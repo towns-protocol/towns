@@ -15,9 +15,9 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/stream"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
@@ -121,10 +121,16 @@ func testDistributionWithStateFromEnv(
 		},
 	}
 
-	distributor, err := stream.NewDistributor(ctx, mockCfg, blockNumber, blockchain.ChainMonitor, riverRegistry)
+	distributor, err := streamplacement.NewDistributor(
+		ctx,
+		mockCfg,
+		blockNumber,
+		blockchain.ChainMonitor,
+		riverRegistry,
+	)
 	require.NoError(err)
 
-	distributorSim := distributor.(stream.DistributorSimulator)
+	distributorSim := distributor.(streamplacement.DistributorSimulator)
 
 	initialStreamCount := 0
 	initialNodeStreamCount := make(map[common.Address]uint64)
@@ -234,7 +240,7 @@ func testStreamDistributionFromGreenState(t *testing.T) {
 	blockNumber, err := tt.btc.DeployerBlockchain.GetBlockNumber(t.Context())
 	tt.require.NoError(err)
 
-	distributor, err := stream.NewDistributor(
+	distributor, err := streamplacement.NewDistributor(
 		t.Context(),
 		tt.btc.OnChainConfig,
 		blockNumber,
@@ -244,7 +250,7 @@ func testStreamDistributionFromGreenState(t *testing.T) {
 	tt.require.NoError(err)
 
 	var (
-		distributorSim    = distributor.(stream.DistributorSimulator)
+		distributorSim    = distributor.(streamplacement.DistributorSimulator)
 		streamID          StreamId
 		streamsToAllocate = 1_000_000
 		replFactor        = 3

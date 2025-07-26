@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -18,7 +19,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	"github.com/towns-protocol/towns/core/node/rpc"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -179,7 +180,10 @@ func (cc *cmdContext) getHttpClient() (*http.Client, error) {
 	return httpClient, nil
 }
 
-func (cc *cmdContext) getStubForStream(streamID StreamId, preferredNode common.Address) (StreamServiceClient, *river.StreamWithId, *river.Node, error) {
+func (cc *cmdContext) getStubForStream(
+	streamID StreamId,
+	preferredNode common.Address,
+) (StreamServiceClient, *river.StreamWithId, *river.Node, error) {
 	ctx, cancel := context.WithTimeout(cc.ctx, 30*time.Second)
 	defer cancel()
 
@@ -215,8 +219,8 @@ func (cc *cmdContext) getStream(streamId StreamId, stub StreamServiceClient) (*S
 	request := connect.NewRequest(&GetStreamRequest{
 		StreamId: streamId[:],
 	})
-	request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-	request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 	response, err := stub.GetStream(cc.ctx, request)
 	if err != nil {
 		return nil, err
@@ -225,7 +229,8 @@ func (cc *cmdContext) getStream(streamId StreamId, stub StreamServiceClient) (*S
 }
 
 func addBlockFlag(cmd *cobra.Command) {
-	cmd.Flags().Int64("block", 0, "Blockchain block number to use, 0 for latest block, negative for relative to latest block")
+	cmd.Flags().
+		Int64("block", 0, "Blockchain block number to use, 0 for latest block, negative for relative to latest block")
 }
 
 func addNumberFlag(cmd *cobra.Command) {

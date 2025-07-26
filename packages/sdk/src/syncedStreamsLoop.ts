@@ -828,14 +828,25 @@ export class SyncedStreamsLoop {
         const syncId = this.syncId
         const retryCount = retryParams?.retryCount ?? 0
         this.rpcClient
-            .addStreamToSync({
+            .modifySync({
                 syncId: this.syncId,
-                syncPos: cookie,
+                addStreams: [cookie],
+            })
+            .then((resp) => {
+                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
+                if (resp?.adds && resp?.adds.length > 0) {
+                    setTimeout(() => {
+                        this.syncDown(streamId, {
+                            syncId,
+                            retryCount: retryCount + 1,
+                        })
+                    }, retryDelay)
+                }
             })
             .catch((err) => {
                 const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
                 this.logError(
-                    'syncDown: addStreamToSync error',
+                    'syncDown: modifySync error',
                     err,
                     'retryParams',
                     retryParams,

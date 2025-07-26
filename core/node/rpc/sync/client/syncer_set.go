@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -53,7 +54,7 @@ type (
 	// syncerWithLock holds a syncer with its associated lock
 	syncerWithLock struct {
 		StreamsSyncer
-		sync.Mutex
+		deadlock.Mutex
 	}
 
 	// SyncerSet is the set of StreamsSyncers that are used for a sync operation.
@@ -64,6 +65,8 @@ type (
 		localNodeAddress common.Address
 		// messageDistributor is used to distribute messages to subscriptions
 		messageDistributor MessageDistributor
+		// unsubStream is called when a stream is no longer syncing due to the node outage or something else.
+		unsubStream func(streamID StreamId)
 		// streamCache is used to subscribe to streams managed by this node instance
 		streamCache StreamCache
 		// nodeRegistry keeps a mapping from node address to node meta-data
@@ -77,7 +80,7 @@ type (
 		// streamID2Syncer maps from a stream to its syncer
 		streamID2Syncer *xsync.Map[StreamId, StreamsSyncer]
 		// streamLocks provides per-stream locking
-		streamLocks *xsync.Map[StreamId, *sync.Mutex]
+		streamLocks *xsync.Map[StreamId, *deadlock.Mutex]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
@@ -97,6 +100,7 @@ func NewSyncers(
 	nodeRegistry nodes.NodeRegistry,
 	localNodeAddress common.Address,
 	messageDistributor MessageDistributor,
+	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) *SyncerSet {
 	return &SyncerSet{
@@ -105,9 +109,10 @@ func NewSyncers(
 		nodeRegistry:       nodeRegistry,
 		localNodeAddress:   localNodeAddress,
 		messageDistributor: messageDistributor,
+		unsubStream:        unsubStream,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
 		otelTracer:         otelTracer,
 	}
 }
@@ -167,13 +172,13 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 	for _, streamID := range orderedStreamIDs {
 		ss.streamLocks.Compute(
 			streamID,
-			func(streamLock *sync.Mutex, loaded bool) (*sync.Mutex, xsync.ComputeOp) {
+			func(streamLock *deadlock.Mutex, loaded bool) (*deadlock.Mutex, xsync.ComputeOp) {
 				_, syncing := ss.streamID2Syncer.Load(streamID)
 				_, streamToRemove := toRemove[streamID]
 
 				if (!syncing && !streamToRemove) || (syncing && streamToRemove) {
 					if !loaded || streamLock == nil {
-						streamLock = &sync.Mutex{}
+						streamLock = &deadlock.Mutex{}
 					}
 					streamLock.Lock()
 					lockedStreamIDs = append(lockedStreamIDs, streamID)
@@ -219,111 +224,216 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		return AsRiverError(err).Func("SyncerSet.Modify")
 	}
 
-	addingFailuresLock := sync.Mutex{}
-	addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
-	addingFailuresHandler := func(status *SyncStreamOpStatus) {
-		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
-			req.AddingFailureHandler(status)
-			return
+	var (
+		addingFailuresLock      sync.Mutex
+		backfillingFailuresLock sync.Mutex
+		removingFailuresLock    sync.Mutex
+	)
+
+	// 1. Optimistic try to backfill and remove streams since syncers are expected
+	// to be running and ready to process the request.
+	{
+		backfillingFailures := make([]StreamId, 0, len(req.ToBackfill))
+		backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
+			backfillingFailuresLock.Lock()
+			backfillingFailures = append(backfillingFailures, StreamId(status.GetStreamId()))
+			backfillingFailuresLock.Unlock()
 		}
 
-		addingFailuresLock.Lock()
-		addingFailures = append(addingFailures, status)
-		addingFailuresLock.Unlock()
-	}
-
-	backfillingFailuresLock := sync.Mutex{}
-	backfillingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
-	backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
-		if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
-			req.BackfillingFailureHandler(status)
-			return
+		removingFailures := make([][]byte, 0, len(req.ToRemove))
+		removingFailuresHandler := func(status *SyncStreamOpStatus) {
+			removingFailuresLock.Lock()
+			removingFailures = append(removingFailures, status.GetStreamId())
+			removingFailuresLock.Unlock()
 		}
 
-		backfillingFailuresLock.Lock()
-		backfillingFailures = append(backfillingFailures, status)
-		backfillingFailuresLock.Unlock()
-	}
+		// Send the modify request to the syncers to backfill and remove streams.
+		unlock := ss.lockStreams(ctx, ModifyRequest{ToRemove: req.ToRemove})
+		err := ss.modifyNoLock(ctx, ModifyRequest{
+			SyncID:                    req.SyncID,
+			ToBackfill:                req.ToBackfill,
+			ToRemove:                  req.ToRemove,
+			BackfillingFailureHandler: backfillingFailuresHandler,
+			RemovingFailureHandler:    removingFailuresHandler,
+		}, false)
+		unlock()
+		if err != nil {
+			return AsRiverError(err).Func("SyncerSet.Modify.first")
+		}
 
-	// First attempt with the provided cookies without modifications.
-	if err := ss.modify(ctx, ModifyRequest{
-		SyncID:                    req.SyncID,
-		ToBackfill:                req.ToBackfill,
-		ToAdd:                     req.ToAdd,
-		ToRemove:                  req.ToRemove,
-		BackfillingFailureHandler: backfillingFailuresHandler,
-		AddingFailureHandler:      addingFailuresHandler,
-		RemovingFailureHandler:    req.RemovingFailureHandler,
-	}); err != nil {
-		return err
-	}
-
-	// If a stream was failed to process, try to fix the cookies and send the modify sync again.
-	// There could be a case when a client specifies a wrong node address which leads to errors.
-	// This case should be properly handled by resetting the node address and retrying the operation.
-	if len(addingFailures) == 0 && len(backfillingFailures) == 0 {
-		return nil
-	}
-
-	mr := ModifyRequest{
-		ToBackfill:                make([]*ModifySyncRequest_Backfill, 0, len(backfillingFailures)),
-		ToAdd:                     make([]*SyncCookie, 0, len(addingFailures)),
-		BackfillingFailureHandler: req.BackfillingFailureHandler,
-		AddingFailureHandler:      req.AddingFailureHandler,
-	}
-
-	// Remove node addresses from failed to backfill streams
-	if len(backfillingFailures) > 0 {
-		backfills := make(map[string][]*SyncCookie, len(backfillingFailures))
-		for _, status := range backfillingFailures {
-			var syncID string
-			preparedSyncCookie := &SyncCookie{
-				StreamId: status.StreamId,
+		// Remove successful backfilled streams from the request.
+		if len(backfillingFailures) > 0 {
+			backfills := make(map[string][]*SyncCookie, len(backfillingFailures))
+			for _, streamID := range backfillingFailures {
+				var syncID string
+				preparedSyncCookie := &SyncCookie{
+					StreamId: streamID[:],
+				}
+				for _, backfill := range req.ToBackfill {
+					for _, cookie := range backfill.GetStreams() {
+						if StreamId(cookie.GetStreamId()) == streamID {
+							preparedSyncCookie = cookie
+							syncID = backfill.GetSyncId()
+							break
+						}
+					}
+				}
+				if _, ok := backfills[syncID]; !ok {
+					backfills[syncID] = []*SyncCookie{preparedSyncCookie}
+				} else {
+					backfills[syncID] = append(backfills[syncID], preparedSyncCookie)
+				}
 			}
-			for _, backfill := range req.ToBackfill {
-				for _, cookie := range backfill.GetStreams() {
+			req.ToBackfill = nil
+			for syncID, cookies := range backfills {
+				req.ToBackfill = append(req.ToBackfill, &ModifySyncRequest_Backfill{
+					SyncId:  syncID,
+					Streams: cookies,
+				})
+			}
+		} else {
+			req.ToBackfill = nil
+		}
+
+		// Remove successful removed streams from the request.
+		if len(removingFailures) > 0 {
+			req.ToRemove = removingFailures
+		} else {
+			req.ToRemove = nil
+		}
+
+		// Early exit if there are no streams to modify.
+		if len(req.ToRemove) == 0 && len(req.ToAdd) == 0 && len(req.ToBackfill) == 0 {
+			return nil
+		}
+	}
+
+	// 2. The second try for adding and backfilling streams with the provided node address in cookie.
+	{
+		addingFailures := make([]*SyncStreamOpStatus, 0, len(req.ToAdd))
+		addingFailuresHandler := func(status *SyncStreamOpStatus) {
+			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+				req.AddingFailureHandler(status)
+				return
+			}
+
+			addingFailuresLock.Lock()
+			addingFailures = append(addingFailures, status)
+			addingFailuresLock.Unlock()
+		}
+
+		backfillingFailures := make([]StreamId, 0, len(req.ToBackfill))
+		backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
+			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+				req.BackfillingFailureHandler(status)
+				return
+			}
+
+			backfillingFailuresLock.Lock()
+			backfillingFailures = append(backfillingFailures, StreamId(status.GetStreamId()))
+			backfillingFailuresLock.Unlock()
+		}
+
+		removingFailures := make([][]byte, 0, len(req.ToRemove))
+		removingFailuresHandler := func(status *SyncStreamOpStatus) {
+			if status.GetCode() != int32(Err_NOT_FOUND) && status.GetCode() != int32(Err_INTERNAL) {
+				req.RemovingFailureHandler(status)
+				return
+			}
+
+			removingFailuresLock.Lock()
+			removingFailures = append(removingFailures, status.GetStreamId())
+			removingFailuresLock.Unlock()
+		}
+
+		if err := ss.modify(ctx, ModifyRequest{
+			SyncID:                    req.SyncID,
+			ToBackfill:                req.ToBackfill,
+			ToAdd:                     req.ToAdd,
+			ToRemove:                  req.ToRemove,
+			BackfillingFailureHandler: backfillingFailuresHandler,
+			AddingFailureHandler:      addingFailuresHandler,
+			RemovingFailureHandler:    removingFailuresHandler,
+		}, false); err != nil {
+			return AsRiverError(err).Func("SyncerSet.Modify.second")
+		}
+
+		// If a stream was failed to backfill, just try again one more time.
+		if len(backfillingFailures) > 0 {
+			backfills := make(map[string][]*SyncCookie, len(backfillingFailures))
+			for _, streamID := range backfillingFailures {
+				var syncID string
+				preparedSyncCookie := &SyncCookie{
+					StreamId: streamID[:],
+				}
+				for _, backfill := range req.ToBackfill {
+					for _, cookie := range backfill.GetStreams() {
+						if StreamId(cookie.GetStreamId()) == streamID {
+							preparedSyncCookie = cookie
+							syncID = backfill.GetSyncId()
+							break
+						}
+					}
+				}
+				if _, ok := backfills[syncID]; !ok {
+					backfills[syncID] = []*SyncCookie{preparedSyncCookie}
+				} else {
+					backfills[syncID] = append(backfills[syncID], preparedSyncCookie)
+				}
+			}
+			req.ToBackfill = nil
+			for syncID, cookies := range backfills {
+				req.ToBackfill = append(req.ToBackfill, &ModifySyncRequest_Backfill{
+					SyncId:  syncID,
+					Streams: cookies,
+				})
+			}
+		} else {
+			req.ToBackfill = nil
+		}
+
+		// If a stream was failed to add, just try again one more time with reset cookie.
+		if len(addingFailures) > 0 {
+			toAdd := make([]*SyncCookie, len(addingFailures))
+			for i, status := range addingFailures {
+				preparedSyncCookie := &SyncCookie{
+					StreamId: status.StreamId,
+				}
+				for _, cookie := range req.ToAdd {
 					if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
 						preparedSyncCookie = cookie
-						syncID = backfill.GetSyncId()
 						break
 					}
 				}
+				preparedSyncCookie.NodeAddress = status.NodeAddress
+				toAdd[i] = preparedSyncCookie
 			}
-			preparedSyncCookie.NodeAddress = nil
-			if _, ok := backfills[syncID]; !ok {
-				backfills[syncID] = []*SyncCookie{preparedSyncCookie}
-			} else {
-				backfills[syncID] = append(backfills[syncID], preparedSyncCookie)
-			}
+			req.ToAdd = toAdd
+		} else {
+			req.ToAdd = nil
 		}
-		for syncID, cookies := range backfills {
-			mr.ToBackfill = append(mr.ToBackfill, &ModifySyncRequest_Backfill{
-				SyncId:  syncID,
-				Streams: cookies,
-			})
+
+		// If a stream was failed to remove, just try again one more time.
+		if len(removingFailures) > 0 {
+			req.ToRemove = removingFailures
+		} else {
+			req.ToRemove = nil
+		}
+
+		// Early exit if there are no streams to modify.
+		if len(req.ToRemove) == 0 && len(req.ToAdd) == 0 && len(req.ToBackfill) == 0 {
+			return nil
 		}
 	}
 
-	// Remove node addresses from failed to add streams
-	for _, status := range addingFailures {
-		preparedSyncCookie := &SyncCookie{
-			StreamId: status.StreamId,
-		}
-		for _, cookie := range req.ToAdd {
-			if StreamId(cookie.GetStreamId()) == StreamId(status.StreamId) {
-				preparedSyncCookie = cookie
-				break
-			}
-		}
-		preparedSyncCookie.NodeAddress = nil
-		mr.ToAdd = append(mr.ToAdd, preparedSyncCookie)
-	}
-
-	return ss.modify(ctx, mr)
+	// 3. If the first attempt failed, try to remove node address from cookies and send the modify sync again.
+	// There could be a case when a client specifies a wrong node address which leads to errors.
+	// This case should be properly handled by resetting the node address and retrying the operation.
+	return ss.modify(ctx, req, true)
 }
 
 // modify implements the actual modification logic
-func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
+func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest, changeNode bool) error {
 	if ss.stopped.Load() {
 		return RiverError(Err_CANCELED, "Sync stopped")
 	}
@@ -331,6 +441,15 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 	// Lock streams from the request excluding backfills.
 	unlock := ss.lockStreams(ctx, req)
 	defer unlock()
+
+	return ss.modifyNoLock(ctx, req, changeNode)
+}
+
+// modifyNoLock performs the modification without acquiring locks.
+func (ss *SyncerSet) modifyNoLock(ctx context.Context, req ModifyRequest, changeNode bool) error {
+	if ss.stopped.Load() {
+		return RiverError(Err_CANCELED, "Sync stopped")
+	}
 
 	// Group modifications by node address
 	modifySyncs := make(map[common.Address]*ModifySyncRequest)
@@ -386,7 +505,7 @@ func (ss *SyncerSet) modify(ctx context.Context, req ModifyRequest) error {
 			continue
 		}
 
-		selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie)
+		selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, changeNode)
 		if !nodeAvailable {
 			req.AddingFailureHandler(&SyncStreamOpStatus{
 				StreamId: streamID[:],
@@ -445,41 +564,50 @@ func (ss *SyncerSet) distributeSyncModifications(
 	failedToAdd func(status *SyncStreamOpStatus),
 	failedToRemove func(status *SyncStreamOpStatus),
 ) {
+	if ss.otelTracer != nil {
+		var span trace.Span
+		ctx, span = ss.otelTracer.Start(ctx, "syncerset::distributeSyncModifications")
+		defer span.End()
+	}
+
 	var wg sync.WaitGroup
 	for nodeAddress, modifySync := range modifySyncs {
 		// Get syncer for the given node address
-		syncer, err := ss.getOrCreateSyncer(nodeAddress)
+		syncer, err := ss.getOrCreateSyncer(ctx, nodeAddress)
 		if err != nil || syncer == nil {
 			rvrErr := AsRiverError(err).Tag("remoteSyncerAddr", nodeAddress)
 			for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 				failedToBackfill(&SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    cookie.GetStreamId(),
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			for _, cookie := range modifySync.GetAddStreams() {
 				failedToAdd(&SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    cookie.GetStreamId(),
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 				failedToRemove(&SyncStreamOpStatus{
-					StreamId: streamIDRaw,
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
+					StreamId:    streamIDRaw,
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: nodeAddress.Bytes(),
 				})
 			}
 			continue
 		}
 
 		wg.Add(1)
-		go func(modifySync *ModifySyncRequest) {
+		go func(nodeAddress common.Address, modifySync *ModifySyncRequest) {
 			defer wg.Done()
 
-			ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
 
 			resp, _, err := syncer.Modify(ctx, modifySync)
@@ -487,23 +615,26 @@ func (ss *SyncerSet) distributeSyncModifications(
 				rvrErr := AsRiverError(err, Err_INTERNAL).Tag("remoteSyncerAddr", syncer.Address())
 				for _, cookie := range modifySync.GetBackfillStreams().GetStreams() {
 					failedToBackfill(&SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				for _, cookie := range modifySync.GetAddStreams() {
 					failedToAdd(&SyncStreamOpStatus{
-						StreamId: cookie.GetStreamId(),
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    cookie.GetStreamId(),
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				for _, streamIDRaw := range modifySync.GetRemoveStreams() {
 					failedToRemove(&SyncStreamOpStatus{
-						StreamId: streamIDRaw,
-						Code:     int32(rvrErr.Code),
-						Message:  rvrErr.GetMessage(),
+						StreamId:    streamIDRaw,
+						Code:        int32(rvrErr.Code),
+						Message:     rvrErr.GetMessage(),
+						NodeAddress: nodeAddress.Bytes(),
 					})
 				}
 				return
@@ -513,33 +644,31 @@ func (ss *SyncerSet) distributeSyncModifications(
 				failedToBackfill(status)
 			}
 
-			addingFailures := resp.GetAdds()
-			successfullyAdded := slices.DeleteFunc(modifySync.GetAddStreams(), func(cookie *SyncCookie) bool {
-				return slices.ContainsFunc(addingFailures, func(status *SyncStreamOpStatus) bool {
-					return StreamId(status.StreamId) == StreamId(cookie.GetStreamId())
-				})
-			})
-			for _, status := range addingFailures {
+			// Create a set of failed stream IDs
+			failedAddStreams := make(map[StreamId]struct{}, len(resp.GetAdds()))
+			for _, status := range resp.GetAdds() {
+				failedAddStreams[StreamId(status.StreamId)] = struct{}{}
 				failedToAdd(status)
 			}
 
-			removalFailures := resp.GetRemovals()
-			successfullyRemoved := slices.DeleteFunc(modifySync.GetRemoveStreams(), func(streamIdRaw []byte) bool {
-				return slices.ContainsFunc(removalFailures, func(status *SyncStreamOpStatus) bool {
-					return StreamId(status.StreamId) == StreamId(streamIdRaw)
-				})
-			})
-			for _, status := range removalFailures {
+			// Create a set of failed stream IDs
+			failedRemoveStreams := make(map[StreamId]struct{}, len(resp.GetRemovals()))
+			for _, status := range resp.GetRemovals() {
+				failedRemoveStreams[StreamId(status.StreamId)] = struct{}{}
 				failedToRemove(status)
 			}
 
-			for _, cookie := range successfullyAdded {
-				ss.streamID2Syncer.Store(StreamId(cookie.GetStreamId()), syncer)
+			for _, cookie := range modifySync.GetAddStreams() {
+				if _, failed := failedAddStreams[StreamId(cookie.GetStreamId())]; !failed {
+					ss.streamID2Syncer.Store(StreamId(cookie.GetStreamId()), syncer)
+				}
 			}
-			for _, streamIdRaw := range successfullyRemoved {
-				ss.streamID2Syncer.Delete(StreamId(streamIdRaw))
+			for _, streamIdRaw := range modifySync.GetRemoveStreams() {
+				if _, failed := failedRemoveStreams[StreamId(streamIdRaw)]; !failed {
+					ss.streamID2Syncer.Delete(StreamId(streamIdRaw))
+				}
 			}
-		}(modifySync)
+		}(nodeAddress, modifySync)
 	}
 	wg.Wait()
 }
@@ -565,16 +694,20 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 // 1. Node specified in the cookie (if any)
 // 2. Local node (if stream is local)
 // 3. Remote nodes (in order of preference)
+// Extra logic is applied if changeNode is true, which means that the node from the cookie should not be used.
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
-func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie) (common.Address, bool) {
+func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie, changeNode bool) (common.Address, bool) {
 	streamID := StreamId(cookie.GetStreamId())
+	usedNode := common.BytesToAddress(cookie.GetNodeAddress())
 
 	// 1. Try node from cookie first
-	if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
-		selectedNode := common.BytesToAddress(addrRaw)
-		if _, err := ss.getOrCreateSyncer(selectedNode); err == nil {
-			return selectedNode, true
+	if !changeNode {
+		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
+			selectedNode := common.BytesToAddress(addrRaw)
+			if _, err := ss.getOrCreateSyncer(ctx, selectedNode); err == nil {
+				return selectedNode, true
+			}
 		}
 	}
 
@@ -585,17 +718,24 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 
 	// 2. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
-	if isLocal {
-		if _, err = ss.getOrCreateSyncer(ss.localNodeAddress); err == nil {
+	if isLocal && (!changeNode || ss.localNodeAddress != usedNode) {
+		if _, err = ss.getOrCreateSyncer(ctx, ss.localNodeAddress); err == nil {
 			return ss.localNodeAddress, true
 		}
+	}
+
+	// If changeNode is true, we should not use the usedNode address
+	if changeNode {
+		remotes = slices.DeleteFunc(remotes, func(addr common.Address) bool {
+			return addr == usedNode
+		})
 	}
 
 	// 3. Try remote nodes
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
-			if _, err = ss.getOrCreateSyncer(selectedNode); err == nil {
+			if _, err = ss.getOrCreateSyncer(ctx, selectedNode); err == nil {
 				return selectedNode, true
 			}
 			selectedNode = stream.AdvanceStickyPeer(selectedNode)
@@ -609,10 +749,16 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 // If the syncer does not exist, it creates a new one and starts it.
 // This implementation uses per-node-address locking to avoid blocking
 // other operations while creating syncers (which can be slow due to network calls).
-func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSyncer, error) {
+func (ss *SyncerSet) getOrCreateSyncer(ctx context.Context, nodeAddress common.Address) (StreamsSyncer, error) {
 	// Check if stopped before creating
 	if ss.stopped.Load() {
 		return nil, RiverError(Err_CANCELED, "Sync stopped")
+	}
+
+	if ss.otelTracer != nil {
+		_, span := ss.otelTracer.Start(ctx, "syncerset::getOrCreateSyncer",
+			trace.WithAttributes(attribute.String("address", nodeAddress.Hex())))
+		defer span.End()
 	}
 
 	syncerEntity, _ := ss.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
@@ -633,7 +779,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.localNodeAddress,
 			ss.streamCache,
 			ss.messageDistributor,
-			ss.streamID2Syncer.Delete,
+			ss.onStreamDown,
 			ss.otelTracer,
 		)
 	} else {
@@ -646,7 +792,7 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 			ss.globalCtx,
 			nodeAddress,
 			client,
-			ss.streamID2Syncer.Delete,
+			ss.onStreamDown,
 			ss.messageDistributor,
 			ss.otelTracer,
 		)
@@ -668,6 +814,17 @@ func (ss *SyncerSet) getOrCreateSyncer(nodeAddress common.Address) (StreamsSynce
 	}()
 
 	return syncer, nil
+}
+
+// onStreamDown is called when a stream is no longer syncing, e.g., due to node outage or other reasons.
+func (ss *SyncerSet) onStreamDown(streamID StreamId) {
+	if ss.unsubStream != nil {
+		ss.unsubStream(streamID)
+	}
+
+	// Remove the stream from the syncer set.
+	// !!! MIGHT BE A POTENTIAL RACE CONDITION IF THE GIVEN STREAM IS BEING MODIFIED, LOOK MORE INTO IT LATER !!!
+	ss.streamID2Syncer.Delete(streamID)
 }
 
 // Validate checks the modify request for errors and returns an error if any are found.

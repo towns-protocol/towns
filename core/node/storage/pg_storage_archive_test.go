@@ -12,12 +12,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
 
-func mbDataForNumb(n int64, sn bool) *WriteMiniblockData {
+func mbDataForNumb(n int64, sn bool) *MiniblockDescriptor {
 	var snapshot []byte
 	if sn {
 		snapshot = []byte(fmt.Sprintf("snapshot-%d", n))
 	}
-	return &WriteMiniblockData{
+	return &MiniblockDescriptor{
 		Data:     []byte(fmt.Sprintf("data-%d", n)),
 		Snapshot: snapshot,
 	}
@@ -47,7 +47,7 @@ func TestArchive(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(-1), bn)
 
-	data := []*WriteMiniblockData{
+	data := []*MiniblockDescriptor{
 		mbDataForNumb(0, true),
 		mbDataForNumb(1, false),
 		mbDataForNumb(2, false),
@@ -68,7 +68,7 @@ func TestArchive(t *testing.T) {
 		{Number: 2, Data: data[2].Data, Snapshot: data[2].Snapshot},
 	}, readMBs)
 
-	data2 := []*WriteMiniblockData{
+	data2 := []*MiniblockDescriptor{
 		mbDataForNumb(3, false),
 		mbDataForNumb(4, false),
 		mbDataForNumb(5, false),

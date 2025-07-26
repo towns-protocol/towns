@@ -208,7 +208,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 
-		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.WriteMiniblockData{
+		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
@@ -308,7 +308,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 
 	if seal {
 		// Register the given stream onchain with sealed flag
-		if err = s.streamRegistry.AddStream(
+		if err = s.registryContract.AddStream(
 			ctx,
 			streamId,
 			cc.NodeAddresses(),

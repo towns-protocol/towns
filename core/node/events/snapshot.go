@@ -1129,12 +1129,18 @@ func applyKeySolicitation(member *MemberPayload_Snapshot_Member, keySolicitation
 func applyKeyFulfillment(member *MemberPayload_Snapshot_Member, keyFulfillment *MemberPayload_KeyFulfillment) {
 	if member != nil {
 		// clear out any fulfilled session ids for the device key
-		for _, event := range member.Solicitations {
+		for i := 0; i < len(member.Solicitations); {
+			event := member.Solicitations[i]
 			if event.DeviceKey == keyFulfillment.DeviceKey {
 				event.SessionIds = removeCommon(event.SessionIds, keyFulfillment.SessionIds)
 				event.IsNewDevice = false
+				if len(event.SessionIds) == 0 {
+					// Remove the solicitation if SessionIds is empty
+					member.Solicitations = append(member.Solicitations[:i], member.Solicitations[i+1:]...)
+				}
 				break
 			}
+			i++
 		}
 	}
 }

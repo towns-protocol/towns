@@ -37,7 +37,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func newRemoteSyncer(
+func NewRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
@@ -61,18 +61,20 @@ func newRemoteSyncer(
 	firstMsgChan := make(chan bool, 1)
 	go func() {
 		firstMsgChan <- responseStream.Receive()
+		close(firstMsgChan)
 	}()
 
 	select {
 	case received := <-firstMsgChan:
-		close(firstMsgChan)
 		if !received {
 			syncStreamCancel()
-			return nil, responseStream.Err()
+			if err = responseStream.Err(); err != nil {
+				return nil, err
+			}
+			return nil, RiverError(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages")
 		}
 		// First message received successfully, continue with the stream
 	case <-timer.C:
-		close(firstMsgChan)
 		syncStreamCancel()
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}

@@ -13,6 +13,7 @@ var MIGRATIONS = []migrationFunc{
 	snapshot_migration_0002,
 	snapshot_migration_0003,
 	snapshot_migration_0004,
+	snapshot_migration_0005,
 }
 
 func CurrentSnapshotVersion() int32 {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -24,12 +25,35 @@ func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*Syncer
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
 
+	// Default unsubStream callback that does nothing
+	unsubStream := func(streamID StreamId) {}
+
 	syncerSet := NewSyncers(
 		ctx,
 		streamCache,
 		nodeRegistry,
 		localAddr,
 		messageDistributor,
+		unsubStream,
+		nil, // no otel tracer
+	)
+
+	return syncerSet, streamCache, messageDistributor, nodeRegistry
+}
+
+// createTestSyncerSetWithCallback creates a test syncer set with a custom unsubStream callback
+func createTestSyncerSetWithCallback(ctx context.Context, localAddr common.Address, unsubStream func(StreamId)) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localAddr,
+		messageDistributor,
+		unsubStream,
 		nil, // no otel tracer
 	)
 
@@ -44,7 +68,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Test creating local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -56,7 +80,7 @@ func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
 	assert.Equal(t, syncer, storedSyncerEntry.StreamsSyncer)
 
 	// Test getting the same syncer again (should return cached)
-	syncer2, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer2, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	assert.Equal(t, syncer, syncer2)
 
@@ -82,7 +106,7 @@ func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -112,7 +136,7 @@ func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
 	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(nil, expectedErr)
 
 	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -140,7 +164,7 @@ func TestGetOrCreateSyncer_SyncStopped(t *testing.T) {
 	syncerSet.stopped.Store(true)
 
 	// Test creating syncer when stopped
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -176,7 +200,7 @@ func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			<-start // Wait for signal to start all at once
-			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(localAddr)
+			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(ctx, localAddr)
 		}(i)
 	}
 
@@ -224,7 +248,7 @@ func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
 
 	// Test creating remote syncer with init error
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.Error(t, err)
 	require.Nil(t, syncer)
@@ -250,7 +274,7 @@ func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
 	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
 
 	// Create a local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -291,7 +315,7 @@ func TestSyncerSet_Run(t *testing.T) {
 	}()
 
 	// Create a syncer to ensure we have something to wait for
-	syncer, err := syncerSet.getOrCreateSyncer(localAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
 
@@ -334,7 +358,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *sync.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
 	}
 
 	// Pre-store a syncer
@@ -343,7 +367,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 	syncerSet.syncers.Store(remoteAddr, syncerEntry)
 
 	// Try to get the existing syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	require.NoError(t, err)
 	require.NotNil(t, syncer)
@@ -375,7 +399,7 @@ func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
 	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, syncErr)
 
 	// Try to create a remote syncer
-	syncer, err := syncerSet.getOrCreateSyncer(remoteAddr)
+	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
 
 	// Should fail with an error
 	require.Error(t, err)
@@ -592,5 +616,82 @@ func TestStreamLocks_ConditionalLocking(t *testing.T) {
 
 	// Cleanup
 	syncerSet.streamID2Syncer.Delete(streamID2)
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestOnStreamDown tests the onStreamDown method
+func TestOnStreamDown(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	unsubCalled := false
+	var unsubStreamID StreamId
+	unsubStream := func(streamID StreamId) {
+		unsubCalled = true
+		unsubStreamID = streamID
+	}
+
+	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSetWithCallback(ctx, localAddr, unsubStream)
+
+	streamID := StreamId{0x01, 0x02, 0x03}
+
+	// Create a mock syncer and add it to streamID2Syncer
+	mockSyncer := &mockStreamsSyncer{}
+	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+	// Call onStreamDown
+	syncerSet.onStreamDown(streamID)
+
+	// Verify unsubStream was called with correct streamID
+	assert.True(t, unsubCalled, "unsubStream should have been called")
+	assert.Equal(t, streamID, unsubStreamID, "unsubStream should have been called with correct streamID")
+
+	// Verify stream was removed from streamID2Syncer
+	_, found := syncerSet.streamID2Syncer.Load(streamID)
+	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+	mockSyncer.AssertExpectations(t)
+}
+
+// TestOnStreamDown_NilCallback tests onStreamDown when unsubStream is nil
+func TestOnStreamDown_NilCallback(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Create syncer set with nil unsubStream callback
+	streamCache := &mockStreamCache{}
+	messageDistributor := &mockMessageDistributor{}
+	nodeRegistry := &mocks.MockNodeRegistry{}
+
+	syncerSet := NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localAddr,
+		messageDistributor,
+		nil, // nil unsubStream callback
+		nil, // no otel tracer
+	)
+
+	streamID := StreamId{0x01, 0x02, 0x03}
+
+	// Create a mock syncer and add it to streamID2Syncer
+	mockSyncer := &mockStreamsSyncer{}
+	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+	// Call onStreamDown - should not panic even with nil callback
+	syncerSet.onStreamDown(streamID)
+
+	// Verify stream was still removed from streamID2Syncer
+	_, found := syncerSet.streamID2Syncer.Load(streamID)
+	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
+
+	// Cleanup
+	streamCache.AssertExpectations(t)
+	messageDistributor.AssertExpectations(t)
+	nodeRegistry.AssertExpectations(t)
 	mockSyncer.AssertExpectations(t)
 }

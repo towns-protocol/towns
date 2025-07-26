@@ -61,18 +61,20 @@ func NewRemoteSyncer(
 	firstMsgChan := make(chan bool, 1)
 	go func() {
 		firstMsgChan <- responseStream.Receive()
+		close(firstMsgChan)
 	}()
 
 	select {
 	case received := <-firstMsgChan:
-		close(firstMsgChan)
 		if !received {
 			syncStreamCancel()
-			return nil, responseStream.Err()
+			if err = responseStream.Err(); err != nil {
+				return nil, err
+			}
+			return nil, RiverError(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages")
 		}
 		// First message received successfully, continue with the stream
 	case <-timer.C:
-		close(firstMsgChan)
 		syncStreamCancel()
 		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
 	}
@@ -141,13 +143,14 @@ func (s *remoteSyncer) Run() {
 			}
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
-				s.unsubStream(streamID)
-				if err := s.sendResponse(streamID, res); err != nil {
+				if err = s.sendResponse(streamID, res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 					}
 					return
 				}
+				// This must happen only after sending the message to the client.
+				s.unsubStream(streamID)
 				s.streams.Delete(streamID)
 			}
 		}
@@ -159,21 +162,17 @@ func (s *remoteSyncer) Run() {
 
 		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
 			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
-
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
-
-			// TODO: slow down a bit to give client time to read stream down updates
 			if err := s.sendResponse(streamID, msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
-
-			// unsubStream is called to remove the stream from the local cache of the syncer set so
-			// the given stream could be re-added.
+			// This must happen only after sending the message to the client.
 			s.unsubStream(streamID)
-
 			return true
 		})
+
+		s.streams.Clear()
 	}
 }
 

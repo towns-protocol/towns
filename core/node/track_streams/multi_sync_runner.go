@@ -1,6 +1,7 @@
 package track_streams
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -26,6 +27,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -34,14 +36,23 @@ type RemoteStreamSyncer interface {
 	GetSyncId() string
 }
 
+// ApplyHistoricalContent describes how historical content should be applied during sync
+type ApplyHistoricalContent struct {
+	// If false, only sync from current position. If true, apply historical content
+	// since inception/last snapshot, unless FromMiniblockHash is set, in which case
+	// only events from a specific miniblock hash will be applied
+	Enabled bool
+	// If non-nil, start applying from this specific miniblock hash onwards
+	// Enabled must be set to true
+	FromMiniblockHash []byte
+}
+
 type streamSyncInitRecord struct {
 	trackedView events.TrackedStreamView
 	streamId    shared.StreamId
 
-	// Set applyHistoricalStreamContents to true when we wish to send all stream events since inception.
-	// Set to false if we wish to send only events starting from the current sync position. This should
-	// be true, as we will restart the sync with the latest sync position.
-	applyHistoricalStreamContents bool
+	// Describes if and how historical content should be applied
+	applyHistoricalContent ApplyHistoricalContent
 
 	// These are tracked to determine where to restart streams. If the stream is initially
 	// being added and a sync reset is desired, set minipoolGen to MaxInt64 and prevMiniblockHash
@@ -70,6 +81,7 @@ type syncSessionRunner struct {
 	nodeRegistry             nodes.NodeRegistry
 	metrics                  *TrackStreamsSyncMetrics
 	maxStreamsPerSyncSession int
+	useSharedSyncer          bool
 	otelTracer               trace.Tracer
 
 	trackedViewForStream TrackedViewForStream
@@ -194,6 +206,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		return
 	}
 
+	applyBlocks := false
 	for _, block := range streamAndCookie.GetMiniblocks() {
 		if !reset {
 			if err := trackedView.ApplyBlock(
@@ -203,10 +216,16 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				log.Errorw("Unable to apply block", "error", err)
 			}
 		}
+		// apply blocks from the first block that matches the specified miniblock hash
+		// and all consecutive blocks
+		if record.applyHistoricalContent.Enabled {
+			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockHash == nil ||
+				bytes.Equal(block.Header.GetHash(), record.applyHistoricalContent.FromMiniblockHash)
+		}
 		// If the stream was just allocated, process the miniblocks and events for notifications.
 		// If not, ignore them because there were already notifications sent for the stream, and possibly
 		// for these miniblocks and events.
-		if record.applyHistoricalStreamContents {
+		if applyBlocks {
 			// Send notifications for all events in all blocks.
 			for _, event := range block.GetEvents() {
 				if parsedEvent, err := events.ParseEvent(event); err == nil {
@@ -230,7 +249,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		// These events are already applied to the tracked stream view's internal state, so let's
 		// notify on them because they were not added via ApplyEvent. If added below, the events
 		// will be silently skipped because they are already a part of the minipool.
-		if record.applyHistoricalStreamContents {
+		if record.applyHistoricalContent.Enabled {
 			if parsedEvent, err := events.ParseEvent(event); err == nil {
 				if err := record.trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
 					log.Errorw(
@@ -249,7 +268,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		}
 	}
 
-	record.applyHistoricalStreamContents = false
+	record.applyHistoricalContent.Enabled = false
 
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
@@ -318,24 +337,40 @@ func (ssr *syncSessionRunner) Run() {
 		ssr.syncStarted.Done()
 		return
 	}
-	syncer, err := client.NewRemoteSyncer(
-		ssr.syncCtx,
-		ssr.node,
-		streamClient,
-		ssr.relocateStream,
-		ssr,
-		ssr.otelTracer,
-	)
+
+	var syncer RemoteStreamSyncer
+	if ssr.useSharedSyncer {
+		syncer, err = client.NewRemoteSyncer(
+			ssr.syncCtx,
+			ssr.node,
+			streamClient,
+			ssr.relocateStream,
+			ssr,
+			ssr.otelTracer,
+		)
+	} else {
+		syncer, err = legacyclient.NewRemoteSyncer(
+			ssr.syncCtx,
+			ssr.cancelSync,
+			"SyncSessionRunner",
+			ssr.node,
+			streamClient,
+			ssr.relocateStream,
+			ssr.messages,
+			ssr.otelTracer,
+		)
+	}
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
+			Tag("sharedSyncer", ssr.useSharedSyncer).
 			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
 	}
-	ssr.syncer = syncer
 
+	ssr.syncer = syncer
 	go ssr.syncer.Run()
 
 	// Track active syncs spawned by the multi sync runner.
@@ -485,6 +520,7 @@ func newSyncSessionRunner(
 	nodeRegistry nodes.NodeRegistry,
 	trackedViewForStream TrackedViewForStream,
 	maxStreamsPerSyncSession int,
+	useSharedSyncer bool,
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
@@ -495,6 +531,7 @@ func newSyncSessionRunner(
 		syncCtx:                  logging.CtxWithLog(ctx, logging.FromCtx(rootCtx).With("targetNode", targetNode)),
 		cancelSync:               cancel,
 		maxStreamsPerSyncSession: maxStreamsPerSyncSession,
+		useSharedSyncer:          useSharedSyncer,
 		trackedViewForStream:     trackedViewForStream,
 		relocateStreams:          relocateStreams,
 		node:                     targetNode,
@@ -520,7 +557,7 @@ type TrackedViewConstructorFn func(
 // is responsible for firing any callbacks needed by a service that is tracking the contents of remotely hosted streams.
 type MultiSyncRunner struct {
 	// Keep track of all streams that need to be added (or re-added) to a sync session
-	streamsToSync chan (*streamSyncInitRecord)
+	streamsToSync chan *streamSyncInitRecord
 
 	metrics *TrackStreamsSyncMetrics
 
@@ -642,6 +679,7 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
+			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
@@ -719,6 +757,7 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
+			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
@@ -788,16 +827,16 @@ func (msr *MultiSyncRunner) addToSync(
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
 	stream *river.StreamWithId,
-	applyHistoricalStreamContents bool,
+	applyHistoricalContent ApplyHistoricalContent,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId:                      stream.StreamId(),
-		applyHistoricalStreamContents: applyHistoricalStreamContents,
-		minipoolGen:                   math.MaxInt64,
-		prevMiniblockHash:             common.Hash{}.Bytes(),
+		streamId:               stream.StreamId(),
+		applyHistoricalContent: applyHistoricalContent,
+		minipoolGen:            math.MaxInt64,
+		prevMiniblockHash:      common.Hash{}.Bytes(),
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

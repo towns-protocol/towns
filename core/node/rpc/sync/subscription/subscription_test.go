@@ -412,7 +412,7 @@ func TestSubscription_Send(t *testing.T) {
 				sub := createTestSubscription("test-sync-1")
 				// Fill the buffer to capacity
 				// MaxBufferSize is defined in dynmsgbuf package as 2048
-				for i := 0; i < 2048; i++ {
+				for i := 0; i < 4096; i++ {
 					err := sub.Messages.AddMessage(&SyncStreamsResponse{
 						SyncOp:   SyncOp_SYNC_UPDATE,
 						StreamId: []byte{byte(i % 256), byte(i / 256)},

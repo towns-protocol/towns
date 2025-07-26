@@ -59,6 +59,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         uint16 expectedPenaltyBps
     ) external returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
+        if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 
         DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
@@ -75,7 +76,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         points.inner.burn(req.account, req.points);
         emit IERC20.Transfer(req.account, address(0), amount);
 
-        drop.condition.currency.safeTransfer(req.account, amount);
+        drop.condition.currency.safeTransfer(req.recipient, amount);
 
         emit DropFacet_Claimed_WithPenalty(req.conditionId, msg.sender, req.account, amount);
     }
@@ -88,6 +89,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         bytes calldata signature
     ) external returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
+        if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 
         DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
