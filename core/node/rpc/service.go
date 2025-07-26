@@ -68,7 +68,6 @@ type Service struct {
 	riverChain       *crypto.Blockchain
 	registryContract *registries.RiverRegistryContract
 	nodeRegistry     nodes.NodeRegistry
-	streamRegistry   nodes.StreamRegistry
 	chainConfig      crypto.OnChainConfiguration
 
 	// Base chain
