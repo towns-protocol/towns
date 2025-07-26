@@ -32,21 +32,20 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
         );
 
         if (result == NodeVoteStatus.PASSED) {
-            bool shouldCharge = _shouldChargeForJoinSpace();
-            if (shouldCharge) {
-                uint256 payment = _getCapturedValue(transactionId);
-                uint256 membershipPrice = _getMembershipPrice(_totalSupply());
-                uint256 requiredAmount = _getRequiredAmount(membershipPrice);
+            JoinDetails memory joinDetails = _getJoinDetails();
 
-                if (payment < requiredAmount) {
+            if (joinDetails.shouldCharge) {
+                uint256 payment = _getCapturedValue(transactionId);
+
+                if (payment < joinDetails.amountDue) {
                     _rejectMembership(transactionId, receiver);
                     return;
                 }
 
                 if (transactionType == JOIN_SPACE_SELECTOR) {
-                    _chargeForJoinSpace(transactionId);
+                    _chargeForJoinSpace(transactionId, joinDetails);
                 } else if (transactionType == IMembership.joinSpaceWithReferral.selector) {
-                    _chargeForJoinSpaceWithReferral(transactionId);
+                    _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
                 } else {
                     _rejectMembership(transactionId, receiver);
                     return;
