@@ -1108,21 +1108,49 @@ func insertUserBlock(
 
 func applyKeySolicitation(member *MemberPayload_Snapshot_Member, keySolicitation *MemberPayload_KeySolicitation) {
 	if member != nil {
-		// if solicitation exists for this device key, remove it by shifting the slice
-		i := 0
+		// Find existing solicitation for this device key
+		found := false
 		for _, event := range member.Solicitations {
-			if event.DeviceKey != keySolicitation.DeviceKey {
-				member.Solicitations[i] = event
-				i++
+			if event.DeviceKey == keySolicitation.DeviceKey {
+				// Combine session IDs from the new solicitation with existing ones
+				sessionIdMap := make(map[string]bool)
+				// Add existing session IDs
+				for _, id := range event.SessionIds {
+					sessionIdMap[id] = true
+				}
+				// Add new session IDs
+				for _, id := range keySolicitation.SessionIds {
+					sessionIdMap[id] = true
+				}
+				// Convert back to sorted slice
+				event.SessionIds = make([]string, 0, len(sessionIdMap))
+
+				for id := range sessionIdMap {
+					event.SessionIds = append(event.SessionIds, id)
+				}
+				slices.Sort(event.SessionIds)
+				
+				// Update other fields
+				event.FallbackKey = keySolicitation.FallbackKey
+				event.IsNewDevice = false
+				found = true
+				break
 			}
 		}
-		// clone to avoid data race
-		event := proto.Clone(keySolicitation).(*MemberPayload_KeySolicitation)
-
-		// append it
-		MAX_DEVICES := 10
-		startIndex := max(0, i-MAX_DEVICES)
-		member.Solicitations = append(member.Solicitations[startIndex:i], event)
+		
+		// If not found, add new solicitation
+		if !found {
+			// Clone to avoid data race
+			event := proto.Clone(keySolicitation).(*MemberPayload_KeySolicitation)
+			
+			// Limit number of devices
+			MAX_DEVICES := 10
+			if len(member.Solicitations) >= MAX_DEVICES {
+				// Remove oldest solicitation
+				member.Solicitations = member.Solicitations[1:]
+			}
+			member.Solicitations = append(member.Solicitations, event)
+		}
 	}
 }
 
