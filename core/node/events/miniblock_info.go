@@ -481,3 +481,21 @@ func (p *ParsedMiniblockInfoOpts) WithApplyOnlyMatchingSnapshot() *ParsedMiniblo
 func (p *ParsedMiniblockInfoOpts) ApplyOnlyMatchingSnapshot() bool {
 	return p.applyOnlyMatchingSnapshot
 }
+
+func MiniblockInfosToStorageMbs(mbs []*MiniblockInfo) ([]*storage.MiniblockDescriptor, error) {
+	storageMbs := make([]*storage.MiniblockDescriptor, len(mbs))
+	var err error
+	for i, mb := range mbs {
+		if i > 0 && mb.Ref.Num != mbs[0].Ref.Num+int64(i) {
+			return nil, RiverError(
+				Err_INTERNAL,
+				"miniblock numbers are not sequential",
+			).Func("MiniblockInfosToStorageMbs")
+		}
+		storageMbs[i], err = mb.AsStorageMb()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return storageMbs, nil
+}

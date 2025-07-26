@@ -460,12 +460,45 @@ func (ctc *cacheTestContext) GetLastMiniblockHash(
 		return nil, err
 	}
 
-	view, err := stream.GetView(ctx)
+	view, err := stream.GetViewIfLocal(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return view.LastBlock().Ref, nil
+}
+
+func (ctc *cacheTestContext) GetStream(
+	ctx context.Context,
+	node common.Address,
+	request *GetStreamRequest,
+) (*GetStreamResponse, error) {
+	inst, ok := ctc.instancesByAddr[node]
+	if !ok {
+		return nil, RiverError(Err_INTERNAL, "TEST: cacheTestContext::GetStream node not found", "node", node)
+	}
+
+	stream, err := inst.cache.getStreamImpl(ctx, StreamId(request.StreamId), true)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := stream.GetViewIfLocal(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var result *StreamAndCookie
+	if request.SyncCookie != nil {
+		result, err = view.GetStreamSince(ctx, inst.params.Wallet.Address, request.SyncCookie)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		result = view.GetResetStreamAndCookieWithPrecedingMiniblocks(inst.params.Wallet.Address, request.NumberOfPrecedingMiniblocks)
+	}
+
+	return &GetStreamResponse{Stream: result}, nil
 }
 
 func (ctc *cacheTestContext) ChooseStreamNodes(
