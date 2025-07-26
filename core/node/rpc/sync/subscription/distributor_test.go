@@ -88,7 +88,7 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			},
 		},
 		{
-			name: "distribute SYNC_DOWN message - should remove streams",
+			name: "distribute SYNC_DOWN message - should distribute to all subscriptions",
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub1 := createTestSubscription("test-sync-1")
@@ -108,9 +108,25 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				StreamId: []byte{1, 2, 3, 4},
 			},
 			verify: func(t *testing.T, reg Registry, streamID StreamId) {
-				// After SYNC_DOWN, stream should be removed from registry
+				// After SYNC_DOWN, the message should be distributed to all subscriptions
+				// The stream removal is now handled by the syncer set's unsubStream callback
 				subs := reg.GetSubscriptionsForStream(streamID)
-				assert.Len(t, subs, 0)
+				assert.Len(t, subs, 2) // Subscriptions should still exist
+				
+				// Verify both subscriptions received the SYNC_DOWN message
+				sub1, exists1 := reg.GetSubscriptionByID("test-sync-1")
+				sub2, exists2 := reg.GetSubscriptionByID("test-sync-2")
+				assert.True(t, exists1)
+				assert.True(t, exists2)
+				
+				// Check that SYNC_DOWN messages were sent
+				assert.Equal(t, 1, sub1.Messages.Len())
+				assert.Equal(t, 1, sub2.Messages.Len())
+				
+				msg1 := sub1.Messages.GetBatch(nil)[0]
+				msg2 := sub2.Messages.GetBatch(nil)[0]
+				assert.Equal(t, SyncOp_SYNC_DOWN, msg1.GetSyncOp())
+				assert.Equal(t, SyncOp_SYNC_DOWN, msg2.GetSyncOp())
 			},
 		},
 		{

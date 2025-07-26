@@ -31,10 +31,9 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 		return
 	}
 
-	// Send message to all subscriptions
 	var wg sync.WaitGroup
+	wg.Add(len(subscriptions))
 	for _, subscription := range subscriptions {
-		wg.Add(1)
 		go func(subscription *Subscription) {
 			d.sendMessageToSubscription(streamID, &SyncStreamsResponse{
 				SyncId:   msg.GetSyncId(),
@@ -45,12 +44,6 @@ func (d *distributor) DistributeMessage(streamID StreamId, msg *SyncStreamsRespo
 			wg.Done()
 		}(subscription)
 	}
-
-	// Handle SYNC_DOWN by removing stream from registry
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		d.registry.OnStreamDown(streamID)
-	}
-
 	wg.Wait()
 }
 

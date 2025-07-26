@@ -68,7 +68,7 @@ func TestGetMiniblocksRangeLimit_NoRace(t *testing.T) {
 		ToExclusive:   5,
 	}))
 	tt.require.Nil(resp)
-	tt.require.ErrorContains(err, "invalid range")
+	tt.require.ErrorContains(err, "INVALID_ARGUMENT")
 
 	tt.require.Eventually(func() bool {
 		// Requesting a list of miniblocks with the limit > max limit and expect to return "limit" miniblocks.

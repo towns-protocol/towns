@@ -272,8 +272,8 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	subscriptions := env.registry.GetSubscriptionsForStream(streamID)
 	t.Logf("After SYNC_DOWN, stream has %d subscriptions", len(subscriptions))
 
-	// Test 3: Further messages should not be delivered
-	// Use a different message to avoid interference
+	// Test 3: Further messages should still be delivered after SYNC_DOWN
+	// The stream removal is now handled by the syncer set's unsubStream callback
 	furtherMsg := &SyncStreamsResponse{
 		SyncOp: SyncOp_SYNC_UPDATE,
 		Stream: &StreamAndCookie{
@@ -285,13 +285,13 @@ func TestE2E_MessageDistributionPatterns(t *testing.T) {
 	env.distributor.DistributeMessage(streamID, furtherMsg)
 	time.Sleep(50 * time.Millisecond)
 
-	// Check that no additional messages were received after SYNC_DOWN
+	// Check that the message was received (subscription still exists)
 	receivedMsgs = sub.Messages.GetBatch(nil)
 	t.Logf("After further message, received %d messages", len(receivedMsgs))
 	if len(receivedMsgs) > 0 {
 		t.Logf("Received message: %v", receivedMsgs[0].GetSyncOp())
 	}
-	assert.Len(t, receivedMsgs, 0) // No messages should be delivered after SYNC_DOWN
+	assert.Len(t, receivedMsgs, 1) // Message should be delivered since subscription still exists
 
 	// Test 4: Backfill message (should be delivered even after SYNC_DOWN)
 	backfillMsg := &SyncStreamsResponse{

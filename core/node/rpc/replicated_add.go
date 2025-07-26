@@ -308,7 +308,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 
 	if seal {
 		// Register the given stream onchain with sealed flag
-		if err = s.streamRegistry.AddStream(
+		if err = s.registryContract.AddStream(
 			ctx,
 			streamId,
 			cc.NodeAddresses(),

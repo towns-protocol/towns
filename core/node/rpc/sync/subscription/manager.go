@@ -56,7 +56,15 @@ func NewManager(
 	reg := newRegistry()
 	dis := newDistributor(reg, log.Named("distributor"))
 
-	syncers := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, dis, otelTracer)
+	syncers := client.NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localNodeAddr,
+		dis,
+		reg.DeleteStreamSubscriptions,
+		otelTracer,
+	)
 	go syncers.Run()
 
 	manager := &Manager{
