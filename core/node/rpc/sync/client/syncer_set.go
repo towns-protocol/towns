@@ -236,7 +236,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 
 	// 1. Optimistic try to backfill and remove streams since syncers are expected
 	// to be running and ready to process the request.
-	{
+	if len(req.ToRemove) > 0 || len(req.ToBackfill) > 0 {
 		backfillingFailures := make([]StreamId, 0, len(req.ToBackfill))
 		backfillingFailuresHandler := func(status *SyncStreamOpStatus) {
 			backfillingFailuresLock.Lock()
@@ -761,11 +761,22 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	if len(remotes) > 0 {
 		selectedNode := stream.GetStickyPeer()
 		for range remotes {
-			if _, err = ss.getOrCreateSyncer(ctx, selectedNode); err == nil {
+			var subSpan trace.Span
+			remoteCtx := ctx
+			if ss.otelTracer != nil {
+				remoteCtx, subSpan = ss.otelTracer.Start(ctx, "syncerset::selectNodeForStream::remote",
+					trace.WithAttributes(attribute.String("selectedNode", selectedNode.String())))
+			}
+
+			if _, err = ss.getOrCreateSyncer(remoteCtx, selectedNode); err == nil {
 				return selectedNode, true
 			} else {
 				logging.FromCtx(ss.globalCtx).Errorw("Failed to get or create syncer for remote node",
 					"nodeAddress", selectedNode, "streamId", streamID, "error", err)
+				if subSpan != nil {
+					subSpan.RecordError(err)
+					subSpan.SetStatus(codes.Error, err.Error())
+				}
 			}
 			selectedNode = stream.AdvanceStickyPeer(selectedNode)
 		}
