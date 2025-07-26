@@ -55,11 +55,10 @@ type testParams struct {
 	defaultMinEventsPerSnapshot   int
 	enableNewSnapshotFormat       int
 
-	disableMineOnTx             bool
-	numInstances                int
-	disableStreamCacheCallbacks bool
-
-	streamPlacer streamplacement.Distributor
+	disableMineOnTx                 bool
+	numInstances                    int
+	disableStreamCacheCallbacks     bool
+	useDeterministicStreamPlacement bool
 }
 
 type noopScrubber struct{}
@@ -149,8 +148,10 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
-		streamPlacer := p.streamPlacer
-		if streamPlacer == nil {
+		var streamPlacer streamplacement.Distributor
+		if p.useDeterministicStreamPlacement {
+			streamPlacer = ctc
+		} else {
 			streamPlacer, err = streamplacement.NewDistributor(
 				ctx,
 				btc.OnChainConfig,
@@ -480,6 +481,26 @@ func (ctc *cacheTestContext) GetLastMiniblockHash(
 	}
 
 	return view.LastBlock().Ref, nil
+}
+
+func (ctc *cacheTestContext) ChooseStreamNodes(
+	ctx context.Context,
+	streamId StreamId,
+	replFactor int,
+) ([]common.Address, error) {
+	if replFactor > len(ctc.instances) {
+		return nil, RiverError(
+			Err_INTERNAL,
+			"TEST: cacheTestContext::ChooseStreamNodes replFactor is greater than the number of instances",
+			"replFactor",
+			replFactor,
+		)
+	}
+	addrs := make([]common.Address, replFactor)
+	for i := range replFactor {
+		addrs[i] = ctc.instances[i].params.Wallet.Address
+	}
+	return addrs, nil
 }
 
 func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {
