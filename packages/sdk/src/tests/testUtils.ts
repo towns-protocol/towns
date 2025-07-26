@@ -298,7 +298,6 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
         ...opts,
         persistenceStoreName: persistenceDbName,
         streamOpts: {
-            useModifySync: true,
             useSharedSyncer: true,
         },
     }) as TestClient

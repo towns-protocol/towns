@@ -210,7 +210,7 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { useModifySync?: boolean; useSharedSyncer?: boolean }
+    streamOpts?: { useSharedSyncer?: boolean }
     notifications?: {
         url: string
         store?: INotificationStore
