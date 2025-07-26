@@ -358,7 +358,7 @@ func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
 		messageDistributor: messageDistributor,
 		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
 		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
+		streamLocks:        xsync.NewMap[StreamId, *deadlock.DeadlockMutex](),
 	}
 
 	// Pre-store a syncer
