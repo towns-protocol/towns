@@ -14,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
@@ -47,7 +48,7 @@ func TestGetMiniblocksExclusionFilter(t *testing.T) {
 				DeviceKey:   "test_device_key",
 				FallbackKey: "test_fallback_key",
 				IsNewDevice: true,
-				SessionIds:  []string{},
+				SessionIds:  []string{"aaa"},
 			},
 		},
 	})

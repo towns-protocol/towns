@@ -24,7 +24,6 @@ import {
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
-    Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
     MemberPayload_Nft,
@@ -110,7 +109,13 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import {
+    makeEvent,
+    UnpackEnvelopeOpts,
+    unpackStream,
+    unpackStreamEx,
+    waitForStreamEx,
+} from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -352,8 +357,8 @@ export class Client
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
             {
-                startSyncStreams: async () => {
-                    this.streams.startSyncStreams()
+                startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                    this.streams.startSyncStreams(lastAccessedAt)
                     this.decryptionExtensions?.start()
                 },
                 initStream: (streamId, allowGetStream, persistedData) =>
@@ -744,8 +749,8 @@ export class Client
                 await this.rpcClient.createStream(request)
             const stream = this.createSyncedStream(streamId)
             if (!response.stream) {
-                // if a stream alread exists it will return a nil stream in the response, but no error
-                // fetch the stream to get the client in the rigth state
+                // if a stream already exists it will return a nil stream in the response, but no error
+                // fetch the stream to get the client in the right state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
             const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
@@ -1573,35 +1578,7 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-            const miniblocks: Miniblock[] = []
-            let seenEndOfStream = false
-            for await (const chunk of response) {
-                switch (chunk.data.case) {
-                    case 'miniblock':
-                        if (seenEndOfStream) {
-                            throw new Error(
-                                `GetStreamEx: received miniblock after minipool contents for stream ${streamIdAsString(
-                                    streamId,
-                                )}.`,
-                            )
-                        }
-                        miniblocks.push(chunk.data.value)
-                        break
-                    case 'minipool':
-                        // TODO: add minipool contents to the unpacked response
-                        break
-                    case undefined:
-                        seenEndOfStream = true
-                        break
-                }
-            }
-            if (!seenEndOfStream) {
-                throw new Error(
-                    `Failed receive all getStreamEx streaming responses for stream ${streamIdAsString(
-                        streamId,
-                    )}.`,
-                )
-            }
+            const miniblocks = await waitForStreamEx(streamId, response)
             const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
@@ -2914,6 +2891,7 @@ export class Client
         this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
         this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
     }
 

@@ -318,7 +318,7 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 }
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
-func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
+func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
 	serializedMb, err := proto.Marshal(b.Proto)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
@@ -341,7 +341,7 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.WriteMiniblockData, error) {
 		serializedSn = make([]byte, 0)
 	}
 
-	return &storage.WriteMiniblockData{
+	return &storage.MiniblockDescriptor{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
 		Snapshot: serializedSn,

@@ -12,6 +12,7 @@ import {DropGroup} from "./DropGroup.sol";
 import {DropStorage} from "./DropStorage.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {TownsPointsStorage} from "../points/TownsPointsStorage.sol";
@@ -23,6 +24,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
     using DropClaim for DropClaim.Claim;
     using DropGroup for DropGroup.Layout;
     using SafeTransferLib for address;
+    using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       ADMIN FUNCTIONS                      */
@@ -56,6 +58,9 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         DropClaim.Claim calldata req,
         uint16 expectedPenaltyBps
     ) external returns (uint256 amount) {
+        if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
+        if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
+
         DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
         amount = _deductPenalty(req.quantity, drop.condition.penaltyBps, expectedPenaltyBps);
@@ -71,7 +76,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         points.inner.burn(req.account, req.points);
         emit IERC20.Transfer(req.account, address(0), amount);
 
-        drop.condition.currency.safeTransfer(req.account, amount);
+        drop.condition.currency.safeTransfer(req.recipient, amount);
 
         emit DropFacet_Claimed_WithPenalty(req.conditionId, msg.sender, req.account, amount);
     }
@@ -83,6 +88,9 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         uint256 deadline,
         bytes calldata signature
     ) external returns (uint256 amount) {
+        if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
+        if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
+
         DropGroup.Layout storage drop = _getDropGroup(req.conditionId);
 
         amount = req.quantity;

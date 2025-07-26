@@ -82,6 +82,11 @@ export default [
             "internalType": "address"
           },
           {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
             "name": "quantity",
             "type": "uint256",
             "internalType": "uint256"
@@ -139,6 +144,11 @@ export default [
           },
           {
             "name": "account",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "recipient",
             "type": "address",
             "internalType": "address"
           },
@@ -695,12 +705,22 @@ export default [
   },
   {
     "type": "error",
+    "name": "DropFacet__InvalidRecipient",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "DropFacet__MerkleRootNotSet",
     "inputs": []
   },
   {
     "type": "error",
     "name": "DropFacet__NoActiveClaimCondition",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "DropFacet__NotClaimingAccount",
     "inputs": []
   },
   {

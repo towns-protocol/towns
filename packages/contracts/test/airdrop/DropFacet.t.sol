@@ -146,6 +146,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: wallet,
+                recipient: wallet,
                 quantity: merkleAmount,
                 points: merklePoints,
                 proof: proof
@@ -200,13 +201,14 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 deadline = block.timestamp + 100;
         bytes memory signature = _signStake(operator, wallet, walletKey, deadline);
 
-        vm.prank(caller);
+        vm.prank(wallet);
         vm.expectEmit(address(dropFacet));
-        emit DropFacet_Claimed_And_Staked(conditionId, caller, wallet, amount);
+        emit DropFacet_Claimed_And_Staked(conditionId, wallet, wallet, amount);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: wallet,
+                recipient: wallet,
                 quantity: amount,
                 points: point,
                 proof: proof
@@ -429,6 +431,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 DropClaim.Claim({
                     conditionId: conditionId,
                     account: claimer,
+                    recipient: claimer,
                     quantity: amount,
                     points: point,
                     proof: proof
@@ -466,15 +469,171 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__MerkleRootNotSet.selector);
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 100,
                 points: 1,
                 proof: new bytes32[](0)
             }),
             PENALTY_BPS
+        );
+    }
+
+    function test_claimWithPenalty_differentRecipient()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+        conditions[0].penaltyBps = PENALTY_BPS;
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        uint256 conditionId = dropFacet.getActiveClaimConditionId();
+
+        bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
+
+        // Ensure bob has enough points to claim
+        vm.prank(space);
+        pointsFacet.mint(bob, points[treeIndex[bob]]);
+
+        vm.prank(bob);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: conditionId,
+                account: bob,
+                recipient: alice,
+                quantity: amounts[treeIndex[bob]],
+                points: points[treeIndex[bob]],
+                proof: proof
+            }),
+            PENALTY_BPS
+        );
+
+        uint256 expectedAmount = _calculateExpectedAmount(bob);
+        assertEq(dropFacet.getSupplyClaimedByWallet(bob, conditionId), expectedAmount);
+        assertEq(dropFacet.getSupplyClaimedByWallet(alice, conditionId), 0);
+        assertEq(towns.balanceOf(alice), expectedAmount);
+    }
+
+    function test_claimWithPenalty_recipientZeroAddress()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+        conditions[0].penaltyBps = PENALTY_BPS;
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        uint256 conditionId = dropFacet.getActiveClaimConditionId();
+
+        bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
+
+        // Ensure bob has enough points to claim
+        vm.prank(space);
+        pointsFacet.mint(bob, points[treeIndex[bob]]);
+
+        vm.expectRevert(DropFacet__InvalidRecipient.selector);
+        vm.prank(bob);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: conditionId,
+                account: bob,
+                recipient: address(0),
+                quantity: amounts[treeIndex[bob]],
+                points: points[treeIndex[bob]],
+                proof: proof
+            }),
+            PENALTY_BPS
+        );
+    }
+
+    function test_claimAndStake_differentRecipient(
+        address operator,
+        uint256 commissionRate
+    )
+        external
+        givenOperatorRegistered(operator, commissionRate)
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        uint256 conditionId = dropFacet.getActiveClaimConditionId();
+
+        bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
+
+        uint256 deadline = block.timestamp + 100;
+        bytes memory signature = _signStake(operator, bob, bobKey, deadline);
+
+        vm.prank(bob);
+        dropFacet.claimAndStake(
+            DropClaim.Claim({
+                conditionId: conditionId,
+                account: bob,
+                recipient: alice,
+                quantity: amounts[treeIndex[bob]],
+                points: points[treeIndex[bob]],
+                proof: proof
+            }),
+            operator,
+            deadline,
+            signature
+        );
+
+        uint256 expectedAmount = amounts[treeIndex[bob]];
+        assertEq(dropFacet.getSupplyClaimedByWallet(bob, conditionId), expectedAmount);
+        assertEq(dropFacet.getSupplyClaimedByWallet(alice, conditionId), 0);
+
+        // Verify staking was done on behalf of bob (account), not alice (recipient)
+        assertEq(rewardsDistribution.stakedByDepositor(bob), expectedAmount);
+    }
+
+    function test_claimAndStake_recipientZeroAddress(
+        address operator,
+        uint256 commissionRate
+    )
+        external
+        givenOperatorRegistered(operator, commissionRate)
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        uint256 conditionId = dropFacet.getActiveClaimConditionId();
+
+        bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
+
+        uint256 deadline = block.timestamp + 100;
+        bytes memory signature = _signStake(operator, bob, bobKey, deadline);
+
+        vm.expectRevert(DropFacet__InvalidRecipient.selector);
+        vm.prank(bob);
+        dropFacet.claimAndStake(
+            DropClaim.Claim({
+                conditionId: conditionId,
+                account: bob,
+                recipient: address(0),
+                quantity: amounts[treeIndex[bob]],
+                points: points[treeIndex[bob]],
+                proof: proof
+            }),
+            operator,
+            deadline,
+            signature
         );
     }
 
@@ -489,11 +648,42 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__QuantityMustBeGreaterThanZero.selector);
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 0,
+                points: 1,
+                proof: new bytes32[](0)
+            }),
+            PENALTY_BPS
+        );
+    }
+
+    function test_revertWhen_notClaimingAccount(
+        address caller
+    ) external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+        vm.assume(caller != bob);
+
+        DropGroup.ClaimCondition[] memory conditions = new DropGroup.ClaimCondition[](1);
+        conditions[0] = _createClaimCondition(block.timestamp, root, TOTAL_TOKEN_AMOUNT);
+        conditions[0].penaltyBps = PENALTY_BPS;
+
+        vm.prank(deployer);
+        dropFacet.setClaimConditions(conditions);
+
+        uint256 conditionId = dropFacet.getActiveClaimConditionId();
+
+        vm.prank(caller);
+        vm.expectRevert(DropFacet__NotClaimingAccount.selector);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: conditionId,
+                account: bob,
+                recipient: bob,
+                quantity: 1,
                 points: 1,
                 proof: new bytes32[](0)
             }),
@@ -516,10 +706,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__ExceedsMaxClaimableSupply.selector);
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 101,
                 points: 1,
                 proof: new bytes32[](0)
@@ -548,6 +740,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -571,11 +764,13 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         vm.warp(conditions[0].endTimestamp);
 
+        vm.prank(bob);
         vm.expectRevert(DropFacet__ClaimHasEnded.selector);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -595,10 +790,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
 
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -607,10 +804,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         );
 
         vm.expectRevert(DropFacet__AlreadyClaimed.selector);
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -627,10 +826,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__InvalidProof.selector);
+        vm.prank(bob);
         dropFacet.claimWithPenalty(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: new bytes32[](0)
@@ -661,28 +862,21 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
         uint256 depositId = dropFacet.getDepositIdByWallet(bob, conditionId);
         uint256 depositAmount = amounts[treeIndex[bob]];
-
         assertEq(rewardsDistribution.stakedByDepositor(bob), depositAmount);
-
         // move time forward
         vm.warp(block.timestamp + timeLapse);
-
         uint256 currentReward = rewardsDistribution.currentReward(bob);
-
         vm.prank(bob);
         uint256 claimReward = rewardsDistribution.claimReward(bob, bob);
         _verifyClaim(bob, bob, claimReward, currentReward);
-
         vm.prank(bob);
         rewardsDistribution.initiateWithdraw(depositId);
         uint256 lockCooldown = towns.lockExpiration(
             rewardsDistribution.delegationProxyById(depositId)
         );
         vm.warp(lockCooldown);
-
         vm.prank(bob);
         rewardsDistribution.withdraw(depositId);
-
         assertEq(towns.balanceOf(bob), depositAmount + claimReward);
         assertEq(pointsFacet.balanceOf(bob), 0);
     }
@@ -701,10 +895,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__MerkleRootNotSet.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 100,
                 points: 1,
                 proof: new bytes32[](0)
@@ -728,10 +924,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__QuantityMustBeGreaterThanZero.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 0,
                 points: 1,
                 proof: new bytes32[](0)
@@ -756,10 +954,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__ExceedsMaxClaimableSupply.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: 101,
                 points: 1,
                 proof: new bytes32[](0)
@@ -786,12 +986,13 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         vm.warp(block.timestamp - 100);
 
-        vm.prank(bob);
         vm.expectRevert(DropFacet__ClaimHasNotStarted.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -820,10 +1021,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         vm.warp(conditions[0].endTimestamp);
 
         vm.expectRevert(DropFacet__ClaimHasEnded.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -852,10 +1055,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         bytes32[] memory proof = merkleTree.getProof(tree, treeIndex[bob]);
 
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -866,10 +1071,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         );
 
         vm.expectRevert(DropFacet__AlreadyClaimed.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -888,10 +1095,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 conditionId = dropFacet.getActiveClaimConditionId();
 
         vm.expectRevert(DropFacet__InvalidProof.selector);
+        vm.prank(bob);
         dropFacet.claimAndStake(
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: new bytes32[](0)
@@ -982,6 +1191,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[treeIndex[bob]],
                 points: points[treeIndex[bob]],
                 proof: proof
@@ -1095,6 +1305,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[bobIndex],
                 points: points[bobIndex],
                 proof: proof
@@ -1118,6 +1329,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: alice,
+                recipient: alice,
                 quantity: amounts[aliceIndex],
                 points: points[aliceIndex],
                 proof: proof
@@ -1145,6 +1357,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[bobIndex],
                 points: points[bobIndex],
                 proof: proof
@@ -1159,6 +1372,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: conditionId,
                 account: alice,
+                recipient: alice,
                 quantity: amounts[aliceIndex],
                 points: points[aliceIndex],
                 proof: proof
@@ -1208,6 +1422,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: 2,
                 account: bob,
+                recipient: bob,
                 quantity: amounts[bobIndex],
                 points: points[bobIndex],
                 proof: proof
@@ -1323,6 +1538,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
             DropClaim.Claim({
                 conditionId: 0,
                 account: accts[0],
+                recipient: accts[0],
                 quantity: amts[0],
                 points: pts[0],
                 proof: proof

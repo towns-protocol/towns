@@ -1621,7 +1621,7 @@ export class SpaceDapp {
         const result = await wrapTransaction(async () => {
             // Set gas limit instead of using estimateGas
             // As the estimateGas is not reliable for this contract
-            return await space.Membership.write(signer).joinSpace(recipient, {
+            return await space.Membership.write(signer)['joinSpace(address)'](recipient, {
                 gasLimit: 1_500_000,
                 value: price,
             })

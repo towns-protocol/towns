@@ -45,10 +45,11 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
     // Default test parameters
     ExactInputParams internal defaultInputParams;
     RouterParams internal defaultRouterParams;
+    FeeConfig internal defaultPosterFee;
     Permit2Params internal defaultEmptyPermit;
     uint256 internal constant DEFAULT_AMOUNT_IN = 100 ether;
     uint256 internal constant DEFAULT_AMOUNT_OUT = 95 ether;
-    address internal immutable defaultRecipient = makeAddr("defaultRecipient");
+    address internal immutable DEFAULT_RECIPIENT = makeAddr("DEFAULT_RECIPIENT");
     address internal immutable POSTER = makeAddr("POSTER");
 
     function setUp() public virtual {
@@ -82,8 +83,10 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
             address(token1),
             DEFAULT_AMOUNT_IN,
             DEFAULT_AMOUNT_OUT,
-            defaultRecipient
+            DEFAULT_RECIPIENT
         );
+
+        defaultPosterFee = FeeConfig(POSTER, POSTER_BPS);
     }
 
     function _encodeSwapData(
@@ -174,9 +177,11 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         address spender,
         ExactInputParams memory exactInputParams,
         RouterParams memory routerParams,
-        address poster
+        FeeConfig memory feeConfig
     ) internal view returns (bytes memory) {
-        bytes32 witnessHash = Permit2Hash.hash(SwapWitness(exactInputParams, routerParams, poster));
+        bytes32 witnessHash = Permit2Hash.hash(
+            SwapWitness(exactInputParams, routerParams, feeConfig)
+        );
         bytes32 tokenPermissions = keccak256(
             abi.encode(PermitHash._TOKEN_PERMISSIONS_TYPEHASH, permit.permitted)
         );
@@ -204,7 +209,7 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
         uint256 deadline,
         ExactInputParams memory exactInputParams,
         RouterParams memory routerParams,
-        address poster
+        FeeConfig memory posterFee
     ) internal view returns (Permit2Params memory permitParams) {
         bytes memory signature = _signPermitWitnessTransfer(
             privateKey,
@@ -217,10 +222,34 @@ abstract contract SwapTestBase is Test, TestUtils, EIP712Utils, ISwapRouterBase 
             spender,
             exactInputParams,
             routerParams,
-            poster
+            posterFee
         );
 
         permitParams = Permit2Params(owner, nonce, deadline, signature);
+    }
+
+    /// @notice Backward compatible version that uses POSTER_BPS as default
+    function _createPermitParams(
+        uint256 privateKey,
+        address owner,
+        address spender,
+        uint256 nonce,
+        uint256 deadline,
+        ExactInputParams memory exactInputParams,
+        RouterParams memory routerParams,
+        address poster
+    ) internal view returns (Permit2Params memory permitParams) {
+        return
+            _createPermitParams(
+                privateKey,
+                owner,
+                spender,
+                nonce,
+                deadline,
+                exactInputParams,
+                routerParams,
+                FeeConfig(poster, POSTER_BPS)
+            );
     }
 
     function _verifySwapResults(

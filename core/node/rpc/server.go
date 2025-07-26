@@ -25,10 +25,12 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/events/remoteprovider"
 	"github.com/towns-protocol/towns/core/node/http_client"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
@@ -392,12 +394,16 @@ func (s *Service) initRiverChain() error {
 		return err
 	}
 
-	s.streamRegistry = nodes.NewStreamRegistry(
-		s.riverChain,
-		s.nodeRegistry,
-		s.registryContract,
+	s.streamPlacer, err = streamplacement.NewDistributor(
+		ctx,
 		s.chainConfig,
+		s.riverChain.InitialBlockNum,
+		s.riverChain.ChainMonitor,
+		s.registryContract,
 	)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -741,8 +747,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		AppliedBlockNum:         s.riverChain.InitialBlockNum,
 		ChainMonitor:            s.riverChain.ChainMonitor,
 		Metrics:                 s.metrics,
-		RemoteMiniblockProvider: s,
-		NodeRegistry:            s.nodeRegistry,
+		RemoteMiniblockProvider: remoteprovider.NewRemoteProvider(s.nodeRegistry),
 		Tracer:                  s.otelTracer,
 	}
 

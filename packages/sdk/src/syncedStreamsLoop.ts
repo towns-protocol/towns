@@ -105,7 +105,7 @@ export class SyncedStreamsLoop {
     // Starting the client creates the syncLoop
     // While a syncLoop exists, the client tried to keep the syncLoop connected, and if it reconnects, it
     // will restart sync for all Streams
-    // on stop, the syncLoop will be cancelled if it is runnign and removed once it stops
+    // on stop, the syncLoop will be cancelled if it is running and removed once it stops
     private syncLoop?: Promise<number>
 
     // syncId is used to add and remove streams from the sync subscription
@@ -155,6 +155,7 @@ export class SyncedStreamsLoop {
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
         private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
+        private lastAccessedAt: Record<string, number>,
     ) {
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
@@ -294,6 +295,8 @@ export class SyncedStreamsLoop {
 
     public setHighPriorityStreams(streamIds: string[]) {
         this.highPriorityIds = new Set(streamIds)
+        streamIds.forEach((x) => (this.lastAccessedAt[x] = Date.now()))
+        this.checkStartTicking()
     }
 
     public onNetworkStatusChanged(isOnline: boolean) {
@@ -366,6 +369,11 @@ export class SyncedStreamsLoop {
                                         b[0],
                                         this.highPriorityIds,
                                     )
+                                    if (aPriority === bPriority) {
+                                        const aLastAccessedAt = this.lastAccessedAt[a[0]] ?? 0
+                                        const bLastAccessedAt = this.lastAccessedAt[b[0]] ?? 0
+                                        return bLastAccessedAt - aLastAccessedAt
+                                    }
                                     return aPriority - bPriority
                                 })
                                 .map((streamRecord) => {
@@ -600,15 +608,32 @@ export class SyncedStreamsLoop {
             const pendingStreamsToDelete = this.pendingStreamsToDelete.filter(
                 (x) => !this.inFlightSyncCookies.has(x),
             )
-            if (
+            const highPriorityStreamsToAdd = this.pendingSyncCookies.filter((x) =>
+                this.highPriorityIds.has(x),
+            )
+            if (highPriorityStreamsToAdd.length > 0) {
+                // call modify sync with high priority streams
+                this.log('tick: modifySync: high priority streams to add', {
+                    syncId: this.syncId,
+                    addHighPriorityStreams: highPriorityStreamsToAdd,
+                })
+                this.pendingSyncCookies = this.pendingSyncCookies.filter(
+                    (x) => !highPriorityStreamsToAdd.includes(x),
+                )
+                await this.modifySync(highPriorityStreamsToAdd, [])
+            } else if (
                 (this.inFlightSyncCookies.size <= this.MIN_IN_FLIGHT_COOKIES &&
                     this.pendingSyncCookies.length > 0) ||
                 pendingStreamsToDelete.length > 0
             ) {
-                const syncId = this.syncId
                 this.pendingSyncCookies.sort((a, b) => {
                     const aPriority = priorityFromStreamId(a, this.highPriorityIds)
                     const bPriority = priorityFromStreamId(b, this.highPriorityIds)
+                    if (aPriority === bPriority) {
+                        const aLastAccessedAt = this.lastAccessedAt[a] ?? 0
+                        const bLastAccessedAt = this.lastAccessedAt[b] ?? 0
+                        return bLastAccessedAt - aLastAccessedAt
+                    }
                     return aPriority - bPriority
                 })
                 const streamsToAdd = this.pendingSyncCookies.splice(0, this.MAX_IN_FLIGHT_COOKIES)
@@ -620,37 +645,42 @@ export class SyncedStreamsLoop {
                     (x) => !streamsToDelete.find((y) => x === y),
                 )
                 this.logSync('tick: modifySync', {
-                    syncId,
+                    syncId: this.syncId,
                     addStreams: streamsToAdd,
                     deleteStreams: streamsToDelete,
                     inFlight: this.inFlightSyncCookies.size,
                 })
-                streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
-                const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
-                try {
-                    const resp = await this.rpcClient.modifySync({
-                        syncId,
-                        addStreams: syncPos.filter(isDefined),
-                        removeStreams: streamsToDelete.map(streamIdAsBytes),
-                    })
-                    if (resp.removals.length > 0) {
-                        this.logError('modifySync removal errors', resp.removals)
+                await this.modifySync(streamsToAdd, streamsToDelete)
+            }
+        }
+    }
+
+    private async modifySync(streamsToAdd: string[], streamsToDelete: string[]) {
+        const syncId = this.syncId
+        streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
+        const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
+        try {
+            const resp = await this.rpcClient.modifySync({
+                syncId,
+                addStreams: syncPos.filter(isDefined),
+                removeStreams: streamsToDelete.map(streamIdAsBytes),
+            })
+            if (resp.removals.length > 0) {
+                this.logError('modifySync removal errors', resp.removals)
+            }
+            if (resp.adds.length > 0) {
+                this.logError('modifySync addition errors', resp.adds)
+            }
+        } catch (err) {
+            this.logError('modifySync error', err)
+            if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
+                streamsToAdd.forEach((x) => {
+                    if (this.inFlightSyncCookies.delete(x)) {
+                        this.pendingSyncCookies.push(x)
                     }
-                    if (resp.adds.length > 0) {
-                        this.logError('modifySync addition errors', resp.adds)
-                    }
-                } catch (err) {
-                    this.logError('modifySync error', err)
-                    if (this.syncId === syncId && this.syncState === SyncState.Syncing) {
-                        streamsToAdd.forEach((x) => {
-                            if (this.inFlightSyncCookies.delete(x)) {
-                                this.pendingSyncCookies.push(x)
-                            }
-                        })
-                        this.pendingStreamsToDelete.push(...streamsToDelete)
-                        this.checkStartTicking()
-                    }
-                }
+                })
+                this.pendingStreamsToDelete.push(...streamsToDelete)
+                this.checkStartTicking()
             }
         }
     }
@@ -749,7 +779,7 @@ export class SyncedStreamsLoop {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
-            // On sucessful sync, reset retryCount
+            // On successful sync, reset retryCount
             this.currentRetryCount = 0
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
             this.log('syncStarted', 'syncId', this.syncId)
@@ -798,14 +828,25 @@ export class SyncedStreamsLoop {
         const syncId = this.syncId
         const retryCount = retryParams?.retryCount ?? 0
         this.rpcClient
-            .addStreamToSync({
+            .modifySync({
                 syncId: this.syncId,
-                syncPos: cookie,
+                addStreams: [cookie],
+            })
+            .then((resp) => {
+                const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
+                if (resp?.adds && resp?.adds.length > 0) {
+                    setTimeout(() => {
+                        this.syncDown(streamId, {
+                            syncId,
+                            retryCount: retryCount + 1,
+                        })
+                    }, retryDelay)
+                }
             })
             .catch((err) => {
                 const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
                 this.logError(
-                    'syncDown: addStreamToSync error',
+                    'syncDown: modifySync error',
                     err,
                     'retryParams',
                     retryParams,
@@ -1058,13 +1099,14 @@ function priorityFromStreamId(streamId: string, highPriorityIds: Set<string>) {
         }
     }
     // if we're prioritizing dms, load other dms and gdm channels
-    if (highPriorityIds.size > 0) {
-        const firstHPI = Array.from(highPriorityIds.values())[0]
-        if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
-            if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+    if (isDMChannelStreamId(streamId) || isGDMChannelStreamId(streamId)) {
+        if (highPriorityIds.size > 0) {
+            const firstHPI = Array.from(highPriorityIds.values())[0]
+            if (isDMChannelStreamId(firstHPI) || isGDMChannelStreamId(firstHPI)) {
                 return 2
             }
         }
+        return 3
     }
 
     // we need spaces to structure the app

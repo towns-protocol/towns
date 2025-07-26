@@ -56,7 +56,15 @@ func NewManager(
 	reg := newRegistry()
 	dis := newDistributor(reg, log.Named("distributor"))
 
-	syncers := client.NewSyncers(ctx, streamCache, nodeRegistry, localNodeAddr, dis, otelTracer)
+	syncers := client.NewSyncers(
+		ctx,
+		streamCache,
+		nodeRegistry,
+		localNodeAddr,
+		dis,
+		reg.DeleteStreamSubscriptions,
+		otelTracer,
+	)
 	go syncers.Run()
 
 	manager := &Manager{
@@ -74,7 +82,12 @@ func NewManager(
 }
 
 // Subscribe creates a new subscription with the given sync ID.
-func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc, syncID string) (*Subscription, error) {
+func (m *Manager) Subscribe(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	syncID string,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+) (*Subscription, error) {
 	if m.stopped.Load() {
 		return nil, RiverError(Err_UNAVAILABLE, "subscription manager is stopped").Tag("syncId", syncID)
 	}
@@ -87,7 +100,7 @@ func (m *Manager) Subscribe(ctx context.Context, cancel context.CancelCauseFunc,
 		ctx:                 ctx,
 		cancel:              cancel,
 		syncID:              syncID,
-		Messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		Messages:            messages,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		backfillEvents:      xsync.NewMap[StreamId, map[common.Hash]struct{}](),
 		syncers:             m.syncers,

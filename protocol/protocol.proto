@@ -1130,6 +1130,8 @@ message SyncStreamOpStatus {
   int32 code = 2;
   // message describing what happened
   string message = 3;
+  // node_address is the address of the node that failed to add/remove the stream.
+  bytes node_address = 4;
 }
 
 // ModifySyncResponse contains the details of a stream sync modification request.

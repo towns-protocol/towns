@@ -21,6 +21,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
+	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -707,7 +708,7 @@ func (a *Archiver) ArchiveStream(ctx context.Context, stream *ArchiveStream) (er
 
 		// Validate miniblocks are sequential.
 		// TODO: validate miniblock signatures.
-		var serialized []*storage.WriteMiniblockData
+		var serialized []*storage.MiniblockDescriptor
 		for i, mb := range resp.Msg.Miniblocks {
 			// Parse header
 			info, err := events.NewMiniblockInfoFromProto(

@@ -77,6 +77,11 @@ const _abi = [
             internalType: "address",
           },
           {
+            name: "recipient",
+            type: "address",
+            internalType: "address",
+          },
+          {
             name: "quantity",
             type: "uint256",
             internalType: "uint256",
@@ -134,6 +139,11 @@ const _abi = [
           },
           {
             name: "account",
+            type: "address",
+            internalType: "address",
+          },
+          {
+            name: "recipient",
             type: "address",
             internalType: "address",
           },
@@ -607,12 +617,22 @@ const _abi = [
   },
   {
     type: "error",
+    name: "DropFacet__InvalidRecipient",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "DropFacet__MerkleRootNotSet",
     inputs: [],
   },
   {
     type: "error",
     name: "DropFacet__NoActiveClaimCondition",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "DropFacet__NotClaimingAccount",
     inputs: [],
   },
   {
