@@ -55,10 +55,9 @@ type testParams struct {
 	defaultMinEventsPerSnapshot   int
 	enableNewSnapshotFormat       int
 
-	disableMineOnTx                 bool
-	numInstances                    int
-	disableStreamCacheCallbacks     bool
-	useDeterministicStreamPlacement bool
+	disableMineOnTx             bool
+	numInstances                int
+	disableStreamCacheCallbacks bool
 }
 
 type noopScrubber struct{}
@@ -148,23 +147,9 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
-		var streamPlacer streamplacement.Distributor
-		if p.useDeterministicStreamPlacement {
-			streamPlacer = ctc
-		} else {
-			streamPlacer, err = streamplacement.NewDistributor(
-				ctx,
-				btc.OnChainConfig,
-				blockNumber,
-				bc.ChainMonitor,
-				registry,
-			)
-			ctc.require.NoError(err)
-		}
-
 		inst := &cacheTestInstance{
 			params:       params,
-			streamPlacer: streamPlacer,
+			streamPlacer: ctc,
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
