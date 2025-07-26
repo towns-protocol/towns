@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -105,6 +106,11 @@ func init() {
 		deadlock.Opts.DeadlockTimeout = 5 * time.Minute
 		deadlock.Opts.MaxMapSize = 1024 * 256
 		deadlock.Opts.PrintAllCurrentGoroutines = true
+		deadlock.Opts.OnPotentialDeadlock = func() {
+			if err := pprof.Lookup("block").WriteTo(os.Stdout, 1); err != nil {
+				fmt.Println("Failed to write to pprof:", err)
+			}
+		}
 	})
 
 	cobra.OnInitialize(initConfigAndLog)
