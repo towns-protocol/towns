@@ -769,6 +769,9 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 			}
 
 			if _, err = ss.getOrCreateSyncer(remoteCtx, selectedNode); err == nil {
+				if subSpan != nil {
+					subSpan.End()
+				}
 				return selectedNode, true
 			} else {
 				logging.FromCtx(ss.globalCtx).Errorw("Failed to get or create syncer for remote node",
@@ -776,6 +779,7 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 				if subSpan != nil {
 					subSpan.RecordError(err)
 					subSpan.SetStatus(codes.Error, err.Error())
+					subSpan.End()
 				}
 			}
 			selectedNode = stream.AdvanceStickyPeer(selectedNode)
