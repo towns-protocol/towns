@@ -10,6 +10,6 @@ services:
         volumes:
             # attach local run_files to the container
             - ../run_files:/run_files
-            - $HOME/river-ca-cert.pem:/root/river-ca-cert.pem
-            - $HOME/river-ca-key.pem:/root/river-ca-key.pem
+            - $HOME/towns-ca-cert.pem:/root/towns-ca-cert.pem
+            - $HOME/towns-ca-key.pem:/root/towns-ca-key.pem
             - ../scripts/register-ca.sh:/register-ca.sh
