@@ -15,11 +15,9 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type NodeRegistry interface {
@@ -33,8 +31,6 @@ type NodeRegistry interface {
 	// TODO: refactor to provide IsValidNodeAddress(address common.Address) bool functions instead of copying the whole list
 	GetValidNodeAddresses() []common.Address
 
-	ChooseStreamNodes(ctx context.Context, streamId StreamId, replFactor int) ([]common.Address, error)
-
 	IsOperator(address common.Address) bool
 }
 
@@ -45,9 +41,6 @@ type nodeRegistryImpl struct {
 	httpClient         *http.Client
 	httpClientWithCert *http.Client
 	connectOpts        []connect.ClientOption
-
-	// streamPicker is used to choose nodes for a stream.
-	streamPicker streamplacement.Distributor
 
 	mu                    sync.RWMutex
 	nodesLocked           map[common.Address]*NodeRecord
@@ -86,11 +79,6 @@ func LoadNodeRegistry(
 		connectOpts = append(connectOpts, connect.WithInterceptors(connectOtelIterceptor))
 	}
 
-	streamPicker, err := streamplacement.NewDistributor(ctx, onChainConfig, appliedBlockNum, chainMonitor, contract)
-	if err != nil {
-		return nil, err
-	}
-
 	ret := &nodeRegistryImpl{
 		contract:              contract,
 		onChainConfig:         onChainConfig,
@@ -100,7 +88,6 @@ func LoadNodeRegistry(
 		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
 		appliedBlockNumLocked: appliedBlockNum,
 		connectOpts:           connectOpts,
-		streamPicker:          streamPicker,
 	}
 
 	localFound := false
@@ -321,14 +308,6 @@ func (n *nodeRegistryImpl) GetValidNodeAddresses() []common.Address {
 	return n.validAddrsLocked
 }
 
-func (n *nodeRegistryImpl) ChooseStreamNodes(
-	ctx context.Context,
-	streamId StreamId,
-	replFactor int,
-) ([]common.Address, error) {
-	return n.streamPicker.ChooseStreamNodes(ctx, streamId, replFactor)
-}
-
 // CloneWithClients returns a new node registry with cloned values from n and the given
 // httpClient and httpClientWithCert.
 func (n *nodeRegistryImpl) CloneWithClients(
@@ -344,7 +323,6 @@ func (n *nodeRegistryImpl) CloneWithClients(
 		localNodeAddress:      n.localNodeAddress,
 		httpClient:            httpClient,
 		httpClientWithCert:    httpClientWithCert,
-		streamPicker:          n.streamPicker,
 		appliedBlockNumLocked: n.appliedBlockNumLocked,
 	}
 

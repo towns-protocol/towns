@@ -21,6 +21,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -68,6 +69,7 @@ type Service struct {
 	riverChain       *crypto.Blockchain
 	registryContract *registries.RiverRegistryContract
 	nodeRegistry     nodes.NodeRegistry
+	streamPlacer     streamplacement.Distributor
 	chainConfig      crypto.OnChainConfiguration
 
 	// Base chain

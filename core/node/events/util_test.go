@@ -16,7 +16,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	. "github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -42,7 +42,7 @@ var _ RemoteProvider = (*cacheTestContext)(nil)
 
 type cacheTestInstance struct {
 	params       *StreamCacheParams
-	nodeRegistry NodeRegistry
+	streamPlacer streamplacement.Distributor
 	cache        *StreamCache
 }
 
@@ -58,6 +58,8 @@ type testParams struct {
 	disableMineOnTx             bool
 	numInstances                int
 	disableStreamCacheCallbacks bool
+
+	streamPlacer streamplacement.Distributor
 }
 
 type noopScrubber struct{}
@@ -131,19 +133,6 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		blockNumber := btc.BlockNum(ctx)
 
-		nr, err := LoadNodeRegistry(
-			ctx,
-			registry,
-			bc.Wallet.Address,
-			blockNumber,
-			bc.ChainMonitor,
-			btc.OnChainConfig,
-			nil,
-			nil,
-			nil,
-		)
-		ctc.require.NoError(err)
-
 		params := &StreamCacheParams{
 			ServerCtx:               ctx,
 			Storage:                 streamStore.Storage,
@@ -160,9 +149,21 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 			disableCallbacks:        p.disableStreamCacheCallbacks,
 		}
 
+		streamPlacer := p.streamPlacer
+		if streamPlacer == nil {
+			streamPlacer, err = streamplacement.NewDistributor(
+				ctx,
+				btc.OnChainConfig,
+				blockNumber,
+				bc.ChainMonitor,
+				registry,
+			)
+			ctc.require.NoError(err)
+		}
+
 		inst := &cacheTestInstance{
 			params:       params,
-			nodeRegistry: nr,
+			streamPlacer: streamPlacer,
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
@@ -192,7 +193,7 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *Mi
 	ctc.require.NoError(err)
 
 	inst := ctc.instances[0]
-	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
+	nodes, err := inst.streamPlacer.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
 		int(inst.params.ChainConfig.Get().ReplicationFactor),
@@ -263,7 +264,7 @@ func (ctc *cacheTestContext) createStreamNoCache(
 	ctc.require.NoError(err)
 
 	inst := ctc.instances[0]
-	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
+	nodes, err := inst.streamPlacer.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
 		int(inst.params.ChainConfig.Get().ReplicationFactor),

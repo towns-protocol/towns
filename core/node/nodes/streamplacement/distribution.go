@@ -35,10 +35,6 @@ type (
 	Distributor interface {
 		// ChooseStreamNodes returns a set of `replFactor` nodes for the given streamID.
 		ChooseStreamNodes(ctx context.Context, streamID StreamId, replFactor int) ([]common.Address, error)
-		// Reload the distributor state from the node registry.
-		// It must be called when a node is added or removed from the system,
-		// or its status changed from/to operational.
-		Reload()
 	}
 
 	// DistributorSimulator is an interface that provides additional methods for
