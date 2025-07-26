@@ -2,7 +2,7 @@
 
 .PHONY: all test clean deploy-base-anvil
 
-all: clean install build
+all: clean build
 
 clean :; forge clean
 
@@ -157,10 +157,10 @@ explicit-verify-any :;
 	@forge verify-contract ${address} ${contract} --verifier ${verifier} --verifier-url ${verifier-url} ${args}
 
 verify-on-blockscout :;
-	@$(MAKE) explicit-verify-any rpc=$(rpc) verifier=blockscout verifier-url=$(blockscout_url) args="$(if $(blockscout_key),--etherscan-api-key $(blockscout_key),)"
+	@$(MAKE) explicit-verify-any verifier=blockscout verifier-url=$(blockscout_url) args="$(if $(blockscout_key),--etherscan-api-key $(blockscout_key),)"
 
 verify-on-etherscan :;
-	@$(MAKE) explicit-verify-any rpc=$(rpc) verifier=etherscan verifier-url=$(etherscan_url) args="--etherscan-api-key $(etherscan_key)"
+	@$(MAKE) explicit-verify-any verifier=etherscan verifier-url=$(etherscan_url) args="--etherscan-api-key $(etherscan_key)"
 
 # ===========================
 # 					Ledger
@@ -212,9 +212,9 @@ deploy-ledger-verify-both :;
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 deploy-facet-ledger-verify-both :;
-	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
+	@$(MAKE) deploy-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=$(SENDER_ADDRESS) \
 	verifier=blockscout verifier-url=$(blockscout_url) etherscan=$(blockscout_key)
-	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
+	@$(MAKE) resume-facet-ledger rpc=$(rpc) hd_path=$(call format_hd_path,$(HD_PATH)) sender=$(SENDER_ADDRESS) \
 	verifier=etherscan verifier-url=$(etherscan_url) etherscan=$(etherscan_key)
 
 resume-any-ledger :;
@@ -298,12 +298,12 @@ verify-river-testnet :;
 deploy-ledger-base-sepolia :;
 	@$(MAKE) deploy-ledger-verify-both rpc=base_sepolia hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 		blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY} \
-		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_API_KEY}
+		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_SEPOLIA_API_KEY}
 
 deploy-base-sepolia :;
 	@$(MAKE) deploy-verify-both rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} \
 		blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY} \
-		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_API_KEY}
+		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_SEPOLIA_API_KEY}
 
 interact-base-sepolia :;
 	@$(MAKE) interact-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
