@@ -8,6 +8,10 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel/codes"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -701,18 +705,37 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	streamID := StreamId(cookie.GetStreamId())
 	usedNode := common.BytesToAddress(cookie.GetNodeAddress())
 
+	var span trace.Span
+	if ss.otelTracer != nil {
+		ctx, span = ss.otelTracer.Start(ctx, "syncerset::selectNodeForStream",
+			trace.WithAttributes(
+				attribute.Bool("changeNode", changeNode),
+				attribute.String("targetNode", usedNode.Hex()),
+				attribute.String("streamID", streamID.String())))
+		defer span.End()
+	}
+
 	// 1. Try node from cookie first
 	if !changeNode {
 		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
 			selectedNode := common.BytesToAddress(addrRaw)
 			if _, err := ss.getOrCreateSyncer(ctx, selectedNode); err == nil {
 				return selectedNode, true
+			} else {
+				logging.FromCtx(ss.globalCtx).Errorw("Failed to get or create syncer for node from cookie",
+					"nodeAddress", selectedNode, "streamId", streamID, "error", err)
 			}
 		}
 	}
 
 	stream, err := ss.streamCache.GetStreamNoWait(ctx, streamID)
 	if err != nil {
+		logging.FromCtx(ss.globalCtx).Errorw("Failed to get stream from cache for syncer selection",
+			"streamId", streamID, "error", err)
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
 		return common.Address{}, false
 	}
 
@@ -721,6 +744,9 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 	if isLocal && (!changeNode || ss.localNodeAddress != usedNode) {
 		if _, err = ss.getOrCreateSyncer(ctx, ss.localNodeAddress); err == nil {
 			return ss.localNodeAddress, true
+		} else {
+			logging.FromCtx(ss.globalCtx).Errorw("Failed to get or create local syncer for node",
+				"nodeAddress", ss.localNodeAddress, "streamId", streamID, "error", err)
 		}
 	}
 
@@ -737,6 +763,9 @@ func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie
 		for range remotes {
 			if _, err = ss.getOrCreateSyncer(ctx, selectedNode); err == nil {
 				return selectedNode, true
+			} else {
+				logging.FromCtx(ss.globalCtx).Errorw("Failed to get or create syncer for remote node",
+					"nodeAddress", selectedNode, "streamId", streamID, "error", err)
 			}
 			selectedNode = stream.AdvanceStickyPeer(selectedNode)
 		}
