@@ -40,24 +40,47 @@ export class StreamStateView_Members_Solicitations {
         sigBundle: EventSignatureBundle,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        user.solicitations = user.solicitations.filter(
-            (x) => x.deviceKey !== solicitation.deviceKey,
+        const existingIndex = user.solicitations.findIndex(
+            (x) => x.deviceKey === solicitation.deviceKey,
         )
-        const newSolicitation = {
-            deviceKey: solicitation.deviceKey,
-            fallbackKey: solicitation.fallbackKey,
-            isNewDevice: solicitation.isNewDevice,
-            sessionIds: solicitation.sessionIds.toSorted(),
-        } satisfies KeySolicitationContent
-        user.solicitations.push(newSolicitation)
-        encryptionEmitter?.emit(
-            'newKeySolicitation',
-            this.streamId,
-            eventId,
-            user.userId,
-            newSolicitation,
-            sigBundle,
-        )
+
+        if (existingIndex !== -1) {
+            // Merge with existing solicitation
+            const existing = user.solicitations[existingIndex]
+            const sessionIdSet = new Set([...existing.sessionIds, ...solicitation.sessionIds])
+            const updatedSolicitation = {
+                deviceKey: solicitation.deviceKey,
+                fallbackKey: solicitation.fallbackKey,
+                isNewDevice: false,
+                sessionIds: Array.from(sessionIdSet).sort(),
+            } satisfies KeySolicitationContent
+            user.solicitations[existingIndex] = updatedSolicitation
+            encryptionEmitter?.emit(
+                'updatedKeySolicitation',
+                this.streamId,
+                eventId,
+                user.userId,
+                updatedSolicitation,
+                sigBundle,
+            )
+        } else {
+            // Add new solicitation
+            const newSolicitation = {
+                deviceKey: solicitation.deviceKey,
+                fallbackKey: solicitation.fallbackKey,
+                isNewDevice: solicitation.isNewDevice,
+                sessionIds: solicitation.sessionIds.toSorted(),
+            } satisfies KeySolicitationContent
+            user.solicitations.push(newSolicitation)
+            encryptionEmitter?.emit(
+                'newKeySolicitation',
+                this.streamId,
+                eventId,
+                user.userId,
+                newSolicitation,
+                sigBundle,
+            )
+        }
     }
 
     applyFulfillment(

@@ -983,15 +983,27 @@ export abstract class BaseDecryptionExtensions {
         const existingKeyRequest = solicitedEvents.find(
             (x) => x.deviceKey === this.userDevice.deviceKey,
         )
-        if (
-            existingKeyRequest?.isNewDevice ||
-            sortedArraysEqual(existingKeyRequest?.sessionIds ?? [], missingSessionIds)
-        ) {
+        if (existingKeyRequest?.isNewDevice) {
             this.log.debug(
-                'processing missing keys already requested keys for this session',
+                'processing missing keys already requested keys for new device',
                 existingKeyRequest,
             )
             return
+        }
+
+        // Check if all missing session IDs are already in the existing request
+        let sessionIdsToRequest = missingSessionIds
+        if (existingKeyRequest) {
+            const existingSet = new Set(existingKeyRequest.sessionIds)
+            // Filter out session IDs that are already being requested
+            sessionIdsToRequest = missingSessionIds.filter((id) => !existingSet.has(id))
+            if (sessionIdsToRequest.length === 0) {
+                this.log.debug(
+                    'processing missing keys already requested all these session IDs',
+                    existingKeyRequest,
+                )
+                return
+            }
         }
         const knownSessionIds = await this.crypto.getGroupSessionIds(streamId)
 
@@ -1003,13 +1015,15 @@ export abstract class BaseDecryptionExtensions {
             'isNewDevice',
             isNewDevice,
             'sessionIds:',
+            sessionIdsToRequest.length,
+            'filtered from:',
             missingSessionIds.length,
         )
         // Send ephemeral solicitation first
         await this.sendKeySolicitation({
             streamId,
             isNewDevice,
-            missingSessionIds,
+            missingSessionIds: sessionIdsToRequest,
             ephemeral: this.opts.enableEphemeralKeySolicitations,
         })
     }
