@@ -30,6 +30,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
@@ -388,6 +389,17 @@ func (s *Service) initRiverChain() error {
 		httpClient,
 		httpClientWithCert,
 		s.otelConnectIterceptor,
+	)
+	if err != nil {
+		return err
+	}
+
+	s.streamPlacer, err = streamplacement.NewDistributor(
+		ctx,
+		s.chainConfig,
+		s.riverChain.InitialBlockNum,
+		s.riverChain.ChainMonitor,
+		s.registryContract,
 	)
 	if err != nil {
 		return err

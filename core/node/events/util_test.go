@@ -16,7 +16,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	. "github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/nodes/streamplacement"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -42,7 +42,7 @@ var _ RemoteProvider = (*cacheTestContext)(nil)
 
 type cacheTestInstance struct {
 	params       *StreamCacheParams
-	nodeRegistry NodeRegistry
+	streamPlacer streamplacement.Distributor
 	cache        *StreamCache
 }
 
@@ -131,19 +131,6 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		blockNumber := btc.BlockNum(ctx)
 
-		nr, err := LoadNodeRegistry(
-			ctx,
-			registry,
-			bc.Wallet.Address,
-			blockNumber,
-			bc.ChainMonitor,
-			btc.OnChainConfig,
-			nil,
-			nil,
-			nil,
-		)
-		ctc.require.NoError(err)
-
 		params := &StreamCacheParams{
 			ServerCtx:               ctx,
 			Storage:                 streamStore.Storage,
@@ -162,7 +149,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		inst := &cacheTestInstance{
 			params:       params,
-			nodeRegistry: nr,
+			streamPlacer: ctc,
 		}
 		ctc.instances = append(ctc.instances, inst)
 		ctc.instancesByAddr[bc.Wallet.Address] = inst
@@ -192,7 +179,7 @@ func (ctc *cacheTestContext) createReplStream() (StreamId, []common.Address, *Mi
 	ctc.require.NoError(err)
 
 	inst := ctc.instances[0]
-	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
+	nodes, err := inst.streamPlacer.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
 		int(inst.params.ChainConfig.Get().ReplicationFactor),
@@ -263,7 +250,7 @@ func (ctc *cacheTestContext) createStreamNoCache(
 	ctc.require.NoError(err)
 
 	inst := ctc.instances[0]
-	nodes, err := inst.nodeRegistry.ChooseStreamNodes(
+	nodes, err := inst.streamPlacer.ChooseStreamNodes(
 		ctc.ctx,
 		streamId,
 		int(inst.params.ChainConfig.Get().ReplicationFactor),
@@ -479,6 +466,26 @@ func (ctc *cacheTestContext) GetLastMiniblockHash(
 	}
 
 	return view.LastBlock().Ref, nil
+}
+
+func (ctc *cacheTestContext) ChooseStreamNodes(
+	ctx context.Context,
+	streamId StreamId,
+	replFactor int,
+) ([]common.Address, error) {
+	if replFactor > len(ctc.instances) {
+		return nil, RiverError(
+			Err_INTERNAL,
+			"TEST: cacheTestContext::ChooseStreamNodes replFactor is greater than the number of instances",
+			"replFactor",
+			replFactor,
+		)
+	}
+	addrs := make([]common.Address, replFactor)
+	for i := range replFactor {
+		addrs[i] = ctc.instances[i].params.Wallet.Address
+	}
+	return addrs, nil
 }
 
 func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {

@@ -272,7 +272,7 @@ func (s *Service) createReplicatedStream(
 		return nil, err
 	}
 
-	nodesList, err := s.nodeRegistry.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
+	nodesList, err := s.streamPlacer.ChooseStreamNodes(ctx, streamId, int(s.chainConfig.Get().ReplicationFactor))
 	if err != nil {
 		return nil, err
 	}
