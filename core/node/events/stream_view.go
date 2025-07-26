@@ -927,14 +927,21 @@ func (r *StreamView) GetStreamSince(
 
 	if cookie.MinipoolGen == r.minipool.generation {
 		envelopes := make([]*Envelope, r.minipool.events.Len())
+		var snapshot *Envelope
 		for i, e := range r.minipool.events.Values {
 			envelopes[i] = e.Envelope
+			if e.Event.GetMiniblockHeader() != nil && e.Event.GetMiniblockHeader().SnapshotHash != nil {
+				if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) && bytes.Equal(e.Event.GetMiniblockHeader().SnapshotHash, r.blocks[r.snapshotIndex].SnapshotEnvelope.Hash) {
+					snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
+				}
+			}
 		}
 
 		// always send response, even if there are no events so that the client knows it's upToDate
 		return &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: r.SyncCookie(addr),
+			Snapshot:       snapshot,
 		}, nil
 	}
 
@@ -947,10 +954,16 @@ func (r *StreamView) GetStreamSince(
 		return r.GetResetStreamAndCookie(addr), nil
 	}
 
+	var snapshot *Envelope
 	// append events from blocks
 	envelopes := make([]*Envelope, 0, 16)
 	err = r.forEachEvent(miniblockIndex, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		envelopes = append(envelopes, e.Envelope)
+		if e.Event.GetMiniblockHeader() != nil && e.Event.GetMiniblockHeader().SnapshotHash != nil {
+			if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) && bytes.Equal(e.Event.GetMiniblockHeader().SnapshotHash, r.blocks[r.snapshotIndex].SnapshotEnvelope.Hash) {
+				snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
+			}
+		}
 		return true, nil
 	})
 	if err != nil {
@@ -964,6 +977,7 @@ func (r *StreamView) GetStreamSince(
 	return &StreamAndCookie{
 		Events:         envelopes,
 		NextSyncCookie: r.SyncCookie(addr),
+		Snapshot:       snapshot,
 	}, nil
 }
 

@@ -4,6 +4,7 @@ import { makeRandomUserContext, makeTestRpcClient } from '../testUtils'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
 import { makeEvent, unpackStreamAndCookie } from '../../sign'
+import { isEqual } from 'lodash-es'
 
 describe('streamRpcClient using v2 sync', () => {
     let alicesContext: SignerContext
@@ -66,6 +67,13 @@ describe('streamRpcClient using v2 sync', () => {
                                 ) {
                                     didEnd = true
                                     throw new Error('Got snapshot hash but no snapshot')
+                                }
+                                if (
+                                    event.event.payload.value.snapshotHash !== undefined &&
+                                    !isEqual(snapshot?.hash, event.event.payload.value.snapshotHash)
+                                ) {
+                                    didEnd = true
+                                    throw new Error('Snapshot hash mismatch')
                                 }
                                 prevMiniblockHash = event.hash
                             }
