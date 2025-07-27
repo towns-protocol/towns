@@ -1204,9 +1204,12 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 	}
 
 	opts := NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true)
-	miniblocks, _, snapshotMbIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, opts)
+	miniblocks, snapshot, snapshotMbIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, opts)
 	if err != nil {
 		return err
+	}
+	if snapshot == nil {
+		return RiverError(Err_INTERNAL, "snapshot is nil").Func("reinitialize")
 	}
 
 	storageMiniblocks, err := MiniblockInfosToStorageMbs(miniblocks)
@@ -1222,7 +1225,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 
 	s.setViewLocked(nil)
 
-	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num + int64(snapshotMbIndex)
+	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num
 	err = s.params.Storage.ReinitializeStreamStorage(
 		ctx,
 		s.streamId,

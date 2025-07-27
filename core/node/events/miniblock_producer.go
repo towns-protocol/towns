@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
+	// MiniblockCandidateBatchSize keep track the max number of miniblockblocks that are registered in the StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
 
@@ -45,8 +45,8 @@ type MiniblockProducerOpts struct {
 	TestDisableMbProdcutionOnBlock bool
 }
 
-// NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
-// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates new miniblock
+// NewMiniblockProducer instantiates a miniblockblockProducer instance that implements the MiniblockProducer interface.
+// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates miniblockblock
 // candidates and schedules these candidates for registration.
 func newMiniblockProducer(
 	ctx context.Context,
@@ -126,8 +126,8 @@ func (p *candidateTracker) add(ctx context.Context, mp *miniblockProducer, j *mb
 	}
 }
 
-// onNewBlock loops over streams and determines if it needs to produce a new mini block.
-// For every stream that is eligible to produce a new mini block it creates a new mini block candidate.
+// onNewBlock loops over streams and determines if it needs to produce a miniblock block.
+// For every stream that is eligible to produce a miniblock block it creates a miniblock block candidate.
 // It bundles candidates in a batch.
 // If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
 // logs to determine which mini block candidate was registered and which are not. For each registered mini block
@@ -299,7 +299,7 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum cry
 	if err != nil {
 		logging.FromCtx(ctx).
 			Warnw(
-				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
+				"MiniblockProducer: jobStart: Error creating miniblockblock proposal",
 				"streamId",
 				j.stream.streamId,
 				"error",
