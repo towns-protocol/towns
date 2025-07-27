@@ -23,8 +23,28 @@ import {PointsBase} from "../points/PointsBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
-/// @title SwapFacet
-/// @notice Facet for executing swaps within a space
+/**
+ * @title SwapFacet
+ * @notice Diamond facet for executing swaps within a space with configurable fees and poster handling
+ * @dev This facet extends SwapRouter functionality with space-specific features:
+ *
+ * Standard Swaps (`executeSwap`):
+ * - Space membership validation required for all callers
+ * - Configurable poster fees (to space treasury or forwarded to poster)
+ * - Smart ETH refund logic accounts for poster fees when poster is space
+ * - Points minting for ETH-involved swaps
+ *
+ * Permit2 Swaps (`executeSwapWithPermit`):
+ * - All standard swap features plus Permit2 security enhancements
+ * - Cryptographic binding prevents fee manipulation attacks
+ *
+ * Space-Specific Features:
+ * - Owner-configurable poster fee rates and forwarding behavior via `setSwapFeeConfig`
+ * - Automatic fee collection to space treasury when poster equals space address
+ * - Smart refund logic preserves space fees during partial ETH swaps
+ * - Integration with space entitlement and membership validation systems
+ * - Diamond pattern integration for upgradeable space functionality
+ */
 contract SwapFacet is ISwapFacet, ReentrancyGuardTransient, Entitled, PointsBase, Facet {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
