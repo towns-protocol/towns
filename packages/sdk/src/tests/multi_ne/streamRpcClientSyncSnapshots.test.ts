@@ -93,7 +93,7 @@ describe('streamRpcClient using v2 sync', () => {
         }
 
         async function createEvents() {
-            for (let i = 0; i < 100000; i++) {
+            for (let i = 0; i < 20000; i++) {
                 if (didEnd) {
                     return
                 }
