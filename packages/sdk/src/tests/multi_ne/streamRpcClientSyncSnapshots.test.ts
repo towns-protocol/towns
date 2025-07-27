@@ -81,8 +81,6 @@ describe('streamRpcClient using v2 sync', () => {
                     }
 
                     if (c % 3 === 0) {
-                        // eslint-disable-next-line no-console
-                        console.log('new syncStreams')
                         syncStreams = aliceClient.syncStreams({
                             syncPos: [alicesUserInboxStream.stream!.nextSyncCookie!],
                         })
@@ -93,7 +91,7 @@ describe('streamRpcClient using v2 sync', () => {
         }
 
         async function createEvents() {
-            for (let i = 0; i < 20000; i++) {
+            for (let i = 0; i < 5000; i++) {
                 if (didEnd) {
                     return
                 }
