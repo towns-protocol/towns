@@ -94,7 +94,7 @@ func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (sh
 	r.subscriptionsByStream.Compute(
 		streamID,
 		func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
-			if !loaded {
+			if !loaded || len(oldValue) == 0 {
 				shouldAddToRemote = true
 				return []*Subscription{sub}, xsync.UpdateOp
 			}
