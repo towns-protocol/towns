@@ -1,6 +1,5 @@
-import { FullyReadMarker, GetSettingsResponse } from '@towns-protocol/proto'
+import { FullyReadMarker } from '@towns-protocol/proto'
 import { UnreadMarkersModel } from '../streams/unreadMarkersTransform'
-import { getMutedChannelIds } from '../../notificationsClient'
 import { isEqual } from 'lodash-es'
 import { ThreadStatsMap, TimelinesViewModel } from '../streams/timelinesModel'
 import { isChannelStreamId, spaceIdFromChannelId } from '../../id'
@@ -12,7 +11,7 @@ export interface SpaceUnreadsModel {
 }
 
 interface Input {
-    notificationSettings: GetSettingsResponse | undefined
+    mutedStreamIds: Set<string>
     timelinesView: TimelinesViewModel
     myUnreadMarkers: UnreadMarkersModel
 }
@@ -22,8 +21,7 @@ export function spaceUnreadsTransform(
     _prevInput: Input,
     prev?: SpaceUnreadsModel,
 ): SpaceUnreadsModel {
-    const { myUnreadMarkers, timelinesView, notificationSettings } = input
-    const mutedChannelIds = getMutedChannelIds(notificationSettings)
+    const { myUnreadMarkers, timelinesView, mutedStreamIds } = input
 
     let next =
         prev ??
@@ -104,7 +102,7 @@ export function spaceUnreadsTransform(
             }
             if (marker.isUnread && isParticipatingThread(marker, threadsStats)) {
                 const isMuted =
-                    mutedChannelIds?.has(marker.channelId) || mutedChannelIds?.has(spaceId)
+                    mutedStreamIds?.has(marker.channelId) || mutedStreamIds?.has(spaceId)
 
                 if (!isMuted) {
                     results[spaceId].mentions += marker.mentions
