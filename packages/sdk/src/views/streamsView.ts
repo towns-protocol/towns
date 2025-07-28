@@ -19,7 +19,7 @@ import { ChannelStreamsView } from './streams/channelStreams'
 import { DmStreamsView } from './streams/dmStreams'
 import { GdmStreamsView } from './streams/gdmStreams'
 import { membershipsTransform } from './transforms/membershipsTransform'
-import { Membership } from './models/timelineTypes'
+import { Membership, TimelineEvent } from './models/timelineTypes'
 import { spaceIdsTransform } from './transforms/spaceIdsTransform'
 import { DmAndGdmModel, dmsAndGdmsTransform } from './transforms/dmsAndGdmsTransform'
 import { StreamMemberIdsView } from './streams/streamMemberIds'
@@ -28,6 +28,8 @@ import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
 import { NotificationSettings } from './streams/notificationSettings'
 import { SpaceUnreadsModel, spaceUnreadsTransform } from './transforms/spaceUnreadsTransform'
 import { streamMemberIdsSansUserTransform } from './transforms/streamMemberIdsSansUserTransform'
+import { Constant } from '../observable/constant'
+import { MembersNotInDms, membersNotInDmsTransform } from './transforms/membersNotInDmsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -50,8 +52,9 @@ export class StreamsView {
     readonly userMetadataStreams: UserMetadataStreamsView
     readonly userSettingsStreams: UserSettingsStreamsView
     readonly timelinesView: TimelinesView
+    readonly latestEventByUser: Observable<Record<string, TimelineEvent>>
     readonly my: {
-        userId: Observable<string> // never changes, but useful for combine
+        userId: Constant<string>
         userStream: Observable<UserStreamModel | undefined>
         userInboxStream: Observable<UserInboxStreamModel | undefined>
         userMetadataStream: Observable<UserMetadataStreamModel | undefined>
@@ -67,7 +70,7 @@ export class StreamsView {
     }
 
     constructor(userId: string, delegate: StreamsViewDelegate | undefined) {
-        const myUserId = new Observable(userId)
+        const myUserId = new Constant(userId)
         const userStreamId = userId !== '' ? makeUserStreamId(userId) : ''
         const userInboxStreamId = userId !== '' ? makeUserInboxStreamId(userId) : ''
         const userMetadataStreamId = userId !== '' ? makeUserMetadataStreamId(userId) : ''
@@ -85,6 +88,7 @@ export class StreamsView {
         this.userMetadataStreams = new UserMetadataStreamsView()
         this.userInboxStreams = new UserInboxStreamsView()
         this.timelinesView = new TimelinesView(userId, delegate)
+        this.latestEventByUser = this.timelinesView.throttle(1000).map((x) => x.lastestEventByUser)
 
         // throttle the timelines for subsequent observers
         const throttledTimelinesView = this.timelinesView.throttle(15)
@@ -172,5 +176,15 @@ export class StreamsView {
             blockedUserIds: myBlockedUserIds,
             spaceUnreads: mySpaceUnreads,
         }
+    }
+
+    membersNotInDms(streamId: string): Observable<MembersNotInDms> {
+        return combine({
+            memberIds: this.streamMemberIds.map((x) => x[streamId] ?? Consts.arr),
+            latestEventByUser: this.timelinesView.map((x) => x.lastestEventByUser ?? Consts.obj),
+            dmsAndGdms: this.my.dmsAndGdms,
+        })
+            .throttle(1000)
+            .map(membersNotInDmsTransform)
     }
 }
