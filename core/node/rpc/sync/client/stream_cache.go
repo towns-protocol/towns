@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -14,6 +15,10 @@ type Stream interface {
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 	GetStickyPeer() common.Address
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
+	UpdatesSinceCookie(ctx context.Context, cookie *SyncCookie, callback func(streamAndCookie *StreamAndCookie) error) error
+	Sub(ctx context.Context, cookie *SyncCookie, r events.SyncResultReceiver) error
+	Unsub(r events.SyncResultReceiver)
+	StreamId() StreamId
 }
 
 // StreamCache represents a behavior of the stream cache.
