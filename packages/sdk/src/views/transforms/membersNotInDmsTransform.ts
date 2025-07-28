@@ -10,7 +10,7 @@ interface Input {
 
 export interface MemberNotInDms {
     id: string
-    latestMs: number
+    latestEventMs: number
 }
 
 export interface MembersNotInDms {
@@ -23,7 +23,6 @@ export function membersNotInDmsTransform(
     prevResult?: MembersNotInDms,
 ): MembersNotInDms {
     const DM_THRESHOLD = 50
-    //const startTime = performance.now()
     const { memberIds, latestEventByUser, dmsAndGdms } = value
     // any DM channels should only be considered if they involve members of this space
     const memberIdSet = new Set(memberIds)
@@ -43,37 +42,22 @@ export function membersNotInDmsTransform(
 
     const usersInDMs = new Set(spaceRelatedDMChannels.flatMap((dm) => dm.userIds))
 
-    const prevResultMap = prevResult?.members.reduce(
-        (acc, member) => {
-            acc[member.id] = member
-            return acc
-        },
-        {} as Record<string, MemberNotInDms>,
-    )
-
     const eligibleUsers = memberIds
-        .reduce<MemberNotInDms[]>((acc, memberId) => {
+        .reduce<MemberNotInDms[]>((acc, id) => {
             // Stop early if we have enough
             if (acc.length >= remainingSlots) {
                 return acc
             }
-            if (!usersInDMs.has(memberId)) {
-                const latestMs = latestEventByUser[memberId]?.createdAtEpochMs ?? 0
-                if (prevResultMap?.[memberId]?.latestMs === latestMs) {
-                    acc.push(prevResultMap[memberId])
-                } else {
-                    acc.push({
-                        id: memberId,
-                        latestMs: latestEventByUser[memberId]?.createdAtEpochMs ?? 0,
-                    })
-                }
+            if (!usersInDMs.has(id)) {
+                const latestEventMs = latestEventByUser[id]?.createdAtEpochMs ?? 0
+                acc.push({
+                    id,
+                    latestEventMs,
+                })
             }
             return acc
         }, [])
-        .sort((a, b) => b.latestMs - a.latestMs)
-
-    //const endTime = performance.now()
-    //console.log(`!membersNotInDmsTransform took ${endTime - startTime}ms`)
+        .sort((a, b) => b.latestEventMs - a.latestEventMs)
 
     if (prevResult && isEqual(prevResult.members, eligibleUsers)) {
         return prevResult
