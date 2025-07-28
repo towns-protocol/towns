@@ -231,7 +231,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 
 	recipients.Remove(sender)
 
-	p.log.Infow("onMesssageEvent", usersToNotify, usersToNotify)
+	p.log.Infow("onMesssageEvent sendNotification", "usersToNotify", usersToNotify)
 	for user, userPref := range usersToNotify {
 		p.sendNotification(ctx, user, userPref, spaceID, channelID, event, kind, members)
 	}
@@ -462,6 +462,17 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 	if channelID.Type() == shared.STREAM_DM_CHANNEL_BIN || channelID.Type() == shared.STREAM_GDM_CHANNEL_BIN {
 		receivers = members.ToSlice()
 	}
+
+	p.log.Infow("sending notification", "user", user, "userPref", userPref, "spaceID", spaceID, "channelID",
+		channelID, "event", event, "kind", kind, "members", members, "receivers", receivers)
+	p.log.Infow("sending notification 2",
+		"userPref.Subscriptions.WebPush len",
+		len(userPref.Subscriptions.WebPush),
+		"user",
+		user,
+		"channelID",
+		channelID,
+	)
 
 	if len(userPref.Subscriptions.WebPush) > 0 {
 		eventBytesHex := hex.EncodeToString(eventBytes)
