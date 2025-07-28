@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -34,12 +33,6 @@ type (
 		Address() common.Address
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error)
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
-	}
-
-	// StreamCache represents a behavior of the stream cache
-	StreamCache interface {
-		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
-		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
 	}
 
 	ModifyRequest struct {
