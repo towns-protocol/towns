@@ -630,7 +630,10 @@ func TestProcessAddingStream(t *testing.T) {
 			}
 
 			// Execute
-			syncerSet.processAddingStream(ctx, "test-sync", cookie, handler, false)
+			st := syncerSet.processAddingStream(ctx, "test-sync", cookie, false)
+			if st != nil {
+				handler(st)
+			}
 
 			// Verify
 			if tt.expectFailure {
@@ -708,7 +711,10 @@ func TestProcessBackfillingStream(t *testing.T) {
 			}
 
 			// Execute
-			syncerSet.processBackfillingStream(ctx, "test-sync", "backfill-sync-1", cookie, handler)
+			st := syncerSet.processBackfillingStream(ctx, "test-sync", "backfill-sync-1", cookie)
+			if st != nil {
+				handler(st)
+			}
 
 			// Verify
 			if tt.expectFailure {
@@ -796,7 +802,10 @@ func TestProcessRemovingStream(t *testing.T) {
 			}
 
 			// Execute
-			syncerSet.processRemovingStream(ctx, streamID, handler)
+			st := syncerSet.processRemovingStream(ctx, streamID)
+			if st != nil {
+				handler(st)
+			}
 
 			// Verify
 			if tt.expectFailure {

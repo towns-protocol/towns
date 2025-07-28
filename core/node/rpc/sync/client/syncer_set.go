@@ -157,8 +157,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 		go func(cookie *SyncCookie) {
 			defer wg.Done()
 
-			var st *SyncStreamOpStatus
-			ss.processAddingStream(ctx, req.SyncID, cookie, func(status *SyncStreamOpStatus) { st = status }, false)
+			// 1. Process adding stream to sync with the given cookie.
+			// The node address specified in cookie is used to select the node for the syncer.
+			st := ss.processAddingStream(ctx, req.SyncID, cookie, false)
 			if st == nil {
 				return
 			}
@@ -169,13 +170,15 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 				return
 			}
 
-			// If the first attempt failed, try to force change node address in cookies and send the modify sync again.
+			// 2. If the first attempt failed, try to force change node address in cookies and send the modify sync again.
 			// This sets the node address to the one returned in the failure status to make sure
 			// this is not going to be used in the next request.
 			// There could be a case when a client specifies a wrong node address which leads to errors.
 			// This case should be properly handled by using another node address.
 			cookie.NodeAddress = st.GetNodeAddress()
-			ss.processAddingStream(ctx, req.SyncID, cookie, req.AddingFailureHandler, true)
+			if st = ss.processAddingStream(ctx, req.SyncID, cookie, true); st != nil {
+				req.AddingFailureHandler(st)
+			}
 		}(cookie)
 	}
 
@@ -185,7 +188,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			wg.Add(1)
 			go func(cookie *SyncCookie, backfillSyncID string) {
 				defer wg.Done()
-				ss.processBackfillingStream(ctx, req.SyncID, backfillSyncID, cookie, req.BackfillingFailureHandler)
+				if st := ss.processBackfillingStream(ctx, req.SyncID, backfillSyncID, cookie); st != nil {
+					req.BackfillingFailureHandler(st)
+				}
 			}(cookie, backfill.GetSyncId())
 		}
 	}
@@ -195,7 +200,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 	for _, streamID := range req.ToRemove {
 		go func(streamID StreamId) {
 			defer wg.Done()
-			ss.processRemovingStream(ctx, streamID, req.RemovingFailureHandler)
+			if st := ss.processRemovingStream(ctx, streamID); st != nil {
+				req.RemovingFailureHandler(st)
+			}
 		}(StreamId(streamID))
 	}
 
@@ -208,9 +215,8 @@ func (ss *SyncerSet) processAddingStream(
 	ctx context.Context,
 	syncID string,
 	cookie *SyncCookie,
-	failureHandler func(st *SyncStreamOpStatus),
 	changeNode bool,
-) {
+) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
 
 	if ss.otelTracer != nil {
@@ -225,32 +231,28 @@ func (ss *SyncerSet) processAddingStream(
 
 	if _, found := ss.streamID2Syncer.Load(streamID); found {
 		unlock()
-		// Backfill the given stream if it is added already.
-		ss.processBackfillingStream(ctx, syncID, syncID, cookie, failureHandler)
-		return
+		return ss.processBackfillingStream(ctx, syncID, syncID, cookie)
 	}
 	defer unlock()
 
 	selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, changeNode)
 	if !nodeAvailable {
-		failureHandler(&SyncStreamOpStatus{
+		return &SyncStreamOpStatus{
 			StreamId: streamID[:],
 			Code:     int32(Err_UNAVAILABLE),
 			Message:  "No available node to sync stream",
-		})
-		return
+		}
 	}
 
 	syncer, err := ss.getOrCreateSyncer(ctx, selectedNode)
 	if err != nil || syncer == nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", selectedNode)
-		failureHandler(&SyncStreamOpStatus{
+		return &SyncStreamOpStatus{
 			StreamId:    cookie.GetStreamId(),
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: selectedNode.Bytes(),
-		})
-		return
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
@@ -261,21 +263,22 @@ func (ss *SyncerSet) processAddingStream(
 	})
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", selectedNode)
-		failureHandler(&SyncStreamOpStatus{
+		return &SyncStreamOpStatus{
 			StreamId:    cookie.GetStreamId(),
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: selectedNode.Bytes(),
-		})
-		return
+		}
 	}
 
 	// If the response contains adds, it means the stream was not added successfully.
 	if len(resp.GetAdds()) != 0 {
-		failureHandler(resp.GetAdds()[0])
-	} else {
-		ss.streamID2Syncer.Store(StreamId(cookie.GetStreamId()), syncer)
+		return resp.GetAdds()[0]
 	}
+
+	ss.streamID2Syncer.Store(StreamId(cookie.GetStreamId()), syncer)
+
+	return nil
 }
 
 func (ss *SyncerSet) processBackfillingStream(
@@ -283,8 +286,7 @@ func (ss *SyncerSet) processBackfillingStream(
 	syncID string,
 	backfillSyncID string,
 	cookie *SyncCookie,
-	failureHandler func(st *SyncStreamOpStatus),
-) {
+) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
 
 	if ss.otelTracer != nil {
@@ -304,24 +306,29 @@ func (ss *SyncerSet) processBackfillingStream(
 		// The maximum time we wait is defined by modifySyncTimeout.
 		timeout := time.After(modifySyncTimeout)
 		for {
+			var stop bool
 			select {
 			case <-timeout:
+				stop = true
+				break
 			default:
+				time.Sleep(time.Millisecond * 100)
+				if syncer, found = ss.streamID2Syncer.Load(streamID); found {
+					stop = true
+					break
+				}
 			}
-			time.Sleep(time.Millisecond * 100)
-			syncer, found = ss.streamID2Syncer.Load(streamID)
-			if found {
+			if stop {
 				break
 			}
 		}
 
 		if !found {
-			failureHandler(&SyncStreamOpStatus{
+			return &SyncStreamOpStatus{
 				StreamId: streamID[:],
 				Code:     int32(Err_NOT_FOUND),
 				Message:  "Stream must be syncing to be backfilled",
-			})
-			return
+			}
 		}
 	}
 
@@ -337,27 +344,27 @@ func (ss *SyncerSet) processBackfillingStream(
 	})
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", syncer.Address())
-		failureHandler(&SyncStreamOpStatus{
+		return &SyncStreamOpStatus{
 			StreamId:    cookie.GetStreamId(),
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: syncer.Address().Bytes(),
-		})
-		return
+		}
 	}
 
 	// If the response contains backfills, it means the stream was not backfilled successfully.
 	if len(resp.GetBackfills()) != 0 {
-		failureHandler(resp.GetBackfills()[0])
+		return resp.GetBackfills()[0]
 	}
+
+	return nil
 }
 
 // processRemovingStream processes the removal of a stream from the syncer.
 func (ss *SyncerSet) processRemovingStream(
 	ctx context.Context,
 	streamID StreamId,
-	failureHandler func(st *SyncStreamOpStatus),
-) {
+) *SyncStreamOpStatus {
 	if ss.otelTracer != nil {
 		var span trace.Span
 		ctx, span = ss.otelTracer.Start(ctx, "syncerset::processRemovingStream",
@@ -370,7 +377,7 @@ func (ss *SyncerSet) processRemovingStream(
 
 	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
-		return
+		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
@@ -381,21 +388,22 @@ func (ss *SyncerSet) processRemovingStream(
 	})
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", syncer.Address())
-		failureHandler(&SyncStreamOpStatus{
+		return &SyncStreamOpStatus{
 			StreamId:    streamID[:],
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: syncer.Address().Bytes(),
-		})
-		return
+		}
 	}
 
 	// If the response contains removals, it means the stream was not removed successfully.
 	if len(resp.GetRemovals()) != 0 {
-		failureHandler(resp.GetRemovals()[0])
-	} else {
-		ss.streamID2Syncer.Delete(streamID)
+		return resp.GetRemovals()[0]
 	}
+
+	ss.streamID2Syncer.Delete(streamID)
+
+	return nil
 }
 
 func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) error {
