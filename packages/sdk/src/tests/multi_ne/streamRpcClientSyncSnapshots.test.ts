@@ -36,11 +36,11 @@ describe('streamRpcClientEnsuresSnapshotsAreSent', () => {
         let didEnd = false // this is just to help createEvents() finish and prevent the test from running for a long time
 
         async function processSyncResponses() {
-            let syncStreams = aliceClient.syncStreams({
+            const syncStreams = aliceClient.syncStreams({
                 syncPos: [alicesUserInboxStream.stream!.nextSyncCookie!],
             })
 
-            let snapshotObserved = 0
+            let snapshotsObserved = 0
             for await (const resp of syncStreams) {
                 if (resp.syncOp === SyncOp.SYNC_NEW) {
                     syncId = resp.syncId
@@ -68,8 +68,8 @@ describe('streamRpcClientEnsuresSnapshotsAreSent', () => {
                                     didEnd = true
                                     throw new Error('Snapshot hash mismatch')
                                 }
-                                snapshotObserved += 1
-                                if (snapshotObserved > 5) {
+                                snapshotsObserved += 1
+                                if (snapshotsObserved > 5) {
                                     didEnd = true
                                     return
                                 }
