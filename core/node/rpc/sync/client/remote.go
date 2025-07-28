@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.opentelemetry.io/otel/attribute"
 	"slices"
 	"sync/atomic"
 	"time"
@@ -251,8 +252,8 @@ func (s *remoteSyncer) Address() common.Address {
 }
 
 func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
+	var span trace.Span
 	if s.otelTracer != nil {
-		var span trace.Span
 		ctx, span = s.otelTracer.Start(ctx, "remoteSyncer::modify")
 		defer span.End()
 	}
@@ -262,6 +263,34 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
+		if span == nil {
+			return nil, false, err
+		}
+
+		if len(request.GetAddStreams()) > 0 {
+			var streamIDs []string
+			for _, cookie := range request.GetAddStreams() {
+				streamIDs = append(streamIDs, fmt.Sprintf("%x", cookie.GetStreamId()))
+			}
+			span.SetAttributes(attribute.StringSlice("addStreams", streamIDs))
+		}
+
+		if len(request.GetRemoveStreams()) > 0 {
+			var streamIDs []string
+			for _, streamID := range request.GetRemoveStreams() {
+				streamIDs = append(streamIDs, fmt.Sprintf("%x", streamID))
+			}
+			span.SetAttributes(attribute.StringSlice("removeStreams", streamIDs))
+		}
+
+		if len(request.GetBackfillStreams().GetStreams()) > 0 {
+			var streamIDs []string
+			for _, streamID := range request.GetBackfillStreams().GetStreams() {
+				streamIDs = append(streamIDs, fmt.Sprintf("%x", streamID))
+			}
+			span.SetAttributes(attribute.StringSlice("backfillStreams", streamIDs))
+		}
+
 		return nil, false, err
 	}
 
