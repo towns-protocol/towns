@@ -36,7 +36,7 @@ type (
 	}
 
 	// ModifyRequest represents a request to modify the sync state of streams.
-	// 
+	//
 	// IMPORTANT: All failure handler callbacks (AddingFailureHandler, RemovingFailureHandler,
 	// BackfillingFailureHandler) are invoked while the corresponding stream is locked.
 	// These callbacks MUST NOT attempt to lock any stream as this will cause a deadlock.
@@ -154,7 +154,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			defer wg.Done()
 
 			var st *SyncStreamOpStatus
-			ss.processAddingStream(ctx, req.SyncID, cookie, func(status *SyncStreamOpStatus) { st = status })
+			ss.processAddingStream(ctx, req.SyncID, cookie, func(status *SyncStreamOpStatus) { st = status }, false)
 			if st == nil {
 				return
 			}
@@ -171,7 +171,7 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			// There could be a case when a client specifies a wrong node address which leads to errors.
 			// This case should be properly handled by using another node address.
 			cookie.NodeAddress = st.GetNodeAddress()
-			ss.processAddingStream(ctx, req.SyncID, cookie, req.AddingFailureHandler)
+			ss.processAddingStream(ctx, req.SyncID, cookie, req.AddingFailureHandler, true)
 		}(cookie)
 	}
 
@@ -205,6 +205,7 @@ func (ss *SyncerSet) processAddingStream(
 	syncID string,
 	cookie *SyncCookie,
 	failureHandler func(st *SyncStreamOpStatus),
+	changeNode bool,
 ) {
 	streamID := StreamId(cookie.GetStreamId())
 
@@ -227,7 +228,7 @@ func (ss *SyncerSet) processAddingStream(
 	}
 	defer unlock()
 
-	selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, false)
+	selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, changeNode)
 	if !nodeAvailable {
 		failureHandler(&SyncStreamOpStatus{
 			StreamId: streamID[:],
