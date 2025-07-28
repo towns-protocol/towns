@@ -34,15 +34,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
-var setupDB sync.Once
-
 // Creation of extensions can cause race conditions in the database even if
 // they are created with an "IF NOT EXISTS" clause, causing migrations across
 // multiple tests to fail. Therefore we create all required extensions in
 // pg one time here.
 func initPostgres() {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContextForTestMain("core/node/rpc")
 
 	// We are not creating a schema for this connection, therefore no need to tear
 	// it down - do not call the closer.
@@ -63,7 +60,7 @@ func initPostgres() {
 }
 
 func TestMain(m *testing.M) {
-	setupDB.Do(initPostgres)
+	initPostgres()
 
 	c := m.Run()
 	if c != 0 {
@@ -298,7 +295,7 @@ func joinChannel(
 		return err
 	}
 
-	add, err := client.AddEvent(
+	_, err = client.AddEvent(
 		ctx,
 		connect.NewRequest(
 			&protocol.AddEventRequest{
@@ -309,9 +306,6 @@ func joinChannel(
 	)
 	if err != nil {
 		return err
-	}
-	if add.Msg.Error != nil {
-		return fmt.Errorf("Could not add join event to user stream: %v", add.Msg.Error.Msg)
 	}
 	return nil
 }
@@ -723,12 +717,11 @@ func testRiverDeviceId(tester *serviceTester) {
 			&protocol.AddEventRequest{
 				StreamId: channelId[:],
 				Event:    envelope,
-				Optional: true,
 			},
 		),
 	)
-	require.NoError(err)
-	require.NotNil(resp.Msg.Error, "expected error")
+	require.Error(err)
+	require.Nil(resp)
 }
 
 func testSyncStreams(tester *serviceTester) {

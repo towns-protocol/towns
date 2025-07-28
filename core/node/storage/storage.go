@@ -24,17 +24,10 @@ type (
 		MinipoolEnvelopes       [][]byte
 	}
 
-	WriteMiniblockData struct {
-		Number   int64
-		Hash     common.Hash
-		Snapshot []byte
-		Data     []byte
-	}
-
 	MiniblockDescriptor struct {
 		Number   int64
 		Data     []byte
-		Hash     common.Hash // Only set for miniblock candidates
+		Hash     common.Hash // On read only set for miniblock candidates
 		Snapshot []byte
 	}
 
@@ -65,11 +58,16 @@ type (
 		LatestSnapshotMiniblockNum int64
 	}
 
+	MiniblockRange struct {
+		StartInclusive int64
+		EndInclusive   int64
+	}
+
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
+		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *MiniblockDescriptor) error
 
 		// ReinitializeStreamStorage initialized or reinitializes storage for the given stream.
 		//
@@ -89,13 +87,17 @@ type (
 		ReinitializeStreamStorage(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 			lastSnapshotMiniblockNum int64,
 			updateExisting bool,
 		) error
 
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
-		CreateEphemeralStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *WriteMiniblockData) error
+		CreateEphemeralStreamStorage(
+			ctx context.Context,
+			streamId StreamId,
+			genesisMiniblock *MiniblockDescriptor,
+		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
@@ -151,7 +153,7 @@ type (
 		WriteMiniblockCandidate(
 			ctx context.Context,
 			streamId StreamId,
-			miniblock *WriteMiniblockData,
+			miniblock *MiniblockDescriptor,
 		) error
 
 		ReadMiniblockCandidate(
@@ -179,7 +181,7 @@ type (
 		WriteMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 			newMinipoolGeneration int64,
 			newMinipoolEnvelopes [][]byte,
 			prevMinipoolGeneration int64,
@@ -188,7 +190,7 @@ type (
 
 		// WriteEphemeralMiniblock writes a miniblock as part of ephemeral stream. Skips a bunch of consistency checks.
 		// Stream with the given ID must be ephemeral.
-		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *WriteMiniblockData) error
+		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *MiniblockDescriptor) error
 
 		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 		// If stream record is created, but no miniblocks are archived, returns -1.
@@ -201,7 +203,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			startMiniblockNum int64,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 		) error
 
 		// GetLastMiniblockNumber returns the last miniblock number for the given stream from storage.
@@ -220,27 +222,48 @@ type (
 
 		// WritePrecedingMiniblocks writes miniblocks that precede existing miniblocks in storage.
 		// This is used for backfilling gaps in the miniblock sequence during reconciliation.
-		// 
+		//
 		// Requirements:
 		// - miniblocks must be continuous (no gaps)
 		// - all miniblock numbers must be less than the last miniblock in storage
 		// - overlapping miniblocks are skipped (not overwritten)
 		// - does not modify minipool
 		// - does not update latest_snapshot_miniblock
-		// 
+		//
 		// This function is designed for reconciliation processes that need to fill gaps
 		// in the miniblock sequence without affecting the current stream state.
 		WritePrecedingMiniblocks(
 			ctx context.Context,
 			streamId StreamId,
-			miniblocks []*WriteMiniblockData,
+			miniblocks []*MiniblockDescriptor,
 		) error
+
+		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
+		// present in storage for the given stream, starting from the specified miniblock number.
+		// Each range contains StartInclusive and EndInclusive miniblock numbers.
+		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		//
+		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
+		// the result would be: [{0,2}, {5,7}, {10,10}]
+		//
+		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
+		GetMiniblockNumberRanges(
+			ctx context.Context,
+			streamId StreamId,
+			startMiniblockNumberInclusive int64,
+		) ([]MiniblockRange, error)
 
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
 
 		// DebugReadStreamStatistics returns statistics for debugging about the stream.
 		DebugReadStreamStatistics(ctx context.Context, streamId StreamId) (*DebugReadStreamStatisticsResult, error)
+
+		// DebugDeleteMiniblocks deletes miniblocks from the storage in the given range.
+		// This is a debug function used for testing backwards reconciliation.
+		// fromInclusive and toExclusive specify the range of miniblock numbers to delete.
+		// WARNING: This function should only be used for testing purposes.
+		DebugDeleteMiniblocks(ctx context.Context, streamId StreamId, fromInclusive int64, toExclusive int64) error
 
 		// Close closes the storage.
 		Close(ctx context.Context)

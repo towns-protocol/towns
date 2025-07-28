@@ -18,6 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
+	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
@@ -55,6 +56,8 @@ type (
 		syncingStreamsCount atomic.Int64
 		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
 		usingSharedSyncer bool
+		// messages is the dynamic buffer used to store messages for the sync operation
+		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 		// metrics is the set of metrics used to track sync operations
@@ -65,7 +68,6 @@ type (
 	subCommand struct {
 		Ctx             context.Context
 		ModifySyncReq   *client.ModifyRequest
-		PingReq         string
 		CancelReq       string
 		DebugDropStream shared.StreamId
 		reply           chan error
@@ -108,6 +110,7 @@ func NewStreamsSyncOperation(
 		streamCache:         streamCache,
 		nodeRegistry:        nodeRegistry,
 		subscriptionManager: subscriptionManager,
+		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		otelTracer:          otelTracer,
 		metrics:             metrics,
 	}, nil
@@ -120,7 +123,7 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID)
+	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.messages)
 	if err != nil {
 		syncOp.log.Errorw("Failed to subscribe to stream sync operation", "err", err)
 		return err
@@ -249,12 +252,6 @@ func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subsc
 				sub.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
 				cmd.Reply(nil)
 				return
-			} else if cmd.PingReq != "" {
-				sub.Send(&SyncStreamsResponse{
-					SyncOp:    SyncOp_SYNC_PONG,
-					PongNonce: cmd.PingReq,
-				})
-				cmd.Reply(nil)
 			}
 		}
 	}
@@ -282,10 +279,9 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToAdd: []*SyncCookie{req.Msg.GetSyncPos()},
-			AddingFailureHandler: func(st *SyncStreamOpStatus) {
-				status = st
-			},
+			ToAdd:                     []*SyncCookie{req.Msg.GetSyncPos()},
+			BackfillingFailureHandler: func(st *SyncStreamOpStatus) { status = st },
+			AddingFailureHandler:      func(st *SyncStreamOpStatus) { status = st },
 		},
 		reply: make(chan error, 1),
 	}
@@ -332,10 +328,8 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 	cmd := &subCommand{
 		Ctx: ctx,
 		ModifySyncReq: &client.ModifyRequest{
-			ToRemove: [][]byte{req.Msg.GetStreamId()},
-			RemovingFailureHandler: func(st *SyncStreamOpStatus) {
-				status = st
-			},
+			ToRemove:               [][]byte{req.Msg.GetStreamId()},
+			RemovingFailureHandler: func(st *SyncStreamOpStatus) { status = st },
 		},
 		reply: make(chan error, 1),
 	}
@@ -471,7 +465,7 @@ func (syncOp *StreamSyncOperation) CancelSync(
 }
 
 func (syncOp *StreamSyncOperation) PingSync(
-	ctx context.Context,
+	_ context.Context,
 	req *connect.Request[PingSyncRequest],
 ) (*connect.Response[PingSyncResponse], error) {
 	if req.Msg.GetSyncId() != syncOp.SyncID {
@@ -480,13 +474,10 @@ func (syncOp *StreamSyncOperation) PingSync(
 			Func("PingSync")
 	}
 
-	cmd := &subCommand{
-		Ctx:     ctx,
-		PingReq: req.Msg.GetNonce(),
-		reply:   make(chan error, 1),
-	}
-
-	if err := syncOp.process(cmd); err != nil {
+	if err := syncOp.messages.AddMessage(&SyncStreamsResponse{
+		SyncOp:    SyncOp_SYNC_PONG,
+		PongNonce: req.Msg.GetNonce(),
+	}); err != nil {
 		return nil, AsRiverError(err).Func("PingSync")
 	}
 

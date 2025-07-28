@@ -43,7 +43,6 @@
       "group": "Learn",
       "pages": [
         "introduction",
-        "introduction/technical-whitepaper",
         {
           "group": "Towns Smart Contracts",
           "pages": [
@@ -205,6 +204,17 @@
             "sdk/react-sdk/api/useUserGdms",
             "sdk/react-sdk/api/useUserSpaces"
           ]
+        }
+      ]
+    },
+    {
+      "group": "White Paper",
+      "pages": [
+        "white-paper/towns-technical-overview",
+        "white-paper/technical-whitepaper",
+        {
+          "name": "MiCA Whitepaper",
+          "url": "https://www.towns.com/mica-whitepaper.pdf"
         }
       ]
     }

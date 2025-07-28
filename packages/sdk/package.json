@@ -1,13 +1,10 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.273",
+    "version": "0.0.287",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -15,12 +12,12 @@
         "dev": "my-node src/index.ts",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "test:unit": "vitest run --config vitest.config.unit.ts",
         "test:ci": "yarn test:ci:multi:ne",
-        "test:ci:multi:ent:legacy": "vitest run --config vitest.config.multi_legacy.ts",
         "test:ci:multi:ent": "vitest run --config vitest.config.ts",
+        "test:ci:multi:ent:legacy": "vitest run --config vitest.config.multi_legacy.ts",
         "test:ci:multi:ne": "vitest run --config vitest.config.multi_ne.ts",
         "test:ci:with-entitlements": "yarn test:ci:multi:ent",
+        "test:unit": "vitest run --config vitest.config.unit.ts",
         "test:watch": "vitest --watch",
         "watch": "tsc --watch"
     },
@@ -68,5 +65,8 @@
     },
     "files": [
         "/dist"
-    ]
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
 }

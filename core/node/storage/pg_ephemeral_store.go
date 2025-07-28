@@ -53,7 +53,7 @@ func (s *PostgresStreamStore) lockEphemeralStream(
 func (s *PostgresStreamStore) CreateEphemeralStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
-	genesisMiniblock *WriteMiniblockData,
+	genesisMiniblock *MiniblockDescriptor,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -71,7 +71,7 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	genesisMiniblock *WriteMiniblockData,
+	genesisMiniblock *MiniblockDescriptor,
 ) error {
 	sql := s.sqlForStream(
 		`
@@ -149,7 +149,7 @@ func (s *PostgresStreamStore) readEphemeralMiniblockNumsTx(
 func (s *PostgresStreamStore) WriteEphemeralMiniblock(
 	ctx context.Context,
 	streamId StreamId,
-	miniblock *WriteMiniblockData,
+	miniblock *MiniblockDescriptor,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -175,7 +175,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	miniblock *WriteMiniblockData,
+	miniblock *MiniblockDescriptor,
 ) error {
 	// Query to insert a new ephemeral miniblock
 	query := s.sqlForStream("INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4);", streamId)

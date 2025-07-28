@@ -20,7 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -44,9 +43,8 @@ type StreamCacheParams struct {
 	AppliedBlockNum         crypto.BlockNumber
 	ChainMonitor            crypto.ChainMonitor // TODO: delete and use RiverChain.ChainMonitor
 	Metrics                 infra.MetricsFactory
-	RemoteMiniblockProvider RemoteMiniblockProvider
+	RemoteMiniblockProvider RemoteProvider
 	Scrubber                Scrubber
-	NodeRegistry            NodeRegistry
 	Tracer                  trace.Tracer
 	disableCallbacks        bool // for test purposes
 	streamCache             *StreamCache
@@ -73,7 +71,7 @@ type StreamCache struct {
 	loadStreamRecordCounter           *infra.StatusCounterVec
 	scheduledGetRecordTasksGauge      prometheus.Gauge
 	scheduledReconciliationTasksGauge prometheus.Gauge
-	retryableReconciliationTasksGauge  prometheus.Gauge
+	retryableReconciliationTasksGauge prometheus.Gauge
 
 	stoppedMu sync.RWMutex
 	stopped   bool
@@ -137,7 +135,7 @@ func NewStreamCache(params *StreamCacheParams) *StreamCache {
 			"Number of stream record loads",
 		),
 		chainConfig:                  params.ChainConfig,
-		onlineReconcileWorkerPool:         workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
+		onlineReconcileWorkerPool:    workerpool.New(params.Config.StreamReconciliation.OnlineWorkerPoolSize),
 		scheduledGetRecordTasks:      xsync.NewMap[StreamId, bool](),
 		scheduledReconciliationTasks: xsync.NewMap[StreamId, *reconcileTask](),
 		retryableReconciliationTasks: newRetryableReconciliationTasks(
@@ -513,7 +511,7 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 	err = s.params.Storage.CreateStreamStorage(
 		ctx,
 		streamId,
-		&storage.WriteMiniblockData{Data: mb},
+		&storage.MiniblockDescriptor{Data: mb},
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {

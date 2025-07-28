@@ -408,7 +408,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
-	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app)); err != nil {
+	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys").
 			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
@@ -878,21 +878,21 @@ func (s *Service) ValidateBotName(
 	error,
 ) {
 	// Validate input
-	if req.Msg.Name == "" {
+	if req.Msg.Username == "" {
 		return &connect.Response[ValidateBotNameResponse]{
 			Msg: &ValidateBotNameResponse{
 				IsAvailable:  false,
-				ErrorMessage: "name cannot be empty",
+				ErrorMessage: "username cannot be empty",
 			},
 		}, nil
 	}
 
-	// Check if name is already taken using the existing display name check
-	isAvailable, err := s.store.IsDisplayNameAvailable(ctx, req.Msg.Name)
+	// Check if username is already taken
+	isAvailable, err := s.store.IsUsernameAvailable(ctx, req.Msg.Username)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
-			Message("failed to check bot name availability").
-			Tag("name", req.Msg.Name).
+			Message("failed to check bot username availability").
+			Tag("username", req.Msg.Username).
 			Func("ValidateBotName")
 	}
 
@@ -900,7 +900,7 @@ func (s *Service) ValidateBotName(
 		return &connect.Response[ValidateBotNameResponse]{
 			Msg: &ValidateBotNameResponse{
 				IsAvailable:  false,
-				ErrorMessage: "name is already taken",
+				ErrorMessage: "username is already taken",
 			},
 		}, nil
 	}

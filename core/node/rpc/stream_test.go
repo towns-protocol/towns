@@ -312,13 +312,14 @@ func TestEphemeralMessageInChat(t *testing.T) {
 				return
 			}
 
-			// Check that all 4 ephemeral messages were received
-			for i, expectedMessage := range ephemeralMessages {
-				if syncedMessages[i].message != expectedMessage {
-					collect.Errorf("client %d: expected message %d to be '%s', got '%s'",
-						clientIdx, i, expectedMessage, syncedMessages[i].message)
-				}
+			// Check that all 4 ephemeral messages were received (order doesn't matter)
+			receivedMessageStrings := make([]string, len(syncedMessages))
+			for i, msg := range syncedMessages {
+				receivedMessageStrings[i] = msg.message
 			}
+
+			assert.ElementsMatch(collect, ephemeralMessages, receivedMessageStrings,
+				"client %d: messages don't match", clientIdx)
 		}
 	}, 20*time.Second, 25*time.Millisecond)
 

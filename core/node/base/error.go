@@ -15,11 +15,12 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/rpc"
-	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/protocol"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/exp/slices"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
 // Constants are not exported when go bindings are generated from solidity, so there is duplication here.
@@ -85,7 +86,11 @@ func RiverError(code protocol.Err, msg string, tags ...any) *RiverErrorImpl {
 }
 
 func RiverErrorWithBase(code protocol.Err, msg string, base error, tags ...any) *RiverErrorImpl {
-	return RiverErrorWithBases(code, msg, []error{base}, tags...)
+	var bases []error
+	if base != nil {
+		bases = []error{base}
+	}
+	return RiverErrorWithBases(code, msg, bases, tags...)
 }
 
 func RiverErrorWithBases(code protocol.Err, msg string, bases []error, tags ...any) *RiverErrorImpl {
@@ -234,7 +239,7 @@ func IsRiverError(err error) bool {
 }
 
 func IsRiverErrorCode(err error, code protocol.Err) bool {
-	return AsRiverError(err).Code == code
+	return err != nil && AsRiverError(err).Code == code
 }
 
 // IsCodeWithBases checks if the error or any of base errors match the given code.
@@ -486,5 +491,7 @@ func IsOperationRetriableOnRemotes(err error) bool {
 		protocol.Err_BUFFER_FULL,
 		protocol.Err_STREAM_RECONCILIATION_REQUIRED,
 		protocol.Err_MINIBLOCK_TOO_NEW,
+		protocol.Err_MINIBLOCKS_STORAGE_FAILURE,
+		protocol.Err_MINIBLOCKS_NOT_FOUND,
 	}, AsRiverError(err).Code)
 }

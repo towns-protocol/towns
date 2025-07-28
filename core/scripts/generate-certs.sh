@@ -38,7 +38,7 @@ fi
 
 echo "Generating server certs..."
 current_user=$(whoami)
-email="${current_user}@hntlabs.com"
+email="${current_user}@towns.com"
 
 # Determine if we're on Ubuntu or macOS to handle OpenSSL config location
 if [[ $(uname) == "Darwin" ]]; then

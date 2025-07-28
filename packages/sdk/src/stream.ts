@@ -164,7 +164,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 }
             }
 
-            const timeoutError = new Error(`waitFor timeout waiting for ${event}`)
+            const timeoutError = new Error(`waitFor timeout: ${this.streamId} ${event}`)
             // Set up the timeout
             const timeout = setTimeout(() => {
                 this.logEmitFromStream('waitFor timeout', this.streamId, event)

@@ -14,7 +14,7 @@ import (
 
 func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -22,7 +22,7 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 
 	// Create a stream first
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -37,7 +37,7 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 
 	// Now add blocks with gaps using ReinitializeStreamStorage with updateExisting=true
 	// This will add blocks 5-6, leaving gaps 1-4
-	additionalMiniblocks := []*WriteMiniblockData{
+	additionalMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   5,
 			Hash:     common.BytesToHash([]byte("block5")),
@@ -57,7 +57,7 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 	require.NoError(err)
 
 	// Prepare miniblocks to backfill gaps
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.BytesToHash([]byte("block1")),
@@ -101,7 +101,7 @@ func TestWritePrecedingMiniblocks_BasicBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -112,7 +112,7 @@ func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 	
 	// The test actually can't create real gaps with ReinitializeStreamStorage
 	// So we'll create continuous blocks and test the overlap behavior
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -155,7 +155,7 @@ func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 	require.NoError(err)
 
 	// Prepare overlapping backfill (includes existing block 2)
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.BytesToHash([]byte("block1")),
@@ -198,14 +198,14 @@ func TestWritePrecedingMiniblocks_PartialOverlap(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_StreamNotFound(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
 	ctx := params.ctx
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.BytesToHash([]byte("block1")),
@@ -222,7 +222,7 @@ func TestWritePrecedingMiniblocks_StreamNotFound(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -230,7 +230,7 @@ func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 
 	// Use the same approach as BasicBackfill test which works
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -255,7 +255,7 @@ func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 	require.NoError(err)
 
 	// Try to backfill with block >= last block (should fail validation)
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   2, // Equal to last block
 			Hash:     common.BytesToHash([]byte("block2_new")),
@@ -271,7 +271,7 @@ func TestWritePrecedingMiniblocks_InvalidRange(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -279,7 +279,7 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 
 	// Create a stream with initial block
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -292,7 +292,7 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 	require.NoError(err)
 	
 	// Add block 10 with gap using updateExisting
-	additionalMiniblocks := []*WriteMiniblockData{
+	additionalMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   10,
 			Hash:     common.BytesToHash([]byte("block10")),
@@ -305,7 +305,7 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 	require.NoError(err)
 
 	// Try to backfill with non-continuous blocks
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.BytesToHash([]byte("block1")),
@@ -327,7 +327,7 @@ func TestWritePrecedingMiniblocks_NonContinuous(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -335,7 +335,7 @@ func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 
 	// Create a stream
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -348,7 +348,7 @@ func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 	require.NoError(err)
 
 	// Empty list should return error
-	err = store.WritePrecedingMiniblocks(ctx, streamId, []*WriteMiniblockData{})
+	err = store.WritePrecedingMiniblocks(ctx, streamId, []*MiniblockDescriptor{})
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_INVALID_ARGUMENT))
 	require.Contains(err.Error(), "miniblocks cannot be empty")
@@ -356,7 +356,7 @@ func TestWritePrecedingMiniblocks_EmptyList(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -364,7 +364,7 @@ func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 
 	// Create a stream with continuous blocks
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	miniblocks := []*WriteMiniblockData{
+	miniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis")),
@@ -389,7 +389,7 @@ func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 	require.NoError(err)
 
 	// Try to backfill existing blocks (they should be skipped)
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte("genesis_new")),
@@ -418,7 +418,7 @@ func TestWritePrecedingMiniblocks_AllExisting(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -428,9 +428,9 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	
 	// First create blocks 0-600
-	initialMiniblocks := make([]*WriteMiniblockData, 601)
+	initialMiniblocks := make([]*MiniblockDescriptor, 601)
 	for i := 0; i <= 600; i++ {
-		initialMiniblocks[i] = &WriteMiniblockData{
+		initialMiniblocks[i] = &MiniblockDescriptor{
 			Number:   int64(i),
 			Hash:     common.BytesToHash([]byte{byte(i % 256)}),
 			Data:     []byte{byte(i % 256)},
@@ -445,9 +445,9 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	require.NoError(err)
 	
 	// Now add block 1000 to create a gap
-	additionalMiniblocks := make([]*WriteMiniblockData, 400)
+	additionalMiniblocks := make([]*MiniblockDescriptor, 400)
 	for i := 0; i < 400; i++ {
-		additionalMiniblocks[i] = &WriteMiniblockData{
+		additionalMiniblocks[i] = &MiniblockDescriptor{
 			Number:   int64(i + 601),
 			Hash:     common.BytesToHash([]byte{byte((i + 601) % 256)}),
 			Data:     []byte{byte((i + 601) % 256)},
@@ -462,9 +462,9 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 	require.NoError(err)
 
 	// Create large backfill
-	backfillBlocks := make([]*WriteMiniblockData, 500)
+	backfillBlocks := make([]*MiniblockDescriptor, 500)
 	for i := 0; i < 500; i++ {
-		backfillBlocks[i] = &WriteMiniblockData{
+		backfillBlocks[i] = &MiniblockDescriptor{
 			Number:   int64(i + 100), // 100-599
 			Hash:     common.BytesToHash([]byte{byte(i)}),
 			Data:     []byte{byte(i)},
@@ -487,7 +487,7 @@ func TestWritePrecedingMiniblocks_LargeBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -497,9 +497,9 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	
 	// Create blocks 0-10
-	miniblocks := make([]*WriteMiniblockData, 11)
+	miniblocks := make([]*MiniblockDescriptor, 11)
 	for i := 0; i <= 10; i++ {
-		miniblocks[i] = &WriteMiniblockData{
+		miniblocks[i] = &MiniblockDescriptor{
 			Number:   int64(i),
 			Hash:     common.BytesToHash([]byte{byte(i)}),
 			Data:     []byte{byte(i)},
@@ -514,7 +514,7 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 	require.NoError(err)
 
 	// Prepare two overlapping backfills
-	backfill1 := []*WriteMiniblockData{
+	backfill1 := []*MiniblockDescriptor{
 		{
 			Number:   1,
 			Hash:     common.BytesToHash([]byte("block1")),
@@ -529,7 +529,7 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 		},
 	}
 
-	backfill2 := []*WriteMiniblockData{
+	backfill2 := []*MiniblockDescriptor{
 		{
 			Number:   2,
 			Hash:     common.BytesToHash([]byte("block2_alt")),
@@ -567,7 +567,7 @@ func TestWritePrecedingMiniblocks_ConcurrentBackfill(t *testing.T) {
 
 func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	params := setupStreamStorageTest(t)
-	t.Cleanup(params.closer)
+
 
 	require := require.New(t)
 	store := params.pgStreamStore
@@ -577,7 +577,7 @@ func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	
 	// First create 0-2
-	initialMiniblocks := []*WriteMiniblockData{
+	initialMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   0,
 			Hash:     common.BytesToHash([]byte{0}),
@@ -602,7 +602,7 @@ func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	require.NoError(err)
 	
 	// Then add 3-5 to create continuous blocks
-	additionalMiniblocks := []*WriteMiniblockData{
+	additionalMiniblocks := []*MiniblockDescriptor{
 		{
 			Number:   3,
 			Hash:     common.BytesToHash([]byte{3}),
@@ -627,7 +627,7 @@ func TestWritePrecedingMiniblocks_ValidationBeforeWrite(t *testing.T) {
 	require.NoError(err)
 
 	// Mix of valid and invalid blocks (block 5 exists, block 6 > last)
-	backfillBlocks := []*WriteMiniblockData{
+	backfillBlocks := []*MiniblockDescriptor{
 		{
 			Number:   3,
 			Hash:     common.BytesToHash([]byte("block3")),

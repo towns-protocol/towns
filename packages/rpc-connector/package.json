@@ -1,34 +1,10 @@
 {
     "name": "@towns-protocol/rpc-connector",
-    "version": "0.0.273",
+    "version": "0.0.287",
     "packageManager": "yarn@3.8.0",
     "type": "module",
-    "publishConfig": {
-        "access": "public"
-    },
     "main": "./dist/node/index.cjs",
-    "module": "./dist/node/index.js",
     "types": "./dist/node/index.d.ts",
-    "sideEffects": false,
-    "exports": {
-        ".": {
-            "import": {
-                "node": "./dist/node/index.js",
-                "browser": "./dist/web/index.js",
-                "default": "./dist/web/index.js"
-            },
-            "require": {
-                "node": "./dist/node/index.cjs",
-                "browser": "./dist/web/index.cjs",
-                "default": "./dist/web/index.cjs"
-            }
-        },
-        "./common": {
-            "import": "./dist/common/index.js",
-            "require": "./dist/common/index.cjs"
-        },
-        "./package.json": "./package.json"
-    },
     "scripts": {
         "build": "tsdown",
         "cb": "yarn clean && yarn build",
@@ -54,6 +30,29 @@
         "typescript": "^5.8.2",
         "vitest": "^3.2.3"
     },
+    "exports": {
+        ".": {
+            "import": {
+                "node": "./dist/node/index.js",
+                "browser": "./dist/web/index.js",
+                "default": "./dist/web/index.js"
+            },
+            "require": {
+                "node": "./dist/node/index.cjs",
+                "browser": "./dist/web/index.cjs",
+                "default": "./dist/web/index.cjs"
+            }
+        },
+        "./common": {
+            "import": "./dist/common/index.js",
+            "require": "./dist/common/index.cjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "/dist"
+    ],
+    "module": "./dist/node/index.js",
     "peerDependencies": {
         "@connectrpc/connect-node": ">=2.0.0",
         "@connectrpc/connect-web": ">=2.0.0"
@@ -66,7 +65,8 @@
             "optional": true
         }
     },
-    "files": [
-        "/dist"
-    ]
+    "publishConfig": {
+        "access": "public"
+    },
+    "sideEffects": false
 }

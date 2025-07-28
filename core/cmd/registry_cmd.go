@@ -36,7 +36,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	"github.com/towns-protocol/towns/core/node/rpc"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -227,8 +227,8 @@ func validateStream(
 	request := connect.NewRequest(&GetStreamRequest{
 		StreamId: streamId[:],
 	})
-	request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-	request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+	request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 	response, err := streamServiceClient.GetStream(ctx, request)
 	if err != nil {
 		return err
@@ -439,8 +439,8 @@ func srStream(
 			request := connect.NewRequest(&GetLastMiniblockHashRequest{
 				StreamId: stream.Id[:],
 			})
-			request.Header().Set(rpc.RiverNoForwardHeader, rpc.RiverHeaderTrueValue)
-			request.Header().Set(rpc.RiverAllowNoQuorumHeader, rpc.RiverHeaderTrueValue)
+			request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+			request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
 
 			response, err := streamServiceClient.GetLastMiniblockHash(ctx, request)
 			if err != nil {

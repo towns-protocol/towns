@@ -1,4 +1,4 @@
-package rpc
+package remoteprovider
 
 import (
 	"context"
@@ -7,13 +7,24 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/events"
+	. "github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/rpcinterface"
 )
 
-var _ RemoteMiniblockProvider = (*Service)(nil)
+type remoteProviderImpl struct {
+	nodeRegistry NodeRegistry
+}
 
-func (s *Service) GetMbProposal(
+var _ RemoteProvider = (*remoteProviderImpl)(nil)
+
+func NewRemoteProvider(nodeRegistry NodeRegistry) *remoteProviderImpl {
+	return &remoteProviderImpl{nodeRegistry: nodeRegistry}
+}
+
+func (s *remoteProviderImpl) GetMbProposal(
 	ctx context.Context,
 	node common.Address,
 	request *ProposeMiniblockRequest,
@@ -34,7 +45,7 @@ func (s *Service) GetMbProposal(
 	return resp.Msg, nil
 }
 
-func (s *Service) SaveMbCandidate(
+func (s *remoteProviderImpl) SaveMbCandidate(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
@@ -58,7 +69,7 @@ func (s *Service) SaveMbCandidate(
 }
 
 // GetMbs returns a range of miniblocks from the given stream.
-func (s *Service) GetMbs(
+func (s *remoteProviderImpl) GetMbs(
 	ctx context.Context,
 	node common.Address,
 	streamId StreamId,
@@ -91,4 +102,43 @@ func (s *Service) GetMbs(
 	}
 
 	return mbs, nil
+}
+
+func (s *remoteProviderImpl) GetMiniblocksByIds(
+	ctx context.Context,
+	node common.Address,
+	req *GetMiniblocksByIdsRequest,
+) (rpcinterface.ServerStreamForClient[GetMiniblockResponse], error) {
+	remote, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
+	if err != nil {
+		return nil, err
+	}
+
+	return remote.GetMiniblocksByIds(ctx, connect.NewRequest(req))
+}
+
+func (s *remoteProviderImpl) GetLastMiniblockHash(
+	ctx context.Context,
+	node common.Address,
+	streamId StreamId,
+) (*MiniblockRef, error) {
+	remote, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
+	if err != nil {
+		return nil, err
+	}
+
+	req := connect.NewRequest(&GetLastMiniblockHashRequest{
+		StreamId: streamId[:],
+	})
+	req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+
+	resp, err := remote.GetLastMiniblockHash(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &MiniblockRef{
+		Hash: common.BytesToHash(resp.Msg.Hash),
+		Num:  resp.Msg.MiniblockNum,
+	}, nil
 }

@@ -923,44 +923,37 @@ func (r *StreamView) GetStreamSince(
 	addr common.Address,
 	cookie *SyncCookie,
 ) (*StreamAndCookie, error) {
-	log := logging.FromCtx(ctx)
-
 	if cookie.MinipoolGen == r.minipool.generation {
 		envelopes := make([]*Envelope, r.minipool.events.Len())
 		for i, e := range r.minipool.events.Values {
 			envelopes[i] = e.Envelope
 		}
 
-		// always send response, even if there are no events so that the client knows it's upToDate
+		// Always send response, even if there are no events so that the client knows it's up to date
 		return &StreamAndCookie{
 			Events:         envelopes,
 			NextSyncCookie: r.SyncCookie(addr),
 		}, nil
 	}
 
+	// Reset if index is not found or snapshot needs to be sent anyway
 	miniblockIndex, err := r.indexOfMiniblockWithNum(cookie.MinipoolGen)
-	if err != nil {
-		// The user's sync cookie is out of date. Send a sync reset and return an up-to-date StreamAndCookie.
-		log.Debugw("GetStreamSince: out of date cookie.MiniblockNum. Sending sync reset.",
-			"stream", r.streamId, "error", err.Error())
-
+	if err != nil || miniblockIndex <= r.snapshotIndex {
 		return r.GetResetStreamAndCookie(addr), nil
 	}
 
-	// append events from blocks
+	// TODO: FIX: do not flatten miniblocks here, send them as they are
+	// Append events from blocks and minipool
 	envelopes := make([]*Envelope, 0, 16)
 	err = r.forEachEvent(miniblockIndex, func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
 		envelopes = append(envelopes, e.Envelope)
 		return true, nil
 	})
 	if err != nil {
-		// "Should never happen: GetStreamSince: forEachEvent failed: "
-		logging.FromCtx(ctx).Errorw("GetStreamSince: forEachEvent failed", "error", err)
 		return nil, RiverError(Err_INTERNAL, "GetStreamSince: forEachEvent failed", "error", err).
 			Func("GetStreamSince")
 	}
 
-	// always send response, even if there are no events so that the client knows it's upToDate
 	return &StreamAndCookie{
 		Events:         envelopes,
 		NextSyncCookie: r.SyncCookie(addr),
@@ -1028,14 +1021,11 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(
 
 	// Get the snapshot envelope if present
 	var snapshot *Envelope
-	if r.snapshotIndex >= 0 && r.snapshotIndex < len(r.blocks) {
-		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
-	}
-
 	// Calculate snapshot index in the result safely
 	snapshotIndexInResult := int64(0)
-	if r.snapshotIndex >= startIndex {
+	if r.snapshotIndex >= startIndex && r.snapshotIndex < len(r.blocks) {
 		snapshotIndexInResult = int64(r.snapshotIndex - startIndex)
+		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
 	}
 
 	return &StreamAndCookie{

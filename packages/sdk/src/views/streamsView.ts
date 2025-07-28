@@ -27,6 +27,7 @@ import { dmsAndGdmsUnreadIdsTransform } from './transforms/dmsAndGdmsUnreadIdsTr
 import { blockedUserIdsTransform } from './transforms/blockedUserIdsTransform'
 import { NotificationSettings } from './streams/notificationSettings'
 import { SpaceUnreadsModel, spaceUnreadsTransform } from './transforms/spaceUnreadsTransform'
+import { streamMemberIdsSansUserTransform } from './transforms/streamMemberIdsSansUserTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -107,7 +108,7 @@ export class StreamsView {
         // to get the unread markers
         const unreadMarkers = combine({
             userId: myUserId,
-            myRemoteFullyReadMarkers: myRemoteFullyReadMarkers.throttle(10),
+            myRemoteFullyReadMarkers: myRemoteFullyReadMarkers,
             timelinesView: throttledTimelinesView,
         })
             .throttle(250)
@@ -127,10 +128,14 @@ export class StreamsView {
 
         const mySpaceIds = myMemberships.map(spaceIdsTransform)
 
-        const myDmsAndGdms = combine({
+        const streamMemberIdsSansCurrentUser = combine({
             userId: myUserId,
-            memberships: myMemberships,
             streamMemberIds: this.streamMemberIds,
+        }).map(streamMemberIdsSansUserTransform)
+
+        const myDmsAndGdms = combine({
+            memberships: myMemberships,
+            streamMemberIds: streamMemberIdsSansCurrentUser,
             dmStreams: this.dmStreams,
             gdmStreams: this.gdmStreams,
         })

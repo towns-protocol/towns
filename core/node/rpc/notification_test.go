@@ -51,6 +51,247 @@ func authenticateNS[T any](
 
 var notificationDeliveryDelay = 30 * time.Second
 
+func TestNotificationsColdStreams(t *testing.T) {
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	ctx := tester.ctx
+
+	nc := &notificationCapture{
+		WebPushNotifications: make(map[common.Hash]map[common.Address]int),
+		ApnPushNotifications: make(map[common.Hash]map[common.Address]int),
+	}
+
+	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
+
+	test := setupNotificationsColdStreams(ctx, tester)
+
+	event0 := test.sendMessageWithTags(ctx, test.initiator, "msg1", &Tags{})
+	eventHash0 := common.BytesToHash(event0.Hash)
+
+	_, err := makeMiniblock(ctx, test.streamClient, test.dmStreamID, false, 0)
+	test.req.NoError(err)
+
+	// initialize notifications service AFTER we've created the stream and sent a message
+	notificationService := initNotificationService(ctx, tester, nc)
+
+	notificationClient := protocolconnect.NewNotificationServiceClient(
+		httpClient, "https://"+notificationService.listener.Addr().String())
+
+	authClient := protocolconnect.NewAuthenticationServiceClient(
+		httpClient, "https://"+notificationService.listener.Addr().String())
+
+	subscribeWebPush(ctx, test.member, test.req, authClient, notificationClient)
+
+	event1 := test.sendMessageWithTags(ctx, test.initiator, "msg2", &Tags{})
+	eventHash1 := common.BytesToHash(event1.Hash)
+
+	test.req.Eventuallyf(func() bool {
+		nc.WebPushNotificationsMu.Lock()
+		defer nc.WebPushNotificationsMu.Unlock()
+
+		// eventHash0 should not have any notifications since it was sent before the notification service started
+		if _, exists := nc.WebPushNotifications[eventHash0]; exists {
+			return false
+		}
+
+		// Check that we have exactly 1 event hash
+		if len(nc.WebPushNotifications) != 1 {
+			return false
+		}
+
+		_, hasHash1 := nc.WebPushNotifications[eventHash1]
+		return hasHash1
+	}, notificationDeliveryDelay, 250*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
+}
+
+type notificationsColdStreamsTestContext struct {
+	req                           *require.Assertions
+	initiator                     *crypto.Wallet
+	InitiatorUserSettingsStreamID StreamId
+	member                        *crypto.Wallet
+	MemberUserSettingsStreamID    StreamId
+	dmStreamID                    StreamId
+	Channel                       *SyncCookie
+	streamClient                  protocolconnect.StreamServiceClient
+}
+
+func (tc *notificationsColdStreamsTestContext) sendMessageWithTags(
+	ctx context.Context,
+	from *crypto.Wallet,
+	messageContent string,
+	tags *Tags,
+) *Envelope {
+	return sendMessageWithTagsGeneric(ctx, from, messageContent, tags, tc.dmStreamID,
+		events.Make_DMChannelPayload_Message, tc.req, tc.streamClient)
+}
+
+func setupNotificationsColdStreams(
+	ctx context.Context,
+	tester *serviceTester,
+) *notificationsColdStreamsTestContext {
+	testCtx := &notificationsColdStreamsTestContext{
+		req:          tester.require,
+		streamClient: tester.testClient(0),
+	}
+
+	require := tester.require
+	client := testCtx.streamClient
+	var err error
+
+	testCtx.initiator, err = crypto.NewWallet(ctx)
+	require.NoError(err)
+
+	testCtx.InitiatorUserSettingsStreamID, _, _, err = createUserSettingsStream(
+		ctx,
+		testCtx.initiator,
+		testCtx.streamClient,
+		nil,
+	)
+	require.NoError(err)
+
+	user1SyncCookie, _, err := createUser(ctx, testCtx.initiator, client, nil)
+	require.NoError(err)
+	require.NotNil(user1SyncCookie)
+
+	_, _, err = createUserMetadataStream(ctx, testCtx.initiator, client, nil)
+	require.NoError(err)
+
+	testCtx.member, err = crypto.NewWallet(ctx)
+	require.NoError(err)
+
+	user2SyncCookie, _, err := createUser(ctx, testCtx.member, client, nil)
+	require.NoError(err)
+	require.NotNil(user2SyncCookie)
+
+	testCtx.MemberUserSettingsStreamID, _, _, err = createUserSettingsStream(
+		ctx,
+		testCtx.member,
+		testCtx.streamClient,
+		nil,
+	)
+	require.NoError(err)
+
+	_, _, err = createUserMetadataStream(ctx, testCtx.member, client, nil)
+	require.NoError(err)
+
+	testCtx.dmStreamID, err = DMStreamIdForUsers(testCtx.initiator.Address[:], testCtx.member.Address[:])
+	require.NoError(err)
+	testCtx.Channel, _, err = createDMChannel(ctx, testCtx.initiator, testCtx.member, client, testCtx.dmStreamID, nil)
+	require.NoError(err)
+	require.NotNil(testCtx.Channel)
+
+	return testCtx
+}
+
+func subscribeWebPush(
+	ctx context.Context,
+	user *crypto.Wallet,
+	req *require.Assertions,
+	authClient protocolconnect.AuthenticationServiceClient,
+	notificationClient protocolconnect.NotificationServiceClient,
+) {
+	userID := user.Address
+
+	h := sha256.New()
+	h.Write(userID[:])
+	p256Dh := hex.EncodeToString(h.Sum(nil))
+	h.Write(userID[:])
+	auth := hex.EncodeToString(h.Sum(nil))
+
+	request := connect.NewRequest(&SubscribeWebPushRequest{
+		Subscription: &WebPushSubscriptionObject{
+			Endpoint: userID.String(), // (ab)used to determine who received a notification
+			Keys: &WebPushSubscriptionObjectKeys{
+				P256Dh: p256Dh,
+				Auth:   auth,
+			},
+		},
+	})
+
+	authenticateNS(ctx, req, authClient, user, request)
+
+	_, err := notificationClient.SubscribeWebPush(ctx, request)
+
+	req.NoError(err, "SubscribeWebPush failed")
+}
+
+func subscribeApnPush(
+	ctx context.Context,
+	user *crypto.Wallet,
+	req *require.Assertions,
+	authClient protocolconnect.AuthenticationServiceClient,
+	notificationClient protocolconnect.NotificationServiceClient,
+	pushVersion *NotificationPushVersion,
+) {
+	request := connect.NewRequest(&SubscribeAPNRequest{
+		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
+		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+	})
+
+	if pushVersion != nil {
+		request.Msg.PushVersion = *pushVersion
+	}
+
+	authenticateNS(ctx, req, authClient, user, request)
+	_, err := notificationClient.SubscribeAPN(ctx, request)
+
+	req.NoError(err, "SubscribeAPN failed")
+}
+
+func unsubscribeApnPush(
+	ctx context.Context,
+	user *crypto.Wallet,
+	req *require.Assertions,
+	authClient protocolconnect.AuthenticationServiceClient,
+	notificationClient protocolconnect.NotificationServiceClient,
+) {
+	request := connect.NewRequest(&UnsubscribeAPNRequest{
+		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
+	})
+
+	authenticateNS(ctx, req, authClient, user, request)
+	_, err := notificationClient.UnsubscribeAPN(ctx, request)
+
+	req.NoError(err, "UnsubscribeAPN failed")
+}
+
+// sendMessageWithTagsGeneric is a generic implementation for sending messages with tags
+func sendMessageWithTagsGeneric[T IsStreamEvent_Payload](
+	ctx context.Context,
+	from *crypto.Wallet,
+	messageContent string,
+	tags *Tags,
+	streamID StreamId,
+	payloadMaker func(string) T,
+	req *require.Assertions,
+	streamClient protocolconnect.StreamServiceClient,
+) *Envelope {
+	resp, err := streamClient.GetLastMiniblockHash(ctx, connect.NewRequest(
+		&GetLastMiniblockHashRequest{
+			StreamId: streamID[:],
+		}))
+	req.NoError(err)
+
+	payload := payloadMaker(messageContent)
+	event, err := events.MakeEnvelopeWithPayloadAndTags(
+		from,
+		payload,
+		&MiniblockRef{
+			Num:  resp.Msg.GetMiniblockNum(),
+			Hash: common.BytesToHash(resp.Msg.GetHash()),
+		},
+		tags,
+	)
+	req.NoError(err)
+
+	_, err = streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
+		StreamId: streamID[:],
+		Event:    event,
+	}))
+	req.NoError(err)
+
+	return event
+}
+
 // TestNotifications is designed in such a way that all tests are run in parallel
 // and share the same set of nodes, notification service and client.
 func TestNotifications(t *testing.T) {
@@ -134,7 +375,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 	userC := test.members[5]
 
 	// userA subscribes for APN
-	test.subscribeApnPush(ctx, userA)
+	subscribeApnPush(ctx, userA, test.req, test.authClient, test.notificationClient, nil)
 
 	// send a message from userC that userA must receive a notification for because A is a member of GDM.
 	expectedUsersToReceiveNotification := map[common.Address]int{userA.Address: 1}
@@ -148,12 +389,12 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return cmp.Equal(notificationsForEvent, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// userA unsubscribes and userB subscribes using the same device.
 	// for tests the deviceToken is the users wallet address, in this case
 	// userB "reuses" the device with deviceToken which is userA wallet address.
-	test.unsubscribeApnPush(ctx, userA)
+	unsubscribeApnPush(ctx, userA, test.req, test.authClient, test.notificationClient)
 
 	request := connect.NewRequest(&SubscribeAPNRequest{
 		DeviceToken: userA.Address[:],
@@ -191,7 +432,7 @@ func testGDMAPNNotificationAfterUnsubscribe(
 		notificationsForEvent := nc.ApnPushNotifications[eventHash]
 
 		return len(notificationsForEvent) != 0
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Receive unexpected notification")
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Receive unexpected notification")
 }
 
 func testGDMMessageWithNoMentionsRepliesAndReaction(
@@ -204,7 +445,7 @@ func testGDMMessageWithNoMentionsRepliesAndReaction(
 	// by default all members should receive a notification for GDM messages
 	for _, member := range test.members {
 		test.subscribeWebPush(ctx, member)
-		test.subscribeApnPush(ctx, member)
+		subscribeApnPush(ctx, member, test.req, test.authClient, test.notificationClient, nil)
 
 		expectedUsersToReceiveNotification[member.Address] = 1
 	}
@@ -260,7 +501,7 @@ func testGDMMessageWithNoMentionsRepliesAndReaction(
 
 		return cmp.Equal(webNotifications, expectedUsersToReceiveNotification) &&
 			cmp.Equal(apnNotifications, expectedUsersToReceiveNotification)
-	}, notificationDeliveryDelay, 2500*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
+	}, notificationDeliveryDelay, 100*time.Millisecond, "Didn't receive expected notifications for stream %s", test.gdmStreamID)
 
 	// Wait a bit to ensure that no more notifications come in
 	test.req.Never(func() bool {
@@ -402,8 +643,9 @@ func testDMMessageWithNotificationsMutedOnDmChannel(
 
 	test.subscribeWebPush(ctx, test.initiator)
 	test.subscribeWebPush(ctx, test.member)
-	test.subscribeApnPush(ctx, test.initiator)
-	test.subscribeApnPush(ctx, test.member)
+	pushVersion := NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2
+	subscribeApnPush(ctx, test.initiator, test.req, test.authClient, test.notificationClient, &pushVersion)
+	subscribeApnPush(ctx, test.member, test.req, test.authClient, test.notificationClient, &pushVersion)
 
 	// send a message and ensure that all expected notification are captured
 	event := test.sendMessageWithTags(
@@ -436,8 +678,9 @@ func testDMMessageWithNotificationsMutedGlobal(
 
 	test.subscribeWebPush(ctx, test.initiator)
 	test.subscribeWebPush(ctx, test.member)
-	test.subscribeApnPush(ctx, test.initiator)
-	test.subscribeApnPush(ctx, test.member)
+	pushVersion := NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2
+	subscribeApnPush(ctx, test.initiator, test.req, test.authClient, test.notificationClient, &pushVersion)
+	subscribeApnPush(ctx, test.member, test.req, test.authClient, test.notificationClient, &pushVersion)
 
 	// send a message and ensure that all expected notification are captured
 	event := test.sendMessageWithTags(
@@ -470,8 +713,9 @@ func testDMMessageWithDefaultUserNotificationsPreferences(
 
 	test.subscribeWebPush(ctx, test.initiator)
 	test.subscribeWebPush(ctx, test.member)
-	test.subscribeApnPush(ctx, test.initiator)
-	test.subscribeApnPush(ctx, test.member)
+	pushVersion := NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2
+	subscribeApnPush(ctx, test.initiator, test.req, test.authClient, test.notificationClient, &pushVersion)
+	subscribeApnPush(ctx, test.member, test.req, test.authClient, test.notificationClient, &pushVersion)
 
 	// send a message and ensure that all expected notification are captured
 	event := test.sendMessageWithTags(
@@ -525,8 +769,9 @@ func testDMMessageWithBlockedUser(
 
 	test.subscribeWebPush(ctx, test.initiator)
 	test.subscribeWebPush(ctx, test.member)
-	test.subscribeApnPush(ctx, test.initiator)
-	test.subscribeApnPush(ctx, test.member)
+	pushVersion := NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2
+	subscribeApnPush(ctx, test.initiator, test.req, test.authClient, test.notificationClient, &pushVersion)
+	subscribeApnPush(ctx, test.member, test.req, test.authClient, test.notificationClient, &pushVersion)
 
 	// send a message and ensure that all expected notification are captured
 	event := test.sendMessageWithTags(
@@ -590,13 +835,13 @@ func testSpaceChannelPlainMessage(
 	test *spaceChannelNotificationsTestContext,
 	nc *notificationCapture,
 ) {
-	// by default non of the members should receive a notification for this message
+	// by default, none of the members should receive a notification for this message
 	expectedUsersToReceiveNotification := make(map[common.Address]int)
 	for _, wallet := range test.members {
 		test.setSpaceChannelSetting(ctx, wallet, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_NO_MESSAGES)
 
 		test.subscribeWebPush(ctx, wallet)
-		test.subscribeApnPush(ctx, wallet)
+		subscribeApnPush(ctx, wallet, test.req, test.authClient, test.notificationClient, nil)
 	}
 
 	// enable for some members notifications for this message
@@ -656,7 +901,7 @@ func testSpaceChannelAtChannelTag(
 	expectedUsersToReceiveNotification := make(map[common.Address]int)
 	for _, wallet := range test.members[:10] {
 		test.subscribeWebPush(ctx, wallet)
-		test.subscribeApnPush(ctx, wallet)
+		subscribeApnPush(ctx, wallet, test.req, test.authClient, test.notificationClient, nil)
 		expectedUsersToReceiveNotification[wallet.Address] = 1
 	}
 
@@ -737,7 +982,7 @@ func testSpaceChannelMentionTag(
 
 	for _, wallet := range test.members[:10] {
 		test.subscribeWebPush(ctx, wallet)
-		test.subscribeApnPush(ctx, wallet)
+		subscribeApnPush(ctx, wallet, test.req, test.authClient, test.notificationClient, nil)
 		expectedUsersToReceiveNotification[wallet.Address] = struct{}{}
 		mentionedUsers = append(mentionedUsers, wallet.Address[:])
 	}
@@ -820,10 +1065,11 @@ func initNotificationService(
 	cfg.Notifications.Authentication.SessionToken.Key.Algorithm = "HS256"
 	cfg.Notifications.Authentication.SessionToken.Key.Key = hex.EncodeToString(key[:])
 	cfg.Notifications.StreamTracking.StreamsPerSyncSession = 4
+	cfg.Notifications.ColdStreamsEnabled = true
 
 	service, err := StartServerInNotificationMode(ctx, cfg, notifier, makeTestServerOpts(tester))
 	tester.require.NoError(err)
-	tester.cleanup(service.Close)
+	tester.t.Cleanup(service.Close)
 
 	return service
 }
@@ -1037,32 +1283,8 @@ func (tc *gdmChannelNotificationsTestContext) sendMessageWithTags(
 	messageContent string,
 	tags *Tags,
 ) *Envelope {
-	resp, err := tc.streamClient.GetLastMiniblockHash(ctx, connect.NewRequest(
-		&GetLastMiniblockHashRequest{
-			StreamId: tc.gdmStreamID[:],
-		}))
-	tc.req.NoError(err)
-
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
-		from,
-		events.Make_GDMChannelPayload_Message(messageContent),
-		&MiniblockRef{
-			Num:  resp.Msg.GetMiniblockNum(),
-			Hash: common.BytesToHash(resp.Msg.GetHash()),
-		},
-		tags,
-	)
-	tc.req.NoError(err)
-
-	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
-		StreamId: tc.gdmStreamID[:],
-		Event:    event,
-		Optional: false,
-	}))
-
-	tc.req.NoError(err)
-
-	return event
+	return sendMessageWithTagsGeneric(ctx, from, messageContent, tags, tc.gdmStreamID,
+		events.Make_GDMChannelPayload_Message, tc.req, tc.streamClient)
 }
 
 func (tc *gdmChannelNotificationsTestContext) sendTip(
@@ -1117,7 +1339,6 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 	aresp, err := tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: userStreamId[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1230,58 +1451,7 @@ func (tc *gdmChannelNotificationsTestContext) subscribeWebPush(
 	ctx context.Context,
 	user *crypto.Wallet,
 ) {
-	userID := user.Address
-
-	h := sha256.New()
-	h.Write(userID[:])
-	p256Dh := hex.EncodeToString(h.Sum(nil))
-	h.Write(userID[:])
-	auth := hex.EncodeToString(h.Sum(nil))
-
-	request := connect.NewRequest(&SubscribeWebPushRequest{
-		Subscription: &WebPushSubscriptionObject{
-			Endpoint: userID.String(), // (ab)used to determine who received a notification
-			Keys: &WebPushSubscriptionObjectKeys{
-				P256Dh: p256Dh,
-				Auth:   auth,
-			},
-		},
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-
-	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
-
-	tc.req.NoError(err, "SubscribeWebPush failed")
-}
-
-func (tc *gdmChannelNotificationsTestContext) subscribeApnPush(
-	ctx context.Context,
-	user *crypto.Wallet,
-) {
-	request := connect.NewRequest(&SubscribeAPNRequest{
-		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
-		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
-
-	tc.req.NoError(err, "SubscribeAPN failed")
-}
-
-func (tc *gdmChannelNotificationsTestContext) unsubscribeApnPush(
-	ctx context.Context,
-	user *crypto.Wallet,
-) {
-	request := connect.NewRequest(&UnsubscribeAPNRequest{
-		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-	_, err := tc.notificationClient.UnsubscribeAPN(ctx, request)
-
-	tc.req.NoError(err, "UnsubscribeAPN failed")
+	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
 
 func (tc *dmChannelNotificationsTestContext) sendMessageWithTags(
@@ -1290,32 +1460,8 @@ func (tc *dmChannelNotificationsTestContext) sendMessageWithTags(
 	messageContent string,
 	tags *Tags,
 ) *Envelope {
-	resp, err := tc.streamClient.GetLastMiniblockHash(ctx, connect.NewRequest(
-		&GetLastMiniblockHashRequest{
-			StreamId: tc.dmStreamID[:],
-		}))
-	tc.req.NoError(err)
-
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
-		from,
-		events.Make_DMChannelPayload_Message(messageContent),
-		&MiniblockRef{
-			Num:  resp.Msg.GetMiniblockNum(),
-			Hash: common.BytesToHash(resp.Msg.GetHash()),
-		},
-		tags,
-	)
-	tc.req.NoError(err)
-
-	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
-		StreamId: tc.dmStreamID[:],
-		Event:    event,
-		Optional: false,
-	}))
-
-	tc.req.NoError(err)
-
-	return event
+	return sendMessageWithTagsGeneric(ctx, from, messageContent, tags, tc.dmStreamID,
+		events.Make_DMChannelPayload_Message, tc.req, tc.streamClient)
 }
 
 func (tc *dmChannelNotificationsTestContext) blockUser(
@@ -1348,7 +1494,6 @@ func (tc *dmChannelNotificationsTestContext) blockUser(
 	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
 		StreamId: streamID[:],
 		Event:    event,
-		Optional: false,
 	}))
 
 	tc.req.NoError(err)
@@ -1394,46 +1539,7 @@ func (tc *dmChannelNotificationsTestContext) subscribeWebPush(
 	ctx context.Context,
 	user *crypto.Wallet,
 ) {
-	userID := user.Address
-	h := sha256.New()
-	h.Write(userID[:])
-	p256Dh := hex.EncodeToString(h.Sum(nil))
-	h.Write(userID[:])
-	auth := hex.EncodeToString(h.Sum(nil))
-
-	endpoint := userID.String() // (ab)used to determine who received a notification
-
-	request := connect.NewRequest(&SubscribeWebPushRequest{
-		Subscription: &WebPushSubscriptionObject{
-			Endpoint: endpoint,
-			Keys: &WebPushSubscriptionObjectKeys{
-				P256Dh: p256Dh,
-				Auth:   auth,
-			},
-		},
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-
-	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
-
-	tc.req.NoError(err, "SubscribeWebPush failed")
-}
-
-func (tc *dmChannelNotificationsTestContext) subscribeApnPush(
-	ctx context.Context,
-	user *crypto.Wallet,
-) {
-	request := connect.NewRequest(&SubscribeAPNRequest{
-		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
-		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
-		PushVersion: NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
-	})
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-
-	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
-
-	tc.req.NoError(err, "SubscribeAPN failed")
+	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
 
 type spaceChannelNotificationsTestContext struct {
@@ -1452,76 +1558,15 @@ func (tc *spaceChannelNotificationsTestContext) sendMessageWithTags(
 	messageContent string,
 	tags *Tags,
 ) *Envelope {
-	resp, err := tc.streamClient.GetLastMiniblockHash(ctx, connect.NewRequest(
-		&GetLastMiniblockHashRequest{
-			StreamId: tc.channelID[:],
-		}))
-	tc.req.NoError(err)
-
-	event, err := events.MakeEnvelopeWithPayloadAndTags(
-		from,
-		events.Make_ChannelPayload_Message(messageContent),
-		&MiniblockRef{
-			Num:  resp.Msg.GetMiniblockNum(),
-			Hash: common.BytesToHash(resp.Msg.GetHash()),
-		},
-		tags,
-	)
-	tc.req.NoError(err)
-
-	_, err = tc.streamClient.AddEvent(ctx, connect.NewRequest(&AddEventRequest{
-		StreamId: tc.channelID[:],
-		Event:    event,
-		Optional: false,
-	}))
-
-	tc.req.NoError(err)
-
-	return event
+	return sendMessageWithTagsGeneric(ctx, from, messageContent, tags, tc.channelID,
+		events.Make_ChannelPayload_Message, tc.req, tc.streamClient)
 }
 
 func (tc *spaceChannelNotificationsTestContext) subscribeWebPush(
 	ctx context.Context,
 	user *crypto.Wallet,
 ) {
-	userID := user.Address
-
-	h := sha256.New()
-	h.Write(userID[:])
-	p256Dh := hex.EncodeToString(h.Sum(nil))
-	h.Write(userID[:])
-	auth := hex.EncodeToString(h.Sum(nil))
-
-	request := connect.NewRequest(&SubscribeWebPushRequest{
-		Subscription: &WebPushSubscriptionObject{
-			Endpoint: userID.String(), // (ab)used to determine who received a notification
-			Keys: &WebPushSubscriptionObjectKeys{
-				P256Dh: p256Dh,
-				Auth:   auth,
-			},
-		},
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-	_, err := tc.notificationClient.SubscribeWebPush(ctx, request)
-
-	tc.req.NoError(err, "SubscribeWebPush failed")
-}
-
-func (tc *spaceChannelNotificationsTestContext) subscribeApnPush(
-	ctx context.Context,
-	user *crypto.Wallet,
-) {
-	request := connect.NewRequest(&SubscribeAPNRequest{
-		DeviceToken: user.Address[:], // (ab)used to determine who received a notification
-		Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
-	})
-
-	authenticateNS(ctx, tc.req, tc.authClient, user, request)
-
-	_, err := tc.notificationClient.SubscribeAPN(ctx, request)
-
-	tc.req.NoError(err, "SubscribeAPN failed")
+	subscribeWebPush(ctx, user, tc.req, tc.authClient, tc.notificationClient)
 }
 
 func (tc *spaceChannelNotificationsTestContext) setSpaceChannelSetting(
@@ -1748,7 +1793,7 @@ func testJoinExistingTown(
 	userNewlyJoined, err := crypto.NewWallet(ctx)
 	test.req.NoError(err)
 
-	test.subscribeApnPush(ctx, userNewlyJoined)
+	subscribeApnPush(ctx, userNewlyJoined, test.req, test.authClient, test.notificationClient, nil)
 	test.subscribeWebPush(ctx, userNewlyJoined)
 	test.setSpaceChannelSetting(ctx, userNewlyJoined, SpaceChannelSettingValue_SPACE_CHANNEL_SETTING_MESSAGES_ALL)
 

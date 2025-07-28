@@ -33,12 +33,14 @@ export class SyncedStreams {
         private readonly streamOpts?:
             | { useModifySync?: boolean; useSharedSyncer?: boolean }
             | undefined,
+        highPriorityStreamIds?: string[],
     ) {
         this.userId = userId
         this.rpcClient = rpcClient
         this.clientEmitter = clientEmitter
         this.log = dlog('csb:cl:sync').extend(this.logId)
         this.logError = dlogError('csb:cl:sync:stream').extend(this.logId)
+        this.highPriorityIds = new Set(highPriorityStreamIds ?? [])
     }
 
     public get syncState(): SyncState {
@@ -100,7 +102,7 @@ export class SyncedStreams {
         this.syncedStreamsLoop?.onNetworkStatusChanged(isOnline)
     }
 
-    public startSyncStreams() {
+    public startSyncStreams(lastAccessedAt: Record<string, number>) {
         const streamRecords = Array.from(this.streams.values())
             .filter((x) => isDefined(x.syncCookie))
             .map((stream) => ({ syncCookie: stream.syncCookie!, stream }))
@@ -113,6 +115,7 @@ export class SyncedStreams {
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
             this.streamOpts,
+            lastAccessedAt,
         )
         this.syncedStreamsLoop.start()
     }

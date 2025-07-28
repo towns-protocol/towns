@@ -122,7 +122,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -225,7 +225,6 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			numNodes:          testCfg.numNodes,
 			replicationFactor: testCfg.replFactor,
 			start:             true,
-			printTestLogs:     false,
 		},
 	)
 	ctx := tt.ctx
@@ -441,13 +440,13 @@ func setupTestChannelAndAddToSyncer(
 
 	msr.AddStream(
 		&river.StreamWithId{
-			Id: [32]byte(channelId),
+			Id: channelId,
 			Stream: river.Stream{
 				Nodes:     streamOnChain.Nodes(),
 				Reserved0: uint64(replFactor),
 			},
 		},
-		true,
+		track_streams.ApplyHistoricalContent{Enabled: true},
 	)
 
 	return channelId, channelHash, nil
@@ -459,8 +458,6 @@ func waitForMessagesDelivery(
 	eventTrackerMu *sync.Mutex,
 	eventTracker map[StreamId]map[string]int,
 	expectedMessages map[StreamId][]string,
-	timeout time.Duration,
-	pollInterval time.Duration,
 	failMessage string,
 ) {
 	require.EventuallyWithT(func(t *assert.CollectT) {
@@ -479,7 +476,7 @@ func waitForMessagesDelivery(
 				}
 			}
 		}
-	}, timeout, pollInterval, failMessage)
+	}, 30*time.Second, 100*time.Millisecond, failMessage)
 }
 
 // TestMultiSyncerWithNodeFailures stops nodes one at a time after streams have already started syncing. This
@@ -490,7 +487,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	replFactor := 5
 	tt := newServiceTester(
 		t,
-		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true, printTestLogs: false},
+		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true},
 	)
 	ctx := tt.ctx
 	require := tt.require
@@ -603,8 +600,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages from first batch were received",
 	)
 
@@ -626,8 +621,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages were received after first node failure",
 	)
 
@@ -649,8 +642,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		&eventTrackerMu,
 		eventTracker,
 		expectedMessages,
-		30*time.Second,
-		100*time.Millisecond,
 		"Not all messages were received after second node failure",
 	)
 
@@ -663,4 +654,344 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 	defer eventTrackerMu.Unlock()
 
 	verifyMessagesReceivedExactlyOnce(require, channelIds, expectedMessages, eventTracker)
+}
+
+// Common test setup for cold streams tests
+type coldStreamsTestContext struct {
+	tt             *serviceTester
+	ctx            context.Context
+	require        *require.Assertions
+	msr            *track_streams.MultiSyncRunner
+	client         protocolconnect.StreamServiceClient
+	wallet         *crypto.Wallet
+	spaceId        StreamId
+	streamEvents   chan eventRecord
+	eventTracker   map[StreamId]map[string]int
+	eventTrackerMu *sync.Mutex
+}
+
+// addStreamToSyncerNoHistory adds a stream to the syncer without historical content
+func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
+	tc.require.NoError(err)
+	tc.msr.AddStream(
+		&river.StreamWithId{
+			Id: streamId,
+			Stream: river.Stream{
+				Nodes:     streamOnChain.Nodes(),
+				Reserved0: uint64(tc.tt.opts.replicationFactor),
+			},
+		},
+		track_streams.ApplyHistoricalContent{
+			Enabled:           enabled,
+			FromMiniblockHash: fromMiniblockHash,
+		},
+	)
+}
+
+// waitForAndVerifyMessages waits for messages to be received and verifies the count
+func (tc *coldStreamsTestContext) waitForAndVerifyMessages(streamId StreamId, expectedCount int, timeout time.Duration) map[string]int {
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		return len(tc.eventTracker[streamId]) >= expectedCount
+	}, timeout, 100*time.Millisecond, "Not all messages were received")
+
+	tc.eventTrackerMu.Lock()
+	defer tc.eventTrackerMu.Unlock()
+	return tc.eventTracker[streamId]
+}
+
+// verifyNoMessages ensures no messages were received for a stream
+func (tc *coldStreamsTestContext) verifyNoMessages(streamId StreamId) {
+	tc.eventTrackerMu.Lock()
+	defer tc.eventTrackerMu.Unlock()
+	tc.require.Equal(0, len(tc.eventTracker[streamId]), "Stream should have no messages")
+}
+
+// setupColdStreamsTest creates the common test infrastructure for cold streams tests
+func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
+	numNodes := 3
+	replFactor := 2
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes:          numNodes,
+			replicationFactor: replFactor,
+			start:             true,
+		},
+	)
+	ctx := tt.ctx
+	require := tt.require
+
+	streamEvents := make(chan eventRecord, 2048)
+	eventTracker := make(map[StreamId]map[string]int)
+	var eventTrackerMu sync.Mutex
+
+	cfg := tt.getConfig()
+	riverContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		tt.btc.DeployerBlockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	require.NoError(err, "Error creating river registry contract for multi-sync runner")
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		riverContract,
+		common.Address{},
+		0,
+		tt.btc.DeployerBlockchain.ChainMonitor,
+		tt.btc.OnChainConfig,
+		tt.httpClient(),
+		tt.httpClientWithCert(0),
+		nil,
+	)
+	require.NoError(err, "Error creating node registry for multi-sync runner")
+
+	// Create MultiSyncRunner
+	msr := track_streams.NewMultiSyncRunner(
+		track_streams.NewTrackStreamsSyncMetrics(infra.NewMetricsFactory(nil, "", "")),
+		tt.btc.OnChainConfig,
+		[]nodes.NodeRegistry{nodeRegistry},
+		makeTrackedStreamConstructor(streamEvents),
+		config.StreamTrackingConfig{
+			StreamsPerSyncSession:     10,
+			NumWorkers:                5,
+			MaxConcurrentNodeRequests: 5,
+		},
+		nil,
+	)
+	go msr.Run(ctx)
+
+	client0 := tt.newTestClient(0, testClientOpts{}).client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, client0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	// Create space
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, client0, spaceId, nil)
+	require.NoError(err)
+
+	return &coldStreamsTestContext{
+		tt:             tt,
+		ctx:            ctx,
+		require:        require,
+		msr:            msr,
+		client:         client0,
+		wallet:         wallet,
+		spaceId:        spaceId,
+		streamEvents:   streamEvents,
+		eventTracker:   eventTracker,
+		eventTrackerMu: &eventTrackerMu,
+	}
+}
+
+func createAndVerifyMiniblockWithRetry(
+	ctx context.Context,
+	client protocolconnect.StreamServiceClient,
+	channelId StreamId,
+	miniblockRefs []MiniblockRef,
+	require *require.Assertions,
+) (*MiniblockRef, []MiniblockRef) {
+	maxRetries := 10
+	expectedNum := int64(0)
+	if len(miniblockRefs) > 0 {
+		expectedNum = miniblockRefs[len(miniblockRefs)-1].Num + 1
+	}
+
+	var mb *MiniblockRef
+	var err error
+
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		mb, err = makeMiniblock(ctx, client, channelId, false, -1)
+		require.NoError(err, "Failed to create miniblock on attempt %d", attempt+1)
+
+		if mb.Num == expectedNum {
+			// Success - got the expected sequential number
+			miniblockRefs = append(miniblockRefs, *mb)
+			return mb, miniblockRefs
+		}
+
+		// Wrong number, wait a bit before retrying
+		if attempt < maxRetries-1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+
+	// Failed after all retries
+	require.Failf("Failed to get sequential miniblock number",
+		"Expected miniblock num %d but got %d after %d retries",
+		expectedNum, mb.Num, maxRetries)
+	return nil, miniblockRefs
+}
+
+// createChannelWithMessages creates a channel and adds messages with miniblocks
+func createChannelWithMessages(
+	ctx context.Context,
+	tc *coldStreamsTestContext,
+	channelIndex int,
+	messagesPerChannel int,
+) (StreamId, *MiniblockRef, []MiniblockRef) {
+	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channel, channelHash, err := createChannel(
+		ctx,
+		tc.wallet,
+		tc.client,
+		tc.spaceId,
+		channelId,
+		&StreamSettings{DisableMiniblockCreation: true},
+	)
+	tc.require.NoError(err, "createChannel failed for channel %d", channelIndex)
+	tc.require.NotNil(channel)
+
+	tc.eventTrackerMu.Lock()
+	tc.eventTracker[channelId] = make(map[string]int)
+	tc.eventTrackerMu.Unlock()
+
+	// Create initial miniblock with retries
+	var miniblockRefs []MiniblockRef
+	_, miniblockRefs = createAndVerifyMiniblockWithRetry(ctx, tc.client, channelId, miniblockRefs, tc.require)
+
+	// Add messages and create miniblocks
+	for j := 0; j < messagesPerChannel; j++ {
+		msg := fmt.Sprintf("channel%d-msg%d", channelIndex, j)
+		addMessageToChannel(ctx, tc.client, tc.wallet, msg, channelId, channelHash, tc.require)
+
+		_, miniblockRefs = createAndVerifyMiniblockWithRetry(ctx, tc.client, channelId, miniblockRefs, tc.require)
+	}
+
+	return channelId, channelHash, miniblockRefs
+}
+
+// startColdStreamsEventCollector starts the event collector for tracking messages
+func startColdStreamsEventCollector(tc *coldStreamsTestContext) (context.CancelFunc, <-chan struct{}) {
+	updateTrackerForCounts := func(record eventRecord, ciphertext string) {
+		if _, streamExists := tc.eventTracker[record.streamId]; !streamExists {
+			tc.eventTracker[record.streamId] = make(map[string]int)
+		}
+		tc.eventTracker[record.streamId][ciphertext]++
+	}
+	return startEventCollector(
+		tc.ctx,
+		tc.streamEvents,
+		tc.eventTrackerMu,
+		updateTrackerForCounts,
+	)
+}
+
+// TestColdStreamsNoHistory tests cold streams with no historical content
+func TestColdStreamsNoHistory(t *testing.T) {
+	tc := setupColdStreamsTest(t)
+
+	// Create a channel with messages
+	channelId, _, _ := createChannelWithMessages(tc.ctx, tc, 0, 3)
+
+	// Start event collector
+	cancelCollector, eventCollectorDone := startColdStreamsEventCollector(tc)
+	defer cancelCollector()
+
+	// Add stream to syncer with no historical content
+	tc.addStreamToSyncer(channelId, false, nil)
+
+	// Wait a bit to ensure no events are received
+	time.Sleep(2 * time.Second)
+
+	// Verify no events received
+	tc.verifyNoMessages(channelId)
+
+	// Cleanup
+	cancelCollector()
+	<-eventCollectorDone
+}
+
+// TestColdStreamsFullHistory tests cold streams with full historical content
+func TestColdStreamsFullHistory(t *testing.T) {
+	tc := setupColdStreamsTest(t)
+
+	// Create channel with messages
+	messagesPerChannel := 3
+	channelId, _, _ := createChannelWithMessages(tc.ctx, tc, 1, messagesPerChannel)
+
+	// Start event collector
+	cancelCollector, eventCollectorDone := startColdStreamsEventCollector(tc)
+	defer cancelCollector()
+
+	// Add stream to syncer with full historical content
+	tc.addStreamToSyncer(channelId, true, nil)
+
+	// Wait for and verify messages
+	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
+
+	tc.require.Equal(messagesPerChannel, len(channelMessages), "Channel should have all %d messages", messagesPerChannel)
+	for i := 0; i < messagesPerChannel; i++ {
+		expectedMsg := fmt.Sprintf("channel1-msg%d", i)
+		count, found := channelMessages[expectedMsg]
+		tc.require.True(found, "Channel should have message: %s", expectedMsg)
+		tc.require.Equal(1, count, "Message %s should be received exactly once", expectedMsg)
+	}
+
+	// Cleanup
+	cancelCollector()
+	<-eventCollectorDone
+}
+
+// TestColdStreamsFromSpecificHash tests cold streams with historical content from a specific miniblock
+func TestColdStreamsFromSpecificHash(t *testing.T) {
+	tc := setupColdStreamsTest(t)
+
+	// Create channel with messages
+	messagesPerChannel := 3
+	channelId, _, miniblockRefs := createChannelWithMessages(tc.ctx, tc, 2, messagesPerChannel)
+
+	// Start event collector
+	cancelCollector, eventCollectorDone := startColdStreamsEventCollector(tc)
+	defer cancelCollector()
+
+	// Add stream to syncer with historical content from specific miniblock
+	// Start from miniblock 2 (which contains events after msg0)
+	tc.addStreamToSyncer(channelId, true, miniblockRefs[2].Hash[:])
+
+	// Wait for and verify messages
+	channelMessages := tc.waitForAndVerifyMessages(channelId, 2, 10*time.Second)
+
+	// When starting from miniblock 2, we should get all events from that miniblock onwards
+	// Since miniblock 2 was created after msg0, we should get msg1 and msg2
+	tc.require.Equal(2, len(channelMessages), "Channel should have 2 messages (from miniblock 2 onwards)")
+
+	// Verify msg0 is NOT present
+	_, found := channelMessages["channel2-msg0"]
+	tc.require.False(found, "Channel should not have msg0 (before miniblock 2)")
+
+	// Verify msg1 and msg2 are present
+	for i := 1; i < messagesPerChannel; i++ {
+		expectedMsg := fmt.Sprintf("channel2-msg%d", i)
+		count, found := channelMessages[expectedMsg]
+		tc.require.True(found, "Channel should have message: %s", expectedMsg)
+		tc.require.Equal(1, count, "Message %s should be received exactly once", expectedMsg)
+	}
+
+	// Cleanup
+	cancelCollector()
+	<-eventCollectorDone
+}
+
+// TestColdStreams runs all cold streams tests in parallel
+func TestColdStreams(t *testing.T) {
+	t.Run("NoHistory", func(t *testing.T) {
+		TestColdStreamsNoHistory(t)
+	})
+
+	t.Run("FullHistory", func(t *testing.T) {
+		TestColdStreamsFullHistory(t)
+	})
+
+	t.Run("FromSpecificHash", func(t *testing.T) {
+		TestColdStreamsFromSpecificHash(t)
+	})
 }

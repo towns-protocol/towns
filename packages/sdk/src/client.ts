@@ -24,12 +24,10 @@ import {
     FullyReadMarkers,
     FullyReadMarker,
     Envelope,
-    Miniblock,
     Err,
     ChannelMessage_Post_Attachment,
     MemberPayload_Nft,
     CreateStreamRequest,
-    AddEventResponse_Error,
     ChunkedMedia,
     UserBio,
     Tags,
@@ -111,7 +109,13 @@ import {
     contractAddressFromSpaceId,
     isUserId,
 } from './id'
-import { makeEvent, UnpackEnvelopeOpts, unpackStream, unpackStreamEx } from './sign'
+import {
+    makeEvent,
+    UnpackEnvelopeOpts,
+    unpackStream,
+    unpackStreamEx,
+    waitForStreamEx,
+} from './sign'
 import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import {
@@ -227,10 +231,6 @@ type SendBlockchainTransactionOptions = {
 }
 
 const defaultExcludeEventsInScrollback: ExclusionFilter = [
-    {
-        payload: 'memberPayload',
-        content: 'membership',
-    },
     {
         payload: 'memberPayload',
         content: 'keySolicitation',
@@ -352,12 +352,13 @@ export class Client
             opts?.unpackEnvelopeOpts,
             this.logId,
             opts?.streamOpts,
+            opts?.highPriorityStreamIds,
         )
         this.syncedStreamsExtensions = new SyncedStreamsExtension(
             opts?.highPriorityStreamIds,
             {
-                startSyncStreams: async () => {
-                    this.streams.startSyncStreams()
+                startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                    this.streams.startSyncStreams(lastAccessedAt)
                     this.decryptionExtensions?.start()
                 },
                 initStream: (streamId, allowGetStream, persistedData) =>
@@ -433,7 +434,6 @@ export class Client
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
-        this.on('streamInitialized', (s) => void this.onStreamInitialized(s))
         this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
@@ -749,8 +749,8 @@ export class Client
                 await this.rpcClient.createStream(request)
             const stream = this.createSyncedStream(streamId)
             if (!response.stream) {
-                // if a stream alread exists it will return a nil stream in the response, but no error
-                // fetch the stream to get the client in the rigth state
+                // if a stream already exists it will return a nil stream in the response, but no error
+                // fetch the stream to get the client in the right state
                 response = await this.rpcClient.getStream({ streamId: request.streamId })
             }
             const unpacked = await unpackStream(response.stream, this.opts?.unpackEnvelopeOpts)
@@ -1578,35 +1578,7 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-            const miniblocks: Miniblock[] = []
-            let seenEndOfStream = false
-            for await (const chunk of response) {
-                switch (chunk.data.case) {
-                    case 'miniblock':
-                        if (seenEndOfStream) {
-                            throw new Error(
-                                `GetStreamEx: received miniblock after minipool contents for stream ${streamIdAsString(
-                                    streamId,
-                                )}.`,
-                            )
-                        }
-                        miniblocks.push(chunk.data.value)
-                        break
-                    case 'minipool':
-                        // TODO: add minipool contents to the unpacked response
-                        break
-                    case undefined:
-                        seenEndOfStream = true
-                        break
-                }
-            }
-            if (!seenEndOfStream) {
-                throw new Error(
-                    `Failed receive all getStreamEx streaming responses for stream ${streamIdAsString(
-                        streamId,
-                    )}.`,
-                )
-            }
+            const miniblocks = await waitForStreamEx(streamId, response)
             const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
@@ -1720,22 +1692,6 @@ export class Client
     private onLeftStream = async (streamId: string): Promise<void> => {
         this.logEvent('onLeftStream', streamId)
         return await this.streams.removeStreamFromSync(streamId)
-    }
-
-    private onStreamInitialized = (streamId: string): void => {
-        const scrollbackUntilContentFound = async () => {
-            const stream = this.streams.get(streamId)
-            if (!stream) {
-                return
-            }
-            while (stream.view.getContent().needsScrollback()) {
-                const scrollback = await this.scrollback(streamId)
-                if (scrollback.terminus) {
-                    break
-                }
-            }
-        }
-        void scrollbackUntilContentFound()
     }
 
     private onStreamUpToDate = (streamId: string): void => {
@@ -2655,11 +2611,10 @@ export class Client
             method?: string
             localId?: string
             cleartext?: Uint8Array
-            optional?: boolean
             tags?: PlainMessage<Tags>
             ephemeral?: boolean
         } = {},
-    ): Promise<{ eventId: string; error?: AddEventResponse_Error }> {
+    ): Promise<{ eventId: string }> {
         // TODO: filter this.logged payload for PII reasons
         this.logCall(
             'await makeEventAndAddToStream',
@@ -2667,7 +2622,6 @@ export class Client
             streamId,
             payload,
             options.localId,
-            options.optional,
         )
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
@@ -2684,19 +2638,18 @@ export class Client
             isDefined(prevMiniblockNum),
             'no prev miniblock num for stream ' + streamIdAsString(streamId),
         )
-        const { eventId, error } = await this.makeEventWithHashAndAddToStream(
+        const { eventId } = await this.makeEventWithHashAndAddToStream(
             streamId,
             payload,
             prevHash,
             prevMiniblockNum,
-            options.optional,
             options.localId,
             options.cleartext,
             options.tags,
             undefined, // retryCount
             options.ephemeral,
         )
-        return { eventId, error }
+        return { eventId }
     }
 
     async makeEventWithHashAndAddToStream(
@@ -2704,13 +2657,12 @@ export class Client
         payload: PlainMessage<StreamEvent>['payload'],
         prevMiniblockHash: Uint8Array,
         prevMiniblockNum: bigint,
-        optional?: boolean,
         localId?: string,
         cleartext?: Uint8Array,
         tags?: PlainMessage<Tags>,
         retryCount?: number,
         ephemeral?: boolean,
-    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string; error?: AddEventResponse_Error }> {
+    ): Promise<{ prevMiniblockHash: Uint8Array; eventId: string }> {
         const streamIdStr = streamIdAsString(streamId)
         check(isDefined(streamIdStr) && streamIdStr !== '', 'streamId must be defined')
         const event = await makeEvent(
@@ -2735,16 +2687,15 @@ export class Client
         }
 
         try {
-            const { error } = await this.rpcClient.addEvent({
+            await this.rpcClient.addEvent({
                 streamId: streamIdAsBytes(streamId),
                 event,
-                optional,
             })
             if (localId) {
                 const stream = this.streams.get(streamId)
                 stream?.updateLocalEvent(localId, eventId, 'sent')
             }
-            return { prevMiniblockHash, eventId, error }
+            return { prevMiniblockHash, eventId }
         } catch (err) {
             // custom retry logic for addEvent
             // if we send up a stale prevMiniblockHash, the server will return a BAD_PREV_MINIBLOCK_HASH
@@ -2758,7 +2709,6 @@ export class Client
                     payload,
                     prevMiniblockHash,
                     prevMiniblockNum,
-                    optional,
                     isDefined(localId) ? eventId : undefined,
                     cleartext,
                     tags,
@@ -2941,6 +2891,7 @@ export class Client
         this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
         this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
     }
 
@@ -3027,7 +2978,7 @@ export class Client
             try {
                 if (deviceKeys.length === 0) {
                     // means we failed to download the device keys, we should enqueue a retry
-                    this.logInfo(
+                    this.logCall(
                         'encryptAndShareGroupSessions: no device keys to send',
                         inStreamId,
                         userId,
@@ -3046,7 +2997,7 @@ export class Client
                 const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
                 const { hash: miniblockHash, miniblockNum } = gslmhResp
                 if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logInfo("encryptAndShareGroupSessions: sent to user's devices", {
+                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
                         toStreamId,
                         deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
                     })
@@ -3069,9 +3020,9 @@ export class Client
             }
         })
 
-        this.logInfo('encryptAndShareGroupSessions: send to devices', promises.length)
+        this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
-        this.logInfo('encryptAndShareGroupSessions: done')
+        this.logCall('encryptAndShareGroupSessions: done')
     }
 
     // Encrypt event using GroupEncryption.

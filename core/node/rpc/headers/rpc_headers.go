@@ -1,0 +1,9 @@
+package headers
+
+const (
+	RiverNoForwardHeader     = "X-River-No-Forward" // Must be set to "true" to disable forwarding
+	RiverHeaderTrueValue     = "true"
+	RiverFromNodeHeader      = "X-River-From-Node"
+	RiverToNodeHeader        = "X-River-To-Node"
+	RiverAllowNoQuorumHeader = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
+)

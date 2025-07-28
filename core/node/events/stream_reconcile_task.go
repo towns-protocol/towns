@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
@@ -47,6 +46,10 @@ func (s *StreamCache) submitToPool(
 	pool *workerpool.WorkerPool,
 	task func(),
 ) {
+	if s.params.Config.StreamReconciliation.OnlineWorkerPoolSize == 0 {
+		return
+	}
+
 	s.stoppedMu.RLock()
 	defer s.stoppedMu.RUnlock()
 	if !s.stopped {
@@ -64,12 +67,11 @@ func (s *StreamCache) submitGetRecordTask(
 	}
 
 	s.submitToPool(pool, func() {
-		s.getRecordTask(pool, stream)
+		s.getRecordTask(stream)
 	})
 }
 
 func (s *StreamCache) getRecordTask(
-	pool *workerpool.WorkerPool,
 	stream *Stream,
 ) {
 	s.scheduledGetRecordTasks.Delete(stream.streamId)
@@ -84,7 +86,7 @@ func (s *StreamCache) getRecordTask(
 		return
 	}
 
-	s.submitReconciliationTask(pool, stream, streamRecord)
+	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
 }
 
 func (s *StreamCache) submitReconciliationTask(
@@ -115,13 +117,12 @@ func (s *StreamCache) submitReconciliationTask(
 
 	if schedule {
 		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, stream.StreamId())
+			s.reconciliationTask(stream.StreamId())
 		})
 	}
 }
 
 func (s *StreamCache) reconciliationTask(
-	pool *workerpool.WorkerPool,
 	streamId StreamId,
 ) {
 	corrupt := false
@@ -176,9 +177,8 @@ func (s *StreamCache) reconciliationTask(
 
 					return nil, xsync.DeleteOp
 				})
+			return
 		}
-
-		return
 	}
 
 	schedule := false
@@ -206,8 +206,8 @@ func (s *StreamCache) reconciliationTask(
 	}
 
 	if schedule {
-		s.submitToPool(pool, func() {
-			s.reconciliationTask(pool, streamId)
+		s.submitToPool(s.onlineReconcileWorkerPool, func() {
+			s.reconciliationTask(streamId)
 		})
 	}
 }
@@ -261,17 +261,11 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		// because nodes only register periodically new miniblocks to reduce transaction costs
 		// for non-replicated streams. In that case fetch the latest block number from the remote.
 		if nonReplicatedStream {
-			client, err := s.params.NodeRegistry.GetStreamServiceClientForAddress(remote)
+			mbRef, err := s.params.RemoteMiniblockProvider.GetLastMiniblockHash(ctx, remote, stream.streamId)
 			if err != nil {
 				continue
 			}
-			resp, err := client.GetLastMiniblockHash(ctx, connect.NewRequest(&GetLastMiniblockHashRequest{
-				StreamId: stream.streamId[:],
-			}))
-			if err != nil {
-				continue
-			}
-			toExclusive = max(toExclusive, resp.Msg.MiniblockNum+1)
+			toExclusive = max(toExclusive, mbRef.Num+1)
 		}
 
 		nextFromInclusive, err = s.reconcileStreamFromSinglePeer(stream, remote, fromInclusive, toExclusive)
@@ -283,9 +277,12 @@ func (s *StreamCache) reconcileStreamFromPeers(
 	}
 
 	if err != nil {
-		return AsRiverError(err, Err_UNAVAILABLE).
-			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive).
-			Message("No peer could provide miniblocks for stream reconciliation")
+		return RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"No peer could provide miniblocks for stream reconciliation",
+			err,
+		).
+			Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 	}
 
 	return RiverError(
@@ -296,7 +293,7 @@ func (s *StreamCache) reconcileStreamFromPeers(
 }
 
 // reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
-// It returns block number of last block successfully reconciled + 1.
+// It returns the block number of the last block successfully reconciled + 1.
 func (s *StreamCache) reconcileStreamFromSinglePeer(
 	stream *Stream,
 	remote common.Address,

@@ -17,13 +17,13 @@ func TestStreamTrimmer(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	pgStreamStore := params.pgStreamStore
-	defer params.closer()
+
 	require := require.New(t)
 
 	streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 	nonTrimmableStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
-	genesisMb := &WriteMiniblockData{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
+	genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
 
 	err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
 	require.NoError(err)
@@ -34,9 +34,9 @@ func TestStreamTrimmer(t *testing.T) {
 	testEnvelopes = append(testEnvelopes, []byte("event2"))
 
 	// Generate 54 miniblocks with snapshot on each 10th miniblock
-	mbs := make([]*WriteMiniblockData, 54)
+	mbs := make([]*MiniblockDescriptor, 54)
 	for i := 1; i <= 54; i++ {
-		mb := &WriteMiniblockData{
+		mb := &MiniblockDescriptor{
 			Number: int64(i),
 			Hash:   common.BytesToHash([]byte("block_hash" + strconv.Itoa(i))),
 			Data:   []byte("block" + strconv.Itoa(i)),
@@ -104,7 +104,7 @@ func TestStreamTrimmer(t *testing.T) {
 	}, time.Second*5, 100*time.Millisecond)
 
 	// Write a new miniblock with a snapshot and check if the stream is trimmed correctly
-	newMb := &WriteMiniblockData{
+	newMb := &MiniblockDescriptor{
 		Number:   55,
 		Hash:     common.BytesToHash([]byte("block_hash" + strconv.Itoa(55))),
 		Data:     []byte("block" + strconv.Itoa(55)),
@@ -113,7 +113,7 @@ func TestStreamTrimmer(t *testing.T) {
 	err = pgStreamStore.WriteMiniblocks(
 		ctx,
 		streamId,
-		[]*WriteMiniblockData{newMb},
+		[]*MiniblockDescriptor{newMb},
 		newMb.Number+1,
 		testEnvelopes,
 		newMb.Number,

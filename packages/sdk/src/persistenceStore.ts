@@ -84,6 +84,7 @@ async function fnReadRetryer<T>(
 }
 
 export interface IPersistenceStore {
+    setHighPriorityStreams(streamIds: string[]): void
     saveCleartext(eventId: string, cleartext: Uint8Array | string): Promise<void>
     getCleartext(eventId: string): Promise<Uint8Array | string | undefined>
     getCleartexts(eventIds: string[]): Promise<Record<string, Uint8Array | string> | undefined>
@@ -93,7 +94,10 @@ export interface IPersistenceStore {
         streamId: string,
         inPersistedSyncedStream?: ParsedPersistedSyncedStream,
     ): Promise<LoadedStream | undefined>
-    loadStreams(streamIds: string[]): Promise<Record<string, LoadedStream | undefined>>
+    loadStreams(streamIds: string[]): Promise<{
+        streams: Record<string, LoadedStream | undefined>
+        lastAccessedAt: Record<string, number>
+    }>
     saveMiniblock(streamId: string, miniblock: ParsedMiniblock): Promise<void>
     saveMiniblocks(
         streamId: string,
@@ -109,21 +113,23 @@ export interface IPersistenceStore {
     saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void>
 }
 
+const SCRATCH_ID = '0'
+type ScratchData = {
+    lastAccessedAt: { [streamId: string]: number }
+}
+
 export class PersistenceStore extends Dexie implements IPersistenceStore {
     cleartexts!: Table<{ cleartext: Uint8Array | string; eventId: string }>
     syncedStreams!: Table<{ streamId: string; data: Uint8Array }>
     miniblocks!: Table<{ streamId: string; miniblockNum: string; data: Uint8Array }>
     snapshots!: Table<{ streamId: string; data: { miniblockNum: bigint; snapshot: Uint8Array } }>
+    scratch!: Table<{ id: string; data: ScratchData }>
+
+    private scratchQueue: ((scratchData: ScratchData) => void)[] = []
+    private scratchTimerId: NodeJS.Timeout | undefined
 
     constructor(databaseName: string) {
         super(databaseName)
-
-        this.version(7).stores({
-            cleartexts: 'eventId',
-            syncedStreams: 'streamId',
-            miniblocks: '[streamId+miniblockNum]',
-            snapshots: 'streamId',
-        })
 
         // Version 6: changed how we store snapshots, drop all saved miniblocks, syncedStreams and snapshots
         this.version(8).upgrade((tx) => {
@@ -134,8 +140,40 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             ])
         })
 
+        this.version(9).stores({
+            cleartexts: 'eventId',
+            syncedStreams: 'streamId',
+            miniblocks: '[streamId+miniblockNum]',
+            snapshots: 'streamId',
+            scratch: 'id',
+        })
+
         this.requestPersistentStorage()
         this.logPersistenceStats()
+    }
+
+    setHighPriorityStreams(streamIds: string[]) {
+        this.scratchQueue.push((scratchData: ScratchData) => {
+            streamIds.forEach((streamId) => {
+                scratchData.lastAccessedAt[streamId] = Date.now()
+            })
+        })
+        clearTimeout(this.scratchTimerId)
+        this.scratchTimerId = setTimeout(() => {
+            this.processScratchQueue().catch((e) => {
+                logError('Error processing scratch queue', e)
+            })
+        }, 1000)
+    }
+
+    async processScratchQueue() {
+        const scratchData = (await this.scratch.get(SCRATCH_ID)) || {
+            id: SCRATCH_ID,
+            data: { lastAccessedAt: {} } satisfies ScratchData,
+        }
+        this.scratchQueue.forEach((fn) => fn(scratchData.data))
+        this.scratchQueue = []
+        await this.scratch.put({ id: SCRATCH_ID, data: scratchData.data })
     }
 
     async saveCleartext(eventId: string, cleartext: Uint8Array | string) {
@@ -184,6 +222,19 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             return undefined
         }
 
+        if (
+            persistedSyncedStream.lastMiniblockNum !==
+            persistedSyncedStream.syncCookie.minipoolGen - 1n
+        ) {
+            logError(
+                'Persisted miniblock num mismatch',
+                streamId,
+                persistedSyncedStream.lastMiniblockNum,
+                persistedSyncedStream.syncCookie.minipoolGen - 1n,
+            )
+            return undefined
+        }
+
         const miniblocks = await this.getMiniblocks(
             streamId,
             persistedSyncedStream.lastSnapshotMiniblockNum,
@@ -227,12 +278,14 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                   )
             : []
 
+        const minipoolEventIds = persistedSyncedStream.minipoolEvents.map((e) => e.hashStr)
         const snapshotEventIds = eventIdsFromSnapshot(snapshot.snapshot)
         const eventIds = miniblocks.flatMap((mb) => mb.events.map((e) => e.hashStr))
         const prependedEventIds = prependedMiniblocks.flatMap((mb) =>
             mb.events.map((e) => e.hashStr),
         )
         const cleartexts = await this.getCleartexts([
+            ...minipoolEventIds,
             ...eventIds,
             ...snapshotEventIds,
             ...prependedEventIds,
@@ -250,8 +303,9 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     async loadStreams(streamIds: string[]) {
         const result = await this.transaction(
             'r',
-            [this.syncedStreams, this.cleartexts, this.miniblocks, this.snapshots],
+            [this.syncedStreams, this.cleartexts, this.miniblocks, this.snapshots, this.scratch],
             async () => {
+                const scratchData = await this.scratch.get(SCRATCH_ID)
                 const syncedStreams = await this.getSyncedStreams(streamIds)
                 const retVal: Record<string, LoadedStream | undefined> = {}
                 for (const streamId of streamIds) {
@@ -262,7 +316,10 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                         }
                     }
                 }
-                return retVal
+                return {
+                    streams: retVal,
+                    lastAccessedAt: scratchData?.data.lastAccessedAt ?? {},
+                }
             },
         )
         return result
@@ -504,6 +561,10 @@ export function eventIdsFromSnapshot(snapshot: Snapshot): string[] {
 //Linting below is disable as this is a stub class which is used for testing and just follows the interface
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export class StubPersistenceStore implements IPersistenceStore {
+    setHighPriorityStreams(streamIds: string[]) {
+        return
+    }
+
     async saveCleartext(eventId: string, cleartext: Uint8Array) {
         return Promise.resolve()
     }
@@ -525,7 +586,7 @@ export class StubPersistenceStore implements IPersistenceStore {
     }
 
     async loadStreams(streamIds: string[]) {
-        return Promise.resolve({})
+        return Promise.resolve({ streams: {}, lastAccessedAt: {} })
     }
 
     async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {

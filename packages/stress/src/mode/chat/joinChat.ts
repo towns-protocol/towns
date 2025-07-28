@@ -58,6 +58,19 @@ export async function joinChat(client: StressClient, cfg: ChatConfig) {
         { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
     )
 
+    // Wait for membership minting to complete before proceeding
+    logger.info('waiting for membership minting to complete')
+    await client.waitFor(
+        () => {
+            return announceChannel.view.timeline.find(
+                channelMessagePostWhere(
+                    (value) => value.body === `MEMBERSHIPS_MINTED:${cfg.sessionId}`,
+                ),
+            )
+        },
+        { interval: 1000, timeoutMs: cfg.waitForChannelDecryptionTimeoutMs },
+    )
+
     if (client.clientIndex === cfg.localClients.startIndex) {
         logger.info('sharing keys')
         await client.streamsClient.ensureOutboundSession(announceChannelId, {

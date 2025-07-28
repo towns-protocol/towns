@@ -12,6 +12,11 @@ type CachedStreamData = {
 
 const cache: Record<string, CachedStreamData> = {}
 
+const getNodeForStreamRequests = new Map<
+	string,
+	Promise<{ url: string; lastMiniblockNum: BigNumber }>
+>()
+
 // TODO: remove this entire file
 export async function getNodeForStream(
 	logger: FastifyBaseLogger,
@@ -27,6 +32,25 @@ export async function getNodeForStream(
 		return { url: cachedData.url, lastMiniblockNum: cachedData.lastMiniblockNum }
 	}
 
+	const existing = getNodeForStreamRequests.get(streamId)
+	if (existing) {
+		return existing
+	}
+
+	try {
+		const promise = _getNodeForStream(logger, streamId, now)
+		getNodeForStreamRequests.set(streamId, promise)
+		return await promise
+	} finally {
+		getNodeForStreamRequests.delete(streamId)
+	}
+}
+
+async function _getNodeForStream(
+	logger: FastifyBaseLogger,
+	streamId: string,
+	now: number,
+): Promise<{ url: string; lastMiniblockNum: BigNumber }> {
 	const riverRegistry = getRiverRegistry()
 	const streamData = await riverRegistry.getStream(streamIdAsBytes(streamId))
 

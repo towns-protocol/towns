@@ -26,8 +26,7 @@ func parsedEvent(t *testing.T, envelope *Envelope) *ParsedEvent {
 }
 
 func TestLoad(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	cfg := crypto.DefaultOnChainSettings()
@@ -265,8 +264,7 @@ func toBytes(t *testing.T, mb *MiniblockInfo) []byte {
 }
 
 func TestMbHashConstraints(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	require := require.New(t)
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
@@ -360,8 +358,7 @@ func TestMbHashConstraints(t *testing.T) {
 }
 
 func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
-	ctx, cancel := test.NewTestContext()
-	defer cancel()
+	ctx := test.NewTestContext(t)
 	
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)

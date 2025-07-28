@@ -22,13 +22,12 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 	var (
 		require        = require.New(t)
 		N              = 3
-		ctx, cancel    = test.NewTestContext()
+		ctx            = test.NewTestContext(t)
 		resubmitPolicy = crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)
 		repricePolicy  = crypto.NewDefaultTransactionPricePolicy(0, 15_000_000_000, 0)
 		tc, errTC      = crypto.NewBlockchainTestContext(ctx, crypto.TestParams{NumKeys: 1})
 		pendingTxs     []crypto.TransactionPoolPendingTransaction
 	)
-	defer cancel()
 
 	require.NoError(errTC, "unable to construct block test context")
 
@@ -89,14 +88,13 @@ func TestNewTransactionPoolWithReplaceTx(t *testing.T) {
 func TestReplacementTxOnBoot(t *testing.T) {
 	var (
 		require             = require.New(t)
-		ctx, cancel         = test.NewTestContext()
-		rootCtx, rootCancel = context.WithCancel(ctx)
+		ctx                 = test.NewTestContext(t)
+		rootCtx, rootCancel = context.WithCancel(ctx) // TODO: is rootCtx really needed? What's its purpose?
 		tc, errTC           = crypto.NewBlockchainTestContext(
 			rootCtx,
 			crypto.TestParams{MineOnTx: false, AutoMine: false, NumKeys: 1},
 		)
 	)
-	defer cancel()
 	defer rootCancel()
 
 	require.NoError(errTC, "unable to construct block test context")

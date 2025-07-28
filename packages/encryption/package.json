@@ -1,13 +1,10 @@
 {
     "name": "@towns-protocol/encryption",
-    "version": "0.0.273",
+    "version": "0.0.287",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "publishConfig": {
-        "access": "public"
-    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -15,9 +12,9 @@
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
         "test": "vitest run",
-        "test:watch": "vitest --watch",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
+        "test:watch": "vitest --watch",
         "watch": "tsc --watch"
     },
     "dependencies": {
@@ -47,5 +44,8 @@
     },
     "files": [
         "dist"
-    ]
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
 }

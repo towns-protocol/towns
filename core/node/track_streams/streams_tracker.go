@@ -3,11 +3,11 @@ package track_streams
 import (
 	"context"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -27,7 +27,9 @@ import (
 // must provide the logic for determining which streams to track, and for constructing application-specific
 // tracked stream views.
 type StreamFilter interface {
-	TrackStream(streamID shared.StreamId) bool
+	// TrackStream
+	// inInit is true when the stream_tracker is initialized (usually when the process starts), otherwise it's false
+	TrackStream(streamID shared.StreamId, isInit bool) bool
 
 	NewTrackedStream(
 		ctx context.Context,
@@ -44,7 +46,13 @@ type StreamsTracker interface {
 
 	// A stream that does not meet criteria for tracking at the time it is created can later be added via
 	// AddStream. An error will be returned if the stream could not be successfully added to the sync runner.
-	AddStream(streamId shared.StreamId) error
+	// set ApplyHistoricalContent.Enabled to true if you want to apply the stream from inception/last snapshot.
+	// You can set ApplyHistoricalContent.FromMiniblockHash to the exact miniblock hash
+	// that should be applied, and all of the consecutive miniblocks (Enabled needs to be true as well)
+	AddStream(
+		streamId shared.StreamId,
+		applyHistoricalContent ApplyHistoricalContent,
+	) error
 }
 
 var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
@@ -61,7 +69,7 @@ type StreamsTrackerImpl struct {
 	onChainConfig   crypto.OnChainConfiguration
 	listener        StreamEventListener
 	metrics         *TrackStreamsSyncMetrics
-	tracked         sync.Map // map[shared.StreamId] = struct{}
+	tracked         *xsync.Map[shared.StreamId, struct{}]
 	multiSyncRunner *MultiSyncRunner
 }
 
@@ -91,6 +99,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		streamTracking,
 		nil,
 	)
+	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
 	// Subscribe to stream events in river registry
 	if err := tracker.riverRegistry.OnStreamEvent(
@@ -138,7 +147,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId()) {
+			if !tracker.filter.TrackStream(stream.StreamId(), true) {
 				return true
 			}
 
@@ -162,7 +171,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
 				// start tracking the stream, until the root ctx expires.
-				tracker.multiSyncRunner.AddStream(stream, false)
+				tracker.multiSyncRunner.AddStream(stream, ApplyHistoricalContent{Enabled: false})
 			}
 
 			return true
@@ -185,33 +194,34 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 	return nil
 }
 
-func (tracker *StreamsTrackerImpl) forwardStreamEventsFromInception(
-	streamId shared.StreamId,
-	nodes []common.Address,
+func (tracker *StreamsTrackerImpl) forwardStreamEvents(
+	streamWithId *river.StreamWithId,
+	applyHistoricalContent ApplyHistoricalContent,
 ) {
-	_, loaded := tracker.tracked.LoadOrStore(streamId, struct{}{})
+	_, loaded := tracker.tracked.LoadOrStore(streamWithId.StreamId(), struct{}{})
 	if !loaded {
-		stream := &river.StreamWithId{
-			Id: streamId,
-			Stream: river.Stream{
-				Reserved0: uint64(len(nodes)),
-				Nodes:     nodes,
-			},
-		}
-		tracker.multiSyncRunner.AddStream(stream, true)
+		tracker.multiSyncRunner.AddStream(streamWithId, applyHistoricalContent)
 	}
 }
 
-func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
+func (tracker *StreamsTrackerImpl) AddStream(
+	streamId shared.StreamId,
+	applyHistoricalContent ApplyHistoricalContent,
+) error {
+	// Check if the stream is already tracked, so we won't call the expensice GetStream.
+	// actually adding this stream to the tracked steams map is done in forwardStreamEvents
+	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
+		return nil
+	}
 	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
 	}
 
-	// Use tracker.ctx here so that the stream continues to  be synced after
+	// Use tracker.ctx here so that the stream continues to be synced after
 	// the originating request expires
-	tracker.forwardStreamEventsFromInception(streamId, stream.Nodes)
+	tracker.forwardStreamEvents(&river.StreamWithId{Id: streamId, Stream: stream}, applyHistoricalContent)
 	return nil
 }
 
@@ -219,37 +229,40 @@ func (tracker *StreamsTrackerImpl) AddStream(streamId shared.StreamId) error {
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAllocated(
-	ctx context.Context,
+	_ context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID) {
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-
-	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
+	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAdded(
-	ctx context.Context,
+	_ context.Context,
 	event *river.StreamState,
 ) {
-	streamID := event.GetStreamId()
-	if !tracker.filter.TrackStream(streamID) {
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-
-	tracker.forwardStreamEventsFromInception(streamID, event.Stream.Nodes())
+	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
-	context.Context,
-	*river.StreamMiniblockUpdate,
+	ctx context.Context,
+	event *river.StreamMiniblockUpdate,
 ) {
-	// miniblocks are processed when a stream event with a block header is received for the stream
+	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+		return
+	}
+	if err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]}); err != nil {
+		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
+			"streamId", event.GetStreamId(),
+			"error", err)
+	}
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(

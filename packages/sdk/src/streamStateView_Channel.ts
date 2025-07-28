@@ -10,7 +10,6 @@ import { DecryptedContent } from './encryptedContentTypes'
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
     spaceId: string = ''
-    private reachedRenderableContent = false
 
     constructor(streamId: string) {
         super()
@@ -19,10 +18,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
 
     getStreamParentId(): string | undefined {
         return this.spaceId
-    }
-
-    needsScrollback(): boolean {
-        return !this.reachedRenderableContent
     }
 
     applySnapshot(
@@ -46,10 +41,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                // if we have a refEventId it means we're a reaction or thread message
-                if (!payload.content.value.refEventId) {
-                    this.reachedRenderableContent = true
-                }
                 this.decryptEvent(
                     'channelMessage',
                     event,
@@ -79,9 +70,6 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'inception':
                 break
             case 'message':
-                if (!payload.content.value.refEventId) {
-                    this.reachedRenderableContent = true
-                }
                 this.decryptEvent(
                     'channelMessage',
                     event,

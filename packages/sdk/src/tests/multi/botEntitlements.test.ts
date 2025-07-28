@@ -128,14 +128,13 @@ describe('bot entitlements tests', () => {
         // Key solicitations require READ permission, not WRITE permission
         const payload = make_MemberPayload_KeySolicitation({
             deviceKey: 'bot-device-key',
-            sessionIds: [],
+            sessionIds: ['aaa'],
             fallbackKey: 'bot-fallback-key',
             isNewDevice: true,
         })
 
         // This should succeed because the bot has READ permission via app entitlements
-        const { error } = await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
-        expect(error).toBeUndefined()
+        await bot.makeEventAndAddToStream(restrictedChannelId!, payload)
 
         // Cleanup
         await bot.stopSync()

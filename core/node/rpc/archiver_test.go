@@ -284,7 +284,11 @@ func TestArchiveOneStream(t *testing.T) {
 	require.NoError(err)
 
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, nil)
-	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(ctx, nil, node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId))
+	httpClientWithCert, _ := testcert.GetHttp2LocalhostTLSClientWithCert(
+		ctx,
+		nil,
+		node2nodeauth.CertGetter(nil, wallet, tester.btc.ChainId),
+	)
 	var nodeRegistry nodes.NodeRegistry
 	nodeRegistry, err = nodes.LoadNodeRegistry(
 		ctx,
@@ -305,8 +309,8 @@ func TestArchiveOneStream(t *testing.T) {
 
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
-	tester.cleanup(pool.Pool.Close)
-	tester.cleanup(pool.StreamingPool.Close)
+	tester.t.Cleanup(pool.Pool.Close)
+	tester.t.Cleanup(pool.StreamingPool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
@@ -465,7 +469,7 @@ func TestArchiveContinuous(t *testing.T) {
 	serverCtx, serverCancel := context.WithCancel(ctx)
 	arch, err := StartServerInArchiveMode(serverCtx, archiveCfg, makeTestServerOpts(tester), false)
 	require.NoError(err)
-	tester.cleanup(arch.Close)
+	tester.t.Cleanup(arch.Close)
 	arch.Archiver.WaitForStart()
 	require.Len(arch.ExitSignal(), 0)
 

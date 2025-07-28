@@ -1,12 +1,12 @@
-import { BigNumber, BigNumberish, ContractTransaction, ethers, Signer } from 'ethers'
+import { BigNumber, ContractTransaction, ethers, Signer } from 'ethers'
 import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { dlogger } from '@towns-protocol/dlog'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IMulticallShim } from './IMulticallShim'
-import { TransactionOpts } from 'types/ContractTypes'
-const log = dlogger('csb:IMembershipShim')
+import { TransactionOpts } from '../types/ContractTypes'
+const logger = dlogger('csb:IMembershipShim')
 
 const { abi, connect } = MembershipFacet__factory
 
@@ -47,66 +47,127 @@ export class IMembershipShim extends BaseContractShim<typeof connect> {
 
     // If the caller doesn't provide an abort controller, create one and set a timeout
     // to abort the call after 20 seconds.
-    async listenForMembershipToken(
-        receiver: string,
-        providedAbortController?: AbortController,
-    ): Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
-        //
-        const timeoutController = providedAbortController ? undefined : new AbortController()
+    // exmample:
+    // const startListener = space.Membership.listenForMembershipToken({
+    //     receiver: recipient,
+    //     startingBlock: blockNumber,
+    // })
+    // await txn()
+    // const result = await startListener()
+    listenForMembershipToken(args: {
+        receiver: string
+        startingBlock: number
+        providedAbortController?: AbortController
+    }): () => Promise<{ issued: true; tokenId: string } | { issued: false; tokenId: undefined }> {
+        const { receiver, providedAbortController, startingBlock } = args
 
-        const abortTimeout = providedAbortController
-            ? undefined
-            : setTimeout(() => {
-                  log.error('joinSpace timeout')
-                  timeoutController?.abort()
-              }, 20_000)
+        return async () => {
+            const contract = this.read
+            const provider = contract.provider
+            const iface = contract.interface
 
-        const abortController = providedAbortController ?? timeoutController!
-        // TODO: this isn't picking up correct typed function signature, treating as string
-        const issuedFilter = this.read.filters['MembershipTokenIssued(address,uint256)'](
-            receiver,
-        ) as string
-        const rejectedFilter = this.read.filters['MembershipTokenRejected(address)'](
-            receiver,
-        ) as string
+            const issuedFilter =
+                contract.filters['MembershipTokenIssued(address,uint256)'](receiver)
+            const rejectedFilter = contract.filters['MembershipTokenRejected(address)'](receiver)
 
-        return new Promise<
-            { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
-        >((resolve, _reject) => {
-            const cleanup = () => {
-                this.read.off(issuedFilter, issuedListener)
-                this.read.off(rejectedFilter, rejectedListener)
-                abortController.signal.removeEventListener('abort', onAbort)
-                clearTimeout(abortTimeout)
-            }
-            const onAbort = () => {
-                cleanup()
-                resolve({ issued: false, tokenId: undefined })
-            }
-            const issuedListener = (recipient: string, tokenId: BigNumberish) => {
-                if (receiver === recipient) {
-                    log.log('MembershipTokenIssued', { receiver, recipient, tokenId })
-                    cleanup()
-                    resolve({ issued: true, tokenId: BigNumber.from(tokenId).toString() })
-                } else {
-                    // This techincally should never happen, but we should log it
-                    log.log('MembershipTokenIssued mismatch', { receiver, recipient, tokenId })
+            const abortController = providedAbortController ?? new AbortController()
+            const abortTimeout = providedAbortController
+                ? undefined
+                : setTimeout(() => {
+                      logger.error('joinSpace timeout')
+                      abortController.abort()
+                  }, 20_000)
+
+            const pollingInterval = 1_000
+            let lastCheckedBlock = startingBlock
+
+            return new Promise<
+                { issued: true; tokenId: string } | { issued: false; tokenId: undefined }
+            >((resolve) => {
+                let active = true
+
+                const cleanup = () => {
+                    active = false
+                    clearInterval(intervalId)
+                    abortController.signal.removeEventListener('abort', onAbort)
+                    if (abortTimeout) {
+                        clearTimeout(abortTimeout)
+                    }
                 }
-            }
 
-            const rejectedListener = (recipient: string) => {
-                if (receiver === recipient) {
+                const onAbort = () => {
                     cleanup()
                     resolve({ issued: false, tokenId: undefined })
-                } else {
-                    // This techincally should never happen, but we should log it
-                    log.log('MembershipTokenIssued mismatch', { receiver, recipient })
                 }
-            }
 
-            this.read.on(issuedFilter, issuedListener)
-            this.read.on(rejectedFilter, rejectedListener)
-            abortController.signal.addEventListener('abort', onAbort)
-        })
+                abortController.signal.addEventListener('abort', onAbort)
+
+                const intervalId = setInterval(() => {
+                    void (async () => {
+                        if (!active) {
+                            return
+                        }
+
+                        const currentBlock = await provider.getBlockNumber()
+                        if (currentBlock <= lastCheckedBlock) {
+                            return
+                        }
+
+                        try {
+                            // check for both issued and rejected logs
+                            const [issuedLogs, rejectedLogs] = await Promise.all([
+                                provider.getLogs({
+                                    ...issuedFilter,
+                                    fromBlock: lastCheckedBlock + 1,
+                                    toBlock: currentBlock,
+                                }),
+                                provider.getLogs({
+                                    ...rejectedFilter,
+                                    fromBlock: lastCheckedBlock + 1,
+                                    toBlock: currentBlock,
+                                }),
+                            ])
+
+                            for (const log of issuedLogs) {
+                                const parsed = iface.parseLog(log)
+                                const { recipient, tokenId } = parsed.args
+                                if (
+                                    recipient &&
+                                    typeof recipient === 'string' &&
+                                    recipient === receiver
+                                ) {
+                                    logger.log('MembershipTokenIssued', {
+                                        receiver,
+                                        recipient,
+                                        tokenId,
+                                    })
+                                    cleanup()
+                                    resolve({
+                                        issued: true,
+                                        tokenId: BigNumber.from(tokenId).toString(),
+                                    })
+                                    return
+                                }
+                            }
+
+                            for (const log of rejectedLogs) {
+                                const parsed = iface.parseLog(log)
+                                const { recipient } = parsed.args
+                                if (recipient === receiver) {
+                                    logger.log('MembershipTokenRejected', { receiver, recipient })
+                                    cleanup()
+                                    resolve({ issued: false, tokenId: undefined })
+                                    return
+                                }
+                            }
+
+                            lastCheckedBlock = currentBlock
+                        } catch (err) {
+                            logger.error('Log polling error', err)
+                        }
+                    })()
+                }, pollingInterval)
+            })
+        }
     }
 }
