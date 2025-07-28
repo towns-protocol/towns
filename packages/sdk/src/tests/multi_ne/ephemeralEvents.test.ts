@@ -122,7 +122,7 @@ describe('ephemeralEvents', () => {
 
         const ephemeralFulfillments: string[] = []
         alice.on('ephemeralKeyFulfillment', (event) => {
-            ephemeralFulfillments.push(event.userId)
+            ephemeralFulfillments.push(event.senderUserId)
         })
 
         await waitFor(() => {
