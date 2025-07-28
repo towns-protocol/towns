@@ -63,7 +63,7 @@ export type StreamEncryptionEvents = {
         sigBundle: EventSignatureBundle,
     ) => void
     userDeviceKeyMessage: (streamId: string, userId: string, userDevice: UserDevice) => void
-    ephemeralKeyFulfillment: (event: KeyFulfilmentData) => void
+    ephemeralKeyFulfillment: (event: KeyFulfilmentData & { senderUserId: string }) => void
 }
 
 export type SyncedStreamEvents = {

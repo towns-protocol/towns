@@ -170,7 +170,8 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 	})
 
 	// Acquire locks in order. Do not lock streams that are already syncing.
-	lockedStreamIDs := make([]StreamId, 0, len(streamIDs))
+	lockedStreamIDs := make([]StreamId, 0, len(orderedStreamIDs))
+	mutexesToLock := make(map[StreamId]*deadlock.Mutex)
 	for _, streamID := range orderedStreamIDs {
 		ss.streamLocks.Compute(
 			streamID,
@@ -182,7 +183,7 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 					if !loaded || streamLock == nil {
 						streamLock = &deadlock.Mutex{}
 					}
-					streamLock.Lock()
+					mutexesToLock[streamID] = streamLock
 					lockedStreamIDs = append(lockedStreamIDs, streamID)
 					return streamLock, xsync.UpdateOp
 				}
@@ -190,6 +191,10 @@ func (ss *SyncerSet) lockStreams(ctx context.Context, req ModifyRequest) func() 
 				return streamLock, xsync.CancelOp
 			},
 		)
+	}
+
+	for _, streamID := range lockedStreamIDs {
+		mutexesToLock[streamID].Lock()
 	}
 
 	return func() {

@@ -198,7 +198,9 @@ export class SyncedStream extends Stream implements ISyncedStream {
         const minipoolEvents = Array.from(this.view.minipoolEvents.values())
 
         const lastSnapshotMiniblockNum =
-            miniblock.header.snapshot !== undefined || miniblock.header.snapshotHash !== undefined
+            miniblock.header.snapshot !== undefined ||
+            (miniblock.header.snapshotHash !== undefined &&
+                bin_equal(miniblock.header.snapshotHash, snapshot?.hash))
                 ? miniblock.header.miniblockNum
                 : miniblock.header.prevSnapshotMiniblockNum
 

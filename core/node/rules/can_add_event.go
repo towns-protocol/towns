@@ -484,13 +484,13 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 
 		if shared.ValidChannelStreamId(params.streamView.StreamId()) {
 			return aeBuilder().
-				checkOneOf(params.creatorIsMember).
+				check(params.creatorIsMember).
 				check(ru.validKeySolicitation).
 				requireChainAuth(params.channelEntitlements(auth.PermissionRead)).
 				onChainAuthFailure(params.onEntitlementFailureForUserEvent)
 		} else {
 			return aeBuilder().
-				checkOneOf(params.creatorIsMember).
+				check(params.creatorIsMember).
 				check(ru.validKeySolicitation)
 		}
 	case *MemberPayload_KeyFulfillment_:
@@ -499,7 +499,7 @@ func (params *aeParams) canAddMemberPayload(payload *StreamEvent_MemberPayload) 
 			fulfillment: content.KeyFulfillment,
 		}
 		return aeBuilder().
-			checkOneOf(params.creatorIsMember).
+			check(params.creatorIsMember).
 			check(ru.validKeyFulfillment)
 	case *MemberPayload_DisplayName:
 		return aeBuilder().
