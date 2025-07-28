@@ -175,6 +175,9 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 				if st = ss.processAddingStream(ctx, req.SyncID, cookie, true); st != nil {
 					req.AddingFailureHandler(st)
 				}
+			} else {
+				// Call the failure handler for other error types (e.g., Err_UNAVAILABLE)
+				req.AddingFailureHandler(st)
 			}
 		}(cookie)
 	}
