@@ -8817,6 +8817,7 @@ __metadata:
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.14
     solhint: ^5.0.5
+    solidity-bytes-utils: ^0.8.4
   languageName: unknown
   linkType: soft
 
@@ -28140,6 +28141,13 @@ __metadata:
   bin:
     solhint: solhint.js
   checksum: 8fa19a4411564c79c17017fdc68d4cccff46a67b11da5fc6c435aab9b5c8b8c22f25ea49307d82b4ba03a87ff57e6b91be8f9fee5e95227e80b539905c07a7ec
+  languageName: node
+  linkType: hard
+
+"solidity-bytes-utils@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "solidity-bytes-utils@npm:0.8.4"
+  checksum: 3eb3d7628c60727e3c528fd4bf7a3427e2fb145b9793964605ccde81e774a4681f8778552670c7d95671a198387199e8fc1b042173449b044528284a508f9fc5
   languageName: node
   linkType: hard
 

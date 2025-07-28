@@ -27,7 +27,8 @@
     "@towns-protocol/diamond": "^0.6.1",
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
     "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
-    "solady": "^0.1.14"
+    "solady": "^0.1.14",
+    "solidity-bytes-utils": "^0.8.4"
   },
   "devDependencies": {
     "@openzeppelin/merkle-tree": "^1.0.8",
