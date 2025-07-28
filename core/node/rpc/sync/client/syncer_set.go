@@ -219,8 +219,7 @@ func (ss *SyncerSet) processAddingStream(
 
 	unlock := ss.lockStream(streamID)
 
-	syncer, found := ss.streamID2Syncer.Load(streamID)
-	if found {
+	if _, found := ss.streamID2Syncer.Load(streamID); found {
 		unlock()
 		// Backfill the given stream if it is added already.
 		ss.processBackfillingStream(ctx, syncID, syncID, cookie, failureHandler)
@@ -296,6 +295,10 @@ func (ss *SyncerSet) processBackfillingStream(
 	// The given stream must be syncing
 	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
+		// TODO:
+		//  Another process could have started adding the given stream to sync a bit earlier but did not finish yet.
+		//  In this case, we should wait for this process to finish by acquiring the lock.
+
 		failureHandler(&SyncStreamOpStatus{
 			StreamId: streamID[:],
 			Code:     int32(Err_NOT_FOUND),
