@@ -337,7 +337,7 @@ func TestModifyConcurrency(t *testing.T) {
 		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		mockStream.On("Unsub", mock.Anything).Return().Maybe()
-		
+
 		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
 		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
 
@@ -418,7 +418,7 @@ func TestModifyConcurrency(t *testing.T) {
 		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		mockStream.On("Unsub", mock.Anything).Return().Maybe()
-		
+
 		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
 		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
 
@@ -624,16 +624,8 @@ func TestProcessAddingStream(t *testing.T) {
 				cookie = tt.cookie(streamID)
 			}
 
-			var capturedStatus *SyncStreamOpStatus
-			handler := func(status *SyncStreamOpStatus) {
-				capturedStatus = status
-			}
-
 			// Execute
-			st := syncerSet.processAddingStream(ctx, "test-sync", cookie, false)
-			if st != nil {
-				handler(st)
-			}
+			capturedStatus := syncerSet.processAddingStream(ctx, "test-sync", cookie, false)
 
 			// Verify
 			if tt.expectFailure {
@@ -705,16 +697,8 @@ func TestProcessBackfillingStream(t *testing.T) {
 				tt.setupFunc(t, syncerSet, streamID)
 			}
 
-			var capturedStatus *SyncStreamOpStatus
-			handler := func(status *SyncStreamOpStatus) {
-				capturedStatus = status
-			}
-
 			// Execute
-			st := syncerSet.processBackfillingStream(ctx, "test-sync", "backfill-sync-1", cookie)
-			if st != nil {
-				handler(st)
-			}
+			capturedStatus := syncerSet.processBackfillingStream(ctx, "test-sync", "backfill-sync-1", cookie)
 
 			// Verify
 			if tt.expectFailure {
@@ -796,16 +780,8 @@ func TestProcessRemovingStream(t *testing.T) {
 				tt.setupFunc(t, syncerSet, streamID)
 			}
 
-			var capturedStatus *SyncStreamOpStatus
-			handler := func(status *SyncStreamOpStatus) {
-				capturedStatus = status
-			}
-
 			// Execute
-			st := syncerSet.processRemovingStream(ctx, streamID)
-			if st != nil {
-				handler(st)
-			}
+			capturedStatus := syncerSet.processRemovingStream(ctx, streamID)
 
 			// Verify
 			if tt.expectFailure {
