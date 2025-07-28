@@ -98,7 +98,7 @@ describe('streamRpcClientGetSince', () => {
 
     test('make block with 2 events', async () => {
         await client.info({
-            debug: ['make_miniblock', streamIdAsString(bobsSettingsStreamId), 'true'],
+            debug: ['make_miniblock', streamIdAsString(bobsSettingsStreamId), 'false'],
         })
         await waitFor(async () => {
             // eventually the block should get made and we should have miniblocks instead of events in the pool
