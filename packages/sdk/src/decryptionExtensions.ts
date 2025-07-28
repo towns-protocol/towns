@@ -1074,15 +1074,27 @@ export abstract class BaseDecryptionExtensions {
             return
         }
 
+        // in the fulfillment, for simplicity, we broadcast only the overlapping session ids that we are sending over
+        let fulfilledSessionIds = allSessions
+            .map((x) => x.sessionId)
+            .filter((x) => requestedSessionIds.has(x))
+            .sort()
+
+        // if we're not sending any overlapping session ids, we send the first 50 session ids for clarity
+        fulfilledSessionIds =
+            fulfilledSessionIds.length > 0
+                ? fulfilledSessionIds
+                : allSessions
+                      .map((x) => x.sessionId)
+                      .sort()
+                      .slice(0, Math.min(allSessions.length, 50))
+
         // send a single key fulfillment for all algorithms
         const { error } = await this.sendKeyFulfillment({
             streamId,
             userId: item.fromUserId,
             deviceKey: item.solicitation.deviceKey,
-            sessionIds: allSessions
-                .map((x) => x.sessionId)
-                .filter((x) => requestedSessionIds.has(x))
-                .sort(),
+            sessionIds: fulfilledSessionIds,
             ephemeral: item.ephemeral,
         })
 
