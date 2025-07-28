@@ -258,7 +258,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 
 	// Create MultiSyncRunner
 	msr := track_streams.NewMultiSyncRunner(
-		track_streams.NewTrackStreamsSyncMetrics(infra.NewMetricsFactory(nil, "", "")),
+		infra.NewMetricsFactory(nil, "", ""),
 		tt.btc.OnChainConfig,
 		[]nodes.NodeRegistry{nodeRegistry},
 		makeTrackedStreamConstructor(streamEvents),
@@ -520,7 +520,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 
 	// Create MultiSyncRunner
 	msr := track_streams.NewMultiSyncRunner(
-		track_streams.NewTrackStreamsSyncMetrics(infra.NewMetricsFactory(nil, "", "")),
+		infra.NewMetricsFactory(nil, "", ""),
 		tt.btc.OnChainConfig,
 		[]nodes.NodeRegistry{nodeRegistry},
 		makeTrackedStreamConstructor(streamEvents),
@@ -752,7 +752,7 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 
 	// Create MultiSyncRunner
 	msr := track_streams.NewMultiSyncRunner(
-		track_streams.NewTrackStreamsSyncMetrics(infra.NewMetricsFactory(nil, "", "")),
+		infra.NewMetricsFactory(nil, "", ""),
 		tt.btc.OnChainConfig,
 		[]nodes.NodeRegistry{nodeRegistry},
 		makeTrackedStreamConstructor(streamEvents),

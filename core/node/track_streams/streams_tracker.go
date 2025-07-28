@@ -68,7 +68,6 @@ type StreamsTrackerImpl struct {
 	riverRegistry   *registries.RiverRegistryContract
 	onChainConfig   crypto.OnChainConfiguration
 	listener        StreamEventListener
-	metrics         *TrackStreamsSyncMetrics
 	tracked         *xsync.Map[shared.StreamId, struct{}]
 	multiSyncRunner *MultiSyncRunner
 }
@@ -85,14 +84,13 @@ func (tracker *StreamsTrackerImpl) Init(
 	streamTracking config.StreamTrackingConfig,
 ) error {
 	tracker.ctx = ctx
-	tracker.metrics = NewTrackStreamsSyncMetrics(metricsFactory)
 	tracker.riverRegistry = riverRegistry
 	tracker.onChainConfig = onChainConfig
 	tracker.nodeRegistries = nodeRegistries
 	tracker.listener = listener
 	tracker.filter = filter
 	tracker.multiSyncRunner = NewMultiSyncRunner(
-		tracker.metrics,
+		metricsFactory,
 		onChainConfig,
 		nodeRegistries,
 		filter.NewTrackedStream,
