@@ -165,19 +165,16 @@ func (ss *SyncerSet) Modify(ctx context.Context, req ModifyRequest) error {
 			}
 
 			// Do not retry in specific cases such as if the stream not found or internal error.
-			if st.GetCode() != int32(Err_NOT_FOUND) && st.GetCode() != int32(Err_INTERNAL) {
-				req.AddingFailureHandler(st)
-				return
-			}
-
-			// 2. If the first attempt failed, try to force change node address in cookies and send the modify sync again.
-			// This sets the node address to the one returned in the failure status to make sure
-			// this is not going to be used in the next request.
-			// There could be a case when a client specifies a wrong node address which leads to errors.
-			// This case should be properly handled by using another node address.
-			cookie.NodeAddress = st.GetNodeAddress()
-			if st = ss.processAddingStream(ctx, req.SyncID, cookie, true); st != nil {
-				req.AddingFailureHandler(st)
+			if st.GetCode() == int32(Err_NOT_FOUND) || st.GetCode() == int32(Err_INTERNAL) {
+				// 2. If the first attempt failed, try to force change node address in cookies and send the modify sync again.
+				// This sets the node address to the one returned in the failure status to make sure
+				// this is not going to be used in the next request.
+				// There could be a case when a client specifies a wrong node address which leads to errors.
+				// This case should be properly handled by using another node address.
+				cookie.NodeAddress = st.GetNodeAddress()
+				if st = ss.processAddingStream(ctx, req.SyncID, cookie, true); st != nil {
+					req.AddingFailureHandler(st)
+				}
 			}
 		}(cookie)
 	}
