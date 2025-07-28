@@ -306,22 +306,17 @@ func (ss *SyncerSet) processBackfillingStream(
 		// The maximum time we wait is defined by modifySyncTimeout.
 		timeout := time.After(modifySyncTimeout)
 		for {
-			var stop bool
 			select {
 			case <-timeout:
-				stop = true
-				break
+				goto done
 			default:
 				time.Sleep(time.Millisecond * 100)
 				if syncer, found = ss.streamID2Syncer.Load(streamID); found {
-					stop = true
-					break
+					goto done
 				}
 			}
-			if stop {
-				break
-			}
 		}
+	done:
 
 		if !found {
 			return &SyncStreamOpStatus{
