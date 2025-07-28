@@ -1,6 +1,9 @@
 package debug_streams
 
 import (
+	"go.uber.org/zap/zapcore"
+
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -18,6 +21,8 @@ func init() {
 		streamId, err := shared.StreamIdFromString(streamIdStr)
 		if err == nil {
 			debugStreamMap[streamId] = true
+		} else {
+			logging.DefaultLogger(zapcore.InfoLevel).Errorw("Error parsing stream id", "raw", streamIdStr, "err", err)
 		}
 	}
 }
@@ -29,6 +34,10 @@ func init() {
 func IsDebugStream(streamId shared.StreamId) bool {
 	if _, ok := debugStreamMap[streamId]; ok {
 		return ok
+	}
+
+	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+		return false
 	}
 
 	_, ok := debugStreamMap[streamId.SpaceID()]
