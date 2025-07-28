@@ -21,6 +21,10 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	modifySyncTimeout = 10 * time.Second // Timeout for modifying sync state
+)
+
 type (
 	// MessageDistributor defines the contract for distributing messages to subscriptions
 	MessageDistributor interface {
@@ -249,7 +253,7 @@ func (ss *SyncerSet) processAddingStream(
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
 	defer cancel()
 
 	resp, _, err := syncer.Modify(ctx, &ModifySyncRequest{
@@ -295,19 +299,33 @@ func (ss *SyncerSet) processBackfillingStream(
 	// The given stream must be syncing
 	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
-		// TODO:
-		//  Another process could have started adding the given stream to sync a bit earlier but did not finish yet.
-		//  In this case, we should wait for this process to finish by acquiring the lock.
+		// Another process could have started adding the given stream to sync a bit earlier but did not finish yet.
+		// In this case, we should wait for this process to finish.
+		// The maximum time we wait is defined by modifySyncTimeout.
+		timeout := time.After(modifySyncTimeout)
+		for {
+			select {
+			case <-timeout:
+			default:
+			}
+			time.Sleep(time.Millisecond * 100)
+			syncer, found = ss.streamID2Syncer.Load(streamID)
+			if found {
+				break
+			}
+		}
 
-		failureHandler(&SyncStreamOpStatus{
-			StreamId: streamID[:],
-			Code:     int32(Err_NOT_FOUND),
-			Message:  "Stream must be syncing to be backfilled",
-		})
-		return
+		if !found {
+			failureHandler(&SyncStreamOpStatus{
+				StreamId: streamID[:],
+				Code:     int32(Err_NOT_FOUND),
+				Message:  "Stream must be syncing to be backfilled",
+			})
+			return
+		}
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
 	defer cancel()
 
 	resp, _, err := syncer.Modify(ctx, &ModifySyncRequest{
@@ -355,7 +373,7 @@ func (ss *SyncerSet) processRemovingStream(
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
 	defer cancel()
 
 	resp, _, err := syncer.Modify(ctx, &ModifySyncRequest{
