@@ -35,6 +35,13 @@ type (
 		DebugDropStream(ctx context.Context, streamID StreamId) (bool, error)
 	}
 
+	// ModifyRequest represents a request to modify the sync state of streams.
+	// 
+	// IMPORTANT: All failure handler callbacks (AddingFailureHandler, RemovingFailureHandler,
+	// BackfillingFailureHandler) are invoked while the corresponding stream is locked.
+	// These callbacks MUST NOT attempt to lock any stream as this will cause a deadlock.
+	// The callbacks should only perform non-blocking operations such as logging or
+	// queuing the failure for later processing.
 	ModifyRequest struct {
 		SyncID                    string
 		ToAdd                     []*SyncCookie
@@ -209,14 +216,15 @@ func (ss *SyncerSet) processAddingStream(
 		defer span.End()
 	}
 
+	unlock := ss.lockStream(streamID)
+
 	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if found {
+		unlock()
 		// Backfill the given stream if it is added already.
 		ss.processBackfillingStream(ctx, syncID, syncID, cookie, failureHandler)
 		return
 	}
-
-	unlock := ss.lockStream(streamID)
 	defer unlock()
 
 	selectedNode, nodeAvailable := ss.selectNodeForStream(ctx, cookie, false)
@@ -335,13 +343,13 @@ func (ss *SyncerSet) processRemovingStream(
 		defer span.End()
 	}
 
+	unlock := ss.lockStream(streamID)
+	defer unlock()
+
 	syncer, found := ss.streamID2Syncer.Load(streamID)
 	if !found {
 		return
 	}
-
-	unlock := ss.lockStream(streamID)
-	defer unlock()
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()

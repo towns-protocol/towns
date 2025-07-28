@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -50,6 +51,25 @@ func (m *mockStream) GetStickyPeer() common.Address {
 func (m *mockStream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	args := m.Called(currentPeer)
 	return args.Get(0).(common.Address)
+}
+
+func (m *mockStream) UpdatesSinceCookie(ctx context.Context, cookie *SyncCookie, callback func(streamAndCookie *StreamAndCookie) error) error {
+	args := m.Called(ctx, cookie, callback)
+	return args.Error(0)
+}
+
+func (m *mockStream) Sub(ctx context.Context, cookie *SyncCookie, r events.SyncResultReceiver) error {
+	args := m.Called(ctx, cookie, r)
+	return args.Error(0)
+}
+
+func (m *mockStream) Unsub(r events.SyncResultReceiver) {
+	m.Called(r)
+}
+
+func (m *mockStream) StreamId() StreamId {
+	args := m.Called()
+	return args.Get(0).(StreamId)
 }
 
 type mockMessageDistributor struct {
