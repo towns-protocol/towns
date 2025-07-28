@@ -30,6 +30,7 @@ import { SpaceUnreadsModel, spaceUnreadsTransform } from './transforms/spaceUnre
 import { streamMemberIdsSansUserTransform } from './transforms/streamMemberIdsSansUserTransform'
 import { Constant } from '../observable/constant'
 import { MembersNotInDms, membersNotInDmsTransform } from './transforms/membersNotInDmsTransform'
+import { mutedStreamIdsTransform } from './transforms/mutedStreamIdsTransform'
 
 export type StreamsViewDelegate = TimelinesViewDelegate
 
@@ -41,6 +42,7 @@ class Consts {
 // a view of all the streams
 export class StreamsView {
     readonly notificationSettings: NotificationSettings
+    readonly mutedStreamIds: Observable<Set<string>>
     readonly streamStatus: StreamStatus
     readonly streamMemberIds: StreamMemberIdsView
     readonly spaceStreams: SpaceStreamsView
@@ -77,6 +79,7 @@ export class StreamsView {
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
         this.notificationSettings = new NotificationSettings()
+        this.mutedStreamIds = this.notificationSettings.map(mutedStreamIdsTransform)
         this.streamStatus = new StreamStatus()
         this.streamMemberIds = new StreamMemberIdsView()
         this.userSettingsStreams = new UserSettingsStreamsView()
@@ -146,14 +149,18 @@ export class StreamsView {
             .throttle(250)
             .map(dmsAndGdmsTransform)
 
-        const myDmsAndGdmsUnreadIds = combine({ myDmsAndGdms, unreadMarkers })
+        const myDmsAndGdmsUnreadIds = combine({
+            mutedStreamIds: this.mutedStreamIds,
+            myDmsAndGdms,
+            unreadMarkers,
+        })
             .throttle(250)
             .map(dmsAndGdmsUnreadIdsTransform)
 
         const myBlockedUserIds = myRemoteUserBlocks.map(blockedUserIdsTransform)
 
         const mySpaceUnreads = combine({
-            notificationSettings: this.notificationSettings.map((x) => x.settings),
+            mutedStreamIds: this.mutedStreamIds,
             timelinesView: throttledTimelinesView,
             myUnreadMarkers: unreadMarkers,
         })
