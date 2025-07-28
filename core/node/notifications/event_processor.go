@@ -102,7 +102,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	if spaceID != nil {
 		l = l.With("space", *spaceID)
 	}
-	l.Debugw("Process event")
+	l.Infow("Process event")
 
 	kind := "new_message"
 	tags := event.Event.GetTags()
@@ -169,14 +169,14 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 		}
 
 		if !pref.HasSubscriptions() {
-			p.log.Debugw("User hasn't subscribed for notifications",
+			p.log.Infow("User hasn't subscribed for notifications",
 				"user", participant, "event", event.Hash)
 			return false
 		}
 
 		blocked := p.cache.IsBlocked(participant, sender)
 		if blocked {
-			p.log.Debugw("Message creator was blocked", "user", participant, "blocked_user", sender)
+			p.log.Infow("Message creator was blocked", "user", participant, "blocked_user", sender)
 			return false
 		}
 
@@ -231,6 +231,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 
 	recipients.Remove(sender)
 
+	p.log.Infow("onMesssageEvent", usersToNotify, usersToNotify)
 	for user, userPref := range usersToNotify {
 		p.sendNotification(ctx, user, userPref, spaceID, channelID, event, kind, members)
 	}
@@ -465,6 +466,8 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 	if len(userPref.Subscriptions.WebPush) > 0 {
 		eventBytesHex := hex.EncodeToString(eventBytes)
 
+		p.log.Infow("sending web notification", "channelId", channelID, "kind", kind, "members", members)
+
 		webPayload := map[string]interface{}{
 			"channelId": hex.EncodeToString(channelID[:]),
 			"kind":      kind,
@@ -502,7 +505,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub.Sub, event, webPayload)
 			if err == nil {
-				p.log.Debugw("Successfully sent web push notification",
+				p.log.Infow("Successfully sent web push notification",
 					"user", user,
 					"event", event.Hash,
 					"channelID", channelID,

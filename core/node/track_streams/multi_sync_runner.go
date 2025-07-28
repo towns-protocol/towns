@@ -669,6 +669,7 @@ func (msr *MultiSyncRunner) addToSync(
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
 
+	log.Infow("AddToSync", "streamId", record.streamId)
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
 		runner = newSyncSessionRunner(
