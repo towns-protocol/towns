@@ -300,8 +300,9 @@ func (ss *SyncerSet) processBackfillingStream(
 	if !found {
 		// Another process could have started adding the given stream to sync a bit earlier but did not finish yet.
 		// In this case, we should wait for this process to finish.
-		// The maximum time we wait is defined by modifySyncTimeout.
-		timeout := time.After(modifySyncTimeout)
+		// The maximum time we wait is defined by modifySyncTimeout/2. The timeout should be less than modifySyncTimeout
+		// otherwise the given logic is always going to fails with the context timeout error.
+		timeout := time.After(modifySyncTimeout / 2)
 		for {
 			select {
 			case <-timeout:
