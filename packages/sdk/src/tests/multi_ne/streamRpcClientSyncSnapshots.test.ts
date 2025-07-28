@@ -6,14 +6,14 @@ import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../.
 import { makeEvent, unpackStreamAndCookie } from '../../sign'
 import { isEqual } from 'lodash-es'
 
-describe('streamRpcClient using v2 sync', () => {
+describe('streamRpcClientEnsuresSnapshotsAreSent', () => {
     let alicesContext: SignerContext
 
     beforeEach(async () => {
         alicesContext = await makeRandomUserContext()
     })
 
-    test('syncStreamsGetsSyncId', async () => {
+    test('lookForSnapshots', async () => {
         const aliceClient = await makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserInboxStreamId = streamIdToBytes(makeUserInboxStreamId(alicesUserId))
@@ -40,58 +40,53 @@ describe('streamRpcClient using v2 sync', () => {
                 syncPos: [alicesUserInboxStream.stream!.nextSyncCookie!],
             })
 
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                let c = 0
-                for await (const resp of syncStreams) {
-                    c += 1
-                    if (resp.syncOp === SyncOp.SYNC_NEW) {
-                        syncId = resp.syncId
-                    } else if (resp.syncOp === SyncOp.SYNC_UPDATE) {
-                        const streamAndCookie = resp.stream
-                        if (!streamAndCookie) {
-                            continue
-                        }
-                        const { events, snapshot } = await unpackStreamAndCookie(streamAndCookie, {
-                            disableHashValidation: false,
-                            disableSignatureValidation: true,
-                        })
-                        alicesUserInboxStream.stream!.nextSyncCookie =
-                            streamAndCookie.nextSyncCookie
-                        for (const event of events) {
-                            if (event.event.payload.case === 'miniblockHeader') {
-                                // this is the test we're looking for
-                                if (
-                                    event.event.payload.value.snapshotHash !== undefined &&
-                                    !snapshot
-                                ) {
+            let snapshotObserved = 0
+            for await (const resp of syncStreams) {
+                if (resp.syncOp === SyncOp.SYNC_NEW) {
+                    syncId = resp.syncId
+                } else if (resp.syncOp === SyncOp.SYNC_UPDATE) {
+                    const streamAndCookie = resp.stream
+                    if (!streamAndCookie) {
+                        continue
+                    }
+                    const { events, snapshot } = await unpackStreamAndCookie(streamAndCookie, {
+                        disableHashValidation: false,
+                        disableSignatureValidation: true,
+                    })
+                    alicesUserInboxStream.stream!.nextSyncCookie = streamAndCookie.nextSyncCookie
+                    for (const event of events) {
+                        if (event.event.payload.case === 'miniblockHeader') {
+                            // this is the test we're looking for
+                            if (event.event.payload.value.snapshotHash !== undefined) {
+                                if (!snapshot) {
                                     didEnd = true
                                     throw new Error('Got snapshot hash but no snapshot')
                                 }
                                 if (
-                                    event.event.payload.value.snapshotHash !== undefined &&
                                     !isEqual(snapshot?.hash, event.event.payload.value.snapshotHash)
                                 ) {
                                     didEnd = true
                                     throw new Error('Snapshot hash mismatch')
                                 }
-                                prevMiniblockHash = event.hash
+                                snapshotObserved += 1
+                                if (snapshotObserved > 5) {
+                                    didEnd = true
+                                    return
+                                }
                             }
+                            if (event.event.payload.value.snapshot !== undefined) {
+                                didEnd = true
+                                throw new Error('Got snapshot in legacy format')
+                            }
+                            prevMiniblockHash = event.hash
                         }
-                    }
-
-                    if (c % 3 === 0) {
-                        syncStreams = aliceClient.syncStreams({
-                            syncPos: [alicesUserInboxStream.stream!.nextSyncCookie!],
-                        })
-                        break
                     }
                 }
             }
         }
 
         async function createEvents() {
-            for (let i = 0; i < 500; i++) {
+            for (let i = 0; i < 100000; i++) {
                 if (didEnd) {
                     return
                 }
@@ -109,6 +104,10 @@ describe('streamRpcClient using v2 sync', () => {
                     // this is ok, we're just trying to add a bunch of events and this sometimes fails w
                     // bad prevMiniblockHash
                 }
+            }
+
+            if (!didEnd) {
+                throw new Error('Did not end')
             }
         }
 
