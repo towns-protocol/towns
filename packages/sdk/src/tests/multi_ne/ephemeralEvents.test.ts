@@ -122,7 +122,7 @@ describe('ephemeralEvents', () => {
 
         const ephemeralFulfillments: string[] = []
         alice.on('ephemeralKeyFulfillment', (event) => {
-            ephemeralFulfillments.push(event.userId)
+            ephemeralFulfillments.push(event.senderUserId)
         })
 
         await waitFor(() => {
@@ -138,7 +138,7 @@ describe('ephemeralEvents', () => {
         await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
-        expect(ephemeralSolicitations).toEqual([true])
+        await waitFor(() => expect(ephemeralSolicitations).toEqual([true]))
 
         // Wait for at least one ephemeral fulfillment
         await waitFor(() => expect(ephemeralFulfillments.length).toBeGreaterThanOrEqual(1))

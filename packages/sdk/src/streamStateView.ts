@@ -378,7 +378,8 @@ export class StreamStateView {
                     userId: userIdFromAddress(fulfillment.userAddress),
                     deviceKey: fulfillment.deviceKey,
                     sessionIds: fulfillment.sessionIds,
-                } satisfies KeyFulfilmentData)
+                    senderUserId: event.creatorUserId,
+                } satisfies KeyFulfilmentData & { senderUserId: string })
                 break
             }
             case undefined:
