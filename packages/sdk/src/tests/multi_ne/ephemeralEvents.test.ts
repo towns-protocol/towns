@@ -138,7 +138,7 @@ describe('ephemeralEvents', () => {
         await expect(chuck.joinStream(streamId)).resolves.not.toThrow()
         await expect(chuckEventDecryptedPromise).resolves.not.toThrow()
 
-        await waitFor(() => expect(ephemeralSolicitations).toEqual([true]))
+        expect(ephemeralSolicitations).toEqual([true])
 
         // Wait for at least one ephemeral fulfillment
         await waitFor(() => expect(ephemeralFulfillments.length).toBeGreaterThanOrEqual(1))
