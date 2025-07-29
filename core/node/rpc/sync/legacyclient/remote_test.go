@@ -65,48 +65,41 @@ type mockStreamService struct {
 	noSendAndWaitForever context.Context
 }
 
+var _ protocolconnect.StreamServiceHandler = (*mockStreamService)(nil)
+
 func (m *mockStreamService) Info(ctx context.Context, c *connect.Request[InfoRequest]) (*connect.Response[InfoResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) CreateStream(ctx context.Context, c *connect.Request[CreateStreamRequest]) (*connect.Response[CreateStreamResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) CreateMediaStream(ctx context.Context, c *connect.Request[CreateMediaStreamRequest]) (*connect.Response[CreateMediaStreamResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) GetStream(ctx context.Context, c *connect.Request[GetStreamRequest]) (*connect.Response[GetStreamResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) GetStreamEx(ctx context.Context, c *connect.Request[GetStreamExRequest], c2 *connect.ServerStream[GetStreamExResponse]) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) GetMiniblocks(ctx context.Context, c *connect.Request[GetMiniblocksRequest]) (*connect.Response[GetMiniblocksResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) GetLastMiniblockHash(ctx context.Context, c *connect.Request[GetLastMiniblockHashRequest]) (*connect.Response[GetLastMiniblockHashResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) AddEvent(ctx context.Context, c *connect.Request[AddEventRequest]) (*connect.Response[AddEventResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) AddMediaEvent(ctx context.Context, c *connect.Request[AddMediaEventRequest]) (*connect.Response[AddMediaEventResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -114,42 +107,26 @@ func (m *mockStreamService) SyncStreams(ctx context.Context, req *connect.Reques
 	if m.noSendAndWaitForever != nil {
 		<-m.noSendAndWaitForever.Done()
 	}
-
-	//if err := res.Send(&SyncStreamsResponse{
-	//	SyncOp: SyncOp_SYNC_NEW,
-	//	SyncId: "some sync id",
-	//}); err != nil {
-	//	return err
-	//}
-
 	<-ctx.Done()
-
-	return nil
+	return ctx.Err()
 }
 
 func (m *mockStreamService) AddStreamToSync(ctx context.Context, c *connect.Request[AddStreamToSyncRequest]) (*connect.Response[AddStreamToSyncResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) ModifySync(ctx context.Context, c *connect.Request[ModifySyncRequest]) (*connect.Response[ModifySyncResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) CancelSync(ctx context.Context, c *connect.Request[CancelSyncRequest]) (*connect.Response[CancelSyncResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) RemoveStreamFromSync(ctx context.Context, c *connect.Request[RemoveStreamFromSyncRequest]) (*connect.Response[RemoveStreamFromSyncResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockStreamService) PingSync(ctx context.Context, c *connect.Request[PingSyncRequest]) (*connect.Response[PingSyncResponse], error) {
-	//TODO implement me
 	panic("implement me")
 }
-
-var _ protocolconnect.StreamServiceHandler = (*mockStreamService)(nil)
