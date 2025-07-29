@@ -19,6 +19,8 @@ import {console} from "forge-std/console.sol";
 contract InteractBridgeLayerZero is Interaction {
     using OptionsBuilder for bytes;
 
+    address internal BNB_MULTISIG = address(1);
+
     function addressToBytes32(address _addr) internal pure returns (bytes32) {
         return bytes32(uint256(uint160(_addr)));
     }
@@ -63,7 +65,7 @@ contract InteractBridgeLayerZero is Interaction {
         address towns = getDeployment("townsMainnet");
         address wrappedTowns = getDeployment("wTowns");
         uint256 amount = 11 ether;
-        uint32 dstEid = LibLayerZeroValues.getEid(56); // Ethereum
+        uint32 dstEid = LibLayerZeroValues.getEid(56); // Binance
 
         Towns oft = Towns(wrappedTowns);
 
@@ -71,9 +73,10 @@ contract InteractBridgeLayerZero is Interaction {
             65000,
             0
         );
+
         SendParam memory sendParam = SendParam({
             dstEid: dstEid,
-            to: addressToBytes32(deployer),
+            to: addressToBytes32(BNB_MULTISIG),
             amountLD: amount,
             minAmountLD: (amount * 95) / 100, // 5% slippage tolerance
             extraOptions: extraOptions,
