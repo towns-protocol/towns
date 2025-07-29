@@ -278,7 +278,7 @@ export class Client
     private creatingStreamIds = new Set<string>()
     private entitlementsDelegate: EntitlementsDelegate
     private decryptionExtensions?: BaseDecryptionExtensions
-    private syncedStreamsExtensions?: SyncedStreamsExtension
+    private syncedStreamsExtensions: SyncedStreamsExtension
     private persistenceStore: IPersistenceStore
     private defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId
     private pendingUsernames: Map<string, string> = new Map()
@@ -393,7 +393,6 @@ export class Client
     }
 
     get clientInitStatus(): ClientInitStatus {
-        check(this.syncedStreamsExtensions !== undefined, 'syncedStreamsExtensions must be set')
         return this.syncedStreamsExtensions.initStatus
     }
 
@@ -404,7 +403,7 @@ export class Client
     async stop(): Promise<void> {
         this.logCall('stop')
         await this.decryptionExtensions?.stop()
-        await this.syncedStreamsExtensions?.stop()
+        await this.syncedStreamsExtensions.stop()
         await this.stopSync()
     }
 
@@ -428,7 +427,6 @@ export class Client
 
     private initUserJoinedStreams() {
         assert(isDefined(this.userStreamId), 'userStreamId must be set')
-        assert(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be set')
         const stream = this.stream(this.userStreamId)
         assert(isDefined(stream), 'userStream must be set')
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
@@ -480,7 +478,6 @@ export class Client
         const initCrypto = await getTime(() => this.initCrypto(opts?.encryptionDeviceInit))
 
         check(isDefined(this.decryptionExtensions), 'decryptionExtensions must be defined')
-        check(isDefined(this.syncedStreamsExtensions), 'syncedStreamsExtensions must be defined')
 
         const [
             initUserStream,
@@ -1741,12 +1738,11 @@ export class Client
     }
 
     startSync() {
-        check(this.syncedStreamsExtensions !== undefined, 'syncedStreamsExtensions must be set')
         this.syncedStreamsExtensions.setStartSyncRequested(true)
     }
 
     async stopSync() {
-        this.syncedStreamsExtensions?.setStartSyncRequested(false)
+        this.syncedStreamsExtensions.setStartSyncRequested(false)
         await this.streams.stopSync()
     }
 
@@ -2890,7 +2886,7 @@ export class Client
     public setHighPriorityStreams(streamIds: string[]) {
         this.logCall('setHighPriorityStreams', streamIds)
         this.decryptionExtensions?.setHighPriorityStreams(streamIds)
-        this.syncedStreamsExtensions?.setHighPriorityStreams(streamIds)
+        this.syncedStreamsExtensions.setHighPriorityStreams(streamIds)
         this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
     }
