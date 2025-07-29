@@ -32,6 +32,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	modifySyncRequestTimeout = 10 * time.Second
+)
+
 type RemoteStreamSyncer interface {
 	client.StreamsSyncer
 	GetSyncId() string
@@ -134,7 +138,11 @@ func (ssr *syncSessionRunner) AddStream(
 			"syncId", ssr.GetSyncId(),
 			"targetNode", ssr.node,
 		)
-	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
+
+	modifyCtx, cancel := context.WithTimeout(ctx, modifySyncRequestTimeout)
+	defer cancel()
+
+	if resp, _, err := ssr.syncer.Modify(modifyCtx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
 			MinipoolGen:       record.minipoolGen,
