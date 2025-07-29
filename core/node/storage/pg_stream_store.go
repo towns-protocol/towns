@@ -799,7 +799,6 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		return nil, err
 	}
 
-
 	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
 	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
 	if startSeqNum < 0 {
@@ -837,6 +836,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			}
 			if len(blockdata) == 0 {
 				corrupt = true
+			}
+			if len(snapshot) == 0 {
+				snapshot = nil
 			}
 			miniblocks = append(miniblocks, &MiniblockDescriptor{
 				Number:   seqNum,
@@ -1214,22 +1216,16 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		return nil, err
 	}
 
-	var snapshotField string
+	var sql string
 	if omitSnapshot {
-		snapshotField = "NULL as snapshot"
+		sql = "SELECT blockdata, seq_num, NULL as snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num"
 	} else {
-		snapshotField = "snapshot"
+		sql = "SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num"
 	}
 
 	miniblocksRow, err := tx.Query(
 		ctx,
-		s.sqlForStream(
-			fmt.Sprintf(
-				"SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE seq_num >= $1 AND seq_num < $2 AND stream_id = $3 ORDER BY seq_num",
-				snapshotField,
-			),
-			streamId,
-		),
+		s.sqlForStream(sql, streamId),
 		fromInclusive,
 		toExclusive,
 		streamId,
@@ -1255,7 +1251,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 				Tag("streamId", streamId)
 		}
 		firstRow = false
-		
+
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").
@@ -1264,6 +1260,9 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 				Tag("streamId", streamId)
 		}
 		prevSeqNum = seqNum
+		if len(snapshot) == 0 {
+			snapshot = nil
+		}
 		miniblocks = append(miniblocks, &MiniblockDescriptor{
 			Number:   int64(seqNum),
 			Data:     blockdata,
@@ -2303,6 +2302,9 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	var data []byte
 	var snapshot []byte
 	if _, err := pgx.ForEachRow(candRows, []any{&num, &hashStr, &data, &snapshot}, func() error {
+		if len(snapshot) == 0 {
+			snapshot = nil
+		}
 		result.MbCandidates = append(result.MbCandidates, MiniblockDescriptor{
 			Number:   num,
 			Data:     data,
@@ -2355,7 +2357,7 @@ func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
 		"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3",
 		streamId,
 	)
-	
+
 	result, err := tx.Exec(ctx, query, streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
