@@ -13,13 +13,13 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/crypto"
-	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type ParsedEvent struct {
-	Event         *StreamEvent
-	Envelope      *Envelope
+	Event         *protocol.StreamEvent
+	Envelope      *protocol.Envelope
 	Hash          common.Hash
 	MiniblockRef  *MiniblockRef
 	SignerPubKey  []byte
@@ -31,18 +31,18 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 	if err == nil {
 		return b, nil
 	}
-	return nil, AsRiverError(err, Err_INTERNAL).
+	return nil, AsRiverError(err, protocol.Err_INTERNAL).
 		Message("Failed to marshal parsed event envelope to bytes").
 		Func("GetEnvelopeBytes")
 }
 
-func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
+func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 	if envelope == nil {
-		return nil, RiverError(Err_BAD_EVENT, "Nil envelope provided").Func("ParseEvent")
+		return nil, RiverError(protocol.Err_BAD_EVENT, "Nil envelope provided").Func("ParseEvent")
 	}
 	hash := TownsHashForEvents.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
-		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
+		return nil, RiverError(protocol.Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
 
 	signerPubKey, err := RecoverSignerPublicKey(hash[:], envelope.Signature)
@@ -50,10 +50,10 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		return nil, err
 	}
 
-	var streamEvent StreamEvent
+	var streamEvent protocol.StreamEvent
 	err = proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
-		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
+		return nil, AsRiverError(err, protocol.Err_INVALID_ARGUMENT).
 			Message("Failed to decode stream event from bytes").
 			Func("ParseEvent")
 	}
@@ -67,7 +67,7 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		)
 		if err != nil {
 			return nil, WrapRiverError(
-				Err_BAD_EVENT_SIGNATURE,
+				protocol.Err_BAD_EVENT_SIGNATURE,
 				err,
 			).Message("Bad signature").
 				Func("ParseEvent")
@@ -75,7 +75,7 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	} else {
 		address := PublicKeyToAddress(signerPubKey)
 		if !bytes.Equal(address.Bytes(), streamEvent.CreatorAddress) {
-			return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
+			return nil, RiverError(protocol.Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
 				"computed address", address,
 				"event creatorAddress", streamEvent.CreatorAddress)
 		}
@@ -115,7 +115,7 @@ func FormatEventToJsonSB(sb *strings.Builder, event *ParsedEvent) {
 }
 
 // TODO(HNT-1381): needs to be refactored
-func FormatEventsToJson(events []*Envelope) string {
+func FormatEventsToJson(events []*protocol.Envelope) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	for idx, event := range events {
@@ -138,12 +138,12 @@ func FormatEventsToJson(events []*Envelope) string {
 	return sb.String()
 }
 
-func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
+func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
 		parsedEvent, err := ParseEvent(event)
 		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_EVENT).
+			return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
 				Tag("CorruptEventIndex", i).
 				Func("ParseEvents")
 		}
@@ -153,61 +153,85 @@ func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 }
 
 // TODO: doesn't belong here, refactor
-func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
+func (e *ParsedEvent) GetChannelMessage() *protocol.ChannelPayload_Message {
 	switch payload := e.Event.Payload.(type) {
-	case *StreamEvent_ChannelPayload:
+	case *protocol.StreamEvent_ChannelPayload:
 		switch cp := payload.ChannelPayload.Content.(type) {
-		case *ChannelPayload_Message:
+		case *protocol.ChannelPayload_Message:
 			return cp
 		}
 	}
 	return nil
 }
 
-func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
+func (e *ParsedEvent) GetEncryptedMessage() *protocol.EncryptedData {
 	switch payload := e.Event.Payload.(type) {
-	case *StreamEvent_ChannelPayload:
+	case *protocol.StreamEvent_ChannelPayload:
 		switch cp := payload.ChannelPayload.Content.(type) {
-		case *ChannelPayload_Message:
+		case *protocol.ChannelPayload_Message:
 			return cp.Message
 		}
-	case *StreamEvent_DmChannelPayload:
+	case *protocol.StreamEvent_DmChannelPayload:
 		switch cp := payload.DmChannelPayload.Content.(type) {
-		case *DmChannelPayload_Message:
+		case *protocol.DmChannelPayload_Message:
 			return cp.Message
 		}
-	case *StreamEvent_GdmChannelPayload:
+	case *protocol.StreamEvent_GdmChannelPayload:
 		switch cp := payload.GdmChannelPayload.Content.(type) {
-		case *GdmChannelPayload_Message:
+		case *protocol.GdmChannelPayload_Message:
 			return cp.Message
 		}
 	}
 	return nil
 }
 
+type streamSettings struct {
+	DisableMiniblockCreation bool
+	LightStream              bool
+}
+
+type channelSettings struct {
+	Autojoin                bool
+	HideUserJoinLeaveEvents bool
+}
+
 // ParsedString prints the content of the ParsedEvent according to it's event type.
 func (e *ParsedEvent) ParsedString() string {
+	return e.ParsedStringWithIndent("")
+}
+
+func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 	switch payload := e.Event.Payload.(type) {
-	case *StreamEvent_ChannelPayload:
+	case *protocol.StreamEvent_ChannelPayload:
 		{
 			switch content := payload.ChannelPayload.Content.(type) {
-			case *ChannelPayload_Inception_:
+			case *protocol.ChannelPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						SpaceId  string
-						StreamId string
+						Type            string
+						SpaceId         string
+						StreamId        string
+						StreamSettings  streamSettings
+						ChannelSettings channelSettings
 					}{
 						Type:     "ChannelPayload_Inception",
 						SpaceId:  hex.EncodeToString(content.Inception.SpaceId),
 						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, "", "  ")
+						StreamSettings: streamSettings{
+							DisableMiniblockCreation: content.Inception.GetSettings().GetDisableMiniblockCreation(),
+							LightStream:              content.Inception.GetSettings().GetLightStream(),
+						},
+						ChannelSettings: channelSettings{
+							Autojoin:                content.Inception.GetChannelSettings().GetAutojoin(),
+							HideUserJoinLeaveEvents: content.Inception.GetChannelSettings().GetHideUserJoinLeaveEvents(),
+						},
+					}, indent, "  ")
 					if err != nil {
 						return "<ChannelPayload_Inception>"
 					}
 					return string(bytes)
 				}
-			case *ChannelPayload_Message:
+			case *protocol.ChannelPayload_Message:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -219,7 +243,7 @@ func (e *ParsedEvent) ParsedString() string {
 						Message:        content.Message.Ciphertext,
 						SessionId:      hex.EncodeToString(content.Message.SessionIdBytes),
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<ChannelPayload_Message>"
 					}
@@ -229,10 +253,10 @@ func (e *ParsedEvent) ParsedString() string {
 				return "<ChannelPayload>"
 			}
 		}
-	case *StreamEvent_MemberPayload:
+	case *protocol.StreamEvent_MemberPayload:
 		{
 			switch content := payload.MemberPayload.Content.(type) {
-			case *MemberPayload_Membership_:
+			case *protocol.MemberPayload_Membership_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type             string
@@ -244,7 +268,7 @@ func (e *ParsedEvent) ParsedString() string {
 						UserAddress:      hex.EncodeToString(content.Membership.UserAddress),
 						InitiatorAddress: hex.EncodeToString(content.Membership.InitiatorAddress),
 						Op:               content.Membership.Op.String(),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<MemberPayload_Membership>"
 					}
@@ -254,10 +278,10 @@ func (e *ParsedEvent) ParsedString() string {
 				return "<MemberPayload>"
 			}
 		}
-	case *StreamEvent_UserSettingsPayload:
+	case *protocol.StreamEvent_UserSettingsPayload:
 		{
 			switch content := payload.UserSettingsPayload.Content.(type) {
-			case *UserSettingsPayload_Inception_:
+			case *protocol.UserSettingsPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -265,13 +289,13 @@ func (e *ParsedEvent) ParsedString() string {
 					}{
 						Type:     "UserSettingsPayload_Inception",
 						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_Inception>"
 					}
 					return string(bytes)
 				}
-			case *UserSettingsPayload_FullyReadMarkers_:
+			case *protocol.UserSettingsPayload_FullyReadMarkers_:
 				{
 					var data map[string]interface{}
 					if err := json.Unmarshal([]byte(content.FullyReadMarkers.GetContent().GetData()), &data); err != nil {
@@ -285,13 +309,13 @@ func (e *ParsedEvent) ParsedString() string {
 						Type:     "UserSettingsPayload_FullyReadMarkers",
 						StreamId: hex.EncodeToString(content.FullyReadMarkers.StreamId),
 						Content:  data,
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_FullyReadMarkers>"
 					}
 					return string(bytes)
 				}
-			case *UserSettingsPayload_UserBlock_:
+			case *protocol.UserSettingsPayload_UserBlock_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -305,7 +329,7 @@ func (e *ParsedEvent) ParsedString() string {
 						IsBlocked:      content.UserBlock.IsBlocked,
 						EventNum:       content.UserBlock.EventNum,
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_UserBlock>"
 					}
@@ -315,10 +339,10 @@ func (e *ParsedEvent) ParsedString() string {
 				return "<UserSettingsPayload>"
 			}
 		}
-	case *StreamEvent_UserPayload:
+	case *protocol.StreamEvent_UserPayload:
 		{
 			switch content := payload.UserPayload.Content.(type) {
-			case *UserPayload_Inception_:
+			case *protocol.UserPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -326,13 +350,13 @@ func (e *ParsedEvent) ParsedString() string {
 					}{
 						Type:     "UserPayload_Inception",
 						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserPayload_Inception>"
 					}
 					return string(bytes)
 				}
-			case *UserPayload_UserMembership_:
+			case *protocol.UserPayload_UserMembership_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -344,13 +368,13 @@ func (e *ParsedEvent) ParsedString() string {
 						StreamId:       hex.EncodeToString(content.UserMembership.StreamId),
 						Op:             content.UserMembership.Op.String(),
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserPayload_UserMembership>"
 					}
 					return string(bytes)
 				}
-			case *UserPayload_UserMembershipAction_:
+			case *protocol.UserPayload_UserMembershipAction_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -364,13 +388,13 @@ func (e *ParsedEvent) ParsedString() string {
 						UserId:         hex.EncodeToString(content.UserMembershipAction.UserId),
 						Op:             content.UserMembershipAction.Op.String(),
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserPayload_UserMembershipAction>"
 					}
 					return string(bytes)
 				}
-			case *UserPayload_BlockchainTransaction:
+			case *protocol.UserPayload_BlockchainTransaction:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type            string
@@ -380,13 +404,13 @@ func (e *ParsedEvent) ParsedString() string {
 						Type:            "UserPayload_BlockchainTransaction",
 						TransactionHash: hex.EncodeToString(content.BlockchainTransaction.Receipt.TransactionHash),
 						CreatorAddress:  hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserPayload_BlockchainTransaction>"
 					}
 					return string(bytes)
 				}
-			case *UserPayload_ReceivedBlockchainTransaction_:
+			case *protocol.UserPayload_ReceivedBlockchainTransaction_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type            string
@@ -398,7 +422,7 @@ func (e *ParsedEvent) ParsedString() string {
 						TransactionHash: hex.EncodeToString(content.ReceivedBlockchainTransaction.Transaction.Receipt.TransactionHash),
 						FromUserAddress: hex.EncodeToString(content.ReceivedBlockchainTransaction.FromUserAddress),
 						CreatorAddress:  hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserPayload_ReceivedBlockchainTransaction>"
 					}
@@ -408,10 +432,10 @@ func (e *ParsedEvent) ParsedString() string {
 				return "<UserPayload>"
 			}
 		}
-	case *StreamEvent_UserMetadataPayload:
+	case *protocol.StreamEvent_UserMetadataPayload:
 		{
 			switch content := payload.UserMetadataPayload.Content.(type) {
-			case *UserMetadataPayload_Inception_:
+			case *protocol.UserMetadataPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -419,13 +443,13 @@ func (e *ParsedEvent) ParsedString() string {
 					}{
 						Type:     "UserMetadataPayload_Inception",
 						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_Inception>"
 					}
 					return string(bytes)
 				}
-			case *UserMetadataPayload_EncryptionDevice_:
+			case *protocol.UserMetadataPayload_EncryptionDevice_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -437,13 +461,13 @@ func (e *ParsedEvent) ParsedString() string {
 						DeviceKey:      content.EncryptionDevice.DeviceKey,
 						FallbackKey:    content.EncryptionDevice.FallbackKey,
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_EncryptionDevice>"
 					}
 					return string(bytes)
 				}
-			case *UserMetadataPayload_ProfileImage:
+			case *protocol.UserMetadataPayload_ProfileImage:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -455,13 +479,13 @@ func (e *ParsedEvent) ParsedString() string {
 						Ciphertext:     content.ProfileImage.Ciphertext,
 						SessionId:      hex.EncodeToString(content.ProfileImage.SessionIdBytes),
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_ProfileImage>"
 					}
 					return string(bytes)
 				}
-			case *UserMetadataPayload_Bio:
+			case *protocol.UserMetadataPayload_Bio:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -473,7 +497,7 @@ func (e *ParsedEvent) ParsedString() string {
 						Ciphertext:     content.Bio.Ciphertext,
 						SessionId:      hex.EncodeToString(content.Bio.SessionIdBytes),
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_Bio>"
 					}
@@ -483,10 +507,10 @@ func (e *ParsedEvent) ParsedString() string {
 				return "<UserMetadataPayload>"
 			}
 		}
-	case *StreamEvent_UserInboxPayload:
+	case *protocol.StreamEvent_UserInboxPayload:
 		{
 			switch content := payload.UserInboxPayload.Content.(type) {
-			case *UserInboxPayload_Inception_:
+			case *protocol.UserInboxPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -494,13 +518,13 @@ func (e *ParsedEvent) ParsedString() string {
 					}{
 						Type:     "UserInboxPayload_Inception",
 						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_Inception>"
 					}
 					return string(bytes)
 				}
-			case *UserInboxPayload_Ack_:
+			case *protocol.UserInboxPayload_Ack_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -512,13 +536,13 @@ func (e *ParsedEvent) ParsedString() string {
 						DeviceKey:      content.Ack.DeviceKey,
 						MiniblockNum:   content.Ack.MiniblockNum,
 						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_Ack>"
 					}
 					return string(bytes)
 				}
-			case *UserInboxPayload_GroupEncryptionSessions_:
+			case *protocol.UserInboxPayload_GroupEncryptionSessions_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type             string
@@ -536,7 +560,7 @@ func (e *ParsedEvent) ParsedString() string {
 						CiphertextsCount: len(content.GroupEncryptionSessions.Ciphertexts),
 						Algorithm:        content.GroupEncryptionSessions.Algorithm,
 						CreatorAddress:   hex.EncodeToString(e.Event.CreatorAddress),
-					}, "", "  ")
+					}, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_GroupEncryptionSessions>"
 					}

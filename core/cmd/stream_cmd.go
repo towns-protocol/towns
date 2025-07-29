@@ -415,7 +415,7 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 			timestamp.UTC(),
 			hex.EncodeToString(event.Hash),
 			len(event.Event),
-			parsedEvent.ParsedString(),
+			parsedEvent.ParsedStringWithIndent("      "),
 		)
 	}
 	return nil

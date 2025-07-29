@@ -1,0 +1,62 @@
+# Notification service configuration for Omega network with local storage
+
+# Use Omega network settings
+baseChain:
+    chainId: 8453
+    networkUrl: 'https://mainnet.base.org'
+    blockTimeMs: 2000
+riverChain:
+    chainId: 550
+    networkUrl: 'https://mainnet.rpc.river.build'
+    blockTimeMs: 2000
+
+# Omega contracts
+architectContract:
+    address: '0x9978c826d93883701522d2CA645d5436e5654252'
+registryContract:
+    address: '0x1298c03Fde548dc433a452573E36A713b38A0404'
+
+# Local settings
+disableHttps: true
+http:
+    port: 8081
+
+# Local PostgreSQL
+database:
+    host: 'localhost'
+    port: 5433
+    user: 'postgres'
+    password: 'postgres'
+    database: 'river_notifications'
+    extra: '?sslmode=disable'
+    schemaVersion: 2
+
+# Metrics configuration
+metrics:
+    port: 4143
+
+# Log settings to ensure info level is enabled
+log:
+    level: info
+    format: json
+    console: true
+
+# Notification service specific settings
+notifications:
+    simulate: true  # Simulate notifications without actually sending them
+    authentication:
+        sessionToken:
+            lifetime: 30m
+            key:
+                algorithm: HS256
+                key: 'c69b1973792ad59bebb96a2ab1639aafc0c1e229a1c2138d91834f0f6953a544'
+
+# RPC settings
+rpc:
+    port: 8081
+
+# Node configuration
+node:
+    entitlementContract:
+        evaluationCacheTtl: 30s
+        defaultDisableEntitlementCheck: true
