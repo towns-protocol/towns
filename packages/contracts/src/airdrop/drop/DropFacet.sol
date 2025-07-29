@@ -19,8 +19,9 @@ import {TownsPointsStorage} from "../points/TownsPointsStorage.sol";
 import {DropBase} from "./DropBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 
-contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
+contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
     using DropClaim for DropClaim.Claim;
     using DropGroup for DropGroup.Layout;
     using SafeTransferLib for address;
@@ -57,7 +58,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
     function claimWithPenalty(
         DropClaim.Claim calldata req,
         uint16 expectedPenaltyBps
-    ) external returns (uint256 amount) {
+    ) external whenNotPaused returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
         if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 
@@ -87,7 +88,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         address delegatee,
         uint256 deadline,
         bytes calldata signature
-    ) external returns (uint256 amount) {
+    ) external whenNotPaused returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
         if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 

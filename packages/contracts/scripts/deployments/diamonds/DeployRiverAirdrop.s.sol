@@ -12,6 +12,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployDropFacet} from "../facets/DeployDropFacet.s.sol";
 import {DeployTownsPoints} from "../facets/DeployTownsPoints.s.sol";
+import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -66,6 +67,7 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
+        facetHelper.add("PausableFacet");
 
         // Get predicted addresses
         address facet = facetHelper.predictAddress("DiamondCutFacet");
@@ -94,6 +96,13 @@ contract DeployRiverAirdrop is IDiamondInitHelper, DiamondHelper, Deployer {
             makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
+        );
+
+        facet = facetHelper.predictAddress("PausableFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployPausable.selectors()),
+            facet,
+            DeployPausable.makeInitData()
         );
     }
 
