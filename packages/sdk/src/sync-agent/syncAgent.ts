@@ -39,6 +39,7 @@ export interface SyncAgentConfig {
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     logId?: string
+    useSharedSyncer?: boolean
 }
 
 export class SyncAgent {
@@ -93,7 +94,7 @@ export class SyncAgent {
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
                 streamOpts: {
-                    useSharedSyncer: true,
+                    useSharedSyncer: config.useSharedSyncer ?? true,
                 },
             },
             rpcRetryParams: config.retryParams,
