@@ -319,7 +319,7 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
 func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
-	serializedMb, err := proto.Marshal(b.Proto)
+	mbProto, err := proto.Marshal(b.Proto)
 	if err != nil {
 		return nil, AsRiverError(err, Err_INTERNAL).
 			Message("Failed to serialize miniblock info to bytes").
@@ -329,23 +329,39 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
 	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
 	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
-	var serializedSn []byte
-	if b.SnapshotEnvelope != nil && (len(b.Header().GetSnapshotHash()) > 0 && b.Header().GetSnapshot() == nil) {
-		if serializedSn, err = proto.Marshal(b.SnapshotEnvelope); err != nil {
+	var snapshotProto []byte
+	if b.SnapshotEnvelope != nil {
+		if !bytes.Equal(b.SnapshotEnvelope.Hash, b.Header().GetSnapshotHash()) {
+			return nil, RiverError(
+				Err_INTERNAL,
+				"snapshot envelope hash does not match header snapshot hash",
+				"mb",
+				b.Ref,
+				"snapshotHash",
+				b.Header().GetSnapshotHash(),
+				"snapshotEnvelopeHash",
+				b.SnapshotEnvelope.Hash,
+			).
+				Func("AsStorageMb")
+		}
+		snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
+		if err != nil {
 			return nil, AsRiverError(err, Err_INTERNAL).
 				Message("Failed to serialize snapshot to bytes").
 				Func("AsStorageMb")
 		}
-	} else if b.Header().GetSnapshot() != nil {
-		// TODO: Remove it after enabling new snapshot format
-		serializedSn = make([]byte, 0)
+	} else {
+		if len(b.Header().GetSnapshotHash()) > 0 {
+			return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
+				Func("AsStorageMb")
+		}
 	}
 
 	return &storage.MiniblockDescriptor{
 		Number:   b.Ref.Num,
 		Hash:     b.Ref.Hash,
-		Snapshot: serializedSn,
-		Data:     serializedMb,
+		Snapshot: snapshotProto,
+		Data:     mbProto,
 	}, nil
 }
 
