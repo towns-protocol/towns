@@ -154,7 +154,7 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useModifySync?: boolean; useSharedSyncer?: boolean } | undefined,
+        private streamOpts: { useSharedSyncer?: boolean } | undefined,
         private lastAccessedAt: Record<string, number>,
     ) {
         this.rpcClient = rpcClient
@@ -337,51 +337,25 @@ export class SyncedStreamsLoop {
                 ) {
                     // get cookies from all the known streams to sync
                     this.inFlightSyncCookies.clear()
-                    this.pendingSyncCookies = []
                     this.pendingStreamsToDelete = []
                     const syncCookies: SyncCookie[] = []
-                    if (this.streamOpts?.useModifySync == true) {
-                        this.pendingSyncCookies.push(...Array.from(this.streams.keys()))
-                        // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
-                        // prioritized spaces will be added later during the calls to tick()
-                        for (const id of this.highPriorityIds) {
-                            if (isHighPriorityStreamForSync(id)) {
-                                const syncCookie = this.streams.get(id)?.syncCookie
-                                if (syncCookie) {
-                                    syncCookies.push(syncCookie)
-                                    this.inFlightSyncCookies.add(id)
-                                }
+
+                    // if the stream is a channel, dm, or gdm, add the sync cookie to the initial sync cookies
+                    // prioritized spaces will be added later during the calls to tick()
+                    for (const id of this.highPriorityIds) {
+                        if (isHighPriorityStreamForSync(id)) {
+                            const syncCookie = this.streams.get(id)?.syncCookie
+                            if (syncCookie) {
+                                syncCookies.push(syncCookie)
+                                this.inFlightSyncCookies.add(id)
                             }
                         }
-                        // remove any added stream ids from the pending sync cookies
-                        this.pendingSyncCookies = this.pendingSyncCookies.filter(
-                            (id) => !this.inFlightSyncCookies.has(id),
-                        )
-                    } else {
-                        syncCookies.push(
-                            ...Array.from(this.streams.entries())
-                                .sort((a, b) => {
-                                    const aPriority = priorityFromStreamId(
-                                        a[0],
-                                        this.highPriorityIds,
-                                    )
-                                    const bPriority = priorityFromStreamId(
-                                        b[0],
-                                        this.highPriorityIds,
-                                    )
-                                    if (aPriority === bPriority) {
-                                        const aLastAccessedAt = this.lastAccessedAt[a[0]] ?? 0
-                                        const bLastAccessedAt = this.lastAccessedAt[b[0]] ?? 0
-                                        return bLastAccessedAt - aLastAccessedAt
-                                    }
-                                    return aPriority - bPriority
-                                })
-                                .map((streamRecord) => {
-                                    this.inFlightSyncCookies.add(streamRecord[0])
-                                    return streamRecord[1].syncCookie
-                                }),
-                        )
                     }
+                    // pending sync cookies are all streams that are not in the inFlightSyncCookies
+                    this.pendingSyncCookies = Array.from(this.streams.keys()).filter(
+                        (id) => !this.inFlightSyncCookies.has(id),
+                    )
+
                     this.syncStartedAt = performance.now()
                     this.processedStreamCount = 0
 
