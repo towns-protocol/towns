@@ -48,46 +48,57 @@ func NewRemoteSyncer(
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
+
+	// ensure that the first valid update is received within 15 seconds,
+	// if not, cancel the operation and return an unavailable error
+	var firstUpdateReceived atomic.Bool
+	go func() {
+		<-time.After(15 * time.Second)
+		if !firstUpdateReceived.Load() {
+			syncStreamCancel()
+		}
+	}()
+
 	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
 		syncStreamCancel()
-		return nil, err
+
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams failed",
+			err).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteSyncer")
 	}
 
-	// Create a timer for the first Receive
-	timer := time.NewTimer(5 * time.Second)
-	defer timer.Stop()
+	// store indication if the first update was received
+	firstUpdateReceived.Store(responseStream.Receive())
 
-	firstMsgChan := make(chan bool, 1)
-	go func() {
-		firstMsgChan <- responseStream.Receive()
-		close(firstMsgChan)
-	}()
-
-	select {
-	case received := <-firstMsgChan:
-		if !received {
-			syncStreamCancel()
-			if err = responseStream.Err(); err != nil {
-				return nil, err
-			}
-			return nil, RiverError(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages")
-		}
-		// First message received successfully, continue with the stream
-	case <-timer.C:
+	// if the sync operation was canceled, return an unavailable error
+	if !firstUpdateReceived.Load() || syncStreamCtx.Err() != nil {
 		syncStreamCancel()
-		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
+
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams stream closed without receiving any messages",
+			responseStream.Err()).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteSyncer")
 	}
 
+	// test that the first update is a SYNC_NEW message with a valid syncID set
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
+		syncStreamCancel()
+
 		logging.FromCtx(ctx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
-		syncStreamCancel()
+
 		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
 			Tags("syncOp", responseStream.Msg().SyncOp,
 				"syncId", responseStream.Msg().SyncId,
-				"remote", remoteAddr)
+				"remote", remoteAddr).
+			Func("NewRemoteSyncer")
 	}
 
 	return &remoteSyncer{
