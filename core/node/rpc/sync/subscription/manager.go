@@ -58,7 +58,7 @@ func NewManager(
 
 	syncers := client.NewSyncers(
 		ctx,
-		streamCache,
+		client.NewStreamCacheWrapper(streamCache),
 		nodeRegistry,
 		localNodeAddr,
 		dis,

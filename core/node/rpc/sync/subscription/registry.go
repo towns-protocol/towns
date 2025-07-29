@@ -167,7 +167,11 @@ func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
 		if len(subs) == 0 {
 			r.subscriptionsByStream.Compute(
 				streamID,
-				func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+				func(subs []*Subscription, loaded bool) ([]*Subscription, xsync.ComputeOp) {
+					if len(subs) > 0 {
+						// If there are still subscriptions, do not delete the stream
+						return subs, xsync.CancelOp
+					}
 					if cb != nil {
 						cb(streamID)
 					}
