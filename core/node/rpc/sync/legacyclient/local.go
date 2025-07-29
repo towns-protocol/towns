@@ -2,6 +2,7 @@ package legacyclient
 
 import (
 	"context"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -77,16 +78,26 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 	}
 
 	var resp ModifySyncResponse
+	var wg sync.WaitGroup
+	var lock sync.Mutex
 
+	wg.Add(len(request.GetAddStreams()))
 	for _, cookie := range request.GetAddStreams() {
-		if err := s.addStream(ctx, cookie); err != nil {
-			rvrErr := AsRiverError(err)
-			resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
-				StreamId: cookie.GetStreamId(),
-				Code:     int32(rvrErr.Code),
-				Message:  rvrErr.GetMessage(),
-			})
-		}
+		go func(cookie *SyncCookie) {
+			defer wg.Done()
+
+			if err := s.addStream(ctx, cookie); err != nil {
+				rvrErr := AsRiverError(err)
+				lock.Lock()
+				resp.Adds = append(resp.Adds, &SyncStreamOpStatus{
+					StreamId:    cookie.GetStreamId(),
+					Code:        int32(rvrErr.Code),
+					Message:     rvrErr.GetMessage(),
+					NodeAddress: s.localAddr.Bytes(),
+				})
+				lock.Unlock()
+			}
+		}(cookie)
 	}
 
 	for _, streamID := range request.GetRemoveStreams() {
@@ -95,6 +106,8 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 			syncStream.Unsub(s)
 		}
 	}
+
+	wg.Wait()
 
 	return &resp, s.activeStreams.Size() == 0, nil
 }
