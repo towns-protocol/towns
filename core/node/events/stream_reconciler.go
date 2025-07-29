@@ -40,6 +40,24 @@ type streamReconciler struct {
 
 	// notFound is true if local storage returned Err_NOT_FOUND for the stream.
 	notFound bool
+
+	// stats to inspect by tests
+	stats streamReconcilerStats
+}
+
+type streamReconcilerStats struct {
+	forwardCalled            bool
+	backwardCalled           bool
+	backfillCalled           bool
+	forwardPagesAttempted    int
+	forwardPagesSucceeded    int
+	forwardMbsSucceeded      int
+	backfillPagesAttempted   int
+	backfillPagesSucceeded   int
+	backfillMbsSucceeded     int
+	reinitializeAttempted    int
+	reinitializeSucceeded    int
+	reinitializeMbsSucceeded int
 }
 
 func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river.StreamWithId) *streamReconciler {
@@ -142,6 +160,8 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) e
 }
 
 func (sr *streamReconciler) reconcileBackward() error {
+	sr.stats.backwardCalled = true
+
 	// First reinitialize the stream.
 	// If after that stream doesn't have miniblocks to that last expected, run forward reconciliation from this point.
 	// Backfill gaps.
@@ -189,6 +209,8 @@ func (sr *streamReconciler) reconcileBackward() error {
 }
 
 func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Address) error {
+	sr.stats.reinitializeAttempted++
+
 	ctx, cancel := context.WithTimeout(
 		sr.ctx,
 		time.Minute,
@@ -208,10 +230,19 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 		return err
 	}
 
-	return sr.stream.reinitialize(ctx, resp.GetStream(), !sr.notFound)
+	err = sr.stream.reinitialize(ctx, resp.GetStream(), !sr.notFound)
+	if err != nil {
+		return err
+	}
+
+	sr.stats.reinitializeSucceeded++
+	sr.stats.reinitializeMbsSucceeded += len(resp.GetStream().GetMiniblocks())
+	return nil
 }
 
 func (sr *streamReconciler) backfillGaps() error {
+	sr.stats.backfillCalled = true
+
 	// TODO: DO NOT COMMIT: calculate localStartMbInclusive based on settings.
 	sr.localStartMbInclusive = 0
 
@@ -298,6 +329,8 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 	fromInclusive int64,
 	toExclusive int64,
 ) (int64, error) {
+	sr.stats.backfillPagesAttempted++
+
 	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
 	defer cancel()
 
@@ -332,10 +365,15 @@ func (sr *streamReconciler) backfillPageFromSinglePeer(
 		return fromInclusive, err
 	}
 
+	sr.stats.backfillPagesSucceeded++
+	sr.stats.backfillMbsSucceeded += len(mbs)
+
 	return fromInclusive + int64(len(mbs)), nil
 }
 
 func (sr *streamReconciler) reconcileForward() error {
+	sr.stats.forwardCalled = true
+
 	fromInclusive := sr.localLastMbInclusive + 1
 	toExclusive := sr.expectedLastMbInclusive + 1
 
@@ -387,6 +425,8 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	fromInclusive int64,
 	toExclusive int64,
 ) (int64, error) {
+	sr.stats.forwardPagesAttempted++
+
 	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
 	defer cancel()
 
@@ -411,6 +451,9 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	if err != nil {
 		return fromInclusive, err
 	}
+
+	sr.stats.forwardPagesSucceeded++
+	sr.stats.forwardMbsSucceeded += len(mbs)
 
 	return fromInclusive + int64(len(mbs)), nil
 }

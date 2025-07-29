@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestReconciler(t *testing.T) {
@@ -15,6 +16,7 @@ func TestReconciler(t *testing.T) {
 	ctx, tc := makeCacheTestContext(
 		t,
 		testParams{
+			config:                           cfg,
 			replFactor:                       3,
 			numInstances:                     3,
 			disableStreamCacheCallbacks:      true,
@@ -37,12 +39,11 @@ func TestReconciler(t *testing.T) {
 	}
 
 	nodesWithStream := streamNodes[0:2]
-	// nodeWithoutStream := streamNodes[2]
 	stream, err := tc.instances[0].cache.getStreamImpl(ctx, streamId, true)
 	require.NoError(err)
 	require.NotNil(stream)
 
-	for range 50 {
+	for range 52 {
 		tc.addReplEvent(streamId, prevMb, nodesWithStream)
 		prevMb = tc.makeMiniblockNoCallbacks(nodesWithStream, streamId, false)
 	}
@@ -69,6 +70,15 @@ func TestReconciler(t *testing.T) {
 	reconciler := newStreamReconciler(inst.cache, stream, record)
 	err = reconciler.reconcile()
 	require.NoError(err)
+	testfmt.Logf(t, "Reconciler stats: %+v", reconciler.stats)
+	require.True(reconciler.notFound)
+	require.False(reconciler.stats.forwardCalled)
+	require.True(reconciler.stats.backwardCalled)
+	require.True(reconciler.stats.backfillCalled)
+	require.Greater(reconciler.stats.backfillPagesSucceeded, 1)
+	require.Equal(reconciler.stats.backfillPagesAttempted, reconciler.stats.backfillPagesSucceeded)
+	require.Equal(reconciler.stats.forwardPagesAttempted, reconciler.stats.forwardPagesSucceeded)
+	require.Equal(reconciler.stats.reinitializeAttempted, reconciler.stats.reinitializeSucceeded)
 
 	stream, ok = tc.instances[2].cache.cache.Load(streamId)
 	require.True(ok)
@@ -78,9 +88,10 @@ func TestReconciler(t *testing.T) {
 
 	// Add more events
 	for range 10 {
-		tc.addReplEvent(streamId, prevMb, nodesWithStream)
-		prevMb = tc.makeMiniblockNoCallbacks(nodesWithStream, streamId, false)
+		tc.addReplEvent(streamId, prevMb, streamNodes)
+		prevMb = tc.makeMiniblockNoCallbacks(streamNodes, streamId, false)
 	}
+	tc.addReplEvent(streamId, prevMb, streamNodes)
 
-	// compare streams
+	tc.compareStreamStorage(streamNodes, streamId, 0)
 }

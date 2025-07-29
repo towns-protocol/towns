@@ -74,6 +74,7 @@ func (n *noopScrubber) Scrub(streamId StreamId) bool { return false }
 // It doesn't create a stream cache itself. Call initCache to create a stream cache.
 func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTestContext) {
 	t.Parallel()
+	t.Helper()
 
 	if p.numInstances <= 0 {
 		p.numInstances = 1
@@ -576,6 +577,52 @@ func (ctc *cacheTestContext) ChooseStreamNodes(
 		addrs[i] = ctc.instances[i].params.Wallet.Address
 	}
 	return addrs, nil
+}
+
+func (ctc *cacheTestContext) compareStreamStorage(
+	nodes []common.Address,
+	streamId StreamId,
+	fromInclusive int64,
+) {
+	ctc.t.Helper()
+
+	instances := make([]*cacheTestInstance, len(nodes))
+	for i, n := range nodes {
+		instances[i] = ctc.instancesByAddr[n]
+	}
+
+	var first *storage.ReadStreamFromLastSnapshotResult
+	for i, inst := range instances {
+		result, err := inst.cache.params.Storage.ReadStreamFromLastSnapshot(ctc.ctx, streamId, 0)
+		ctc.require.NoError(err, "failed to read stream from last snapshot for node %d %s", i, nodes[i])
+		if i == 0 {
+			first = result
+		} else {
+			ctc.require.Equal(first, result, "stream %s is not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
+		}
+	}
+
+	toExclusive := first.Miniblocks[0].Number
+	for fromInclusive < toExclusive {
+		var first []*storage.MiniblockDescriptor
+		for i, inst := range instances {
+			miniblocks, err := inst.cache.params.Storage.ReadMiniblocks(
+				ctc.ctx,
+				streamId,
+				fromInclusive,
+				toExclusive,
+				false,
+			)
+			ctc.require.NoError(err, "failed to read stream for node %d %s", i, nodes[i])
+			if i == 0 {
+				first = miniblocks
+			} else {
+				ctc.require.Equal(first, miniblocks, "stream %s miniblocks are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
+			}
+		}
+		fromInclusive = toExclusive
+		toExclusive = fromInclusive + int64(len(first))
+	}
 }
 
 func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.BlockchainTestContext, p testParams) {
