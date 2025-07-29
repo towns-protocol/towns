@@ -86,6 +86,8 @@ func TestReconciler(t *testing.T) {
 	require.NotNil(view)
 	require.Equal(prevMb.Num, view.LastBlock().Ref.Num)
 
+	testfmt.Logf(t, "Last block: %+v", view.LastBlock().Ref)
+
 	// Add more events
 	for range 10 {
 		tc.addReplEvent(streamId, prevMb, streamNodes)

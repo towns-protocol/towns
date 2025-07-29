@@ -23,6 +23,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 	"github.com/towns-protocol/towns/core/node/testutils/testrpcstream"
 	"github.com/towns-protocol/towns/core/node/utils/rpcinterface"
 )
@@ -595,6 +596,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 	for i, inst := range instances {
 		result, err := inst.cache.params.Storage.ReadStreamFromLastSnapshot(ctc.ctx, streamId, 0)
 		ctc.require.NoError(err, "failed to read stream from last snapshot for node %d %s", i, nodes[i])
+		testfmt.Logf(ctc.t, "Stream %s on node %d %s:\n%#v\n", streamId, i, nodes[i], result)
 		if i == 0 {
 			first = result
 		} else {
@@ -620,8 +622,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 				ctc.require.Equal(first, miniblocks, "stream %s miniblocks are not equal for nodes %d %s and %d %s", streamId, 0, nodes[0], i, nodes[i])
 			}
 		}
-		fromInclusive = toExclusive
-		toExclusive = fromInclusive + int64(len(first))
+		fromInclusive += int64(len(first))
 	}
 }
 
