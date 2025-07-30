@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -232,9 +231,6 @@ func (h *handlerImpl) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.AddStreamToSync(ctx, req)
 	}
@@ -248,9 +244,6 @@ func (h *handlerImpl) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.RemoveStreamFromSync(ctx, req)
 	}
@@ -264,8 +257,6 @@ func (h *handlerImpl) ModifySync(
 	ctx context.Context,
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
 	if op, ok := h.activeSyncOperations.Load(req.Msg.GetSyncId()); ok {
 		return op.ModifySync(ctx, req)
 	}

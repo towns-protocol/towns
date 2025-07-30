@@ -67,7 +67,9 @@ func (s *Service) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	ctx, log := utils.CtxAndLogForRequest(ctx, req)
+	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 30*time.Second)
+	defer cancel()
+
 	var res *connect.Response[AddStreamToSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
@@ -90,7 +92,9 @@ func (s *Service) ModifySync(
 	ctx context.Context,
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
-	ctx, log := utils.CtxAndLogForRequest(ctx, req)
+	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 30*time.Second)
+	defer cancel()
+
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
@@ -113,7 +117,9 @@ func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
-	ctx, log := utils.CtxAndLogForRequest(ctx, req)
+	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 10*time.Second)
+	defer cancel()
+
 	var res *connect.Response[RemoveStreamFromSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {

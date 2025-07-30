@@ -53,7 +53,7 @@ func NewRemoteSyncer(
 	// if not, cancel the operation and return an unavailable error
 	var firstUpdateReceived atomic.Bool
 	go func() {
-		<-time.After(15 * time.Second)
+		<-time.After(5 * time.Second)
 		if !firstUpdateReceived.Load() {
 			syncStreamCancel()
 		}

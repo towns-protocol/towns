@@ -42,6 +42,30 @@ func CtxAndLogForRequest[T any](ctx context.Context, req *connect.Request[T]) (c
 	return ctx, log
 }
 
+// CtxAndLogForRequestWithTimeout returns a new context with the given timeout and logger for the given request.
+// If the request is made in the context of a stream it will try to add the stream id to the logger.
+func CtxAndLogForRequestWithTimeout[T any](
+	ctx context.Context,
+	req *connect.Request[T],
+	timeout time.Duration,
+) (context.Context, context.CancelFunc, *logging.Log) {
+	log := logging.FromCtx(ctx)
+
+	// Add streamId to log context if present in request
+	if reqMsg, ok := any(req.Msg).(RequestWithStreamId); ok {
+		streamId := reqMsg.GetStreamId()
+		if streamId != "" {
+			log = log.With(RpcStreamIdKey, streamId).With("application", "streamNode")
+			ctx = logging.CtxWithLog(ctx, log)
+		}
+	}
+
+	// Set a timeout for the context
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+
+	return ctx, cancel, log
+}
+
 // UncancelContext returns a new context without original parent cancel.
 // Write operations should not be cancelled even if RPC context is cancelled.
 // Deadline is re-used from original context. If it's smaller than minTimeout, it's increased.
