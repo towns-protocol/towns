@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"connectrpc.com/connect"
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
@@ -51,6 +53,7 @@ func NewService(
 	nodes []nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
+	otelTracer trace.Tracer,
 ) (*Service, error) {
 	tracker, err := notificationssync.NewNotificationsStreamsTracker(
 		ctx,
@@ -62,6 +65,7 @@ func NewService(
 		metrics,
 		notificationsConfig.StreamTracking,
 		notificationsConfig,
+		otelTracer,
 	)
 	if err != nil {
 		return nil, err

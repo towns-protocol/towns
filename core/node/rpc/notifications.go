@@ -25,6 +25,8 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	s.initInstance(ServerModeNotification, opts)
 
+	s.initTracing("notification", "notification-service")
+
 	err = s.initRiverChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
@@ -98,6 +100,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		registries,
 		s.metrics,
 		processor,
+		s.otelTracer,
 	)
 	if err != nil {
 		return AsRiverError(err).Message("Failed to instantiate notification service").LogError(s.defaultLogger)

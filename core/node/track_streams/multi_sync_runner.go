@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
@@ -120,6 +122,14 @@ func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
 ) error {
+	if ssr.otelTracer != nil {
+		var span trace.Span
+		ctx, span = ssr.otelTracer.Start(ctx, "syncSessionRunner::AddStream",
+			trace.WithAttributes(attribute.String("streamId", record.streamId.String())),
+			trace.WithAttributes(attribute.String("syncId", ssr.GetSyncId())))
+		defer span.End()
+	}
+
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
 	ssr.mu.Lock()
@@ -179,6 +189,13 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		log      = logging.FromCtx(ssr.syncCtx)
 		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
+
+	if ssr.otelTracer != nil {
+		_, span := ssr.otelTracer.Start(ssr.syncCtx, "syncSessionRunner::applyUpdateToStream",
+			trace.WithAttributes(attribute.String("streamId", streamId.String())),
+			trace.WithAttributes(attribute.String("syncId", ssr.GetSyncId())))
+		defer span.End()
+	}
 
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
