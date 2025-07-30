@@ -119,27 +119,6 @@ type syncSessionRunner struct {
 	closeErr error
 }
 
-func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
-	if ssr.otelTracer == nil {
-		return ctx, func() {}
-	}
-
-	// Determine the span name based on the caller's function name.
-	spanName := "N/A"
-	if pc, _, _, ok := runtime.Caller(1); ok {
-		if f := runtime.FuncForPC(pc); f != nil {
-			names := strings.Split(f.Name(), ".")
-			spanName = names[len(names)-1]
-		}
-	}
-
-	ctx, span := ssr.otelTracer.Start(ctx, "syncSessionRunner::"+spanName, trace.WithAttributes(
-		append(attrs, attribute.String("syncId", ssr.GetSyncId()))...,
-	))
-
-	return ctx, func() { span.End() }
-}
-
 func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
@@ -553,6 +532,28 @@ func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *
 			"func", "DistributeBackfillMessage",
 		)
 	}
+}
+
+// startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.
+func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
+	if ssr.otelTracer == nil {
+		return ctx, func() {}
+	}
+
+	// Determine the span name based on the caller's function name.
+	spanName := "N/A"
+	if pc, _, _, ok := runtime.Caller(1); ok {
+		if f := runtime.FuncForPC(pc); f != nil {
+			names := strings.Split(f.Name(), ".")
+			spanName = names[len(names)-1]
+		}
+	}
+
+	ctx, span := ssr.otelTracer.Start(ctx, "syncSessionRunner::"+spanName, trace.WithAttributes(
+		append(attrs, attribute.String("syncId", ssr.GetSyncId()))...,
+	))
+
+	return ctx, func() { span.End() }
 }
 
 type TrackedViewForStream func(streamId shared.StreamId, stream *protocol.StreamAndCookie) (events.TrackedStreamView, error)
