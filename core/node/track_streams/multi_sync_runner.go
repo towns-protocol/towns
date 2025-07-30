@@ -419,7 +419,7 @@ func (ssr *syncSessionRunner) Run() {
 
 			// If the batch is nil, it means the messages channel was closed.
 			if batch == nil {
-				ssr.Close(nil)
+				ssr.Close(base.RiverError(protocol.Err_BUFFER_FULL, "Sync session runner messages buffer is full, closing sync session runner"))
 				return
 			}
 
