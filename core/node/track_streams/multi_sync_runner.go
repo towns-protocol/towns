@@ -855,7 +855,6 @@ func (msr *MultiSyncRunner) addToSync(
 					if loaded && oldRunner == runner {
 						go newRunner.Run()
 						newRunner.WaitUntilStarted()
-						// oldRunner.
 						return newRunner, xsync.UpdateOp
 					}
 					return oldRunner, xsync.CancelOp
