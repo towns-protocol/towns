@@ -25,7 +25,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	s.initInstance(ServerModeNotification, opts)
 
-	s.initTracing("notification", "notification-service")
+	s.initTracing("notification", s.instanceId)
 
 	err = s.initRiverChain()
 	if err != nil {
