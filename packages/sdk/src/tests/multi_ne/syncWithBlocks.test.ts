@@ -151,7 +151,7 @@ describe('syncWithBlocks', () => {
             },
             {
                 timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'true' },
+                headers: { 'X-Use-Shared-Sync': 'false' },
             },
         )
 
