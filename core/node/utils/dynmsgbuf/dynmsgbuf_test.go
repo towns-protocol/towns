@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 func TestDynamicBuffer_AddMessage(t *testing.T) {

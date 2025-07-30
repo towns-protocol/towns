@@ -1,21 +1,22 @@
 package legacyclient
 
 import (
-	"connectrpc.com/connect"
 	"context"
 	"errors"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // TestRemoteSyncerTimeoutFirstUpdate ensures that initiating a sync operation
