@@ -23,14 +23,25 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+// StreamPlacementListener is an interface for receiving stream placement events
+type StreamPlacementListener interface {
+	// OnStreamPlacement is called when a stream is assigned to a node
+	// syncId is the ID of the sync session, nodeAddress is the node hosting the stream
+	// minipoolGen is the minipool generation number (miniblock offset)
+	// prevMiniblockHash is the hash of the previous miniblock at the time of placement
+	OnStreamPlacement(streamId shared.StreamId, syncId string, nodeAddress common.Address, minipoolGen int64, prevMiniblockHash []byte)
+}
+
 // The StreamFilter is used by the StreamTrackerImpl, which is a cross-application, shared implementation
 // of stream tracking used by both the notification service and the app registry service. Each application
 // must provide the logic for determining which streams to track, and for constructing application-specific
 // tracked stream views.
 type StreamFilter interface {
-	// TrackStream
-	// inInit is true when the stream_tracker is initialized (usually when the process starts), otherwise it's false
-	TrackStream(streamID shared.StreamId, isInit bool) bool
+	// TrackStream determines if a stream should be tracked and can optionally modify the stream record
+	// to shape how the stream is synced.
+	// Returns whether to track it and the potentially modified stream
+	// isInit is true when the stream_tracker is initialized (usually when the process starts)
+	TrackStream(stream *river.StreamWithId, isInit bool) (bool, *river.StreamWithId)
 
 	NewTrackedStream(
 		ctx context.Context,
@@ -84,6 +95,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	metricsFactory infra.MetricsFactory,
 	streamTracking config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	placementListener StreamPlacementListener,
 ) error {
 	tracker.ctx = ctx
 	tracker.riverRegistry = riverRegistry
@@ -98,6 +110,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		filter.NewTrackedStream,
 		streamTracking,
 		otelTracer,
+		placementListener,
 	)
 	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
@@ -147,7 +160,9 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId(), true) {
+			// Let the filter decide and potentially modify the stream
+			shouldTrack, filteredStream := tracker.filter.TrackStream(stream, true)
+			if !shouldTrack || filteredStream == nil {
 				return true
 			}
 
@@ -158,25 +173,25 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			// There are some streams managed by a node that isn't registered anymore.
 			// Filter these out because we can't sync these streams.
-			stream.Stream.Nodes = slices.DeleteFunc(stream.Stream.Nodes, func(address common.Address) bool {
+			filteredStream.Stream.Nodes = slices.DeleteFunc(filteredStream.Stream.Nodes, func(address common.Address) bool {
 				return !slices.Contains(validNodes, address)
 			})
 
-			if len(stream.Nodes()) == 0 {
+			if len(filteredStream.Nodes()) == 0 {
 				// We know that we have a set of these on the network because some nodes were accidentally deployed
 				// with the wrong addresses early in the network's history. We've deemed these streams not worthy
 				// of repairing and generally ignore them.
-				log.Debugw("Ignore stream, no valid node found", "stream", stream.StreamId())
+				log.Debugw("Ignore stream, no valid node found", "stream", filteredStream.StreamId())
 				return true
 			}
 
 			streamsLoaded++
 
 			// start stream sync session for stream if it hasn't seen before
-			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
+			_, loaded := tracker.tracked.LoadOrStore(filteredStream.StreamId(), struct{}{})
 			if !loaded {
 				// start tracking the stream, until the root ctx expires.
-				tracker.multiSyncRunner.AddStream(stream, ApplyHistoricalContent{Enabled: false})
+				tracker.multiSyncRunner.AddStream(filteredStream, ApplyHistoricalContent{Enabled: false})
 			}
 
 			return true
@@ -237,10 +252,11 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	_ context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	shouldTrack, filteredStream := tracker.filter.TrackStream(event.Stream, false)
+	if !shouldTrack || filteredStream == nil {
 		return
 	}
-	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
+	tracker.forwardStreamEvents(filteredStream, ApplyHistoricalContent{Enabled: true})
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -250,22 +266,36 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	_ context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	shouldTrack, filteredStream := tracker.filter.TrackStream(event.Stream, false)
+	if !shouldTrack || filteredStream == nil {
 		return
 	}
-	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
+	tracker.forwardStreamEvents(filteredStream, ApplyHistoricalContent{Enabled: true})
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	ctx context.Context,
 	event *river.StreamMiniblockUpdate,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	// For miniblock updates, we need to fetch the full stream data
+	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: ctx}, event.GetStreamId())
+	if err != nil {
+		logging.FromCtx(ctx).Errorw("Failed to get stream for miniblock update",
+			"streamId", event.GetStreamId(),
+			"error", err)
 		return
 	}
-	if err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]}); err != nil {
+	
+	streamWithId := &river.StreamWithId{Id: event.GetStreamId(), Stream: stream}
+	shouldTrack, filteredStream := tracker.filter.TrackStream(streamWithId, false)
+	if !shouldTrack || filteredStream == nil {
+		return
+	}
+	
+	// Use filtered stream ID but original event's miniblock hash
+	if err := tracker.AddStream(filteredStream.StreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]}); err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
-			"streamId", event.GetStreamId(),
+			"streamId", filteredStream.StreamId(),
 			"error", err)
 	}
 }

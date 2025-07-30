@@ -7,6 +7,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -72,6 +73,7 @@ func NewAppRegistryStreamsTracker(
 		metricsFactory,
 		config.StreamTracking,
 		otelTracer,
+		nil, // No placement listener for app registry
 	); err != nil {
 		return nil, err
 	}
@@ -79,10 +81,8 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, _ bool) bool {
-	streamType := streamId.Type()
-
-	return streamType == shared.STREAM_CHANNEL_BIN
+func (tracker *AppRegistryStreamsTracker) TrackStream(stream *river.StreamWithId, _ bool) (bool, *river.StreamWithId) {
+	return stream.StreamId().Type() == shared.STREAM_CHANNEL_BIN, stream
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(

@@ -1,4 +1,4 @@
-package config
+ package config
 
 import (
 	"context"
@@ -199,6 +199,9 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+	// StreamSyncMonitor configuration for monitoring stream sync lag
+	StreamSyncMonitor StreamSyncMonitorConfig
 }
 
 type TLSConfig struct {
@@ -586,6 +589,20 @@ type RiverRegistryConfig struct {
 
 	// ProgressReportInterval is the interval at which to report progress of the GetPaginatedStreams calls.
 	ProgressReportInterval time.Duration
+}
+
+type StreamSyncMonitorConfig struct {
+	// MonitoredNodeAddresses is the list of node addresses to monitor for stream sync lag
+	MonitoredNodeAddresses []common.Address
+	
+	// LagThreshold is the number of miniblocks a stream can be behind before triggering a stack trace
+	LagThreshold uint64
+	
+	// StackTraceOutputDir is the directory where stack traces will be saved
+	StackTraceOutputDir string
+	
+	// StreamTracking configuration is embedded for sync session settings
+	StreamTracking StreamTrackingConfig
 }
 
 func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {

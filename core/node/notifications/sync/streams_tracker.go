@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -55,6 +56,7 @@ func NewNotificationsStreamsTracker(
 		metricsFactory,
 		trackingConfig,
 		otelTracer,
+		nil, // No placement listener for notifications
 	); err != nil {
 		return nil, err
 	}
@@ -83,16 +85,22 @@ func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
 }
 
 // TrackStream returns true if the given streamID must be tracked for notifications.
-func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
-	streamType := streamID.Type()
-
+func (tracker *NotificationsStreamsTracker) TrackStream(
+	stream *river.StreamWithId,
+	isInit bool,
+) (bool, *river.StreamWithId) {
+	streamType := stream.StreamId().Type()
 	// When cold streams are enabled, only track user settings stream on init
 	if isInit && tracker.coldStreamsEnabled() {
-		return streamType == shared.STREAM_USER_SETTINGS_BIN
+		shouldTrack := streamType == shared.STREAM_USER_SETTINGS_BIN
+		return shouldTrack, stream
 	}
 
-	return streamType == shared.STREAM_DM_CHANNEL_BIN ||
+	shouldTrack := streamType == shared.STREAM_DM_CHANNEL_BIN ||
 		streamType == shared.STREAM_GDM_CHANNEL_BIN ||
 		streamType == shared.STREAM_CHANNEL_BIN ||
 		streamType == shared.STREAM_USER_SETTINGS_BIN // users add addresses of blocked users into their settings stream
+
+	// Return unchanged stream
+	return shouldTrack, stream
 }

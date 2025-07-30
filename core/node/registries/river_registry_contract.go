@@ -22,7 +22,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// RiverRegistryContract is the convinience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
+// RiverRegistryContract is the convenience wrapper for the IRiverRegistryV1 interface (abigen exports it as RiverRegistryV1)
 type RiverRegistryContract struct {
 	OperatorRegistry *river.OperatorRegistryV1
 
@@ -930,6 +930,8 @@ func (c *RiverRegistryContract) ParseEvent(
 	return ee, nil
 }
 
+// OnStreamEvent accepts a set of callbacks that are fired in response to different types of
+// stream events emitted from the contract. All callbacks must be non-nil.
 func (c *RiverRegistryContract) OnStreamEvent(
 	ctx context.Context,
 	startBlockNumInclusive crypto.BlockNumber,
@@ -969,8 +971,8 @@ func (c *RiverRegistryContract) OnStreamEvent(
 						logging.FromCtx(ctx).Errorw("Unknown stream updated reason type", "event", event)
 					}
 				}
-			} else if event, ok := parsed.(*river.StreamRegistryV1StreamLastMiniblockUpdateFailed); ok {
-				logging.FromCtx(ctx).Debugw("Stream last miniblock update failed", "event", event)
+			} else if _, ok := parsed.(*river.StreamRegistryV1StreamLastMiniblockUpdateFailed); ok {
+				// 	logging.FromCtx(ctx).Debugw("Stream last miniblock update failed", "event", event)
 			} else {
 				logging.FromCtx(ctx).Errorw("Unknown event type", "event", parsed)
 			}
