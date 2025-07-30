@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -117,17 +119,33 @@ type syncSessionRunner struct {
 	closeErr error
 }
 
+func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
+	if ssr.otelTracer == nil {
+		return ctx, func() {}
+	}
+
+	// Determine the span name based on the caller's function name.
+	spanName := "N/A"
+	if pc, _, _, ok := runtime.Caller(1); ok {
+		if f := runtime.FuncForPC(pc); f != nil {
+			names := strings.Split(f.Name(), ".")
+			spanName = names[len(names)-1]
+		}
+	}
+
+	ctx, span := ssr.otelTracer.Start(ctx, "syncSessionRunner::"+spanName, trace.WithAttributes(
+		append(attrs, attribute.String("syncId", ssr.GetSyncId()))...,
+	))
+
+	return ctx, func() { span.End() }
+}
+
 func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
 ) error {
-	if ssr.otelTracer != nil {
-		var span trace.Span
-		ctx, span = ssr.otelTracer.Start(ctx, "syncSessionRunner::AddStream",
-			trace.WithAttributes(attribute.String("streamId", record.streamId.String())),
-			trace.WithAttributes(attribute.String("syncId", ssr.GetSyncId())))
-		defer span.End()
-	}
+	ctx, end := ssr.startSpan(ctx, attribute.String("streamId", record.streamId.String()))
+	defer end()
 
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
@@ -182,19 +200,15 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
 ) {
+	_, end := ssr.startSpan(ssr.syncCtx, attribute.String("streamId", record.streamId.String()))
+	defer end()
+
 	var (
 		reset    = streamAndCookie.GetSyncReset()
 		streamId = record.streamId
 		log      = logging.FromCtx(ssr.syncCtx)
 		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
-
-	if ssr.otelTracer != nil {
-		_, span := ssr.otelTracer.Start(ssr.syncCtx, "syncSessionRunner::applyUpdateToStream",
-			trace.WithAttributes(attribute.String("streamId", streamId.String())),
-			trace.WithAttributes(attribute.String("syncId", ssr.GetSyncId())))
-		defer span.End()
-	}
 
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
