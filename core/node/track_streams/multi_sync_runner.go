@@ -416,6 +416,13 @@ func (ssr *syncSessionRunner) Run() {
 		// Process the current batch of messages.
 		case <-ssr.messages.Wait():
 			batch = ssr.messages.GetBatch(batch)
+
+			// If the batch is nil, it means the messages channel was closed.
+			if batch == nil {
+				ssr.Close(nil)
+				return
+			}
+
 			for _, update := range batch {
 				ssr.processSyncUpdate(update)
 			}
