@@ -8,6 +8,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IPausable, IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
 
 // libraries
 import {DropClaim} from "src/airdrop/drop/DropClaim.sol";
@@ -27,7 +28,13 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {TownsPoints} from "src/airdrop/points/TownsPoints.sol";
 import {DropFacet} from "src/airdrop/drop/DropFacet.sol";
 
-contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistributionBase {
+contract DropFacetTest is
+    BaseSetup,
+    IDropFacetBase,
+    IOwnableBase,
+    IRewardsDistributionBase,
+    IPausableBase
+{
     using FixedPointMathLib for uint256;
 
     bytes32 internal constant STAKE_TYPEHASH =
@@ -51,6 +58,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     IRewardsDistribution internal rewardsDistribution;
     TownsPoints internal pointsFacet;
     NodeOperatorFacet internal operatorFacet;
+    IPausable internal pausableFacet;
 
     mapping(address => uint256) internal treeIndex;
     address[] internal accounts;
@@ -78,7 +86,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         // Initialize the Drop facet
         dropFacet = DropFacet(riverAirdrop);
         pointsFacet = TownsPoints(riverAirdrop);
-
+        pausableFacet = IPausable(riverAirdrop);
         // Create the Merkle tree with accounts and amounts
         _createTree();
 
@@ -223,6 +231,48 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     // =============================================================
     //                        TESTS
     // =============================================================
+
+    // paused
+    function test_claimWithPenalty_revertWhen_paused()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        vm.expectRevert(Pausable__Paused.selector);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: bob,
+                recipient: bob,
+                quantity: 100,
+                points: 10,
+                proof: new bytes32[](0)
+            }),
+            0
+        );
+    }
+
+    function test_claimAndStake_revertWhen_paused() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        vm.expectRevert(Pausable__Paused.selector);
+        dropFacet.claimAndStake(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: bob,
+                recipient: bob,
+                quantity: 100,
+                points: 10,
+                proof: new bytes32[](0)
+            }),
+            address(0),
+            0,
+            new bytes(0)
+        );
+    }
 
     // getActiveClaimConditionId
     function test_getActiveClaimConditionId() external givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3) {

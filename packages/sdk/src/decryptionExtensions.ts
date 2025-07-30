@@ -1019,6 +1019,11 @@ export abstract class BaseDecryptionExtensions {
      * process incoming key solicitations and send keys and key fulfillments
      */
     private async processKeySolicitation(item: KeySolicitationItem): Promise<void> {
+        if (item.solicitation.sessionIds.length === 0) {
+            this.log.debug('processing key solicitation: no session ids', item)
+            return
+        }
+
         this.log.debug('processing key solicitation', item.streamId, item)
         const streamId = item.streamId
 
@@ -1075,39 +1080,35 @@ export abstract class BaseDecryptionExtensions {
         }
 
         // in the fulfillment, for simplicity, we broadcast only the overlapping session ids that we are sending over
-        let fulfilledSessionIds = allSessions
+        const fulfilledSessionIds = allSessions
             .map((x) => x.sessionId)
             .filter((x) => requestedSessionIds.has(x))
             .sort()
 
-        // if we're not sending any overlapping session ids, we send the first 50 session ids for clarity
-        fulfilledSessionIds =
-            fulfilledSessionIds.length > 0
-                ? fulfilledSessionIds
-                : allSessions
-                      .map((x) => x.sessionId)
-                      .sort()
-                      .slice(0, Math.min(allSessions.length, 50))
+        // the only way fulfilledSessionIds is empty is if we're sending a to a new device key
+        // and we don't have overlapping session ids, but they probably need these keys so we're going to send them anyway
+        // but we don't need to send a fulfillment because it's not actionable information for the other stream members
+        if (fulfilledSessionIds.length > 0) {
+            // send a single key fulfillment for all algorithms
+            const { error } = await this.sendKeyFulfillment({
+                streamId,
+                userId: item.fromUserId,
+                deviceKey: item.solicitation.deviceKey,
+                sessionIds: fulfilledSessionIds,
+                ephemeral: item.ephemeral,
+            })
 
-        // send a single key fulfillment for all algorithms
-        const { error } = await this.sendKeyFulfillment({
-            streamId,
-            userId: item.fromUserId,
-            deviceKey: item.solicitation.deviceKey,
-            sessionIds: fulfilledSessionIds,
-            ephemeral: item.ephemeral,
-        })
-
-        // if the key fulfillment failed, someone else already sent a key fulfillment
-        if (error) {
-            if (
-                !errorContains(error, Err.DUPLICATE_EVENT) &&
-                !errorContains(error, Err.NOT_FOUND)
-            ) {
-                // duplicate events are expected, we can ignore them, others are not
-                this.log.error('failed to send key fulfillment', error)
+            // if the key fulfillment failed, someone else already sent a key fulfillment
+            if (error) {
+                if (
+                    !errorContains(error, Err.DUPLICATE_EVENT) &&
+                    !errorContains(error, Err.NOT_FOUND)
+                ) {
+                    // duplicate events are expected, we can ignore them, others are not
+                    this.log.error('failed to send key fulfillment', error)
+                }
+                return
             }
-            return
         }
 
         // if the key fulfillment succeeded, send one group session payload for each algorithm

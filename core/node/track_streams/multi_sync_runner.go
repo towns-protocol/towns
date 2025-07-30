@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/semaphore"
 
@@ -28,9 +31,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications/debug_streams"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 const (
@@ -121,6 +124,9 @@ func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
 ) error {
+	ctx, end := ssr.startSpan(ctx, attribute.String("streamId", record.streamId.String()))
+	defer end()
+
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
 	ssr.mu.Lock()
@@ -174,6 +180,9 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
 ) {
+	_, end := ssr.startSpan(ssr.syncCtx, attribute.String("streamId", record.streamId.String()))
+	defer end()
+
 	var (
 		reset         = streamAndCookie.GetSyncReset()
 		streamId      = record.streamId
@@ -445,6 +454,13 @@ func (ssr *syncSessionRunner) Run() {
 		// Process the current batch of messages.
 		case <-ssr.messages.Wait():
 			batch = ssr.messages.GetBatch(batch)
+
+			// If the batch is nil, it means the messages channel was closed.
+			if batch == nil {
+				ssr.Close(base.RiverError(protocol.Err_BUFFER_FULL, "Sync session runner messages buffer is full, closing sync session runner"))
+				return
+			}
+
 			for _, update := range batch {
 				ssr.processSyncUpdate(update)
 			}
@@ -552,6 +568,28 @@ func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *
 			"func", "DistributeBackfillMessage",
 		)
 	}
+}
+
+// startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.
+func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
+	if ssr.otelTracer == nil {
+		return ctx, func() {}
+	}
+
+	// Determine the span name based on the caller's function name.
+	spanName := "N/A"
+	if pc, _, _, ok := runtime.Caller(1); ok {
+		if f := runtime.FuncForPC(pc); f != nil && len(f.Name()) > 0 {
+			names := strings.Split(f.Name(), ".")
+			spanName = names[len(names)-1]
+		}
+	}
+
+	ctx, span := ssr.otelTracer.Start(ctx, "syncSessionRunner::"+spanName, trace.WithAttributes(
+		append(attrs, attribute.String("syncId", ssr.GetSyncId()))...,
+	))
+
+	return ctx, func() { span.End() }
 }
 
 type TrackedViewForStream func(streamId shared.StreamId, stream *protocol.StreamAndCookie) (events.TrackedStreamView, error)

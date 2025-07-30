@@ -635,6 +635,19 @@ export default [
   },
   {
     "type": "event",
+    "name": "Paused",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Transfer",
     "inputs": [
       {
@@ -654,6 +667,19 @@ export default [
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Unpaused",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -793,6 +819,16 @@ export default [
   {
     "type": "error",
     "name": "Ownable__ZeroAddress",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Pausable__NotPaused",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Pausable__Paused",
     "inputs": []
   }
 ] as const
