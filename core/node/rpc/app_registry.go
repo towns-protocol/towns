@@ -26,6 +26,8 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 
 	s.initInstance(ServerModeAppRegistry, opts)
 
+	s.initTracing("app-registry", s.config.AppRegistry.AppRegistryId)
+
 	err = s.initRiverChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
@@ -107,6 +109,7 @@ func (s *Service) startAppRegistryMode(opts *ServerStartOpts) error {
 		webhookHttpClient,
 		s.baseChain,
 		&s.config.AppRegistryContract,
+		s.otelTracer,
 	); err != nil {
 		return AsRiverError(err).Message("Failed to instantiate app registry service").LogError(s.defaultLogger)
 	}

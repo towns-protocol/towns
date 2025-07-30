@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/SherClockHolmes/webpush-go"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/authentication"
@@ -14,14 +15,13 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/track_streams"
-
 	"github.com/towns-protocol/towns/core/node/nodes"
 	notificationssync "github.com/towns-protocol/towns/core/node/notifications/sync"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
 const (
@@ -51,6 +51,7 @@ func NewService(
 	nodes []nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
+	otelTracer trace.Tracer,
 ) (*Service, error) {
 	tracker, err := notificationssync.NewNotificationsStreamsTracker(
 		ctx,
@@ -62,6 +63,7 @@ func NewService(
 		metrics,
 		notificationsConfig.StreamTracking,
 		notificationsConfig,
+		otelTracer,
 	)
 	if err != nil {
 		return nil, err
