@@ -543,7 +543,7 @@ func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.
 	// Determine the span name based on the caller's function name.
 	spanName := "N/A"
 	if pc, _, _, ok := runtime.Caller(1); ok {
-		if f := runtime.FuncForPC(pc); f != nil {
+		if f := runtime.FuncForPC(pc); f != nil && len(f.Name()) > 0 {
 			names := strings.Split(f.Name(), ".")
 			spanName = names[len(names)-1]
 		}
