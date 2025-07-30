@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
@@ -82,6 +83,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	filter StreamFilter,
 	metricsFactory infra.MetricsFactory,
 	streamTracking config.StreamTrackingConfig,
+	otelTracer trace.Tracer,
 ) error {
 	tracker.ctx = ctx
 	tracker.riverRegistry = riverRegistry
@@ -95,7 +97,7 @@ func (tracker *StreamsTrackerImpl) Init(
 		nodeRegistries,
 		filter.NewTrackedStream,
 		streamTracking,
-		nil,
+		otelTracer,
 	)
 	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
