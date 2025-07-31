@@ -11,6 +11,7 @@ import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 
 // contracts
 import {MembershipBase} from "../MembershipBase.sol";
+import {ERC721ABase} from "../../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 
 /// @title MembershipTiersBase
 /// @notice Internal library-style abstract contract that manages tier CRUD and
@@ -18,7 +19,7 @@ import {MembershipBase} from "../MembershipBase.sol";
 ///         APIs.  No external/public functions are declared here.
 /// @dev    Uses a separate storage slot defined in MembershipTiersStorage to
 ///         avoid touching legacy MembershipStorage.
-abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase {
+abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, ERC721ABase {
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -104,8 +105,23 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase {
     /*                        INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getTier(uint32 tierId) internal view returns (MembershipTiersStorage.Tier storage t) {
-        t = MembershipTiersStorage.getLayout().tiers[tierId];
+    function _getTier(uint32 tierId) internal view returns (MembershipTiersStorage.Tier memory t) {
+        if (tierId == 0) {
+            t = MembershipTiersStorage.Tier({
+                name: "Membership",
+                basePrice: _getMembershipPrice(_totalSupply()),
+                maxSupply: _getMembershipSupplyLimit(),
+                duration: _getMembershipDuration(),
+                freeAllocation: _getMembershipFreeAllocation(),
+                pricingModule: address(0),
+                minted: 0,
+                image: "",
+                disabled: false
+            });
+        } else {
+            t = MembershipTiersStorage.getLayout().tiers[tierId];
+        }
+
         if (t.duration == 0 && t.basePrice == 0 && t.maxSupply == 0 && bytes(t.name).length == 0) {
             Membership__InvalidTier.selector.revertWith();
         }
@@ -140,7 +156,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase {
     /// @notice Returns membership price for a specific tier.
     /// @dev    Simplified: uses Tier.pricingModule if set, else basePrice.
     function _getTierPrice(uint32 tierId) internal view returns (uint256 price) {
-        MembershipTiersStorage.Tier storage t = _getTier(tierId);
+        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
 
         if (t.pricingModule != address(0)) {
             price = IMembershipPricing(t.pricingModule).getPrice(t.freeAllocation, t.minted);
@@ -150,7 +166,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase {
     }
 
     function _getTierDuration(uint32 tierId) internal view returns (uint64 duration) {
-        MembershipTiersStorage.Tier storage t = _getTier(tierId);
+        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
         duration = t.duration != 0 ? t.duration : _getMembershipDuration();
     }
 }

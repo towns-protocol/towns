@@ -17,7 +17,6 @@ import {Permissions} from "../../Permissions.sol";
 
 // contracts
 import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
-import {ERC721ABase} from "../../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {DispatcherBase} from "../../dispatcher/DispatcherBase.sol";
 import {Entitled} from "../../Entitled.sol";
 import {EntitlementGatedBase} from "../../gated/EntitlementGatedBase.sol";
@@ -42,8 +41,7 @@ abstract contract MembershipJoin is
     EntitlementGatedBase,
     Entitled,
     PrepayBase,
-    PointsBase,
-    ERC721ABase
+    PointsBase
 {
     using CustomRevert for bytes4;
 
