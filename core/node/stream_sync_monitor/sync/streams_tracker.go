@@ -287,7 +287,7 @@ func (m *StreamSyncMonitor) captureStackTrace(monitored *MonitoredStream, lag in
 		return
 	}
 
-	url := fmt.Sprintf("%s/debug/stacks", nodeUrl)
+	url := fmt.Sprintf("%s/debug/stacks2", nodeUrl)
 	req, err := http.NewRequestWithContext(m.ctx, "GET", url, nil)
 	if err != nil {
 		logging.FromCtx(m.ctx).Errorw("Failed to create stack trace request",
