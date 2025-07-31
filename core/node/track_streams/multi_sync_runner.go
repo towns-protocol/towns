@@ -357,27 +357,16 @@ func (ssr *syncSessionRunner) Run() {
 	}
 
 	var syncer RemoteStreamSyncer
-	if ssr.useSharedSyncer {
-		syncer, err = client.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr,
-			ssr.otelTracer,
-		)
-	} else {
-		syncer, err = legacyclient.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.cancelSync,
-			"SyncSessionRunner",
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr.messages,
-			ssr.otelTracer,
-		)
-	}
+	syncer, err = legacyclient.NewRemoteSyncer(
+		ssr.syncCtx,
+		ssr.cancelSync,
+		"SyncSessionRunner",
+		ssr.node,
+		streamClient,
+		ssr.relocateStream,
+		ssr.messages,
+		ssr.otelTracer,
+	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").
@@ -428,7 +417,12 @@ func (ssr *syncSessionRunner) Run() {
 
 			// If the batch is nil, it means the messages channel was closed.
 			if batch == nil {
-				ssr.Close(base.RiverError(protocol.Err_BUFFER_FULL, "Sync session runner messages buffer is full, closing sync session runner"))
+				ssr.Close(
+					base.RiverError(
+						protocol.Err_BUFFER_FULL,
+						"Sync session runner messages buffer is full, closing sync session runner",
+					),
+				)
 				return
 			}
 

@@ -52,7 +52,32 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 		sentMessagesHistogram: metrics.NewHistogramVecEx(
 			"stream_sync_sent_messages",
 			"Total number of messages sent to the client per sync operation",
-			[]float64{5, 10, 25, 50, 75, 100, 150, 200, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 50000, 75000, 100000},
+			[]float64{
+				5,
+				10,
+				25,
+				50,
+				75,
+				100,
+				150,
+				200,
+				250,
+				500,
+				750,
+				1000,
+				1500,
+				2000,
+				2500,
+				5000,
+				7500,
+				10000,
+				15000,
+				20000,
+				25000,
+				50000,
+				75000,
+				100000,
+			},
 			"use_shared_sync",
 		),
 	}
@@ -63,13 +88,6 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 			Help: "Total number of active stream sync operations",
 		},
 		func() float64 { return float64(h.activeSyncOperations.Size()) },
-	)
-	metrics.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "stream_sync_shared_syncing_streams_counter",
-			Help: "Total number of streams currently being synced by the shared syncer",
-		},
-		func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
 	)
 }
 

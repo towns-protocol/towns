@@ -25,7 +25,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -149,7 +148,6 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		node1.address,
 		node1.service.cache,
 		node1.service.nodeRegistry,
-		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
 		nil, nil,
 	)
 	req.NoError(err, "NewStreamsSyncOperation")
@@ -161,7 +159,10 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// this must cancel the sync op with a buffer too full error.
 	go func() {
 		slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
-		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
+		syncOpErr := syncOp.RunLegacy(
+			connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}),
+			slowSubscriber,
+		)
 		syncOpStopped.Store(true)
 		syncOpResult <- syncOpErr
 	}()
