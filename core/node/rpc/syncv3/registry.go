@@ -20,7 +20,10 @@ type Registry interface {
 
 	// AddOpToExistingStream adds an operation to an existing stream.
 	// It returns true if the operation was added, false if the given stream does not exist.
-	AddOpToExistingStream(streamId StreamId, op Operation) bool
+	// Returns two booleans:
+	//  - false if the stream does not exist
+	//  - false if the operation already exists in the stream
+	AddOpToExistingStream(streamId StreamId, op Operation) (bool, bool)
 	// AddOpToStream adds an operation to a stream.
 	// Creates a new record in the map if the stream does not exist.
 	AddOpToStream(streamID StreamId, op Operation)
@@ -61,22 +64,24 @@ func (r *registry) GetOp(id string) (Operation, bool) {
 	return r.ops.Load(id)
 }
 
-func (r *registry) AddOpToExistingStream(streamID StreamId, op Operation) bool {
-	_, ok := r.streams.Compute(
+func (r *registry) AddOpToExistingStream(streamID StreamId, op Operation) (streamExists bool, added bool) {
+	r.streams.Compute(
 		streamID,
 		func(ops []Operation, loaded bool) ([]Operation, xsync.ComputeOp) {
 			if !loaded {
 				return nil, xsync.CancelOp
 			}
+			streamExists = true
 			if slices.ContainsFunc(ops, func(o Operation) bool {
 				return o.ID() == op.ID()
 			}) {
 				return ops, xsync.CancelOp
 			}
+			added = true
 			return append(slices.Clone(ops), op), xsync.UpdateOp
 		},
 	)
-	return ok
+	return
 }
 
 func (r *registry) AddOpToStream(streamID StreamId, op Operation) {

@@ -2,6 +2,7 @@ package syncv3
 
 import (
 	"context"
+	"math"
 	"slices"
 	"sync"
 	"time"
@@ -170,7 +171,12 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 
 			// 1. Process adding stream to sync with the given cookie.
 			// The node address specified in cookie is used to select the node for the syncer.
-			st := m.processAddingStream(ctx, cookie, false)
+			st := m.processAddingStream(ctx, &SyncCookie{
+				NodeAddress:       cookie.GetNodeAddress(),
+				StreamId:          cookie.GetStreamId(),
+				MinipoolGen:       math.MaxInt64,
+				PrevMiniblockHash: common.Hash{}.Bytes(),
+			}, false)
 			if st == nil {
 				return
 			}
@@ -187,8 +193,8 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 				st = m.processAddingStream(ctx, &SyncCookie{
 					NodeAddress:       st.GetNodeAddress(),
 					StreamId:          cookie.GetStreamId(),
-					MinipoolGen:       cookie.GetMinipoolGen(),
-					PrevMiniblockHash: cookie.GetPrevMiniblockHash(),
+					MinipoolGen:       math.MaxInt64,
+					PrevMiniblockHash: common.Hash{}.Bytes(),
 				}, true)
 			}
 

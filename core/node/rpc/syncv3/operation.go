@@ -2,7 +2,6 @@ package syncv3
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -200,13 +199,17 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	for _, cookie := range request.GetAddStreams() {
 		streamID := StreamId(cookie.GetStreamId())
 
-		// Add the stream to the initializing streams map. See map description for more details about the logic.
-		op.initializingStreams.Store(streamID, nil)
+		streamExists, added := op.registry.AddOpToExistingStream(streamID, op)
+		if added {
+			// Add the stream to the initializing streams map. See map description for more details about the logic.
+			op.initializingStreams.LoadOrStore(streamID, nil)
 
-		if op.registry.AddOpToExistingStream(streamID, op) {
 			// The already syncing stream was successfully added to the current operation. Backfill it.
 			toBackfill = append(toBackfill, cookie)
-		} else {
+		} else if !streamExists {
+			// Add the stream to the initializing streams map. See map description for more details about the logic.
+			op.initializingStreams.LoadOrStore(streamID, nil)
+
 			// The given stream is not syncing yet, so we need to add it to the syncer.
 			// Add this list to the registry after a successful syncer manager call.
 			toAddStreams = append(toAddStreams, cookie)
@@ -412,7 +415,6 @@ func (op *operation) startUpdatesProcessor() {
 				case SyncOp_SYNC_UPDATE:
 					streamID, err := StreamIdFromBytes(msg.StreamID())
 					if err != nil {
-						fmt.Println(err)
 						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",
 							"streamId", msg.GetStreamId(), "error", err)
 						continue
@@ -437,6 +439,8 @@ func (op *operation) startUpdatesProcessor() {
 									return nil, xsync.CancelOp
 								}
 
+								return nil, xsync.DeleteOp
+
 								// Remove the first target sync ID from the message and send it to the operation
 								msg.TargetSyncIds = msg.TargetSyncIds[1:]
 
@@ -456,6 +460,9 @@ func (op *operation) startUpdatesProcessor() {
 									filteredMiniblocks = append(filteredMiniblocks, mb)
 								}
 							}
+
+							//filteredEvents = msg.GetStream().GetEvents()
+							//filteredMiniblocks = msg.GetStream().GetMiniblocks()
 
 							msg.Stream = &StreamAndCookie{
 								Events:         filteredEvents,

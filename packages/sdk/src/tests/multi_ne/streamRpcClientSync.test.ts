@@ -123,7 +123,7 @@ describe('streamRpcClient using v2 sync', () => {
             },
             {
                 timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'false' },
+                headers: { 'X-Use-Shared-Sync': 'true' },
             },
         )
         await expect(
@@ -225,7 +225,7 @@ describe('streamRpcClient using v2 sync', () => {
             },
             {
                 timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'false' },
+                headers: { 'X-Use-Shared-Sync': 'true' },
             },
         )
         // bob reads the syncId from the response stream

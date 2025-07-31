@@ -303,7 +303,7 @@ describe('streamRpcClient', () => {
             },
             {
                 timeoutMs: -1,
-                headers: { 'X-Use-Shared-Sync': 'false' },
+                headers: { 'X-Use-Shared-Sync': 'true' },
             },
         )
 
