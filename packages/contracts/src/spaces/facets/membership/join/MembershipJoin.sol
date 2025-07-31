@@ -25,7 +25,8 @@ import {PointsBase} from "../../points/PointsBase.sol";
 import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
-import {MembershipBase} from "../MembershipBase.sol";
+import {MembershipTiersBase} from "../tiers/MembershipTiersBase.sol";
+import {MembershipTiersStorage} from "../tiers/MembershipTiersStorage.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -35,7 +36,7 @@ abstract contract MembershipJoin is
     IRolesBase,
     IPartnerRegistryBase,
     ERC5643Base,
-    MembershipBase,
+    MembershipTiersBase,
     ReferralsBase,
     DispatcherBase,
     RolesBase,
@@ -63,21 +64,30 @@ abstract contract MembershipJoin is
         bytes4 selector,
         address sender,
         address receiver,
-        bytes memory referralData
+        bytes memory referralData,
+        uint32 tierId
     ) internal pure returns (bytes memory) {
-        return abi.encode(selector, sender, receiver, referralData);
+        return abi.encode(selector, sender, receiver, referralData, tierId);
     }
 
     /// @notice Calculates all pricing details for joining a space
     /// @return joinDetails Struct containing all pricing information
-    function _getJoinDetails() internal view returns (JoinDetails memory joinDetails) {
-        uint256 totalSupply = _totalSupply();
-        uint256 membershipPrice = _getMembershipPrice(totalSupply);
-        uint256 freeAllocation = _getMembershipFreeAllocation();
-        uint256 prepaidSupply = _getPrepaidSupply();
+    function _getJoinDetails(uint32 tierId) internal view returns (JoinDetails memory joinDetails) {
+        uint256 membershipPrice;
+        uint256 freeAllocation;
+        uint256 prepaidSupply;
 
-        // Check if this is a free join due to allocation
-        if (freeAllocation > totalSupply) {
+        // For legacy tier 0 use global helpers to avoid storage revert
+        if (tierId == 0) return _getJoinDetails();
+
+        MembershipTiersStorage.Tier storage t = _getTier(tierId);
+        uint256 minted = t.minted; // per-tier supply minted so far
+        membershipPrice = _getTierPrice(tierId);
+        freeAllocation = t.freeAllocation;
+        prepaidSupply = _getPrepaidSupply(); // still global
+
+        // Free because of per-tier allocation
+        if (freeAllocation > minted) {
             return
                 JoinDetails({
                     basePrice: membershipPrice,
@@ -87,7 +97,7 @@ abstract contract MembershipJoin is
                 });
         }
 
-        // Check if this is a free join due to prepaid supply
+        // Free because prepaid tickets exist (global)
         if (prepaidSupply > 0) {
             return
                 JoinDetails({
@@ -108,12 +118,46 @@ abstract contract MembershipJoin is
             });
     }
 
+    // Legacy helper – defaults to tier 0 for backwards compatibility
+    function _getJoinDetails() internal view returns (JoinDetails memory joinDetails) {
+        uint256 totalSupply = _totalSupply();
+        uint256 membershipPrice = _getMembershipPrice(totalSupply);
+        uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 prepaidSupply = _getPrepaidSupply();
+
+        if (freeAllocation > totalSupply) {
+            return
+                JoinDetails({
+                    basePrice: membershipPrice,
+                    amountDue: 0,
+                    shouldCharge: false,
+                    isPrepaid: false
+                });
+        }
+        if (prepaidSupply > 0) {
+            return
+                JoinDetails({
+                    basePrice: membershipPrice,
+                    amountDue: 0,
+                    shouldCharge: false,
+                    isPrepaid: true
+                });
+        }
+        return
+            JoinDetails({
+                basePrice: membershipPrice,
+                amountDue: membershipPrice,
+                shouldCharge: true,
+                isPrepaid: false
+            });
+    }
+
     /// @notice Handles the process of joining a space
     /// @param receiver The address that will receive the membership token
-    function _joinSpace(address receiver) internal {
-        _validateJoinSpace(receiver);
+    function _joinSpace(address receiver, uint32 tierId) internal {
+        _validateJoinSpace(receiver, tierId);
 
-        JoinDetails memory joinDetails = _getJoinDetails();
+        JoinDetails memory joinDetails = _getJoinDetails(tierId);
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -125,7 +169,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "", tierId)
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -139,7 +183,7 @@ abstract contract MembershipJoin is
             if (isEntitled) {
                 if (joinDetails.shouldCharge) _chargeForJoinSpace(transactionId, joinDetails);
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, tierId);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -149,10 +193,14 @@ abstract contract MembershipJoin is
     /// @notice Handles the process of joining a space with a referral
     /// @param receiver The address that will receive the membership token
     /// @param referral The referral information
-    function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
-        _validateJoinSpace(receiver);
+    function _joinSpaceWithReferral(
+        address receiver,
+        uint32 tierId,
+        ReferralTypes memory referral
+    ) internal {
+        _validateJoinSpace(receiver, tierId);
 
-        JoinDetails memory joinDetails = _getJoinDetails();
+        JoinDetails memory joinDetails = _getJoinDetails(tierId);
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -172,7 +220,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData, tierId)
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -188,7 +236,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
 
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, tierId);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -405,18 +453,28 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    function _issueToken(address receiver) internal {
+    function _issueToken(address receiver, uint32 tierId) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
-        // set renewal price for token
-        _setMembershipRenewalPrice(tokenId, _getMembershipPrice(_totalSupply()));
+        // associate tier & supply bookkeeping
+        _setTierOf(tokenId, tierId);
+        _incrementTierMinted(tierId, 1);
 
-        // mint membership
+        // set renewal price for token based on its tier
+        _setMembershipRenewalPrice(
+            tokenId,
+            tierId == 0 ? _getMembershipPrice(_totalSupply()) : _getTierPrice(tierId)
+        );
+
+        // mint membership NFT
         _safeMint(receiver, 1);
 
         // set expiration of membership
-        _renewSubscription(tokenId, _getMembershipDuration());
+        _renewSubscription(
+            tokenId,
+            tierId == 0 ? _getMembershipDuration() : _getTierDuration(tierId)
+        );
 
         // emit event
         emit MembershipTokenIssued(receiver, tokenId);
@@ -424,9 +482,11 @@ abstract contract MembershipJoin is
 
     /// @notice Validates if a user can join the space
     /// @param receiver The address that will receive the membership token
-    function _validateJoinSpace(address receiver) internal view {
+    function _validateJoinSpace(address receiver, uint32 tierId) internal view {
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
-        uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
+        uint256 membershipSupplyLimit = tierId == 0
+            ? _getMembershipSupplyLimit()
+            : _getTier(tierId).maxSupply;
         if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
             Membership__MaxSupplyReached.selector.revertWith();
         }
