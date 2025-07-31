@@ -26,7 +26,6 @@ import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
 import {MembershipTiersBase} from "../tiers/MembershipTiersBase.sol";
-import {MembershipTiersStorage} from "../tiers/MembershipTiersStorage.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -73,21 +72,15 @@ abstract contract MembershipJoin is
     /// @notice Calculates all pricing details for joining a space
     /// @return joinDetails Struct containing all pricing information
     function _getJoinDetails(uint32 tierId) internal view returns (JoinDetails memory joinDetails) {
-        uint256 membershipPrice;
-        uint256 freeAllocation;
-        uint256 prepaidSupply;
-
-        // For legacy tier 0 use global helpers to avoid storage revert
-        if (tierId == 0) return _getJoinDetails();
-
-        MembershipTiersStorage.Tier storage t = _getTier(tierId);
-        uint256 minted = t.minted; // per-tier supply minted so far
-        membershipPrice = _getTierPrice(tierId);
-        freeAllocation = t.freeAllocation;
-        prepaidSupply = _getPrepaidSupply(); // still global
+        uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 prepaidSupply = _getPrepaidSupply();
+        uint256 totalSupply = _totalSupply();
+        uint256 membershipPrice = tierId == 0
+            ? _getMembershipPrice(totalSupply)
+            : _getTierPrice(tierId);
 
         // Free because of per-tier allocation
-        if (freeAllocation > minted) {
+        if (freeAllocation > totalSupply) {
             return
                 JoinDetails({
                     basePrice: membershipPrice,
@@ -109,40 +102,6 @@ abstract contract MembershipJoin is
         }
 
         // Regular paid join
-        return
-            JoinDetails({
-                basePrice: membershipPrice,
-                amountDue: membershipPrice,
-                shouldCharge: true,
-                isPrepaid: false
-            });
-    }
-
-    // Legacy helper – defaults to tier 0 for backwards compatibility
-    function _getJoinDetails() internal view returns (JoinDetails memory joinDetails) {
-        uint256 totalSupply = _totalSupply();
-        uint256 membershipPrice = _getMembershipPrice(totalSupply);
-        uint256 freeAllocation = _getMembershipFreeAllocation();
-        uint256 prepaidSupply = _getPrepaidSupply();
-
-        if (freeAllocation > totalSupply) {
-            return
-                JoinDetails({
-                    basePrice: membershipPrice,
-                    amountDue: 0,
-                    shouldCharge: false,
-                    isPrepaid: false
-                });
-        }
-        if (prepaidSupply > 0) {
-            return
-                JoinDetails({
-                    basePrice: membershipPrice,
-                    amountDue: 0,
-                    shouldCharge: false,
-                    isPrepaid: true
-                });
-        }
         return
             JoinDetails({
                 basePrice: membershipPrice,
