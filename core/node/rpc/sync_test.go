@@ -611,7 +611,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 			NodeAddress: channel.GetNodeAddress(),
 			StreamId:    channel.GetStreamId(),
 		}}})
-		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 
 		resp, err := syncClient0.SyncStreams(ctx, connReq)
 		require.NoError(err)

@@ -169,7 +169,6 @@ func (op *operation) Ping(ctx context.Context, nonce string) {
 
 // DebugDropStream is a debug method to drop a specific stream from the sync operation.
 func (op *operation) DebugDropStream(ctx context.Context, streamId StreamId) error {
-	// TODO: Implement, drop from the registry and that's it
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:]})
 	return nil
 }
@@ -391,9 +390,13 @@ func (op *operation) startUpdatesProcessor() {
 					return
 				}
 
-				// TODO: If stream down, remove it from the list of subscribed streams
-
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+				// Special cases depending on the update type
+				switch msg.GetSyncOp() {
+				case SyncOp_SYNC_DOWN:
+					// If the sync operation is a down operation, remove the operation from the stream.
+					op.registry.RemoveOpFromStream(StreamId(msg.StreamID()), op.id)
+				case SyncOp_SYNC_CLOSE:
+					// Close the operation and return from the updates processor.
 					op.cancel(nil)
 					return
 				}

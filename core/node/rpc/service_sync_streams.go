@@ -14,10 +14,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
-func useSyncV3(req connect.AnyRequest) bool {
-	return req.Header().Get(UseSharedSyncHeaderName) == "true"
-}
-
 func runWithLabels(
 	ctx context.Context,
 	syncId string,
@@ -42,7 +38,7 @@ func (s *Service) SyncStreams(
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
-		if useSyncV3(req) {
+		if req.Header().Get(UseSharedSyncHeaderName) == "true" {
 			s.v3Syncs.Store(syncId, struct{}{})
 			err = s.syncv3.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
 			s.v3Syncs.Delete(syncId)
