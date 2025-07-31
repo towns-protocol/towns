@@ -1,7 +1,12 @@
 package syncv3
 
 import (
+	"context"
 	"sync"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -97,4 +102,37 @@ func distributeMessage(registry Registry, streamID StreamId, msg *SyncStreamsRes
 		}(op)
 	}
 	wg.Wait()
+}
+
+type otelSender struct {
+	ctx        context.Context
+	otelTracer trace.Tracer
+	sender     Receiver
+}
+
+func (s *otelSender) Send(msg *SyncStreamsResponse) error {
+	_, span := s.otelTracer.Start(s.ctx, "SyncStreamsResponse")
+	defer span.End()
+
+	streamIdBytes := msg.GetStreamId()
+	if streamIdBytes == nil {
+		streamIdBytes = msg.Stream.GetNextSyncCookie().GetStreamId()
+	}
+	if streamIdBytes != nil {
+		id, err := StreamIdFromBytes(streamIdBytes)
+		if err == nil {
+			span.SetAttributes(attribute.String("streamId", id.String()))
+		}
+	}
+	span.SetAttributes(
+		attribute.String("syncOp", msg.GetSyncOp().String()),
+		attribute.String("syncId", msg.GetSyncId()),
+	)
+
+	err := s.sender.Send(msg)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+	return err
 }

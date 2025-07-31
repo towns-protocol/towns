@@ -186,7 +186,10 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 				// This case should be properly handled by using another node address.
 				cookie.NodeAddress = st.GetNodeAddress()
 				st = m.processAddingStream(ctx, cookie, true)
-			} else if st.GetCode() == int32(Err_ALREADY_EXISTS) {
+			}
+
+			if st.GetCode() == int32(Err_ALREADY_EXISTS) {
+				// 3. If the stream is already being synced, we need to backfill it.
 				st = m.processBackfillingStream(ctx, req.GetSyncId(), cookie)
 			}
 
@@ -262,6 +265,8 @@ func (m *syncerManager) processAddingStream(
 		}
 	}
 
+	syncerEntity.Syncer = syncer
+
 	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
 	defer cancel()
 
@@ -282,8 +287,6 @@ func (m *syncerManager) processAddingStream(
 	if len(resp.GetAdds()) != 0 {
 		return resp.GetAdds()[0]
 	}
-
-	syncerEntity.Syncer = syncer
 
 	return nil
 }

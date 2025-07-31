@@ -78,6 +78,15 @@ func NewService(
 }
 
 func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec Receiver) error {
+	// Wrap the receiver with an OpenTelemetry sender if the tracer is set.
+	if s.otelTracer != nil {
+		rec = &otelSender{
+			ctx:        ctx,
+			otelTracer: s.otelTracer,
+			sender:     rec,
+		}
+	}
+
 	// Create a new sync operation with the given ID and receiver.
 	op := NewOperation(
 		ctx,

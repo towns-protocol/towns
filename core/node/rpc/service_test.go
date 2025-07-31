@@ -1328,6 +1328,7 @@ func (s slowStreamsResponseSender) Send(msg *protocol.SyncStreamsResponse) error
 
 func TestModifySyncWithWrongCookie(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+	require := tt.require
 
 	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
 	cookie := alice.createUserStreamGetCookie()
@@ -1350,8 +1351,12 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 	tt.require.Len(resp.Msg.GetAdds(), 0)
 	tt.require.Len(resp.Msg.GetRemovals(), 0)
 
-	updates, ok := alice.updates.Load(StreamId(cookie.GetStreamId()))
-	tt.require.True(ok)
+	var updates *receivedStreamUpdates
+	require.Eventually(func() bool {
+		var ok bool
+		updates, ok = alice.updates.Load(StreamId(cookie.GetStreamId()))
+		return ok
+	}, time.Second*15, time.Millisecond*100)
 	tt.require.Len(updates.updates, 1)
 	tt.require.Equal(updates.updates[0].StreamID(), cookie.GetStreamId())
 }
@@ -1375,7 +1380,7 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 
 	testfmt.Print(t, "StartSync with wrong cookie")
 	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
-	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
+	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 30*time.Second)
 	defer syncCancel()
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}})

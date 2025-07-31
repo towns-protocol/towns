@@ -155,8 +155,10 @@ func (op *operation) Modify(ctx context.Context, request *ModifySyncRequest) (*M
 }
 
 // Cancel cancels the given operation.
+// The client connection will be closed in startUpdatesProcessor.
 func (op *operation) Cancel(ctx context.Context) {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+	<-op.ctx.Done() // TODO: Add timeouts
 }
 
 // Ping pings the operation to keep it alive.
@@ -168,6 +170,7 @@ func (op *operation) Ping(ctx context.Context, nonce string) {
 }
 
 // DebugDropStream is a debug method to drop a specific stream from the sync operation.
+// The stream will be removed from the operation in startUpdatesProcessor.
 func (op *operation) DebugDropStream(ctx context.Context, streamId StreamId) error {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:]})
 	return nil
@@ -298,6 +301,11 @@ func (op *operation) localBackfill(ctx context.Context, targetSyncIDs []string, 
 		go func(cookie *SyncCookie) {
 			defer wg.Done()
 
+			// There could be a very rare case when the cookie is nil, just skip it instead of panicking.
+			if cookie == nil {
+				return
+			}
+
 			streamID := StreamId(cookie.GetStreamId())
 
 			stream, err := op.streamCache.GetStreamWaitForLocal(ctx, streamID)
@@ -396,7 +404,7 @@ func (op *operation) startUpdatesProcessor() {
 					// If the sync operation is a down operation, remove the operation from the stream.
 					op.registry.RemoveOpFromStream(StreamId(msg.StreamID()), op.id)
 				case SyncOp_SYNC_CLOSE:
-					// Close the operation and return from the updates processor.
+					// Close the operation and return from the stream updates processor.
 					op.cancel(nil)
 					return
 				}
