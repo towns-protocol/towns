@@ -159,6 +159,52 @@ type OnChainSettings struct {
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
+
+	// Number of miniblocks to keep for each type of stream.
+	// 0 means keep all miniblocks.
+	// 
+	StreamHistoryMiniblocks StreamHistoryMiniblocks `mapstructure:",squash"`
+}
+
+type StreamHistoryMiniblocks struct {
+	Default      uint64 `mapstructure:"default"`
+	Channel      uint64 `mapstructure:"20"`
+	DM           uint64 `mapstructure:"88"`
+	GDM          uint64 `mapstructure:"77"`
+	Metadata     uint64 `mapstructure:"dd"`
+	Space        uint64 `mapstructure:"10"`
+	User         uint64 `mapstructure:"a8"`
+	UserDevice   uint64 `mapstructure:"ad"`
+	UserInbox    uint64 `mapstructure:"a1"`
+	UserSettings uint64 `mapstructure:"a5"`
+}
+
+func (s StreamHistoryMiniblocks) ForType(streamType byte) uint64 {
+	var ret uint64
+	switch streamType {
+	case shared.STREAM_CHANNEL_BIN:
+		ret = s.Channel
+	case shared.STREAM_DM_CHANNEL_BIN:
+		ret = s.DM
+	case shared.STREAM_GDM_CHANNEL_BIN:
+		ret = s.GDM
+	case shared.STREAM_METADATA_BIN:
+		ret = s.Metadata
+	case shared.STREAM_SPACE_BIN:
+		ret = s.Space
+	case shared.STREAM_USER_BIN:
+		ret = s.User
+	case shared.STREAM_USER_METADATA_KEY_BIN:
+		ret = s.UserDevice
+	case shared.STREAM_USER_INBOX_BIN:
+		ret = s.UserInbox
+	case shared.STREAM_USER_SETTINGS_BIN:
+		ret = s.UserSettings
+	}
+	if ret == 0 {
+		ret = s.Default
+	}
+	return ret
 }
 
 type XChainSettings struct {
