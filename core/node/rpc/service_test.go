@@ -874,16 +874,16 @@ func testAddStreamsToSync(tester *serviceTester) {
 	)
 	require.Nilf(err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
-	_, err = bobClient.AddStreamToSync(
+	_, err = bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "error calling AddStreamsToSync")
+	require.NoError(err, "error calling ModifySync")
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -966,17 +966,17 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	require.Nilf(err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
-	resp, err := bobClient.AddStreamToSync(
+	resp, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "AddStreamsToSync")
-	log.Infow("AddStreamToSync", "resp", resp)
+	require.NoError(err, "ModifySync")
+	log.Infow("ModifySync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
 	// the externally added event (by AddEvent). Second event is the miniblock
@@ -1005,16 +1005,16 @@ OuterLoop:
 	Act
 	*/
 	// bob removes alice's stream to sync
-	removeRes, err := bobClient.RemoveStreamFromSync(
+	removeRes, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.RemoveStreamFromSyncRequest{
-				SyncId:   syncId,
-				StreamId: channelId[:],
+			&protocol.ModifySyncRequest{
+				SyncId:        syncId,
+				RemoveStreams: [][]byte{channelId[:]},
 			},
 		),
 	)
-	require.Nilf(err, "error calling RemoveStreamsFromSync: %v", err)
+	require.Nilf(err, "error calling ModifySync: %v", err)
 
 	// alice sends another message
 	message2, err := events.MakeEnvelopeWithPayload(

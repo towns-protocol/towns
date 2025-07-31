@@ -169,7 +169,7 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 				cookie.NodeAddress = st.GetNodeAddress()
 				st = m.processAddingStream(ctx, cookie, true)
 			} else if st.GetCode() == int32(Err_ALREADY_EXISTS) {
-				st = m.processBackfillingStream(ctx, req.GetSyncId(), req.GetSyncId(), cookie)
+				st = m.processBackfillingStream(ctx, req.GetSyncId(), cookie)
 			}
 
 			if st != nil {
@@ -219,7 +219,12 @@ func (m *syncerManager) processAddingStream(
 		}
 	}
 
-	selectedNode, nodeAvailable := m.selectNodeForStream(ctx, cookie, changeNode)
+	selectedNode, nodeAvailable := m.selectNodeForStream(
+		ctx,
+		StreamId(cookie.GetStreamId()),
+		common.BytesToAddress(cookie.GetNodeAddress()),
+		changeNode,
+	)
 	if !nodeAvailable {
 		return &SyncStreamOpStatus{
 			StreamId: streamID[:],
@@ -306,7 +311,6 @@ func (m *syncerManager) processRemovingStream(
 func (m *syncerManager) processBackfillingStream(
 	ctx context.Context,
 	syncID string,
-	backfillSyncID string,
 	cookie *SyncCookie,
 ) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
@@ -336,7 +340,7 @@ func (m *syncerManager) processBackfillingStream(
 	resp, err := syncer.Modify(ctx, &ModifySyncRequest{
 		SyncId: syncID,
 		BackfillStreams: &ModifySyncRequest_Backfill{
-			SyncId:  backfillSyncID,
+			SyncId:  syncID,
 			Streams: []*SyncCookie{cookie.CopyWithAddr(syncer.Address())},
 		},
 	})
@@ -365,29 +369,30 @@ func (m *syncerManager) processBackfillingStream(
 // Extra logic is applied if changeNode is true, which means that the node from the cookie should not be used.
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
-func (m *syncerManager) selectNodeForStream(ctx context.Context, cookie *SyncCookie, changeNode bool) (common.Address, bool) {
-	streamID := StreamId(cookie.GetStreamId())
-	usedNode := common.BytesToAddress(cookie.GetNodeAddress())
-
+func (m *syncerManager) selectNodeForStream(
+	ctx context.Context,
+	streamID StreamId,
+	node common.Address,
+	changeNode bool,
+) (common.Address, bool) {
 	var span trace.Span
 	if m.otelTracer != nil {
 		ctx, span = m.otelTracer.Start(ctx, "syncerset::selectNodeForStream",
 			trace.WithAttributes(
 				attribute.Bool("changeNode", changeNode),
-				attribute.String("targetNode", usedNode.Hex()),
+				attribute.String("targetNode", node.Hex()),
 				attribute.String("streamID", streamID.String())))
 		defer span.End()
 	}
 
 	// 1. Try node from cookie first
 	if !changeNode {
-		if addrRaw := cookie.GetNodeAddress(); len(addrRaw) > 0 {
-			selectedNode := common.BytesToAddress(addrRaw)
-			if _, err := m.getOrCreateSyncer(ctx, selectedNode); err == nil {
-				return selectedNode, true
+		if node.Cmp(common.Address{}) != 0 {
+			if _, err := m.getOrCreateSyncer(ctx, node); err == nil {
+				return node, true
 			} else {
 				logging.FromCtx(m.ctx).Errorw("Failed to get or create syncer for node from cookie",
-					"nodeAddress", selectedNode, "streamId", streamID, "error", err)
+					"nodeAddress", node, "streamId", streamID, "error", err)
 			}
 		}
 	}
@@ -405,7 +410,7 @@ func (m *syncerManager) selectNodeForStream(ctx context.Context, cookie *SyncCoo
 
 	// 2. Try local node if stream is local
 	remotes, isLocal := stream.GetRemotesAndIsLocal()
-	if isLocal && (!changeNode || m.localAddr != usedNode) {
+	if isLocal && (!changeNode || m.localAddr != node) {
 		if _, err = m.getOrCreateSyncer(ctx, m.localAddr); err == nil {
 			return m.localAddr, true
 		} else {
@@ -417,7 +422,7 @@ func (m *syncerManager) selectNodeForStream(ctx context.Context, cookie *SyncCoo
 	// If changeNode is true, we should not use the usedNode address
 	if changeNode {
 		remotes = slices.DeleteFunc(remotes, func(addr common.Address) bool {
-			return addr == usedNode
+			return addr == node
 		})
 	}
 
