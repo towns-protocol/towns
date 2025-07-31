@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
@@ -20,7 +21,13 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
+const (
+	// modifySyncTimeout is the timeout for modifying sync op with a SINGLE item/stream in it.
+	modifySyncTimeout = 15 * time.Second
+)
+
 type (
+	// Syncer represents a behavior of a syncer entity responsible for managing stream updates.
 	Syncer interface {
 		Run()
 		ID() string
@@ -28,6 +35,8 @@ type (
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error)
 	}
 
+	// SyncerManager is an interface that defines the behavior of a syncer manager.
+	// It is responsible for managing syncers and processing modify sync requests.
 	SyncerManager interface {
 		Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 	}
@@ -101,16 +110,18 @@ func (m *syncerManager) startCommandsProcessor() {
 			}
 
 			for _, cmd := range commands {
-				wg.Add(1)
-				go func(cmd *command) {
-					defer wg.Done()
+				if cmd != nil && cmd.req != nil {
+					wg.Add(1)
+					go func(cmd *command) {
+						defer wg.Done()
 
-					if resp, err := m.modify(cmd.ctx, cmd.req); err != nil {
-						cmd.err <- err
-					} else {
-						cmd.resp <- resp
-					}
-				}(cmd)
+						if resp, err := m.modify(cmd.ctx, cmd.req); err != nil {
+							cmd.err <- err
+						} else {
+							cmd.resp <- resp
+						}
+					}(cmd)
+				}
 			}
 			wg.Wait()
 
@@ -152,6 +163,11 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 		go func(cookie *SyncCookie) {
 			defer wg.Done()
 
+			// There are some edge cases when cookie can be nil. Do nothing, just skip instead of panicing.
+			if cookie == nil {
+				return
+			}
+
 			// 1. Process adding stream to sync with the given cookie.
 			// The node address specified in cookie is used to select the node for the syncer.
 			st := m.processAddingStream(ctx, cookie, false)
@@ -160,7 +176,9 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 			}
 
 			// Do not retry in specific cases such as if the stream not found or internal error.
-			if st.GetCode() == int32(Err_NOT_FOUND) || st.GetCode() == int32(Err_INTERNAL) {
+			if st.GetCode() == int32(Err_NOT_FOUND) || // Stream not found on the selected node
+				st.GetCode() == int32(Err_DEADLINE_EXCEEDED) || // The selected node is not responding in time
+				st.GetCode() == int32(Err_INTERNAL) { // There is some internal error on the selected node
 				// 2. If the first attempt failed, try to force change node address in cookies and send the modify sync again.
 				// This sets the node address to the one returned in the failure status to make sure
 				// this is not going to be used in the next request.
@@ -237,12 +255,15 @@ func (m *syncerManager) processAddingStream(
 	if err != nil || syncer == nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", selectedNode)
 		return &SyncStreamOpStatus{
-			StreamId:    cookie.GetStreamId(),
+			StreamId:    streamID[:],
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: selectedNode.Bytes(),
 		}
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
+	defer cancel()
 
 	resp, err := syncer.Modify(ctx, &ModifySyncRequest{
 		AddStreams: []*SyncCookie{cookie.CopyWithAddr(selectedNode)},
@@ -250,7 +271,7 @@ func (m *syncerManager) processAddingStream(
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", selectedNode)
 		return &SyncStreamOpStatus{
-			StreamId:    cookie.GetStreamId(),
+			StreamId:    streamID[:],
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: selectedNode.Bytes(),
@@ -284,6 +305,9 @@ func (m *syncerManager) processRemovingStream(
 	if syncerEntity.Syncer == nil {
 		return nil
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
+	defer cancel()
 
 	resp, err := syncerEntity.Modify(ctx, &ModifySyncRequest{
 		RemoveStreams: [][]byte{streamID[:]},
@@ -337,6 +361,9 @@ func (m *syncerManager) processBackfillingStream(
 		}
 	}
 
+	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
+	defer cancel()
+
 	resp, err := syncer.Modify(ctx, &ModifySyncRequest{
 		SyncId: syncID,
 		BackfillStreams: &ModifySyncRequest_Backfill{
@@ -347,7 +374,7 @@ func (m *syncerManager) processBackfillingStream(
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("nodeAddr", syncer.Address())
 		return &SyncStreamOpStatus{
-			StreamId:    cookie.GetStreamId(),
+			StreamId:    streamID[:],
 			Code:        int32(rvrErr.Code),
 			Message:     rvrErr.GetMessage(),
 			NodeAddress: syncer.Address().Bytes(),
