@@ -2,13 +2,17 @@ package syncv3
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
@@ -75,6 +79,11 @@ type operation struct {
 	streamCache StreamCache
 	// registry is the registry of sync operations and their state.
 	registry Registry
+	// initializingStreams contains a list of streams that are currently being initialized for this operation.
+	// Meaning that a client added the given stream but the initial backfill message is not received yet,
+	// and the client is waiting for this message to be received. No other messages should be sent for this stream
+	// until the backfill is received. The value here is needed to avoid sending the same data multiple times.
+	initializingStreams *xsync.Map[StreamId, map[common.Hash]struct{}]
 	// otelTracer is used to traceoperations, tracing is disabled if nil.
 	otelTracer trace.Tracer
 }
@@ -92,16 +101,17 @@ func NewOperation(
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	op := &operation{
-		ctx:                ctx,
-		cancel:             cancel,
-		id:                 id,
-		rec:                rec,
-		streamUpdatesQueue: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		cmdQueue:           make(chan *command, 100),
-		syncerManager:      syncerManager,
-		streamCache:        streamCache,
-		registry:           registry,
-		otelTracer:         otelTracer,
+		ctx:                 ctx,
+		cancel:              cancel,
+		id:                  id,
+		rec:                 rec,
+		streamUpdatesQueue:  dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		cmdQueue:            make(chan *command, 100),
+		syncerManager:       syncerManager,
+		streamCache:         streamCache,
+		registry:            registry,
+		initializingStreams: xsync.NewMap[StreamId, map[common.Hash]struct{}](),
+		otelTracer:          otelTracer,
 	}
 
 	go op.startCommandsProcessor()
@@ -189,6 +199,9 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	)
 	for _, cookie := range request.GetAddStreams() {
 		streamID := StreamId(cookie.GetStreamId())
+
+		// Add the stream to the initializing streams map. See map description for more details about the logic.
+		op.initializingStreams.Store(streamID, nil)
 
 		if op.registry.AddOpToExistingStream(streamID, op) {
 			// The already syncing stream was successfully added to the current operation. Backfill it.
@@ -391,17 +404,83 @@ func (op *operation) startUpdatesProcessor() {
 				default:
 				}
 
+				// Special cases depending on the message type that should be applied before sending the message.
+				switch msg.GetSyncOp() {
+				case SyncOp_SYNC_DOWN:
+					// If the sync operation is a down operation, remove the operation from the stream.
+					op.registry.RemoveOpFromStream(StreamId(msg.StreamID()), op.id)
+				case SyncOp_SYNC_UPDATE:
+					streamID, err := StreamIdFromBytes(msg.StreamID())
+					if err != nil {
+						fmt.Println(err)
+						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",
+							"streamId", msg.GetStreamId(), "error", err)
+						continue
+					}
+
+					var skipMsg bool
+
+					// Avoid sending duplicates (streams and miniblocks) for the backfill message.
+					// TODO: Add a clear comment of what's going on here. Separate to another function.
+					op.initializingStreams.Compute(
+						streamID,
+						func(sent map[common.Hash]struct{}, loaded bool) (map[common.Hash]struct{}, xsync.ComputeOp) {
+							if !loaded {
+								return nil, xsync.CancelOp
+							}
+
+							if sent == nil {
+								// Here no updates were sent yet.
+								// Do not send messages until the backfill is sent, i.e. stream initialized.
+								if len(msg.GetTargetSyncIds()) == 0 {
+									skipMsg = true
+									return nil, xsync.CancelOp
+								}
+
+								// Remove the first target sync ID from the message and send it to the operation
+								msg.TargetSyncIds = msg.TargetSyncIds[1:]
+
+								return extractBackfillHashes(msg), xsync.UpdateOp
+							}
+
+							filteredEvents := make([]*Envelope, 0, len(msg.GetStream().GetEvents()))
+							for _, e := range msg.GetStream().GetEvents() {
+								if _, exists := sent[common.BytesToHash(e.Hash)]; !exists {
+									filteredEvents = append(filteredEvents, e)
+								}
+							}
+
+							filteredMiniblocks := make([]*Miniblock, 0, len(msg.GetStream().GetMiniblocks()))
+							for _, mb := range msg.GetStream().GetMiniblocks() {
+								if _, exists := sent[common.BytesToHash(mb.Header.Hash)]; !exists {
+									filteredMiniblocks = append(filteredMiniblocks, mb)
+								}
+							}
+
+							msg.Stream = &StreamAndCookie{
+								Events:         filteredEvents,
+								Miniblocks:     filteredMiniblocks,
+								NextSyncCookie: msg.GetStream().GetNextSyncCookie(),
+								SyncReset:      msg.GetStream().GetSyncReset(),
+								Snapshot:       msg.GetStream().GetSnapshot(),
+							}
+
+							return nil, xsync.DeleteOp
+						},
+					)
+					if skipMsg {
+						continue
+					}
+				}
+
 				msg.SyncId = op.id
 				if err := op.rec.Send(msg); err != nil {
 					op.cancel(err)
 					return
 				}
 
-				// Special cases depending on the update type
+				// Special cases depending on the message type that should be applied after sending the message.
 				switch msg.GetSyncOp() {
-				case SyncOp_SYNC_DOWN:
-					// If the sync operation is a down operation, remove the operation from the stream.
-					op.registry.RemoveOpFromStream(StreamId(msg.StreamID()), op.id)
 				case SyncOp_SYNC_CLOSE:
 					// Close the operation and return from the stream updates processor.
 					op.cancel(nil)

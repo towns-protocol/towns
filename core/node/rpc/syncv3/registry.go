@@ -68,6 +68,11 @@ func (r *registry) AddOpToExistingStream(streamID StreamId, op Operation) bool {
 			if !loaded {
 				return nil, xsync.CancelOp
 			}
+			if slices.ContainsFunc(ops, func(o Operation) bool {
+				return o.ID() == op.ID()
+			}) {
+				return ops, xsync.CancelOp
+			}
 			return append(slices.Clone(ops), op), xsync.UpdateOp
 		},
 	)
