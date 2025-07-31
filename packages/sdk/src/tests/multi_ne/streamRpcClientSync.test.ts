@@ -252,9 +252,9 @@ describe('streamRpcClient using v2 sync', () => {
         })
         // bob adds alice's channel to his syncStreams
         const bobsChannelStream = await bob.getStream({ streamId: channelId }, { timeoutMs: -1 })
-        await bob.addStreamToSync({
+        await bob.modifySync({
             syncId: syncId!,
-            syncPos: bobsChannelStream.stream!.nextSyncCookie!,
+            addStreams: [bobsChannelStream.stream!.nextSyncCookie!],
         })
         // alice posts a message
         event = await makeEvent(

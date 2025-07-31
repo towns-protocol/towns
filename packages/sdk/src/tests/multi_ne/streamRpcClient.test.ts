@@ -415,9 +415,9 @@ describe('streamRpcClient', () => {
         })
         expect(messageCount).toEqual(1)
 
-        await alice.addStreamToSync({
+        await alice.modifySync({
             syncId,
-            syncPos: channel.stream.nextSyncCookie!,
+            addStreams: [channel.stream.nextSyncCookie!],
         })
 
         // Bob posts another message

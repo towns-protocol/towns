@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
@@ -82,7 +81,7 @@ type operation struct {
 	// Meaning that a client added the given stream but the initial backfill message is not received yet,
 	// and the client is waiting for this message to be received. No other messages should be sent for this stream
 	// until the backfill is received. The value here is needed to avoid sending the same data multiple times.
-	initializingStreams *xsync.Map[StreamId, map[common.Hash]struct{}]
+	initializingStreams *xsync.Map[StreamId, struct{}]
 	// otelTracer is used to traceoperations, tracing is disabled if nil.
 	otelTracer trace.Tracer
 }
@@ -109,7 +108,7 @@ func NewOperation(
 		syncerManager:       syncerManager,
 		streamCache:         streamCache,
 		registry:            registry,
-		initializingStreams: xsync.NewMap[StreamId, map[common.Hash]struct{}](),
+		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		otelTracer:          otelTracer,
 	}
 
@@ -202,13 +201,13 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 		streamExists, added := op.registry.AddOpToExistingStream(streamID, op)
 		if added {
 			// Add the stream to the initializing streams map. See map description for more details about the logic.
-			op.initializingStreams.LoadOrStore(streamID, nil)
+			op.initializingStreams.LoadOrStore(streamID, struct{}{})
 
 			// The already syncing stream was successfully added to the current operation. Backfill it.
 			toBackfill = append(toBackfill, cookie)
 		} else if !streamExists {
 			// Add the stream to the initializing streams map. See map description for more details about the logic.
-			op.initializingStreams.LoadOrStore(streamID, nil)
+			op.initializingStreams.LoadOrStore(streamID, struct{}{})
 
 			// The given stream is not syncing yet, so we need to add it to the syncer.
 			// Add this list to the registry after a successful syncer manager call.
@@ -420,62 +419,22 @@ func (op *operation) startUpdatesProcessor() {
 						continue
 					}
 
-					var skipMsg bool
-
-					// Avoid sending duplicates (streams and miniblocks) for the backfill message.
-					// TODO: Add a clear comment of what's going on here. Separate to another function.
-					op.initializingStreams.Compute(
+					// Waiting for the backfill message to be sent first
+					if _, exists := op.initializingStreams.Compute(
 						streamID,
-						func(sent map[common.Hash]struct{}, loaded bool) (map[common.Hash]struct{}, xsync.ComputeOp) {
+						func(_ struct{}, loaded bool) (struct{}, xsync.ComputeOp) {
 							if !loaded {
-								return nil, xsync.CancelOp
+								return struct{}{}, xsync.CancelOp
 							}
 
-							if sent == nil {
-								// Here no updates were sent yet.
-								// Do not send messages until the backfill is sent, i.e. stream initialized.
-								if len(msg.GetTargetSyncIds()) == 0 {
-									skipMsg = true
-									return nil, xsync.CancelOp
-								}
-
-								return nil, xsync.DeleteOp
-
-								// Remove the first target sync ID from the message and send it to the operation
-								msg.TargetSyncIds = msg.TargetSyncIds[1:]
-
-								return extractBackfillHashes(msg), xsync.UpdateOp
+							if len(msg.GetTargetSyncIds()) == 0 {
+								return struct{}{}, xsync.CancelOp
 							}
 
-							filteredEvents := make([]*Envelope, 0, len(msg.GetStream().GetEvents()))
-							for _, e := range msg.GetStream().GetEvents() {
-								if _, exists := sent[common.BytesToHash(e.Hash)]; !exists {
-									filteredEvents = append(filteredEvents, e)
-								}
-							}
+							return struct{}{}, xsync.DeleteOp
 
-							filteredMiniblocks := make([]*Miniblock, 0, len(msg.GetStream().GetMiniblocks()))
-							for _, mb := range msg.GetStream().GetMiniblocks() {
-								if _, exists := sent[common.BytesToHash(mb.Header.Hash)]; !exists {
-									filteredMiniblocks = append(filteredMiniblocks, mb)
-								}
-							}
-
-							//filteredEvents = msg.GetStream().GetEvents()
-							//filteredMiniblocks = msg.GetStream().GetMiniblocks()
-
-							msg.Stream = &StreamAndCookie{
-								Events:         filteredEvents,
-								Miniblocks:     filteredMiniblocks,
-								NextSyncCookie: msg.GetStream().GetNextSyncCookie(),
-								SyncReset:      msg.GetStream().GetSyncReset(),
-								Snapshot:       msg.GetStream().GetSnapshot(),
-							}
-
-							return nil, xsync.DeleteOp
 						},
-					)
-					if skipMsg {
+					); exists {
 						continue
 					}
 				}
