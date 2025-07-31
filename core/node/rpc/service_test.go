@@ -1357,8 +1357,10 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 		updates, ok = alice.updates.Load(StreamId(cookie.GetStreamId()))
 		return ok
 	}, time.Second*15, time.Millisecond*100)
+	updates.mu.Lock()
 	tt.require.Len(updates.updates, 1)
 	tt.require.Equal(updates.updates[0].StreamID(), cookie.GetStreamId())
+	updates.mu.Unlock()
 }
 
 func TestStartSyncWithWrongCookie(t *testing.T) {

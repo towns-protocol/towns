@@ -450,8 +450,7 @@ func (op *operation) startUpdatesProcessor() {
 				}
 
 				// Special cases depending on the message type that should be applied after sending the message.
-				switch msg.GetSyncOp() {
-				case SyncOp_SYNC_CLOSE:
+				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 					// Close the operation and return from the stream updates processor.
 					op.cancel(nil)
 					return
