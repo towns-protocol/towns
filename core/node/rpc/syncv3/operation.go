@@ -339,7 +339,6 @@ func (op *operation) localBackfill(ctx context.Context, targetSyncIDs []string, 
 				lock.Unlock()
 			}
 		}(cookie)
-
 	}
 	wg.Wait()
 

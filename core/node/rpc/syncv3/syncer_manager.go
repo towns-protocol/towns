@@ -184,8 +184,12 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 				// this is not going to be used in the next request.
 				// There could be a case when a client specifies a wrong node address which leads to errors.
 				// This case should be properly handled by using another node address.
-				cookie.NodeAddress = st.GetNodeAddress()
-				st = m.processAddingStream(ctx, cookie, true)
+				st = m.processAddingStream(ctx, &SyncCookie{
+					NodeAddress:       st.GetNodeAddress(),
+					StreamId:          cookie.GetStreamId(),
+					MinipoolGen:       cookie.GetMinipoolGen(),
+					PrevMiniblockHash: cookie.GetPrevMiniblockHash(),
+				}, true)
 			}
 
 			if st.GetCode() == int32(Err_ALREADY_EXISTS) {
@@ -265,8 +269,6 @@ func (m *syncerManager) processAddingStream(
 		}
 	}
 
-	syncerEntity.Syncer = syncer
-
 	ctx, cancel := context.WithTimeout(ctx, modifySyncTimeout)
 	defer cancel()
 
@@ -287,6 +289,8 @@ func (m *syncerManager) processAddingStream(
 	if len(resp.GetAdds()) != 0 {
 		return resp.GetAdds()[0]
 	}
+
+	syncerEntity.Syncer = syncer
 
 	return nil
 }
@@ -451,9 +455,7 @@ func (m *syncerManager) selectNodeForStream(
 
 	// If changeNode is true, we should not use the usedNode address
 	if changeNode {
-		remotes = slices.DeleteFunc(remotes, func(addr common.Address) bool {
-			return addr == node
-		})
+		remotes = slices.DeleteFunc(remotes, func(addr common.Address) bool { return addr == node })
 	}
 
 	// 3. Try remote nodes
