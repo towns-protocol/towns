@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
@@ -785,8 +786,13 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	)
 
 	s.syncv3 = syncv3.NewService(
+		s.serverCtx,
+		s.wallet.Address,
+		s.nodeRegistry,
+		syncv3.NewStreamCacheWrapper(s.cache),
 		s.otelTracer,
 	)
+	s.v3Syncs = xsync.NewMap[string, struct{}]()
 
 	return nil
 }

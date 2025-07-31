@@ -2,10 +2,13 @@ package syncv3
 
 import (
 	"context"
+	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -29,7 +32,7 @@ type (
 		// CancelSync cancels an existing sync operation by its ID.
 		CancelSync(ctx context.Context, id string) error
 		// PingSync pings an existing sync operation by its ID to keep it alive.
-		PingSync(ctx context.Context, id string) error
+		PingSync(ctx context.Context, id, nonce string) error
 		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
 		DebugDropStream(ctx context.Context, id string, streamId StreamId) error
 	}
@@ -37,35 +40,157 @@ type (
 
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
+	// localAddr is the address of the local node.
+	localAddr common.Address
+	// registry is the registry of sync operations and their state.
+	registry Registry
+	// syncerManager is the syncer manager that handles syncers and their states.
+	syncerManager SyncerManager
+	// streamCache is the stream cache that holds the streams and their state.
+	streamCache StreamCache
 	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
 
 // NewService creates a new instance of the sync V3 service.
 func NewService(
+	ctx context.Context,
+	localAddr common.Address,
+	nodeRegistry nodes.NodeRegistry,
+	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) Service {
+	reg := NewRegistry()
 	return &serviceImpl{
-		otelTracer: otelTracer,
+		localAddr: localAddr,
+		registry:  reg,
+		syncerManager: NewSyncerManager(
+			ctx,
+			localAddr,
+			nodeRegistry,
+			streamCache,
+			reg,
+			otelTracer,
+		),
+		streamCache: streamCache,
+		otelTracer:  otelTracer,
 	}
 }
 
 func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec Receiver) error {
-	return RiverError(Err_UNIMPLEMENTED, "SyncStreams is not implemented yet in V3")
+	// Create a new sync operation with the given ID and receiver.
+	op := NewOperation(
+		ctx,
+		id,
+		rec,
+		s.syncerManager,
+		s.streamCache,
+		s.registry,
+		s.otelTracer,
+	)
+
+	// Add the given operation to the registry.
+	remove, err := s.registry.AddOp(op)
+	if err != nil {
+		return AsRiverError(err).
+			Tag("syncId", id).
+			Func("SyncStreams")
+	}
+	defer remove()
+
+	// Send initial sync streams response to the receiver.
+	op.OnStreamUpdate(&SyncStreamsResponse{
+		SyncId: id,
+		SyncOp: SyncOp_SYNC_NEW,
+	})
+
+	// If initial list of streams is not empty, we need to add them to the sync operation.
+	if len(streams) > 0 {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+		defer cancel()
+
+		resp, err := op.Modify(ctx, &ModifySyncRequest{
+			SyncId:     id,
+			AddStreams: streams,
+		})
+		if err != nil {
+			return AsRiverError(err).
+				Tag("syncId", id).
+				Tag("streams", len(streams)).
+				Func("SyncStreams")
+		}
+
+		if len(resp.GetAdds()) > 0 {
+			for _, add := range resp.GetAdds() {
+				op.OnStreamUpdate(&SyncStreamsResponse{
+					SyncOp:   SyncOp_SYNC_DOWN,
+					StreamId: add.GetStreamId(),
+				})
+			}
+		}
+	}
+
+	// Wait for the operation to finish.
+	<-ctx.Done()
+
+	return context.Cause(ctx)
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	return nil, RiverError(Err_UNIMPLEMENTED, "ModifySync is not implemented yet in V3")
+	op, ok := s.registry.GetOp(req.GetSyncId())
+	if !ok {
+		return nil, RiverError(Err_NOT_FOUND, "Sync operation not found").Func("ModifySync")
+	}
+
+	resp, err := op.Modify(ctx, req)
+	if err != nil {
+		return nil, AsRiverError(err).
+			Tag("syncId", req.GetSyncId()).
+			Func("ModifySync")
+	}
+
+	return resp, nil
 }
 
 func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
-	return RiverError(Err_UNIMPLEMENTED, "CancelSync is not implemented yet in V3")
+	op, ok := s.registry.GetOp(id)
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "Sync operation not found").
+			Tag("syncId", id).
+			Func("CancelSync")
+	}
+
+	op.Cancel(ctx)
+
+	return nil
 }
 
-func (s *serviceImpl) PingSync(ctx context.Context, id string) error {
-	return RiverError(Err_UNIMPLEMENTED, "PingSync is not implemented yet in V3")
+func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
+	op, ok := s.registry.GetOp(id)
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "Sync operation not found").
+			Tag("syncId", id).
+			Func("PingSync")
+	}
+
+	op.Ping(ctx, nonce)
+
+	return nil
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
-	return RiverError(Err_UNIMPLEMENTED, "DebugDropStream is not implemented yet in V3")
+	op, ok := s.registry.GetOp(id)
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "Sync operation not found").
+			Func("DebugDropStream")
+	}
+
+	if err := op.DebugDropStream(ctx, streamId); err != nil {
+		return AsRiverError(err).
+			Tag("syncId", id).
+			Tag("streamId", streamId).
+			Func("DebugDropStream")
+	}
+
+	return nil
 }
