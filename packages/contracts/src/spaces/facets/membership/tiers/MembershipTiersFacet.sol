@@ -52,8 +52,7 @@ contract MembershipTiersFacet is MembershipTiersBase, TokenOwnableBase, Reentran
     function getTier(
         uint32 tierId
     ) external view returns (MembershipTiersStorage.Tier memory tier) {
-        MembershipTiersStorage.Tier storage ts = _getTier(tierId);
-        tier = _copyTier(ts);
+        return _getTier(tierId);
     }
 
     function tierOf(uint256 tokenId) external view returns (uint32) {
@@ -63,26 +62,5 @@ contract MembershipTiersFacet is MembershipTiersBase, TokenOwnableBase, Reentran
     /// @notice Returns the current price for a tier (including dynamic module logic if any).
     function tierPrice(uint32 tierId) external view returns (uint256) {
         return _getTierPrice(tierId);
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       INTERNAL UTILITIES                   */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Solidity cannot directly convert storage struct to memory; perform manual copy.
-    function _copyTier(
-        MembershipTiersStorage.Tier storage ts
-    ) private view returns (MembershipTiersStorage.Tier memory tier) {
-        tier = MembershipTiersStorage.Tier({
-            name: ts.name,
-            basePrice: ts.basePrice,
-            maxSupply: ts.maxSupply,
-            duration: ts.duration,
-            freeAllocation: ts.freeAllocation,
-            pricingModule: ts.pricingModule,
-            minted: ts.minted,
-            image: ts.image,
-            disabled: ts.disabled
-        });
     }
 }
