@@ -164,7 +164,7 @@ describe('integration/stream-metadata/userSpaces', () => {
 		expect(response.status).toBe(200)
 		expect(response.headers['cache-control']).toContain('public')
 		expect(response.headers['cache-control']).toContain('max-age=30')
-		expect(response.headers['cache-control']).toContain('s-maxage=3600')
+		expect(response.headers['cache-control']).toContain('s-maxage=60')
 		log('Cache headers verified:', response.headers['cache-control'])
 	})
 })
