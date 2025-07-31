@@ -177,12 +177,8 @@ func (m *StreamSyncMonitor) TrackStream(stream *river.StreamWithId, isInit bool)
 		return false, nil
 	}
 
-	// Calculate the replication factor - it should not exceed the number of available nodes
-	originalReplicationFactor := stream.ReplicationFactor()
-	adjustedReplicationFactor := min(originalReplicationFactor, len(filteredNodes))
-
 	// Adjust Reserved0 to set the new replication factor (stored in the lowest byte)
-	adjustedReserved0 := (stream.Stream.Reserved0 &^ 0xFF) | uint64(adjustedReplicationFactor)
+	adjustedReserved0 := (stream.Stream.Reserved0 &^ 0xFF) | uint64(len(filteredNodes))
 
 	// Create a copy with filtered nodes
 	filteredStream := &river.StreamWithId{
@@ -201,7 +197,7 @@ func (m *StreamSyncMonitor) TrackStream(stream *river.StreamWithId, isInit bool)
 		streamID:            filteredStream.StreamId(),
 		nodeAddresses:       filteredNodes,
 		onChainMiniblockNum: stream.Stream.LastMiniblockNum,
-		syncMiniblockNum:    stream.Stream.LastMiniblockNum,
+		syncMiniblockNum:    0,
 		lastLagCheck:        time.Now(),
 	}
 	m.trackedStreams.Store(filteredStream.StreamId(), monitored)
@@ -228,28 +224,37 @@ func (m *StreamSyncMonitor) OnStreamMiniblockUpdate(
 	streamId := shared.StreamId(event.StreamId)
 	monitored, ok := m.trackedStreams.Load(streamId)
 	if !ok {
-		// Not a stream we're monitoring
 		return
 	}
 
 	monitored.mu.Lock()
 	monitored.onChainMiniblockNum = event.LastMiniblockNum
 	lag := int64(monitored.onChainMiniblockNum) - int64(monitored.syncMiniblockNum)
+
+	// onChainMiniblockNum := monitored.onChainMiniblockNum
+	// syncMiniblockNum := monitored.syncMiniblockNum
+
 	monitored.mu.Unlock()
 
 	log := logging.FromCtx(ctx)
 	// log.Debugw(
 	// 	"OnStreamMiniblockUpdate",
-	// 	"monitored",
-	// 	monitored,
-	// 	"stream",
-	// 	event.StreamId,
+	// 	"monitored.streamID",
+	// 	monitored.streamID,
+	// 	"lastPlacement",
+	// 	monitored.lastPlacement,
+	// 	"lastLagCheck",
+	// 	monitored.lastLagCheck,
 	// 	"miniblockLag",
 	// 	lag,
+	// 	"syncMBNum",
+	// 	syncMiniblockNum,
+	// 	"onChainMbNum",
+	// 	onChainMiniblockNum,
 	// )
 
 	// Only consider lag if we have placement info and lag exceeds threshold
-	if monitored.lastPlacement != nil && lag > int64(m.config.LagThreshold) {
+	if monitored.lastPlacement != nil && lag >= int64(m.config.LagThreshold) {
 		timeSincePlacement := time.Since(monitored.lastPlacement.PlacedAt)
 		if timeSincePlacement >= LagDetectionGracePeriod {
 			log.Warnw("Stream sync lag detected",
@@ -414,7 +419,7 @@ func (m *StreamSyncMonitor) Run(ctx context.Context) error {
 
 // reportStatus periodically logs the number of tracked streams and other status information
 func (m *StreamSyncMonitor) reportStatus(ctx context.Context) {
-	ticker := time.NewTicker(15 * time.Second) // Report every 30 seconds
+	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
 	for {
@@ -432,19 +437,28 @@ func (m *StreamSyncMonitor) reportStatus(ctx context.Context) {
 				hasPlacement := monitored.lastPlacement != nil
 				monitored.mu.RUnlock()
 
-				if hasPlacement && lag > int64(m.config.LagThreshold) {
+				if hasPlacement && lag >= int64(m.config.LagThreshold) {
 					laggingCount++
 				}
 
 				return true
 			})
 
-			logging.FromCtx(ctx).Infow("Stream sync monitor status",
+			log := logging.FromCtx(ctx)
+			log.Infow("Stream sync monitor status",
 				"trackedStreams", trackedCount,
 				"laggingStreams", laggingCount,
 				"monitoredNodes", m.config.MonitoredNodeAddresses,
 				"lagThreshold", m.config.LagThreshold,
 			)
+
+			// Get metrics as structured map for better JSON logging
+			metricsMap, err := m.metricsFactory.GetMetricsAsMap()
+			if err != nil {
+				log.Errorw("Failed to get metrics as map", "error", err)
+			} else {
+				log.Debugw("Stream sync monitor metrics", "metrics", metricsMap)
+			}
 
 		case <-ctx.Done():
 			return
@@ -467,12 +481,14 @@ func (m *StreamSyncMonitor) OnStreamPlacement(
 ) {
 	monitored, ok := m.trackedStreams.Load(streamId)
 	if !ok {
-		// Not a stream we're monitoring
+		// We should never get placement events for a stream we're not monitoring.
+		logging.FromCtx(m.ctx).
+			Errorw("Received OnStreamPlacement for unmonitored stream - this should not be possible", "streamId", streamId)
 		return
 	}
 
 	monitored.mu.Lock()
-	prevPlacement := monitored.lastPlacement
+	// prevPlacement := monitored.lastPlacement
 	monitored.lastPlacement = &StreamPlacementInfo{
 		NodeAddress:       nodeAddress,
 		SyncId:            syncId,
@@ -482,11 +498,9 @@ func (m *StreamSyncMonitor) OnStreamPlacement(
 	}
 	monitored.mu.Unlock()
 
-	if prevPlacement != nil {
-		logging.FromCtx(m.ctx).Debugw("Stream placement updated",
-			"streamId", streamId,
-			"newPlacement", monitored.lastPlacement,
-			"prevPlacement", prevPlacement,
-		)
-	}
+	// logging.FromCtx(m.ctx).Debugw("Stream placement updated",
+	// 	"streamId", streamId,
+	// 	"newPlacement", monitored.lastPlacement,
+	// 	"prevPlacement", prevPlacement,
+	// )
 }

@@ -60,3 +60,6 @@ func NewTrackStreamsSyncMetrics(metricsFactory infra.MetricsFactory) *TrackStrea
 		}, []string{"node"}),
 	}
 }
+
+func (t *TrackStreamsSyncMetrics) String() {
+}

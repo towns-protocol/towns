@@ -29,7 +29,13 @@ type StreamPlacementListener interface {
 	// syncId is the ID of the sync session, nodeAddress is the node hosting the stream
 	// minipoolGen is the minipool generation number (miniblock offset)
 	// prevMiniblockHash is the hash of the previous miniblock at the time of placement
-	OnStreamPlacement(streamId shared.StreamId, syncId string, nodeAddress common.Address, minipoolGen int64, prevMiniblockHash []byte)
+	OnStreamPlacement(
+		streamId shared.StreamId,
+		syncId string,
+		nodeAddress common.Address,
+		minipoolGen int64,
+		prevMiniblockHash []byte,
+	)
 }
 
 // The StreamFilter is used by the StreamTrackerImpl, which is a cross-application, shared implementation
@@ -129,6 +135,10 @@ func (tracker *StreamsTrackerImpl) Init(
 	return nil
 }
 
+func (tracker *StreamsTrackerImpl) Metrics() *TrackStreamsSyncMetrics {
+	return tracker.multiSyncRunner.Metrics()
+}
+
 func (tracker *StreamsTrackerImpl) Listener() StreamEventListener {
 	return tracker.listener
 }
@@ -173,9 +183,12 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			// There are some streams managed by a node that isn't registered anymore.
 			// Filter these out because we can't sync these streams.
-			filteredStream.Stream.Nodes = slices.DeleteFunc(filteredStream.Stream.Nodes, func(address common.Address) bool {
-				return !slices.Contains(validNodes, address)
-			})
+			filteredStream.Stream.Nodes = slices.DeleteFunc(
+				filteredStream.Stream.Nodes,
+				func(address common.Address) bool {
+					return !slices.Contains(validNodes, address)
+				},
+			)
 
 			if len(filteredStream.Nodes()) == 0 {
 				// We know that we have a set of these on the network because some nodes were accidentally deployed
@@ -285,13 +298,13 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 			"error", err)
 		return
 	}
-	
+
 	streamWithId := &river.StreamWithId{Id: event.GetStreamId(), Stream: stream}
 	shouldTrack, filteredStream := tracker.filter.TrackStream(streamWithId, false)
 	if !shouldTrack || filteredStream == nil {
 		return
 	}
-	
+
 	// Use filtered stream ID but original event's miniblock hash
 	if err := tracker.AddStream(filteredStream.StreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]}); err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
