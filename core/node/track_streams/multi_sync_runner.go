@@ -334,7 +334,7 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 				Tag("syncOp", update.SyncOp).
 				Tag("streamId", update.GetStreamId()).
 				Tag("syncId", ssr.syncer.GetSyncId()).
-				Func("syncSessionRunner.processSyncUpdates"),
+				Func("syncSessionRunner.processSyncUpdates").LogError(log),
 		)
 	}
 }
@@ -698,6 +698,10 @@ func NewMultiSyncRunner(
 	}
 }
 
+func (msr *MultiSyncRunner) Metrics() *TrackStreamsSyncMetrics {
+	return msr.metrics
+}
+
 // Run starts the operation of the MultiSyncRunner and continues to add streams to sync sessions until rootCtx is canceled.
 func (msr *MultiSyncRunner) Run(
 	rootCtx context.Context,
@@ -712,7 +716,7 @@ func (msr *MultiSyncRunner) Run(
 			case <-rootCtx.Done():
 				return
 			case <-ticker.C:
-				msr.metrics.UnsyncedQueueLength.Set(float64(len(msr.streamsToSync)))
+				msr.metrics.UnsyncedQueueLength.Set(float64(msr.workerPool.WaitingQueueSize()))
 			}
 		}
 	}()
@@ -872,18 +876,18 @@ func (msr *MultiSyncRunner) addToSync(
 			)
 			pool.Release(1)
 
-			log := logging.FromCtx(rootCtx)
+			// log := logging.FromCtx(rootCtx)
 
-			// Relocate this stream's target node and re-insert into the pool of unassigned streams
-			newRemote := record.remotes.AdvanceStickyPeer(targetNode)
+			// // Relocate this stream's target node and re-insert into the pool of unassigned streams
+			// newRemote := record.remotes.AdvanceStickyPeer(targetNode)
 
-			log.Debugw(
-				"Could not assign stream to existing session, cycling to new session",
-				"streamId", record.streamId,
-				"syncId", runner.GetSyncId(),
-				"failedRemote", targetNode,
-				"newRemote", newRemote,
-			)
+			// log.Debugw(
+			// 	"Could not assign stream to existing session, cycling to new session",
+			// 	"streamId", record.streamId,
+			// 	"syncId", runner.GetSyncId(),
+			// 	"failedRemote", targetNode,
+			// 	"newRemote", newRemote,
+			// )
 		} else {
 			log.Errorw(
 				"Error adding stream to sync on node, retrying",
