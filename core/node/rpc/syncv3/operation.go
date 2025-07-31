@@ -289,9 +289,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	// backfilled by another node.
 	statuses := op.localBackfill(ctx, request.TargetSyncIDs(), request.GetBackfillStreams().GetStreams())
 	if len(statuses) > 0 {
-		for _, status := range statuses {
-			response.Backfills = append(response.Backfills, status)
-		}
+		response.Backfills = append(response.Backfills, statuses...)
 	}
 
 	return &response, nil
