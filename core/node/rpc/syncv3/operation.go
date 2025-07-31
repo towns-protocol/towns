@@ -405,11 +405,17 @@ func (op *operation) startUpdatesProcessor() {
 				}
 
 				// Special cases depending on the message type that should be applied before sending the message.
-				switch msg.GetSyncOp() {
-				case SyncOp_SYNC_DOWN:
+				if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+					streamID, err := StreamIdFromBytes(msg.StreamID())
+					if err != nil {
+						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",
+							"streamId", msg.GetStreamId(), "error", err)
+						continue
+					}
+
 					// If the sync operation is a down operation, remove the operation from the stream.
-					op.registry.RemoveOpFromStream(StreamId(msg.StreamID()), op.id)
-				case SyncOp_SYNC_UPDATE:
+					op.registry.RemoveOpFromStream(streamID, op.id)
+				} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 					streamID, err := StreamIdFromBytes(msg.StreamID())
 					if err != nil {
 						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",

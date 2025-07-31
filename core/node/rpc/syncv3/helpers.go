@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -101,21 +100,6 @@ func distributeMessage(registry Registry, streamID StreamId, msg *SyncStreamsRes
 		}(op)
 	}
 	wg.Wait()
-}
-
-// extractBackfillHashes extracts hashes from backfill events and miniblocks
-func extractBackfillHashes(msg *SyncStreamsResponse) map[common.Hash]struct{} {
-	hashes := make(map[common.Hash]struct{}, len(msg.GetStream().GetEvents())+len(msg.GetStream().GetMiniblocks()))
-
-	for _, event := range msg.GetStream().GetEvents() {
-		hashes[common.BytesToHash(event.Hash)] = struct{}{}
-	}
-
-	for _, miniblock := range msg.GetStream().GetMiniblocks() {
-		hashes[common.BytesToHash(miniblock.Header.Hash)] = struct{}{}
-	}
-
-	return hashes
 }
 
 type otelSender struct {
