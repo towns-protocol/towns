@@ -428,7 +428,12 @@ func (ssr *syncSessionRunner) Run() {
 
 			// If the batch is nil, it means the messages channel was closed.
 			if batch == nil {
-				ssr.Close(base.RiverError(protocol.Err_BUFFER_FULL, "Sync session runner messages buffer is full, closing sync session runner"))
+				ssr.Close(
+					base.RiverError(
+						protocol.Err_BUFFER_FULL,
+						"Sync session runner messages buffer is full, closing sync session runner",
+					),
+				)
 				return
 			}
 
@@ -702,7 +707,7 @@ func (msr *MultiSyncRunner) Run(
 			case <-rootCtx.Done():
 				return
 			case <-ticker.C:
-				msr.metrics.UnsyncedQueueLength.Set(float64(len(msr.streamsToSync)))
+				msr.metrics.UnsyncedQueueLength.Set(float64(msr.workerPool.WaitingQueueSize()))
 			}
 		}
 	}()
