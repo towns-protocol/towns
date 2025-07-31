@@ -2,7 +2,6 @@ package syncv3
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"sync"
 
@@ -516,7 +515,7 @@ func (m *syncerManager) getOrCreateSyncer(ctx context.Context, nodeAddress commo
 // FIXME: RACE CONDITION WHEN ONE PROCESS IS ADDING STREAM AND THIS FUNCTION IS CALLED.
 func (m *syncerManager) onStreamDown(streamID StreamId) {
 	m.registry.RemoveStream(streamID)
-	fmt.Println("Stream down:", streamID)
+
 	syncerEntity, loaded := m.streams.Load(streamID)
 	if !loaded {
 		return

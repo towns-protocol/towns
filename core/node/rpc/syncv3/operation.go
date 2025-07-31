@@ -297,6 +297,7 @@ func (op *operation) localBackfill(ctx context.Context, targetSyncIDs []string, 
 	wg.Add(len(cookies))
 	for _, cookie := range cookies {
 		go func(cookie *SyncCookie) {
+			defer wg.Done()
 
 			streamID := StreamId(cookie.GetStreamId())
 
