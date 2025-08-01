@@ -13,8 +13,8 @@ const paramsSchema = z.object({
 })
 
 const CACHE_CONTROL = {
-	200: 'public, max-age=30, s-maxage=3600, stale-while-revalidate=3600',
-	404: 'public, max-age=5, s-maxage=3600',
+	200: 'public, max-age=30, s-maxage=60, stale-while-revalidate=60',
+	404: 'public, max-age=5, s-maxage=60',
 }
 
 export async function fetchUserSpaces(request: FastifyRequest, reply: FastifyReply) {
