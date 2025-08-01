@@ -2,8 +2,8 @@
 
 ## Overview
 
-This design doc describes implmentation of stream sync engine on top of queues
-to prevent blocking and relying on acquiring locks. It's part of the "node" server that is implmented in go.
+This design doc describes implementation of stream sync engine on top of queues
+to prevent blocking and relying on acquiring locks. It's part of the "node" server that is implemented in go.
 
 This document does not describe shared remote syncer design. This will be addressed in a separate document.
 Shared remote syncer will follow contract outlined here for the `RemoteSyncer` component.
@@ -14,13 +14,13 @@ Node implements `StreamSync` GRPC streaming RPC to stream updates to the client.
 
 When `StreamSync` is received, node replies with sync id (`SYNC_NEW` `SyncStreamsResponse`) that can be used in subsequent
 calls to `ModifySync` and `CancelSync`. `AddStreamToSync` and `RemoveStreamFromSync` are
-legacy APIs superseeded by `ModifySync` (do not include them in the new implementation).
+legacy APIs superseded by `ModifySync` (do not include them in the new implementation).
 
 `StreamSync` call carries initial set of `StreamCookies`. `StreamCookie` contains 
 stream id and sync position as a miniblock number in the given stream.
 
 If sync position is within recent history, node streams updates from the given position.
-If sync position is in the past, node starts sends "reset" consisting of the last snapshot
+If sync position is in the past, node sends "reset" consisting of the last snapshot
 miniblock for the given stream and subsequent miniblocks and events.
 
 `ModifySync` call can be used to add/remove/request backfill for streams for the given sync id.
@@ -32,8 +32,8 @@ miniblock for the given stream and subsequent miniblocks and events.
 - `SYNC_UPDATE` - new miniblock or event is available. First update for the given stream is always "backfill". 
                   `reset` field is true on backfill if stream couldn't be synced from the given position.
                   Contains new `SyncCookie` for next stream position.
-                  In case of node-to-node sync, `TargetSyncIds` is set if this update is backfill and contains sync ids of intended recepients.
-                  Note: backfills are intermixed with regular updates, this is used in node-to-node sync to add support multiple clients for 
+                  In case of node-to-node sync, `TargetSyncIds` is set if this update is backfill and contains sync ids of intended recipients.
+                  Note: backfills are intermixed with regular updates, this is used in node-to-node sync to support multiple clients for 
                   the single node-to-node update stream.
 - `SYNC_DOWN` - stream is down. Contains stream id. Typical cause: remote node is down.
 - `SYNC_PONG` - pong response to the client's ping
@@ -49,7 +49,7 @@ Each stream is identified by unique stream id.
 Nodes host streams. Each node is identified by unique node address. If stream is hosted by the
 node, then stream is "local" to the node, otherwise it is "remote".
 
-Stream are replicated to the subset of nodes. If node is down, or there is other problem, sync can be failover to the next node.
+Streams are replicated to the subset of nodes. If node is down, or there is other problem, sync can be failover to the next node.
 
 ## Local and Remote Sync
 
@@ -57,7 +57,7 @@ Node receiving `StreamSync` from client streams updates for local streams direct
 
 For remote streams, node uses `StreamSync` call to the remote nodes to request updates and forwards them to the client.
 
-If remote becomes unavailable, node sends `SYNC_DOWN` to the client. Client retries with exponential backoff to
+If remote node becomes unavailable, node sends `SYNC_DOWN` to the client. Client retries with exponential backoff to
 add this stream again. Node should attempt to sync this stream from the different remote node if such request is received.
 
 ## Implementation
@@ -95,13 +95,13 @@ provides relevant update methods, implementation of these methods save update to
 
 `EventBus` is responsible for dispatching updates to the `SyncStreamHandler` queues.
 
-`LocalSyncer` and `RemoteSyncer` post updates to the `EventBus` queue through `OnEventBusUpdate` interface.
+`LocalSyncer` and `RemoteSyncer` post updates to the `EventBus` queue through the `OnEventBusUpdate` interface.
 
 `EventBus` tracks which `SyncStreamHandler` is interested in which streams and dispatches updates to the relevant queues.
 
 When `Subscribe` message is received, `EventBus` calls `SyncerRegistry` to request backfill and start (or continue)
 update streaming. It is guaranteed that after this call either backfill or SYNC_DOWN will be posted to the `EventBus` queue
-and propogated to the `SyncStreamHandler` queues.
+and propagated to the `SyncStreamHandler` queues.
 
 On `Unsubscribe`, if there are no more subscribers, `EventBus` notifies `SyncerRegistry` to stop tracking this stream.
 
@@ -110,14 +110,14 @@ On `Unsubscribe`, if there are no more subscribers, `EventBus` notifies `SyncerR
 `LocalSyncer` is responsible for streaming updates from the single local stream into the `EventBus` queue.
 
 Backfills can be requested while stream is still being loaded from the local storage. In such case `LocalSyncer`
-should save backfill requests and satisfy then once stream is loaded.
+should save backfill requests and satisfy them once stream is loaded.
 
 ### `RemoteSyncer`
 
 `RemoteSyncer` is responsible for streaming updates from the single remote stream into the `EventBus` queue.
 
 `RemoteSyncer` uses `StreamSync` call to the remote node to request updates. It creates new `StreamSync` for
-each requested stream. I.e. `RemoteSyncer` tracks single stream and uses singe `StreamSync` exclusively for this stream.
+each requested stream. I.e. `RemoteSyncer` tracks single stream and uses single `StreamSync` exclusively for this stream.
 
 Backfills can be requested while connection to the remote node is still established. In such case `RemoteSyncer`
 should save backfill requests and send them to the remote node once `SyncStream` is ready and sync id is received.
@@ -155,7 +155,7 @@ and then call `Subscribe` again after client requests new backfill through `Modi
 
 Both components need to react to `SYNC_DOWN` consistently. Given this should they be merged into a single component?
 
-Alternately, is there a need to introduce syncer generations to simplify failover, and resolve races?
+Alternatively, is there a need to introduce syncer generations to simplify failover, and resolve races?
 
 Alternatively, should StreamRegistry calls be synchronous (i.e. not message passing), and use very scoped locks to update state?
 No network or other blocking calls should be performed while `StreamRegistry` holds internal locks.
