@@ -137,7 +137,7 @@ func (op *operation) OnStreamUpdate(msg *SyncStreamsResponse) {
 // Modify modifies the operation with the given request.
 func (op *operation) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	// Perform an initial validation of the request before processing further.
-	if err := ValidateModifySync(request); err != nil {
+	if err := validateModifySync(request); err != nil {
 		return nil, err
 	}
 
@@ -285,6 +285,25 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 		}
 	}
 
+	// Backfill streams
+	/*if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
+		resp, err := op.syncerManager.Modify(ctx, &ModifySyncRequest{
+			SyncId:          request.GetSyncId(),
+			BackfillStreams: streams,
+		})
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			for _, cookie := range streams.GetStreams() {
+				response.Backfills = append(response.Backfills, &SyncStreamOpStatus{
+					StreamId: cookie.GetStreamId(),
+					Code:     int32(rvrErr.Code),
+					Message:  rvrErr.GetMessage(),
+				})
+			}
+		} else if len(resp.GetBackfills()) > 0 {
+			response.Backfills = append(response.Backfills, resp.GetBackfills()...)
+		}
+	}*/
 	// Backfill an explicit list of streams that are already syncing for the given operation and wants to be
 	// backfilled by another node.
 	statuses := op.localBackfill(ctx, request.TargetSyncIDs(), request.GetBackfillStreams().GetStreams())
@@ -434,6 +453,8 @@ func (op *operation) startUpdatesProcessor() {
 							if len(msg.GetTargetSyncIds()) == 0 {
 								return struct{}{}, xsync.CancelOp
 							}
+
+							msg.TargetSyncIds = msg.TargetSyncIds[1:]
 
 							return struct{}{}, xsync.DeleteOp
 

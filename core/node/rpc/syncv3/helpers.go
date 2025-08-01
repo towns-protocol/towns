@@ -4,17 +4,19 @@ import (
 	"context"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// ValidateModifySync validates the ModifySyncRequest to ensure it is well-formed.
-func ValidateModifySync(req *ModifySyncRequest) error {
+// validateModifySync validates the ModifySyncRequest to ensure it is well-formed.
+func validateModifySync(req *ModifySyncRequest) error {
 	// Make sure the request is not empty
 	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 && len(req.GetBackfillStreams().GetStreams()) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
@@ -102,6 +104,7 @@ func distributeMessage(registry Registry, streamID StreamId, msg *SyncStreamsRes
 	wg.Wait()
 }
 
+// otelSender is a wrapper around the Receiver that adds OpenTelemetry tracing to the Send method.
 type otelSender struct {
 	ctx        context.Context
 	otelTracer trace.Tracer
@@ -133,4 +136,42 @@ func (s *otelSender) Send(msg *SyncStreamsResponse) error {
 		span.SetStatus(codes.Error, err.Error())
 	}
 	return err
+}
+
+// Stream represents the behavior of a stream.
+// This abstraction is created to allow better unit testing the code.
+type Stream interface {
+	GetRemotesAndIsLocal() ([]common.Address, bool)
+	GetStickyPeer() common.Address
+	AdvanceStickyPeer(currentPeer common.Address) common.Address
+	UpdatesSinceCookie(ctx context.Context, cookie *SyncCookie, callback func(streamAndCookie *StreamAndCookie) error) error
+	Sub(ctx context.Context, cookie *SyncCookie, r events.SyncResultReceiver) error
+	Unsub(r events.SyncResultReceiver)
+	StreamId() StreamId
+}
+
+// StreamCache represents a behavior of the stream cache.
+// This abstraction is created to allow better unit testing the code.
+type StreamCache interface {
+	GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (Stream, error)
+	GetStreamNoWait(ctx context.Context, streamId StreamId) (Stream, error)
+}
+
+// StreamCacheWrapper is a wrapper around the events.StreamCache that implements the StreamCache interface.
+// This is created to be able to unit test the code that uses StreamCache without relying on the actual events.StreamCache implementation.
+type StreamCacheWrapper struct {
+	cache *events.StreamCache
+}
+
+// NewStreamCacheWrapper creates a new StreamCacheWrapper instance from the given events.StreamCache.
+func NewStreamCacheWrapper(cache *events.StreamCache) StreamCache {
+	return &StreamCacheWrapper{cache: cache}
+}
+
+func (scw *StreamCacheWrapper) GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (Stream, error) {
+	return scw.cache.GetStreamWaitForLocal(ctx, streamId)
+}
+
+func (scw *StreamCacheWrapper) GetStreamNoWait(ctx context.Context, streamId StreamId) (Stream, error) {
+	return scw.cache.GetStreamNoWait(ctx, streamId)
 }

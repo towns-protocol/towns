@@ -200,7 +200,7 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 
 			if st.GetCode() == int32(Err_ALREADY_EXISTS) {
 				// 3. If the stream is already being synced, we need to backfill it.
-				st = m.processBackfillingStream(ctx, req.GetSyncId(), cookie)
+				st = m.processBackfillingStream(ctx, req.GetSyncId(), req.GetSyncId(), cookie)
 			}
 
 			if st != nil {
@@ -222,6 +222,26 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 				lock.Unlock()
 			}
 		}(StreamId(streamID))
+	}
+
+	// Process backfilling streams
+	wg.Add(len(req.GetBackfillStreams().GetStreams()))
+	for _, cookie := range req.GetBackfillStreams().GetStreams() {
+		go func(cookie *SyncCookie) {
+			defer wg.Done()
+
+			// There are some edge cases when cookie can be nil. Do nothing, just skip instead of panicing.
+			if cookie == nil {
+				return
+			}
+
+			st := m.processBackfillingStream(ctx, req.GetSyncId(), req.GetBackfillStreams().GetSyncId(), cookie)
+			if st != nil {
+				lock.Lock()
+				resp.Backfills = append(resp.Backfills, st)
+				lock.Unlock()
+			}
+		}(cookie)
 	}
 
 	wg.Wait()
@@ -348,6 +368,7 @@ func (m *syncerManager) processRemovingStream(
 func (m *syncerManager) processBackfillingStream(
 	ctx context.Context,
 	syncID string,
+	targetSyncID string,
 	cookie *SyncCookie,
 ) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
@@ -380,7 +401,7 @@ func (m *syncerManager) processBackfillingStream(
 	resp, err := syncer.Modify(ctx, &ModifySyncRequest{
 		SyncId: syncID,
 		BackfillStreams: &ModifySyncRequest_Backfill{
-			SyncId:  syncID,
+			SyncId:  targetSyncID,
 			Streams: []*SyncCookie{cookie.CopyWithAddr(syncer.Address())},
 		},
 	})
