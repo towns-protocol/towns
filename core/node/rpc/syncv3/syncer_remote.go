@@ -18,6 +18,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // remoteSyncer implements the Syncer interface for remote sync operations.
@@ -33,8 +34,8 @@ type remoteSyncer struct {
 	remoteAddr common.Address
 	// client is the RPC client used to communicate with the remote node.
 	client protocolconnect.StreamServiceClient
-	// eventBus is used to publish events related to sync operations.
-	eventBus EventBus
+	// eventBusQueue ...
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
 	// streams is a thread-safe map that keeps track of active streams.
 	streams *xsync.Map[StreamId, struct{}]
 	// responseStream is the stream for receiving sync messages from the remote node.
@@ -50,7 +51,7 @@ func NewRemoteSyncer(
 	ctx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
-	eventBus EventBus,
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) (Syncer, error) {
@@ -120,7 +121,7 @@ func NewRemoteSyncer(
 		cancel:         syncStreamCancel,
 		syncID:         responseStream.Msg().GetSyncId(),
 		client:         client,
-		eventBus:       eventBus,
+		eventBusQueue:  eventBusQueue,
 		streams:        xsync.NewMap[StreamId, struct{}](),
 		responseStream: responseStream,
 		remoteAddr:     remoteAddr,
@@ -255,7 +256,7 @@ func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse)
 			err = AsRiverError(err, Err_CANCELED)
 		}
 	default:
-		err = s.eventBus.OnUpdate(*NewEventBusMessageUpdateStream(msg))
+		err = s.eventBusQueue.AddMessage(NewEventBusMessageUpdateStream(msg))
 	}
 	if err != nil {
 		rvrErr := AsRiverError(err).Func("remoteSyncer.sendResponse")

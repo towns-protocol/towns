@@ -11,6 +11,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 type (
@@ -58,19 +59,19 @@ func NewService(
 	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) Service {
+	eventBusQueue := dynmsgbuf.NewDynamicBuffer[*EventBusMessage]()
 	opReg := NewRegistry()
 	syncerReg := NewSyncerRegistry(
 		ctx,
 		localAddr,
-		nodeRegistry,
+		eventBusQueue,
 		nodeRegistry,
 		streamCache,
 		otelTracer,
 	)
-	eb := NewEventBus(ctx, syncerReg, opReg)
 	return &serviceImpl{
 		localAddr:         localAddr,
-		eventBus:          eb,
+		eventBus:          NewEventBus(ctx, eventBusQueue, syncerReg, opReg),
 		operationRegistry: opReg,
 		otelTracer:        otelTracer,
 	}

@@ -53,8 +53,8 @@ type (
 		ctx context.Context
 		// localAddr is the address of the local node.
 		localAddr common.Address
-		// eventBus is a common stream of messages.
-		eventBus EventBus
+		// eventBusQueue ...
+		eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
 		// queue is the queue for commands that can be processed by the syncer registry.
 		queue *dynmsgbuf.DynamicBuffer[*command]
 		// syncers is the existing set of syncers, indexed by the syncer node address
@@ -74,21 +74,21 @@ type (
 func NewSyncerRegistry(
 	ctx context.Context,
 	localAddr common.Address,
-	eventBus EventBus,
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	nodeRegistry nodes.NodeRegistry,
 	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) SyncerRegistry {
 	return &syncerRegistry{
-		ctx:          ctx,
-		localAddr:    localAddr,
-		eventBus:     eventBus,
-		queue:        dynmsgbuf.NewDynamicBuffer[*command](),
-		syncers:      xsync.NewMap[common.Address, *syncerWithLock](),
-		streams:      xsync.NewMap[StreamId, *syncerWithLock](),
-		nodeRegistry: nodeRegistry,
-		streamCache:  streamCache,
-		otelTracer:   otelTracer,
+		ctx:           ctx,
+		localAddr:     localAddr,
+		eventBusQueue: eventBusQueue,
+		queue:         dynmsgbuf.NewDynamicBuffer[*command](),
+		syncers:       xsync.NewMap[common.Address, *syncerWithLock](),
+		streams:       xsync.NewMap[StreamId, *syncerWithLock](),
+		nodeRegistry:  nodeRegistry,
+		streamCache:   streamCache,
+		otelTracer:    otelTracer,
 	}
 }
 
@@ -477,7 +477,7 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 		syncer = NewLocalSyncer(
 			m.ctx,
 			m.localAddr,
-			m.eventBus,
+			m.eventBusQueue,
 			m.streamCache,
 			m.onStreamDown,
 			m.otelTracer,
@@ -492,7 +492,7 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 			m.ctx,
 			nodeAddress,
 			client,
-			m.eventBus,
+			m.eventBusQueue,
 			m.onStreamDown,
 			m.otelTracer,
 		)

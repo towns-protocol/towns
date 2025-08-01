@@ -12,6 +12,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // localSyncer implements the Syncer interface for local sync operations.
@@ -21,8 +22,8 @@ type localSyncer struct {
 	ctx context.Context
 	// localAddr is the address of the local node, used to identify the syncer in operations
 	localAddr common.Address
-	// eventBus is used to publish events related to sync operations
-	eventBus EventBus
+	// eventBusQueue ...
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
 	// streamCache is the cache for retrieving streams
 	streamCache StreamCache
 	// unsubStream calld when a stream goes down.
@@ -37,7 +38,7 @@ type localSyncer struct {
 func NewLocalSyncer(
 	ctx context.Context,
 	localAddr common.Address,
-	eventBus EventBus,
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	streamCache StreamCache,
 	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
@@ -45,7 +46,7 @@ func NewLocalSyncer(
 	return &localSyncer{
 		ctx:           ctx,
 		localAddr:     localAddr,
-		eventBus:      eventBus,
+		eventBusQueue: eventBusQueue,
 		streamCache:   streamCache,
 		unsubStream:   unsubStream,
 		activeStreams: xsync.NewMap[StreamId, Stream](),
@@ -215,7 +216,7 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 			err = AsRiverError(err, Err_CANCELED)
 		}
 	default:
-		err = s.eventBus.OnUpdate(*NewEventBusMessageUpdateStream(msg))
+		err = s.eventBusQueue.AddMessage(NewEventBusMessageUpdateStream(msg))
 	}
 	if err != nil {
 		rvrErr := AsRiverError(err).Func("localSyncer.sendResponse")

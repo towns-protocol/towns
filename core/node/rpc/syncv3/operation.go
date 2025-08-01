@@ -183,6 +183,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 
 	// Send messages to the event bus to add streams to the given sync
 	for _, cookie := range request.GetAddStreams() {
+		op.initializingStreams.Store(StreamId(cookie.GetStreamId()), struct{}{})
 		err := op.eventBus.OnUpdate(*NewEventBusMessageSubscribe(op, cookie))
 		if err != nil {
 			rvrErr := AsRiverError(err)
@@ -208,27 +209,19 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	}
 
 	// Backfill streams
-	/*if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
-		resp, err := op.syncerRegistry.Modify(ctx, &ModifySyncRequest{
-			SyncId: op.id,
-			BackfillStreams: &ModifySyncRequest_Backfill{
-				SyncId:  streams.GetSyncId(),
-				Streams: streams.GetStreams(),
-			},
-		})
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			for _, cookie := range streams.GetStreams() {
+	if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
+		for _, cookie := range streams.GetStreams() {
+			err := op.eventBus.OnUpdate(*NewEventBusMessageBackfill(op, request.GetSyncId(), cookie))
+			if err != nil {
+				rvrErr := AsRiverError(err)
 				response.Backfills = append(response.Backfills, &SyncStreamOpStatus{
 					StreamId: cookie.GetStreamId(),
 					Code:     int32(rvrErr.Code),
 					Message:  rvrErr.GetMessage(),
 				})
 			}
-		} else if len(resp.GetBackfills()) > 0 {
-			response.Backfills = append(response.Backfills, resp.GetBackfills()...)
 		}
-	}*/
+	}
 
 	return &response, nil
 }
@@ -290,6 +283,7 @@ func (op *operation) startUpdatesProcessor() {
 
 					// If the sync operation is a down operation, remove the operation from the stream.
 					op.operationRegistry.RemoveOpFromStream(streamID, op.id)
+					op.initializingStreams.Delete(streamID)
 				} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 					streamID, err := StreamIdFromBytes(msg.StreamID())
 					if err != nil {

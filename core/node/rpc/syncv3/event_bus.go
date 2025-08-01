@@ -2,13 +2,13 @@ package syncv3
 
 import (
 	"context"
+	"fmt"
 	"sync"
-
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 type MessageType uint8
@@ -20,6 +20,8 @@ const (
 	MessageSubscribe
 	// MessageUnsubscribe is sent when a stream is removed from a sync operation.
 	MessageUnsubscribe
+	// MessageBackfill is sent when a stream is backfilled.
+	MessageBackfill
 )
 
 func NewEventBusMessageUpdateStream(resp *SyncStreamsResponse) *EventBusMessage {
@@ -53,11 +55,25 @@ func NewEventBusMessageUnsubscribe(op Operation, streamID StreamId) *EventBusMes
 	}
 }
 
+type EventBusMessageBackfill struct {
+	Op           Operation
+	TargetSyncID string
+	Cookie       *SyncCookie
+}
+
+func NewEventBusMessageBackfill(op Operation, targetSyncID string, cookie *SyncCookie) *EventBusMessage {
+	return &EventBusMessage{
+		Type:     MessageBackfill,
+		Backfill: &EventBusMessageBackfill{Op: op, TargetSyncID: targetSyncID, Cookie: cookie},
+	}
+}
+
 type EventBusMessage struct {
 	Type         MessageType          // Type of the message, used to route the message to the right handler
 	StreamUpdate *SyncStreamsResponse // stream ID
 	Subscribe    *EventBusMessageSubscribe
 	Unsubscribe  *EventBusMessageUnsubscribe
+	Backfill     *EventBusMessageBackfill
 }
 
 type EventBus interface {
@@ -74,16 +90,17 @@ type eventBus struct {
 
 func NewEventBus(
 	ctx context.Context,
+	queue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	syncerRegistry SyncerRegistry,
 	operationRegistry OperationRegistry,
 ) EventBus {
 	eb := &eventBus{
 		ctx:               ctx,
-		queue:             dynmsgbuf.NewDynamicBuffer[*EventBusMessage](),
+		queue:             queue,
 		syncerRegistry:    syncerRegistry,
 		operationRegistry: operationRegistry,
 	}
-	eb.startCommandsProcessor()
+	go eb.startCommandsProcessor()
 	return eb
 }
 
@@ -129,8 +146,10 @@ func (eb *eventBus) onStreamUpdate(msg *SyncStreamsResponse) {
 	}
 	wg.Wait()
 
-	// Remove the stream from the operation registry if the sync operation is complete.
-	eb.operationRegistry.RemoveStream(streamID)
+	// Remove the stream from the operation registry if the sync down message is received.
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		eb.operationRegistry.RemoveStream(streamID)
+	}
 }
 
 func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
@@ -139,8 +158,6 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		logging.FromCtx(eb.ctx).Error("Failed to parse stream ID from SyncCookie", "error", err)
 		return
 	}
-
-	// TODO: Just send a backfill message if a user is trying to add a stream which is already added
 
 	// Adding stream to the sync op. Scenarios:
 	// 1. If the stream is already syncing for the given op, just backfill it(or skip?) - no syncer call.
@@ -154,10 +171,12 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		return
 	}
 
+	fmt.Println("onSubscribe", streamID, "exists:", streamExists, "added:", added)
+
 	// 1. Start syncing stream if not syncing yet.
 	if !streamExists {
 		// TODO: Add timeout to context
-		resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{AddStreams: []*SyncCookie{cookie}})
+		resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
 			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
@@ -194,34 +213,30 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
 		return
 	}
-
-	// Backfill streams
-	/*if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
-		resp, err := op.syncerRegistry.Modify(ctx, &ModifySyncRequest{
-			SyncId: op.id,
-			BackfillStreams: &ModifySyncRequest_Backfill{
-				SyncId:  streams.GetSyncId(),
-				Streams: streams.GetStreams(),
-			},
-		})
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			for _, cookie := range streams.GetStreams() {
-				response.Backfills = append(response.Backfills, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-			}
-		} else if len(resp.GetBackfills()) > 0 {
-			response.Backfills = append(response.Backfills, resp.GetBackfills()...)
-		}
-	}*/
 }
 
 // TODO: Let syncer registry know to stop syncing if no subscribers are left
 func (eb *eventBus) onUnsubscribe(op Operation, streamID StreamId) {
 	eb.operationRegistry.RemoveOpFromStream(streamID, op.ID())
+}
+
+func (eb *eventBus) onBackfill(op Operation, targetSyncID string, cookie *SyncCookie) {
+	resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{
+		SyncId: op.ID(),
+		BackfillStreams: &ModifySyncRequest_Backfill{
+			SyncId:  targetSyncID,
+			Streams: []*SyncCookie{cookie},
+		},
+	})
+	if err != nil {
+		// rvrErr := AsRiverError(err)
+		// TODO: Log error? Or send sync down message?
+		return
+	} else if len(resp.GetBackfills()) > 0 {
+		// rvrErr := AsRiverError(err)
+		// TODO: Log error? Or send sync down message?
+		return
+	}
 }
 
 func (eb *eventBus) startCommandsProcessor() {
@@ -260,6 +275,12 @@ func (eb *eventBus) startCommandsProcessor() {
 						return
 					}
 					eb.onUnsubscribe(msg.Unsubscribe.Op, msg.Unsubscribe.StreamID)
+				case MessageBackfill:
+					if msg.Backfill == nil {
+						logging.FromCtx(eb.ctx).Error("Received MessageBackfill with nil EventBusMessageBackfill")
+						return
+					}
+					eb.onBackfill(msg.Backfill.Op, msg.Backfill.TargetSyncID, msg.Backfill.Cookie)
 				default:
 					logging.FromCtx(eb.ctx).Error("Unknown message type received on event bus", "type", msg.Type)
 				}
