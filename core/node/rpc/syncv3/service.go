@@ -44,7 +44,7 @@ type serviceImpl struct {
 	// localAddr is the address of the local node.
 	localAddr common.Address
 	// eventBus is the event bus that handles events and messages.
-	eventBus EventBus
+	eventBus EventBus[EventBusMessage]
 	// operationRegistry is the registry of sync operations and their state.
 	operationRegistry OperationRegistry
 	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
@@ -59,7 +59,12 @@ func NewService(
 	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) Service {
-	eventBusQueue := dynmsgbuf.NewDynamicBuffer[*EventBusMessage]()
+	// Create a dynamic message buffer for the event bus queue.
+	// There is a cyclic dependency between the event bus and the syncer registry,
+	// so we need to create the event bus queue first and pass it to these components.
+	// TODO: Come up with a better way to handle cyclic dependencies here.
+	eventBusQueue := dynmsgbuf.NewDynamicBuffer[EventBusMessage]()
+
 	opReg := NewRegistry()
 	syncerReg := NewSyncerRegistry(
 		ctx,

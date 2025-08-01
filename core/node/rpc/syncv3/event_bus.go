@@ -72,14 +72,14 @@ type EventBus[T any] interface {
 
 type eventBus struct {
 	ctx               context.Context
-	queue             *dynmsgbuf.DynamicBuffer[*EventBusMessage]
+	queue             *dynmsgbuf.DynamicBuffer[EventBusMessage]
 	syncerRegistry    SyncerRegistry
 	operationRegistry OperationRegistry
 }
 
 func NewEventBus(
 	ctx context.Context,
-	queue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
+	queue *dynmsgbuf.DynamicBuffer[EventBusMessage],
 	syncerRegistry SyncerRegistry,
 	operationRegistry OperationRegistry,
 ) EventBus[EventBusMessage] {
@@ -94,7 +94,7 @@ func NewEventBus(
 }
 
 func (eb *eventBus) AddMessage(msg EventBusMessage) error {
-	return eb.queue.AddMessage(&msg)
+	return eb.queue.AddMessage(msg)
 }
 
 // onStreamUpdate distributes the given message to the appropriate operations in the registry.
@@ -231,7 +231,7 @@ func (eb *eventBus) onBackfill(op Operation, targetSyncID string, cookie *SyncCo
 }
 
 func (eb *eventBus) startCommandsProcessor() {
-	var messages []*EventBusMessage
+	var messages []EventBusMessage
 	for {
 		select {
 		case <-eb.ctx.Done():
