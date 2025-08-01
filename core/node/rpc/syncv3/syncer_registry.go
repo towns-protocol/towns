@@ -37,9 +37,9 @@ type (
 		Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error)
 	}
 
-	// SyncerManager is an interface that defines the behavior of a syncer manager.
+	// SyncerRegistry is an interface that defines the behavior of a syncer registry.
 	// It is responsible for managing syncers and processing modify sync requests.
-	SyncerManager interface {
+	SyncerRegistry interface {
 		Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 	}
 
@@ -49,12 +49,14 @@ type (
 		deadlock.Mutex
 	}
 
-	syncerManager struct {
+	syncerRegistry struct {
 		// ctx is the global process context.
 		ctx context.Context
 		// localAddr is the address of the local node.
 		localAddr common.Address
-		// queue is the queue for commands that can be processed by the syncer manager.
+		// eventBusQueue ...
+		eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
+		// queue is the queue for commands that can be processed by the syncer registry.
 		queue *dynmsgbuf.DynamicBuffer[*command]
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers *xsync.Map[common.Address, *syncerWithLock]
@@ -64,97 +66,34 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// streamCache is the stream cache that holds the streams and their state.
 		streamCache StreamCache
-		// registry is the registry of sync operations and their state.
-		registry Registry
 		// otelTracer is used to trace individual sync operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 	}
 )
 
-// NewSyncerManager creates a new syncer manager.
-func NewSyncerManager(
+// NewSyncerRegistry creates a new syncer registry.
+func NewSyncerRegistry(
 	ctx context.Context,
 	localAddr common.Address,
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	nodeRegistry nodes.NodeRegistry,
 	streamCache StreamCache,
-	registry Registry,
 	otelTracer trace.Tracer,
-) SyncerManager {
-	m := &syncerManager{
-		ctx:          ctx,
-		localAddr:    localAddr,
-		queue:        dynmsgbuf.NewDynamicBuffer[*command](),
-		syncers:      xsync.NewMap[common.Address, *syncerWithLock](),
-		streams:      xsync.NewMap[StreamId, *syncerWithLock](),
-		nodeRegistry: nodeRegistry,
-		streamCache:  streamCache,
-		registry:     registry,
-		otelTracer:   otelTracer,
-	}
-	go m.startCommandsProcessor()
-	return m
-}
-
-func (m *syncerManager) startCommandsProcessor() {
-	var wg sync.WaitGroup
-	var commands []*command
-	for {
-		select {
-		case <-m.ctx.Done():
-			return
-		case _, open := <-m.queue.Wait():
-			commands = m.queue.GetBatch(commands)
-
-			// nil msgs indicates the buffer is closed.
-			if commands == nil {
-				// TODO: Log error and skip the rest of commands
-				return
-			}
-
-			for _, cmd := range commands {
-				if cmd != nil && cmd.req != nil {
-					wg.Add(1)
-					go func(cmd *command) {
-						defer wg.Done()
-
-						if resp, err := m.modify(cmd.ctx, cmd.req); err != nil {
-							cmd.err <- err
-						} else {
-							cmd.resp <- resp
-						}
-					}(cmd)
-				}
-			}
-			wg.Wait()
-
-			if !open {
-				// TODO: Log error and skip the rest of commands
-				// If the queue is closed, we stop processing commands.
-				return
-			}
-		}
+) SyncerRegistry {
+	return &syncerRegistry{
+		ctx:           ctx,
+		localAddr:     localAddr,
+		eventBusQueue: eventBusQueue,
+		queue:         dynmsgbuf.NewDynamicBuffer[*command](),
+		syncers:       xsync.NewMap[common.Address, *syncerWithLock](),
+		streams:       xsync.NewMap[StreamId, *syncerWithLock](),
+		nodeRegistry:  nodeRegistry,
+		streamCache:   streamCache,
+		otelTracer:    otelTracer,
 	}
 }
 
-func (m *syncerManager) Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	cmd := newCommand(ctx, req)
-
-	// Send the command to the common modify sync queue for processing.
-	if err := m.queue.AddMessage(cmd); err != nil {
-		return nil, err
-	}
-
-	select {
-	case <-ctx.Done():
-		return nil, AsRiverError(ctx.Err(), Err_CANCELED).Message("context cancelled")
-	case err := <-cmd.err:
-		return nil, err
-	case resp := <-cmd.resp:
-		return resp, nil
-	}
-}
-
-func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
+func (m *syncerRegistry) Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
 	var wg sync.WaitGroup
 	var lock sync.Mutex
 	var resp ModifySyncResponse
@@ -250,7 +189,7 @@ func (m *syncerManager) modify(ctx context.Context, req *ModifySyncRequest) (*Mo
 	return &resp, nil
 }
 
-func (m *syncerManager) processAddingStream(
+func (m *syncerRegistry) processAddingStream(
 	ctx context.Context,
 	cookie *SyncCookie,
 	changeNode bool,
@@ -325,7 +264,7 @@ func (m *syncerManager) processAddingStream(
 }
 
 // processRemovingStream processes the removal of a stream from the syncer.
-func (m *syncerManager) processRemovingStream(
+func (m *syncerRegistry) processRemovingStream(
 	ctx context.Context,
 	streamID StreamId,
 ) *SyncStreamOpStatus {
@@ -368,7 +307,7 @@ func (m *syncerManager) processRemovingStream(
 	return nil
 }
 
-func (m *syncerManager) processBackfillingStream(
+func (m *syncerRegistry) processBackfillingStream(
 	ctx context.Context,
 	syncID string,
 	targetSyncID string,
@@ -435,7 +374,7 @@ func (m *syncerManager) processBackfillingStream(
 // Extra logic is applied if changeNode is true, which means that the node from the cookie should not be used.
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
-func (m *syncerManager) selectNodeForStream(
+func (m *syncerRegistry) selectNodeForStream(
 	ctx context.Context,
 	streamID StreamId,
 	node common.Address,
@@ -526,7 +465,7 @@ func (m *syncerManager) selectNodeForStream(
 // If the syncer does not exist, it creates a new one and starts it.
 // This implementation uses per-node-address locking to avoid blocking
 // other operations while creating syncers (which can be slow due to network calls).
-func (m *syncerManager) getOrCreateSyncer(ctx context.Context, nodeAddress common.Address) (Syncer, error) {
+func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress common.Address) (Syncer, error) {
 	syncerEntity, _ := m.syncers.LoadOrStore(nodeAddress, &syncerWithLock{})
 
 	// Lock the syncer for initialization check/creation
@@ -543,8 +482,8 @@ func (m *syncerManager) getOrCreateSyncer(ctx context.Context, nodeAddress commo
 		syncer = NewLocalSyncer(
 			m.ctx,
 			m.localAddr,
+			m.eventBusQueue,
 			m.streamCache,
-			m.registry,
 			m.onStreamDown,
 			m.otelTracer,
 		)
@@ -558,8 +497,8 @@ func (m *syncerManager) getOrCreateSyncer(ctx context.Context, nodeAddress commo
 			m.ctx,
 			nodeAddress,
 			client,
+			m.eventBusQueue,
 			m.onStreamDown,
-			m.registry,
 			m.otelTracer,
 		)
 		if err != nil {
@@ -582,9 +521,7 @@ func (m *syncerManager) getOrCreateSyncer(ctx context.Context, nodeAddress commo
 
 // onStreamDown is called when a stream is no longer syncing, e.g., due to node outage or other reasons.
 // FIXME: RACE CONDITION WHEN ONE PROCESS IS ADDING STREAM AND THIS FUNCTION IS CALLED.
-func (m *syncerManager) onStreamDown(streamID StreamId) {
-	m.registry.RemoveStream(streamID)
-
+func (m *syncerRegistry) onStreamDown(streamID StreamId) {
 	syncerEntity, loaded := m.streams.Load(streamID)
 	if !loaded {
 		return

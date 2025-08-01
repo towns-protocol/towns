@@ -18,6 +18,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // remoteSyncer implements the Syncer interface for remote sync operations.
@@ -33,8 +34,8 @@ type remoteSyncer struct {
 	remoteAddr common.Address
 	// client is the RPC client used to communicate with the remote node.
 	client protocolconnect.StreamServiceClient
-	// registry is used to distribute messages to the correct operations.
-	registry Registry
+	// eventBusQueue ...
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
 	// streams is a thread-safe map that keeps track of active streams.
 	streams *xsync.Map[StreamId, struct{}]
 	// responseStream is the stream for receiving sync messages from the remote node.
@@ -50,8 +51,8 @@ func NewRemoteSyncer(
 	ctx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
+	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	unsubStream func(streamID StreamId),
-	registry Registry,
 	otelTracer trace.Tracer,
 ) (Syncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
@@ -120,7 +121,7 @@ func NewRemoteSyncer(
 		cancel:         syncStreamCancel,
 		syncID:         responseStream.Msg().GetSyncId(),
 		client:         client,
-		registry:       registry,
+		eventBusQueue:  eventBusQueue,
 		streams:        xsync.NewMap[StreamId, struct{}](),
 		responseStream: responseStream,
 		remoteAddr:     remoteAddr,
@@ -248,16 +249,19 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 // sendResponse tries to write msg to the client send message channel.
 // If the channel is full or the sync operation is cancelled, the function returns an error.
 func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
+	var err error
 	select {
 	case <-s.ctx.Done():
-		if err := s.ctx.Err(); err != nil {
-			rvrErr := AsRiverError(err, Err_CANCELED).
-				Func("localSyncer.sendResponse")
-			_ = rvrErr.LogError(logging.FromCtx(s.ctx))
-			return rvrErr
+		if err = s.ctx.Err(); err != nil {
+			err = AsRiverError(err, Err_CANCELED)
 		}
 	default:
-		distributeMessage(s.registry, streamID, msg)
+		err = s.eventBusQueue.AddMessage(NewEventBusMessageUpdateStream(msg))
+	}
+	if err != nil {
+		rvrErr := AsRiverError(err).Func("remoteSyncer.sendResponse")
+		_ = rvrErr.LogError(logging.FromCtx(s.ctx))
+		return rvrErr
 	}
 	return nil
 }

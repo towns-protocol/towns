@@ -2,7 +2,6 @@ package syncv3
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
@@ -69,39 +68,6 @@ func validateModifySync(req *ModifySyncRequest) error {
 	}
 
 	return nil
-}
-
-// distributeMessage distributes the given message to the appropriate operations in the registry.
-// If the message has target sync IDs, it sends the message to the first operation associated with the first target sync ID.
-// If no target sync IDs are present, it sends the message to all operations associated with the specified stream ID.
-func distributeMessage(registry Registry, streamID StreamId, msg *SyncStreamsResponse) {
-	if len(msg.GetTargetSyncIds()) > 0 {
-		op, exists := registry.GetOp(msg.GetTargetSyncIds()[0])
-		if exists {
-			op.OnStreamUpdate(msg)
-		}
-		return
-	}
-
-	ops := registry.GetStreamOps(streamID)
-	if len(ops) == 0 {
-		return
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(len(ops))
-	for _, op := range ops {
-		go func(op Operation) {
-			op.OnStreamUpdate(&SyncStreamsResponse{
-				SyncId:   msg.GetSyncId(),
-				SyncOp:   msg.GetSyncOp(),
-				Stream:   msg.GetStream(),
-				StreamId: msg.GetStreamId(),
-			})
-			wg.Done()
-		}(op)
-	}
-	wg.Wait()
 }
 
 // otelSender is a wrapper around the Receiver that adds OpenTelemetry tracing to the Send method.
