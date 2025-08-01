@@ -5,8 +5,10 @@
 This design doc describes implementation of stream sync engine on top of queues
 to prevent blocking and relying on acquiring locks. It's part of the "node" server that is implemented in go.
 
-This document does not describe shared remote syncer design. This will be addressed in a separate document.
-Shared remote syncer will follow contract outlined here for the `RemoteSyncer` component.
+NOTE: This design results in using a single remote syncer for a stream that is shared between multiple clients.
+In this sense it's a "shared syncer" design. However, currently requests to the same remote node are not
+multiplexed into a single `SyncStreams` call. If this feature is going to be required,
+it will be addressed in a separate document and implemented later.
 
 ## API Overview
 
