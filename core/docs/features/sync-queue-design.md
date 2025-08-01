@@ -41,7 +41,7 @@ miniblock for the given stream and subsequent miniblocks and events.
 
 ## Stream Overview
 
-Stream consists of a sequence of numbered miniblocks and of the recent events in the stream's minipool. 
+Stream consists of a sequence of numbered miniblocks and the recent events in the stream's minipool. 
 Each miniblock contains a sequence of events. Some miniblocks contain snapshots.
 
 Each stream is identified by unique stream id.
@@ -49,7 +49,7 @@ Each stream is identified by unique stream id.
 Nodes host streams. Each node is identified by unique node address. If stream is hosted by the
 node, then stream is "local" to the node, otherwise it is "remote".
 
-Streams are replicated to the subset of nodes. If node is down, or there is other problem, sync can failover to the next node.
+Streams are replicated to a subset of nodes. If node is down, or there is other problem, sync can fail over to the next node.
 
 ## Local and Remote Sync
 
@@ -62,7 +62,7 @@ add this stream again. Node should attempt to sync this stream from a different 
 
 ## Implementation
 
-Propose design of next components that interact with each other through asynchronous message passing (i.e. channels):
+Propose design of the following components that interact with each other through asynchronous message passing (i.e. channels):
 
 - `SyncStreamHandler` and `SyncStreamHandlerRegistry` in package `syncv3/handler`
 - `EventBus` in package `syncv3/eventbus`
@@ -89,7 +89,7 @@ when `SyncStreams` request is closed.
 before relevant backfill is complete and should filter such updates out and not send them to the client.
 
 `SyncStreamHandler` and `EventBus` communicate only through message passing. `SyncStreamHandler` provides `OnHandlerUpdate` interface which
-provides relevant update methods, implementation of these methods save update to the `SyncStreamHandler` internal queue.
+provides relevant update methods, implementations of these methods save updates to the `SyncStreamHandler` internal queue.
 
 ### `EventBus`
 
@@ -116,8 +116,8 @@ should save backfill requests and satisfy them once stream is loaded.
 
 `RemoteSyncer` is responsible for streaming updates from a single remote stream into the `EventBus` queue.
 
-`RemoteSyncer` uses `SyncStreams` call to the remote node to request updates. It creates new `SyncStreams` for
-each requested stream. I.e. `RemoteSyncer` tracks a single stream and uses a single `SyncStreams` exclusively for this stream.
+`RemoteSyncer` uses `SyncStreams` call to the remote node to request updates. It creates a new `SyncStreams` call for
+each requested stream. I.e., `RemoteSyncer` tracks a single stream and uses a single `SyncStreams` exclusively for this stream.
 
 Backfills can be requested while connection to the remote node is being established. In such case `RemoteSyncer`
 should save backfill requests and send them to the remote node once `SyncStreams` is ready and sync id is received.
@@ -130,12 +130,12 @@ and it's guaranteed that this syncer will not send any subsequent updates to the
 `SyncerRegistry` is responsible for tracking `LocalSyncer` and `RemoteSyncer` by stream id.
 
 `SyncerRegistry` receives `BackfillAndStreamUpdates` requests from `EventBus`. If there is no existing syncer for the stream,
-it creates a new one and requests backfill. If there is existing syncer, it requests new backfill.
+it creates a new one and requests backfill. If there is an existing syncer, it requests new backfill.
 It is guaranteed that after this call either backfill or SYNC_DOWN will be posted to the `EventBus` queue.
 
 ### Event Ordering
 
-Both `LocalSyncer` and `RemoteSyncer` guarantee event ordering. I.e. they call `OnEventBusUpdate` in the same order as
+Both `LocalSyncer` and `RemoteSyncer` guarantee event ordering. I.e., they call `OnEventBusUpdate` in the same order as
 events are received from the stream. Backfill position is guaranteed: after specific backfill is posted through `OnEventBusUpdate`,
 subsequent events are "after" this backfill without any gaps.
 
