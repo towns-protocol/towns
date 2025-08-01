@@ -306,6 +306,8 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 
 		record, ok := ssr.streamRecords.Load(streamID)
 		if !ok {
+			// This can happen if the call to modify the sync times out, and yet the
+			// add was still successful.
 			log.Errorw(
 				"Expected stream id for sync to be in the syncSessionRunner records",
 				"streamId", streamID,

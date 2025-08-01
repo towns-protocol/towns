@@ -584,6 +584,12 @@ type StreamSyncMonitorConfig struct {
 	
 	// StreamTracking configuration is embedded for sync session settings
 	StreamTracking StreamTrackingConfig
+	
+	// DebugPort is the port to serve debug endpoints on (0 to disable)
+	DebugPort int
+	
+	// EnablePProf enables pprof debug endpoints
+	EnablePProf bool
 }
 
 func (ac *ArchiveConfig) GetReadMiniblocksSize() uint64 {
