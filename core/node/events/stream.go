@@ -949,23 +949,30 @@ func (s *Stream) Unsub(receiver SyncResultReceiver) {
 // ForceFlush transitions Stream object to unloaded state.
 // All subbed receivers will receive empty response and must
 // terminate corresponding sync loop.
+// This method is intended to be called only from test code.
 // ForceFlush is thread-safe.
 func (s *Stream) ForceFlush(ctx context.Context) {
+	receivers := s.forceFlushImpl()
+	if receivers != nil && receivers.Cardinality() > 0 {
+		err := RiverError(Err_INTERNAL, "Stream unloaded")
+		for r := range receivers.Iter() {
+			r.OnSyncError(err)
+		}
+	}
+}
+
+func (s *Stream) forceFlushImpl() mapset.Set[SyncResultReceiver] {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.local == nil {
-		return
+		return nil
 	}
 
 	s.setViewLocked(nil)
-	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
-		err := RiverError(Err_INTERNAL, "Stream unloaded")
-		for r := range s.local.receivers.Iter() {
-			r.OnSyncError(err)
-		}
-	}
+	receivers := s.local.receivers
 	s.local.receivers = nil
+	return receivers
 }
 
 // canCreateMiniblock determines if a stream is eligible to create a miniblock.
