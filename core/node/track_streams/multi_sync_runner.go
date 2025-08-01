@@ -812,10 +812,10 @@ func (msr *MultiSyncRunner) addToSync(
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
 	if err := runner.AddStream(rootCtx, *record); err != nil {
-		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
-			// Aggressively release the lock on target node resources to maximize request throughput.
-			pool.Release(1)
+		// Aggressively release the lock on target node resources to maximize request throughput.
+		pool.Release(1)
 
+		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
 			// Create a new runner and replace this one
 			newRunner := newSyncSessionRunner(
 				rootCtx,
