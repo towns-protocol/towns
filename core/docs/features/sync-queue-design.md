@@ -5,6 +5,9 @@
 This design doc describes implmentation of stream sync engine on top of queues
 to prevent blocking and relying on acquiring locks. It's part of the "node" server that is implmented in go.
 
+This document does not describe shared remote syncer design. This will be addressed in a separate document.
+Shared remote syncer will follow contract outlined here for the `RemoteSyncer` component.
+
 ## API Overview
 
 Node implements `StreamSync` GRPC streaming RPC to stream updates to the client.
@@ -61,13 +64,13 @@ add this stream again. Node should attempt to sync this stream from the differen
 
 Propose design of next components that interact with each other through asynchronous message passing (i.e. channels):
 
-- `SyncStreamHandler` and `SyncStreamHandlerRegistry` in package `syncv2/handler`
-- `EventBus` in package `syncv2/eventbus`
-- `LocalSyncer` in package `syncv2/local`
-- `RemoteSyncer` in package `syncv2/remote`
-- `SyncerRegistry` in package `syncv2/registry`
+- `SyncStreamHandler` and `SyncStreamHandlerRegistry` in package `syncv3/handler`
+- `EventBus` in package `syncv3/eventbus`
+- `LocalSyncer` in package `syncv3/local`
+- `RemoteSyncer` in package `syncv3/remote`
+- `SyncerRegistry` in package `syncv3/registry`
 
-All packages are subpackages of @core/node/rpc/syncv2
+All packages are subpackages of @core/node/rpc/syncv3
 
 ### `SyncStreamHandler` and `SyncStreamHandlerRegistry`
 
@@ -96,10 +99,9 @@ provides relevant update methods, implementation of these methods save update to
 
 `EventBus` tracks which `SyncStreamHandler` is interested in which streams and dispatches updates to the relevant queues.
 
-When `Subscribe` message is received for the stream that is not synced yet, `EventBus` calls `SyncerRegistry` to 
-initiate update streaming.
-If stream is already tracked by the `EventBus`, on `Subscribe` `EventBus` requests new backfill to be generated.
-If `Subscribe` or request fails, appropriate error should be sent to the `SyncStreamHandler`.
+When `Subscribe` message is received, `EventBus` calls `SyncerRegistry` to request backfill and start (or continue)
+update streaming. It is guaranteed that after this call either backfill or SYNC_DOWN will be posted to the `EventBus` queue
+and propogated to the `SyncStreamHandler` queues.
 
 On `Unsubscribe`, if there are no more subscribers, `EventBus` notifies `SyncerRegistry` to stop tracking this stream.
 
@@ -120,9 +122,16 @@ each requested stream. I.e. `RemoteSyncer` tracks single stream and uses singe `
 Backfills can be requested while connection to the remote node is still established. In such case `RemoteSyncer`
 should save backfill requests and send them to the remote node once `SyncStream` is ready and sync id is received.
 
+Lifecycle of a single `RemoteSyncer` is INIT->STREAM->SHUTDOWN. On shutdown, `SYNC_DOWN` is sent to the `EventBus`
+and it's guaranteed that this syncer will not send any subsequent updates to the `EventBus`.
+
 ### `SyncerRegistry`
 
 `SyncerRegistry` is responsible for tracking `LocalSyncer` and `RemoteSyncer` by stream id.
+
+`SyncerRegistry` receives `BackfillAndStreamUpdates` requests from `EventBus`. If there is no existing syncer for the stream,
+it creates new one and requests backfill. If there is existing syncer, it requests new backfill.
+It is guaranteed that after this call either backfill or SYNC_DOWN will be posted to the `EventBus` queue.
 
 ### Event Ordering
 
@@ -132,36 +141,24 @@ subsequent events are "after" this backfill without any gaps.
 
 `EventBus` guarantees that all `SyncStreamHandlers` will receive events in the same order as they are received from the `LocalSyncer` and `RemoteSyncer`.
 
+### SYNC_DOWN and automatic unsubscribe
+
+Once SYNC_DOWN is received, components automatically unsubscribe. There is no need to issue `Unsubscribe` call.
+This design allows to avoid races between `Unsubscribe` and `Subscribe` calls and races between `SYNC_DOWN` and `Subscribe` calls.
+If new `Subscribe` comes in at the same time, it will create new syncer and issue backfill request.
+If `SYNC_DOWN ` is observed, `SyncStreamHandler` should send it to the client, remove stream from internal tracking, 
+and then call `Subscribe` again after client requests new backfill through `ModifySync`.
+
 ## Design Questions
 
-### To be designed: From which componenent backfill is requested?
+### EventBus and SyncerRegistry appear to be tightly coupled
 
-Potential choices: 
-- A. `LocalSyncer` and `RemoteSyncer`
-- B. `SyncerRegistry`
+Both components need to react to `SYNC_DOWN` consistently. Given this should they be merged into a single component?
 
-In case of A it is implied that `EventBus` should track used `LocalSyncers` and `RemoteSyncers`, which is perhaps undesirable.
+Alternately, is there a need to introduce syncer generations to simplify failover, and resolve races?
 
-In case of B there is a problem of getting wrong backfills/loosing backfills if `RemoteSyncer` is down
-and needs to be replaced with the new one or if there is last unsubsribe/new subscribe race (see below).
-
-### To be designed: How to handle last unsubsribe/new subscribe race?
-
-When there are no more subscribers for the stream, `EventBus` should notify `SyncerRegistry` to stop tracking this stream
-and in case of `RemoteSyncer` to close `StreamSync` call and stop streaming updates to free resources.
-
-However, if new `Subscribe` comes in at the same time, system needs to be designed in such a way that it will not
-incorrectly use syncer being shut down. In other words, new backfill should be correctly requested from the new syncer.
-
-Question: should it be handled on the `SyncerRegistry` level on the individual syncer level? In other words, should 
-syncer state machine only move forward INIT->STREAM->SHUTDOWN or should it be possible to move back to INIT? Which
-approach makes it easier to correctly free up and re-initialize syncers?
-
-### To be designed: How to handle `RemoteSyncer` failover?
-
-Similar problem arises when `RemoteSyncer` is down and needs to be replaced with the new one. 
-In such case, `STREAM_DOWN` is propagated through `EventBus` to the `SyncStreamHandlers`.
-However, new `Subscribe` calls should be handled, or at least rejected correctly.
+Alternatively, should StreamRegistry calls be synchronous (i.e. not message passing), and use very scoped locks to update state?
+No network or other blocking calls should be performed while `StreamRegistry` holds internal locks.
 
 ## Instructions
 
