@@ -173,20 +173,20 @@ function participantsFromParentEventId(
     parentId: string,
     streamView: StreamStateView,
 ): Uint8Array[] {
-    const participating = new Set<Uint8Array>()
+    const participating = new Set<string>()
     const parentEvent = streamView.timeline.find((x) => x.eventId === parentId)
     if (parentEvent && parentEvent.sender.id) {
-        participating.add(addressFromUserId(parentEvent.sender.id))
+        participating.add(parentEvent.sender.id)
     }
     streamView.timeline.forEach((event) => {
         if (
             event.content?.kind === RiverTimelineEvent.ChannelMessage &&
             event.content.threadId === parentId
         ) {
-            participating.add(addressFromUserId(event.sender.id))
+            participating.add(event.sender.id)
         }
     })
-    return Array.from(participating)
+    return Array.from(participating).map((id) => addressFromUserId(id))
 }
 
 function getParentThreadId(
