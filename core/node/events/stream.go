@@ -825,60 +825,6 @@ func (s *Stream) addEventToMinipoolAndStorageLocked(
 	return newSV, nil
 }
 
-// UpdatesSinceCookie retrieves the stream content since the given cookie and sends it to the callback.
-// This function locks the stream until the callback is executed.
-// One of the use cases is to properly handle race condition when sending stream delta to the sync client
-// (avoid updating the stream until the delta is sent to the client).
-func (s *Stream) UpdatesSinceCookie(
-	ctx context.Context,
-	cookie *SyncCookie,
-	cb func(*StreamAndCookie) error,
-) error {
-	if !s.IsLocal() {
-		return RiverError(
-			Err_NOT_FOUND,
-			"stream not local",
-			"cookie.StreamId",
-			cookie.StreamId,
-			"s.streamId",
-			s.streamId,
-		)
-	}
-	if !bytes.Equal(cookie.NodeAddress, s.params.Wallet.Address.Bytes()) {
-		return RiverError(
-			Err_BAD_SYNC_COOKIE,
-			"cookies is not for this node",
-			"cookie.NodeAddress",
-			cookie.NodeAddress,
-			"s.params.Wallet.AddressStr",
-			s.params.Wallet,
-		)
-	}
-	if !s.streamId.EqualsBytes(cookie.StreamId) {
-		return RiverError(
-			Err_BAD_SYNC_COOKIE,
-			"bad stream id",
-			"cookie.StreamId",
-			cookie.StreamId,
-			"s.streamId",
-			s.streamId,
-		)
-	}
-
-	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
-	if err != nil {
-		return err
-	}
-
-	resp, err := view.GetStreamSince(ctx, s.params.Wallet.Address, cookie)
-	if err != nil {
-		return err
-	}
-
-	return cb(resp)
-}
-
 // Sub subscribes to the stream, sending all content between the cookie and the current stream state.
 // This method is thread-safe.
 // Only local streams are allowed to subscribe.
