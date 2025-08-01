@@ -16,7 +16,7 @@ When `SyncStreams` is received, node replies with sync id (`SYNC_NEW` `SyncStrea
 calls to `ModifySync` and `CancelSync`. `AddStreamToSync` and `RemoveStreamFromSync` are
 legacy APIs superseded by `ModifySync` (do not include them in the new implementation).
 
-`SyncStreams` call carries initial set of `StreamCookies`. `StreamCookie` contains 
+`SyncStreams` call carries initial set of `SyncCookie` structs. `SyncCookie` contains 
 stream id and sync position as a miniblock number in the given stream.
 
 If sync position is within recent history, node streams updates from the given position.
@@ -49,7 +49,7 @@ Each stream is identified by unique stream id.
 Nodes host streams. Each node is identified by unique node address. If stream is hosted by the
 node, then stream is "local" to the node, otherwise it is "remote".
 
-Streams are replicated to the subset of nodes. If node is down, or there is other problem, sync can be failover to the next node.
+Streams are replicated to the subset of nodes. If node is down, or there is other problem, sync can failover to the next node.
 
 ## Local and Remote Sync
 
@@ -58,7 +58,7 @@ Node receiving `SyncStreams` from client streams updates for local streams direc
 For remote streams, node uses `SyncStreams` call to the remote nodes to request updates and forwards them to the client.
 
 If remote node becomes unavailable, node sends `SYNC_DOWN` to the client. Client retries with exponential backoff to
-add this stream again. Node should attempt to sync this stream from the different remote node if such request is received.
+add this stream again. Node should attempt to sync this stream from a different remote node if such request is received.
 
 ## Implementation
 
@@ -130,7 +130,7 @@ and it's guaranteed that this syncer will not send any subsequent updates to the
 `SyncerRegistry` is responsible for tracking `LocalSyncer` and `RemoteSyncer` by stream id.
 
 `SyncerRegistry` receives `BackfillAndStreamUpdates` requests from `EventBus`. If there is no existing syncer for the stream,
-it creates new one and requests backfill. If there is existing syncer, it requests new backfill.
+it creates a new one and requests backfill. If there is existing syncer, it requests new backfill.
 It is guaranteed that after this call either backfill or SYNC_DOWN will be posted to the `EventBus` queue.
 
 ### Event Ordering
@@ -144,7 +144,7 @@ subsequent events are "after" this backfill without any gaps.
 ### SYNC_DOWN and automatic unsubscribe
 
 Once SYNC_DOWN is received, components automatically unsubscribe. There is no need to issue `Unsubscribe` call.
-This design allows to avoid races between `Unsubscribe` and `Subscribe` calls and races between `SYNC_DOWN` and `Subscribe` calls.
+This design helps to avoid races between `Unsubscribe` and `Subscribe` calls and races between `SYNC_DOWN` and `Subscribe` calls.
 If new `Subscribe` comes in at the same time, it will create new syncer and issue backfill request.
 If `SYNC_DOWN` is observed, `SyncStreamHandler` should send it to the client, remove stream from internal tracking, 
 and then call `Subscribe` again after client requests new backfill through `ModifySync`.
