@@ -10,9 +10,9 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// Registry is an interface that defines the behavior of the sync operation registry.
+// OperationRegistry is an interface that defines the behavior of the sync operation registry.
 // Keep track on all sync operations and their state.
-type Registry interface {
+type OperationRegistry interface {
 	// AddOp adds an operation to the registry.
 	AddOp(op Operation) (func(), error)
 	// GetOp retrieves an operation by its ID.
@@ -35,22 +35,22 @@ type Registry interface {
 	RemoveStream(streamId StreamId)
 }
 
-// registry implements the Registry interface using xsync.Map for thread-safe operations.
-type registry struct {
+// operationRegistry implements the OperationRegistry interface using xsync.Map for thread-safe operations.
+type operationRegistry struct {
 	ops *xsync.Map[string, Operation]
 	// TODO: The given slice if always changing, use another structure with a lock or something
 	streams *xsync.Map[StreamId, []Operation]
 }
 
-// NewRegistry creates a new instance of the Registry.
-func NewRegistry() Registry {
-	return &registry{
+// NewRegistry creates a new instance of the OperationRegistry.
+func NewRegistry() OperationRegistry {
+	return &operationRegistry{
 		ops:     xsync.NewMap[string, Operation](),
 		streams: xsync.NewMap[StreamId, []Operation](),
 	}
 }
 
-func (r *registry) AddOp(op Operation) (func(), error) {
+func (r *operationRegistry) AddOp(op Operation) (func(), error) {
 	if _, loaded := r.ops.Load(op.ID()); loaded {
 		return nil, RiverError(Err_ALREADY_EXISTS, "operation with ID %s already exists", op.ID())
 	}
@@ -60,11 +60,11 @@ func (r *registry) AddOp(op Operation) (func(), error) {
 	return func() { r.ops.Delete(op.ID()) }, nil
 }
 
-func (r *registry) GetOp(id string) (Operation, bool) {
+func (r *operationRegistry) GetOp(id string) (Operation, bool) {
 	return r.ops.Load(id)
 }
 
-func (r *registry) AddOpToExistingStream(streamID StreamId, op Operation) (streamExists bool, added bool) {
+func (r *operationRegistry) AddOpToExistingStream(streamID StreamId, op Operation) (streamExists bool, added bool) {
 	r.streams.Compute(
 		streamID,
 		func(ops []Operation, loaded bool) ([]Operation, xsync.ComputeOp) {
@@ -84,7 +84,7 @@ func (r *registry) AddOpToExistingStream(streamID StreamId, op Operation) (strea
 	return
 }
 
-func (r *registry) AddOpToStream(streamID StreamId, op Operation) {
+func (r *operationRegistry) AddOpToStream(streamID StreamId, op Operation) {
 	r.streams.Compute(
 		streamID,
 		func(ops []Operation, _ bool) ([]Operation, xsync.ComputeOp) {
@@ -100,7 +100,7 @@ func (r *registry) AddOpToStream(streamID StreamId, op Operation) {
 	)
 }
 
-func (r *registry) RemoveOpFromStream(streamID StreamId, id string) {
+func (r *operationRegistry) RemoveOpFromStream(streamID StreamId, id string) {
 	r.streams.Compute(
 		streamID,
 		func(ops []Operation, loaded bool) ([]Operation, xsync.ComputeOp) {
@@ -116,7 +116,7 @@ func (r *registry) RemoveOpFromStream(streamID StreamId, id string) {
 	)
 }
 
-func (r *registry) GetStreamOps(streamID StreamId) []Operation {
+func (r *operationRegistry) GetStreamOps(streamID StreamId) []Operation {
 	ops, ok := r.streams.Load(streamID)
 	if !ok {
 		return nil
@@ -124,6 +124,6 @@ func (r *registry) GetStreamOps(streamID StreamId) []Operation {
 	return slices.Clone(ops)
 }
 
-func (r *registry) RemoveStream(streamID StreamId) {
+func (r *operationRegistry) RemoveStream(streamID StreamId) {
 	r.streams.Delete(streamID)
 }

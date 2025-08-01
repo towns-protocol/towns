@@ -42,12 +42,10 @@ type (
 type serviceImpl struct {
 	// localAddr is the address of the local node.
 	localAddr common.Address
-	// registry is the registry of sync operations and their state.
-	registry Registry
-	// syncerManager is the syncer manager that handles syncers and their states.
-	syncerManager SyncerManager
-	// streamCache is the stream cache that holds the streams and their state.
-	streamCache StreamCache
+	// eventBus is the event bus that handles events and messages.
+	eventBus EventBus
+	// operationRegistry is the registry of sync operations and their state.
+	operationRegistry OperationRegistry
 	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -60,20 +58,21 @@ func NewService(
 	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) Service {
-	reg := NewRegistry()
+	opReg := NewRegistry()
+	syncerReg := NewSyncerRegistry(
+		ctx,
+		localAddr,
+		nodeRegistry,
+		nodeRegistry,
+		streamCache,
+		otelTracer,
+	)
+	eb := NewEventBus(ctx, syncerReg, opReg)
 	return &serviceImpl{
-		localAddr: localAddr,
-		registry:  reg,
-		syncerManager: NewSyncerManager(
-			ctx,
-			localAddr,
-			nodeRegistry,
-			streamCache,
-			reg,
-			otelTracer,
-		),
-		streamCache: streamCache,
-		otelTracer:  otelTracer,
+		localAddr:         localAddr,
+		eventBus:          eb,
+		operationRegistry: opReg,
+		otelTracer:        otelTracer,
 	}
 }
 
@@ -92,14 +91,13 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		ctx,
 		id,
 		rec,
-		s.syncerManager,
-		s.streamCache,
-		s.registry,
+		s.eventBus,
+		s.operationRegistry,
 		s.otelTracer,
 	)
 
 	// Add the given operation to the registry.
-	remove, err := s.registry.AddOp(op)
+	remove, err := s.operationRegistry.AddOp(op)
 	if err != nil {
 		return AsRiverError(err).
 			Tag("syncId", id).
@@ -146,7 +144,7 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	op, ok := s.registry.GetOp(req.GetSyncId())
+	op, ok := s.operationRegistry.GetOp(req.GetSyncId())
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "Sync operation not found").Func("ModifySync")
 	}
@@ -162,7 +160,7 @@ func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*
 }
 
 func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
-	op, ok := s.registry.GetOp(id)
+	op, ok := s.operationRegistry.GetOp(id)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "Sync operation not found").
 			Tag("syncId", id).
@@ -175,7 +173,7 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 }
 
 func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
-	op, ok := s.registry.GetOp(id)
+	op, ok := s.operationRegistry.GetOp(id)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "Sync operation not found").
 			Tag("syncId", id).
@@ -188,7 +186,7 @@ func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
-	op, ok := s.registry.GetOp(id)
+	op, ok := s.operationRegistry.GetOp(id)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "Sync operation not found").
 			Func("DebugDropStream")

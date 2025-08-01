@@ -2,7 +2,6 @@ package syncv3
 
 import (
 	"context"
-	"slices"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v4"
@@ -70,18 +69,16 @@ type operation struct {
 	streamUpdatesQueue *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	// cmdQueue is the queue for commands that can be processed by the operation.
 	cmdQueue chan *command
-	// syncerManager is the syncer manager that handles syncers and their states.
-	syncerManager SyncerManager
-	// streamCache is the stream cache.
-	streamCache StreamCache
-	// registry is the registry of sync operations and their state.
-	registry Registry
+	// eventBus is the event bus that handles stream updates and commands.
+	eventBus EventBus
+	// operationRegistry is the registry of sync operations and their state.
+	operationRegistry OperationRegistry
 	// initializingStreams contains a list of streams that are currently being initialized for this operation.
 	// Meaning that a client added the given stream but the initial backfill message is not received yet,
 	// and the client is waiting for this message to be received. No other messages should be sent for this stream
 	// until the backfill is received. The value here is needed to avoid sending the same data multiple times.
 	initializingStreams *xsync.Map[StreamId, struct{}]
-	// otelTracer is used to traceoperations, tracing is disabled if nil.
+	// otelTracer is used to trace operations, tracing is disabled if nil.
 	otelTracer trace.Tracer
 }
 
@@ -90,9 +87,8 @@ func NewOperation(
 	ctx context.Context,
 	id string,
 	rec Receiver,
-	syncerManager SyncerManager,
-	streamCache StreamCache,
-	registry Registry,
+	eventBus EventBus,
+	operationRegistry OperationRegistry,
 	otelTracer trace.Tracer,
 ) Operation {
 	ctx, cancel := context.WithCancelCause(ctx)
@@ -102,11 +98,10 @@ func NewOperation(
 		cancel:              cancel,
 		id:                  id,
 		rec:                 rec,
+		eventBus:            eventBus,
+		operationRegistry:   operationRegistry,
 		streamUpdatesQueue:  dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 		cmdQueue:            make(chan *command, 100),
-		syncerManager:       syncerManager,
-		streamCache:         streamCache,
-		registry:            registry,
 		initializingStreams: xsync.NewMap[StreamId, struct{}](),
 		otelTracer:          otelTracer,
 	}
@@ -186,107 +181,35 @@ func (op *operation) DebugDropStream(ctx context.Context, streamId StreamId) err
 func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	var response ModifySyncResponse
 
-	// Adding stream to the sync op. Scenarios:
-	// 1. If the stream is already syncing for the given op, just backfill it(or skip?) - no syncer call.
-	// 2. If the stream is already syncing for another op, add it to the current op and backfill it - no syncer call.
-	// 3. If the stream is not syncing, add it to sync and ONLY after successful syncer call, add it to the registry.
-	var (
-		toAddStreams []*SyncCookie
-		toBackfill   []*SyncCookie
-	)
+	// Send messages to the event bus to add streams to the given sync
 	for _, cookie := range request.GetAddStreams() {
-		streamID := StreamId(cookie.GetStreamId())
-
-		streamExists, added := op.registry.AddOpToExistingStream(streamID, op)
-		if added {
-			// Add the stream to the initializing streams map. See map description for more details about the logic.
-			op.initializingStreams.LoadOrStore(streamID, struct{}{})
-
-			// The already syncing stream was successfully added to the current operation. Backfill it.
-			toBackfill = append(toBackfill, cookie)
-		} else if !streamExists {
-			// Add the stream to the initializing streams map. See map description for more details about the logic.
-			op.initializingStreams.LoadOrStore(streamID, struct{}{})
-
-			// The given stream is not syncing yet, so we need to add it to the syncer.
-			// Add this list to the registry after a successful syncer manager call.
-			toAddStreams = append(toAddStreams, cookie)
-			// The given stream in not added to the given operation on a moment of adding it to the sync so the first
-			// update is going to be skipped since the distribution will not identify the given operation as
-			// the receiver of the first update most likely. Just backfill it after. OPTIMIZE IT LATER.
-			toBackfill = append(toBackfill, cookie)
+		err := op.eventBus.OnUpdate(*NewEventBusMessageSubscribe(op, cookie))
+		if err != nil {
+			rvrErr := AsRiverError(err)
+			response.Adds = append(response.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
 		}
 	}
 
-	// Just remove streams from the list of streams of the current operation.
-	// Do not modify the syncer state here, since it is not needed.
-	// It is done in a separate background process to avoid blocking the operation
-	// and unnecessary state changes - other ops might want to re-subscribe or smth.
+	// Send messages to the event bus to remove streams from the given sync
 	for _, stream := range request.GetRemoveStreams() {
-		op.registry.RemoveOpFromStream(StreamId(stream), op.id)
-	}
-
-	if len(toAddStreams) > 0 {
-		// Start syncing streams that are not syncing yet and should be syncing.
-		resp, err := op.syncerManager.Modify(ctx, &ModifySyncRequest{AddStreams: toAddStreams})
+		err := op.eventBus.OnUpdate(*NewEventBusMessageUnsubscribe(op, StreamId(stream)))
 		if err != nil {
 			rvrErr := AsRiverError(err)
-			for _, cookie := range toAddStreams {
-				// Remove the given stream from both lists since it was not added successfully.
-				toBackfill = slices.DeleteFunc(toBackfill, func(c *SyncCookie) bool { return cookie.SameStream(c) })
-				toAddStreams = slices.DeleteFunc(toAddStreams, func(c *SyncCookie) bool { return cookie.SameStream(c) })
-
-				// Add the given stream to the list of streams that were not added successfully.
-				response.Adds = append(response.Adds, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-			}
-		} else if len(resp.GetAdds()) > 0 {
-			for _, status := range resp.GetAdds() {
-				// Remove the given stream from both lists since it was not added successfully.
-				toBackfill = slices.DeleteFunc(toBackfill, func(c *SyncCookie) bool { return c.SameStream(status) })
-				toAddStreams = slices.DeleteFunc(toAddStreams, func(c *SyncCookie) bool { return c.SameStream(status) })
-
-				// Add the given stream to the list of streams that were not added successfully.
-				response.Adds = append(response.Adds, status)
-			}
-		}
-	}
-
-	// Add successfully added streams to the registry.
-	for _, cookie := range toAddStreams {
-		op.registry.AddOpToStream(StreamId(cookie.GetStreamId()), op)
-	}
-
-	if len(toBackfill) > 0 {
-		// Backfill to make sure that all of newly added streams are up to date.
-		// Optimize this logic later to be able to receive initial updates when adding stream first time.
-		// The request must use the add list of streams to backfill - they will be automatically converted to
-		// the backfill request in the syncer manager since they are already being syncing.
-		resp, err := op.syncerManager.Modify(ctx, &ModifySyncRequest{SyncId: op.id, AddStreams: toBackfill})
-		if err != nil {
-			rvrErr := AsRiverError(err)
-			for _, cookie := range toBackfill {
-				op.registry.RemoveOpFromStream(StreamId(cookie.GetStreamId()), op.id)
-				response.Adds = append(response.Adds, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-			}
-		} else if len(resp.GetAdds()) > 0 {
-			for _, status := range resp.GetAdds() {
-				op.registry.RemoveOpFromStream(StreamId(status.GetStreamId()), op.id)
-				response.Adds = append(response.Adds, status)
-			}
+			response.Removals = append(response.Removals, &SyncStreamOpStatus{
+				StreamId: stream,
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
 		}
 	}
 
 	// Backfill streams
-	if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
-		resp, err := op.syncerManager.Modify(ctx, &ModifySyncRequest{
+	/*if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
+		resp, err := op.syncerRegistry.Modify(ctx, &ModifySyncRequest{
 			SyncId: op.id,
 			BackfillStreams: &ModifySyncRequest_Backfill{
 				SyncId:  streams.GetSyncId(),
@@ -305,7 +228,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 		} else if len(resp.GetBackfills()) > 0 {
 			response.Backfills = append(response.Backfills, resp.GetBackfills()...)
 		}
-	}
+	}*/
 
 	return &response, nil
 }
@@ -366,7 +289,7 @@ func (op *operation) startUpdatesProcessor() {
 					}
 
 					// If the sync operation is a down operation, remove the operation from the stream.
-					op.registry.RemoveOpFromStream(streamID, op.id)
+					op.operationRegistry.RemoveOpFromStream(streamID, op.id)
 				} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 					streamID, err := StreamIdFromBytes(msg.StreamID())
 					if err != nil {
