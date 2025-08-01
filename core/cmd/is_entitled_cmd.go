@@ -112,7 +112,7 @@ func checkSpaceMembership(
 ) error {
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
 	ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.InfoLevel))
-	
+
 	baseChain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.BaseChain,
@@ -184,7 +184,7 @@ func checkSpaceMembership(
 	fmt.Printf("User %v membership status for space %v:\n", userId, spaceId.String())
 	fmt.Printf("Is Member: %v\n", isEntitledResult.IsEntitled())
 	fmt.Printf("Reason: %v\n", isEntitledResult.Reason())
-	
+
 	return nil
 }
 

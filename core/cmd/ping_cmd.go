@@ -68,7 +68,16 @@ func runPing(cfg *config.Config) error {
 	}
 
 	nodeRegistry, err := nodes.LoadNodeRegistry(
-		ctx, registryContract, common.Address{}, riverChain.InitialBlockNum, riverChain.ChainMonitor, onChainConfig, httpClient, httpClient, nil)
+		ctx,
+		registryContract,
+		common.Address{},
+		riverChain.InitialBlockNum,
+		riverChain.ChainMonitor,
+		onChainConfig,
+		httpClient,
+		httpClient,
+		nil,
+	)
 	if err != nil {
 		return err
 	}
