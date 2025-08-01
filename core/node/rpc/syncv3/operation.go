@@ -70,7 +70,7 @@ type operation struct {
 	// cmdQueue is the queue for commands that can be processed by the operation.
 	cmdQueue chan *command
 	// eventBus is the event bus that handles stream updates and commands.
-	eventBus EventBus
+	eventBus EventBus[EventBusMessage]
 	// operationRegistry is the registry of sync operations and their state.
 	operationRegistry OperationRegistry
 	// initializingStreams contains a list of streams that are currently being initialized for this operation.
@@ -87,7 +87,7 @@ func NewOperation(
 	ctx context.Context,
 	id string,
 	rec Receiver,
-	eventBus EventBus,
+	eventBus EventBus[EventBusMessage],
 	operationRegistry OperationRegistry,
 	otelTracer trace.Tracer,
 ) Operation {
@@ -184,7 +184,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	// Send messages to the event bus to add streams to the given sync
 	for _, cookie := range request.GetAddStreams() {
 		op.initializingStreams.Store(StreamId(cookie.GetStreamId()), struct{}{})
-		err := op.eventBus.OnUpdate(*NewEventBusMessageSubscribe(op, cookie))
+		err := op.eventBus.AddMessage(*NewEventBusMessageSubscribe(op, cookie))
 		if err != nil {
 			rvrErr := AsRiverError(err)
 			response.Adds = append(response.Adds, &SyncStreamOpStatus{
@@ -197,7 +197,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 
 	// Send messages to the event bus to remove streams from the given sync
 	for _, stream := range request.GetRemoveStreams() {
-		err := op.eventBus.OnUpdate(*NewEventBusMessageUnsubscribe(op, StreamId(stream)))
+		err := op.eventBus.AddMessage(*NewEventBusMessageUnsubscribe(op, StreamId(stream)))
 		if err != nil {
 			rvrErr := AsRiverError(err)
 			response.Removals = append(response.Removals, &SyncStreamOpStatus{
@@ -211,7 +211,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	// Backfill streams
 	if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
 		for _, cookie := range streams.GetStreams() {
-			err := op.eventBus.OnUpdate(*NewEventBusMessageBackfill(op, streams.GetSyncId(), cookie))
+			err := op.eventBus.AddMessage(*NewEventBusMessageBackfill(op, streams.GetSyncId(), cookie))
 			if err != nil {
 				rvrErr := AsRiverError(err)
 				response.Backfills = append(response.Backfills, &SyncStreamOpStatus{

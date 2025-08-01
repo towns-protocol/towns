@@ -41,6 +41,7 @@ type (
 	// It is responsible for managing syncers and processing modify sync requests.
 	SyncerRegistry interface {
 		Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
+		RemoveStream(streamID StreamId)
 	}
 
 	// syncerWithLock holds a syncer with its associated lock
@@ -54,8 +55,8 @@ type (
 		ctx context.Context
 		// localAddr is the address of the local node.
 		localAddr common.Address
-		// eventBusQueue ...
-		eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
+		// eventBus is the event bus that processes messages.
+		eventBus EventBus[EventBusMessage]
 		// queue is the queue for commands that can be processed by the syncer registry.
 		queue *dynmsgbuf.DynamicBuffer[*command]
 		// syncers is the existing set of syncers, indexed by the syncer node address
@@ -75,21 +76,21 @@ type (
 func NewSyncerRegistry(
 	ctx context.Context,
 	localAddr common.Address,
-	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
+	eventBus EventBus[EventBusMessage],
 	nodeRegistry nodes.NodeRegistry,
 	streamCache StreamCache,
 	otelTracer trace.Tracer,
 ) SyncerRegistry {
 	return &syncerRegistry{
-		ctx:           ctx,
-		localAddr:     localAddr,
-		eventBusQueue: eventBusQueue,
-		queue:         dynmsgbuf.NewDynamicBuffer[*command](),
-		syncers:       xsync.NewMap[common.Address, *syncerWithLock](),
-		streams:       xsync.NewMap[StreamId, *syncerWithLock](),
-		nodeRegistry:  nodeRegistry,
-		streamCache:   streamCache,
-		otelTracer:    otelTracer,
+		ctx:          ctx,
+		localAddr:    localAddr,
+		eventBus:     eventBus,
+		queue:        dynmsgbuf.NewDynamicBuffer[*command](),
+		syncers:      xsync.NewMap[common.Address, *syncerWithLock](),
+		streams:      xsync.NewMap[StreamId, *syncerWithLock](),
+		nodeRegistry: nodeRegistry,
+		streamCache:  streamCache,
+		otelTracer:   otelTracer,
 	}
 }
 
@@ -482,9 +483,8 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 		syncer = NewLocalSyncer(
 			m.ctx,
 			m.localAddr,
-			m.eventBusQueue,
+			m.eventBus,
 			m.streamCache,
-			m.onStreamDown,
 			m.otelTracer,
 		)
 	} else {
@@ -497,8 +497,7 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 			m.ctx,
 			nodeAddress,
 			client,
-			m.eventBusQueue,
-			m.onStreamDown,
+			m.eventBus,
 			m.otelTracer,
 		)
 		if err != nil {
@@ -519,9 +518,9 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 	return syncer, nil
 }
 
-// onStreamDown is called when a stream is no longer syncing, e.g., due to node outage or other reasons.
-// FIXME: RACE CONDITION WHEN ONE PROCESS IS ADDING STREAM AND THIS FUNCTION IS CALLED.
-func (m *syncerRegistry) onStreamDown(streamID StreamId) {
+// RemoveStream is called when a stream the stream down message is received.
+// This function called by event bus.
+func (m *syncerRegistry) RemoveStream(streamID StreamId) {
 	syncerEntity, loaded := m.streams.Load(streamID)
 	if !loaded {
 		return

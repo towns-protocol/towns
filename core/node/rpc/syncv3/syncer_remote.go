@@ -18,7 +18,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // remoteSyncer implements the Syncer interface for remote sync operations.
@@ -34,14 +33,12 @@ type remoteSyncer struct {
 	remoteAddr common.Address
 	// client is the RPC client used to communicate with the remote node.
 	client protocolconnect.StreamServiceClient
-	// eventBusQueue ...
-	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
+	// eventBus is the event bus that processes messages.
+	eventBus EventBus[EventBusMessage]
 	// streams is a thread-safe map that keeps track of active streams.
 	streams *xsync.Map[StreamId, struct{}]
 	// responseStream is the stream for receiving sync messages from the remote node.
 	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
-	// unsubStream is called when a stream goes down.
-	unsubStream func(streamID StreamId)
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 }
@@ -51,8 +48,7 @@ func NewRemoteSyncer(
 	ctx context.Context,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
-	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
-	unsubStream func(streamID StreamId),
+	eventBus EventBus[EventBusMessage],
 	otelTracer trace.Tracer,
 ) (Syncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
@@ -121,11 +117,10 @@ func NewRemoteSyncer(
 		cancel:         syncStreamCancel,
 		syncID:         responseStream.Msg().GetSyncId(),
 		client:         client,
-		eventBusQueue:  eventBusQueue,
+		eventBus:       eventBus,
 		streams:        xsync.NewMap[StreamId, struct{}](),
 		responseStream: responseStream,
 		remoteAddr:     remoteAddr,
-		unsubStream:    unsubStream,
 		otelTracer:     otelTracer,
 	}, nil
 }
@@ -182,7 +177,6 @@ func (s *remoteSyncer) Run() {
 			}
 
 			// This must happen only after sending the message to the client.
-			s.unsubStream(streamID)
 			s.streams.Delete(streamID)
 		}
 	}
@@ -198,8 +192,6 @@ func (s *remoteSyncer) Run() {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false
 			}
-			// This must happen only after sending the message to the client.
-			s.unsubStream(streamID)
 			return true
 		})
 
@@ -256,10 +248,10 @@ func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse)
 			err = AsRiverError(err, Err_CANCELED)
 		}
 	default:
-		err = s.eventBusQueue.AddMessage(NewEventBusMessageUpdateStream(msg))
+		err = s.eventBus.AddMessage(*NewEventBusMessageUpdateStream(msg))
 	}
 	if err != nil {
-		rvrErr := AsRiverError(err).Func("remoteSyncer.sendResponse")
+		rvrErr := AsRiverError(err).Tag("streamId", streamID).Func("remoteSyncer.sendResponse")
 		_ = rvrErr.LogError(logging.FromCtx(s.ctx))
 		return rvrErr
 	}

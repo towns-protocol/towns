@@ -65,9 +65,9 @@ func NewEventBusMessageBackfill(op Operation, targetSyncID string, cookie *SyncC
 	}
 }
 
-type EventBus interface {
-	// OnUpdate is called with the given message on every received update for further routing to the right subscribers.
-	OnUpdate(msg EventBusMessage) error
+type EventBus[T any] interface {
+	// AddMessage adds a new message to the event bus.
+	AddMessage(msg T) error
 }
 
 type eventBus struct {
@@ -82,7 +82,7 @@ func NewEventBus(
 	queue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
 	syncerRegistry SyncerRegistry,
 	operationRegistry OperationRegistry,
-) EventBus {
+) EventBus[EventBusMessage] {
 	eb := &eventBus{
 		ctx:               ctx,
 		queue:             queue,
@@ -93,7 +93,7 @@ func NewEventBus(
 	return eb
 }
 
-func (eb *eventBus) OnUpdate(msg EventBusMessage) error {
+func (eb *eventBus) AddMessage(msg EventBusMessage) error {
 	return eb.queue.AddMessage(&msg)
 }
 
@@ -135,9 +135,10 @@ func (eb *eventBus) onStreamUpdate(msg *SyncStreamsResponse) {
 	}
 	wg.Wait()
 
-	// Remove the stream from the operation registry if the sync down message is received.
+	// Remove the stream from registries if the sync down message is received.
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		eb.operationRegistry.RemoveStream(streamID)
+		eb.syncerRegistry.RemoveStream(streamID)
 	}
 }
 

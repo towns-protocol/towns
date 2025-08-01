@@ -12,7 +12,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // localSyncer implements the Syncer interface for local sync operations.
@@ -22,12 +21,10 @@ type localSyncer struct {
 	ctx context.Context
 	// localAddr is the address of the local node, used to identify the syncer in operations
 	localAddr common.Address
-	// eventBusQueue ...
-	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage]
+	// eventBus is the event bus that processes messages.
+	eventBus EventBus[EventBusMessage]
 	// streamCache is the cache for retrieving streams
 	streamCache StreamCache
-	// unsubStream calld when a stream goes down.
-	unsubStream func(streamID StreamId)
 	// activeStreams is a map of currently active streams, used to track which streams are being synced
 	activeStreams *xsync.Map[StreamId, Stream]
 	// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -38,17 +35,15 @@ type localSyncer struct {
 func NewLocalSyncer(
 	ctx context.Context,
 	localAddr common.Address,
-	eventBusQueue *dynmsgbuf.DynamicBuffer[*EventBusMessage],
+	eventBus EventBus[EventBusMessage],
 	streamCache StreamCache,
-	unsubStream func(streamID StreamId),
 	otelTracer trace.Tracer,
 ) Syncer {
 	return &localSyncer{
 		ctx:           ctx,
 		localAddr:     localAddr,
-		eventBusQueue: eventBusQueue,
+		eventBus:      eventBus,
 		streamCache:   streamCache,
-		unsubStream:   unsubStream,
 		activeStreams: xsync.NewMap[StreamId, Stream](),
 		otelTracer:    otelTracer,
 	}
@@ -134,15 +129,15 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 
 // OnUpdate is called each time by StreamView when a new cookie is available for a stream
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
 	if err != nil {
-		streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
-		if err != nil {
-			logging.FromCtx(s.ctx).Errorw("failed to parse stream id",
-				"streamId", r.GetNextSyncCookie().GetStreamId(), "error", err)
-			return
-		}
+		logging.FromCtx(s.ctx).Errorw("failed to parse stream id",
+			"streamId", r.GetNextSyncCookie().GetStreamId(), "error", err)
+		return
+	}
 
+	err = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+	if err != nil {
 		s.streamUnsub(streamID)
 	}
 }
@@ -158,7 +153,7 @@ func (s *localSyncer) OnSyncError(error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	err := s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	if err != nil {
 		s.streamUnsub(streamID)
 	}
@@ -199,7 +194,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 	}
 
 	return stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) error {
-		return s.sendResponse(&SyncStreamsResponse{
+		return s.sendResponse(streamID, &SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_UPDATE,
 			Stream:        streamAndCookie,
 			TargetSyncIds: targetSyncIds,
@@ -208,7 +203,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
+func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	var err error
 	select {
 	case <-s.ctx.Done():
@@ -216,10 +211,10 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) error {
 			err = AsRiverError(err, Err_CANCELED)
 		}
 	default:
-		err = s.eventBusQueue.AddMessage(NewEventBusMessageUpdateStream(msg))
+		err = s.eventBus.AddMessage(*NewEventBusMessageUpdateStream(msg))
 	}
 	if err != nil {
-		rvrErr := AsRiverError(err).Func("localSyncer.sendResponse")
+		rvrErr := AsRiverError(err).Tag("streamId", streamID).Func("localSyncer.sendResponse")
 		_ = rvrErr.LogError(logging.FromCtx(s.ctx))
 		return rvrErr
 	}
@@ -231,7 +226,6 @@ func (s *localSyncer) streamUnsub(streamID StreamId) bool {
 	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
 		go syncStream.Unsub(s)
-		s.unsubStream(syncStream.StreamId())
 	}
 	return found
 }
