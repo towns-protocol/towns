@@ -2,6 +2,7 @@ package syncv3
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"slices"
 	"sync"
@@ -195,6 +196,8 @@ func (m *syncerRegistry) processAddingStream(
 ) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
 
+	fmt.Println("adding", m.localAddr, streamID)
+
 	syncerEntity, _ := m.streams.LoadOrStore(streamID, &syncerWithLock{})
 
 	syncerEntity.Lock()
@@ -311,6 +314,8 @@ func (m *syncerRegistry) processBackfillingStream(
 	cookie *SyncCookie,
 ) *SyncStreamOpStatus {
 	streamID := StreamId(cookie.GetStreamId())
+
+	fmt.Println("backfilling", m.localAddr, streamID)
 
 	// The given stream must be syncing
 	syncerEntity, found := m.streams.Load(streamID)
