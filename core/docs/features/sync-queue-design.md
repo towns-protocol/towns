@@ -10,13 +10,13 @@ Shared remote syncer will follow contract outlined here for the `RemoteSyncer` c
 
 ## API Overview
 
-Node implements `StreamSync` GRPC streaming RPC to stream updates to the client.
+Node implements `SyncStreams` GRPC streaming RPC to stream updates to the client.
 
-When `StreamSync` is received, node replies with sync id (`SYNC_NEW` `SyncStreamsResponse`) that can be used in subsequent
+When `SyncStreams` is received, node replies with sync id (`SYNC_NEW` `SyncStreamsResponse`) that can be used in subsequent
 calls to `ModifySync` and `CancelSync`. `AddStreamToSync` and `RemoveStreamFromSync` are
 legacy APIs superseded by `ModifySync` (do not include them in the new implementation).
 
-`StreamSync` call carries initial set of `StreamCookies`. `StreamCookie` contains 
+`SyncStreams` call carries initial set of `StreamCookies`. `StreamCookie` contains 
 stream id and sync position as a miniblock number in the given stream.
 
 If sync position is within recent history, node streams updates from the given position.
@@ -53,9 +53,9 @@ Streams are replicated to the subset of nodes. If node is down, or there is othe
 
 ## Local and Remote Sync
 
-Node receiving `StreamSync` from client streams updates for local streams directly to the client.
+Node receiving `SyncStreams` from client streams updates for local streams directly to the client.
 
-For remote streams, node uses `StreamSync` call to the remote nodes to request updates and forwards them to the client.
+For remote streams, node uses `SyncStreams` call to the remote nodes to request updates and forwards them to the client.
 
 If remote node becomes unavailable, node sends `SYNC_DOWN` to the client. Client retries with exponential backoff to
 add this stream again. Node should attempt to sync this stream from the different remote node if such request is received.
@@ -70,15 +70,15 @@ Propose design of next components that interact with each other through asynchro
 - `RemoteSyncer` in package `syncv3/remote`
 - `SyncerRegistry` in package `syncv3/registry`
 
-All packages are subpackages of @core/node/rpc/syncv3
+All packages are subpackages of core/node/rpc/syncv3
 
 ### `SyncStreamHandler` and `SyncStreamHandlerRegistry`
 
-`SyncStreamHandler` is responsible for handling single `StreamSync` request, related `ModifySync` and `CancelSync` calls,
+`SyncStreamHandler` is responsible for handling single `SyncStreams` request, related `ModifySync` and `CancelSync` calls,
 and streaming updates to the client.
 
-`SyncStreamHandler` is created for each `StreamSync` request. It is stored in `SyncStreamHandlerRegistry` and is removed
-when `StreamSync` request is closed.
+`SyncStreamHandler` is created for each `SyncStreams` request. It is stored in `SyncStreamHandlerRegistry` and is removed
+when `SyncStreams` request is closed.
 
 `SyncStreamHandlerRegistry` is used to look up `SyncStreamHandler` by a sync id to dispatch `ModifySync` and `CancelSync` calls.
 
@@ -107,20 +107,20 @@ On `Unsubscribe`, if there are no more subscribers, `EventBus` notifies `SyncerR
 
 ### `LocalSyncer`
 
-`LocalSyncer` is responsible for streaming updates from the single local stream into the `EventBus` queue.
+`LocalSyncer` is responsible for streaming updates from a single local stream into the `EventBus` queue.
 
 Backfills can be requested while stream is still being loaded from the local storage. In such case `LocalSyncer`
 should save backfill requests and satisfy them once stream is loaded.
 
 ### `RemoteSyncer`
 
-`RemoteSyncer` is responsible for streaming updates from the single remote stream into the `EventBus` queue.
+`RemoteSyncer` is responsible for streaming updates from a single remote stream into the `EventBus` queue.
 
-`RemoteSyncer` uses `StreamSync` call to the remote node to request updates. It creates new `StreamSync` for
-each requested stream. I.e. `RemoteSyncer` tracks single stream and uses single `StreamSync` exclusively for this stream.
+`RemoteSyncer` uses `SyncStreams` call to the remote node to request updates. It creates new `SyncStreams` for
+each requested stream. I.e. `RemoteSyncer` tracks a single stream and uses a single `SyncStreams` exclusively for this stream.
 
-Backfills can be requested while connection to the remote node is still established. In such case `RemoteSyncer`
-should save backfill requests and send them to the remote node once `SyncStream` is ready and sync id is received.
+Backfills can be requested while connection to the remote node is being established. In such case `RemoteSyncer`
+should save backfill requests and send them to the remote node once `SyncStreams` is ready and sync id is received.
 
 Lifecycle of a single `RemoteSyncer` is INIT->STREAM->SHUTDOWN. On shutdown, `SYNC_DOWN` is sent to the `EventBus`
 and it's guaranteed that this syncer will not send any subsequent updates to the `EventBus`.
@@ -146,7 +146,7 @@ subsequent events are "after" this backfill without any gaps.
 Once SYNC_DOWN is received, components automatically unsubscribe. There is no need to issue `Unsubscribe` call.
 This design allows to avoid races between `Unsubscribe` and `Subscribe` calls and races between `SYNC_DOWN` and `Subscribe` calls.
 If new `Subscribe` comes in at the same time, it will create new syncer and issue backfill request.
-If `SYNC_DOWN ` is observed, `SyncStreamHandler` should send it to the client, remove stream from internal tracking, 
+If `SYNC_DOWN` is observed, `SyncStreamHandler` should send it to the client, remove stream from internal tracking, 
 and then call `Subscribe` again after client requests new backfill through `ModifySync`.
 
 ## Design Questions
@@ -157,8 +157,8 @@ Both components need to react to `SYNC_DOWN` consistently. Given this should the
 
 Alternatively, is there a need to introduce syncer generations to simplify failover, and resolve races?
 
-Alternatively, should StreamRegistry calls be synchronous (i.e. not message passing), and use very scoped locks to update state?
-No network or other blocking calls should be performed while `StreamRegistry` holds internal locks.
+Alternatively, should SyncerRegistry calls be synchronous (i.e. not message passing), and use very scoped locks to update state?
+No network or other blocking calls should be performed while `SyncerRegistry` holds internal locks.
 
 ## Instructions
 
