@@ -2,6 +2,7 @@ package syncv3
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -217,6 +218,7 @@ func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) 
 			return rvrErr
 		}
 	default:
+		fmt.Println(msg.GetTargetSyncIds(), msg.GetStream())
 		distributeMessage(s.registry, streamID, msg)
 	}
 	return nil
