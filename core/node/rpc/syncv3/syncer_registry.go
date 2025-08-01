@@ -512,6 +512,7 @@ func (m *syncerRegistry) getOrCreateSyncer(ctx context.Context, nodeAddress comm
 
 // RemoveStream is called when a stream the stream down message is received.
 // This function called by event bus.
+// TODO: Requires extra logic to properly handle node issues.
 func (m *syncerRegistry) RemoveStream(streamID StreamId) {
 	syncerEntity, loaded := m.streams.Load(streamID)
 	if !loaded {
