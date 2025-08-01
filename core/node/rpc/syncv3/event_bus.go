@@ -70,8 +70,10 @@ type EventBus[T any] interface {
 	AddMessage(msg T) error
 }
 
+// eventBus implements the EventBus interface and handles the distribution of messages to operations.
 type eventBus struct {
-	ctx               context.Context
+	ctx context.Context
+	// TODO: Use two separate queues: one for stream updates and one for other messages.
 	queue             *dynmsgbuf.DynamicBuffer[EventBusMessage]
 	syncerRegistry    SyncerRegistry
 	operationRegistry OperationRegistry
