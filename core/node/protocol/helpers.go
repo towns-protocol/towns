@@ -80,11 +80,11 @@ func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
 func (r *ModifySyncRequest) TargetSyncIDs() []string {
 	var targetSyncIds []string
 
-	if r.SyncId != "" {
-		targetSyncIds = append(targetSyncIds, r.SyncId)
+	if r.GetSyncId() != "" {
+		targetSyncIds = append(targetSyncIds, r.GetSyncId())
 	}
 
-	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.SyncId {
+	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.GetSyncId() {
 		targetSyncIds = append(targetSyncIds, r.GetBackfillStreams().GetSyncId())
 	}
 

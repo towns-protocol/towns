@@ -3,7 +3,6 @@ package syncv3
 import (
 	"context"
 	"slices"
-	"sync"
 	"time"
 
 	"github.com/puzpuzpuz/xsync/v4"
@@ -286,10 +285,13 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	}
 
 	// Backfill streams
-	/*if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
+	if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
 		resp, err := op.syncerManager.Modify(ctx, &ModifySyncRequest{
-			SyncId:          request.GetSyncId(),
-			BackfillStreams: streams,
+			SyncId: op.id,
+			BackfillStreams: &ModifySyncRequest_Backfill{
+				SyncId:  streams.GetSyncId(),
+				Streams: streams.GetStreams(),
+			},
 		})
 		if err != nil {
 			rvrErr := AsRiverError(err)
@@ -303,78 +305,9 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 		} else if len(resp.GetBackfills()) > 0 {
 			response.Backfills = append(response.Backfills, resp.GetBackfills()...)
 		}
-	}*/
-	// Backfill an explicit list of streams that are already syncing for the given operation and wants to be
-	// backfilled by another node.
-	statuses := op.localBackfill(ctx, request.TargetSyncIDs(), request.GetBackfillStreams().GetStreams())
-	if len(statuses) > 0 {
-		response.Backfills = append(response.Backfills, statuses...)
 	}
 
 	return &response, nil
-}
-
-// localBackfill backfills streams from the request assuming all of them are local.
-// Requests are goiong to be timed out by the context if a sync is not local.
-// This function can be called only when another node is trying to backfill streams for a client.
-func (op *operation) localBackfill(ctx context.Context, targetSyncIDs []string, cookies []*SyncCookie) []*SyncStreamOpStatus {
-	var (
-		lock     sync.Mutex
-		statuses []*SyncStreamOpStatus
-		wg       sync.WaitGroup
-	)
-
-	if len(targetSyncIDs) == 0 {
-		return nil
-	}
-
-	wg.Add(len(cookies))
-	for _, cookie := range cookies {
-		go func(cookie *SyncCookie) {
-			defer wg.Done()
-
-			// There could be a very rare case when the cookie is nil, just skip it instead of panicking.
-			if cookie == nil {
-				return
-			}
-
-			streamID := StreamId(cookie.GetStreamId())
-
-			stream, err := op.streamCache.GetStreamWaitForLocal(ctx, streamID)
-			if err != nil {
-				rvrErr := AsRiverError(err)
-				lock.Lock()
-				statuses = append(statuses, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				lock.Unlock()
-				return
-			}
-
-			if err = stream.UpdatesSinceCookie(ctx, cookie, func(streamAndCookie *StreamAndCookie) error {
-				op.OnStreamUpdate(&SyncStreamsResponse{
-					SyncOp:        SyncOp_SYNC_UPDATE,
-					Stream:        streamAndCookie,
-					TargetSyncIds: targetSyncIDs[1:],
-				})
-				return nil
-			}); err != nil {
-				rvrErr := AsRiverError(err)
-				lock.Lock()
-				statuses = append(statuses, &SyncStreamOpStatus{
-					StreamId: cookie.GetStreamId(),
-					Code:     int32(rvrErr.Code),
-					Message:  rvrErr.GetMessage(),
-				})
-				lock.Unlock()
-			}
-		}(cookie)
-	}
-	wg.Wait()
-
-	return statuses
 }
 
 // startCommandsProcessor starts the commands processor that handles incoming commands.
@@ -454,13 +387,15 @@ func (op *operation) startUpdatesProcessor() {
 								return struct{}{}, xsync.CancelOp
 							}
 
-							msg.TargetSyncIds = msg.TargetSyncIds[1:]
-
 							return struct{}{}, xsync.DeleteOp
 
 						},
 					); exists {
 						continue
+					}
+
+					if len(msg.GetTargetSyncIds()) > 0 {
+						msg.TargetSyncIds = msg.TargetSyncIds[1:]
 					}
 				}
 
