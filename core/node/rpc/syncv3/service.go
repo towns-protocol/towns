@@ -173,9 +173,7 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 			Func("CancelSync")
 	}
 
-	op.Cancel(ctx)
-
-	return nil
+	return op.Cancel(ctx)
 }
 
 func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {

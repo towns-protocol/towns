@@ -30,7 +30,7 @@ type Operation interface {
 	// It should be called by client to modify the operation.
 	Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error)
 	// Cancel cancels the given operation
-	Cancel(ctx context.Context)
+	Cancel(ctx context.Context) error
 	// Ping pings the operation to keep it alive.
 	Ping(ctx context.Context, nonce string)
 	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
@@ -38,15 +38,13 @@ type Operation interface {
 }
 
 type command struct {
-	ctx  context.Context
 	req  *ModifySyncRequest
 	resp chan *ModifySyncResponse
 	err  chan error
 }
 
-func newCommand(ctx context.Context, req *ModifySyncRequest) *command {
+func newCommand(req *ModifySyncRequest) *command {
 	return &command{
-		ctx:  ctx,
 		req:  req,
 		resp: make(chan *ModifySyncResponse, 1),
 		err:  make(chan error, 1),
@@ -118,6 +116,7 @@ func (op *operation) ID() string {
 }
 
 // OnStreamUpdate handles a stream update message.
+// This function is called by event bus to notify the operation about a stream update.
 func (op *operation) OnStreamUpdate(msg *SyncStreamsResponse) {
 	select {
 	case <-op.ctx.Done():
@@ -135,7 +134,7 @@ func (op *operation) Modify(ctx context.Context, request *ModifySyncRequest) (*M
 		return nil, err
 	}
 
-	cmd := newCommand(ctx, request)
+	cmd := newCommand(request)
 
 	select {
 	case op.cmdQueue <- cmd:
@@ -158,13 +157,21 @@ func (op *operation) Modify(ctx context.Context, request *ModifySyncRequest) (*M
 
 // Cancel cancels the given operation.
 // The client connection will be closed in startUpdatesProcessor.
-func (op *operation) Cancel(ctx context.Context) {
+func (op *operation) Cancel(ctx context.Context) error {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
-	<-op.ctx.Done() // TODO: Add timeouts
+
+	select {
+	case <-time.After(defaultCommandReplyTimeout):
+		return RiverError(Err_DEADLINE_EXCEEDED, "sync operation could not be cancelled in time")
+	case <-ctx.Done():
+		return AsRiverError(ctx.Err(), Err_CANCELED).Message("request context cancelled")
+	case <-op.ctx.Done():
+		return AsRiverError(op.ctx.Err(), Err_CANCELED).Message("sync context cancelled")
+	}
 }
 
 // Ping pings the operation to keep it alive.
-func (op *operation) Ping(ctx context.Context, nonce string) {
+func (op *operation) Ping(_ context.Context, nonce string) {
 	op.OnStreamUpdate(&SyncStreamsResponse{
 		SyncOp:    SyncOp_SYNC_PONG,
 		PongNonce: nonce,
@@ -173,12 +180,12 @@ func (op *operation) Ping(ctx context.Context, nonce string) {
 
 // DebugDropStream is a debug method to drop a specific stream from the sync operation.
 // The stream will be removed from the operation in startUpdatesProcessor.
-func (op *operation) DebugDropStream(ctx context.Context, streamId StreamId) error {
+func (op *operation) DebugDropStream(_ context.Context, streamId StreamId) error {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:]})
 	return nil
 }
 
-func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, error) {
+func (op *operation) modify(request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	var response ModifySyncResponse
 
 	// Send messages to the event bus to add streams to the given sync
@@ -233,7 +240,7 @@ func (op *operation) startCommandsProcessor() {
 		case <-op.ctx.Done():
 			return
 		case cmd := <-op.cmdQueue:
-			resp, err := op.modify(cmd.ctx, cmd.req)
+			resp, err := op.modify(cmd.req)
 			if err != nil {
 				// If the command failed, send the error to the command's error channel.
 				cmd.err <- err
