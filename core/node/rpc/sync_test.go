@@ -413,7 +413,7 @@ func TestSyncWithFlush(t *testing.T) {
 	syncClients.expectOneUpdate(t, &updateOpts{events: 1, eventType: "MiniblockHeader"})
 
 	var cacheCleanupTotal CacheCleanupResult
-	for i := 0; i < 10; i++ {
+	for i := 0; i < numNodes; i++ {
 		cacheCleanupResult := tt.nodes[i].service.cache.CacheCleanup(ctx, true, -1*time.Hour)
 		cacheCleanupTotal.TotalStreams += cacheCleanupResult.TotalStreams
 		cacheCleanupTotal.UnloadedStreams += cacheCleanupResult.UnloadedStreams

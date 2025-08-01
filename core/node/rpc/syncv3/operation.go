@@ -211,7 +211,7 @@ func (op *operation) modify(ctx context.Context, request *ModifySyncRequest) (*M
 	// Backfill streams
 	if streams := request.GetBackfillStreams(); len(streams.GetStreams()) > 0 {
 		for _, cookie := range streams.GetStreams() {
-			err := op.eventBus.OnUpdate(*NewEventBusMessageBackfill(op, request.GetSyncId(), cookie))
+			err := op.eventBus.OnUpdate(*NewEventBusMessageBackfill(op, streams.GetSyncId(), cookie))
 			if err != nil {
 				rvrErr := AsRiverError(err)
 				response.Backfills = append(response.Backfills, &SyncStreamOpStatus{
