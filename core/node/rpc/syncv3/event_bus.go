@@ -152,7 +152,7 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 	defer cancel()
 
 	// Adding stream to the sync op. Scenarios:
-	// 1. If the stream is already syncing for the given op, just backfill it(or skip?) - no syncer call.
+	// 1. If the stream is already syncing for the given op, just skip.
 	// 2. If the stream is already syncing for another op, add it to the current op and backfill it - no syncer call.
 	// 3. If the stream is not syncing, add it to sync and ONLY after successful syncer call, add it to the registry.
 	streamExists, added := eb.operationRegistry.AddOpToExistingStream(streamID, op)
@@ -163,10 +163,10 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		return
 	}
 
-	// 1. Start syncing stream if not syncing yet.
+	// Start syncing stream if not syncing yet.
 	if !streamExists {
 		// TODO: Add timeout to context
-		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
+		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
 			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
@@ -178,12 +178,12 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		}
 	}
 
-	// 2. Add stream to the registry after start syncing.
+	// Add stream to the registry after start syncing.
 	if !added {
 		eb.operationRegistry.AddOpToStream(streamID, op)
 	}
 
-	// 3. Backfill the given stream for the given operation.
+	// Backfill the given stream for the given operation.
 	resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{
 		SyncId: op.ID(),
 		BackfillStreams: &ModifySyncRequest_Backfill{
@@ -250,25 +250,25 @@ func (eb *eventBus) startCommandsProcessor() {
 				case MessageUpdateStream:
 					if msg.StreamUpdate == nil {
 						logging.FromCtx(eb.ctx).Error("Received MessageUpdateStream with nil SyncStreamsResponse")
-						return
+						continue
 					}
 					eb.onStreamUpdate(msg.StreamUpdate)
 				case MessageSubscribe:
 					if msg.Cookie == nil {
 						logging.FromCtx(eb.ctx).Error("Received MessageSubscribe with nil EventBusMessageSubscribe")
-						return
+						continue
 					}
 					eb.onSubscribe(msg.Op, msg.Cookie)
 				case MessageUnsubscribe:
 					if msg.StreamID == (StreamId{}) {
 						logging.FromCtx(eb.ctx).Error("Received MessageUnsubscribe with nil EventBusMessageUnsubscribe")
-						return
+						continue
 					}
 					eb.onUnsubscribe(msg.Op, msg.StreamID)
 				case MessageBackfill:
 					if msg.Cookie == nil {
 						logging.FromCtx(eb.ctx).Error("Received MessageBackfill with nil EventBusMessageBackfill")
-						return
+						continue
 					}
 					eb.onBackfill(msg.Op, msg.TargetSyncID, msg.Cookie)
 				default:
