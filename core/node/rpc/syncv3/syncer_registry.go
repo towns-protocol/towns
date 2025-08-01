@@ -20,7 +20,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 const (
@@ -50,6 +49,7 @@ type (
 		deadlock.Mutex
 	}
 
+	// syncerRegistry implements the SyncerRegistry interface.
 	syncerRegistry struct {
 		// ctx is the global process context.
 		ctx context.Context
@@ -57,8 +57,6 @@ type (
 		localAddr common.Address
 		// eventBus is the event bus that processes messages.
 		eventBus EventBus[EventBusMessage]
-		// queue is the queue for commands that can be processed by the syncer registry.
-		queue *dynmsgbuf.DynamicBuffer[*command]
 		// syncers is the existing set of syncers, indexed by the syncer node address
 		syncers *xsync.Map[common.Address, *syncerWithLock]
 		// streams is a map of stream IDs to syncers, used to quickly find syncers for specific streams
@@ -85,7 +83,6 @@ func NewSyncerRegistry(
 		ctx:          ctx,
 		localAddr:    localAddr,
 		eventBus:     eventBus,
-		queue:        dynmsgbuf.NewDynamicBuffer[*command](),
 		syncers:      xsync.NewMap[common.Address, *syncerWithLock](),
 		streams:      xsync.NewMap[StreamId, *syncerWithLock](),
 		nodeRegistry: nodeRegistry,
