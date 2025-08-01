@@ -2,8 +2,8 @@ package syncv3
 
 import (
 	"context"
-	"fmt"
 	"sync"
+	"time"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -24,6 +24,15 @@ const (
 	MessageBackfill
 )
 
+type EventBusMessage struct {
+	Type         MessageType
+	StreamUpdate *SyncStreamsResponse
+	Op           Operation
+	Cookie       *SyncCookie
+	TargetSyncID string
+	StreamID     StreamId
+}
+
 func NewEventBusMessageUpdateStream(resp *SyncStreamsResponse) *EventBusMessage {
 	return &EventBusMessage{
 		Type:         MessageUpdateStream,
@@ -31,49 +40,29 @@ func NewEventBusMessageUpdateStream(resp *SyncStreamsResponse) *EventBusMessage 
 	}
 }
 
-type EventBusMessageSubscribe struct {
-	Op     Operation
-	Cookie *SyncCookie
-}
-
 func NewEventBusMessageSubscribe(op Operation, cookie *SyncCookie) *EventBusMessage {
 	return &EventBusMessage{
-		Type:      MessageSubscribe,
-		Subscribe: &EventBusMessageSubscribe{Op: op, Cookie: cookie},
+		Type:   MessageSubscribe,
+		Op:     op,
+		Cookie: cookie,
 	}
-}
-
-type EventBusMessageUnsubscribe struct {
-	Op       Operation
-	StreamID StreamId
 }
 
 func NewEventBusMessageUnsubscribe(op Operation, streamID StreamId) *EventBusMessage {
 	return &EventBusMessage{
-		Type:        MessageUnsubscribe,
-		Unsubscribe: &EventBusMessageUnsubscribe{Op: op, StreamID: streamID},
+		Type:     MessageUnsubscribe,
+		Op:       op,
+		StreamID: streamID,
 	}
-}
-
-type EventBusMessageBackfill struct {
-	Op           Operation
-	TargetSyncID string
-	Cookie       *SyncCookie
 }
 
 func NewEventBusMessageBackfill(op Operation, targetSyncID string, cookie *SyncCookie) *EventBusMessage {
 	return &EventBusMessage{
-		Type:     MessageBackfill,
-		Backfill: &EventBusMessageBackfill{Op: op, TargetSyncID: targetSyncID, Cookie: cookie},
+		Type:         MessageBackfill,
+		Op:           op,
+		TargetSyncID: targetSyncID,
+		Cookie:       cookie,
 	}
-}
-
-type EventBusMessage struct {
-	Type         MessageType          // Type of the message, used to route the message to the right handler
-	StreamUpdate *SyncStreamsResponse // stream ID
-	Subscribe    *EventBusMessageSubscribe
-	Unsubscribe  *EventBusMessageUnsubscribe
-	Backfill     *EventBusMessageBackfill
 }
 
 type EventBus interface {
@@ -159,6 +148,9 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		return
 	}
 
+	ctx, cancel := context.WithTimeout(eb.ctx, time.Second*10)
+	defer cancel()
+
 	// Adding stream to the sync op. Scenarios:
 	// 1. If the stream is already syncing for the given op, just backfill it(or skip?) - no syncer call.
 	// 2. If the stream is already syncing for another op, add it to the current op and backfill it - no syncer call.
@@ -171,12 +163,10 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		return
 	}
 
-	fmt.Println("onSubscribe", streamID, "exists:", streamExists, "added:", added)
-
 	// 1. Start syncing stream if not syncing yet.
 	if !streamExists {
 		// TODO: Add timeout to context
-		resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
+		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
 			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
@@ -194,7 +184,7 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 	}
 
 	// 3. Backfill the given stream for the given operation.
-	resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{
+	resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{
 		SyncId: op.ID(),
 		BackfillStreams: &ModifySyncRequest_Backfill{
 			SyncId:  op.ID(),
@@ -264,23 +254,23 @@ func (eb *eventBus) startCommandsProcessor() {
 					}
 					eb.onStreamUpdate(msg.StreamUpdate)
 				case MessageSubscribe:
-					if msg.Subscribe == nil {
+					if msg.Cookie == nil {
 						logging.FromCtx(eb.ctx).Error("Received MessageSubscribe with nil EventBusMessageSubscribe")
 						return
 					}
-					eb.onSubscribe(msg.Subscribe.Op, msg.Subscribe.Cookie)
+					eb.onSubscribe(msg.Op, msg.Cookie)
 				case MessageUnsubscribe:
-					if msg.Unsubscribe == nil {
+					if msg.StreamID == (StreamId{}) {
 						logging.FromCtx(eb.ctx).Error("Received MessageUnsubscribe with nil EventBusMessageUnsubscribe")
 						return
 					}
-					eb.onUnsubscribe(msg.Unsubscribe.Op, msg.Unsubscribe.StreamID)
+					eb.onUnsubscribe(msg.Op, msg.StreamID)
 				case MessageBackfill:
-					if msg.Backfill == nil {
+					if msg.Cookie == nil {
 						logging.FromCtx(eb.ctx).Error("Received MessageBackfill with nil EventBusMessageBackfill")
 						return
 					}
-					eb.onBackfill(msg.Backfill.Op, msg.Backfill.TargetSyncID, msg.Backfill.Cookie)
+					eb.onBackfill(msg.Op, msg.TargetSyncID, msg.Cookie)
 				default:
 					logging.FromCtx(eb.ctx).Error("Unknown message type received on event bus", "type", msg.Type)
 				}
