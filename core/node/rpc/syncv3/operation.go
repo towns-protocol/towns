@@ -34,7 +34,7 @@ type Operation interface {
 	// Ping pings the operation to keep it alive.
 	Ping(ctx context.Context, nonce string)
 	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
-	DebugDropStream(ctx context.Context, streamId StreamId) error
+	DebugDropStream(ctx context.Context, streamId StreamId)
 }
 
 type command struct {
@@ -58,6 +58,8 @@ type operation struct {
 	ctx context.Context
 	// cancel is the cancel function for the operation context.
 	cancel context.CancelCauseFunc
+	// log is the logger for the operation.
+	log *logging.Log
 	// id is the unique identifier of the operation.
 	id string
 	// rec is the receiver of stream updates.
@@ -94,6 +96,7 @@ func NewOperation(
 	op := &operation{
 		ctx:                 ctx,
 		cancel:              cancel,
+		log:                 logging.FromCtx(ctx).Named("syncv3-operation").With("syncId", id),
 		id:                  id,
 		rec:                 rec,
 		eventBus:            eventBus,
@@ -160,6 +163,7 @@ func (op *operation) Modify(ctx context.Context, request *ModifySyncRequest) (*M
 func (op *operation) Cancel(ctx context.Context) error {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
 
+	// Operation is expected to be cancelled by the updates processor.
 	select {
 	case <-time.After(defaultCommandReplyTimeout):
 		return RiverError(Err_DEADLINE_EXCEEDED, "sync operation could not be cancelled in time")
@@ -172,19 +176,17 @@ func (op *operation) Cancel(ctx context.Context) error {
 
 // Ping pings the operation to keep it alive.
 func (op *operation) Ping(_ context.Context, nonce string) {
-	op.OnStreamUpdate(&SyncStreamsResponse{
-		SyncOp:    SyncOp_SYNC_PONG,
-		PongNonce: nonce,
-	})
+	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_PONG, PongNonce: nonce})
 }
 
 // DebugDropStream is a debug method to drop a specific stream from the sync operation.
 // The stream will be removed from the operation in startUpdatesProcessor.
-func (op *operation) DebugDropStream(_ context.Context, streamId StreamId) error {
+func (op *operation) DebugDropStream(_ context.Context, streamId StreamId) {
 	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:]})
-	return nil
 }
 
+// modify modifies the operation with the given request.
+// It can add, remove or backfill streams. The function sends operations to the event bus for further processing.
 func (op *operation) modify(request *ModifySyncRequest) (*ModifySyncResponse, error) {
 	var response ModifySyncResponse
 
@@ -272,67 +274,10 @@ func (op *operation) startUpdatesProcessor() {
 				return
 			}
 
+			// Process each message in the batch.
+			// Messages must be processed in the order they were received.
 			for _, msg := range msgs {
-				select {
-				case <-op.ctx.Done():
-					return
-				default:
-				}
-
-				// Special cases depending on the message type that should be applied before sending the message.
-				if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-					streamID, err := StreamIdFromBytes(msg.StreamID())
-					if err != nil {
-						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",
-							"streamId", msg.GetStreamId(), "error", err)
-						continue
-					}
-
-					// If the sync operation is a down operation, remove the operation from the stream.
-					op.operationRegistry.RemoveOpFromStream(streamID, op.id)
-					op.initializingStreams.Delete(streamID)
-				} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-					streamID, err := StreamIdFromBytes(msg.StreamID())
-					if err != nil {
-						logging.FromCtx(op.ctx).Warnw("received invalid stream ID",
-							"streamId", msg.GetStreamId(), "error", err)
-						continue
-					}
-
-					// Waiting for the backfill message to be sent first
-					if _, exists := op.initializingStreams.Compute(
-						streamID,
-						func(_ struct{}, loaded bool) (struct{}, xsync.ComputeOp) {
-							if !loaded {
-								return struct{}{}, xsync.CancelOp
-							}
-
-							if len(msg.GetTargetSyncIds()) == 0 {
-								return struct{}{}, xsync.CancelOp
-							}
-
-							return struct{}{}, xsync.DeleteOp
-
-						},
-					); exists {
-						continue
-					}
-
-					if len(msg.GetTargetSyncIds()) > 0 {
-						msg.TargetSyncIds = msg.TargetSyncIds[1:]
-					}
-				}
-
-				msg.SyncId = op.id
-				if err := op.rec.Send(msg); err != nil {
-					op.cancel(err)
-					return
-				}
-
-				// Special cases depending on the message type that should be applied after sending the message.
-				if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-					// Close the operation and return from the stream updates processor.
-					op.cancel(nil)
+				if op.processMessage(msg) {
 					return
 				}
 			}
@@ -349,4 +294,72 @@ func (op *operation) startUpdatesProcessor() {
 			}
 		}
 	}
+}
+
+// processMessage processes a single message from the stream updates queue.
+// Returns true if the processor should stop processing messages.
+func (op *operation) processMessage(msg *SyncStreamsResponse) bool {
+	select {
+	case <-op.ctx.Done():
+		return true
+	default:
+	}
+
+	// Special cases depending on the message type that should be applied before sending the message.
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		streamID, err := StreamIdFromBytes(msg.StreamID())
+		if err != nil {
+			op.log.Warnw("received invalid stream ID", "streamId", msg.GetStreamId(), "error", err)
+			return false
+		}
+
+		// If the sync operation is a down operation, remove the operation from the stream.
+		op.operationRegistry.RemoveOpFromStream(streamID, op.id)
+		op.initializingStreams.Delete(streamID)
+	} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
+		streamID, err := StreamIdFromBytes(msg.StreamID())
+		if err != nil {
+			op.log.Warnw("received invalid stream ID", "streamId", msg.GetStreamId(), "error", err)
+			return false
+		}
+
+		// Waiting for the backfill message to be sent first, skip other messages for this stream until then.
+		if _, exists := op.initializingStreams.Compute(
+			streamID,
+			func(_ struct{}, loaded bool) (struct{}, xsync.ComputeOp) {
+				if !loaded {
+					return struct{}{}, xsync.CancelOp
+				}
+
+				if len(msg.GetTargetSyncIds()) == 0 {
+					return struct{}{}, xsync.CancelOp
+				}
+
+				return struct{}{}, xsync.DeleteOp
+
+			},
+		); exists {
+			return false
+		}
+
+		// Removing the first target sync ID since it is the one that is being processed.
+		if len(msg.GetTargetSyncIds()) > 0 {
+			msg.TargetSyncIds = msg.TargetSyncIds[1:]
+		}
+	}
+
+	msg.SyncId = op.id
+	if err := op.rec.Send(msg); err != nil {
+		op.cancel(err)
+		return true
+	}
+
+	// Special cases depending on the message type that should be applied after sending the message.
+	if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
+		// Close the operation and return from the stream updates processor.
+		op.cancel(nil)
+		return true
+	}
+
+	return false
 }

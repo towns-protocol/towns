@@ -49,9 +49,13 @@ type (
 	}
 
 	// syncerRegistry implements the SyncerRegistry interface.
+	// TODO: 1. Periodically check for streams with no subscribers to stop syncing them.
+	//       2. Advance sticky peer for streams that are failed to sync due to the remote node issues.
 	syncerRegistry struct {
 		// ctx is the global process context.
 		ctx context.Context
+		// log is the logger for the syncer registry.
+		log *logging.Log
 		// localAddr is the address of the local node.
 		localAddr common.Address
 		// eventBus is the event bus that processes messages.
@@ -80,6 +84,7 @@ func NewSyncerRegistry(
 ) SyncerRegistry {
 	return &syncerRegistry{
 		ctx:          ctx,
+		log:          logging.FromCtx(ctx).Named("syncv3-syncer-registry"),
 		localAddr:    localAddr,
 		eventBus:     eventBus,
 		syncers:      xsync.NewMap[common.Address, *syncerWithLock](),
@@ -102,6 +107,7 @@ func (m *syncerRegistry) Modify(ctx context.Context, req *ModifySyncRequest) (*M
 			defer wg.Done()
 
 			// There are some edge cases when cookie can be nil. Do nothing, just skip instead of panicing.
+			// Investigate later why it can be nil.
 			if cookie == nil {
 				return
 			}
@@ -186,6 +192,8 @@ func (m *syncerRegistry) Modify(ctx context.Context, req *ModifySyncRequest) (*M
 	return &resp, nil
 }
 
+// processAddingStream processes the addition of a stream to the syncer.
+// Note that the first request to add a stream will try to use the node address from the created by client cookie.
 func (m *syncerRegistry) processAddingStream(
 	ctx context.Context,
 	cookie *SyncCookie,
@@ -389,7 +397,7 @@ func (m *syncerRegistry) selectNodeForStream(
 			if _, err := m.getOrCreateSyncer(ctx, node); err == nil {
 				return node, true
 			} else {
-				logging.FromCtx(m.ctx).Errorw("Failed to get or create syncer for node from cookie",
+				m.log.Errorw("Failed to get or create syncer for node from cookie",
 					"nodeAddress", node, "streamId", streamID, "error", err)
 			}
 		}
@@ -397,8 +405,7 @@ func (m *syncerRegistry) selectNodeForStream(
 
 	stream, err := m.streamCache.GetStreamNoWait(ctx, streamID)
 	if err != nil {
-		logging.FromCtx(m.ctx).Errorw("Failed to get stream from cache for syncer selection",
-			"streamId", streamID, "error", err)
+		m.log.Errorw("Failed to get stream from cache for syncer selection", "streamId", streamID, "error", err)
 		if span != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
@@ -412,7 +419,7 @@ func (m *syncerRegistry) selectNodeForStream(
 		if _, err = m.getOrCreateSyncer(ctx, m.localAddr); err == nil {
 			return m.localAddr, true
 		} else {
-			logging.FromCtx(m.ctx).Errorw("Failed to get or create local syncer for node",
+			m.log.Errorw("Failed to get or create local syncer for node",
 				"nodeAddress", m.localAddr, "streamId", streamID, "error", err)
 		}
 	}
@@ -439,7 +446,7 @@ func (m *syncerRegistry) selectNodeForStream(
 				}
 				return selectedNode, true
 			} else {
-				logging.FromCtx(m.ctx).Errorw("Failed to get or create syncer for remote node",
+				m.log.Errorw("Failed to get or create syncer for remote node",
 					"nodeAddress", selectedNode, "streamId", streamID, "error", err)
 				if subSpan != nil {
 					subSpan.RecordError(err)

@@ -196,12 +196,7 @@ func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId S
 			Func("DebugDropStream")
 	}
 
-	if err := op.DebugDropStream(ctx, streamId); err != nil {
-		return AsRiverError(err).
-			Tag("syncId", id).
-			Tag("streamId", streamId).
-			Func("DebugDropStream")
-	}
+	op.DebugDropStream(ctx, streamId)
 
 	return nil
 }

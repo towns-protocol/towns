@@ -3,7 +3,6 @@ package syncv3
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -72,13 +71,21 @@ type EventBus[T any] interface {
 
 // eventBus implements the EventBus interface and handles the distribution of messages to operations.
 type eventBus struct {
+	// ctx is the global node context.
 	ctx context.Context
-	// TODO: Use two separate queues: one for stream updates and one for other messages.
-	queue             *dynmsgbuf.DynamicBuffer[EventBusMessage]
-	syncerRegistry    SyncerRegistry
+	// log is the logger for the event bus.
+	log *logging.Log
+	// queue is a dynamic message buffer that holds messages to be processed.
+	// This queue contains both stream updates and sync operations.
+	// An appropriate message handler is applied depending on the message type.
+	queue *dynmsgbuf.DynamicBuffer[EventBusMessage]
+	// syncerRegistry is the registry of syncers that handle stream synchronization.
+	syncerRegistry SyncerRegistry
+	// operationRegistry is the registry of operations that handle stream updates and subscriptions.
 	operationRegistry OperationRegistry
 }
 
+// NewEventBus creates a new instance of the event bus.
 func NewEventBus(
 	ctx context.Context,
 	queue *dynmsgbuf.DynamicBuffer[EventBusMessage],
@@ -87,6 +94,7 @@ func NewEventBus(
 ) EventBus[EventBusMessage] {
 	eb := &eventBus{
 		ctx:               ctx,
+		log:               logging.FromCtx(ctx).Named("syncv3-event-bus"),
 		queue:             queue,
 		syncerRegistry:    syncerRegistry,
 		operationRegistry: operationRegistry,
@@ -95,6 +103,8 @@ func NewEventBus(
 	return eb
 }
 
+// AddMessage adds a new message to the event bus queue for processing.
+// Note that both dynamic message buffer and event bus implements the EventBus interface.
 func (eb *eventBus) AddMessage(msg EventBusMessage) error {
 	return eb.queue.AddMessage(msg)
 }
@@ -113,7 +123,7 @@ func (eb *eventBus) onStreamUpdate(msg *SyncStreamsResponse) {
 
 	streamID, err := StreamIdFromBytes(msg.StreamID())
 	if err != nil {
-		logging.FromCtx(eb.ctx).Error("Failed to parse stream ID from SyncStreamsResponse", "error", err)
+		eb.log.Error("Failed to parse stream ID from SyncStreamsResponse", "error", err)
 		return
 	}
 
@@ -144,15 +154,13 @@ func (eb *eventBus) onStreamUpdate(msg *SyncStreamsResponse) {
 	}
 }
 
+// onSubscribe handles the stream subscribe message of a specific operation.
 func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
-		logging.FromCtx(eb.ctx).Error("Failed to parse stream ID from SyncCookie", "error", err)
+		eb.log.Error("Failed to parse stream ID from SyncCookie", "error", err)
 		return
 	}
-
-	ctx, cancel := context.WithTimeout(eb.ctx, time.Second*10)
-	defer cancel()
 
 	// Adding stream to the sync op. Scenarios:
 	// 1. If the stream is already syncing for the given op, just skip.
@@ -168,7 +176,11 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 
 	// Start syncing stream if not syncing yet.
 	if !streamExists {
-		// TODO: Add timeout to context
+		// Creating a new context with x2 timeout for the modify sync request just to have an overhead.
+		// It is one request (cookie) to the syncer so it could be just doubled.
+		ctx, cancel := context.WithTimeout(eb.ctx, modifySyncTimeout*2)
+		defer cancel()
+
 		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
@@ -186,9 +198,13 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		eb.operationRegistry.AddOpToStream(streamID, op)
 	}
 
+	// Creating a new context with x2 timeout for the modify sync request just to have an overhead.
+	// It is one request (cookie) to the syncer so it could be just doubled.
+	ctx, cancel := context.WithTimeout(eb.ctx, modifySyncTimeout*2)
+	defer cancel()
+
 	// Backfill the given stream for the given operation.
 	resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{
-		SyncId: op.ID(),
 		BackfillStreams: &ModifySyncRequest_Backfill{
 			SyncId:  op.ID(),
 			Streams: []*SyncCookie{cookie},
@@ -208,11 +224,12 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 	}
 }
 
-// TODO: Let syncer registry know to stop syncing if no subscribers are left
+// onUnsubscribe handles the stream unsubscribe message of a specific operation.
 func (eb *eventBus) onUnsubscribe(op Operation, streamID StreamId) {
 	eb.operationRegistry.RemoveOpFromStream(streamID, op.ID())
 }
 
+// onBackfill handles the backfill request for a specific operation and target sync ID.
 func (eb *eventBus) onBackfill(op Operation, targetSyncID string, cookie *SyncCookie) {
 	resp, err := eb.syncerRegistry.Modify(eb.ctx, &ModifySyncRequest{
 		SyncId: op.ID(),
@@ -249,34 +266,7 @@ func (eb *eventBus) startCommandsProcessor() {
 
 			// Process messages from the current batch one by one.
 			for _, msg := range messages {
-				switch msg.Type {
-				case MessageUpdateStream:
-					if msg.StreamUpdate == nil {
-						logging.FromCtx(eb.ctx).Error("Received MessageUpdateStream with nil SyncStreamsResponse")
-						continue
-					}
-					eb.onStreamUpdate(msg.StreamUpdate)
-				case MessageSubscribe:
-					if msg.Cookie == nil {
-						logging.FromCtx(eb.ctx).Error("Received MessageSubscribe with nil EventBusMessageSubscribe")
-						continue
-					}
-					eb.onSubscribe(msg.Op, msg.Cookie)
-				case MessageUnsubscribe:
-					if msg.StreamID == (StreamId{}) {
-						logging.FromCtx(eb.ctx).Error("Received MessageUnsubscribe with nil EventBusMessageUnsubscribe")
-						continue
-					}
-					eb.onUnsubscribe(msg.Op, msg.StreamID)
-				case MessageBackfill:
-					if msg.Cookie == nil {
-						logging.FromCtx(eb.ctx).Error("Received MessageBackfill with nil EventBusMessageBackfill")
-						continue
-					}
-					eb.onBackfill(msg.Op, msg.TargetSyncID, msg.Cookie)
-				default:
-					logging.FromCtx(eb.ctx).Error("Unknown message type received on event bus", "type", msg.Type)
-				}
+				eb.processCommand(msg)
 			}
 
 			if !open {
@@ -285,5 +275,36 @@ func (eb *eventBus) startCommandsProcessor() {
 				return
 			}
 		}
+	}
+}
+
+func (eb *eventBus) processCommand(msg EventBusMessage) {
+	switch msg.Type {
+	case MessageUpdateStream:
+		if msg.StreamUpdate == nil {
+			eb.log.Error("Received MessageUpdateStream with nil SyncStreamsResponse")
+			return
+		}
+		eb.onStreamUpdate(msg.StreamUpdate)
+	case MessageSubscribe:
+		if msg.Cookie == nil {
+			eb.log.Error("Received MessageSubscribe with nil EventBusMessageSubscribe")
+			return
+		}
+		eb.onSubscribe(msg.Op, msg.Cookie)
+	case MessageUnsubscribe:
+		if msg.StreamID == (StreamId{}) {
+			eb.log.Error("Received MessageUnsubscribe with nil EventBusMessageUnsubscribe")
+			return
+		}
+		eb.onUnsubscribe(msg.Op, msg.StreamID)
+	case MessageBackfill:
+		if msg.Cookie == nil {
+			eb.log.Error("Received MessageBackfill with nil EventBusMessageBackfill")
+			return
+		}
+		eb.onBackfill(msg.Op, msg.TargetSyncID, msg.Cookie)
+	default:
+		eb.log.Error("Unknown message type received on event bus", "type", msg.Type)
 	}
 }

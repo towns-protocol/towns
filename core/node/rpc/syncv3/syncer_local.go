@@ -19,6 +19,8 @@ import (
 type localSyncer struct {
 	// ctx is the context for the local syncer, used to cancel operations when the syncer is stopped
 	ctx context.Context
+	// log is the logger for the local syncer.
+	log *logging.Log
 	// localAddr is the address of the local node, used to identify the syncer in operations
 	localAddr common.Address
 	// eventBus is the event bus that processes messages.
@@ -41,6 +43,7 @@ func NewLocalSyncer(
 ) Syncer {
 	return &localSyncer{
 		ctx:           ctx,
+		log:           logging.FromCtx(ctx).Named("syncv3-syncer-local").With("addr", localAddr.Hex()),
 		localAddr:     localAddr,
 		eventBus:      eventBus,
 		streamCache:   streamCache,
@@ -131,8 +134,7 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
 	if err != nil {
-		logging.FromCtx(s.ctx).Errorw("failed to parse stream id",
-			"streamId", r.GetNextSyncCookie().GetStreamId(), "error", err)
+		s.log.Errorw("failed to parse stream id", "streamId", r.GetNextSyncCookie().GetStreamId(), "error", err)
 		return
 	}
 
@@ -143,7 +145,10 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
-func (s *localSyncer) OnSyncError(error) {
+// TODO: Specify error in the down message.
+func (s *localSyncer) OnSyncError(err error) {
+	s.log.Errorw("sync failed with error", "error", err)
+
 	s.activeStreams.Range(func(streamID StreamId, syncStream Stream) bool {
 		s.OnStreamSyncDown(streamID)
 		return true
@@ -155,6 +160,7 @@ func (s *localSyncer) OnSyncError(error) {
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
 	err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 	if err != nil {
+		s.log.Errorw("failed to send sync down response", "streamId", streamID, "error", err)
 		s.streamUnsub(streamID)
 	}
 }
@@ -203,6 +209,7 @@ func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, ta
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
+// TODO: Retry sending the message if the channel is full, or implement a backoff strategy.
 func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	var err error
 	select {
@@ -215,7 +222,7 @@ func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) 
 	}
 	if err != nil {
 		rvrErr := AsRiverError(err).Tag("streamId", streamID).Func("localSyncer.sendResponse")
-		_ = rvrErr.LogError(logging.FromCtx(s.ctx))
+		s.log.Errorw("failed to send stream update", "streamId", streamID, "error", rvrErr)
 		return rvrErr
 	}
 	return nil
