@@ -155,6 +155,7 @@ func NewMiniblockInfoFromProto(
 		}
 	}
 
+	// TODO: FIX: modify to ignore snapshot envelope if snapshot is set in the header
 	var snapshot *Snapshot
 	if snapshotEnvelope != nil {
 		snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
