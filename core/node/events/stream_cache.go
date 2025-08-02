@@ -495,6 +495,13 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 			"streamId", streamId, "blockNum", blockNum, "record", record).Func("readGenesisAndCreateStream")
 	}
 
+	mbInfo, err := NewMiniblockInfoFromBytes(mb, nil, NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0))
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: check stream id in genesis?
+
 	// If genesis record is not consistent, return stream with empty local state and schedule reconciliation.
 	if record.LastMbNum() > 0 || len(mb) == 0 {
 		logging.FromCtx(ctx).Warnw("readGenesisAndCreateStream: Inconsistent genesis record",
@@ -508,10 +515,15 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
+	storageMb, err := mbInfo.AsStorageMbWithBytes(mb, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	err = s.params.Storage.CreateStreamStorage(
 		ctx,
 		streamId,
-		&storage.MiniblockDescriptor{Data: mb},
+		storageMb,
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {
