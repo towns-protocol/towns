@@ -123,7 +123,7 @@ func (s *Service) debugDropStream(
 		return nil, err
 	}
 
-	if useSyncV3(req) {
+	if _, ok := s.v3Syncs.Load(syncID); ok {
 		err = s.syncv3.DebugDropStream(ctx, syncID, streamID)
 	} else {
 		dbgHandler, ok := s.sync.(sync.DebugHandler)

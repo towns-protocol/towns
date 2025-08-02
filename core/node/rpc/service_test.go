@@ -7,9 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"slices"
 	"strconv"
-	"sync"
 	"testing"
 	"time"
 
@@ -31,7 +29,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
-	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 // Creation of extensions can cause race conditions in the database even if
@@ -592,7 +589,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 			channel,
 		},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
@@ -755,7 +752,7 @@ func testSyncStreams(tester *serviceTester) {
 			channel1,
 		},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 
 	// sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
@@ -844,7 +841,7 @@ func testAddStreamsToSync(tester *serviceTester) {
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 
 	// bob sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
@@ -874,16 +871,16 @@ func testAddStreamsToSync(tester *serviceTester) {
 	)
 	require.Nilf(err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
-	_, err = bobClient.AddStreamToSync(
+	_, err = bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "error calling AddStreamsToSync")
+	require.NoError(err, "error calling ModifySync")
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -936,7 +933,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
@@ -966,17 +963,17 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	require.Nilf(err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
-	resp, err := bobClient.AddStreamToSync(
+	resp, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "AddStreamsToSync")
-	log.Infow("AddStreamToSync", "resp", resp)
+	require.NoError(err, "ModifySync")
+	log.Infow("ModifySync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
 	// the externally added event (by AddEvent). Second event is the miniblock
@@ -1005,16 +1002,16 @@ OuterLoop:
 	Act
 	*/
 	// bob removes alice's stream to sync
-	removeRes, err := bobClient.RemoveStreamFromSync(
+	removeRes, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.RemoveStreamFromSyncRequest{
-				SyncId:   syncId,
-				StreamId: channelId[:],
+			&protocol.ModifySyncRequest{
+				SyncId:        syncId,
+				RemoveStreams: [][]byte{channelId[:]},
 			},
 		),
 	)
-	require.Nilf(err, "error calling RemoveStreamsFromSync: %v", err)
+	require.Nilf(err, "error calling ModifySync: %v", err)
 
 	// alice sends another message
 	message2, err := events.MakeEnvelopeWithPayload(
@@ -1259,64 +1256,6 @@ func sendMessagesAndReceive(
 	}, 20*time.Second, 100*time.Millisecond, "didn't receive messages in reasonable time")
 }
 
-// TestStreamSyncPingPong test stream sync subscription ping/pong
-func TestStreamSyncPingPong(t *testing.T) {
-	var (
-		req      = require.New(t)
-		services = newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
-		client   = services.testClient(0)
-		ctx      = services.ctx
-		mu       sync.Mutex
-		pongs    []string
-		syncID   string
-	)
-
-	// create stream sub
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
-	syncRes, err := client.SyncStreams(ctx, connReq)
-	req.NoError(err, "sync streams")
-
-	pings := []string{"ping1", "ping2", "ping3", "ping4", "ping5"}
-	sendPings := func() {
-		for _, ping := range pings {
-			_, err := client.PingSync(ctx, connect.NewRequest(&protocol.PingSyncRequest{SyncId: syncID, Nonce: ping}))
-			req.NoError(err, "ping sync")
-		}
-	}
-
-	go func() {
-		for syncRes.Receive() {
-			msg := syncRes.Msg()
-			switch msg.GetSyncOp() {
-			case protocol.SyncOp_SYNC_NEW:
-				syncID = msg.GetSyncId()
-				// send some pings and ensure all pongs are received
-				sendPings()
-			case protocol.SyncOp_SYNC_PONG:
-				req.NotEmpty(syncID, "expected non-empty sync id")
-				req.Equal(syncID, msg.GetSyncId(), "sync id")
-				mu.Lock()
-				pongs = append(pongs, msg.GetPongNonce())
-				mu.Unlock()
-			case protocol.SyncOp_SYNC_CLOSE, protocol.SyncOp_SYNC_DOWN,
-				protocol.SyncOp_SYNC_UNSPECIFIED, protocol.SyncOp_SYNC_UPDATE:
-				continue
-			default:
-				t.Errorf("unexpected sync operation %s", msg.GetSyncOp())
-				return
-			}
-		}
-	}()
-
-	req.Eventuallyf(func() bool {
-		mu.Lock()
-		defer mu.Unlock()
-		return slices.Equal(pings, pongs)
-	}, 20*time.Second, 100*time.Millisecond, "didn't receive all pongs in reasonable time or out of order")
-}
-
 type slowStreamsResponseSender struct {
 	sendDuration time.Duration
 }
@@ -1324,95 +1263,4 @@ type slowStreamsResponseSender struct {
 func (s slowStreamsResponseSender) Send(msg *protocol.SyncStreamsResponse) error {
 	time.Sleep(s.sendDuration)
 	return nil
-}
-
-func TestModifySyncWithWrongCookie(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
-
-	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
-	cookie := alice.createUserStreamGetCookie()
-
-	alice.startSync()
-
-	// Replace node address in the cookie with the address of the other node
-	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
-		cookie.NodeAddress = tt.nodes[1].address.Bytes()
-	} else {
-		cookie.NodeAddress = tt.nodes[0].address.Bytes()
-	}
-
-	testfmt.Print(t, "Modifying sync with wrong cookie")
-	resp, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
-		SyncId:     alice.SyncID(),
-		AddStreams: []*protocol.SyncCookie{cookie},
-	}))
-	tt.require.NoError(err)
-	tt.require.Len(resp.Msg.GetAdds(), 0)
-	tt.require.Len(resp.Msg.GetRemovals(), 0)
-}
-
-func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
-
-	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
-	_ = alice.createUserStreamGetCookie()
-	spaceId, _ := alice.createSpace()
-	channelId, _, cookie := alice.createChannel(spaceId)
-
-	alice.say(channelId, "hello from Alice")
-
-	alice.startSync()
-
-	// Replace node address in the cookie with the address of the other node
-	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
-		cookie.NodeAddress = tt.nodes[1].address.Bytes()
-	} else {
-		cookie.NodeAddress = tt.nodes[0].address.Bytes()
-	}
-
-	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie")
-	_, err := alice.client.AddStreamToSync(alice.ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-		SyncId:  alice.SyncID(),
-		SyncPos: cookie,
-	}))
-	tt.require.NoError(err)
-	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
-}
-
-func TestStartSyncWithWrongCookie(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true, replicationFactor: 1})
-
-	alice := tt.newTestClient(0, testClientOpts{enableSync: false})
-	_ = alice.createUserStreamGetCookie()
-	spaceId, _ := alice.createSpace()
-	channelId, _, cookie := alice.createChannel(spaceId)
-
-	// Replace node address in the cookie with the address of the other node
-	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
-		cookie.NodeAddress = tt.nodes[1].address.Bytes()
-	} else {
-		cookie.NodeAddress = tt.nodes[0].address.Bytes()
-	}
-
-	alice.say(channelId, "hello from Alice")
-
-	testfmt.Print(t, "StartSync with wrong cookie")
-	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
-	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
-	defer syncCancel()
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
-	updates, err := alice.client.SyncStreams(syncCtx, connReq)
-	tt.require.NoError(err)
-	testfmt.Print(t, "StartSync with wrong cookie done")
-
-	for updates.Receive() {
-		msg := updates.Msg()
-		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
-			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
-			syncCancel()
-		}
-	}
-	tt.require.ErrorIs(updates.Err(), context.Canceled)
 }

@@ -3,8 +3,8 @@ module github.com/towns-protocol/towns/core
 go 1.24.2
 
 require (
-	connectrpc.com/connect v1.17.0
-	connectrpc.com/otelconnect v0.7.1
+	connectrpc.com/connect v1.18.1
+	connectrpc.com/otelconnect v0.7.2
 	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/deckarep/golang-set/v2 v2.8.0
@@ -69,7 +69,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.32.0 // indirect
 	go.opentelemetry.io/otel/metric v1.32.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.28.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect

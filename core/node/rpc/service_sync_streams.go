@@ -14,10 +14,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
-func useSyncV3(req connect.AnyRequest) bool {
-	return req.Header().Get(UseSharedSyncHeaderName) == "true"
-}
-
 func runWithLabels(
 	ctx context.Context,
 	syncId string,
@@ -42,8 +38,10 @@ func (s *Service) SyncStreams(
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
-		if useSyncV3(req) {
+		if req.Header().Get(UseSharedSyncHeaderName) == "true" {
+			s.v3Syncs.Store(syncId, struct{}{})
 			err = s.syncv3.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
+			s.v3Syncs.Delete(syncId)
 		} else {
 			err = s.sync.SyncStreams(ctx, syncId, req, res)
 		}
@@ -73,7 +71,7 @@ func (s *Service) AddStreamToSync(
 	var res *connect.Response[AddStreamToSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if useSyncV3(req) {
+		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
 			err = RiverError(Err_UNIMPLEMENTED, "AddStreamToSync is not supported in V3")
 		} else {
 			res, err = s.sync.AddStreamToSync(ctx, req)
@@ -98,7 +96,7 @@ func (s *Service) ModifySync(
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if useSyncV3(req) {
+		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
 			res.Msg, err = s.syncv3.ModifySync(ctx, req.Msg)
 		} else {
 			res, err = s.sync.ModifySync(ctx, req)
@@ -123,7 +121,7 @@ func (s *Service) RemoveStreamFromSync(
 	var res *connect.Response[RemoveStreamFromSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if useSyncV3(req) {
+		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
 			err = RiverError(Err_UNIMPLEMENTED, "RemoveStreamFromSync is not supported in V3")
 		} else {
 			res, err = s.sync.RemoveStreamFromSync(ctx, req)
@@ -146,7 +144,7 @@ func (s *Service) CancelSync(
 	res := connect.NewResponse(&CancelSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if useSyncV3(req) {
+		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
 			err = s.syncv3.CancelSync(ctx, req.Msg.GetSyncId())
 		} else {
 			res, err = s.sync.CancelSync(ctx, req)
@@ -169,8 +167,8 @@ func (s *Service) PingSync(
 	res := connect.NewResponse(&PingSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if useSyncV3(req) {
-			err = s.syncv3.PingSync(ctx, req.Msg.GetSyncId())
+		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
+			err = s.syncv3.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
 		} else {
 			res, err = s.sync.PingSync(ctx, req)
 		}

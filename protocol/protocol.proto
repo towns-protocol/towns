@@ -1075,6 +1075,8 @@ message SyncStreamsResponse {
     // target_sync_ids is the chain of sync IDs that is used to deliver the backfill update to the right end client.
     // For example: client->nodeA->nodeB->nodeA(target sync 1)->client(target sync 2)
     repeated string target_sync_ids = 6;
+    // message describing what happened if a stream went down.
+    string message = 7;
 }
 
 // AddStreamToSyncRequest is a request to add a stream to an existing streams sync session.

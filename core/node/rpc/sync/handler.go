@@ -179,12 +179,8 @@ func (s *otelSender) Send(msg *SyncStreamsResponse) error {
 	_, span := s.otelTracer.Start(s.ctx, "SyncStreamsResponse")
 	defer span.End()
 
-	streamIdBytes := msg.GetStreamId()
-	if streamIdBytes == nil {
-		streamIdBytes = msg.Stream.GetNextSyncCookie().GetStreamId()
-	}
-	if streamIdBytes != nil {
-		id, err := shared.StreamIdFromBytes(streamIdBytes)
+	if raw := msg.StreamID(); raw != nil {
+		id, err := shared.StreamIdFromBytes(raw)
 		if err == nil {
 			span.SetAttributes(attribute.String("streamId", id.String()))
 		}

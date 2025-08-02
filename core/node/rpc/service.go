@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/puzpuzpuz/xsync/v4"
+
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -57,9 +59,10 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache  *StreamCache
-	sync   riversync.Handler
-	syncv3 riversyncv3.Service
+	cache   *StreamCache
+	sync    riversync.Handler
+	syncv3  riversyncv3.Service
+	v3Syncs *xsync.Map[string, struct{}]
 
 	// Notifications
 	notifications notifications.UserPreferencesStore

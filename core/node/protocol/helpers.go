@@ -1,6 +1,8 @@
 package protocol
 
 import (
+	"bytes"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -59,6 +61,11 @@ func (sc *SyncCookie) CopyWithAddr(address common.Address) *SyncCookie {
 	}
 }
 
+// SameStream returns true if the given SyncCookie has the same stream ID as the current one.
+func (sc *SyncCookie) SameStream(x1 interface{ GetStreamId() []byte }) bool {
+	return bytes.Equal(sc.GetStreamId(), x1.GetStreamId())
+}
+
 // GetMiniblockSnapshot returns the snapshot for the given miniblock number.
 // Returns nil if the snapshot is not found.
 func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
@@ -73,11 +80,11 @@ func (x *GetMiniblocksResponse) GetMiniblockSnapshot(num int64) *Envelope {
 func (r *ModifySyncRequest) TargetSyncIDs() []string {
 	var targetSyncIds []string
 
-	if r.SyncId != "" {
-		targetSyncIds = append(targetSyncIds, r.SyncId)
+	if r.GetSyncId() != "" {
+		targetSyncIds = append(targetSyncIds, r.GetSyncId())
 	}
 
-	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.SyncId {
+	if r.GetBackfillStreams().GetSyncId() != "" && r.GetBackfillStreams().GetSyncId() != r.GetSyncId() {
 		targetSyncIds = append(targetSyncIds, r.GetBackfillStreams().GetSyncId())
 	}
 
