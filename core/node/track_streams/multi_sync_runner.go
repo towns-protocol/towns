@@ -159,6 +159,9 @@ func (ssr *syncSessionRunner) AddStream(
 		ssr.streamRecords.Delete(record.streamId)
 
 		if err != nil {
+			if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
+				ssr.Close(err)
+			}
 			return err
 		} else {
 			return base.AsRiverError(fmt.Errorf("failed to add stream to existing sync")).
@@ -970,15 +973,19 @@ func (msr *MultiSyncRunner) addToSync(
 			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
 			runner.Close(err)
 		} else {
-			log.Errorw(
-				"Error adding stream to sync on node, retrying",
-				"streamId", record.streamId,
-				"node", targetNode,
-				"syncId", runner.GetSyncId(),
-				"error", err,
-			)
+			if strings.Contains(err.Error(), "snapshotMiniblockIndex is out of range") {
+				log.Errorw("Corrupt stream encountered", "streamId", record.streamId, "node", targetNode, "syncId", runner.GetSyncId(), "err", err)
+			} else {
+				log.Errorw(
+					"Error adding stream to sync on node, retrying",
+					"streamId", record.streamId,
+					"node", targetNode,
+					"syncId", runner.GetSyncId(),
+					"error", err,
+				)
+				msr.streamsToSync <- record
+			}
 		}
-		msr.streamsToSync <- record
 	} else {
 		msr.releaseNodeSemaphore(targetNode, pool, acquireTime2, "add_stream_success")
 		// Notify placement listener if configured
