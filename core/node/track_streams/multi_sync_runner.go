@@ -707,7 +707,7 @@ func (msr *MultiSyncRunner) Run(
 			case <-rootCtx.Done():
 				return
 			case <-ticker.C:
-				msr.metrics.UnsyncedQueueLength.Set(float64(len(msr.streamsToSync)))
+				msr.metrics.UnsyncedQueueLength.Set(float64(msr.workerPool.WaitingQueueSize()))
 			}
 		}
 	}()
