@@ -105,7 +105,8 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 }
 
 // OnSyncError is called when a sync subscription failed unrecoverable
-func (s *localSyncer) OnSyncError(error) {
+func (s *localSyncer) OnSyncError(err error) {
+	logging.FromCtx(s.syncStreamCtx).Error("failed to sync streams in local syncer", "error", err)
 	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
 		syncStream.Unsub(s)
 		s.OnStreamSyncDown(streamID)
@@ -171,7 +172,7 @@ func (s *localSyncer) sendResponse(msg *SyncStreamsResponse) {
 				Tag("op", msg.GetSyncOp()).
 				Func("legacyLocalSyncer.sendResponse")
 
-			_ = err.LogError(logging.FromCtx(s.syncStreamCtx))
+			logging.FromCtx(s.syncStreamCtx).Errorw("failed to send sync response", "error", err)
 
 			s.cancelGlobalSyncOp(err)
 		}
