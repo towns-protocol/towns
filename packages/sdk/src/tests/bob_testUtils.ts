@@ -155,7 +155,7 @@ export const bobTalksToHimself = async (
         },
         {
             timeoutMs: -1,
-            headers: { 'X-Use-Shared-Sync': 'true' },
+            headers: { 'X-Use-Shared-Sync': 'false' },
         },
     )
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call

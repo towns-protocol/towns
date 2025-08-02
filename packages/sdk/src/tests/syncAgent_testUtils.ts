@@ -30,7 +30,7 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             logNamespaceFilter: undefined,
             highPriorityStreamIds: undefined,
             streamOpts: {
-                useSharedSyncer: true,
+                useSharedSyncer: false,
             },
         },
         rpcRetryParams: config.retryParams,

@@ -67,7 +67,7 @@ describe('syncStreams', () => {
             mockClientEmitter,
             undefined,
             shortenHexString(alicesUserId),
-            { useSharedSyncer: true },
+            { useSharedSyncer: false },
         )
 
         // some helper functions
