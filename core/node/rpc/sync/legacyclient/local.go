@@ -2,6 +2,7 @@ package legacyclient
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -129,16 +130,22 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 		defer span.End()
 	}
 
-	var err error
+	var (
+		err error
+		// wait max 5s to subscribe on a local stream because this blocks the entire sync operation.
+		ctxWithTimeout, cancelWithTimeout = context.WithTimeout(ctx, 5*time.Second)
+	)
+	defer cancelWithTimeout()
+
 	s.activeStreams.LoadOrCompute(
 		streamID,
 		func() (*Stream, bool) {
 			var syncStream *Stream
-			if syncStream, err = s.streamCache.GetStreamWaitForLocal(ctx, streamID); err != nil {
+			if syncStream, err = s.streamCache.GetStreamWaitForLocal(ctxWithTimeout, streamID); err != nil {
 				return nil, true
 			}
 
-			if err = syncStream.Sub(ctx, cookie, s); err != nil {
+			if err = syncStream.Sub(ctxWithTimeout, cookie, s); err != nil {
 				return nil, true
 			}
 
