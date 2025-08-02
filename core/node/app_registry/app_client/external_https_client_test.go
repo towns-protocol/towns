@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/towns-protocol/towns/core/node/http_client"
 	"golang.org/x/net/http2"
+
+	"github.com/towns-protocol/towns/core/node/http_client"
 )
 
 func TestExternalHttpsClient(t *testing.T) {

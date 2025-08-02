@@ -3,10 +3,11 @@ package cmd
 import (
 	"context"
 
+	"go.uber.org/zap"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/rpc"
-	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
 )

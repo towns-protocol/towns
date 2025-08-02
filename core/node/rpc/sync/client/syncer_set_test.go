@@ -20,7 +20,10 @@ import (
 )
 
 // Helper functions for testing
-func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+func createTestSyncerSet(
+	ctx context.Context,
+	localAddr common.Address,
+) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
 	streamCache := &mockStreamCache{}
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
@@ -42,7 +45,11 @@ func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*Syncer
 }
 
 // createTestSyncerSetWithCallback creates a test syncer set with a custom unsubStream callback
-func createTestSyncerSetWithCallback(ctx context.Context, localAddr common.Address, unsubStream func(StreamId)) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+func createTestSyncerSetWithCallback(
+	ctx context.Context,
+	localAddr common.Address,
+	unsubStream func(StreamId),
+) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
 	streamCache := &mockStreamCache{}
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
@@ -298,7 +305,9 @@ func TestModify(t *testing.T) {
 		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
 
 		// First call fails, forcing retry with different node
-		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(nil, errors.New("stream not found")).Once()
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).
+			Return(nil, errors.New("stream not found")).
+			Once()
 
 		var addHandlerCalls int32
 		var capturedStatus *SyncStreamOpStatus
@@ -524,7 +533,9 @@ func TestModifyConcurrency(t *testing.T) {
 					if j%2 == 0 {
 						mockSyncer := &mockStreamsSyncer{}
 						mockSyncer.On("Address").Return(localAddr)
-						mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(&ModifySyncResponse{}, false, nil).Maybe()
+						mockSyncer.On("Modify", mock.Anything, mock.Anything).
+							Return(&ModifySyncResponse{}, false, nil).
+							Maybe()
 						syncerSet.streamID2Syncer.Store(streams[streamIdx], mockSyncer)
 					}
 				}

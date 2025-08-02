@@ -141,7 +141,8 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
 	if err != nil {
-		logging.FromCtx(s.globalCtx).Errorw("failed to get stream id", "stream", r.GetNextSyncCookie().GetStreamId(), "error", err)
+		logging.FromCtx(s.globalCtx).
+			Errorw("failed to get stream id", "stream", r.GetNextSyncCookie().GetStreamId(), "error", err)
 		return
 	}
 

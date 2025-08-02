@@ -53,7 +53,11 @@ func (m *mockStream) AdvanceStickyPeer(currentPeer common.Address) common.Addres
 	return args.Get(0).(common.Address)
 }
 
-func (m *mockStream) UpdatesSinceCookie(ctx context.Context, cookie *SyncCookie, callback func(streamAndCookie *StreamAndCookie) error) error {
+func (m *mockStream) UpdatesSinceCookie(
+	ctx context.Context,
+	cookie *SyncCookie,
+	callback func(streamAndCookie *StreamAndCookie) error,
+) error {
 	args := m.Called(ctx, cookie, callback)
 	return args.Error(0)
 }

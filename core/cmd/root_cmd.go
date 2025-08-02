@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/linkdata/deadlock"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/config/builder"
 	"github.com/towns-protocol/towns/core/node/logging"

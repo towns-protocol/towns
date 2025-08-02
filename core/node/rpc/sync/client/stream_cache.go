@@ -15,7 +15,11 @@ type Stream interface {
 	GetRemotesAndIsLocal() ([]common.Address, bool)
 	GetStickyPeer() common.Address
 	AdvanceStickyPeer(currentPeer common.Address) common.Address
-	UpdatesSinceCookie(ctx context.Context, cookie *SyncCookie, callback func(streamAndCookie *StreamAndCookie) error) error
+	UpdatesSinceCookie(
+		ctx context.Context,
+		cookie *SyncCookie,
+		callback func(streamAndCookie *StreamAndCookie) error,
+	) error
 	Sub(ctx context.Context, cookie *SyncCookie, r events.SyncResultReceiver) error
 	Unsub(r events.SyncResultReceiver)
 	StreamId() StreamId

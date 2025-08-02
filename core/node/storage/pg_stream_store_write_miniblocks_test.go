@@ -18,7 +18,6 @@ func TestWriteMiniblocks_ValidationErrors(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -88,7 +87,6 @@ func TestWriteMiniblocks_SuccessfulWrite(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -108,7 +106,7 @@ func TestWriteMiniblocks_SuccessfulWrite(t *testing.T) {
 		Snapshot: []byte("snapshot1"),
 	}}
 	newEnvelopes := [][]byte{[]byte("newEvent1"), []byte("newEvent2")}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, newEnvelopes, 1, 2)
 	require.NoError(err)
 
@@ -144,7 +142,6 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
@@ -173,7 +170,7 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 		},
 	}
 	newEnvelopes := [][]byte{[]byte("event1"), []byte("event2"), []byte("event3")}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 4, newEnvelopes, 1, 0)
 	require.NoError(err)
 
@@ -181,7 +178,7 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 	result, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
 	// ReadStreamFromLastSnapshot returns from genesis (0) to latest, since numToRead=10
-	require.Len(result.Miniblocks, 4) // All 4 blocks: 0, 1, 2, 3
+	require.Len(result.Miniblocks, 4)                    // All 4 blocks: 0, 1, 2, 3
 	require.Equal(int64(0), result.Miniblocks[0].Number) // Genesis
 	require.Equal(int64(2), result.Miniblocks[2].Number) // Snapshot block
 	require.Equal([]byte("snapshot2"), result.Miniblocks[2].Snapshot)
@@ -198,7 +195,6 @@ func TestWriteMiniblocks_CandidateCleanup(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -238,7 +234,7 @@ func TestWriteMiniblocks_CandidateCleanup(t *testing.T) {
 			Data:   []byte("block3"),
 		},
 	}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 4, [][]byte{}, 1, 0)
 	require.NoError(err)
 
@@ -267,7 +263,6 @@ func TestWriteMiniblocks_TransactionConsistency(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -307,16 +302,15 @@ func TestWriteMiniblocks_StreamNotFound(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	
+
 	// Try to write miniblocks to non-existent stream
 	miniblocks := []*MiniblockDescriptor{{
 		Number: 1,
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err := store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 0)
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
@@ -327,7 +321,6 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -357,7 +350,7 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 2)
 	require.Error(err)
 	require.Contains(err.Error(), "Minipool contains unexpected generation")
@@ -368,7 +361,6 @@ func TestWriteMiniblocks_LastMiniblockValidation(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -405,7 +397,6 @@ func TestWriteMiniblocks_EmptyMinipool(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -417,7 +408,7 @@ func TestWriteMiniblocks_EmptyMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 0)
 	require.NoError(err)
 
@@ -437,7 +428,6 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -456,12 +446,12 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	newEnvelopes := make([][]byte, 50)
 	for i := range newEnvelopes {
 		newEnvelopes[i] = []byte("newEvent" + string(rune(i)))
 	}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, newEnvelopes, 1, numEvents)
 	require.NoError(err)
 

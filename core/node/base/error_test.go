@@ -119,63 +119,63 @@ func TestIsConnectNetworkError(t *testing.T) {
 
 func TestIsOperationRetriableOnRemotes(t *testing.T) {
 	tests := map[string]struct {
-		err        error
+		err         error
 		isRetriable bool
 	}{
 		"retriable error - UNKNOWN": {
-			err:        RiverError(protocol.Err_UNKNOWN, "unknown error"),
+			err:         RiverError(protocol.Err_UNKNOWN, "unknown error"),
 			isRetriable: true,
 		},
 		"retriable error - DEADLINE_EXCEEDED": {
-			err:        RiverError(protocol.Err_DEADLINE_EXCEEDED, "deadline exceeded"),
+			err:         RiverError(protocol.Err_DEADLINE_EXCEEDED, "deadline exceeded"),
 			isRetriable: true,
 		},
 		"retriable error - NOT_FOUND": {
-			err:        RiverError(protocol.Err_NOT_FOUND, "not found"),
+			err:         RiverError(protocol.Err_NOT_FOUND, "not found"),
 			isRetriable: true,
 		},
 		"retriable error - MINIBLOCKS_STORAGE_FAILURE": {
-			err:        RiverError(protocol.Err_MINIBLOCKS_STORAGE_FAILURE, "miniblocks storage failure"),
+			err:         RiverError(protocol.Err_MINIBLOCKS_STORAGE_FAILURE, "miniblocks storage failure"),
 			isRetriable: true,
 		},
 		"retriable error - MINIBLOCK_TOO_NEW": {
-			err:        RiverError(protocol.Err_MINIBLOCK_TOO_NEW, "miniblock too new"),
+			err:         RiverError(protocol.Err_MINIBLOCK_TOO_NEW, "miniblock too new"),
 			isRetriable: true,
 		},
 		"retriable error - STREAM_RECONCILIATION_REQUIRED": {
-			err:        RiverError(protocol.Err_STREAM_RECONCILIATION_REQUIRED, "stream reconciliation required"),
+			err:         RiverError(protocol.Err_STREAM_RECONCILIATION_REQUIRED, "stream reconciliation required"),
 			isRetriable: true,
 		},
 		"retriable error - BUFFER_FULL": {
-			err:        RiverError(protocol.Err_BUFFER_FULL, "buffer full"),
+			err:         RiverError(protocol.Err_BUFFER_FULL, "buffer full"),
 			isRetriable: true,
 		},
 		"retriable error - MINIBLOCKS_NOT_FOUND": {
-			err:        RiverError(protocol.Err_MINIBLOCKS_NOT_FOUND, "miniblocks not found"),
+			err:         RiverError(protocol.Err_MINIBLOCKS_NOT_FOUND, "miniblocks not found"),
 			isRetriable: true,
 		},
 		"non-retriable error - INVALID_ARGUMENT": {
-			err:        RiverError(protocol.Err_INVALID_ARGUMENT, "invalid argument"),
+			err:         RiverError(protocol.Err_INVALID_ARGUMENT, "invalid argument"),
 			isRetriable: false,
 		},
 		"non-retriable error - PERMISSION_DENIED": {
-			err:        RiverError(protocol.Err_PERMISSION_DENIED, "permission denied"),
+			err:         RiverError(protocol.Err_PERMISSION_DENIED, "permission denied"),
 			isRetriable: false,
 		},
 		"non-retriable error - BAD_STREAM_ID": {
-			err:        RiverError(protocol.Err_BAD_STREAM_ID, "bad stream id"),
+			err:         RiverError(protocol.Err_BAD_STREAM_ID, "bad stream id"),
 			isRetriable: false,
 		},
 		"non-river error": {
-			err:        errors.New("plain error"),
+			err:         errors.New("plain error"),
 			isRetriable: false,
 		},
 		"wrapped river error": {
-			err:        AsRiverError(RiverError(protocol.Err_UNAVAILABLE, "unavailable")),
+			err:         AsRiverError(RiverError(protocol.Err_UNAVAILABLE, "unavailable")),
 			isRetriable: true,
 		},
 		"connect error mapped to river error": {
-			err:        AsRiverError(connect.NewError(connect.CodeUnavailable, fmt.Errorf("unavailable"))),
+			err:         AsRiverError(connect.NewError(connect.CodeUnavailable, fmt.Errorf("unavailable"))),
 			isRetriable: false, // Maps to Err_DOWNSTREAM_NETWORK_ERROR which is not retriable
 		},
 	}

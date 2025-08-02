@@ -14,18 +14,18 @@ import (
 
 func TestDistributor_DistributeMessage(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func() (*distributor, Registry)
-		streamID      StreamId
-		msg           *SyncStreamsResponse
-		verify        func(t *testing.T, reg Registry, streamID StreamId)
+		name     string
+		setup    func() (*distributor, Registry)
+		streamID StreamId
+		msg      *SyncStreamsResponse
+		verify   func(t *testing.T, reg Registry, streamID StreamId)
 	}{
 		{
 			name: "distribute message to single subscription",
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub := createTestSubscription("test-sync-1")
-				sub.registry = reg  // Use shared registry
+				sub.registry = reg // Use shared registry
 				reg.AddSubscription(sub)
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
 				dis := newDistributor(reg, nil)
@@ -48,9 +48,9 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub1 := createTestSubscription("test-sync-1")
-				sub1.registry = reg  // Use shared registry
+				sub1.registry = reg // Use shared registry
 				sub2 := createTestSubscription("test-sync-2")
-				sub2.registry = reg  // Use shared registry
+				sub2.registry = reg // Use shared registry
 				reg.AddSubscription(sub1)
 				reg.AddSubscription(sub2)
 				// Add both subscriptions at once to avoid backfill marking
@@ -76,12 +76,12 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				assert.True(t, exists1)
 				assert.True(t, exists2)
 				t.Logf("Sub1 closed: %v, Sub2 closed: %v", sub1.isClosed(), sub2.isClosed())
-				
+
 				// Check if stream is marked as initializing
 				_, initializing1 := sub1.initializingStreams.Load(streamID)
 				_, initializing2 := sub2.initializingStreams.Load(streamID)
 				t.Logf("Sub1 initializing: %v, Sub2 initializing: %v", initializing1, initializing2)
-				
+
 				t.Logf("Sub1 messages: %d, Sub2 messages: %d", sub1.Messages.Len(), sub2.Messages.Len())
 				assert.Equal(t, 1, sub1.Messages.Len())
 				assert.Equal(t, 1, sub2.Messages.Len())
@@ -92,9 +92,9 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub1 := createTestSubscription("test-sync-1")
-				sub1.registry = reg  // Use shared registry
+				sub1.registry = reg // Use shared registry
 				sub2 := createTestSubscription("test-sync-2")
-				sub2.registry = reg  // Use shared registry
+				sub2.registry = reg // Use shared registry
 				reg.AddSubscription(sub1)
 				reg.AddSubscription(sub2)
 				reg.AddStreamToSubscription("test-sync-1", StreamId{1, 2, 3, 4})
@@ -112,17 +112,17 @@ func TestDistributor_DistributeMessage(t *testing.T) {
 				// The stream removal is now handled by the syncer set's unsubStream callback
 				subs := reg.GetSubscriptionsForStream(streamID)
 				assert.Len(t, subs, 2) // Subscriptions should still exist
-				
+
 				// Verify both subscriptions received the SYNC_DOWN message
 				sub1, exists1 := reg.GetSubscriptionByID("test-sync-1")
 				sub2, exists2 := reg.GetSubscriptionByID("test-sync-2")
 				assert.True(t, exists1)
 				assert.True(t, exists2)
-				
+
 				// Check that SYNC_DOWN messages were sent
 				assert.Equal(t, 1, sub1.Messages.Len())
 				assert.Equal(t, 1, sub2.Messages.Len())
-				
+
 				msg1 := sub1.Messages.GetBatch(nil)[0]
 				msg2 := sub2.Messages.GetBatch(nil)[0]
 				assert.Equal(t, SyncOp_SYNC_DOWN, msg1.GetSyncOp())
@@ -174,7 +174,7 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub := createTestSubscription("test-sync-1")
-				sub.registry = reg  // Use shared registry
+				sub.registry = reg // Use shared registry
 				reg.AddSubscription(sub)
 				dis := newDistributor(reg, nil)
 				return dis, reg
@@ -214,8 +214,8 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 			setup: func() (*distributor, Registry) {
 				reg := newRegistry()
 				sub := createTestSubscription("test-sync-1")
-				sub.registry = reg  // Use shared registry
-				sub.Close() // Mark as closed
+				sub.registry = reg // Use shared registry
+				sub.Close()        // Mark as closed
 				reg.AddSubscription(sub)
 				dis := newDistributor(reg, nil)
 				return dis, reg
@@ -265,11 +265,11 @@ func TestDistributor_DistributeBackfillMessage(t *testing.T) {
 
 func TestDistributor_SendMessageToSubscription(t *testing.T) {
 	tests := []struct {
-		name          string
-		setup         func() (*distributor, *Subscription)
-		streamID      StreamId
-		msg           *SyncStreamsResponse
-		verify        func(t *testing.T, sub *Subscription)
+		name     string
+		setup    func() (*distributor, *Subscription)
+		streamID StreamId
+		msg      *SyncStreamsResponse
+		verify   func(t *testing.T, sub *Subscription)
 	}{
 		{
 			name: "send SYNC_UPDATE message to subscription",
@@ -363,7 +363,7 @@ func TestDistributor_BackfillEventFiltering(t *testing.T) {
 				reg := newRegistry()
 				dis := newDistributor(reg, nil)
 				sub := createTestSubscription("test-sync-1")
-				sub.registry = reg  // Use shared registry
+				sub.registry = reg // Use shared registry
 				// Mark stream as initializing for backfill
 				sub.initializingStreams.Store(StreamId{1, 2, 3, 4}, struct{}{})
 				reg.AddSubscription(sub)

@@ -374,7 +374,12 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		contexts[i] = cancel
 		defer cancel(nil)
 
-		sub, err := env.manager.Subscribe(ctx, cancel, fmt.Sprintf("test-sync-%d", i), dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
+		sub, err := env.manager.Subscribe(
+			ctx,
+			cancel,
+			fmt.Sprintf("test-sync-%d", i),
+			dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		)
 		require.NoError(t, err)
 		subscriptions[i] = sub
 	}

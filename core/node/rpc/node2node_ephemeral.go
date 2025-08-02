@@ -37,7 +37,10 @@ func (s *Service) AllocateEphemeralStream(
 	return connect.NewResponse(r), nil
 }
 
-func (s *Service) allocateEphemeralStream(ctx context.Context, req *AllocateEphemeralStreamRequest) (*AllocateEphemeralStreamResponse, error) {
+func (s *Service) allocateEphemeralStream(
+	ctx context.Context,
+	req *AllocateEphemeralStreamRequest,
+) (*AllocateEphemeralStreamResponse, error) {
 	streamId, err := StreamIdFromBytes(req.StreamId)
 	if err != nil {
 		return nil, err

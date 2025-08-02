@@ -49,7 +49,8 @@ func TestSubscription_Modify(t *testing.T) {
 			expectedCalls: func(mockSyncer SyncerSet) {
 				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
-				})).Return(nil)
+				})).
+					Return(nil)
 			},
 			verify: func(t *testing.T, sub *Subscription) {
 				// Verify stream was added to registry
@@ -82,7 +83,8 @@ func TestSubscription_Modify(t *testing.T) {
 			expectedCalls: func(mockSyncer SyncerSet) {
 				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
-				})).Return(nil)
+				})).
+					Return(nil)
 			},
 		},
 		{
@@ -135,7 +137,8 @@ func TestSubscription_Modify(t *testing.T) {
 			expectedCalls: func(mockSyncer SyncerSet) {
 				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 1 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 0
-				})).Return(nil)
+				})).
+					Return(nil)
 			},
 		},
 		{
@@ -163,7 +166,8 @@ func TestSubscription_Modify(t *testing.T) {
 			expectedCalls: func(mockSyncer SyncerSet) {
 				mockSyncer.(*mockSyncerSet).On("Modify", mock.Anything, mock.MatchedBy(func(req client.ModifyRequest) bool {
 					return len(req.ToAdd) == 0 && len(req.ToRemove) == 0 && len(req.ToBackfill) == 1
-				})).Return(nil)
+				})).
+					Return(nil)
 			},
 		},
 		{
