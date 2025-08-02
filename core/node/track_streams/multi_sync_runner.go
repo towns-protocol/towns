@@ -664,6 +664,49 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 	return workerPool
 }
 
+// acquireNodeSemaphore acquires a semaphore slot for the given node with metrics tracking
+// Returns the acquire time for tracking hold duration
+func (msr *MultiSyncRunner) acquireNodeSemaphore(
+	ctx context.Context,
+	node common.Address,
+	pool *semaphore.Weighted,
+) (time.Time, error) {
+	nodeHex := node.Hex()
+	labels := prometheus.Labels{"node": nodeHex}
+
+	// Measure acquire duration
+	start := time.Now()
+	err := pool.Acquire(ctx, 1)
+	// Track in-flight requests
+	duration := time.Since(start).Seconds()
+
+	msr.metrics.SemaphoreAcquireDuration.With(labels).Observe(duration)
+
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Now(), nil
+}
+
+// releaseNodeSemaphore releases a semaphore slot for the given node with metrics tracking
+func (msr *MultiSyncRunner) releaseNodeSemaphore(
+	node common.Address,
+	pool *semaphore.Weighted,
+	acquireTime time.Time,
+	operation string,
+) {
+	pool.Release(1)
+	nodeHex := node.Hex()
+
+	// Track how long the semaphore was held
+	if !acquireTime.IsZero() {
+		holdDuration := time.Since(acquireTime).Seconds()
+		msr.metrics.SemaphoreHoldDuration.With(prometheus.Labels{"node": nodeHex, "operation": operation}).
+			Observe(holdDuration)
+	}
+}
+
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
@@ -747,9 +790,21 @@ func (msr *MultiSyncRunner) addToSync(
 	rootCtx context.Context,
 	record *streamSyncInitRecord,
 ) {
+	startTime := time.Now()
 	targetNode := record.remotes.GetStickyPeer()
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
+	nodeHex := targetNode.Hex()
+
+	// Track total placement duration when function exits (only for failures)
+	success := false
+	defer func() {
+		if !success {
+			duration := time.Since(startTime).Seconds()
+			msr.metrics.StreamPlacementTotalDuration.With(prometheus.Labels{"node": nodeHex, "success": "false"}).
+				Observe(duration)
+		}
+	}()
 
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
@@ -774,7 +829,8 @@ func (msr *MultiSyncRunner) addToSync(
 		// Pre-emptively acquire a connection for the newly created runner above so that if the
 		// store is successful, we are guaranteed to call it's 'Run' method. This will keep
 		// other workers from becoming indefinitely blocked on stream insertion to this runner.
-		if err := pool.Acquire(rootCtx, 1); err != nil {
+		acquireTime, err := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
+		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Errorw(
 					"unable to acquire worker pool task for node; closing runner and re-assigning stream",
@@ -795,15 +851,22 @@ func (msr *MultiSyncRunner) addToSync(
 			// If our new runner won the race to be stored for this node, kick off the runner. Streams
 			// are not assignable until the sync session starts.
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
+
+			// Track sync runner creation time
+			creationStart := time.Now()
 			go runner.Run()
 			runner.WaitUntilStarted()
+			creationDuration := time.Since(creationStart).Seconds()
+			msr.metrics.SyncRunnerCreationDuration.With(prometheus.Labels{"node": nodeHex}).Observe(creationDuration)
+
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
-		pool.Release(1)
+		msr.releaseNodeSemaphore(targetNode, pool, acquireTime, "runner_creation")
 	}
 
 	// Prepare for another rpc call by acquiring another connection from the pool.
-	if err := pool.Acquire(rootCtx, 1); err != nil {
+	acquireTime2, err := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
+	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return
 		}
@@ -827,11 +890,18 @@ func (msr *MultiSyncRunner) addToSync(
 	// The runner will continue to stay in memory until its go routine stops running, which will occur
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
-	if err := runner.AddStream(rootCtx, *record); err != nil {
+	addStreamStart := time.Now()
+	err = runner.AddStream(rootCtx, *record)
+	addStreamDuration := time.Since(addStreamStart).Seconds()
+	msr.metrics.AddStreamDuration.With(prometheus.Labels{"node": nodeHex, "success": fmt.Sprintf("%t", err == nil)}).
+		Observe(addStreamDuration)
+
+	if err != nil {
 		// Aggressively release the lock on target node resources to maximize request throughput.
-		pool.Release(1)
+		msr.releaseNodeSemaphore(targetNode, pool, acquireTime2, "add_stream_failure")
 
 		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
+			log.Warnw("Failing to assign stream to sync; creating new runner", "err", err, "targetNode", targetNode)
 			// Create a new runner and replace this one
 			newRunner := newSyncSessionRunner(
 				rootCtx,
@@ -847,7 +917,8 @@ func (msr *MultiSyncRunner) addToSync(
 				msr.otelTracer,
 			)
 
-			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
+			acquireTime3, acquireErr := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
+			if acquireErr != nil {
 				if errors.Is(acquireErr, context.Canceled) {
 					return
 				}
@@ -876,7 +947,7 @@ func (msr *MultiSyncRunner) addToSync(
 					return oldRunner, xsync.CancelOp
 				},
 			)
-			pool.Release(1)
+			msr.releaseNodeSemaphore(targetNode, pool, acquireTime3, "runner_replacement")
 
 			// log := logging.FromCtx(rootCtx)
 
@@ -901,7 +972,7 @@ func (msr *MultiSyncRunner) addToSync(
 		}
 		msr.streamsToSync <- record
 	} else {
-		pool.Release(1)
+		msr.releaseNodeSemaphore(targetNode, pool, acquireTime2, "add_stream_success")
 		// Notify placement listener if configured
 		if msr.placementListener != nil {
 			msr.placementListener.OnStreamPlacement(
@@ -912,6 +983,10 @@ func (msr *MultiSyncRunner) addToSync(
 				record.prevMiniblockHash,
 			)
 		}
+		// Mark success and update metric for total placement duration
+		success = true
+		duration := time.Since(startTime).Seconds()
+		msr.metrics.StreamPlacementTotalDuration.With(prometheus.Labels{"node": nodeHex, "success": "true"}).Observe(duration)
 	}
 }
 
