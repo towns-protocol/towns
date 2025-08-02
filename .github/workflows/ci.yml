@@ -166,16 +166,16 @@ jobs:
                   if ! command -v goimports >/dev/null 2>&1; then
                     go install golang.org/x/tools/cmd/goimports@latest
                   fi
-                  
+
                   # Check if any files need formatting
                   echo "Checking Go code formatting..."
-                  
+
                   # Capture output and exit code
                   set +e
                   OUTPUT=$(./fmt.sh -l 2>&1)
                   EXIT_CODE=$?
                   set -e
-                  
+
                   if [ $EXIT_CODE -ne 0 ]; then
                     echo "❌ Go files are not properly formatted!"
                     echo ""
@@ -187,7 +187,7 @@ jobs:
                     echo "Please run './fmt.sh' in the core directory and commit the changes."
                     exit 1
                   fi
-                  
+
                   echo "✅ All Go files are properly formatted."
 
             - name: Generate react-sdk docs
