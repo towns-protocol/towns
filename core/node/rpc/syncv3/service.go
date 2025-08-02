@@ -92,6 +92,14 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		}
 	}
 
+	// Send initial sync streams response to the receiver.
+	if err := rec.Send(&SyncStreamsResponse{
+		SyncId: id,
+		SyncOp: SyncOp_SYNC_NEW,
+	}); err != nil {
+		return err
+	}
+
 	// Create a new sync operation with the given ID and receiver.
 	op := NewOperation(
 		ctx,
@@ -110,12 +118,6 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 			Func("SyncStreams")
 	}
 	defer remove()
-
-	// Send initial sync streams response to the receiver.
-	op.OnStreamUpdate(&SyncStreamsResponse{
-		SyncId: id,
-		SyncOp: SyncOp_SYNC_NEW,
-	})
 
 	// If initial list of streams is not empty, we need to add them to the sync operation.
 	if len(streams) > 0 {
