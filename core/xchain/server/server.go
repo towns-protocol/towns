@@ -257,13 +257,13 @@ func New(
 		x.metricsPublisher = infra.NewMetricsPublisher(metrics.Registry())
 	}
 
-	isRegistered, err := x.isRegistered(ctx)
+	/*isRegistered, err := x.isRegistered(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if !isRegistered {
 		return nil, RiverError(Err_BAD_CONFIG, "xchain node not registered")
-	}
+	}*/
 
 	return x, nil
 }

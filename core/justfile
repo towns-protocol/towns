@@ -209,13 +209,14 @@ run-bin *args: _require_run_env
 [positional-arguments]
 run-go *args: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
-    cd ${RUN_BASE}
-    mkdir -p logs
-    go run ../../river_node/main.go \
-        --config common.yaml \
-        --config config.yaml \
-        --config contracts.env \
+    #source ${ENV_FILE}
+    #cd ${RUN_BASE}
+    #mkdir -p logs
+    set -a
+    source ./run_files/multi_ne/00/config/config.env
+    set +a
+    go run ./river_node/main.go \
+        --config ./run_files/multi_ne/00/config/config.yaml \
         "$@"
 
 # Run node from source with go run with config for instance N

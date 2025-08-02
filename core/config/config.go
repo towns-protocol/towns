@@ -22,7 +22,7 @@ func GetDefaultConfig() *Config {
 		},
 		StorageType:       "postgres",
 		TrimmingBatchSize: 100,
-		DisableHttps:      false,
+		DisableHttps:      true,
 		BaseChain: ChainConfig{
 			// TODO: ChainId:
 			BlockTimeMs: 2000,

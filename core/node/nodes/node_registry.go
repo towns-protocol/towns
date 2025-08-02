@@ -97,7 +97,7 @@ func LoadNodeRegistry(
 	}
 	ret.resetLocked()
 
-	if localNodeAddress != (common.Address{}) && !localFound {
+	/*if localNodeAddress != (common.Address{}) && !localFound {
 		return nil, RiverError(
 			Err_UNKNOWN_NODE,
 			"Local node not found in registry",
@@ -106,7 +106,7 @@ func LoadNodeRegistry(
 			"localAddress",
 			localNodeAddress,
 		).LogError(log)
-	}
+	}*/
 
 	if config.UseDetailedLog(ctx) {
 		log.Infow(
