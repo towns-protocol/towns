@@ -399,6 +399,10 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 	)
 	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
 	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	if info.Snapshot != nil {
+		fmt.Printf("  ** Snapshot: **\n")
+		fmt.Println(info.Snapshot.ParsedStringWithIndent("    "))
+	}
 	fmt.Printf("  Events: (%d)\n", len(info.Proto.Events))
 	for i, event := range info.Proto.GetEvents() {
 		parsedEvent, err := events.ParseEvent(event)
@@ -415,7 +419,7 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 			timestamp.UTC(),
 			hex.EncodeToString(event.Hash),
 			len(event.Event),
-			parsedEvent.ParsedString(),
+			parsedEvent.ParsedStringWithIndent("        "),
 		)
 	}
 	return nil
@@ -471,6 +475,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		StreamId:      streamID[:],
 		FromInclusive: miniblockNum,
 		ToExclusive:   miniblockNum + 1,
+		OmitSnapshots: false,
 	}))
 	if err != nil {
 		return err
