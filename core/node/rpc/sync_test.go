@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -807,4 +808,137 @@ func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
 	case <-time.After(time.Second * 5):
 		t.Fatalf("timed out waiting for sync down message from client 1")
 	}
+}
+
+func TestModifySyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+	require := tt.require
+
+	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
+	cookie := alice.createUserStreamGetCookie()
+
+	alice.startSync()
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
+	}
+
+	testfmt.Print(t, "Modifying sync with wrong cookie")
+	resp, err := alice.client.ModifySync(alice.ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+		SyncId:     alice.SyncID(),
+		AddStreams: []*protocol.SyncCookie{cookie},
+	}))
+	tt.require.NoError(err)
+	tt.require.Len(resp.Msg.GetAdds(), 0)
+	tt.require.Len(resp.Msg.GetRemovals(), 0)
+
+	var updates *receivedStreamUpdates
+	require.Eventually(func() bool {
+		var ok bool
+		updates, ok = alice.updates.Load(StreamId(cookie.GetStreamId()))
+		return ok
+	}, time.Second*20, time.Millisecond*100)
+	updates.mu.Lock()
+	tt.require.Len(updates.updates, 1)
+	tt.require.Equal(updates.updates[0].StreamID(), cookie.GetStreamId())
+	updates.mu.Unlock()
+}
+
+func TestStartSyncWithWrongCookie(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true, replicationFactor: 1})
+
+	alice := tt.newTestClient(0, testClientOpts{enableSync: false})
+	_ = alice.createUserStreamGetCookie()
+	spaceId, _ := alice.createSpace()
+	channelId, _, cookie := alice.createChannel(spaceId)
+
+	// Replace node address in the cookie with the address of the other node
+	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
+		cookie.NodeAddress = tt.nodes[1].address.Bytes()
+	} else {
+		cookie.NodeAddress = tt.nodes[0].address.Bytes()
+	}
+
+	alice.say(channelId, "hello from Alice")
+
+	testfmt.Print(t, "StartSync with wrong cookie")
+	// The context timeout should be a bit higher than the context timeout in syncer set when sending request to modify sync
+	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 30*time.Second)
+	defer syncCancel()
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+	updates, err := alice.client.SyncStreams(syncCtx, connReq)
+	tt.require.NoError(err)
+	testfmt.Print(t, "StartSync with wrong cookie done")
+
+	for updates.Receive() {
+		msg := updates.Msg()
+		if msg.GetSyncOp() == protocol.SyncOp_SYNC_UPDATE &&
+			testutils.StreamIdFromBytes(msg.GetStream().GetNextSyncCookie().GetStreamId()) == channelId {
+			syncCancel()
+		}
+	}
+	tt.require.ErrorIs(updates.Err(), context.Canceled)
+}
+
+// TestStreamSyncPingPong test stream sync subscription ping/pong
+func TestStreamSyncPingPong(t *testing.T) {
+	var (
+		req      = require.New(t)
+		services = newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
+		client   = services.testClient(0)
+		ctx      = services.ctx
+		mu       sync.Mutex
+		pongs    []string
+		syncID   string
+	)
+
+	// create stream sub
+	// TODO: Remove after removing the legacy syncer
+	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil})
+	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
+	syncRes, err := client.SyncStreams(ctx, connReq)
+	req.NoError(err, "sync streams")
+
+	pings := []string{"ping1", "ping2", "ping3", "ping4", "ping5"}
+	sendPings := func() {
+		for _, ping := range pings {
+			_, err := client.PingSync(ctx, connect.NewRequest(&protocol.PingSyncRequest{SyncId: syncID, Nonce: ping}))
+			req.NoError(err, "ping sync")
+		}
+	}
+
+	go func() {
+		for syncRes.Receive() {
+			msg := syncRes.Msg()
+			switch msg.GetSyncOp() {
+			case protocol.SyncOp_SYNC_NEW:
+				syncID = msg.GetSyncId()
+				// send some pings and ensure all pongs are received
+				sendPings()
+			case protocol.SyncOp_SYNC_PONG:
+				req.NotEmpty(syncID, "expected non-empty sync id")
+				req.Equal(syncID, msg.GetSyncId(), "sync id")
+				mu.Lock()
+				pongs = append(pongs, msg.GetPongNonce())
+				mu.Unlock()
+			case protocol.SyncOp_SYNC_CLOSE, protocol.SyncOp_SYNC_DOWN,
+				protocol.SyncOp_SYNC_UNSPECIFIED, protocol.SyncOp_SYNC_UPDATE:
+				continue
+			default:
+				t.Errorf("unexpected sync operation %s", msg.GetSyncOp())
+				return
+			}
+		}
+	}()
+
+	req.Eventuallyf(func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Equal(pings, pongs)
+	}, 20*time.Second, 100*time.Millisecond, "didn't receive all pongs in reasonable time or out of order")
 }

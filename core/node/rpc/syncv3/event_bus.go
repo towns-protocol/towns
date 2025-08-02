@@ -185,7 +185,7 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		ctx, cancel := context.WithTimeout(eb.ctx, modifySyncTimeout*2)
 		defer cancel()
 
-		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{AddStreams: []*SyncCookie{cookie}})
+		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
 			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
@@ -209,6 +209,7 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 
 	// Backfill the given stream for the given operation.
 	resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{
+		SyncId: op.ID(),
 		BackfillStreams: &ModifySyncRequest_Backfill{
 			SyncId:  op.ID(),
 			Streams: []*SyncCookie{cookie},
