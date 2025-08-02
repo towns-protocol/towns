@@ -231,27 +231,28 @@ func (m *StreamSyncMonitor) OnStreamMiniblockUpdate(
 	monitored.onChainMiniblockNum = event.LastMiniblockNum
 	lag := int64(monitored.onChainMiniblockNum) - int64(monitored.syncMiniblockNum)
 
-	// onChainMiniblockNum := monitored.onChainMiniblockNum
-	// syncMiniblockNum := monitored.syncMiniblockNum
-
 	monitored.mu.Unlock()
 
 	log := logging.FromCtx(ctx)
-	// log.Debugw(
-	// 	"OnStreamMiniblockUpdate",
-	// 	"monitored.streamID",
-	// 	monitored.streamID,
-	// 	"lastPlacement",
-	// 	monitored.lastPlacement,
-	// 	"lastLagCheck",
-	// 	monitored.lastLagCheck,
-	// 	"miniblockLag",
-	// 	lag,
-	// 	"syncMBNum",
-	// 	syncMiniblockNum,
-	// 	"onChainMbNum",
-	// 	onChainMiniblockNum,
-	// )
+	if monitored.lastPlacement != nil {
+		onChainMiniblockNum := monitored.onChainMiniblockNum
+		syncMiniblockNum := monitored.syncMiniblockNum
+		log.Debugw(
+			"OnStreamMiniblockUpdate",
+			"monitored.streamID",
+			monitored.streamID,
+			"lastPlacement",
+			monitored.lastPlacement,
+			"lastLagCheck",
+			monitored.lastLagCheck,
+			"miniblockLag",
+			lag,
+			"syncMBNum",
+			syncMiniblockNum,
+			"onChainMbNum",
+			onChainMiniblockNum,
+		)
+	}
 
 	// Only consider lag if we have placement info and lag exceeds threshold
 	if monitored.lastPlacement != nil && lag >= int64(m.config.LagThreshold) {
@@ -419,7 +420,7 @@ func (m *StreamSyncMonitor) Run(ctx context.Context) error {
 
 // reportStatus periodically logs the number of tracked streams and other status information
 func (m *StreamSyncMonitor) reportStatus(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -445,20 +446,23 @@ func (m *StreamSyncMonitor) reportStatus(ctx context.Context) {
 			})
 
 			log := logging.FromCtx(ctx)
+
+			// Get metrics as structured map for better JSON logging
+			syncQueueLength := float64(-1)
+			metricsMap, err := m.metricsFactory.GetMetricsAsMap()
+			if err != nil {
+				log.Errorw("Failed to get metrics as map", "error", err)
+			} else {
+				syncQueueLength = (metricsMap["metrics"].(map[string]interface{})["river_sync_monitor_unsynced_queue_length"]).(float64)
+			}
+
 			log.Infow("Stream sync monitor status",
 				"trackedStreams", trackedCount,
 				"laggingStreams", laggingCount,
 				"monitoredNodes", m.config.MonitoredNodeAddresses,
 				"lagThreshold", m.config.LagThreshold,
+				"syncQueueLength", syncQueueLength,
 			)
-
-			// Get metrics as structured map for better JSON logging
-			metricsMap, err := m.metricsFactory.GetMetricsAsMap()
-			if err != nil {
-				log.Errorw("Failed to get metrics as map", "error", err)
-			} else {
-				log.Debugw("Stream sync monitor metrics", "metrics", metricsMap)
-			}
 
 		case <-ctx.Done():
 			return
