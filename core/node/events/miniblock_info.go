@@ -262,31 +262,39 @@ func NewMiniblockInfoFromHeaderAndParsed(
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
-	opts := NewParsedMiniblockInfoOpts()
-	if mb.Number > -1 {
-		opts = opts.WithExpectedBlockNumber(mb.Number)
-	}
-	return NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
+	return NewMiniblockInfoFromDescriptorWithOpts(mb, NewParsedMiniblockInfoOpts())
 }
 
 func NewMiniblockInfoFromDescriptorWithOpts(
 	mb *storage.MiniblockDescriptor,
 	opts *ParsedMiniblockInfoOpts,
 ) (*MiniblockInfo, error) {
+	if mb.Number > -1 {
+		opts = opts.WithExpectedBlockNumber(mb.Number)
+	}
+
+	return NewMiniblockInfoFromBytes(mb.Data, mb.Snapshot, opts)
+}
+
+func NewMiniblockInfoFromBytes(
+	mbBytes []byte,
+	snapshotBytes []byte,
+	opts *ParsedMiniblockInfoOpts,
+) (*MiniblockInfo, error) {
 	var pb Miniblock
-	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
+	if err := proto.Unmarshal(mbBytes, &pb); err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode miniblock from bytes").
-			Func("NewMiniblockInfoFromDescriptorWithOpts")
+			Func("NewMiniblockInfoFromBytes")
 	}
 
 	var snapshot *Envelope
-	if len(mb.Snapshot) > 0 {
+	if len(snapshotBytes) > 0 {
 		snapshot = &Envelope{}
-		if err := proto.Unmarshal(mb.Snapshot, snapshot); err != nil {
+		if err := proto.Unmarshal(snapshotBytes, snapshot); err != nil {
 			return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 				Message("Failed to decode snapshot from bytes").
-				Func("NewMiniblockInfoFromDescriptor")
+				Func("NewMiniblockInfoFromBytes")
 		}
 	}
 
@@ -319,19 +327,36 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
 func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
-	mbProto, err := proto.Marshal(b.Proto)
-	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
-			Message("Failed to serialize miniblock info to bytes").
-			Func("AsStorageMb")
+	return b.AsStorageMbWithBytes(nil, nil)
+}
+
+// AsStorageMbWithBytes returns a storage miniblock with the data from the MiniblockInfo.
+// Optionally, mbBytes and snapshotBytes can be provided to avoid serializing the data.
+func (b *MiniblockInfo) AsStorageMbWithBytes(
+	mbBytes []byte,
+	snapshotBytes []byte,
+) (*storage.MiniblockDescriptor, error) {
+	var mbProto []byte
+	var err error
+	if len(mbBytes) == 0 {
+		mbProto, err = proto.Marshal(b.Proto)
+		if err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Failed to serialize miniblock info to bytes").
+				Func("AsStorageMbWithBytes")
+		}
+	} else {
+		mbProto = mbBytes
 	}
 
 	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
 	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	var snapshotProto []byte
+	var hasLegacySnapshot bool
 	if b.SnapshotEnvelope != nil {
 		if !bytes.Equal(b.SnapshotEnvelope.Hash, b.Header().GetSnapshotHash()) {
+			hasLegacySnapshot = true
 			return nil, RiverError(
 				Err_INTERNAL,
 				"snapshot envelope hash does not match header snapshot hash",
@@ -344,25 +369,37 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
 			).
 				Func("AsStorageMb")
 		}
-		snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
-		if err != nil {
-			return nil, AsRiverError(err, Err_INTERNAL).
-				Message("Failed to serialize snapshot to bytes").
-				Func("AsStorageMb")
+		if len(snapshotBytes) == 0 {
+			snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
+			if err != nil {
+				return nil, AsRiverError(err, Err_INTERNAL).
+					Message("Failed to serialize snapshot to bytes").
+					Func("AsStorageMbWithBytes")
+			}
+		} else {
+			snapshotProto = snapshotBytes
 		}
 	} else {
 		if len(b.Header().GetSnapshotHash()) > 0 {
 			return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
-				Func("AsStorageMb")
+				Func("AsStorageMbWithBytes")
+		}
+		if b.Header().GetSnapshot() != nil {
+			hasLegacySnapshot = true
 		}
 	}
 
 	return &storage.MiniblockDescriptor{
-		Number:   b.Ref.Num,
-		Hash:     b.Ref.Hash,
-		Snapshot: snapshotProto,
-		Data:     mbProto,
+		Number:            b.Ref.Num,
+		Hash:              b.Ref.Hash,
+		Snapshot:          snapshotProto,
+		Data:              mbProto,
+		HasLegacySnapshot: hasLegacySnapshot,
 	}, nil
+}
+
+func (b *MiniblockInfo) HasLegacySnapshot() bool {
+	return b.SnapshotEnvelope == nil && b.Snapshot != nil
 }
 
 func (b *MiniblockInfo) forEachEvent(

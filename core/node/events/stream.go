@@ -363,18 +363,9 @@ func (s *Stream) applyMiniblockImplLocked(
 		return err
 	}
 
-	var storageMb *storage.MiniblockDescriptor
-	if miniblock != nil {
-		storageMb = &storage.MiniblockDescriptor{
-			Number:   info.Ref.Num,
-			Hash:     info.Ref.Hash,
-			Snapshot: miniblock.Snapshot,
-			Data:     miniblock.Data,
-		}
-	} else {
-		if storageMb, err = info.AsStorageMb(); err != nil {
-			return err
-		}
+	storageMb, err := info.AsStorageMbWithBytes(miniblock.Data, miniblock.Snapshot)
+	if err != nil {
+		return err
 	}
 
 	err = s.params.Storage.WriteMiniblocks(
@@ -493,10 +484,15 @@ func (s *Stream) initFromGenesisLocked(
 		return RiverError(Err_INTERNAL, "init from genesis: empty genesis bytes", "streamId", s.streamId)
 	}
 
-	err := s.params.Storage.CreateStreamStorage(
+	storageMb, err := genesisInfo.AsStorageMbWithBytes(genesisBytes, nil)
+	if err != nil {
+		return err
+	}
+
+	err = s.params.Storage.CreateStreamStorage(
 		ctx,
 		s.streamId,
-		&storage.MiniblockDescriptor{Data: genesisBytes},
+		storageMb,
 	)
 	if err != nil {
 		return err
@@ -504,11 +500,7 @@ func (s *Stream) initFromGenesisLocked(
 
 	view, err := MakeStreamView(
 		&storage.ReadStreamFromLastSnapshotResult{
-			Miniblocks: []*storage.MiniblockDescriptor{{
-				Data:   genesisBytes,
-				Number: genesisInfo.Ref.Num,
-				Hash:   genesisInfo.Ref.Hash,
-			}},
+			Miniblocks: []*storage.MiniblockDescriptor{storageMb},
 		},
 	)
 	if err != nil {
