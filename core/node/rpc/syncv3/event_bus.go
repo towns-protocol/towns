@@ -188,11 +188,11 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		resp, err := eb.syncerRegistry.Modify(ctx, &ModifySyncRequest{SyncId: op.ID(), AddStreams: []*SyncCookie{cookie}})
 		if err != nil {
 			// Send sync down message with the given error. TODO: Add message to sync down resp.
-			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
+			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN, Message: err.Error()})
 			return
 		} else if len(resp.GetAdds()) > 0 {
 			// Send sync down message with the given error. TODO: Add message to sync down resp
-			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
+			op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN, Message: resp.GetAdds()[0].GetMessage()})
 			return
 		}
 	}
@@ -219,12 +219,12 @@ func (eb *eventBus) onSubscribe(op Operation, cookie *SyncCookie) {
 		// rvrErr := AsRiverError(err)
 		eb.operationRegistry.RemoveOpFromStream(streamID, op.ID())
 		//  Send sync down message with the given error. TODO: Add message to sync down resp
-		op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
+		op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN, Message: err.Error()})
 		return
 	} else if len(resp.GetBackfills()) > 0 {
 		eb.operationRegistry.RemoveOpFromStream(streamID, op.ID())
 		// Send sync down message with the given error. TODO: Add message to sync down resp
-		op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN})
+		op.OnStreamUpdate(&SyncStreamsResponse{StreamId: streamID[:], SyncOp: SyncOp_SYNC_DOWN, Message: resp.GetBackfills()[0].GetMessage()})
 		return
 	}
 }

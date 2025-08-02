@@ -190,7 +190,7 @@ func (s *remoteSyncer) Run() {
 
 		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
 			s.log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
-			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
+			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], Message: "remote node disconnected"}
 			if err := s.sendResponse(streamID, msg); err != nil {
 				s.log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
 				return false

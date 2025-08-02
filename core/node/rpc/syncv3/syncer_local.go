@@ -148,9 +148,17 @@ func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
 // TODO: Specify error in the down message.
 func (s *localSyncer) OnSyncError(err error) {
 	s.log.Errorw("sync failed with error", "error", err)
+	var errMsg string
+	if err != nil {
+		errMsg = err.Error()
+	}
 
 	s.activeStreams.Range(func(streamID StreamId, syncStream Stream) bool {
-		s.OnStreamSyncDown(streamID)
+		err = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], Message: errMsg})
+		if err != nil {
+			s.log.Errorw("failed to send sync down response", "streamId", streamID, "error", err)
+			s.streamUnsub(streamID)
+		}
 		return true
 	})
 	s.activeStreams.Clear()
@@ -158,7 +166,7 @@ func (s *localSyncer) OnSyncError(err error) {
 
 // OnStreamSyncDown is called when updates for a stream could not be given.
 func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], Message: "stream is down"})
 	if err != nil {
 		s.log.Errorw("failed to send sync down response", "streamId", streamID, "error", err)
 		s.streamUnsub(streamID)

@@ -182,7 +182,7 @@ func (op *operation) Ping(_ context.Context, nonce string) {
 // DebugDropStream is a debug method to drop a specific stream from the sync operation.
 // The stream will be removed from the operation in startUpdatesProcessor.
 func (op *operation) DebugDropStream(_ context.Context, streamId StreamId) {
-	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:]})
+	op.OnStreamUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamId[:], Message: "debug drop stream"})
 }
 
 // modify modifies the operation with the given request.
