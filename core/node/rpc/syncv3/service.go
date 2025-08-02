@@ -63,7 +63,7 @@ func NewService(
 	// There is a cyclic dependency between the event bus and the syncer registry,
 	// so we need to create the event bus queue first and pass it to these components.
 	// TODO: Come up with a better way to handle cyclic dependencies here.
-	eventBusQueue := dynmsgbuf.NewDynamicBuffer[EventBusMessage]()
+	eventBusQueue := dynmsgbuf.NewDynamicBufferWithSize[EventBusMessage](eventBusBufferSize)
 
 	opReg := NewRegistry()
 	syncerReg := NewSyncerRegistry(

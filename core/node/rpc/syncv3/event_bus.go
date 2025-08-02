@@ -10,6 +10,10 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
+const (
+	eventBusBufferSize = 10000
+)
+
 type MessageType uint8
 
 const (
