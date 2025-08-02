@@ -299,12 +299,6 @@ func (op *operation) startUpdatesProcessor() {
 // processMessage processes a single message from the stream updates queue.
 // Returns true if the processor should stop processing messages.
 func (op *operation) processMessage(msg *SyncStreamsResponse) bool {
-	select {
-	case <-op.ctx.Done():
-		return true
-	default:
-	}
-
 	// Special cases depending on the message type that should be applied before sending the message.
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		streamID, err := StreamIdFromBytes(msg.StreamID())
@@ -348,10 +342,15 @@ func (op *operation) processMessage(msg *SyncStreamsResponse) bool {
 		}
 	}
 
-	msg.SyncId = op.id
-	if err := op.rec.Send(msg); err != nil {
-		op.cancel(err)
+	select {
+	case <-op.ctx.Done():
 		return true
+	default:
+		msg.SyncId = op.id
+		if err := op.rec.Send(msg); err != nil {
+			op.cancel(err)
+			return true
+		}
 	}
 
 	// Special cases depending on the message type that should be applied after sending the message.
