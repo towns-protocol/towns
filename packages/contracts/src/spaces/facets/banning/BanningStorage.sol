@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
-// contracts
 
 library BanningStorage {
     // keccak256(abi.encode(uint256(keccak256("spaces.facets.banning.storage")) - 1)) &
@@ -16,13 +11,13 @@ library BanningStorage {
 
     struct Layout {
         EnumerableSet.UintSet bannedIds;
+        // deprecated
         mapping(uint256 => bool) bannedFromSpace;
     }
 
     function layout() internal pure returns (Layout storage s) {
-        bytes32 slot = STORAGE_SLOT;
         assembly {
-            s.slot := slot
+            s.slot := STORAGE_SLOT
         }
     }
 }
