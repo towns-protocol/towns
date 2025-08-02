@@ -170,7 +170,7 @@ func (op *operation) Cancel(ctx context.Context) error {
 	case <-ctx.Done():
 		return AsRiverError(ctx.Err(), Err_CANCELED).Message("request context cancelled")
 	case <-op.ctx.Done():
-		return AsRiverError(op.ctx.Err(), Err_CANCELED).Message("sync context cancelled")
+		return nil
 	}
 }
 

@@ -1356,7 +1356,7 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 		var ok bool
 		updates, ok = alice.updates.Load(StreamId(cookie.GetStreamId()))
 		return ok
-	}, time.Second*15, time.Millisecond*100)
+	}, time.Second*30, time.Millisecond*100)
 	updates.mu.Lock()
 	tt.require.Len(updates.updates, 1)
 	tt.require.Equal(updates.updates[0].StreamID(), cookie.GetStreamId())

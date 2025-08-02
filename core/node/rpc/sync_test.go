@@ -97,15 +97,11 @@ func (c *syncClient) sync(ctx context.Context, cookie *protocol.SyncCookie) {
 }
 
 func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.SyncCookie, remove [][]byte) {
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(&protocol.ModifySyncRequest{
+	resp, err := c.client.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
 		SyncId:        c.syncId,
 		AddStreams:    add,
 		RemoveStreams: remove,
-	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
-
-	resp, err := c.client.ModifySync(ctx, connReq)
+	}))
 	require.NoError(t, err, "failed to modify sync")
 	require.Len(t, resp.Msg.GetBackfills(), 0)
 	require.Len(t, resp.Msg.GetAdds(), 0)
@@ -113,13 +109,9 @@ func (c *syncClient) modify(t *testing.T, ctx context.Context, add []*protocol.S
 }
 
 func (c *syncClient) cancelSync(t *testing.T, ctx context.Context) {
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(&protocol.CancelSyncRequest{
+	_, err := c.client.CancelSync(ctx, connect.NewRequest(&protocol.CancelSyncRequest{
 		SyncId: c.syncId,
-	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
-
-	_, err := c.client.CancelSync(ctx, connReq)
+	}))
 	require.NoError(t, err, "failed to cancel sync")
 }
 
