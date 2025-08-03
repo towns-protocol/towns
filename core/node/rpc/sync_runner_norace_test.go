@@ -122,7 +122,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -267,6 +267,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			NumWorkers:                testCfg.numWorkers,
 			MaxConcurrentNodeRequests: testCfg.maxConcurrentRequests,
 		},
+		nil,
 		nil,
 	)
 	msrCtx := ctx
@@ -530,6 +531,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 			MaxConcurrentNodeRequests: 2,
 		},
 		nil,
+		nil,
 	)
 	msrCtx := ctx
 	// Use this line to enable logs only for the multisync runner
@@ -690,7 +692,11 @@ func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled b
 }
 
 // waitForAndVerifyMessages waits for messages to be received and verifies the count
-func (tc *coldStreamsTestContext) waitForAndVerifyMessages(streamId StreamId, expectedCount int, timeout time.Duration) map[string]int {
+func (tc *coldStreamsTestContext) waitForAndVerifyMessages(
+	streamId StreamId,
+	expectedCount int,
+	timeout time.Duration,
+) map[string]int {
 	tc.require.Eventually(func() bool {
 		tc.eventTrackerMu.Lock()
 		defer tc.eventTrackerMu.Unlock()
@@ -761,6 +767,7 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 			NumWorkers:                5,
 			MaxConcurrentNodeRequests: 5,
 		},
+		nil,
 		nil,
 	)
 	go msr.Run(ctx)
@@ -928,7 +935,12 @@ func TestColdStreamsFullHistory(t *testing.T) {
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
 
-	tc.require.Equal(messagesPerChannel, len(channelMessages), "Channel should have all %d messages", messagesPerChannel)
+	tc.require.Equal(
+		messagesPerChannel,
+		len(channelMessages),
+		"Channel should have all %d messages",
+		messagesPerChannel,
+	)
 	for i := 0; i < messagesPerChannel; i++ {
 		expectedMsg := fmt.Sprintf("channel1-msg%d", i)
 		count, found := channelMessages[expectedMsg]
