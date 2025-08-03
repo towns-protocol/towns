@@ -355,9 +355,10 @@ func (b *MiniblockInfo) AsStorageMbWithBytes(
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	var snapshotProto []byte
 	var hasLegacySnapshot bool
-	if b.SnapshotEnvelope != nil {
+	if b.Header().GetSnapshot() != nil {
+		hasLegacySnapshot = true
+	} else if b.SnapshotEnvelope != nil {
 		if !bytes.Equal(b.SnapshotEnvelope.Hash, b.Header().GetSnapshotHash()) {
-			hasLegacySnapshot = true
 			return nil, RiverError(
 				Err_INTERNAL,
 				"snapshot envelope hash does not match header snapshot hash",
@@ -368,7 +369,7 @@ func (b *MiniblockInfo) AsStorageMbWithBytes(
 				"snapshotEnvelopeHash",
 				b.SnapshotEnvelope.Hash,
 			).
-				Func("AsStorageMb")
+				Func("AsStorageMbWithBytes")
 		}
 		if len(snapshotBytes) == 0 {
 			snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
@@ -380,14 +381,9 @@ func (b *MiniblockInfo) AsStorageMbWithBytes(
 		} else {
 			snapshotProto = snapshotBytes
 		}
-	} else {
-		if len(b.Header().GetSnapshotHash()) > 0 {
-			return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
-				Func("AsStorageMbWithBytes")
-		}
-		if b.Header().GetSnapshot() != nil {
-			hasLegacySnapshot = true
-		}
+	} else if len(b.Header().GetSnapshotHash()) > 0 {
+		return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
+			Func("AsStorageMbWithBytes")
 	}
 
 	return &storage.MiniblockDescriptor{

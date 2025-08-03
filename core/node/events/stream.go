@@ -363,7 +363,13 @@ func (s *Stream) applyMiniblockImplLocked(
 		return err
 	}
 
-	storageMb, err := info.AsStorageMbWithBytes(miniblock.Data, miniblock.Snapshot)
+	var mbBytes []byte
+	var snapshotBytes []byte
+	if miniblock != nil {
+		mbBytes = miniblock.Data
+		snapshotBytes = miniblock.Snapshot
+	}
+	storageMb, err := info.AsStorageMbWithBytes(mbBytes, snapshotBytes)
 	if err != nil {
 		return err
 	}
