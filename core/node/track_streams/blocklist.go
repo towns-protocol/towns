@@ -1,4 +1,4 @@
-package sync
+package track_streams
 
 import (
 	"log"

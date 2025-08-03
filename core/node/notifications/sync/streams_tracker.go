@@ -84,11 +84,6 @@ func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
 
 // TrackStream returns true if the given streamID must be tracked for notifications.
 func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
-	// Skip blocklisted streams
-	if isStreamBlocklisted(streamID) {
-		return false
-	}
-
 	streamType := streamID.Type()
 
 	// When cold streams are enabled, only track user settings stream on init

@@ -151,6 +151,11 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 				return true
 			}
 
+			// Skip blocklisted streams
+			if isStreamBlocklisted(stream.StreamId()) {
+				return true
+			}
+
 			// There are some streams managed by a node that isn't registered anymore.
 			// Filter these out because we can't sync these streams.
 			stream.Stream.Nodes = slices.DeleteFunc(stream.Stream.Nodes, func(address common.Address) bool {
