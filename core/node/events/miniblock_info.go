@@ -50,6 +50,14 @@ func NewMiniblockInfoFromProto(
 	snapshotEnvelope *Envelope,
 	opts *ParsedMiniblockInfoOpts,
 ) (*MiniblockInfo, error) {
+	if opts == nil {
+		opts = NewParsedMiniblockInfoOpts()
+	}
+
+	if mbProto == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "miniblock proto is nil").Func("NewMiniblockInfoFromProto")
+	}
+
 	headerEvent, err := ParseEvent(mbProto.Header)
 	if err != nil {
 		return nil, AsRiverError(
@@ -149,43 +157,46 @@ func NewMiniblockInfoFromProto(
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	if opts.ApplyOnlyMatchingSnapshot() && snapshotEnvelope != nil {
-		if !bytes.Equal(snapshotEnvelope.Hash, blockHeader.GetSnapshotHash()) {
-			snapshotEnvelope = nil
-		}
-	}
-
-	// TODO: FIX: modify to ignore snapshot envelope if snapshot is set in the header
 	var snapshot *Snapshot
-	if snapshotEnvelope != nil {
-		snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
-		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_EVENT).
-				Message("Failed to parse snapshot").
-				Func("NewMiniblockInfoFromProto")
-		}
-	} else if blockHeader.GetSnapshot() != nil {
+	if blockHeader.GetSnapshot() != nil {
 		snapshot = blockHeader.GetSnapshot()
-	}
+		// Prefer snapshot from header over one from snapshot envelope.
+		snapshotEnvelope = nil
+	} else {
+		if opts.ApplyOnlyMatchingSnapshot() && snapshotEnvelope != nil {
+			if !bytes.Equal(snapshotEnvelope.Hash, blockHeader.GetSnapshotHash()) {
+				snapshotEnvelope = nil
+			}
+		}
 
-	if !opts.SkipSnapshotValidation() && !opts.ApplyOnlyMatchingSnapshot() {
-		expectedHash := blockHeader.GetSnapshotHash()
 		if snapshotEnvelope != nil {
-			if !bytes.Equal(snapshotEnvelope.Hash, expectedHash) {
+			snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
+			if err != nil {
+				return nil, AsRiverError(err, Err_BAD_EVENT).
+					Message("Failed to parse snapshot").
+					Func("NewMiniblockInfoFromProto")
+			}
+		}
+
+		if !opts.SkipSnapshotValidation() && !opts.ApplyOnlyMatchingSnapshot() {
+			expectedHash := blockHeader.GetSnapshotHash()
+			if snapshotEnvelope != nil {
+				if !bytes.Equal(snapshotEnvelope.Hash, expectedHash) {
+					return nil, RiverError(
+						Err_BAD_BLOCK,
+						"Snapshot hash does not match snapshot envelope hash",
+					).Func("NewMiniblockInfoFromProto").
+						Tag("snapshotHash", hex.EncodeToString(blockHeader.GetSnapshotHash())).
+						Tag("snapshotEnvelopeHash", hex.EncodeToString(snapshotEnvelope.Hash)).
+						Tag("mbNum", blockHeader.MiniblockNum)
+				}
+			} else if len(expectedHash) != 0 {
 				return nil, RiverError(
 					Err_BAD_BLOCK,
-					"Snapshot hash does not match snapshot envelope hash",
+					"Snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
 				).Func("NewMiniblockInfoFromProto").
-					Tag("snapshotHash", hex.EncodeToString(blockHeader.GetSnapshotHash())).
-					Tag("snapshotEnvelopeHash", hex.EncodeToString(snapshotEnvelope.Hash)).
 					Tag("mbNum", blockHeader.MiniblockNum)
 			}
-		} else if len(expectedHash) != 0 {
-			return nil, RiverError(
-				Err_BAD_BLOCK,
-				"Snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
-			).Func("NewMiniblockInfoFromProto").
-				Tag("mbNum", blockHeader.MiniblockNum)
 		}
 	}
 
