@@ -15,7 +15,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 
-	"github.com/SherClockHolmes/webpush-go"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/sideshow/apns2/payload"
@@ -137,6 +136,7 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	}
 
 	members.Each(func(member string) bool {
+		// Yoni: move everything here to a separate function
 		var (
 			participant = common.HexToAddress(member)
 			pref, err   = p.cache.GetUserPreferences(ctx, participant)
@@ -475,6 +475,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			webPayload["event"] = eventBytesHex
 		}
 
+		// Yoni: this list can be pretty long. what does the client do with it?
 		if len(receivers) > 0 {
 			webPayload["recipients"] = receivers
 		}
@@ -488,6 +489,9 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 		}
 
 		for _, sub := range userPref.Subscriptions.WebPush {
+			// Yoni: do we want to clean those expired subscriptions? we can
+			// change the fetch method to not return records with LastSeen older than
+			// now - subscriptionExpiration
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
 				p.log.Warnw("Ignore WebPush subscription due to no activity",
 					"user", user,
@@ -500,7 +504,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 				continue
 			}
 
-			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub.Sub, event, webPayload)
+			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub, event, webPayload)
 			if err == nil {
 				p.log.Debugw("Successfully sent web push notification",
 					"user", user,
@@ -509,7 +513,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"user", user,
 				)
 			} else if subscriptionExpired {
-				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub); err != nil {
+				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub, sub.App); err != nil {
 					p.log.Errorw("Unable to remove expired webpush subscription",
 						"user", userPref.UserID, "error", err)
 				} else {
@@ -532,7 +536,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 		for _, sub := range userPref.Subscriptions.APNPush {
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
+				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID, sub.App); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
 						"user", userPref.UserID, "error", err)
 					continue
@@ -632,7 +636,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"version", sub.PushVersion,
 					"error", err)
 			} else {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
+				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID, sub.App); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
 						"user", userPref.UserID, "error", err)
 				} else {
@@ -646,7 +650,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 func (p *MessageToNotificationsProcessor) sendWebPushNotification(
 	ctx context.Context,
 	streamID shared.StreamId,
-	sub *webpush.Subscription,
+	sub *types.WebPushSubscription,
 	event *events.ParsedEvent,
 	content map[string]interface{},
 ) (bool, error) {
@@ -655,7 +659,13 @@ func (p *MessageToNotificationsProcessor) sendWebPushNotification(
 		"payload":   content,
 	})
 
-	return p.notifier.SendWebPushNotification(ctx, sub, event.Hash, payload)
+	// TODO: remove this once all subs have an app specified
+	// Default to Towns app if not specified
+	app := NotificationApp_NOTIFICATION_APP_TOWNS
+	if sub.App != NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
+		app = sub.App
+	}
+	return p.notifier.SendWebPushNotification(ctx, sub.Sub, event.Hash, payload, app)
 }
 
 func (p *MessageToNotificationsProcessor) sendAPNNotification(
@@ -685,6 +695,12 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 
 	_, containsStreamEvent := content["event"]
 
+	// TODO: remove this once all subs have an app specified
+	// Default to Towns app if not specified
+	app := NotificationApp_NOTIFICATION_APP_TOWNS
+	if sub.App != NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
+		app = sub.App
+	}
 	return p.notifier.SendApplePushNotification(
-		ctx, sub, event.Hash, notificationPayload, containsStreamEvent)
+		ctx, sub, event.Hash, notificationPayload, containsStreamEvent, app)
 }
