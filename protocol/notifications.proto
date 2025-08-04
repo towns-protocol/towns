@@ -86,6 +86,16 @@ enum SpaceChannelSettingValue {
   SPACE_CHANNEL_SETTING_MESSAGES_ALL = 4;
 }
 
+// NotificationApp identifies which app is making the notification subscription request.
+enum NotificationApp {
+  // NOTIFICATION_APP_UNSPECIFIED is invalid and should not be used.
+  NOTIFICATION_APP_UNSPECIFIED = 0;
+  // NOTIFICATION_APP_TOWNS is for the Towns iOS/web app.
+  NOTIFICATION_APP_TOWNS = 1;
+  // NOTIFICATION_APP_SENDIT is for the Sendit app.
+  NOTIFICATION_APP_SENDIT = 2;
+}
+
 enum APNEnvironment {
   // APN_ENVIRONMENT_UNSPECIFIED is invalid.
   APN_ENVIRONMENT_UNSPECIFIED = 0;
@@ -238,6 +248,8 @@ message WebPushSubscriptionObject {
 message SubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
+  // app identifies which app is making the subscription request
+  NotificationApp app = 2;
 }
 
 message SubscribeWebPushResponse {}
@@ -245,6 +257,8 @@ message SubscribeWebPushResponse {}
 message UnsubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
+  // app identifies which app is making the unsubscription request
+  NotificationApp app = 2;
 }
 
 message UnsubscribeWebPushResponse {}
@@ -263,6 +277,8 @@ message SubscribeAPNRequest {
   APNEnvironment environment = 2;
   // Requested push notification version (default=NOTIFICATION_PUSH_VERSION_1)
   NotificationPushVersion push_version = 3;
+  // app identifies which app is making the subscription request
+  NotificationApp app = 4;
 }
 
 message APNSubscription {
@@ -277,6 +293,8 @@ message SubscribeAPNResponse {}
 message UnsubscribeAPNRequest {
   // APN device token
   bytes device_token = 1;
+  // app identifies which app is making the unsubscription request
+  NotificationApp app = 2;
 }
 
 message UnsubscribeAPNResponse {}
