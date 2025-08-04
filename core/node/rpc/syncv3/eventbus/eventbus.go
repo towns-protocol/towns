@@ -10,6 +10,11 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
+var (
+	_ StreamSubscriptionManager = (*eventBusImpl)(nil)
+	_ syncer.StreamSubscriber   = (*eventBusImpl)(nil)
+)
+
 type (
 	// StreamSubscriber subscribes to stream updates.
 	StreamSubscriber interface {
@@ -87,17 +92,15 @@ type (
 	}
 )
 
-var (
-	_ StreamSubscriptionManager = (*eventBusImpl)(nil)
-	_ syncer.StreamSubscriber   = (*eventBusImpl)(nil)
-)
-
 // New creates a new instance of the event bus implementation.
 //
 // It creates an internal queue for stream updates and a background goroutine that reads updates from this queue
 // and distributes them to subscribers.
-func New(ctx context.Context) *eventBusImpl {
-	e := &eventBusImpl{}
+func New(ctx context.Context, registry syncer.Registry) *eventBusImpl {
+	e := &eventBusImpl{
+		queue:    dynmsgbuf.NewDynamicBuffer[*eventBusImplMessage](),
+		registry: registry,
+	}
 	go e.run(ctx)
 	return e
 }

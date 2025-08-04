@@ -9,6 +9,13 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+var (
+	_ SyncStreamHandler         = (*syncStreamHandlerImpl)(nil)
+	_ eventbus.StreamSubscriber = (*syncStreamHandlerImpl)(nil)
+
+	_ Registry = (*syncStreamHandlerRegistryImpl)(nil)
+)
+
 type (
 	// SyncStreamHandler is a client sync operation. It subscribes for stream updates on behalf of
 	// the client and sends updates to the client. The client can add, remove stream subscription
@@ -47,9 +54,10 @@ type (
 		Send(*SyncStreamsResponse) error
 	}
 
-	// SyncStreamHandlerRegistry holds a mapping from syncId that is shared with the client and
+	// Registry is the sync stream handler registry.
+	// Registry holds a mapping from syncId that is shared with the client and
 	// its associated SyncStreamHandler that is responsible to send stream updates to the client.
-	SyncStreamHandlerRegistry interface {
+	Registry interface {
 		// Get sync stream handler by sync id.
 		Get(syncID string) (SyncStreamHandler, bool)
 
@@ -57,12 +65,14 @@ type (
 		New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler
 	}
 
+	// syncStreamHandlerImpl is a concrete implementation of the SyncStreamHandler interface.
 	syncStreamHandlerImpl struct {
 		syncID           string
 		receiver         Receiver
 		streamUpdatesBus eventbus.StreamSubscriptionManager
 	}
 
+	// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
 	syncStreamHandlerRegistryImpl struct {
 		handlersLock sync.Mutex
 		handlers     map[string]*syncStreamHandlerImpl
@@ -71,19 +81,12 @@ type (
 	}
 )
 
-var (
-	_ SyncStreamHandler         = (*syncStreamHandlerImpl)(nil)
-	_ eventbus.StreamSubscriber = (*syncStreamHandlerImpl)(nil)
-
-	_ SyncStreamHandlerRegistry = (*syncStreamHandlerRegistryImpl)(nil)
-)
-
 func (s *syncStreamHandlerImpl) SyncID() string {
 	return s.syncID
 }
 
 func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) *ModifySyncResponse {
-	// TODO: validate req
+	// TODO: implement me
 
 	var res ModifySyncResponse
 	for _, stream := range req.AddStreams {
@@ -137,11 +140,20 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 	panic("implement me")
 }
 
+// NewRegistry creates a new instance of the Registry.
+func NewRegistry() Registry {
+	return &syncStreamHandlerRegistryImpl{
+		handlers: make(map[string]*syncStreamHandlerImpl),
+	}
+}
+
+// Get retrieves a sync stream handler by its sync ID.
 func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, bool) {
 	handler, ok := s.handlers[syncID]
 	return handler, ok
 }
 
+// New creates a new sync stream handler and registers it in the registry.
 func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler {
 	handler := &syncStreamHandlerImpl{
 		syncID:           syncID,
