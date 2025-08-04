@@ -11,14 +11,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
-	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/contracts/river/deploy"
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -517,7 +518,7 @@ func TestStreamReconciliationTaskRescheduling(t *testing.T) {
 
 func TestStreamReconciliationFromUnreplicated(t *testing.T) {
 	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true})
-	//ctx := tt.ctx
+	// ctx := tt.ctx
 	require := tt.require
 
 	tt.btc.SetConfigValue(
@@ -558,12 +559,131 @@ func TestStreamReconciliationFromUnreplicated(t *testing.T) {
 		tt.ctx,
 		[]river.SetStreamReplicationFactor{
 			{StreamId: channelId, Nodes: nodes, ReplicationFactor: uint8(1)},
-		},
-	)
+		})
 
 	// Now leader should write latest miniblock to the stream registry
 	tt.require.Eventually(func() bool {
 		streamRecord, err = tt.btc.StreamRegistry.GetStream(&bind.CallOpts{Context: tt.ctx}, channelId)
 		return err == nil && streamRecord.LastMiniblockNum >= uint64(mb.Num)
 	}, 20*time.Second, 100*time.Millisecond, "leader should write latest miniblock to the stream registry")
+}
+
+// TestStreamMiniblockRegistrationOnStart ensures that the latest miniblock is written to the
+// stream registry when the node starts up.
+func TestStreamMiniblockRegistrationOnStart(t *testing.T) {
+	var (
+		opts    = serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true}
+		tt      = newServiceTester(t, opts)
+		client  = tt.testClient(2)
+		ctx     = tt.ctx
+		require = tt.require
+	)
+
+	// ensure that only every 5th miniblock is registered
+	tt.btc.SetConfigValue(
+		t,
+		tt.ctx,
+		crypto.StreamMiniblockRegistrationFrequencyKey,
+		crypto.ABIEncodeUint64(uint64(5)),
+	)
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+
+	// create a stream, add some events and create a bunch of mini-blocks that are stored
+	// in the nodes local storage.
+	streamId, cookie, _, err := createUserSettingsStream(
+		ctx,
+		wallet,
+		client,
+		&protocol.StreamSettings{DisableMiniblockCreation: true},
+	)
+	require.NoError(err)
+
+	stream, err := tt.btc.StreamRegistry.GetStream(nil, streamId)
+	require.NoError(err)
+	quorumNodeAddr := stream.Nodes[0]
+	var quorumNodeService *Service
+
+	// lookup the quorum node service
+	for _, n := range tt.nodes {
+		if n.address == quorumNodeAddr {
+			quorumNodeService = n.service
+		}
+	}
+	require.NotNil(quorumNodeService)
+
+	// create a bunch of mini-blocks and store them in mbChain for later comparison
+	N := 8
+	mbChain := map[int64]common.Hash{0: common.BytesToHash(cookie.PrevMiniblockHash)}
+	latestMbNum := int64(0)
+
+	for range N {
+		require.NoError(addUserBlockedFillerEvent(ctx, wallet, client, streamId, MiniblockRefFromCookie(cookie)))
+		mbRef, err := quorumNodeService.cache.TestMakeMiniblock(ctx, streamId, false)
+		require.NoError(err)
+
+		latestMbNum = mbRef.Num
+		mbChain[mbRef.Num] = mbRef.Hash
+	}
+	require.Equal(1+N, len(mbChain), "expected to create %d miniblocks", 1+N)
+
+	// ensure that the node has more miniblocks in its storage than registered on-chain
+	storedMbNum, err := quorumNodeService.storage.GetLastMiniblockNumber(tt.ctx, streamId)
+	require.NoError(err)
+	stream, err = tt.btc.StreamRegistry.GetStream(nil, streamId)
+	require.NoError(err)
+	require.Greater(uint64(storedMbNum), stream.LastMiniblockNum)
+
+	// update the stream record to initiate stream replication using the mockUpdateStreamNoEmit
+	// function that doesn't emit the StreamUpdated event to test that the node updates the
+	// registry stream record on boot (e.g. missed the StreamUpdated event).
+	registry, err := deploy.NewMockRiverRegistry(tt.btc.RiverRegistryAddress, tt.btc.BcClient)
+	require.NoError(err)
+
+	nodes := []common.Address{quorumNodeAddr}
+	for _, node := range tt.nodes {
+		if node.address != quorumNodeAddr {
+			nodes = append(nodes, node.address)
+		}
+	}
+	require.Equal(3, len(nodes), "expected to have 3 nodes")
+
+	pendingTx, err := tt.btc.DeployerBlockchain.TxPool.Submit(
+		tt.ctx,
+		"mockUpdateStreamNoEmit",
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return registry.MockUpdateStreamNoEmit(opts, streamId, deploy.Stream{
+				LastMiniblockHash: stream.LastMiniblockHash,
+				LastMiniblockNum:  stream.LastMiniblockNum,
+				Reserved0:         1,
+				Flags:             0,
+				Nodes:             nodes,
+			})
+		},
+	)
+
+	require.NoError(err)
+	receipt, err := pendingTx.Wait(tt.ctx)
+	require.NoError(err)
+	require.Equal(receipt.Status, types.ReceiptStatusSuccessful)
+
+	// create a new instance of the StreamCache that detects that its local stream storage
+	// is ahead of the stream record and registers the latest miniblock in the registry.
+	params := quorumNodeService.cache.Params()
+	params.AppliedBlockNum = tt.btc.BlockNum(tt.ctx)
+	streamCache := NewStreamCache(params)
+	go func() {
+		require.NoError(streamCache.Start(tt.ctx, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: false}))
+	}()
+
+	// ensure that at some point the stream record in the registry is upgraded to the latest miniblock
+	require.Eventuallyf(func() bool {
+		streamRecord, err := tt.btc.StreamRegistry.GetStream(&bind.CallOpts{Context: tt.ctx}, streamId)
+		if err != nil {
+			return false
+		}
+
+		return latestMbNum == streamRecord.LastMb().Num
+	}, 20*time.Second, 100*time.Millisecond, "stream registry should have been updated with latest miniblock number")
 }

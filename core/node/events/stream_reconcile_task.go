@@ -27,18 +27,19 @@ func (s *StreamCache) SubmitReconcileStreamTask(
 	stream *Stream,
 	streamRecord *river.StreamWithId,
 ) {
-	s.submitReconcileStreamTaskToPool(s.onlineReconcileWorkerPool, stream, streamRecord)
+	s.submitReconcileStreamTaskToPool(s.onlineReconcileWorkerPool, stream, streamRecord, false)
 }
 
 func (s *StreamCache) submitReconcileStreamTaskToPool(
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
+	writeLatestKnownMiniblock bool,
 ) {
 	if streamRecord == nil {
-		s.submitGetRecordTask(pool, stream)
+		s.submitGetRecordTask(pool, stream, writeLatestKnownMiniblock)
 	} else {
-		s.submitReconciliationTask(pool, stream, streamRecord)
+		s.submitReconciliationTask(pool, stream, streamRecord, writeLatestKnownMiniblock)
 	}
 }
 
@@ -60,6 +61,7 @@ func (s *StreamCache) submitToPool(
 func (s *StreamCache) submitGetRecordTask(
 	pool *workerpool.WorkerPool,
 	stream *Stream,
+	writeLatestKnownMiniblock bool,
 ) {
 	_, loaded := s.scheduledGetRecordTasks.LoadOrStore(stream.streamId, true)
 	if loaded {
@@ -67,12 +69,13 @@ func (s *StreamCache) submitGetRecordTask(
 	}
 
 	s.submitToPool(pool, func() {
-		s.getRecordTask(stream)
+		s.getRecordTask(stream, writeLatestKnownMiniblock)
 	})
 }
 
 func (s *StreamCache) getRecordTask(
 	stream *Stream,
+	writeLatestKnownMiniblock bool,
 ) {
 	s.scheduledGetRecordTasks.Delete(stream.streamId)
 
@@ -86,13 +89,14 @@ func (s *StreamCache) getRecordTask(
 		return
 	}
 
-	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
+	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord, writeLatestKnownMiniblock)
 }
 
 func (s *StreamCache) submitReconciliationTask(
 	pool *workerpool.WorkerPool,
 	stream *Stream,
 	streamRecord *river.StreamWithId,
+	writeLatestKnownMiniblock bool,
 ) {
 	schedule := false
 	_, _ = s.scheduledReconciliationTasks.Compute(
@@ -108,6 +112,7 @@ func (s *StreamCache) submitReconciliationTask(
 			if v.inProgress != nil && v.inProgress.LastMbNum() >= streamRecord.LastMbNum() {
 				return v, xsync.CancelOp
 			}
+
 			if v.next != nil && v.next.LastMbNum() >= streamRecord.LastMbNum() {
 				return v, xsync.CancelOp
 			}
@@ -117,13 +122,14 @@ func (s *StreamCache) submitReconciliationTask(
 
 	if schedule {
 		s.submitToPool(pool, func() {
-			s.reconciliationTask(stream.StreamId())
+			s.reconciliationTask(stream.StreamId(), writeLatestKnownMiniblock)
 		})
 	}
 }
 
 func (s *StreamCache) reconciliationTask(
 	streamId StreamId,
+	writeLatestKnownMiniblock bool,
 ) {
 	corrupt := false
 	var streamRecord *river.StreamWithId
@@ -153,7 +159,7 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.reconcileStreamFromPeers(stream, streamRecord)
+	err := s.reconcileStreamFromPeers(stream, streamRecord, writeLatestKnownMiniblock)
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
@@ -207,7 +213,7 @@ func (s *StreamCache) reconciliationTask(
 
 	if schedule {
 		s.submitToPool(s.onlineReconcileWorkerPool, func() {
-			s.reconciliationTask(streamId)
+			s.reconciliationTask(streamId, writeLatestKnownMiniblock)
 		})
 	}
 }
@@ -217,6 +223,7 @@ func (s *StreamCache) reconciliationTask(
 func (s *StreamCache) reconcileStreamFromPeers(
 	stream *Stream,
 	streamRecord *river.StreamWithId,
+	writeLatestKnownMiniblock bool,
 ) error {
 	ctx := s.params.ServerCtx
 
@@ -229,16 +236,28 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		}
 	}
 
-	lastMiniblockNum, err := stream.getLastMiniblockNumSkipLoad(ctx)
+	lastLocalMiniblockNum, err := stream.getLastMiniblockNumSkipLoad(ctx)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			lastMiniblockNum = -1
+			lastLocalMiniblockNum = -1
 		} else {
 			return err
 		}
 	}
 
-	if streamRecord.LastMbNum() <= lastMiniblockNum {
+	// if local storage is ahead of the stream record, write the latest miniblock to the blockchain.
+	// This can happen when a stream started as a non-replicated stream and mb registration frequency
+	// was set to > 1.
+	if writeLatestKnownMiniblock && stream.nodesLocked.IsLocalInQuorum() &&
+		streamRecord.LastMbNum() < lastLocalMiniblockNum {
+		if view, _ := stream.GetViewIfLocal(ctx); view != nil {
+			if lastBlock := view.LastBlock(); lastBlock != nil {
+				go s.mbProducer.writeLatestKnownMiniblock(ctx, stream, lastBlock)
+			}
+		}
+	}
+
+	if streamRecord.LastMbNum() <= lastLocalMiniblockNum {
 		return nil
 	}
 
@@ -246,7 +265,7 @@ func (s *StreamCache) reconcileStreamFromPeers(
 	nonReplicatedStream := len(stream.nodesLocked.GetQuorumNodes()) == 1
 	stream.mu.Unlock()
 
-	fromInclusive := lastMiniblockNum + 1
+	fromInclusive := lastLocalMiniblockNum + 1
 	toExclusive := streamRecord.LastMbNum() + 1
 
 	remotes, _ := stream.GetRemotesAndIsLocal()

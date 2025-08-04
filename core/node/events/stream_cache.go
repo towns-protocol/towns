@@ -176,11 +176,13 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 		}
 		stream.nodesLocked.ResetFromStreamWithId(streamRecord, s.params.Wallet.Address)
 		s.cache.Store(streamRecord.StreamId(), stream)
+
 		if s.params.Config.StreamReconciliation.InitialWorkerPoolSize > 0 {
 			s.submitReconcileStreamTaskToPool(
 				initialReconcileWorkerPool,
 				stream,
 				streamRecord,
+				true,
 			)
 		}
 	}
