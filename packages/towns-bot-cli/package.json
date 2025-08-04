@@ -1,7 +1,7 @@
 {
     "name": "towns-bot",
     "description": "CLI for creating and managing Towns Protocol bot projects",
-    "version": "0.0.291",
+    "version": "0.0.294",
     "author": "Towns Protocol",
     "scripts": {
         "build": "tsup",
