@@ -75,7 +75,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
         points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
+        emit IERC20.Transfer(req.account, address(0), req.points);
 
         drop.condition.currency.safeTransfer(req.recipient, amount);
 
@@ -104,7 +104,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
 
         TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
         points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
+        emit IERC20.Transfer(req.account, address(0), req.points);
 
         _approveClaimToken(drop.condition.currency, amount);
 
