@@ -2,8 +2,7 @@ package handler
 
 import (
 	"context"
-
-	"github.com/puzpuzpuz/xsync/v4"
+	"sync"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
@@ -65,7 +64,9 @@ type (
 	}
 
 	syncStreamHandlerRegistryImpl struct {
-		handlers         xsync.Map[string, *syncStreamHandlerImpl]
+		handlersLock sync.Mutex
+		handlers     map[string]*syncStreamHandlerImpl
+
 		streamUpdatesBus eventbus.StreamSubscriptionManager
 	}
 )
@@ -137,7 +138,8 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 }
 
 func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, bool) {
-	return s.handlers.Load(syncID)
+	handler, ok := s.handlers[syncID]
+	return handler, ok
 }
 
 func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler {
@@ -147,7 +149,9 @@ func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, 
 		streamUpdatesBus: s.streamUpdatesBus,
 	}
 
-	s.handlers.Store(handler.SyncID(), handler)
+	s.handlersLock.Lock()
+	s.handlers[handler.SyncID()] = handler
+	s.handlersLock.Unlock()
 
 	return handler
 }
