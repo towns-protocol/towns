@@ -5,7 +5,6 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v4"
 
-	"github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -61,6 +60,7 @@ type (
 
 	syncStreamHandlerImpl struct {
 		syncID           string
+		receiver         Receiver
 		streamUpdatesBus eventbus.StreamSubscriptionManager
 	}
 
@@ -140,7 +140,8 @@ func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, b
 
 func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler {
 	handler := &syncStreamHandlerImpl{
-		syncID:           base.GenNanoid(),
+		syncID:           syncID,
+		receiver:         receiver,
 		streamUpdatesBus: s.streamUpdatesBus,
 	}
 
