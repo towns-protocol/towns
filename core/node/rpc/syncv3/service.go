@@ -29,7 +29,7 @@ type (
 		// CancelSync cancels an existing sync operation by its ID.
 		CancelSync(ctx context.Context, id string) error
 		// PingSync pings an existing sync operation by its ID to keep it alive.
-		PingSync(ctx context.Context, id string) error
+		PingSync(ctx context.Context, id string)
 		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
 		DebugDropStream(ctx context.Context, id string, streamId StreamId) error
 	}
@@ -62,8 +62,8 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 	return RiverError(Err_UNIMPLEMENTED, "CancelSync is not implemented yet in V3")
 }
 
-func (s *serviceImpl) PingSync(ctx context.Context, id string) error {
-	return RiverError(Err_UNIMPLEMENTED, "PingSync is not implemented yet in V3")
+func (s *serviceImpl) PingSync(ctx context.Context, id string) {
+
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
