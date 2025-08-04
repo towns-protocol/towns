@@ -59,19 +59,8 @@ type (
 		Backfill(cookie *SyncCookie, syncIDs ...string) error
 	}
 
-	// eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
-	// It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
-	// to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
-	eventBusImpl struct {
-		// TODO: discuss if we want to have an unbounded queue here?
-		// Processing items on the queue should be fast enough to always keep up with the added items.
-		queue *dynmsgbuf.DynamicBuffer[*eventBusImplMessage]
-		// registry is the syncer registry.
-		registry syncer.Registry
-	}
-
-	// eventBusImplMessage is put on the internal event bus queue for processing in eventBusImpl.run.
-	eventBusImplMessage struct {
+	// eventBusMessage is put on the internal event bus queue for processing in eventBusImpl.run.
+	eventBusMessage struct {
 		// a stream update
 		update *SyncStreamsResponse
 		// a stream subscribe command
@@ -90,6 +79,17 @@ type (
 			syncIDs []string
 		}
 	}
+
+	// eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
+	// It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
+	// to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
+	eventBusImpl struct {
+		// TODO: discuss if we want to have an unbounded queue here?
+		// Processing items on the queue should be fast enough to always keep up with the added items.
+		queue *dynmsgbuf.DynamicBuffer[*eventBusMessage]
+		// registry is the syncer registry.
+		registry syncer.Registry
+	}
 )
 
 // New creates a new instance of the event bus implementation.
@@ -98,7 +98,7 @@ type (
 // and distributes them to subscribers.
 func New(ctx context.Context, registry syncer.Registry) *eventBusImpl {
 	e := &eventBusImpl{
-		queue:    dynmsgbuf.NewDynamicBuffer[*eventBusImplMessage](),
+		queue:    dynmsgbuf.NewDynamicBuffer[*eventBusMessage](),
 		registry: registry,
 	}
 	go e.run(ctx)
@@ -116,7 +116,7 @@ func New(ctx context.Context, registry syncer.Registry) *eventBusImpl {
 func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse) {
 	// TODO: if the queue is full, we should retry few times, if it still fails, we unsubscribe from the given stream
 	//  updates and send the stream down message to all subscribers.
-	_ = e.queue.AddMessage(&eventBusImplMessage{update: update})
+	_ = e.queue.AddMessage(&eventBusMessage{update: update})
 }
 
 // Subscribe adds the given subscriber to the stream updates.
@@ -126,7 +126,7 @@ func (e *eventBusImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber)
 	// (TODO: determine how to determine if a stream exists to prevent locking subscribe too long, or pushing a command
 
 	// 2. add command to e.queue that adds the subscriber to the stream's subscriber list in eventBusImpl.run
-	err := e.queue.AddMessage(&eventBusImplMessage{
+	err := e.queue.AddMessage(&eventBusMessage{
 		sub: &struct {
 			streamID   StreamId
 			subscriber StreamSubscriber
@@ -144,7 +144,7 @@ func (e *eventBusImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber)
 
 // Unsubscribe removes the given subscriber from the stream updates.
 func (e *eventBusImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscriber) error {
-	return e.queue.AddMessage(&eventBusImplMessage{
+	return e.queue.AddMessage(&eventBusMessage{
 		unsub: &struct {
 			streamID   StreamId
 			subscriber StreamSubscriber
@@ -157,7 +157,7 @@ func (e *eventBusImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscribe
 
 // Backfill requests a backfill message for the given cookie and sync IDs.
 func (e *eventBusImpl) Backfill(cookie *SyncCookie, syncIDs ...string) error {
-	return e.queue.AddMessage(&eventBusImplMessage{
+	return e.queue.AddMessage(&eventBusMessage{
 		backfill: &struct {
 			cookie  *SyncCookie
 			syncIDs []string
@@ -170,7 +170,7 @@ func (e *eventBusImpl) Backfill(cookie *SyncCookie, syncIDs ...string) error {
 
 func (e *eventBusImpl) run(ctx context.Context) {
 	var (
-		msgs        []*eventBusImplMessage
+		msgs        []*eventBusMessage
 		subscribers = make(map[StreamId][]StreamSubscriber)
 	)
 	for {
