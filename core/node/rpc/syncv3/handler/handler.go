@@ -12,6 +12,13 @@ import (
 )
 
 type (
+	// Receiver is a final receiver of the stream update message, i.e. client.
+	// It is not thread safe so the race detector will throw an error if multiple goroutines
+	// try to call Send at the same time.
+	Receiver interface {
+		Send(*SyncStreamsResponse) error
+	}
+
 	// SyncStreamHandler is a client sync operation. It subscribes for stream updates on behalf of
 	// the client and sends updates to the client. The client can add, remove stream subscription
 	// or cancel the sync operation.
@@ -49,7 +56,7 @@ type (
 		Get(syncID string) (SyncStreamHandler, bool)
 
 		// New create a new sync stream handler.
-		New(ctx context.Context, syncID string) SyncStreamHandler
+		New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler
 	}
 
 	syncStreamHandlerImpl struct {
@@ -131,7 +138,7 @@ func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, b
 	return s.handlers.Load(syncID)
 }
 
-func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string) SyncStreamHandler {
+func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler {
 	handler := &syncStreamHandlerImpl{
 		syncID:           base.GenNanoid(),
 		streamUpdatesBus: s.streamUpdatesBus,
