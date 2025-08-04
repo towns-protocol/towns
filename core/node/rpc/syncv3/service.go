@@ -7,29 +7,23 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type (
-	// Receiver is an interface that defines the method to send sync stream responses.
-	// It is not thread safe so the race detector will throw an error if multiple goroutines
-	// try to call Send at the same time.
-	Receiver interface {
-		Send(*SyncStreamsResponse) error
-	}
-
 	// Service defines the behavior of the sync V3 service.
 	Service interface {
 		// SyncStreams creates and starts a sync operation. Given streams are immediately going to be added
 		// to the sync operation, and the receiver will receive updates for these streams.
-		SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec Receiver) error
+		SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error
 		// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
 		// It can also backfill a specific stream by the given cookie which is already in the sync.
 		ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 		// CancelSync cancels an existing sync operation by its ID.
 		CancelSync(ctx context.Context, id string) error
 		// PingSync pings an existing sync operation by its ID to keep it alive.
-		PingSync(ctx context.Context, id string) error
+		PingSync(ctx context.Context, id string)
 		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
 		DebugDropStream(ctx context.Context, id string, streamId StreamId) error
 	}
@@ -39,6 +33,8 @@ type (
 type serviceImpl struct {
 	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
 	otelTracer trace.Tracer
+	// handlerRegistry is used to manage sync stream handlers.
+	handlerRegistry handler.SyncStreamHandlerRegistry
 }
 
 // NewService creates a new instance of the sync V3 service.
@@ -50,7 +46,7 @@ func NewService(
 	}
 }
 
-func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec Receiver) error {
+func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error {
 	return RiverError(Err_UNIMPLEMENTED, "SyncStreams is not implemented yet in V3")
 }
 
@@ -62,8 +58,8 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 	return RiverError(Err_UNIMPLEMENTED, "CancelSync is not implemented yet in V3")
 }
 
-func (s *serviceImpl) PingSync(ctx context.Context, id string) error {
-	return RiverError(Err_UNIMPLEMENTED, "PingSync is not implemented yet in V3")
+func (s *serviceImpl) PingSync(ctx context.Context, id string) {
+
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
