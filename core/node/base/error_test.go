@@ -52,6 +52,13 @@ func TestRiverError(t *testing.T) {
 		LogInfo(log)
 }
 
+func TestAsRiverErrorWithNil(t *testing.T) {
+	assert := assert.New(t)
+	assert.Nil(AsRiverError(nil), "river error expected to be nil")
+	assert.Nil(AsRiverError(nil, protocol.Err_ALREADY_EXISTS), "river error expected to be nil")
+	assert.Nil(AsRiverError(nil, protocol.Err_ALREADY_EXISTS, protocol.Err_INVALID_ARGUMENT), "river error expected to be nil")
+}
+
 type testStruct1 struct{}
 
 func (t *testStruct1) GoString() string {
