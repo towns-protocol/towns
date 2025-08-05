@@ -1,0 +1,52 @@
+package track_streams
+
+import (
+	"log"
+	"slices"
+
+	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+// blocklistedStreams contains a list of streams that are blocklisted and should not be tracked.
+// These streams were identified as problematic or malicious during migration.
+// This logic could be removed after these streams are fixed (deleted or restored).
+var blocklistedStreams []StreamId
+
+func init() {
+	for _, streamIDRaw := range []string{
+		"10467d980b4ffa6f6e5cc903cf3111e0ab74cf755c0000000000000000000000",
+		"2079dce10c5b0980a08856f4e495ac8e02f1b33a100000000000000000000000",
+		"a8433b8b99f8a7fc7b3140ec9c3c5db31dbb22640f0000000000000000000000",
+		"a81dad75e2c3dd320ce3a5ac148f6daef22acffab40000000000000000000000",
+		"a5a087d6de203a8494d6b6e6bcb1e0ae2426c95b830000000000000000000000",
+		"ffd03820a462723a6fab9a113a138706fb9ebfb11e581c486346fa2fe775729e",
+		"ffdca2a8c73e3e12c48ce0346231bb5893b6e33ede7c8b04e77a7b3855541ca0",
+		"20f3be4fee2323dde439f2f3010f47102d882a379a0000000000000000000000",
+		"10367dcaced1edc303cfa30abbbd46c9de866639820000000000000000000000",
+		"a539eadbeeb08b428f3a3a3f0947559fc4b5b1cf7a0000000000000000000000",
+		"ad440e8a4ffc27720c900aebcb5341ab360ed5de070000000000000000000000",
+		"a511e59e4a0b071e6f39b8b29022fb78b84cdc76470000000000000000000000",
+		"10c4be47093727f68535aa706bfe807a743087907d0000000000000000000000",
+		"a83f1b5eaba9efc54e9c3e103348ca03a53779d49f0000000000000000000000",
+		"1079fe1d3bed698ff75aecd5ca78137f5f0a17c4760000000000000000000000",
+		"10a5718d31bce0cba0b75148658329a7b1a86616600000000000000000000000",
+		"a1167991efc77da2572913fd7e916672cfc6558d670000000000000000000000",
+		"a58b9d8ed3666e540b1e4a3649076cad1540fddf310000000000000000000000",
+		"ffe9af828a49e1c42ce15e4fceb434ac16030e82505f33332410a97da85757b4",
+		"101ae88acea196f9516bed7519d33d6b7d574bbfa70000000000000000000000",
+		"a1f23b2de45bdf8d76123ecf34e91c9d624ef2112b0000000000000000000000",
+		"a1e6fc675092ac1c41536346f9a0032dd8495504260000000000000000000000",
+		"a8658153546110639dc58e32c22b89d176c8defe1f0000000000000000000000",
+	} {
+		streamID, err := StreamIdFromString(streamIDRaw)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		blocklistedStreams = append(blocklistedStreams, streamID)
+	}
+}
+
+func isStreamBlocklisted(streamID StreamId) bool {
+	return slices.Contains(blocklistedStreams, streamID)
+}
