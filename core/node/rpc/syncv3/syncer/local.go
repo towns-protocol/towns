@@ -162,5 +162,4 @@ func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 
 	streamID := s.stream.StreamId()
 	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
-
 }
