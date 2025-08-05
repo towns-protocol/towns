@@ -48,8 +48,11 @@ func NewLocalStreamUpdateEmitter(
 ) (StreamUpdateEmitter, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	defer ctxWithCancel()
+
 	// Get stream from the stream cache by ID.
-	stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
+	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, streamID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +67,7 @@ func NewLocalStreamUpdateEmitter(
 		onDown:      onDown,
 	}
 
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	ctxWithTimeout, ctxWithCancel = context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	defer ctxWithCancel()
 
 	// Subscribe on updates for the stream. Do not receive an initial update.
@@ -77,7 +80,7 @@ func NewLocalStreamUpdateEmitter(
 		return nil, err
 	}
 
-	go l.run(ctx)
+	go l.run()
 
 	return l, nil
 }
@@ -151,8 +154,8 @@ func (s *localStreamUpdateEmitter) sendUpdateToSubscribers(msg *SyncStreamsRespo
 // 2. Call the onDown callback if it is set. Basically, removing the emitter from the registry.
 // 3. Unsubscribe from the stream updates.
 // 4. Send the sync down message to all subscribers of the stream.
-func (s *localStreamUpdateEmitter) run(ctx context.Context) {
-	<-ctx.Done()
+func (s *localStreamUpdateEmitter) run() {
+	<-s.ctx.Done()
 
 	if s.onDown != nil {
 		s.onDown()
