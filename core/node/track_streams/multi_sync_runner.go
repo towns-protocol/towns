@@ -28,7 +28,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
-	"github.com/towns-protocol/towns/core/node/notifications/debug_streams"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
@@ -184,11 +183,10 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	defer end()
 
 	var (
-		reset         = streamAndCookie.GetSyncReset()
-		streamId      = record.streamId
-		log           = logging.FromCtx(ssr.syncCtx)
-		labels        = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
-		isDebugStream = debug_streams.IsDebugStream(streamId)
+		reset    = streamAndCookie.GetSyncReset()
+		streamId = record.streamId
+		log      = logging.FromCtx(ssr.syncCtx)
+		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
@@ -249,20 +247,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 			// Send notifications for all events in all blocks.
 			for _, event := range block.GetEvents() {
 				if parsedEvent, err := events.ParseEvent(event); err == nil {
-					if isDebugStream {
-						log.Infow(
-							"Saw stream event in stream tracker; forwarding (applyBlocks)",
-							"stream",
-							streamId,
-							"eventHash",
-							event.Hash,
-							"eventMiniblockRef",
-							parsedEvent.MiniblockRef,
-							"remote",
-							ssr.node,
-						)
-					}
-
 					if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
 						log.Errorw(
 							"Error sending event notification",
@@ -285,19 +269,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		// will be silently skipped because they are already a part of the minipool.
 		if record.applyHistoricalContent.Enabled {
 			if parsedEvent, err := events.ParseEvent(event); err == nil {
-				if isDebugStream {
-					log.Infow(
-						"Saw stream event in stream tracker; forwarding",
-						"stream",
-						streamId,
-						"eventHash",
-						event.Hash,
-						"eventMiniblockRef",
-						parsedEvent.MiniblockRef,
-						"remote",
-						ssr.node,
-					)
-				}
 				if err := record.trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
 					log.Errorw(
 						"Error sending notification for historical event",
