@@ -13,13 +13,13 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 type ParsedEvent struct {
-	Event         *protocol.StreamEvent
-	Envelope      *protocol.Envelope
+	Event         *StreamEvent
+	Envelope      *Envelope
 	Hash          common.Hash
 	MiniblockRef  *MiniblockRef
 	SignerPubKey  []byte
@@ -31,18 +31,18 @@ func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
 	if err == nil {
 		return b, nil
 	}
-	return nil, AsRiverError(err, protocol.Err_INTERNAL).
+	return nil, AsRiverError(err, Err_INTERNAL).
 		Message("Failed to marshal parsed event envelope to bytes").
 		Func("GetEnvelopeBytes")
 }
 
-func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
+func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	if envelope == nil {
-		return nil, RiverError(protocol.Err_BAD_EVENT, "Nil envelope provided").Func("ParseEvent")
+		return nil, RiverError(Err_BAD_EVENT, "Nil envelope provided").Func("ParseEvent")
 	}
 	hash := TownsHashForEvents.Hash(envelope.Event)
 	if !bytes.Equal(hash[:], envelope.Hash) {
-		return nil, RiverError(protocol.Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
+		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
 
 	signerPubKey, err := RecoverSignerPublicKey(hash[:], envelope.Signature)
@@ -50,10 +50,10 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 		return nil, err
 	}
 
-	var streamEvent protocol.StreamEvent
+	var streamEvent StreamEvent
 	err = proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_INVALID_ARGUMENT).
+		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode stream event from bytes").
 			Func("ParseEvent")
 	}
@@ -67,7 +67,7 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 		)
 		if err != nil {
 			return nil, WrapRiverError(
-				protocol.Err_BAD_EVENT_SIGNATURE,
+				Err_BAD_EVENT_SIGNATURE,
 				err,
 			).Message("Bad signature").
 				Func("ParseEvent")
@@ -75,7 +75,7 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 	} else {
 		address := PublicKeyToAddress(signerPubKey)
 		if !bytes.Equal(address.Bytes(), streamEvent.CreatorAddress) {
-			return nil, RiverError(protocol.Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
+			return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided",
 				"computed address", address,
 				"event creatorAddress", streamEvent.CreatorAddress)
 		}
@@ -115,7 +115,7 @@ func FormatEventToJsonSB(sb *strings.Builder, event *ParsedEvent) {
 }
 
 // TODO(HNT-1381): needs to be refactored
-func FormatEventsToJson(events []*protocol.Envelope) string {
+func FormatEventsToJson(events []*Envelope) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	for idx, event := range events {
@@ -138,12 +138,12 @@ func FormatEventsToJson(events []*protocol.Envelope) string {
 	return sb.String()
 }
 
-func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
+func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
 		parsedEvent, err := ParseEvent(event)
 		if err != nil {
-			return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+			return nil, AsRiverError(err, Err_BAD_EVENT).
 				Tag("CorruptEventIndex", i).
 				Func("ParseEvents")
 		}
@@ -153,32 +153,32 @@ func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
 }
 
 // TODO: doesn't belong here, refactor
-func (e *ParsedEvent) GetChannelMessage() *protocol.ChannelPayload_Message {
+func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 	switch payload := e.Event.Payload.(type) {
-	case *protocol.StreamEvent_ChannelPayload:
+	case *StreamEvent_ChannelPayload:
 		switch cp := payload.ChannelPayload.Content.(type) {
-		case *protocol.ChannelPayload_Message:
+		case *ChannelPayload_Message:
 			return cp
 		}
 	}
 	return nil
 }
 
-func (e *ParsedEvent) GetEncryptedMessage() *protocol.EncryptedData {
+func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
 	switch payload := e.Event.Payload.(type) {
-	case *protocol.StreamEvent_ChannelPayload:
+	case *StreamEvent_ChannelPayload:
 		switch cp := payload.ChannelPayload.Content.(type) {
-		case *protocol.ChannelPayload_Message:
+		case *ChannelPayload_Message:
 			return cp.Message
 		}
-	case *protocol.StreamEvent_DmChannelPayload:
+	case *StreamEvent_DmChannelPayload:
 		switch cp := payload.DmChannelPayload.Content.(type) {
-		case *protocol.DmChannelPayload_Message:
+		case *DmChannelPayload_Message:
 			return cp.Message
 		}
-	case *protocol.StreamEvent_GdmChannelPayload:
+	case *StreamEvent_GdmChannelPayload:
 		switch cp := payload.GdmChannelPayload.Content.(type) {
-		case *protocol.GdmChannelPayload_Message:
+		case *GdmChannelPayload_Message:
 			return cp.Message
 		}
 	}
@@ -202,10 +202,10 @@ func (e *ParsedEvent) ParsedString() string {
 
 func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 	switch payload := e.Event.Payload.(type) {
-	case *protocol.StreamEvent_ChannelPayload:
+	case *StreamEvent_ChannelPayload:
 		{
 			switch content := payload.ChannelPayload.Content.(type) {
-			case *protocol.ChannelPayload_Inception_:
+			case *ChannelPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type            string
@@ -231,7 +231,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.ChannelPayload_Message:
+			case *ChannelPayload_Message:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -253,10 +253,10 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 				return "<ChannelPayload>"
 			}
 		}
-	case *protocol.StreamEvent_MemberPayload:
+	case *StreamEvent_MemberPayload:
 		{
 			switch content := payload.MemberPayload.Content.(type) {
-			case *protocol.MemberPayload_Membership_:
+			case *MemberPayload_Membership_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type             string
@@ -278,10 +278,10 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 				return "<MemberPayload>"
 			}
 		}
-	case *protocol.StreamEvent_UserSettingsPayload:
+	case *StreamEvent_UserSettingsPayload:
 		{
 			switch content := payload.UserSettingsPayload.Content.(type) {
-			case *protocol.UserSettingsPayload_Inception_:
+			case *UserSettingsPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -295,7 +295,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserSettingsPayload_FullyReadMarkers_:
+			case *UserSettingsPayload_FullyReadMarkers_:
 				{
 					var data map[string]interface{}
 					if err := json.Unmarshal([]byte(content.FullyReadMarkers.GetContent().GetData()), &data); err != nil {
@@ -315,7 +315,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserSettingsPayload_UserBlock_:
+			case *UserSettingsPayload_UserBlock_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -339,10 +339,10 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 				return "<UserSettingsPayload>"
 			}
 		}
-	case *protocol.StreamEvent_UserPayload:
+	case *StreamEvent_UserPayload:
 		{
 			switch content := payload.UserPayload.Content.(type) {
-			case *protocol.UserPayload_Inception_:
+			case *UserPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -356,7 +356,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserPayload_UserMembership_:
+			case *UserPayload_UserMembership_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -374,7 +374,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserPayload_UserMembershipAction_:
+			case *UserPayload_UserMembershipAction_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -394,7 +394,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserPayload_BlockchainTransaction:
+			case *UserPayload_BlockchainTransaction:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type            string
@@ -410,7 +410,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserPayload_ReceivedBlockchainTransaction_:
+			case *UserPayload_ReceivedBlockchainTransaction_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type            string
@@ -432,10 +432,10 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 				return "<UserPayload>"
 			}
 		}
-	case *protocol.StreamEvent_UserMetadataPayload:
+	case *StreamEvent_UserMetadataPayload:
 		{
 			switch content := payload.UserMetadataPayload.Content.(type) {
-			case *protocol.UserMetadataPayload_Inception_:
+			case *UserMetadataPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -449,7 +449,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserMetadataPayload_EncryptionDevice_:
+			case *UserMetadataPayload_EncryptionDevice_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -467,7 +467,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserMetadataPayload_ProfileImage:
+			case *UserMetadataPayload_ProfileImage:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -485,7 +485,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserMetadataPayload_Bio:
+			case *UserMetadataPayload_Bio:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -507,10 +507,10 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 				return "<UserMetadataPayload>"
 			}
 		}
-	case *protocol.StreamEvent_UserInboxPayload:
+	case *StreamEvent_UserInboxPayload:
 		{
 			switch content := payload.UserInboxPayload.Content.(type) {
-			case *protocol.UserInboxPayload_Inception_:
+			case *UserInboxPayload_Inception_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type     string
@@ -524,7 +524,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserInboxPayload_Ack_:
+			case *UserInboxPayload_Ack_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type           string
@@ -542,7 +542,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 					return string(bytes)
 				}
-			case *protocol.UserInboxPayload_GroupEncryptionSessions_:
+			case *UserInboxPayload_GroupEncryptionSessions_:
 				{
 					bytes, err := json.MarshalIndent(struct {
 						Type             string
