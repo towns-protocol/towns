@@ -21,8 +21,10 @@ const (
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
 type localStreamUpdateEmitter struct {
-	// ctx is the global node context.
+	// ctx is the global node context wrapped into the cancellable context.
 	ctx context.Context
+	// cancel is the cancel function for the context.
+	cancel context.CancelCauseFunc
 	// log is the logger for the emitter.
 	log *logging.Log
 	// localAddr is the address of the current node.
@@ -31,6 +33,9 @@ type localStreamUpdateEmitter struct {
 	stream *events.Stream
 	// subscribers is a set of subscribers for the stream updates.
 	subscribers mapset.Set[StreamSubscriber]
+	// onDown is a callback that is called when the current emitter goes down.
+	// Must be NON-BLOCKING operation.
+	onDown func()
 }
 
 // NewLocalStreamUpdateEmitter creates a new local stream update emitter for the given stream ID.
@@ -39,7 +44,10 @@ func NewLocalStreamUpdateEmitter(
 	localAddr common.Address,
 	streamCache StreamCache,
 	streamID StreamId,
+	onDown func(),
 ) (StreamUpdateEmitter, error) {
+	ctx, cancel := context.WithCancelCause(ctx)
+
 	// Get stream from the stream cache by ID.
 	stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 	if err != nil {
@@ -48,14 +56,16 @@ func NewLocalStreamUpdateEmitter(
 
 	l := &localStreamUpdateEmitter{
 		ctx:         ctx,
+		cancel:      cancel,
 		log:         logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
 		localAddr:   localAddr,
 		stream:      stream,
 		subscribers: mapset.NewSet[StreamSubscriber](),
+		onDown:      onDown,
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
-	defer cancel()
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	defer ctxWithCancel()
 
 	// Subscribe on updates for the stream. Do not receive an initial update.
 	if err = stream.Sub(ctxWithTimeout, &SyncCookie{
@@ -67,7 +77,7 @@ func NewLocalStreamUpdateEmitter(
 		return nil, err
 	}
 
-	l.run(ctx)
+	go l.run(ctx)
 
 	return l, nil
 }
@@ -78,21 +88,15 @@ func (s *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
 }
 
 // OnSyncError implements events.SyncResultReceiver interface.
-// TODO: Close the given local syncer and remove from registry.
 func (s *localStreamUpdateEmitter) OnSyncError(err error) {
 	s.log.Error("sync error for local stream", "streamID", s.stream.StreamId(), "error", err)
-
-	streamID := s.stream.StreamId()
-	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	s.cancel(err)
 }
 
 // OnStreamSyncDown implements events.SyncResultReceiver interface.
-// TODO: Close the given local syncer and remove from registry.
 func (s *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
 	s.log.Warnw("local stream sync down", "streamID", s.stream.StreamId())
-
-	streamID := s.stream.StreamId()
-	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	s.cancel(nil)
 }
 
 // StreamID returns the StreamId of the stream that this emitter emits events for.
@@ -151,4 +155,8 @@ func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 
 	streamID := s.stream.StreamId()
 	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+
+	if s.onDown != nil {
+		s.onDown()
+	}
 }
