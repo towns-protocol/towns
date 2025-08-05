@@ -73,9 +73,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
 
         drop.claim(req.account, amount);
 
-        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
+        _burnPoints(req.account, req.points);
 
         drop.condition.currency.safeTransfer(req.recipient, amount);
 
@@ -102,10 +100,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
 
         drop.claim(req.account, amount);
 
-        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
-
+        _burnPoints(req.account, req.points);
         _approveClaimToken(drop.condition.currency, amount);
 
         uint256 depositId = IRewardsDistribution(DropStorage.getLayout().rewardsDistribution)
@@ -166,5 +161,16 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
         uint256 conditionId
     ) external view returns (uint256) {
         return _getSupplyClaimedByWallet(conditionId, account).depositId;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INTERNAL FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _burnPoints(address from, uint256 amount) internal {
+        if (amount == 0) return;
+        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
+        points.inner.burn(from, amount);
+        emit IERC20.Transfer(from, address(0), amount);
     }
 }

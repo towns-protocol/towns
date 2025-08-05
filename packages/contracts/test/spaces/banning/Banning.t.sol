@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {ERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/ERC721AQueryable.sol";
 import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
@@ -10,7 +9,6 @@ import {IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 // libraries
 
 // contracts
-
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {Banning} from "src/spaces/facets/banning/Banning.sol";
 import {Channels} from "src/spaces/facets/channels/Channels.sol";
@@ -118,6 +116,7 @@ contract BanningTest is BaseSetup, IRolesBase, IMembershipBase {
         address wallet
     ) external assumeEOA(wallet) givenWalletHasJoinedSpace(wallet) {
         vm.assume(wallet != founder);
+        vm.assume(wallet != appClient);
 
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32(bytes(Permissions.ModifyBanning));
