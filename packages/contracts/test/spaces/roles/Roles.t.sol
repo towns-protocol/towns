@@ -9,19 +9,12 @@ import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
+import {EntitlementsManagerService} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";
+import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
 import {Roles} from "src/spaces/facets/roles/Roles.sol";
 import {RolesBaseSetup} from "test/spaces/roles/RolesBaseSetup.sol";
-
-// errors
-// solhint-disable-next-line max-line-length
-import {EntitlementsService__EntitlementDoesNotExist, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface} from "src/spaces/facets/entitlements/EntitlementsManagerService.sol";
-// solhint-disable-next-line max-line-length
-import {Validator} from "src/utils/libraries/Validator.sol";
-// solhint-disable-next-line max-line-length
-
-// mocks
 import {MockUserEntitlement} from "test/mocks/MockUserEntitlement.sol";
 
 contract RolesTest is RolesBaseSetup {
@@ -141,7 +134,7 @@ contract RolesTest is RolesBaseSetup {
     ) external {
         vm.assume(bytes(roleName).length > 2);
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
+        vm.expectRevert(EntitlementsManagerService.InvalidEntitlementAddress.selector);
         roles.createRole(roleName, new string[](0), new IRoles.CreateEntitlement[](1));
     }
 
@@ -157,7 +150,7 @@ contract RolesTest is RolesBaseSetup {
         entitlements[0] = CreateEntitlement({module: mockEntitlement, data: data});
 
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__EntitlementDoesNotExist.selector);
+        vm.expectRevert(EntitlementsManagerService.EntitlementDoesNotExist.selector);
         roles.createRole(roleName, new string[](0), entitlements);
     }
 
@@ -376,7 +369,7 @@ contract RolesTest is RolesBaseSetup {
         );
 
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__InvalidEntitlementAddress.selector);
+        vm.expectRevert(EntitlementsManagerService.InvalidEntitlementAddress.selector);
         roles.updateRole(roleId, roleName, new string[](0), new IRoles.CreateEntitlement[](1));
     }
 
@@ -401,7 +394,7 @@ contract RolesTest is RolesBaseSetup {
         });
 
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__InvalidEntitlementInterface.selector);
+        vm.expectRevert(EntitlementsManagerService.InvalidEntitlementInterface.selector);
         roles.updateRole(roleId, roleName, new string[](0), entitlements);
     }
 
@@ -723,7 +716,7 @@ contract RolesTest is RolesBaseSetup {
 
         // add roles to entitlement
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__EntitlementDoesNotExist.selector);
+        vm.expectRevert(EntitlementsManagerService.EntitlementDoesNotExist.selector);
         roles.addRoleToEntitlement(roleId, entitlement);
     }
 
@@ -843,7 +836,7 @@ contract RolesTest is RolesBaseSetup {
 
         // remove roles from entitlement
         vm.prank(founder);
-        vm.expectRevert(EntitlementsService__EntitlementDoesNotExist.selector);
+        vm.expectRevert(EntitlementsManagerService.EntitlementDoesNotExist.selector);
         roles.removeRoleFromEntitlement(roleId, entitlement);
     }
 
