@@ -18,7 +18,6 @@ func TestWriteMiniblocks_ValidationErrors(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -88,7 +87,6 @@ func TestWriteMiniblocks_SuccessfulWrite(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -108,7 +106,7 @@ func TestWriteMiniblocks_SuccessfulWrite(t *testing.T) {
 		Snapshot: []byte("snapshot1"),
 	}}
 	newEnvelopes := [][]byte{[]byte("newEvent1"), []byte("newEvent2")}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, newEnvelopes, 1, 2)
 	require.NoError(err)
 
@@ -144,7 +142,6 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
@@ -173,7 +170,7 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 		},
 	}
 	newEnvelopes := [][]byte{[]byte("event1"), []byte("event2"), []byte("event3")}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 4, newEnvelopes, 1, 0)
 	require.NoError(err)
 
@@ -181,7 +178,7 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 	result, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
 	// ReadStreamFromLastSnapshot returns from genesis (0) to latest, since numToRead=10
-	require.Len(result.Miniblocks, 4) // All 4 blocks: 0, 1, 2, 3
+	require.Len(result.Miniblocks, 4)                    // All 4 blocks: 0, 1, 2, 3
 	require.Equal(int64(0), result.Miniblocks[0].Number) // Genesis
 	require.Equal(int64(2), result.Miniblocks[2].Number) // Snapshot block
 	require.Equal([]byte("snapshot2"), result.Miniblocks[2].Snapshot)
@@ -198,7 +195,6 @@ func TestWriteMiniblocks_CandidateCleanup(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -238,7 +234,7 @@ func TestWriteMiniblocks_CandidateCleanup(t *testing.T) {
 			Data:   []byte("block3"),
 		},
 	}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 4, [][]byte{}, 1, 0)
 	require.NoError(err)
 
@@ -267,7 +263,6 @@ func TestWriteMiniblocks_TransactionConsistency(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -307,16 +302,15 @@ func TestWriteMiniblocks_StreamNotFound(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	
+
 	// Try to write miniblocks to non-existent stream
 	miniblocks := []*MiniblockDescriptor{{
 		Number: 1,
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err := store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 0)
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
@@ -327,7 +321,6 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -357,7 +350,7 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 2)
 	require.Error(err)
 	require.Contains(err.Error(), "Minipool contains unexpected generation")
@@ -368,7 +361,6 @@ func TestWriteMiniblocks_LastMiniblockValidation(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
@@ -405,7 +397,6 @@ func TestWriteMiniblocks_EmptyMinipool(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -417,7 +408,7 @@ func TestWriteMiniblocks_EmptyMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, [][]byte{}, 1, 0)
 	require.NoError(err)
 
@@ -437,7 +428,6 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
@@ -456,12 +446,12 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 		Hash:   common.BytesToHash([]byte("hash1")),
 		Data:   []byte("block1"),
 	}}
-	
+
 	newEnvelopes := make([][]byte, 50)
 	for i := range newEnvelopes {
 		newEnvelopes[i] = []byte("newEvent" + string(rune(i)))
 	}
-	
+
 	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 2, newEnvelopes, 1, numEvents)
 	require.NoError(err)
 
@@ -469,4 +459,299 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 	result, err := store.ReadStreamFromLastSnapshot(ctx, streamId, 10)
 	require.NoError(err)
 	require.Len(result.MinipoolEnvelopes, 50)
+}
+
+func TestWriteMiniblocks_LastSnapshotIndexWithLegacySnapshot(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Create stream with genesis miniblock that has a legacy snapshot
+	genesisMiniblock := []byte("genesisMiniblock")
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+		Data:              genesisMiniblock,
+		HasLegacySnapshot: true, // Genesis has legacy snapshot embedded in data
+	})
+	require.NoError(err)
+
+	// Verify initial snapshot index is 0 (genesis)
+	debugData, err := store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(0), debugData.LatestSnapshotMiniblockNum)
+
+	// Write miniblocks without snapshots
+	miniblocks := []*MiniblockDescriptor{
+		{
+			Number: 1,
+			Hash:   common.BytesToHash([]byte("hash1")),
+			Data:   []byte("block1"),
+			// No snapshot, no HasLegacySnapshot
+		},
+		{
+			Number: 2,
+			Hash:   common.BytesToHash([]byte("hash2")),
+			Data:   []byte("block2"),
+			// No snapshot, no HasLegacySnapshot
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0)
+	require.NoError(err)
+
+	// Verify snapshot index still points to genesis (0)
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(0), debugData.LatestSnapshotMiniblockNum)
+
+	// Write miniblocks with a legacy snapshot at the end
+	miniblocks = []*MiniblockDescriptor{
+		{
+			Number: 3,
+			Hash:   common.BytesToHash([]byte("hash3")),
+			Data:   []byte("block3"),
+			// No snapshot
+		},
+		{
+			Number:            4,
+			Hash:              common.BytesToHash([]byte("hash4")),
+			Data:              []byte("block4_with_embedded_snapshot"),
+			HasLegacySnapshot: true, // This block has a legacy snapshot embedded in its data
+		},
+		{
+			Number: 5,
+			Hash:   common.BytesToHash([]byte("hash5")),
+			Data:   []byte("block5"),
+			// No snapshot
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 6, [][]byte{}, 3, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 4 (the last block with HasLegacySnapshot)
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(4), debugData.LatestSnapshotMiniblockNum)
+
+	// Write more blocks with multiple legacy snapshots
+	miniblocks = []*MiniblockDescriptor{
+		{
+			Number:            6,
+			Hash:              common.BytesToHash([]byte("hash6")),
+			Data:              []byte("block6_with_snapshot"),
+			HasLegacySnapshot: true, // First legacy snapshot
+		},
+		{
+			Number: 7,
+			Hash:   common.BytesToHash([]byte("hash7")),
+			Data:   []byte("block7"),
+			// No snapshot
+		},
+		{
+			Number:            8,
+			Hash:              common.BytesToHash([]byte("hash8")),
+			Data:              []byte("block8_with_snapshot"),
+			HasLegacySnapshot: true, // Second legacy snapshot - should be the new latest
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 9, [][]byte{}, 6, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 8 (the last block with HasLegacySnapshot)
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(8), debugData.LatestSnapshotMiniblockNum)
+}
+
+func TestWriteMiniblocks_LastSnapshotIndexWithNonLegacySnapshot(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Create stream with genesis miniblock
+	genesisMiniblock := []byte("genesisMiniblock")
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+		Data:     genesisMiniblock,
+		Snapshot: []byte("genesis_snapshot"), // Non-legacy snapshot
+	})
+	require.NoError(err)
+
+	// Verify initial snapshot index is 0 (genesis)
+	debugData, err := store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(0), debugData.LatestSnapshotMiniblockNum)
+
+	// Write miniblocks without snapshots
+	miniblocks := []*MiniblockDescriptor{
+		{
+			Number: 1,
+			Hash:   common.BytesToHash([]byte("hash1")),
+			Data:   []byte("block1"),
+			// No snapshot
+		},
+		{
+			Number: 2,
+			Hash:   common.BytesToHash([]byte("hash2")),
+			Data:   []byte("block2"),
+			// No snapshot
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 3, [][]byte{}, 1, 0)
+	require.NoError(err)
+
+	// Verify snapshot index still points to genesis (0)
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(0), debugData.LatestSnapshotMiniblockNum)
+
+	// Write miniblocks with a non-legacy snapshot
+	miniblocks = []*MiniblockDescriptor{
+		{
+			Number: 3,
+			Hash:   common.BytesToHash([]byte("hash3")),
+			Data:   []byte("block3"),
+			// No snapshot
+		},
+		{
+			Number:   4,
+			Hash:     common.BytesToHash([]byte("hash4")),
+			Data:     []byte("block4"),
+			Snapshot: []byte("snapshot4_data"), // Non-legacy snapshot
+		},
+		{
+			Number: 5,
+			Hash:   common.BytesToHash([]byte("hash5")),
+			Data:   []byte("block5"),
+			// No snapshot
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 6, [][]byte{}, 3, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 4
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(4), debugData.LatestSnapshotMiniblockNum)
+
+	// Write more blocks with multiple non-legacy snapshots
+	miniblocks = []*MiniblockDescriptor{
+		{
+			Number:   6,
+			Hash:     common.BytesToHash([]byte("hash6")),
+			Data:     []byte("block6"),
+			Snapshot: []byte("snapshot6_data"), // First snapshot
+		},
+		{
+			Number: 7,
+			Hash:   common.BytesToHash([]byte("hash7")),
+			Data:   []byte("block7"),
+			// No snapshot
+		},
+		{
+			Number:   8,
+			Hash:     common.BytesToHash([]byte("hash8")),
+			Data:     []byte("block8"),
+			Snapshot: []byte("snapshot8_data"), // Second snapshot - should be the new latest
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 9, [][]byte{}, 6, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 8 (the last block with Snapshot)
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(8), debugData.LatestSnapshotMiniblockNum)
+}
+
+func TestWriteMiniblocks_LastSnapshotIndexMixedSnapshotTypes(t *testing.T) {
+	params := setupStreamStorageTest(t)
+	require := require.New(t)
+	ctx := params.ctx
+	store := params.pgStreamStore
+
+	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Create stream with genesis miniblock that has a legacy snapshot
+	genesisMiniblock := []byte("genesisMiniblock_with_embedded_snapshot")
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
+		Data:              genesisMiniblock,
+		HasLegacySnapshot: true,
+	})
+	require.NoError(err)
+
+	// Write miniblocks with mixed snapshot types
+	miniblocks := []*MiniblockDescriptor{
+		{
+			Number: 1,
+			Hash:   common.BytesToHash([]byte("hash1")),
+			Data:   []byte("block1"),
+			// No snapshot
+		},
+		{
+			Number:            2,
+			Hash:              common.BytesToHash([]byte("hash2")),
+			Data:              []byte("block2_with_legacy"),
+			HasLegacySnapshot: true, // Legacy snapshot
+		},
+		{
+			Number:   3,
+			Hash:     common.BytesToHash([]byte("hash3")),
+			Data:     []byte("block3"),
+			Snapshot: []byte("snapshot3_non_legacy"), // Non-legacy snapshot
+		},
+		{
+			Number: 4,
+			Hash:   common.BytesToHash([]byte("hash4")),
+			Data:   []byte("block4"),
+			// No snapshot
+		},
+		{
+			Number:            5,
+			Hash:              common.BytesToHash([]byte("hash5")),
+			Data:              []byte("block5_with_legacy"),
+			HasLegacySnapshot: true, // Legacy snapshot - should be the latest
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 6, [][]byte{}, 1, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 5 (the last block with any snapshot)
+	debugData, err := store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(5), debugData.LatestSnapshotMiniblockNum)
+
+	// Add another batch with non-legacy snapshot at the end
+	miniblocks = []*MiniblockDescriptor{
+		{
+			Number:            6,
+			Hash:              common.BytesToHash([]byte("hash6")),
+			Data:              []byte("block6_with_legacy"),
+			HasLegacySnapshot: true,
+		},
+		{
+			Number:   7,
+			Hash:     common.BytesToHash([]byte("hash7")),
+			Data:     []byte("block7"),
+			Snapshot: []byte("snapshot7_non_legacy"), // Non-legacy - should be the latest now
+		},
+	}
+
+	err = store.WriteMiniblocks(ctx, streamId, miniblocks, 8, [][]byte{}, 6, 0)
+	require.NoError(err)
+
+	// Verify snapshot index advanced to block 7
+	debugData, err = store.DebugReadStreamData(ctx, streamId)
+	require.NoError(err)
+	require.Equal(int64(7), debugData.LatestSnapshotMiniblockNum)
 }

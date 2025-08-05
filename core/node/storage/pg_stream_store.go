@@ -474,10 +474,9 @@ func (s *PostgresStreamStore) lockStream(
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
-) (
-	lastSnapshotMiniblock int64,
-	err error,
-) {
+) (int64, error) {
+	var lastSnapshotMiniblock int64
+	var err error
 	if write {
 		err = tx.QueryRow(
 			ctx,
@@ -502,6 +501,16 @@ func (s *PostgresStreamStore) lockStream(
 			).Func("PostgresStreamStore.lockStream")
 		}
 		return 0, err
+	}
+
+	// There is a data corruption in prod when lastSnapshotMiniblock is -1.
+	if lastSnapshotMiniblock < 0 {
+		lastSnapshotMiniblock = 0
+		logging.FromCtx(ctx).Warnw(
+			"lastSnapshotMiniblock is -1, setting to 0",
+			"streamId",
+			streamId,
+		)
 	}
 
 	return lastSnapshotMiniblock, nil
@@ -634,7 +643,7 @@ func (s *PostgresStreamStore) createStreamArchiveStorageTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) error {
-	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, -1, true);`
+	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, 0, true);`
 	if _, err := tx.Exec(ctx, sql, streamId); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
@@ -1825,7 +1834,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 			len(miniblocks),
 			func(i int) ([]any, error) {
 				snapshot := miniblocks[i].Snapshot
-				if snapshot != nil {
+				if len(snapshot) > 0 || miniblocks[i].HasLegacySnapshot {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
 

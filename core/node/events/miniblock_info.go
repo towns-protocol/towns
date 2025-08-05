@@ -50,6 +50,14 @@ func NewMiniblockInfoFromProto(
 	snapshotEnvelope *Envelope,
 	opts *ParsedMiniblockInfoOpts,
 ) (*MiniblockInfo, error) {
+	if opts == nil {
+		opts = NewParsedMiniblockInfoOpts()
+	}
+
+	if mbProto == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "miniblock proto is nil").Func("NewMiniblockInfoFromProto")
+	}
+
 	headerEvent, err := ParseEvent(mbProto.Header)
 	if err != nil {
 		return nil, AsRiverError(
@@ -149,42 +157,46 @@ func NewMiniblockInfoFromProto(
 			Tag("prevSnapshotMiniblockNum", blockHeader.PrevSnapshotMiniblockNum)
 	}
 
-	if opts.ApplyOnlyMatchingSnapshot() && snapshotEnvelope != nil {
-		if !bytes.Equal(snapshotEnvelope.Hash, blockHeader.GetSnapshotHash()) {
-			snapshotEnvelope = nil
-		}
-	}
-
 	var snapshot *Snapshot
-	if snapshotEnvelope != nil {
-		snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
-		if err != nil {
-			return nil, AsRiverError(err, Err_BAD_EVENT).
-				Message("Failed to parse snapshot").
-				Func("NewMiniblockInfoFromProto")
-		}
-	} else if blockHeader.GetSnapshot() != nil {
+	if blockHeader.GetSnapshot() != nil {
 		snapshot = blockHeader.GetSnapshot()
-	}
+		// Prefer snapshot from header over one from snapshot envelope.
+		snapshotEnvelope = nil
+	} else {
+		if opts.ApplyOnlyMatchingSnapshot() && snapshotEnvelope != nil {
+			if !bytes.Equal(snapshotEnvelope.Hash, blockHeader.GetSnapshotHash()) {
+				snapshotEnvelope = nil
+			}
+		}
 
-	if !opts.SkipSnapshotValidation() && !opts.ApplyOnlyMatchingSnapshot() {
-		expectedHash := blockHeader.GetSnapshotHash()
 		if snapshotEnvelope != nil {
-			if !bytes.Equal(snapshotEnvelope.Hash, expectedHash) {
+			snapshot, err = ParseSnapshot(snapshotEnvelope, common.BytesToAddress(headerEvent.Event.CreatorAddress))
+			if err != nil {
+				return nil, AsRiverError(err, Err_BAD_EVENT).
+					Message("Failed to parse snapshot").
+					Func("NewMiniblockInfoFromProto")
+			}
+		}
+
+		if !opts.SkipSnapshotValidation() && !opts.ApplyOnlyMatchingSnapshot() {
+			expectedHash := blockHeader.GetSnapshotHash()
+			if snapshotEnvelope != nil {
+				if !bytes.Equal(snapshotEnvelope.Hash, expectedHash) {
+					return nil, RiverError(
+						Err_BAD_BLOCK,
+						"Snapshot hash does not match snapshot envelope hash",
+					).Func("NewMiniblockInfoFromProto").
+						Tag("snapshotHash", hex.EncodeToString(blockHeader.GetSnapshotHash())).
+						Tag("snapshotEnvelopeHash", hex.EncodeToString(snapshotEnvelope.Hash)).
+						Tag("mbNum", blockHeader.MiniblockNum)
+				}
+			} else if len(expectedHash) != 0 {
 				return nil, RiverError(
 					Err_BAD_BLOCK,
-					"Snapshot hash does not match snapshot envelope hash",
+					"Snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
 				).Func("NewMiniblockInfoFromProto").
-					Tag("snapshotHash", hex.EncodeToString(blockHeader.GetSnapshotHash())).
-					Tag("snapshotEnvelopeHash", hex.EncodeToString(snapshotEnvelope.Hash)).
 					Tag("mbNum", blockHeader.MiniblockNum)
 			}
-		} else if len(expectedHash) != 0 {
-			return nil, RiverError(
-				Err_BAD_BLOCK,
-				"Snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
-			).Func("NewMiniblockInfoFromProto").
-				Tag("mbNum", blockHeader.MiniblockNum)
 		}
 	}
 
@@ -262,31 +274,39 @@ func NewMiniblockInfoFromHeaderAndParsed(
 }
 
 func NewMiniblockInfoFromDescriptor(mb *storage.MiniblockDescriptor) (*MiniblockInfo, error) {
-	opts := NewParsedMiniblockInfoOpts()
-	if mb.Number > -1 {
-		opts = opts.WithExpectedBlockNumber(mb.Number)
-	}
-	return NewMiniblockInfoFromDescriptorWithOpts(mb, opts)
+	return NewMiniblockInfoFromDescriptorWithOpts(mb, NewParsedMiniblockInfoOpts())
 }
 
 func NewMiniblockInfoFromDescriptorWithOpts(
 	mb *storage.MiniblockDescriptor,
 	opts *ParsedMiniblockInfoOpts,
 ) (*MiniblockInfo, error) {
+	if mb.Number > -1 {
+		opts = opts.WithExpectedBlockNumber(mb.Number)
+	}
+
+	return NewMiniblockInfoFromBytes(mb.Data, mb.Snapshot, opts)
+}
+
+func NewMiniblockInfoFromBytes(
+	mbBytes []byte,
+	snapshotBytes []byte,
+	opts *ParsedMiniblockInfoOpts,
+) (*MiniblockInfo, error) {
 	var pb Miniblock
-	if err := proto.Unmarshal(mb.Data, &pb); err != nil {
+	if err := proto.Unmarshal(mbBytes, &pb); err != nil {
 		return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 			Message("Failed to decode miniblock from bytes").
-			Func("NewMiniblockInfoFromDescriptorWithOpts")
+			Func("NewMiniblockInfoFromBytes")
 	}
 
 	var snapshot *Envelope
-	if len(mb.Snapshot) > 0 {
+	if len(snapshotBytes) > 0 {
 		snapshot = &Envelope{}
-		if err := proto.Unmarshal(mb.Snapshot, snapshot); err != nil {
+		if err := proto.Unmarshal(snapshotBytes, snapshot); err != nil {
 			return nil, AsRiverError(err, Err_INVALID_ARGUMENT).
 				Message("Failed to decode snapshot from bytes").
-				Func("NewMiniblockInfoFromDescriptor")
+				Func("NewMiniblockInfoFromBytes")
 		}
 	}
 
@@ -319,18 +339,36 @@ func (b *MiniblockInfo) lastEvent() *ParsedEvent {
 
 // AsStorageMb returns a storage miniblock with the data from the MiniblockInfo.
 func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
-	mbProto, err := proto.Marshal(b.Proto)
-	if err != nil {
-		return nil, AsRiverError(err, Err_INTERNAL).
-			Message("Failed to serialize miniblock info to bytes").
-			Func("AsStorageMb")
+	return b.AsStorageMbWithBytes(nil, nil)
+}
+
+// AsStorageMbWithBytes returns a storage miniblock with the data from the MiniblockInfo.
+// Optionally, mbBytes and snapshotBytes can be provided to avoid serializing the data.
+func (b *MiniblockInfo) AsStorageMbWithBytes(
+	mbBytes []byte,
+	snapshotBytes []byte,
+) (*storage.MiniblockDescriptor, error) {
+	var mbProto []byte
+	var err error
+	if len(mbBytes) == 0 {
+		mbProto, err = proto.Marshal(b.Proto)
+		if err != nil {
+			return nil, AsRiverError(err, Err_INTERNAL).
+				Message("Failed to serialize miniblock info to bytes").
+				Func("AsStorageMbWithBytes")
+		}
+	} else {
+		mbProto = mbBytes
 	}
 
 	// Serialize snapshot if the miniblock header contains a snapshot hash instead of a full snapshot.
 	// Here the DB record is controlled by the header, so we need to serialize the snapshot.
 	// IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 	var snapshotProto []byte
-	if b.SnapshotEnvelope != nil {
+	var hasLegacySnapshot bool
+	if b.Header().GetSnapshot() != nil {
+		hasLegacySnapshot = true
+	} else if b.SnapshotEnvelope != nil {
 		if !bytes.Equal(b.SnapshotEnvelope.Hash, b.Header().GetSnapshotHash()) {
 			return nil, RiverError(
 				Err_INTERNAL,
@@ -342,27 +380,34 @@ func (b *MiniblockInfo) AsStorageMb() (*storage.MiniblockDescriptor, error) {
 				"snapshotEnvelopeHash",
 				b.SnapshotEnvelope.Hash,
 			).
-				Func("AsStorageMb")
+				Func("AsStorageMbWithBytes")
 		}
-		snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
-		if err != nil {
-			return nil, AsRiverError(err, Err_INTERNAL).
-				Message("Failed to serialize snapshot to bytes").
-				Func("AsStorageMb")
+		if len(snapshotBytes) == 0 {
+			snapshotProto, err = proto.Marshal(b.SnapshotEnvelope)
+			if err != nil {
+				return nil, AsRiverError(err, Err_INTERNAL).
+					Message("Failed to serialize snapshot to bytes").
+					Func("AsStorageMbWithBytes")
+			}
+		} else {
+			snapshotProto = snapshotBytes
 		}
-	} else {
-		if len(b.Header().GetSnapshotHash()) > 0 {
-			return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
-				Func("AsStorageMb")
-		}
+	} else if len(b.Header().GetSnapshotHash()) > 0 {
+		return nil, RiverError(Err_INTERNAL, "snapshot hash is set in the miniblock header, but no snapshot envelope is provided", "mb", b.Ref).
+			Func("AsStorageMbWithBytes")
 	}
 
 	return &storage.MiniblockDescriptor{
-		Number:   b.Ref.Num,
-		Hash:     b.Ref.Hash,
-		Snapshot: snapshotProto,
-		Data:     mbProto,
+		Number:            b.Ref.Num,
+		Hash:              b.Ref.Hash,
+		Snapshot:          snapshotProto,
+		Data:              mbProto,
+		HasLegacySnapshot: hasLegacySnapshot,
 	}, nil
+}
+
+func (b *MiniblockInfo) HasLegacySnapshot() bool {
+	return b.SnapshotEnvelope == nil && b.Snapshot != nil
 }
 
 func (b *MiniblockInfo) forEachEvent(
