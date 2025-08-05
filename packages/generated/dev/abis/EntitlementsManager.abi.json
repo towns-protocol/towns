@@ -246,31 +246,6 @@
   },
   {
     "type": "error",
-    "name": "EntitlementsService__EntitlementAlreadyExists",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__EntitlementDoesNotExist",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__ImmutableEntitlement",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__InvalidEntitlementAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__InvalidEntitlementInterface",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Ownable__NotOwner",
     "inputs": [
       {

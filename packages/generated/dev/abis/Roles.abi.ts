@@ -532,21 +532,6 @@ export default [
   },
   {
     "type": "error",
-    "name": "EntitlementsService__EntitlementDoesNotExist",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__InvalidEntitlementAddress",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "EntitlementsService__InvalidEntitlementInterface",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "Ownable__NotOwner",
     "inputs": [
       {
