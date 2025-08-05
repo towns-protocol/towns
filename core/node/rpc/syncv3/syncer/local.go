@@ -146,17 +146,21 @@ func (s *localStreamUpdateEmitter) sendUpdateToSubscribers(msg *SyncStreamsRespo
 	}
 }
 
-// run waits for the global node context to be done, unsubscribes from updates, and sends the sync down message to
-// all subscribers.
+// run waits for the global node context to be done to close the emitter:
+// 1. Wait for the context to be done.
+// 2. Call the onDown callback if it is set. Basically, removing the emitter from the registry.
+// 3. Unsubscribe from the stream updates.
+// 4. Send the sync down message to all subscribers of the stream.
 func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 	<-ctx.Done()
+
+	if s.onDown != nil {
+		s.onDown()
+	}
 
 	s.stream.Unsub(s)
 
 	streamID := s.stream.StreamId()
 	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 
-	if s.onDown != nil {
-		s.onDown()
-	}
 }
