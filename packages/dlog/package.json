@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/dlog",
-    "version": "0.0.294",
+    "version": "0.0.295",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
