@@ -41,7 +41,7 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
  * - ERC20 tokens only (native ETH not supported)
  * - Cryptographically binds permit signatures to exact swap parameters
  * - Prevents front-running attacks through witness data binding
- * - Uses EIP-712 witness containing ExactInputParams, RouterParams, and poster
+ * - Uses EIP-712 witness containing ExactInputParams, RouterParams, and FeeConfig
  * - Requires pre-approval of tokens to Permit2 contract
  * - Provides nonce-based replay protection and deadline-based time bounds
  */

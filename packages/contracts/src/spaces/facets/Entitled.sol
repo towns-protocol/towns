@@ -3,12 +3,12 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IWalletLink} from "../../factory/facets/wallet-link/IWalletLink.sol";
-import {IEntitlement} from "../entitlements/IEntitlement.sol";
-import {IEntitlementBase} from "../entitlements/IEntitlement.sol";
+import {IEntitlement, IEntitlementBase} from "../entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {PausableStorage} from "@towns-protocol/diamond/src/facets/pausable/PausableStorage.sol";
+import {LibSort} from "solady/utils/LibSort.sol";
 import {ERC721AStorage} from "../../diamond/facets/token/ERC721A/ERC721AStorage.sol";
 import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {EntitlementsManagerStorage} from "./entitlements/EntitlementsManagerStorage.sol";
@@ -23,6 +23,7 @@ import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token
 abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
+    using CustomRevert for bytes4;
 
     bytes32 internal constant IN_TOWN = 0x0;
     uint256 internal constant MEMBERSHIP_START_TOKEN_ID = 0;
@@ -39,41 +40,27 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
         address user,
         bytes32 permission
     ) internal view returns (bool) {
-        address owner = _owner();
-
         address[] memory wallets = _getLinkedWalletsWithUser(user);
-        uint256 linkedWalletsLength = wallets.length;
+        if (wallets.length == 0) return false;
 
-        uint256[] memory bannedTokens = BanningStorage.layout().bannedIds.values();
-        uint256 bannedTokensLen = bannedTokens.length;
+        // Check owner first (cheapest check)
+        address owner = _owner();
+        for (uint256 i; i < wallets.length; ++i) if (wallets[i] == owner) return true;
 
-        for (uint256 i; i < linkedWalletsLength; ++i) {
-            address wallet = wallets[i];
-
-            if (wallet == owner) {
-                return true;
-            }
-
-            // check if banned
-            for (uint256 j; j < bannedTokensLen; ++j) {
-                if (ERC721AStorage.ownerAt(MEMBERSHIP_START_TOKEN_ID, bannedTokens[j]) == wallet) {
-                    return false;
-                }
-            }
-        }
+        // Check if any wallet is banned using optimized O(n log n + m) approach
+        if (_hasAnyBannedWallet(wallets)) return false;
 
         // Entitlement checks for members
         EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage.layout();
-        uint256 entitlementsLength = ds.entitlements.length();
+        address[] memory entitlements = ds.entitlements.values();
+        uint256 entitlementsLength = entitlements.length;
 
         for (uint256 i; i < entitlementsLength; ++i) {
-            IEntitlement entitlement = ds.entitlementByAddress[ds.entitlements.at(i)].entitlement;
+            IEntitlement entitlement = ds.entitlementByAddress[entitlements[i]].entitlement;
             if (
                 !entitlement.isCrosschain() &&
                 entitlement.isEntitled(channelId, wallets, permission)
-            ) {
-                return true;
-            }
+            ) return true;
         }
 
         return false;
@@ -94,7 +81,7 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
             if (_isBotEntitled(msg.sender, permissionHash)) return;
         }
 
-        CustomRevert.revertWith(Entitlement__NotAllowed.selector);
+        Entitlement__NotAllowed.selector.revertWith();
     }
 
     function _isMember(address user) internal view returns (bool member) {
@@ -111,14 +98,14 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
         address[] memory wallets = _getLinkedWalletsWithUser(user);
         uint256 length = wallets.length;
         for (uint256 i; i < length; ++i) {
-            if (_isMember(wallets[i]) || wallets[i] == owner) {
-                return;
-            }
+            if (_isMember(wallets[i]) || wallets[i] == owner) return;
         }
-        CustomRevert.revertWith(Entitlement__NotMember.selector);
+        Entitlement__NotMember.selector.revertWith();
     }
 
-    function _getLinkedWalletsWithUser(address rootKey) internal view returns (address[] memory) {
+    function _getLinkedWalletsWithUser(
+        address rootKey
+    ) internal view returns (address[] memory wallets) {
         IWalletLink wl = IWalletLink(MembershipStorage.layout().spaceFactory);
         address[] memory linkedWallets = wl.getWalletsByRootKey(rootKey);
 
@@ -131,14 +118,14 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
             }
         }
 
-        uint256 linkedWalletsLength = linkedWallets.length;
-
-        address[] memory wallets = new address[](linkedWalletsLength + 1);
-        for (uint256 i; i < linkedWalletsLength; ++i) {
-            wallets[i] = linkedWallets[i];
+        wallets = LibSort.copy(linkedWallets);
+        assembly ("memory-safe") {
+            // Increment the size of the array by 1 and add the root key
+            mstore(wallets, add(mload(wallets), 1))
+            // LibSort.copy assigns the free memory pointer to the end of the array
+            mstore(mload(0x40), rootKey)
+            mstore(0x40, add(mload(0x40), 0x20))
         }
-        wallets[linkedWalletsLength] = rootKey;
-        return wallets;
     }
 
     function _isBotEntitled(address client, bytes32 permission) internal view returns (bool) {
@@ -149,5 +136,37 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
         if (app == address(0)) return false;
 
         return AppAccountStorage.isAppEntitled(app, client, permission);
+    }
+
+    function _hasAnyBannedWallet(address[] memory wallets) internal view returns (bool) {
+        BanningStorage.Layout storage ds = BanningStorage.layout();
+        uint256[] memory bannedTokens = ds.bannedIds.values();
+
+        if (bannedTokens.length == 0) return false;
+
+        // Step 1: Collect banned token owners - O(n)
+        address[] memory bannedOwners = new address[](bannedTokens.length);
+        for (uint256 i; i < bannedTokens.length; ++i) {
+            bannedOwners[i] = ERC721AStorage.ownerAt(MEMBERSHIP_START_TOKEN_ID, bannedTokens[i]);
+        }
+
+        // Step 2: Sort and deduplicate banned owners - O(n log n)
+        LibSort.sort(bannedOwners);
+        LibSort.uniquifySorted(bannedOwners);
+
+        unchecked {
+            // Step 3: Combine wallets with unique banned owners - O(m + n)
+            address[] memory combined = new address[](wallets.length + bannedOwners.length);
+            for (uint256 i; i < wallets.length; ++i) {
+                combined[i] = wallets[i];
+            }
+            for (uint256 i; i < bannedOwners.length; ++i) {
+                combined[wallets.length + i] = bannedOwners[i];
+            }
+
+            // Step 4: Check for duplicates - O(m + n)
+            // any duplicate found is an intersection between wallets and banned owners
+            return LibSort.hasDuplicate(combined);
+        }
     }
 }

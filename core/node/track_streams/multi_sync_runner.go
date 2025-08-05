@@ -879,6 +879,9 @@ func (msr *MultiSyncRunner) addToSync(
 				"failedRemote", targetNode,
 				"newRemote", newRemote,
 			)
+		} else if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
+			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
+			runner.Close(err)
 		} else {
 			log.Errorw(
 				"Error adding stream to sync on node, retrying",

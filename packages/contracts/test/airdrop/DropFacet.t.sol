@@ -72,6 +72,8 @@ contract DropFacetTest is
     uint256 internal bobKey;
     address internal alice;
     uint256 internal aliceKey;
+    address internal charlie;
+    uint256 internal charlieKey;
 
     address internal NOTIFIER = makeAddr("NOTIFIER");
     uint256 internal rewardDuration;
@@ -82,6 +84,7 @@ contract DropFacetTest is
 
         (bob, bobKey) = makeAddrAndKey("bob");
         (alice, aliceKey) = makeAddrAndKey("alice");
+        (charlie, charlieKey) = makeAddrAndKey("charlie");
 
         // Initialize the Drop facet
         dropFacet = DropFacet(riverAirdrop);
@@ -427,7 +430,7 @@ contract DropFacetTest is
                 : claimData[i].claimer;
             claimers[i] = claimData[i].claimer;
             claimAmounts[i] = claimData[i].amount == 0 ? 1 : claimData[i].amount;
-            claimPoints[i] = claimData[i].points == 0 ? 1 : claimData[i].points;
+            claimPoints[i] = claimData[i].points;
             claimData[i].amount = uint16(claimAmounts[i]);
             claimData[i].points = uint16(claimPoints[i]);
 
@@ -506,6 +509,17 @@ contract DropFacetTest is
         uint256 expectedAmount = _calculateExpectedAmount(bob);
         assertEq(towns.balanceOf(bob), expectedAmount);
         assertEq(pointsFacet.balanceOf(bob), 10);
+    }
+
+    function test_claimWithNoPoints()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+        givenClaimConditionSet(5000)
+        givenWalletHasClaimedWithPenalty(charlie, charlie)
+    {
+        uint256 expectedAmount = _calculateExpectedAmount(charlie);
+        assertEq(towns.balanceOf(charlie), expectedAmount);
+        assertEq(pointsFacet.balanceOf(charlie), 0);
     }
 
     function test_revertWhen_merkleRootNotSet() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
@@ -1648,9 +1662,13 @@ contract DropFacetTest is
         accounts.push(alice);
         amounts.push(200);
         points.push(20);
+        accounts.push(charlie);
+        amounts.push(300);
+        points.push(0);
 
         treeIndex[bob] = 0;
         treeIndex[alice] = 1;
+        treeIndex[charlie] = 2;
         (root, tree) = merkleTree.constructTree(accounts, amounts, points);
     }
 

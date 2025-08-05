@@ -72,7 +72,10 @@ func TestSnapshotsTrimmer(t *testing.T) {
 		)
 		require.NoError(err)
 		fmt.Println(mbsWithSnapshot)
-		return slices.Equal([]int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}, mbsWithSnapshot)
+		return slices.Equal(
+			[]int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500},
+			mbsWithSnapshot,
+		)
 	}, time.Second*5, 100*time.Millisecond)
 }
 

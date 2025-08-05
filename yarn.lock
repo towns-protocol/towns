@@ -5760,7 +5760,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openzeppelin/contracts-upgradeable@npm:^5.3.0":
+"@openzeppelin/contracts-upgradeable@npm:^5.4.0":
   version: 5.4.0
   resolution: "@openzeppelin/contracts-upgradeable@npm:5.4.0"
   peerDependencies:
@@ -5773,6 +5773,13 @@ __metadata:
   version: 5.3.0
   resolution: "@openzeppelin/contracts@npm:5.3.0"
   checksum: 1d1629c42d170e070c112779c33b3b81c133995695271bc62a696160b598b56455a3c56d1f976a42ee3dd426c4ad984451b1752139f2b7897c9e1ba56c1947da
+  languageName: node
+  linkType: hard
+
+"@openzeppelin/contracts@npm:^5.4.0":
+  version: 5.4.0
+  resolution: "@openzeppelin/contracts@npm:5.4.0"
+  checksum: 8a0c64266f5213801029251fdc9815798917b311b7fc9acb94db13a479a3a0d044e0312f57e739f13b87161105157cb8da023124b4f026cf6b72a718a333ef64
   languageName: node
   linkType: hard
 
@@ -8801,8 +8808,8 @@ __metadata:
     "@layerzerolabs/lz-evm-protocol-v2": ^3.0.112
     "@layerzerolabs/oapp-evm": ^0.3.2
     "@layerzerolabs/oft-evm": ^3.1.4
-    "@openzeppelin/contracts": ^5.3.0
-    "@openzeppelin/contracts-upgradeable": ^5.3.0
+    "@openzeppelin/contracts": ^5.4.0
+    "@openzeppelin/contracts-upgradeable": ^5.4.0
     "@openzeppelin/merkle-tree": ^1.0.8
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
@@ -8812,10 +8819,10 @@ __metadata:
     "@wagmi/cli": ^2.2.0
     account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
     crypto-lib: "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
-    forge-std: "github:foundry-rs/forge-std#v1.9.7"
+    forge-std: "github:foundry-rs/forge-std#v1.10.0"
     prettier: ^3.5.3
     prettier-plugin-solidity: ^1.4.2
-    solady: ^0.1.14
+    solady: ^0.1.24
     solhint: ^5.0.5
     solidity-bytes-utils: ^0.8.4
   languageName: unknown
@@ -17091,6 +17098,13 @@ __metadata:
     cross-spawn: ^7.0.0
     signal-exit: ^4.0.1
   checksum: 3e2e844d6003c96d70affe8ae98d7eaaba269a868c14d997620c088340a8775cd5d2d9043e6ceebae1928d8d9a874911c4d664b9a267e8995945df20337aebc0
+  languageName: node
+  linkType: hard
+
+"forge-std@github:foundry-rs/forge-std#v1.10.0":
+  version: 1.10.0
+  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=8bbcf6e3f8f62f419e5429a0bd89331c85c37824"
+  checksum: c56c99c6f903f0a9f67ac6e2c3c82084ef0585d4429ff3875a8d88202315438cfbcd050e7f7fa8481c944e6caaa11964af42deabd3d952f621b4a12c5da83ae1
   languageName: node
   linkType: hard
 
@@ -28092,6 +28106,13 @@ __metadata:
   version: 0.1.14
   resolution: "solady@npm:0.1.14"
   checksum: e6f71338251b8e4642bf012355e6f0274345d99cb886075980a7600dc126e3ddacbd5435c56e4d446b0d6248eb9005b62cf6f28672c2033827866620d0c4104e
+  languageName: node
+  linkType: hard
+
+"solady@npm:^0.1.24":
+  version: 0.1.24
+  resolution: "solady@npm:0.1.24"
+  checksum: 5e14a5dc31ceaab7211529c54197fc912dd436f4801d6ddc39d05966d1b1b6376316caf20a532fe465cfa79684350c7fb9d9fb32a3434fe2fd6c40f9cc265836
   languageName: node
   linkType: hard
 
