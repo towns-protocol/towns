@@ -253,7 +253,11 @@ func (cs *clientSimulator) executeCheck(
 			)
 			if emitV2Event {
 				log.Infow("Calling RequestEntitlementCheckV2RuleDataV1", "opts", opts, "ruleData", ruleData)
-				return cs.entitlementGated.RequestEntitlementCheckV2RuleDataV1(opts, [](*big.Int){big.NewInt(0)}, *ruleData)
+				return cs.entitlementGated.RequestEntitlementCheckV2RuleDataV1(
+					opts,
+					[](*big.Int){big.NewInt(0)},
+					*ruleData,
+				)
 			} else {
 				log.Infow("Calling RequestEntitlementCheckV1RuleDataV1", "opts", opts, "ruleData", ruleData)
 				return cs.entitlementGated.RequestEntitlementCheckV1RuleDataV1(opts, big.NewInt(0), *ruleData)
@@ -311,7 +315,11 @@ func (cs *clientSimulator) executeV2Check(
 			)
 
 			if emitV2Event {
-				tx, err := cs.entitlementGated.RequestEntitlementCheckV2RuleDataV2(opts, []*big.Int{big.NewInt(0)}, *ruleData)
+				tx, err := cs.entitlementGated.RequestEntitlementCheckV2RuleDataV2(
+					opts,
+					[]*big.Int{big.NewInt(0)},
+					*ruleData,
+				)
 				log.Infow("RequestEntitlementCheckV2RuleDataV2 called", "tx", tx, "error", err)
 				return tx, err
 

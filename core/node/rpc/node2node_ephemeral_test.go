@@ -43,13 +43,16 @@ func TestCreateEphemeralStream(t *testing.T) {
 		}), mb)
 		tt.require.NoError(err)
 
-		_, err = alice.node2nodeClient.SaveEphemeralMiniblock(alice.ctx, connect.NewRequest(&SaveEphemeralMiniblockRequest{
-			StreamId: mediaStreamId[:],
-			Miniblock: &Miniblock{
-				Events: []*Envelope{envelope},
-				Header: header,
-			},
-		}))
+		_, err = alice.node2nodeClient.SaveEphemeralMiniblock(
+			alice.ctx,
+			connect.NewRequest(&SaveEphemeralMiniblockRequest{
+				StreamId: mediaStreamId[:],
+				Miniblock: &Miniblock{
+					Events: []*Envelope{envelope},
+					Header: header,
+				},
+			}),
+		)
 		tt.require.NoError(err)
 	})
 
@@ -77,10 +80,13 @@ func TestCreateEphemeralStream(t *testing.T) {
 	tt.require.NoError(err)
 
 	// Create ephemeral media stream
-	_, err = alice.node2nodeClient.AllocateEphemeralStream(alice.ctx, connect.NewRequest(&AllocateEphemeralStreamRequest{
-		Miniblock: genesisMb,
-		StreamId:  mediaStreamId[:],
-	}))
+	_, err = alice.node2nodeClient.AllocateEphemeralStream(
+		alice.ctx,
+		connect.NewRequest(&AllocateEphemeralStreamRequest{
+			Miniblock: genesisMb,
+			StreamId:  mediaStreamId[:],
+		}),
+	)
 	tt.require.NoError(err)
 
 	mb := &MiniblockRef{
@@ -102,13 +108,16 @@ func TestCreateEphemeralStream(t *testing.T) {
 		}), mb)
 		tt.require.NoError(err)
 
-		_, err = alice.node2nodeClient.SaveEphemeralMiniblock(alice.ctx, connect.NewRequest(&SaveEphemeralMiniblockRequest{
-			StreamId: mediaStreamId[:],
-			Miniblock: &Miniblock{
-				Events: []*Envelope{envelope},
-				Header: header,
-			},
-		}))
+		_, err = alice.node2nodeClient.SaveEphemeralMiniblock(
+			alice.ctx,
+			connect.NewRequest(&SaveEphemeralMiniblockRequest{
+				StreamId: mediaStreamId[:],
+				Miniblock: &Miniblock{
+					Events: []*Envelope{envelope},
+					Header: header,
+				},
+			}),
+		)
 		tt.require.NoError(err)
 
 		mb.Num = int64(i + 1)
