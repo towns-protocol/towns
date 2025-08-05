@@ -1,10 +1,12 @@
 package syncer
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -14,6 +16,12 @@ var (
 )
 
 type (
+	// StreamCache represents a behavior of the stream cache.
+	StreamCache interface {
+		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
+		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
+	}
+
 	// StreamSubscriber accept (local or remote) stream events.
 	StreamSubscriber interface {
 		// OnStreamEvent is called for each stream event.

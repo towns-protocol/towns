@@ -1,0 +1,154 @@
+package syncer
+
+import (
+	"context"
+	"math"
+	"time"
+
+	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+const (
+	// localStreamUpdateEmitterTimeout is the default timeout to get updates from the local stream.
+	localStreamUpdateEmitterTimeout = time.Second * 10
+)
+
+// localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
+type localStreamUpdateEmitter struct {
+	// ctx is the global node context.
+	ctx context.Context
+	// log is the logger for the emitter.
+	log *logging.Log
+	// localAddr is the address of the current node.
+	localAddr common.Address
+	// stream is the currently syncing stream.
+	stream *events.Stream
+	// subscribers is a set of subscribers for the stream updates.
+	subscribers mapset.Set[StreamSubscriber]
+}
+
+// NewLocalStreamUpdateEmitter creates a new local stream update emitter for the given stream ID.
+func NewLocalStreamUpdateEmitter(
+	ctx context.Context,
+	localAddr common.Address,
+	streamCache StreamCache,
+	streamID StreamId,
+) (StreamUpdateEmitter, error) {
+	// Get stream from the stream cache by ID.
+	stream, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
+	if err != nil {
+		return nil, err
+	}
+
+	l := &localStreamUpdateEmitter{
+		ctx:         ctx,
+		log:         logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
+		localAddr:   localAddr,
+		stream:      stream,
+		subscribers: mapset.NewSet[StreamSubscriber](),
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	defer cancel()
+
+	// Subscribe on updates for the stream. Do not receive an initial update.
+	if err = stream.Sub(ctxWithTimeout, &SyncCookie{
+		StreamId:          streamID[:],
+		NodeAddress:       localAddr.Bytes(),
+		MinipoolGen:       math.MaxInt64,
+		PrevMiniblockHash: common.Hash{}.Bytes(),
+	}, l); err != nil {
+		return nil, err
+	}
+
+	l.run(ctx)
+
+	return l, nil
+}
+
+// OnUpdate implements events.SyncResultReceiver interface.
+func (s *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
+	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
+}
+
+// OnSyncError implements events.SyncResultReceiver interface.
+// TODO: Close the given local syncer and remove from registry.
+func (s *localStreamUpdateEmitter) OnSyncError(err error) {
+	s.log.Error("sync error for local stream", "streamID", s.stream.StreamId(), "error", err)
+
+	streamID := s.stream.StreamId()
+	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+}
+
+// OnStreamSyncDown implements events.SyncResultReceiver interface.
+// TODO: Close the given local syncer and remove from registry.
+func (s *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
+	s.log.Warnw("local stream sync down", "streamID", s.stream.StreamId())
+
+	streamID := s.stream.StreamId()
+	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+}
+
+// StreamID returns the StreamId of the stream that this emitter emits events for.
+func (s *localStreamUpdateEmitter) StreamID() StreamId {
+	return s.stream.StreamId()
+}
+
+// Node returns the address of the stream node. This is the local node address for local streams.
+func (s *localStreamUpdateEmitter) Node() common.Address {
+	return s.localAddr
+}
+
+// Subscribe adds the given subscriber to the stream updates.
+func (s *localStreamUpdateEmitter) Subscribe(subscriber StreamSubscriber) error {
+	s.subscribers.Add(subscriber)
+	return nil
+}
+
+// Unsubscribe removes the given subscriber from the stream updates.
+// The local stream update emitter does not unsubscribe from updates even if there are no subscribers left.
+func (s *localStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) bool {
+	s.subscribers.Remove(subscriber)
+	return false
+}
+
+// Backfill requests a backfill message by the given cookie and sends the message through sync IDs.
+func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) error {
+	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
+	defer cancel()
+
+	return s.stream.UpdatesSinceCookie(ctxWithTimeout, cookie, func(streamAndCookie *StreamAndCookie) error {
+		s.sendUpdateToSubscribers(&SyncStreamsResponse{
+			SyncOp:        SyncOp_SYNC_UPDATE,
+			Stream:        streamAndCookie,
+			TargetSyncIds: syncIDs,
+		})
+		return nil
+	})
+}
+
+// sendUpdateToSubscribers sends the given sync streams response to all subscribers of the stream.
+func (s *localStreamUpdateEmitter) sendUpdateToSubscribers(msg *SyncStreamsResponse) {
+	if s.subscribers.Cardinality() > 0 {
+		for subscriber := range s.subscribers.Iter() {
+			subscriber.OnStreamEvent(msg)
+		}
+	}
+}
+
+// run waits for the global node context to be done, unsubscribes from updates, and sends the sync down message to
+// all subscribers.
+func (s *localStreamUpdateEmitter) run(ctx context.Context) {
+	<-ctx.Done()
+
+	s.stream.Unsub(s)
+
+	streamID := s.stream.StreamId()
+	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+}

@@ -33,7 +33,8 @@ type (
 		//
 		// For each stream that is removed, the operation will unsubscribe from further stream updates.
 		//
-		// TODO: discuss what error needs to be returned for streams that can't be found. Probably just a stream down message with a message immediately.
+		// TODO: discuss what error needs to be returned for streams that can't be found.
+		//   Probably just a stream down message with a message immediately.
 		Modify(req *ModifySyncRequest) *ModifySyncResponse
 
 		// Cancel the stream sync operation.
