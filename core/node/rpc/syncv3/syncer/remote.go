@@ -160,14 +160,14 @@ func (r *remoteStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) {
 	}
 }
 
-func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) error {
+func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, targetSyncID string) error {
 	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, remoteStreamUpdateEmitterTimeout)
 	defer cancel()
 
 	resp, err := r.client.ModifySync(ctxWithTimeout, connect.NewRequest(&ModifySyncRequest{
 		SyncId: r.syncID,
 		BackfillStreams: &ModifySyncRequest_Backfill{
-			SyncId:  syncIDs[0], // TODO: It requires only one sync ID instead of chain
+			SyncId:  targetSyncID,
 			Streams: []*SyncCookie{cookie},
 		},
 	}))

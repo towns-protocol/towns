@@ -76,8 +76,8 @@ func (r *registryImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscribe
 	}
 }
 
-// Backfill sends a backfill request for the given syncIDs to the corresponding StreamUpdateEmitter.
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
+// Backfill sends a backfill request for the given targetSyncID to the corresponding StreamUpdateEmitter.
+func (r *registryImpl) Backfill(cookie *SyncCookie, targetSyncID string) error {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()
 
@@ -95,9 +95,10 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
 			Func("registryImpl.Backfill")
 	}
 
-	if err = emitter.Backfill(cookie, syncIDs); err != nil {
+	if err = emitter.Backfill(cookie, targetSyncID); err != nil {
 		return AsRiverError(err).
 			Tag("streamID", streamID.String()).
+			Tag("targetSyncID", targetSyncID).
 			Func("registryImpl.Backfill")
 	}
 

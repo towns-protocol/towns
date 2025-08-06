@@ -124,8 +124,8 @@ func (s *localStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) {
 	s.subscribers.Remove(subscriber)
 }
 
-// Backfill requests a backfill message by the given cookie and sends the message through sync IDs.
-func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) error {
+// Backfill requests a backfill message by the given cookie and sends the message to targetSyncID.
+func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, targetSyncID string) error {
 	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
 	defer cancel()
 
@@ -133,7 +133,7 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 		s.sendUpdateToSubscribers(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_UPDATE,
 			Stream:        streamAndCookie,
-			TargetSyncIds: syncIDs,
+			TargetSyncIds: []string{targetSyncID},
 		})
 		return nil
 	})
