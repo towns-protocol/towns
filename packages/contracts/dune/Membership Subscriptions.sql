@@ -32,9 +32,9 @@ WITH towns_created AS (SELECT town_address
                                  block_time,
                                  block_number,
                                  log_index,
-                                 substring(topic1 FROM 13)                            AS member_address,
-                                 bytearray_to_int256(substring(topic2 FROM 1 FOR 32)) AS token_id,
-                                 'mint'                                               AS event_type
+                                 substring(topic1 FROM 13)    AS member_address,
+                                 bytearray_to_uint256(topic2) AS token_id,
+                                 'mint'                       AS event_type
                           FROM all_membership_logs
                           WHERE log_type = 'mint'),
 
@@ -44,8 +44,8 @@ WITH towns_created AS (SELECT town_address
                                      block_time,
                                      block_number,
                                      log_index,
-                                     bytearray_to_int256(substring(topic1 FROM 1 FOR 32)) AS token_id,
-                                     bytearray_to_int256(substring(topic2 FROM 1 FOR 32)) AS expiration
+                                     bytearray_to_uint256(topic1) AS token_id,
+                                     bytearray_to_uint256(topic2) AS expiration
                               FROM all_membership_logs
                               WHERE log_type = 'subscription_update'),
 

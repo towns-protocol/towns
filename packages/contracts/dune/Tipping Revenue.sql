@@ -12,7 +12,7 @@ WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
                            CASE
                                -- When currency is ETH (0xEeeE...), use amount
                                WHEN substring(l.topic2 FROM 13) = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-                                   THEN bytearray_to_int256(substring(l.data FROM 65 FOR 32))
+                                   THEN bytearray_to_uint256(substring(l.data FROM 65 FOR 32))
                                -- Skip non-ETH tips
                                ELSE 0
                                END AS amount

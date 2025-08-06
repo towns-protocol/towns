@@ -1,8 +1,8 @@
 with space_created AS (SELECT block_time,
                               tx_hash,
-                              substring(topic1 FROM 13)                            AS space_owner,
-                              bytearray_to_int256(substring(topic2 from 1 for 32)) AS space_owner_token_id,
-                              substring(topic3 from 13)                            AS space_address
+                              substring(topic1 FROM 13)    AS space_owner,
+                              bytearray_to_uint256(topic2) AS space_owner_token_id,
+                              substring(topic3 from 13)    AS space_address
                        FROM base.logs
                        -- SpaceFactory
                        WHERE contract_address = 0x9978c826d93883701522d2CA645d5436e5654252
@@ -10,9 +10,9 @@ with space_created AS (SELECT block_time,
                          AND topic0 = 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b
                          AND block_time > cast('2024-05-01' AS timestamp)),
 
-     member_added AS (SELECT DISTINCT contract_address                                     AS space_address,
-                                      substring(topic1 FROM 13)                            AS space_member_address,
-                                      bytearray_to_int256(substring(topic2 FROM 1 for 32)) AS space_member_token_id,
+     member_added AS (SELECT DISTINCT contract_address             AS space_address,
+                                      substring(topic1 FROM 13)    AS space_member_address,
+                                      bytearray_to_uint256(topic2) AS space_member_token_id,
                                       base.logs.tx_hash,
                                       space_owner
                       FROM space_created

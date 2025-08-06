@@ -12,10 +12,10 @@ WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
                             CASE
                                 -- When tokenIn is ETH (0xEeeE...), use amountIn
                                 WHEN substring(l.topic2 FROM 13) = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-                                    THEN bytearray_to_int256(substring(l.data FROM 1 FOR 32))
+                                    THEN bytearray_to_uint256(substring(l.data FROM 1 FOR 32))
                                 -- When tokenOut is ETH (0xEeeE...), use amountOut
                                 WHEN substring(l.topic3 FROM 13) = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-                                    THEN bytearray_to_int256(substring(l.data FROM 33 FOR 32))
+                                    THEN bytearray_to_uint256(substring(l.data FROM 33 FOR 32))
                                 -- Skip non-ETH pairs
                                 ELSE 0
                                 END AS volume
