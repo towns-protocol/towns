@@ -20,6 +20,7 @@ const (
 )
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
+// TODO: Advance sticky peer on failure.
 type localStreamUpdateEmitter struct {
 	// ctx is the global node context wrapped into the cancellable context.
 	ctx context.Context
@@ -60,7 +61,7 @@ func NewLocalStreamUpdateEmitter(
 	l := &localStreamUpdateEmitter{
 		ctx:         ctx,
 		cancel:      cancel,
-		log:         logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
+		log:         logging.FromCtx(ctx).Named("syncv3.localStreamUpdateEmitter"),
 		localAddr:   localAddr,
 		stream:      stream,
 		subscribers: mapset.NewSet[StreamSubscriber](),
@@ -113,16 +114,14 @@ func (s *localStreamUpdateEmitter) Node() common.Address {
 }
 
 // Subscribe adds the given subscriber to the stream updates.
-func (s *localStreamUpdateEmitter) Subscribe(subscriber StreamSubscriber) error {
+func (s *localStreamUpdateEmitter) Subscribe(subscriber StreamSubscriber) {
 	s.subscribers.Add(subscriber)
-	return nil
 }
 
 // Unsubscribe removes the given subscriber from the stream updates.
 // The local stream update emitter does not unsubscribe from updates even if there are no subscribers left.
-func (s *localStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) bool {
+func (s *localStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) {
 	s.subscribers.Remove(subscriber)
-	return false
 }
 
 // Backfill requests a backfill message by the given cookie and sends the message through sync IDs.

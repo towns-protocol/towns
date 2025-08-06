@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -49,13 +48,13 @@ type (
 		Node() common.Address
 
 		// Subscribe for updates on the stream.
-		Subscribe(subscriber StreamSubscriber) error
+		Subscribe(subscriber StreamSubscriber)
 
 		// Unsubscribe from updates of the stream.
 		//
 		// If no subscribers left, the emitter should be closed.
 		// Returns true if the emitter was closed, false otherwise.
-		Unsubscribe(subscriber StreamSubscriber) bool
+		Unsubscribe(subscriber StreamSubscriber)
 
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
@@ -83,31 +82,4 @@ type (
 		// TODO: If a syncer for the given stream ID is not found, it returns an error or the sync down message.
 		Backfill(cookie *SyncCookie, syncIDs []string) error
 	}
-
-	registryImpl struct {
-		syncersLock sync.Mutex
-		syncers     map[StreamId]StreamUpdateEmitter
-	}
 )
-
-// NewRegistry creates a new instance of the Registry.
-func NewRegistry() *registryImpl {
-	return &registryImpl{
-		syncers: make(map[StreamId]StreamUpdateEmitter),
-	}
-}
-
-func (r *registryImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
-	// TODO: Implement me
-	panic("implement me")
-}
