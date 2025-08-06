@@ -669,7 +669,7 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
 		hex.EncodeToString(userID[:]),
-		app,
+		int32(app),
 	)
 
 	return err
@@ -709,7 +709,7 @@ func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
-		app,
+		int32(app),
 	)
 
 	return err
@@ -746,7 +746,7 @@ func (s *PostgresNotificationStore) removeWebPushSubscription(
 		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND app_id=$3`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
-		app,
+		int32(app),
 	)
 
 	return err
@@ -853,7 +853,7 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 		int16(environment),
 		hex.EncodeToString(userID[:]),
 		int32(pushVersion),
-		app,
+		int32(app),
 	)
 
 	return err
@@ -888,7 +888,7 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 		ctx,
 		`DELETE FROM apnpushsubscriptions where device_token=$1 AND app_id=$2`,
 		deviceToken,
-		app,
+		int32(app),
 	)
 
 	logging.FromCtx(ctx).Infow("remove APN subscription",
