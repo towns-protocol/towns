@@ -40,7 +40,7 @@ type (
 			// payload of the message
 			payload []byte,
 			// app identifies which app config to use
-			app protocol.NotificationApp,
+			app string,
 		) (expired bool, err error)
 
 		// SendApplePushNotification sends a push notification to the iOS app
@@ -55,13 +55,13 @@ type (
 			// payloadIncludesStreamEvent is true if the payload includes the stream event
 			payloadIncludesStreamEvent bool,
 			// app identifies which app config to use
-			app protocol.NotificationApp,
+			app string,
 		) (bool, int, error)
 	}
 
 	MessageNotifications struct {
 		// App-specific configurations
-		appConfigs map[protocol.NotificationApp]*AppNotificationConfig
+		appConfigs map[string]*AppNotificationConfig
 
 		// metrics
 		webPushSent *prometheus.CounterVec
@@ -128,20 +128,20 @@ func NewMessageNotifier(
 	if len(cfg.Apps) == 0 && (cfg.APN.AppBundleID != "" || cfg.Web.Vapid.PrivateKey != "") {
 		// Convert legacy config to Apps format
 		cfg.Apps = []config.AppNotificationConfig{{
-			App: int32(protocol.NotificationApp_NOTIFICATION_APP_TOWNS),
+			App: "towns",
 			APN: cfg.APN,
 			Web: cfg.Web,
 		}}
 	}
 
-	appConfigs := make(map[protocol.NotificationApp]*AppNotificationConfig)
+	appConfigs := make(map[string]*AppNotificationConfig)
 
 	for _, appCfg := range cfg.Apps {
 		appConfig, err := createAppNotificationConfig(&appCfg)
 		if err != nil {
 			return nil, err
 		}
-		appConfigs[protocol.NotificationApp(appCfg.App)] = appConfig
+		appConfigs[appCfg.App] = appConfig
 	}
 
 	webPushSend := metricsFactory.NewCounterVecEx(
@@ -236,7 +236,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	payload []byte,
-	app protocol.NotificationApp,
+	app string,
 ) (expired bool, err error) {
 	appConfig, ok := n.appConfigs[app]
 	if !ok {
@@ -257,7 +257,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 	if err != nil {
 		n.webPushSent.With(prometheus.Labels{
 			"status": fmt.Sprintf("%d", http.StatusServiceUnavailable),
-			"app":    app.String(),
+			"app":    app,
 		}).Inc()
 		return false, AsRiverError(err).
 			Message("Send notification with WebPush failed").
@@ -267,7 +267,7 @@ func (n *MessageNotifications) SendWebPushNotification(
 
 	n.webPushSent.With(prometheus.Labels{
 		"status": fmt.Sprintf("%d", res.StatusCode),
-		"app":    app.String(),
+		"app":    app,
 	}).Inc()
 
 	if res.StatusCode == http.StatusCreated {
@@ -295,7 +295,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 	eventHash common.Hash,
 	payload *payload2.Payload,
 	payloadIncludesStreamEvent bool,
-	app protocol.NotificationApp,
+	app string,
 ) (bool, int, error) {
 	appConfig, ok := n.appConfigs[app]
 	if !ok {
@@ -330,7 +330,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 			"status":           fmt.Sprintf("%d", http.StatusServiceUnavailable),
 			"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
 			"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
-			"app":              app.String(),
+			"app":              app,
 		}).Inc()
 		return false, http.StatusBadGateway, AsRiverError(err).
 			Message("Send notification to APNS failed").
@@ -341,7 +341,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 		"status":           fmt.Sprintf("%d", res.StatusCode),
 		"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
 		"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
-		"app":              app.String(),
+		"app":              app,
 	}).Inc()
 
 	if res.Sent() {
@@ -381,21 +381,21 @@ func (n *MessageNotificationsSimulator) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	payload []byte,
-	app protocol.NotificationApp,
+	app string,
 ) (bool, error) {
 	log := logging.FromCtx(ctx)
 	log.Infow("SendWebPushNotification",
 		"keys.p256dh", subscription.Keys.P256dh,
 		"keys.auth", subscription.Keys.Auth,
 		"payload", payload,
-		"app", app.String())
+		"app", app)
 
 	n.WebPushNotificationsByEndpoint[subscription.Endpoint] = append(
 		n.WebPushNotificationsByEndpoint[subscription.Endpoint], payload)
 
 	n.webPushSent.With(prometheus.Labels{
 		"status": "200",
-		"app":    app.String(),
+		"app":    app,
 	}).Inc()
 
 	return false, nil
@@ -407,7 +407,7 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 	eventHash common.Hash,
 	payload *payload2.Payload,
 	payloadIncludesStreamEvent bool,
-	app protocol.NotificationApp,
+	app string,
 ) (bool, int, error) {
 	log := logging.FromCtx(ctx)
 
@@ -417,14 +417,14 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 		"payload", payload,
 		"payloadStripped", payloadIncludesStreamEvent,
 		"payloadVersion", fmt.Sprintf("%d", sub.PushVersion),
-		"app", app.String(),
+		"app", app,
 	)
 
 	n.apnSent.With(prometheus.Labels{
 		"status":           "200",
 		"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
 		"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
-		"app":              app.String(),
+		"app":              app,
 	}).Inc()
 
 	return false, http.StatusOK, nil

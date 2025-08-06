@@ -292,7 +292,7 @@ func (up *UserPreferencesCache) AddWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	pref, err := up.GetUserPreferences(ctx, userID)
 	if err != nil {
@@ -324,7 +324,7 @@ func (up *UserPreferencesCache) RemoveExpiredWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	err := up.persistent.RemoveExpiredWebPushSubscription(ctx, userID, webPushSubscription, app)
 	if err != nil {
@@ -342,7 +342,7 @@ func (up *UserPreferencesCache) RemoveWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	err := up.persistent.RemoveWebPushSubscription(ctx, userID, webPushSubscription, app)
 	if err != nil {
@@ -373,7 +373,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 	deviceToken []byte,
 	environment APNEnvironment,
 	pushVersion NotificationPushVersion,
-	app NotificationApp,
+	app string,
 ) error {
 	pref, err := up.GetUserPreferences(ctx, userID)
 	if err != nil {
@@ -402,7 +402,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 func (up *UserPreferencesCache) RemoveAPNSubscription(ctx context.Context,
 	deviceToken []byte,
 	userID common.Address,
-	app NotificationApp,
+	app string,
 ) error {
 	err := up.persistent.RemoveAPNSubscription(ctx, deviceToken, userID, app)
 	if err != nil {

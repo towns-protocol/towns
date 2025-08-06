@@ -42,7 +42,7 @@ type (
 	WebPushSubscription struct {
 		Sub      *webpush.Subscription
 		LastSeen time.Time
-		App      NotificationApp
+		App      string
 	}
 
 	APNPushSubscription struct {
@@ -50,7 +50,7 @@ type (
 		LastSeen    time.Time
 		Environment APNEnvironment
 		PushVersion NotificationPushVersion
-		App         NotificationApp
+		App         string
 	}
 
 	Subscriptions struct {

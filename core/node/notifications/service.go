@@ -340,8 +340,8 @@ func (s *Service) SubscribeWebPush(
 	}
 
 	// Default to Towns app for backward compatibility
-	if app == NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
-		app = NotificationApp_NOTIFICATION_APP_TOWNS
+	if app == "" {
+		app = "towns"
 	}
 
 	if err := s.userPreferences.AddWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
@@ -375,8 +375,8 @@ func (s *Service) UnsubscribeWebPush(
 	}
 
 	// Default to Towns app for backward compatibility
-	if app == NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
-		app = NotificationApp_NOTIFICATION_APP_TOWNS
+	if app == "" {
+		app = "towns"
 	}
 
 	if err := s.userPreferences.RemoveWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
@@ -411,8 +411,8 @@ func (s *Service) SubscribeAPN(
 	}
 
 	// Default to Towns app for backward compatibility
-	if app == NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
-		app = NotificationApp_NOTIFICATION_APP_TOWNS
+	if app == "" {
+		app = "towns"
 	}
 
 	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion, app); err != nil {
@@ -440,8 +440,8 @@ func (s *Service) UnsubscribeAPN(
 	}
 
 	// Default to Towns app for backward compatibility
-	if app == NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
-		app = NotificationApp_NOTIFICATION_APP_TOWNS
+	if app == "" {
+		app = "towns"
 	}
 
 	logging.FromCtx(ctx).Infow("remove APN subscription", "userID", userID, "app", app)
