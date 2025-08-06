@@ -176,7 +176,11 @@ func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 	}
 
 	if resp.Msg.GetBackfills() != nil {
-		// TODO: Handle failure
+		// SyncStreamOpStatus implements error interface so we can use it directly.
+		// Just wrap it into a RiverError with additional context.
+		errData := resp.Msg.GetBackfills()[0]
+		return AsRiverError(errData, Err(errData.GetCode())).
+			Func("remoteStreamUpdateEmitter.Backfill")
 	}
 
 	return nil

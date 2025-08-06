@@ -1,6 +1,8 @@
 package protocol
 
 import (
+	"fmt"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -97,4 +99,14 @@ func (r *SyncStreamsResponse) StreamID() []byte {
 	}
 
 	return r.GetStream().GetNextSyncCookie().GetStreamId()
+}
+
+// Error implements the error interface for SyncStreamOpStatus.
+func (op *SyncStreamOpStatus) Error() string {
+	if op == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("StreamOpStatus{StreamId: %x, Code: %d, Message: %s, NodeAddress: %x}",
+		op.GetStreamId(), op.GetCode(), op.GetMessage(), op.GetNodeAddress())
 }
