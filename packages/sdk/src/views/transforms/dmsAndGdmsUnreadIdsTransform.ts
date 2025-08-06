@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash-es'
-import { UnreadMarkersModel } from '../streams/unreadMarkersTransform'
+import { UnreadMarkersModel } from './unreadMarkersTransform'
 import { DmAndGdmModel } from './dmsAndGdmsTransform'
 
 interface Input {

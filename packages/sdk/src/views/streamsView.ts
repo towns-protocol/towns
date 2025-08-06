@@ -9,7 +9,7 @@ import {
     makeUserStreamId,
 } from '../id'
 import { UserSettingsStreamModel, UserSettingsStreamsView } from './streams/userSettingsStreams'
-import { UnreadMarkersModel, unreadMarkersTransform } from './streams/unreadMarkersTransform'
+import { UnreadMarkersModel, unreadMarkersTransform } from './transforms/unreadMarkersTransform'
 import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
 import { SpaceStreamsView } from './streams/spaceStreams'
 import { UserStreamModel, UserStreamsView } from './streams/userStreamsView'
