@@ -32,7 +32,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
         );
 
         if (result == NodeVoteStatus.PASSED) {
-            JoinDetails memory joinDetails = _getJoinDetails();
+            PricingDetails memory joinDetails = _getPricingDetails();
 
             if (joinDetails.shouldCharge) {
                 uint256 payment = _getCapturedValue(transactionId);

@@ -70,42 +70,26 @@ abstract contract MembershipJoin is
 
     /// @notice Calculates all pricing details for joining a space
     /// @return joinDetails Struct containing all pricing information
-    function _getJoinDetails() internal view returns (JoinDetails memory joinDetails) {
+    function _getPricingDetails() internal view returns (PricingDetails memory joinDetails) {
         uint256 totalSupply = _totalSupply();
         uint256 membershipPrice = _getMembershipPrice(totalSupply);
         uint256 freeAllocation = _getMembershipFreeAllocation();
         uint256 prepaidSupply = _getPrepaidSupply();
 
-        // Check if this is a free join due to allocation
+        joinDetails.basePrice = membershipPrice;
         if (freeAllocation > totalSupply) {
-            return
-                JoinDetails({
-                    basePrice: membershipPrice,
-                    amountDue: 0,
-                    shouldCharge: false,
-                    isPrepaid: false
-                });
+            return joinDetails;
         }
 
         // Check if this is a free join due to prepaid supply
         if (prepaidSupply > 0) {
-            return
-                JoinDetails({
-                    basePrice: membershipPrice,
-                    amountDue: 0,
-                    shouldCharge: false,
-                    isPrepaid: true
-                });
+            joinDetails.isPrepaid = true;
+            return joinDetails;
         }
 
         // Regular paid join
-        return
-            JoinDetails({
-                basePrice: membershipPrice,
-                amountDue: membershipPrice,
-                shouldCharge: true,
-                isPrepaid: false
-            });
+        joinDetails.amountDue = membershipPrice;
+        joinDetails.shouldCharge = true;
     }
 
     /// @notice Handles the process of joining a space
@@ -113,7 +97,7 @@ abstract contract MembershipJoin is
     function _joinSpace(address receiver) internal {
         _validateJoinSpace(receiver);
 
-        JoinDetails memory joinDetails = _getJoinDetails();
+        PricingDetails memory joinDetails = _getPricingDetails();
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -152,7 +136,7 @@ abstract contract MembershipJoin is
     function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
         _validateJoinSpace(receiver);
 
-        JoinDetails memory joinDetails = _getJoinDetails();
+        PricingDetails memory joinDetails = _getPricingDetails();
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -315,7 +299,10 @@ abstract contract MembershipJoin is
     /// @notice Processes the charge for joining a space without referral
     /// @param transactionId The unique identifier for this join transaction
     /// @param joinDetails The pricing details for this join
-    function _chargeForJoinSpace(bytes32 transactionId, JoinDetails memory joinDetails) internal {
+    function _chargeForJoinSpace(
+        bytes32 transactionId,
+        PricingDetails memory joinDetails
+    ) internal {
         (bytes4 selector, address sender, address receiver, ) = abi.decode(
             _getCapturedData(transactionId),
             (bytes4, address, address, bytes)
@@ -343,7 +330,7 @@ abstract contract MembershipJoin is
     /// @param joinDetails The pricing details for this join
     function _chargeForJoinSpaceWithReferral(
         bytes32 transactionId,
-        JoinDetails memory joinDetails
+        PricingDetails memory joinDetails
     ) internal {
         (bytes4 selector, address sender, address receiver, bytes memory referralData) = abi.decode(
             _getCapturedData(transactionId),
