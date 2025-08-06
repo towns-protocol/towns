@@ -659,10 +659,9 @@ func (p *MessageToNotificationsProcessor) sendWebPushNotification(
 		"payload":   content,
 	})
 
-	// TODO: remove this once all subs have an app specified
 	// Default to Towns app if not specified
-	app := NotificationApp_NOTIFICATION_APP_TOWNS
-	if sub.App != NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
+	app := "towns"
+	if sub.App != "" {
 		app = sub.App
 	}
 	return p.notifier.SendWebPushNotification(ctx, sub.Sub, event.Hash, payload, app)
@@ -695,10 +694,9 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 
 	_, containsStreamEvent := content["event"]
 
-	// TODO: remove this once all subs have an app specified
 	// Default to Towns app if not specified
-	app := NotificationApp_NOTIFICATION_APP_TOWNS
-	if sub.App != NotificationApp_NOTIFICATION_APP_UNSPECIFIED {
+	app := "towns"
+	if sub.App != "" {
 		app = sub.App
 	}
 	return p.notifier.SendApplePushNotification(

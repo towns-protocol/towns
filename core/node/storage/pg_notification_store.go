@@ -97,7 +97,7 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
-			app NotificationApp,
+			app string,
 		) error
 
 		// RemoveExpiredWebPushSubscription deletes a web push subscription with an expired endpoint.
@@ -105,7 +105,7 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
-			app NotificationApp,
+			app string,
 		) error
 
 		// RemoveWebPushSubscription deletes a web push subscription.
@@ -113,7 +113,7 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
-			app NotificationApp,
+			app string,
 		) error
 
 		GetAPNSubscriptions(
@@ -127,18 +127,41 @@ type (
 			deviceToken []byte,
 			environment APNEnvironment,
 			pushVersion NotificationPushVersion,
-			app NotificationApp,
+			app string,
 		) error
 
 		RemoveAPNSubscription(ctx context.Context,
 			deviceToken []byte,
 			userID common.Address,
-			app NotificationApp,
+			app string,
 		) error
 	}
 )
 
 var _ NotificationStore = (*PostgresNotificationStore)(nil)
+
+// Helper functions to convert between app names and IDs
+func getAppIDFromName(app string) int32 {
+	switch app {
+	case "towns":
+		return 1
+	case "sendit":
+		return 2
+	default:
+		return 0 // unspecified
+	}
+}
+
+func getAppNameFromID(appID int32) string {
+	switch appID {
+	case 1:
+		return "towns"
+	case 2:
+		return "sendit"
+	default:
+		return ""
+	}
+}
 
 //go:embed notification_migrations/*.sql
 var notificationMigrationsDir embed.FS
@@ -623,7 +646,7 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 				},
 			},
 			LastSeen: lastSeen,
-			App:      NotificationApp(appID),
+			App:      getAppNameFromID(appID),
 		})
 		return nil
 	}); err != nil {
@@ -640,7 +663,7 @@ func (s *PostgresNotificationStore) AddWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -660,7 +683,7 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 	tx pgx.Tx,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
@@ -669,7 +692,7 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
 		hex.EncodeToString(userID[:]),
-		int32(app),
+		getAppIDFromName(app),
 	)
 
 	return err
@@ -682,7 +705,7 @@ func (s *PostgresNotificationStore) RemoveExpiredWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -701,7 +724,7 @@ func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
 	ctx context.Context,
 	tx pgx.Tx,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
@@ -709,7 +732,7 @@ func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
-		int32(app),
+		getAppIDFromName(app),
 	)
 
 	return err
@@ -720,7 +743,7 @@ func (s *PostgresNotificationStore) RemoveWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -739,14 +762,14 @@ func (s *PostgresNotificationStore) removeWebPushSubscription(
 	ctx context.Context,
 	tx pgx.Tx,
 	webPushSubscription *webpush.Subscription,
-	app NotificationApp,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
 		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND app_id=$3`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
-		int32(app),
+		getAppIDFromName(app),
 	)
 
 	return err
@@ -806,7 +829,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 			LastSeen:    lastSeen,
 			Environment: environment,
 			PushVersion: NotificationPushVersion(pushVersion),
-			App:         NotificationApp(appID),
+			App:         getAppNameFromID(appID),
 		})
 		return nil
 	}); err != nil {
@@ -822,7 +845,7 @@ func (s *PostgresNotificationStore) AddAPNSubscription(
 	deviceToken []byte,
 	environment APNEnvironment,
 	pushVersion NotificationPushVersion,
-	app NotificationApp,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -844,7 +867,7 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 	environment APNEnvironment,
 	userID common.Address,
 	pushVersion NotificationPushVersion,
-	app NotificationApp,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
@@ -853,7 +876,7 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 		int16(environment),
 		hex.EncodeToString(userID[:]),
 		int32(pushVersion),
-		int32(app),
+		getAppIDFromName(app),
 	)
 
 	return err
@@ -862,7 +885,7 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 func (s *PostgresNotificationStore) RemoveAPNSubscription(ctx context.Context,
 	deviceToken []byte,
 	userID common.Address,
-	app NotificationApp,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
@@ -882,13 +905,13 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 	tx pgx.Tx,
 	deviceToken []byte,
 	userID common.Address,
-	app NotificationApp,
+	app string,
 ) error {
 	result, err := tx.Exec(
 		ctx,
 		`DELETE FROM apnpushsubscriptions where device_token=$1 AND app_id=$2`,
 		deviceToken,
-		int32(app),
+		getAppIDFromName(app),
 	)
 
 	logging.FromCtx(ctx).Infow("remove APN subscription",

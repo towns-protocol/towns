@@ -444,8 +444,8 @@ type StreamTrackingConfig struct {
 
 // AppNotificationConfig holds notification configuration for a specific app.
 type AppNotificationConfig struct {
-	// App identifies which app this configuration is for (from protocol.NotificationApp enum)
-	App int32 // Using int32 to match protobuf enum type
+	// App identifies which app this configuration is for ("towns" or "sendit")
+	App string
 	// APN holds the Apple Push Notification settings for this app
 	APN APNPushNotificationsConfig
 	// Web holds the Web Push notification settings for this app
