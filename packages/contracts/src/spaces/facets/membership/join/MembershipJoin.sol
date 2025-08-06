@@ -79,7 +79,7 @@ abstract contract MembershipJoin is
         uint256 membershipPrice = _getTierPrice(tierId);
         uint256 prepaidSupply = _getPrepaidSupply(); // still global
 
-        MembershipTiersStorage.Tier storage t = _getTier(tierId);
+        MembershipTiersStorage.Tier memory t = _getTier(tierId);
 
         // Free because of per-tier allocation
         if (t.freeAllocation > t.minted) {
@@ -431,19 +431,13 @@ abstract contract MembershipJoin is
         _incrementTierMinted(tierId, 1);
 
         // set renewal price for token based on its tier
-        _setMembershipRenewalPrice(
-            tokenId,
-            tierId == 0 ? _getMembershipPrice(_totalSupply()) : _getTierPrice(tierId)
-        );
+        _setMembershipRenewalPrice(tokenId, _getTierPrice(tierId));
 
         // mint membership NFT
         _safeMint(receiver, 1);
 
         // set expiration of membership
-        _renewSubscription(
-            tokenId,
-            tierId == 0 ? _getMembershipDuration() : _getTierDuration(tierId)
-        );
+        _renewSubscription(tokenId, _getTierDuration(tierId));
 
         // emit event
         emit MembershipTokenIssued(receiver, tokenId);
@@ -453,9 +447,7 @@ abstract contract MembershipJoin is
     /// @param receiver The address that will receive the membership token
     function _validateJoinSpace(address receiver, uint32 tierId) internal view {
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
-        uint256 membershipSupplyLimit = tierId == 0
-            ? _getMembershipSupplyLimit()
-            : _getTier(tierId).maxSupply;
+        uint256 membershipSupplyLimit = _getTier(tierId).maxSupply;
         if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
             Membership__MaxSupplyReached.selector.revertWith();
         }
@@ -546,7 +538,8 @@ abstract contract MembershipJoin is
 
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
-        uint256 duration = _getMembershipDuration();
+        uint32 tierId = _tierOf(tokenId);
+        uint256 duration = _getTierDuration(tierId);
         uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
 
         if (membershipPrice > msg.value) Membership__InvalidPayment.selector.revertWith();
