@@ -138,6 +138,7 @@ export class SyncedStreamsLoop {
     private syncStartedAt: number | undefined = undefined
     private processedStreamCount = 0
     private streamSyncStalled: NodeJS.Timeout | undefined
+    private abortControllers: Record<string, AbortController[]> = {}
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 10
     private readonly MAX_IN_FLIGHT_STREAMS_TO_DELETE = 40
@@ -217,6 +218,10 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncState', syncState)
                 this.log('stopSync syncLoop', syncLoop)
                 this.log('stopSync syncId', syncId)
+                if (syncId) {
+                    this.abortControllers[syncId]?.forEach((x) => x.abort())
+                    delete this.abortControllers[syncId]
+                }
                 const result = await Promise.allSettled([
                     syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
                     syncLoop,
@@ -374,6 +379,10 @@ export class SyncedStreamsLoop {
                     try {
                         // syncId needs to be reset before starting a new syncStreams
                         // syncStreams() should return a new syncId
+                        if (this.syncId) {
+                            this.abortControllers[this.syncId]?.forEach((x) => x.abort())
+                            delete this.abortControllers[this.syncId]
+                        }
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
@@ -631,19 +640,33 @@ export class SyncedStreamsLoop {
 
     private async modifySync(streamsToAdd: string[], streamsToDelete: string[]) {
         const syncId = this.syncId
+        if (!syncId) {
+            throw new Error('modifySync called without a syncId')
+        }
         streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
         const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
         try {
-            const resp = await this.rpcClient.modifySync({
-                syncId,
-                addStreams: syncPos.filter(isDefined),
-                removeStreams: streamsToDelete.map(streamIdAsBytes),
-            })
+            const abortController = new AbortController()
+            const resp = await this.rpcClient.modifySync(
+                {
+                    syncId,
+                    addStreams: syncPos.filter(isDefined),
+                    removeStreams: streamsToDelete.map(streamIdAsBytes),
+                },
+                { signal: abortController.signal },
+            )
+            this.abortControllers[syncId] = [
+                ...(this.abortControllers[syncId] ?? []),
+                abortController,
+            ]
             if (resp.removals.length > 0) {
                 this.logError('modifySync removal errors', resp.removals)
             }
             if (resp.adds.length > 0) {
                 this.logError('modifySync addition errors', resp.adds)
+                resp.removals.forEach((x) =>
+                    this.inFlightSyncCookies.delete(streamIdAsString(x.streamId)),
+                )
             }
         } catch (err) {
             this.logError('modifySync error', err)
@@ -698,6 +721,10 @@ export class SyncedStreamsLoop {
         if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
+                if (this.syncId) {
+                    this.abortControllers[this.syncId]?.forEach((x) => x.abort())
+                    delete this.abortControllers[this.syncId]
+                }
                 this.syncId = undefined
                 this.streams.forEach((streamRecord) => {
                     streamRecord.stream.resetUpToDate()
