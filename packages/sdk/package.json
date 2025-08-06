@@ -59,7 +59,7 @@
         "happy-dom": "^15.11.7",
         "seedrandom": "^3.0.5",
         "typed-emitter": "^2.1.0",
-        "typescript": "^5.8.2",
+        "typescript": "^5.9.2",
         "vite-plugin-wasm": "^3.4.1",
         "vitest-fetch-mock": "^0.4.3"
     },
