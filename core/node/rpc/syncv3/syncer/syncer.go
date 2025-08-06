@@ -57,8 +57,8 @@ type (
 		Unsubscribe(subscriber StreamSubscriber)
 
 		// Backfill backfills the given stream by the given cookie.
-		// targetSyncID is the ID of the sync operation that should receive the requested backfill message.
-		Backfill(cookie *SyncCookie, targetSyncID string) error
+		// syncIDs is a chain of sync IDs that the backfill message should be sent through.
+		Backfill(cookie *SyncCookie, syncIDs []string) error
 	}
 
 	// Registry is a registry of stream update emitters (syncers).
@@ -80,6 +80,6 @@ type (
 		// Backfill sends a request to appropriate syncer to backfill a specific sync operation by the given cookie.
 		//
 		// Note: it returns error instead of sending a sync down message.
-		Backfill(cookie *SyncCookie, targetSyncID string) error
+		Backfill(cookie *SyncCookie, syncIDs []string) error
 	}
 )
