@@ -45,7 +45,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
         }
 
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
-        tierId = $.nextTierId++;
+        tierId = ++$.nextTierId;
         $.tiers[tierId] = cfg;
 
         emit TierCreated(tierId);
@@ -53,6 +53,11 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
 
     /// @notice Updates an existing tier.
     function _updateTier(uint32 tierId, MembershipTiersStorage.Tier memory cfg) internal {
+        if (tierId == 0) {
+            // Tier 0 is virtual and cannot be updated
+            Membership__InvalidTier.selector.revertWith();
+        }
+
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
         MembershipTiersStorage.Tier storage t = $.tiers[tierId];
 
@@ -89,6 +94,11 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
 
     /// @notice Permanently disables a tier (no further mints).
     function _disableTier(uint32 tierId) internal {
+        if (tierId == 0) {
+            // Tier 0 is virtual and cannot be disabled
+            Membership__InvalidTier.selector.revertWith();
+        }
+
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
         MembershipTiersStorage.Tier storage t = $.tiers[tierId];
 
@@ -114,8 +124,8 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
                 duration: _getMembershipDuration(),
                 freeAllocation: _getMembershipFreeAllocation(),
                 pricingModule: address(0),
-                minted: 0,
-                image: "",
+                minted: _totalSupply(),
+                image: _getMembershipImage(),
                 disabled: false
             });
         } else {
@@ -137,6 +147,15 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
 
     /// @dev Ensures tier is active and, if maxSupply is set, that another mint is allowed.
     function _verifyTierAvailable(uint32 tierId) internal view {
+        if (tierId == 0) {
+            // For tier 0, check against totalSupply and membership supply limit
+            uint256 maxSupply = _getMembershipSupplyLimit();
+            if (maxSupply != 0 && _totalSupply() >= maxSupply) {
+                Membership__MaxSupplyReached.selector.revertWith();
+            }
+            return;
+        }
+
         MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
         if (t.disabled) Membership__TierDisabled.selector.revertWith();
         if (t.maxSupply != 0 && t.minted >= t.maxSupply) {
@@ -145,8 +164,16 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     }
 
     /// @dev Increments minted counter; caller MUST have verified availability first.
+    /// @dev For tier 0 (virtual tier), no action is needed as minted count equals totalSupply.
     function _incrementTierMinted(uint32 tierId, uint256 amount) internal {
-        MembershipTiersStorage.getLayout().tiers[tierId].minted += amount;
+        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
+
+        if (tierId == 0 && t.minted == 0 && _totalSupply() > 0) {
+            t.minted = _totalSupply();
+            return;
+        }
+
+        t.minted += amount;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -156,6 +183,11 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     /// @notice Returns membership price for a specific tier.
     /// @dev    Simplified: uses Tier.pricingModule if set, else basePrice.
     function _getTierPrice(uint32 tierId) internal view returns (uint256 price) {
+        if (tierId == 0) {
+            // For tier 0, always use the membership price based on totalSupply
+            return _getMembershipPrice(_totalSupply());
+        }
+
         MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
 
         if (t.pricingModule != address(0)) {
@@ -166,6 +198,11 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     }
 
     function _getTierDuration(uint32 tierId) internal view returns (uint64 duration) {
+        if (tierId == 0) {
+            // For tier 0, always use the membership duration
+            return _getMembershipDuration();
+        }
+
         MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
         duration = t.duration != 0 ? t.duration : _getMembershipDuration();
     }
