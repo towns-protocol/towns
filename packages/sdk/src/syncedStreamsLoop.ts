@@ -220,6 +220,7 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncId', syncId)
                 if (syncId) {
                     this.abortControllers[syncId]?.forEach((x) => x.abort())
+                    delete this.abortControllers[syncId]
                 }
                 const result = await Promise.allSettled([
                     syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
