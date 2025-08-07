@@ -147,7 +147,7 @@ export const unpackStream = async (
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamIdAsString(
             streamAndCookie.nextSyncCookie.streamId,
-        )}`,
+        )} (syncReset=${stream.syncReset})`,
     )
     const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     const eventIds = [

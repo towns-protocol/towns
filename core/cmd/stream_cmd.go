@@ -555,6 +555,10 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
+	if len(args) >= 3 {
+		remoteNodeAddress = common.HexToAddress(args[2])
+	}
+
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
 	if err != nil {
 		return err
@@ -574,7 +578,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 
 	maxBlock := streamAndCookie.GetNextSyncCookie().GetMinipoolGen()
 	blockRange := int64(10)
-	if len(args) == 2 {
+	if len(args) >= 2 {
 		blockRange, err = strconv.ParseInt(args[1], 10, 64)
 		if err != nil {
 			return err
@@ -1374,10 +1378,10 @@ For example, range=5 will print miniblocks from miniblockNum to miniblockNum+4.`
 
 	cmdStreamDump := &cobra.Command{
 		Use:   "dump",
-		Short: "Dump stream contents <stream-id> [max-block-range]",
+		Short: "Dump stream contents <stream-id> [max-block-range] [node-address]",
 		Long: `Dump stream content to stdout.
 max-block-range is optional and limits the number of blocks to consider (default=100)`,
-		Args: cobra.RangeArgs(1, 2),
+		Args: cobra.RangeArgs(1, 3),
 		RunE: runStreamDumpCmd,
 	}
 

@@ -93,13 +93,11 @@
           ]
         },
         {
-          "group": "Towns DAO",
+          "group": "Token Governance",
           "pages": [
-            "towns-dao/overview",
-            "towns-dao/governance-framework",
-            "towns-dao/stakeholders",
-            "towns-dao/proposals",
-            "towns-dao/stages"
+            "token-governance/overview",
+            "token-governance/governance-framework",
+            "token-governance/towns-token"
           ]
         },
         {
