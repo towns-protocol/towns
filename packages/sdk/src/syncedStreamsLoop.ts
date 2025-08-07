@@ -138,7 +138,7 @@ export class SyncedStreamsLoop {
     private syncStartedAt: number | undefined = undefined
     private processedStreamCount = 0
     private streamSyncStalled: NodeJS.Timeout | undefined
-    private abortControllers: Record<string, AbortController[]> = {}
+    private abortController?: AbortController
     private readonly MAX_IN_FLIGHT_COOKIES = 40
     private readonly MIN_IN_FLIGHT_COOKIES = 10
     private readonly MAX_IN_FLIGHT_STREAMS_TO_DELETE = 40
@@ -218,10 +218,6 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncState', syncState)
                 this.log('stopSync syncLoop', syncLoop)
                 this.log('stopSync syncId', syncId)
-                if (syncId) {
-                    this.abortControllers[syncId]?.forEach((x) => x.abort())
-                    delete this.abortControllers[syncId]
-                }
                 const result = await Promise.allSettled([
                     syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
                     syncLoop,
@@ -231,6 +227,8 @@ export class SyncedStreamsLoop {
             } catch (e) {
                 this.log('sync STOP ERROR', e)
             }
+            this.abortController?.abort()
+            this.abortController = undefined
             this.log('sync STOP DONE', syncId)
         } else {
             this.log(`WARN: stopSync called from invalid state ${this.syncState}`)
@@ -379,10 +377,8 @@ export class SyncedStreamsLoop {
                     try {
                         // syncId needs to be reset before starting a new syncStreams
                         // syncStreams() should return a new syncId
-                        if (this.syncId) {
-                            this.abortControllers[this.syncId]?.forEach((x) => x.abort())
-                            delete this.abortControllers[this.syncId]
-                        }
+                        this.abortController?.abort()
+                        this.abortController = new AbortController()
                         this.syncId = undefined
                         const streams = this.rpcClient.syncStreams(
                             {
@@ -393,6 +389,7 @@ export class SyncedStreamsLoop {
                                 headers: this.streamOpts?.useSharedSyncer
                                     ? { 'X-Use-Shared-Sync': 'true' }
                                     : undefined,
+                                signal: this.abortController.signal,
                             },
                         )
 
@@ -504,6 +501,8 @@ export class SyncedStreamsLoop {
                     this.streams.clear()
                     this.releaseRetryWait = undefined
                     this.syncId = undefined
+                    this.abortController?.abort()
+                    this.abortController = undefined
                     this.clientEmitter.emit('streamSyncActive', false)
                 } else {
                     this.log(
@@ -646,19 +645,14 @@ export class SyncedStreamsLoop {
         streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
         const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
         try {
-            const abortController = new AbortController()
             const resp = await this.rpcClient.modifySync(
                 {
                     syncId,
                     addStreams: syncPos.filter(isDefined),
                     removeStreams: streamsToDelete.map(streamIdAsBytes),
                 },
-                { signal: abortController.signal },
+                { signal: this.abortController?.signal },
             )
-            this.abortControllers[syncId] = [
-                ...(this.abortControllers[syncId] ?? []),
-                abortController,
-            ]
             if (resp.removals.length > 0) {
                 this.logError('modifySync removal errors', resp.removals)
             }
@@ -721,10 +715,8 @@ export class SyncedStreamsLoop {
         if (stateConstraints[this.syncState].has(SyncState.Retrying)) {
             if (this.syncState !== SyncState.Retrying) {
                 this.setSyncState(SyncState.Retrying)
-                if (this.syncId) {
-                    this.abortControllers[this.syncId]?.forEach((x) => x.abort())
-                    delete this.abortControllers[this.syncId]
-                }
+                this.abortController?.abort()
+                this.abortController = undefined
                 this.syncId = undefined
                 this.streams.forEach((streamRecord) => {
                     streamRecord.stream.resetUpToDate()
@@ -829,10 +821,15 @@ export class SyncedStreamsLoop {
         const syncId = this.syncId
         const retryCount = retryParams?.retryCount ?? 0
         this.rpcClient
-            .modifySync({
-                syncId: this.syncId,
-                addStreams: [cookie],
-            })
+            .modifySync(
+                {
+                    syncId: this.syncId,
+                    addStreams: [cookie],
+                },
+                {
+                    signal: this.abortController?.signal,
+                },
+            )
             .then((resp) => {
                 const retryDelay = Math.min(1000 * Math.pow(2, retryCount), 60000)
                 if (resp?.adds && resp?.adds.length > 0) {
@@ -1024,10 +1021,13 @@ export class SyncedStreamsLoop {
                             nonce: n,
                             pingAt: performance.now(),
                         }
-                        await this.rpcClient.pingSync({
-                            syncId: this.syncId,
-                            nonce: n,
-                        })
+                        await this.rpcClient.pingSync(
+                            {
+                                syncId: this.syncId,
+                                nonce: n,
+                            },
+                            { signal: this.abortController?.signal },
+                        )
                     }
                     if (this.syncState === SyncState.Syncing) {
                         // schedule the next ping
