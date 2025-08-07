@@ -642,6 +642,9 @@ export class SyncedStreamsLoop {
         if (!syncId) {
             throw new Error('modifySync called without a syncId')
         }
+        if (!this.abortController) {
+            throw new Error('modifySync called before abortController is set')
+        }
         streamsToAdd.forEach((x) => this.inFlightSyncCookies.add(x))
         const syncPos = streamsToAdd.map((x) => this.streams.get(x)?.syncCookie)
         try {
@@ -651,7 +654,7 @@ export class SyncedStreamsLoop {
                     addStreams: syncPos.filter(isDefined),
                     removeStreams: streamsToDelete.map(streamIdAsBytes),
                 },
-                { signal: this.abortController?.signal },
+                { signal: this.abortController.signal },
             )
             if (resp.removals.length > 0) {
                 this.logError('modifySync removal errors', resp.removals)
@@ -772,6 +775,10 @@ export class SyncedStreamsLoop {
         if (!this.syncId && stateConstraints[this.syncState].has(SyncState.Syncing)) {
             this.setSyncState(SyncState.Syncing)
             this.syncId = syncId
+            if (!this.abortController) {
+                this.logError('syncStarted: abortController not set, creating new one')
+                this.abortController = new AbortController()
+            }
             // On successful sync, reset retryCount
             this.currentRetryCount = 0
             this.sendKeepAlivePings() // ping the server periodically to keep the connection alive
@@ -795,6 +802,10 @@ export class SyncedStreamsLoop {
         retryParams?: { syncId: string; retryCount: number },
     ): void {
         if (this.syncId === undefined) {
+            return
+        }
+        if (!this.abortController) {
+            this.logError('syncDown: abortController not set')
             return
         }
         if (retryParams !== undefined && retryParams.syncId !== this.syncId) {
@@ -827,7 +838,7 @@ export class SyncedStreamsLoop {
                     addStreams: [cookie],
                 },
                 {
-                    signal: this.abortController?.signal,
+                    signal: this.abortController.signal,
                 },
             )
             .then((resp) => {
@@ -1014,6 +1025,13 @@ export class SyncedStreamsLoop {
         this.pingInfo.pingTimeout = setTimeout(
             () => {
                 const ping = async () => {
+                    if (!this.syncId || !this.abortController) {
+                        this.log('sendKeepAlivePings: syncId or abortController not set', {
+                            syncId: this.syncId,
+                            abortController: this.abortController,
+                        })
+                        return
+                    }
                     if (this.syncState === SyncState.Syncing && this.syncId) {
                         const n = nanoid()
                         this.pingInfo.nonces[n] = {
@@ -1026,7 +1044,7 @@ export class SyncedStreamsLoop {
                                 syncId: this.syncId,
                                 nonce: n,
                             },
-                            { signal: this.abortController?.signal },
+                            { signal: this.abortController.signal },
                         )
                     }
                     if (this.syncState === SyncState.Syncing) {
