@@ -321,23 +321,6 @@ export class SpaceDapp {
         this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId))
     }
 
-    public async updateCacheAfterBanOrUnBanWallet(spaceId: string, walletAddress: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        const tokenId = await space.ERC721AQueryable.read
-            .tokensOfOwner(walletAddress)
-            .then((tokens) => tokens[0])
-        if (!tokenId) {
-            logger.log(
-                `updateCacheAfterBanOrUnBanWallet: Token ID not found for wallet address ${walletAddress} in space ${spaceId}`,
-            )
-            return
-        }
-        this.updateCacheAfterBanOrUnBan(spaceId, tokenId)
-    }
-
     public async walletAddressIsBanned(
         spaceId: string,
         walletAddress: string,
