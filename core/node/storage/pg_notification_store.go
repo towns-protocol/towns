@@ -15,6 +15,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -143,9 +144,9 @@ var _ NotificationStore = (*PostgresNotificationStore)(nil)
 // Helper functions to convert between app names and IDs
 func getAppIDFromName(app string) int32 {
 	switch app {
-	case "towns":
+	case apps.Towns:
 		return 1
-	case "sendit":
+	case apps.Sendit:
 		return 2
 	default:
 		return 0 // unspecified
@@ -155,9 +156,9 @@ func getAppIDFromName(app string) int32 {
 func getAppNameFromID(appID int32) string {
 	switch appID {
 	case 1:
-		return "towns"
+		return apps.Towns
 	case 2:
-		return "sendit"
+		return apps.Sendit
 	default:
 		return ""
 	}

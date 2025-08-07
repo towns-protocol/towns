@@ -444,7 +444,7 @@ type StreamTrackingConfig struct {
 
 // AppNotificationConfig holds notification configuration for a specific app.
 type AppNotificationConfig struct {
-	// App identifies which app this configuration is for ("towns" or "sendit")
+	// App identifies which app this configuration is for
 	App string
 	// APN holds the Apple Push Notification settings for this app
 	APN APNPushNotificationsConfig

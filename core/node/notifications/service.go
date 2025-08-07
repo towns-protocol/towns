@@ -16,6 +16,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	notificationssync "github.com/towns-protocol/towns/core/node/notifications/sync"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -341,7 +342,7 @@ func (s *Service) SubscribeWebPush(
 
 	// Default to Towns app for backward compatibility
 	if app == "" {
-		app = "towns"
+		app = apps.Default
 	}
 
 	if err := s.userPreferences.AddWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
@@ -376,7 +377,7 @@ func (s *Service) UnsubscribeWebPush(
 
 	// Default to Towns app for backward compatibility
 	if app == "" {
-		app = "towns"
+		app = apps.Default
 	}
 
 	if err := s.userPreferences.RemoveWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
@@ -412,7 +413,7 @@ func (s *Service) SubscribeAPN(
 
 	// Default to Towns app for backward compatibility
 	if app == "" {
-		app = "towns"
+		app = apps.Default
 	}
 
 	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion, app); err != nil {
@@ -441,7 +442,7 @@ func (s *Service) UnsubscribeAPN(
 
 	// Default to Towns app for backward compatibility
 	if app == "" {
-		app = "towns"
+		app = apps.Default
 	}
 
 	logging.FromCtx(ctx).Infow("remove APN subscription", "userID", userID, "app", app)
