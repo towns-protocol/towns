@@ -229,6 +229,16 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 		return aeBuilder().
 			fail(invalidContentType(content))
 	case *ChannelPayload_Message:
+		if messageContainsImages(content.Message) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionSendImages))
+		}
+		if messageContainsLinks(content.Message) {
+			return aeBuilder().
+				check(params.creatorIsMember).
+				requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionPostLinks))
+		}
 		return aeBuilder().
 			check(params.creatorIsMember).
 			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
@@ -2253,5 +2263,13 @@ func hasCommon(x, y []string) bool {
 		}
 	}
 
+	return false
+}
+
+func messageContainsImages(message *EncryptedData) bool {
+	return false
+}
+
+func messageContainsLinks(message *EncryptedData) bool {
 	return false
 }

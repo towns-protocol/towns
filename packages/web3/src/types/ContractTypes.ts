@@ -42,6 +42,10 @@ export const Permission = {
     ModifySpaceSettings: 'ModifySpaceSettings',
     /** React to a message permission. */
     React: 'React',
+    /** Send images permission. */
+    SendImages: 'SendImages',
+    /** Post links permission. */
+    PostLinks: 'PostLinks',
 } as const
 
 export type Permission = (typeof Permission)[keyof typeof Permission]

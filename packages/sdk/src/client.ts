@@ -1832,10 +1832,20 @@ export class Client
             // to allow react-only users to react to posts and edit their reactions. We're not
             // concerned with being overly permissive with redactions, as at this time, a user
             // is always allowed to redact their own messages.
-            const expectedPermissions: Permission[] =
-                payload.payload.case === 'reaction' || payload.payload.case === 'redaction'
-                    ? [Permission.React, Permission.Write]
-                    : [Permission.Write]
+            let expectedPermissions: Permission[] = []
+            if (payload.payload.case === 'reaction' || payload.payload.case === 'redaction') {
+                expectedPermissions = [Permission.React, Permission.Write]
+            } else if (payload.payload.case === 'post') {
+                expectedPermissions = [Permission.Write]
+                if (this.messageContainsImages(payload.payload.value)) {
+                    expectedPermissions = [Permission.SendImages, Permission.Write]
+                }
+                if (this.messageContainsLinks(payload.payload.value)) {
+                    expectedPermissions = [Permission.PostLinks, Permission.Write]
+                }
+            } else {
+                expectedPermissions = [Permission.Write]
+            }
             let isEntitled = false
             for (const permission of expectedPermissions) {
                 isEntitled = await this.entitlementsDelegate.isEntitled(
@@ -3099,6 +3109,27 @@ export class Client
 
     public async debugDropStream(syncId: string, streamId: string): Promise<void> {
         await this.rpcClient.info({ debug: ['drop_stream', syncId, streamId] })
+    }
+
+    private messageContainsImages(post: PlainMessage<ChannelMessage_Post>): boolean {
+        if (post.content?.case === 'image') {
+            return true
+        }
+        if (post.content?.case === 'text' && post.content.value.attachments) {
+            return post.content.value.attachments.some(attachment => 
+                attachment.content?.case === 'image'
+            )
+        }
+        return false
+    }
+
+    private messageContainsLinks(post: PlainMessage<ChannelMessage_Post>): boolean {
+        if (post.content?.case === 'text' && post.content.value.attachments) {
+            return post.content.value.attachments.some(attachment => 
+                attachment.content?.case === 'unfurledUrl'
+            )
+        }
+        return false
     }
 }
 
