@@ -308,7 +308,7 @@ func (s *Snapshot) ParsedStringWithIndent(indent string) string {
 		}
 
 		// Add channel details
-		if content.SpaceContent.Channels != nil && len(content.SpaceContent.Channels) > 0 {
+		if len(content.SpaceContent.Channels) > 0 {
 			channelList := make([]map[string]any, 0, len(content.SpaceContent.Channels))
 			for _, channel := range content.SpaceContent.Channels {
 				channelInfo := map[string]any{
