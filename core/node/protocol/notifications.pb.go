@@ -1438,7 +1438,7 @@ type SubscribeWebPushRequest struct {
 
 	// subscription holds the subscribe data that is returned by the browser when subscribing
 	Subscription *WebPushSubscriptionObject `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription,omitempty"`
-	// app identifies which app is making the subscription request ("towns" or "sendit")
+	// app identifies which app is making the subscription request
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
 }
 
@@ -1533,7 +1533,7 @@ type UnsubscribeWebPushRequest struct {
 
 	// subscription holds the subscribe data that is returned by the browser when subscribing
 	Subscription *WebPushSubscriptionObject `protobuf:"bytes,1,opt,name=subscription,proto3" json:"subscription,omitempty"`
-	// app identifies which app is making the unsubscription request ("towns" or "sendit")
+	// app identifies which app is making the unsubscription request
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
 }
 
@@ -1632,7 +1632,7 @@ type SubscribeAPNRequest struct {
 	Environment APNEnvironment `protobuf:"varint,2,opt,name=environment,proto3,enum=river.APNEnvironment" json:"environment,omitempty"`
 	// Requested push notification version (default=NOTIFICATION_PUSH_VERSION_1)
 	PushVersion NotificationPushVersion `protobuf:"varint,3,opt,name=push_version,json=pushVersion,proto3,enum=river.NotificationPushVersion" json:"push_version,omitempty"`
-	// app identifies which app is making the subscription request ("towns" or "sendit")
+	// app identifies which app is making the subscription request
 	App string `protobuf:"bytes,4,opt,name=app,proto3" json:"app,omitempty"`
 }
 
@@ -1798,7 +1798,7 @@ type UnsubscribeAPNRequest struct {
 
 	// APN device token
 	DeviceToken []byte `protobuf:"bytes,1,opt,name=device_token,json=deviceToken,proto3" json:"device_token,omitempty"`
-	// app identifies which app is making the unsubscription request ("towns" or "sendit")
+	// app identifies which app is making the unsubscription request
 	App string `protobuf:"bytes,2,opt,name=app,proto3" json:"app,omitempty"`
 }
 

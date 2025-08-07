@@ -23,6 +23,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -660,7 +661,7 @@ func (p *MessageToNotificationsProcessor) sendWebPushNotification(
 	})
 
 	// Default to Towns app if not specified
-	app := "towns"
+	app := apps.Default
 	if sub.App != "" {
 		app = sub.App
 	}
@@ -695,7 +696,7 @@ func (p *MessageToNotificationsProcessor) sendAPNNotification(
 	_, containsStreamEvent := content["event"]
 
 	// Default to Towns app if not specified
-	app := "towns"
+	app := apps.Default
 	if sub.App != "" {
 		app = sub.App
 	}

@@ -14,6 +14,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -64,7 +65,7 @@ func TestAPNSPushNotification(t *testing.T) {
 	}
 
 	expired, _, err := notifier.SendApplePushNotification(
-		ctx, &sub, common.Hash{1}, payload, true, protocol.NotificationApp_NOTIFICATION_APP_TOWNS)
+		ctx, &sub, common.Hash{1}, payload, true, apps.Towns)
 	req.False(expired, "subscription should not be expired")
 	req.NoError(err, "send APN notification")
 }
@@ -126,7 +127,7 @@ func TestWebPushWithVapid(t *testing.T) {
 		subscription,
 		common.Hash{1},
 		payload,
-		protocol.NotificationApp_NOTIFICATION_APP_TOWNS,
+		apps.Towns,
 	)
 	req.False(expired, "expired")
 	req.NoError(err, "send web push notification")
