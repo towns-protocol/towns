@@ -185,16 +185,6 @@ func (e *ParsedEvent) GetEncryptedMessage() *EncryptedData {
 	return nil
 }
 
-type streamSettings struct {
-	DisableMiniblockCreation bool
-	LightStream              bool
-}
-
-type channelSettings struct {
-	Autojoin                bool
-	HideUserJoinLeaveEvents bool
-}
-
 // ParsedString prints the content of the ParsedEvent according to it's event type.
 func (e *ParsedEvent) ParsedString() string {
 	return e.ParsedStringWithIndent("")
@@ -207,47 +197,40 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.ChannelPayload.Content.(type) {
 			case *ChannelPayload_Inception_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type            string
-						SpaceId         string
-						StreamId        string
-						StreamSettings  streamSettings
-						ChannelSettings channelSettings
-					}{
-						Type:     "ChannelPayload_Inception",
-						SpaceId:  hex.EncodeToString(content.Inception.SpaceId),
-						StreamId: hex.EncodeToString(content.Inception.StreamId),
-						StreamSettings: streamSettings{
-							DisableMiniblockCreation: content.Inception.GetSettings().GetDisableMiniblockCreation(),
-							LightStream:              content.Inception.GetSettings().GetLightStream(),
-						},
-						ChannelSettings: channelSettings{
-							Autojoin:                content.Inception.GetChannelSettings().GetAutojoin(),
-							HideUserJoinLeaveEvents: content.Inception.GetChannelSettings().GetHideUserJoinLeaveEvents(),
-						},
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"SpaceId":  hex.EncodeToString(content.Inception.SpaceId),
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add ChannelSettings if present
+					if channelSettings := content.Inception.GetChannelSettings(); channelSettings != nil {
+						if settingsMap := channelSettings.ToMap(); len(settingsMap) > 0 {
+							data["ChannelSettings"] = settingsMap
+						}
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<ChannelPayload_Inception>"
 					}
-					return string(bytes)
+					return "[ChannelPayload_Inception] " + string(bytes)
 				}
 			case *ChannelPayload_Message:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						Message        string
-						SessionId      string
-						CreatorAddress string
-					}{
-						Type:           "ChannelPayload_Message",
-						Message:        content.Message.Ciphertext,
-						SessionId:      hex.EncodeToString(content.Message.SessionIdBytes),
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					messageData := content.Message.ToMap()
+					if messageData == nil {
+						messageData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(messageData, indent, "  ")
 					if err != nil {
 						return "<ChannelPayload_Message>"
 					}
-					return string(bytes)
+					return "[ChannelPayload_Message] " + string(bytes)
 				}
 			default:
 				return "<ChannelPayload>"
@@ -258,21 +241,193 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.MemberPayload.Content.(type) {
 			case *MemberPayload_Membership_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type             string
-						UserAddress      string
-						InitiatorAddress string
-						Op               string
-					}{
-						Type:             "MemberPayload_Membership",
-						UserAddress:      hex.EncodeToString(content.Membership.UserAddress),
-						InitiatorAddress: hex.EncodeToString(content.Membership.InitiatorAddress),
-						Op:               content.Membership.Op.String(),
-					}, indent, "  ")
+					membershipData := map[string]interface{}{
+						"UserAddress":      hex.EncodeToString(content.Membership.UserAddress),
+						"InitiatorAddress": hex.EncodeToString(content.Membership.InitiatorAddress),
+						"Op":               content.Membership.Op.String(),
+					}
+
+					// Add optional fields if present
+					if content.Membership.Reason != 0 { // MembershipReason_MR_NONE is 0
+						membershipData["Reason"] = content.Membership.Reason.String()
+					}
+					if len(content.Membership.AppAddress) > 0 && !bytes.Equal(content.Membership.AppAddress, common.Address{}.Bytes()) {
+						membershipData["AppAddress"] = hex.EncodeToString(content.Membership.AppAddress)
+					}
+
+					bytes, err := json.MarshalIndent(membershipData, indent, "  ")
 					if err != nil {
 						return "<MemberPayload_Membership>"
 					}
-					return string(bytes)
+					return "[MemberPayload_Membership] " + string(bytes)
+				}
+			case *MemberPayload_KeySolicitation_:
+				{
+					data := map[string]interface{}{
+						"DeviceKey":   content.KeySolicitation.DeviceKey,
+						"FallbackKey": content.KeySolicitation.FallbackKey,
+						"IsNewDevice": content.KeySolicitation.IsNewDevice,
+					}
+
+					// Add session IDs if present
+					if len(content.KeySolicitation.SessionIds) > 0 {
+						data["SessionIds"] = content.KeySolicitation.SessionIds
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_KeySolicitation>"
+					}
+					return "[MemberPayload_KeySolicitation] " + string(bytes)
+				}
+			case *MemberPayload_KeyFulfillment_:
+				{
+					data := map[string]interface{}{
+						"UserAddress": hex.EncodeToString(content.KeyFulfillment.UserAddress),
+						"DeviceKey":   content.KeyFulfillment.DeviceKey,
+					}
+
+					// Add session IDs if present
+					if len(content.KeyFulfillment.SessionIds) > 0 {
+						data["SessionIds"] = content.KeyFulfillment.SessionIds
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_KeyFulfillment>"
+					}
+					return "[MemberPayload_KeyFulfillment] " + string(bytes)
+				}
+			case *MemberPayload_Username:
+				{
+					usernameData := content.Username.ToMap()
+					if usernameData == nil {
+						usernameData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(usernameData, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_Username>"
+					}
+					return "[MemberPayload_Username] " + string(bytes)
+				}
+			case *MemberPayload_DisplayName:
+				{
+					displayNameData := content.DisplayName.ToMap()
+					if displayNameData == nil {
+						displayNameData = make(map[string]interface{})
+					}
+					data := map[string]interface{}{
+						"DisplayName": displayNameData,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_DisplayName>"
+					}
+					return "[MemberPayload_DisplayName] " + string(bytes)
+				}
+			case *MemberPayload_EnsAddress:
+				{
+					data := map[string]interface{}{
+						"EnsAddress": hex.EncodeToString(content.EnsAddress),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_EnsAddress>"
+					}
+					return "[MemberPayload_EnsAddress] " + string(bytes)
+				}
+			case *MemberPayload_Nft_:
+				{
+					data := map[string]interface{}{
+						"ChainId":         content.Nft.ChainId,
+						"ContractAddress": hex.EncodeToString(content.Nft.ContractAddress),
+						"TokenId":         hex.EncodeToString(content.Nft.TokenId),
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_Nft>"
+					}
+					return "[MemberPayload_Nft] " + string(bytes)
+				}
+			case *MemberPayload_Pin_:
+				{
+					data := map[string]interface{}{
+						"EventId": hex.EncodeToString(content.Pin.EventId),
+					}
+
+					// Include basic info about the pinned event if present
+					if content.Pin.Event != nil {
+						pinnedEventInfo := map[string]interface{}{
+							"CreatedAtMs": content.Pin.Event.CreatedAtEpochMs,
+						}
+						// Add the payload type of the pinned event
+						if content.Pin.Event.Payload != nil {
+							pinnedEventInfo["PayloadType"] = fmt.Sprintf("%T", content.Pin.Event.Payload)
+						}
+						data["PinnedEvent"] = pinnedEventInfo
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_Pin>"
+					}
+					return "[MemberPayload_Pin] " + string(bytes)
+				}
+			case *MemberPayload_Unpin_:
+				{
+					data := map[string]interface{}{
+						"EventId": hex.EncodeToString(content.Unpin.EventId),
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_Unpin>"
+					}
+					return "[MemberPayload_Unpin] " + string(bytes)
+				}
+			case *MemberPayload_EncryptionAlgorithm_:
+				{
+					data := map[string]interface{}{}
+
+					// Add algorithm if present
+					if content.EncryptionAlgorithm.Algorithm != nil {
+						data["Algorithm"] = *content.EncryptionAlgorithm.Algorithm
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_EncryptionAlgorithm>"
+					}
+					return "[MemberPayload_EncryptionAlgorithm] " + string(bytes)
+				}
+			case *MemberPayload_MemberBlockchainTransaction_:
+				{
+					data := map[string]interface{}{
+						"FromUserAddress": hex.EncodeToString(content.MemberBlockchainTransaction.FromUserAddress),
+					}
+
+					// Add transaction details if present
+					if content.MemberBlockchainTransaction.Transaction != nil {
+						txInfo := map[string]interface{}{}
+						if content.MemberBlockchainTransaction.Transaction.Receipt != nil {
+							txInfo["TransactionHash"] = hex.EncodeToString(content.MemberBlockchainTransaction.Transaction.Receipt.TransactionHash)
+							txInfo["BlockNumber"] = content.MemberBlockchainTransaction.Transaction.Receipt.BlockNumber
+							txInfo["ChainId"] = content.MemberBlockchainTransaction.Transaction.Receipt.ChainId
+							txInfo["To"] = hex.EncodeToString(content.MemberBlockchainTransaction.Transaction.Receipt.To)
+							txInfo["From"] = hex.EncodeToString(content.MemberBlockchainTransaction.Transaction.Receipt.From)
+							if len(content.MemberBlockchainTransaction.Transaction.Receipt.Logs) > 0 {
+								txInfo["LogsCount"] = len(content.MemberBlockchainTransaction.Transaction.Receipt.Logs)
+							}
+						}
+						data["Transaction"] = txInfo
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MemberPayload_MemberBlockchainTransaction>"
+					}
+					return "[MemberPayload_MemberBlockchainTransaction] " + string(bytes)
 				}
 			default:
 				return "<MemberPayload>"
@@ -283,57 +438,54 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.UserSettingsPayload.Content.(type) {
 			case *UserSettingsPayload_Inception_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						StreamId string
-					}{
-						Type:     "UserSettingsPayload_Inception",
-						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add AppAddress if present
+					if len(content.Inception.AppAddress) > 0 {
+						data["AppAddress"] = hex.EncodeToString(content.Inception.AppAddress)
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_Inception>"
 					}
-					return string(bytes)
+					return "[UserSettingsPayload_Inception] " + string(bytes)
 				}
 			case *UserSettingsPayload_FullyReadMarkers_:
 				{
-					var data map[string]interface{}
-					if err := json.Unmarshal([]byte(content.FullyReadMarkers.GetContent().GetData()), &data); err != nil {
-						return fmt.Sprintf("%v", err)
+					var contentData map[string]interface{}
+					if err := json.Unmarshal([]byte(content.FullyReadMarkers.GetContent().GetData()), &contentData); err != nil {
+						return "<UserSettingsPayload_FullyReadMarkers>"
 					}
-					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						StreamId string
-						Content  any
-					}{
-						Type:     "UserSettingsPayload_FullyReadMarkers",
-						StreamId: hex.EncodeToString(content.FullyReadMarkers.StreamId),
-						Content:  data,
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.FullyReadMarkers.StreamId),
+						"Content":  contentData,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_FullyReadMarkers>"
 					}
-					return string(bytes)
+					return "[UserSettingsPayload_FullyReadMarkers] " + string(bytes)
 				}
 			case *UserSettingsPayload_UserBlock_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						UserId         string
-						IsBlocked      bool
-						EventNum       int64
-						CreatorAddress string
-					}{
-						Type:           "UserSettingsPayload_UserBlock",
-						UserId:         hex.EncodeToString(content.UserBlock.UserId),
-						IsBlocked:      content.UserBlock.IsBlocked,
-						EventNum:       content.UserBlock.EventNum,
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"UserId":    hex.EncodeToString(content.UserBlock.UserId),
+						"IsBlocked": content.UserBlock.IsBlocked,
+						"EventNum":  content.UserBlock.EventNum,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserSettingsPayload_UserBlock>"
 					}
-					return string(bytes)
+					return "[UserSettingsPayload_UserBlock] " + string(bytes)
 				}
 			default:
 				return "<UserSettingsPayload>"
@@ -344,89 +496,73 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.UserPayload.Content.(type) {
 			case *UserPayload_Inception_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						StreamId string
-					}{
-						Type:     "UserPayload_Inception",
-						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add AppAddress if present
+					if len(content.Inception.AppAddress) > 0 {
+						data["AppAddress"] = hex.EncodeToString(content.Inception.AppAddress)
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserPayload_Inception>"
 					}
-					return string(bytes)
+					return "[UserPayload_Inception] " + string(bytes)
 				}
 			case *UserPayload_UserMembership_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						StreamId       string
-						Op             string
-						CreatorAddress string
-					}{
-						Type:           "UserPayload_UserMembership",
-						StreamId:       hex.EncodeToString(content.UserMembership.StreamId),
-						Op:             content.UserMembership.Op.String(),
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.UserMembership.StreamId),
+						"Op":       content.UserMembership.Op.String(),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserPayload_UserMembership>"
 					}
-					return string(bytes)
+					return "[UserPayload_UserMembership] " + string(bytes)
 				}
 			case *UserPayload_UserMembershipAction_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						StreamId       string
-						UserId         string
-						Op             string
-						CreatorAddress string
-					}{
-						Type:           "UserPayload_UserMembershipAction",
-						StreamId:       hex.EncodeToString(content.UserMembershipAction.StreamId),
-						UserId:         hex.EncodeToString(content.UserMembershipAction.UserId),
-						Op:             content.UserMembershipAction.Op.String(),
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.UserMembershipAction.StreamId),
+						"UserId":   hex.EncodeToString(content.UserMembershipAction.UserId),
+						"Op":       content.UserMembershipAction.Op.String(),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserPayload_UserMembershipAction>"
 					}
-					return string(bytes)
+					return "[UserPayload_UserMembershipAction] " + string(bytes)
 				}
 			case *UserPayload_BlockchainTransaction:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type            string
-						TransactionHash string
-						CreatorAddress  string
-					}{
-						Type:            "UserPayload_BlockchainTransaction",
-						TransactionHash: hex.EncodeToString(content.BlockchainTransaction.Receipt.TransactionHash),
-						CreatorAddress:  hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"TransactionHash": hex.EncodeToString(content.BlockchainTransaction.Receipt.TransactionHash),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserPayload_BlockchainTransaction>"
 					}
-					return string(bytes)
+					return "[UserPayload_BlockchainTransaction] " + string(bytes)
 				}
 			case *UserPayload_ReceivedBlockchainTransaction_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type            string
-						TransactionHash string
-						FromUserAddress string
-						CreatorAddress  string
-					}{
-						Type:            "UserPayload_ReceivedBlockchainTransaction",
-						TransactionHash: hex.EncodeToString(content.ReceivedBlockchainTransaction.Transaction.Receipt.TransactionHash),
-						FromUserAddress: hex.EncodeToString(content.ReceivedBlockchainTransaction.FromUserAddress),
-						CreatorAddress:  hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"TransactionHash": hex.EncodeToString(content.ReceivedBlockchainTransaction.Transaction.Receipt.TransactionHash),
+						"FromUserAddress": hex.EncodeToString(content.ReceivedBlockchainTransaction.FromUserAddress),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserPayload_ReceivedBlockchainTransaction>"
 					}
-					return string(bytes)
+					return "[UserPayload_ReceivedBlockchainTransaction] " + string(bytes)
 				}
 			default:
 				return "<UserPayload>"
@@ -437,71 +573,61 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.UserMetadataPayload.Content.(type) {
 			case *UserMetadataPayload_Inception_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						StreamId string
-					}{
-						Type:     "UserMetadataPayload_Inception",
-						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add AppAddress if present
+					if len(content.Inception.AppAddress) > 0 {
+						data["AppAddress"] = hex.EncodeToString(content.Inception.AppAddress)
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_Inception>"
 					}
-					return string(bytes)
+					return "[UserMetadataPayload_Inception] " + string(bytes)
 				}
 			case *UserMetadataPayload_EncryptionDevice_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						DeviceKey      string
-						FallbackKey    string
-						CreatorAddress string
-					}{
-						Type:           "UserMetadataPayload_EncryptionDevice",
-						DeviceKey:      content.EncryptionDevice.DeviceKey,
-						FallbackKey:    content.EncryptionDevice.FallbackKey,
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"DeviceKey":   content.EncryptionDevice.DeviceKey,
+						"FallbackKey": content.EncryptionDevice.FallbackKey,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_EncryptionDevice>"
 					}
-					return string(bytes)
+					return "[UserMetadataPayload_EncryptionDevice] " + string(bytes)
 				}
 			case *UserMetadataPayload_ProfileImage:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						Ciphertext     string
-						SessionId      string
-						CreatorAddress string
-					}{
-						Type:           "UserMetadataPayload_ProfileImage",
-						Ciphertext:     content.ProfileImage.Ciphertext,
-						SessionId:      hex.EncodeToString(content.ProfileImage.SessionIdBytes),
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					profileImageData := content.ProfileImage.ToMap()
+					if profileImageData == nil {
+						profileImageData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(profileImageData, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_ProfileImage>"
 					}
-					return string(bytes)
+					return "[UserMetadataPayload_ProfileImage] " + string(bytes)
 				}
 			case *UserMetadataPayload_Bio:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						Ciphertext     string
-						SessionId      string
-						CreatorAddress string
-					}{
-						Type:           "UserMetadataPayload_Bio",
-						Ciphertext:     content.Bio.Ciphertext,
-						SessionId:      hex.EncodeToString(content.Bio.SessionIdBytes),
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					bioData := content.Bio.ToMap()
+					if bioData == nil {
+						bioData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(bioData, indent, "  ")
 					if err != nil {
 						return "<UserMetadataPayload_Bio>"
 					}
-					return string(bytes)
+					return "[UserMetadataPayload_Bio] " + string(bytes)
 				}
 			default:
 				return "<UserMetadataPayload>"
@@ -512,62 +638,297 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			switch content := payload.UserInboxPayload.Content.(type) {
 			case *UserInboxPayload_Inception_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type     string
-						StreamId string
-					}{
-						Type:     "UserInboxPayload_Inception",
-						StreamId: hex.EncodeToString(content.Inception.StreamId),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add AppAddress if present
+					if len(content.Inception.AppAddress) > 0 {
+						data["AppAddress"] = hex.EncodeToString(content.Inception.AppAddress)
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_Inception>"
 					}
-					return string(bytes)
+					return "[UserInboxPayload_Inception] " + string(bytes)
 				}
 			case *UserInboxPayload_Ack_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type           string
-						DeviceKey      string
-						MiniblockNum   int64
-						CreatorAddress string
-					}{
-						Type:           "UserInboxPayload_Ack",
-						DeviceKey:      content.Ack.DeviceKey,
-						MiniblockNum:   content.Ack.MiniblockNum,
-						CreatorAddress: hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"DeviceKey":    content.Ack.DeviceKey,
+						"MiniblockNum": content.Ack.MiniblockNum,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_Ack>"
 					}
-					return string(bytes)
+					return "[UserInboxPayload_Ack] " + string(bytes)
 				}
 			case *UserInboxPayload_GroupEncryptionSessions_:
 				{
-					bytes, err := json.MarshalIndent(struct {
-						Type             string
-						StreamId         string
-						SenderKey        string
-						SessionIds       []string
-						CiphertextsCount int
-						Algorithm        string
-						CreatorAddress   string
-					}{
-						Type:             "UserInboxPayload_GroupEncryptionSessions",
-						StreamId:         hex.EncodeToString(content.GroupEncryptionSessions.StreamId),
-						SenderKey:        content.GroupEncryptionSessions.SenderKey,
-						SessionIds:       content.GroupEncryptionSessions.SessionIds,
-						CiphertextsCount: len(content.GroupEncryptionSessions.Ciphertexts),
-						Algorithm:        content.GroupEncryptionSessions.Algorithm,
-						CreatorAddress:   hex.EncodeToString(e.Event.CreatorAddress),
-					}, indent, "  ")
+					data := map[string]interface{}{
+						"StreamId":         hex.EncodeToString(content.GroupEncryptionSessions.StreamId),
+						"SenderKey":        content.GroupEncryptionSessions.SenderKey,
+						"SessionIds":       content.GroupEncryptionSessions.SessionIds,
+						"CiphertextsCount": len(content.GroupEncryptionSessions.Ciphertexts),
+						"Algorithm":        content.GroupEncryptionSessions.Algorithm,
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
 						return "<UserInboxPayload_GroupEncryptionSessions>"
 					}
-					return string(bytes)
+					return "[UserInboxPayload_GroupEncryptionSessions] " + string(bytes)
 				}
 			default:
 				return "<UserInboxPayload>"
+			}
+		}
+	case *StreamEvent_SpacePayload:
+		{
+			switch content := payload.SpacePayload.Content.(type) {
+			case *SpacePayload_Inception_:
+				{
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<SpacePayload_Inception>"
+					}
+					return "[SpacePayload_Inception] " + string(bytes)
+				}
+			case *SpacePayload_Channel:
+				{
+					data := map[string]interface{}{
+						"ChannelId": hex.EncodeToString(content.Channel.ChannelId),
+						"Op":        content.Channel.Op.String(),
+					}
+
+					// Add channel settings if present
+					if channelSettings := content.Channel.GetSettings(); channelSettings != nil {
+						if settingsMap := channelSettings.ToMap(); len(settingsMap) > 0 {
+							data["ChannelSettings"] = settingsMap
+						}
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<SpacePayload_Channel>"
+					}
+					return "[SpacePayload_Channel] " + string(bytes)
+				}
+			case *SpacePayload_SpaceImage:
+				{
+					imageData := content.SpaceImage.ToMap()
+					if imageData == nil {
+						imageData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(imageData, indent, "  ")
+					if err != nil {
+						return "<SpacePayload_SpaceImage>"
+					}
+					return "[SpacePayload_SpaceImage] " + string(bytes)
+				}
+			default:
+				return "<SpacePayload>"
+			}
+		}
+	case *StreamEvent_DmChannelPayload:
+		{
+			switch content := payload.DmChannelPayload.Content.(type) {
+			case *DmChannelPayload_Inception_:
+				{
+					data := map[string]interface{}{
+						"StreamId":           hex.EncodeToString(content.Inception.StreamId),
+						"FirstPartyAddress":  hex.EncodeToString(content.Inception.FirstPartyAddress),
+						"SecondPartyAddress": hex.EncodeToString(content.Inception.SecondPartyAddress),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<DmChannelPayload_Inception>"
+					}
+					return "[DmChannelPayload_Inception] " + string(bytes)
+				}
+			case *DmChannelPayload_Message:
+				{
+					messageData := content.Message.ToMap()
+					if messageData == nil {
+						messageData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(messageData, indent, "  ")
+					if err != nil {
+						return "<DmChannelPayload_Message>"
+					}
+					return "[DmChannelPayload_Message] " + string(bytes)
+				}
+			default:
+				return "<DmChannelPayload>"
+			}
+		}
+	case *StreamEvent_GdmChannelPayload:
+		{
+			switch content := payload.GdmChannelPayload.Content.(type) {
+			case *GdmChannelPayload_Inception_:
+				{
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					// Add channel properties if present
+					if content.Inception.ChannelProperties != nil {
+						data["ChannelProperties"] = content.Inception.ChannelProperties.ToMap()
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<GdmChannelPayload_Inception>"
+					}
+					return "[GdmChannelPayload_Inception] " + string(bytes)
+				}
+			case *GdmChannelPayload_Message:
+				{
+					messageData := content.Message.ToMap()
+					if messageData == nil {
+						messageData = make(map[string]interface{})
+					}
+					bytes, err := json.MarshalIndent(messageData, indent, "  ")
+					if err != nil {
+						return "<GdmChannelPayload_Message>"
+					}
+					return "[GdmChannelPayload_Message] " + string(bytes)
+				}
+			case *GdmChannelPayload_ChannelProperties:
+				{
+					data := make(map[string]interface{})
+					if content.ChannelProperties != nil {
+						data["ChannelProperties"] = content.ChannelProperties.ToMap()
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<GdmChannelPayload_ChannelProperties>"
+					}
+					return "[GdmChannelPayload_ChannelProperties] " + string(bytes)
+				}
+			default:
+				return "<GdmChannelPayload>"
+			}
+		}
+	case *StreamEvent_MediaPayload:
+		{
+			switch content := payload.MediaPayload.Content.(type) {
+			case *MediaPayload_Inception_:
+				{
+					data := map[string]interface{}{
+						"StreamId":   hex.EncodeToString(content.Inception.StreamId),
+						"ChunkCount": content.Inception.ChunkCount,
+					}
+
+					// Add optional fields if present
+					if content.Inception.ChannelId != nil {
+						data["ChannelId"] = hex.EncodeToString(content.Inception.ChannelId)
+					}
+					if content.Inception.SpaceId != nil {
+						data["SpaceId"] = hex.EncodeToString(content.Inception.SpaceId)
+					}
+					if content.Inception.UserId != nil {
+						data["UserId"] = hex.EncodeToString(content.Inception.UserId)
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MediaPayload_Inception>"
+					}
+					return "[MediaPayload_Inception] " + string(bytes)
+				}
+			case *MediaPayload_Chunk_:
+				{
+					data := map[string]interface{}{
+						"ChunkIndex": content.Chunk.ChunkIndex,
+						"DataSize":   len(content.Chunk.Data),
+					}
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MediaPayload_Chunk>"
+					}
+					return "[MediaPayload_Chunk] " + string(bytes)
+				}
+			default:
+				return "<MediaPayload>"
+			}
+		}
+	case *StreamEvent_MetadataPayload:
+		{
+			switch content := payload.MetadataPayload.Content.(type) {
+			case *MetadataPayload_Inception_:
+				{
+					data := map[string]interface{}{
+						"StreamId": hex.EncodeToString(content.Inception.StreamId),
+					}
+
+					// Add StreamSettings if present
+					if streamSettings := content.Inception.GetSettings().ToMap(); len(streamSettings) > 0 {
+						data["StreamSettings"] = streamSettings
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MetadataPayload_Inception>"
+					}
+					return "[MetadataPayload_Inception] " + string(bytes)
+				}
+			case *MetadataPayload_NewStream_:
+				{
+					data := map[string]interface{}{
+						"StreamId":             hex.EncodeToString(content.NewStream.StreamId),
+						"GenesisMiniblockHash": hex.EncodeToString(content.NewStream.GenesisMiniblockHash),
+						"ReplicationFactor":    content.NewStream.ReplicationFactor,
+					}
+
+					// Add nodes if present
+					if len(content.NewStream.Nodes) > 0 {
+						nodes := make([]string, len(content.NewStream.Nodes))
+						for i, node := range content.NewStream.Nodes {
+							nodes[i] = hex.EncodeToString(node)
+						}
+						data["Nodes"] = nodes
+					}
+
+					bytes, err := json.MarshalIndent(data, indent, "  ")
+					if err != nil {
+						return "<MetadataPayload_NewStream>"
+					}
+					return "[MetadataPayload_NewStream] " + string(bytes)
+				}
+			default:
+				return "<MetadataPayload>"
 			}
 		}
 	default:
