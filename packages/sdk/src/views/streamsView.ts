@@ -150,6 +150,8 @@ export class StreamsView {
             .map(dmsAndGdmsTransform)
 
         const myDmsAndGdmsUnreadIds = combine({
+            dmGlobal: this.notificationSettings.map((x) => x.settings?.dmGlobal),
+            gdmGlobal: this.notificationSettings.map((x) => x.settings?.gdmGlobal),
             mutedStreamIds: this.mutedStreamIds,
             myDmsAndGdms,
             unreadMarkers,
