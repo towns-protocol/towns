@@ -137,7 +137,6 @@ func (p *MessageToNotificationsProcessor) OnMessageEvent(
 	}
 
 	members.Each(func(member string) bool {
-		// Yoni: move everything here to a separate function
 		var (
 			participant = common.HexToAddress(member)
 			pref, err   = p.cache.GetUserPreferences(ctx, participant)
@@ -476,7 +475,6 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 			webPayload["event"] = eventBytesHex
 		}
 
-		// Yoni: this list can be pretty long. what does the client do with it?
 		if len(receivers) > 0 {
 			webPayload["recipients"] = receivers
 		}
@@ -490,9 +488,6 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 		}
 
 		for _, sub := range userPref.Subscriptions.WebPush {
-			// Yoni: do we want to clean those expired subscriptions? we can
-			// change the fetch method to not return records with LastSeen older than
-			// now - subscriptionExpiration
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
 				p.log.Warnw("Ignore WebPush subscription due to no activity",
 					"user", user,

@@ -40,7 +40,6 @@ type (
 			eventHash common.Hash,
 			// payload of the message
 			payload []byte,
-			// app identifies which app config to use
 			app string,
 		) (expired bool, err error)
 
@@ -55,7 +54,6 @@ type (
 			payload *payload2.Payload,
 			// payloadIncludesStreamEvent is true if the payload includes the stream event
 			payloadIncludesStreamEvent bool,
-			// app identifies which app config to use
 			app string,
 		) (bool, int, error)
 	}
