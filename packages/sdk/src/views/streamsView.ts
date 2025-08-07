@@ -10,7 +10,7 @@ import {
 } from '../id'
 import { UserSettingsStreamModel, UserSettingsStreamsView } from './streams/userSettingsStreams'
 import { UnreadMarkersModel, unreadMarkersTransform } from './transforms/unreadMarkersTransform'
-import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
+import { MentionsModel, spaceMentionsTransform } from './transforms/spaceMentionsTransform'
 import { SpaceStreamsView } from './streams/spaceStreams'
 import { UserStreamModel, UserStreamsView } from './streams/userStreamsView'
 import { UserMetadataStreamModel, UserMetadataStreamsView } from './streams/userMetadataStreams'
