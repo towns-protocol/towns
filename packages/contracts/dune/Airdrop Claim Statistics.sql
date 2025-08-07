@@ -1,60 +1,69 @@
 -- Airdrop Claims Statistics - Analytics using materialized table
 -- Uses dune.towns_protocol.result_airdrop_claims materialized table
 
-WITH claim_data AS (SELECT *
-                    FROM dune.towns_protocol.result_airdrop_claims),
-
--- Total claims overview
-     total_stats AS (SELECT COUNT(*)                AS total_claims,
-                            SUM(amount) / 1e18      AS total_amount_claimed,
-                            COUNT(DISTINCT account) AS unique_accounts
-                     FROM claim_data),
-
--- Claims by type breakdown
-     type_breakdown AS (SELECT claim_type,
-                               COUNT(*)                AS claim_count,
-                               SUM(amount) / 1e18      AS total_amount,
-                               COUNT(DISTINCT account) AS unique_accounts
-                        FROM claim_data
-                        GROUP BY claim_type),
-
--- Daily aggregations
-     daily_claims
-         AS (SELECT DATE_TRUNC('day', block_time) AS day, claim_type, COUNT (*) AS daily_count, SUM (amount) / 1e18 AS daily_amount
-FROM claim_data
-GROUP BY 1, 2
+WITH hourly_claims AS (
+         SELECT DATE_TRUNC('hour', block_time) AS hour,
+                claim_type,
+                COUNT(*) AS hourly_count,
+                SUM(amount) / 1e18 AS hourly_amount,
+                (SUM(amount) / 1e18) * COALESCE(towns_price.price, 0) AS hourly_amount_usd
+         FROM dune.towns_protocol.result_airdrop_claims
+             LEFT JOIN prices.usd_latest towns_price
+                 ON towns_price.blockchain = 'ethereum'
+                 AND towns_price.contract_address = 0x000000Fa00b200406de700041CFc6b19BbFB4d13
+             GROUP BY
+                 1,
+                 2,
+                 towns_price.price
     ),
 
--- Pivot daily data by type
-    daily_summary AS (
+-- Pivot hourly data by type
+    hourly_summary AS (
 SELECT
-    day, COALESCE (SUM (CASE WHEN claim_type = 'with_penalty' THEN daily_count END), 0) AS penalty_claims, COALESCE (SUM (CASE WHEN claim_type = 'staked' THEN daily_count END), 0) AS staked_claims, COALESCE (SUM (CASE WHEN claim_type = 'with_penalty' THEN daily_amount END), 0) AS penalty_amount, COALESCE (SUM (CASE WHEN claim_type = 'staked' THEN daily_amount END), 0) AS staked_amount, SUM (daily_count) AS total_daily_claims, SUM (daily_amount) AS total_daily_amount
-FROM daily_claims
-GROUP BY day
+    hour,
+    COALESCE(SUM(CASE WHEN claim_type = 'with_penalty' THEN hourly_count END), 0) AS penalty_claims,
+    COALESCE(SUM(CASE WHEN claim_type = 'staked' THEN hourly_count END), 0) AS staked_claims,
+    COALESCE(SUM(CASE WHEN claim_type = 'with_penalty' THEN hourly_amount END), 0) AS penalty_amount,
+    COALESCE(SUM(CASE WHEN claim_type = 'staked' THEN hourly_amount END), 0) AS staked_amount,
+    COALESCE(SUM(CASE WHEN claim_type = 'with_penalty' THEN hourly_amount_usd END), 0) AS penalty_amount_usd,
+    COALESCE(SUM(CASE WHEN claim_type = 'staked' THEN hourly_amount_usd END), 0) AS staked_amount_usd,
+    SUM(hourly_count) AS total_hourly_claims,
+    SUM(hourly_amount) AS total_hourly_amount,
+    SUM(hourly_amount_usd) AS total_hourly_amount_usd
+FROM hourly_claims
+GROUP BY
+    hour
     ),
 
--- Generate complete date range
-    days AS (
-SELECT CAST (day AS timestamp) AS day
-FROM unnest(
-    sequence (
-    DATE ('2025-07-15'), CURRENT_DATE, INTERVAL '1' day
+-- Generate complete date range by hour
+    hours AS (
+SELECT
+    TRY_CAST(hour AS TIMESTAMP) AS hour
+FROM UNNEST(SEQUENCE (
+    TRY_CAST('2025-08-05 12:00:00' AS TIMESTAMP), CAST (CURRENT_TIMESTAMP AS TIMESTAMP), INTERVAL '1' hour
+    )) AS t(hour)
     )
-    ) AS t(day)
-    )
-
--- Final output with cumulative totals
-SELECT d.day,
-       COALESCE(ds.penalty_claims, 0)     AS penalty_claims,
-       COALESCE(ds.staked_claims, 0)      AS staked_claims,
-       COALESCE(ds.penalty_amount, 0)     AS penalty_amount,
-       COALESCE(ds.staked_amount, 0)      AS staked_amount,
-       COALESCE(ds.total_daily_claims, 0) AS total_daily_claims,
-       COALESCE(ds.total_daily_amount, 0) AS total_daily_amount,
-
+SELECT h.hour,
+       COALESCE(hs.penalty_claims, 0)         AS penalty_claims,
+       COALESCE(hs.staked_claims, 0)          AS staked_claims,
+       COALESCE(hs.penalty_amount, 0)         AS penalty_amount,
+       COALESCE(hs.staked_amount, 0)          AS staked_amount,
+       COALESCE(hs.penalty_amount_usd, 0)     AS penalty_amount_usd,
+       COALESCE(hs.staked_amount_usd, 0)      AS staked_amount_usd,
+       COALESCE(hs.total_hourly_claims, 0)    AS total_hourly_claims,
+       COALESCE(hs.total_hourly_amount, 0)    AS total_hourly_amount,
+       COALESCE(hs.total_hourly_amount_usd, 0) AS total_hourly_amount_usd,
        -- Cumulative totals
-       SUM(COALESCE(ds.penalty_claims, 0))   OVER (ORDER BY d.day) AS cumulative_penalty_claims, SUM(COALESCE(ds.staked_claims, 0)) OVER (ORDER BY d.day) AS cumulative_staked_claims, SUM(COALESCE(ds.penalty_amount, 0)) OVER (ORDER BY d.day) AS cumulative_penalty_amount, SUM(COALESCE(ds.staked_amount, 0)) OVER (ORDER BY d.day) AS cumulative_staked_amount, SUM(COALESCE(ds.total_daily_claims, 0)) OVER (ORDER BY d.day) AS cumulative_total_claims, SUM(COALESCE(ds.total_daily_amount, 0)) OVER (ORDER BY d.day) AS cumulative_total_amount
-
-FROM days d
-         LEFT JOIN daily_summary ds ON d.day = ds.day
-ORDER BY d.day DESC;
+       SUM(COALESCE(hs.penalty_claims, 0)) OVER (ORDER BY h.hour) AS cumulative_penalty_claims,
+       SUM(COALESCE(hs.staked_claims, 0)) OVER (ORDER BY h.hour) AS cumulative_staked_claims,
+       SUM(COALESCE(hs.penalty_amount, 0)) OVER (ORDER BY h.hour) AS cumulative_penalty_amount,
+       SUM(COALESCE(hs.staked_amount, 0)) OVER (ORDER BY h.hour) AS cumulative_staked_amount,
+       SUM(COALESCE(hs.penalty_amount_usd, 0)) OVER (ORDER BY h.hour) AS cumulative_penalty_amount_usd,
+       SUM(COALESCE(hs.staked_amount_usd, 0)) OVER (ORDER BY h.hour) AS cumulative_staked_amount_usd,
+       SUM(COALESCE(hs.total_hourly_claims, 0)) OVER (ORDER BY h.hour) AS cumulative_total_claims,
+       SUM(COALESCE(hs.total_hourly_amount, 0)) OVER (ORDER BY h.hour) AS cumulative_total_amount,
+       SUM(COALESCE(hs.total_hourly_amount_usd, 0)) OVER (ORDER BY h.hour) AS cumulative_total_amount_usd
+FROM hours AS h
+         LEFT JOIN hourly_summary AS hs
+                   ON h.hour = hs.hour
+ORDER BY h.hour DESC

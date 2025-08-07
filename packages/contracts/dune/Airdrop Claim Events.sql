@@ -11,12 +11,12 @@ SELECT l.block_time,
                THEN 'with_penalty'
            WHEN l.topic0 = 0xf08f338c8905e343697a35fef11af2f611a36658016e0653521354c865373ea7
                THEN 'staked'
-           END                                              AS claim_type,
-       bytearray_to_int256(l.topic1)                        AS condition_id,
-       substring(l.topic3 FROM 13)                          AS account,
-       bytearray_to_int256(substring(l.data FROM 1 FOR 32)) AS amount,
+           END                                               AS claim_type,
+       bytearray_to_uint256(l.topic1)                        AS condition_id,
+       substring(l.topic3 FROM 13)                           AS account,
+       bytearray_to_uint256(substring(l.data FROM 1 FOR 32)) AS amount,
        l.tx_hash,
-       l.index                                              AS log_index
+       l.index                                               AS log_index
 FROM base.logs l
 WHERE l.contract_address = 0xe55fEE191604cdBeb874F87A28Ca89aED401C303
   AND l.topic0 IN (
