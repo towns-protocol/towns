@@ -203,14 +203,17 @@ export class SyncedStreamsLoop {
             const syncId = this.syncId
             const syncLoop = this.syncLoop
             const syncState = this.syncState
+            this.syncId = undefined
             this.setSyncState(SyncState.Canceling)
             this.stopPing()
             try {
                 this.releaseRetryWait?.()
                 // Give the server 5 seconds to respond to the cancelSync RPC before forceStopSyncStreams
+                const cancelSyncAbortController = new AbortController()
                 const breakTimeout = syncId
                     ? setTimeout(() => {
                           this.log('calling forceStopSyncStreams', syncId)
+                          cancelSyncAbortController.abort()
                           this.forceStopSyncStreams?.()
                       }, 5000)
                     : undefined
@@ -219,7 +222,12 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncLoop', syncLoop)
                 this.log('stopSync syncId', syncId)
                 const result = await Promise.allSettled([
-                    syncId ? await this.rpcClient.cancelSync({ syncId }) : undefined,
+                    syncId
+                        ? await this.rpcClient.cancelSync(
+                              { syncId },
+                              { signal: cancelSyncAbortController.signal },
+                          )
+                        : undefined,
                     syncLoop,
                 ])
                 this.log('syncLoop awaited', syncId, result)
