@@ -1,8 +1,7 @@
 -- Optimized with materialized tables
 -- Get subscription and tip transactions for filtering
 WITH subscription_tx AS (SELECT DISTINCT ms.tx_hash, ms.town_address
-                         FROM dune.towns_protocol.result_membership_subscriptions ms
-                         WHERE ms.block_time > CAST('2024-05-01' AS timestamp)),
+                         FROM dune.towns_protocol.result_membership_subscriptions ms),
 
      tip_tx AS (SELECT DISTINCT l.tx_hash, l.contract_address AS town_address
                 FROM base.logs l

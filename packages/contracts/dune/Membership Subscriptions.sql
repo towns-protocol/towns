@@ -10,6 +10,7 @@ WITH towns_created AS (SELECT town_address
                                     l.topic0,
                                     l.topic1,
                                     l.topic2,
+                                    l.data,
                                     CASE
                                         WHEN l.topic0 =
                                              0x2f40b0474996b72a4251e00fb9170cdd960deea1dc749772cbbab61395b9b576
@@ -44,8 +45,8 @@ WITH towns_created AS (SELECT town_address
                                      block_time,
                                      block_number,
                                      log_index,
-                                     bytearray_to_uint256(topic1) AS token_id,
-                                     bytearray_to_uint256(topic2) AS expiration
+                                     bytearray_to_uint256(topic1)                        AS token_id,
+                                     bytearray_to_uint256(substring(data FROM 1 FOR 32)) AS expiration
                               FROM all_membership_logs
                               WHERE log_type = 'subscription_update'),
 

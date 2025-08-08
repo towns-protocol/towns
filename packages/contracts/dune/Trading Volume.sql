@@ -1,12 +1,6 @@
--- Get all spaces created by SpaceFactory
-WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
-                       FROM base.logs
-                       WHERE
-                         -- SpaceFactory
-                           contract_address = 0x9978c826d93883701522d2CA645d5436e5654252
-                         -- SpaceCreated(address,uint256,address)
-                         AND topic0 = 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b
-                         AND block_time > cast('2024-05-01' AS timestamp)),
+-- Get all towns created
+WITH towns_created AS (SELECT town_address
+                       FROM dune.towns_protocol.result_towns_created),
      -- Track SwapExecuted events and calculate ETH volume
      swap_events AS (SELECT l.block_time,
                             CASE
@@ -20,8 +14,8 @@ WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
                                 ELSE 0
                                 END AS volume
                      FROM base.logs l
-                              JOIN space_created sc
-                                   ON l.contract_address = sc.space_address
+                              JOIN towns_created tc
+                                   ON l.contract_address = tc.town_address
                      WHERE
                        -- SwapExecuted(address,address,address,uint256,uint256,address)
                          l.topic0 = 0x300b4a9ac356114be2eaffe0f530cd615f14560df4b634adc11142d1358e8976
@@ -54,7 +48,7 @@ SELECT
     CAST (day AS timestamp) AS day
 FROM unnest(
     sequence (
-    DATE ('2024-05-30'), current_date, INTERVAL '1' day
+    DATE ('2025-05-01'), current_date, INTERVAL '1' day
     )
     ) AS t(day)
     )

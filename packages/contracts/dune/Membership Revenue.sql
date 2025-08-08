@@ -1,8 +1,7 @@
 -- Optimized with materialized tables
 WITH subscription_transactions AS (SELECT DISTINCT ms.town_address,
                                                    ms.tx_hash
-                                   FROM dune.towns_protocol.result_membership_subscriptions ms
-                                   WHERE ms.block_time > CAST('2024-05-01' AS timestamp)),
+                                   FROM dune.towns_protocol.result_membership_subscriptions ms),
 
 -- Payments coming into towns from membership transactions
      summary_payments AS (SELECT date_trunc('day', ef.block_time) AS day, SUM (ef.eth_amount) AS gross_revenue

@@ -1,8 +1,7 @@
 -- Optimized with materialized tables
 WITH subscription_transactions AS (SELECT DISTINCT ms.town_address,
                                                    ms.tx_hash
-                                   FROM dune.towns_protocol.result_membership_subscriptions ms
-                                   WHERE ms.block_time > CAST('2024-05-01' AS timestamp)),
+                                   FROM dune.towns_protocol.result_membership_subscriptions ms),
 
 -- Get actual ETH value using pre-computed ETH flows
      space_payments AS (SELECT ef.block_time,

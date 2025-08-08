@@ -1,23 +1,24 @@
--- Daily town membership growth using materialized tables  
+-- Daily town membership growth using materialized tables
 WITH member_added AS (SELECT town_address   AS town,
                              block_time,
                              member_address AS recipient,
                              token_id       AS tokenid
                       FROM dune.towns_protocol.result_membership_subscriptions
-                      WHERE event_type = 'mint'
-                        AND block_time > CAST('2024-05-01' AS timestamp)),
-     summary as (select date_trunc('day', block_time) as day, count (*) as member_added
-from member_added c
-group by 1
-    ),
-    days AS
-    (
-select cast (day as timestamp) as day
-from unnest(sequence (date ('2024-05-30'), cast (now() as date), interval '1' day)) as t(day)
+                      WHERE event_type = 'mint'),
+     summary AS (SELECT DATE_TRUNC('day', block_time) AS day, COUNT (*) AS member_added
+FROM member_added
+GROUP BY 1),
+    days AS (
+SELECT CAST (day AS timestamp) AS day
+FROM unnest(
+    sequence (
+    DATE ('2024-05-30'), CAST (now() AS date), INTERVAL '1' day
     )
-select d.day,
-       s.member_added as              daily_members_added,
-       sum(coalesce(member_added, 0)) over (order by d.day) as total_members_added
-from days d
-         left join summary s on d.day = s.day
-order by 1 desc
+    ) AS t(day))
+
+SELECT d.day,
+       s.member_added AS              daily_members_added,
+       SUM(COALESCE(member_added, 0)) OVER (ORDER BY d.day) AS total_members_added
+FROM days d
+         LEFT JOIN summary s ON d.day = s.day
+ORDER BY d.day DESC;

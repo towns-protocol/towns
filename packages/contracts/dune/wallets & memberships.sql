@@ -3,8 +3,7 @@ WITH membership_mints AS (SELECT member_address,
                                  town_address,
                                  token_id
                           FROM dune.towns_protocol.result_membership_subscriptions
-                          WHERE event_type = 'mint'
-                            AND block_time > CAST('2024-05-01' AS timestamp))
+                          WHERE event_type = 'mint')
 
 SELECT COUNT(*) as num_memberships,
        member_address

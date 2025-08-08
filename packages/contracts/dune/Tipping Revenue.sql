@@ -1,14 +1,10 @@
--- Get all spaces created by SpaceFactory
-WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
-                       FROM base.logs
-                       WHERE
-                         -- SpaceFactory
-                           contract_address = 0x9978c826d93883701522d2CA645d5436e5654252
-                         -- SpaceCreated(address,uint256,address)
-                         AND topic0 = 0xe50fc3942f8a2d7e5a7c8fb9488499eba5255b41e18bc3f1b4791402976d1d0b
-                         AND block_time > cast('2024-05-01' AS timestamp)),
+-- Get all towns created
+WITH towns_created AS (SELECT town_address
+                       FROM dune.towns_protocol.result_towns_created),
      -- Track Tip events and calculate ETH tips
      tip_events AS (SELECT l.block_time,
+                           l.tx_hash,
+                           tc.town_address,
                            CASE
                                -- When currency is ETH (0xEeeE...), use amount
                                WHEN substring(l.topic2 FROM 13) = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
@@ -17,29 +13,23 @@ WITH space_created AS (SELECT substring(topic3 FROM 13) AS space_address
                                ELSE 0
                                END AS amount
                     FROM base.logs l
-                             JOIN space_created sc
-                                  ON l.contract_address = sc.space_address
+                             JOIN towns_created tc
+                                  ON l.contract_address = tc.town_address
                     WHERE
                       -- Tip(uint256,address,address,address,uint256,bytes32,bytes32)
                         l.topic0 = 0x854db29cbd1986b670c0d596bf56847152a0d66e5ddef710408c1fa4ada78f2b
                       AND l.block_time > cast('2024-12-01' AS timestamp)),
-     -- Get tx_hash from tip events to track protocol fees
-     tip_transactions AS (SELECT DISTINCT l.tx_hash,
-                                          sc.space_address
-                          FROM base.logs l
-                                   JOIN space_created sc
-                                        ON l.contract_address = sc.space_address
-                          WHERE
-                            -- Tip(uint256,address,address,address,uint256,bytes32,bytes32)
-                              l.topic0 = 0x854db29cbd1986b670c0d596bf56847152a0d66e5ddef710408c1fa4ada78f2b
-                            AND l.block_time > cast('2024-12-01' AS timestamp)),
+     -- Extract data for treasury trace matching
+     tip_transactions AS (SELECT DISTINCT tx_hash,
+                                          town_address
+                          FROM tip_events),
      -- Track protocol fees from tipping transactions only
      tipping_treasury_traces AS (SELECT t.block_time,
                                         t.value
                                  FROM base.traces t
                                           JOIN tip_transactions tt
                                                ON t.tx_hash = tt.tx_hash
-                                                   AND t."from" = tt.space_address
+                                                   AND t."from" = tt.town_address
                                  WHERE t.to = 0x562aA63A64f56245af69b86B4e4be34421f84c81
                                    AND t.success = true
                                    AND t.call_type = 'call'
@@ -63,7 +53,7 @@ SELECT
     CAST (day AS timestamp) AS day
 FROM unnest(
     sequence (
-    DATE ('2024-05-30'), current_date, INTERVAL '1' day
+    DATE ('2024-12-01'), current_date, INTERVAL '1' day
     )
     ) AS t(day)
     )
