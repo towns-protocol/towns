@@ -55,6 +55,17 @@ module.exports = {
         groups: ["external", "internal"],
       },
     ],
+    "no-restricted-imports": [
+      "error",
+      {
+        patterns: [
+          {
+            group: ["**/dist/*", "**/dist/**/*"],
+            message: "Please use proper paths for imports.",
+          },
+        ],
+      },
+    ],
     "sort-imports": [
       "warn",
       {
