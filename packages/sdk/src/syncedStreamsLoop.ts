@@ -661,7 +661,7 @@ export class SyncedStreamsLoop {
             }
             if (resp.adds.length > 0) {
                 this.logError('modifySync addition errors', resp.adds)
-                resp.removals.forEach((x) =>
+                resp.adds.forEach((x) =>
                     this.inFlightSyncCookies.delete(streamIdAsString(x.streamId)),
                 )
             }
