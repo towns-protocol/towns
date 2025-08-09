@@ -90,6 +90,8 @@ type (
 	// eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
 	// It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
 	// to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
+	//
+	// TODO: Periodically unsubscribe from streams that have no subscribers.
 	eventBusImpl struct {
 		// log is the event bus named logger
 		log *logging.Log
@@ -255,6 +257,7 @@ func (e *eventBusImpl) run(ctx context.Context) {
 	}
 }
 
+// processStreamUpdateCommand processes the given stream update command.
 func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse) {
 	if msg == nil {
 		return
@@ -267,6 +270,8 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse) {
 		return
 	}
 
+	// If the given message has target sync IDs, it means that this is a backfill message and should be forwarded
+	// to the target subscriber only.
 	if len(msg.GetTargetSyncIds()) > 0 {
 		var target StreamSubscriber
 		for _, sub := range e.subscribers[streamID] {
@@ -315,6 +320,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse) {
 	}
 }
 
+// processSubscribeCommand processes the given subscribe command.
 func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	if msg == nil {
 		return
@@ -332,6 +338,7 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	}
 }
 
+// processUnsubscribeCommand processes the given unsubscribe command.
 func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 	if msg == nil {
 		return
@@ -345,6 +352,7 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 	)
 }
 
+// processBackfillCommand processes the given backfill command.
 func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 	if msg == nil {
 		return
