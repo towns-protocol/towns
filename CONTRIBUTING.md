@@ -52,9 +52,6 @@ If you have a package in the monorepo, and
 a) you want it to be built on CI, add a `"build"` script
 b) you want it to be linted on CI, add a `"lint"` script
 c) you want its unit tests to be run on CI, add a `"test:unit"` script
-
-Sincerely,
-The team
 d) you want its e2e tests to be run on CI, add a `"test:e2e"` script
 e) you want a single script to run all tests within the package, add `"test: yarn test:unit && yarn test:e2e"` script to its package.json
 
@@ -67,3 +64,6 @@ If you have the permission to publish to npm, you can run the following script t
 ```
 ./scripts/publish-to-npm.sh
 ```
+
+Sincerely,
+The team
