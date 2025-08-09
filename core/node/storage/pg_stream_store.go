@@ -469,15 +469,17 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 	return sql
 }
 
+// lockStream locks the stream row for write or read in the provided transaction.
+// It returns the last snapshot miniblock number for the stream.
 func (s *PostgresStreamStore) lockStream(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
-) (
-	lastSnapshotMiniblock int64,
-	err error,
-) {
+) (int64, error) {
+	var lastSnapshotMiniblock int64
+	var err error
+
 	if write {
 		err = tx.QueryRow(
 			ctx,
@@ -502,6 +504,16 @@ func (s *PostgresStreamStore) lockStream(
 			).Func("PostgresStreamStore.lockStream")
 		}
 		return 0, err
+	}
+
+	// Handle edge case where lastSnapshotMiniblock has invalid value -1 in prod  due to data corruption.
+	if lastSnapshotMiniblock < 0 {
+		lastSnapshotMiniblock = 0
+		logging.FromCtx(ctx).Warnw(
+			"lastSnapshotMiniblock is -1, setting to 0",
+			"streamId",
+			streamId,
+		)
 	}
 
 	return lastSnapshotMiniblock, nil
