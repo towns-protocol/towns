@@ -292,6 +292,7 @@ func (up *UserPreferencesCache) AddWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
 	pref, err := up.GetUserPreferences(ctx, userID)
 	if err != nil {
@@ -308,7 +309,7 @@ func (up *UserPreferencesCache) AddWebPushSubscription(
 		}
 	}
 
-	err = up.persistent.AddWebPushSubscription(ctx, userID, webPushSubscription)
+	err = up.persistent.AddWebPushSubscription(ctx, userID, webPushSubscription, app)
 	if err != nil {
 		return err
 	}
@@ -323,8 +324,9 @@ func (up *UserPreferencesCache) RemoveExpiredWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
-	err := up.persistent.RemoveExpiredWebPushSubscription(ctx, userID, webPushSubscription)
+	err := up.persistent.RemoveExpiredWebPushSubscription(ctx, userID, webPushSubscription, app)
 	if err != nil {
 		return err
 	}
@@ -340,8 +342,9 @@ func (up *UserPreferencesCache) RemoveWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
-	err := up.persistent.RemoveWebPushSubscription(ctx, userID, webPushSubscription)
+	err := up.persistent.RemoveWebPushSubscription(ctx, userID, webPushSubscription, app)
 	if err != nil {
 		return err
 	}
@@ -370,6 +373,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 	deviceToken []byte,
 	environment APNEnvironment,
 	pushVersion NotificationPushVersion,
+	app string,
 ) error {
 	pref, err := up.GetUserPreferences(ctx, userID)
 	if err != nil {
@@ -384,7 +388,7 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 		}
 	}
 
-	err = up.persistent.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion)
+	err = up.persistent.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion, app)
 	if err != nil {
 		return err
 	}
@@ -398,8 +402,9 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 func (up *UserPreferencesCache) RemoveAPNSubscription(ctx context.Context,
 	deviceToken []byte,
 	userID common.Address,
+	app string,
 ) error {
-	err := up.persistent.RemoveAPNSubscription(ctx, deviceToken, userID)
+	err := up.persistent.RemoveAPNSubscription(ctx, deviceToken, userID, app)
 	if err != nil {
 		return err
 	}

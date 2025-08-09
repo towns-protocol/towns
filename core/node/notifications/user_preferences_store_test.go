@@ -14,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -124,6 +125,7 @@ func setAndRetrieveUserPreferences(
 						},
 					},
 					LastSeen: time.Now(),
+					App:      apps.Towns,
 				},
 			},
 			APNPush: []*types.APNPushSubscription{
@@ -132,6 +134,7 @@ func setAndRetrieveUserPreferences(
 					LastSeen:    time.Now(),
 					Environment: APNEnvironment_APN_ENVIRONMENT_SANDBOX,
 					PushVersion: NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
+					App:         apps.Towns,
 				},
 			},
 		},
@@ -176,12 +179,20 @@ func setAndRetrieveUserPreferences(
 	req.NoError(store.SetUserPreferences(ctx, expected))
 
 	for _, webSub := range expected.Subscriptions.WebPush {
-		req.NoError(store.AddWebPushSubscription(ctx, expected.UserID, webSub.Sub))
+		req.NoError(
+			store.AddWebPushSubscription(ctx, expected.UserID, webSub.Sub, apps.Towns),
+		)
 	}
 	for _, apnSub := range expected.Subscriptions.APNPush {
 		req.NoError(
-			store.AddAPNSubscription(ctx, expected.UserID, apnSub.DeviceToken,
-				APNEnvironment_APN_ENVIRONMENT_SANDBOX, NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2),
+			store.AddAPNSubscription(
+				ctx,
+				expected.UserID,
+				apnSub.DeviceToken,
+				APNEnvironment_APN_ENVIRONMENT_SANDBOX,
+				NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
+				apps.Towns,
+			),
 		)
 	}
 
@@ -215,9 +226,9 @@ func subscribeWebPush(req *require.Assertions, ctx context.Context, store *stora
 		},
 	}
 
-	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp1)
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp1, apps.Towns)
 	req.NoError(err)
-	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp2)
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp2, apps.Towns)
 	req.NoError(err)
 
 	got, err := store.GetWebPushSubscriptions(ctx, wallet.Address)
@@ -260,6 +271,7 @@ func subscribeAPN(req *require.Assertions, ctx context.Context, store *storage.P
 			deviceToken1[:],
 			env1,
 			NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
+			"towns",
 		),
 	)
 	req.NoError(
@@ -269,6 +281,7 @@ func subscribeAPN(req *require.Assertions, ctx context.Context, store *storage.P
 			deviceToken2[:],
 			env2,
 			NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2,
+			"towns",
 		),
 	)
 
@@ -309,9 +322,9 @@ func webPushExpired(req *require.Assertions, ctx context.Context, store *storage
 		},
 	}
 
-	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp1)
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp1, apps.Towns)
 	req.NoError(err)
-	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp2)
+	err = store.AddWebPushSubscription(ctx, wallet.Address, &exp2, apps.Towns)
 	req.NoError(err)
 
 	got, err := store.GetWebPushSubscriptions(ctx, wallet.Address)
@@ -319,7 +332,9 @@ func webPushExpired(req *require.Assertions, ctx context.Context, store *storage
 
 	req.Equal(2, len(got))
 
-	req.NoError(store.RemoveExpiredWebPushSubscription(ctx, wallet.Address, &exp1))
+	req.NoError(
+		store.RemoveExpiredWebPushSubscription(ctx, wallet.Address, &exp1, apps.Towns),
+	)
 	got, err = store.GetWebPushSubscriptions(ctx, wallet.Address)
 	req.NoError(err)
 

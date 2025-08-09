@@ -1616,6 +1616,7 @@ func (nc *notificationCapture) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	_ []byte,
+	_ string,
 ) (bool, error) {
 	nc.WebPushNotificationsMu.Lock()
 	defer nc.WebPushNotificationsMu.Unlock()
@@ -1638,6 +1639,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	eventHash common.Hash,
 	_ *payload2.Payload,
 	_ bool,
+	_ string,
 ) (bool, int, error) {
 	nc.ApnPushNotificationsMu.Lock()
 	defer nc.ApnPushNotificationsMu.Unlock()
