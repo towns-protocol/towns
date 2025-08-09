@@ -71,10 +71,10 @@ func (m *OrderedMap[K, V]) Copy(extraCapacity int) *OrderedMap[K, V] {
 	}
 }
 
-func (m *OrderedMap[K, V]) Delete(key K) {
+func (m *OrderedMap[K, V]) Delete(key K) bool {
 	val, ok := m.Map[key]
 	if !ok {
-		panic("key does not exist")
+		return false
 	}
 	delete(m.Map, key)
 	for i, v := range m.Values {
@@ -83,4 +83,5 @@ func (m *OrderedMap[K, V]) Delete(key K) {
 			break
 		}
 	}
+	return true
 }
