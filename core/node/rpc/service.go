@@ -25,7 +25,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	riversync "github.com/towns-protocol/towns/core/node/rpc/sync"
+	riversyncv3 "github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
 )
@@ -56,8 +57,9 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache       *StreamCache
-	syncHandler river_sync.Handler
+	cache  *StreamCache
+	sync   riversync.Handler
+	syncv3 riversyncv3.Service
 
 	// Notifications
 	notifications notifications.UserPreferencesStore

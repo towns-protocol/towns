@@ -111,24 +111,29 @@ func (s *Service) info(
 
 func (s *Service) debugDropStream(
 	ctx context.Context,
-	request *connect.Request[InfoRequest],
+	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
-	if len(request.Msg.GetDebug()) < 3 {
+	if len(req.Msg.GetDebug()) < 3 {
 		return nil, RiverError(Err_DEBUG_ERROR, "drop_stream requires a sync id and stream id")
 	}
 
-	syncID := request.Msg.Debug[1]
-	streamID, err := shared.StreamIdFromString(request.Msg.Debug[2])
+	syncID := req.Msg.Debug[1]
+	streamID, err := shared.StreamIdFromString(req.Msg.Debug[2])
 	if err != nil {
 		return nil, err
 	}
 
-	dbgHandler, ok := s.syncHandler.(sync.DebugHandler)
-	if !ok {
-		return nil, RiverError(Err_UNAVAILABLE, "Drop stream not supported")
-	}
+	if useSyncV3(req) {
+		err = s.syncv3.DebugDropStream(ctx, syncID, streamID)
+	} else {
+		dbgHandler, ok := s.sync.(sync.DebugHandler)
+		if !ok {
+			return nil, RiverError(Err_UNAVAILABLE, "Drop stream not supported")
+		}
 
-	if err = dbgHandler.DebugDropStream(ctx, syncID, streamID); err != nil {
+		err = dbgHandler.DebugDropStream(ctx, syncID, streamID)
+	}
+	if err != nil {
 		return nil, err
 	}
 
