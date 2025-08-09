@@ -197,20 +197,20 @@ export async function _getStreamEx(
 		const response = client.getStreamEx({
 			streamId: streamIdAsBytes(streamId),
 		})
-		const miniblocks = await waitForStreamEx(streamId, response)
-		const unpackedResponse = await unpackStreamEx(miniblocks, opts)
+		const data = await waitForStreamEx(streamId, response)
+		const unpackedResponse = await unpackStreamEx(data.miniblocks, data.snapshot, opts)
 		const duration_ms = Date.now() - start
 		logger.info(
 			{
 				duration_ms,
 			},
-			'getStream finished',
+			'getStreamEx finished',
 		)
 		return streamViewFromUnpackedResponse(streamId, unpackedResponse)
 	} catch (e) {
 		logger.warn(
 			{ url: client.url, streamId, err: e },
-			'getStream failed, removing client from cache',
+			'getStreamEx failed, removing client from cache',
 		)
 		removeClient(logger, client)
 		throw e

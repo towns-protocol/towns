@@ -169,10 +169,16 @@ export const unpackStream = async (
 export const waitForStreamEx = async (
     streamId: string | Uint8Array,
     response: AsyncIterable<GetStreamExResponse>,
-): Promise<Miniblock[]> => {
+): Promise<{ miniblocks: Miniblock[]; snapshot?: Envelope }> => {
     const miniblocks: Miniblock[] = []
+    let snapshot: Envelope | undefined = undefined
     let seenEndOfStream = false
     for await (const chunk of response) {
+        // One snapshot is expected in the response.
+        if (chunk.snapshot !== undefined && snapshot === undefined) {
+            snapshot = chunk.snapshot
+        }
+
         switch (chunk.data.case) {
             case 'miniblock':
                 if (seenEndOfStream) {
@@ -199,16 +205,18 @@ export const waitForStreamEx = async (
             )}.`,
         )
     }
-    return miniblocks
+    return { miniblocks, snapshot }
 }
 
 export const unpackStreamEx = async (
     miniblocks: Miniblock[],
+    snapshot: Envelope | undefined,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedStreamResponse> => {
     const streamAndCookie: StreamAndCookie = create(StreamAndCookieSchema, {})
     streamAndCookie.events = []
     streamAndCookie.miniblocks = miniblocks
+    streamAndCookie.snapshot = snapshot
     // We don't need to set a valid nextSyncCookie here, as we are currently using getStreamEx only
     // for fetching media streams, and the result does not return a nextSyncCookie. However, it does
     // need to be non-null to avoid runtime errors when unpacking the stream into a StreamStateView,
