@@ -20,6 +20,9 @@ var (
 type (
 	// StreamSubscriber subscribes to stream updates.
 	StreamSubscriber interface {
+		// SyncID returns subscription (sync op basically) identifier.
+		SyncID() string
+
 		// OnUpdate is called when there is a stream update available.
 		// Each subscriber receives its own copy of the update.
 		//
@@ -147,7 +150,25 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse) {
 	// Unsubscribe event bus from receiving updates of the given stream.
 	e.registry.Unsubscribe(streamID, e)
 
-	// TODO: Send sync down message. What if the given message cannot be added to the queue as well? Sending directly to clients?
+	subscribers, ok := e.subscribers[streamID]
+	if !ok {
+		// No subscribers for the given stream, do nothing
+		return
+	}
+
+	// Send sync down message directly to clients to avoid common queue
+	var wg sync.WaitGroup
+	wg.Add(len(subscribers))
+	for _, sub := range subscribers {
+		go func(sub StreamSubscriber) {
+			sub.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+			wg.Done()
+		}(sub)
+	}
+	wg.Wait()
+
+	// Remove the given stream from the list
+	delete(e.subscribers, streamID)
 }
 
 // Subscribe adds the given subscriber to the stream updates.
@@ -239,15 +260,30 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse) {
 		return
 	}
 
-	if len(msg.GetTargetSyncIds()) > 0 {
-		// TODO: Send update to msg.GetTargetSyncIds()[0]
-		return
-	}
-
 	streamID, err := StreamIdFromBytes(msg.StreamID())
 	if err != nil {
 		e.log.Errorw("failed to parse stream id from the stream update message",
 			"streamID", msg.StreamID(), "error", err)
+		return
+	}
+
+	if len(msg.GetTargetSyncIds()) > 0 {
+		var target StreamSubscriber
+		for _, sub := range e.subscribers[streamID] {
+			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+				target = sub
+				break
+			}
+		}
+
+		if target == nil {
+			e.log.Debugw("no subscriber found for the given backfill message",
+				"streamID", streamID, "syncIDs", msg.GetTargetSyncIds())
+			return
+		}
+
+		target.OnUpdate(msg)
+
 		return
 	}
 
@@ -314,8 +350,39 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 		return
 	}
 
-	if err := e.registry.Backfill(msg.cookie, msg.syncIDs); err != nil {
-		// TODO: Send sync down message
-		e.log.Errorw("failed to process backfill request", "error", err)
+	err := e.registry.Backfill(msg.cookie, msg.syncIDs)
+	if err == nil {
+		return
 	}
+
+	streamID, err := StreamIdFromBytes(msg.cookie.GetStreamId())
+	if err != nil {
+		e.log.Errorw("failed to parse stream ID from cookie in backfill message",
+			"streamID", msg.cookie.GetStreamId(), "error", err)
+		return
+	}
+
+	e.log.Errorw("failed to process backfill request",
+		"streamID", streamID, "syncIDs", msg.syncIDs, "error", err)
+
+	var target StreamSubscriber
+	e.subscribers[streamID] = slices.DeleteFunc(
+		e.subscribers[streamID],
+		func(subscriber StreamSubscriber) bool {
+			if subscriber.SyncID() != msg.syncIDs[0] {
+				return false
+			}
+			target = subscriber
+			return true
+		},
+	)
+
+	if target == nil {
+		e.log.Debugw("no subscriber found for the given failed backfill request",
+			"streamID", streamID, "syncIDs", msg.syncIDs)
+		return
+	}
+
+	// Send sync down message back to the subscriber as an indicator of backfilling failure
+	target.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 }
