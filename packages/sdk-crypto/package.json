@@ -31,7 +31,7 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "happy-dom": "^15.11.7",
         "tsdown": "^0.12.3",
-        "typescript": "^5.8.2",
+        "typescript": "^5.9.2",
         "vitest": "^3.2.3"
     },
     "exports": {
