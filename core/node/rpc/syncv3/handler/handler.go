@@ -249,7 +249,7 @@ func (s *syncStreamHandlerImpl) startUpdatesProcessor() {
 			// Process each message in the batch.
 			// Messages must be processed in the order they were received.
 			for _, msg := range msgs {
-				if s.processMessage(msg) {
+				if stop := s.processMessage(msg); stop {
 					return
 				}
 			}
