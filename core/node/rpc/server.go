@@ -784,9 +784,12 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.otelTracer,
 	)
 
-	s.syncv3 = syncv3.NewService(
-		s.otelTracer,
-	)
+	// Init sync v3 components
+	{
+		s.syncv3 = syncv3.NewService(
+			s.otelTracer,
+		)
+	}
 
 	return nil
 }
