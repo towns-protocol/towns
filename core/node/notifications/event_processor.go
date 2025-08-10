@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/hex"
@@ -424,6 +425,18 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	// only add the (stream)event if there is a reasonable chance that the payload isn't too large.
 	if base64.StdEncoding.EncodedLen(len(eventBytes)) <= MaxAPNAllowedNotificationStreamEventPayloadSize {
 		apnPayload["event"] = base64.StdEncoding.EncodeToString(eventBytes)
+	} else {
+		// attempt to compress the event bytes to fit within the APN payload size limit
+		compressedBytes := p.compressEventBytes(eventBytes)
+		if compressedBytes != nil {
+			if base64.StdEncoding.EncodedLen(len(compressedBytes)) <= MaxAPNAllowedNotificationStreamEventPayloadSize {
+				apnPayload["zippedEvent"] = base64.StdEncoding.EncodeToString(compressedBytes)
+			} else {
+				p.log.Debugw("Compressed event still too large for APN payload", 
+					"originalSize", len(eventBytes), 
+					"compressedSize", len(compressedBytes))
+			}
+		}
 	}
 
 	if len(receivers) > 0 {
@@ -439,6 +452,27 @@ func (p *MessageToNotificationsProcessor) apnPayloadV2(
 	}
 
 	return apnPayload, nil
+}
+
+// compressEventBytes compresses the given event bytes using gzip compression.
+
+func (p *MessageToNotificationsProcessor) compressEventBytes(eventBytes []byte) []byte {
+	var buf bytes.Buffer
+	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		p.log.Errorw("Failed to create gzip writer", "err", err)
+		return nil
+	}
+	if _, err := zw.Write(eventBytes); err != nil {
+		p.log.Errorw("Failed to write to gzip writer", "err", err)
+		return nil
+	}
+	if err := zw.Close(); err != nil {
+		p.log.Errorw("Failed to close gzip writer", "err", err)
+		return nil
+	}
+	
+	return buf.Bytes()
 }
 
 func (p *MessageToNotificationsProcessor) sendNotification(
