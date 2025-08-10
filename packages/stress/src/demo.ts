@@ -132,7 +132,7 @@ async function encryptDecrypt() {
     bobAccount.free()
 }
 
-async function demoExternalStoreage() {
+async function demoExternalStorage() {
     if (isSet(process.env.REDIS_HOST)) {
         const storage = new RedisStorage(process.env.REDIS_HOST)
         const value = await storage.get('demo_key')
@@ -148,7 +148,7 @@ logger.info(getSystemInfo(), 'system info')
 
 const run = async () => {
     logger.debug('========================storage========================')
-    await demoExternalStoreage()
+    await demoExternalStorage()
     logger.debug('==========================spamInfo==========================')
     await spamInfo(1)
     logger.debug('=======================encryptDecrypt=======================')
