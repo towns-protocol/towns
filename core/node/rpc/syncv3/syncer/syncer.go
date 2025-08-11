@@ -11,6 +11,13 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+// List of possible states of the stream update emitter.
+const (
+	streamUpdateEmitterStateInitializing int32 = iota
+	streamUpdateEmitterStateRunning
+	streamUpdateEmitterStateClosed
+)
+
 var (
 	_ Registry = (*registryImpl)(nil)
 )

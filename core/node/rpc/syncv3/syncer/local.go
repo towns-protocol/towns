@@ -2,7 +2,9 @@ package syncer
 
 import (
 	"context"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 	"math"
+	"sync/atomic"
 	"time"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -29,13 +31,15 @@ type localStreamUpdateEmitter struct {
 	log *logging.Log
 	// localAddr is the address of the current node.
 	localAddr common.Address
+	// streamID is the ID of the stream that this emitter emits updates for.
+	streamID StreamId
 	// stream is the currently syncing stream.
 	stream *events.Stream
 	// subscribers is a set of subscribers for the stream updates.
 	subscribers mapset.Set[StreamSubscriber]
-	// onDown is a callback that is called when the current emitter goes down.
-	// Must be NON-BLOCKING operation.
-	onDown func()
+	queue       *dynmsgbuf.DynamicBuffer[]
+	// state is the current state of the emitter.
+	state atomic.Int32
 }
 
 // NewLocalStreamUpdateEmitter creates a new local stream update emitter for the given stream ID.
@@ -44,45 +48,21 @@ func NewLocalStreamUpdateEmitter(
 	localAddr common.Address,
 	streamCache StreamCache,
 	streamID StreamId,
-	onDown func(),
-) (StreamUpdateEmitter, error) {
-	ctx, cancel := context.WithCancelCause(ctx)
-
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
-	defer ctxWithCancel()
-
-	// Get stream from the stream cache by ID.
-	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, streamID)
-	if err != nil {
-		return nil, err
-	}
-
+) StreamUpdateEmitter {
 	l := &localStreamUpdateEmitter{
-		ctx:         ctx,
-		cancel:      cancel,
 		log:         logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
 		localAddr:   localAddr,
-		stream:      stream,
+		streamID:    streamID,
 		subscribers: mapset.NewSet[StreamSubscriber](),
-		onDown:      onDown,
 	}
 
-	ctxWithTimeout, ctxWithCancel = context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
-	defer ctxWithCancel()
+	// Set the current state to initializing.
+	l.state.Store(streamUpdateEmitterStateInitializing)
 
-	// Subscribe on updates for the stream. Do not receive an initial update.
-	if err = stream.Sub(ctxWithTimeout, &SyncCookie{
-		StreamId:          streamID[:],
-		NodeAddress:       localAddr.Bytes(),
-		MinipoolGen:       math.MaxInt64,
-		PrevMiniblockHash: common.Hash{}.Bytes(),
-	}, l); err != nil {
-		return nil, err
-	}
+	// Start initialization in a separate goroutine to avoid blocking the caller.
+	go l.initialize(ctx, streamCache)
 
-	go l.run()
-
-	return l, nil
+	return l
 }
 
 // OnUpdate implements events.SyncResultReceiver interface.
@@ -149,20 +129,94 @@ func (s *localStreamUpdateEmitter) sendUpdateToSubscribers(msg *SyncStreamsRespo
 	}
 }
 
-// run waits for the global node context to be done to close the emitter:
-// 1. Wait for the context to be done.
-// 2. Call the onDown callback if it is set. Basically, removing the emitter from the registry.
-// 3. Unsubscribe from the stream updates.
-// 4. Send the sync down message to all subscribers of the stream.
-func (s *localStreamUpdateEmitter) run() {
-	<-s.ctx.Done()
+// initialize initializes the local stream update emitter.
+func (s *localStreamUpdateEmitter) initialize(
+	ctx context.Context,
+	streamCache StreamCache,
+) {
+	ctx, cancel := context.WithCancelCause(ctx)
 
-	if s.onDown != nil {
-		s.onDown()
+	defer func() {
+		// TODO: Process pending events from the queue
+	}()
+
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	defer ctxWithCancel()
+
+	// Get stream from the stream cache by ID.
+	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, s.streamID)
+	if err != nil {
+		s.log.Errorw("initialization failed: failed to get stream",
+			"streamID", s.streamID, "error", err)
+		s.state.Store(streamUpdateEmitterStateClosed)
+		return
 	}
 
+	s.ctx = ctx
+	s.cancel = cancel
+	s.stream = stream
+
+	ctxWithTimeout, ctxWithCancel = context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
+	defer ctxWithCancel()
+
+	// Subscribe on updates for the stream. Do not receive an initial update.
+	if err = stream.Sub(ctxWithTimeout, &SyncCookie{
+		StreamId:          s.streamID[:],
+		NodeAddress:       s.localAddr.Bytes(),
+		MinipoolGen:       math.MaxInt64,
+		PrevMiniblockHash: common.Hash{}.Bytes(),
+	}, s); err != nil {
+		s.log.Errorw("initialization failed: failed to subscribe to stream updates",
+			"streamID", s.streamID, "error", err)
+		s.state.Store(streamUpdateEmitterStateClosed)
+		return
+	}
+
+	var msgs []any
+	for {
+		select {
+		case <-ctx.Done():
+		// TODO: Break the loop
+		case _, open := <-s.queue.Wait():
+			msgs = s.queue.GetBatch(msgs)
+
+			// nil msgs indicates the buffer is closed.
+			if msgs == nil {
+				_ = op.rec.Send(&SyncStreamsResponse{
+					SyncId: op.id,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				op.cancel(nil)
+				return
+			}
+
+			// Process each message in the batch.
+			// Messages must be processed in the order they were received.
+			for _, msg := range msgs {
+				if op.processMessage(msg) {
+					return
+				}
+			}
+
+			// If the client sent a close message, stop sending messages to client from the buffer.
+			// In theory should not happen, but just in case.
+			if !open {
+				_ = op.rec.Send(&SyncStreamsResponse{
+					SyncId: op.id,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				op.cancel(nil)
+				return
+			}
+		}
+	}
+
+	// Waiting for the global context to be done.
+	<-s.ctx.Done()
+
+	// Unsubscribe from the stream updates.
 	s.stream.Unsub(s)
 
-	streamID := s.stream.StreamId()
-	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	// Send a stream down message to all subscribers.
+	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]})
 }
