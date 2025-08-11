@@ -298,6 +298,9 @@ export interface MembershipFacetInterface extends utils.Interface {
     "RoleRemoved(address,uint256)": EventFragment;
     "RoleUpdated(address,uint256)": EventFragment;
     "SubscriptionUpdate(uint256,uint64)": EventFragment;
+    "TierCreated(uint32)": EventFragment;
+    "TierDisabled(uint32)": EventFragment;
+    "TierUpdated(uint32)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
@@ -347,6 +350,9 @@ export interface MembershipFacetInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "SubscriptionUpdate"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TierCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TierDisabled"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TierUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
@@ -732,6 +738,27 @@ export type SubscriptionUpdateEvent = TypedEvent<
 
 export type SubscriptionUpdateEventFilter =
   TypedEventFilter<SubscriptionUpdateEvent>;
+
+export interface TierCreatedEventObject {
+  tierId: number;
+}
+export type TierCreatedEvent = TypedEvent<[number], TierCreatedEventObject>;
+
+export type TierCreatedEventFilter = TypedEventFilter<TierCreatedEvent>;
+
+export interface TierDisabledEventObject {
+  tierId: number;
+}
+export type TierDisabledEvent = TypedEvent<[number], TierDisabledEventObject>;
+
+export type TierDisabledEventFilter = TypedEventFilter<TierDisabledEvent>;
+
+export interface TierUpdatedEventObject {
+  tierId: number;
+}
+export type TierUpdatedEvent = TypedEvent<[number], TierUpdatedEventObject>;
+
+export type TierUpdatedEventFilter = TypedEventFilter<TierUpdatedEvent>;
 
 export interface TransferEventObject {
   from: string;
@@ -1285,6 +1312,27 @@ export interface MembershipFacet extends BaseContract {
       tokenId?: PromiseOrValue<BigNumberish> | null,
       expiration?: null
     ): SubscriptionUpdateEventFilter;
+
+    "TierCreated(uint32)"(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierCreatedEventFilter;
+    TierCreated(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierCreatedEventFilter;
+
+    "TierDisabled(uint32)"(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierDisabledEventFilter;
+    TierDisabled(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierDisabledEventFilter;
+
+    "TierUpdated(uint32)"(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierUpdatedEventFilter;
+    TierUpdated(
+      tierId?: PromiseOrValue<BigNumberish> | null
+    ): TierUpdatedEventFilter;
 
     "Transfer(address,address,uint256)"(
       from?: PromiseOrValue<string> | null,
