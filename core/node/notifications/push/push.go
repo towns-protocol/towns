@@ -298,7 +298,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 ) (bool, int, error) {
 	appConfig, ok := n.appConfigs[app]
 	if !ok {
-		return false, http.StatusBadGateway, RiverError(protocol.Err_INVALID_ARGUMENT, "No configuration for app").
+		return false, http.StatusNotFound, RiverError(protocol.Err_INVALID_ARGUMENT, "No configuration for app").
 			Func("SendApplePushNotification").
 			Tag("app", app)
 	}
