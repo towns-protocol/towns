@@ -50,7 +50,9 @@ type (
 
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
-		Backfill(cookie *SyncCookie, syncIDs []string) error
+		//
+		// Returns false if the given emitter is closed.
+		Backfill(cookie *SyncCookie, syncIDs []string) bool
 	}
 
 	// Registry is a registry of stream update emitters (syncers).
