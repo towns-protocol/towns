@@ -918,6 +918,45 @@ export default [
   },
   {
     "type": "event",
+    "name": "TierCreated",
+    "inputs": [
+      {
+        "name": "tierId",
+        "type": "uint32",
+        "indexed": true,
+        "internalType": "uint32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TierDisabled",
+    "inputs": [
+      {
+        "name": "tierId",
+        "type": "uint32",
+        "indexed": true,
+        "internalType": "uint32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TierUpdated",
+    "inputs": [
+      {
+        "name": "tierId",
+        "type": "uint32",
+        "indexed": true,
+        "internalType": "uint32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "Transfer",
     "inputs": [
       {
@@ -1155,6 +1194,11 @@ export default [
   },
   {
     "type": "error",
+    "name": "Membership__InvalidTier",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "Membership__InvalidTokenId",
     "inputs": []
   },
@@ -1176,6 +1220,11 @@ export default [
   {
     "type": "error",
     "name": "Membership__PriceTooLow",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Membership__TierDisabled",
     "inputs": []
   },
   {
