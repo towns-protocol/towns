@@ -41,13 +41,12 @@ type (
 		Node() common.Address
 
 		// Subscribe for updates on the stream.
-		Subscribe(subscriber StreamSubscriber) error
+		//
+		// Returns false if the given emitter is closed.
+		Subscribe(subscriber StreamSubscriber) bool
 
 		// Unsubscribe from updates of the stream.
-		//
-		// If no subscribers left, the emitter should be closed.
-		// Returns true if the emitter was closed, false otherwise.
-		Unsubscribe(subscriber StreamSubscriber) bool
+		Unsubscribe(subscriber StreamSubscriber)
 
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
