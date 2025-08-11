@@ -4,10 +4,19 @@
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
-        "build": "yarn make-config",
+        "build": "yarn prepare && yarn make-config",
         "make-config": "node ./scripts/make-config.js",
-        "preinstall": "node ./scripts/make-config.js"
+        "preinstall": "yarn make-config",
+        "prepare": "node ./scripts/prepare.js"
     },
+    "files": [
+        "config/**/*",
+        "deployments/**/*",
+        "dev/**/*",
+        "scripts/**/*",
+        "v3/**/*",
+        "README.md"
+    ],
     "imports": {
         "#/dev/*": "./dev/*",
         "#/v3/*": "./v3/*",

@@ -43,6 +43,16 @@ if [ $exit_status_yarn -ne 0 ]; then
     exit 1
 fi
 
+# Generate contract types for publishing
+echo "Generating contract types for publishing..."
+./scripts/build-contract-types.sh
+exit_status_contracts=$?
+
+if [ $exit_status_contracts -ne 0 ]; then
+    echo "Contract type generation failed."
+    exit 1
+fi
+
 # build docs
 yarn workspace @towns-protocol/react-sdk gen
 exit_status_docgen=$?
