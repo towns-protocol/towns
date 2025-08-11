@@ -42,12 +42,15 @@
     "solidity-bytes-utils": "^0.8.4"
   },
   "files": [
+    "docs/**/*",
     "src/**/*.sol",
     "scripts/**/*.sol",
-    "./typings/index.ts",
     "README.md"
   ],
   "installConfig": {
     "hoistingLimits": "dependencies"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
