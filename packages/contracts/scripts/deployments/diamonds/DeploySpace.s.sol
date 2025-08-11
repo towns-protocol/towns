@@ -120,6 +120,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("SwapFacet");
         facetHelper.add("TippingFacet");
         facetHelper.add("Treasury");
+
+        facetHelper.deployBatch(deployer);
+
         facetHelper.add("AppAccount");
         facetHelper.add("SignerFacet");
         facetHelper.add("MembershipTiersFacet");
