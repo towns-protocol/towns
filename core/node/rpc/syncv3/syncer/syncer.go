@@ -38,7 +38,7 @@ type (
 		// When update.SyncOp is SyncOp_SYNC_DOWN this is the last update the subscriber
 		// receives for the stream. It is expected that this update is sent to the client
 		// and that the client will resubscribe.
-		OnStreamEvent(update *SyncStreamsResponse)
+		OnStreamEvent(update *SyncStreamsResponse, version int32)
 	}
 
 	// StreamUpdateEmitter emit events related to a specific stream.
@@ -56,7 +56,9 @@ type (
 		Node() common.Address
 
 		// Subscribe for updates on the stream.
-		Subscribe(subscriber StreamSubscriber) error
+		//
+		// Returns false if the given emitter is closed.
+		Subscribe(subscriber StreamSubscriber) bool
 
 		// Unsubscribe from updates of the stream.
 		//
@@ -66,7 +68,7 @@ type (
 
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
-		Backfill(cookie *SyncCookie, syncIDs []string) error
+		Backfill(cookie *SyncCookie, syncIDs []string) bool
 	}
 
 	// Registry is a registry of stream update emitters (syncers).

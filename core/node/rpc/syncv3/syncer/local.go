@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"context"
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 	"math"
 	"sync/atomic"
 	"time"
@@ -14,12 +13,18 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 const (
 	// localStreamUpdateEmitterTimeout is the default timeout to get updates from the local stream.
 	localStreamUpdateEmitterTimeout = time.Second * 10
 )
+
+type backfillRequest struct {
+	cookie  *SyncCookie
+	syncIDs []string
+}
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
 type localStreamUpdateEmitter struct {
@@ -37,7 +42,10 @@ type localStreamUpdateEmitter struct {
 	stream *events.Stream
 	// subscribers is a set of subscribers for the stream updates.
 	subscribers mapset.Set[StreamSubscriber]
-	queue       *dynmsgbuf.DynamicBuffer[]
+	// backfillsQueue is a dynamic buffer that holds backfill requests.
+	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
+	// version is the version of the current emitter.
+	version int32
 	// state is the current state of the emitter.
 	state atomic.Int32
 }
@@ -48,12 +56,15 @@ func NewLocalStreamUpdateEmitter(
 	localAddr common.Address,
 	streamCache StreamCache,
 	streamID StreamId,
+	version int32,
 ) StreamUpdateEmitter {
 	l := &localStreamUpdateEmitter{
-		log:         logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
-		localAddr:   localAddr,
-		streamID:    streamID,
-		subscribers: mapset.NewSet[StreamSubscriber](),
+		log:            logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
+		localAddr:      localAddr,
+		streamID:       streamID,
+		subscribers:    mapset.NewSet[StreamSubscriber](),
+		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
+		version:        version,
 	}
 
 	// Set the current state to initializing.
@@ -93,38 +104,48 @@ func (s *localStreamUpdateEmitter) Node() common.Address {
 }
 
 // Subscribe adds the given subscriber to the stream updates.
-func (s *localStreamUpdateEmitter) Subscribe(subscriber StreamSubscriber) error {
+//
+// If the emitter is closed, it returns false. This indicates that the subscriber
+// will not receive any updates from this emitter so a new one should be created.
+func (s *localStreamUpdateEmitter) Subscribe(subscriber StreamSubscriber) bool {
+	if s.state.Load() == streamUpdateEmitterStateClosed {
+		return false
+	}
 	s.subscribers.Add(subscriber)
-	return nil
+	return true
 }
 
 // Unsubscribe removes the given subscriber from the stream updates.
-// The local stream update emitter does not unsubscribe from updates even if there are no subscribers left.
+//
+// TODO: Do we really need to let registry unsubscribe from the stream?
 func (s *localStreamUpdateEmitter) Unsubscribe(subscriber StreamSubscriber) bool {
 	s.subscribers.Remove(subscriber)
 	return false
 }
 
-// Backfill requests a backfill message by the given cookie and sends the message through sync IDs.
-func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) error {
-	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
-	defer cancel()
+// Backfill adds the given backfill request to the queue for further processing.
+func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
+	if s.state.Load() == streamUpdateEmitterStateClosed {
+		return false
+	}
 
-	return s.stream.UpdatesSinceCookie(ctxWithTimeout, cookie, func(streamAndCookie *StreamAndCookie) error {
-		s.sendUpdateToSubscribers(&SyncStreamsResponse{
-			SyncOp:        SyncOp_SYNC_UPDATE,
-			Stream:        streamAndCookie,
-			TargetSyncIds: syncIDs,
-		})
-		return nil
-	})
+	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
+	if err != nil {
+		s.log.Errorw("failed to add backfill request to the queue",
+			"streamID", s.streamID, "error", err)
+		s.cancel(err)
+		s.state.Store(streamUpdateEmitterStateClosed)
+		return false
+	}
+
+	return true
 }
 
 // sendUpdateToSubscribers sends the given sync streams response to all subscribers of the stream.
 func (s *localStreamUpdateEmitter) sendUpdateToSubscribers(msg *SyncStreamsResponse) {
 	if s.subscribers.Cardinality() > 0 {
 		for subscriber := range s.subscribers.Iter() {
-			subscriber.OnStreamEvent(msg)
+			subscriber.OnStreamEvent(msg, s.version)
 		}
 	}
 }
@@ -135,10 +156,6 @@ func (s *localStreamUpdateEmitter) initialize(
 	streamCache StreamCache,
 ) {
 	ctx, cancel := context.WithCancelCause(ctx)
-
-	defer func() {
-		// TODO: Process pending events from the queue
-	}()
 
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	defer ctxWithCancel()
@@ -172,51 +189,69 @@ func (s *localStreamUpdateEmitter) initialize(
 		return
 	}
 
-	var msgs []any
+	// Start processing backfill requests
+	var msgs []*backfillRequest
 	for {
 		select {
 		case <-ctx.Done():
-		// TODO: Break the loop
-		case _, open := <-s.queue.Wait():
-			msgs = s.queue.GetBatch(msgs)
+			s.state.Store(streamUpdateEmitterStateClosed)
+			break
+		case _, open := <-s.backfillsQueue.Wait():
+			msgs = s.backfillsQueue.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
 			if msgs == nil {
-				_ = op.rec.Send(&SyncStreamsResponse{
-					SyncId: op.id,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				op.cancel(nil)
-				return
+				s.cancel(nil)
+				s.state.Store(streamUpdateEmitterStateClosed)
+				break
 			}
 
 			// Process each message in the batch.
 			// Messages must be processed in the order they were received.
 			for _, msg := range msgs {
-				if op.processMessage(msg) {
-					return
+				if err = s.processBackfillRequest(msg); err != nil {
+					s.log.Errorw("failed to process backfill request",
+						"streamID", s.streamID, "cookie", msg.cookie, "error", err)
+					s.cancel(err)
+					s.state.Store(streamUpdateEmitterStateClosed)
+					break
 				}
 			}
 
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
+			// The queue is closed, so we can stop the emitter.
 			if !open {
-				_ = op.rec.Send(&SyncStreamsResponse{
-					SyncId: op.id,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				op.cancel(nil)
-				return
+				s.cancel(nil)
+				s.state.Store(streamUpdateEmitterStateClosed)
+				break
 			}
 		}
-	}
 
-	// Waiting for the global context to be done.
-	<-s.ctx.Done()
+		if s.state.Load() == streamUpdateEmitterStateClosed {
+			break
+		}
+	}
 
 	// Unsubscribe from the stream updates.
 	s.stream.Unsub(s)
 
 	// Send a stream down message to all subscribers.
 	s.sendUpdateToSubscribers(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]})
+}
+
+// processBackfillRequest processes the given backfill request by fetching updates since the given cookie
+// and sending the message back to the specified sync.
+//
+// It returns false if the process is failed, which indicates that the emitter should be closed.
+func (s *localStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest) error {
+	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
+	defer cancel()
+
+	return s.stream.UpdatesSinceCookie(ctxWithTimeout, msg.cookie, func(streamAndCookie *StreamAndCookie) error {
+		s.sendUpdateToSubscribers(&SyncStreamsResponse{
+			SyncOp:        SyncOp_SYNC_UPDATE,
+			Stream:        streamAndCookie,
+			TargetSyncIds: msg.syncIDs,
+		})
+		return nil
+	})
 }
