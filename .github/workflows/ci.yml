@@ -211,10 +211,6 @@ jobs:
                   working-directory: core
                   install-go: false
 
-            - name: Build town types
-              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: ./scripts/build-contract-types.sh localhost --frozen
-
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
