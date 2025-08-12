@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"context"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -37,13 +36,16 @@ type (
 
 	// StreamSubscriber accept (local or remote) stream events.
 	StreamSubscriber interface {
-		// OnStreamEvent is called for each stream event.
+		// OnStreamEvent is called by StreamUpdateEmitter for each stream event.
 		//
 		// Subscribers MUST NOT block when processing the given update.
 		//
 		// When update.SyncOp is SyncOp_SYNC_DOWN this is the last update the subscriber
 		// receives for the stream. It is expected that this update is sent to the client
 		// and that the client will resubscribe.
+		//
+		// Version indicates which version of the syncer the update is sent from. If node A goes down
+		// and node B takes over the sync operation, the version will be incremented.
 		OnStreamEvent(update *SyncStreamsResponse, version int32)
 	}
 
@@ -88,31 +90,4 @@ type (
 		// chain of sync identifiers.
 		Backfill(cookie *SyncCookie, syncIDs []string) error
 	}
-
-	registryImpl struct {
-		syncersLock sync.Mutex
-		syncers     map[StreamId]StreamUpdateEmitter
-	}
 )
-
-// NewRegistry creates a new instance of the Registry.
-func NewRegistry() *registryImpl {
-	return &registryImpl{
-		syncers: make(map[StreamId]StreamUpdateEmitter),
-	}
-}
-
-func (r *registryImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
-	// TODO: Implement me
-	panic("implement me")
-}
