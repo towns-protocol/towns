@@ -93,6 +93,6 @@ type (
 
 		// Backfill sends a request to appropriate syncer to backfill a specific sync operation by the given
 		// chain of sync identifiers.
-		Backfill(cookie *SyncCookie, syncIDs []string) error
+		Backfill(cookie *SyncCookie, syncIDs []string)
 	}
 )
