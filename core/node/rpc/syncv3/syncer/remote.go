@@ -107,8 +107,8 @@ func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 
 	err := r.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
-		r.log.Errorw("failed to add backfill request to the queue", "error", err)
 		r.cancel(err)
+		r.log.Errorw("failed to add backfill request to the queue", "error", err)
 		r.state.Store(streamUpdateEmitterStateClosed)
 		return false
 	}
@@ -150,7 +150,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	go func() {
 		select {
 		case <-r.ctx.Done():
-		case <-time.After(20 * time.Second):
+		case <-time.After(remoteStreamUpdateEmitterTimeout):
 			if !firstUpdateReceived.Load() {
 				r.cancel(nil)
 			}
@@ -207,6 +207,20 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
+				// Context could be canceled while processing backfill requests so one more check here.
+				select {
+				case <-r.ctx.Done():
+					// Send unprocessed messages back to the queue for further processing by sending the down message back.
+					for _, m := range msgs[i:] {
+						if err = r.backfillsQueue.AddMessage(m); err != nil {
+							r.log.Errorw("failed to re-add unprocessed backfill request to the queue", "cookie", m.cookie, "error", err)
+						}
+					}
+
+					return
+				default:
+				}
+
 				if err = r.processBackfillRequest(msg); err != nil {
 					r.cancel(err)
 					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
@@ -323,7 +337,7 @@ func (r *remoteStreamUpdateEmitter) connectionAlive(latestMsgReceived *atomic.Va
 	}
 }
 
-// processBackfillRequest processes a backfill request by sending it to the remote node.
+// processBackfillRequest processes the given backfill request by sending it to the remote node.
 func (r *remoteStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest) error {
 	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, remoteStreamUpdateEmitterTimeout)
 	defer cancel()
