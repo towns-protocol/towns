@@ -179,7 +179,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
 		r.cancel(nil)
 		r.log.Errorw("initialization failed: received unexpected sync stream message",
-			"syncOp", responseStream.Msg().SyncOp, "syncId", responseStream.Msg().SyncId)
+			"syncOp", responseStream.Msg().SyncOp, "syncID", responseStream.Msg().SyncId)
 		return
 	}
 
