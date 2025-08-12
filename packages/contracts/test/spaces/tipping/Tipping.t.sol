@@ -289,7 +289,7 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
         vm.deal(sender, 1 ether);
         vm.startPrank(sender);
         mockERC20.approve(address(tipping), amount);
-        
+
         vm.expectRevert(UnexpectedETH.selector);
         tipping.tip{value: 0.1 ether}(
             TipRequest({
