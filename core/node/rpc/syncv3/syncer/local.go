@@ -58,7 +58,7 @@ func NewLocalStreamUpdateEmitter(
 		ctx:    ctx,
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
-			Named("localStreamUpdateEmitter").
+			Named("syncv3.localStreamUpdateEmitter").
 			With("addr", localAddr, "streamID", streamID, "version", version),
 		localAddr:      localAddr,
 		streamID:       streamID,
