@@ -205,6 +205,15 @@ func (r *SyncStreamsResponse) StreamID() []byte {
 	return r.GetStream().GetNextSyncCookie().GetStreamId()
 }
 
+// IsBackfill returns true if the SyncStreamsResponse is a backfill operation.
+func (r *SyncStreamsResponse) IsBackfill() bool {
+	if r == nil {
+		return false
+	}
+
+	return r.GetSyncOp() == SyncOp_SYNC_UPDATE && len(r.GetTargetSyncIds()) > 0
+}
+
 // ParsedStreamWithIndent renders a version of the snapshot that is easily read and understood. Please
 // note that this method is not optimized for performance and should not be used in any hot path. It
 // is for debugging purposes only.

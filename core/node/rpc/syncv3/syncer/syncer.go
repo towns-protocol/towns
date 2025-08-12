@@ -1,12 +1,21 @@
 package syncer
 
 import (
+	"context"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+)
+
+// List of possible states of the stream update emitter.
+const (
+	streamUpdateEmitterStateInitializing int32 = iota
+	streamUpdateEmitterStateRunning
+	streamUpdateEmitterStateClosed
 )
 
 var (
@@ -14,6 +23,18 @@ var (
 )
 
 type (
+	// backfillRequest is used by syncers as an element in the backfill queue.
+	backfillRequest struct {
+		cookie  *SyncCookie
+		syncIDs []string
+	}
+
+	// StreamCache represents a behavior of the stream cache.
+	StreamCache interface {
+		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
+		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
+	}
+
 	// StreamSubscriber accept (local or remote) stream events.
 	StreamSubscriber interface {
 		// OnStreamEvent is called for each stream event.
@@ -23,7 +44,7 @@ type (
 		// When update.SyncOp is SyncOp_SYNC_DOWN this is the last update the subscriber
 		// receives for the stream. It is expected that this update is sent to the client
 		// and that the client will resubscribe.
-		OnStreamEvent(update *SyncStreamsResponse)
+		OnStreamEvent(update *SyncStreamsResponse, version int32)
 	}
 
 	// StreamUpdateEmitter emit events related to a specific stream.

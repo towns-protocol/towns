@@ -113,7 +113,7 @@ func New(ctx context.Context, registry syncer.Registry) *eventBusImpl {
 // There is a background goroutine that reads updates from this queue and forwards the update to subscribers
 // on the stream. If the update is a SyncOp_SYNC_DOWN update, all subscribers are automatically unsubscribed
 // from the stream.
-func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse) {
+func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int32) {
 	// TODO: if the queue is full, we should retry few times, if it still fails, we unsubscribe from the given stream
 	//  updates and send the stream down message to all subscribers.
 	_ = e.queue.AddMessage(&eventBusMessage{update: update})
