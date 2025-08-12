@@ -68,7 +68,7 @@ func (r *registryImpl) Subscribe(streamID StreamId) {
 		var err error
 		if _, err = r.createEmitterNoLock(streamID, 1); err != nil {
 			r.log.Errorw("failed to create stream emitter", "streamID", streamID, "error", err)
-			r.sendStreamDown(streamID)
+			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, 0)
 			return
 		}
 	}
@@ -130,7 +130,7 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (St
 	// Get stream remote nodes first
 	stream, err := r.streamCache.GetStreamNoWait(ctxWithTimeout, streamID)
 	if err != nil {
-		return nil, AsRiverError(err).Func("registryImpl.createEmitter")
+		return nil, AsRiverError(err).Func("registryImpl.createEmitterNoLock")
 	}
 
 	// Get current sticky peer address for the stream.
@@ -164,9 +164,4 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (St
 	r.syncers[streamID] = streamUpdateEmitter
 
 	return streamUpdateEmitter, nil
-}
-
-// sendStreamDown sends a stream down message to the given subscriber for the specified streamID.
-func (r *registryImpl) sendStreamDown(streamID StreamId) {
-	r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, 0)
 }
