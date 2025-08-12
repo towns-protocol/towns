@@ -78,7 +78,7 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 	defer r.syncersLock.Unlock()
 
 	if emitter, ok := r.syncers[streamID]; ok {
-		emitter.Unsubscribe(subscriber)
+		emitter.Close()
 	}
 }
 
