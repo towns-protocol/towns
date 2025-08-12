@@ -17,10 +17,6 @@ const (
 	streamUpdateEmitterStateClosed
 )
 
-var (
-	_ Registry = (*registryImpl)(nil)
-)
-
 type (
 	// backfillRequest is used by syncers as an element in the backfill queue.
 	backfillRequest struct {
@@ -33,7 +29,9 @@ type (
 		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
 		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
 	}
+)
 
+type (
 	// StreamSubscriber accept (local or remote) stream events.
 	StreamSubscriber interface {
 		// OnStreamEvent is called by StreamUpdateEmitter for each stream event.
