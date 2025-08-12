@@ -334,34 +334,52 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	subscribers, ok := e.subscribers[streamID][version]
-	if !ok {
-		// No subscribers for the given stream, do nothing
-		return
-	}
+	if version == 0 {
+		var wg sync.WaitGroup
+		for _, subscribers := range e.subscribers[streamID] {
+			for _, sub := range subscribers {
+				wg.Add(1)
+				go func(sub StreamSubscriber) {
+					// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
+					// All other fields can be set by reference/pointer to prevent needless copying.
+					sub.OnUpdate(&SyncStreamsResponse{
+						SyncOp:   msg.GetSyncOp(),
+						Stream:   msg.GetStream(),
+						StreamId: msg.GetStreamId(),
+					})
+					wg.Done()
+				}(sub)
+			}
+		}
+		wg.Wait()
 
-	var wg sync.WaitGroup
-	wg.Add(len(subscribers))
-	for _, sub := range subscribers {
-		go func(sub StreamSubscriber) {
-			// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
-			// All other fields can be set by reference/pointer to prevent needless copying.
-			sub.OnUpdate(&SyncStreamsResponse{
-				SyncOp:   msg.GetSyncOp(),
-				Stream:   msg.GetStream(),
-				StreamId: msg.GetStreamId(),
-			})
-			wg.Done()
-		}(sub)
-	}
-	wg.Wait()
-
-	// Remove the stream from registries if the sync down message is received.
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		if version == 0 {
+		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 			delete(e.subscribers, streamID)
-		} else if _, ok = e.subscribers[streamID]; ok {
-			// Remove the version from the subscribers map.
+		}
+	} else {
+		subscribers, ok := e.subscribers[streamID]
+		if !ok {
+			// No subscribers for the given stream, do nothing
+			return
+		}
+
+		var wg sync.WaitGroup
+		wg.Add(len(subscribers[version]))
+		for _, sub := range subscribers[version] {
+			go func(sub StreamSubscriber) {
+				// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
+				// All other fields can be set by reference/pointer to prevent needless copying.
+				sub.OnUpdate(&SyncStreamsResponse{
+					SyncOp:   msg.GetSyncOp(),
+					Stream:   msg.GetStream(),
+					StreamId: msg.GetStreamId(),
+				})
+				wg.Done()
+			}(sub)
+		}
+		wg.Wait()
+
+		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 			delete(e.subscribers[streamID], version)
 			if len(e.subscribers[streamID]) == 0 {
 				delete(e.subscribers, streamID)
