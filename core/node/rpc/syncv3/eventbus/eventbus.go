@@ -5,6 +5,9 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/towns-protocol/towns/core/node/nodes"
+
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/syncer"
@@ -45,7 +48,7 @@ type (
 		//
 		// When the subscriber receives a SyncOp_SYNC_DOWN stream update the subscriber is automatically
 		// unsubscribed from the stream and won't receive further updates.
-		Subscribe(streamID StreamId, subscriber StreamSubscriber) error
+		Subscribe(cookie *SyncCookie, subscriber StreamSubscriber) error
 
 		// Unsubscribe from events.
 		//
@@ -70,7 +73,7 @@ type (
 	}
 
 	eventBusMessageSub struct {
-		streamID   StreamId
+		cookie     *SyncCookie
 		subscriber StreamSubscriber
 	}
 
@@ -116,15 +119,20 @@ type (
 // and distributes them to subscribers.
 func New(
 	ctx context.Context,
-	registry syncer.Registry,
+	localAddr common.Address,
+	streamCache syncer.StreamCache,
+	nodeRegistry nodes.NodeRegistry,
 ) *eventBusImpl {
 	e := &eventBusImpl{
 		log:         logging.FromCtx(ctx).Named("syncv3.eventbus"),
 		queue:       dynmsgbuf.NewDynamicBuffer[*eventBusMessage](),
-		registry:    registry,
 		subscribers: make(map[StreamId]map[int32][]StreamSubscriber),
 	}
+
+	e.registry = syncer.NewRegistry(ctx, localAddr, streamCache, nodeRegistry, e)
+
 	go e.run(ctx)
+
 	return e
 }
 
@@ -179,7 +187,7 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int32)
 }
 
 // Subscribe adds the given subscriber to the stream updates.
-func (e *eventBusImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber) error {
+func (e *eventBusImpl) Subscribe(cookie *SyncCookie, subscriber StreamSubscriber) error {
 	// 1. Check if the stream exists, if not return Err_NOT_FOUND
 	// (TODO: determine how to determine if a stream exists to prevent locking subscribe too long, or pushing a command
 
@@ -191,7 +199,7 @@ func (e *eventBusImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber)
 	// is automatically unsubscribed.
 	return e.queue.AddMessage(&eventBusMessage{
 		sub: &eventBusMessageSub{
-			streamID:   streamID,
+			cookie:     cookie,
 			subscriber: subscriber,
 		},
 	})
@@ -279,7 +287,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 	// to the target subscriber only.
 	if len(msg.GetTargetSyncIds()) > 0 {
 		var target StreamSubscriber
-		for _, sub := range e.subscribers[streamID] {
+		for _, sub := range e.subscribers[streamID][version] {
 			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
 				target = sub
 				break
@@ -297,7 +305,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	subscribers, ok := e.subscribers[streamID]
+	subscribers, ok := e.subscribers[streamID][version]
 	if !ok {
 		// No subscribers for the given stream, do nothing
 		return
@@ -331,16 +339,39 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		return
 	}
 
-	currentSubscribers, ok := e.subscribers[msg.streamID]
+	streamID, err := StreamIdFromBytes(msg.cookie.GetStreamId())
+	if err != nil {
+		e.log.Errorw("failed to parse stream ID from cookie in subscribe message",
+			"streamID", msg.cookie.GetStreamId(), "error", err)
+		return
+	}
+
+	currentSubscribers, ok := e.subscribers[streamID]
 	if !ok {
 		// Event bus is not subscribed on updates of the given stream. Subscribe first.
-		e.subscribers[msg.streamID] = []StreamSubscriber{msg.subscriber}
-		e.registry.Subscribe(msg.streamID)
+		e.subscribers[streamID] = map[int32][]StreamSubscriber{0: {msg.subscriber}}
+		e.registry.Subscribe(streamID)
 	} else {
-		if !slices.Contains(currentSubscribers, msg.subscriber) {
-			e.subscribers[msg.streamID] = append(currentSubscribers, msg.subscriber)
+		var found bool
+		for _, subscribers := range currentSubscribers {
+			if slices.Contains(subscribers, msg.subscriber) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			if _, ok = e.subscribers[streamID][0]; !ok {
+				e.subscribers[streamID][0] = []StreamSubscriber{}
+			}
+			e.subscribers[streamID][0] = append(e.subscribers[streamID][0], msg.subscriber)
 		}
 	}
+
+	e.processBackfillCommand(&eventBusMessageBackfill{
+		cookie:  msg.cookie,
+		syncIDs: []string{msg.subscriber.SyncID()},
+	})
 }
 
 // processUnsubscribeCommand processes the given unsubscribe command.
@@ -349,12 +380,14 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 		return
 	}
 
-	e.subscribers[msg.streamID] = slices.DeleteFunc(
-		e.subscribers[msg.streamID],
-		func(subscriber StreamSubscriber) bool {
-			return subscriber == msg.subscriber
-		},
-	)
+	for version := range e.subscribers[msg.streamID] {
+		e.subscribers[msg.streamID][version] = slices.DeleteFunc(
+			e.subscribers[msg.streamID][version],
+			func(subscriber StreamSubscriber) bool {
+				return subscriber == msg.subscriber
+			},
+		)
+	}
 }
 
 // processBackfillCommand processes the given backfill command.
