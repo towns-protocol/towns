@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/towns-protocol/towns/core/node/nodes"
 
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/syncer"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -165,20 +165,16 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int32)
 	// Unsubscribe event bus from receiving updates of the given stream.
 	e.registry.Unsubscribe(streamID)
 
-	subscribers, ok := e.subscribers[streamID]
-	if !ok {
-		// No subscribers for the given stream, do nothing
-		return
-	}
-
 	// Send sync down message directly to clients to avoid common queue
 	var wg sync.WaitGroup
-	wg.Add(len(subscribers))
-	for _, sub := range subscribers {
-		go func(sub StreamSubscriber) {
-			sub.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
-			wg.Done()
-		}(sub)
+	for _, subscribers := range e.subscribers[streamID] {
+		for _, sub := range subscribers {
+			wg.Add(1)
+			go func(sub StreamSubscriber) {
+				sub.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+				wg.Done()
+			}(sub)
+		}
 	}
 	wg.Wait()
 
@@ -287,10 +283,27 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 	// to the target subscriber only.
 	if len(msg.GetTargetSyncIds()) > 0 {
 		var target StreamSubscriber
-		for _, sub := range e.subscribers[streamID][version] {
-			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
-				target = sub
-				break
+		var targetVersion int32
+		if version == 0 {
+			for version, subscribers := range e.subscribers[streamID] {
+				for _, sub := range subscribers {
+					if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+						target = sub
+						targetVersion = version
+						break
+					}
+				}
+				if target != nil {
+					break
+				}
+			}
+		} else if _, ok := e.subscribers[streamID]; ok {
+			targetVersion = version
+			for _, sub := range e.subscribers[streamID][version] {
+				if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+					target = sub
+					break
+				}
 			}
 		}
 
@@ -301,6 +314,22 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		}
 
 		target.OnUpdate(msg)
+
+		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+			e.subscribers[streamID][targetVersion] = slices.DeleteFunc(
+				e.subscribers[streamID][targetVersion],
+				func(subscriber StreamSubscriber) bool {
+					return subscriber == target
+				},
+			)
+
+			if len(e.subscribers[streamID][targetVersion]) == 0 {
+				delete(e.subscribers[streamID], targetVersion)
+				if len(e.subscribers[streamID]) == 0 {
+					delete(e.subscribers, streamID)
+				}
+			}
+		}
 
 		return
 	}
@@ -329,7 +358,15 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 
 	// Remove the stream from registries if the sync down message is received.
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		delete(e.subscribers, streamID)
+		if version == 0 {
+			delete(e.subscribers, streamID)
+		} else if _, ok = e.subscribers[streamID]; ok {
+			// Remove the version from the subscribers map.
+			delete(e.subscribers[streamID], version)
+			if len(e.subscribers[streamID]) == 0 {
+				delete(e.subscribers, streamID)
+			}
+		}
 	}
 }
 
@@ -396,39 +433,5 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 		return
 	}
 
-	err := e.registry.Backfill(msg.cookie, msg.syncIDs)
-	if err == nil {
-		return
-	}
-
-	streamID, err := StreamIdFromBytes(msg.cookie.GetStreamId())
-	if err != nil {
-		e.log.Errorw("failed to parse stream ID from cookie in backfill message",
-			"streamID", msg.cookie.GetStreamId(), "error", err)
-		return
-	}
-
-	e.log.Errorw("failed to process backfill request",
-		"streamID", streamID, "syncIDs", msg.syncIDs, "error", err)
-
-	var target StreamSubscriber
-	e.subscribers[streamID] = slices.DeleteFunc(
-		e.subscribers[streamID],
-		func(subscriber StreamSubscriber) bool {
-			if subscriber.SyncID() != msg.syncIDs[0] {
-				return false
-			}
-			target = subscriber
-			return true
-		},
-	)
-
-	if target == nil {
-		e.log.Debugw("no subscriber found for the given failed backfill request",
-			"streamID", streamID, "syncIDs", msg.syncIDs)
-		return
-	}
-
-	// Send sync down message back to the subscriber as an indicator of backfilling failure
-	target.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	e.registry.Backfill(msg.cookie, msg.syncIDs)
 }
