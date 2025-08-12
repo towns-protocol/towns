@@ -111,6 +111,11 @@ func (s *localStreamUpdateEmitter) Node() common.Address {
 	return s.localAddr
 }
 
+// Version returns the version of the emitter.
+func (s *localStreamUpdateEmitter) Version() int32 {
+	return s.version
+}
+
 // Backfill adds the given backfill request to the queue for further processing.
 func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
 	if s.state.Load() == streamUpdateEmitterStateClosed {

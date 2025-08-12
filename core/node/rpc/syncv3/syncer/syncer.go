@@ -61,6 +61,9 @@ type (
 		// For remote streams this is the address of the remote node.
 		Node() common.Address
 
+		// Version returns the version of the emitter.
+		Version() int32
+
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
 		//
