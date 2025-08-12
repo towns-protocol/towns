@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -18,6 +16,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 const (
@@ -209,8 +208,8 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
 				if err = r.processBackfillRequest(msg); err != nil {
-					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					r.cancel(err)
+					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
