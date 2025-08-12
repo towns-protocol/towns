@@ -263,13 +263,14 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates() {
 		}
 	}
 
-	if r.responseStream.Err() == nil {
+	err := r.responseStream.Err()
+	if err == nil || errors.Is(err, context.Canceled) {
 		r.log.Info("remote node disconnected")
 	} else {
-		r.log.Errorw("remote node disconnected with error", "error", r.responseStream.Err())
+		r.log.Errorw("remote node disconnected with error", "error", err)
 	}
 
-	r.cancel(r.responseStream.Err())
+	r.cancel(err)
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
