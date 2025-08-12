@@ -66,6 +66,10 @@ type (
 		//
 		// Returns false if the given emitter is closed.
 		Backfill(cookie *SyncCookie, syncIDs []string) bool
+
+		// Close the emitter.
+		// This method should be called by the registry to stop receiving updates for the stream.
+		Close()
 	}
 
 	// Registry is a registry of stream update emitters (syncers).
