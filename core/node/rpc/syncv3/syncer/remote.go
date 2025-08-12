@@ -72,7 +72,7 @@ func NewRemoteStreamUpdateEmitter(
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
-			With("addr", remoteAddr.Hex(), "streamID", streamID),
+			With("version", version, "addr", remoteAddr.Hex(), "streamID", streamID),
 		streamID:       streamID,
 		remoteAddr:     remoteAddr,
 		subscriber:     subscriber,
@@ -118,11 +118,30 @@ func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 }
 
 func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) {
+	var msgs []*backfillRequest
+
+	defer func() {
+		// Updating the state to closed to indicate that the emitter is no longer active.
+		r.state.Store(streamUpdateEmitterStateClosed)
+
+		// Send a stream down message to all active syncs of the current syncer version via event bus.
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID[:]}, r.version)
+
+		// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
+		msgs = r.backfillsQueue.GetBatch(msgs)
+		for _, msg := range msgs {
+			r.subscriber.OnStreamEvent(&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_DOWN,
+				StreamId:      r.streamID[:],
+				TargetSyncIds: msg.syncIDs,
+			}, r.version)
+		}
+	}()
+
 	// Get remote node RPC client
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(r.remoteAddr)
 	if err != nil {
 		r.log.Errorw("initialization failed: failed to get stream service client by address", "error", err)
-		r.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
 
@@ -144,7 +163,6 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	responseStream, err := client.SyncStreams(r.ctx, req)
 	if err != nil {
 		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
-		r.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
 
@@ -155,7 +173,6 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	if !firstUpdateReceived.Load() || r.ctx.Err() != nil {
 		r.cancel(nil)
 		r.log.Errorw("initialization failed: SyncStreams stream closed without receiving any messages", "error", responseStream.Err())
-		r.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
 
@@ -164,19 +181,62 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 		r.cancel(nil)
 		r.log.Errorw("initialization failed: received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp, "syncId", responseStream.Msg().SyncId)
-		r.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
 
 	r.syncID = responseStream.Msg().GetSyncId()
 	r.responseStream = responseStream
 	r.client = client
-	r.log = r.log.With("syncId", r.syncID)
+	r.log = r.log.With("syncID", r.syncID)
+
+	// Start processing stream updates received from the remote node.
+	go r.processStreamUpdates()
+
+	// Start processing backfill requests
+	for {
+		select {
+		case <-r.ctx.Done():
+			return
+		case _, open := <-r.backfillsQueue.Wait():
+			msgs = r.backfillsQueue.GetBatch(msgs)
+
+			// nil msgs indicates the buffer is closed.
+			if msgs == nil {
+				r.cancel(nil)
+				return
+			}
+
+			// Messages must be processed in the order they were received.
+			for i, msg := range msgs {
+				if err = r.processBackfillRequest(msg); err != nil {
+					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
+					r.cancel(err)
+
+					// Send unprocessed messages back to the queue for further processing by sending the down message back.
+					for _, m := range msgs[i:] {
+						if err = r.backfillsQueue.AddMessage(m); err != nil {
+							r.log.Errorw("failed to re-add unprocessed backfill request to the queue", "cookie", m.cookie, "error", err)
+						}
+					}
+
+					return
+				}
+			}
+
+			// The queue is closed, so we can stop the emitter.
+			if !open {
+				r.cancel(nil)
+				return
+			}
+		}
+	}
 }
 
-func (r *remoteStreamUpdateEmitter) run() {
+func (r *remoteStreamUpdateEmitter) processStreamUpdates() {
 	defer func() {
-		_ = r.responseStream.Close()
+		if err := r.responseStream.Close(); err != nil {
+			r.log.Errorw("failed to close sync stream", "error", err)
+		}
 	}()
 
 	var latestMsgReceived atomic.Value
@@ -203,12 +263,13 @@ func (r *remoteStreamUpdateEmitter) run() {
 		}
 	}
 
-	// Stream is closed here.
-	r.log.Infow("remote node disconnected", "error", r.responseStream.Err())
-	r.cancel(nil)
-	if r.onDown != nil {
-		r.onDown()
+	if r.responseStream.Err() == nil {
+		r.log.Info("remote node disconnected")
+	} else {
+		r.log.Errorw("remote node disconnected with error", "error", r.responseStream.Err())
 	}
+
+	r.cancel(r.responseStream.Err())
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
@@ -275,15 +336,16 @@ func (r *remoteStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest)
 		},
 	}))
 	if err != nil {
-		return err
+		return AsRiverError(err).Func("remoteStreamUpdateEmitter.processBackfillRequest")
 	}
 
 	if resp.Msg.GetBackfills() != nil {
-		// SyncStreamOpStatus implements error interface so we can use it directly.
-		// Just wrap it into a RiverError with additional context.
 		errData := resp.Msg.GetBackfills()[0]
-		return AsRiverError(errData, Err(errData.GetCode())).
-			Func("remoteStreamUpdateEmitter.Backfill")
+		if errData.GetMessage() == "" {
+			errData.Message = "failed to backfill stream in remote node"
+		}
+		return RiverError(Err(errData.GetCode()), errData.Message, "nodeAddress", common.BytesToAddress(errData.GetNodeAddress())).
+			Func("remoteStreamUpdateEmitter.processBackfillRequest")
 	}
 
 	return nil
