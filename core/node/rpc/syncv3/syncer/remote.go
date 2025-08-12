@@ -72,17 +72,19 @@ func NewRemoteStreamUpdateEmitter(
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
-			With("addr", remoteAddr.Hex(), "streamID", streamID, "syncID", syncID),
-		syncID:         syncID,
+			With("addr", remoteAddr.Hex(), "streamID", streamID),
 		streamID:       streamID,
 		remoteAddr:     remoteAddr,
-		responseStream: responseStream,
-		client:         client,
 		subscriber:     subscriber,
+		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,
 	}
 
-	r.initialize(nodeRegistry)
+	// Set the current state to initializing.
+	r.state.Store(streamUpdateEmitterStateInitializing)
+
+	// Initialize the emitter in a separate goroutine to avoid blocking the caller.
+	go r.initialize(nodeRegistry)
 
 	return r
 }
@@ -99,44 +101,29 @@ func (r *remoteStreamUpdateEmitter) Node() common.Address {
 	return r.remoteAddr
 }
 
-func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) error {
-	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, remoteStreamUpdateEmitterTimeout)
-	defer cancel()
+func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
+	if r.state.Load() == streamUpdateEmitterStateClosed {
+		return false
+	}
 
-	resp, err := r.client.ModifySync(ctxWithTimeout, connect.NewRequest(&ModifySyncRequest{
-		SyncId: r.syncID,
-		BackfillStreams: &ModifySyncRequest_Backfill{
-			SyncId:  syncIDs[0],
-			Streams: []*SyncCookie{cookie},
-		},
-	}))
+	err := r.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
-		return err
+		r.log.Errorw("failed to add backfill request to the queue", "error", err)
+		r.cancel(err)
+		r.state.Store(streamUpdateEmitterStateClosed)
+		return false
 	}
 
-	if resp.Msg.GetBackfills() != nil {
-		// SyncStreamOpStatus implements error interface so we can use it directly.
-		// Just wrap it into a RiverError with additional context.
-		errData := resp.Msg.GetBackfills()[0]
-		return AsRiverError(errData, Err(errData.GetCode())).
-			Func("remoteStreamUpdateEmitter.Backfill")
-	}
-
-	return nil
+	return true
 }
 
 func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) {
-	log := logging.FromCtx(ctx).
-		Named("syncv3.remoteStreamUpdateEmitter").
-		With("addr", remoteAddr.Hex(), "streamID", streamID, "syncID", syncID)
-
 	// Get remote node RPC client
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(r.remoteAddr)
 	if err != nil {
-		r.cancel(err)
-		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "GetStreamServiceClientForAddress failed", err).
-			Tags("remote", remoteAddr).
-			Func("NewRemoteStreamUpdateEmitter")
+		r.log.Errorw("initialization failed: failed to get stream service client by address", "error", err)
+		r.state.Store(streamUpdateEmitterStateClosed)
+		return
 	}
 
 	// Ensure that the first valid update is received within 15 seconds,
@@ -145,7 +132,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	go func() {
 		select {
 		case <-r.ctx.Done():
-		case <-time.After(15 * time.Second):
+		case <-time.After(20 * time.Second):
 			if !firstUpdateReceived.Load() {
 				r.cancel(nil)
 			}
@@ -156,10 +143,9 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	req := connect.NewRequest(&SyncStreamsRequest{})
 	responseStream, err := client.SyncStreams(r.ctx, req)
 	if err != nil {
-		r.cancel(err)
-		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams failed", err).
-			Tags("remote", remoteAddr).
-			Func("NewRemoteStreamUpdateEmitter")
+		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
+		r.state.Store(streamUpdateEmitterStateClosed)
+		return
 	}
 
 	// Store indication if the first update was received.
@@ -168,24 +154,24 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	// If the sync operation was canceled, return an unavailable error.
 	if !firstUpdateReceived.Load() || r.ctx.Err() != nil {
 		r.cancel(nil)
-
-		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages", responseStream.Err()).
-			Tags("remote", remoteAddr).
-			Func("NewRemoteStreamUpdateEmitter")
+		r.log.Errorw("initialization failed: SyncStreams stream closed without receiving any messages", "error", responseStream.Err())
+		r.state.Store(streamUpdateEmitterStateClosed)
+		return
 	}
 
 	// Test that the first update is a SYNC_NEW message with a valid syncID set.
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
 		r.cancel(nil)
-
-		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
-			Tags("syncOp", responseStream.Msg().SyncOp,
-				"syncId", responseStream.Msg().SyncId,
-				"remote", remoteAddr).
-			Func("NewRemoteSyncer")
+		r.log.Errorw("initialization failed: received unexpected sync stream message",
+			"syncOp", responseStream.Msg().SyncOp, "syncId", responseStream.Msg().SyncId)
+		r.state.Store(streamUpdateEmitterStateClosed)
+		return
 	}
 
-	syncID := responseStream.Msg().GetSyncId()
+	r.syncID = responseStream.Msg().GetSyncId()
+	r.responseStream = responseStream
+	r.client = client
+	r.log = r.log.With("syncId", r.syncID)
 }
 
 func (r *remoteStreamUpdateEmitter) run() {
