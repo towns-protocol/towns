@@ -55,9 +55,11 @@ func NewLocalStreamUpdateEmitter(
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	l := &localStreamUpdateEmitter{
-		ctx:            ctx,
-		cancel:         cancel,
-		log:            logging.FromCtx(ctx).Named("localStreamUpdateEmitter"),
+		ctx:    ctx,
+		cancel: cancel,
+		log: logging.FromCtx(ctx).
+			Named("localStreamUpdateEmitter").
+			With("streamID", streamID, "version", version),
 		localAddr:      localAddr,
 		streamID:       streamID,
 		subscriber:     subscriber,
@@ -87,13 +89,13 @@ func (s *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
 
 // OnSyncError implements events.SyncResultReceiver interface.
 func (s *localStreamUpdateEmitter) OnSyncError(err error) {
-	s.log.Error("sync error for local stream", "streamID", s.streamID, "error", err)
+	s.log.Error("sync error for local stream", "error", err)
 	s.cancel(err)
 }
 
 // OnStreamSyncDown implements events.SyncResultReceiver interface.
 func (s *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
-	s.log.Warnw("local stream sync down", "streamID", s.streamID)
+	s.log.Warn("local stream sync down")
 	s.cancel(nil)
 }
 
@@ -115,8 +117,7 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 
 	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
-		s.log.Errorw("failed to add backfill request to the queue",
-			"streamID", s.streamID, "error", err)
+		s.log.Errorw("failed to add backfill request to the queue", "error", err)
 		s.cancel(err)
 		s.state.Store(streamUpdateEmitterStateClosed)
 		return false
@@ -132,8 +133,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, s.streamID)
 	ctxWithCancel()
 	if err != nil {
-		s.log.Errorw("initialization failed: failed to get stream",
-			"streamID", s.streamID, "error", err)
+		s.log.Errorw("initialization failed: failed to get stream", "error", err)
 		s.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
@@ -146,8 +146,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	}, s)
 	ctxWithCancel()
 	if err != nil {
-		s.log.Errorw("initialization failed: failed to subscribe to stream updates",
-			"streamID", s.streamID, "error", err)
+		s.log.Errorw("initialization failed: failed to subscribe to stream updates", "error", err)
 		s.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
@@ -171,15 +170,13 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
 				if err = s.processBackfillRequest(msg, stream); err != nil {
-					s.log.Errorw("failed to process backfill request",
-						"streamID", s.streamID, "cookie", msg.cookie, "error", err)
+					s.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					s.cancel(err)
 
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
 						if err = s.backfillsQueue.AddMessage(m); err != nil {
-							s.log.Errorw("failed to re-add unprocessed backfill request to the queue",
-								"streamID", s.streamID, "cookie", m.cookie, "error", err)
+							s.log.Errorw("failed to re-add unprocessed backfill request to the queue", "cookie", m.cookie, "error", err)
 							break
 						}
 					}
