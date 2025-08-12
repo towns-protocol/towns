@@ -74,7 +74,7 @@ func NewLocalStreamUpdateEmitter(
 
 // OnUpdate implements events.SyncResultReceiver interface.
 func (s *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
-	// The first received update should be ignored.
+	// The first received update should be ignored since all sync ops are starting from their own cookie.
 	// After receiving the first update, the emitter is considered to be running.
 	if s.state.CompareAndSwap(streamUpdateEmitterStateInitializing, streamUpdateEmitterStateRunning) {
 		return
