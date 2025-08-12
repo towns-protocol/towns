@@ -34,7 +34,7 @@ type serviceImpl struct {
 	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
 	otelTracer trace.Tracer
 	// handlerRegistry is used to manage sync stream handlers.
-	handlerRegistry handler.SyncStreamHandlerRegistry
+	handlerRegistry handler.Registry
 }
 
 // NewService creates a new instance of the sync V3 service.
