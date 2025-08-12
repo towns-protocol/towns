@@ -31,6 +31,8 @@ type localStreamUpdateEmitter struct {
 	localAddr common.Address
 	// streamID is the ID of the stream that this emitter emits updates for.
 	streamID StreamId
+	// stream is the current stream.
+	stream *events.Stream
 	// subscriber is the subscriber that receives updates from the stream.
 	subscriber StreamSubscriber
 	// backfillsQueue is a dynamic buffer that holds backfill requests.
@@ -128,15 +130,38 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 
 // initialize initializes the local stream update emitter.
 func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
+	var msgs []*backfillRequest
+
+	defer func() {
+		// Updating the state to closed to indicate that the emitter is no longer active.
+		s.state.Store(streamUpdateEmitterStateClosed)
+
+		// Unsubscribe from the stream updates.
+		s.stream.Unsub(s)
+
+		// Send a stream down message to all active syncs of the current syncer version via event bus.
+		s.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]}, s.version)
+
+		// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
+		msgs = s.backfillsQueue.GetBatch(msgs)
+		for _, msg := range msgs {
+			s.subscriber.OnStreamEvent(&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_DOWN,
+				StreamId:      s.streamID[:],
+				TargetSyncIds: msg.syncIDs,
+			}, s.version)
+		}
+	}()
+
 	// Get stream from the stream cache by ID.
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
 	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, s.streamID)
 	ctxWithCancel()
 	if err != nil {
 		s.log.Errorw("initialization failed: failed to get stream", "error", err)
-		s.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
+	s.stream = stream
 
 	// Subscribe on updates for the stream. Do not receive an initial update.
 	ctxWithTimeout, ctxWithCancel = context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
@@ -147,24 +172,21 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	ctxWithCancel()
 	if err != nil {
 		s.log.Errorw("initialization failed: failed to subscribe to stream updates", "error", err)
-		s.state.Store(streamUpdateEmitterStateClosed)
 		return
 	}
 
 	// Start processing backfill requests
-	var msgs []*backfillRequest
 	for {
 		select {
 		case <-s.ctx.Done():
-			s.state.Store(streamUpdateEmitterStateClosed)
-			break
+			return
 		case _, open := <-s.backfillsQueue.Wait():
 			msgs = s.backfillsQueue.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
 			if msgs == nil {
 				s.cancel(nil)
-				break
+				return
 			}
 
 			// Messages must be processed in the order they were received.
@@ -177,40 +199,19 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 					for _, m := range msgs[i:] {
 						if err = s.backfillsQueue.AddMessage(m); err != nil {
 							s.log.Errorw("failed to re-add unprocessed backfill request to the queue", "cookie", m.cookie, "error", err)
-							break
 						}
 					}
 
-					break
+					return
 				}
 			}
 
 			// The queue is closed, so we can stop the emitter.
 			if !open {
 				s.cancel(nil)
-				break
+				return
 			}
 		}
-
-		if s.state.Load() == streamUpdateEmitterStateClosed {
-			break
-		}
-	}
-
-	// Unsubscribe from the stream updates.
-	stream.Unsub(s)
-
-	// Send a stream down message to all active syncs of the current syncer version via event bus.
-	s.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]}, s.version)
-
-	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
-	msgs = s.backfillsQueue.GetBatch(msgs)
-	for _, msg := range msgs {
-		s.subscriber.OnStreamEvent(&SyncStreamsResponse{
-			SyncOp:        SyncOp_SYNC_DOWN,
-			StreamId:      s.streamID[:],
-			TargetSyncIds: msg.syncIDs,
-		}, s.version)
 	}
 }
 
