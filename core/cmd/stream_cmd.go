@@ -398,7 +398,8 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 		formatBytes(proto.Size(miniblock)),
 	)
 	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
-	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	fmt.Printf("  Hash:      %v\n", hex.EncodeToString(miniblock.Header.Hash))
+	fmt.Printf("  Author:    %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
 	if info.Snapshot != nil {
 		fmt.Printf(
 			"  **********************\n  Snapshot: (size %s)\n  **********************\n",
@@ -681,27 +682,9 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
-			// Parse header
-			info, err := events.NewMiniblockInfoFromProto(
-				miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
-				events.NewParsedMiniblockInfoOpts().
-					WithExpectedBlockNumber(from+int64(n)),
-			)
-			if err != nil {
+			if err := printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)), from+int64(n)); err != nil {
 				return err
 			}
-
-			mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
-			if !ok {
-				return fmt.Errorf("unable to parse header event as miniblock header")
-			}
-
-			fmt.Printf(
-				"\nMiniblock %d\n=========\n%s",
-				mbHeader.MiniblockHeader.MiniblockNum,
-				protojson.Format(miniblock),
-			)
-			fmt.Printf("\n(Parsed Header)\n-------------\n%s\n", protojson.Format(mbHeader.MiniblockHeader))
 		}
 		blocksRead = len(miniblocks.Msg.Miniblocks)
 		from = from + int64(blocksRead)

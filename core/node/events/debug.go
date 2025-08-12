@@ -112,9 +112,7 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 					}
 
 					// Add session IDs if present
-					if len(content.KeyFulfillment.SessionIds) > 0 {
-						data["SessionIds"] = content.KeyFulfillment.SessionIds
-					}
+					data["SessionIds"] = content.KeyFulfillment.SessionIds
 
 					bytes, err := json.MarshalIndent(data, indent, "  ")
 					if err != nil {
