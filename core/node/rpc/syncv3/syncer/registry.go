@@ -47,8 +47,10 @@ func NewRegistry(
 	subscriber StreamSubscriber,
 ) *registryImpl {
 	return &registryImpl{
-		ctx:          ctx,
-		log:          logging.FromCtx(ctx).Named("syncv3.Registry"),
+		ctx: ctx,
+		log: logging.FromCtx(ctx).
+			Named("syncv3.Registry").
+			With("addr", localAddr),
 		localAddr:    localAddr,
 		streamCache:  streamCache,
 		nodeRegistry: nodeRegistry,
@@ -64,8 +66,8 @@ func (r *registryImpl) Subscribe(streamID StreamId) {
 
 	if _, ok := r.syncers[streamID]; !ok {
 		var err error
-		if _, err = r.createEmitterNoLock(streamID); err != nil {
-			r.log.Errorw("failed to create stream emitter", "streamId", streamID, "error", err)
+		if _, err = r.createEmitterNoLock(streamID, 1); err != nil {
+			r.log.Errorw("failed to create stream emitter", "streamID", streamID, "error", err)
 			r.sendStreamDown(streamID)
 			return
 		}
@@ -79,6 +81,7 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 
 	if emitter, ok := r.syncers[streamID]; ok {
 		emitter.Close()
+		delete(r.syncers, streamID)
 	}
 }
 
@@ -95,7 +98,7 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
 
 	emitter, ok := r.syncers[streamID]
 	if !ok {
-		emitter, err = r.createEmitterNoLock(streamID)
+		emitter, err = r.createEmitterNoLock(streamID, 1)
 		if err != nil {
 			return AsRiverError(err).
 				Tag("streamID", streamID).Func("registryImpl.Backfill")
@@ -103,7 +106,8 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
 	}
 
 	if !emitter.Backfill(cookie, syncIDs) {
-		emitter, err = r.createEmitterNoLock(streamID)
+		currentVersion := emitter.Version()
+		emitter, err = r.createEmitterNoLock(streamID, currentVersion+1)
 		if err != nil {
 			return AsRiverError(err).
 				Tag("streamID", streamID).Func("registryImpl.Backfill")
@@ -119,7 +123,7 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
 }
 
 // createEmitterNoLock creates a new StreamUpdateEmitter for the given streamID without acquiring the lock.
-func (r *registryImpl) createEmitterNoLock(streamID StreamId) (StreamUpdateEmitter, error) {
+func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (StreamUpdateEmitter, error) {
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(r.ctx, 20*time.Second)
 	defer ctxWithCancel()
 
@@ -142,7 +146,7 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId) (StreamUpdateEmitt
 			r.streamCache,
 			streamID,
 			r.subscriber,
-			1,
+			version,
 		)
 	} else {
 		streamUpdateEmitter = NewRemoteStreamUpdateEmitter(
@@ -151,7 +155,7 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId) (StreamUpdateEmitt
 			r.nodeRegistry,
 			streamID,
 			r.subscriber,
-			1,
+			version,
 		)
 	}
 
@@ -160,16 +164,6 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId) (StreamUpdateEmitt
 	r.syncers[streamID] = streamUpdateEmitter
 
 	return streamUpdateEmitter, nil
-}
-
-// deleteEmitter returns a function that deletes the emitter for the given streamID from the registry.
-// The returned function is passed as a callback and called when the emitter is closed or no longer needed.
-func (r *registryImpl) deleteEmitter(streamID StreamId) func() {
-	return func() {
-		r.syncersLock.Lock()
-		delete(r.syncers, streamID)
-		r.syncersLock.Unlock()
-	}
 }
 
 // sendStreamDown sends a stream down message to the given subscriber for the specified streamID.

@@ -81,7 +81,7 @@ type (
 		//
 		// If the given stream ID is not found, it sends the stream down message to the subscriber
 		// with the reason (message field in proto).
-		Subscribe(streamID StreamId, subscriber StreamSubscriber)
+		Subscribe(streamID StreamId)
 
 		// Unsubscribe unsubscribes from the given stream updates.
 		//
@@ -89,7 +89,7 @@ type (
 		// If no more subscribers are left for the stream, the emitter should be closed.
 		//
 		// Note: the event bus is the only subscriber for the stream.
-		Unsubscribe(streamID StreamId, subscriber StreamSubscriber)
+		Unsubscribe(streamID StreamId)
 
 		// Backfill sends a request to appropriate syncer to backfill a specific sync operation by the given
 		// chain of sync identifiers.
