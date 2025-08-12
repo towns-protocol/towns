@@ -37,8 +37,19 @@ library CurrencyTransfer {
     function transferCurrency(address currency, address from, address to, uint256 amount) internal {
         if (amount == 0) return;
 
-        if (currency != NATIVE_TOKEN) safeTransferERC20(currency, from, to, amount);
-        else safeTransferNativeToken(to, amount);
+        if (currency != NATIVE_TOKEN) {
+            safeTransferERC20(currency, from, to, amount);
+        } else {
+            // For native tokens, validate the source of funds
+            if (from == address(this)) {
+                // Safe: sending from contract's balance
+                safeTransferNativeToken(to, amount);
+            } else {
+                // Unsafe: external sender must provide msg.value
+                if (amount != msg.value) MsgValueMismatch.selector.revertWith();
+                safeTransferNativeToken(to, msg.value);
+            }
+        }
     }
 
     /// @dev Transfers a given amount of currency. (With native token wrapping)
