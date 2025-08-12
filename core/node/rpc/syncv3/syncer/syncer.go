@@ -40,14 +40,6 @@ type (
 		// For remote streams this is the address of the remote node.
 		Node() common.Address
 
-		// Subscribe for updates on the stream.
-		//
-		// Returns false if the given emitter is closed.
-		Subscribe(subscriber StreamSubscriber) bool
-
-		// Unsubscribe from updates of the stream.
-		Unsubscribe(subscriber StreamSubscriber)
-
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
 		//
