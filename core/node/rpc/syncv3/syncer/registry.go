@@ -12,11 +12,31 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 var (
 	_ Registry = (*registryImpl)(nil)
 )
+
+type registryMsgSub struct {
+	streamID StreamId
+}
+
+type registryMsgUnsub struct {
+	streamID StreamId
+}
+
+type registryMsgBackfill struct {
+	cookie  *SyncCookie
+	syncIDs []string
+}
+
+type registryMsg struct {
+	sub      *registryMsgSub
+	unsub    *registryMsgUnsub
+	backfill *registryMsgBackfill
+}
 
 // registryImpl is an implementation of the Registry interface.
 type registryImpl struct {
@@ -36,6 +56,8 @@ type registryImpl struct {
 	syncersLock sync.Mutex
 	// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
 	syncers map[StreamId]StreamUpdateEmitter
+	// queue of sync registry commands.
+	queue *dynmsgbuf.DynamicBuffer[*registryMsg]
 }
 
 // NewRegistry creates a new instance of the Registry.
@@ -46,7 +68,7 @@ func NewRegistry(
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
 ) *registryImpl {
-	return &registryImpl{
+	r := &registryImpl{
 		ctx: ctx,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.Registry").
@@ -56,11 +78,71 @@ func NewRegistry(
 		nodeRegistry: nodeRegistry,
 		subscriber:   subscriber,
 		syncers:      make(map[StreamId]StreamUpdateEmitter),
+		queue:        dynmsgbuf.NewDynamicBuffer[*registryMsg](),
+	}
+	go r.run()
+	return r
+}
+
+func (r *registryImpl) Subscribe(streamID StreamId) {
+	err := r.queue.AddMessage(&registryMsg{sub: &registryMsgSub{streamID: streamID}})
+	if err != nil {
+		r.log.Errorw("failed to enqueue subscribe request", "streamID", streamID, "error", err)
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, 0)
 	}
 }
 
-// Subscribe subscribes a StreamSubscriber to the updates of the given streamID.
-func (r *registryImpl) Subscribe(streamID StreamId) {
+func (r *registryImpl) Unsubscribe(streamID StreamId) {
+	err := r.queue.AddMessage(&registryMsg{unsub: &registryMsgUnsub{streamID: streamID}})
+	if err != nil {
+		r.log.Errorw("failed to enqueue unsubscribe request", "streamID", streamID, "error", err)
+	}
+}
+
+func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) {
+	err := r.queue.AddMessage(&registryMsg{backfill: &registryMsgBackfill{cookie: cookie, syncIDs: syncIDs}})
+	if err != nil {
+		r.log.Errorw("failed to enqueue backfill request", "streamID", cookie.GetStreamId(), "error", err)
+
+		streamID, err := StreamIdFromBytes(cookie.GetStreamId())
+		if err != nil {
+			r.log.Errorw("invalid stream ID in backfill cookie", "streamID", cookie.GetStreamId(), "error", err)
+			return
+		}
+
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+	}
+}
+
+func (r *registryImpl) run() {
+	var msgs []*registryMsg
+	for {
+		select {
+		case <-r.ctx.Done():
+			return
+		case _, open := <-r.queue.Wait():
+			msgs = r.queue.GetBatch(msgs)
+
+			// Messages must be processed in the order they were received.
+			for _, msg := range msgs {
+				if msg.sub != nil {
+					r.processSubscribe(msg.sub.streamID)
+				} else if msg.unsub != nil {
+					r.processUnsubscribe(msg.unsub.streamID)
+				} else if msg.backfill != nil {
+					r.processBackfill(msg.backfill.cookie, msg.backfill.syncIDs)
+				}
+			}
+
+			if !open {
+				r.log.Error("sync registry queue closed, stopping the registry")
+				return
+			}
+		}
+	}
+}
+
+func (r *registryImpl) processSubscribe(streamID StreamId) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()
 
@@ -74,8 +156,7 @@ func (r *registryImpl) Subscribe(streamID StreamId) {
 	}
 }
 
-// Unsubscribe unsubscribes a StreamSubscriber from the updates of the given streamID.
-func (r *registryImpl) Unsubscribe(streamID StreamId) {
+func (r *registryImpl) processUnsubscribe(streamID StreamId) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()
 
@@ -85,23 +166,23 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 	}
 }
 
-// Backfill sends a backfill request for the given syncIDs to the corresponding StreamUpdateEmitter.
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
+func (r *registryImpl) processBackfill(cookie *SyncCookie, syncIDs []string) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()
 
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
-		return AsRiverError(err).
-			Tag("streamID", cookie.GetStreamId()).Func("registryImpl.Backfill")
+		r.log.Errorw("invalid stream ID in backfill cookie", "streamID", cookie.GetStreamId(), "error", err)
+		return
 	}
 
 	emitter, ok := r.syncers[streamID]
 	if !ok {
 		emitter, err = r.createEmitterNoLock(streamID, 1)
 		if err != nil {
-			return AsRiverError(err).
-				Tag("streamID", streamID).Func("registryImpl.Backfill")
+			r.log.Errorw("failed to create stream emitter for backfill", "streamID", streamID, "error", err)
+			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			return
 		}
 	}
 
@@ -109,17 +190,17 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
 		currentVersion := emitter.Version()
 		emitter, err = r.createEmitterNoLock(streamID, currentVersion+1)
 		if err != nil {
-			return AsRiverError(err).
-				Tag("streamID", streamID).Func("registryImpl.Backfill")
+			r.log.Errorw("failed to recreate stream emitter for backfill", "streamID", streamID, "error", err)
+			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			return
 		}
 
 		if !emitter.Backfill(cookie, syncIDs) {
-			return RiverError(Err_NOT_FOUND, "failed to create a new stream updates emitter").
-				Tag("streamID", streamID).Func("registryImpl.Backfill")
+			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
+			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			return
 		}
 	}
-
-	return nil
 }
 
 // createEmitterNoLock creates a new StreamUpdateEmitter for the given streamID without acquiring the lock.
