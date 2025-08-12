@@ -137,7 +137,9 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 		s.state.Store(streamUpdateEmitterStateClosed)
 
 		// Unsubscribe from the stream updates.
-		s.stream.Unsub(s)
+		if s.stream != nil {
+			s.stream.Unsub(s)
+		}
 
 		// Send a stream down message to all active syncs of the current syncer version via event bus.
 		s.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]}, s.version)
