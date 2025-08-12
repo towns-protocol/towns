@@ -59,7 +59,7 @@ func NewLocalStreamUpdateEmitter(
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("localStreamUpdateEmitter").
-			With("streamID", streamID, "version", version),
+			With("addr", localAddr, "streamID", streamID, "version", version),
 		localAddr:      localAddr,
 		streamID:       streamID,
 		subscriber:     subscriber,
