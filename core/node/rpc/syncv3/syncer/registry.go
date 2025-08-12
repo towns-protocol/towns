@@ -19,46 +19,48 @@ var (
 	_ Registry = (*registryImpl)(nil)
 )
 
-type registryMsgSub struct {
-	streamID StreamId
-}
+type (
+	registryMsgSub struct {
+		streamID StreamId
+	}
 
-type registryMsgUnsub struct {
-	streamID StreamId
-}
+	registryMsgUnsub struct {
+		streamID StreamId
+	}
 
-type registryMsgBackfill struct {
-	cookie  *SyncCookie
-	syncIDs []string
-}
+	registryMsgBackfill struct {
+		cookie  *SyncCookie
+		syncIDs []string
+	}
 
-type registryMsg struct {
-	sub      *registryMsgSub
-	unsub    *registryMsgUnsub
-	backfill *registryMsgBackfill
-}
+	registryMsg struct {
+		sub      *registryMsgSub
+		unsub    *registryMsgUnsub
+		backfill *registryMsgBackfill
+	}
 
-// registryImpl is an implementation of the Registry interface.
-type registryImpl struct {
-	// ctx is the global node context.
-	ctx context.Context
-	// log is the logger for the registry.
-	log *logging.Log
-	// localAddr is the address of the current node.
-	localAddr common.Address
-	// streamCache is the global stream cache.
-	streamCache StreamCache
-	// nodeRegistry is the global node registry.
-	nodeRegistry nodes.NodeRegistry
-	// subscriber is the StreamSubscriber that receives updates from all syncers.
-	subscriber StreamSubscriber
-	// syncersLock is a mutex to protect the syncers map.
-	syncersLock sync.Mutex
-	// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
-	syncers map[StreamId]StreamUpdateEmitter
-	// queue of sync registry commands.
-	queue *dynmsgbuf.DynamicBuffer[*registryMsg]
-}
+	// registryImpl is an implementation of the Registry interface.
+	registryImpl struct {
+		// ctx is the global node context.
+		ctx context.Context
+		// log is the logger for the registry.
+		log *logging.Log
+		// localAddr is the address of the current node.
+		localAddr common.Address
+		// streamCache is the global stream cache.
+		streamCache StreamCache
+		// nodeRegistry is the global node registry.
+		nodeRegistry nodes.NodeRegistry
+		// subscriber is the StreamSubscriber that receives updates from all syncers.
+		subscriber StreamSubscriber
+		// syncersLock is a mutex to protect the syncers map.
+		syncersLock sync.Mutex
+		// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
+		syncers map[StreamId]StreamUpdateEmitter
+		// queue of sync registry commands.
+		queue *dynmsgbuf.DynamicBuffer[*registryMsg]
+	}
+)
 
 // NewRegistry creates a new instance of the Registry.
 func NewRegistry(
@@ -103,14 +105,7 @@ func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) {
 	err := r.queue.AddMessage(&registryMsg{backfill: &registryMsgBackfill{cookie: cookie, syncIDs: syncIDs}})
 	if err != nil {
 		r.log.Errorw("failed to enqueue backfill request", "streamID", cookie.GetStreamId(), "error", err)
-
-		streamID, err := StreamIdFromBytes(cookie.GetStreamId())
-		if err != nil {
-			r.log.Errorw("invalid stream ID in backfill cookie", "streamID", cookie.GetStreamId(), "error", err)
-			return
-		}
-
-		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId(), TargetSyncIds: syncIDs}, 0)
 	}
 }
 
