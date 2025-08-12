@@ -36,6 +36,8 @@ type localStreamUpdateEmitter struct {
 	// backfillsQueue is a dynamic buffer that holds backfill requests.
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
 	// version is the version of the current emitter.
+	// It is used to indicate which version of the syncer the update is sent from to avoid sending
+	// sync down message for sync operations from another version of syncer.
 	version int32
 	// state is the current state of the emitter.
 	state atomic.Int32
