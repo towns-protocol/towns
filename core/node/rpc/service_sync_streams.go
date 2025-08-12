@@ -164,7 +164,7 @@ func (s *Service) PingSync(
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
 		if useSyncV3(req) {
-			err = s.syncv3.PingSync(ctx, req.Msg.GetSyncId())
+			s.syncv3.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
 		} else {
 			res, err = s.sync.PingSync(ctx, req)
 		}
