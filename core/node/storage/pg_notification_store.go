@@ -15,7 +15,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -140,29 +139,6 @@ type (
 )
 
 var _ NotificationStore = (*PostgresNotificationStore)(nil)
-
-// Helper functions to convert between app names and IDs
-func getAppIDFromName(app string) int32 {
-	switch app {
-	case apps.Towns:
-		return 1
-	case apps.Sendit:
-		return 2
-	default:
-		return 0 // unspecified
-	}
-}
-
-func getAppNameFromID(appID int32) string {
-	switch appID {
-	case 1:
-		return apps.Towns
-	case 2:
-		return apps.Sendit
-	default:
-		return ""
-	}
-}
 
 //go:embed notification_migrations/*.sql
 var notificationMigrationsDir embed.FS
@@ -622,7 +598,7 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 	var subs []*types.WebPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select key_auth, key_p256dh, endpoint, last_seen, app_id from webpushsubscriptions where user_id=$1",
+		"select key_auth, key_p256dh, endpoint, last_seen, app_name from webpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -635,9 +611,9 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 	var (
 		auth, p256dh, endpoint string
 		lastSeen               time.Time
-		appID                  int32
+		appName                string
 	)
-	if _, err := pgx.ForEachRow(rows, []any{&auth, &p256dh, &endpoint, &lastSeen, &appID}, func() error {
+	if _, err := pgx.ForEachRow(rows, []any{&auth, &p256dh, &endpoint, &lastSeen, &appName}, func() error {
 		subs = append(subs, &types.WebPushSubscription{
 			Sub: &webpush.Subscription{
 				Endpoint: endpoint,
@@ -647,7 +623,7 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 				},
 			},
 			LastSeen: lastSeen,
-			App:      getAppNameFromID(appID),
+			App:      appName,
 		})
 		return nil
 	}); err != nil {
@@ -688,12 +664,12 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen, app_id) VALUES ($1, $2, $3, $4, NOW(), $5) ON CONFLICT (key_auth, key_p256dh, app_id) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
+		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen, app_name) VALUES ($1, $2, $3, $4, NOW(), $5) ON CONFLICT (key_auth, key_p256dh, app_name) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
 		hex.EncodeToString(userID[:]),
-		getAppIDFromName(app),
+		app,
 	)
 
 	return err
@@ -729,11 +705,11 @@ func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND endpoint=$3 AND app_id=$4`,
+		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND endpoint=$3 AND app_name=$4`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
-		getAppIDFromName(app),
+		app,
 	)
 
 	return err
@@ -767,10 +743,10 @@ func (s *PostgresNotificationStore) removeWebPushSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND app_id=$3`,
+		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND app_name=$3`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
-		getAppIDFromName(app),
+		app,
 	)
 
 	return err
@@ -807,7 +783,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 	var subs []*types.APNPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select device_token, environment, last_seen, push_version, app_id from apnpushsubscriptions where user_id=$1",
+		"select device_token, environment, last_seen, push_version, app_name from apnpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -822,15 +798,15 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 		environment APNEnvironment
 		lastSeen    time.Time
 		pushVersion int32
-		appID       int32
+		appName     string
 	)
-	if _, err := pgx.ForEachRow(rows, []any{&deviceToken, &environment, &lastSeen, &pushVersion, &appID}, func() error {
+	if _, err := pgx.ForEachRow(rows, []any{&deviceToken, &environment, &lastSeen, &pushVersion, &appName}, func() error {
 		subs = append(subs, &types.APNPushSubscription{
 			DeviceToken: deviceToken,
 			LastSeen:    lastSeen,
 			Environment: environment,
 			PushVersion: NotificationPushVersion(pushVersion),
-			App:         getAppNameFromID(appID),
+			App:         appName,
 		})
 		return nil
 	}); err != nil {
@@ -872,12 +848,12 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version, app_id) VALUES ($1, $2, $3, NOW(), $4, $5) ON CONFLICT (device_token, app_id) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
+		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version, app_name) VALUES ($1, $2, $3, NOW(), $4, $5) ON CONFLICT (device_token, app_name) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
 		deviceToken,
 		int16(environment),
 		hex.EncodeToString(userID[:]),
 		int32(pushVersion),
-		getAppIDFromName(app),
+		app,
 	)
 
 	return err
@@ -910,9 +886,9 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 ) error {
 	result, err := tx.Exec(
 		ctx,
-		`DELETE FROM apnpushsubscriptions where device_token=$1 AND app_id=$2`,
+		`DELETE FROM apnpushsubscriptions where device_token=$1 AND app_name=$2`,
 		deviceToken,
-		getAppIDFromName(app),
+		app,
 	)
 
 	logging.FromCtx(ctx).Infow("remove APN subscription",
