@@ -234,4 +234,73 @@ contract TippingTest is BaseSetup, ITippingBase, IERC721ABase {
             })
         );
     }
+
+    function test_revertWhenMsgValueMismatch(
+        address sender,
+        address receiver,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId
+    ) external givenUsersAreMembers(sender, receiver) {
+        amount = bound(amount, 0.001 ether, 1 ether);
+        uint256 tokenId = token.tokensOfOwner(receiver)[0];
+
+        // Test with zero msg.value
+        vm.expectRevert(MsgValueMismatch.selector);
+        vm.prank(sender);
+        tipping.tip{value: 0}(
+            TipRequest({
+                receiver: receiver,
+                tokenId: tokenId,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId
+            })
+        );
+
+        // Test with mismatched msg.value
+        vm.expectRevert(MsgValueMismatch.selector);
+        hoax(sender, amount + 0.1 ether);
+        tipping.tip{value: amount + 0.1 ether}(
+            TipRequest({
+                receiver: receiver,
+                tokenId: tokenId,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId
+            })
+        );
+    }
+
+    function test_revertWhenUnexpectedETHSent(
+        address sender,
+        address receiver,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId
+    ) external givenUsersAreMembers(sender, receiver) {
+        amount = bound(amount, 0.01 ether, 1 ether);
+        uint256 tokenId = token.tokensOfOwner(receiver)[0];
+
+        mockERC20.mint(sender, amount);
+
+        vm.deal(sender, 1 ether);
+        vm.startPrank(sender);
+        mockERC20.approve(address(tipping), amount);
+        
+        vm.expectRevert(UnexpectedETH.selector);
+        tipping.tip{value: 0.1 ether}(
+            TipRequest({
+                receiver: receiver,
+                tokenId: tokenId,
+                currency: address(mockERC20),
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId
+            })
+        );
+        vm.stopPrank();
+    }
 }
