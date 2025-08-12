@@ -193,6 +193,20 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
+				// Context could be cancelled while processing messages so adding one more check here.
+				select {
+				case <-s.ctx.Done():
+					// Send unprocessed messages back to the queue for further processing by sending the down message back.
+					for _, m := range msgs[i:] {
+						if err = s.backfillsQueue.AddMessage(m); err != nil {
+							s.log.Errorw("failed to re-add unprocessed backfill request to the queue", "cookie", m.cookie, "error", err)
+						}
+					}
+
+					return
+				default:
+				}
+
 				if err = s.processBackfillRequest(msg, stream); err != nil {
 					s.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					s.cancel(err)
