@@ -116,6 +116,13 @@ func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 	return true
 }
 
+// Close closes the emitter and stops receiving updates for the stream.
+func (r *remoteStreamUpdateEmitter) Close() {
+	if r.state.CompareAndSwap(streamUpdateEmitterStateRunning, streamUpdateEmitterStateClosed) {
+		r.cancel(nil)
+	}
+}
+
 func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) {
 	var msgs []*backfillRequest
 
