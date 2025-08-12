@@ -173,7 +173,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 						"streamID", s.streamID, "cookie", msg.cookie, "error", err)
 					s.cancel(err)
 
-					// Send unprocessed messages back to the queue.
+					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
 						if err = s.backfillsQueue.AddMessage(m); err != nil {
 							s.log.Errorw("failed to re-add unprocessed backfill request to the queue",
