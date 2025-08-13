@@ -160,7 +160,6 @@ func (s *syncStreamHandlerImpl) Cancel(ctx context.Context) error {
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
-		SyncId: s.syncID,
 		SyncOp: SyncOp_SYNC_CLOSE,
 	}); err != nil {
 		return AsRiverError(err).
@@ -187,7 +186,6 @@ func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
-		SyncId:    s.syncID,
 		SyncOp:    SyncOp_SYNC_PONG,
 		PongNonce: nonce,
 	}); err != nil {
@@ -203,9 +201,6 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 		return
 	default:
 	}
-
-	// Set SyncID as exchanged with client
-	update.SyncId = s.syncID
 
 	// Add update to internal queue
 	if err := s.streamUpdates.AddMessage(update); err != nil {
