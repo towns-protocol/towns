@@ -318,6 +318,14 @@ func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, 
 		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 	}
 
+	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
+	if err := receiver.Send(&SyncStreamsResponse{
+		SyncId: syncID,
+		SyncOp: SyncOp_SYNC_NEW,
+	}); err != nil {
+		return nil, err
+	}
+
 	go handler.startUpdatesProcessor()
 
 	s.handlers[syncID] = handler
