@@ -179,16 +179,12 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (St
 		return nil, AsRiverError(err).Func("registryImpl.createEmitterNoLock")
 	}
 
-	// Get current sticky peer address for the stream.
-	// The sticky peer could be advanced by the emitter if a remote node is failed or unavailable.
-	addr := stream.GetStickyPeer()
-
 	// Create a new emitter based on whether the address is local or remote.
 	var streamUpdateEmitter StreamUpdateEmitter
-	if addr == r.localAddr {
+	if stream.IsLocal() {
 		streamUpdateEmitter = NewLocalStreamUpdateEmitter(
 			r.ctx,
-			addr,
+			r.localAddr,
 			r.streamCache,
 			streamID,
 			r.subscriber,
@@ -197,7 +193,7 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (St
 	} else {
 		streamUpdateEmitter = NewRemoteStreamUpdateEmitter(
 			r.ctx,
-			addr,
+			stream.GetStickyPeer(),
 			r.nodeRegistry,
 			streamID,
 			r.subscriber,
