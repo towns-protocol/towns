@@ -41,9 +41,7 @@ import (
 //
 // All operations use lockApp() to establish consistent lock ordering and prevent deadlocks.
 
-var (
-	isoLevelReadCommitted = pgx.ReadCommitted
-)
+var isoLevelReadCommitted = pgx.ReadCommitted
 
 type (
 	PostgresAppRegistryStore struct {
@@ -315,7 +313,10 @@ func (s *PostgresAppRegistryStore) Init(
 }
 
 // lockApp locks an app row for reading (FOR SHARE) or writing (FOR UPDATE)
-// This helps prevent deadlocks by establishing a consistent lock ordering
+// This helps prevent deadlocks based on index page contention.
+// If you wish to acquire locks on multiple apps, please use the lockApps
+// function Instead of calling this one because lock apps already has logic
+// for acquiring locks on multiple apps in order.
 func (s *PostgresAppRegistryStore) lockApp(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -353,8 +354,9 @@ func (s *PostgresAppRegistryStore) lockApp(
 	return nil
 }
 
-// lockApps locks multiple app rows atomically in a single query
-// Returns the count of apps that were successfully locked
+// lockApps locks multiple app rows in a single query. It enforces a consistent
+// ordering of app id lock acquisition and returns the count of apps that were
+// successfully locked.
 func (s *PostgresAppRegistryStore) lockApps(
 	ctx context.Context,
 	tx pgx.Tx,
