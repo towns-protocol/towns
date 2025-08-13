@@ -15,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -175,6 +176,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 			NodeAddress: r.remoteAddr[:],
 		}},
 	})
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
 	responseStream, err := client.SyncStreams(r.ctx, req)
 	if err != nil {
 		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
