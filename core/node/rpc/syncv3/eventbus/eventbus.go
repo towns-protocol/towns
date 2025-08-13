@@ -281,6 +281,8 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 
 	// If the given message has target sync IDs, it means that this is a backfill message and should be forwarded
 	// to the target subscriber only.
+	// TODO: Backfill message should move subscribers from 0 version to the given version list.
+	//  For the sync down - just remove from the 0 version list.
 	if len(msg.GetTargetSyncIds()) > 0 {
 		var target StreamSubscriber
 		var targetVersion int32
