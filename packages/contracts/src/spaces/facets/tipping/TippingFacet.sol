@@ -2,24 +2,26 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
+import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITipping} from "./ITipping.sol";
-import {ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // libraries
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {TippingBase} from "./TippingBase.sol";
-import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
-import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
-import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
+import {ERC721ABase} from "../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {PointsBase} from "../points/PointsBase.sol";
 
 contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGuard {
+    using CustomRevert for bytes4;
+
     function __Tipping_init() external onlyInitializing {
         _addInterface(type(ITipping).interfaceId);
     }
@@ -35,9 +37,13 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
 
         uint256 tipAmount = tipRequest.amount;
 
-        if (tipRequest.currency == CurrencyTransfer.NATIVE_TOKEN) {
-            uint256 protocolFee = _payProtocol(msg.sender, tipRequest.amount);
-            tipAmount = tipRequest.amount - protocolFee;
+        if (tipRequest.currency != CurrencyTransfer.NATIVE_TOKEN) {
+            if (msg.value != 0) UnexpectedETH.selector.revertWith();
+        } else {
+            if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
+
+            uint256 protocolFee = _payProtocol(msg.sender, tipAmount);
+            tipAmount -= protocolFee;
 
             address airdropDiamond = _getAirdropDiamond();
             uint256 points = _getPoints(
@@ -100,11 +106,9 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
         address currency,
         uint256 amount
     ) internal pure {
-        if (currency == address(0)) {
-            CustomRevert.revertWith(CurrencyIsZero.selector);
-        }
-        if (sender == receiver) CustomRevert.revertWith(CannotTipSelf.selector);
-        if (amount == 0) CustomRevert.revertWith(AmountIsZero.selector);
+        if (currency == address(0)) CurrencyIsZero.selector.revertWith();
+        if (sender == receiver) CannotTipSelf.selector.revertWith();
+        if (amount == 0) AmountIsZero.selector.revertWith();
     }
 
     function _payProtocol(address sender, uint256 amount) internal returns (uint256 protocolFee) {
