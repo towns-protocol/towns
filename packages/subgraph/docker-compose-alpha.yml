@@ -20,8 +20,8 @@ services:
 
     subgraph:
         build:
-             context: ../../
-             dockerfile: packages/subgraph/Dockerfile
+            context: ../../
+            dockerfile: packages/subgraph/Dockerfile
         depends_on:
             subgraph-db:
                 condition: service_healthy
