@@ -298,7 +298,11 @@ func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, b
 }
 
 // New creates a new sync stream handler and registers it in the registry.
-func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error) {
+func (s *syncStreamHandlerRegistryImpl) New(
+	ctx context.Context,
+	syncID string,
+	receiver Receiver,
+) (SyncStreamHandler, error) {
 	s.handlersLock.Lock()
 	defer s.handlersLock.Unlock()
 
