@@ -193,12 +193,22 @@ const _abi = [
   },
   {
     type: "error",
+    name: "MsgValueMismatch",
+    inputs: [],
+  },
+  {
+    type: "error",
     name: "ReceiverIsNotMember",
     inputs: [],
   },
   {
     type: "error",
     name: "TokenDoesNotExist",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "UnexpectedETH",
     inputs: [],
   },
 ] as const;
