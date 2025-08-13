@@ -19,7 +19,7 @@ type (
 		SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error
 		// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
 		// It can also backfill a specific stream by the given cookie which is already in the sync.
-		ModifySync(ctx context.Context, id string, req *ModifySyncRequest) (*ModifySyncResponse, error)
+		ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 		// CancelSync cancels an existing sync operation by its ID.
 		CancelSync(ctx context.Context, id string) error
 		// PingSync pings an existing sync operation by its ID to keep it alive.
@@ -47,12 +47,18 @@ func NewService(
 }
 
 func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error {
-	h := s.handlerRegistry.New(ctx, id, rec)
+	h, err := s.handlerRegistry.New(ctx, id, rec)
+	if err != nil {
+		return err
+	}
+
+	h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
+
 	return RiverError(Err_UNIMPLEMENTED, "SyncStreams is not implemented yet in V3")
 }
 
-func (s *serviceImpl) ModifySync(ctx context.Context, id string, req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	h, ok := s.handlerRegistry.Get(id)
+func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
+	h, ok := s.handlerRegistry.Get(req.GetSyncId())
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
