@@ -94,7 +94,7 @@ func (s *Service) ModifySync(
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
 		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			res.Msg, err = s.syncv3.ModifySync(ctx, req.Msg)
+			res.Msg, err = s.syncv3.ModifySync(ctx, req.Msg.GetSyncId(), req.Msg)
 		} else {
 			res, err = s.sync.ModifySync(ctx, req)
 		}
@@ -163,7 +163,7 @@ func (s *Service) PingSync(
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
 		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			s.syncv3.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
+			err = s.syncv3.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
 		} else {
 			res, err = s.sync.PingSync(ctx, req)
 		}
