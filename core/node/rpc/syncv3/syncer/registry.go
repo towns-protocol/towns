@@ -20,23 +20,17 @@ var (
 )
 
 type (
-	registryMsgSub struct {
-		streamID StreamId
+	registryMsgSubAndBackfill struct {
+		cookie  *SyncCookie
+		syncIDs []string
 	}
 
 	registryMsgUnsub struct {
 		streamID StreamId
 	}
-
-	registryMsgBackfill struct {
-		cookie  *SyncCookie
-		syncIDs []string
-	}
-
 	registryMsg struct {
-		sub      *registryMsgSub
-		unsub    *registryMsgUnsub
-		backfill *registryMsgBackfill
+		subAndBackfill *registryMsgSubAndBackfill
+		unsub          *registryMsgUnsub
 	}
 
 	// registryImpl is an implementation of the Registry interface.
@@ -73,7 +67,7 @@ func NewRegistry(
 	r := &registryImpl{
 		ctx: ctx,
 		log: logging.FromCtx(ctx).
-			Named("syncv3.Registry").
+			Named("syncv3.registry").
 			With("addr", localAddr),
 		localAddr:    localAddr,
 		streamCache:  streamCache,
@@ -86,11 +80,12 @@ func NewRegistry(
 	return r
 }
 
-func (r *registryImpl) Subscribe(streamID StreamId) {
-	err := r.queue.AddMessage(&registryMsg{sub: &registryMsgSub{streamID: streamID}})
+func (r *registryImpl) SubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
+	err := r.queue.AddMessage(&registryMsg{subAndBackfill: &registryMsgSubAndBackfill{cookie: cookie, syncIDs: syncIDs}})
 	if err != nil {
-		r.log.Errorw("failed to enqueue subscribe request", "streamID", streamID, "error", err)
-		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, 0)
+		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
+		r.log.Errorw("failed to enqueue subscribe-and-backfill request", "streamID", streamID, "error", err)
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId()}, 0)
 	}
 }
 
@@ -100,15 +95,6 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 		r.log.Errorw("failed to enqueue unsubscribe request", "streamID", streamID, "error", err)
 	}
 }
-
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) {
-	err := r.queue.AddMessage(&registryMsg{backfill: &registryMsgBackfill{cookie: cookie, syncIDs: syncIDs}})
-	if err != nil {
-		r.log.Errorw("failed to enqueue backfill request", "streamID", cookie.GetStreamId(), "error", err)
-		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId(), TargetSyncIds: syncIDs}, 0)
-	}
-}
-
 func (r *registryImpl) run() {
 	var msgs []*registryMsg
 	for {
@@ -120,12 +106,10 @@ func (r *registryImpl) run() {
 
 			// Messages must be processed in the order they were received.
 			for _, msg := range msgs {
-				if msg.sub != nil {
-					r.processSubscribe(msg.sub.streamID)
+				if msg.subAndBackfill != nil {
+					r.processSubscribeAndBackfill(msg.subAndBackfill.cookie, msg.subAndBackfill.syncIDs)
 				} else if msg.unsub != nil {
 					r.processUnsubscribe(msg.unsub.streamID)
-				} else if msg.backfill != nil {
-					r.processBackfill(msg.backfill.cookie, msg.backfill.syncIDs)
 				}
 			}
 
@@ -137,37 +121,13 @@ func (r *registryImpl) run() {
 	}
 }
 
-func (r *registryImpl) processSubscribe(streamID StreamId) {
-	r.syncersLock.Lock()
-	defer r.syncersLock.Unlock()
-
-	if _, ok := r.syncers[streamID]; !ok {
-		var err error
-		if _, err = r.createEmitterNoLock(streamID, 1); err != nil {
-			r.log.Errorw("failed to create stream emitter", "streamID", streamID, "error", err)
-			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, 0)
-			return
-		}
-	}
-}
-
-func (r *registryImpl) processUnsubscribe(streamID StreamId) {
-	r.syncersLock.Lock()
-	defer r.syncersLock.Unlock()
-
-	if emitter, ok := r.syncers[streamID]; ok {
-		emitter.Close()
-		delete(r.syncers, streamID)
-	}
-}
-
-func (r *registryImpl) processBackfill(cookie *SyncCookie, syncIDs []string) {
+func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()
 
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
-		r.log.Errorw("invalid stream ID in backfill cookie", "streamID", cookie.GetStreamId(), "error", err)
+		r.log.Errorw("invalid stream ID in cookie", "streamID", cookie.GetStreamId(), "error", err)
 		return
 	}
 
@@ -195,6 +155,16 @@ func (r *registryImpl) processBackfill(cookie *SyncCookie, syncIDs []string) {
 			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
 			return
 		}
+	}
+}
+
+func (r *registryImpl) processUnsubscribe(streamID StreamId) {
+	r.syncersLock.Lock()
+	defer r.syncersLock.Unlock()
+
+	if emitter, ok := r.syncers[streamID]; ok {
+		emitter.Close()
+		delete(r.syncers, streamID)
 	}
 }
 
