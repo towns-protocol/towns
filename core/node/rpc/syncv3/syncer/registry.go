@@ -79,7 +79,9 @@ func NewRegistry(
 }
 
 func (r *registryImpl) SubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
-	err := r.queue.AddMessage(&registryMsg{subAndBackfill: &registryMsgSubAndBackfill{cookie: cookie, syncIDs: syncIDs}})
+	err := r.queue.AddMessage(
+		&registryMsg{subAndBackfill: &registryMsgSubAndBackfill{cookie: cookie, syncIDs: syncIDs}},
+	)
 	if err != nil {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		r.log.Errorw("failed to enqueue subscribe-and-backfill request", "streamID", streamID, "error", err)
@@ -93,6 +95,7 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 		r.log.Errorw("failed to enqueue unsubscribe request", "streamID", streamID, "error", err)
 	}
 }
+
 func (r *registryImpl) run() {
 	var msgs []*registryMsg
 	for {
@@ -134,7 +137,10 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 		emitter, err = r.createEmitterNoLock(streamID, 1)
 		if err != nil {
 			r.log.Errorw("failed to create stream emitter for backfill", "streamID", streamID, "error", err)
-			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			r.subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
+				0,
+			)
 			return
 		}
 	}
@@ -144,13 +150,19 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 		emitter, err = r.createEmitterNoLock(streamID, currentVersion+1)
 		if err != nil {
 			r.log.Errorw("failed to recreate stream emitter for backfill", "streamID", streamID, "error", err)
-			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			r.subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
+				0,
+			)
 			return
 		}
 
 		if !emitter.Backfill(cookie, syncIDs) {
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
-			r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs}, 0)
+			r.subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
+				0,
+			)
 			return
 		}
 	}
