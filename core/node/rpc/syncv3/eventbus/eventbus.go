@@ -248,7 +248,11 @@ func (e *eventBusImpl) run(ctx context.Context) {
 		// Process messages from the current batch one by one.
 		for _, msg := range msgs {
 			if msg.update != nil {
-				e.processStreamUpdateCommand(msg.update.msg, msg.update.version)
+				if len(msg.update.msg.GetTargetSyncIds()) == 0 {
+					e.processStreamUpdateCommand(msg.update.msg, msg.update.version)
+				} else {
+					e.processTargetedStreamUpdateCommand(msg.update.msg, msg.update.version)
+				}
 			} else if msg.sub != nil {
 				e.processSubscribeCommand(msg.sub)
 			} else if msg.unsub != nil {
@@ -267,8 +271,16 @@ func (e *eventBusImpl) run(ctx context.Context) {
 }
 
 // processStreamUpdateCommand processes the given stream update command.
+//
+// version is the syncer version that the update is sent from. "0" version means that the update is sent
+// to all subscribers of the stream regardless of their sync ID.
 func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, version int32) {
 	if msg == nil {
+		return
+	}
+
+	if len(msg.GetTargetSyncIds()) > 0 {
+		e.log.Error("received targeted stream update message in the common stream update processor")
 		return
 	}
 
@@ -276,63 +288,6 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 	if err != nil {
 		e.log.Errorw("failed to parse stream id from the stream update message",
 			"streamID", msg.StreamID(), "error", err)
-		return
-	}
-
-	// If the given message has target sync IDs, it means that this is a backfill message and should be forwarded
-	// to the target subscriber only.
-	// TODO: Backfill message should move subscribers from 0 version to the given version list.
-	//  For the sync down - just remove from the 0 version list.
-	if len(msg.GetTargetSyncIds()) > 0 {
-		var target StreamSubscriber
-		var targetVersion int32
-		if version == 0 {
-			for version, subscribers := range e.subscribers[streamID] {
-				for _, sub := range subscribers {
-					if sub.SyncID() == msg.GetTargetSyncIds()[0] {
-						target = sub
-						targetVersion = version
-						break
-					}
-				}
-				if target != nil {
-					break
-				}
-			}
-		} else if _, ok := e.subscribers[streamID]; ok {
-			targetVersion = version
-			for _, sub := range e.subscribers[streamID][version] {
-				if sub.SyncID() == msg.GetTargetSyncIds()[0] {
-					target = sub
-					break
-				}
-			}
-		}
-
-		if target == nil {
-			e.log.Debugw("no subscriber found for the given backfill message",
-				"streamID", streamID, "syncIDs", msg.GetTargetSyncIds())
-			return
-		}
-
-		target.OnUpdate(msg)
-
-		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-			e.subscribers[streamID][targetVersion] = slices.DeleteFunc(
-				e.subscribers[streamID][targetVersion],
-				func(subscriber StreamSubscriber) bool {
-					return subscriber == target
-				},
-			)
-
-			if len(e.subscribers[streamID][targetVersion]) == 0 {
-				delete(e.subscribers[streamID], targetVersion)
-				if len(e.subscribers[streamID]) == 0 {
-					delete(e.subscribers, streamID)
-				}
-			}
-		}
-
 		return
 	}
 
@@ -387,6 +342,99 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 				delete(e.subscribers, streamID)
 			}
 		}
+	}
+}
+
+// processTargetedStreamUpdateCommand processes the given stream update command that is targeted to a specific sync ID.
+//
+//   - SyncOp_SYNC_UPDATE message is a backfill one and should move the given subscriber from the "0" version list
+//     to the given version list so it can start receiving updates.
+//   - SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
+//     regardless of their version.
+func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsResponse, version int32) {
+	if msg == nil {
+		return
+	}
+
+	if len(msg.GetTargetSyncIds()) == 0 {
+		e.log.Error("received non-targeted stream update message in the targeted stream update processor")
+		return
+	}
+
+	streamID, err := StreamIdFromBytes(msg.StreamID())
+	if err != nil {
+		e.log.Errorw("failed to parse stream id from the stream update message",
+			"streamID", msg.StreamID(), "error", err)
+		return
+	}
+
+	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+		// The following logic removes the subscriber with the given sync ID from the list of subscribers
+		// and sends the given stream down message to it.
+		// Noop if the subscriber is not found.
+		var target StreamSubscriber
+		for version = range e.subscribers[streamID] {
+			e.subscribers[streamID][version] = slices.DeleteFunc(
+				e.subscribers[streamID][version],
+				func(subscriber StreamSubscriber) bool {
+					if msg.GetTargetSyncIds()[0] == subscriber.SyncID() {
+						target = subscriber
+					}
+					return target != nil
+				},
+			)
+			if target != nil {
+				break
+			}
+		}
+
+		if target != nil {
+			msg.TargetSyncIds = msg.TargetSyncIds[1:]
+			target.OnUpdate(msg)
+		} else {
+			e.log.Debugw("no subscriber found for the given stream down message",
+				"streamID", streamID, "syncIDs", msg.GetTargetSyncIds())
+		}
+	} else if msg.GetSyncOp() != SyncOp_SYNC_UPDATE {
+		if _, ok := e.subscribers[streamID]; !ok {
+			// No subscribers for the given stream, do nothing
+			e.log.Debugw("no subscribers found for the given stream",
+				"streamID", streamID, "syncOp", msg.GetSyncOp(), "syncIDs", msg.GetTargetSyncIds())
+			return
+		}
+
+		// 1. Try to find the given subscriber in the "0" version list. If found, this is the first backfill message,
+		//    and we need to move the subscriber to the given version list.
+		var found bool
+		for i, sub := range e.subscribers[streamID][0] {
+			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+				found = true
+				// Move the subscriber to the given version list.
+				e.subscribers[streamID][version] = append(e.subscribers[streamID][version], sub)
+				// Remove the subscriber from the "0" version list.
+				e.subscribers[streamID][0] = slices.Delete(e.subscribers[streamID][0], i, i+1)
+				// Send the backfill message to the subscriber.
+				msg.TargetSyncIds = msg.TargetSyncIds[1:]
+				sub.OnUpdate(msg)
+				break
+			}
+		}
+		if found {
+			return
+		}
+
+		// 2. If the subscriber was not found in the "0" version list, it means that it is already subscribed to the stream
+		//    with the given sync ID and version. Just send the update to it.
+		for _, sub := range e.subscribers[streamID][version] {
+			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+				msg.TargetSyncIds = msg.TargetSyncIds[1:]
+				sub.OnUpdate(msg)
+				break
+			}
+		}
+	} else {
+		e.log.Errorw("received unsupported targeted stream update message",
+			"streamID", streamID, "syncOp", msg.GetSyncOp())
 	}
 }
 
