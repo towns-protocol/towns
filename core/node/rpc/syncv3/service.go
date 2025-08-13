@@ -66,7 +66,7 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 
 	<-ctx.Done()
 
-	return nil
+	return context.Cause(ctx)
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
