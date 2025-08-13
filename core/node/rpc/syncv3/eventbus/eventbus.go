@@ -401,7 +401,7 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 			e.log.Debugw("no subscriber found for the given stream down message",
 				"streamID", streamID, "syncIDs", msg.GetTargetSyncIds())
 		}
-	} else if msg.GetSyncOp() != SyncOp_SYNC_UPDATE {
+	} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
 		if _, ok := e.subscribers[streamID]; !ok {
 			// No subscribers for the given stream, do nothing
 			e.log.Debugw("no subscribers found for the given stream",
