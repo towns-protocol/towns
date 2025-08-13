@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v4"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -93,11 +91,6 @@ type (
 		// streamUpdates is the stream updates queue.
 		// When a stream update is received, it should be sent to the queue so the updates processor can handle them.
 		streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-		// initializingStreams contains a list of streams that are currently being initialized for this operation.
-		// Meaning that a client added the given stream but the initial backfill message is not received yet,
-		// and the client is waiting for this message to be received. No other messages should be sent for this stream
-		// until the backfill is received. The value here is needed to avoid sending the same data multiple times.
-		initializingStreams *xsync.Map[StreamId, struct{}]
 	}
 
 	// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
@@ -131,8 +124,6 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 				Code:     int32(rvrErr.Code),
 				Message:  rvrErr.GetMessage(),
 			})
-		} else {
-			s.initializingStreams.Store(StreamId(cookie.GetStreamId()), struct{}{})
 		}
 	}
 
@@ -144,9 +135,6 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 				Code:     int32(rvrErr.Code),
 				Message:  rvrErr.GetMessage(),
 			})
-		} else {
-			// If the stream was successfully removed, remove it from the initializing streams map just in case.
-			s.initializingStreams.Delete(StreamId(streamID))
 		}
 	}
 
@@ -277,49 +265,6 @@ func (s *syncStreamHandlerImpl) processMessage(msg *SyncStreamsResponse) bool {
 	default:
 	}
 
-	// Special cases depending on the message type that should be applied before sending the message.
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		streamID, err := StreamIdFromBytes(msg.StreamID())
-		if err != nil {
-			s.log.Warnw("failed to parse stream ID from the sync down message",
-				"streamId", msg.StreamID(), "error", err)
-			return false
-		}
-
-		// If the sync operation is a down operation, remove the operation from the stream.
-		s.initializingStreams.Delete(streamID)
-	} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		streamID, err := StreamIdFromBytes(msg.StreamID())
-		if err != nil {
-			s.log.Warnw("failed to parse stream ID from the sync update message",
-				"streamId", msg.StreamID(), "error", err)
-			return false
-		}
-
-		// Waiting for the backfill message to be sent first, skip other messages for this stream until then.
-		if _, exists := s.initializingStreams.Compute(
-			streamID,
-			func(_ struct{}, loaded bool) (struct{}, xsync.ComputeOp) {
-				if !loaded {
-					return struct{}{}, xsync.CancelOp
-				}
-
-				if len(msg.GetTargetSyncIds()) == 0 {
-					return struct{}{}, xsync.CancelOp
-				}
-
-				return struct{}{}, xsync.DeleteOp
-			},
-		); exists {
-			return false
-		}
-
-		// Removing the first target sync ID since it is the one that is being processed.
-		if len(msg.GetTargetSyncIds()) > 0 {
-			msg.TargetSyncIds = msg.TargetSyncIds[1:]
-		}
-	}
-
 	select {
 	case <-s.ctx.Done():
 		return true
@@ -362,14 +307,13 @@ func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, 
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	handler := &syncStreamHandlerImpl{
-		ctx:                 ctx,
-		cancel:              cancel,
-		log:                 logging.FromCtx(ctx).Named("syncv3.handler").With("syncID", syncID),
-		syncID:              syncID,
-		receiver:            receiver,
-		eventBus:            s.eventBus,
-		streamUpdates:       dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		initializingStreams: xsync.NewMap[StreamId, struct{}](),
+		ctx:           ctx,
+		cancel:        cancel,
+		log:           logging.FromCtx(ctx).Named("syncv3.handler").With("syncID", syncID),
+		syncID:        syncID,
+		receiver:      receiver,
+		eventBus:      s.eventBus,
+		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 	}
 
 	go handler.startUpdatesProcessor()
