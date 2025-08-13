@@ -451,11 +451,11 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		return
 	}
 
+	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
+	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers, ok := e.subscribers[streamID]
 	if !ok {
-		// Event bus is not subscribed on updates of the given stream. Subscribe first.
 		e.subscribers[streamID] = map[int32][]StreamSubscriber{0: {msg.subscriber}}
-		e.registry.Subscribe(streamID)
 	} else {
 		var found bool
 		for _, subscribers := range currentSubscribers {
@@ -473,10 +473,8 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		}
 	}
 
-	e.processBackfillCommand(&eventBusMessageBackfill{
-		cookie:  msg.cookie,
-		syncIDs: []string{msg.subscriber.SyncID()},
-	})
+	// Send a request to backfill the stream for the given subscriber.
+	e.registry.SubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
 }
 
 // processUnsubscribeCommand processes the given unsubscribe command.
@@ -501,5 +499,5 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 		return
 	}
 
-	e.registry.Backfill(msg.cookie, msg.syncIDs)
+	e.registry.SubscribeAndBackfill(msg.cookie, msg.syncIDs)
 }
