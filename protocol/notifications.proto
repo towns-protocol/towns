@@ -86,8 +86,6 @@ enum SpaceChannelSettingValue {
   SPACE_CHANNEL_SETTING_MESSAGES_ALL = 4;
 }
 
-// Removed NotificationApp enum - now using string field with values "towns" or "sendit"
-
 enum APNEnvironment {
   // APN_ENVIRONMENT_UNSPECIFIED is invalid.
   APN_ENVIRONMENT_UNSPECIFIED = 0;

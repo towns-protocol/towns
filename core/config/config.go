@@ -460,7 +460,7 @@ type NotificationsConfig struct {
 	// send notifications to the client but only logs them.
 	// This is intended for development purposes. Defaults to false.
 	Simulate bool
-	// Apps holds the notification configuration for each app (Towns, Sendit, etc.)
+	// Apps holds the notification configuration for each app
 	Apps []AppNotificationConfig
 	// APN holds the Apple Push Notification settings (deprecated - use Apps instead)
 	APN APNPushNotificationsConfig
