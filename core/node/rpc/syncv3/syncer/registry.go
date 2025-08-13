@@ -193,7 +193,7 @@ func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (St
 	} else {
 		streamUpdateEmitter = NewRemoteStreamUpdateEmitter(
 			r.ctx,
-			stream.GetStickyPeer(),
+			stream,
 			r.nodeRegistry,
 			streamID,
 			r.subscriber,
