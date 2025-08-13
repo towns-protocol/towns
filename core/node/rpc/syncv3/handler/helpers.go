@@ -9,7 +9,8 @@ import (
 // validateModifySync validates the ModifySyncRequest to ensure it is well-formed.
 func validateModifySync(req *ModifySyncRequest) error {
 	// Make sure the request is not empty
-	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 && len(req.GetBackfillStreams().GetStreams()) == 0 {
+	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 &&
+		len(req.GetBackfillStreams().GetStreams()) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "Empty modify sync request")
 	}
 
