@@ -118,9 +118,17 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 
 ### Code Quality Requirements
 
-- **All TypeScript files must pass Prettier formatting**
-  - Run `yarn prettier:fix` to automatically format all TypeScript files
+#### For Go code changes:
+- **Format all Go files**: Run `./fmt.sh` from the `/core` directory
+- **Run the linter**: Execute `./lint.sh` from the `/core` directory
+- These scripts handle formatting and linting for all Go code
+
+#### For TypeScript, JavaScript, YAML, Solidity, and other non-Go files:
+- **All non-Go files must pass Prettier formatting**
+  - Run `yarn prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
   - This command will check and fix any formatting issues in one step
+
+#### For all changes:
 - **All PRs must pass global linting**
   - Run `yarn lint` from the root directory before committing
   - This ensures code quality and consistency across the entire repository
