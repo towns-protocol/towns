@@ -344,7 +344,7 @@ func (s *PostgresAppRegistryStore) lockApp(
 		if errors.Is(err, pgx.ErrNoRows) {
 			return RiverError(
 				protocol.Err_NOT_FOUND,
-				"app not found in registry",
+				"app was not found in registry",
 				"appId", appId,
 			).Func("PostgresAppRegistryStore.lockApp")
 		}
@@ -355,16 +355,15 @@ func (s *PostgresAppRegistryStore) lockApp(
 }
 
 // lockApps locks multiple app rows in a single query. It enforces a consistent
-// ordering of app id lock acquisition and returns the count of apps that were
-// successfully locked.
+// ordering of app id lock acquisition and returns which apps were successfully locked.
 func (s *PostgresAppRegistryStore) lockApps(
 	ctx context.Context,
 	tx pgx.Tx,
 	appIds []common.Address,
 	write bool,
-) (int, error) {
+) ([]common.Address, error) {
 	if len(appIds) == 0 {
-		return 0, nil
+		return []common.Address{}, nil
 	}
 
 	// Convert addresses to strings for the query
@@ -378,27 +377,47 @@ func (s *PostgresAppRegistryStore) lockApps(
 		lockMode = "FOR UPDATE"
 	}
 
-	// Use a subquery to ensure rows are locked in sorted order
-	// This prevents deadlocks by guaranteeing consistent lock acquisition order
-	var count int
-	err := tx.QueryRow(
+	// Lock rows in sorted order to prevent deadlocks and return which apps exist
+	rows, err := tx.Query(
 		ctx,
 		fmt.Sprintf(`
-			SELECT COUNT(*) FROM (
-				SELECT app_id FROM app_registry 
-				WHERE app_id = ANY($1) 
-				ORDER BY app_id
-			) AS ordered_apps
+			SELECT app_id FROM app_registry 
+			WHERE app_id = ANY($1) 
+			ORDER BY app_id
 			%s
 		`, lockMode),
 		appIdStrings,
-	).Scan(&count)
+	)
 	if err != nil {
-		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 			Message("failed to lock apps")
 	}
+	defer rows.Close()
 
-	return count, nil
+	// Collect the locked app IDs
+	var lockedApps []common.Address
+	for rows.Next() {
+		var appIdHex string
+		if err := rows.Scan(&appIdHex); err != nil {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to scan locked app")
+		}
+
+		appIdBytes, err := hex.DecodeString(appIdHex)
+		if err != nil {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to decode app ID")
+		}
+
+		lockedApps = append(lockedApps, common.BytesToAddress(appIdBytes))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to iterate locked apps")
+	}
+
+	return lockedApps, nil
 }
 
 func (s *PostgresAppRegistryStore) CreateApp(
@@ -632,7 +651,7 @@ func (s *PostgresAppRegistryStore) GetAppInfo(
 			appInfo, err = s.getAppInfo(ctx, app, tx)
 			return err
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 	)
 	if err != nil {
@@ -999,16 +1018,28 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	tx pgx.Tx,
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
 	// Lock all apps and ensure they all exist
-	lockedCount, err := s.lockApps(ctx, tx, appIds, false)
+	lockedApps, err := s.lockApps(ctx, tx, appIds, false)
 	if err != nil {
 		return nil, nil, err
 	}
-	if lockedCount != len(appIds) {
+	if len(lockedApps) != len(appIds) {
+		// Find which apps were not found
+		lockedSet := make(map[common.Address]bool)
+		for _, app := range lockedApps {
+			lockedSet[app] = true
+		}
+		var missingApps []common.Address
+		for _, app := range appIds {
+			if !lockedSet[app] {
+				missingApps = append(missingApps, app)
+			}
+		}
 		return nil, nil, RiverError(
 			protocol.Err_NOT_FOUND,
 			"some apps were not found in the registry",
 			"expected", len(appIds),
-			"found", lockedCount,
+			"found", len(lockedApps),
+			"missing", missingApps,
 		)
 	}
 
@@ -1099,7 +1130,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		).Message("error streaming app metadata for unsendable devices")
 	}
 	if len(unsendableAppIds) > nextRow {
-		return nil, nil, RiverError(protocol.Err_NOT_FOUND, "some app ids were not registered")
+		return nil, nil, RiverError(protocol.Err_NOT_FOUND, "some apps were not found in the registry")
 	}
 
 	// Insert unsendable messages
