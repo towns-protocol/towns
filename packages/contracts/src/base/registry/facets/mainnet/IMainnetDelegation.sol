@@ -124,4 +124,11 @@ interface IMainnetDelegation is IMainnetDelegationBase {
     /// @param delegator The mainnet delegator address
     /// @return The authorized claimer address for the delegator
     function getAuthorizedClaimer(address delegator) external view returns (address);
+
+    /// @notice Get all delegators that have the specified authorized claimer
+    /// @param claimer The address of the authorized claimer to check for
+    /// @return An array of addresses that have the specified authorized claimer
+    function getDelegatorsByAuthorizedClaimer(
+        address claimer
+    ) external view returns (address[] memory);
 }
