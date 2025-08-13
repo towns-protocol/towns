@@ -11,6 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -786,10 +789,18 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.otelTracer,
 	)
 
-	s.syncv3 = syncv3.NewService(
-		s.otelTracer,
-	)
-	s.v3Syncs = xsync.NewMap[string, struct{}]()
+	// Sync v3 setup
+	{
+		eventBus := eventbus.New(
+			s.serverCtx,
+			s.wallet.Address,
+			s.cache,
+			s.nodeRegistry,
+		)
+		registry := handler.NewRegistry(eventBus)
+		s.syncv3 = syncv3.NewService(registry, s.otelTracer)
+		s.v3Syncs = xsync.NewMap[string, struct{}]()
+	}
 
 	return nil
 }

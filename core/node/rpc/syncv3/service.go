@@ -31,18 +31,20 @@ type (
 
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
-	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
-	otelTracer trace.Tracer
 	// handlerRegistry is used to manage sync stream handlers.
 	handlerRegistry handler.Registry
+	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
+	otelTracer trace.Tracer
 }
 
 // NewService creates a new instance of the sync V3 service.
 func NewService(
+	handlerRegistry handler.Registry,
 	otelTracer trace.Tracer,
 ) Service {
 	return &serviceImpl{
-		otelTracer: otelTracer,
+		handlerRegistry: handlerRegistry,
+		otelTracer:      otelTracer,
 	}
 }
 
@@ -52,9 +54,17 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		return err
 	}
 
-	h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
+	res, err := h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
+	if err != nil {
+		_ = h.Cancel(ctx)
+		return err
+	}
 
-	return RiverError(Err_UNIMPLEMENTED, "SyncStreams is not implemented yet in V3")
+	if len(res.GetAdds()) > 0 {
+		return h.Cancel(ctx)
+	}
+
+	return nil
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
