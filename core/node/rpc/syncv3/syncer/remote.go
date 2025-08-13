@@ -155,7 +155,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 		return
 	}
 
-	// Ensure that the first valid update is received within 15 seconds,
+	// Ensure that the first valid update is received within remoteStreamUpdateEmitterTimeout,
 	// if not, cancel the operation and return an unavailable error
 	var firstUpdateReceived atomic.Bool
 	go func() {
@@ -169,7 +169,12 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	}()
 
 	// Create a new sync operation for the given stream only.
-	req := connect.NewRequest(&SyncStreamsRequest{})
+	req := connect.NewRequest(&SyncStreamsRequest{
+		SyncPos: []*SyncCookie{{
+			StreamId:    r.streamID[:],
+			NodeAddress: r.remoteAddr[:],
+		}},
+	})
 	responseStream, err := client.SyncStreams(r.ctx, req)
 	if err != nil {
 		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
@@ -182,7 +187,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	// If the sync operation was canceled, return an unavailable error.
 	if !firstUpdateReceived.Load() || r.ctx.Err() != nil {
 		r.cancel(nil)
-		r.log.Errorw("initialization failed: SyncStreams stream closed without receiving any messages", "error", responseStream.Err())
+		r.log.Errorw("initialization failed: [1] SyncStreams stream closed without receiving any messages", "error", responseStream.Err())
 		return
 	}
 
@@ -198,6 +203,33 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	r.responseStream = responseStream
 	r.client = client
 	r.log = r.log.With("syncID", r.syncID)
+
+	// Ensure that the second update is received within remoteStreamUpdateEmitterTimeout,
+	// if not, cancel the operation and return an unavailable error. The second update should be a SYNC_UPDATE message
+	// which should be ignored since each client has its own cookie.
+	var secondUpdateReceived atomic.Bool
+	go func() {
+		select {
+		case <-r.ctx.Done():
+		case <-time.After(remoteStreamUpdateEmitterTimeout):
+			if !secondUpdateReceived.Load() {
+				r.cancel(nil)
+			}
+		}
+	}()
+
+	// Store indication if the second update was received.
+	secondUpdateReceived.Store(responseStream.Receive())
+
+	// If the sync operation was canceled, return an unavailable error.
+	if !secondUpdateReceived.Load() || r.ctx.Err() != nil {
+		r.cancel(nil)
+		r.log.Errorw("initialization failed: [2] SyncStreams stream closed without receiving any messages", "error", responseStream.Err())
+		return
+	}
+
+	// Update the state to running to indicate that the emitter is ready to process updates.
+	r.state.Store(streamUpdateEmitterStateRunning)
 
 	// Start processing stream updates received from the remote node.
 	go r.processStreamUpdates()
