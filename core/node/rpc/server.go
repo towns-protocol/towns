@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
@@ -35,6 +36,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
@@ -558,7 +560,7 @@ func (s *Service) runHttpServer() error {
 			"Connect-Timeout-Ms",
 			"x-river-request-id",
 			"Authorization",
-			UseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+			headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
 		},
 	})
 
@@ -787,6 +789,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	s.syncv3 = syncv3.NewService(
 		s.otelTracer,
 	)
+	s.v3Syncs = xsync.NewMap[string, struct{}]()
 
 	return nil
 }
