@@ -69,7 +69,7 @@ type (
 		Get(syncID string) (SyncStreamHandler, bool)
 
 		// New create a new sync stream handler.
-		New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler
+		New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error)
 	}
 
 	// syncStreamHandlerImpl is a concrete implementation of the SyncStreamHandler interface.
@@ -303,7 +303,14 @@ func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, b
 }
 
 // New creates a new sync stream handler and registers it in the registry.
-func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) SyncStreamHandler {
+func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error) {
+	s.handlersLock.Lock()
+	defer s.handlersLock.Unlock()
+
+	if _, exists := s.handlers[syncID]; exists {
+		return nil, RiverError(Err_ALREADY_EXISTS, "sync operation with the given ID already exists")
+	}
+
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	handler := &syncStreamHandlerImpl{
@@ -318,9 +325,7 @@ func (s *syncStreamHandlerRegistryImpl) New(ctx context.Context, syncID string, 
 
 	go handler.startUpdatesProcessor()
 
-	s.handlersLock.Lock()
 	s.handlers[syncID] = handler
-	s.handlersLock.Unlock()
 
-	return handler
+	return handler, nil
 }
