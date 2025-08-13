@@ -9,7 +9,7 @@ import { RiverChainModel } from './river-connection/models/riverChain'
 import { User, UserModel } from './user/user'
 import { makeBaseProvider, makeRiverProvider } from './utils/providers'
 import { UserMembershipsModel } from './user/models/userMemberships'
-import { RiverDbManager } from '../riverDbManager'
+import { createCryptoStore } from '@towns-protocol/encryption'
 import { Entitlements } from './entitlements/entitlements'
 import { PersistedObservable } from '../observable/persistedObservable'
 import { Observable } from '../observable/observable'
@@ -84,7 +84,7 @@ export class SyncAgent {
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
-            cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
+            cryptoStore: createCryptoStore(this.cryptoDbName(), this.userId),
             entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
             opts: {
                 persistenceStoreName:
