@@ -40,6 +40,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/rpc_client"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -836,7 +837,7 @@ func (tc *testClient) startSync() {
 
 	// TODO: Remove after removing the legacy syncer
 	req := connect.NewRequest(&SyncStreamsRequest{})
-	req.Header().Set(UseSharedSyncHeaderName, "false")
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	updates, err := tc.client.SyncStreams(tc.ctx, req)
 	tc.require.NoError(err)

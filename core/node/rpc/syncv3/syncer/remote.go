@@ -100,6 +100,10 @@ func (r *remoteStreamUpdateEmitter) Node() common.Address {
 	return r.remoteAddr
 }
 
+func (r *remoteStreamUpdateEmitter) Version() int32 {
+	return r.version
+}
+
 func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
 	if r.state.Load() == streamUpdateEmitterStateClosed {
 		return false
