@@ -9,9 +9,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-var (
-	_ Registry = (*registryImpl)(nil)
-)
+var _ Registry = (*registryImpl)(nil)
 
 type (
 	// StreamSubscriber accept (local or remote) stream events.

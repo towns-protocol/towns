@@ -59,7 +59,6 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 }
 
 func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) {
-
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
