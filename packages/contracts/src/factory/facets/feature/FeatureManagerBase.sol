@@ -79,9 +79,7 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
 
             uint256 votes = IVotes(condition.token).getVotes(space);
 
-            if (_meetsThreshold(condition, votes)) {
-                conditions[index++] = condition;
-            }
+            if (_meetsThreshold(condition, votes)) conditions[index++] = condition;
         }
 
         assembly ("memory-safe") {

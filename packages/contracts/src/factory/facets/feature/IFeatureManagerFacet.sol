@@ -4,8 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
-// libraries
-
 /// @notice Represents a condition for feature activation
 /// @dev Used to determine if a feature should be enabled based on token voting power
 /// @param token The address of the token used for voting (must implement IVotes)
@@ -18,7 +16,6 @@ struct FeatureCondition {
     uint256 threshold;
     bytes extraData;
 }
-// contracts
 
 /// @title IFeatureManagerFacetBase
 /// @notice Base interface for the FeatureManager facet defining errors and events
