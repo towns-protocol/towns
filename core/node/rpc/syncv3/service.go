@@ -54,14 +54,16 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		return err
 	}
 
-	res, err := h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
-	if err != nil {
-		_ = h.Cancel(ctx)
-		return err
-	}
+	if len(streams) > 0 {
+		res, err := h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
+		if err != nil {
+			_ = h.Cancel(ctx)
+			return err
+		}
 
-	if len(res.GetAdds()) > 0 {
-		return h.Cancel(ctx)
+		if len(res.GetAdds()) > 0 {
+			return h.Cancel(ctx)
+		}
 	}
 
 	<-ctx.Done()
