@@ -15,9 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
-var (
-	_ Registry = (*registryImpl)(nil)
-)
+var _ Registry = (*registryImpl)(nil)
 
 type (
 	registryMsgSubAndBackfill struct {
