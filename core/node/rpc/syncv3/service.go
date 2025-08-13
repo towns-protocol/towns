@@ -64,6 +64,8 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		return h.Cancel(ctx)
 	}
 
+	<-ctx.Done()
+
 	return nil
 }
 
