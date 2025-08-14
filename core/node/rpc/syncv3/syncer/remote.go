@@ -340,8 +340,6 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates(stream *events.Stream) 
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			r.subscriber.OnStreamEvent(res, r.version)
 			break
-		} else {
-			r.log.Errorw("Received unexpected sync stream message", "syncOp", res.GetSyncOp(), "syncId", res.GetSyncId())
 		}
 	}
 
