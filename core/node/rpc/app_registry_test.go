@@ -872,7 +872,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			metadata:             validMetadata,
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
@@ -1166,7 +1166,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		}
 		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 		tester.require.Nil(getResp)
-		tester.require.ErrorContains(err, "app is not registered")
+		tester.require.ErrorContains(err, "app was not found in registry")
 	})
 
 	// Test duplicate username (not display name)
@@ -1224,7 +1224,7 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 		"Failure: unregistered app": {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
@@ -1723,7 +1723,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			webhookUrl:           "http://www.test.com/callme",
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],

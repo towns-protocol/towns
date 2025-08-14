@@ -1,7 +1,7 @@
 package app_registry
 
 import (
-	"bytes" 
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
