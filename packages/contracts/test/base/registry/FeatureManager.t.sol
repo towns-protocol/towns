@@ -87,7 +87,7 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
     ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
         FeatureCondition memory newCondition = FeatureCondition({
             token: address(townsToken),
-            threshold: 100 ether,
+            threshold: amount,
             active: true,
             extraData: ""
         });
@@ -98,14 +98,17 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         featureManagerFacet.updateFeatureCondition(featureId, newCondition);
     }
 
-    function test_revertWith_updateFeatureCondition_featureNotActive() external {
+    function test_revertWith_updateFeatureCondition_featureNotActive()
+        external
+        givenTokensAreMinted(deployer, TEST_THRESHOLD)
+    {
         vm.prank(deployer);
         vm.expectRevert(FeatureNotActive.selector);
         featureManagerFacet.updateFeatureCondition(
             TEST_FEATURE_ID,
             FeatureCondition({
                 token: address(townsToken),
-                threshold: 100 ether,
+                threshold: TEST_THRESHOLD,
                 active: false,
                 extraData: ""
             })

@@ -11,6 +11,7 @@ import {FeatureManagerStorage} from "./FeatureManagerStorage.sol";
 import {FeatureCondition} from "./IFeatureManagerFacet.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {LibCall} from "solady/utils/LibCall.sol";
 
 // contracts
 
@@ -18,33 +19,35 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
     using CustomRevert for bytes4;
 
-    function _setFeatureCondition(bytes32 featureId, FeatureCondition calldata condition) internal {
-        if (condition.token == address(0)) InvalidToken.selector.revertWith();
-
-        _validateGetVotes(condition);
-
-        FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
-        if (!$.featureIds.add(featureId)) FeatureAlreadyExists.selector.revertWith();
-        $.conditions[featureId] = condition;
-    }
-
-    function _updateFeatureCondition(
+    function _upsertFeatureCondition(
         bytes32 featureId,
-        FeatureCondition calldata condition
+        FeatureCondition calldata condition,
+        bool create
     ) internal {
+        _validateToken(condition);
+
         FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
-        if (!$.featureIds.contains(featureId)) FeatureNotActive.selector.revertWith();
+        if (create && !$.featureIds.add(featureId)) {
+            FeatureAlreadyExists.selector.revertWith();
+        } else if (!create && !$.featureIds.contains(featureId)) {
+            FeatureNotActive.selector.revertWith();
+        }
+
         $.conditions[featureId] = condition;
     }
 
     /// @notice Retrieves the condition for a specific feature
     /// @dev Returns the complete condition struct with all parameters
     /// @param featureId The unique identifier for the feature
-    /// @return FeatureCondition memory The complete condition configuration for the feature
+    /// @return result The complete condition configuration for the feature
     function _getFeatureCondition(
         bytes32 featureId
-    ) internal view returns (FeatureCondition memory) {
-        return FeatureManagerStorage.getLayout().conditions[featureId];
+    ) internal view returns (FeatureCondition memory result) {
+        FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
+        assembly ("memory-safe") {
+            mstore(0x40, result)
+        }
+        result = $.conditions[featureId];
     }
 
     /// @notice Retrieves all feature conditions
@@ -76,19 +79,10 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
         for (uint256 i; i < featureCount; ++i) {
             bytes32 id = $.featureIds.at(i);
             FeatureCondition storage cond = $.conditions[id];
-            if (!cond.active) continue;
 
-            address token = cond.token;
-            if (token == address(0)) continue;
-
-            uint256 threshold = cond.threshold;
-            if (threshold == 0) {
+            if (_isValidCondition(cond, space)) {
                 conditions[index++] = cond;
-                continue;
             }
-
-            uint256 votes = IVotes(token).getVotes(space);
-            if (votes >= threshold) conditions[index++] = cond;
         }
 
         assembly ("memory-safe") {
@@ -109,38 +103,65 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
         condition.active = false;
     }
 
-    function _validateGetVotes(FeatureCondition calldata condition) internal view {
-        if (condition.token.code.length == 0) InvalidInterface.selector.revertWith();
-        (bool ok, ) = condition.token.staticcall(
-            abi.encodeWithSelector(IVotes.getVotes.selector, address(this))
+    /// @notice Sets a feature condition (wrapper for upsert with create=true)
+    /// @param featureId The unique identifier for the feature
+    /// @param condition The condition struct containing token, threshold, active status, and extra data
+    function _setFeatureCondition(bytes32 featureId, FeatureCondition calldata condition) internal {
+        _upsertFeatureCondition(featureId, condition, true);
+    }
+
+    /// @notice Updates a feature condition (wrapper for upsert with create=false)
+    /// @param featureId The unique identifier for the feature
+    /// @param condition The condition struct containing token, threshold, active status, and extra data
+    function _updateFeatureCondition(
+        bytes32 featureId,
+        FeatureCondition calldata condition
+    ) internal {
+        _upsertFeatureCondition(featureId, condition, false);
+    }
+
+    function _validateToken(FeatureCondition calldata condition) internal view {
+        if (condition.token == address(0)) InvalidToken.selector.revertWith();
+
+        // Check if the token implements IVotes.getVotes with proper return data
+        (bool success, bool exceededMaxCopy, bytes memory data) = LibCall.tryStaticCall(
+            condition.token,
+            gasleft(),
+            32,
+            abi.encodeCall(IVotes.getVotes, (address(this)))
         );
-        if (!ok) InvalidInterface.selector.revertWith();
 
-        try IERC20(condition.token).totalSupply() returns (uint256 totalSupply) {
-            if (totalSupply == 0) InvalidTotalSupply.selector.revertWith();
-            if (condition.threshold > totalSupply) InvalidThreshold.selector.revertWith();
-        } catch {
+        if (!success || exceededMaxCopy || data.length != 32)
             InvalidInterface.selector.revertWith();
-        }
+
+        // Check if the token implements ERC20.totalSupply with proper return data
+        (success, exceededMaxCopy, data) = LibCall.tryStaticCall(
+            condition.token,
+            gasleft(),
+            32,
+            abi.encodeCall(IERC20.totalSupply, ())
+        );
+
+        if (!success || exceededMaxCopy || data.length != 32)
+            InvalidInterface.selector.revertWith();
+
+        uint256 totalSupply = abi.decode(data, (uint256));
+        if (totalSupply == 0) InvalidTotalSupply.selector.revertWith();
+        if (condition.threshold > totalSupply) InvalidThreshold.selector.revertWith();
     }
 
-    function isValid(FeatureCondition memory condition) internal pure returns (bool) {
-        return condition.active && condition.token != address(0);
-    }
-
-    /// @notice Checks if the given number of votes meets the condition's threshold
-    /// @dev Returns false if condition is inactive, true if threshold is 0, otherwise compares
-    /// votes to threshold
-    /// @param condition The condition containing the threshold and active status
-    /// @param votes The number of votes to check against the threshold
-    /// @return True if the condition is met, false otherwise
-    function _meetsThreshold(
+    /// @notice Checks if a condition should be included for a given space
+    /// @dev Returns true if the condition is active, has a valid token, and meets the threshold
+    /// @param condition The condition to check
+    /// @param space The space address to check against
+    /// @return True if the condition should be included, false otherwise
+    function _isValidCondition(
         FeatureCondition memory condition,
-        uint256 votes
-    ) internal pure returns (bool) {
-        if (!isValid(condition)) return false;
-        uint256 threshold = condition.threshold;
-        if (threshold == 0) return true;
-        return votes >= threshold;
+        address space
+    ) internal view returns (bool) {
+        if (!condition.active) return false;
+        if (condition.token == address(0)) return false;
+        uint256 votes = IVotes(condition.token).getVotes(space);
+        return votes >= condition.threshold;
     }
 }
