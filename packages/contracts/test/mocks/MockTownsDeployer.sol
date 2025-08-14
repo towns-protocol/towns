@@ -19,12 +19,9 @@ contract MockTownsDeployer {
         );
 
         // Create proxy initialization bytecode
-        bytes memory proxyBytecode = abi.encodePacked(
+        bytes memory proxyBytecode = bytes.concat(
             type(ERC1967Proxy).creationCode,
-            abi.encode(
-                implementation,
-                abi.encodePacked(Towns.initialize.selector, abi.encode(l1Token, owner))
-            )
+            abi.encode(implementation, abi.encodeCall(Towns.initialize, (l1Token, owner)))
         );
 
         // Deploy proxy using create2
