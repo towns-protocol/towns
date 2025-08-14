@@ -147,11 +147,11 @@ func StartServerInNotificationMode(
 	// to the Apps field, so the rest of the code can be apps agnostic.
 	// in the future, this configuration (both *App and Apps) will be moved to
 	// a database, to allow dynamic config without code changes
-	if cfg.Notifications.TownsApp != nil {
-		cfg.Notifications.Apps = append(cfg.Notifications.Apps, *cfg.Notifications.TownsApp)
+	if cfg.Notifications.TownsApp.App != "" {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, cfg.Notifications.TownsApp)
 	}
-	if cfg.Notifications.SenditApp != nil {
-		cfg.Notifications.Apps = append(cfg.Notifications.Apps, *cfg.Notifications.SenditApp)
+	if cfg.Notifications.SenditApp.App != "" {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, cfg.Notifications.SenditApp)
 	}
 
 	notificationService := &Service{
