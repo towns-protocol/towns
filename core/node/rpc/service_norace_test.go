@@ -503,11 +503,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 	mu.Unlock()
 
@@ -554,11 +554,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 	mu.Unlock()
 
@@ -624,11 +624,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {
