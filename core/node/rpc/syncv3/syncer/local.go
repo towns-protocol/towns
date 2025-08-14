@@ -261,12 +261,21 @@ func (s *localStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest, 
 	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
 	defer cancel()
 
-	return stream.UpdatesSinceCookie(ctxWithTimeout, msg.cookie, func(streamAndCookie *StreamAndCookie) error {
-		s.subscriber.OnStreamEvent(&SyncStreamsResponse{
-			SyncOp:        SyncOp_SYNC_UPDATE,
-			Stream:        streamAndCookie,
-			TargetSyncIds: msg.syncIDs,
-		}, s.version)
-		return nil
-	})
+	return stream.UpdatesSinceCookie(
+		ctxWithTimeout,
+		&SyncCookie{
+			NodeAddress:       s.localAddr.Bytes(),
+			StreamId:          msg.cookie.GetStreamId(),
+			MinipoolGen:       msg.cookie.GetMinipoolGen(),
+			PrevMiniblockHash: msg.cookie.GetPrevMiniblockHash(),
+		},
+		func(streamAndCookie *StreamAndCookie) error {
+			s.subscriber.OnStreamEvent(&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_UPDATE,
+				Stream:        streamAndCookie,
+				TargetSyncIds: msg.syncIDs,
+			}, s.version)
+			return nil
+		},
+	)
 }
