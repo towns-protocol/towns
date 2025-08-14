@@ -460,6 +460,13 @@ type NotificationsConfig struct {
 	// send notifications to the client but only logs them.
 	// This is intended for development purposes. Defaults to false.
 	Simulate bool
+	// Since viper does not support arrays configurations via env var, 
+	// we can't use the Apps field directly. using two flat configuration 
+	// for towns and sendit apps for now. 
+	// in the future, this configuration (both *App and Apps) will be moved to 
+	// a database, to allow dynamic config without code changes
+	TownsApp *AppNotificationConfig
+	SenditApp *AppNotificationConfig
 	// Apps holds the notification configuration for each app
 	Apps []AppNotificationConfig
 	// APN holds the Apple Push Notification settings (deprecated - use Apps instead)

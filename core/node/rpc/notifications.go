@@ -148,6 +148,19 @@ func StartServerInNotificationMode(
 		exitSignal:      make(chan error, 1),
 	}
 
+	// Since viper does not support arrays configurations via env var,
+	// Apps field is not initialized automatically.
+	// As a workaround, we have the TownsApp and SenditApp, and here we copy their values
+	// to the Apps field, so the rest of the code can be apps agnostic.
+	// in the future, this configuration (both *App and Apps) will be moved to
+	// a database, to allow dynamic config without code changes
+	if cfg.Notifications.TownsApp != nil {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, *cfg.Notifications.TownsApp)
+	}
+	if cfg.Notifications.SenditApp != nil {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, *cfg.Notifications.SenditApp)
+	}
+
 	err := notificationService.startNotificationMode(notifier, opts)
 	if err != nil {
 		notificationService.Close()
