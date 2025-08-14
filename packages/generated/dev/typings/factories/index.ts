@@ -43,6 +43,7 @@ export { ITipping__factory } from "./ITipping__factory";
 export { ITownsPoints__factory } from "./ITownsPoints__factory";
 export { ITreasury__factory } from "./ITreasury__factory";
 export { IWalletLink__factory } from "./IWalletLink__factory";
+export { MainnetDelegation__factory } from "./MainnetDelegation__factory";
 export { Member__factory } from "./Member__factory";
 export { MembershipFacet__factory } from "./MembershipFacet__factory";
 export { MockERC721A__factory } from "./MockERC721A__factory";
