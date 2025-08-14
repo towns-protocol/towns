@@ -465,8 +465,8 @@ type NotificationsConfig struct {
 	// for towns and sendit apps for now.
 	// in the future, this configuration (both *App and Apps) will be moved to
 	// a database, to allow dynamic config without code changes
-	TownsApp  *AppNotificationConfig
-	SenditApp *AppNotificationConfig
+	TownsApp  AppNotificationConfig
+	SenditApp AppNotificationConfig
 	// Apps holds the notification configuration for each app
 	Apps []AppNotificationConfig
 	// APN holds the Apple Push Notification settings (deprecated - use Apps instead)
