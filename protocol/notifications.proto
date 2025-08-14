@@ -238,6 +238,8 @@ message WebPushSubscriptionObject {
 message SubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
+  // app identifies which app is making the subscription request
+  string app = 2;
 }
 
 message SubscribeWebPushResponse {}
@@ -245,6 +247,8 @@ message SubscribeWebPushResponse {}
 message UnsubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
+  // app identifies which app is making the unsubscription request
+  string app = 2;
 }
 
 message UnsubscribeWebPushResponse {}
@@ -263,6 +267,8 @@ message SubscribeAPNRequest {
   APNEnvironment environment = 2;
   // Requested push notification version (default=NOTIFICATION_PUSH_VERSION_1)
   NotificationPushVersion push_version = 3;
+  // app identifies which app is making the subscription request
+  string app = 4;
 }
 
 message APNSubscription {
@@ -277,6 +283,8 @@ message SubscribeAPNResponse {}
 message UnsubscribeAPNRequest {
   // APN device token
   bytes device_token = 1;
+  // app identifies which app is making the unsubscription request
+  string app = 2;
 }
 
 message UnsubscribeAPNResponse {}
