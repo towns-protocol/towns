@@ -101,5 +101,10 @@ func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
 }
 
 func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
-	return RiverError(Err_UNIMPLEMENTED, "DebugDropStream is not implemented yet in V3")
+	h, ok := s.handlerRegistry.Get(id)
+	if !ok {
+		return RiverError(Err_NOT_FOUND, "sync operation not found")
+	}
+
+	return h.DebugDropStream(ctx, streamId)
 }

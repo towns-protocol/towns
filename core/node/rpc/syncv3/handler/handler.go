@@ -52,6 +52,10 @@ type (
 
 		// Ping is used to keep the sync operation alive and make sure it is operational.
 		Ping(ctx context.Context, nonce string)
+
+		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
+		// Sends a SyncOp_SYNC_DOWN message to the receiver and unsubscribes from the stream updates.
+		DebugDropStream(ctx context.Context, streamId StreamId) error
 	}
 
 	// Receiver is a final receiver of the stream update message, i.e. client.
@@ -191,6 +195,23 @@ func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
 	}); err != nil {
 		s.log.Errorw("failed to add ping message to the stream updates queue", "error", err)
 	}
+}
+
+func (s *syncStreamHandlerImpl) DebugDropStream(ctx context.Context, streamId StreamId) error {
+	select {
+	case <-s.ctx.Done():
+		return s.ctx.Err()
+	default:
+	}
+
+	if err := s.eventBus.Unsubscribe(streamId, s); err != nil {
+		return err
+	}
+
+	return s.streamUpdates.AddMessage(&SyncStreamsResponse{
+		SyncOp:   SyncOp_SYNC_DOWN,
+		StreamId: streamId[:],
+	})
 }
 
 // OnUpdate implements the eventbus.StreamSubscriber interface.
