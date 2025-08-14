@@ -874,16 +874,16 @@ func testAddStreamsToSync(tester *serviceTester) {
 	)
 	require.Nilf(err, "error calling AddEvent: %v", err)
 	// bob adds alice's stream to sync
-	_, err = bobClient.AddStreamToSync(
+	_, err = bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "error calling AddStreamsToSync")
+	require.NoError(err, "error calling ModifySync")
 	// wait for the sync
 	syncRes.Receive()
 	msg := syncRes.Msg()
@@ -966,17 +966,17 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	require.Nilf(err, "error calling AddEvent: %v", err)
 
 	// bob adds alice's stream to sync
-	resp, err := bobClient.AddStreamToSync(
+	resp, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.AddStreamToSyncRequest{
-				SyncId:  syncId,
-				SyncPos: channel1,
+			&protocol.ModifySyncRequest{
+				SyncId:     syncId,
+				AddStreams: []*protocol.SyncCookie{channel1},
 			},
 		),
 	)
-	require.NoError(err, "AddStreamsToSync")
-	log.Infow("AddStreamToSync", "resp", resp)
+	require.NoError(err, "ModifySync")
+	log.Infow("ModifySync", "resp", resp)
 	// When AddEvent is called, node calls streamImpl.notifyToSubscribers() twice
 	// for different events. 	See hnt-3683 for explanation. First event is for
 	// the externally added event (by AddEvent). Second event is the miniblock
@@ -1005,12 +1005,12 @@ OuterLoop:
 	Act
 	*/
 	// bob removes alice's stream to sync
-	removeRes, err := bobClient.RemoveStreamFromSync(
+	removeRes, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.RemoveStreamFromSyncRequest{
-				SyncId:   syncId,
-				StreamId: channelId[:],
+			&protocol.ModifySyncRequest{
+				SyncId:        syncId,
+				RemoveStreams: [][]byte{channelId[:]},
 			},
 		),
 	)
@@ -1073,8 +1073,8 @@ func TestSingleAndMulti(t *testing.T) {
 		{"testMethods", testMethods},
 		{"testRiverDeviceId", testRiverDeviceId},
 		{"testSyncStreams", testSyncStreams},
-		{"testAddStreamsToSync", testAddStreamsToSync},
-		{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
+		{"testModifySyncAdd", testAddStreamsToSync},
+		{"testModifySyncRemove", testRemoveStreamsFromSync},
 	}
 
 	t.Run("single", func(t *testing.T) {
@@ -1349,34 +1349,6 @@ func TestModifySyncWithWrongCookie(t *testing.T) {
 	tt.require.NoError(err)
 	tt.require.Len(resp.Msg.GetAdds(), 0)
 	tt.require.Len(resp.Msg.GetRemovals(), 0)
-}
-
-func TestAddStreamToSyncWithWrongCookie(t *testing.T) {
-	tt := newServiceTester(t, serviceTesterOpts{numNodes: 2, start: true})
-
-	alice := tt.newTestClient(0, testClientOpts{enableSync: true})
-	_ = alice.createUserStreamGetCookie()
-	spaceId, _ := alice.createSpace()
-	channelId, _, cookie := alice.createChannel(spaceId)
-
-	alice.say(channelId, "hello from Alice")
-
-	alice.startSync()
-
-	// Replace node address in the cookie with the address of the other node
-	if common.BytesToAddress(cookie.NodeAddress) == tt.nodes[0].address {
-		cookie.NodeAddress = tt.nodes[1].address.Bytes()
-	} else {
-		cookie.NodeAddress = tt.nodes[0].address.Bytes()
-	}
-
-	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie")
-	_, err := alice.client.AddStreamToSync(alice.ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-		SyncId:  alice.SyncID(),
-		SyncPos: cookie,
-	}))
-	tt.require.NoError(err)
-	testfmt.Print(t, "AddStreamToSync with wrong node address in cookie done")
 }
 
 func TestStartSyncWithWrongCookie(t *testing.T) {
