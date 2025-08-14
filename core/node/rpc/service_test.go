@@ -1005,12 +1005,12 @@ OuterLoop:
 	Act
 	*/
 	// bob removes alice's stream to sync
-	removeRes, err := bobClient.RemoveStreamFromSync(
+	removeRes, err := bobClient.ModifySync(
 		ctx,
 		connect.NewRequest(
-			&protocol.RemoveStreamFromSyncRequest{
-				SyncId:   syncId,
-				StreamId: channelId[:],
+			&protocol.ModifySyncRequest{
+				SyncId:        syncId,
+				RemoveStreams: [][]byte{channelId[:]},
 			},
 		),
 	)
@@ -1073,8 +1073,8 @@ func TestSingleAndMulti(t *testing.T) {
 		{"testMethods", testMethods},
 		{"testRiverDeviceId", testRiverDeviceId},
 		{"testSyncStreams", testSyncStreams},
-		{"testAddStreamsToSync", testAddStreamsToSync},
-		{"testRemoveStreamsFromSync", testRemoveStreamsFromSync},
+		{"testModifySyncAdd", testAddStreamsToSync},
+		{"testModifySyncRemove", testRemoveStreamsFromSync},
 	}
 
 	t.Run("single", func(t *testing.T) {

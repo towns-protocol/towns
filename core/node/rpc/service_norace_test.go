@@ -523,11 +523,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
 	for i, syncCookie := range channels {
 		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
-		_, err = client1.RemoveStreamFromSync(ctx, connect.NewRequest(&protocol.RemoveStreamFromSyncRequest{
-			SyncId:   syncID,
-			StreamId: streamID[:],
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:        syncID,
+			RemoveStreams: [][]byte{streamID[:]},
 		}))
-		req.NoError(err, "RemoveStreamFromSync")
+		req.NoError(err, "ModifySync")
 
 		unsubbedStreams[streamID] = struct{}{}
 
