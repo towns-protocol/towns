@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 import {IFeatureManagerFacetBase} from "src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureCondition} from "src/factory/facets/feature/IFeatureManagerFacet.sol";
+import {FeatureCondition} from "src/factory/facets/feature/FeatureManagerStorage.sol";
 
 // contracts
 import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFacet.sol";

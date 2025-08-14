@@ -4,10 +4,22 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
-import {FeatureCondition} from "./IFeatureManagerFacet.sol";
 
 // contracts
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+
+/// @notice Represents a condition for feature activation
+/// @dev Used to determine if a feature should be enabled based on token voting power
+/// @param token The address of the token used for voting (must implement IVotes)
+/// @param threshold The minimum voting power (votes) required to activate the feature
+/// @param active Whether the condition is currently active
+/// @param extraData Additional data that might be used for specialized condition logic
+struct FeatureCondition {
+    address token;
+    bool active;
+    uint256 threshold;
+    bytes extraData;
+}
 
 /// @title FeatureManager
 library FeatureManagerStorage {
