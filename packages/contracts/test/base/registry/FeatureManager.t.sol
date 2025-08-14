@@ -79,6 +79,39 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
         assertEq(currentCondition.active, condition.active);
     }
 
+    function test_updateFeatureCondition(
+        bytes32 featureId,
+        FeatureCondition memory condition,
+        address to,
+        uint256 amount
+    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+        FeatureCondition memory newCondition = FeatureCondition({
+            token: address(townsToken),
+            threshold: 100 ether,
+            active: true,
+            extraData: ""
+        });
+
+        vm.prank(deployer);
+        vm.expectEmit(address(featureManagerFacet));
+        emit FeatureConditionSet(featureId, newCondition);
+        featureManagerFacet.updateFeatureCondition(featureId, newCondition);
+    }
+
+    function test_revertWith_updateFeatureCondition_featureNotActive() external {
+        vm.prank(deployer);
+        vm.expectRevert(FeatureNotActive.selector);
+        featureManagerFacet.updateFeatureCondition(
+            TEST_FEATURE_ID,
+            FeatureCondition({
+                token: address(townsToken),
+                threshold: 100 ether,
+                active: false,
+                extraData: ""
+            })
+        );
+    }
+
     function test_getFeatureConditions() external givenTokensAreMinted(deployer, TEST_THRESHOLD) {
         bytes32[] memory featureIds = new bytes32[](10);
 
@@ -110,6 +143,25 @@ contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacet
             assertEq(currentCondition.threshold, 0);
             assertEq(currentCondition.active, true);
         }
+    }
+
+    function test_revertWith_setFeatureCondition_featureAlreadyExists()
+        external
+        givenTokensAreMinted(deployer, TEST_THRESHOLD)
+    {
+        FeatureCondition memory condition = FeatureCondition({
+            token: address(townsToken),
+            threshold: 0,
+            active: true,
+            extraData: ""
+        });
+
+        vm.prank(deployer);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+
+        vm.prank(deployer);
+        vm.expectRevert(FeatureAlreadyExists.selector);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
     }
 
     function test_revertWith_setFeatureCondition_invalidToken() external {

@@ -23,23 +23,24 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
 
         _validateGetVotes(condition);
 
-        // Check totalSupply directly
-        try IERC20(condition.token).totalSupply() returns (uint256 totalSupply) {
-            if (totalSupply == 0) InvalidTotalSupply.selector.revertWith();
-            if (condition.threshold > totalSupply) InvalidThreshold.selector.revertWith();
-        } catch {
-            InvalidToken.selector.revertWith();
-        }
-
         FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
-        $.featureIds.add(featureId);
+        if (!$.featureIds.add(featureId)) FeatureAlreadyExists.selector.revertWith();
+        $.conditions[featureId] = condition;
+    }
+
+    function _updateFeatureCondition(
+        bytes32 featureId,
+        FeatureCondition calldata condition
+    ) internal {
+        FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
+        if (!$.featureIds.contains(featureId)) FeatureNotActive.selector.revertWith();
         $.conditions[featureId] = condition;
     }
 
     /// @notice Retrieves the condition for a specific feature
     /// @dev Returns the complete condition struct with all parameters
     /// @param featureId The unique identifier for the feature
-    /// @return Condition memory The complete condition configuration for the feature
+    /// @return FeatureCondition memory The complete condition configuration for the feature
     function _getFeatureCondition(
         bytes32 featureId
     ) internal view returns (FeatureCondition memory) {
@@ -48,38 +49,46 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
 
     /// @notice Retrieves all feature conditions
     /// @dev Returns an array of all feature conditions
-    /// @return Condition[] An array of all feature conditions
+    /// @return FeatureCondition[] An array of all feature conditions
     function _getFeatureConditions() internal view returns (FeatureCondition[] memory) {
-        uint256 featureCount = FeatureManagerStorage.getLayout().featureIds.length();
+        FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
+        uint256 featureCount = $.featureIds.length();
 
         FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);
         for (uint256 i; i < featureCount; ++i) {
-            conditions[i] = FeatureManagerStorage.getLayout().conditions[
-                FeatureManagerStorage.getLayout().featureIds.at(i)
-            ];
+            conditions[i] = $.conditions[$.featureIds.at(i)];
         }
         return conditions;
     }
 
     /// @notice Retrieves all feature conditions for a specific space
     /// @dev Returns an array of all feature conditions that are active for the space
-    /// @return Condition[] An array of all feature conditions that are active for the space
+    /// @return FeatureCondition[] An array of all feature conditions that are active for the space
     function _getFeatureConditionsForSpace(
         address space
     ) internal view returns (FeatureCondition[] memory) {
-        uint256 featureCount = FeatureManagerStorage.getLayout().featureIds.length();
+        FeatureManagerStorage.Layout storage $ = FeatureManagerStorage.getLayout();
+        uint256 featureCount = $.featureIds.length();
 
         FeatureCondition[] memory conditions = new FeatureCondition[](featureCount);
         uint256 index;
 
         for (uint256 i; i < featureCount; ++i) {
-            FeatureCondition storage condition = FeatureManagerStorage.getLayout().conditions[
-                FeatureManagerStorage.getLayout().featureIds.at(i)
-            ];
+            bytes32 id = $.featureIds.at(i);
+            FeatureCondition storage cond = $.conditions[id];
+            if (!cond.active) continue;
 
-            uint256 votes = IVotes(condition.token).getVotes(space);
+            address token = cond.token;
+            if (token == address(0)) continue;
 
-            if (_meetsThreshold(condition, votes)) conditions[index++] = condition;
+            uint256 threshold = cond.threshold;
+            if (threshold == 0) {
+                conditions[index++] = cond;
+                continue;
+            }
+
+            uint256 votes = IVotes(token).getVotes(space);
+            if (votes >= threshold) conditions[index++] = cond;
         }
 
         assembly ("memory-safe") {
@@ -101,10 +110,15 @@ abstract contract FeatureManagerBase is IFeatureManagerFacetBase {
     }
 
     function _validateGetVotes(FeatureCondition calldata condition) internal view {
-        // Check IVotes support by attempting to call getVotes
-        try IVotes(condition.token).getVotes(address(this)) returns (uint256) {
-            // If we get here, getVotes is supported
-            return;
+        if (condition.token.code.length == 0) InvalidInterface.selector.revertWith();
+        (bool ok, ) = condition.token.staticcall(
+            abi.encodeWithSelector(IVotes.getVotes.selector, address(this))
+        );
+        if (!ok) InvalidInterface.selector.revertWith();
+
+        try IERC20(condition.token).totalSupply() returns (uint256 totalSupply) {
+            if (totalSupply == 0) InvalidTotalSupply.selector.revertWith();
+            if (condition.threshold > totalSupply) InvalidThreshold.selector.revertWith();
         } catch {
             InvalidInterface.selector.revertWith();
         }

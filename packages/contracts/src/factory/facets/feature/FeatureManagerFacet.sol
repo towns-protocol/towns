@@ -31,6 +31,15 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet, Featur
     }
 
     /// @inheritdoc IFeatureManagerFacet
+    function updateFeatureCondition(
+        bytes32 featureId,
+        FeatureCondition calldata condition
+    ) external onlyOwner {
+        _updateFeatureCondition(featureId, condition);
+        emit FeatureConditionSet(featureId, condition);
+    }
+
+    /// @inheritdoc IFeatureManagerFacet
     function getFeatureCondition(
         bytes32 featureId
     ) external view returns (FeatureCondition memory) {
@@ -59,6 +68,8 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet, Featur
     function checkFeatureCondition(bytes32 featureId, address space) external view returns (bool) {
         FeatureCondition memory condition = _getFeatureCondition(featureId);
         if (!condition.active) return false;
+        if (condition.threshold == 0) return condition.token != address(0);
+        if (condition.token == address(0)) return false;
         uint256 votes = IVotes(condition.token).getVotes(space);
         return _meetsThreshold(condition, votes);
     }
