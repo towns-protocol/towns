@@ -72,6 +72,11 @@ contract MainnetDelegationTest is BaseRegistryTest, IMainnetDelegationBase {
         vm.expectEmit(address(rewardsDistributionFacet));
         emit ClaimReward(delegator, claimer, currentReward);
 
+        address[] memory delegators = mainnetDelegationFacet.getDelegatorsByAuthorizedClaimer(
+            claimer
+        );
+        assertContains(delegators, delegator);
+
         vm.prank(claimer);
         uint256 reward = rewardsDistributionFacet.claimReward(delegator, claimer);
 

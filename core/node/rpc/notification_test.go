@@ -69,6 +69,9 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	_, err := makeMiniblock(ctx, test.streamClient, test.dmStreamID, false, 0)
 	test.req.NoError(err)
+	// wait a little bit to increase the chances that the miniblock will be created before
+	// the service is initialized
+	time.Sleep(100 * time.Millisecond)
 
 	// initialize notifications service AFTER we've created the stream and sent a message
 	notificationService := initNotificationService(ctx, tester, nc)
@@ -1616,6 +1619,7 @@ func (nc *notificationCapture) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	_ []byte,
+	_ string,
 ) (bool, error) {
 	nc.WebPushNotificationsMu.Lock()
 	defer nc.WebPushNotificationsMu.Unlock()
@@ -1638,6 +1642,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	eventHash common.Hash,
 	_ *payload2.Payload,
 	_ bool,
+	_ string,
 ) (bool, int, error) {
 	nc.ApnPushNotificationsMu.Lock()
 	defer nc.ApnPushNotificationsMu.Unlock()
