@@ -442,6 +442,16 @@ type StreamTrackingConfig struct {
 	UseSharedSyncer bool
 }
 
+// AppNotificationConfig holds notification configuration for a specific app.
+type AppNotificationConfig struct {
+	// App identifies which app this configuration is for
+	App string
+	// APN holds the Apple Push Notification settings for this app
+	APN APNPushNotificationsConfig
+	// Web holds the Web Push notification settings for this app
+	Web WebPushNotificationConfig `mapstructure:"webpush"`
+}
+
 type NotificationsConfig struct {
 	// SubscriptionExpirationDuration if the client isn't seen within this duration stop sending
 	// notifications to it. Defaults to 90 days.
@@ -450,9 +460,11 @@ type NotificationsConfig struct {
 	// send notifications to the client but only logs them.
 	// This is intended for development purposes. Defaults to false.
 	Simulate bool
-	// APN holds the Apple Push Notification settings
+	// Apps holds the notification configuration for each app
+	Apps []AppNotificationConfig
+	// APN holds the Apple Push Notification settings (deprecated - use Apps instead)
 	APN APNPushNotificationsConfig
-	// Web holds the Web Push notification settings
+	// Web holds the Web Push notification settings (deprecated - use Apps instead)
 	Web WebPushNotificationConfig `mapstructure:"webpush"`
 
 	// Authentication holds configuration for the Client API authentication service.
