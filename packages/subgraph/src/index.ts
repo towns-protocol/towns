@@ -101,6 +101,40 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     }
 })
 
+ponder.on('SpaceOwner:Transfer', async ({ event, context }) => {
+    // Get block number
+    const blockNumber = event.block.number
+
+    try {
+        // Find the space by tokenId
+        const space = await context.db.sql.query.space.findFirst({
+            where: eq(schema.space.tokenId, event.args.tokenId),
+        })
+
+        if (!space) {
+            console.warn(`Space not found for tokenId ${event.args.tokenId} in Transfer event`)
+            return
+        }
+
+        // Update the space's owner to the new owner
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                owner: event.args.to,
+            })
+            .where(eq(schema.space.tokenId, event.args.tokenId))
+
+        console.log(
+            `Space ${space.id} (tokenId: ${event.args.tokenId}) transferred from ${event.args.from} to ${event.args.to} at block ${blockNumber}`
+        )
+    } catch (error) {
+        console.error(
+            `Error processing SpaceOwner:Transfer at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
 ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
     // Get block number
     const blockNumber = event.block.number
