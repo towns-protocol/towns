@@ -9,6 +9,7 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
+    FOUNDRY_VERBOSITY: 3
 on:
     schedule:
         # Run every hour
@@ -217,7 +218,19 @@ jobs:
 
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
-              run: yarn test:unit
+              run: |
+                  echo "Running unit tests..."
+                  yarn test:unit || {
+                    echo "❌ Unit tests failed. Checking for fuzz test failures..."
+                    if [ -d "packages/contracts/cache/fuzz/failures" ]; then
+                      echo "Found fuzz test failures:"
+                      ls -la packages/contracts/cache/fuzz/failures/
+                      echo "Latest failure details:"
+                      find packages/contracts/cache/fuzz/failures -name "*.md" -exec cat {} \;
+                    fi
+                    echo "❌ Exiting due to test failures"
+                    exit 1
+                  }
 
     Multinode:
         permissions: write-all
