@@ -233,7 +233,11 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 		storageMb, err := mbInfo.AsStorageMb()
 		require.NoError(t, err)
 
-		require.False(t, storageMb.HasLegacySnapshot, "Regular miniblock without snapshot should have HasLegacySnapshot=false")
+		require.False(
+			t,
+			storageMb.HasLegacySnapshot,
+			"Regular miniblock without snapshot should have HasLegacySnapshot=false",
+		)
 		miniblocks = append(miniblocks, storageMb)
 	}
 
@@ -278,7 +282,15 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 	require.True(t, storageMb4.HasLegacySnapshot, "Miniblock with embedded snapshot should have HasLegacySnapshot=true")
 
 	// Write the miniblock with legacy snapshot
-	err = streamStore.Storage.WriteMiniblocks(ctx, streamId, []*storage.MiniblockDescriptor{storageMb4}, 5, [][]byte{}, 4, 0)
+	err = streamStore.Storage.WriteMiniblocks(
+		ctx,
+		streamId,
+		[]*storage.MiniblockDescriptor{storageMb4},
+		5,
+		[][]byte{},
+		4,
+		0,
+	)
 	require.NoError(t, err)
 
 	// Verify snapshot index advanced to block 4

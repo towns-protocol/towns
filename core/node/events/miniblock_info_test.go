@@ -309,7 +309,11 @@ func TestNewMiniblockInfoFromDescriptor_NonLegacySnapshot(t *testing.T) {
 	require.Equal(t, int64(1), mbInfo.Ref.Num)
 	require.Nil(t, mbInfo.Header().GetSnapshot(), "Should not have snapshot in header for non-legacy format")
 	require.NotNil(t, mbInfo.SnapshotEnvelope, "Should have separate snapshot envelope for non-legacy format")
-	require.True(t, bytes.Equal(parsedSnapshot.Envelope.Hash, mbInfo.SnapshotEnvelope.Hash), "Snapshot hash should match")
+	require.True(
+		t,
+		bytes.Equal(parsedSnapshot.Envelope.Hash, mbInfo.SnapshotEnvelope.Hash),
+		"Snapshot hash should match",
+	)
 }
 
 // TestHasLegacySnapshot_GenesisMiniblock tests that genesis miniblocks
@@ -474,7 +478,11 @@ func TestAsStorageMb_MissingSnapshotEnvelope(t *testing.T) {
 	// Convert to storage descriptor should fail
 	_, err = mbInfo.AsStorageMb()
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "snapshot hash is set in the miniblock header, but no snapshot envelope is provided")
+	require.Contains(
+		t,
+		err.Error(),
+		"snapshot hash is set in the miniblock header, but no snapshot envelope is provided",
+	)
 }
 
 // TestAsStorageMb_MixedSnapshots tests converting multiple miniblocks
