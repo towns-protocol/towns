@@ -1,4 +1,4 @@
-import { ContractTransaction, ethers } from 'ethers'
+import { ContractTransaction, ethers, Signer } from 'ethers'
 import { ISpaceOwnerBase } from '@towns-protocol/generated/dev/typings/SpaceOwner'
 import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
 import { SpaceOwner__factory } from '@towns-protocol/generated/dev/typings/factories/SpaceOwner__factory'
@@ -6,6 +6,7 @@ import { Keyable } from '../cache/Keyable'
 import { SimpleCache } from '../cache/SimpleCache'
 import { TransactionOpts } from '../types/ContractTypes'
 import { SpaceAddressFromSpaceId } from '../utils/ut'
+import { GuardianFacetShim } from './GuardianFacetShim'
 
 class SpaceOwnerGetSpaceInfo implements Keyable {
     spaceAddress: string
@@ -26,9 +27,12 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
         SpaceOwnerGetSpaceInfo,
         ISpaceOwnerBase.SpaceStructOutput
     >
+    private readonly guardianFacet: GuardianFacetShim
 
     constructor(address: string, provider: ethers.providers.Provider) {
         super(address, provider, connect, abi)
+
+        this.guardianFacet = new GuardianFacetShim(address, provider)
 
         this.spaceInfoCache = new SimpleCache({
             ttlSeconds: 15 * 60,
@@ -44,6 +48,70 @@ export class SpaceOwner extends BaseContractShim<typeof connect> {
 
     public async getNumTotalSpaces(): Promise<ethers.BigNumber> {
         return this.read.totalSupply()
+    }
+
+    public async ownerOf(tokenId: string): Promise<string> {
+        return this.read.ownerOf(tokenId)
+    }
+
+    public async isGuardianEnabled(ownerAddress: string): Promise<boolean> {
+        return this.guardianFacet.read.isGuardianEnabled(ownerAddress)
+    }
+
+    public async guardianCooldown(ownerAddress: string): Promise<bigint> {
+        return (await this.guardianFacet.read.guardianCooldown(ownerAddress)).toBigInt()
+    }
+
+    public async getDefaultCooldown(): Promise<bigint> {
+        return (await this.guardianFacet.read.getDefaultCooldown()).toBigInt()
+    }
+
+    public async enableGuardian<T = ContractTransaction>(args: {
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }): Promise<T extends undefined ? ContractTransaction : T> {
+        const { signer, overrideExecution, transactionOpts } = args
+        return this.guardianFacet.executeCall({
+            signer,
+            functionName: 'enableGuardian',
+            args: [],
+            overrideExecution,
+            transactionOpts,
+        })
+    }
+
+    public async disableGuardian<T = ContractTransaction>(args: {
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }) {
+        const { signer, overrideExecution, transactionOpts } = args
+        return this.guardianFacet.executeCall({
+            signer,
+            functionName: 'disableGuardian',
+            args: [],
+            overrideExecution,
+            transactionOpts,
+        })
+    }
+
+    public async transferOwnership<T = ContractTransaction>(args: {
+        from: string
+        to: string
+        tokenId: string
+        signer: Signer
+        overrideExecution?: OverrideExecution<T>
+        transactionOpts?: TransactionOpts
+    }) {
+        const { from, to, tokenId, signer, overrideExecution, transactionOpts } = args
+        return this.executeCall({
+            signer,
+            functionName: 'transferFrom',
+            args: [from, to, tokenId],
+            overrideExecution,
+            transactionOpts,
+        })
     }
 
     public async updateSpaceInfo<T = ContractTransaction>(args: {
