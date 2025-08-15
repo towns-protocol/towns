@@ -276,8 +276,18 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			// add several events to the stream
 			numToAdd := 1 + int(streamID[3]%50)
 			for i := range numToAdd {
-				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
+				addEventToStream(
+					t,
+					ctx,
+					streamCache.params,
+					streamSync,
+					fmt.Sprintf(
+						"msg# %d",
+						i,
+					),
+					&MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0},
+					false,
+				)
 			}
 
 			mu.Lock()
@@ -424,8 +434,18 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 			streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
-				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
+				addEventToStream(
+					t,
+					ctx,
+					streamCache.params,
+					streamSync,
+					fmt.Sprintf(
+						"msg# %d",
+						i,
+					),
+					&MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0},
+					false,
+				)
 			}
 			streamsWithEvents[streamID] = 1 + int(streamID[3]%50)
 		} else {

@@ -9,8 +9,8 @@ import {
     makeUserStreamId,
 } from '../id'
 import { UserSettingsStreamModel, UserSettingsStreamsView } from './streams/userSettingsStreams'
-import { UnreadMarkersModel, unreadMarkersTransform } from './streams/unreadMarkersTransform'
-import { MentionsModel, spaceMentionsTransform } from './streams/spaceMentionsTransform'
+import { UnreadMarkersModel, unreadMarkersTransform } from './transforms/unreadMarkersTransform'
+import { MentionsModel, spaceMentionsTransform } from './transforms/spaceMentionsTransform'
 import { SpaceStreamsView } from './streams/spaceStreams'
 import { UserStreamModel, UserStreamsView } from './streams/userStreamsView'
 import { UserMetadataStreamModel, UserMetadataStreamsView } from './streams/userMetadataStreams'
@@ -150,6 +150,8 @@ export class StreamsView {
             .map(dmsAndGdmsTransform)
 
         const myDmsAndGdmsUnreadIds = combine({
+            dmGlobal: this.notificationSettings.map((x) => x.settings?.dmGlobal),
+            gdmGlobal: this.notificationSettings.map((x) => x.settings?.gdmGlobal),
             mutedStreamIds: this.mutedStreamIds,
             myDmsAndGdms,
             unreadMarkers,

@@ -14,7 +14,7 @@ library DeployMainnetDelegation {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(11);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(12);
         arr.p(MainnetDelegation.setProxyDelegation.selector);
         arr.p(MainnetDelegation.setDelegationDigest.selector);
         arr.p(MainnetDelegation.relayDelegations.selector);
@@ -26,6 +26,7 @@ library DeployMainnetDelegation {
         arr.p(MainnetDelegation.getAuthorizedClaimer.selector);
         arr.p(MainnetDelegation.getProxyDelegation.selector);
         arr.p(MainnetDelegation.getMessenger.selector);
+        arr.p(MainnetDelegation.getDelegatorsByAuthorizedClaimer.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {

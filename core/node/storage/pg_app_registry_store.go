@@ -1036,7 +1036,8 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
 		return AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to marshal app metadata to JSON").Tag("metadata", metadata).Tag("username", metadata.Username)
+			Message("Unable to marshal app metadata to JSON").
+			Tag("metadata", metadata).Tag("username", metadata.Username)
 	}
 
 	tag, err := txn.Exec(

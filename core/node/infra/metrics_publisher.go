@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/logging"
 )

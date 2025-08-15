@@ -1598,8 +1598,12 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-            const miniblocks = await waitForStreamEx(streamId, response)
-            const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
+            const data = await waitForStreamEx(streamId, response)
+            const unpackedResponse = await unpackStreamEx(
+                data.miniblocks,
+                data.snapshot,
+                this.opts?.unpackEnvelopeOpts,
+            )
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)

@@ -12,13 +12,14 @@ import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFace
 
 library DeployFeatureManager {
     function selectors() internal pure returns (bytes4[] memory _selectors) {
-        _selectors = new bytes4[](6);
+        _selectors = new bytes4[](7);
         _selectors[0] = FeatureManagerFacet.setFeatureCondition.selector;
-        _selectors[1] = FeatureManagerFacet.getFeatureCondition.selector;
-        _selectors[2] = FeatureManagerFacet.getFeatureConditions.selector;
-        _selectors[3] = FeatureManagerFacet.getFeatureConditionsForSpace.selector;
-        _selectors[4] = FeatureManagerFacet.checkFeatureCondition.selector;
-        _selectors[5] = FeatureManagerFacet.disableFeatureCondition.selector;
+        _selectors[1] = FeatureManagerFacet.updateFeatureCondition.selector;
+        _selectors[2] = FeatureManagerFacet.getFeatureCondition.selector;
+        _selectors[3] = FeatureManagerFacet.getFeatureConditions.selector;
+        _selectors[4] = FeatureManagerFacet.getFeatureConditionsForSpace.selector;
+        _selectors[5] = FeatureManagerFacet.checkFeatureCondition.selector;
+        _selectors[6] = FeatureManagerFacet.disableFeatureCondition.selector;
     }
 
     function makeCut(

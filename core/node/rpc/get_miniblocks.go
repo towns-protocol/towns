@@ -98,8 +98,8 @@ func (s *Service) applyExclusionFilter(info *MiniblockInfo, exclusionFilter []*E
 
 	// Return new MiniblockInfo with filtered proto
 	return &MiniblockInfo{
-		Proto:    filteredMiniblock,
-		Ref:      info.Ref,
+		Proto:            filteredMiniblock,
+		Ref:              info.Ref,
 		SnapshotEnvelope: info.SnapshotEnvelope,
 	}
 }

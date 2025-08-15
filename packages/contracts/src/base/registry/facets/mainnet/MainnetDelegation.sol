@@ -116,4 +116,11 @@ contract MainnetDelegation is IMainnetDelegation, MainnetDelegationBase, Ownable
     function getAuthorizedClaimer(address delegator) external view returns (address) {
         return _getAuthorizedClaimer(delegator);
     }
+
+    /// @inheritdoc IMainnetDelegation
+    function getDelegatorsByAuthorizedClaimer(
+        address claimer
+    ) external view returns (address[] memory) {
+        return _getDelegatorsByAuthorizedClaimer(claimer);
+    }
 }

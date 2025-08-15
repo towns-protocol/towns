@@ -426,7 +426,11 @@ func (ss *SyncerSet) DebugDropStream(ctx context.Context, streamID StreamId) err
 // Extra logic is applied if changeNode is true, which means that the node from the cookie should not be used.
 // Returns the selected node address and true if a node was found and available, false otherwise.
 // Initializes syncer for the selected node if it does not exist yet.
-func (ss *SyncerSet) selectNodeForStream(ctx context.Context, cookie *SyncCookie, changeNode bool) (common.Address, bool) {
+func (ss *SyncerSet) selectNodeForStream(
+	ctx context.Context,
+	cookie *SyncCookie,
+	changeNode bool,
+) (common.Address, bool) {
 	streamID := StreamId(cookie.GetStreamId())
 	usedNode := common.BytesToAddress(cookie.GetNodeAddress())
 

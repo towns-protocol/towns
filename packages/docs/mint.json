@@ -93,13 +93,11 @@
           ]
         },
         {
-          "group": "Towns DAO",
+          "group": "Token Governance",
           "pages": [
-            "towns-dao/overview",
-            "towns-dao/governance-framework",
-            "towns-dao/stakeholders",
-            "towns-dao/proposals",
-            "towns-dao/stages"
+            "token-governance/overview",
+            "token-governance/governance-framework",
+            "token-governance/towns-token"
           ]
         },
         {
@@ -212,10 +210,7 @@
       "pages": [
         "white-paper/towns-technical-overview",
         "white-paper/technical-whitepaper",
-        {
-          "name": "MiCA Whitepaper",
-          "url": "https://www.towns.com/mica-whitepaper.pdf"
-        }
+        "white-paper/mica-whitepaper"
       ]
     }
   ],

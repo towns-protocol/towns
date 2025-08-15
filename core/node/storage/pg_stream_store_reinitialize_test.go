@@ -20,7 +20,6 @@ func TestReinitializeStreamStorage_CreateNew(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Prepare miniblocks
@@ -77,7 +76,6 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create initial stream
@@ -91,7 +89,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	require.NoError(err)
 
 	// Write a miniblock to extend the stream
-	err = store.WriteMiniblocks(ctx, streamId, 
+	err = store.WriteMiniblocks(ctx, streamId,
 		[]*MiniblockDescriptor{{Number: 1, Data: []byte("miniblock 1")}},
 		2, [][]byte{}, 1, 0)
 	require.NoError(err)
@@ -108,14 +106,14 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	// Prepare new miniblocks for reinitialization (extending the stream)
 	newMiniblocks := []*MiniblockDescriptor{
 		{
-			Number:   1,
-			Hash:     common.HexToHash("0x02"),
-			Data:     []byte("new miniblock 1 - should be ignored"),
+			Number: 1,
+			Hash:   common.HexToHash("0x02"),
+			Data:   []byte("new miniblock 1 - should be ignored"),
 		},
 		{
-			Number: 2,
-			Hash:   common.HexToHash("0x03"),
-			Data:   []byte("new miniblock 2"),
+			Number:   2,
+			Hash:     common.HexToHash("0x03"),
+			Data:     []byte("new miniblock 2"),
 			Snapshot: []byte("new snapshot 2"),
 		},
 		{
@@ -134,13 +132,13 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	require.NoError(err)
 	// With last snapshot at 2, should return from miniblock 2 onwards
 	require.GreaterOrEqual(len(result.Miniblocks), 2) // At least miniblocks 2 and 3
-	
+
 	// Find miniblock 0 to verify it wasn't changed
 	mb0, err := store.ReadMiniblocks(ctx, streamId, 0, 1, false)
 	require.NoError(err)
 	require.Len(mb0, 1)
 	require.Equal([]byte("genesis miniblock"), mb0[0].Data) // Original data preserved
-	
+
 	// Verify only new miniblocks 2 and 3 were added (0 and 1 already existed)
 	allMbs, err := store.ReadMiniblocks(ctx, streamId, 0, 4, false)
 	require.NoError(err)
@@ -153,7 +151,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 	// Verify old minipool events were deleted and new generation marker exists
 	debugData, err := store.DebugReadStreamData(ctx, streamId)
 	require.NoError(err)
-	require.Len(debugData.Events, 1) // Only generation marker
+	require.Len(debugData.Events, 1)                        // Only generation marker
 	require.Equal(int64(4), debugData.Events[0].Generation) // Last miniblock is 3, so generation is 4
 	require.Equal(int64(-1), debugData.Events[0].Slot)
 
@@ -168,7 +166,6 @@ func TestReinitializeStreamStorage_ValidationErrors(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -246,7 +243,6 @@ func TestReinitializeStreamStorage_UpdateValidation(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create stream with initial miniblocks
@@ -275,7 +271,6 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	existingStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	nonExistingStreamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
@@ -295,17 +290,17 @@ func TestReinitializeStreamStorage_ExistenceChecks(t *testing.T) {
 	// Test 2: When stream doesn't exist, it should create it regardless of updateExisting
 	err = store.ReinitializeStreamStorage(ctx, nonExistingStreamId, miniblocks, 0, true)
 	require.NoError(err) // Should succeed and create the stream
-	
+
 	// Verify the stream was created
 	result, err := store.ReadStreamFromLastSnapshot(ctx, nonExistingStreamId, 10)
 	require.NoError(err)
 	require.Len(result.Miniblocks, 1)
-	
+
 	// Test 3: When stream doesn't exist and updateExisting=false, it should still create it
 	anotherStreamId := testutils.FakeStreamId(STREAM_USER_INBOX_BIN)
 	err = store.ReinitializeStreamStorage(ctx, anotherStreamId, miniblocks, 0, false)
 	require.NoError(err) // Should succeed and create the stream
-	
+
 	// Verify this stream was also created
 	result, err = store.ReadStreamFromLastSnapshot(ctx, anotherStreamId, 10)
 	require.NoError(err)
@@ -319,7 +314,6 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -365,11 +359,11 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 	count1, err := store.GetMiniblockCandidateCount(ctx, streamId, 1)
 	require.NoError(err)
 	require.Equal(0, count1, "candidate 1 should be deleted")
-	
+
 	count2, err := store.GetMiniblockCandidateCount(ctx, streamId, 2)
 	require.NoError(err)
 	require.Equal(0, count2, "candidate 2 should be deleted")
-	
+
 	count3, err := store.GetMiniblockCandidateCount(ctx, streamId, 3)
 	require.NoError(err)
 	require.Equal(1, count3, "candidate 3 should remain")
@@ -380,7 +374,6 @@ func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -432,7 +425,6 @@ func TestReinitializeStreamStorage_LargeDataSet(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Create 100+ miniblocks
@@ -470,7 +462,6 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	tests := []struct {
 		name                     string
@@ -510,7 +501,7 @@ func TestReinitializeStreamStorage_SnapshotHandling(t *testing.T) {
 				{Number: 2, Data: []byte("mb2"), Snapshot: []byte("snapshot2")},
 			},
 			lastSnapshotMiniblockNum: 2,
-			expectedSnapshot:         2, // Snapshot is at position 2 in returned array  
+			expectedSnapshot:         2, // Snapshot is at position 2 in returned array
 			expectedMiniblockCount:   3, // Returns all miniblocks when snapshot is at end
 		},
 	}
@@ -537,7 +528,6 @@ func TestReinitializeStreamStorage_MinipoolGeneration(t *testing.T) {
 	params := setupStreamStorageTest(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	tests := []struct {
 		name               string
@@ -593,7 +583,6 @@ func TestReinitializeStreamStorage_NonZeroStart(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test miniblocks starting from non-zero
@@ -629,7 +618,6 @@ func TestReinitializeStreamStorage_OverlappingUpdate(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -679,7 +667,6 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Manually create a stream without miniblocks (violates invariant)
@@ -688,9 +675,11 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 		"CreateStreamWithoutMiniblocks",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			_, err := tx.Exec(ctx,
+			_, err := tx.Exec(
+				ctx,
 				"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false)",
-				streamId)
+				streamId,
+			)
 			return err
 		},
 		nil,
@@ -712,7 +701,6 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 	require := require.New(t)
 	ctx := params.ctx
 	store := params.pgStreamStore
-
 
 	tests := []struct {
 		name                     string
@@ -756,7 +744,7 @@ func TestReinitializeStreamStorage_SnapshotValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Use a different stream ID for each test
 			testStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-			
+
 			err := store.ReinitializeStreamStorage(ctx, testStreamId, tt.miniblocks, tt.lastSnapshotMiniblockNum, false)
 			if tt.expectedError != "" {
 				require.Error(err)
@@ -774,7 +762,6 @@ func TestReinitializeStreamStorage_IntegerOverflow(t *testing.T) {
 	ctx := params.ctx
 	store := params.pgStreamStore
 
-
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 	// Test with miniblock number at MaxInt64
@@ -783,7 +770,7 @@ func TestReinitializeStreamStorage_IntegerOverflow(t *testing.T) {
 		{Number: math.MaxInt64, Data: []byte("mb at max")},
 	}
 
-	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, math.MaxInt64 - 1, false)
+	err := store.ReinitializeStreamStorage(ctx, streamId, miniblocks, math.MaxInt64-1, false)
 	require.Error(err)
 	require.Contains(err.Error(), "miniblock number overflow")
 }

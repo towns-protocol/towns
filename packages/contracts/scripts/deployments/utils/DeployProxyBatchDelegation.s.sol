@@ -15,6 +15,7 @@ import {DeployTownsMainnet} from "./DeployTownsMainnet.s.sol";
 
 contract DeployProxyBatchDelegation is Deployer {
     address internal constant CLAIMERS = 0x0bEe55b52d01C4D5d4D0cfcE1d6e0baE6722db05;
+    address internal constant CLAIMERS_SEPOLIA = 0xeeDCAB3c3B032D5627dcF5e1475E0e24a88b4A21;
     address internal constant BASE_REGISTRY = 0x7c0422b31401C936172C897802CF0373B35B7698;
     address internal constant BASE_REGISTRY_SEPOLIA = 0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F;
     address internal constant MESSENGER = 0x866E82a600A1414e583f7F13623F1aC5d58b0Afa;
@@ -77,6 +78,8 @@ contract DeployProxyBatchDelegation is Deployer {
     function _getClaimers(address deployer) internal returns (address) {
         if (block.chainid == 1) {
             return CLAIMERS;
+        } else if (block.chainid == 11_155_111) {
+            return CLAIMERS_SEPOLIA;
         }
 
         vm.broadcast(deployer);
