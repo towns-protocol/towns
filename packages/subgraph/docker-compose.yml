@@ -19,6 +19,10 @@ services:
             - subgraph-db:/var/lib/postgresql/data
 
     subgraph-indexer:
+        # TODO: remove this in favor of building from Dockerfile locally 
+        # once we have fixed issues building image on arm64 machine
+        # image: public.ecr.aws/h5v6m2x1/subgraph:60570c1
+        platform: linux/amd64
         build:
             context: ../../
             dockerfile: packages/subgraph/Dockerfile
@@ -26,19 +30,22 @@ services:
             subgraph-db:
                 condition: service_healthy
         environment:
-            - NODE_ENV=development
+            - NODE_ENV=production
             - DATABASE_SCHEMA=public
             - DB_HOST=subgraph-db
             - DB_PORT=5432
             - DB_USER=postgres
             - DB_PASSWORD=postgres
-            - DATABASE_URL=postgresql://postgres:postgres@subgraph-db:5432/postgres
             - PONDER_CONFIG=${PONDER_CONFIG}
             - PONDER_RPC_URL_1=${PONDER_RPC_URL_1}
             - PONDER_START_BLOCK=${PONDER_START_BLOCK}
             - PONDER_ENVIRONMENT=${PONDER_ENVIRONMENT}
 
     subgraph-server:
+        # TODO: remove this in favor of building from Dockerfile locally 
+        # once we have fixed issues building image on arm64 machine
+        # image: public.ecr.aws/h5v6m2x1/subgraph:60570c1
+        platform: linux/amd64
         build:
             context: ../../
             dockerfile: packages/subgraph/Dockerfile
@@ -51,10 +58,6 @@ services:
         environment:
             - NODE_ENV=production
             - DATABASE_SCHEMA=public
-            - DB_HOST=subgraph-db
-            - DB_PORT=5432
-            - DB_USER=postgres
-            - DB_PASSWORD=postgres
             - DATABASE_URL=postgresql://postgres:postgres@subgraph-db:5432/postgres
             - PONDER_RPC_URL_1=${PONDER_RPC_URL_1}
             - PONDER_START_BLOCK=${PONDER_START_BLOCK}
