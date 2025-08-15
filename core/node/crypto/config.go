@@ -162,7 +162,7 @@ type OnChainSettings struct {
 
 	// Number of miniblocks to keep for each type of stream.
 	// 0 means keep all miniblocks.
-	// 
+	//
 	StreamHistoryMiniblocks StreamHistoryMiniblocks `mapstructure:",squash"`
 }
 

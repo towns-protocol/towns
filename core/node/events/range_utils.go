@@ -38,7 +38,10 @@ import (
 //   - Present ranges that are completely outside the requested range
 //   - Overlapping present ranges
 //   - Unsorted present ranges (the function sorts them internally)
-func calculateMissingRanges(presentRanges []storage.MiniblockRange, startMbInclusive, endMbInclusive int64) []storage.MiniblockRange {
+func calculateMissingRanges(
+	presentRanges []storage.MiniblockRange,
+	startMbInclusive, endMbInclusive int64,
+) []storage.MiniblockRange {
 	// Handle edge cases
 	if startMbInclusive > endMbInclusive {
 		return nil
