@@ -113,7 +113,6 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
-			app string,
 		) error
 
 		GetAPNSubscriptions(
@@ -133,7 +132,6 @@ type (
 		RemoveAPNSubscription(ctx context.Context,
 			deviceToken []byte,
 			userID common.Address,
-			app string,
 		) error
 	}
 )
@@ -664,7 +662,7 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen, app_name) VALUES ($1, $2, $3, $4, NOW(), $5) ON CONFLICT (key_auth, key_p256dh, app_name) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
+		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen, app_name) VALUES ($1, $2, $3, $4, NOW(), $5) ON CONFLICT (key_auth, key_p256dh) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
@@ -720,18 +718,16 @@ func (s *PostgresNotificationStore) RemoveWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"RemoveWebPushSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.removeWebPushSubscription(ctx, tx, webPushSubscription, app)
+			return s.removeWebPushSubscription(ctx, tx, webPushSubscription)
 		},
 		nil,
 		"userID", userID,
-		"app", app,
 	)
 }
 
@@ -739,14 +735,12 @@ func (s *PostgresNotificationStore) removeWebPushSubscription(
 	ctx context.Context,
 	tx pgx.Tx,
 	webPushSubscription *webpush.Subscription,
-	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND app_name=$3`,
+		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
-		app,
 	)
 
 	return err
@@ -848,7 +842,7 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version, app_name) VALUES ($1, $2, $3, NOW(), $4, $5) ON CONFLICT (device_token, app_name) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
+		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version, app_name) VALUES ($1, $2, $3, NOW(), $4, $5) ON CONFLICT (device_token) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
 		deviceToken,
 		int16(environment),
 		hex.EncodeToString(userID[:]),
@@ -862,18 +856,16 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 func (s *PostgresNotificationStore) RemoveAPNSubscription(ctx context.Context,
 	deviceToken []byte,
 	userID common.Address,
-	app string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"RemoveAPNSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.removeAPNSubscription(ctx, tx, deviceToken, userID, app)
+			return s.removeAPNSubscription(ctx, tx, deviceToken, userID)
 		},
 		nil,
 		"userID", userID,
-		"app", app,
 	)
 }
 
@@ -882,13 +874,11 @@ func (s *PostgresNotificationStore) removeAPNSubscription(
 	tx pgx.Tx,
 	deviceToken []byte,
 	userID common.Address,
-	app string,
 ) error {
 	result, err := tx.Exec(
 		ctx,
-		`DELETE FROM apnpushsubscriptions where device_token=$1 AND app_name=$2`,
+		`DELETE FROM apnpushsubscriptions where device_token=$1`,
 		deviceToken,
-		app,
 	)
 
 	logging.FromCtx(ctx).Infow("remove APN subscription",
