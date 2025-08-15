@@ -8,7 +8,7 @@ import {Create2Utils} from "../../../utils/libraries/Create2Utils.sol";
 
 // contracts
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Towns} from "src/tokens/towns/base/Towns.sol";
+import {Towns} from "./Towns.sol";
 
 contract TownsDeployer {
     constructor(address l1Token, address owner, bytes32 implementationSalt, bytes32 proxySalt) {
@@ -18,12 +18,9 @@ contract TownsDeployer {
         );
 
         // Create proxy initialization bytecode
-        bytes memory proxyBytecode = abi.encodePacked(
+        bytes memory proxyBytecode = bytes.concat(
             type(ERC1967Proxy).creationCode,
-            abi.encode(
-                implementation,
-                abi.encodePacked(Towns.initialize.selector, abi.encode(l1Token, owner))
-            )
+            abi.encode(implementation, abi.encodeCall(Towns.initialize, (l1Token, owner)))
         );
 
         // Deploy proxy using create2
