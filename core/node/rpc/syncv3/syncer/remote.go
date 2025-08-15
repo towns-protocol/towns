@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -59,7 +60,7 @@ type remoteStreamUpdateEmitter struct {
 // NewRemoteStreamUpdateEmitter creates a new remote stream update emitter for the given stream ID and remote address.
 func NewRemoteStreamUpdateEmitter(
 	ctx context.Context,
-	addr common.Address,
+	stream *events.Stream,
 	nodeRegistry nodes.NodeRegistry,
 	streamID StreamId,
 	subscriber StreamSubscriber,
@@ -72,9 +73,9 @@ func NewRemoteStreamUpdateEmitter(
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
-			With("version", version, "addr", addr.Hex(), "streamID", streamID),
+			With("version", version, "addr", stream.GetStickyPeer().Hex(), "streamID", streamID),
 		streamID:       streamID,
-		remoteAddr:     addr,
+		remoteAddr:     stream.GetStickyPeer(),
 		subscriber:     subscriber,
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,
@@ -84,7 +85,7 @@ func NewRemoteStreamUpdateEmitter(
 	r.state.Store(streamUpdateEmitterStateInitializing)
 
 	// Initialize the emitter in a separate goroutine to avoid blocking the caller.
-	go r.initialize(nodeRegistry)
+	go r.initialize(nodeRegistry, stream)
 
 	return r
 }
@@ -128,7 +129,10 @@ func (r *remoteStreamUpdateEmitter) Close() {
 	}
 }
 
-func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) {
+func (r *remoteStreamUpdateEmitter) initialize(
+	nodeRegistry nodes.NodeRegistry,
+	stream *events.Stream,
+) {
 	var msgs []*backfillRequest
 
 	defer func() {
@@ -242,7 +246,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	r.state.Store(streamUpdateEmitterStateRunning)
 
 	// Start processing stream updates received from the remote node.
-	go r.processStreamUpdates()
+	go r.processStreamUpdates(stream)
 
 	// Start processing backfill requests
 	for {
@@ -310,7 +314,7 @@ func (r *remoteStreamUpdateEmitter) initialize(nodeRegistry nodes.NodeRegistry) 
 	}
 }
 
-func (r *remoteStreamUpdateEmitter) processStreamUpdates() {
+func (r *remoteStreamUpdateEmitter) processStreamUpdates(stream *events.Stream) {
 	defer func() {
 		if err := r.responseStream.Close(); err != nil {
 			r.log.Errorw("failed to close sync stream", "error", err)
@@ -344,6 +348,7 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates() {
 		r.log.Info("remote node disconnected")
 	} else {
 		r.log.Errorw("remote node disconnected with error", "error", err)
+		stream.AdvanceStickyPeer(r.remoteAddr)
 	}
 
 	r.cancel(err)
