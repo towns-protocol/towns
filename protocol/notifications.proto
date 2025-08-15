@@ -247,8 +247,6 @@ message SubscribeWebPushResponse {}
 message UnsubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
-  // app identifies which app is making the unsubscription request
-  string app = 2;
 }
 
 message UnsubscribeWebPushResponse {}
@@ -283,8 +281,6 @@ message SubscribeAPNResponse {}
 message UnsubscribeAPNRequest {
   // APN device token
   bytes device_token = 1;
-  // app identifies which app is making the unsubscription request
-  string app = 2;
 }
 
 message UnsubscribeAPNResponse {}
