@@ -24,6 +24,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -311,7 +312,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
