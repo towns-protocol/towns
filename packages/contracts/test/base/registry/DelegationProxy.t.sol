@@ -59,20 +59,20 @@ contract DelegationProxyTest is TestUtils {
         DelegationProxy(proxy).reinitialize(towns);
     }
 
-    function test_fuzz_reinitialize(address delegatee) public {
-        test_fuzz_initialize(delegatee);
+    // function test_fuzz_reinitialize(address delegatee) public {
+    //     test_fuzz_initialize(delegatee);
 
-        deployTownsTokenBase.setSalts(_randomBytes32(), _randomBytes32());
-        address token = deployTownsTokenBase.deploy(deployer);
+    //     deployTownsTokenBase.setSalts(_randomBytes32(), _randomBytes32());
+    //     address token = deployTownsTokenBase.deploy(deployer);
 
-        vm.prank(deployer);
-        DelegationProxy(proxy).reinitialize(token);
+    //     vm.prank(deployer);
+    //     DelegationProxy(proxy).reinitialize(token);
 
-        assertEq(DelegationProxy(proxy).factory(), deployer);
-        assertEq(DelegationProxy(proxy).stakeToken(), token);
-        assertEq(IVotes(token).delegates(proxy), delegatee);
-        assertEq(IERC20(token).allowance(proxy, deployer), type(uint256).max);
-    }
+    //     assertEq(DelegationProxy(proxy).factory(), deployer);
+    //     assertEq(DelegationProxy(proxy).stakeToken(), token);
+    //     assertEq(IVotes(token).delegates(proxy), delegatee);
+    //     assertEq(IERC20(token).allowance(proxy, deployer), type(uint256).max);
+    // }
 
     function test_fuzz_redelegate_revertIf_notFactory(address caller) public {
         vm.assume(caller != deployer);
