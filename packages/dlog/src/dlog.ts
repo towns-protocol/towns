@@ -146,13 +146,30 @@ export interface DLogOpts {
 
 const allDlogs: Map<string, DLogger> = new Map()
 
+// Configurable error logger - evaluated at runtime to avoid order of operations issues
+let customErrorLogger: ((...args: unknown[]) => void) | undefined = undefined
+
+/**
+ * Set a custom error logger that will be used instead of console.error for dlog error output.
+ * This allows external libraries to capture and buffer error logs for reporting.
+ *
+ * @param logger Custom logger function, or undefined to reset to console.error
+ */
+export const setDlogErrorLogger = (logger: ((...args: unknown[]) => void) | undefined): void => {
+    customErrorLogger = logger
+}
+
 // github#722
 const isSingleLineLogsMode =
     typeof process !== 'undefined' && process.env.SINGLE_LINE_LOGS === 'true'
 
 const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
     if (opts?.printStack) {
-        d.log = console.error.bind(console)
+        // Use a dynamic logger that checks for custom error logger at runtime
+        d.log = (...args: unknown[]) => {
+            const errorLogger = customErrorLogger || console.error
+            errorLogger(...args)
+        }
     }
 
     const dlog = (...args: unknown[]): void => {

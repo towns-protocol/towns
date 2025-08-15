@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // E2E test helper that sets up a real subscription environment
@@ -374,7 +374,12 @@ func TestE2E_PerformanceAndStress(t *testing.T) {
 		contexts[i] = cancel
 		defer cancel(nil)
 
-		sub, err := env.manager.Subscribe(ctx, cancel, fmt.Sprintf("test-sync-%d", i), dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse]())
+		sub, err := env.manager.Subscribe(
+			ctx,
+			cancel,
+			fmt.Sprintf("test-sync-%d", i),
+			dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		)
 		require.NoError(t, err)
 		subscriptions[i] = sub
 	}

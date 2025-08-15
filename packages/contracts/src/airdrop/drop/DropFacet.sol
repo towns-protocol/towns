@@ -19,8 +19,9 @@ import {TownsPointsStorage} from "../points/TownsPointsStorage.sol";
 import {DropBase} from "./DropBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
+import {PausableBase} from "@towns-protocol/diamond/src/facets/pausable/PausableBase.sol";
 
-contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
+contract DropFacet is IDropFacet, DropBase, OwnableBase, PausableBase, Facet {
     using DropClaim for DropClaim.Claim;
     using DropGroup for DropGroup.Layout;
     using SafeTransferLib for address;
@@ -57,7 +58,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
     function claimWithPenalty(
         DropClaim.Claim calldata req,
         uint16 expectedPenaltyBps
-    ) external returns (uint256 amount) {
+    ) external whenNotPaused returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
         if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 
@@ -72,9 +73,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
 
         drop.claim(req.account, amount);
 
-        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
+        _burnPoints(req.account, req.points);
 
         drop.condition.currency.safeTransfer(req.recipient, amount);
 
@@ -87,7 +86,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         address delegatee,
         uint256 deadline,
         bytes calldata signature
-    ) external returns (uint256 amount) {
+    ) external whenNotPaused returns (uint256 amount) {
         if (msg.sender != req.account) DropFacet__NotClaimingAccount.selector.revertWith();
         if (req.recipient == address(0)) DropFacet__InvalidRecipient.selector.revertWith();
 
@@ -101,10 +100,7 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
 
         drop.claim(req.account, amount);
 
-        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
-        points.inner.burn(req.account, req.points);
-        emit IERC20.Transfer(req.account, address(0), amount);
-
+        _burnPoints(req.account, req.points);
         _approveClaimToken(drop.condition.currency, amount);
 
         uint256 depositId = IRewardsDistribution(DropStorage.getLayout().rewardsDistribution)
@@ -165,5 +161,16 @@ contract DropFacet is IDropFacet, DropBase, OwnableBase, Facet {
         uint256 conditionId
     ) external view returns (uint256) {
         return _getSupplyClaimedByWallet(conditionId, account).depositId;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        INTERNAL FUNCTIONS                  */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _burnPoints(address from, uint256 amount) internal {
+        if (amount == 0) return;
+        TownsPointsStorage.Layout storage points = TownsPointsStorage.layout();
+        points.inner.burn(from, amount);
+        emit IERC20.Transfer(from, address(0), amount);
     }
 }

@@ -25,6 +25,8 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 
 	s.initInstance(ServerModeNotification, opts)
 
+	s.initTracing("notification", s.instanceId)
+
 	err = s.initRiverChain()
 	if err != nil {
 		return AsRiverError(err).Message("Failed to init river chain").LogError(s.defaultLogger)
@@ -98,6 +100,7 @@ func (s *Service) startNotificationMode(notifier push.MessageNotifier, opts *Ser
 		registries,
 		s.metrics,
 		processor,
+		s.otelTracer,
 	)
 	if err != nil {
 		return AsRiverError(err).Message("Failed to instantiate notification service").LogError(s.defaultLogger)
@@ -137,6 +140,19 @@ func StartServerInNotificationMode(
 ) (*Service, error) {
 	ctx = config.CtxWithConfig(ctx, cfg)
 	ctx, ctxCancel := context.WithCancel(ctx)
+
+	// Since viper does not support arrays configurations via env var,
+	// Apps field cannot be initialized automatically.
+	// As a workaround, we have the TownsApp and SenditApp, and here we copy their values
+	// to the Apps field, so the rest of the code can be apps agnostic.
+	// in the future, this configuration (both *App and Apps) will be moved to
+	// a database, to allow dynamic config without code changes
+	if cfg.Notifications.TownsApp.App != "" {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, cfg.Notifications.TownsApp)
+	}
+	if cfg.Notifications.SenditApp.App != "" {
+		cfg.Notifications.Apps = append(cfg.Notifications.Apps, cfg.Notifications.SenditApp)
+	}
 
 	notificationService := &Service{
 		serverCtx:       ctx,

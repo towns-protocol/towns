@@ -2,7 +2,9 @@ package sync
 
 import (
 	"context"
+
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
@@ -55,6 +57,7 @@ func NewAppRegistryStreamsTracker(
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
+	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
 		queue: store,
@@ -68,6 +71,7 @@ func NewAppRegistryStreamsTracker(
 		tracker,
 		metricsFactory,
 		config.StreamTracking,
+		otelTracer,
 	); err != nil {
 		return nil, err
 	}
@@ -75,7 +79,7 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, isInit bool) bool {
+func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
 	return streamType == shared.STREAM_CHANNEL_BIN

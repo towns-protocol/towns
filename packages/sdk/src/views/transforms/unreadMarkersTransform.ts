@@ -1,5 +1,5 @@
 import { FullyReadMarker } from '@towns-protocol/proto'
-import { TimelinesViewModel } from './timelinesModel'
+import { TimelinesViewModel } from '../streams/timelinesModel'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '../../id'
 import { RiverTimelineEvent, TimelineEvent } from '../models/timelineTypes'
 import { check, dlogger } from '@towns-protocol/dlog'

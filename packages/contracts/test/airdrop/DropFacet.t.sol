@@ -8,6 +8,7 @@ import {Vm} from "forge-std/Vm.sol";
 import {IDropFacetBase} from "src/airdrop/drop/IDropFacet.sol";
 import {IRewardsDistributionBase} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {IPausable, IPausableBase} from "@towns-protocol/diamond/src/facets/pausable/IPausable.sol";
 
 // libraries
 import {DropClaim} from "src/airdrop/drop/DropClaim.sol";
@@ -27,7 +28,13 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {TownsPoints} from "src/airdrop/points/TownsPoints.sol";
 import {DropFacet} from "src/airdrop/drop/DropFacet.sol";
 
-contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistributionBase {
+contract DropFacetTest is
+    BaseSetup,
+    IDropFacetBase,
+    IOwnableBase,
+    IRewardsDistributionBase,
+    IPausableBase
+{
     using FixedPointMathLib for uint256;
 
     bytes32 internal constant STAKE_TYPEHASH =
@@ -51,6 +58,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     IRewardsDistribution internal rewardsDistribution;
     TownsPoints internal pointsFacet;
     NodeOperatorFacet internal operatorFacet;
+    IPausable internal pausableFacet;
 
     mapping(address => uint256) internal treeIndex;
     address[] internal accounts;
@@ -64,6 +72,8 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     uint256 internal bobKey;
     address internal alice;
     uint256 internal aliceKey;
+    address internal charlie;
+    uint256 internal charlieKey;
 
     address internal NOTIFIER = makeAddr("NOTIFIER");
     uint256 internal rewardDuration;
@@ -74,11 +84,12 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
 
         (bob, bobKey) = makeAddrAndKey("bob");
         (alice, aliceKey) = makeAddrAndKey("alice");
+        (charlie, charlieKey) = makeAddrAndKey("charlie");
 
         // Initialize the Drop facet
         dropFacet = DropFacet(riverAirdrop);
         pointsFacet = TownsPoints(riverAirdrop);
-
+        pausableFacet = IPausable(riverAirdrop);
         // Create the Merkle tree with accounts and amounts
         _createTree();
 
@@ -223,6 +234,48 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
     // =============================================================
     //                        TESTS
     // =============================================================
+
+    // paused
+    function test_claimWithPenalty_revertWhen_paused()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+    {
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        vm.expectRevert(Pausable__Paused.selector);
+        dropFacet.claimWithPenalty(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: bob,
+                recipient: bob,
+                quantity: 100,
+                points: 10,
+                proof: new bytes32[](0)
+            }),
+            0
+        );
+    }
+
+    function test_claimAndStake_revertWhen_paused() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
+        vm.prank(deployer);
+        pausableFacet.pause();
+
+        vm.expectRevert(Pausable__Paused.selector);
+        dropFacet.claimAndStake(
+            DropClaim.Claim({
+                conditionId: 0,
+                account: bob,
+                recipient: bob,
+                quantity: 100,
+                points: 10,
+                proof: new bytes32[](0)
+            }),
+            address(0),
+            0,
+            new bytes(0)
+        );
+    }
 
     // getActiveClaimConditionId
     function test_getActiveClaimConditionId() external givenTokensMinted(TOTAL_TOKEN_AMOUNT * 3) {
@@ -377,7 +430,7 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
                 : claimData[i].claimer;
             claimers[i] = claimData[i].claimer;
             claimAmounts[i] = claimData[i].amount == 0 ? 1 : claimData[i].amount;
-            claimPoints[i] = claimData[i].points == 0 ? 1 : claimData[i].points;
+            claimPoints[i] = claimData[i].points;
             claimData[i].amount = uint16(claimAmounts[i]);
             claimData[i].points = uint16(claimPoints[i]);
 
@@ -456,6 +509,17 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         uint256 expectedAmount = _calculateExpectedAmount(bob);
         assertEq(towns.balanceOf(bob), expectedAmount);
         assertEq(pointsFacet.balanceOf(bob), 10);
+    }
+
+    function test_claimWithNoPoints()
+        external
+        givenTokensMinted(TOTAL_TOKEN_AMOUNT)
+        givenClaimConditionSet(5000)
+        givenWalletHasClaimedWithPenalty(charlie, charlie)
+    {
+        uint256 expectedAmount = _calculateExpectedAmount(charlie);
+        assertEq(towns.balanceOf(charlie), expectedAmount);
+        assertEq(pointsFacet.balanceOf(charlie), 0);
     }
 
     function test_revertWhen_merkleRootNotSet() external givenTokensMinted(TOTAL_TOKEN_AMOUNT) {
@@ -1598,9 +1662,13 @@ contract DropFacetTest is BaseSetup, IDropFacetBase, IOwnableBase, IRewardsDistr
         accounts.push(alice);
         amounts.push(200);
         points.push(20);
+        accounts.push(charlie);
+        amounts.push(300);
+        points.push(0);
 
         treeIndex[bob] = 0;
         treeIndex[alice] = 1;
+        treeIndex[charlie] = 2;
         (root, tree) = merkleTree.constructTree(accounts, amounts, points);
     }
 

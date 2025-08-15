@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/gammazero/workerpool"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/puzpuzpuz/xsync/v4"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/semaphore"
 
@@ -27,9 +30,13 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
+)
+
+const (
+	modifySyncRequestTimeout = 10 * time.Second
 )
 
 type RemoteStreamSyncer interface {
@@ -116,6 +123,9 @@ func (ssr *syncSessionRunner) AddStream(
 	ctx context.Context,
 	record streamSyncInitRecord,
 ) error {
+	ctx, end := ssr.startSpan(ctx, attribute.String("streamId", record.streamId.String()))
+	defer end()
+
 	// Wait for the sync to start. This waitgroup should be decremented even if the initial sync from the remote syncer fails.
 	ssr.syncStarted.Wait()
 	ssr.mu.Lock()
@@ -134,7 +144,11 @@ func (ssr *syncSessionRunner) AddStream(
 			"syncId", ssr.GetSyncId(),
 			"targetNode", ssr.node,
 		)
-	if resp, _, err := ssr.syncer.Modify(ctx, &protocol.ModifySyncRequest{
+
+	modifyCtx, cancel := context.WithTimeout(ctx, modifySyncRequestTimeout)
+	defer cancel()
+
+	if resp, _, err := ssr.syncer.Modify(modifyCtx, &protocol.ModifySyncRequest{
 		AddStreams: []*protocol.SyncCookie{{
 			StreamId:          record.streamId[:],
 			MinipoolGen:       record.minipoolGen,
@@ -165,6 +179,9 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
 ) {
+	_, end := ssr.startSpan(ssr.syncCtx, attribute.String("streamId", record.streamId.String()))
+	defer end()
+
 	var (
 		reset    = streamAndCookie.GetSyncReset()
 		streamId = record.streamId
@@ -408,6 +425,18 @@ func (ssr *syncSessionRunner) Run() {
 		// Process the current batch of messages.
 		case <-ssr.messages.Wait():
 			batch = ssr.messages.GetBatch(batch)
+
+			// If the batch is nil, it means the messages channel was closed.
+			if batch == nil {
+				ssr.Close(
+					base.RiverError(
+						protocol.Err_BUFFER_FULL,
+						"Sync session runner messages buffer is full, closing sync session runner",
+					),
+				)
+				return
+			}
+
 			for _, update := range batch {
 				ssr.processSyncUpdate(update)
 			}
@@ -515,6 +544,28 @@ func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *
 			"func", "DistributeBackfillMessage",
 		)
 	}
+}
+
+// startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.
+func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
+	if ssr.otelTracer == nil {
+		return ctx, func() {}
+	}
+
+	// Determine the span name based on the caller's function name.
+	spanName := "N/A"
+	if pc, _, _, ok := runtime.Caller(1); ok {
+		if f := runtime.FuncForPC(pc); f != nil && len(f.Name()) > 0 {
+			names := strings.Split(f.Name(), ".")
+			spanName = names[len(names)-1]
+		}
+	}
+
+	ctx, span := ssr.otelTracer.Start(ctx, "syncSessionRunner::"+spanName, trace.WithAttributes(
+		append(attrs, attribute.String("syncId", ssr.GetSyncId()))...,
+	))
+
+	return ctx, func() { span.End() }
 }
 
 type TrackedViewForStream func(streamId shared.StreamId, stream *protocol.StreamAndCookie) (events.TrackedStreamView, error)
@@ -656,7 +707,7 @@ func (msr *MultiSyncRunner) Run(
 			case <-rootCtx.Done():
 				return
 			case <-ticker.C:
-				msr.metrics.UnsyncedQueueLength.Set(float64(len(msr.streamsToSync)))
+				msr.metrics.UnsyncedQueueLength.Set(float64(msr.workerPool.WaitingQueueSize()))
 			}
 		}
 	}()
@@ -759,7 +810,8 @@ func (msr *MultiSyncRunner) addToSync(
 		return
 	}
 
-	// If we fail to add a stream to a sync session runner, relocate the stream and replace the runner.
+	// If we fail to add a stream to a sync session runner due to closed or full sync,
+	// relocate the stream and replace the runner. Otherwise, retry adding the stream to the same sync.
 	// This failure could occur if the session is full or due to an underlying sync error.
 	// The runner will continue to stay in memory until its go routine stops running, which will occur
 	// if the underlying sync fails or the root context is canceled.
@@ -768,59 +820,58 @@ func (msr *MultiSyncRunner) addToSync(
 		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
 
-		// Create a new runner and replace this one
-		newRunner := newSyncSessionRunner(
-			rootCtx,
-			msr.streamsToSync,
-			msr.getNodeRegistry(),
-			func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
-				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
-			},
-			msr.config.StreamsPerSyncSession,
-			msr.config.UseSharedSyncer,
-			targetNode,
-			msr.metrics,
-			msr.otelTracer,
-		)
+		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
+			// Create a new runner and replace this one
+			newRunner := newSyncSessionRunner(
+				rootCtx,
+				msr.streamsToSync,
+				msr.getNodeRegistry(),
+				func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
+					return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
+				},
+				msr.config.StreamsPerSyncSession,
+				msr.config.UseSharedSyncer,
+				targetNode,
+				msr.metrics,
+				msr.otelTracer,
+			)
 
-		if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
-			if errors.Is(acquireErr, context.Canceled) {
+			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
+				if errors.Is(acquireErr, context.Canceled) {
+					return
+				}
+
+				log.Errorw(
+					"unable to acquire worker pool task for node; re-assigning stream",
+					"error",
+					acquireErr,
+					"node",
+					targetNode,
+					"streamId",
+					record.streamId,
+				)
+				msr.streamsToSync <- record
 				return
 			}
 
-			log.Errorw(
-				"unable to acquire worker pool task for node; re-assigning stream",
-				"error",
-				acquireErr,
-				"node",
+			msr.unfilledSyncs.Compute(
 				targetNode,
-				"streamId",
-				record.streamId,
+				func(oldRunner *syncSessionRunner, loaded bool) (*syncSessionRunner, xsync.ComputeOp) {
+					if loaded && oldRunner == runner {
+						go newRunner.Run()
+						newRunner.WaitUntilStarted()
+						return newRunner, xsync.UpdateOp
+					}
+					return oldRunner, xsync.CancelOp
+				},
 			)
-			msr.streamsToSync <- record
-			return
+			pool.Release(1)
 
-		}
+			log := logging.FromCtx(rootCtx)
 
-		msr.unfilledSyncs.Compute(
-			targetNode,
-			func(oldRunner *syncSessionRunner, loaded bool) (*syncSessionRunner, xsync.ComputeOp) {
-				if loaded && oldRunner == runner {
-					go newRunner.Run()
-					newRunner.WaitUntilStarted()
-					return newRunner, xsync.UpdateOp
-				}
-				return oldRunner, xsync.CancelOp
-			},
-		)
-		pool.Release(1)
+			// Relocate this stream's target node and re-insert into the pool of unassigned streams
+			newRemote := record.remotes.AdvanceStickyPeer(targetNode)
 
-		log := logging.FromCtx(rootCtx)
-
-		// Relocate this stream's target node and re-insert into the pool of unassigned streams
-		newRemote := record.remotes.AdvanceStickyPeer(targetNode)
-
-		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
 			log.Debugw(
 				"Could not assign stream to existing session, cycling to new session",
 				"streamId", record.streamId,
@@ -828,9 +879,12 @@ func (msr *MultiSyncRunner) addToSync(
 				"failedRemote", targetNode,
 				"newRemote", newRemote,
 			)
+		} else if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
+			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
+			runner.Close(err)
 		} else {
 			log.Errorw(
-				"Error adding stream to sync on node, cycling to new session",
+				"Error adding stream to sync on node, retrying",
 				"streamId", record.streamId,
 				"node", targetNode,
 				"syncId", runner.GetSyncId(),

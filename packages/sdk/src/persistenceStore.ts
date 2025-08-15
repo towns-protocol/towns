@@ -131,7 +131,13 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     constructor(databaseName: string) {
         super(databaseName)
 
-        // Version 6: changed how we store snapshots, drop all saved miniblocks, syncedStreams and snapshots
+        this.version(7).stores({
+            cleartexts: 'eventId',
+            syncedStreams: 'streamId',
+            miniblocks: '[streamId+miniblockNum]',
+            snapshots: 'streamId',
+        })
+        // Version 8: changed how we store snapshots, drop all saved miniblocks, syncedStreams and snapshots
         this.version(8).upgrade((tx) => {
             return Promise.all([
                 tx.table('miniblocks').toCollection().delete(),

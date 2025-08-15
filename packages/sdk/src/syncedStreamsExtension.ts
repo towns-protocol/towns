@@ -1,34 +1,27 @@
 import { spaceIdFromChannelId, StreamPrefix } from './id'
 import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
-import { Stream } from './stream'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
+import {
+    ISyncedStreamsController,
+    SyncedStreamsControllerDelegate,
+} from './sync/ISyncedStreamsController'
 
 interface StreamSyncItem {
     streamId: string
     priority: number
 }
 
-interface SyncedStreamsExtensionDelegate {
-    startSyncStreams: (lastAccessedAt: Record<string, number>) => Promise<void>
-    initStream(
-        streamId: string,
-        allowGetStream: boolean,
-        persistedData?: LoadedStream,
-    ): Promise<Stream>
-    emitClientInitStatus: (status: ClientInitStatus) => void
-}
-
 const MAX_CONCURRENT_FROM_PERSISTENCE = 10
 const MAX_CONCURRENT_FROM_NETWORK = 20
 const concurrencyLimit = pLimit(MAX_CONCURRENT_FROM_NETWORK)
 
-export class SyncedStreamsExtension {
+export class SyncedStreamsExtension implements ISyncedStreamsController {
     private log: DLogger
     private logDebug: DLogger
     private logError: DLogger
-    private readonly delegate: SyncedStreamsExtensionDelegate
+    private readonly delegate: SyncedStreamsControllerDelegate
 
     private readonly tasks = new Array<() => Promise<void>>()
     private streamIds = new Set<string>()
@@ -57,7 +50,7 @@ export class SyncedStreamsExtension {
 
     constructor(
         highPriorityStreamIds: string[] | undefined,
-        delegate: SyncedStreamsExtensionDelegate,
+        delegate: SyncedStreamsControllerDelegate,
         private persistenceStore: IPersistenceStore,
         private logId: string,
     ) {

@@ -393,13 +393,21 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 	}
 
 	fmt.Printf(
-		"Miniblock %d (size %s)\n=========\n",
+		"=============================\nMiniblock %d (size %s)\n=============================\n",
 		mbHeader.MiniblockHeader.MiniblockNum,
 		formatBytes(proto.Size(miniblock)),
 	)
 	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
-	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
-	fmt.Printf("  Events: (%d)\n", len(info.Proto.Events))
+	fmt.Printf("  Hash:      %v\n", hex.EncodeToString(miniblock.Header.Hash))
+	fmt.Printf("  Author:    %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	if info.Snapshot != nil {
+		fmt.Printf(
+			"  **********************\n  Snapshot: (size %s)\n  **********************\n",
+			formatBytes(proto.Size(info.Snapshot)),
+		)
+		fmt.Printf("    %v\n", info.Snapshot.ParsedStringWithIndent("    "))
+	}
+	fmt.Printf("  ------------\n  Events: (%d)\n  ------------\n", len(info.Proto.Events))
 	for i, event := range info.Proto.GetEvents() {
 		parsedEvent, err := events.ParseEvent(event)
 		if err != nil {
@@ -410,12 +418,13 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 		nanoseconds := (parsedEvent.Event.CreatedAtEpochMs % 1000) * 1e6 // 1 millisecond = 1e6 nanoseconds
 		timestamp := time.Unix(seconds, nanoseconds)
 		fmt.Printf(
-			"    (%d) %v %v Len=(%d) %v\n",
+			"    (%d) %v %v Len=(%d)\n      Creator: %v %v\n",
 			i,
 			timestamp.UTC(),
 			hex.EncodeToString(event.Hash),
 			len(event.Event),
-			parsedEvent.ParsedString(),
+			hex.EncodeToString(parsedEvent.Event.CreatorAddress),
+			parsedEvent.ParsedStringWithIndent("        "),
 		)
 	}
 	return nil
@@ -430,6 +439,18 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 	miniblockNum, err := strconv.ParseInt(args[1], 10, 64)
 	if err != nil {
 		return fmt.Errorf("could not parse miniblockNum: %w", err)
+	}
+
+	// Parse optional range argument (default to 1 if not provided)
+	rangeCount := int64(1)
+	if len(args) == 3 {
+		rangeCount, err = strconv.ParseInt(args[2], 10, 64)
+		if err != nil {
+			return fmt.Errorf("could not parse range: %w", err)
+		}
+		if rangeCount < 1 {
+			return fmt.Errorf("range must be at least 1")
+		}
 	}
 
 	blockchain, err := crypto.NewBlockchain(
@@ -470,21 +491,33 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 	miniblocks, err := remoteClient.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
 		StreamId:      streamID[:],
 		FromInclusive: miniblockNum,
-		ToExclusive:   miniblockNum + 1,
+		ToExclusive:   miniblockNum + rangeCount,
+		OmitSnapshots: false,
 	}))
 	if err != nil {
 		return err
 	}
 
-	// There should only be one miniblock here
+	// Check if we got any miniblocks
 	if len(miniblocks.Msg.Miniblocks) < 1 {
 		fmt.Printf("Miniblock num %d not found in stream %s\n", miniblockNum, streamID)
 		return nil
 	}
 
-	miniblock := miniblocks.Msg.GetMiniblocks()[0]
+	// Print summary for each miniblock in the range
+	for i, miniblock := range miniblocks.Msg.GetMiniblocks() {
+		mbNum := miniblockNum + int64(i)
+		if err := printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(mbNum), mbNum); err != nil {
+			return err
+		}
+	}
 
-	return printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(miniblockNum), miniblockNum)
+	// Report if we got fewer miniblocks than requested
+	if int64(len(miniblocks.Msg.Miniblocks)) < rangeCount {
+		fmt.Printf("\n(Found %d miniblocks, requested %d)\n", len(miniblocks.Msg.Miniblocks), rangeCount)
+	}
+
+	return nil
 }
 
 func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
@@ -523,6 +556,10 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
+	if len(args) >= 3 {
+		remoteNodeAddress = common.HexToAddress(args[2])
+	}
+
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
 	if err != nil {
 		return err
@@ -542,7 +579,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 
 	maxBlock := streamAndCookie.GetNextSyncCookie().GetMinipoolGen()
 	blockRange := int64(10)
-	if len(args) == 2 {
+	if len(args) >= 2 {
 		blockRange, err = strconv.ParseInt(args[1], 10, 64)
 		if err != nil {
 			return err
@@ -555,6 +592,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 			StreamId:      streamID[:],
 			FromInclusive: from,
 			ToExclusive:   to,
+			OmitSnapshots: false,
 		}))
 		if err != nil {
 			return err
@@ -644,27 +682,9 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
-			// Parse header
-			info, err := events.NewMiniblockInfoFromProto(
-				miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
-				events.NewParsedMiniblockInfoOpts().
-					WithExpectedBlockNumber(from+int64(n)),
-			)
-			if err != nil {
+			if err := printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)), from+int64(n)); err != nil {
 				return err
 			}
-
-			mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
-			if !ok {
-				return fmt.Errorf("unable to parse header event as miniblock header")
-			}
-
-			fmt.Printf(
-				"\nMiniblock %d\n=========\n%s",
-				mbHeader.MiniblockHeader.MiniblockNum,
-				protojson.Format(miniblock),
-			)
-			fmt.Printf("\n(Parsed Header)\n-------------\n%s\n", protojson.Format(mbHeader.MiniblockHeader))
 		}
 		blocksRead = len(miniblocks.Msg.Miniblocks)
 		from = from + int64(blocksRead)
@@ -1331,18 +1351,20 @@ max-block-range is optional and limits the number of blocks to consider (default
 
 	cmdStreamGetMiniblockNum := &cobra.Command{
 		Use:   "miniblock-num",
-		Short: "Get Miniblock <stream-id> <miniblockNum>",
-		Long:  `Dump miniblock content to stdout.`,
-		Args:  cobra.ExactArgs(2),
-		RunE:  runStreamGetMiniblockNumCmd,
+		Short: "Get Miniblock <stream-id> <miniblockNum> [range]",
+		Long: `Dump miniblock content to stdout.
+range is optional and specifies the number of miniblocks to print (default=1).
+For example, range=5 will print miniblocks from miniblockNum to miniblockNum+4.`,
+		Args: cobra.RangeArgs(2, 3),
+		RunE: runStreamGetMiniblockNumCmd,
 	}
 
 	cmdStreamDump := &cobra.Command{
 		Use:   "dump",
-		Short: "Dump stream contents <stream-id> [max-block-range]",
+		Short: "Dump stream contents <stream-id> [max-block-range] [node-address]",
 		Long: `Dump stream content to stdout.
 max-block-range is optional and limits the number of blocks to consider (default=100)`,
-		Args: cobra.RangeArgs(1, 2),
+		Args: cobra.RangeArgs(1, 3),
 		RunE: runStreamDumpCmd,
 	}
 

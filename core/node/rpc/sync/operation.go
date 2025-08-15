@@ -18,9 +18,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/dynmsgbuf"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 const (
@@ -221,7 +221,8 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").Observe(float64(sub.Messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").
+					Observe(float64(sub.Messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -410,7 +411,17 @@ func (syncOp *StreamSyncOperation) ModifySync(
 		syncOp.metrics.syncingStreamsPerOpHistogram.
 			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
 			Observe(float64(syncOp.syncingStreamsCount.Add(
-				int64(len(req.Msg.GetAddStreams()) - len(resp.Msg.GetAdds()) - len(req.Msg.GetRemoveStreams()) + len(resp.Msg.GetRemovals())),
+				int64(
+					len(
+						req.Msg.GetAddStreams(),
+					) - len(
+						resp.Msg.GetAdds(),
+					) - len(
+						req.Msg.GetRemoveStreams(),
+					) + len(
+						resp.Msg.GetRemovals(),
+					),
+				),
 			)))
 	}
 

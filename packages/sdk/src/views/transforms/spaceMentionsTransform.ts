@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash-es'
 import { isChannelStreamId, spaceIdFromChannelId } from '../../id'
 import { MentionResult } from '../models/timelineTypes'
-import { TimelinesViewModel } from './timelinesModel'
+import { TimelinesViewModel } from '../streams/timelinesModel'
 import { UnreadMarkersModel } from './unreadMarkersTransform'
 
 export interface MentionsModel {

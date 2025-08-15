@@ -85,7 +85,10 @@ func (r *registry) GetSubscriptionByID(syncID string) (*Subscription, bool) {
 
 // AddStreamToSubscription adds a stream to a subscription
 // Returns true if the given stream must be added to the main syncer set
-func (r *registry) AddStreamToSubscription(syncID string, streamID StreamId) (shouldAddToRemote bool, shouldBackfill bool) {
+func (r *registry) AddStreamToSubscription(
+	syncID string,
+	streamID StreamId,
+) (shouldAddToRemote bool, shouldBackfill bool) {
 	sub, exists := r.subscriptionsByID.Load(syncID)
 	if !exists {
 		return false, false
@@ -167,7 +170,11 @@ func (r *registry) CleanupUnusedStreams(cb func(streamID StreamId)) {
 		if len(subs) == 0 {
 			r.subscriptionsByStream.Compute(
 				streamID,
-				func(oldValue []*Subscription, loaded bool) (newValue []*Subscription, op xsync.ComputeOp) {
+				func(subs []*Subscription, loaded bool) ([]*Subscription, xsync.ComputeOp) {
+					if len(subs) > 0 {
+						// If there are still subscriptions, do not delete the stream
+						return subs, xsync.CancelOp
+					}
 					if cb != nil {
 						cb(streamID)
 					}

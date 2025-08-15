@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-// interfaces
-
-// libraries
-
-// contracts
-
 interface ITippingBase {
     // =============================================================
     //                           Structs
@@ -44,6 +38,8 @@ interface ITippingBase {
     error CannotTipSelf();
     error AmountIsZero();
     error CurrencyIsZero();
+    error MsgValueMismatch();
+    error UnexpectedETH();
 }
 
 interface ITipping is ITippingBase {

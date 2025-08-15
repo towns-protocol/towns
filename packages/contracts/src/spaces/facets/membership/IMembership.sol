@@ -41,6 +41,13 @@ interface IMembershipBase {
         string referralCode;
     }
 
+    struct PricingDetails {
+        uint256 basePrice;
+        uint256 amountDue;
+        bool shouldCharge;
+        bool isPrepaid;
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

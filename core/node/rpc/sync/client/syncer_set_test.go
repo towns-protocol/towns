@@ -3,24 +3,27 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/linkdata/deadlock"
-	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 // Helper functions for testing
-func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+func createTestSyncerSet(
+	ctx context.Context,
+	localAddr common.Address,
+) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
 	streamCache := &mockStreamCache{}
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
@@ -42,7 +45,11 @@ func createTestSyncerSet(ctx context.Context, localAddr common.Address) (*Syncer
 }
 
 // createTestSyncerSetWithCallback creates a test syncer set with a custom unsubStream callback
-func createTestSyncerSetWithCallback(ctx context.Context, localAddr common.Address, unsubStream func(StreamId)) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
+func createTestSyncerSetWithCallback(
+	ctx context.Context,
+	localAddr common.Address,
+	unsubStream func(StreamId),
+) (*SyncerSet, *mockStreamCache, *mockMessageDistributor, *mocks.MockNodeRegistry) {
 	streamCache := &mockStreamCache{}
 	messageDistributor := &mockMessageDistributor{}
 	nodeRegistry := &mocks.MockNodeRegistry{}
@@ -60,563 +67,1119 @@ func createTestSyncerSetWithCallback(ctx context.Context, localAddr common.Addre
 	return syncerSet, streamCache, messageDistributor, nodeRegistry
 }
 
-// TestGetOrCreateSyncer_LocalNode tests creating a local syncer
-func TestGetOrCreateSyncer_LocalNode(t *testing.T) {
+// TestModify tests the Modify method with various scenarios
+func TestModify(t *testing.T) {
 	ctx := context.Background()
 	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
+	t.Run("sync stopped", func(t *testing.T) {
+		syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+		syncerSet.stopped.Store(true)
 
-	// Test creating local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
-
-	require.NoError(t, err)
-	require.NotNil(t, syncer)
-	assert.Equal(t, localAddr, syncer.Address())
-
-	// Verify syncer is stored
-	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
-	assert.True(t, found)
-	assert.Equal(t, syncer, storedSyncerEntry.StreamsSyncer)
-
-	// Test getting the same syncer again (should return cached)
-	syncer2, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
-	require.NoError(t, err)
-	assert.Equal(t, syncer, syncer2)
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_RemoteNode tests creating a remote syncer
-func TestGetOrCreateSyncer_RemoteNode(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
-
-	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
-
-	// Mock the stream service client
-	mockClient := &mocks.MockStreamServiceClient{}
-	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
-
-	// Mock SyncStreams to return an error (simpler test)
-	expectedErr := errors.New("sync stream error")
-	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
-
-	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
-
-	require.Error(t, err)
-	require.Nil(t, syncer)
-	assert.Contains(t, err.Error(), "sync stream error")
-
-	// Verify syncer is NOT stored
-	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
-	assert.True(t, found)
-	assert.Nil(t, syncerEntity.StreamsSyncer)
-
-	// Cleanup
-	nodeRegistry.AssertExpectations(t)
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_RemoteNodeError tests error handling when creating remote syncer fails
-func TestGetOrCreateSyncer_RemoteNodeError(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
-
-	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
-
-	// Mock the stream service client to return error
-	expectedErr := errors.New("connection failed")
-	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(nil, expectedErr)
-
-	// Test creating remote syncer with error
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
-
-	require.Error(t, err)
-	require.Nil(t, syncer)
-	assert.Contains(t, err.Error(), "connection failed")
-
-	// Verify syncer is NOT stored
-	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
-	assert.True(t, found)
-	assert.Nil(t, syncerEntity.StreamsSyncer)
-
-	// Cleanup
-	nodeRegistry.AssertExpectations(t)
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_SyncStopped tests behavior when sync is stopped
-func TestGetOrCreateSyncer_SyncStopped(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
-
-	// Mark sync as stopped
-	syncerSet.stopped.Store(true)
-
-	// Test creating syncer when stopped
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
-
-	require.Error(t, err)
-	require.Nil(t, syncer)
-	assert.Contains(t, err.Error(), "Sync stopped")
-
-	// Verify syncer is NOT stored
-	_, found := syncerSet.syncers.Load(localAddr)
-	assert.False(t, found)
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_ConcurrentAccess tests concurrent access to getOrCreateSyncer
-func TestGetOrCreateSyncer_ConcurrentAccess(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
-
-	// Use more goroutines to increase chance of race conditions
-	numGoroutines := 50
-	var wg sync.WaitGroup
-	results := make([]StreamsSyncer, numGoroutines)
-	errors := make([]error, numGoroutines)
-
-	// Start all goroutines at once using WaitGroup for better concurrency
-	wg.Add(numGoroutines)
-	start := make(chan struct{})
-
-	for i := 0; i < numGoroutines; i++ {
-		go func(idx int) {
-			defer wg.Done()
-			<-start // Wait for signal to start all at once
-			results[idx], errors[idx] = syncerSet.getOrCreateSyncer(ctx, localAddr)
-		}(i)
-	}
-
-	// Release all goroutines at once
-	close(start)
-	wg.Wait()
-
-	// Verify all succeeded and got the same instance
-	var firstSyncer StreamsSyncer
-	for i := 0; i < numGoroutines; i++ {
-		require.NoError(t, errors[i])
-		require.NotNil(t, results[i])
-
-		if firstSyncer == nil {
-			firstSyncer = results[i]
-		} else {
-			assert.Same(t, firstSyncer, results[i], "All goroutines should get the same syncer instance")
+		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		req := ModifyRequest{
+			SyncID: "test-sync-1",
+			ToAdd:  []*SyncCookie{{StreamId: streamId[:]}},
 		}
-	}
-
-	// Verify syncer is properly stored
-	storedSyncerEntry, found := syncerSet.syncers.Load(localAddr)
-	assert.True(t, found)
-	assert.Equal(t, firstSyncer, storedSyncerEntry.StreamsSyncer)
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_RemoteSyncerInitError tests when NewRemoteSyncer returns an error
-func TestGetOrCreateSyncer_RemoteSyncerInitError(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
-
-	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
-
-	// Mock the stream service client
-	mockClient := &mocks.MockStreamServiceClient{}
-	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
-
-	// Mock SyncStreams to return error immediately
-	expectedErr := errors.New("sync init failed")
-	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, expectedErr)
-
-	// Test creating remote syncer with init error
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
-
-	require.Error(t, err)
-	require.Nil(t, syncer)
-	assert.Contains(t, err.Error(), "sync init failed")
-
-	// Verify syncer is NOT stored
-	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
-	assert.True(t, found)
-	assert.Nil(t, syncerEntity.StreamsSyncer)
-
-	// Cleanup
-	nodeRegistry.AssertExpectations(t)
-	mockClient.AssertExpectations(t)
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_SyncerLifecycle tests that syncer is removed when Run completes
-func TestGetOrCreateSyncer_SyncerLifecycle(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
-
-	// Create a local syncer
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
-	require.NoError(t, err)
-	require.NotNil(t, syncer)
-
-	// Verify syncer is stored
-	_, found := syncerSet.syncers.Load(localAddr)
-	assert.True(t, found)
-
-	// Cancel context to trigger syncer shutdown
-	cancel()
-
-	// Wait for syncer to be removed (give it some time to clean up)
-	time.Sleep(100 * time.Millisecond)
-
-	// Verify syncer is removed after Run completes
-	syncerEntity, found := syncerSet.syncers.Load(localAddr)
-	assert.True(t, found)
-	syncerEntity.Lock()
-	assert.Nil(t, syncerEntity.StreamsSyncer)
-	syncerEntity.Unlock()
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestSyncerSet_Run tests the Run method of SyncerSet
-func TestSyncerSet_Run(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSet(ctx, localAddr)
-
-	// Start Run in a goroutine
-	runComplete := make(chan bool)
-	go func() {
-		syncerSet.Run()
-		runComplete <- true
-	}()
-
-	// Create a syncer to ensure we have something to wait for
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, localAddr)
-	require.NoError(t, err)
-	require.NotNil(t, syncer)
-
-	// Cancel context
-	cancel()
-
-	// Wait for Run to complete
-	select {
-	case <-runComplete:
-		// Success
-	case <-time.After(1 * time.Second):
-		t.Fatal("Run did not complete in time")
-	}
-
-	// Verify stopped flag is set
-	assert.True(t, syncerSet.stopped.Load())
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_ComputeOpBehavior tests xsync.Compute operation behavior
-func TestGetOrCreateSyncer_ComputeOpBehavior(t *testing.T) {
-	// This test verifies the atomic nature of the LoadOrStore operation
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
-
-	// Create a custom syncer set to test internal behavior
-	streamCache := &mockStreamCache{}
-	messageDistributor := &mockMessageDistributor{}
-	nodeRegistry := &mocks.MockNodeRegistry{}
-
-	syncerSet := &SyncerSet{
-		globalCtx:          ctx,
-		streamCache:        streamCache,
-		nodeRegistry:       nodeRegistry,
-		localNodeAddress:   localAddr,
-		messageDistributor: messageDistributor,
-		syncers:            xsync.NewMap[common.Address, *syncerWithLock](),
-		streamID2Syncer:    xsync.NewMap[StreamId, StreamsSyncer](),
-		streamLocks:        xsync.NewMap[StreamId, *deadlock.Mutex](),
-	}
-
-	// Pre-store a syncer
-	existingSyncer := newLocalSyncer(ctx, localAddr, streamCache, messageDistributor, func(StreamId) {}, nil)
-	syncerEntry := &syncerWithLock{StreamsSyncer: existingSyncer}
-	syncerSet.syncers.Store(remoteAddr, syncerEntry)
-
-	// Try to get the existing syncer
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
-
-	require.NoError(t, err)
-	require.NotNil(t, syncer)
-	assert.Equal(t, existingSyncer, syncer) // Should return the existing syncer
-
-	// Verify nodeRegistry was NOT called since syncer already existed
-	nodeRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-	nodeRegistry.AssertExpectations(t)
-}
-
-// TestGetOrCreateSyncer_RemoteFailure tests remote syncer creation that fails
-func TestGetOrCreateSyncer_RemoteFailure(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
-
-	syncerSet, streamCache, messageDistributor, nodeRegistry := createTestSyncerSet(ctx, localAddr)
-
-	// Mock the stream service client
-	mockClient := &mocks.MockStreamServiceClient{}
-	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil)
-
-	// Mock SyncStreams to return an error
-	syncErr := errors.New("sync failed")
-	mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, syncErr)
-
-	// Try to create a remote syncer
-	syncer, err := syncerSet.getOrCreateSyncer(ctx, remoteAddr)
-
-	// Should fail with an error
-	require.Error(t, err)
-	require.Nil(t, syncer)
-	assert.Contains(t, err.Error(), "sync failed")
-
-	// Verify no syncer was stored since creation failed
-	syncerEntity, found := syncerSet.syncers.Load(remoteAddr)
-	assert.True(t, found)
-	assert.Nil(t, syncerEntity.StreamsSyncer)
-
-	// Cleanup
-	nodeRegistry.AssertExpectations(t)
-	mockClient.AssertExpectations(t)
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-}
-
-// TestStreamLocks_DeleteBehavior tests that stream locks are deleted after use
-func TestStreamLocks_DeleteBehavior(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
-
-	streamID := StreamId{0x01, 0x02, 0x03}
-
-	// Lock a stream using lockStreams
-	req := ModifyRequest{
-		ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
-	}
-	unlock := syncerSet.lockStreams(ctx, req)
-
-	// Verify the lock exists
-	lock, found := syncerSet.streamLocks.Load(streamID)
-	assert.True(t, found, "Stream lock should exist after locking")
-	assert.NotNil(t, lock)
-
-	// Verify we can't acquire the lock (proving it's locked)
-	assert.False(t, lock.TryLock(), "Lock should be held")
-
-	// Unlock the stream
-	unlock()
-
-	// Verify the lock still exists but is unlocked
-	lock, found = syncerSet.streamLocks.Load(streamID)
-	assert.True(t, found, "Stream lock should still exist after unlock")
-	assert.NotNil(t, lock)
-
-	// Verify we can acquire the lock again (proving it was unlocked)
-	assert.True(t, lock.TryLock())
-	lock.Unlock()
-}
-
-// TestStreamLocks_ConcurrentAccess tests concurrent access to different stream locks
-func TestStreamLocks_ConcurrentAccess(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
-
-	numGoroutines := 20
-	var wg sync.WaitGroup
-
-	// Start concurrent goroutines that lock and unlock different streams
-	for i := 0; i < numGoroutines; i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-
-			// Each goroutine uses a different stream ID
-			streamID := StreamId{byte(idx), 0x02, 0x03}
-
-			// Lock the stream
-			req := ModifyRequest{
-				ToAdd: []*SyncCookie{{StreamId: streamID[:]}},
-			}
-			unlock := syncerSet.lockStreams(ctx, req)
-
-			// Simulate some work
-			time.Sleep(1 * time.Millisecond)
-
-			// Unlock the stream
-			unlock()
-
-			// After unlock, the lock should still exist but be unlocked
-			lock, found := syncerSet.streamLocks.Load(streamID)
-			assert.True(t, found, "Stream lock should still exist after unlock")
-
-			// Verify we can acquire it again
-			if lock != nil && lock.TryLock() {
-				lock.Unlock()
-			}
-		}(i)
-	}
-
-	// Wait for all goroutines to complete
-	wg.Wait()
-}
-
-// TestSyncerWithLock_Embedding tests that syncerWithLock properly embeds StreamsSyncer
-func TestSyncerWithLock_Embedding(t *testing.T) {
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	// Create a mock syncer
-	mockSyncer := &mockStreamsSyncer{}
-	mockSyncer.On("Address").Return(localAddr)
-
-	// Create syncerWithLock
-	swl := &syncerWithLock{
-		StreamsSyncer: mockSyncer,
-	}
-
-	// Verify we can call StreamsSyncer methods
-	assert.Equal(t, localAddr, swl.Address())
-
-	// Verify we can use the mutex
-	swl.Lock()
-	swl.Unlock() //lint:ignore SA2001 just waiting for the stream to be unlocked and then proceed
-
-	// Verify TryLock works
-	assert.True(t, swl.TryLock())
-	swl.Unlock()
-
-	mockSyncer.AssertExpectations(t)
-}
-
-// TestStreamLocks_ConditionalLocking tests that streams are only locked when necessary
-func TestStreamLocks_ConditionalLocking(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
-
-	streamID1 := StreamId{0x01, 0x02, 0x03}
-	streamID2 := StreamId{0x02, 0x03, 0x04}
-	streamID3 := StreamId{0x03, 0x04, 0x05}
-
-	// Create a mock syncer for testing
-	mockSyncer := &mockStreamsSyncer{}
-	mockSyncer.On("Address").Return(localAddr).Maybe()
-
-	// Mark streamID2 as already syncing
-	syncerSet.streamID2Syncer.Store(streamID2, mockSyncer)
-
-	// Test 1: Adding new streams (should lock streamID1, not streamID2)
-	req1 := ModifyRequest{
-		ToAdd: []*SyncCookie{
-			{StreamId: streamID1[:]},
-			{StreamId: streamID2[:]}, // Already syncing, should not lock
-		},
-	}
-	unlock1 := syncerSet.lockStreams(ctx, req1)
-
-	// Verify streamID1 is locked
-	lock1, found1 := syncerSet.streamLocks.Load(streamID1)
-	assert.True(t, found1, "Stream 1 lock should exist")
-	assert.False(t, lock1.TryLock(), "Stream 1 should be locked")
-
-	// Verify streamID2 lock state (may or may not exist, but shouldn't be locked by us)
-	lock2, found2 := syncerSet.streamLocks.Load(streamID2)
-	if found2 {
-		// If it exists, we should be able to lock it
-		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked")
-		lock2.Unlock()
-	}
-
-	unlock1()
-
-	// Test 2: Removing syncing streams (should lock)
-	req2 := ModifyRequest{
-		ToRemove: [][]byte{
-			streamID2[:], // Is syncing, should lock for removal
-			streamID3[:], // Not syncing, should not lock
-		},
-	}
-	unlock2 := syncerSet.lockStreams(ctx, req2)
-
-	// Verify streamID2 is locked (for removal)
-	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
-	assert.True(t, found2, "Stream 2 lock should exist")
-	assert.False(t, lock2.TryLock(), "Stream 2 should be locked for removal")
-
-	// Verify streamID3 lock state
-	lock3, found3 := syncerSet.streamLocks.Load(streamID3)
-	if found3 {
-		// If it exists, we should be able to lock it
-		assert.True(t, lock3.TryLock(), "Stream 3 should not be locked")
-		lock3.Unlock()
-	}
-
-	unlock2()
-
-	// Test 3: Backfilling syncing streams (should not lock)
-	req3 := ModifyRequest{
-		ToBackfill: []*ModifySyncRequest_Backfill{
-			{
-				Streams: []*SyncCookie{
-					{StreamId: streamID2[:]}, // Is syncing, backfill doesn't need lock
+
+		err := syncerSet.Modify(ctx, req)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "Sync stopped")
+	})
+
+	t.Run("add single stream successfully", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Setup mock
+		mockStream := &mockStream{}
+		mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{localAddr}, true)
+		mockStream.On("GetStickyPeer").Return(localAddr)
+		mockStream.On("AdvanceStickyPeer", mock.Anything).Return(localAddr).Maybe()
+		mockStream.On("StreamId").Return(mock.AnythingOfType("shared.StreamId"))
+		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Unsub", mock.Anything).Return().Maybe()
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
+		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
+
+		var addHandlerCalls int32
+		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		req := ModifyRequest{
+			SyncID: "test-sync-1",
+			ToAdd:  []*SyncCookie{{StreamId: streamId[:]}},
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&addHandlerCalls, 1)
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), addHandlerCalls)
+
+		// Verify stream was added
+		count := 0
+		syncerSet.streamID2Syncer.Range(func(key StreamId, value StreamsSyncer) bool {
+			count++
+			return true
+		})
+		assert.Equal(t, 1, count)
+	})
+
+	t.Run("add multiple streams concurrently", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Setup mock
+		mockStream := &mockStream{}
+		mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{localAddr}, true)
+		mockStream.On("GetStickyPeer").Return(localAddr)
+		mockStream.On("AdvanceStickyPeer", mock.Anything).Return(localAddr).Maybe()
+		mockStream.On("StreamId").Return(mock.AnythingOfType("shared.StreamId"))
+		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Unsub", mock.Anything).Return().Maybe()
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
+		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
+
+		// Add 20 streams concurrently
+		numStreams := 20
+		var cookies []*SyncCookie
+		for i := 0; i < numStreams; i++ {
+			streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+			cookies = append(cookies, &SyncCookie{StreamId: streamId[:]})
+		}
+
+		var addHandlerCalls int32
+		req := ModifyRequest{
+			SyncID: "test-sync-1",
+			ToAdd:  cookies,
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&addHandlerCalls, 1)
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), addHandlerCalls)
+
+		// Verify all streams were added
+		count := 0
+		syncerSet.streamID2Syncer.Range(func(key StreamId, value StreamsSyncer) bool {
+			count++
+			return true
+		})
+		assert.Equal(t, numStreams, count)
+	})
+
+	t.Run("remove stream successfully", func(t *testing.T) {
+		syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Pre-populate a stream
+		streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		mockSyncer := &mockStreamsSyncer{}
+		mockSyncer.On("Address").Return(localAddr)
+		mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+			return len(req.RemoveStreams) == 1
+		})).Return(&ModifySyncResponse{}, false, nil)
+		syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+		var removeHandlerCalls int32
+		req := ModifyRequest{
+			SyncID:   "test-sync-1",
+			ToRemove: [][]byte{streamID[:]},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&removeHandlerCalls, 1)
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), removeHandlerCalls)
+
+		// Verify stream was removed
+		_, found := syncerSet.streamID2Syncer.Load(streamID)
+		assert.False(t, found)
+	})
+
+	t.Run("backfill stream successfully", func(t *testing.T) {
+		syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Pre-populate a stream
+		streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		mockSyncer := &mockStreamsSyncer{}
+		mockSyncer.On("Address").Return(localAddr)
+		mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+			return req.BackfillStreams != nil
+		})).Return(&ModifySyncResponse{}, false, nil)
+		syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+
+		var backfillHandlerCalls int32
+		req := ModifyRequest{
+			SyncID: "test-sync-1",
+			ToBackfill: []*ModifySyncRequest_Backfill{
+				{
+					SyncId:  "backfill-sync-1",
+					Streams: []*SyncCookie{{StreamId: streamID[:]}},
 				},
+			},
+			BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&backfillHandlerCalls, 1)
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), backfillHandlerCalls)
+	})
+
+	t.Run("mixed operations", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Setup mock for adding
+		mockStream := &mockStream{}
+		mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{localAddr}, true)
+		mockStream.On("GetStickyPeer").Return(localAddr)
+		mockStream.On("AdvanceStickyPeer", mock.Anything).Return(localAddr).Maybe()
+		mockStream.On("StreamId").Return(mock.AnythingOfType("shared.StreamId"))
+		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Unsub", mock.Anything).Return().Maybe()
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
+		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
+
+		// Pre-populate streams for removal and backfill
+		removeStreamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		backfillStreamID := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+		mockSyncerRemove := &mockStreamsSyncer{}
+		mockSyncerRemove.On("Address").Return(localAddr)
+		mockSyncerRemove.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+			return len(req.RemoveStreams) == 1
+		})).Return(&ModifySyncResponse{}, false, nil)
+		syncerSet.streamID2Syncer.Store(removeStreamID, mockSyncerRemove)
+
+		mockSyncerBackfill := &mockStreamsSyncer{}
+		mockSyncerBackfill.On("Address").Return(localAddr)
+		mockSyncerBackfill.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+			return req.BackfillStreams != nil
+		})).Return(&ModifySyncResponse{}, false, nil)
+		syncerSet.streamID2Syncer.Store(backfillStreamID, mockSyncerBackfill)
+
+		var addHandlerCalls, removeHandlerCalls, backfillHandlerCalls int32
+		addStreamId := testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN)
+		req := ModifyRequest{
+			SyncID:   "test-sync-1",
+			ToAdd:    []*SyncCookie{{StreamId: addStreamId[:]}},
+			ToRemove: [][]byte{removeStreamID[:]},
+			ToBackfill: []*ModifySyncRequest_Backfill{
+				{
+					SyncId:  "backfill-sync-1",
+					Streams: []*SyncCookie{{StreamId: backfillStreamID[:]}},
+				},
+			},
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&addHandlerCalls, 1)
+			},
+			RemovingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&removeHandlerCalls, 1)
+			},
+			BackfillingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&backfillHandlerCalls, 1)
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(0), addHandlerCalls)
+		assert.Equal(t, int32(0), removeHandlerCalls)
+		assert.Equal(t, int32(0), backfillHandlerCalls)
+
+		// Verify operations
+		_, found := syncerSet.streamID2Syncer.Load(removeStreamID)
+		assert.False(t, found, "removed stream should not exist")
+
+		_, found = syncerSet.streamID2Syncer.Load(backfillStreamID)
+		assert.True(t, found, "backfilled stream should still exist")
+	})
+
+	t.Run("add stream with retry on failure", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// First call fails, forcing retry with different node
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).
+			Return(nil, errors.New("stream not found")).
+			Once()
+
+		var addHandlerCalls int32
+		var capturedStatus *SyncStreamOpStatus
+		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		req := ModifyRequest{
+			SyncID: "test-sync-1",
+			ToAdd:  []*SyncCookie{{StreamId: streamId[:]}},
+			AddingFailureHandler: func(status *SyncStreamOpStatus) {
+				atomic.AddInt32(&addHandlerCalls, 1)
+				capturedStatus = status
+			},
+		}
+
+		err := syncerSet.Modify(ctx, req)
+		require.NoError(t, err)
+		assert.Equal(t, int32(1), addHandlerCalls) // Should be called once for the failure
+		assert.NotNil(t, capturedStatus)
+		assert.Equal(t, int32(Err_UNAVAILABLE), capturedStatus.Code)
+	})
+}
+
+// TestModifyConcurrency tests concurrent calls to Modify to ensure thread safety
+func TestModifyConcurrency(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	t.Run("concurrent modify calls with different streams", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Setup mock that works for any stream
+		mockStream := &mockStream{}
+		mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{localAddr}, true).Maybe()
+		mockStream.On("GetStickyPeer").Return(localAddr).Maybe()
+		mockStream.On("AdvanceStickyPeer", mock.Anything).Return(localAddr).Maybe()
+		mockStream.On("StreamId").Return(mock.AnythingOfType("shared.StreamId")).Maybe()
+		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Unsub", mock.Anything).Return().Maybe()
+
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
+		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
+
+		// Run multiple concurrent Modify operations
+		numGoroutines := 50
+		var wg sync.WaitGroup
+		wg.Add(numGoroutines)
+
+		failureCount := atomic.Int32{}
+		successCount := atomic.Int32{}
+
+		for i := 0; i < numGoroutines; i++ {
+			go func(idx int) {
+				defer wg.Done()
+
+				// Create unique streams for each goroutine
+				var cookies []*SyncCookie
+				for j := 0; j < 5; j++ {
+					streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+					cookies = append(cookies, &SyncCookie{
+						StreamId: streamId[:],
+					})
+				}
+
+				req := ModifyRequest{
+					SyncID: fmt.Sprintf("test-sync-%d", idx),
+					ToAdd:  cookies,
+					AddingFailureHandler: func(status *SyncStreamOpStatus) {
+						failureCount.Add(1)
+					},
+				}
+
+				err := syncerSet.Modify(ctx, req)
+				if err == nil {
+					successCount.Add(1)
+				}
+			}(i)
+		}
+
+		wg.Wait()
+
+		// Verify all operations succeeded
+		assert.Equal(t, int32(numGoroutines), successCount.Load())
+		assert.Equal(t, int32(0), failureCount.Load())
+
+		// Count total streams added
+		totalStreams := 0
+		syncerSet.streamID2Syncer.Range(func(key StreamId, value StreamsSyncer) bool {
+			totalStreams++
+			return true
+		})
+		assert.Equal(t, numGoroutines*5, totalStreams)
+	})
+
+	t.Run("concurrent modify with overlapping operations", func(t *testing.T) {
+		syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Create shared streams that multiple goroutines will operate on
+		sharedStreams := make([]StreamId, 10)
+		for i := range sharedStreams {
+			sharedStreams[i] = testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		}
+
+		// Pre-populate some streams
+		for i := 0; i < 5; i++ {
+			mockSyncer := &mockStreamsSyncer{}
+			mockSyncer.On("Address").Return(localAddr)
+			mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(&ModifySyncResponse{}, false, nil).Maybe()
+			syncerSet.streamID2Syncer.Store(sharedStreams[i], mockSyncer)
+		}
+
+		// Setup mock
+		mockStream := &mockStream{}
+		mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{localAddr}, true).Maybe()
+		mockStream.On("GetStickyPeer").Return(localAddr).Maybe()
+		mockStream.On("AdvanceStickyPeer", mock.Anything).Return(localAddr).Maybe()
+		mockStream.On("StreamId").Return(mock.AnythingOfType("shared.StreamId")).Maybe()
+		mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+		mockStream.On("Unsub", mock.Anything).Return().Maybe()
+
+		streamCache.On("GetStreamNoWait", mock.Anything, mock.Anything).Return(mockStream, nil)
+		streamCache.On("GetStreamWaitForLocal", mock.Anything, mock.Anything).Return(mockStream, nil)
+
+		// Run concurrent operations on the same streams
+		var wg sync.WaitGroup
+		numOperations := 20
+
+		for i := 0; i < numOperations; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+
+				req := ModifyRequest{
+					SyncID: fmt.Sprintf("test-sync-%d", idx),
+				}
+
+				// Different operations based on index
+				switch idx % 3 {
+				case 0: // Add operation
+					req.ToAdd = []*SyncCookie{{StreamId: sharedStreams[5+idx%5][:]}}
+				case 1: // Remove operation
+					if idx < 5 {
+						req.ToRemove = [][]byte{sharedStreams[idx][:]}
+					}
+				case 2: // Backfill operation
+					if idx < 5 {
+						req.ToBackfill = []*ModifySyncRequest_Backfill{
+							{
+								SyncId:  fmt.Sprintf("backfill-%d", idx),
+								Streams: []*SyncCookie{{StreamId: sharedStreams[idx][:]}},
+							},
+						}
+					}
+				}
+
+				// Add empty handlers
+				req.AddingFailureHandler = func(status *SyncStreamOpStatus) {}
+				req.RemovingFailureHandler = func(status *SyncStreamOpStatus) {}
+				req.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {}
+
+				_ = syncerSet.Modify(ctx, req)
+			}(i)
+		}
+
+		wg.Wait()
+
+		// Verify no deadlocks occurred and operations completed
+		assert.True(t, true, "Concurrent operations completed without deadlock")
+	})
+
+	t.Run("stress test stream locking", func(t *testing.T) {
+		syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+		// Create a small set of streams to force lock contention
+		streams := make([]StreamId, 3)
+		for i := range streams {
+			streams[i] = testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		}
+
+		// Pre-populate all streams
+		for _, streamID := range streams {
+			mockSyncer := &mockStreamsSyncer{}
+			mockSyncer.On("Address").Return(localAddr)
+			mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(&ModifySyncResponse{}, false, nil).Maybe()
+			syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+		}
+
+		// Run many concurrent operations on the same small set of streams
+		var wg sync.WaitGroup
+		numGoroutines := 100
+		opsPerGoroutine := 10
+
+		for i := 0; i < numGoroutines; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+
+				for j := 0; j < opsPerGoroutine; j++ {
+					// Randomly pick streams and operations
+					streamIdx := (idx + j) % len(streams)
+
+					req := ModifyRequest{
+						SyncID: fmt.Sprintf("test-%d-%d", idx, j),
+					}
+
+					// Alternate between remove and backfill to stress locking
+					if j%2 == 0 {
+						req.ToRemove = [][]byte{streams[streamIdx][:]}
+						req.RemovingFailureHandler = func(status *SyncStreamOpStatus) {}
+					} else {
+						req.ToBackfill = []*ModifySyncRequest_Backfill{
+							{
+								SyncId:  fmt.Sprintf("backfill-%d-%d", idx, j),
+								Streams: []*SyncCookie{{StreamId: streams[streamIdx][:]}},
+							},
+						}
+						req.BackfillingFailureHandler = func(status *SyncStreamOpStatus) {}
+					}
+
+					_ = syncerSet.Modify(ctx, req)
+
+					// Re-add removed streams for next iteration
+					if j%2 == 0 {
+						mockSyncer := &mockStreamsSyncer{}
+						mockSyncer.On("Address").Return(localAddr)
+						mockSyncer.On("Modify", mock.Anything, mock.Anything).
+							Return(&ModifySyncResponse{}, false, nil).
+							Maybe()
+						syncerSet.streamID2Syncer.Store(streams[streamIdx], mockSyncer)
+					}
+				}
+			}(i)
+		}
+
+		wg.Wait()
+		assert.True(t, true, "High contention test completed without deadlock")
+	})
+}
+
+// TestProcessAddingStream tests the processAddingStream method
+func TestProcessAddingStream(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(*testing.T, *SyncerSet, *mockStreamCache, *mocks.MockNodeRegistry, StreamId)
+		cookie        func(StreamId) *SyncCookie
+		expectFailure bool
+		expectedCode  int32
+		expectedMsg   string
+	}{
+		{
+			name: "successful add",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, nr *mocks.MockNodeRegistry, streamID StreamId) {
+				mockStream := &mockStream{}
+				mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{ss.localNodeAddress}, true)
+				mockStream.On("GetStickyPeer").Return(ss.localNodeAddress)
+				mockStream.On("AdvanceStickyPeer", mock.Anything).Return(ss.localNodeAddress).Maybe()
+				mockStream.On("StreamId").Return(streamID)
+				mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Unsub", mock.Anything).Return().Maybe()
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(mockStream, nil)
+				sc.On("GetStreamWaitForLocal", mock.Anything, streamID).Return(mockStream, nil).Maybe()
+			},
+			expectFailure: false,
+		},
+		{
+			name: "stream already exists (backfill)",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, nr *mocks.MockNodeRegistry, streamID StreamId) {
+				// Pre-populate stream
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Address").Return(ss.localNodeAddress)
+				mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+					return req.BackfillStreams != nil
+				})).Return(&ModifySyncResponse{}, false, nil)
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+			expectFailure: false,
+		},
+		{
+			name: "no available node",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, nr *mocks.MockNodeRegistry, streamID StreamId) {
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(nil, errors.New("stream not found"))
+			},
+			expectFailure: true,
+			expectedCode:  int32(Err_UNAVAILABLE),
+			expectedMsg:   "No available node",
+		},
+		{
+			name: "syncer creation failure",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, nr *mocks.MockNodeRegistry, streamID StreamId) {
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(nil, errors.New("stream not found"))
+
+				remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+				mockClient := &mocks.MockStreamServiceClient{}
+				nr.On("GetStreamServiceClientForAddress", remoteAddr).Return(mockClient, nil).Once()
+				mockClient.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, errors.New("sync failed")).Once()
+			},
+			cookie: func(streamID StreamId) *SyncCookie {
+				remoteAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+				return &SyncCookie{
+					StreamId:    streamID[:],
+					NodeAddress: remoteAddr.Bytes(),
+				}
+			},
+			expectFailure: true,
+			expectedCode:  int32(Err_UNAVAILABLE),
+			expectedMsg:   "No available node",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+			syncerSet, streamCache, _, nodeRegistry := createTestSyncerSet(ctx, localAddr)
+
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(t, syncerSet, streamCache, nodeRegistry, streamID)
+			}
+
+			cookie := &SyncCookie{StreamId: streamID[:]}
+			if tt.cookie != nil {
+				cookie = tt.cookie(streamID)
+			}
+
+			// Execute
+			capturedStatus := syncerSet.processAddingStream(ctx, "test-sync", cookie, false)
+
+			// Verify
+			if tt.expectFailure {
+				require.NotNil(t, capturedStatus)
+				assert.Equal(t, tt.expectedCode, capturedStatus.Code)
+				assert.Contains(t, capturedStatus.Message, tt.expectedMsg)
+			} else {
+				assert.Nil(t, capturedStatus)
+				// Verify stream was added
+				_, found := syncerSet.streamID2Syncer.Load(streamID)
+				assert.True(t, found)
+			}
+		})
+	}
+}
+
+// TestProcessBackfillingStream tests the processBackfillingStream method
+func TestProcessBackfillingStream(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(*testing.T, *SyncerSet, StreamId)
+		expectFailure bool
+		expectedCode  int32
+		expectedMsg   string
+	}{
+		{
+			name: "successful backfill",
+			setupFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				// Pre-populate stream with syncer
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Address").Return(ss.localNodeAddress)
+				mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+					return req.BackfillStreams != nil && req.BackfillStreams.SyncId == "backfill-sync-1"
+				})).Return(&ModifySyncResponse{}, false, nil)
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+			expectFailure: false,
+		},
+		{
+			name:          "stream not syncing",
+			expectFailure: true,
+			expectedCode:  int32(Err_NOT_FOUND),
+			expectedMsg:   "Stream must be syncing",
+		},
+		{
+			name: "RPC failure",
+			setupFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				// Pre-populate stream with syncer that fails
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Address").Return(ss.localNodeAddress)
+				mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(nil, false, errors.New("RPC failed"))
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+			expectFailure: true,
+			expectedMsg:   "RPC failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+			syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+			cookie := &SyncCookie{StreamId: streamID[:]}
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(t, syncerSet, streamID)
+			}
+
+			// Execute
+			capturedStatus := syncerSet.processBackfillingStream(ctx, "test-sync", "backfill-sync-1", cookie)
+
+			// Verify
+			if tt.expectFailure {
+				require.NotNil(t, capturedStatus)
+				if tt.expectedCode != 0 {
+					assert.Equal(t, tt.expectedCode, capturedStatus.Code)
+				}
+				assert.Contains(t, capturedStatus.Message, tt.expectedMsg)
+			} else {
+				assert.Nil(t, capturedStatus)
+			}
+		})
+	}
+}
+
+// TestProcessRemovingStream tests the processRemovingStream method
+func TestProcessRemovingStream(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(*testing.T, *SyncerSet, StreamId)
+		expectFailure bool
+		expectedCode  int32
+		expectedMsg   string
+		verifyFunc    func(*testing.T, *SyncerSet, StreamId)
+	}{
+		{
+			name: "successful removal",
+			setupFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				// Pre-populate stream
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Modify", mock.Anything, mock.MatchedBy(func(req *ModifySyncRequest) bool {
+					return len(req.RemoveStreams) == 1 && string(req.RemoveStreams[0]) == string(streamID[:])
+				})).Return(&ModifySyncResponse{}, false, nil)
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+			expectFailure: false,
+			verifyFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				_, found := ss.streamID2Syncer.Load(streamID)
+				assert.False(t, found) // Stream should be removed
+			},
+		},
+		{
+			name:          "stream not found",
+			expectFailure: false, // No failure, just no-op
+		},
+		{
+			name: "RPC failure",
+			setupFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				// Pre-populate stream with failing syncer
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Modify", mock.Anything, mock.Anything).Return(&ModifySyncResponse{
+					Removals: []*SyncStreamOpStatus{{
+						StreamId: streamID[:],
+						Code:     int32(Err_INTERNAL),
+						Message:  "Removal failed",
+					}},
+				}, false, nil)
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+			expectFailure: true,
+			expectedCode:  int32(Err_INTERNAL),
+			expectedMsg:   "Removal failed",
+			verifyFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				_, found := ss.streamID2Syncer.Load(streamID)
+				assert.True(t, found) // Stream should NOT be removed on failure
 			},
 		},
 	}
-	unlock3 := syncerSet.lockStreams(ctx, req3)
 
-	// Verify streamID2 is not locked
-	lock2, found2 = syncerSet.streamLocks.Load(streamID2)
-	if found2 {
-		assert.True(t, lock2.TryLock(), "Stream 2 should not be locked for backfill")
-		lock2.Unlock()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+			syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(t, syncerSet, streamID)
+			}
+
+			// Execute
+			capturedStatus := syncerSet.processRemovingStream(ctx, streamID)
+
+			// Verify
+			if tt.expectFailure {
+				require.NotNil(t, capturedStatus)
+				assert.Equal(t, tt.expectedCode, capturedStatus.Code)
+				assert.Equal(t, tt.expectedMsg, capturedStatus.Message)
+			} else {
+				assert.Nil(t, capturedStatus)
+			}
+
+			if tt.verifyFunc != nil {
+				tt.verifyFunc(t, syncerSet, streamID)
+			}
+		})
+	}
+}
+
+// TestSelectNodeForStream tests the selectNodeForStream method
+func TestSelectNodeForStream(t *testing.T) {
+	tests := []struct {
+		name              string
+		setupFunc         func(*testing.T, *SyncerSet, *mockStreamCache, StreamId) *SyncCookie
+		changeNode        bool
+		expectedNode      common.Address
+		expectedAvailable bool
+	}{
+		{
+			name: "use node from cookie",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, streamID StreamId) *SyncCookie {
+				cookieAddr := common.HexToAddress("0x0987654321098765432109876543210987654321")
+
+				// Pre-populate syncer for cookie node
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Address").Return(cookieAddr)
+				ss.syncers.Store(cookieAddr, &syncerWithLock{StreamsSyncer: mockSyncer})
+
+				return &SyncCookie{
+					StreamId:    streamID[:],
+					NodeAddress: cookieAddr.Bytes(),
+				}
+			},
+			expectedNode:      common.HexToAddress("0x0987654321098765432109876543210987654321"),
+			expectedAvailable: true,
+		},
+		{
+			name: "local stream",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, streamID StreamId) *SyncCookie {
+				// Mock stream as local
+				mockStream := &mockStream{}
+				mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{}, true)
+				mockStream.On("GetStickyPeer").Return(ss.localNodeAddress)
+				mockStream.On("AdvanceStickyPeer", mock.Anything).Return(ss.localNodeAddress).Maybe()
+				mockStream.On("StreamId").Return(streamID).Maybe()
+				mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Unsub", mock.Anything).Return().Maybe()
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(mockStream, nil)
+
+				return &SyncCookie{StreamId: streamID[:]}
+			},
+			expectedNode:      common.HexToAddress("0x1234567890123456789012345678901234567890"),
+			expectedAvailable: true,
+		},
+		{
+			name: "remote nodes",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, streamID StreamId) *SyncCookie {
+				remoteAddr1 := common.HexToAddress("0x1111111111111111111111111111111111111111")
+				remoteAddr2 := common.HexToAddress("0x2222222222222222222222222222222222222222")
+
+				// Mock stream with remotes
+				mockStream := &mockStream{}
+				mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{remoteAddr1, remoteAddr2}, false)
+				mockStream.On("GetStickyPeer").Return(remoteAddr1)
+				mockStream.On("AdvanceStickyPeer", mock.Anything).Return(remoteAddr2).Maybe()
+				mockStream.On("StreamId").Return(streamID).Maybe()
+				mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Unsub", mock.Anything).Return().Maybe()
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(mockStream, nil)
+
+				// Pre-populate syncer for first remote
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("Address").Return(remoteAddr1)
+				ss.syncers.Store(remoteAddr1, &syncerWithLock{StreamsSyncer: mockSyncer})
+
+				return &SyncCookie{StreamId: streamID[:]}
+			},
+			expectedNode:      common.HexToAddress("0x1111111111111111111111111111111111111111"),
+			expectedAvailable: true,
+		},
+		{
+			name: "changeNode flag",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, streamID StreamId) *SyncCookie {
+				usedNode := common.HexToAddress("0x1111111111111111111111111111111111111111")
+				alternateNode := common.HexToAddress("0x2222222222222222222222222222222222222222")
+
+				// Mock stream with remotes
+				mockStream := &mockStream{}
+				mockStream.On("GetRemotesAndIsLocal").Return([]common.Address{usedNode, alternateNode}, false)
+				mockStream.On("GetStickyPeer").Return(alternateNode)
+				mockStream.On("AdvanceStickyPeer", usedNode).Return(alternateNode)
+				mockStream.On("StreamId").Return(streamID).Maybe()
+				mockStream.On("UpdatesSinceCookie", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Sub", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+				mockStream.On("Unsub", mock.Anything).Return().Maybe()
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(mockStream, nil)
+
+				// Pre-populate syncers for both nodes
+				mockSyncerUsed := &mockStreamsSyncer{}
+				mockSyncerUsed.On("Address").Return(usedNode)
+				ss.syncers.Store(usedNode, &syncerWithLock{StreamsSyncer: mockSyncerUsed})
+
+				mockSyncerAlt := &mockStreamsSyncer{}
+				mockSyncerAlt.On("Address").Return(alternateNode)
+				ss.syncers.Store(alternateNode, &syncerWithLock{StreamsSyncer: mockSyncerAlt})
+
+				return &SyncCookie{
+					StreamId:    streamID[:],
+					NodeAddress: usedNode.Bytes(),
+				}
+			},
+			changeNode:        true,
+			expectedNode:      common.HexToAddress("0x2222222222222222222222222222222222222222"),
+			expectedAvailable: true,
+		},
+		{
+			name: "no available nodes",
+			setupFunc: func(t *testing.T, ss *SyncerSet, sc *mockStreamCache, streamID StreamId) *SyncCookie {
+				// Mock stream cache to return error
+				sc.On("GetStreamNoWait", mock.Anything, streamID).Return(nil, errors.New("stream not found"))
+
+				return &SyncCookie{StreamId: streamID[:]}
+			},
+			expectedNode:      common.Address{},
+			expectedAvailable: false,
+		},
 	}
 
-	unlock3()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+			syncerSet, streamCache, _, _ := createTestSyncerSet(ctx, localAddr)
 
-	// Cleanup
-	syncerSet.streamID2Syncer.Delete(streamID2)
-	mockSyncer.AssertExpectations(t)
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+			cookie := &SyncCookie{StreamId: streamID[:]}
+			if tt.setupFunc != nil {
+				cookie = tt.setupFunc(t, syncerSet, streamCache, streamID)
+			}
+
+			// Execute
+			selectedNode, available := syncerSet.selectNodeForStream(ctx, cookie, tt.changeNode)
+
+			// Verify
+			assert.Equal(t, tt.expectedAvailable, available)
+			assert.Equal(t, tt.expectedNode, selectedNode)
+		})
+	}
+}
+
+// TestDebugDropStream tests the DebugDropStream method
+func TestDebugDropStream(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupFunc     func(*testing.T, *SyncerSet, StreamId)
+		expectedError string
+	}{
+		{
+			name: "successful drop",
+			setupFunc: func(t *testing.T, ss *SyncerSet, streamID StreamId) {
+				// Pre-populate stream
+				mockSyncer := &mockStreamsSyncer{}
+				mockSyncer.On("DebugDropStream", mock.Anything, streamID).Return(true, nil)
+				ss.streamID2Syncer.Store(streamID, mockSyncer)
+			},
+		},
+		{
+			name:          "stream not found",
+			expectedError: "Stream not part of sync operation",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+			syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+			streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+			if tt.setupFunc != nil {
+				tt.setupFunc(t, syncerSet, streamID)
+			}
+
+			// Execute
+			err := syncerSet.DebugDropStream(ctx, streamID)
+
+			// Verify
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				_, found := syncerSet.streamID2Syncer.Load(streamID)
+				assert.False(t, found) // Stream should be removed
+			}
+		})
+	}
+}
+
+// TestValidate tests the Validate method on ModifyRequest
+func TestValidate(t *testing.T) {
+	tests := []struct {
+		name          string
+		buildRequest  func() *ModifyRequest
+		expectedError string
+	}{
+		{
+			name: "empty request",
+			buildRequest: func() *ModifyRequest {
+				return &ModifyRequest{}
+			},
+			expectedError: "Empty modify sync request",
+		},
+		{
+			name: "duplicate in add list",
+			buildRequest: func() *ModifyRequest {
+				streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+				return &ModifyRequest{
+					ToAdd: []*SyncCookie{
+						{StreamId: streamID[:]},
+						{StreamId: streamID[:]}, // Duplicate
+					},
+				}
+			},
+			expectedError: "Duplicate stream in add list",
+		},
+		{
+			name: "duplicate in remove list",
+			buildRequest: func() *ModifyRequest {
+				streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+				return &ModifyRequest{
+					ToRemove: [][]byte{
+						streamID[:],
+						streamID[:], // Duplicate
+					},
+				}
+			},
+			expectedError: "Duplicate stream in remove list",
+		},
+		{
+			name: "stream in both add and remove",
+			buildRequest: func() *ModifyRequest {
+				streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+				return &ModifyRequest{
+					ToAdd: []*SyncCookie{
+						{StreamId: streamID[:]},
+					},
+					ToRemove: [][]byte{
+						streamID[:],
+					},
+				}
+			},
+			expectedError: "Stream in remove list is also in add list",
+		},
+		{
+			name: "duplicate in backfill list",
+			buildRequest: func() *ModifyRequest {
+				streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+				return &ModifyRequest{
+					ToBackfill: []*ModifySyncRequest_Backfill{
+						{
+							Streams: []*SyncCookie{
+								{StreamId: streamID[:]},
+								{StreamId: streamID[:]}, // Duplicate
+							},
+						},
+					},
+				}
+			},
+			expectedError: "Duplicate stream in backfill list",
+		},
+		{
+			name: "invalid stream ID in add list",
+			buildRequest: func() *ModifyRequest {
+				return &ModifyRequest{
+					ToAdd: []*SyncCookie{
+						{StreamId: []byte{0x01, 0x02}}, // Too short
+					},
+				}
+			},
+			expectedError: "Invalid stream",
+		},
+		{
+			name: "invalid stream ID in remove list",
+			buildRequest: func() *ModifyRequest {
+				return &ModifyRequest{
+					ToRemove: [][]byte{
+						{0x01}, // Too short
+					},
+				}
+			},
+			expectedError: "Invalid stream",
+		},
+		{
+			name: "invalid stream ID in backfill list",
+			buildRequest: func() *ModifyRequest {
+				return &ModifyRequest{
+					ToBackfill: []*ModifySyncRequest_Backfill{
+						{
+							Streams: []*SyncCookie{
+								{StreamId: nil}, // Nil
+							},
+						},
+					},
+				}
+			},
+			expectedError: "Invalid stream",
+		},
+		{
+			name: "valid request",
+			buildRequest: func() *ModifyRequest {
+				streamID1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+				streamID2 := testutils.FakeStreamId(STREAM_SPACE_BIN)
+				streamID3 := testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN)
+				return &ModifyRequest{
+					ToAdd: []*SyncCookie{
+						{StreamId: streamID1[:]},
+					},
+					ToRemove: [][]byte{
+						streamID2[:],
+					},
+					ToBackfill: []*ModifySyncRequest_Backfill{
+						{
+							Streams: []*SyncCookie{
+								{StreamId: streamID3[:]},
+							},
+						},
+					},
+				}
+			},
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := tt.buildRequest()
+			err := req.Validate()
+
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+// TestStreamLocking tests the stream locking mechanism
+func TestStreamLocking(t *testing.T) {
+	ctx := context.Background()
+	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	syncerSet, _, _, _ := createTestSyncerSet(ctx, localAddr)
+
+	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+
+	// Test locking
+	unlock := syncerSet.lockStream(streamID)
+
+	// Verify lock exists
+	lock, found := syncerSet.streamLocks.Load(streamID)
+	assert.True(t, found)
+	assert.False(t, lock.TryLock()) // Should be locked
+
+	// Unlock
+	unlock()
+
+	// Verify it's unlocked
+	assert.True(t, lock.TryLock())
+	lock.Unlock()
+
+	// Test unlocking non-existent stream
+	nonExistentStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	syncerSet.unlockStream(nonExistentStream) // Should not panic
 }
 
 // TestOnStreamDown tests the onStreamDown method
@@ -624,74 +1187,36 @@ func TestOnStreamDown(t *testing.T) {
 	ctx := context.Background()
 	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
-	unsubCalled := false
-	var unsubStreamID StreamId
-	unsubStream := func(streamID StreamId) {
-		unsubCalled = true
-		unsubStreamID = streamID
-	}
+	// Track unsubscribe calls
+	unsubCalls := make([]StreamId, 0)
+	syncerSet, _, _, _ := createTestSyncerSetWithCallback(ctx, localAddr, func(streamID StreamId) {
+		unsubCalls = append(unsubCalls, streamID)
+	})
 
-	syncerSet, streamCache, messageDistributor, _ := createTestSyncerSetWithCallback(ctx, localAddr, unsubStream)
+	// Add some streams
+	stream1 := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	stream2 := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
-	streamID := StreamId{0x01, 0x02, 0x03}
+	mockSyncer1 := &mockStreamsSyncer{}
+	mockSyncer1.On("Address").Return(localAddr)
+	syncerSet.streamID2Syncer.Store(stream1, mockSyncer1)
 
-	// Create a mock syncer and add it to streamID2Syncer
-	mockSyncer := &mockStreamsSyncer{}
-	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
+	mockSyncer2 := &mockStreamsSyncer{}
+	mockSyncer2.On("Address").Return(localAddr)
+	syncerSet.streamID2Syncer.Store(stream2, mockSyncer2)
 
-	// Call onStreamDown
-	syncerSet.onStreamDown(streamID)
+	// Simulate stream down
+	syncerSet.onStreamDown(stream1)
 
-	// Verify unsubStream was called with correct streamID
-	assert.True(t, unsubCalled, "unsubStream should have been called")
-	assert.Equal(t, streamID, unsubStreamID, "unsubStream should have been called with correct streamID")
+	// Verify
+	assert.Len(t, unsubCalls, 1)
+	assert.Equal(t, stream1, unsubCalls[0])
 
-	// Verify stream was removed from streamID2Syncer
-	_, found := syncerSet.streamID2Syncer.Load(streamID)
-	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
+	// Verify stream was removed from syncer set
+	_, found := syncerSet.streamID2Syncer.Load(stream1)
+	assert.False(t, found)
 
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-	mockSyncer.AssertExpectations(t)
-}
-
-// TestOnStreamDown_NilCallback tests onStreamDown when unsubStream is nil
-func TestOnStreamDown_NilCallback(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
-
-	// Create syncer set with nil unsubStream callback
-	streamCache := &mockStreamCache{}
-	messageDistributor := &mockMessageDistributor{}
-	nodeRegistry := &mocks.MockNodeRegistry{}
-
-	syncerSet := NewSyncers(
-		ctx,
-		streamCache,
-		nodeRegistry,
-		localAddr,
-		messageDistributor,
-		nil, // nil unsubStream callback
-		nil, // no otel tracer
-	)
-
-	streamID := StreamId{0x01, 0x02, 0x03}
-
-	// Create a mock syncer and add it to streamID2Syncer
-	mockSyncer := &mockStreamsSyncer{}
-	syncerSet.streamID2Syncer.Store(streamID, mockSyncer)
-
-	// Call onStreamDown - should not panic even with nil callback
-	syncerSet.onStreamDown(streamID)
-
-	// Verify stream was still removed from streamID2Syncer
-	_, found := syncerSet.streamID2Syncer.Load(streamID)
-	assert.False(t, found, "Stream should have been removed from streamID2Syncer")
-
-	// Cleanup
-	streamCache.AssertExpectations(t)
-	messageDistributor.AssertExpectations(t)
-	nodeRegistry.AssertExpectations(t)
-	mockSyncer.AssertExpectations(t)
+	// Verify other stream is still there
+	_, found = syncerSet.streamID2Syncer.Load(stream2)
+	assert.True(t, found)
 }

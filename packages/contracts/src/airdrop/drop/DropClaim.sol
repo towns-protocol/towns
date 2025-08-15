@@ -17,6 +17,7 @@ library DropClaim {
     /// @notice A struct representing a claim
     /// @param conditionId The ID of the claim condition
     /// @param account The address of the account that claimed
+    /// @param recipient The address of the recipient of the tokens
     /// @param quantity The quantity of tokens claimed
     /// @param points The points to be burned
     /// @param proof The proof of the claim

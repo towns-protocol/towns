@@ -61,9 +61,12 @@ func snapshot_migration_0005_(iSnapshot *Snapshot, force bool) {
 			}
 
 			// Remove empty solicitations
-			member.Solicitations = slices.DeleteFunc(member.Solicitations, func(solicitation *MemberPayload_KeySolicitation) bool {
-				return len(solicitation.SessionIds) == 0
-			})
+			member.Solicitations = slices.DeleteFunc(
+				member.Solicitations,
+				func(solicitation *MemberPayload_KeySolicitation) bool {
+					return len(solicitation.SessionIds) == 0
+				},
+			)
 
 			// Clear lost usernames and display names
 			if member.Username != nil && member.Username.Data != nil {

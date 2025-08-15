@@ -3,6 +3,8 @@ package sync
 import (
 	"context"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -36,13 +38,24 @@ func NewNotificationsStreamsTracker(
 	metricsFactory infra.MetricsFactory,
 	trackingConfig config.StreamTrackingConfig,
 	notificationConfig config.NotificationsConfig,
+	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &NotificationsStreamsTracker{
 		onChainConfig:      onChainConfig,
 		storage:            storage,
 		notificationConfig: notificationConfig,
 	}
-	if err := tracker.StreamsTrackerImpl.Init(ctx, onChainConfig, riverRegistry, nodeRegistries, listener, tracker, metricsFactory, trackingConfig); err != nil {
+	if err := tracker.StreamsTrackerImpl.Init(
+		ctx,
+		onChainConfig,
+		riverRegistry,
+		nodeRegistries,
+		listener,
+		tracker,
+		metricsFactory,
+		trackingConfig,
+		otelTracer,
+	); err != nil {
 		return nil, err
 	}
 
@@ -72,6 +85,7 @@ func (tracker *NotificationsStreamsTracker) coldStreamsEnabled() bool {
 // TrackStream returns true if the given streamID must be tracked for notifications.
 func (tracker *NotificationsStreamsTracker) TrackStream(streamID shared.StreamId, isInit bool) bool {
 	streamType := streamID.Type()
+
 	// When cold streams are enabled, only track user settings stream on init
 	if isInit && tracker.coldStreamsEnabled() {
 		return streamType == shared.STREAM_USER_SETTINGS_BIN

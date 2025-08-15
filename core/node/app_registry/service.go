@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ttlcache "github.com/patrickmn/go-cache"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -69,6 +70,7 @@ func NewService(
 	webhookHttpClient *http.Client,
 	baseChain *crypto.Blockchain,
 	appRegistryContractConfig *config.ContractConfig,
+	otelTracer trace.Tracer,
 ) (*Service, error) {
 	if len(nodes) < 1 {
 		return nil, base.RiverError(
@@ -117,6 +119,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
+		otelTracer,
 	)
 	if err != nil {
 		return nil, err

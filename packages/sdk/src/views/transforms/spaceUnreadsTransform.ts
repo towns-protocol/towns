@@ -1,5 +1,5 @@
 import { FullyReadMarker } from '@towns-protocol/proto'
-import { UnreadMarkersModel } from '../streams/unreadMarkersTransform'
+import { UnreadMarkersModel } from './unreadMarkersTransform'
 import { isEqual } from 'lodash-es'
 import { ThreadStatsMap, TimelinesViewModel } from '../streams/timelinesModel'
 import { isChannelStreamId, spaceIdFromChannelId } from '../../id'
