@@ -5,19 +5,19 @@ pragma solidity ^0.8.23;
 import {IFeatureManagerFacetBase} from "src/factory/facets/feature/IFeatureManagerFacet.sol";
 
 // libraries
-import {FeatureCondition} from "src/factory/facets/feature/FeatureConditionLib.sol";
+import {FeatureCondition} from "src/factory/facets/feature/FeatureManagerStorage.sol";
 
 // contracts
 import {FeatureManagerFacet} from "src/factory/facets/feature/FeatureManagerFacet.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
+import {BaseRegistryTest} from "test/base/registry/BaseRegistry.t.sol";
 
 // mocks
 import {MockERC20} from "test/mocks/MockERC20.sol";
 
-contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
+contract FeatureManagerTest is BaseSetup, BaseRegistryTest, IFeatureManagerFacetBase {
     FeatureManagerFacet featureManagerFacet;
-    Towns towns;
 
     uint256 private constant _ZERO_SENTINEL = 0xfbb67fda52d4bfb8bf;
     bytes32 constant ZERO_SENTINEL_BYTES32 = bytes32(_ZERO_SENTINEL);
@@ -28,10 +28,12 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         0x69ee5871a65c89c042656feb37c9971ee294380d6b43c379eed8a7bfa140c5e7;
     uint256 constant TEST_THRESHOLD = 100 ether;
 
-    function setUp() public override {
+    address operator = _randomAddress();
+    uint256 commissionRate = 1000; // 10%
+
+    function setUp() public override(BaseSetup, BaseRegistryTest) {
         super.setUp();
         featureManagerFacet = FeatureManagerFacet(spaceFactory);
-        towns = Towns(townsToken);
     }
 
     modifier givenFeatureConditionIsSet(
@@ -57,7 +59,7 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
     }
 
     modifier givenTokensAreMinted(address to, uint256 amount) {
-        vm.assume(amount > 0 && amount < type(uint256).max);
+        amount = bound(amount, 1, type(uint256).max);
         vm.prank(bridge);
         towns.mint(to, amount);
         _;
@@ -75,6 +77,42 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
         assertEq(currentCondition.token, address(townsToken));
         assertEq(currentCondition.threshold, condition.threshold);
         assertEq(currentCondition.active, condition.active);
+    }
+
+    function test_updateFeatureCondition(
+        bytes32 featureId,
+        FeatureCondition memory condition,
+        address to,
+        uint256 amount
+    ) external givenFeatureConditionIsSet(featureId, condition, to, amount) {
+        FeatureCondition memory newCondition = FeatureCondition({
+            token: address(townsToken),
+            threshold: amount,
+            active: true,
+            extraData: ""
+        });
+
+        vm.prank(deployer);
+        vm.expectEmit(address(featureManagerFacet));
+        emit FeatureConditionSet(featureId, newCondition);
+        featureManagerFacet.updateFeatureCondition(featureId, newCondition);
+    }
+
+    function test_revertWith_updateFeatureCondition_featureNotActive()
+        external
+        givenTokensAreMinted(deployer, TEST_THRESHOLD)
+    {
+        vm.prank(deployer);
+        vm.expectRevert(FeatureNotActive.selector);
+        featureManagerFacet.updateFeatureCondition(
+            TEST_FEATURE_ID,
+            FeatureCondition({
+                token: address(townsToken),
+                threshold: TEST_THRESHOLD,
+                active: false,
+                extraData: ""
+            })
+        );
     }
 
     function test_getFeatureConditions() external givenTokensAreMinted(deployer, TEST_THRESHOLD) {
@@ -108,6 +146,25 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
             assertEq(currentCondition.threshold, 0);
             assertEq(currentCondition.active, true);
         }
+    }
+
+    function test_revertWith_setFeatureCondition_featureAlreadyExists()
+        external
+        givenTokensAreMinted(deployer, TEST_THRESHOLD)
+    {
+        FeatureCondition memory condition = FeatureCondition({
+            token: address(townsToken),
+            threshold: 0,
+            active: true,
+            extraData: ""
+        });
+
+        vm.prank(deployer);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+
+        vm.prank(deployer);
+        vm.expectRevert(FeatureAlreadyExists.selector);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
     }
 
     function test_revertWith_setFeatureCondition_invalidToken() external {
@@ -273,5 +330,53 @@ contract FeatureManagerTest is BaseSetup, IFeatureManagerFacetBase {
 
         vm.prank(deployer);
         featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           E2E TESTS                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Tests that feature conditions are properly validated after staking tokens
+    /// @dev This test verifies the end-to-end flow: staking tokens to a space, then checking
+    ///      if the space meets a feature condition based on the staked amount
+    function test_stake_featureConditionIsActive()
+        external
+        givenOperator(operator, commissionRate)
+    {
+        uint256 depositId;
+        uint96 amount = 10 ether; // 10 $TOWN
+        address depositor = _randomAddress(); // Towns token holder
+
+        // Mint tokens to depositor via bridge (simulates cross-chain token bridging)
+        bridgeTokensForUser(depositor, amount);
+
+        // Configure space to delegate rewards to the operator
+        pointSpaceToOperator(everyoneSpace, operator);
+
+        // Create a feature condition requiring exactly the staked amount (10 TOWN)
+        FeatureCondition memory condition = FeatureCondition({
+            token: address(townsToken),
+            threshold: amount, // 10 TOWN threshold
+            active: true,
+            extraData: ""
+        });
+
+        // Set the feature condition for the test feature
+        vm.prank(deployer);
+        featureManagerFacet.setFeatureCondition(TEST_FEATURE_ID, condition);
+
+        vm.assertFalse(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, everyoneSpace));
+
+        // Stake tokens: depositor stakes 10 TOWN to the space, with themselves as beneficiary
+        vm.startPrank(depositor);
+        towns.approve(address(rewardsDistributionFacet), amount);
+        depositId = rewardsDistributionFacet.stake(amount, everyoneSpace, depositor);
+        vm.stopPrank();
+
+        // Verify the stake was created correctly with proper delegation and commission
+        verifyStake(depositor, depositId, amount, everyoneSpace, commissionRate, depositor);
+
+        // Verify that the space now meets the feature condition due to the staked tokens
+        vm.assertTrue(featureManagerFacet.checkFeatureCondition(TEST_FEATURE_ID, everyoneSpace));
     }
 }
