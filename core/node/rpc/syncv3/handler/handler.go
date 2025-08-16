@@ -52,6 +52,10 @@ type (
 
 		// Ping is used to keep the sync operation alive and make sure it is operational.
 		Ping(ctx context.Context, nonce string)
+
+		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
+		// Sends a SyncOp_SYNC_DOWN message to the receiver and unsubscribes from the stream updates.
+		DebugDropStream(ctx context.Context, streamId StreamId) error
 	}
 
 	// Receiver is a final receiver of the stream update message, i.e. client.
@@ -160,7 +164,6 @@ func (s *syncStreamHandlerImpl) Cancel(ctx context.Context) error {
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
-		SyncId: s.syncID,
 		SyncOp: SyncOp_SYNC_CLOSE,
 	}); err != nil {
 		return AsRiverError(err).
@@ -187,12 +190,28 @@ func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
-		SyncId:    s.syncID,
 		SyncOp:    SyncOp_SYNC_PONG,
 		PongNonce: nonce,
 	}); err != nil {
 		s.log.Errorw("failed to add ping message to the stream updates queue", "error", err)
 	}
+}
+
+func (s *syncStreamHandlerImpl) DebugDropStream(ctx context.Context, streamId StreamId) error {
+	select {
+	case <-s.ctx.Done():
+		return s.ctx.Err()
+	default:
+	}
+
+	if err := s.eventBus.Unsubscribe(streamId, s); err != nil {
+		return err
+	}
+
+	return s.streamUpdates.AddMessage(&SyncStreamsResponse{
+		SyncOp:   SyncOp_SYNC_DOWN,
+		StreamId: streamId[:],
+	})
 }
 
 // OnUpdate implements the eventbus.StreamSubscriber interface.
@@ -203,9 +222,6 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 		return
 	default:
 	}
-
-	// Set SyncID as exchanged with client
-	update.SyncId = s.syncID
 
 	// Add update to internal queue
 	if err := s.streamUpdates.AddMessage(update); err != nil {
@@ -327,6 +343,10 @@ func (s *syncStreamHandlerRegistryImpl) New(
 		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 	}
 
+	go handler.startUpdatesProcessor()
+
+	s.handlers[syncID] = handler
+
 	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
 	if err := receiver.Send(&SyncStreamsResponse{
 		SyncId: syncID,
@@ -334,10 +354,6 @@ func (s *syncStreamHandlerRegistryImpl) New(
 	}); err != nil {
 		return nil, err
 	}
-
-	go handler.startUpdatesProcessor()
-
-	s.handlers[syncID] = handler
 
 	return handler, nil
 }
