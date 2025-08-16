@@ -14,6 +14,7 @@
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "serve": "ponder serve",
         "start": "ponder start",
+        "transfer-ownership": "tsx interactions/transfer-ownership.ts",
         "typecheck": "tsc"
     },
     "dependencies": {

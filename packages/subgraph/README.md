@@ -231,6 +231,12 @@ You can create custom contract interactions to generate specific events:
 make interact-any-local context=gamma rpc=base_anvil contract=YourCustomInteraction
 ```
 
+### Transfer Ownership
+
+```bash
+yarn transfer-ownership
+```
+
 ### Working with Multiple Networks
 
 The subgraph can be configured to work with multiple networks simultaneously:

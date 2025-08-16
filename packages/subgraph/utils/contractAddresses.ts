@@ -2,6 +2,19 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { getAddress, Address } from 'viem'
 import { findRelativePath } from './pathUtils'
+import { fileURLToPath } from 'url'
+
+// Get __dirname in a way that works for both ESM and CJS
+let __dirname: string
+if (typeof import.meta?.url !== 'undefined') {
+    // ES modules
+    const __filename = fileURLToPath(import.meta.url)
+    __dirname = path.dirname(__filename)
+} else {
+    // CommonJS - __dirname is already defined globally
+    // @ts-ignore
+    __dirname = globalThis.__dirname || process.cwd()
+}
 
 // Try to find the contracts directory dynamically
 const contractsPath = findRelativePath('contracts')
