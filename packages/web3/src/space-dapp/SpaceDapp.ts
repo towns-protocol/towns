@@ -1142,6 +1142,15 @@ export class SpaceDapp {
         return decodedErr
     }
 
+    public parseSpaceOwnerError(error: unknown): Error {
+        if (!this.spaceOwner) {
+            throw new Error('SpaceOwner is not deployed properly.')
+        }
+        const decodedErr = this.spaceOwner.parseError(error)
+        logger.error(decodedErr)
+        return decodedErr
+    }
+
     public parseSpaceError(spaceId: string, error: unknown): Error {
         const space = this.getSpace(spaceId)
         if (!space) {

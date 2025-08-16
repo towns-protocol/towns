@@ -7,7 +7,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {ISignatureTransfer} from "@uniswap/permit2/src/interfaces/ISignatureTransfer.sol";
 
 // libraries
 import {RewardsDistributionStorage} from "src/base/registry/facets/distribution/v2/RewardsDistributionStorage.sol";
