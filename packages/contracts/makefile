@@ -322,6 +322,9 @@ verify-base-sepolia :;
 deploy-sepolia :;
 	@$(MAKE) deploy-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
+deploy-sepolia-ledger :;
+	@$(MAKE) deploy-any-ledger rpc=sepolia hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
+
 interact-sepolia :;
 	@$(MAKE) interact-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
 
