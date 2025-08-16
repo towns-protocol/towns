@@ -1,27 +1,50 @@
 package syncer
 
 import (
-	"sync"
+	"context"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-var _ Registry = (*registryImpl)(nil)
+// List of possible states of the stream update emitter.
+const (
+	streamUpdateEmitterStateInitializing int32 = iota
+	streamUpdateEmitterStateRunning
+	streamUpdateEmitterStateClosed
+)
+
+type (
+	// backfillRequest is used by syncers as an element in the backfill queue.
+	backfillRequest struct {
+		cookie  *SyncCookie
+		syncIDs []string
+	}
+
+	// StreamCache represents a behavior of the stream cache.
+	StreamCache interface {
+		GetStreamWaitForLocal(ctx context.Context, streamId StreamId) (*events.Stream, error)
+		GetStreamNoWait(ctx context.Context, streamId StreamId) (*events.Stream, error)
+	}
+)
 
 type (
 	// StreamSubscriber accept (local or remote) stream events.
 	StreamSubscriber interface {
-		// OnStreamEvent is called for each stream event.
+		// OnStreamEvent is called by StreamUpdateEmitter for each stream event.
 		//
 		// Subscribers MUST NOT block when processing the given update.
 		//
 		// When update.SyncOp is SyncOp_SYNC_DOWN this is the last update the subscriber
 		// receives for the stream. It is expected that this update is sent to the client
 		// and that the client will resubscribe.
-		OnStreamEvent(update *SyncStreamsResponse)
+		//
+		// Version indicates which version of the syncer the update is sent from. If node A goes down
+		// and node B takes over the sync operation, the version will be incremented.
+		OnStreamEvent(update *SyncStreamsResponse, version int32)
 	}
 
 	// StreamUpdateEmitter emit events related to a specific stream.
@@ -38,11 +61,18 @@ type (
 		// For remote streams this is the address of the remote node.
 		Node() common.Address
 
+		// Version returns the version of the emitter.
+		Version() int32
+
 		// Backfill backfills the given stream by the given cookie.
 		// syncIDs is the chain of sync IDs that the backfill request should be sent to.
 		//
 		// Returns false if the given emitter is closed.
 		Backfill(cookie *SyncCookie, syncIDs []string) bool
+
+		// Close the emitter.
+		// This method should be called by the registry to stop receiving updates for the stream.
+		Close()
 	}
 
 	// Registry is a registry of stream update emitters (syncers).
@@ -65,31 +95,4 @@ type (
 		// chain of sync identifiers.
 		Backfill(cookie *SyncCookie, syncIDs []string) error
 	}
-
-	registryImpl struct {
-		syncersLock sync.Mutex
-		syncers     map[StreamId]StreamUpdateEmitter
-	}
 )
-
-// NewRegistry creates a new instance of the Registry.
-func NewRegistry() *registryImpl {
-	return &registryImpl{
-		syncers: make(map[StreamId]StreamUpdateEmitter),
-	}
-}
-
-func (r *registryImpl) Subscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Unsubscribe(streamID StreamId, subscriber StreamSubscriber) {
-	// TODO: Implement me
-	panic("implement me")
-}
-
-func (r *registryImpl) Backfill(cookie *SyncCookie, syncIDs []string) error {
-	// TODO: Implement me
-	panic("implement me")
-}
