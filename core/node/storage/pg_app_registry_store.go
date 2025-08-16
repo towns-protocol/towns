@@ -312,7 +312,6 @@ func (s *PostgresAppRegistryStore) lockApp(
 		fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM app_registry WHERE app_id = $1 %s)", lockMode),
 		PGAddress(appId),
 	).Scan(&exists)
-
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
