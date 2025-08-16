@@ -11,9 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
-	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,6 +40,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
