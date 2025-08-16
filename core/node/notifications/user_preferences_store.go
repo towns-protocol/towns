@@ -342,9 +342,8 @@ func (up *UserPreferencesCache) RemoveWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
-	app string,
 ) error {
-	err := up.persistent.RemoveWebPushSubscription(ctx, userID, webPushSubscription, app)
+	err := up.persistent.RemoveWebPushSubscription(ctx, userID, webPushSubscription)
 	if err != nil {
 		return err
 	}
@@ -402,9 +401,8 @@ func (up *UserPreferencesCache) AddAPNSubscription(
 func (up *UserPreferencesCache) RemoveAPNSubscription(ctx context.Context,
 	deviceToken []byte,
 	userID common.Address,
-	app string,
 ) error {
-	err := up.persistent.RemoveAPNSubscription(ctx, deviceToken, userID, app)
+	err := up.persistent.RemoveAPNSubscription(ctx, deviceToken, userID)
 	if err != nil {
 		return err
 	}
