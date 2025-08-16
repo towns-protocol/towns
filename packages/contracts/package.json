@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.306",
+  "version": "0.0.307",
   "packageManager": "yarn@3.8.0",
   "scripts": {
     "build": "forge build",
