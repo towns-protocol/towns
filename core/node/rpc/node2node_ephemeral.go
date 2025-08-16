@@ -6,13 +6,11 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
-	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -46,22 +44,21 @@ func (s *Service) allocateEphemeralStream(
 		return nil, err
 	}
 
-	mbBytes, err := proto.Marshal(req.Miniblock)
+	mbInfo, err := NewMiniblockInfoFromProto(
+		req.GetMiniblock(),
+		req.GetSnapshot(),
+		NewParsedMiniblockInfoOpts().WithExpectedBlockNumber(0),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	var snBytes []byte
-	if req.Snapshot != nil {
-		if snBytes, err = proto.Marshal(req.Snapshot); err != nil {
-			return nil, err
-		}
+	storageMb, err := mbInfo.AsStorageMb()
+	if err != nil {
+		return nil, err
 	}
 
-	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.MiniblockDescriptor{
-		Data:     mbBytes,
-		Snapshot: snBytes,
-	}); err != nil {
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +90,8 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	}
 
 	mbInfo, err := NewMiniblockInfoFromProto(
-		req.GetMiniblock(), req.GetSnapshot(),
+		req.GetMiniblock(),
+		req.GetSnapshot(),
 		NewParsedMiniblockInfoOpts(),
 	)
 	if err != nil {

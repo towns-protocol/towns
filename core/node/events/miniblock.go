@@ -47,7 +47,6 @@ func Make_GenesisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 }
 
 // MakeGenesisMiniblock creates a genesis miniblock with the given events.
-// Returns the miniblock and the snapshot envelope.
 // IMPORTANT: Genesis miniblocks use the legacy format of snapshots.
 func MakeGenesisMiniblock(
 	wallet *crypto.Wallet,
