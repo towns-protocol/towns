@@ -35,6 +35,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/scrub"
@@ -557,7 +558,7 @@ func (s *Service) runHttpServer() error {
 			"Connect-Timeout-Ms",
 			"x-river-request-id",
 			"Authorization",
-			UseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+			headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
 		},
 	})
 

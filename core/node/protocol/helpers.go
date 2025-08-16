@@ -7,11 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const (
-	// UseSharedSyncHeaderName is the header name that indicates whether to use the shared syncer or not.
-	UseSharedSyncHeaderName = "X-Use-Shared-Sync"
-)
-
 // ToMap returns a map representation of the EncryptedData.
 // This is a helper function for debugging/introspection purposes only.
 // DO NOT use this in production hot paths as it is not optimized for logging.
