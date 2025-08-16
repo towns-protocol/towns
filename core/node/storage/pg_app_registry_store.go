@@ -292,6 +292,39 @@ func (s *PostgresAppRegistryStore) Init(
 	return nil
 }
 
+// lockApp locks an app row for either reading (forUpdate=false) or writing (forUpdate=true).
+// This prevents race conditions during concurrent operations on the same app.
+// Returns true if the app exists, false if it doesn't exist.
+func (s *PostgresAppRegistryStore) lockApp(
+	ctx context.Context,
+	tx pgx.Tx,
+	appId common.Address,
+	forUpdate bool,
+) (bool, error) {
+	var exists bool
+	lockMode := "FOR SHARE"
+	if forUpdate {
+		lockMode = "FOR UPDATE"
+	}
+
+	err := tx.QueryRow(
+		ctx,
+		fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM app_registry WHERE app_id = $1 %s)", lockMode),
+		PGAddress(appId),
+	).Scan(&exists)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Tag("appId", appId).
+			Message("Failed to lock app")
+	}
+
+	return exists, nil
+}
+
 func (s *PostgresAppRegistryStore) CreateApp(
 	ctx context.Context,
 	owner common.Address,
@@ -324,6 +357,15 @@ func (s *PostgresAppRegistryStore) createApp(
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
+	// Check if app already exists with a lock to prevent race conditions
+	exists, err := s.lockApp(ctx, txn, app, true)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return RiverError(protocol.Err_ALREADY_EXISTS, "app already exists")
+	}
+
 	// Marshal metadata to JSON (Name field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
@@ -383,6 +425,15 @@ func (s *PostgresAppRegistryStore) updateSettings(
 	settings types.AppSettings,
 	txn pgx.Tx,
 ) error {
+	// Lock the app for update to prevent race conditions
+	exists, err := s.lockApp(ctx, txn, app, true)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET forward_setting = $2 WHERE app_id = $1`,
@@ -423,6 +474,15 @@ func (s *PostgresAppRegistryStore) rotateSecret(
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
+	// Lock the app for update to prevent race conditions
+	exists, err := s.lockApp(ctx, txn, app, true)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET encrypted_shared_secret = $2 WHERE app_id = $1`,
@@ -470,6 +530,15 @@ func (s *PostgresAppRegistryStore) registerWebhook(
 	fallbackKey string,
 	txn pgx.Tx,
 ) error {
+	// Lock the app for update to prevent race conditions
+	exists, err := s.lockApp(ctx, txn, app, true)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET webhook = $2, device_key = $3, fallback_key = $4 WHERE app_id = $1`,
@@ -1032,6 +1101,15 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadata types.AppMetadata,
 	txn pgx.Tx,
 ) error {
+	// Lock the app for update to prevent race conditions
+	exists, err := s.lockApp(ctx, txn, app, true)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
 	// Marshal metadata to JSON (Username field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
