@@ -116,10 +116,6 @@ func (s *localStreamUpdateEmitter) Version() int32 {
 
 // Backfill adds the given backfill request to the queue for further processing.
 func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
-	if s.state.Load() == streamUpdateEmitterStateClosed {
-		return false
-	}
-
 	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
 		s.log.Errorw("failed to add backfill request to the queue", "error", err)
@@ -127,7 +123,6 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 		s.state.Store(streamUpdateEmitterStateClosed)
 		return false
 	}
-
 	return true
 }
 
@@ -146,6 +141,9 @@ func (s *localStreamUpdateEmitter) run(
 	var msgs []*backfillRequest
 
 	defer func() {
+		// Close the queue to stop receiving updates.
+		s.backfillsQueue.Close()
+
 		// Updating the state to closed to indicate that the emitter is no longer active.
 		s.state.Store(streamUpdateEmitterStateClosed)
 
