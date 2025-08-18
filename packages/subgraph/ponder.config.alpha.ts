@@ -12,6 +12,8 @@ import {
     spaceDelegationFacetAbi,
     rewardsDistributionV2Abi,
     xChainAbi,
+    swapFacetAbi,
+    swapRouterAbi,
 } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
@@ -37,6 +39,11 @@ if (!spaceOwner) {
 const baseRegistry = getContractAddress('baseRegistry')
 if (!baseRegistry) {
     throw new Error('Base registry address not found')
+}
+
+const swapRouter = getContractAddress('swapRouter')
+if (!swapRouter) {
+    throw new Error('Swap router address not found')
 }
 
 const riverAirdrop = getContractAddress('riverAirdrop')
@@ -71,20 +78,14 @@ export default createConfig({
             startBlock,
             chain: 'alpha',
         },
-        RiverAirdrop: {
-            abi: mergeAbis([rewardsDistributionV2Abi]),
-            address: riverAirdrop,
-            startBlock,
-            chain: 'alpha',
-        },
         SpaceFactory: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: spaceFactory,
             startBlock,
             chain: 'alpha',
         },
         Space: {
-            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi]),
+            abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
             address: factory({
                 address: spaceFactory,
                 event: parseAbiItem([
@@ -98,6 +99,18 @@ export default createConfig({
         SpaceOwner: {
             abi: spaceOwnerAbi,
             address: spaceOwner,
+            startBlock,
+            chain: 'alpha',
+        },
+        SwapRouter: {
+            abi: swapRouterAbi,
+            address: swapRouter,
+            startBlock,
+            chain: 'alpha',
+        },
+        RiverAirdrop: {
+            abi: mergeAbis([rewardsDistributionV2Abi]),
+            address: riverAirdrop,
             startBlock,
             chain: 'alpha',
         },

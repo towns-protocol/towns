@@ -23,6 +23,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -39,6 +40,7 @@ type (
 			eventHash common.Hash,
 			// payload of the message
 			payload []byte,
+			app string,
 		) (expired bool, err error)
 
 		// SendApplePushNotification sends a push notification to the iOS app
@@ -52,10 +54,22 @@ type (
 			payload *payload2.Payload,
 			// payloadIncludesStreamEvent is true if the payload includes the stream event
 			payloadIncludesStreamEvent bool,
+			app string,
 		) (bool, int, error)
 	}
 
 	MessageNotifications struct {
+		// App-specific configurations
+		appConfigs map[string]*AppNotificationConfig
+
+		// metrics
+		webPushSent *prometheus.CounterVec
+		apnSent     *prometheus.CounterVec
+	}
+
+	// AppNotificationConfig holds notification config for a specific app
+	AppNotificationConfig struct {
+		// APN configuration
 		apnsAppBundleID string
 		apnJwtSignKey   *ecdsa.PrivateKey
 		apnKeyID        string
@@ -66,10 +80,6 @@ type (
 		vapidPrivateKey string
 		vapidPublicKey  string
 		vapidSubject    string
-
-		// metrics
-		webPushSent *prometheus.CounterVec
-		apnSent     *prometheus.CounterVec
 	}
 
 	// MessageNotificationsSimulator implements MessageNotifier but doesn't send
@@ -113,6 +123,46 @@ func NewMessageNotifier(
 	cfg *config.NotificationsConfig,
 	metricsFactory infra.MetricsFactory,
 ) (*MessageNotifications, error) {
+	// Handle legacy configuration (single app)
+	if len(cfg.Apps) == 0 && (cfg.APN.AppBundleID != "" || cfg.Web.Vapid.PrivateKey != "") {
+		// Convert legacy config to Apps format
+		cfg.Apps = []config.AppNotificationConfig{{
+			App: apps.Default,
+			APN: cfg.APN,
+			Web: cfg.Web,
+		}}
+	}
+
+	appConfigs := make(map[string]*AppNotificationConfig)
+
+	for _, appCfg := range cfg.Apps {
+		appConfig, err := createAppNotificationConfig(&appCfg)
+		if err != nil {
+			return nil, err
+		}
+		appConfigs[appCfg.App] = appConfig
+	}
+
+	webPushSend := metricsFactory.NewCounterVecEx(
+		"webpush_sent",
+		"Number of notifications send over web push",
+		"status", "app",
+	)
+
+	apnSent := metricsFactory.NewCounterVecEx(
+		"apn_sent",
+		"Number of notifications send over APN",
+		"status", "payload_stripped", "payload_version", "app",
+	)
+
+	return &MessageNotifications{
+		appConfigs:  appConfigs,
+		webPushSent: webPushSend,
+		apnSent:     apnSent,
+	}, nil
+}
+
+func createAppNotificationConfig(cfg *config.AppNotificationConfig) (*AppNotificationConfig, error) {
 	apnExpiration := 12 * time.Hour // default
 	if cfg.APN.Expiration > 0 {
 		apnExpiration = cfg.APN.Expiration
@@ -123,57 +173,52 @@ func NewMessageNotifier(
 	authKey := strings.Replace(strings.TrimSpace(cfg.APN.AuthKey), "\\n", "\n", -1)
 
 	if authKey == "" {
-		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN auth key").
-			Func("NewMessageNotifier")
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN auth key for app").
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	blockPrivateKey, _ := pem.Decode([]byte(authKey))
 	if blockPrivateKey == nil {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN auth key").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	rawKey, err := x509.ParsePKCS8PrivateKey(blockPrivateKey.Bytes)
 	if err != nil {
 		return nil, AsRiverError(err).
 			Message("Unable to parse APN auth key").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	apnJwtSignKey, ok := rawKey.(*ecdsa.PrivateKey)
 	if !ok {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN JWT signing key").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	if cfg.Web.Vapid.PrivateKey == "" {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID private key").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	if cfg.Web.Vapid.PublicKey == "" {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID public key").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
 	if cfg.Web.Vapid.Subject == "" {
 		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID subject").
-			Func("NewMessageNotifier")
+			Func("createAppNotificationConfig").
+			Tag("app", cfg.App)
 	}
 
-	webPushSend := metricsFactory.NewCounterVecEx(
-		"webpush_sent",
-		"Number of notifications send over web push",
-		"status",
-	)
-
-	apnSent := metricsFactory.NewCounterVecEx(
-		"apn_sent",
-		"Number of notifications send over APN",
-		"status", "payload_stripped", "payload_version",
-	)
-
-	return &MessageNotifications{
+	return &AppNotificationConfig{
 		apnsAppBundleID: cfg.APN.AppBundleID,
 		apnExpiration:   apnExpiration,
 		apnJwtSignKey:   apnJwtSignKey,
@@ -182,8 +227,6 @@ func NewMessageNotifier(
 		vapidPrivateKey: cfg.Web.Vapid.PrivateKey,
 		vapidPublicKey:  cfg.Web.Vapid.PublicKey,
 		vapidSubject:    cfg.Web.Vapid.Subject,
-		webPushSent:     webPushSend,
-		apnSent:         apnSent,
 	}, nil
 }
 
@@ -192,25 +235,39 @@ func (n *MessageNotifications) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	payload []byte,
+	app string,
 ) (expired bool, err error) {
+	appConfig, ok := n.appConfigs[app]
+	if !ok {
+		return false, RiverError(protocol.Err_INVALID_ARGUMENT, "No configuration for app").
+			Func("SendWebPushNotification").
+			Tag("app", app)
+	}
+
 	options := &webpush.Options{
-		Subscriber:      n.vapidSubject,
+		Subscriber:      appConfig.vapidSubject,
 		TTL:             30,
 		Urgency:         webpush.UrgencyHigh,
-		VAPIDPublicKey:  n.vapidPublicKey,
-		VAPIDPrivateKey: n.vapidPrivateKey,
+		VAPIDPublicKey:  appConfig.vapidPublicKey,
+		VAPIDPrivateKey: appConfig.vapidPrivateKey,
 	}
 
 	res, err := webpush.SendNotificationWithContext(ctx, payload, subscription, options)
 	if err != nil {
-		n.webPushSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", http.StatusServiceUnavailable)}).Inc()
+		n.webPushSent.With(prometheus.Labels{
+			"status": fmt.Sprintf("%d", http.StatusServiceUnavailable),
+			"app":    app,
+		}).Inc()
 		return false, AsRiverError(err).
 			Message("Send notification with WebPush failed").
 			Func("SendWebPushNotification")
 	}
 	defer res.Body.Close()
 
-	n.webPushSent.With(prometheus.Labels{"status": fmt.Sprintf("%d", res.StatusCode)}).Inc()
+	n.webPushSent.With(prometheus.Labels{
+		"status": fmt.Sprintf("%d", res.StatusCode),
+		"app":    app,
+	}).Inc()
 
 	if res.StatusCode == http.StatusCreated {
 		return false, nil
@@ -237,20 +294,28 @@ func (n *MessageNotifications) SendApplePushNotification(
 	eventHash common.Hash,
 	payload *payload2.Payload,
 	payloadIncludesStreamEvent bool,
+	app string,
 ) (bool, int, error) {
+	appConfig, ok := n.appConfigs[app]
+	if !ok {
+		return false, http.StatusNotFound, RiverError(protocol.Err_INVALID_ARGUMENT, "No configuration for app").
+			Func("SendApplePushNotification").
+			Tag("app", app)
+	}
+
 	notification := &apns2.Notification{
 		DeviceToken: hex.EncodeToString(sub.DeviceToken),
-		Topic:       n.apnsAppBundleID,
+		Topic:       appConfig.apnsAppBundleID,
 		Payload:     payload,
 		Priority:    apns2.PriorityHigh,
 		PushType:    apns2.PushTypeAlert,
-		Expiration:  time.Now().Add(n.apnExpiration),
+		Expiration:  time.Now().Add(appConfig.apnExpiration),
 	}
 
 	token := &token.Token{
-		AuthKey: n.apnJwtSignKey,
-		KeyID:   n.apnKeyID,
-		TeamID:  n.apnTeamID,
+		AuthKey: appConfig.apnJwtSignKey,
+		KeyID:   appConfig.apnKeyID,
+		TeamID:  appConfig.apnTeamID,
 	}
 
 	client := apns2.NewTokenClient(token).Production()
@@ -264,6 +329,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 			"status":           fmt.Sprintf("%d", http.StatusServiceUnavailable),
 			"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
 			"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
+			"app":              app,
 		}).Inc()
 		return false, http.StatusBadGateway, AsRiverError(err).
 			Message("Send notification to APNS failed").
@@ -274,6 +340,7 @@ func (n *MessageNotifications) SendApplePushNotification(
 		"status":           fmt.Sprintf("%d", res.StatusCode),
 		"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
 		"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
+		"app":              app,
 	}).Inc()
 
 	if res.Sent() {
@@ -313,17 +380,22 @@ func (n *MessageNotificationsSimulator) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	payload []byte,
+	app string,
 ) (bool, error) {
 	log := logging.FromCtx(ctx)
 	log.Infow("SendWebPushNotification",
 		"keys.p256dh", subscription.Keys.P256dh,
 		"keys.auth", subscription.Keys.Auth,
-		"payload", payload)
+		"payload", payload,
+		"app", app)
 
 	n.WebPushNotificationsByEndpoint[subscription.Endpoint] = append(
 		n.WebPushNotificationsByEndpoint[subscription.Endpoint], payload)
 
-	n.webPushSent.With(prometheus.Labels{"status": "200"}).Inc()
+	n.webPushSent.With(prometheus.Labels{
+		"status": "200",
+		"app":    app,
+	}).Inc()
 
 	return false, nil
 }
@@ -334,6 +406,7 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 	eventHash common.Hash,
 	payload *payload2.Payload,
 	payloadIncludesStreamEvent bool,
+	app string,
 ) (bool, int, error) {
 	log := logging.FromCtx(ctx)
 
@@ -343,9 +416,15 @@ func (n *MessageNotificationsSimulator) SendApplePushNotification(
 		"payload", payload,
 		"payloadStripped", payloadIncludesStreamEvent,
 		"payloadVersion", fmt.Sprintf("%d", sub.PushVersion),
+		"app", app,
 	)
 
-	n.apnSent.With(prometheus.Labels{"status": "200"}).Inc()
+	n.apnSent.With(prometheus.Labels{
+		"status":           "200",
+		"payload_stripped": fmt.Sprintf("%v", !payloadIncludesStreamEvent),
+		"payload_version":  fmt.Sprintf("%d", sub.PushVersion),
+		"app":              app,
+	}).Inc()
 
 	return false, http.StatusOK, nil
 }
