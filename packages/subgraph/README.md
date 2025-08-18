@@ -273,6 +273,7 @@ You can run Ponder in a docker container with a local postgres database. The set
 ### Architecture Benefits
 
 This separation provides:
+
 - Improved performance by preventing HTTP traffic from affecting indexing
 - Ability to scale API servers horizontally if needed
 - Better resource isolation between indexing and serving
@@ -284,7 +285,7 @@ This separation provides:
 # For Alpha environment
 docker compose --env-file .env.alpha up -d
 
-# For Gamma environment  
+# For Gamma environment
 docker compose --env-file .env.gamma up -d
 
 # For Omega environment
@@ -296,6 +297,7 @@ docker compose --env-file .env.omega up -d
 After starting the services, the API server will be available at http://localhost:42069
 
 Check the following endpoints:
+
 - http://localhost:42069/graphql - Interactive GraphQL playground
 - http://localhost:42069/status - Service status information
 - http://localhost:42069/ready - Readiness check

@@ -19,7 +19,7 @@ services:
             - subgraph-db:/var/lib/postgresql/data
 
     subgraph-indexer:
-        # TODO: remove this in favor of building from Dockerfile locally 
+        # TODO: remove this in favor of building from Dockerfile locally
         # once we have fixed issues building image on arm64 machine
         # image: public.ecr.aws/h5v6m2x1/subgraph:60570c1
         platform: linux/amd64
@@ -42,7 +42,7 @@ services:
             - PONDER_ENVIRONMENT=${PONDER_ENVIRONMENT}
 
     subgraph-server:
-        # TODO: remove this in favor of building from Dockerfile locally 
+        # TODO: remove this in favor of building from Dockerfile locally
         # once we have fixed issues building image on arm64 machine
         # image: public.ecr.aws/h5v6m2x1/subgraph:60570c1
         platform: linux/amd64
@@ -54,7 +54,7 @@ services:
                 condition: service_healthy
             subgraph-indexer:
                 condition: service_started
-        entrypoint: ["yarn", "ponder", "serve", "--config", "${PONDER_CONFIG}"]
+        entrypoint: ['yarn', 'ponder', 'serve', '--config', '${PONDER_CONFIG}']
         environment:
             - NODE_ENV=production
             - DATABASE_SCHEMA=public
