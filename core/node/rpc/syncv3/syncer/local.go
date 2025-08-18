@@ -21,8 +21,6 @@ const (
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
 type localStreamUpdateEmitter struct {
-	// ctx is the global node context wrapped into the cancellable context.
-	ctx context.Context
 	// cancel is the cancel function for the context.
 	cancel context.CancelCauseFunc
 	// log is the logger for the emitter.
@@ -46,6 +44,7 @@ type localStreamUpdateEmitter struct {
 }
 
 // NewLocalStreamUpdateEmitter creates a new local stream update emitter for the given stream ID.
+// Context is used to control the lifetime (stopping emitter when context is done) of the emitter.
 func NewLocalStreamUpdateEmitter(
 	ctx context.Context,
 	localAddr common.Address,
@@ -57,7 +56,6 @@ func NewLocalStreamUpdateEmitter(
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	l := &localStreamUpdateEmitter{
-		ctx:    ctx,
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.localStreamUpdateEmitter").
@@ -72,8 +70,8 @@ func NewLocalStreamUpdateEmitter(
 	// Set the current state to initializing.
 	l.state.Store(streamUpdateEmitterStateInitializing)
 
-	// Start initialization in a separate goroutine to avoid blocking the caller.
-	go l.initialize(streamCache)
+	// Initialize and start the emitter.
+	go l.run(ctx, streamCache)
 
 	return l
 }
@@ -118,10 +116,6 @@ func (s *localStreamUpdateEmitter) Version() int32 {
 
 // Backfill adds the given backfill request to the queue for further processing.
 func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
-	if s.state.Load() == streamUpdateEmitterStateClosed {
-		return false
-	}
-
 	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
 		s.log.Errorw("failed to add backfill request to the queue", "error", err)
@@ -129,7 +123,6 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 		s.state.Store(streamUpdateEmitterStateClosed)
 		return false
 	}
-
 	return true
 }
 
@@ -140,11 +133,17 @@ func (s *localStreamUpdateEmitter) Close() {
 	}
 }
 
-// initialize initializes the local stream update emitter.
-func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
+// run initializes and runs the local stream update emitter.
+func (s *localStreamUpdateEmitter) run(
+	ctx context.Context,
+	streamCache StreamCache,
+) {
 	var msgs []*backfillRequest
 
 	defer func() {
+		// Close the queue to stop receiving updates.
+		s.backfillsQueue.Close()
+
 		// Updating the state to closed to indicate that the emitter is no longer active.
 		s.state.Store(streamUpdateEmitterStateClosed)
 
@@ -168,7 +167,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	}()
 
 	// Get stream from the stream cache by ID.
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, s.streamID)
 	ctxWithCancel()
 	if err != nil {
@@ -178,7 +177,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	s.stream = stream
 
 	// Subscribe on updates for the stream. Do not receive an initial update.
-	ctxWithTimeout, ctxWithCancel = context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
+	ctxWithTimeout, ctxWithCancel = context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	err = stream.Sub(ctxWithTimeout, &SyncCookie{
 		StreamId:    s.streamID[:],
 		NodeAddress: s.localAddr.Bytes(),
@@ -192,7 +191,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 	// Start processing backfill requests
 	for {
 		select {
-		case <-s.ctx.Done():
+		case <-ctx.Done():
 			return
 		case _, open := <-s.backfillsQueue.Wait():
 			msgs = s.backfillsQueue.GetBatch(msgs)
@@ -207,7 +206,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 			for i, msg := range msgs {
 				// Context could be cancelled while processing messages so adding one more check here.
 				select {
-				case <-s.ctx.Done():
+				case <-ctx.Done():
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
 						if err = s.backfillsQueue.AddMessage(m); err != nil {
@@ -225,7 +224,7 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 				default:
 				}
 
-				if err = s.processBackfillRequest(msg, stream); err != nil {
+				if err = s.processBackfillRequest(ctx, msg, stream); err != nil {
 					s.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					s.cancel(err)
 
@@ -257,8 +256,12 @@ func (s *localStreamUpdateEmitter) initialize(streamCache StreamCache) {
 
 // processBackfillRequest processes the given backfill request by fetching updates since the given cookie
 // and sending the message back to the event bus for further forwarding to the specified sync operation.
-func (s *localStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest, stream *events.Stream) error {
-	ctxWithTimeout, cancel := context.WithTimeout(s.ctx, localStreamUpdateEmitterTimeout)
+func (s *localStreamUpdateEmitter) processBackfillRequest(
+	ctx context.Context,
+	msg *backfillRequest,
+	stream *events.Stream,
+) error {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	defer cancel()
 
 	return stream.UpdatesSinceCookie(
