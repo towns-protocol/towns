@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
@@ -273,6 +274,11 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			return nil, false, RiverErrorWithBase(Err_UNAVAILABLE, "Remote node is not reachable", err).
+				Tags("remote", s.remoteAddr).
+				Func("Modify")
+		}
 		return nil, false, err
 	}
 
