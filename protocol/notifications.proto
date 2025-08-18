@@ -247,6 +247,9 @@ message SubscribeWebPushResponse {}
 message UnsubscribeWebPushRequest {
   // subscription holds the subscribe data that is returned by the browser when subscribing
   WebPushSubscriptionObject subscription = 1;
+
+  reserved "app";
+  reserved 2;
 }
 
 message UnsubscribeWebPushResponse {}
@@ -281,6 +284,9 @@ message SubscribeAPNResponse {}
 message UnsubscribeAPNRequest {
   // APN device token
   bytes device_token = 1;
+
+  reserved "app";
+  reserved 2;
 }
 
 message UnsubscribeAPNResponse {}
