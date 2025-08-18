@@ -245,7 +245,10 @@ func (r *remoteStreamUpdateEmitter) run(
 	}
 
 	// Update the state to running to indicate that the emitter is ready to process updates.
-	r.state.Store(streamUpdateEmitterStateRunning)
+	if !r.state.CompareAndSwap(streamUpdateEmitterStateInitializing, streamUpdateEmitterStateRunning) {
+		// The emitter is closed. Do not proceed with processing updates.
+		return
+	}
 
 	// Start processing stream updates received from the remote node.
 	go r.processStreamUpdates(ctx, stream)
