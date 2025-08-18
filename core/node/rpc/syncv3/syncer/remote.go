@@ -29,8 +29,6 @@ const (
 // remoteStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a remote stream.
 // TODO: Advance sticky peer on failure.
 type remoteStreamUpdateEmitter struct {
-	// ctx is the global node context wrapped into the cancellable context.
-	ctx context.Context
 	// cancel is the cancel function for the context.
 	cancel context.CancelCauseFunc
 	// log is the logger for the emitter.
@@ -58,6 +56,7 @@ type remoteStreamUpdateEmitter struct {
 }
 
 // NewRemoteStreamUpdateEmitter creates a new remote stream update emitter for the given stream ID and remote address.
+// Context is used to control the lifetime (stopping emitter when context is done) of the emitter.
 func NewRemoteStreamUpdateEmitter(
 	ctx context.Context,
 	stream *events.Stream,
@@ -69,7 +68,6 @@ func NewRemoteStreamUpdateEmitter(
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	r := &remoteStreamUpdateEmitter{
-		ctx:    ctx,
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
@@ -84,8 +82,8 @@ func NewRemoteStreamUpdateEmitter(
 	// Set the current state to initializing.
 	r.state.Store(streamUpdateEmitterStateInitializing)
 
-	// Initialize the emitter in a separate goroutine to avoid blocking the caller.
-	go r.initialize(nodeRegistry, stream)
+	// Initialize and start the emitter.
+	go r.run(ctx, nodeRegistry, stream)
 
 	return r
 }
@@ -107,10 +105,6 @@ func (r *remoteStreamUpdateEmitter) Version() int32 {
 }
 
 func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
-	if r.state.Load() == streamUpdateEmitterStateClosed {
-		return false
-	}
-
 	err := r.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
 		r.cancel(err)
@@ -129,13 +123,17 @@ func (r *remoteStreamUpdateEmitter) Close() {
 	}
 }
 
-func (r *remoteStreamUpdateEmitter) initialize(
+func (r *remoteStreamUpdateEmitter) run(
+	ctx context.Context,
 	nodeRegistry nodes.NodeRegistry,
 	stream *events.Stream,
 ) {
 	var msgs []*backfillRequest
 
 	defer func() {
+		// Close the queue to stop receiving backfill requests.
+		r.backfillsQueue.Close()
+
 		// Updating the state to closed to indicate that the emitter is no longer active.
 		r.state.Store(streamUpdateEmitterStateClosed)
 
@@ -156,6 +154,7 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	// Get remote node RPC client
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(r.remoteAddr)
 	if err != nil {
+		r.cancel(err)
 		r.log.Errorw("initialization failed: failed to get stream service client by address", "error", err)
 		return
 	}
@@ -165,10 +164,11 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	var firstUpdateReceived atomic.Bool
 	go func() {
 		select {
-		case <-r.ctx.Done():
+		case <-ctx.Done():
 		case <-time.After(remoteStreamUpdateEmitterTimeout):
 			if !firstUpdateReceived.Load() {
-				r.cancel(nil)
+				r.cancel(RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for first update",
+					"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID))
 			}
 		}
 	}()
@@ -180,9 +180,10 @@ func (r *remoteStreamUpdateEmitter) initialize(
 			NodeAddress: r.remoteAddr[:],
 		}},
 	})
-	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
-	responseStream, err := client.SyncStreams(r.ctx, req)
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
+	responseStream, err := client.SyncStreams(ctx, req)
 	if err != nil {
+		r.cancel(err)
 		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
 		return
 	}
@@ -191,7 +192,7 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	firstUpdateReceived.Store(responseStream.Receive())
 
 	// If the sync operation was canceled, return an unavailable error.
-	if !firstUpdateReceived.Load() || r.ctx.Err() != nil {
+	if !firstUpdateReceived.Load() || ctx.Err() != nil {
 		r.cancel(nil)
 		r.log.Errorw(
 			"initialization failed: [1] SyncStreams stream closed without receiving any messages",
@@ -220,10 +221,11 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	var secondUpdateReceived atomic.Bool
 	go func() {
 		select {
-		case <-r.ctx.Done():
+		case <-ctx.Done():
 		case <-time.After(remoteStreamUpdateEmitterTimeout):
 			if !secondUpdateReceived.Load() {
-				r.cancel(nil)
+				r.cancel(RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
+					"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID))
 			}
 		}
 	}()
@@ -232,7 +234,7 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	secondUpdateReceived.Store(responseStream.Receive())
 
 	// If the sync operation was canceled, return an unavailable error.
-	if !secondUpdateReceived.Load() || r.ctx.Err() != nil {
+	if !secondUpdateReceived.Load() || ctx.Err() != nil {
 		r.cancel(nil)
 		r.log.Errorw(
 			"initialization failed: [2] SyncStreams stream closed without receiving any messages",
@@ -246,12 +248,12 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	r.state.Store(streamUpdateEmitterStateRunning)
 
 	// Start processing stream updates received from the remote node.
-	go r.processStreamUpdates(stream)
+	go r.processStreamUpdates(ctx, stream)
 
 	// Start processing backfill requests
 	for {
 		select {
-		case <-r.ctx.Done():
+		case <-ctx.Done():
 			return
 		case _, open := <-r.backfillsQueue.Wait():
 			msgs = r.backfillsQueue.GetBatch(msgs)
@@ -266,7 +268,7 @@ func (r *remoteStreamUpdateEmitter) initialize(
 			for i, msg := range msgs {
 				// Context could be canceled while processing backfill requests so one more check here.
 				select {
-				case <-r.ctx.Done():
+				case <-ctx.Done():
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
 						if err = r.backfillsQueue.AddMessage(m); err != nil {
@@ -284,7 +286,7 @@ func (r *remoteStreamUpdateEmitter) initialize(
 				default:
 				}
 
-				if err = r.processBackfillRequest(msg); err != nil {
+				if err = r.processBackfillRequest(ctx, msg); err != nil {
 					r.cancel(err)
 					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 
@@ -314,7 +316,10 @@ func (r *remoteStreamUpdateEmitter) initialize(
 	}
 }
 
-func (r *remoteStreamUpdateEmitter) processStreamUpdates(stream *events.Stream) {
+func (r *remoteStreamUpdateEmitter) processStreamUpdates(
+	ctx context.Context,
+	stream *events.Stream,
+) {
 	defer func() {
 		if err := r.responseStream.Close(); err != nil {
 			r.log.Errorw("failed to close sync stream", "error", err)
@@ -324,7 +329,7 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates(stream *events.Stream) 
 	var latestMsgReceived atomic.Value
 	latestMsgReceived.Store(time.Now())
 
-	go r.connectionAlive(&latestMsgReceived)
+	go r.connectionAlive(ctx, &latestMsgReceived)
 
 	// Receive messages from the sync stream.
 	for r.responseStream.Receive() {
@@ -356,7 +361,10 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates(stream *events.Stream) 
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
 // If the remote can't be reach the sync stream is canceled.
-func (r *remoteStreamUpdateEmitter) connectionAlive(latestMsgReceived *atomic.Value) {
+func (r *remoteStreamUpdateEmitter) connectionAlive(
+	ctx context.Context,
+	latestMsgReceived *atomic.Value,
+) {
 	var (
 		// check every pingTicker if it's time to send a ping req to remote
 		pingTicker = time.NewTicker(3 * time.Second)
@@ -369,7 +377,7 @@ func (r *remoteStreamUpdateEmitter) connectionAlive(latestMsgReceived *atomic.Va
 
 	for {
 		select {
-		case <-r.ctx.Done():
+		case <-ctx.Done():
 			return
 		case <-pingTicker.C:
 			now := time.Now()
@@ -388,7 +396,7 @@ func (r *remoteStreamUpdateEmitter) connectionAlive(latestMsgReceived *atomic.Va
 			}
 
 			// Send ping to remote to generate activity to check if remote is still alive.
-			ctxWithTimeout, cancel := context.WithTimeout(r.ctx, remoteStreamUpdateEmitterTimeout)
+			ctxWithTimeout, cancel := context.WithTimeout(ctx, remoteStreamUpdateEmitterTimeout)
 			_, err := r.client.PingSync(ctxWithTimeout, connect.NewRequest(&PingSyncRequest{
 				SyncId: r.syncID,
 				Nonce:  fmt.Sprintf("%d", now.Unix()),
@@ -406,8 +414,11 @@ func (r *remoteStreamUpdateEmitter) connectionAlive(latestMsgReceived *atomic.Va
 }
 
 // processBackfillRequest processes the given backfill request by sending it to the remote node.
-func (r *remoteStreamUpdateEmitter) processBackfillRequest(msg *backfillRequest) error {
-	ctxWithTimeout, cancel := context.WithTimeout(r.ctx, remoteStreamUpdateEmitterTimeout)
+func (r *remoteStreamUpdateEmitter) processBackfillRequest(
+	ctx context.Context,
+	msg *backfillRequest,
+) error {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, remoteStreamUpdateEmitterTimeout)
 	defer cancel()
 
 	resp, err := r.client.ModifySync(ctxWithTimeout, connect.NewRequest(&ModifySyncRequest{
