@@ -62,6 +62,11 @@ type (
 		Node() common.Address
 
 		// Version returns the version of the emitter.
+		//
+		// This is used to properly address sync down messages when a specific remote node goes down so a new
+		// version of the emitter is created. For example, if node A goes down, only subscriptions that receive stream
+		// updates the given emitter will receive the sync down message with the version of the emitter. Subscriptions
+		// from the next version must not receive the sync down message.
 		Version() int32
 
 		// Backfill backfills the given stream by the given cookie.
