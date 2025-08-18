@@ -22,7 +22,6 @@ contract InteractBaseAlpha is AlphaHelper {
     DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
 
     function __interact(address deployer) internal override {
-        vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
         address space = getDeployment("space");
         address spaceOwner = getDeployment("spaceOwner");
         address spaceFactory = getDeployment("spaceFactory");

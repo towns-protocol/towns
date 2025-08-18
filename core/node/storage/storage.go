@@ -25,10 +25,30 @@ type (
 	}
 
 	MiniblockDescriptor struct {
-		Number   int64
-		Data     []byte
-		Hash     common.Hash // On read only set for miniblock candidates
+		// Number is the miniblock number within the stream.
+		Number int64
+
+		// Data is the miniblock data.
+		Data []byte
+
+		// Hash is the miniblock hash.
+		// NOTE: On read this field is only set for miniblock candidates.
+		// For regular miniblocks hash is not stored in db as a separate column,
+		// to get hash in this case parse it from the data.
+		Hash common.Hash
+
+		// Snapshot is the miniblock snapshot data.
+		// It's not empty if miniblock has non-legacy snapshot.
 		Snapshot []byte
+
+		// HasLegacySnapshot is true if snapshot is embedded in the Data
+		// and not stored in the Snapshot field.
+		// Legacy snapshots are embedded in the Data.
+		// Legacy snapshots are used in the miniblock 0 and in the
+		// historical data present in the system.
+		// This field is used on write to correctly set last snapshot index in es table.
+		// NOTE:This field is not set on read.
+		HasLegacySnapshot bool
 	}
 
 	EventDescriptor struct {

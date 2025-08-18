@@ -24,6 +24,7 @@ contract DelegationProxyTest is TestUtils {
         towns = deployTownsTokenBase.deploy(deployer);
         beacon = address(new UpgradeableBeacon(deployer, address(new DelegationProxy())));
         proxy = LibClone.deployERC1967BeaconProxy(beacon);
+        vm.label(towns, "Towns");
     }
 
     function test_initialize_revertIf_alreadyInitialized() public {
@@ -59,11 +60,12 @@ contract DelegationProxyTest is TestUtils {
         DelegationProxy(proxy).reinitialize(towns);
     }
 
-    function test_fuzz_reinitialize(address delegatee) public {
+    function test_fuzz_reinitialize(address delegatee, bytes32 implSalt, bytes32 proxySalt) public {
         test_fuzz_initialize(delegatee);
 
-        deployTownsTokenBase.setSalts(_randomBytes32(), _randomBytes32());
+        deployTownsTokenBase.setSalts(implSalt, proxySalt);
         address token = deployTownsTokenBase.deploy(deployer);
+        vm.assume(token != towns);
 
         vm.prank(deployer);
         DelegationProxy(proxy).reinitialize(token);

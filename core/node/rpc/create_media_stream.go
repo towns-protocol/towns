@@ -227,7 +227,11 @@ func (s *Service) createReplicatedMediaStream(
 	// Create ephemeral stream within the local node
 	if isLocal {
 		sender.AddTask(func(ctx context.Context) error {
-			return s.storage.CreateEphemeralStreamStorage(ctx, streamId, &storage.MiniblockDescriptor{Data: mbBytes})
+			return s.storage.CreateEphemeralStreamStorage(
+				ctx,
+				streamId,
+				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
+			)
 		})
 	}
 
