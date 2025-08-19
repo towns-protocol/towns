@@ -312,7 +312,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
-	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
 
 	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
