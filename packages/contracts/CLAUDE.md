@@ -251,7 +251,7 @@ Key environment variables needed:
 - `LOCAL_PRIVATE_KEY` - For local deployments
 - `TESTNET_PRIVATE_KEY` - For testnet deployments
 - `BASE_RPC_URL`, `BASE_ANVIL_RPC_URL`, etc. - RPC endpoints
-- `BASESCAN_API_KEY` - For contract verification
+- `ETHERSCAN_API_KEY` - For contract verification
 - `HD_PATH`, `SENDER_ADDRESS` - For hardware wallet deployments
 
 ## Common Workflows
