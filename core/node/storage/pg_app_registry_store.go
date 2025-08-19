@@ -323,33 +323,33 @@ func (s *PostgresAppRegistryStore) lockApp(
 	appId common.Address,
 	write bool,
 ) error {
-	var dummy int
-	var err error
+	// var dummy int
+	// var err error
 
-	if write {
-		err = tx.QueryRow(
-			ctx,
-			"SELECT 1 FROM app_registry WHERE app_id = $1 FOR KEY SHARE",
-			PGAddress(appId),
-		).Scan(&dummy)
-	} else {
-		err = tx.QueryRow(
-			ctx,
-			"SELECT 1 FROM app_registry WHERE app_id = $1 FOR SHARE",
-			PGAddress(appId),
-		).Scan(&dummy)
-	}
+	// if write {
+	// 	err = tx.QueryRow(
+	// 		ctx,
+	// 		"SELECT 1 FROM app_registry WHERE app_id = $1 FOR KEY SHARE",
+	// 		PGAddress(appId),
+	// 	).Scan(&dummy)
+	// } else {
+	// 	err = tx.QueryRow(
+	// 		ctx,
+	// 		"SELECT 1 FROM app_registry WHERE app_id = $1 FOR SHARE",
+	// 		PGAddress(appId),
+	// 	).Scan(&dummy)
+	// }
 
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return RiverError(
-				protocol.Err_NOT_FOUND,
-				"app was not found in registry",
-				"appId", appId,
-			).Func("PostgresAppRegistryStore.lockApp")
-		}
-		return err
-	}
+	// if err != nil {
+	// 	if errors.Is(err, pgx.ErrNoRows) {
+	// 		return RiverError(
+	// 			protocol.Err_NOT_FOUND,
+	// 			"app was not found in registry",
+	// 			"appId", appId,
+	// 		).Func("PostgresAppRegistryStore.lockApp")
+	// 	}
+	// 	return err
+	// }
 
 	return nil
 }
@@ -362,93 +362,94 @@ func (s *PostgresAppRegistryStore) lockApps(
 	appIds []common.Address,
 	write bool,
 ) ([]common.Address, error) {
-	if len(appIds) == 0 {
-		return []common.Address{}, nil
-	}
+	// if len(appIds) == 0 {
+	// 	return []common.Address{}, nil
+	// }
 
-	// Convert addresses to strings for the query
-	appIdStrings := make([]string, len(appIds))
-	for i, addr := range appIds {
-		appIdStrings[i] = hex.EncodeToString(addr[:])
-	}
+	// // Convert addresses to strings for the query
+	// appIdStrings := make([]string, len(appIds))
+	// for i, addr := range appIds {
+	// 	appIdStrings[i] = hex.EncodeToString(addr[:])
+	// }
 
-	lockMode := "FOR SHARE"
-	if write {
-		lockMode = "FOR KEY SHARE"
-	}
+	// lockMode := "FOR SHARE"
+	// if write {
+	// 	lockMode = "FOR KEY SHARE"
+	// }
 
-	// Lock rows in sorted order to prevent deadlocks and return which apps exist
-	rows, err := tx.Query(
-		ctx,
-		fmt.Sprintf(`
-			SELECT app_id FROM app_registry 
-			WHERE app_id = ANY($1) 
-			ORDER BY app_id
-			%s
-		`, lockMode),
-		appIdStrings,
-	)
-	if err != nil {
-		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to lock apps")
-	}
-	defer rows.Close()
+	// // Lock rows in sorted order to prevent deadlocks and return which apps exist
+	// rows, err := tx.Query(
+	// 	ctx,
+	// 	fmt.Sprintf(`
+	// 		SELECT app_id FROM app_registry
+	// 		WHERE app_id = ANY($1)
+	// 		ORDER BY app_id
+	// 		%s
+	// 	`, lockMode),
+	// 	appIdStrings,
+	// )
+	// if err != nil {
+	// 	return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+	// 		Message("failed to lock apps")
+	// }
+	// defer rows.Close()
 
-	// Collect the locked app IDs
-	var lockedApps []common.Address
-	for rows.Next() {
-		var appIdHex string
-		if err := rows.Scan(&appIdHex); err != nil {
-			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to scan locked app")
-		}
+	// // Collect the locked app IDs
+	// var lockedApps []common.Address
+	// for rows.Next() {
+	// 	var appIdHex string
+	// 	if err := rows.Scan(&appIdHex); err != nil {
+	// 		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+	// 			Message("failed to scan locked app")
+	// 	}
 
-		appIdBytes, err := hex.DecodeString(appIdHex)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to decode app ID")
-		}
+	// 	appIdBytes, err := hex.DecodeString(appIdHex)
+	// 	if err != nil {
+	// 		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+	// 			Message("failed to decode app ID")
+	// 	}
 
-		lockedApps = append(lockedApps, common.BytesToAddress(appIdBytes))
-	}
+	// 	lockedApps = append(lockedApps, common.BytesToAddress(appIdBytes))
+	// }
 
-	if err := rows.Err(); err != nil {
-		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to iterate locked apps")
-	}
+	// if err := rows.Err(); err != nil {
+	// 	return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+	// 		Message("failed to iterate locked apps")
+	// }
 
-	return lockedApps, nil
+	// return lockedApps, nil
+	return appIds, nil
 }
 
-// lockDevice locks an app row according to it's device key..
+// lockDevice locks an app row according to it's device key.
 func (s *PostgresAppRegistryStore) lockDevice(
 	ctx context.Context,
 	tx pgx.Tx,
 	deviceKey string,
 	write bool,
 ) error {
-	lockMode := "FOR SHARE"
-	if write {
-		lockMode = "FOR KEY SHARE"
-	}
+	// lockMode := "FOR SHARE"
+	// if write {
+	// 	lockMode = "FOR KEY SHARE"
+	// }
 
-	var dummy int
-	err := tx.QueryRow(
-		ctx,
-		fmt.Sprintf(`
-			SELECT 1 FROM app_registry 
-			WHERE device_key = $1
-			%s
-		`, lockMode),
-		deviceKey,
-	).Scan(&dummy)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return RiverError(protocol.Err_NOT_FOUND, "device is not registered")
-		}
-		return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to lock device").Tag("device", deviceKey)
-	}
+	// var dummy int
+	// err := tx.QueryRow(
+	// 	ctx,
+	// 	fmt.Sprintf(`
+	// 		SELECT 1 FROM app_registry
+	// 		WHERE device_key = $1
+	// 		%s
+	// 	`, lockMode),
+	// 	deviceKey,
+	// ).Scan(&dummy)
+	// if err != nil {
+	// 	if errors.Is(err, pgx.ErrNoRows) {
+	// 		return RiverError(protocol.Err_NOT_FOUND, "device is not registered")
+	// 	}
+	// 	return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+	// 		Message("failed to lock device").Tag("device", deviceKey)
+	// }
 	return nil
 }
 
