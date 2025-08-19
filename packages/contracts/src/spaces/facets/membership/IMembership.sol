@@ -213,4 +213,20 @@ interface IMembership is IMembershipBase {
     /// @notice Get the current balance of funds held by the space
     /// @return The current balance of funds held by the space
     function revenue() external view returns (uint256);
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        VALIDATION                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Check if a user is the owner of the space
+    /// @dev Checks both the user directly and their linked wallets
+    /// @param user The user address to check
+    /// @return True if the user or any linked wallet is the space owner
+    function isOwner(address user) external view returns (bool);
+
+    /// @notice Check if a user has membership in the space
+    /// @dev Checks both the user directly and their linked wallets
+    /// @param user The user address to check
+    /// @return True if the user or any linked wallet has membership tokens
+    function isMember(address user) external view returns (bool);
 }

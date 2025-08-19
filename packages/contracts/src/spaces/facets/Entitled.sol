@@ -85,7 +85,7 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
     }
 
     function _isMember(address user) internal view returns (bool member) {
-        member = ERC721AStorage.balanceOf(user) > 0;
+        member = ERC721AStorage.balanceOf(user) != 0;
     }
 
     function _validateMembership(address user) internal view {

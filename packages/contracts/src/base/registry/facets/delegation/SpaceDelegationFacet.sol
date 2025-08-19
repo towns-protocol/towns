@@ -3,9 +3,8 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IArchitect} from "../../../../factory/facets/architect/IArchitect.sol";
+import {IMembership} from "../../../../spaces/facets/membership/IMembership.sol";
 import {IVotesEnumerable} from "../../../../diamond/facets/governance/votes/enumerable/IVotesEnumerable.sol";
 import {IMainnetDelegation} from "../mainnet/IMainnetDelegation.sol";
 import {IRewardsDistributionBase} from "../distribution/v2/IRewardsDistribution.sol";
@@ -30,7 +29,7 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
     modifier onlySpaceOwner(address space) {
         if (!_isValidSpace(space)) SpaceDelegation__InvalidSpace.selector.revertWith();
-        if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
+        if (!IMembership(space).isOwner(msg.sender)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         _;
     }
 
@@ -61,19 +60,19 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
 
         SpaceDelegationStorage.Layout storage ds = SpaceDelegationStorage.layout();
 
-        address currentOperator = ds.operatorBySpace[space];
-
-        if (currentOperator == operator) SpaceDelegation__AlreadyDelegated.selector.revertWith();
-
         // Authorization logic: only members can delegate if space has never been delegated,
         // only owner can delegate/redelegate if space has been delegated before (even if removed)
         if (ds.spaceDelegationTime[space] != 0) {
             // space has been delegated before (even if currently removed), only owner can delegate
-            if (!_isValidSpaceOwner(space)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
+            if (!IMembership(space).isOwner(msg.sender)) SpaceDelegation__NotSpaceOwner.selector.revertWith();
         } else {
             // Space has never been delegated, only members can delegate
-            if (!_isValidSpaceMember(space)) SpaceDelegation__NotSpaceMember.selector.revertWith();
+            if (!IMembership(space).isMember(msg.sender)) SpaceDelegation__NotSpaceMember.selector.revertWith();
         }
+
+        address currentOperator = ds.operatorBySpace[space];
+
+        if (currentOperator == operator) SpaceDelegation__AlreadyDelegated.selector.revertWith(operator);
 
         NodeOperatorStorage.Layout storage nodeOperatorDs = NodeOperatorStorage.layout();
 
@@ -229,22 +228,5 @@ contract SpaceDelegationFacet is ISpaceDelegation, OwnableBase, Facet {
     /// @dev Checks if the space is valid by verifying if it has a nonzero token ID in the factory
     function _isValidSpace(address space) internal view returns (bool) {
         return IArchitect(getSpaceFactory()).getTokenIdBySpace(space) != 0;
-    }
-
-    /// @dev Checks if the caller is the owner of the space
-    /// @dev Assumes that the space is valid
-    function _isValidSpaceOwner(address space) internal view returns (bool) {
-        return IERC173(space).owner() == msg.sender;
-    }
-
-    /// @dev Checks if the caller is a member of the space (has at least one membership token)
-    /// @dev Also considers the space owner as a member
-    /// @dev Assumes that the space is valid
-    function _isValidSpaceMember(address space) internal view returns (bool) {
-        // Check if caller is the space owner
-        if (IERC173(space).owner() == msg.sender) return true;
-
-        // Check if caller has at least one membership token
-        return IERC721(space).balanceOf(msg.sender) != 0;
     }
 }

@@ -7,7 +7,6 @@ import {IEntitlementsManager} from "./IEntitlementsManager.sol";
 // libraries
 
 // contracts
-
 import {Entitled} from "../Entitled.sol";
 import {EntitlementsManagerBase} from "./EntitlementsManagerBase.sol";
 

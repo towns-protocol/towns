@@ -188,4 +188,33 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function revenue() external view returns (uint256) {
         return address(this).balance;
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         VALIDATION                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @inheritdoc IMembership
+    function isOwner(address user) external view returns (bool) {
+        address owner = _owner();
+        if (user == owner) return true;
+
+        // Check linked wallets
+        address[] memory wallets = _getLinkedWalletsWithUser(user);
+        for (uint256 i; i < wallets.length; ++i) {
+            if (wallets[i] == owner) return true;
+        }
+        return false;
+    }
+
+    /// @inheritdoc IMembership
+    function isMember(address user) external view returns (bool) {
+        if (_isMember(user)) return true;
+
+        // Check linked wallets
+        address[] memory wallets = _getLinkedWalletsWithUser(user);
+        for (uint256 i; i < wallets.length; ++i) {
+            if (_isMember(wallets[i])) return true;
+        }
+        return false;
+    }
 }

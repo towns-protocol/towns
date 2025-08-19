@@ -13,14 +13,12 @@ interface ISpaceDelegationBase {
     error SpaceDelegation__NotSpaceMember();
     error SpaceDelegation__AlreadyDelegated(address operator);
     error SpaceDelegation__NotDelegated();
-    error SpaceDelegation__InvalidStakeRequirement();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     event SpaceDelegatedToOperator(address indexed space, address indexed operator);
-    event RiverTokenChanged(address indexed riverToken);
     event SpaceFactoryChanged(address indexed spaceFactory);
 }
 

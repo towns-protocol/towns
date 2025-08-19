@@ -35,7 +35,7 @@ contract SpaceDelegationTest is BaseRegistryTest, IOwnableBase, ISpaceDelegation
         vm.prank(deployer);
         spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
 
-        vm.expectRevert(SpaceDelegation__AlreadyDelegated.selector);
+        vm.expectRevert(abi.encodeWithSelector(SpaceDelegation__AlreadyDelegated.selector, OPERATOR));
         vm.prank(deployer);
         spaceDelegationFacet.addSpaceDelegation(space, OPERATOR);
     }
