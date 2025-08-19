@@ -33,6 +33,7 @@ export default defineConfig({
         "**/XChain.sol/*.json",
         "**/SwapFacet.sol/*.json",
         "**/SwapRouter.sol/*.json",
+        "**/IAppRegistry.sol/*.json",
       ],
       forge: {
         build: false,

@@ -29,6 +29,14 @@ type Query {
   swapRouterSwaps(where: swapRouterSwapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapRouterSwapPage!
   feeDistribution(txHash: String!): feeDistribution
   feeDistributions(where: feeDistributionFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): feeDistributionPage!
+  stakers(depositId: BigInt!): stakers
+  stakerss(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage!
+  operator(address: String!): operator
+  operators(where: operatorFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): operatorPage!
+  app(id: String!): app
+  apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage!
+  owner(address: String!): owner
+  owners(where: ownerFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): ownerPage!
   _meta: Meta
 }
 
@@ -42,8 +50,10 @@ type space {
   longDescription: String
   createdAt: BigInt
   paused: Boolean
+  totalAmountStaked: BigInt
   swapFee: swapFee
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage
+  stakers(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
 }
 
 type swapFee {
@@ -68,7 +78,7 @@ type swap {
   amountIn: BigInt
   amountOut: BigInt
   poster: String
-  createdDate: String
+  blockTimestamp: BigInt
   createdAt: BigInt
   space: space
   swapRouter: swapRouter
@@ -90,7 +100,7 @@ type swapRouterSwap {
   amountIn: BigInt
   amountOut: BigInt
   recipient: String
-  createdDate: String
+  blockTimestamp: BigInt
   createdAt: BigInt
 }
 
@@ -173,16 +183,97 @@ input swapFilter {
   poster_ends_with: String
   poster_not_starts_with: String
   poster_not_ends_with: String
-  createdDate: String
-  createdDate_not: String
-  createdDate_in: [String]
-  createdDate_not_in: [String]
-  createdDate_contains: String
-  createdDate_not_contains: String
-  createdDate_starts_with: String
-  createdDate_ends_with: String
-  createdDate_not_starts_with: String
-  createdDate_not_ends_with: String
+  blockTimestamp: BigInt
+  blockTimestamp_not: BigInt
+  blockTimestamp_in: [BigInt]
+  blockTimestamp_not_in: [BigInt]
+  blockTimestamp_gt: BigInt
+  blockTimestamp_lt: BigInt
+  blockTimestamp_gte: BigInt
+  blockTimestamp_lte: BigInt
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+}
+
+type stakersPage {
+  items: [stakers!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type stakers {
+  depositId: BigInt!
+  owner: String
+  delegatee: String
+  beneficiary: String
+  amount: BigInt
+  createdAt: BigInt
+  space: space
+  operator: operator
+}
+
+type operator {
+  address: String!
+  status: Int
+  createdAt: BigInt
+  stakings(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
+}
+
+input stakersFilter {
+  AND: [stakersFilter]
+  OR: [stakersFilter]
+  depositId: BigInt
+  depositId_not: BigInt
+  depositId_in: [BigInt]
+  depositId_not_in: [BigInt]
+  depositId_gt: BigInt
+  depositId_lt: BigInt
+  depositId_gte: BigInt
+  depositId_lte: BigInt
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  delegatee: String
+  delegatee_not: String
+  delegatee_in: [String]
+  delegatee_not_in: [String]
+  delegatee_contains: String
+  delegatee_not_contains: String
+  delegatee_starts_with: String
+  delegatee_ends_with: String
+  delegatee_not_starts_with: String
+  delegatee_not_ends_with: String
+  beneficiary: String
+  beneficiary_not: String
+  beneficiary_in: [String]
+  beneficiary_not_in: [String]
+  beneficiary_contains: String
+  beneficiary_not_contains: String
+  beneficiary_starts_with: String
+  beneficiary_ends_with: String
+  beneficiary_not_starts_with: String
+  beneficiary_not_ends_with: String
+  amount: BigInt
+  amount_not: BigInt
+  amount_in: [BigInt]
+  amount_not_in: [BigInt]
+  amount_gt: BigInt
+  amount_lt: BigInt
+  amount_gte: BigInt
+  amount_lte: BigInt
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]
@@ -282,6 +373,14 @@ input spaceFilter {
   paused_not: Boolean
   paused_in: [Boolean]
   paused_not_in: [Boolean]
+  totalAmountStaked: BigInt
+  totalAmountStaked_not: BigInt
+  totalAmountStaked_in: [BigInt]
+  totalAmountStaked_not_in: [BigInt]
+  totalAmountStaked_gt: BigInt
+  totalAmountStaked_lt: BigInt
+  totalAmountStaked_gte: BigInt
+  totalAmountStaked_lte: BigInt
 }
 
 type swapFeePage {
@@ -449,16 +548,14 @@ input swapRouterSwapFilter {
   recipient_ends_with: String
   recipient_not_starts_with: String
   recipient_not_ends_with: String
-  createdDate: String
-  createdDate_not: String
-  createdDate_in: [String]
-  createdDate_not_in: [String]
-  createdDate_contains: String
-  createdDate_not_contains: String
-  createdDate_starts_with: String
-  createdDate_ends_with: String
-  createdDate_not_starts_with: String
-  createdDate_not_ends_with: String
+  blockTimestamp: BigInt
+  blockTimestamp_not: BigInt
+  blockTimestamp_in: [BigInt]
+  blockTimestamp_not_in: [BigInt]
+  blockTimestamp_gt: BigInt
+  blockTimestamp_lt: BigInt
+  blockTimestamp_gte: BigInt
+  blockTimestamp_lte: BigInt
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]
@@ -553,4 +650,139 @@ input feeDistributionFilter {
   createdAt_lt: BigInt
   createdAt_gte: BigInt
   createdAt_lte: BigInt
+}
+
+type operatorPage {
+  items: [operator!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input operatorFilter {
+  AND: [operatorFilter]
+  OR: [operatorFilter]
+  address: String
+  address_not: String
+  address_in: [String]
+  address_not_in: [String]
+  address_contains: String
+  address_not_contains: String
+  address_starts_with: String
+  address_ends_with: String
+  address_not_starts_with: String
+  address_not_ends_with: String
+  status: Int
+  status_not: Int
+  status_in: [Int]
+  status_not_in: [Int]
+  status_gt: Int
+  status_lt: Int
+  status_gte: Int
+  status_lte: Int
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+}
+
+type app {
+  id: String!
+  client: String
+  module: String
+  owner: owner
+  createdAt: BigInt
+  permissions: [String!]
+}
+
+type owner {
+  address: String!
+  apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage
+}
+
+type appPage {
+  items: [app!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input appFilter {
+  AND: [appFilter]
+  OR: [appFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  client: String
+  client_not: String
+  client_in: [String]
+  client_not_in: [String]
+  client_contains: String
+  client_not_contains: String
+  client_starts_with: String
+  client_ends_with: String
+  client_not_starts_with: String
+  client_not_ends_with: String
+  module: String
+  module_not: String
+  module_in: [String]
+  module_not_in: [String]
+  module_contains: String
+  module_not_contains: String
+  module_starts_with: String
+  module_ends_with: String
+  module_not_starts_with: String
+  module_not_ends_with: String
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  permissions: [String]
+  permissions_not: [String]
+  permissions_has: String
+  permissions_not_has: String
+}
+
+type ownerPage {
+  items: [owner!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input ownerFilter {
+  AND: [ownerFilter]
+  OR: [ownerFilter]
+  address: String
+  address_not: String
+  address_in: [String]
+  address_not_in: [String]
+  address_contains: String
+  address_not_contains: String
+  address_starts_with: String
+  address_ends_with: String
+  address_not_starts_with: String
+  address_not_ends_with: String
 }
