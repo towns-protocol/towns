@@ -95,11 +95,11 @@ func (l *localWithMutex) run(ctx context.Context, streamCache StreamCache) {
 			stream.Unsub(l)
 		}
 
-		// send an update to the subscriber that the syncer is closed.
+		// send an update to the subscriber that the syncer closed.
 		l.subscriber.OnStreamEvent(
 			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: l.streamID[:]}, l.version)
 
-		// send an update to all pending backfill requests that the syncer is closed.
+		// send an update to all pending backfill requests that the syncer closed.
 		if backfillRequestInProgress != nil {
 			l.subscriber.OnStreamEvent(&SyncStreamsResponse{
 				SyncOp:        SyncOp_SYNC_DOWN,
@@ -145,8 +145,12 @@ func (l *localWithMutex) run(ctx context.Context, streamCache StreamCache) {
 	// process backfill requests until context is canceled or the syncer is closed
 	for {
 		backfillRequestInProgress = nil
+		ok := false
 		select {
-		case backfillRequestInProgress = <-l.pendingBackfillRequests:
+		case backfillRequestInProgress, ok = <-l.pendingBackfillRequests:
+			if !ok { // syncer closed
+				return
+			}
 			if err := l.processBackfillRequest(ctx, backfillRequestInProgress, stream); err != nil {
 				l.log.Errorw("failed to process backfill request",
 					"cookie", backfillRequestInProgress.cookie,
