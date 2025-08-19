@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.307",
+    "version": "0.0.310",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {

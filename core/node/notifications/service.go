@@ -360,7 +360,6 @@ func (s *Service) UnsubscribeWebPush(
 		msg          = req.Msg
 		subscription = msg.GetSubscription()
 		keys         = subscription.GetKeys()
-		app          = msg.GetApp()
 		webPushSub   = &webpush.Subscription{
 			Endpoint: subscription.GetEndpoint(),
 			Keys: webpush.Keys{
@@ -375,12 +374,7 @@ func (s *Service) UnsubscribeWebPush(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
-	// Default to Towns app for backward compatibility
-	if app == "" {
-		app = apps.Default
-	}
-
-	if err := s.userPreferences.RemoveWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
+	if err := s.userPreferences.RemoveWebPushSubscription(ctx, userID, webPushSub); err != nil {
 		return nil, err
 	}
 
@@ -431,7 +425,6 @@ func (s *Service) UnsubscribeAPN(
 		msg         = req.Msg
 		deviceToken = msg.GetDeviceToken()
 		userID      = authentication.UserFromAuthenticatedContext(ctx)
-		app         = msg.GetApp()
 	)
 	if len(deviceToken) == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid APN device token")
@@ -440,14 +433,9 @@ func (s *Service) UnsubscribeAPN(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
-	// Default to Towns app for backward compatibility
-	if app == "" {
-		app = apps.Default
-	}
+	logging.FromCtx(ctx).Infow("remove APN subscription", "userID", userID)
 
-	logging.FromCtx(ctx).Infow("remove APN subscription", "userID", userID, "app", app)
-
-	if err := s.userPreferences.RemoveAPNSubscription(ctx, deviceToken, userID, app); err != nil {
+	if err := s.userPreferences.RemoveAPNSubscription(ctx, deviceToken, userID); err != nil {
 		return nil, err
 	}
 
