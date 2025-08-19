@@ -18,10 +18,8 @@ yq e '.updated[].facets[]' "${SOURCE_DIFF_YAML}" | while read -r facet; do
     
     echo "Verifying $FACET_NAME at $DEPLOYED_ADDRESS"
     
-    make explicit-verify-any \
-        rpc=base-sepolia \
-        verifier="${BASESCAN_SEPOLIA_URL}" \
-        etherscan="${ETHERSCAN_API_KEY}" \
+    make verify-on-etherscan \
+        etherscan_url="${BASESCAN_SEPOLIA_URL}" \
         address="${DEPLOYED_ADDRESS}" \
         contract="${FACET_NAME}"
 done 
