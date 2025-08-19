@@ -143,25 +143,14 @@ export const operatorToStakings = relations(operator, ({ many }) => ({
 
 // apps
 export const app = onchainTable('apps', (t) => ({
-    id: t.hex().primaryKey(), // appId (uid from events)
+    address: t.hex().primaryKey(),
+    appId: t.hex(),
     client: t.hex(),
     module: t.hex(),
     owner: t.hex(),
     createdAt: t.bigint(),
     permissions: t.text().array(),
-}))
-
-// owners
-export const owner = onchainTable('owners', (t) => ({
-    address: t.hex().primaryKey(),
-}))
-
-// each owner can have many apps
-export const ownerToApps = relations(owner, ({ many }) => ({
-    apps: many(app),
-}))
-
-// each app belongs to one owner
-export const appToOwner = relations(app, ({ one }) => ({
-    owner: one(owner, { fields: [app.owner], references: [owner.address] }),
+    isRegistered: t.boolean().default(false),
+    isBanned: t.boolean().default(false),
+    installedIn: t.hex().array(),
 }))

@@ -33,10 +33,8 @@ type Query {
   stakerss(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage!
   operator(address: String!): operator
   operators(where: operatorFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): operatorPage!
-  app(id: String!): app
+  app(address: String!): app
   apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage!
-  owner(address: String!): owner
-  owners(where: ownerFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): ownerPage!
   _meta: Meta
 }
 
@@ -690,17 +688,16 @@ input operatorFilter {
 }
 
 type app {
-  id: String!
+  address: String!
+  appId: String
   client: String
   module: String
-  owner: owner
+  owner: String
   createdAt: BigInt
   permissions: [String!]
-}
-
-type owner {
-  address: String!
-  apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage
+  isRegistered: Boolean
+  isBanned: Boolean
+  installedIn: [String!]
 }
 
 type appPage {
@@ -712,16 +709,26 @@ type appPage {
 input appFilter {
   AND: [appFilter]
   OR: [appFilter]
-  id: String
-  id_not: String
-  id_in: [String]
-  id_not_in: [String]
-  id_contains: String
-  id_not_contains: String
-  id_starts_with: String
-  id_ends_with: String
-  id_not_starts_with: String
-  id_not_ends_with: String
+  address: String
+  address_not: String
+  address_in: [String]
+  address_not_in: [String]
+  address_contains: String
+  address_not_contains: String
+  address_starts_with: String
+  address_ends_with: String
+  address_not_starts_with: String
+  address_not_ends_with: String
+  appId: String
+  appId_not: String
+  appId_in: [String]
+  appId_not_in: [String]
+  appId_contains: String
+  appId_not_contains: String
+  appId_starts_with: String
+  appId_ends_with: String
+  appId_not_starts_with: String
+  appId_not_ends_with: String
   client: String
   client_not: String
   client_in: [String]
@@ -764,25 +771,16 @@ input appFilter {
   permissions_not: [String]
   permissions_has: String
   permissions_not_has: String
-}
-
-type ownerPage {
-  items: [owner!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-input ownerFilter {
-  AND: [ownerFilter]
-  OR: [ownerFilter]
-  address: String
-  address_not: String
-  address_in: [String]
-  address_not_in: [String]
-  address_contains: String
-  address_not_contains: String
-  address_starts_with: String
-  address_ends_with: String
-  address_not_starts_with: String
-  address_not_ends_with: String
+  isRegistered: Boolean
+  isRegistered_not: Boolean
+  isRegistered_in: [Boolean]
+  isRegistered_not_in: [Boolean]
+  isBanned: Boolean
+  isBanned_not: Boolean
+  isBanned_in: [Boolean]
+  isBanned_not_in: [Boolean]
+  installedIn: [String]
+  installedIn_not: [String]
+  installedIn_has: String
+  installedIn_not_has: String
 }

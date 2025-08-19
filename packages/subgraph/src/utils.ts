@@ -1,3 +1,4 @@
+import { Permission } from '@towns-protocol/web3'
 import { eq } from 'ponder'
 import { Context } from 'ponder:registry'
 import schema from 'ponder:schema'
@@ -84,6 +85,25 @@ export async function handleRedelegation(
     } catch (error) {
         console.error(`Error handling redelegation:`, error)
     }
+}
+
+export function decodePermissions(permissions: readonly string[]): Permission[] {
+    const decodedPermissions: Permission[] = []
+    for (const perm of permissions) {
+        try {
+            const decoded = Buffer.from(perm.slice(2), 'hex')
+                .toString('utf8')
+                .replace(/\0/g, '')
+                .trim() as Permission
+
+            if (decoded && Object.values(Permission).includes(decoded)) {
+                decodedPermissions.push(decoded)
+            }
+        } catch (error) {
+            console.warn(`Failed to parse permission: ${perm}`, error)
+        }
+    }
+    return decodedPermissions
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }
