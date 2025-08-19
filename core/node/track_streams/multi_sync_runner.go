@@ -419,7 +419,7 @@ func (ssr *syncSessionRunner) Run() {
 		// let's close the runner. If the sessionSyncRunner is closed, all of it's streams are
 		// re-assigned and it will become unassignable.
 		case <-ssr.syncCtx.Done():
-			ssr.Close(ssr.syncCtx.Err())
+			ssr.Close(context.Cause(ssr.syncCtx))
 			return
 
 		// Process the current batch of messages.
@@ -512,7 +512,11 @@ func (ssr *syncSessionRunner) Close(err error) {
 	}
 
 	// Relocate all streams on this runner.
-	ssr.streamRecords.Range(func(streamId shared.StreamId, _ *streamSyncInitRecord) bool {
+	ssr.streamRecords.Range(func(streamId shared.StreamId, record *streamSyncInitRecord) bool {
+		if base.AsRiverError(err).IsCodeWithBases(protocol.Err_UNAVAILABLE) {
+			// Advance sticky peer if the current one is not available anymore.
+			record.remotes.AdvanceStickyPeer(ssr.node)
+		}
 		ssr.relocateStream(streamId)
 		return true
 	})
@@ -820,8 +824,10 @@ func (msr *MultiSyncRunner) addToSync(
 		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
 
-		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
-			// Create a new runner and replace this one
+		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) ||
+			base.IsRiverErrorCode(err, protocol.Err_UNAVAILABLE) {
+			// If the sync operation is full OR the remote node is not available, we need to
+			// re-assign the stream to a new sync session runner.
 			newRunner := newSyncSessionRunner(
 				rootCtx,
 				msr.streamsToSync,

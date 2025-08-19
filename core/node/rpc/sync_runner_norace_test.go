@@ -483,8 +483,8 @@ func waitForMessagesDelivery(
 // tests that the MultiSyncer correctly detects when streams are not syncing and rotates them to new
 // nodes, verifying message delivery after each node failure.
 func TestMultiSyncerWithNodeFailures(t *testing.T) {
-	numNodes := 10
-	replFactor := 5
+	numNodes := 5
+	replFactor := 4
 	tt := newServiceTester(
 		t,
 		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true},
@@ -603,8 +603,9 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		"Not all messages from first batch were received",
 	)
 
-	// Stop first node to force stream relocation
+	// Stop first 2 nodes to force stream relocation
 	tt.CloseNode(1)
+	tt.CloseNode(2)
 
 	// Send second batch of messages after first node failure
 	for i, channelId := range channelIds {
@@ -624,8 +625,8 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		"Not all messages were received after first node failure",
 	)
 
-	// Stop second node to force another stream relocation
-	tt.CloseNode(2)
+	// Stop third node to force another stream relocation
+	tt.CloseNode(3)
 
 	// Send third batch of messages after second node failure
 	for i, channelId := range channelIds {

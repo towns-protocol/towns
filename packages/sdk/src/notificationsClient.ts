@@ -211,10 +211,10 @@ export class NotificationsClient {
         })
     }
 
-    async subscribeWebPush(subscription: PlainMessage<WebPushSubscriptionObject>) {
+    async subscribeWebPush(subscription: PlainMessage<WebPushSubscriptionObject>, app: string) {
         return this.withClient(async (client) => {
             logger.log('TNS PUSH: subscribing to web push')
-            return client.subscribeWebPush({ subscription })
+            return client.subscribeWebPush({ subscription: subscription, app: app })
         })
     }
 
