@@ -197,93 +197,116 @@ func NewMessageNotifier(
 func createAppNotificationConfig(cfg *config.AppNotificationConfig) (*AppNotificationConfig, error) {
 	result := &AppNotificationConfig{}
 
-	if cfg.APN.AppBundleID != "" {
-		apnExpiration := 12 * time.Hour // default
-		if cfg.APN.Expiration > 0 {
-			apnExpiration = cfg.APN.Expiration
-		}
-
-		// in case the authkey was passed with "\n" instead of actual newlines
-		// pem.Decode fails. Replace these
-		authKey := strings.Replace(strings.TrimSpace(cfg.APN.AuthKey), "\\n", "\n", -1)
-
-		if authKey == "" {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN auth key for app").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		if cfg.APN.KeyID == "" {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN key ID for app").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		if cfg.APN.TeamID == "" {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN team ID for app").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		blockPrivateKey, _ := pem.Decode([]byte(authKey))
-		if blockPrivateKey == nil {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN auth key").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		rawKey, err := x509.ParsePKCS8PrivateKey(blockPrivateKey.Bytes)
-		if err != nil {
-			return nil, AsRiverError(err).
-				Message("Unable to parse APN auth key").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		apnJwtSignKey, ok := rawKey.(*ecdsa.PrivateKey)
-		if !ok {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN JWT signing key").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		result.APNS = &APNSConfig{
-			AppBundleID: cfg.APN.AppBundleID,
-			JwtSignKey:  apnJwtSignKey,
-			KeyID:       cfg.APN.KeyID,
-			TeamID:      cfg.APN.TeamID,
-			Expiration:  apnExpiration,
-		}
+	apnsConfig, err := createAPNSConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
+	result.APNS = apnsConfig
 
-	if cfg.Web.Vapid.Subject != "" {
-		if cfg.Web.Vapid.PrivateKey == "" {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID private key").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		if cfg.Web.Vapid.PublicKey == "" {
-			return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID public key").
-				Func("createAppNotificationConfig").
-				Tag("app", cfg.App)
-		}
-
-		result.WebPush = &WebPushConfig{
-			VAPIDPrivateKey: cfg.Web.Vapid.PrivateKey,
-			VAPIDPublicKey:  cfg.Web.Vapid.PublicKey,
-			VAPIDSubject:    cfg.Web.Vapid.Subject,
-		}
+	webPushConfig, err := createWebPushConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
+	result.WebPush = webPushConfig
 
 	// Ensure at least one notification type is configured
 	if result.APNS == nil && result.WebPush == nil {
-		return nil, RiverError(protocol.Err_BAD_CONFIG, "At least one notification type (APNS or WebPush) must be configured").
+		return nil, RiverError(
+			protocol.Err_BAD_CONFIG,
+			"At least one notification type (APNS or WebPush) must be configured",
+		).
 			Func("createAppNotificationConfig").
 			Tag("app", cfg.App)
 	}
 
 	return result, nil
+}
+
+func createAPNSConfig(cfg *config.AppNotificationConfig) (*APNSConfig, error) {
+	if cfg.APN.AppBundleID == "" {
+		return nil, nil
+	}
+
+	apnExpiration := 12 * time.Hour // default
+	if cfg.APN.Expiration > 0 {
+		apnExpiration = cfg.APN.Expiration
+	}
+
+	// in case the authkey was passed with "\n" instead of actual newlines
+	// pem.Decode fails. Replace these
+	authKey := strings.Replace(strings.TrimSpace(cfg.APN.AuthKey), "\\n", "\n", -1)
+
+	if authKey == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN auth key for app").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	if cfg.APN.KeyID == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN key ID for app").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	if cfg.APN.TeamID == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing APN team ID for app").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	blockPrivateKey, _ := pem.Decode([]byte(authKey))
+	if blockPrivateKey == nil {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN auth key").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	rawKey, err := x509.ParsePKCS8PrivateKey(blockPrivateKey.Bytes)
+	if err != nil {
+		return nil, AsRiverError(err).
+			Message("Unable to parse APN auth key").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	apnJwtSignKey, ok := rawKey.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Invalid APN JWT signing key").
+			Func("createAPNSConfig").
+			Tag("app", cfg.App)
+	}
+
+	return &APNSConfig{
+		AppBundleID: cfg.APN.AppBundleID,
+		JwtSignKey:  apnJwtSignKey,
+		KeyID:       cfg.APN.KeyID,
+		TeamID:      cfg.APN.TeamID,
+		Expiration:  apnExpiration,
+	}, nil
+}
+
+func createWebPushConfig(cfg *config.AppNotificationConfig) (*WebPushConfig, error) {
+	if cfg.Web.Vapid.Subject == "" {
+		return nil, nil
+	}
+
+	if cfg.Web.Vapid.PrivateKey == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID private key").
+			Func("createWebPushConfig").
+			Tag("app", cfg.App)
+	}
+
+	if cfg.Web.Vapid.PublicKey == "" {
+		return nil, RiverError(protocol.Err_BAD_CONFIG, "Missing VAPID public key").
+			Func("createWebPushConfig").
+			Tag("app", cfg.App)
+	}
+
+	return &WebPushConfig{
+		VAPIDPrivateKey: cfg.Web.Vapid.PrivateKey,
+		VAPIDPublicKey:  cfg.Web.Vapid.PublicKey,
+		VAPIDSubject:    cfg.Web.Vapid.Subject,
+	}, nil
 }
 
 func (n *MessageNotifications) SendWebPushNotification(
