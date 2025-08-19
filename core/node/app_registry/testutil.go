@@ -544,7 +544,7 @@ func (b *TestAppServer) respondToSendMessages(
 			return logAndReturnErr(log, fmt.Errorf("could not parse message envelope: %w", err))
 		}
 		streamEvent := parsedEvent.Event
-		log.Infow("testAppServer observed streamEvent", "streamEvent", parsedEvent)
+		log.Debugw("testAppServer observed streamEvent", "streamEvent", parsedEvent)
 
 		switch payload := streamEvent.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:

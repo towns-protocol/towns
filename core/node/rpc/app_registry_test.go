@@ -156,8 +156,9 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	ar.botIndexCheck(botIndex)
 	botClient := ar.BotNodeClient(botIndex, testClientOpts{})
 	mbRef = botClient.createUserStreamsWithEncryptionDevice()
+	appWallet := ar.botCredentials[botIndex].botWallet
 	sharedSecret = ar.RegisterApp(
-		ar.botCredentials[botIndex].botWallet,
+		appWallet,
 		ar.botCredentials[botIndex].ownerWallet,
 		forwardSetting,
 	)
@@ -165,14 +166,23 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	ar.appServer.SetHS256SecretKey(botIndex, sharedSecret)
 	ar.appServer.SetEncryptionDevice(botIndex, botClient.DefaultEncryptionDevice())
 
-	registerWebhook(
+	req := &connect.Request[protocol.RegisterWebhookRequest]{
+		Msg: &protocol.RegisterWebhookRequest{
+			AppId:      appWallet.Address[:],
+			WebhookUrl: ar.appServer.Url(botIndex),
+		},
+	}
+
+	// Unauthenticated requests should fail
+	authenticateBS(ar.ctx, ar.require, ar.authClient, appWallet, req)
+
+	resp, err := ar.appRegistryClient.RegisterWebhook(
 		ar.ctx,
-		ar.require,
-		ar.botCredentials[botIndex].botWallet,
-		ar.authClient,
-		ar.appRegistryClient,
-		ar.appServer.Url(botIndex),
+		req,
 	)
+	ar.require.NoError(err)
+	ar.require.NotNil(resp)
+
 	return sharedSecret, mbRef
 }
 
@@ -498,32 +508,6 @@ func testAppMetadata() *protocol.AppMetadata {
 
 func stringPtr(s string) *string {
 	return &s
-}
-
-func registerWebhook(
-	ctx context.Context,
-	require *require.Assertions,
-	appWallet *crypto.Wallet,
-	authClient protocolconnect.AuthenticationServiceClient,
-	appRegistryClient protocolconnect.AppRegistryServiceClient,
-	url string,
-) {
-	req := &connect.Request[protocol.RegisterWebhookRequest]{
-		Msg: &protocol.RegisterWebhookRequest{
-			AppId:      appWallet.Address[:],
-			WebhookUrl: url,
-		},
-	}
-
-	// Unauthenticated requests should fail
-	authenticateBS(ctx, require, authClient, appWallet, req)
-
-	resp, err := appRegistryClient.RegisterWebhook(
-		ctx,
-		req,
-	)
-	require.NoError(err)
-	require.NotNil(resp)
 }
 
 func TestAppRegistry_SetGetAppMetadata(t *testing.T) {

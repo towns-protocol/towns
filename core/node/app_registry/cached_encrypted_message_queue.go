@@ -2,7 +2,6 @@ package app_registry
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -90,10 +89,8 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	fs.Settings.Store(&settings)
 	q.appIdCache.Store(app, fs)
 
-	logging.FromCtx(ctx).Infow("About to create app", "appId", app)
 	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Error creating app", "appId", hex.EncodeToString(app[:]), "owner", owner)
 		return err
 	}
 
@@ -103,8 +100,6 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 		metadata:  &metadata,
 		timestamp: time.Now(),
 	})
-
-	logging.FromCtx(ctx).Infow("Creating app", "appId", cacheKey, "owner", owner)
 
 	return nil
 }
