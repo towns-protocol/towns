@@ -532,7 +532,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 
 		for _, sub := range userPref.Subscriptions.APNPush {
 			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID, sub.App); err != nil {
+				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
 						"user", userPref.UserID, "error", err)
 					continue
@@ -632,7 +632,7 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 					"version", sub.PushVersion,
 					"error", err)
 			} else {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID, sub.App); err != nil {
+				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
 					p.log.Errorw("Unable to remove expired APN subscription",
 						"user", userPref.UserID, "error", err)
 				} else {

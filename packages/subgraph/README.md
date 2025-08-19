@@ -265,27 +265,69 @@ ponder.on("CreateSpace:SpaceCreated", async ({ event, context }) => {
 
 ## Setup Ponder for Docker
 
-You can run Ponder in a docker container with a local postgres database pointing to the gamma network.
+You can run Ponder in a docker container with a local postgres database. The setup uses a dual-instance architecture for better performance and scalability:
+
+- **subgraph-indexer**: Handles blockchain event indexing and data processing
+- **subgraph-server**: Serves HTTP API requests (GraphQL/SQL) without affecting indexing performance
+
+### Architecture Benefits
+
+This separation provides:
+
+- Improved performance by preventing HTTP traffic from affecting indexing
+- Ability to scale API servers horizontally if needed
+- Better resource isolation between indexing and serving
+- Continued indexing even if the API server experiences issues
+
+### Running with Docker Compose
 
 ```bash
-# build ponder image
-docker build --no-cache -t towns-subgraph -f packages/subgraph/Dockerfile .
+# For Alpha environment
+docker compose --env-file .env.alpha up -d
 
-# start subgraph with local attached postgrs pointing to gamma network in daemon mode
-docker compose -f docker-compose-gamma.yml up -d
+# For Gamma environment
+docker compose --env-file .env.gamma up -d
+
+# For Omega environment
+docker compose --env-file .env.omega up -d
 ```
 
-Navigate to http://localhost:42069/graphql to interact with the subgraph over the graphql api.
+### Testing the Setup
 
-Check endpoints below for more information.
+After starting the services, the API server will be available at http://localhost:42069
 
-http://localhost:42069/status
+Check the following endpoints:
 
-http://localhost:42069/ready
+- http://localhost:42069/graphql - Interactive GraphQL playground
+- http://localhost:42069/status - Service status information
+- http://localhost:42069/ready - Readiness check
+- http://localhost:42069/metrics - Prometheus metrics
+- http://localhost:42069/health - Health check endpoint
 
-http://localhost:42069/metrics
+### Managing Services
 
-http://localhost:42069/health
+```bash
+# View logs for the indexer (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-indexer
+
+# View logs for the API server (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-server
+
+# Stop all services (specify environment file)
+docker compose --env-file .env.alpha down
+
+# Stop services and remove volumes (specify environment file)
+docker compose --env-file .env.alpha down -v
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. **Indexer not starting**: Check that the database is healthy and accessible
+2. **API server not responding**: Ensure the indexer has started successfully first
+3. **Data not appearing**: Verify the indexer is processing events (check logs)
+4. **Port conflicts**: Ensure port 42069 (API) and 5432 (PostgreSQL) are available
 
 ## Update schema.graphql
 
