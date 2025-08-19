@@ -167,8 +167,10 @@ func (r *remoteStreamUpdateEmitter) run(
 		case <-ctx.Done():
 		case <-time.After(remoteStreamUpdateEmitterTimeout):
 			if !firstUpdateReceived.Load() {
-				r.cancel(RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for first update",
-					"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID))
+				r.cancel(
+					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for first update",
+						"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID),
+				)
 			}
 		}
 	}()
@@ -224,8 +226,10 @@ func (r *remoteStreamUpdateEmitter) run(
 		case <-ctx.Done():
 		case <-time.After(remoteStreamUpdateEmitterTimeout):
 			if !secondUpdateReceived.Load() {
-				r.cancel(RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
-					"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID))
+				r.cancel(
+					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
+						"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID),
+				)
 			}
 		}
 	}()
