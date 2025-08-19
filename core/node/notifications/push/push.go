@@ -62,6 +62,11 @@ type (
 		// App-specific configurations
 		appConfigs map[string]*AppNotificationConfig
 
+		apnsClients map[string]struct {
+			production  *apns2.Client
+			development *apns2.Client
+		}
+
 		// metrics
 		webPushSent *prometheus.CounterVec
 		apnSent     *prometheus.CounterVec
@@ -134,6 +139,10 @@ func NewMessageNotifier(
 	}
 
 	appConfigs := make(map[string]*AppNotificationConfig)
+	apnsClients := make(map[string]struct {
+		production  *apns2.Client
+		development *apns2.Client
+	})
 
 	for _, appCfg := range cfg.Apps {
 		appConfig, err := createAppNotificationConfig(&appCfg)
@@ -141,6 +150,20 @@ func NewMessageNotifier(
 			return nil, err
 		}
 		appConfigs[appCfg.App] = appConfig
+
+		authToken := &token.Token{
+			AuthKey: appConfig.apnJwtSignKey,
+			KeyID:   appConfig.apnKeyID,
+			TeamID:  appConfig.apnTeamID,
+		}
+
+		apnsClients[appCfg.App] = struct {
+			production  *apns2.Client
+			development *apns2.Client
+		}{
+			production:  apns2.NewTokenClient(authToken).Production(),
+			development: apns2.NewTokenClient(authToken).Development(),
+		}
 	}
 
 	webPushSend := metricsFactory.NewCounterVecEx(
@@ -157,6 +180,7 @@ func NewMessageNotifier(
 
 	return &MessageNotifications{
 		appConfigs:  appConfigs,
+		apnsClients: apnsClients,
 		webPushSent: webPushSend,
 		apnSent:     apnSent,
 	}, nil
@@ -303,6 +327,18 @@ func (n *MessageNotifications) SendApplePushNotification(
 			Tag("app", app)
 	}
 
+	clients, ok := n.apnsClients[app]
+	if !ok {
+		return false, http.StatusNotFound, RiverError(protocol.Err_INVALID_ARGUMENT, "No APNS client for app").
+			Func("SendApplePushNotification").
+			Tag("app", app)
+	}
+
+	client := clients.production
+	if sub.Environment == protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX {
+		client = clients.development
+	}
+
 	notification := &apns2.Notification{
 		DeviceToken: hex.EncodeToString(sub.DeviceToken),
 		Topic:       appConfig.apnsAppBundleID,
@@ -310,17 +346,6 @@ func (n *MessageNotifications) SendApplePushNotification(
 		Priority:    apns2.PriorityHigh,
 		PushType:    apns2.PushTypeAlert,
 		Expiration:  time.Now().Add(appConfig.apnExpiration),
-	}
-
-	token := &token.Token{
-		AuthKey: appConfig.apnJwtSignKey,
-		KeyID:   appConfig.apnKeyID,
-		TeamID:  appConfig.apnTeamID,
-	}
-
-	client := apns2.NewTokenClient(token).Production()
-	if sub.Environment == protocol.APNEnvironment_APN_ENVIRONMENT_SANDBOX {
-		client = client.Development()
 	}
 
 	res, err := client.PushWithContext(ctx, notification)
