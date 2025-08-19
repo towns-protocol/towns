@@ -125,12 +125,10 @@ func (ar *appRegistryServiceTester) RegisterApp(
 		},
 	}
 	authenticateBS(ar.ctx, ar.require, ar.authClient, ownerWallet, req)
-	ar.t.Logf("Registering app %v", hex.EncodeToString(appWallet.Address[:]))
 	resp, err := ar.appRegistryClient.Register(
 		ar.ctx,
 		req,
 	)
-	ar.t.Logf("Registered app %v", hex.EncodeToString(appWallet.Address[:]))
 	ar.require.NoError(err)
 	ar.require.NotNil(resp)
 	ar.require.Len(resp.Msg.Hs256SharedSecret, 32, "Shared secret length should be 32 bytes")
