@@ -61,17 +61,23 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     )
 
     const mintMembershipForWallet = async (wallet: Wallet, i: number) => {
-        const hasSpaceMembership = (
-            await rootClient.spaceDapp.getMembershipStatus(spaceId, [wallet.address])
-        ).isMember
-        logger.debug({ i, address: wallet.address, hasSpaceMembership }, 'minting membership')
-        if (!hasSpaceMembership) {
+        const status = await rootClient.spaceDapp.getMembershipStatus(spaceId, [wallet.address])
+        logger.debug({ i, address: wallet.address, status }, 'minting membership')
+        if (!status.isMember || !status.tokenId) {
             const result = await rootClient.spaceDapp.joinSpace(
                 spaceId,
                 wallet.address,
                 rootClient.baseProvider.wallet,
             )
             logger.debug(result, 'minted membership')
+        } else if (status.isExpired) {
+            const space = rootClient.spaceDapp.getSpace(spaceId)
+
+            const result = await space?.Membership.renewMembership({
+                tokenId: status.tokenId,
+                signer: rootClient.baseProvider.wallet,
+            })
+            logger.debug(result, 'renewed membership')
         }
     }
 
