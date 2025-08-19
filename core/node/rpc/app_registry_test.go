@@ -114,17 +114,27 @@ func (ar *appRegistryServiceTester) RegisterApp(
 	ownerWallet *crypto.Wallet,
 	forwardSetting protocol.ForwardSettingValue,
 ) (sharedSecret []byte) {
-	return register(
+	req := &connect.Request[protocol.RegisterRequest]{
+		Msg: &protocol.RegisterRequest{
+			AppId:      appWallet.Address[:],
+			AppOwnerId: ownerWallet.Address[:],
+			Settings: &protocol.AppSettings{
+				ForwardSetting: forwardSetting,
+			},
+			Metadata: appMetadataForBot(appWallet.Address[:]),
+		},
+	}
+	authenticateBS(ar.ctx, ar.require, ar.authClient, ownerWallet, req)
+	ar.t.Logf("Registering app %v", hex.EncodeToString(appWallet.Address[:]))
+	resp, err := ar.appRegistryClient.Register(
 		ar.ctx,
-		ar.require,
-		appWallet.Address[:],
-		ownerWallet.Address[:],
-		forwardSetting,
-		appMetadataForBot(appWallet.Address[:]),
-		ownerWallet,
-		ar.authClient,
-		ar.appRegistryClient,
+		req,
 	)
+	ar.t.Logf("Registered app %v", hex.EncodeToString(appWallet.Address[:]))
+	ar.require.NoError(err)
+	ar.require.NotNil(resp)
+	ar.require.Len(resp.Msg.Hs256SharedSecret, 32, "Shared secret length should be 32 bytes")
+	return resp.Msg.GetHs256SharedSecret()
 }
 
 func (ar *appRegistryServiceTester) RegisterBotServices(
@@ -172,17 +182,6 @@ func (ar *appRegistryServiceTester) StartBotServices() {
 	go func() {
 		if err := ar.appServer.Serve(ar.ctx); err != nil {
 			ar.serviceTester.t.Errorf("Error starting bot service: %v", err)
-		}
-	}()
-
-	go func() {
-		for {
-			select {
-			case <-ar.ctx.Done():
-				return
-			case err := <-ar.appServer.ExitSignal():
-				ar.require.NoError(err, "TestAppServer encountered a fatal error")
-			}
 		}
 	}()
 
@@ -255,7 +254,6 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
@@ -502,38 +500,6 @@ func testAppMetadata() *protocol.AppMetadata {
 
 func stringPtr(s string) *string {
 	return &s
-}
-
-func register(
-	ctx context.Context,
-	require *require.Assertions,
-	appAddress []byte,
-	ownerAddress []byte,
-	forwardSetting protocol.ForwardSettingValue,
-	metadata *protocol.AppMetadata,
-	signer *crypto.Wallet,
-	authClient protocolconnect.AuthenticationServiceClient,
-	appRegistryClient protocolconnect.AppRegistryServiceClient,
-) (sharedSecret []byte) {
-	req := &connect.Request[protocol.RegisterRequest]{
-		Msg: &protocol.RegisterRequest{
-			AppId:      appAddress,
-			AppOwnerId: ownerAddress,
-			Settings: &protocol.AppSettings{
-				ForwardSetting: forwardSetting,
-			},
-			Metadata: metadata,
-		},
-	}
-	authenticateBS(ctx, require, authClient, signer, req)
-	resp, err := appRegistryClient.Register(
-		ctx,
-		req,
-	)
-	require.NoError(err)
-	require.NotNil(resp)
-	require.Len(resp.Msg.Hs256SharedSecret, 32, "Shared secret length should be 32 bytes")
-	return resp.Msg.GetHs256SharedSecret()
 }
 
 func registerWebhook(

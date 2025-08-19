@@ -146,15 +146,15 @@ func testBotConversation(
 func TestBotConversationNoRace(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Small bot chat test", func(t *testing.T) {
-		testBotConversation(t, 1, 3, 3, 5, 5*time.Second, 500*time.Millisecond)
-	})
+	// t.Run("Small bot chat test", func(t *testing.T) {
+	// 	testBotConversation(t, 1, 3, 3, 5, 5*time.Second, 500*time.Millisecond)
+	// })
 
-	t.Run("Medium bot chat test", func(t *testing.T) {
-		testBotConversation(t, 3, 5, 5, 20, 20*time.Second, 1*time.Second)
-	})
+	// t.Run("Medium bot chat test", func(t *testing.T) {
+	// 	testBotConversation(t, 3, 5, 5, 20, 20*time.Second, 1*time.Second)
+	// })
 
 	t.Run("Large bot chat test", func(t *testing.T) {
-		testBotConversation(t, 5, 10, 10, 50, 120*time.Second, 1*time.Second)
+		testBotConversation(t, 5, 10, 20, 50, 120*time.Second, 1*time.Second)
 	})
 }

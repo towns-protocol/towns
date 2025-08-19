@@ -329,7 +329,7 @@ func (s *PostgresAppRegistryStore) lockApp(
 	if write {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT 1 FROM app_registry WHERE app_id = $1 FOR UPDATE",
+			"SELECT 1 FROM app_registry WHERE app_id = $1 FOR KEY SHARE",
 			PGAddress(appId),
 		).Scan(&dummy)
 	} else {
@@ -374,7 +374,7 @@ func (s *PostgresAppRegistryStore) lockApps(
 
 	lockMode := "FOR SHARE"
 	if write {
-		lockMode = "FOR UPDATE"
+		lockMode = "FOR KEY SHARE"
 	}
 
 	// Lock rows in sorted order to prevent deadlocks and return which apps exist
@@ -429,11 +429,10 @@ func (s *PostgresAppRegistryStore) lockDevice(
 ) error {
 	lockMode := "FOR SHARE"
 	if write {
-		lockMode = "FOR UPDATE"
+		lockMode = "FOR KEY SHARE"
 	}
 
 	var dummy int
-	// Lock rows in sorted order to prevent deadlocks and return which apps exist
 	err := tx.QueryRow(
 		ctx,
 		fmt.Sprintf(`
@@ -625,7 +624,7 @@ func (s *PostgresAppRegistryStore) RegisterWebhook(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.registerWebhook(ctx, app, webhook, deviceKey, fallbackKey, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"webhook", webhook,
 		"deviceKey", deviceKey,

@@ -141,9 +141,9 @@ func (s *PostgresEventStore) txRunner(
 				}
 				log.Warnw("pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
-				level := zapcore.WarnLevel
+				level := zapcore.DebugLevel
 				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
-					// Count "not found" as succeess if error is potentially expected
+					// Count "not found" as success if error is potentially expected
 					pass = true
 					level = zapcore.DebugLevel
 				}
