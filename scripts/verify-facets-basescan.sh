@@ -8,7 +8,7 @@ fi
 
 SOURCE_DIFF_YAML=$1
 BASESCAN_SEPOLIA_URL=${BASESCAN_SEPOLIA_URL:-'https://api-sepolia.basescan.org/api'}
-BASESCAN_SEPOLIA_API_KEY=${BASESCAN_SEPOLIA_API_KEY:-'your_api_key_here'}
+ETHERSCAN_API_KEY=${ETHERSCAN_API_KEY:-'your_api_key_here'}
 echo "Source diff yaml: ${SOURCE_DIFF_YAML}"
 
 # Read the updated facets from the YAML file and verify each one
@@ -21,7 +21,7 @@ yq e '.updated[].facets[]' "${SOURCE_DIFF_YAML}" | while read -r facet; do
     make explicit-verify-any \
         rpc=base-sepolia \
         verifier="${BASESCAN_SEPOLIA_URL}" \
-        etherscan="${BASESCAN_SEPOLIA_API_KEY}" \
+        etherscan="${ETHERSCAN_API_KEY}" \
         address="${DEPLOYED_ADDRESS}" \
         contract="${FACET_NAME}"
 done 
