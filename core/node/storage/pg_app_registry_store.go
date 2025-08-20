@@ -732,7 +732,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&appInfo.EncryptionDevice.FallbackKey,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app in registry")
@@ -812,7 +812,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 			return nil, WrapRiverError(
 				protocol.Err_NOT_FOUND,
 				err,
-			).Message("app with device key is not registered")
+			).Message("device is not registered")
 		} else {
 			return nil, WrapRiverError(
 				protocol.Err_DB_OPERATION_FAILURE,
@@ -1349,7 +1349,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		PGAddress(app),
 	).Scan(&metadataJSON, &username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app metadata in registry")
