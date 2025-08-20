@@ -26,21 +26,7 @@ find $ABI_DIR -type f \( -name "*.bin" -o -name "*.json" ! -name "*.abi.json" \)
 
 # Generate contract hash for this artifact build
 echo "Generating contract hash..."
-CONTRACTS_HASH=""
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  # Try git tree hash first (most efficient)
-  CONTRACTS_HASH=$(git rev-parse HEAD:packages/contracts/src 2>/dev/null || echo "")
-fi
-
-if [ -z "$CONTRACTS_HASH" ]; then
-  # Fallback to content-based hash if not in git repo or git command failed
-  if [ -d "packages/contracts/src" ]; then
-    CONTRACTS_HASH=$(find "packages/contracts/src" -name "*.sol" -type f -print0 | xargs -0 cat | shasum -a 256 | cut -d' ' -f1)
-  else
-    echo "Warning: Could not generate contract hash - no contracts source found"
-    CONTRACTS_HASH="unknown-$(date +%s)"
-  fi
-fi
+CONTRACTS_HASH=$(git rev-parse HEAD:packages/contracts/src)
 
 if [ -n "$CONTRACTS_HASH" ]; then
   echo "$CONTRACTS_HASH" > "packages/generated/dev/.contracts-hash"

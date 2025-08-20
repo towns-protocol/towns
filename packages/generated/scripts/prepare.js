@@ -112,8 +112,48 @@ async function downloadArtifactsFromNpm() {
   }
 }
 
+// Check if Foundry is installed
+function isFoundryInstalled() {
+  try {
+    execSync('forge --version', { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Install Foundry if not present
+function installFoundry() {
+  console.log('Installing Foundry...');
+  try {
+    // Install foundryup
+    execSync('curl -L https://foundry.paradigm.xyz | bash', { stdio: 'inherit' });
+
+    // foundryup modifies shell PATH, but we need to update Node.js process PATH
+    // so subsequent execSync calls can find forge
+    const foundryPath = `${process.env.HOME}/.foundry/bin`;
+    process.env.PATH = `${foundryPath}:${process.env.PATH}`;
+
+    // Install latest foundry
+    execSync('foundryup', { stdio: 'inherit' });
+
+    console.log('Foundry installation completed');
+    return true;
+  } catch (error) {
+    console.log('Foundry installation failed:', error.message);
+    return false;
+  }
+}
+
 // Generate contract artifacts
 function generateArtifacts() {
+  if (!isFoundryInstalled()) {
+    console.log('Foundry not found, attempting installation...');
+    if (!installFoundry()) {
+      throw new Error('Failed to install Foundry - cannot generate contract artifacts');
+    }
+  }
+  
   execSync(`bash ${repoRoot}/scripts/build-contract-types.sh`, {
     cwd: repoRoot,
     stdio: 'inherit'
