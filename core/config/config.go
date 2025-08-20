@@ -1,4 +1,4 @@
- package config
+package config
 
 import (
 	"context"
@@ -594,19 +594,19 @@ type RiverRegistryConfig struct {
 type StreamSyncMonitorConfig struct {
 	// MonitoredNodeAddresses is the list of node addresses to monitor for stream sync lag
 	MonitoredNodeAddresses []common.Address
-	
+
 	// LagThreshold is the number of miniblocks a stream can be behind before triggering a stack trace
 	LagThreshold uint64
-	
+
 	// StackTraceOutputDir is the directory where stack traces will be saved
 	StackTraceOutputDir string
-	
+
 	// StreamTracking configuration is embedded for sync session settings
 	StreamTracking StreamTrackingConfig
-	
+
 	// DebugPort is the port to serve debug endpoints on (0 to disable)
 	DebugPort int
-	
+
 	// EnablePProf enables pprof debug endpoints
 	EnablePProf bool
 }

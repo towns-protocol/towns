@@ -51,7 +51,6 @@ type StreamSyncMonitor struct {
 	metricsFactory infra.MetricsFactory
 	onChainConfig  crypto.OnChainConfiguration
 	riverRegistry  *registries.RiverRegistryContract
-	mu             sync.RWMutex
 }
 
 // StreamPlacementInfo contains information about where and when a stream was last placed

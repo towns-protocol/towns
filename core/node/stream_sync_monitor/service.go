@@ -164,4 +164,3 @@ func (s *Service) startDebugServer(ctx context.Context) error {
 
 	return nil
 }
-

@@ -375,6 +375,53 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 				summaryData[labelKey] = sumData
 			}
 			metrics[metricName] = summaryData
+
+		case dto.MetricType_GAUGE_HISTOGRAM:
+			gaugeHistogramData := make(map[string]interface{})
+			for _, m := range mf.Metric {
+				labelKey := buildLabelKey(m.Label)
+				if labelKey == "" {
+					labelKey = "default"
+				}
+
+				// GaugeHistogram uses the same Histogram field as regular histograms
+				hist := m.Histogram
+				ghData := map[string]interface{}{
+					"count": float64(hist.GetSampleCount()),
+					"sum":   hist.GetSampleSum(),
+				}
+
+				// Add average if count > 0
+				if hist.GetSampleCount() > 0 {
+					ghData["avg"] = hist.GetSampleSum() / float64(hist.GetSampleCount())
+				}
+
+				// Add bucket summary
+				if len(hist.Bucket) > 0 {
+					buckets := make(map[string]float64)
+					for _, b := range hist.Bucket {
+						buckets[fmt.Sprintf("le_%.0f", b.GetUpperBound())] = float64(b.GetCumulativeCount())
+					}
+					ghData["buckets"] = buckets
+				}
+
+				gaugeHistogramData[labelKey] = ghData
+			}
+			metrics[metricName] = gaugeHistogramData
+
+		case dto.MetricType_UNTYPED:
+			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
+				// Simple untyped metric without labels
+				metrics[metricName] = mf.Metric[0].Untyped.GetValue()
+			} else {
+				// Untyped metric with labels
+				labeledValues := make(map[string]float64)
+				for _, m := range mf.Metric {
+					labelKey := buildLabelKey(m.Label)
+					labeledValues[labelKey] = m.Untyped.GetValue()
+				}
+				metrics[metricName] = labeledValues
+			}
 		}
 	}
 

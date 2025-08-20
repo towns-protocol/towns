@@ -11,7 +11,7 @@ import (
 
 type MonitorTrackedStreamView struct {
 	events.TrackedStreamViewImpl
-	
+
 	monitored *MonitoredStream
 	monitor   *StreamSyncMonitor
 }
@@ -26,7 +26,7 @@ func NewMonitorTrackedStreamView(
 		monitored: monitored,
 		monitor:   monitor,
 	}
-	
+
 	// Initialize the embedded TrackedStreamViewImpl
 	_, err := view.TrackedStreamViewImpl.Init(
 		ctx,
@@ -38,12 +38,16 @@ func NewMonitorTrackedStreamView(
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return view, nil
 }
 
 // onNewEvent is called when a new event is processed
-func (v *MonitorTrackedStreamView) onNewEvent(ctx context.Context, streamView *events.StreamView, event *events.ParsedEvent) error {
+func (v *MonitorTrackedStreamView) onNewEvent(
+	ctx context.Context,
+	streamView *events.StreamView,
+	event *events.ParsedEvent,
+) error {
 	// We don't need to process individual events for lag monitoring
 	return nil
 }
@@ -55,7 +59,7 @@ func (v *MonitorTrackedStreamView) ApplyBlock(miniblock *protocol.Miniblock, sna
 	if err != nil {
 		return err
 	}
-	
+
 	// Parse the miniblock header to get the number
 	if miniblock.Header != nil {
 		parsedHeader, err := events.ParseEvent(miniblock.Header)
@@ -65,14 +69,14 @@ func (v *MonitorTrackedStreamView) ApplyBlock(miniblock *protocol.Miniblock, sna
 			v.monitored.mu.Lock()
 			v.monitored.syncMiniblockNum = uint64(miniblockHeader.MiniblockNum)
 			v.monitored.lastLagCheck = time.Now()
-			
+
 			// Check lag while we have the lock
 			lag := int64(v.monitored.onChainMiniblockNum) - int64(v.monitored.syncMiniblockNum)
 			v.monitored.mu.Unlock()
-			
+
 			// Log sync progress periodically
 			if miniblockHeader.MiniblockNum%100 == 0 {
-				logging.FromCtx(context.Background()).Debugw("Stream sync progress",
+				logging.FromCtx(v.monitor.ctx).Debugw("Stream sync progress",
 					"streamId", v.monitored.streamID,
 					"nodeAddresses", v.monitored.nodeAddresses,
 					"syncMiniblockNum", miniblockHeader.MiniblockNum,
@@ -80,12 +84,12 @@ func (v *MonitorTrackedStreamView) ApplyBlock(miniblock *protocol.Miniblock, sna
 					"lag", lag,
 				)
 			}
-			
+
 			// Check if we're lagging (only if we have placement info and grace period has passed)
 			if v.monitored.lastPlacement != nil && lag > int64(v.monitor.config.LagThreshold) {
 				timeSincePlacement := time.Since(v.monitored.lastPlacement.PlacedAt)
 				if timeSincePlacement >= LagDetectionGracePeriod {
-					logging.FromCtx(context.Background()).Warnw("Stream sync lag detected during sync",
+					logging.FromCtx(v.monitor.ctx).Warnw("Stream sync lag detected during sync",
 						"streamId", v.monitored.streamID,
 						"nodeAddress", v.monitored.lastPlacement.NodeAddress,
 						"syncId", v.monitored.lastPlacement.SyncId,
@@ -95,13 +99,13 @@ func (v *MonitorTrackedStreamView) ApplyBlock(miniblock *protocol.Miniblock, sna
 						"threshold", v.monitor.config.LagThreshold,
 						"timeSincePlacement", timeSincePlacement,
 					)
-					
+
 					// Capture stack trace
 					v.monitor.captureStackTrace(v.monitored, lag)
 				}
 			}
 		}
 	}
-	
+
 	return nil
 }
