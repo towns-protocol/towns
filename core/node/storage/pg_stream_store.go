@@ -1752,47 +1752,52 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		return err
 	}
 	if len(mpRows) == 0 {
-		return RiverError(
-			Err_INTERNAL,
-			"DB data consistency check failed: No minipool found (should contain -1 marker)",
-		)
-	}
-	slices.SortFunc(mpRows, func(a, b mpRow) int {
-		if a.generation != b.generation {
-			return int(a.generation - b.generation)
-		} else {
-			return int(a.slot - b.slot)
-		}
-	})
-	expectedSlot := int64(-1)
-	for _, mp := range mpRows {
-		if mp.generation != prevMinipoolGeneration {
+		if prevMinipoolSize != 0 {
 			return RiverError(
 				Err_INTERNAL,
-				"DB data consistency check failed: Minipool contains unexpected generation",
-				"generation",
-				mp.generation,
+				"DB data consistency check failed: no minipool found in db, but prev minipool size is not 0",
+				"prevMinipoolSize", prevMinipoolSize,
 			)
 		}
-		if mp.slot != expectedSlot {
+		logging.FromCtx(ctx).Warnw("No minipool found in db for stream, resetting", "streamId", streamId)
+	} else {
+		slices.SortFunc(mpRows, func(a, b mpRow) int {
+			if a.generation != b.generation {
+				return int(a.generation - b.generation)
+			} else {
+				return int(a.slot - b.slot)
+			}
+		})
+		expectedSlot := int64(-1)
+		for _, mp := range mpRows {
+			if mp.generation != prevMinipoolGeneration {
+				return RiverError(
+					Err_INTERNAL,
+					"DB data consistency check failed: Minipool contains unexpected generation",
+					"generation",
+					mp.generation,
+				)
+			}
+			if mp.slot != expectedSlot {
+				return RiverError(
+					Err_INTERNAL,
+					"DB data consistency check failed: Minipool contains unexpected slot number",
+					"slot_num",
+					mp.slot,
+					"expected_slot_num",
+					expectedSlot,
+				)
+			}
+			expectedSlot++
+		}
+		if expectedSlot != int64(prevMinipoolSize) {
 			return RiverError(
 				Err_INTERNAL,
-				"DB data consistency check failed: Minipool contains unexpected slot number",
-				"slot_num",
-				mp.slot,
-				"expected_slot_num",
+				"DB data consistency check failed: Previous minipool size mismatch",
+				"actual_size",
 				expectedSlot,
 			)
 		}
-		expectedSlot++
-	}
-	if prevMinipoolSize != -1 && expectedSlot != int64(prevMinipoolSize) {
-		return RiverError(
-			Err_INTERNAL,
-			"DB data consistency check failed: Previous minipool size mismatch",
-			"actual_size",
-			expectedSlot,
-		)
 	}
 
 	// Insert -1 marker and all new minipool events into minipool.
