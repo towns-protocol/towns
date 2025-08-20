@@ -751,7 +751,7 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run go tests with race detection exluding large tests
+            - name: Run go tests with race detection excluding large tests
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 

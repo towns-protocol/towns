@@ -65,12 +65,17 @@ func TestTlsConfig_KeyDoesNotLog(t *testing.T) {
 
 func TestNotificationsConfig_SensitiveKeysDontLog(t *testing.T) {
 	cfg := config.NotificationsConfig{
-		APN: config.APNPushNotificationsConfig{
-			AuthKey: "APN_AUTH_KEY",
-		},
-		Web: config.WebPushNotificationConfig{
-			Vapid: config.WebPushVapidNotificationConfig{
-				PrivateKey: "WEB_VAPID_PRIVATE_KEY",
+		Apps: []config.AppNotificationConfig{
+			{
+				App: "towns",
+				APN: config.APNPushNotificationsConfig{
+					AuthKey: "APN_AUTH_KEY",
+				},
+				Web: config.WebPushNotificationConfig{
+					Vapid: config.WebPushVapidNotificationConfig{
+						PrivateKey: "WEB_VAPID_PRIVATE_KEY",
+					},
+				},
 			},
 		},
 		Authentication: config.AuthenticationConfig{

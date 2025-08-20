@@ -23,7 +23,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
-	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -134,16 +133,6 @@ func NewMessageNotifier(
 	cfg *config.NotificationsConfig,
 	metricsFactory infra.MetricsFactory,
 ) (*MessageNotifications, error) {
-	// Handle legacy configuration (single app)
-	if len(cfg.Apps) == 0 && (cfg.APN.AppBundleID != "" || cfg.Web.Vapid.PrivateKey != "") {
-		// Convert legacy config to Apps format
-		cfg.Apps = []config.AppNotificationConfig{{
-			App: apps.Default,
-			APN: cfg.APN,
-			Web: cfg.Web,
-		}}
-	}
-
 	appConfigs := make(map[string]*AppNotificationConfig)
 	apnsClients := make(map[string]struct {
 		production  *apns2.Client

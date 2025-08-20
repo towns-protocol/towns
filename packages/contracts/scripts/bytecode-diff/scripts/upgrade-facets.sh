@@ -58,7 +58,7 @@ process_file() {
         chain_id=8453
         context="omega"
         make_command="make deploy-any rpc=base private_key=${OMEGA_PRIVATE_KEY}"
-        resume_any="make resume-any rpc=base private_key=${OMEGA_PRIVATE_KEY} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}"
+        resume_any="make resume-any rpc=base private_key=${OMEGA_PRIVATE_KEY} verifier=etherscan verifier-url=${BASESCAN_URL} etherscan=${ETHERSCAN_API_KEY}"
     elif [[ "$network" == "gamma" ]]; then
         chain_id=84532
         context="gamma"
