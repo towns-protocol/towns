@@ -159,9 +159,6 @@ func (ssr *syncSessionRunner) AddStream(
 		ssr.streamRecords.Delete(record.streamId)
 
 		if err != nil {
-			if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
-				ssr.Close(err)
-			}
 			return err
 		} else {
 			return base.AsRiverError(fmt.Errorf("failed to add stream to existing sync")).
@@ -750,21 +747,9 @@ func (msr *MultiSyncRunner) addToSync(
 	rootCtx context.Context,
 	record *streamSyncInitRecord,
 ) {
-	startTime := time.Now()
 	targetNode := record.remotes.GetStickyPeer()
 	pool := msr.getNodeRequestPool(targetNode)
 	log := logging.FromCtx(rootCtx)
-	nodeHex := targetNode.Hex()
-
-	// Track total placement duration when function exits (only for failures)
-	success := false
-	defer func() {
-		if !success {
-			duration := time.Since(startTime).Seconds()
-			msr.metrics.StreamPlacementTotalDuration.With(prometheus.Labels{"node": nodeHex, "success": "false"}).
-				Observe(duration)
-		}
-	}()
 
 	runner, ok := msr.unfilledSyncs.Load(targetNode)
 	if !ok {
@@ -789,8 +774,7 @@ func (msr *MultiSyncRunner) addToSync(
 		// Pre-emptively acquire a connection for the newly created runner above so that if the
 		// store is successful, we are guaranteed to call it's 'Run' method. This will keep
 		// other workers from becoming indefinitely blocked on stream insertion to this runner.
-		err := pool.Acquire(rootCtx, 1)
-		if err != nil {
+		if err := pool.Acquire(rootCtx, 1); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Errorw(
 					"unable to acquire worker pool task for node; closing runner and re-assigning stream",
@@ -813,11 +797,8 @@ func (msr *MultiSyncRunner) addToSync(
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
 
 			// Track sync runner creation time
-			creationStart := time.Now()
 			go runner.Run()
 			runner.WaitUntilStarted()
-			creationDuration := time.Since(creationStart).Seconds()
-			msr.metrics.SyncRunnerCreationDuration.With(prometheus.Labels{"node": nodeHex}).Observe(creationDuration)
 
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
@@ -825,8 +806,7 @@ func (msr *MultiSyncRunner) addToSync(
 	}
 
 	// Prepare for another rpc call by acquiring another connection from the pool.
-	err := pool.Acquire(rootCtx, 1)
-	if err != nil {
+	if err := pool.Acquire(rootCtx, 1); err != nil {
 		if errors.Is(err, context.Canceled) {
 			return
 		}
@@ -850,13 +830,7 @@ func (msr *MultiSyncRunner) addToSync(
 	// The runner will continue to stay in memory until its go routine stops running, which will occur
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
-	addStreamStart := time.Now()
-	err = runner.AddStream(rootCtx, *record)
-	addStreamDuration := time.Since(addStreamStart).Seconds()
-	msr.metrics.AddStreamDuration.With(prometheus.Labels{"node": nodeHex, "success": fmt.Sprintf("%t", err == nil)}).
-		Observe(addStreamDuration)
-
-	if err != nil {
+	if err := runner.AddStream(rootCtx, *record); err != nil {
 		pool.Release(1)
 
 		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) ||
@@ -936,10 +910,6 @@ func (msr *MultiSyncRunner) addToSync(
 				record.prevMiniblockHash,
 			)
 		}
-		// Mark success and update metric for total placement duration
-		success = true
-		duration := time.Since(startTime).Seconds()
-		msr.metrics.StreamPlacementTotalDuration.With(prometheus.Labels{"node": nodeHex, "success": "true"}).Observe(duration)
 	}
 }
 
