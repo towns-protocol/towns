@@ -796,7 +796,6 @@ func (msr *MultiSyncRunner) addToSync(
 			// are not assignable until the sync session starts.
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
 
-			// Track sync runner creation time
 			go runner.Run()
 			runner.WaitUntilStarted()
 
@@ -881,6 +880,19 @@ func (msr *MultiSyncRunner) addToSync(
 				},
 			)
 			pool.Release(1)
+
+			log := logging.FromCtx(rootCtx)
+
+			// Relocate this stream's target node and re-insert into the pool of unassigned streams
+			newRemote := record.remotes.AdvanceStickyPeer(targetNode)
+
+			log.Debugw(
+				"Could not assign stream to existing session, cycling to new session",
+				"streamId", record.streamId,
+				"syncId", runner.GetSyncId(),
+				"failedRemote", targetNode,
+				"newRemote", newRemote,
+			)
 		} else if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
 			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
 			runner.Close(err)
