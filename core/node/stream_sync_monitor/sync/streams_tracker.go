@@ -48,7 +48,7 @@ type StreamSyncMonitor struct {
 	trackedStreams *xsync.Map[shared.StreamId, *MonitoredStream]
 	httpClient     *http.Client
 	nodeUrls       map[common.Address]string // node address -> URL mapping
-	metricsFactory infra.MetricsFactory
+	metricsFactory infra.DebugMetricsFactory
 	onChainConfig  crypto.OnChainConfiguration
 	riverRegistry  *registries.RiverRegistryContract
 }
@@ -78,7 +78,7 @@ func NewStreamSyncMonitor(
 	riverRegistry *registries.RiverRegistryContract,
 	onChainConfig crypto.OnChainConfiguration,
 	nodeRegistries []nodes.NodeRegistry,
-	metricsFactory infra.MetricsFactory,
+	metricsFactory infra.DebugMetricsFactory,
 	otelTracer trace.Tracer,
 ) (*StreamSyncMonitor, error) {
 	httpClient, err := http_client.GetHttpClient(ctx, cfg)

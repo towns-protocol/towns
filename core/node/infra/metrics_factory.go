@@ -41,6 +41,10 @@ type MetricsFactory interface {
 	NewStatusCounterVecEx(name string, help string, labels ...string) *StatusCounterVec
 
 	Registry() *prometheus.Registry
+}
+
+type DebugMetricsFactory interface {
+	MetricsFactory
 
 	// GetMetricsAsMap returns all metrics as a structured map suitable for JSON logging.
 	// This is intended for debugging purposes only.

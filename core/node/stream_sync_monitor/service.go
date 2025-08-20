@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
-	"runtime"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -33,7 +32,7 @@ func NewService(
 	onChainConfig crypto.OnChainConfiguration,
 	riverRegistry *registries.RiverRegistryContract,
 	nodeRegistries []nodes.NodeRegistry,
-	metricsFactory infra.MetricsFactory,
+	metricsFactory infra.DebugMetricsFactory,
 ) (*Service, error) {
 	monitor, err := sync.NewStreamSyncMonitor(
 		ctx,
@@ -47,8 +46,6 @@ func NewService(
 	if err != nil {
 		return nil, err
 	}
-
-	runtime.SetBlockProfileRate(1)
 
 	// Extract the prometheus registry from the metrics factory
 	var metricsRegistry *prometheus.Registry
@@ -86,7 +83,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	// Shutdown debug server if it was started
 	if s.debugServer != nil {
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		if shutdownErr := s.debugServer.Shutdown(shutdownCtx); shutdownErr != nil {
 			log.Errorw("Failed to shutdown debug server", "error", shutdownErr)

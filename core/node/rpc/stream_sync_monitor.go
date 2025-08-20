@@ -83,7 +83,7 @@ func RunStreamSyncMonitor(ctx context.Context, cfg *config.Config) error {
 		onChainConfig,
 		riverRegistry,
 		nodeRegistries,
-		metricsFactory,
+		metricsFactory.(infra.DebugMetricsFactory),
 	)
 	if err != nil {
 		return err
