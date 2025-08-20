@@ -156,7 +156,7 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
             .update(schema.swapFee)
             .set({
                 posterFeeBps: event.args.posterFeeBps,
-                collectPosterFeeToSpace: event.args.collectPosterFeeToSpace,
+                collectPosterFeeToSpace: event.args.forwardPosterFee,
                 createdAt: blockNumber,
             })
             .where(eq(schema.swapFee.spaceId, spaceId))
@@ -166,7 +166,7 @@ ponder.on('Space:SwapFeeConfigUpdated', async ({ event, context }) => {
             await context.db.insert(schema.swapFee).values({
                 spaceId: spaceId,
                 posterFeeBps: event.args.posterFeeBps,
-                collectPosterFeeToSpace: event.args.collectPosterFeeToSpace,
+                collectPosterFeeToSpace: event.args.forwardPosterFee,
                 createdAt: blockNumber,
             })
         }
@@ -259,9 +259,9 @@ ponder.on('SwapRouter:FeeDistribution', async ({ event, context }) => {
             await context.db.insert(schema.feeDistribution).values({
                 txHash: transactionHash,
                 token: event.args.token,
-                treasury: event.args.treasury,
+                treasury: event.args.protocol,
                 poster: event.args.poster,
-                treasuryAmount: event.args.treasuryAmount,
+                treasuryAmount: event.args.protocolAmount,
                 posterAmount: event.args.posterAmount,
                 createdAt: blockNumber,
             })

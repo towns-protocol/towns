@@ -46,12 +46,17 @@
             "cache": false,
             "outputs": []
         },
+        "typings": {
+            "dependsOn": ["build"],
+            "cache": true,
+            "outputs": ["generated/**", "src/generated/**"]
+        },
         "build": {
             // note: output globs are relative to each package's `package.json`
             // (and not the monorepo root
             "outputs": ["dist/**", "build/**", "out/**", "cache/**"],
             "cache": true,
-            "dependsOn": ["^build"]
+            "dependsOn": ["^build", "^typings"]
         },
         "lint": {
             "cache": true

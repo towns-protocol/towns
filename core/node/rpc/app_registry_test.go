@@ -114,17 +114,25 @@ func (ar *appRegistryServiceTester) RegisterApp(
 	ownerWallet *crypto.Wallet,
 	forwardSetting protocol.ForwardSettingValue,
 ) (sharedSecret []byte) {
-	return register(
+	req := &connect.Request[protocol.RegisterRequest]{
+		Msg: &protocol.RegisterRequest{
+			AppId:      appWallet.Address[:],
+			AppOwnerId: ownerWallet.Address[:],
+			Settings: &protocol.AppSettings{
+				ForwardSetting: forwardSetting,
+			},
+			Metadata: appMetadataForBot(appWallet.Address[:]),
+		},
+	}
+	authenticateBS(ar.ctx, ar.require, ar.authClient, ownerWallet, req)
+	resp, err := ar.appRegistryClient.Register(
 		ar.ctx,
-		ar.require,
-		appWallet.Address[:],
-		ownerWallet.Address[:],
-		forwardSetting,
-		appMetadataForBot(appWallet.Address[:]),
-		ownerWallet,
-		ar.authClient,
-		ar.appRegistryClient,
+		req,
 	)
+	ar.require.NoError(err)
+	ar.require.NotNil(resp)
+	ar.require.Len(resp.Msg.Hs256SharedSecret, 32, "Shared secret length should be 32 bytes")
+	return resp.Msg.GetHs256SharedSecret()
 }
 
 func (ar *appRegistryServiceTester) RegisterBotServices(
@@ -148,8 +156,9 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	ar.botIndexCheck(botIndex)
 	botClient := ar.BotNodeClient(botIndex, testClientOpts{})
 	mbRef = botClient.createUserStreamsWithEncryptionDevice()
+	appWallet := ar.botCredentials[botIndex].botWallet
 	sharedSecret = ar.RegisterApp(
-		ar.botCredentials[botIndex].botWallet,
+		appWallet,
 		ar.botCredentials[botIndex].ownerWallet,
 		forwardSetting,
 	)
@@ -157,14 +166,23 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	ar.appServer.SetHS256SecretKey(botIndex, sharedSecret)
 	ar.appServer.SetEncryptionDevice(botIndex, botClient.DefaultEncryptionDevice())
 
-	registerWebhook(
+	req := &connect.Request[protocol.RegisterWebhookRequest]{
+		Msg: &protocol.RegisterWebhookRequest{
+			AppId:      appWallet.Address[:],
+			WebhookUrl: ar.appServer.Url(botIndex),
+		},
+	}
+
+	// Unauthenticated requests should fail
+	authenticateBS(ar.ctx, ar.require, ar.authClient, appWallet, req)
+
+	resp, err := ar.appRegistryClient.RegisterWebhook(
 		ar.ctx,
-		ar.require,
-		ar.botCredentials[botIndex].botWallet,
-		ar.authClient,
-		ar.appRegistryClient,
-		ar.appServer.Url(botIndex),
+		req,
 	)
+	ar.require.NoError(err)
+	ar.require.NotNil(resp)
+
 	return sharedSecret, mbRef
 }
 
@@ -172,17 +190,6 @@ func (ar *appRegistryServiceTester) StartBotServices() {
 	go func() {
 		if err := ar.appServer.Serve(ar.ctx); err != nil {
 			ar.serviceTester.t.Errorf("Error starting bot service: %v", err)
-		}
-	}()
-
-	go func() {
-		for {
-			select {
-			case <-ar.ctx.Done():
-				return
-			case err := <-ar.appServer.ExitSignal():
-				ar.require.NoError(err, "TestAppServer encountered a fatal error")
-			}
 		}
 	}()
 
@@ -255,7 +262,6 @@ func NewAppRegistryServiceTester(t *testing.T, opts *appRegistryTesterOpts) *app
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: numNodes, start: true})
 	ctx := tester.ctx
 	// Uncomment to force logging only for the app registry service
-	// ctx = logging.CtxWithLog(ctx, logging.DefaultLogger(zapcore.DebugLevel))
 	service := initAppRegistryService(ctx, tester)
 
 	require := tester.require
@@ -407,9 +413,6 @@ func generateSessionKeys(deviceKey string, sessionIds []string) string {
 }
 
 func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 
 	tester.StartBotServices()
@@ -507,67 +510,7 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func register(
-	ctx context.Context,
-	require *require.Assertions,
-	appAddress []byte,
-	ownerAddress []byte,
-	forwardSetting protocol.ForwardSettingValue,
-	metadata *protocol.AppMetadata,
-	signer *crypto.Wallet,
-	authClient protocolconnect.AuthenticationServiceClient,
-	appRegistryClient protocolconnect.AppRegistryServiceClient,
-) (sharedSecret []byte) {
-	req := &connect.Request[protocol.RegisterRequest]{
-		Msg: &protocol.RegisterRequest{
-			AppId:      appAddress,
-			AppOwnerId: ownerAddress,
-			Settings: &protocol.AppSettings{
-				ForwardSetting: forwardSetting,
-			},
-			Metadata: metadata,
-		},
-	}
-	authenticateBS(ctx, require, authClient, signer, req)
-	resp, err := appRegistryClient.Register(
-		ctx,
-		req,
-	)
-	require.NoError(err)
-	require.NotNil(resp)
-	require.Len(resp.Msg.Hs256SharedSecret, 32, "Shared secret length should be 32 bytes")
-	return resp.Msg.GetHs256SharedSecret()
-}
-
-func registerWebhook(
-	ctx context.Context,
-	require *require.Assertions,
-	appWallet *crypto.Wallet,
-	authClient protocolconnect.AuthenticationServiceClient,
-	appRegistryClient protocolconnect.AppRegistryServiceClient,
-	url string,
-) {
-	req := &connect.Request[protocol.RegisterWebhookRequest]{
-		Msg: &protocol.RegisterWebhookRequest{
-			AppId:      appWallet.Address[:],
-			WebhookUrl: url,
-		},
-	}
-
-	// Unauthenticated requests should fail
-	authenticateBS(ctx, require, authClient, appWallet, req)
-
-	resp, err := appRegistryClient.RegisterWebhook(
-		ctx,
-		req,
-	)
-	require.NoError(err)
-	require.NotNil(resp)
-}
-
 func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
 	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3})
 	tester.StartBotServices()
 	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
@@ -877,7 +820,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			metadata:             validMetadata,
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
@@ -1171,7 +1114,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		}
 		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 		tester.require.Nil(getResp)
-		tester.require.ErrorContains(err, "app is not registered")
+		tester.require.ErrorContains(err, "app was not found in registry")
 	})
 
 	// Test duplicate username (not display name)
@@ -1203,9 +1146,6 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 }
 
 func TestAppRegistry_SetGetSettings(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 	tester.StartBotServices()
 	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
@@ -1232,7 +1172,7 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 		"Failure: unregistered app": {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
@@ -1296,9 +1236,6 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 }
 
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	ctx := test.NewTestContext(t)
 	require := require.New(t)
 	botWallet := safeNewWallet(ctx, require)
@@ -1533,9 +1470,6 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 }
 
 func TestAppRegistry_GetSession(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 	require := tester.require
 
@@ -1688,9 +1622,6 @@ func TestAppRegistry_GetSession(t *testing.T) {
 }
 
 func TestAppRegistry_RegisterWebhook(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 	require := tester.require
 
@@ -1740,7 +1671,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 			appId:                unregisteredAppWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			webhookUrl:           "http://www.test.com/callme",
-			expectedErr:          "app is not registered",
+			expectedErr:          "app was not found in registry",
 		},
 		"Failure: missing authentication": {
 			appId:       appWallet.Address[:],
@@ -1823,9 +1754,6 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 }
 
 func TestAppRegistry_Status(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 
 	tester.StartBotServices()
@@ -1932,9 +1860,6 @@ func TestAppRegistry_Status(t *testing.T) {
 }
 
 func TestAppRegistry_RotateSecret(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 	appWallet, ownerWallet := tester.BotWallets(0)
 	tester.BotNodeClient(0, testClientOpts{}).createUserStreamsWithEncryptionDevice()
@@ -2006,9 +1931,6 @@ func TestAppRegistry_RotateSecret(t *testing.T) {
 }
 
 func TestAppRegistry_ValidateBotName(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 2})
 	tester.StartBotServices()
 
@@ -2089,9 +2011,6 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 }
 
 func TestAppRegistry_Register(t *testing.T) {
-	// TODO: refactor app registry sql to use row-locking in order to fix flakes
-	t.Skip("flaky")
-
 	tester := NewAppRegistryServiceTester(t, nil)
 
 	ownerWallet := tester.botCredentials[0].ownerWallet
