@@ -469,10 +469,6 @@ type NotificationsConfig struct {
 	SenditApp AppNotificationConfig
 	// Apps holds the notification configuration for each app
 	Apps []AppNotificationConfig
-	// APN holds the Apple Push Notification settings (deprecated - use Apps instead)
-	APN APNPushNotificationsConfig
-	// Web holds the Web Push notification settings (deprecated - use Apps instead)
-	Web WebPushNotificationConfig `mapstructure:"webpush"`
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig

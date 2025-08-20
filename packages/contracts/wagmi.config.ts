@@ -11,6 +11,8 @@ export default defineConfig({
       include: [
         "**/CreateSpace.sol/*.json",
         "**/SpaceOwner.sol/*.json",
+        "**/GuardianFacet.sol/*.json",
+        "**/PricingModulesFacet.sol/*.json",
         "**/MembershipToken.sol/*.json",
         "**/Banning.sol/*.json",
         "**/MembershipFacet.sol/*.json",
