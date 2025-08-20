@@ -23,6 +23,26 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+// Isolation Level Strategy for AppRegistry Store
+//
+// The AppRegistry maintains a critical invariant: messages exist in enqueued_messages
+// IF AND ONLY IF no decryption key exists in app_session_keys for that (device_key, session_id) pair.
+//
+// Operations are divided into two categories:
+//
+// 1. SERIALIZABLE (default): Required for queue operations
+//    - EnqueueUnsendableMessages: Reads app_session_keys, writes to enqueued_messages
+//    - PublishSessionKeys: Writes to app_session_keys, deletes from enqueued_messages
+//
+// 2. READ COMMITTED: Safe for non-queue operations
+//    - CreateApp, UpdateSettings, RotateSecret, SetAppMetadata: Simple field updates
+//    - RegisterWebhook: Updates device_key (can only succeed if no queue entries exist)
+//    - GetAppInfo, GetAppMetadata, IsUsernameAvailable: Read-only operations
+//
+// All operations use lockApp() to establish consistent lock ordering and prevent deadlocks.
+
+var isoLevelReadCommitted = pgx.ReadCommitted
+
 type (
 	PostgresAppRegistryStore struct {
 		PostgresEventStore
@@ -307,7 +327,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.createApp(ctx, owner, app, settings, metadata, encryptedSharedSecret, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"ownerAddress", owner,
 		"settings", settings,
@@ -371,7 +391,7 @@ func (s *PostgresAppRegistryStore) UpdateSettings(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.updateSettings(ctx, app, settings, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"settings", settings,
 	)
@@ -412,7 +432,7 @@ func (s *PostgresAppRegistryStore) RotateSecret(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.rotateSecret(ctx, app, encryptedSharedSecret, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 	)
 }
@@ -454,7 +474,7 @@ func (s *PostgresAppRegistryStore) RegisterWebhook(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.registerWebhook(ctx, app, webhook, deviceKey, fallbackKey, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"webhook", webhook,
 		"deviceKey", deviceKey,
@@ -502,13 +522,13 @@ func (s *PostgresAppRegistryStore) GetAppInfo(
 	err = s.txRunner(
 		ctx,
 		"GetAppInfo",
-		pgx.ReadOnly,
+		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			appInfo, err = s.getAppInfo(ctx, app, tx)
 			return err
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 	)
 	if err != nil {
@@ -551,7 +571,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&appInfo.EncryptionDevice.FallbackKey,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app in registry")
@@ -628,7 +648,7 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 			return nil, WrapRiverError(
 				protocol.Err_NOT_FOUND,
 				err,
-			).Message("app with device key is not registered")
+			).Message("device is not registered")
 		} else {
 			return nil, WrapRiverError(
 				protocol.Err_DB_OPERATION_FAILURE,
@@ -709,7 +729,7 @@ func (s *PostgresAppRegistryStore) GetSessionKey(
 	err = s.txRunner(
 		ctx,
 		"GetSessionKeys",
-		pgx.ReadOnly,
+		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			encryptionEnvelope, err = s.getSessionKey(ctx, app, sessionId, tx)
@@ -761,7 +781,7 @@ func (s *PostgresAppRegistryStore) GetSendableApps(
 	err = s.txRunner(
 		ctx,
 		"GetSendableApps",
-		pgx.ReadOnly,
+		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			sendableDevices, err = s.getSendableApps(ctx, apps, tx)
@@ -961,7 +981,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		).Message("error streaming app metadata for unsendable devices")
 	}
 	if len(unsendableAppIds) > nextRow {
-		return nil, nil, RiverError(protocol.Err_NOT_FOUND, "some app ids were not registered")
+		return nil, nil, RiverError(protocol.Err_NOT_FOUND, "some apps were not found in the registry")
 	}
 
 	// Insert unsendable messages
@@ -1020,7 +1040,7 @@ func (s *PostgresAppRegistryStore) SetAppMetadata(
 		func(ctx context.Context, tx pgx.Tx) error {
 			return s.setAppMetadata(ctx, app, metadata, tx)
 		},
-		nil,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"metadata", metadata,
 	)
@@ -1074,7 +1094,7 @@ func (s *PostgresAppRegistryStore) GetAppMetadata(
 	err := s.txRunner(
 		ctx,
 		"GetAppMetadata",
-		pgx.ReadOnly,
+		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			metadata, err = s.getAppMetadata(ctx, app, tx)
@@ -1102,7 +1122,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		PGAddress(app),
 	).Scan(&metadataJSON, &username); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app is not registered")
+			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app metadata in registry")
@@ -1129,7 +1149,7 @@ func (s *PostgresAppRegistryStore) IsUsernameAvailable(
 	err := s.txRunner(
 		ctx,
 		"IsUsernameAvailable",
-		pgx.ReadOnly,
+		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			return tx.QueryRow(
 				ctx,

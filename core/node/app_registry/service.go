@@ -170,6 +170,8 @@ func (s *Service) SetAppSettings(
 	*connect.Response[SetAppSettingsResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppSettings"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -208,6 +210,8 @@ func (s *Service) GetAppSettings(
 	*connect.Response[GetAppSettingsResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetAppSettings"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -262,6 +266,8 @@ func (s *Service) RotateSecret(
 	*connect.Response[RotateSecretResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "RotateSecret"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -314,6 +320,8 @@ func (s *Service) GetSession(
 	*connect.Response[GetSessionResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetSession"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -359,6 +367,8 @@ func (s *Service) Register(
 	*connect.Response[RegisterResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "Register"))
+
 	var app, owner common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -636,6 +646,8 @@ func (s *Service) RegisterWebhook(
 	*connect.Response[RegisterWebhookResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "RegisterWebhook"))
+
 	// Validate input
 	var app common.Address
 	var appInfo *storage.AppInfo
@@ -721,6 +733,8 @@ func (s *Service) GetStatus(
 	resp *connect.Response[GetStatusResponse],
 	err error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetStatus"))
+
 	defer func() {
 		if err != nil {
 			err = base.AsRiverError(err, Err_INTERNAL).Func("GetStatus")
@@ -804,6 +818,8 @@ func (s *Service) SetAppMetadata(
 	*connect.Response[SetAppMetadataResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppMetadata"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -852,6 +868,8 @@ func (s *Service) GetAppMetadata(
 	*connect.Response[GetAppMetadataResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetAppMetadata"))
+
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
@@ -880,6 +898,8 @@ func (s *Service) ValidateBotName(
 	*connect.Response[ValidateBotNameResponse],
 	error,
 ) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "ValidateBotName"))
+
 	// Validate input
 	if req.Msg.Username == "" {
 		return &connect.Response[ValidateBotNameResponse]{

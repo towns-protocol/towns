@@ -478,7 +478,7 @@ func TestCreateApp(t *testing.T) {
 
 	info, err = store.GetAppInfo(params.ctx, app3)
 	require.Nil(info)
-	require.ErrorContains(err, "app is not registered")
+	require.ErrorContains(err, "app was not found in registry")
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 }
 
@@ -552,7 +552,7 @@ func TestPublishSessionKeys(t *testing.T) {
 		[]byte("ciphertexts"),
 	)
 	require.Nil(messages)
-	require.ErrorContains(err, "app with device key is not registered")
+	require.ErrorContains(err, "device is not registered")
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	// Create an app...
@@ -750,7 +750,7 @@ func TestEnqueueMessages(t *testing.T) {
 	require.Nil(sendableApps)
 	require.Nil(unsendableApps)
 
-	require.ErrorContains(err, "some app ids were not registered")
+	require.ErrorContains(err, "some apps were not found in the registry")
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	err = store.CreateApp(
@@ -779,7 +779,7 @@ func TestEnqueueMessages(t *testing.T) {
 	)
 	require.Nil(sendableApps)
 	require.Nil(unsendableApps)
-	require.ErrorContains(err, "some app ids were not registered")
+	require.ErrorContains(err, "some apps were not found in the registry")
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 
 	unsendableAppAtIndex := func(i int) storage.UnsendableApp {
@@ -1351,7 +1351,7 @@ func TestGetAppMetadata(t *testing.T) {
 	require.Error(err)
 	require.Nil(metadata)
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
-	require.ErrorContains(err, "app is not registered")
+	require.ErrorContains(err, "app was not found in registry")
 }
 
 func TestAppMetadataInGetAppInfo(t *testing.T) {

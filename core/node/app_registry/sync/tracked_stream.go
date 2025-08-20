@@ -23,8 +23,8 @@ type AppRegistryTrackedStreamView struct {
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
 	// Capture keys sent to the app's inbox and store them in the message cache so that
-	// we can dequeue any existing messages that require decryption this session, and immediately
-	// forward incoming messages with the same session id.
+	// we can dequeue any existing messages that require decryption for this session, and
+	// can now immediately forward incoming messages with the same session id.
 	if payload := event.Event.GetUserInboxPayload(); payload != nil {
 		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
 			sessionIds := groupEncryptionSessions.GetSessionIds()
