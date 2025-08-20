@@ -312,147 +312,6 @@ func (s *PostgresAppRegistryStore) Init(
 	return nil
 }
 
-// lockApp locks an app row for reading (FOR SHARE) or writing (FOR UPDATE)
-// This helps prevent deadlocks based on index page contention.
-// If you wish to acquire locks on multiple apps, please use the lockApps
-// function Instead of calling this one because lock apps already has logic
-// for acquiring locks on multiple apps in order.
-func (s *PostgresAppRegistryStore) lockApp(
-	ctx context.Context,
-	tx pgx.Tx,
-	appId common.Address,
-	write bool,
-) error {
-	// var dummy int
-	// var err error
-
-	// if write {
-	// 	err = tx.QueryRow(
-	// 		ctx,
-	// 		"SELECT 1 FROM app_registry WHERE app_id = $1 FOR KEY SHARE",
-	// 		PGAddress(appId),
-	// 	).Scan(&dummy)
-	// } else {
-	// 	err = tx.QueryRow(
-	// 		ctx,
-	// 		"SELECT 1 FROM app_registry WHERE app_id = $1 FOR SHARE",
-	// 		PGAddress(appId),
-	// 	).Scan(&dummy)
-	// }
-
-	// if err != nil {
-	// 	if errors.Is(err, pgx.ErrNoRows) {
-	// 		return RiverError(
-	// 			protocol.Err_NOT_FOUND,
-	// 			"app was not found in registry",
-	// 			"appId", appId,
-	// 		).Func("PostgresAppRegistryStore.lockApp")
-	// 	}
-	// 	return err
-	// }
-
-	return nil
-}
-
-// lockApps locks multiple app rows in a single query. It enforces a consistent
-// ordering of app id lock acquisition and returns which apps were successfully locked.
-func (s *PostgresAppRegistryStore) lockApps(
-	ctx context.Context,
-	tx pgx.Tx,
-	appIds []common.Address,
-	write bool,
-) ([]common.Address, error) {
-	// if len(appIds) == 0 {
-	// 	return []common.Address{}, nil
-	// }
-
-	// // Convert addresses to strings for the query
-	// appIdStrings := make([]string, len(appIds))
-	// for i, addr := range appIds {
-	// 	appIdStrings[i] = hex.EncodeToString(addr[:])
-	// }
-
-	// lockMode := "FOR SHARE"
-	// if write {
-	// 	lockMode = "FOR KEY SHARE"
-	// }
-
-	// // Lock rows in sorted order to prevent deadlocks and return which apps exist
-	// rows, err := tx.Query(
-	// 	ctx,
-	// 	fmt.Sprintf(`
-	// 		SELECT app_id FROM app_registry
-	// 		WHERE app_id = ANY($1)
-	// 		ORDER BY app_id
-	// 		%s
-	// 	`, lockMode),
-	// 	appIdStrings,
-	// )
-	// if err != nil {
-	// 	return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-	// 		Message("failed to lock apps")
-	// }
-	// defer rows.Close()
-
-	// // Collect the locked app IDs
-	// var lockedApps []common.Address
-	// for rows.Next() {
-	// 	var appIdHex string
-	// 	if err := rows.Scan(&appIdHex); err != nil {
-	// 		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-	// 			Message("failed to scan locked app")
-	// 	}
-
-	// 	appIdBytes, err := hex.DecodeString(appIdHex)
-	// 	if err != nil {
-	// 		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-	// 			Message("failed to decode app ID")
-	// 	}
-
-	// 	lockedApps = append(lockedApps, common.BytesToAddress(appIdBytes))
-	// }
-
-	// if err := rows.Err(); err != nil {
-	// 	return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-	// 		Message("failed to iterate locked apps")
-	// }
-
-	// return lockedApps, nil
-	return appIds, nil
-}
-
-// lockDevice locks an app row according to it's device key.
-func (s *PostgresAppRegistryStore) lockDevice(
-	ctx context.Context,
-	tx pgx.Tx,
-	deviceKey string,
-	write bool,
-) error {
-	// lockMode := "FOR SHARE"
-	// if write {
-	// 	lockMode = "FOR KEY SHARE"
-	// }
-
-	// var dummy int
-	// err := tx.QueryRow(
-	// 	ctx,
-	// 	fmt.Sprintf(`
-	// 		SELECT 1 FROM app_registry
-	// 		WHERE device_key = $1
-	// 		%s
-	// 	`, lockMode),
-	// 	deviceKey,
-	// ).Scan(&dummy)
-	// if err != nil {
-	// 	if errors.Is(err, pgx.ErrNoRows) {
-	// 		return RiverError(protocol.Err_NOT_FOUND, "device is not registered")
-	// 	}
-	// 	return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-	// 		Message("failed to lock device").Tag("device", deviceKey)
-	// }
-	return nil
-}
-
 func (s *PostgresAppRegistryStore) CreateApp(
 	ctx context.Context,
 	owner common.Address,
@@ -544,11 +403,6 @@ func (s *PostgresAppRegistryStore) updateSettings(
 	settings types.AppSettings,
 	txn pgx.Tx,
 ) error {
-	// Lock the app first to prevent deadlocks
-	if err := s.lockApp(ctx, txn, app, true); err != nil {
-		return err
-	}
-
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET forward_setting = $2 WHERE app_id = $1`,
@@ -589,11 +443,6 @@ func (s *PostgresAppRegistryStore) rotateSecret(
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
-	// Lock the app first to prevent deadlocks
-	if err := s.lockApp(ctx, txn, app, true); err != nil {
-		return err
-	}
-
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET encrypted_shared_secret = $2 WHERE app_id = $1`,
@@ -641,11 +490,6 @@ func (s *PostgresAppRegistryStore) registerWebhook(
 	fallbackKey string,
 	txn pgx.Tx,
 ) error {
-	// Lock the app first to prevent deadlocks
-	if err := s.lockApp(ctx, txn, app, true); err != nil {
-		return err
-	}
-
 	tag, err := txn.Exec(
 		ctx,
 		`UPDATE app_registry SET webhook = $2, device_key = $3, fallback_key = $4 WHERE app_id = $1`,
@@ -701,11 +545,6 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	*AppInfo,
 	error,
 ) {
-	// Lock the app first to prevent deadlocks
-	if err := s.lockApp(ctx, tx, appAddr, false); err != nil {
-		return nil, err
-	}
-
 	var owner, app PGAddress
 	var encryptedSecret PGSecret
 	app = PGAddress(appAddr)
@@ -789,9 +628,6 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 	encryptionEnvelope []byte,
 	tx pgx.Tx,
 ) (messages *SendableMessages, err error) {
-	if err := s.lockDevice(ctx, tx, deviceKey, false); err != nil {
-		return nil, err
-	}
 	_, err = tx.Exec(
 		ctx,
 		`   INSERT INTO app_session_keys (device_key, stream_id, session_ids, message_envelope)
@@ -969,34 +805,6 @@ func (s *PostgresAppRegistryStore) getSendableApps(
 		return sendableApps, nil
 	}
 
-	lockedApps, err := s.lockApps(ctx, tx, apps, false)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(lockedApps) < len(apps) {
-		if len(lockedApps) != len(apps) {
-			// Find which apps were not found
-			lockedSet := make(map[common.Address]struct{})
-			for _, app := range lockedApps {
-				lockedSet[app] = struct{}{}
-			}
-			var missingApps []common.Address
-			for _, app := range apps {
-				if _, exists := lockedSet[app]; !exists {
-					missingApps = append(missingApps, app)
-				}
-			}
-			return nil, RiverError(
-				protocol.Err_NOT_FOUND,
-				"some apps were not found in the registry",
-				"expected", len(apps),
-				"found", len(lockedApps),
-				"missing", missingApps,
-			)
-		}
-	}
-
 	rows, err := tx.Query(
 		ctx,
 		`   
@@ -1086,32 +894,6 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 	envelopeBytes []byte,
 	tx pgx.Tx,
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
-	// Lock all apps and ensure they all exist
-	lockedApps, err := s.lockApps(ctx, tx, appIds, false)
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(lockedApps) != len(appIds) {
-		// Find which apps were not found
-		lockedSet := make(map[common.Address]struct{})
-		for _, app := range lockedApps {
-			lockedSet[app] = struct{}{}
-		}
-		var missingApps []common.Address
-		for _, app := range appIds {
-			if _, exists := lockedSet[app]; !exists {
-				missingApps = append(missingApps, app)
-			}
-		}
-		return nil, nil, RiverError(
-			protocol.Err_NOT_FOUND,
-			"some apps were not found in the registry",
-			"expected", len(appIds),
-			"found", len(lockedApps),
-			"missing", missingApps,
-		)
-	}
-
 	rows, err := tx.Query(
 		ctx,
 		`   
@@ -1270,11 +1052,6 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	metadata types.AppMetadata,
 	txn pgx.Tx,
 ) error {
-	// Lock the app first to prevent deadlocks
-	if err := s.lockApp(ctx, txn, app, true); err != nil {
-		return err
-	}
-
 	// Marshal metadata to JSON (Username field is omitted via json:"-" tag)
 	metadataJSON, err := json.Marshal(metadata)
 	if err != nil {
@@ -1337,10 +1114,6 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	app common.Address,
 	tx pgx.Tx,
 ) (*types.AppMetadata, error) {
-	if err := s.lockApp(ctx, tx, app, false); err != nil {
-		return nil, err
-	}
-
 	var metadataJSON string
 	var username string
 	if err := tx.QueryRow(
