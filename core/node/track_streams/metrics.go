@@ -67,37 +67,5 @@ func NewTrackStreamsSyncMetrics(metricsFactory infra.MetricsFactory) *TrackStrea
 			Name: "open_sync_sessions",
 			Help: "Number of syncs opened by the MultiSyncRunner",
 		}, []string{"node"}),
-
-		// Semaphore metrics
-		SemaphoreAcquireDuration: metricsFactory.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "semaphore_acquire_duration_seconds",
-			Help:    "Time spent waiting to acquire semaphore",
-			Buckets: []float64{0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0, 10.0},
-		}, []string{"node"}),
-		SemaphoreHoldDuration: metricsFactory.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "semaphore_hold_duration_seconds",
-			Help:    "Time semaphore is held (between acquire and release)",
-			Buckets: []float64{0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0},
-		}, []string{"node", "operation"}),
-
-		// Operation timing metrics
-		AddStreamDuration: metricsFactory.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "add_stream_duration_seconds",
-			Help:    "Time taken for runner.AddStream() RPC call",
-			Buckets: []float64{0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0},
-		}, []string{"node", "success"}),
-		SyncRunnerCreationDuration: metricsFactory.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "sync_runner_creation_duration_seconds",
-			Help:    "Time taken to create and start a new sync runner",
-			Buckets: []float64{0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0},
-		}, []string{"node"}),
-		StreamPlacementTotalDuration: metricsFactory.NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "stream_placement_total_duration_seconds",
-			Help:    "Total time from start to completion of stream placement",
-			Buckets: []float64{0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0},
-		}, []string{"node", "success"}),
 	}
-}
-
-func (t *TrackStreamsSyncMetrics) String() {
 }

@@ -671,49 +671,6 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 	return workerPool
 }
 
-// acquireNodeSemaphore acquires a semaphore slot for the given node with metrics tracking
-// Returns the acquire time for tracking hold duration
-func (msr *MultiSyncRunner) acquireNodeSemaphore(
-	ctx context.Context,
-	node common.Address,
-	pool *semaphore.Weighted,
-) (time.Time, error) {
-	nodeHex := node.Hex()
-	labels := prometheus.Labels{"node": nodeHex}
-
-	// Measure acquire duration
-	start := time.Now()
-	err := pool.Acquire(ctx, 1)
-	// Track in-flight requests
-	duration := time.Since(start).Seconds()
-
-	msr.metrics.SemaphoreAcquireDuration.With(labels).Observe(duration)
-
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return time.Now(), nil
-}
-
-// releaseNodeSemaphore releases a semaphore slot for the given node with metrics tracking
-func (msr *MultiSyncRunner) releaseNodeSemaphore(
-	node common.Address,
-	pool *semaphore.Weighted,
-	acquireTime time.Time,
-	operation string,
-) {
-	pool.Release(1)
-	nodeHex := node.Hex()
-
-	// Track how long the semaphore was held
-	if !acquireTime.IsZero() {
-		holdDuration := time.Since(acquireTime).Seconds()
-		msr.metrics.SemaphoreHoldDuration.With(prometheus.Labels{"node": nodeHex, "operation": operation}).
-			Observe(holdDuration)
-	}
-}
-
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
@@ -748,10 +705,6 @@ func NewMultiSyncRunner(
 		otelTracer:             otelTracer,
 		placementListener:      placementListener,
 	}
-}
-
-func (msr *MultiSyncRunner) Metrics() *TrackStreamsSyncMetrics {
-	return msr.metrics
 }
 
 // Run starts the operation of the MultiSyncRunner and continues to add streams to sync sessions until rootCtx is canceled.
@@ -836,7 +789,7 @@ func (msr *MultiSyncRunner) addToSync(
 		// Pre-emptively acquire a connection for the newly created runner above so that if the
 		// store is successful, we are guaranteed to call it's 'Run' method. This will keep
 		// other workers from becoming indefinitely blocked on stream insertion to this runner.
-		acquireTime, err := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
+		err := pool.Acquire(rootCtx, 1)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Errorw(
@@ -868,11 +821,11 @@ func (msr *MultiSyncRunner) addToSync(
 
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
-		msr.releaseNodeSemaphore(targetNode, pool, acquireTime, "runner_creation")
+		pool.Release(1)
 	}
 
 	// Prepare for another rpc call by acquiring another connection from the pool.
-	acquireTime2, err := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
+	err := pool.Acquire(rootCtx, 1)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			return
@@ -904,8 +857,7 @@ func (msr *MultiSyncRunner) addToSync(
 		Observe(addStreamDuration)
 
 	if err != nil {
-		// Aggressively release the lock on target node resources to maximize request throughput.
-		msr.releaseNodeSemaphore(targetNode, pool, acquireTime2, "add_stream_failure")
+		pool.Release(1)
 
 		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) ||
 			base.IsRiverErrorCode(err, protocol.Err_UNAVAILABLE) {
@@ -925,8 +877,7 @@ func (msr *MultiSyncRunner) addToSync(
 				msr.otelTracer,
 			)
 
-			acquireTime3, acquireErr := msr.acquireNodeSemaphore(rootCtx, targetNode, pool)
-			if acquireErr != nil {
+			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
 				if errors.Is(acquireErr, context.Canceled) {
 					return
 				}
@@ -955,20 +906,7 @@ func (msr *MultiSyncRunner) addToSync(
 					return oldRunner, xsync.CancelOp
 				},
 			)
-			msr.releaseNodeSemaphore(targetNode, pool, acquireTime3, "runner_replacement")
-
-			// log := logging.FromCtx(rootCtx)
-
-			// // Relocate this stream's target node and re-insert into the pool of unassigned streams
-			// newRemote := record.remotes.AdvanceStickyPeer(targetNode)
-
-			// log.Debugw(
-			// 	"Could not assign stream to existing session, cycling to new session",
-			// 	"streamId", record.streamId,
-			// 	"syncId", runner.GetSyncId(),
-			// 	"failedRemote", targetNode,
-			// 	"newRemote", newRemote,
-			// )
+			pool.Release(1)
 		} else if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
 			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
 			runner.Close(err)
@@ -987,7 +925,7 @@ func (msr *MultiSyncRunner) addToSync(
 			}
 		}
 	} else {
-		msr.releaseNodeSemaphore(targetNode, pool, acquireTime2, "add_stream_success")
+		pool.Release(1)
 		// Notify placement listener if configured
 		if msr.placementListener != nil {
 			msr.placementListener.OnStreamPlacement(

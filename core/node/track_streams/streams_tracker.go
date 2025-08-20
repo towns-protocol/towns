@@ -135,10 +135,6 @@ func (tracker *StreamsTrackerImpl) Init(
 	return nil
 }
 
-func (tracker *StreamsTrackerImpl) Metrics() *TrackStreamsSyncMetrics {
-	return tracker.multiSyncRunner.Metrics()
-}
-
 func (tracker *StreamsTrackerImpl) Listener() StreamEventListener {
 	return tracker.listener
 }

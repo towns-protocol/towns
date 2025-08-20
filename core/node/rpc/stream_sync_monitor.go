@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -75,10 +74,7 @@ func RunStreamSyncMonitor(ctx context.Context, cfg *config.Config) error {
 
 	nodeRegistries := []nodes.NodeRegistry{nodeRegistry}
 
-	// Initialize metrics with a dedicated registry for the sync monitor
-	// This allows us to extract metrics without interfering with the main metrics endpoint
-	syncMonitorRegistry := prometheus.NewRegistry()
-	metricsFactory := infra.NewMetricsFactory(syncMonitorRegistry, "river", "sync_monitor")
+	metricsFactory := infra.NewMetricsFactory(nil, "river", "sync_monitor")
 
 	// Create and run the service
 	service, err := stream_sync_monitor.NewService(

@@ -2,12 +2,10 @@ package infra
 
 import (
 	"fmt"
-	"io"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
-	"github.com/prometheus/common/expfmt"
 )
 
 type MetricsFactory interface {
@@ -43,15 +41,9 @@ type MetricsFactory interface {
 	NewStatusCounterVecEx(name string, help string, labels ...string) *StatusCounterVec
 
 	Registry() *prometheus.Registry
-	
-	// PrintMetricsDebug writes all metrics from this factory's registry to the given writer
-	// in Prometheus exposition format. This is intended for debugging purposes only.
-	// Note: This uses the registry's Gather() method which may affect certain metric types.
-	PrintMetricsDebug(w io.Writer) error
-	
+
 	// GetMetricsAsMap returns all metrics as a structured map suitable for JSON logging.
 	// This is intended for debugging purposes only.
-	// Note: This uses the registry's Gather() method which may affect certain metric types.
 	GetMetricsAsMap() (map[string]interface{}, error)
 }
 
@@ -272,35 +264,6 @@ func (f *metricsFactory) Registry() *prometheus.Registry {
 	return f.registry
 }
 
-func (f *metricsFactory) PrintMetricsDebug(w io.Writer) error {
-	if f.registry == nil {
-		return fmt.Errorf("no metrics registry available")
-	}
-
-	// Gather all metrics from the registry
-	metricFamilies, err := f.registry.Gather()
-	if err != nil {
-		return fmt.Errorf("failed to gather metrics: %w", err)
-	}
-
-	// Create encoder for Prometheus text format
-	encoder := expfmt.NewEncoder(w, expfmt.FmtText)
-
-	// Write header
-	fmt.Fprintf(w, "# Metrics Debug Output\n")
-	fmt.Fprintf(w, "# Namespace: %s, Subsystem: %s\n", f.namespace, f.subsystem)
-	fmt.Fprintf(w, "# Total metric families: %d\n\n", len(metricFamilies))
-
-	// Encode each metric family
-	for _, mf := range metricFamilies {
-		if err := encoder.Encode(mf); err != nil {
-			return fmt.Errorf("failed to encode metric family %s: %w", mf.GetName(), err)
-		}
-	}
-
-	return nil
-}
-
 func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 	if f.registry == nil {
 		return nil, fmt.Errorf("no metrics registry available")
@@ -313,18 +276,18 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 	}
 
 	result := make(map[string]interface{})
-	
+
 	// Add metadata
 	result["namespace"] = f.namespace
 	result["subsystem"] = f.subsystem
 	result["metric_count"] = len(metricFamilies)
-	
+
 	metrics := make(map[string]interface{})
-	
+
 	for _, mf := range metricFamilies {
 		metricName := mf.GetName()
 		metricType := mf.GetType()
-		
+
 		switch metricType {
 		case dto.MetricType_GAUGE:
 			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
@@ -339,7 +302,7 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 				}
 				metrics[metricName] = labeledValues
 			}
-			
+
 		case dto.MetricType_COUNTER:
 			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
 				// Simple counter without labels
@@ -353,7 +316,7 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 				}
 				metrics[metricName] = labeledValues
 			}
-			
+
 		case dto.MetricType_HISTOGRAM:
 			histogramData := make(map[string]interface{})
 			for _, m := range mf.Metric {
@@ -361,18 +324,18 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 				if labelKey == "" {
 					labelKey = "default"
 				}
-				
+
 				hist := m.Histogram
 				histData := map[string]interface{}{
 					"count": float64(hist.GetSampleCount()),
 					"sum":   hist.GetSampleSum(),
 				}
-				
+
 				// Add average if count > 0
 				if hist.GetSampleCount() > 0 {
 					histData["avg"] = hist.GetSampleSum() / float64(hist.GetSampleCount())
 				}
-				
+
 				// Add bucket summary (simplified)
 				if len(hist.Bucket) > 0 {
 					buckets := make(map[string]uint64)
@@ -381,11 +344,11 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 					}
 					histData["buckets"] = buckets
 				}
-				
+
 				histogramData[labelKey] = histData
 			}
 			metrics[metricName] = histogramData
-			
+
 		case dto.MetricType_SUMMARY:
 			summaryData := make(map[string]interface{})
 			for _, m := range mf.Metric {
@@ -393,13 +356,13 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 				if labelKey == "" {
 					labelKey = "default"
 				}
-				
+
 				summary := m.Summary
 				sumData := map[string]interface{}{
 					"count": float64(summary.GetSampleCount()),
 					"sum":   summary.GetSampleSum(),
 				}
-				
+
 				// Add quantiles if available
 				if len(summary.Quantile) > 0 {
 					quantiles := make(map[string]float64)
@@ -408,13 +371,13 @@ func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
 					}
 					sumData["quantiles"] = quantiles
 				}
-				
+
 				summaryData[labelKey] = sumData
 			}
 			metrics[metricName] = summaryData
 		}
 	}
-	
+
 	result["metrics"] = metrics
 	return result, nil
 }
@@ -424,18 +387,18 @@ func buildLabelKey(labels []*dto.LabelPair) string {
 	if len(labels) == 0 {
 		return ""
 	}
-	
+
 	// For single label, just use the value
 	if len(labels) == 1 {
 		return labels[0].GetValue()
 	}
-	
+
 	// For multiple labels, create a map
 	labelMap := make(map[string]string)
 	for _, lp := range labels {
 		labelMap[lp.GetName()] = lp.GetValue()
 	}
-	
+
 	// Create a consistent string representation
 	result := ""
 	for k, v := range labelMap {
