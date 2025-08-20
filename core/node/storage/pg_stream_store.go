@@ -1736,8 +1736,8 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 	// Delete old minipool and check old data for consistency.
 	type mpRow struct {
-		generation int64
-		slot       int64
+		Generation int64
+		Slot       int64
 	}
 	rows, _ := tx.Query(
 		ctx,
@@ -1762,28 +1762,28 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		logging.FromCtx(ctx).Warnw("No minipool found in db for stream, resetting", "streamId", streamId)
 	} else {
 		slices.SortFunc(mpRows, func(a, b mpRow) int {
-			if a.generation != b.generation {
-				return int(a.generation - b.generation)
+			if a.Generation != b.Generation {
+				return int(a.Generation - b.Generation)
 			} else {
-				return int(a.slot - b.slot)
+				return int(a.Slot - b.Slot)
 			}
 		})
 		expectedSlot := int64(-1)
 		for _, mp := range mpRows {
-			if mp.generation != prevMinipoolGeneration {
+			if mp.Generation != prevMinipoolGeneration {
 				return RiverError(
 					Err_INTERNAL,
 					"DB data consistency check failed: Minipool contains unexpected generation",
 					"generation",
-					mp.generation,
+					mp.Generation,
 				)
 			}
-			if mp.slot != expectedSlot {
+			if mp.Slot != expectedSlot {
 				return RiverError(
 					Err_INTERNAL,
 					"DB data consistency check failed: Minipool contains unexpected slot number",
 					"slot_num",
-					mp.slot,
+					mp.Slot,
 					"expected_slot_num",
 					expectedSlot,
 				)
