@@ -47,7 +47,7 @@
             "outputs": []
         },
         "typings": {
-            "dependsOn": ["^build"],
+            "dependsOn": ["build"],
             "cache": true,
             "outputs": ["generated/**", "src/generated/**"]
         },
