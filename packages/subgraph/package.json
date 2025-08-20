@@ -4,6 +4,7 @@
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
+        "build": "tsc",
         "codegen": "ponder codegen",
         "db": "ponder db",
         "dev": "ponder dev",
@@ -14,8 +15,7 @@
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "serve": "ponder serve",
         "start": "ponder start",
-        "transfer-ownership": "tsx interactions/transfer-ownership.ts",
-        "typecheck": "tsc"
+        "transfer-ownership": "tsx interactions/transfer-ownership.ts"
     },
     "dependencies": {
         "hono": "^4.7.11",
