@@ -1747,16 +1747,15 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		),
 		streamId,
 	)
-	mpRows, err := pgx.CollectRows(
-		rows,
-		func(row pgx.CollectableRow) (mpRow, error) {
-			var gen, slot int64
-			err := row.Scan(&gen, &slot)
-			return mpRow{generation: gen, slot: slot}, err
-		},
-	)
+	mpRows, err := pgx.CollectRows(rows, pgx.RowToStructByPos[mpRow])
 	if err != nil {
 		return err
+	}
+	if len(mpRows) == 0 {
+		return RiverError(
+			Err_INTERNAL,
+			"DB data consistency check failed: No minipool found (should contain -1 marker)",
+		)
 	}
 	slices.SortFunc(mpRows, func(a, b mpRow) int {
 		if a.generation != b.generation {
