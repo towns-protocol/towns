@@ -795,10 +795,8 @@ func (msr *MultiSyncRunner) addToSync(
 			// If our new runner won the race to be stored for this node, kick off the runner. Streams
 			// are not assignable until the sync session starts.
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Inc()
-
 			go runner.Run()
 			runner.WaitUntilStarted()
-
 			msr.metrics.SyncSessionsInFlight.With(prometheus.Labels{"target_node": targetNode.Hex()}).Dec()
 		}
 		pool.Release(1)
@@ -830,6 +828,7 @@ func (msr *MultiSyncRunner) addToSync(
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
 	if err := runner.AddStream(rootCtx, *record); err != nil {
+		// Aggressively release the lock on target node resources to maximize request throughput.
 		pool.Release(1)
 
 		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) ||
@@ -904,8 +903,8 @@ func (msr *MultiSyncRunner) addToSync(
 				"syncId", runner.GetSyncId(),
 				"error", err,
 			)
-			msr.streamsToSync <- record
 		}
+		msr.streamsToSync <- record
 	} else {
 		pool.Release(1)
 		// Notify placement listener if configured
