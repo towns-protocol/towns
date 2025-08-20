@@ -45,7 +45,7 @@ fi
 
 # Generate contract types for publishing
 echo "Generating contract types for publishing..."
-./scripts/build-contract-types.sh
+yarn workspace @towns-protocol/contracts build-types
 exit_status_contracts=$?
 
 if [ $exit_status_contracts -ne 0 ]; then

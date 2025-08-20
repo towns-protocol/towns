@@ -42,7 +42,6 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
-        "@typechain/ethers-v5": "^10.1.1",
         "@types/node": "^20.14.8",
         "eslint": "^8.57.1",
         "eslint-config-prettier": "^10.1.2",
@@ -55,7 +54,6 @@
         "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
         "turbo": "^2.5.4",
-        "typechain": "^8.1.1",
         "typescript": "^5.8.2",
         "vitest": "^3.2.3",
         "wait-on": "^7.0.1"

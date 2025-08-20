@@ -20,7 +20,7 @@ import { createRequire } from 'module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(__dirname, '..');
-const repoRoot = resolve(packageRoot, '../..');
+const contractsDir = resolve(packageRoot, '../contracts');
 const devDir = resolve(packageRoot, 'dev');
 const hashFile = resolve(devDir, '.contracts-hash');
 
@@ -38,11 +38,11 @@ function generatedFilesExist() {
 
 // Get git hash of contracts directory
 function getContractsHash() {
-  if (!existsSync(resolve(repoRoot, 'packages/contracts/src'))) return null;
+  if (!existsSync(resolve(contractsDir, 'src'))) return null;
   
   try {
-    return execSync('git rev-parse HEAD:packages/contracts/src', {
-      cwd: repoRoot,
+    return execSync('git rev-parse HEAD:./src', {
+      cwd: contractsDir,
       encoding: 'utf8',
       stdio: 'pipe'
     }).trim();
@@ -154,8 +154,16 @@ function generateArtifacts() {
     }
   }
   
-  execSync(`bash ${repoRoot}/scripts/build-contract-types.sh`, {
-    cwd: repoRoot,
+  // Look for build script in contracts package (sibling to generated package)
+  const contractsDir = resolve(packageRoot, '../contracts');
+  const buildScript = resolve(contractsDir, 'scripts/build-contract-types.sh');
+
+  if (!existsSync(buildScript)) {
+    throw new Error(`Build script not found at ${buildScript}`);
+  }
+
+  execSync(`bash ${buildScript}`, {
+    cwd: contractsDir,
     stdio: 'inherit'
   });
 }
