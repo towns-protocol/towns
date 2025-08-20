@@ -897,18 +897,14 @@ func (msr *MultiSyncRunner) addToSync(
 			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
 			runner.Close(err)
 		} else {
-			if strings.Contains(err.Error(), "snapshotMiniblockIndex is out of range") {
-				log.Errorw("Corrupt stream encountered", "streamId", record.streamId, "node", targetNode, "syncId", runner.GetSyncId(), "err", err)
-			} else {
-				log.Errorw(
-					"Error adding stream to sync on node, retrying",
-					"streamId", record.streamId,
-					"node", targetNode,
-					"syncId", runner.GetSyncId(),
-					"error", err,
-				)
-				msr.streamsToSync <- record
-			}
+			log.Errorw(
+				"Error adding stream to sync on node, retrying",
+				"streamId", record.streamId,
+				"node", targetNode,
+				"syncId", runner.GetSyncId(),
+				"error", err,
+			)
+			msr.streamsToSync <- record
 		}
 	} else {
 		pool.Release(1)
