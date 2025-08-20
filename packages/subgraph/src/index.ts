@@ -676,7 +676,7 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
         const result = await context.db.sql
             .update(schema.app)
             .set({
-                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account})`,
+                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account}::text)`,
             })
             .where(eq(schema.app.appId, event.args.appId))
         if (result.changes === 0) {
