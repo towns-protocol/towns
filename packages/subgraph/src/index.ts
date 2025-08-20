@@ -1,4 +1,4 @@
-import { eq } from 'ponder'
+import { eq, sql } from 'ponder'
 import { ponder, type Context } from 'ponder:registry'
 import schema from 'ponder:schema'
 import {
@@ -615,15 +615,21 @@ ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
 
 ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const existingApp = await context.db.sql.query.app.findFirst({
-        where: eq(schema.app.appId, event.args.appId),
-    })
     try {
-        if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({ installedIn: [...(existingApp.installedIn ?? []), event.args.account] })
-                .where(eq(schema.app.appId, event.args.appId))
+        const result = await context.db.sql
+            .update(schema.app)
+            .set({
+                installedIn: sql`
+                    CASE
+                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${event.args.account}]::text[]
+                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${event.args.account}::text
+                        ELSE ${schema.app.installedIn}
+                    END
+                `,
+            })
+            .where(eq(schema.app.appId, event.args.appId))
+        if (result.changes === 0) {
+            console.warn(`App not found for AppRegistry:AppInstalled`, event.args.appId)
         }
     } catch (error) {
         console.error(
@@ -635,19 +641,15 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
 
 ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const existingApp = await context.db.sql.query.app.findFirst({
-        where: eq(schema.app.appId, event.args.appId),
-    })
     try {
-        if (existingApp) {
-            await context.db.sql
-                .update(schema.app)
-                .set({
-                    installedIn: existingApp.installedIn?.filter(
-                        (space) => space !== event.args.account,
-                    ),
-                })
-                .where(eq(schema.app.appId, event.args.appId))
+        const result = await context.db.sql
+            .update(schema.app)
+            .set({
+                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account})`,
+            })
+            .where(eq(schema.app.appId, event.args.appId))
+        if (result.changes === 0) {
+            console.warn(`App not found for AppRegistry:AppUninstalled`, event.args.appId)
         }
     } catch (error) {
         console.error(
