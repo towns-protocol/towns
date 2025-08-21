@@ -12,7 +12,6 @@ import {
     streamIdAsBytes,
     createTownsClient,
     type ClientV2,
-    type makeRiverConfig,
     streamIdAsString,
     make_MemberPayload_KeySolicitation,
     make_UserMetadataPayload_EncryptionDevice,
@@ -670,16 +669,18 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
 export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
     appPrivateDataBase64: string,
     jwtSecretBase64: string,
-    env: Parameters<typeof makeRiverConfig>[0],
     opts: {
         baseRpcUrl?: string
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
-    const { privateKey, encryptionDevice } = fromBinary(
+    const { privateKey, encryptionDevice, env } = fromBinary(
         AppPrivateDataSchema,
         bin_fromBase64(appPrivateDataBase64),
     )
+    if (!env) {
+        throw new Error('Failed to parse APP_PRIVATE_DATA_BASE64')
+    }
     const baseConfig = makeBaseChainConfig(env)
     const viemClient = createViemClient({
         transport: baseRpcUrl

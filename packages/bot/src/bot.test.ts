@@ -171,6 +171,7 @@ describe('Bot', { sequential: true }, () => {
                 create(AppPrivateDataSchema, {
                     privateKey: botWallet.privateKey,
                     encryptionDevice: exportedDevice,
+                    env: process.env.RIVER_ENV!,
                 }),
             ),
         )
@@ -200,7 +201,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
