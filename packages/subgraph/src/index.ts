@@ -1,5 +1,5 @@
 import { eq, sql } from 'ponder'
-import { ponder, type Context } from 'ponder:registry'
+import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
 import {
     getLatestBlockNumber,
@@ -7,7 +7,6 @@ import {
     handleRedelegation,
     decodePermissions,
 } from './utils'
-import { Permission } from '@towns-protocol/web3'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
