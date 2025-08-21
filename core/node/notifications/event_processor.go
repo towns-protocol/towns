@@ -462,182 +462,212 @@ func (p *MessageToNotificationsProcessor) sendNotification(
 		receivers = members.ToSlice()
 	}
 
+	// Send Web Push notifications
 	if len(userPref.Subscriptions.WebPush) > 0 {
-		eventBytesHex := hex.EncodeToString(eventBytes)
-
-		webPayload := map[string]interface{}{
-			"channelId": hex.EncodeToString(channelID[:]),
-			"kind":      kind,
-			"senderId":  common.BytesToAddress(event.Event.CreatorAddress),
-		}
-
-		if len(eventBytesHex) <= MaxWebPushAllowedNotificationStreamEventPayloadSize {
-			webPayload["event"] = eventBytesHex
-		}
-
-		if len(receivers) > 0 {
-			webPayload["recipients"] = receivers
-		}
-
-		if spaceID != nil {
-			webPayload["spaceId"] = spaceID.String()
-		}
-
-		if threadID := event.Event.GetTags().GetThreadId(); len(threadID) > 0 {
-			webPayload["threadId"] = hex.EncodeToString(threadID)
-		}
-
-		for _, sub := range userPref.Subscriptions.WebPush {
-			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
-				p.log.Warnw("Ignore WebPush subscription due to no activity",
-					"user", user,
-					"event", event.Hash,
-					"channelID", channelID,
-					"lastSeen", sub.LastSeen,
-					"since", time.Since(sub.LastSeen),
-					"sub.expiration", p.subscriptionExpiration,
-				)
-				continue
-			}
-
-			subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub, event, webPayload)
-			if err == nil {
-				p.log.Debugw("Successfully sent web push notification",
-					"user", user,
-					"event", event.Hash,
-					"channelID", channelID,
-					"user", user,
-				)
-			} else if subscriptionExpired {
-				if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub, sub.App); err != nil {
-					p.log.Errorw("Unable to remove expired webpush subscription",
-						"user", userPref.UserID, "error", err)
-				} else {
-					p.log.Infow("Removed expired webpush subscription", "user", userPref.UserID)
-				}
-			} else {
-				p.log.Errorw("Unable to send web push notification",
-					"user", user,
-					"error", err,
-					"event", event.Hash,
-					"channelID", channelID,
-				)
-			}
-		}
+		p.sendWebPushNotifications(ctx, user, userPref, spaceID, channelID, event, kind, eventBytes, receivers)
 	}
 
+	// Send APNS notifications
 	if len(userPref.Subscriptions.APNPush) > 0 {
-		// eventHash is used by iOS/OSX to route the user on the device notification to the message
-		eventHash := hex.EncodeToString(crypto.TownsHashForEvents.Hash(eventBytes).Bytes())
+		p.sendAPNSNotifications(ctx, user, userPref, spaceID, channelID, event, kind, eventBytes, receivers)
+	}
+}
 
-		for _, sub := range userPref.Subscriptions.APNPush {
-			if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
-					p.log.Errorw("Unable to remove expired APN subscription",
-						"user", userPref.UserID, "error", err)
-					continue
-				}
+func (p *MessageToNotificationsProcessor) sendWebPushNotifications(
+	ctx context.Context,
+	user common.Address,
+	userPref *types.UserPreferences,
+	spaceID *shared.StreamId,
+	channelID shared.StreamId,
+	event *events.ParsedEvent,
+	kind string,
+	eventBytes []byte,
+	receivers []string,
+) {
+	eventBytesHex := hex.EncodeToString(eventBytes)
 
-				p.log.Infow("Removed APN subscription due to no activity",
-					"user", user,
-					"event", event.Hash,
-					"channelID", channelID,
-					"lastSeen", sub.LastSeen,
-					"since", time.Since(sub.LastSeen),
-					"sub.expiration", p.subscriptionExpiration,
+	webPayload := map[string]interface{}{
+		"channelId": hex.EncodeToString(channelID[:]),
+		"kind":      kind,
+		"senderId":  common.BytesToAddress(event.Event.CreatorAddress),
+	}
+
+	if len(eventBytesHex) <= MaxWebPushAllowedNotificationStreamEventPayloadSize {
+		webPayload["event"] = eventBytesHex
+	}
+
+	if len(receivers) > 0 {
+		webPayload["recipients"] = receivers
+	}
+
+	if spaceID != nil {
+		webPayload["spaceId"] = spaceID.String()
+	}
+
+	if threadID := event.Event.GetTags().GetThreadId(); len(threadID) > 0 {
+		webPayload["threadId"] = hex.EncodeToString(threadID)
+	}
+
+	for _, sub := range userPref.Subscriptions.WebPush {
+		if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
+			p.log.Warnw("Ignore WebPush subscription due to no activity",
+				"user", user,
+				"event", event.Hash,
+				"channelID", channelID,
+				"lastSeen", sub.LastSeen,
+				"since", time.Since(sub.LastSeen),
+				"sub.expiration", p.subscriptionExpiration,
+			)
+			continue
+		}
+
+		subscriptionExpired, err := p.sendWebPushNotification(ctx, channelID, sub, event, webPayload)
+		if err == nil {
+			p.log.Debugw("Successfully sent web push notification",
+				"user", user,
+				"event", event.Hash,
+				"channelID", channelID,
+				"user", user,
+			)
+		} else if subscriptionExpired {
+			if err := p.cache.RemoveExpiredWebPushSubscription(ctx, userPref.UserID, sub.Sub, sub.App); err != nil {
+				p.log.Errorw("Unable to remove expired webpush subscription",
+					"user", userPref.UserID, "error", err)
+			} else {
+				p.log.Infow("Removed expired webpush subscription", "user", userPref.UserID)
+			}
+		} else {
+			p.log.Errorw("Unable to send web push notification",
+				"user", user,
+				"error", err,
+				"event", event.Hash,
+				"channelID", channelID,
+			)
+		}
+	}
+}
+
+func (p *MessageToNotificationsProcessor) sendAPNSNotifications(
+	ctx context.Context,
+	user common.Address,
+	userPref *types.UserPreferences,
+	spaceID *shared.StreamId,
+	channelID shared.StreamId,
+	event *events.ParsedEvent,
+	kind string,
+	eventBytes []byte,
+	receivers []string,
+) {
+	// eventHash is used by iOS/OSX to route the user on the device notification to the message
+	eventHash := hex.EncodeToString(crypto.TownsHashForEvents.Hash(eventBytes).Bytes())
+
+	for _, sub := range userPref.Subscriptions.APNPush {
+		if time.Since(sub.LastSeen) >= p.subscriptionExpiration {
+			if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
+				p.log.Errorw("Unable to remove expired APN subscription",
+					"user", userPref.UserID, "error", err)
+				continue
+			}
+
+			p.log.Infow("Removed APN subscription due to no activity",
+				"user", user,
+				"event", event.Hash,
+				"channelID", channelID,
+				"lastSeen", sub.LastSeen,
+				"since", time.Since(sub.LastSeen),
+				"sub.expiration", p.subscriptionExpiration,
+			)
+
+			continue
+		}
+
+		var (
+			apnPayload map[string]interface{}
+			err        error
+		)
+
+		switch sub.PushVersion {
+		case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_UNSPECIFIED:
+			p.log.Errorw("Unspecified APN push version in subscription", "deviceToken", sub.DeviceToken)
+			continue
+		case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1:
+			apnPayload, err = p.apnPayloadV1(channelID, spaceID, event, kind, receivers)
+		case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2:
+			apnPayload, err = p.apnPayloadV2(channelID, spaceID, event, kind, eventHash, receivers)
+		default:
+			p.log.Warnw("Ignore APN subscription due to unsupported push payload format",
+				"pushVersion", sub.PushVersion)
+			continue
+		}
+
+		if err != nil {
+			p.log.Errorw("Unable to prepare APN payload", "error", err)
+			continue
+		}
+
+		subscriptionExpired, statusCode, err := p.sendAPNNotification(
+			channelID,
+			sub,
+			event,
+			apnPayload,
+			sub.PushVersion,
+		)
+
+		// APN can return an error that the payload is too large, drop the (stream)event from the payload and retry.
+		// The client can handle notifications with no (stream)event and doesn't show a preview to the user.
+		if err != nil && statusCode == http.StatusRequestEntityTooLarge {
+			if _, exists := apnPayload["event"]; exists {
+				delete(apnPayload, "event")
+				p.log.Infow("Payload too large, retry notification with event stripped", "event", event.Hash)
+				subscriptionExpired, statusCode, err = p.sendAPNNotification(
+					channelID,
+					sub,
+					event,
+					apnPayload,
+					sub.PushVersion,
 				)
 
-				continue
-			}
-
-			var (
-				apnPayload map[string]interface{}
-				err        error
-			)
-
-			switch sub.PushVersion {
-			case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_UNSPECIFIED:
-				p.log.Errorw("Unspecified APN push version in subscription", "deviceToken", sub.DeviceToken)
-				continue
-			case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1:
-				apnPayload, err = p.apnPayloadV1(channelID, spaceID, event, kind, receivers)
-			case NotificationPushVersion_NOTIFICATION_PUSH_VERSION_2:
-				apnPayload, err = p.apnPayloadV2(channelID, spaceID, event, kind, eventHash, receivers)
-			default:
-				p.log.Warnw("Ignore APN subscription due to unsupported push payload format",
-					"pushVersion", sub.PushVersion)
-				continue
-			}
-
-			if err != nil {
-				p.log.Errorw("Unable to prepare APN payload", "error", err)
-				continue
-			}
-
-			subscriptionExpired, statusCode, err := p.sendAPNNotification(
-				channelID,
-				sub,
-				event,
-				apnPayload,
-				sub.PushVersion,
-			)
-
-			// APN can return an error that the payload is too large, drop the (stream)event from the payload and retry.
-			// The client can handle notifications with no (stream)event and doesn't show a preview to the user.
-			if err != nil && statusCode == http.StatusRequestEntityTooLarge {
-				if _, exists := apnPayload["event"]; exists {
-					delete(apnPayload, "event")
-					p.log.Infow("Payload too large, retry notification with event stripped", "event", event.Hash)
-					subscriptionExpired, statusCode, err = p.sendAPNNotification(
-						channelID,
-						sub,
-						event,
-						apnPayload,
-						sub.PushVersion,
-					)
-
-					if err != nil && statusCode == http.StatusRequestEntityTooLarge {
-						if _, exists := apnPayload["tags"]; exists {
-							delete(apnPayload, "tags")
-							p.log.Infow("Payload too large, retry notification with tags stripped", "event", event.Hash)
-							subscriptionExpired, _, err = p.sendAPNNotification(
-								channelID,
-								sub,
-								event,
-								apnPayload,
-								sub.PushVersion,
-							)
-						}
+				if err != nil && statusCode == http.StatusRequestEntityTooLarge {
+					if _, exists := apnPayload["tags"]; exists {
+						delete(apnPayload, "tags")
+						p.log.Infow("Payload too large, retry notification with tags stripped", "event", event.Hash)
+						subscriptionExpired, _, err = p.sendAPNNotification(
+							channelID,
+							sub,
+							event,
+							apnPayload,
+							sub.PushVersion,
+						)
 					}
 				}
 			}
+		}
 
-			if err == nil {
-				p.log.Debugw("Successfully sent APN notification",
-					"user", user,
-					"event", event.Hash,
-					"channelID", channelID,
-					"deviceToken", sub.DeviceToken,
-					"env", sub.Environment,
-					"version", sub.PushVersion,
-				)
-			} else if !subscriptionExpired {
-				p.log.Errorw("Unable to send APN notification",
-					"user", user,
-					"user", user,
-					"event", event.Hash,
-					"channelID", channelID,
-					"deviceToken", sub.DeviceToken,
-					"env", sub.Environment,
-					"version", sub.PushVersion,
-					"error", err)
+		if err == nil {
+			p.log.Debugw("Successfully sent APN notification",
+				"user", user,
+				"event", event.Hash,
+				"channelID", channelID,
+				"deviceToken", sub.DeviceToken,
+				"env", sub.Environment,
+				"version", sub.PushVersion,
+			)
+		} else if !subscriptionExpired {
+			p.log.Errorw("Unable to send APN notification",
+				"user", user,
+				"user", user,
+				"event", event.Hash,
+				"channelID", channelID,
+				"deviceToken", sub.DeviceToken,
+				"env", sub.Environment,
+				"version", sub.PushVersion,
+				"error", err)
+		} else {
+			if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
+				p.log.Errorw("Unable to remove expired APN subscription",
+					"user", userPref.UserID, "error", err)
 			} else {
-				if err := p.cache.RemoveAPNSubscription(ctx, sub.DeviceToken, userPref.UserID); err != nil {
-					p.log.Errorw("Unable to remove expired APN subscription",
-						"user", userPref.UserID, "error", err)
-				} else {
-					p.log.Infow("Removed expired APN subscription", "user", userPref.UserID)
-				}
+				p.log.Infow("Removed expired APN subscription", "user", userPref.UserID)
 			}
 		}
 	}
