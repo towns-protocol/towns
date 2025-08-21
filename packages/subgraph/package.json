@@ -32,7 +32,7 @@
         "eslint-plugin-prettier": "^5.2.6",
         "prettier": "^3.5.3",
         "tsx": "^4.7.1",
-        "typescript": "^5.8.2"
+        "typescript": "^5.9.2"
     },
     "engines": {
         "node": ">=18.14"

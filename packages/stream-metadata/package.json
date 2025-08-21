@@ -66,7 +66,7 @@
 		"eslint-plugin-prettier": "^5.2.6",
 		"fake-indexeddb": "^6.0.1",
 		"prettier": "^3.5.3",
-		"typescript": "^5.8.2",
+		"typescript": "^5.9.2",
 		"vitest": "^3.2.3"
 	}
 }

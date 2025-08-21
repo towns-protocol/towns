@@ -65,7 +65,7 @@
         "prettier": "^3.5.3",
         "prettier-plugin-tailwindcss": "^0.4.1",
         "tailwindcss": "^3.4.4",
-        "typescript": "^5.8.2",
+        "typescript": "^5.9.2",
         "vite": "npm:rolldown-vite@6.3.21",
         "vite-plugin-checker": "^0.8.0",
         "vite-plugin-wasm": "^3.4.1",

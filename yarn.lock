@@ -8790,7 +8790,7 @@ __metadata:
     hono: ^4.7.11
     jsonwebtoken: ^9.0.2
     nanoevents: ^9.1.0
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     viem: ^2.29.3
     vitest: ^3.2.3
   peerDependencies:
@@ -8855,7 +8855,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     ethereum-cryptography: ^3.2.0
     ts-node: ^10.9.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -8892,7 +8892,7 @@ __metadata:
     nanoid: ^4.0.0
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -8918,7 +8918,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     hono: ^4.7.11
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   languageName: unknown
   linkType: soft
 
@@ -8937,7 +8937,7 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
     hono: ^4.7.11
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   languageName: unknown
   linkType: soft
 
@@ -8957,7 +8957,7 @@ __metadata:
     hono: ^4.7.11
     openai: ^5.7.0
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   languageName: unknown
   linkType: soft
 
@@ -8980,7 +8980,7 @@ __metadata:
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     zod: ^3.21.4
   languageName: unknown
   linkType: soft
@@ -9045,7 +9045,7 @@ __metadata:
     tailwind-merge: ^2.3.0
     tailwindcss: ^3.4.4
     tailwindcss-animate: ^1.0.7
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     use-stick-to-bottom: ^1.1.0
     viem: ^2.29.3
     vite: "npm:rolldown-vite@6.3.21"
@@ -9084,7 +9084,7 @@ __metadata:
     "@types/node": ^20.14.8
     lodash.debounce: ^4.0.8
     ts-node: ^10.9.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9113,7 +9113,7 @@ __metadata:
     react-dom: ^19.1.0
     ts-morph: ^24.0.0
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   peerDependencies:
     react: ^18.2 || ^19.0
     typescript: ^5
@@ -9133,7 +9133,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     eslint-plugin-tsdoc: ^0.3.0
     tsdown: ^0.12.3
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   peerDependencies:
     "@connectrpc/connect-node": ">=2.0.0"
@@ -9163,7 +9163,7 @@ __metadata:
     eslint-plugin-tsdoc: ^0.3.0
     happy-dom: ^15.11.7
     tsdown: ^0.12.3
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9206,7 +9206,7 @@ __metadata:
     p-limit: ^6.1.0
     seedrandom: ^3.0.5
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vite-plugin-wasm: ^3.4.1
     vitest: ^3.2.3
     vitest-fetch-mock: ^0.4.3
@@ -9252,7 +9252,7 @@ __metadata:
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     uuid: ^8.3.2
     vitest: ^3.2.3
     zod: ^3.21.4
@@ -9289,7 +9289,7 @@ __metadata:
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9309,7 +9309,7 @@ __metadata:
     ponder: ^0.11.17
     prettier: ^3.5.3
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     viem: ^2.29.3
   languageName: unknown
   linkType: soft
@@ -9333,7 +9333,7 @@ __metadata:
     lru-cache: ^11.0.1
     nanoid: ^4.0.0
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     viem: ^2.29.3
     vitest: ^3.2.3
     zod: ^3.21.4
@@ -9352,7 +9352,7 @@ __metadata:
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     uuid: ^8.3.2
     viem: ^2.29.3
     zod: ^3.21.4
@@ -13630,7 +13630,7 @@ __metadata:
     picocolors: ^1.1.1
     prompts: ^2.4.2
     tsup: ^8.3.5
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   bin:
     create-towns-protocol-app: index.js
   languageName: unknown
@@ -29319,7 +29319,7 @@ __metadata:
     prompts: ^2.4.2
     tsup: ^8.3.5
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
   bin:
     towns-bot: index.js
   languageName: unknown
@@ -29345,7 +29345,7 @@ __metadata:
     ts-node: ^10.9.1
     turbo: ^2.5.4
     typechain: ^8.1.1
-    typescript: ^5.8.2
+    typescript: ^5.9.2
     vitest: ^3.2.3
     wait-on: ^7.0.1
   languageName: unknown
@@ -30031,7 +30031,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.8.2, typescript@npm:^5.8.2":
+"typescript@npm:5.8.2":
   version: 5.8.2
   resolution: "typescript@npm:5.8.2"
   bin:
@@ -30061,6 +30061,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^5.9.2":
+  version: 5.9.2
+  resolution: "typescript@npm:5.9.2"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: f619cf6773cfe31409279711afd68cdf0859780006c50bc2a7a0c3227f85dea89a3b97248846326f3a17dad72ea90ec27cf61a8387772c680b2252fd02d8497b
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@5.3.3#~builtin<compat/typescript>":
   version: 5.3.3
   resolution: "typescript@patch:typescript@npm%3A5.3.3#~builtin<compat/typescript>::version=5.3.3&hash=e012d7"
@@ -30081,7 +30091,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@5.8.2#~builtin<compat/typescript>, typescript@patch:typescript@^5.8.2#~builtin<compat/typescript>":
+"typescript@patch:typescript@5.8.2#~builtin<compat/typescript>":
   version: 5.8.2
   resolution: "typescript@patch:typescript@npm%3A5.8.2#~builtin<compat/typescript>::version=5.8.2&hash=d69c25"
   bin:
@@ -30108,6 +30118,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 1f8f3b6aaea19f0f67cba79057674ba580438a7db55057eb89cc06950483c5d632115c14077f6663ea76fd09fce3c190e6414bb98582ec80aa5a4eaf345d5b68
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@^5.9.2#~builtin<compat/typescript>":
+  version: 5.9.2
+  resolution: "typescript@patch:typescript@npm%3A5.9.2#~builtin<compat/typescript>::version=5.9.2&hash=d69c25"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: e42a701947325500008334622321a6ad073f842f5e7d5e7b588a6346b31fdf51d56082b9ce5cef24312ecd3e48d6c0d4d44da7555f65e2feec18cf62ec540385
   languageName: node
   linkType: hard
 
