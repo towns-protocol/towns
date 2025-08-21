@@ -2,11 +2,15 @@ package types
 
 import (
 	"net/url"
-	"strings"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
+
+// We allow up to 8K length of URLs to external resources for bot profile image links, etc.
+const MAX_RESOURCE_URL_LENGTH = 8192
+
+const MAX_SLASH_COMMANDS = 25
 
 type SlashCommand struct {
 	Name        string `json:"name"`
@@ -97,19 +101,15 @@ var validExternalUrlSchemes = map[string]struct{}{
 	"http":  {},
 }
 
-// validExtensions defines allowed file extensions
-var validExtensions = map[string]struct{}{
-	"png":  {},
-	"jpg":  {},
-	"jpeg": {},
-	"gif":  {},
-	"webp": {},
-	"svg":  {},
-}
-
 func ValidateImageFileUrl(urlStr string) error {
 	if urlStr == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
+	}
+
+	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+			Tag("url_length", len(urlStr)).
+			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
 	}
 
 	parsedUrl, err := url.Parse(urlStr)
@@ -125,31 +125,16 @@ func ValidateImageFileUrl(urlStr string) error {
 			Tag("scheme", parsedUrl.Scheme)
 	}
 
-	// Check if path exists
-	if parsedUrl.Path == "" || parsedUrl.Path == "/" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid path to a file").
-			Tag("url", urlStr)
-	}
-
-	// Extract file extension from path
-	path := parsedUrl.Path
-	lastDot := strings.LastIndex(path, ".")
-	if lastDot == -1 || lastDot == len(path)-1 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a valid extension").
-			Tag("url", urlStr)
-	}
-
-	extension := strings.ToLower(path[lastDot+1:])
-	if _, extOk := validExtensions[extension]; !extOk {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a supported extension (png, jpg, jpeg, gif, webp, svg)").
-			Tag("url", urlStr).
-			Tag("extension", extension)
-	}
-
 	return nil
 }
 
 func ValidateExternalUrl(urlStr string) error {
+	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+			Tag("url_length", len(urlStr)).
+			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
+	}
+
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
@@ -205,9 +190,11 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 
 	// Validate slash commands
 	slashCommands := metadata.GetSlashCommands()
-	if len(slashCommands) > 25 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "cannot have more than 25 slash commands").
-			Tag("commandCount", len(slashCommands))
+	if len(slashCommands) > MAX_SLASH_COMMANDS {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT,
+			"app metadata slash command count exceeds maximum").
+			Tag("commandCount", len(slashCommands)).
+			Tag("maximum", MAX_SLASH_COMMANDS)
 	}
 
 	// Check for duplicate command names
