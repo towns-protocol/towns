@@ -191,8 +191,8 @@ describe('Bot', { sequential: true }, () => {
                 username: BOT_USERNAME,
                 displayName: 'Bot Witness of Infinity',
                 description: BOT_DESCRIPTION,
-                avatarUrl: 'https://placehold.co/64x64.png',
-                imageUrl: 'https://placehold.co/600x600.png',
+                avatarUrl: 'https://placehold.co/64x64',
+                imageUrl: 'https://placehold.co/600x600',
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)

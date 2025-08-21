@@ -2,7 +2,6 @@ package types
 
 import (
 	"net/url"
-	"strings"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -97,16 +96,6 @@ var validExternalUrlSchemes = map[string]struct{}{
 	"http":  {},
 }
 
-// validExtensions defines allowed file extensions
-var validExtensions = map[string]struct{}{
-	"png":  {},
-	"jpg":  {},
-	"jpeg": {},
-	"gif":  {},
-	"webp": {},
-	"svg":  {},
-}
-
 func ValidateImageFileUrl(urlStr string) error {
 	if urlStr == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
@@ -123,27 +112,6 @@ func ValidateImageFileUrl(urlStr string) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid scheme (https, http, or ipfs)").
 			Tag("url", urlStr).
 			Tag("scheme", parsedUrl.Scheme)
-	}
-
-	// Check if path exists
-	if parsedUrl.Path == "" || parsedUrl.Path == "/" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid path to a file").
-			Tag("url", urlStr)
-	}
-
-	// Extract file extension from path
-	path := parsedUrl.Path
-	lastDot := strings.LastIndex(path, ".")
-	if lastDot == -1 || lastDot == len(path)-1 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a valid extension").
-			Tag("url", urlStr)
-	}
-
-	extension := strings.ToLower(path[lastDot+1:])
-	if _, extOk := validExtensions[extension]; !extOk {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must point to a file with a supported extension (png, jpg, jpeg, gif, webp, svg)").
-			Tag("url", urlStr).
-			Tag("extension", extension)
 	}
 
 	return nil
