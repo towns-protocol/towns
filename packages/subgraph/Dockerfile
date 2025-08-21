@@ -35,6 +35,11 @@ COPY buf.yaml ./
 COPY packages/subgraph ./packages/subgraph/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/contracts ./packages/contracts/
+COPY packages/web3 ./packages/web3/
+COPY packages/generated ./packages/generated/
+COPY packages/dlog ./packages/dlog/
+COPY packages/proto ./packages/proto/
+COPY protocol ./protocol/
 
 # Add entrypoint script
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
