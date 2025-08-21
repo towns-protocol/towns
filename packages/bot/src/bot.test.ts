@@ -681,6 +681,28 @@ describe('Bot', { sequential: true }, () => {
         },
     )
 
+    it('bot should be able to get a tip', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+
+        const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // bob tips the bot
+        await bobDefaultChannel.sendTip(
+            messageId,
+            {
+                amount: ethers.utils.parseUnits('0.01').toBigInt(),
+                currency: ETH_ADDRESS,
+                chainId: 1,
+                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
+            },
+            bob.signer,
+        )
+        // app address is the address of the bot contract (not the bot client, since client is per installation)
+        const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
+        expect(balance).toBeGreaterThan(balanceBefore)
+    })
+
     it('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
             bob.signer,
@@ -696,25 +718,5 @@ describe('Bot', { sequential: true }, () => {
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
-    })
-
-    it('bot should be able to get a tip', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
-        // bob tips the bot
-        await bobDefaultChannel.sendTip(
-            messageId,
-            {
-                amount: ethers.utils.parseUnits('0.01').toBigInt(),
-                currency: ETH_ADDRESS,
-                chainId: 1,
-                receiver: bot.botId,
-            },
-            bob.signer,
-        )
-        // balance of app address should be 0.01
-        // app address is the address of the bot contract (not the bot client, since client is per installation)
-        const balance = await ethersProvider.getBalance(appAddress)
-        expect(balance).toBe(ethers.utils.parseUnits('0.01').toBigInt())
     })
 })
