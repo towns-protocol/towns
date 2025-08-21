@@ -611,37 +611,32 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
     })
 
-    // TODO: I couldnt get onTip to work somehow
-    // ConnectError: [failed_precondition] AddEvent: (62:DOWNSTREAM_NETWORK_ERROR)
-    // <base 0: unavailable: AddEvent: (14:UNAVAILABLE) Forwarding disabled by request header
-    // nodeAddress = 0x9CfBCA75Bc64E67Ff415C60367A78DC110BC9239
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 8.350417ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    // >>base 0 end
-    // nodeAddress = 0xC0C4e900678EcA2d9C17d7771351BDf7a225Ca1d
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 9.889292ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    it.skip('onTip should be triggered wfhen a tip is received', async () => {
+    it('onTip should be triggered when a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
         bot.onTip((_h, e) => {
             receivedTipEvents.push(e)
         })
+
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+
+        const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // bob tips the bot
         await bobDefaultChannel.sendTip(
             messageId,
             {
-                amount: ethers.utils.parseUnits('0.1').toBigInt(),
+                amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
-                chainId: 1,
-                receiver: bot.botId,
+                chainId: riverConfig.base.chainConfig.chainId,
+                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
             bob.signer,
         )
+        // app address is the address of the bot contract (not the bot client, since client is per installation)
+        const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
+        expect(balance).toBeGreaterThan(balanceBefore)
         await waitFor(() => receivedTipEvents.length > 0)
         expect(receivedTipEvents.find((x) => x.eventId === messageId)).toBeDefined()
     })
@@ -680,28 +675,6 @@ describe('Bot', { sequential: true }, () => {
             expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
         },
     )
-
-    it('bot should be able to get a tip', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
-
-        const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
-        // bob tips the bot
-        await bobDefaultChannel.sendTip(
-            messageId,
-            {
-                amount: ethers.utils.parseUnits('0.01').toBigInt(),
-                currency: ETH_ADDRESS,
-                chainId: 1,
-                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
-            },
-            bob.signer,
-        )
-        // app address is the address of the bot contract (not the bot client, since client is per installation)
-        const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
-        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
-        expect(balance).toBeGreaterThan(balanceBefore)
-    })
 
     it('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
