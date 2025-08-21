@@ -101,6 +101,12 @@ func ValidateImageFileUrl(urlStr string) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
 	}
 
+	if len(urlStr) > 8192 {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+			Tag("url_length", len(urlStr)).
+			Tag("max_length", 8192)
+	}
+
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
@@ -118,6 +124,12 @@ func ValidateImageFileUrl(urlStr string) error {
 }
 
 func ValidateExternalUrl(urlStr string) error {
+	if len(urlStr) > 8192 {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+			Tag("url_length", len(urlStr)).
+			Tag("max_length", 8192)
+	}
+
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
 		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
