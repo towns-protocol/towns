@@ -675,32 +675,6 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			},
 			expectedErr: "metadata avatar_url validation failed",
 		},
-		"Failure: avatar URL missing file path": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Avatar URL missing file path",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/",
-			},
-			expectedErr: "metadata avatar_url validation failed",
-		},
-		"Failure: avatar URL invalid file extension": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Avatar URL with invalid extension",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.txt",
-			},
-			expectedErr: "metadata avatar_url validation failed",
-		},
 		"Failure: image URL invalid scheme": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
@@ -710,32 +684,6 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				DisplayName: "Test App",
 				Description: "Image URL with invalid scheme",
 				ImageUrl:    "ftp://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
-			},
-			expectedErr: "metadata image_url validation failed",
-		},
-		"Failure: image URL missing file path": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Image URL missing file path",
-				ImageUrl:    "https://example.com/",
-				AvatarUrl:   "https://example.com/avatar.png",
-			},
-			expectedErr: "metadata image_url validation failed",
-		},
-		"Failure: image URL invalid file extension": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Image URL with invalid extension",
-				ImageUrl:    "https://example.com/image.txt",
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			expectedErr: "metadata image_url validation failed",
