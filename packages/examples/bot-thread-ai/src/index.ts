@@ -20,11 +20,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
 
-const bot = await makeTownsBot(
-    process.env.APP_PRIVATE_DATA_BASE64!,
-    process.env.JWT_SECRET!,
-    process.env.RIVER_ENV,
-)
+const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA_BASE64!, process.env.JWT_SECRET!)
 
 bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
     console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)

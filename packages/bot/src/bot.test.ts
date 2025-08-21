@@ -171,6 +171,7 @@ describe('Bot', { sequential: true }, () => {
                 create(AppPrivateDataSchema, {
                     privateKey: botWallet.privateKey,
                     encryptionDevice: exportedDevice,
+                    env: process.env.RIVER_ENV!,
                 }),
             ),
         )
@@ -191,8 +192,8 @@ describe('Bot', { sequential: true }, () => {
                 username: BOT_USERNAME,
                 displayName: 'Bot Witness of Infinity',
                 description: BOT_DESCRIPTION,
-                avatarUrl: 'https://placehold.co/64x64.png',
-                imageUrl: 'https://placehold.co/600x600.png',
+                avatarUrl: 'https://placehold.co/64x64',
+                imageUrl: 'https://placehold.co/600x600',
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -200,7 +201,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()

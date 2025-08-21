@@ -77,7 +77,7 @@ export async function handleRedelegation(
 ): Promise<void> {
     try {
         if (oldDelegatee) {
-            await handleStakeToSpace(context, oldDelegatee, -amount)
+            await handleStakeToSpace(context, oldDelegatee, 0n - amount)
         }
         if (newDelegatee) {
             await handleStakeToSpace(context, newDelegatee, amount)

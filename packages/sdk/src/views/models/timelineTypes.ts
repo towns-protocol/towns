@@ -103,6 +103,13 @@ export type TimelineEvent_OneOf =
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
 
+export type TimelineEventWithContent<T extends TimelineEvent_OneOf> = Omit<
+    TimelineEvent,
+    'content'
+> & {
+    content: T
+}
+
 export enum RiverTimelineEvent {
     ChannelCreate = 'm.channel.create',
     ChannelMessage = 'm.channel.message',
@@ -374,6 +381,13 @@ export interface ChannelMessageEvent {
     editsEventId?: string
     content: ChannelMessageEventContentOneOf
     attachments?: Attachment[]
+}
+
+export type ChannelMessageEventWithContent<T extends ChannelMessageEventContentOneOf> = Omit<
+    ChannelMessageEvent,
+    'content'
+> & {
+    content: T
 }
 
 // original event: the event that was redacted

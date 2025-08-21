@@ -28,6 +28,8 @@ RUN corepack enable
 # Copy monorepo configuration from root
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
+COPY packages/tsconfig.base.json ./packages/
+COPY buf.yaml ./
 
 # Copy the required packages
 COPY packages/subgraph ./packages/subgraph/
@@ -52,6 +54,15 @@ WORKDIR /river
 
 # Generate contract typings
 RUN yarn workspace @towns-protocol/contracts typings
+
+# Build proto package (dependency of dlog)
+RUN yarn workspace @towns-protocol/proto build
+
+# Build dlog package (dependency of web3)
+RUN yarn workspace @towns-protocol/dlog build
+
+# Build web3 package
+RUN yarn workspace @towns-protocol/web3 build
 
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph
