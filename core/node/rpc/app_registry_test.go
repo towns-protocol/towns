@@ -852,7 +852,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					return commands
 				}(),
 			},
-			expectedErr: "cannot have more than 25 slash commands",
+			expectedErr: "app metadata slash command count exceeds maximum",
 		},
 		"Failure: empty command description": {
 			appId:                appWallet.Address[:],
@@ -2188,7 +2188,7 @@ func TestAppRegistry_Register(t *testing.T) {
 				}(),
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "cannot have more than 25 slash commands",
+			expectedErr:          "app metadata slash command count exceeds maximum",
 		},
 	}
 	for name, tc := range tests {

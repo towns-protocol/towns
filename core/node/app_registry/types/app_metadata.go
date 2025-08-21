@@ -7,6 +7,11 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
+// We allow up to 8K length of URLs to external resources for bot profile image links, etc.
+const MAX_RESOURCE_URL_LENGTH = 8192
+
+const MAX_SLASH_COMMANDS = 25
+
 type SlashCommand struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -101,10 +106,10 @@ func ValidateImageFileUrl(urlStr string) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
 	}
 
-	if len(urlStr) > 8192 {
+	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
 			Tag("url_length", len(urlStr)).
-			Tag("max_length", 8192)
+			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
 	}
 
 	parsedUrl, err := url.Parse(urlStr)
@@ -124,10 +129,10 @@ func ValidateImageFileUrl(urlStr string) error {
 }
 
 func ValidateExternalUrl(urlStr string) error {
-	if len(urlStr) > 8192 {
+	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
 			Tag("url_length", len(urlStr)).
-			Tag("max_length", 8192)
+			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
 	}
 
 	parsedUrl, err := url.Parse(urlStr)
@@ -185,9 +190,11 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 
 	// Validate slash commands
 	slashCommands := metadata.GetSlashCommands()
-	if len(slashCommands) > 25 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "cannot have more than 25 slash commands").
-			Tag("commandCount", len(slashCommands))
+	if len(slashCommands) > MAX_SLASH_COMMANDS {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT,
+			"app metadata slash command count exceeds maximum").
+			Tag("commandCount", len(slashCommands)).
+			Tag("maximum", MAX_SLASH_COMMANDS)
 	}
 
 	// Check for duplicate command names
