@@ -12,6 +12,7 @@ export interface UserStreamModel {
     tipsSentCount: Record<string, bigint | undefined>
     tipsReceivedCount: Record<string, bigint | undefined>
     tokenTransfers: BlockchainTransaction_TokenTransfer[]
+    appAddress?: Uint8Array
 }
 
 export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
@@ -127,6 +128,19 @@ export class UserStreamsView extends ObservableRecord<string, UserStreamModel> {
                         ...prevStream.tipsReceivedCount,
                         [currency]: (prevStream.tipsReceivedCount[currency] ?? 0n) + 1n,
                     },
+                },
+            }
+        })
+    }
+
+    setAppAddress(userStreamId: string, appAddress: Uint8Array | undefined) {
+        this.set((prev) => {
+            const prevStream = prev[userStreamId] ?? this.makeDefault(userStreamId)
+            return {
+                ...prev,
+                [userStreamId]: {
+                    ...prevStream,
+                    appAddress,
                 },
             }
         })

@@ -7,8 +7,9 @@ import {
     PlainMessage,
 } from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger, bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
+import { makeUserStreamId } from '../../../id'
 import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
@@ -242,7 +243,13 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
         signer: ethers.Signer,
     ) {
-        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tip.receiver)
+        // Check if the receiver is a bot with an app address and redirect tip if present
+        const receiverUserStreamId = makeUserStreamId(tip.receiver)
+        const receiverUserStream = this.riverConnection.client?.stream(receiverUserStreamId)
+        const appAddress = receiverUserStream?.view.userContent.appAddress
+        const tipRecipient = appAddress ? bin_toHexString(appAddress) : tip.receiver
+
+        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tipRecipient)
         if (!tokenId) {
             throw new Error('tokenId not found')
         }
@@ -254,7 +261,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 amount: tip.amount,
                 messageId,
                 channelId: this.data.id,
-                receiver: tip.receiver,
+                receiver: tipRecipient,
             },
             signer,
         )
