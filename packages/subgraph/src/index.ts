@@ -407,7 +407,7 @@ ponder.on('BaseRegistry:Withdraw', async ({ event, context }) => {
                 existingStake.amount >= withdrawAmount ? existingStake.amount - withdrawAmount : 0n
 
             if (existingStake.delegatee) {
-                await handleStakeToSpace(context, existingStake.delegatee, -withdrawAmount)
+                await handleStakeToSpace(context, existingStake.delegatee, 0n - withdrawAmount)
             }
 
             await context.db.sql
