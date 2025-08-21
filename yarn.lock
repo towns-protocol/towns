@@ -9300,6 +9300,7 @@ __metadata:
   dependencies:
     "@towns-protocol/contracts": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
     eslint: ^8.57.1
     eslint-config-ponder: ^0.9.27

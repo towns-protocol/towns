@@ -14,6 +14,7 @@ import {
     xChainAbi,
     swapFacetAbi,
     swapRouterAbi,
+    iAppRegistryAbi,
 } from '@towns-protocol/contracts/typings'
 
 // Import our contract address utility
@@ -48,6 +49,11 @@ if (!swapRouter) {
 const riverAirdrop = getContractAddress('riverAirdrop')
 if (!riverAirdrop) {
     throw new Error('River airdrop address not found')
+}
+
+const appRegistry = getContractAddress('appRegistry')
+if (!appRegistry) {
+    throw new Error('App registry address not found')
 }
 
 export default createConfig({
@@ -110,6 +116,12 @@ export default createConfig({
         SwapRouter: {
             abi: swapRouterAbi,
             address: swapRouter,
+            startBlock,
+            chain: 'anvil',
+        },
+        AppRegistry: {
+            abi: iAppRegistryAbi,
+            address: appRegistry,
             startBlock,
             chain: 'anvil',
         },

@@ -1,7 +1,12 @@
-import { eq } from 'ponder'
-import { ponder, type Context } from 'ponder:registry'
+import { eq, sql } from 'ponder'
+import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
-import { getLatestBlockNumber, handleStakeToSpace, handleRedelegation } from './utils'
+import {
+    getLatestBlockNumber,
+    handleStakeToSpace,
+    handleRedelegation,
+    decodePermissions,
+} from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -503,5 +508,183 @@ ponder.on('RiverAirdrop:Stake', async ({ event, context }) => {
         }
     } catch (error) {
         console.error(`Error processing RiverAirdrop:Stake at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('AppRegistry:AppCreated', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const { AppRegistry } = context.contracts
+
+    try {
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, event.args.app),
+        })
+        if (existingApp) {
+            console.warn(`App already exists for AppRegistry:AppCreated`, event.args.uid)
+            return
+        }
+
+        const appDetails = await context.client.readContract({
+            abi: AppRegistry.abi,
+            address: AppRegistry.address,
+            functionName: 'getAppById',
+            args: [event.args.uid],
+            blockNumber,
+        })
+        const decodedPermissions = decodePermissions(appDetails.permissions)
+        await context.db.insert(schema.app).values({
+            address: event.args.app,
+            appId: event.args.uid,
+            client: appDetails.client,
+            module: appDetails.module,
+            owner: appDetails.owner,
+            createdAt: blockNumber,
+            permissions: decodedPermissions,
+            isRegistered: false,
+            isBanned: false,
+            installedIn: [],
+        })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppCreated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppRegistered', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const { AppRegistry } = context.contracts
+
+    try {
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, event.args.app),
+        })
+
+        if (existingApp) {
+            // App exists, just update registration status
+            await context.db.sql
+                .update(schema.app)
+                .set({
+                    isRegistered: true,
+                    appId: event.args.uid, // Update appId in case it wasn't set
+                })
+                .where(eq(schema.app.address, event.args.app))
+        } else {
+            // App doesn't exist yet (AppRegistered fired before AppCreated)
+            const appDetails = await context.client.readContract({
+                abi: AppRegistry.abi,
+                address: AppRegistry.address,
+                functionName: 'getAppById',
+                args: [event.args.uid],
+                blockNumber,
+            })
+            const decodedPermissions = decodePermissions(appDetails.permissions)
+            await context.db.insert(schema.app).values({
+                address: event.args.app,
+                appId: event.args.uid,
+                client: appDetails.client,
+                module: appDetails.module,
+                owner: appDetails.owner,
+                createdAt: blockNumber,
+                permissions: decodedPermissions,
+                isRegistered: true,
+                isBanned: false,
+                installedIn: [],
+            })
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppRegistered at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUnregistered', async ({ event, context }) => {
+    const blockNumber = event.block.number
+
+    try {
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, event.args.app),
+        })
+        if (existingApp) {
+            await context.db.sql
+                .update(schema.app)
+                .set({ isRegistered: false })
+                .where(eq(schema.app.address, event.args.app))
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUnregistered at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
+    const blockNumber = event.block.number
+
+    try {
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, event.args.app),
+        })
+        if (existingApp) {
+            await context.db.sql
+                .update(schema.app)
+                .set({ isBanned: true })
+                .where(eq(schema.app.address, event.args.app))
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppBanned at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    try {
+        const result = await context.db.sql
+            .update(schema.app)
+            .set({
+                installedIn: sql`
+                    CASE
+                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${event.args.account}]::text[]
+                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${event.args.account}::text
+                        ELSE ${schema.app.installedIn}
+                    END
+                `,
+            })
+            .where(eq(schema.app.appId, event.args.appId))
+        if (result.changes === 0) {
+            console.warn(`App not found for AppRegistry:AppInstalled`, event.args.appId)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppInstalled at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    try {
+        const result = await context.db.sql
+            .update(schema.app)
+            .set({
+                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account}::text)`,
+            })
+            .where(eq(schema.app.appId, event.args.appId))
+        if (result.changes === 0) {
+            console.warn(`App not found for AppRegistry:AppUninstalled`, event.args.appId)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
+            error,
+        )
     }
 })
