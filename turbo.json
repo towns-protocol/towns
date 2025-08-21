@@ -49,7 +49,7 @@
         "typings": {
             "dependsOn": ["build"],
             "cache": true,
-            "outputs": ["generated/**", "src/generated/**"]
+            "outputs": ["typings/**", "generated/**", "src/generated/**"]
         },
         "build": {
             // note: output globs are relative to each package's `package.json`
