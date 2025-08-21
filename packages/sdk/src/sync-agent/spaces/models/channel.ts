@@ -243,16 +243,40 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
         signer: ethers.Signer,
     ) {
-        // Check if the receiver is a bot with an app address and redirect tip if present
         const receiverUserStreamId = makeUserStreamId(tip.receiver)
-        const receiverUserStream = this.riverConnection.client?.stream(receiverUserStreamId)
-        const appAddress = receiverUserStream?.view.userContent.appAddress
-        const tipRecipient = appAddress ? bin_toHexString(appAddress) : tip.receiver
+        const appAddress = await (async () => {
+            if (!this.riverConnection.client) {
+                return undefined
+            }
+            const firstTry = this.riverConnection.client?.stream(receiverUserStreamId)
+            if (firstTry) {
+                return firstTry.view.userContent.appAddress
+            }
+            // Force init the stream to get the app address
+            await this.riverConnection.client
+                .initStream(receiverUserStreamId)
+                .catch(() => undefined)
+            const stream = this.riverConnection.client?.stream(receiverUserStreamId)
+            return stream?.view.userContent.appAddress
+        })()
+        const tipRecipient = appAddress ? `0x${bin_toHexString(appAddress)}` : tip.receiver
 
-        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tipRecipient)
-        if (!tokenId) {
-            throw new Error('tokenId not found')
+        let tokenId: string
+        if (appAddress) {
+            // Since bots don't have a membership token, we're using a dummy tokenId of 0
+            tokenId = '0'
+        } else {
+            // For regular users, get their actual membership tokenId
+            const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
+                this.data.spaceId,
+                tip.receiver,
+            )
+            if (!membershipTokenId) {
+                throw new Error('tokenId not found')
+            }
+            tokenId = membershipTokenId
         }
+
         const tx = await this.spaceDapp.tip(
             {
                 spaceId: this.data.spaceId,
@@ -276,7 +300,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         const result = await this.riverConnection
             .withStream(channelId)
             .call((client) =>
-                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
+                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tipRecipient),
             )
         return result
     }
