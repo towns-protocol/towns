@@ -251,6 +251,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     create(AppPrivateDataSchema, {
                         privateKey: botWallet.privateKey,
                         encryptionDevice: exportedDevice,
+                        env: riverConfig.environmentId,
                     }),
                 ),
             )
