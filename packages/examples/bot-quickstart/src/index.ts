@@ -43,7 +43,7 @@ async function main() {
         }
     })
 
-    bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
+    bot.onMentioned(async (handler, { message, channelId, userId, eventId }) => {
         if (userId === bot.botId) return
 
         if (message.toLowerCase().includes('hello')) {
