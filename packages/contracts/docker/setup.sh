@@ -15,6 +15,7 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
+  create_address_manifest
   test_node_registry
   cleanup
   sleep 5 # waiting to avoid race condition
@@ -106,6 +107,27 @@ deploy_contracts() {
     just RUN_ENV=multi _require_run_env config-root deploy-contracts 
     just RUN_ENV=multi_ne _require_run_env config-root deploy-contracts 
   popd
+}
+
+# Create a consolidated address file for easy extraction
+create_address_manifest() {
+  echo "Creating contract address manifest for easy extraction..."
+  
+  # Process both environments
+  for env in multi multi_ne; do
+    if [ -d "./packages/generated/deployments/local_${env}" ]; then
+      mkdir -p ./contract-addresses/${env}
+      
+      # Copy base and river addresses
+      for chain in base river; do
+        if [ -d "./packages/generated/deployments/local_${env}/${chain}/addresses" ]; then
+          cp -r ./packages/generated/deployments/local_${env}/${chain}/addresses ./contract-addresses/${env}/${chain}
+        fi
+      done
+    fi
+  done
+  
+  echo "Contract addresses saved to ./contract-addresses/ for extraction"
 }
 
 test_node_registry() {
