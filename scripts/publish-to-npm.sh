@@ -94,7 +94,7 @@ echo "Created PR #${PR_NUMBER}"
 while true; do
     WAIT_TIME=10
     # Get status of all checks except CodeRabbit
-    CHECKS_OUTPUT=$(gh pr checks "${BRANCH_NAME}" --json name,status,conclusion 2>/dev/null || echo "[]")
+    CHECKS_OUTPUT=$(gh pr checks "${BRANCH_NAME}" --json name,state 2>/dev/null || echo "[]")
     
     if [[ "$CHECKS_OUTPUT" == "[]" ]]; then
         echo "No checks reported yet, waiting..."
@@ -103,8 +103,8 @@ while true; do
     fi
     
     # Filter out CodeRabbit and check if all other checks passed
-    FAILED_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.status == "completed" and .conclusion != "success") | .name' 2>/dev/null | tr '\n' ' ')
-    PENDING_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.status != "completed") | .name' 2>/dev/null | tr '\n' ' ')
+    FAILED_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.state == "FAILURE") | .name' 2>/dev/null | tr '\n' ' ')
+    PENDING_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.state == "IN_PROGRESS" or .state == "PENDING" or .state == "QUEUED") | .name' 2>/dev/null | tr '\n' ' ')
     
     if [[ -n "$FAILED_CHECKS" && "$FAILED_CHECKS" != " " ]]; then
         echo "Failed checks: $FAILED_CHECKS"
