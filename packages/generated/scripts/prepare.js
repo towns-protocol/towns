@@ -81,7 +81,10 @@ async function downloadArtifactsFromNpm() {
     });
     
     const files = execSync('ls *.tgz', { cwd: tempDir, encoding: 'utf8' }).trim().split('\n');
-    execSync(`tar -xzf "${files[0]}" -C "${tempDir}"`, { stdio: 'pipe' });
+    execSync(`tar -xzf "${files[0]}" -C "${tempDir}"`, { 
+      cwd: tempDir, 
+      stdio: 'pipe' 
+    });
     
     const extractedDevDir = resolve(tempDir, 'package/dev');
     if (!existsSync(extractedDevDir)) {
@@ -106,6 +109,8 @@ async function downloadArtifactsFromNpm() {
     console.log('Successfully downloaded artifacts from npm');
     return true;
   } catch (error) {
+    console.log('Error in downloadArtifactsFromNpm:', error.message);
+    console.log('Stack trace:', error.stack);
     return false;
   } finally {
     if (existsSync(tempDir)) execSync(`rm -rf "${tempDir}"`, { stdio: 'pipe' });
@@ -147,17 +152,17 @@ function installFoundry() {
 
 // Generate contract artifacts
 function generateArtifacts() {
+  // Check for contracts directory FIRST (before trying to install Foundry)
+  if (!existsSync(contractsDir)) {
+    console.log('Contracts directory not found, cannot generate locally');
+    throw new Error('Cannot generate artifacts: contracts package not available and npm download failed');
+  }
+  
   if (!isFoundryInstalled()) {
     console.log('Foundry not found, attempting installation...');
     if (!installFoundry()) {
       throw new Error('Failed to install Foundry - cannot generate contract artifacts');
     }
-  }
-  
-  // Look for build script in contracts package (sibling to generated package)
-  if (!existsSync(contractsDir)) {
-    console.log('Contracts directory not found, cannot generate locally');
-    throw new Error('Cannot generate artifacts: contracts package not available and npm download failed');
   }
   
   const buildScript = resolve(contractsDir, 'scripts/build-contract-types.sh');
