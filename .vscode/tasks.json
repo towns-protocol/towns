@@ -292,7 +292,7 @@
     {
       "label": "CasablancaConfigureNodes",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
+      "command": "cd ./core && just RUN_ENV=multi config-base-chain-docker build && just RUN_ENV=multi_ne config-base-chain-docker build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -302,29 +302,61 @@
       }
     },
     {
+      "label": "CasablancaConfigureNodes-Local",
+      "type": "shell",
+      "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral-legacy",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
       "label": "BaseChain",
+      "type": "shell",
+      "command": "cd ./core && just anvil-base-docker",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "RiverChain", 
+      "type": "shell",
+      "command": "cd ./core && just anvil-river-docker",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "BaseChain-Local",
       "type": "shell",
       "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-basechain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "local-blockchains"
+        "group": "local-blockchains-legacy"
       }
     },
     {
-      "label": "RiverChain",
+      "label": "RiverChain-Local",
       "type": "shell",
       "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-riverchain.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
-        "group": "local-blockchains"
+        "group": "local-blockchains-legacy"
       }
     },
     {
       "label": "Build Contracts",
       "type": "shell",
-      "command": "./scripts/build-contracts.sh",
+      "command": "yarn workspace @towns-protocol/contracts build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -515,6 +547,76 @@
         "isDefault": true
       },
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "~Start Local Docker Dev~",
+      "dependsOn": [
+        "Dependencies",
+        "BuildLocalDockerImage",
+        "Stage 1 LocalDocker"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "BuildLocalDockerImage",
+      "type": "shell",
+      "command": "cd ./core && just docker-build-local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Stage 1 LocalDocker",
+      "dependsOn": [
+        "AnvilsLocalDocker",
+        "Stage 2 LocalDocker"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      "label": "Stage 2 LocalDocker",
+      "dependsOn": [
+        "CasablancaConfigureNodes LocalDocker",
+        "Stage 3"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "AnvilsLocalDocker",
+      "type": "shell",
+      "command": "cd ./core && USE_LOCAL_DOCKER=1 just anvils-docker",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-blockchains"
+      }
+    },
+    {
+      "label": "CasablancaConfigureNodes LocalDocker",
+      "type": "shell", 
+      "command": "cd ./core && RUN_ENV=multi just config-base-chain-docker build && RUN_ENV=multi_ne just config-base-chain-docker build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared"
+      }
     },
     {
       "label": "Kill All, Clean and Start Local Dev",
