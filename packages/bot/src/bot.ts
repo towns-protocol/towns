@@ -203,6 +203,15 @@ export type BotEvents = {
             message: string
         },
     ) => Promise<void> | void
+    mentionedInThread: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The thread id where the message belongs to */
+            threadId: string
+            /** The decrypted message content */
+            message: string
+        },
+    ) => Promise<void> | void
 }
 
 type BasePayload = {
@@ -452,6 +461,11 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
 
                     if (replyId) {
                         this.emitter.emit('reply', this.client, forwardPayload)
+                    } else if (threadId && hasBotMention) {
+                        this.emitter.emit('mentionedInThread', this.client, {
+                            ...forwardPayload,
+                            threadId,
+                        })
                     } else if (threadId) {
                         this.emitter.emit('threadMessage', this.client, {
                             ...forwardPayload,
@@ -659,6 +673,13 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
 
     onThreadMessage(fn: BotEvents['threadMessage']) {
         this.emitter.on('threadMessage', fn)
+    }
+
+    /**
+     * Triggered when someone mentions the bot in a thread message
+     */
+    onMentionedInThread(fn: BotEvents['mentionedInThread']) {
+        this.emitter.on('mentionedInThread', fn)
     }
 
     // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
