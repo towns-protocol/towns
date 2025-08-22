@@ -15,6 +15,7 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
+  create_address_manifest
   test_node_registry
   cleanup
   sleep 5 # waiting to avoid race condition
@@ -105,6 +106,24 @@ deploy_contracts() {
   pushd ./core
     just config-root deploy-contracts
   popd
+}
+
+# Create a consolidated address file for easy extraction
+create_address_manifest() {
+  echo "Creating contract address manifest for easy extraction..."
+
+  if [ -d "./packages/generated/deployments/local_dev" ]; then
+    mkdir -p ./contract-addresses/local_dev
+
+    # Copy base and river addresses
+    for chain in base river; do
+      if [ -d "./packages/generated/deployments/local_dev/${chain}/addresses" ]; then
+        cp -r ./packages/generated/deployments/local_dev/${chain}/addresses ./contract-addresses/local_dev/${chain}
+      fi
+    done
+  fi
+
+  echo "Contract addresses saved to ./contract-addresses/ for extraction"
 }
 
 test_node_registry() {
