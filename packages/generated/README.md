@@ -1,23 +1,35 @@
 # @towns-protocol/generated
 
-## How to generate contract types
+## Description
 
-From the root of the repo, run:
+Contract ABIs and TypeScript types for the Towns Protocol smart contracts. This package provides compiled artifacts and
+type definitions for interacting with Towns Protocol contracts on Base and Towns chains.
+
+## Overview
+
+This package contains:
+
+- **[`dev/abis/`](dev/abis/)** - Contract ABI JSON files and TypeScript exports
+- **[`dev/typings/`](dev/typings/)** - TypeScript type definitions and factory contracts
+- **[`deployments/`](deployments/)** - Contract addresses by network and environment
+- **[`config/`](config/)** - Deployment configuration files
+
+## Quick Start
 
 ```bash
-./scripts/build-contract-types.sh
+# After fresh clone
+yarn install && yarn build
+
+# Get artifacts (auto-downloads or generates as needed)
+yarn build
 ```
 
-## What are deployments?
-
-Deployments are a group of contracts on multiple chains that together make up a river environment
-
-In order to deploy, run the following command from the repo root
+## Troubleshooting
 
 ```bash
-./scripts/deploy-contracts.sh --e single
+# Missing artifacts error
+yarn build
+
+# Clean slate regeneration
+rm -rf dev/ && yarn build
 ```
-
-## Addresses
-
-One off contracts that are important to the ecosystem at large

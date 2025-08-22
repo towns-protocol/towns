@@ -91,8 +91,12 @@ go.work.sum
 
 # Ponder
 packages/subgraph/.ponder
-packages/generated/**/*.bin
 !packages/subgraph/.env.alpha
+
+# Generated contract artifacts
+packages/generated/**/*.bin
+packages/generated/dev/
+packages/generated/.temp-download/
 
 # Claude local settings
 **/.claude/settings.local.json

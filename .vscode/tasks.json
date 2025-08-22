@@ -336,7 +336,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "./scripts/build-contract-types.sh localhost",
+      "command": "yarn workspace @towns-protocol/contracts build-types",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
