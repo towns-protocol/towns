@@ -155,7 +155,11 @@ function generateArtifacts() {
   }
   
   // Look for build script in contracts package (sibling to generated package)
-  const contractsDir = resolve(packageRoot, '../contracts');
+  if (!existsSync(contractsDir)) {
+    console.log('Contracts directory not found, cannot generate locally');
+    throw new Error('Cannot generate artifacts: contracts package not available and npm download failed');
+  }
+  
   const buildScript = resolve(contractsDir, 'scripts/build-contract-types.sh');
 
   if (!existsSync(buildScript)) {
