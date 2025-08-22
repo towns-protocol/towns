@@ -58,6 +58,7 @@ export interface TimelineEvent {
     isSendFailed: boolean
     confirmedEventNum?: bigint
     confirmedInBlockNum?: bigint
+    confirmedAtEpochMs?: number // time miniblock containing this event was created, should be around 2 seconds after the event was created
     threadParentId?: string
     replyParentId?: string
     reactionParentId?: string
@@ -407,6 +408,7 @@ export interface TimelineEventConfirmation {
     eventId: string
     confirmedEventNum: bigint
     confirmedInBlockNum: bigint
+    confirmedAtEpochMs: number
 }
 
 export interface ThreadStatsData {
