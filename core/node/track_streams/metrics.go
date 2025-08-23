@@ -19,6 +19,15 @@ type TrackStreamsSyncMetrics struct {
 	SyncPing                 *prometheus.CounterVec
 	SyncPong                 prometheus.Counter
 	StreamsPerSyncSession    prometheus.Histogram
+
+	// Semaphore metrics for tracking node request concurrency
+	SemaphoreAcquireDuration *prometheus.HistogramVec
+	SemaphoreHoldDuration    *prometheus.HistogramVec // Time between acquire and release
+
+	// Operation timing metrics
+	AddStreamDuration            *prometheus.HistogramVec // Time for runner.AddStream() call
+	SyncRunnerCreationDuration   *prometheus.HistogramVec // Time to create and start a sync runner
+	StreamPlacementTotalDuration *prometheus.HistogramVec // Total time from start to completion of addToSync
 }
 
 func NewTrackStreamsSyncMetrics(metricsFactory infra.MetricsFactory) *TrackStreamsSyncMetrics {

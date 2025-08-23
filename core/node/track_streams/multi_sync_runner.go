@@ -136,14 +136,14 @@ func (ssr *syncSessionRunner) AddStream(
 	ssr.streamRecords.Store(record.streamId, &record)
 	ssr.mu.Unlock()
 
-	logging.FromCtx(ctx).
-		Debugw("Adding stream with cookie",
-			"stream", record.streamId,
-			"minipoolGen", record.minipoolGen,
-			"prevMiniblockHash", record.prevMiniblockHash,
-			"syncId", ssr.GetSyncId(),
-			"targetNode", ssr.node,
-		)
+	// logging.FromCtx(ctx).
+	// 	Debugw("Adding stream with cookie",
+	// 		"stream", record.streamId,
+	// 		"minipoolGen", record.minipoolGen,
+	// 		"prevMiniblockHash", record.prevMiniblockHash,
+	// 		"syncId", ssr.GetSyncId(),
+	// 		"targetNode", ssr.node,
+	// 	)
 
 	modifyCtx, cancel := context.WithTimeout(ctx, modifySyncRequestTimeout)
 	defer cancel()
@@ -306,6 +306,8 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 
 		record, ok := ssr.streamRecords.Load(streamID)
 		if !ok {
+			// This can happen if the call to modify the sync times out, and yet the
+			// add was still successful.
 			log.Errorw(
 				"Expected stream id for sync to be in the syncSessionRunner records",
 				"streamId", streamID,
@@ -334,7 +336,7 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 				Tag("syncOp", update.SyncOp).
 				Tag("streamId", update.GetStreamId()).
 				Tag("syncId", ssr.syncer.GetSyncId()).
-				Func("syncSessionRunner.processSyncUpdates"),
+				Func("syncSessionRunner.processSyncUpdates").LogError(log),
 		)
 	}
 }
@@ -647,6 +649,9 @@ type MultiSyncRunner struct {
 
 	// TODO: use a single node registry and modify http client settings for better performance.
 	nodeRegistries []nodes.NodeRegistry
+
+	// placementListener receives notifications when streams are placed on nodes (optional)
+	placementListener StreamPlacementListener
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -671,6 +676,7 @@ func NewMultiSyncRunner(
 	trackedStreamViewConstructor TrackedViewConstructorFn,
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	placementListener StreamPlacementListener,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -694,6 +700,7 @@ func NewMultiSyncRunner(
 		concurrentNodeRequests: xsync.NewMap[common.Address, *semaphore.Weighted](),
 		unfilledSyncs:          xsync.NewMap[common.Address, *syncSessionRunner](),
 		otelTracer:             otelTracer,
+		placementListener:      placementListener,
 	}
 }
 
@@ -900,6 +907,16 @@ func (msr *MultiSyncRunner) addToSync(
 		msr.streamsToSync <- record
 	} else {
 		pool.Release(1)
+		// Notify placement listener if configured
+		if msr.placementListener != nil {
+			msr.placementListener.OnStreamPlacement(
+				record.streamId,
+				runner.GetSyncId(),
+				targetNode,
+				record.minipoolGen,
+				record.prevMiniblockHash,
+			)
+		}
 	}
 }
 

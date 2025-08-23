@@ -268,6 +268,7 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			MaxConcurrentNodeRequests: testCfg.maxConcurrentRequests,
 		},
 		nil,
+		nil,
 	)
 	msrCtx := ctx
 	go msr.Run(msrCtx)
@@ -530,6 +531,7 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 			MaxConcurrentNodeRequests: 2,
 		},
 		nil,
+		nil,
 	)
 	msrCtx := ctx
 	// Use this line to enable logs only for the multisync runner
@@ -766,6 +768,7 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 			NumWorkers:                5,
 			MaxConcurrentNodeRequests: 5,
 		},
+		nil,
 		nil,
 	)
 	go msr.Run(ctx)
