@@ -9182,7 +9182,6 @@ __metadata:
     "@noble/hashes": ^1.8.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
-    "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"

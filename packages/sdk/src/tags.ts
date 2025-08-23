@@ -9,7 +9,7 @@ import {
 import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
 import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { TipEventObject } from '@towns-protocol/web3'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
 import { RiverTimelineEvent } from './views/models/timelineTypes'
