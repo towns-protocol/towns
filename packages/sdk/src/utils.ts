@@ -155,13 +155,18 @@ export function isBaseUrlIncluded(baseUrls: string[], fullUrl: string): boolean 
 }
 
 export const randomUrlSelector = (urls: string) => {
-    const u = urls.split(',')
-    if (u.length === 0) {
-        throw new Error('No urls for backend provided')
-    } else if (u.length === 1) {
-        return u[0]
+    // Split by comma and trim each URL
+    const urlList = urls.split(',')
+        .map(url => url.trim())
+        .filter(url => url.length > 0); // Filter out empty strings
+    
+    if (urlList.length === 0) {
+        throw new Error('No valid urls for backend provided');
+    } else if (urlList.length === 1) {
+        return urlList[0];
     } else {
-        return u[Math.floor(Math.random() * u.length)]
+        // Select a random URL from the list
+        return urlList[Math.floor(Math.random() * urlList.length)];
     }
 }
 
