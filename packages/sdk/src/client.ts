@@ -4,6 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
+    TipEventObject,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -196,7 +197,6 @@ import {
     uint8ArrayToBase64,
 } from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
 import { NotificationsClient, INotificationStore } from './notificationsClient'
 import { RpcOptions } from './rpcCommon'
