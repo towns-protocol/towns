@@ -2,6 +2,7 @@ import {
     CryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
+    createCryptoStore,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
     type UserDevice,
@@ -18,7 +19,6 @@ import { ethers } from 'ethers'
 import { RiverRegistry } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
 import { makeRiverProvider } from './sync-agent/utils/providers'
-import { RiverDbManager } from './riverDbManager'
 import {
     makeUserInboxStreamId,
     makeUserMetadataStreamId,
@@ -132,7 +132,7 @@ export const createTownsClient = async (
 
     const userId = userIdFromAddress(signer.creatorAddress)
 
-    const cryptoStore = RiverDbManager.getCryptoDb(userId)
+    const cryptoStore = createCryptoStore(`database-${userId}`, userId)
     await cryptoStore.initialize()
 
     // eslint-disable-next-line prefer-const

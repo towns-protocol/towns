@@ -6,12 +6,12 @@ import {
     makeRiverRpcClient,
     makeSignerContext,
     MockEntitlementsDelegate,
-    RiverDbManager,
     waitFor,
     type AppRegistryRpcClient,
     type Channel,
     type SyncAgent,
 } from '@towns-protocol/sdk'
+import { createCryptoStore } from '@towns-protocol/encryption'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload, UserData } from './bot'
 import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
@@ -148,7 +148,7 @@ describe('Bot', { sequential: true }, () => {
             makeRiverProvider(riverConfig),
             riverConfig.river.chainConfig,
         )
-        const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
+        const cryptoStore = createCryptoStore(`database-${appAddress}`, appAddress)
         const botClient = new Client(
             signerContext,
             rpcClient,

@@ -2,7 +2,7 @@ import { SyncAgentConfig } from '../sync-agent/syncAgent'
 import { ClientParams } from '../sync-agent/river-connection/riverConnection'
 import { makeRandomUserContext } from './testUtils'
 import { makeRiverConfig } from '../riverConfig'
-import { RiverDbManager } from '../riverDbManager'
+import { createCryptoStore } from '@towns-protocol/encryption'
 import { userIdFromAddress } from '../id'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { SpaceDapp } from '@towns-protocol/web3'
@@ -20,10 +20,7 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
     const userId = userIdFromAddress(config.context.creatorAddress)
     return {
         signerContext: config.context,
-        cryptoStore: RiverDbManager.getCryptoDb(
-            userId,
-            makeTestCryptoDbName(userId, config.deviceId),
-        ),
+        cryptoStore: createCryptoStore(makeTestCryptoDbName(userId, config.deviceId), userId),
         entitlementsDelegate: new Entitlements(config.riverConfig, spaceDapp),
         opts: {
             persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
