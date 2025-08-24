@@ -80,6 +80,7 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
                 eventId: event.hashStr,
                 confirmedInBlockNum: event.miniblockNum,
                 confirmedEventNum: event.confirmedEventNum,
+                confirmedAtEpochMs: event.confirmedAtEpochMs,
             }))
             this.setState.confirmEvents(confirmations, streamId)
         }

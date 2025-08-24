@@ -116,6 +116,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isSendFailed: timelineEvent.localEvent?.status === 'failed',
         confirmedEventNum: timelineEvent.confirmedEventNum,
         confirmedInBlockNum: timelineEvent.miniblockNum,
+        confirmedAtEpochMs: timelineEvent.confirmedAtEpochMs,
         threadParentId: getThreadParentId(content),
         replyParentId: getReplyParentId(content),
         reactionParentId: getReactionParentId(content),
