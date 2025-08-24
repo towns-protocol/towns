@@ -6,10 +6,7 @@
   "tasks": {
     "build": {
       "outputs": [
-        "dev/**",
-        "config/**",
-        "deployments/**",
-        "v3/**"
+        "dev/**"
       ]
     }
   }
