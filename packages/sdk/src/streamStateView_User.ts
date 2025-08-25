@@ -35,6 +35,9 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     get tokenTransfers() {
         return this.userStreamModel.tokenTransfers
     }
+    get appAddress() {
+        return this.userStreamModel.appAddress
+    }
 
     get userStreamModel(): UserStreamModel {
         return this.userStreamsView.get(this.streamId)
@@ -75,6 +78,12 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userStreamsView.setAppAddress(
+                        this.streamId,
+                        payload.content.value.appAddress,
+                    )
+                }
                 break
             case 'userMembership':
                 // memberships are handled in the snapshot
@@ -115,6 +124,12 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userStreamsView.setAppAddress(
+                        this.streamId,
+                        payload.content.value.appAddress,
+                    )
+                }
                 break
             case 'userMembership':
                 this.addUserPayload_userMembership(payload.content.value, stateEmitter)
