@@ -33,7 +33,6 @@ The subgraph consists of:
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
-
 ### Running with Docker Compose
 
 ```bash
@@ -83,6 +82,7 @@ If you encounter issues:
 2. **API server not responding**: Ensure the indexer has started successfully first
 3. **Data not appearing**: Verify the indexer is processing events (check logs)
 4. **Port conflicts**: Ensure port 42069 (API) and 5432 (PostgreSQL) are available
+5. **Indexer crashing with schema conflict**: Ensure you've removed volume as part of shutdown to prevent schema name conflicts.
 
 ## Update schema.graphql
 
@@ -90,8 +90,6 @@ If you encounter issues:
 # regenerate schema.graphql file with a headless instance
 yarn dev:no-ui
 ```
-
-
 
 ## Getting Started
 
@@ -344,4 +342,3 @@ This separation provides:
 - Ability to scale API servers horizontally if needed
 - Better resource isolation between indexing and serving
 - Continued indexing even if the API server experiences issues
-
