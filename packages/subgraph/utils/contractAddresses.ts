@@ -33,18 +33,6 @@ export interface AddressResolverOptions {
     baseDir?: string
 
     /**
-     * Default environment to use if none is specified
-     * @default 'gamma'
-     */
-    defaultEnvironment?: string
-
-    /**
-     * Network name
-     * @default 'base'
-     */
-    network?: string
-
-    /**
      * Whether to throw an error if address is not found
      * @default true
      */
@@ -62,8 +50,6 @@ export interface AddressResolverOptions {
  */
 const DEFAULT_OPTIONS: AddressResolverOptions = {
     baseDir: defaultBaseDir,
-    defaultEnvironment: 'gamma',
-    network: 'base',
     throwOnError: true,
     debug: false,
 }
@@ -72,23 +58,24 @@ const DEFAULT_OPTIONS: AddressResolverOptions = {
  * Get a contract address based on environment and contract name
  *
  * @param contractName - Name of the contract (e.g., 'spaceFactory')
- * @param environment - Environment name (e.g., 'gamma', 'beta', 'prod')
+ * @param environment - Environment name (e.g., 'gamma', 'alpha', 'omega', 'delta', 'local_multi')
  * @param options - Configuration options
  * @returns The contract address or null if not found and throwOnError is false
  */
 export function getContractAddress(
     contractName: string,
-    environment?: string,
+    network: 'base' | 'river',
+    environment: string,
     options?: Partial<AddressResolverOptions>,
 ): Address | null {
     const opts = { ...DEFAULT_OPTIONS, ...options }
-    const env = environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
+    const env = environment
 
     try {
         // Construct the path to the address file
         const addressPath = path.resolve(
             __dirname,
-            `${opts.baseDir}/${env}/${opts.network}/addresses/${contractName}.json`,
+            `${opts.baseDir}/${env}/${network}/addresses/${contractName}.json`,
         )
 
         if (opts.debug) {
@@ -100,14 +87,6 @@ export function getContractAddress(
 
         // Check if the file exists
         if (!fs.existsSync(addressPath)) {
-            if (env !== opts.defaultEnvironment) {
-                console.warn(
-                    `Address file not found for contract ${contractName} in environment ${env}, falling back to ${opts.defaultEnvironment}`,
-                )
-                // Fallback to default environment if the file doesn't exist
-                return getContractAddress(contractName, opts.defaultEnvironment, options)
-            }
-
             if (opts.throwOnError) {
                 throw new Error(
                     `Address file not found for contract ${contractName} in environment ${env}`,
@@ -149,7 +128,8 @@ export function getContractAddress(
  */
 export function getContractAddresses(
     contractNames: string[],
-    environment?: string,
+    network: 'base' | 'river',
+    environment: string,
     options?: Partial<AddressResolverOptions>,
 ): Record<string, Address> {
     const addresses: Record<string, Address> = {}
@@ -157,16 +137,12 @@ export function getContractAddresses(
 
     if (opts.debug) {
         console.log(`Getting addresses for contracts: ${contractNames.join(', ')}`)
-        console.log(
-            `Environment: ${
-                environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
-            }`,
-        )
+        console.log(`Environment: ${environment}`)
     }
 
     for (const contractName of contractNames) {
         try {
-            const address = getContractAddress(contractName, environment, {
+            const address = getContractAddress(contractName, network, environment, {
                 ...options,
                 throwOnError: true,
             })
@@ -193,11 +169,12 @@ export function getContractAddresses(
  * @returns Object mapping contract names to addresses
  */
 export function getAllContractAddresses(
-    environment?: string,
+    environment: string,
+    network: 'base' | 'river',
     options?: Partial<AddressResolverOptions>,
 ): Record<string, Address> {
     const opts = { ...DEFAULT_OPTIONS, ...options }
-    const env = environment || process.env.PONDER_ENVIRONMENT || opts.defaultEnvironment
+    const env = environment
 
     if (opts.debug) {
         console.log(`Getting all addresses for environment: ${env}`)
@@ -205,10 +182,7 @@ export function getAllContractAddresses(
 
     try {
         // Construct the path to the addresses directory
-        const addressesDir = path.resolve(
-            __dirname,
-            `${opts.baseDir}/${env}/${opts.network}/addresses`,
-        )
+        const addressesDir = path.resolve(__dirname, `${opts.baseDir}/${env}/${network}/addresses`)
 
         if (opts.debug) {
             console.log(`Addresses directory: ${addressesDir}`)
@@ -216,14 +190,6 @@ export function getAllContractAddresses(
 
         // Check if the directory exists
         if (!fs.existsSync(addressesDir)) {
-            if (env !== opts.defaultEnvironment) {
-                console.warn(
-                    `Addresses directory not found for environment ${env}, falling back to ${opts.defaultEnvironment}`,
-                )
-                // Fallback to default environment if the directory doesn't exist
-                return getAllContractAddresses(opts.defaultEnvironment, options)
-            }
-
             if (opts.throwOnError) {
                 throw new Error(`Addresses directory not found for environment ${env}`)
             }
