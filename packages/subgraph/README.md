@@ -33,6 +33,64 @@ The subgraph consists of:
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
+### Running with Docker Compose
+
+```bash
+# For Alpha environment
+docker compose --env-file .env.alpha up -d
+
+# For Gamma environment
+docker compose --env-file .env.gamma up -d
+
+# For Omega environment
+docker compose --env-file .env.omega up -d
+```
+
+### Testing the Setup
+
+After starting the services, the API server will be available at http://localhost:42069
+
+Check the following endpoints:
+
+- http://localhost:42069/graphql - Interactive GraphQL playground
+- http://localhost:42069/status - Service status information
+- http://localhost:42069/ready - Readiness check
+- http://localhost:42069/metrics - Prometheus metrics
+- http://localhost:42069/health - Health check endpoint
+
+### Managing Services
+
+```bash
+# View logs for the indexer (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-indexer
+
+# View logs for the API server (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-server
+
+# Stop all services (specify environment file)
+docker compose --env-file .env.alpha down
+
+# Stop services and remove volumes (specify environment file)
+docker compose --env-file .env.alpha down -v
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. **Indexer not starting**: Check that the database is healthy and accessible
+2. **API server not responding**: Ensure the indexer has started successfully first
+3. **Data not appearing**: Verify the indexer is processing events (check logs)
+4. **Port conflicts**: Ensure port 42069 (API) and 5432 (PostgreSQL) are available
+5. **Indexer crashing with schema conflict**: Ensure you've removed volume as part of shutdown to prevent schema name conflicts.
+
+## Update schema.graphql
+
+```
+# regenerate schema.graphql file with a headless instance
+yarn dev:no-ui
+```
+
 ## Getting Started
 
 Follow these steps to set up and run the River Subgraph locally:
@@ -284,60 +342,3 @@ This separation provides:
 - Ability to scale API servers horizontally if needed
 - Better resource isolation between indexing and serving
 - Continued indexing even if the API server experiences issues
-
-### Running with Docker Compose
-
-```bash
-# For Alpha environment
-docker compose --env-file .env.alpha up -d
-
-# For Gamma environment
-docker compose --env-file .env.gamma up -d
-
-# For Omega environment
-docker compose --env-file .env.omega up -d
-```
-
-### Testing the Setup
-
-After starting the services, the API server will be available at http://localhost:42069
-
-Check the following endpoints:
-
-- http://localhost:42069/graphql - Interactive GraphQL playground
-- http://localhost:42069/status - Service status information
-- http://localhost:42069/ready - Readiness check
-- http://localhost:42069/metrics - Prometheus metrics
-- http://localhost:42069/health - Health check endpoint
-
-### Managing Services
-
-```bash
-# View logs for the indexer (specify environment file)
-docker compose --env-file .env.alpha logs -f subgraph-indexer
-
-# View logs for the API server (specify environment file)
-docker compose --env-file .env.alpha logs -f subgraph-server
-
-# Stop all services (specify environment file)
-docker compose --env-file .env.alpha down
-
-# Stop services and remove volumes (specify environment file)
-docker compose --env-file .env.alpha down -v
-```
-
-### Troubleshooting
-
-If you encounter issues:
-
-1. **Indexer not starting**: Check that the database is healthy and accessible
-2. **API server not responding**: Ensure the indexer has started successfully first
-3. **Data not appearing**: Verify the indexer is processing events (check logs)
-4. **Port conflicts**: Ensure port 42069 (API) and 5432 (PostgreSQL) are available
-
-## Update schema.graphql
-
-```
-# regenerate schema.graphql file with a headless instance
-yarn dev:no-ui
-```
