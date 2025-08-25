@@ -66,7 +66,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -270,7 +270,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -420,7 +420,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -569,7 +569,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -709,7 +709,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -777,7 +777,7 @@ jobs:
                   access_token: ${{ github.token }}
 
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y zstd make libsecp256k1-dev gcc netcat-openbsd
