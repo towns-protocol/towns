@@ -9,6 +9,15 @@ import {FeatureCondition} from "./FeatureManagerStorage.sol";
 /// @notice Base interface for the FeatureManager facet defining errors and events
 /// @dev Used by the FeatureManager facet and any other facets that need to access feature conditions
 interface IFeatureManagerFacetBase {
+    /// @notice Emitted when a feature condition is set or updated
+    /// @param featureId The unique identifier for the feature whose condition was set
+    /// @param condition The condition parameters that were set for the feature
+    event FeatureConditionSet(bytes32 indexed featureId, FeatureCondition condition);
+
+    /// @notice Emitted when a feature condition is disabled
+    /// @param featureId The unique identifier for the feature whose condition was disabled
+    event FeatureConditionDisabled(bytes32 indexed featureId);
+
     /// @notice Error thrown when a threshold exceeds the token's total supply
     error InvalidThreshold();
 
@@ -26,15 +35,6 @@ interface IFeatureManagerFacetBase {
 
     /// @notice Error thrown when a feature condition already exists
     error FeatureAlreadyExists();
-
-    /// @notice Emitted when a feature condition is set or updated
-    /// @param featureId The unique identifier for the feature whose condition was set
-    /// @param condition The condition parameters that were set for the feature
-    event FeatureConditionSet(bytes32 indexed featureId, FeatureCondition condition);
-
-    /// @notice Emitted when a feature condition is disabled
-    /// @param featureId The unique identifier for the feature whose condition was disabled
-    event FeatureConditionDisabled(bytes32 indexed featureId);
 }
 
 interface IFeatureManagerFacet is IFeatureManagerFacetBase {
@@ -49,6 +49,11 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
     /// @param condition The condition struct containing token, threshold, active status, and extra data
     /// @dev Only callable by the contract owner
     function updateFeatureCondition(bytes32 featureId, FeatureCondition memory condition) external;
+
+    /// @notice Disables a feature condition
+    /// @param featureId The unique identifier for the feature
+    /// @dev Only callable by the contract owner
+    function disableFeatureCondition(bytes32 featureId) external;
 
     /// @notice Gets the condition for a feature
     /// @param featureId The unique identifier for the feature
@@ -65,11 +70,6 @@ interface IFeatureManagerFacet is IFeatureManagerFacetBase {
     function getFeatureConditionsForSpace(
         address space
     ) external view returns (FeatureCondition[] memory);
-
-    /// @notice Disables a feature condition
-    /// @param featureId The unique identifier for the feature
-    /// @dev Only callable by the contract owner
-    function disableFeatureCondition(bytes32 featureId) external;
 
     /// @notice Checks if a space meets the condition for a feature
     /// @param featureId The unique identifier for the feature

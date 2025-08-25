@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // contracts
-import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 /// @notice Represents a condition for feature activation
 /// @dev Used to determine if a feature should be enabled based on token voting power
