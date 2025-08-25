@@ -5,6 +5,7 @@ import {
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    makeUserStreamId,
     MockEntitlementsDelegate,
     RiverDbManager,
     waitFor,
@@ -225,6 +226,16 @@ describe('Bot', { sequential: true }, () => {
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
     }
+
+    it('should have app_address defined in user stream for bot', async () => {
+        const botUserStreamId = makeUserStreamId(botClientAddress)
+        const streamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(botUserStreamId)
+        })
+        const userStream = streamView.userContent.userStreamModel
+        expect(userStream.appAddress).toBeDefined()
+        expect(userStream.appAddress).toBe(appAddress)
+    })
 
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)

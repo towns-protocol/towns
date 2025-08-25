@@ -171,6 +171,7 @@ export interface InceptionEvent {
     creatorId: string
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
+    appAddress?: string
 }
 
 export interface ChannelCreateEvent {
@@ -286,6 +287,7 @@ export interface StreamMembershipEvent {
     membership: Membership
     reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
+    appAddress?: string
 }
 
 export interface UserBlockchainTransactionEvent {
