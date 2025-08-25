@@ -25,34 +25,36 @@ const startBlock = process.env.PONDER_START_BLOCK
     ? parseInt(process.env.PONDER_START_BLOCK, 10)
     : 22890725
 
+const env = 'gamma'
+
 // Get the space factory address using our utility
 // Enable debug mode to see detailed path information
-const spaceFactory = getContractAddress('spaceFactory')
+const spaceFactory = getContractAddress('spaceFactory', 'base', env)
 if (!spaceFactory) {
     throw new Error('Space factory address not found')
 }
 
-const spaceOwner = getContractAddress('spaceOwner')
+const spaceOwner = getContractAddress('spaceOwner', 'base', env)
 if (!spaceOwner) {
     throw new Error('Space owner address not found')
 }
 
-const baseRegistry = getContractAddress('baseRegistry')
+const baseRegistry = getContractAddress('baseRegistry', 'base', env)
 if (!baseRegistry) {
     throw new Error('Base registry address not found')
 }
 
-const swapRouter = getContractAddress('swapRouter')
+const swapRouter = getContractAddress('swapRouter', 'base', env)
 if (!swapRouter) {
     throw new Error('Swap router address not found')
 }
 
-const riverAirdrop = getContractAddress('riverAirdrop')
+const riverAirdrop = getContractAddress('riverAirdrop', 'base', env)
 if (!riverAirdrop) {
     throw new Error('River airdrop address not found')
 }
 
-const appRegistry = getContractAddress('appRegistry')
+const appRegistry = getContractAddress('appRegistry', 'base', env)
 if (!appRegistry) {
     throw new Error('App registry address not found')
 }

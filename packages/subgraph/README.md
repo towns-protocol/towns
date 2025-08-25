@@ -159,13 +159,7 @@ The subgraph uses a dynamic contract address resolution system to find the corre
 
 ```typescript
 // Get a single contract address
-const spaceFactoryAddress = getContractAddress("spaceFactory");
-
-// Get multiple contract addresses
-const { spaceFactory, createSpace } = getContractAddresses([
-  "spaceFactory",
-  "createSpace",
-]);
+const spaceFactoryAddress = getContractAddress("spaceFactory", "base", "alpha");
 ```
 
 This system automatically:
@@ -187,7 +181,9 @@ yarn find-paths
 You can also enable debug mode in the code:
 
 ```typescript
-const address = getContractAddress("contractName", undefined, { debug: true });
+const address = getContractAddress("contractName", network, env, {
+  debug: true,
+});
 ```
 
 ## Available Commands
@@ -254,7 +250,7 @@ If you encounter issues:
 1. **Contract Address Resolution**:
 
    - Run `yarn find-paths` to debug path resolution
-   - Enable debug mode: `getContractAddress('contractName', undefined, { debug: true })`
+   - Enable debug mode: `getContractAddress('contractName', network, env, { debug: true })`
    - Check that the environment is correctly set
 
 2. **Anvil Fork Issues**:
