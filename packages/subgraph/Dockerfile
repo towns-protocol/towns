@@ -41,19 +41,20 @@ COPY packages/dlog ./packages/dlog/
 COPY packages/proto ./packages/proto/
 COPY protocol ./protocol/
 
+# Copy pre-built contract artifacts (needed for wagmi typings generation)
+COPY packages/contracts/out ./packages/contracts/out
+
 # Add entrypoint script
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 
 # Install dependencies
 RUN yarn install
 
-# Build contracts
-WORKDIR /river/packages/contracts
-RUN make build
-WORKDIR /river
+# Generate contract typings (needed for Ponder to import ABIs)
+RUN yarn workspace @towns-protocol/contracts typings || true
 
-# Generate contract typings
-RUN yarn workspace @towns-protocol/contracts typings
+# Build the generated contracts typings package
+RUN yarn workspace @towns-protocol/generated build
 
 # Build proto package (dependency of dlog)
 RUN yarn workspace @towns-protocol/proto build
