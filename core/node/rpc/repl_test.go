@@ -6,20 +6,21 @@ import (
 	"testing"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
-
 	"github.com/towns-protocol/towns/core/contracts/river"
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
 
 func TestReplCreate(t *testing.T) {
@@ -567,4 +568,76 @@ func TestStreamReconciliationFromUnreplicated(t *testing.T) {
 		streamRecord, err = tt.btc.StreamRegistry.GetStream(&bind.CallOpts{Context: tt.ctx}, channelId)
 		return err == nil && streamRecord.LastMiniblockNum >= uint64(mb.Num)
 	}, 20*time.Second, 100*time.Millisecond, "leader should write latest miniblock to the stream registry")
+}
+
+// TestStreamReconciliationFromRegistryGenesisBlock tests stream reconciliation when the stream
+// hasn't moved beyond the genesis block. This is a special case because the node must reconcile
+// the stream from the stream registry instead of a peer.
+func TestStreamReconciliationFromRegistryGenesisBlock(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 3, replicationFactor: 1, start: true})
+	require := tt.require
+
+	alice := tt.newTestClient(0, testClientOpts{})
+	_ = alice.createUserStream()
+	spaceId, _ := alice.createSpace()
+	channelId, channelMbRef, _ := alice.createChannel(spaceId)
+
+	streamWithGenesis, _, genesisBlock, err := tt.btc.StreamRegistry.GetStreamWithGenesis(nil, channelId)
+	require.NoError(err)
+	require.EqualValues(0, streamWithGenesis.LastMiniblockNum)
+	require.True(len(genesisBlock) > 0)
+	require.Equal(1, len(streamWithGenesis.Nodes))
+
+	// assign the stream to a new node that will reconcile the stream from the stream record in the stream registry.
+	newNode := tt.nodes[0]
+	if newNode.address == streamWithGenesis.Nodes[0] {
+		newNode = tt.nodes[1]
+	}
+
+	// mark the new node as a sync node to ensure that it will schedule a reconciliation task for the stream
+	tt.btc.SetStreamReplicationFactor(
+		t,
+		tt.ctx,
+		[]river.SetStreamReplicationFactor{
+			{StreamId: channelId, Nodes: append(streamWithGenesis.Nodes, newNode.address), ReplicationFactor: uint8(1)},
+		},
+	)
+
+	// ensure that the new node reconciles the stream from the genesis block in the stream registry
+	require.EventuallyWithT(func(collect *assert.CollectT) {
+		request := connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      channelId[:],
+			FromInclusive: 0,
+			ToExclusive:   10,
+		})
+
+		request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+		request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
+
+		response, err := newNode.service.GetMiniblocks(tt.ctx, request)
+		if err != nil {
+			collect.Errorf("failed to get miniblocks: %v", err)
+			return
+		}
+
+		miniblocks := response.Msg.GetMiniblocks()
+		if len(miniblocks) != 1 {
+			collect.Errorf("expected to get 1 miniblock, got %d", len(miniblocks))
+			return
+		}
+
+		genesisBlock, err := NewMiniblockInfoFromProto(
+			miniblocks[0], response.Msg.GetMiniblockSnapshot(0),
+			NewParsedMiniblockInfoOpts().
+				WithExpectedBlockNumber(0),
+		)
+		if err != nil {
+			t.Errorf("unable to parse genesis miniblock %v", err)
+			return
+		}
+
+		if channelMbRef.Hash != genesisBlock.Ref.Hash {
+			t.Errorf("unexpected genesis miniblock ref, expected %s, got %s", channelMbRef, genesisBlock.Ref)
+		}
+	}, 20*time.Second, 100*time.Millisecond, "expected to get stream from new node")
 }
