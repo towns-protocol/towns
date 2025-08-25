@@ -19,6 +19,7 @@ import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {ExecutorStorage} from "../executor/ExecutorStorage.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
@@ -206,6 +207,19 @@ abstract contract AppAccountBase is
 
     function _getApps() internal view returns (address[] memory) {
         return AppAccountStorage.getLayout().installedApps.values();
+    }
+
+    function _isAppExecuting(address app) internal view returns (bool) {
+        bytes32 currentExecutionId = ExecutorStorage.getExecutionId();
+        bytes32 targetId = ExecutorStorage.getTargetExecutionId(app);
+
+        if (currentExecutionId == bytes32(0) || targetId == bytes32(0)) return false;
+        if (currentExecutionId != targetId) return false;
+
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) return false;
+
+        return true;
     }
 
     function _isAppInstalled(address module) internal view returns (bool) {
