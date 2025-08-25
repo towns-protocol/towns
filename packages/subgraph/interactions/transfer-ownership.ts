@@ -36,11 +36,11 @@ const walletClient = createWalletClient({
     transport: http(RPC),
 })
 
-const spaceOwner = getContractAddress('spaceOwner', ENV, {
+const spaceOwner = getContractAddress('spaceOwner', 'base', ENV, {
     debug: true,
 })
 
-const spaceFactory = getContractAddress('spaceFactory', ENV, {
+const spaceFactory = getContractAddress('spaceFactory', 'base', ENV, {
     debug: true,
 })
 
