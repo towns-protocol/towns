@@ -62,7 +62,7 @@ func (s *Service) allocateEphemeralStream(
 
 	// TODO use config file instead
 	if os.Getenv("STORAGE_TYPE") == "external" {
-		mbBytes, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, mbBytes)
+		storageMb.Data, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, storageMb.Data)
 		if err != nil {
 			return nil, err
 		}
