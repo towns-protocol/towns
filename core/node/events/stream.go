@@ -655,7 +655,7 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 	return true
 }
 
-// GetMiniblocks returns miniblock data directly fromn storage, bypassing the cache.
+// GetMiniblocks returns miniblock data directly from storage, bypassing the cache.
 // This is useful when we expect block data to be substantial and do not want to bust the cache.
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
@@ -669,6 +669,23 @@ func (s *Stream) GetMiniblocks(
 	blocks, err := s.params.Storage.ReadMiniblocks(ctx, s.streamId, fromInclusive, toExclusive, omitSnapshot)
 	if err != nil {
 		return nil, false, err
+	}
+
+	// if stream is in the external_media table, we need to read from external storage
+	streamInfo, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
+	if err != nil {
+		return nil, false, err
+	}
+	// TODO parallelize this
+	if streamInfo != nil {
+		// for each block, get the data from external storage
+		for _, block := range blocks {
+			data, err := s.params.Storage.DownloadFromExternal(ctx, s.streamId, block.Data)
+			if err != nil {
+				return nil, false, err
+			}
+			block.Data = data
+		}
 	}
 
 	miniblocks := make([]*MiniblockInfo, len(blocks))

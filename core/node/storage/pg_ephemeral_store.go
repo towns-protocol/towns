@@ -357,7 +357,7 @@ func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId St
 func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 	ctx context.Context,
 	streamId StreamId,
-	location int,
+	location []byte,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -383,7 +383,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	location int,
+	location []byte,
 ) error {
 	// Query to insert a new ephemeral miniblock
 	query := s.sqlForStream(

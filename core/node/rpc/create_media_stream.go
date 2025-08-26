@@ -227,13 +227,13 @@ func (s *Service) createReplicatedMediaStream(
 
 	// Create ephemeral stream within the local node
 	if isLocal {
-		// TODO move to using config file
+		// TODO use config file instead
 		if os.Getenv("STORAGE_TYPE") == "external" {
-			mbBytes, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, mbBytes)
+			mbBytes, err = s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
 				return nil, err
 			}
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, storage.S3) != nil {
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, mbBytes) != nil {
 				return nil, err
 			}
 		}

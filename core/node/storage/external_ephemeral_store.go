@@ -40,7 +40,7 @@ func NewExternalMediaStore() *ExternalMediaStore {
 	}
 }
 
-func (w *ExternalMediaStore) UploadToExternal(
+func (w *ExternalMediaStore) CreateExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,

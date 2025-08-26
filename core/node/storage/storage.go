@@ -15,11 +15,6 @@ const (
 	AppRegistryStorageTypePostgres  = postgres
 )
 
-const (
-	Inline = iota
-	S3
-)
-
 type (
 	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
 
@@ -221,7 +216,7 @@ type (
 		WriteExternalMediaStreamInfo(
 			ctx context.Context,
 			streamId StreamId,
-			location int,
+			location []byte,
 		) error
 
 		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
@@ -302,7 +297,10 @@ type (
 	}
 
 	ExternalMediaStorage interface {
-		UploadToExternal(ctx context.Context, streamId StreamId, data []byte) ([]byte, error)
+		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) ([]byte, error)
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) ([]byte, error)
+		AppendToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, location []byte) (int, error)
 		DownloadFromExternal(ctx context.Context, streamId StreamId, key string) ([]byte, error)
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId) error
 	}
 )

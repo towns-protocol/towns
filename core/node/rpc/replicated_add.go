@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -209,14 +210,19 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 		
+		// TODO use config file instead
 		if os.Getenv("STORAGE_TYPE") == "external" {
-			mbBytes, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, mbBytes)
+			// Get the location of the uploaded data
+			location, err := s.externalMediaStorage.GetExternalMediaStreamInfo(ctx, streamId)
 			if err != nil {
 				return err
 			}
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, storage.S3) != nil {
+			
+			part, err := s.externalMediaStorage.AppendToExternalMediaStream(ctx, streamId, mbBytes, location)
+			if err != nil {
 				return err
 			}
+			mbBytes = []byte(fmt.Sprintf("%d", part))
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
@@ -231,6 +237,8 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if !seal {
 			return nil
 		}
+
+		s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId)
 
 		// Normalize stream locally
 		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
@@ -269,6 +277,8 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if !seal {
 			return nil
 		}
+
+		s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId)
 
 		// Seal ephemeral stream in remotes
 		resp, err := stub.SealEphemeralStream(

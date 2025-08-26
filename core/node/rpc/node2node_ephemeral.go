@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -62,13 +62,14 @@ func (s *Service) allocateEphemeralStream(
 
 	// TODO use config file instead
 	if os.Getenv("STORAGE_TYPE") == "external" {
-		storageMb.Data, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, storageMb.Data)
+		location, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, storage.S3) != nil {
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, location) != nil {
 			return nil, err
 		}
+		storageMb.Data = location
 	}
 	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
 		return nil, err
@@ -118,13 +119,17 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
 	if os.Getenv("STORAGE_TYPE") == "external" {
-		storageMb.Data, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, storageMb.Data)
+		// Get the location of the uploaded data
+		location, err := s.externalMediaStorage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
 			return err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, storage.S3) != nil {
+		
+		part, err := s.externalMediaStorage.AppendToExternalMediaStream(ctx, streamId, storageMb.Data, location)
+		if err != nil {
 			return err
 		}
+		storageMb.Data = []byte(fmt.Sprintf("%d", part))
 	}
 	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
