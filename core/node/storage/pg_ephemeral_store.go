@@ -352,3 +352,52 @@ func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId St
 	)
 	return
 }
+
+// Add the media stream data location to the table (for external)
+func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
+	ctx context.Context,
+	streamId StreamId,
+	location int,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return s.txRunner(
+		ctx,
+		"WriteMediaStreamInfo",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeExternalMediaStreamInfoTx(
+				ctx,
+				tx,
+				streamId,
+				location,
+			)
+		},
+		nil,
+		"streamId", streamId,
+	)
+}
+
+func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	location int,
+) error {
+	// Query to insert a new ephemeral miniblock
+	query := s.sqlForStream(
+		"INSERT INTO {{external_media_streams}} (stream_id, location) VALUES ($1, $2);",
+		streamId,
+	)
+
+	_, err := tx.Exec(ctx, query, streamId, location)
+	if err != nil {
+		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
+			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("ephemeral miniblock or stream already exists")
+		}
+		return err
+	}
+
+	return nil
+}

@@ -15,6 +15,11 @@ const (
 	AppRegistryStorageTypePostgres  = postgres
 )
 
+const (
+	Inline = iota
+	S3
+)
+
 type (
 	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
 
@@ -212,6 +217,13 @@ type (
 		// Stream with the given ID must be ephemeral.
 		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *MiniblockDescriptor) error
 
+		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
+		WriteExternalMediaStreamInfo(
+			ctx context.Context,
+			streamId StreamId,
+			location int,
+		) error
+
 		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 		// If stream record is created, but no miniblocks are archived, returns -1.
 		GetMaxArchivedMiniblockNumber(ctx context.Context, streamId StreamId) (int64, error)
@@ -287,5 +299,10 @@ type (
 
 		// Close closes the storage.
 		Close(ctx context.Context)
+	}
+
+	ExternalMediaStorage interface {
+		UploadToExternal(ctx context.Context, streamId StreamId, data []byte) ([]byte, error)
+		DownloadFromExternal(ctx context.Context, streamId StreamId, key string) ([]byte, error)
 	}
 )

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
@@ -206,6 +207,16 @@ func (s *Service) replicatedAddMediaEventImpl(
 		mbBytes, err := proto.Marshal(ephemeralMb)
 		if err != nil {
 			return err
+		}
+		
+		if os.Getenv("STORAGE_TYPE") == "external" {
+			mbBytes, err = s.externalMediaStorage.UploadToExternal(ctx, streamId, mbBytes)
+			if err != nil {
+				return err
+			}
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, storage.S3) != nil {
+				return err
+			}
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
