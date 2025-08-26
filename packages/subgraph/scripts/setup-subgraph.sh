@@ -79,6 +79,7 @@ cat > "$PONDER_ENV_FILE" << EOF
 PONDER_RPC_URL_1=http://localhost:$PORT
 PONDER_START_BLOCK=$FORK_BLOCK_NUMBER
 PONDER_ENVIRONMENT=$ENVIRONMENT
+PONDER_CONFIG_FILE=ponder.config.$ENVIRONMENT.ts
 EOF
 
 echo "Created Ponder environment file at $PONDER_ENV_FILE with:"
