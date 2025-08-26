@@ -6,8 +6,6 @@ on:
     push:
         branches:
             - main
-        paths:
-            - 'packages/subgraph/**'
     workflow_dispatch: # A build was manually requested
         inputs:
             release_version:
