@@ -52,8 +52,11 @@ WORKDIR /river/packages/contracts
 RUN make build
 WORKDIR /river
 
-# Generate contract typings
+# Generate contract typings (needed for Ponder to import ABIs)
 RUN yarn workspace @towns-protocol/contracts typings
+
+# Build the generated contracts typings package
+RUN yarn workspace @towns-protocol/generated build
 
 # Build proto package (dependency of dlog)
 RUN yarn workspace @towns-protocol/proto build
