@@ -237,6 +237,16 @@ describe('Bot', { sequential: true }, () => {
         expect(userStream.appAddress).toBe(appAddress)
     })
 
+    it('should show bot in member list and apps set when installed', async () => {
+        const channelStreamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(channelId)
+        })
+        const { apps, joined } = channelStreamView.getMembers()
+        expect(apps.has(botClientAddress)).toBe(true)
+        expect(joined.has(botClientAddress)).toBe(true)
+        expect(joined.get(botClientAddress)?.appAddress).toBe(appAddress)
+    })
+
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
@@ -641,5 +651,14 @@ describe('Bot', { sequential: true }, () => {
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    it('should not show bot in member list and apps set after uninstallation', async () => {
+        const channelStreamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(channelId)
+        })
+        const { apps, joined } = channelStreamView.getMembers()
+        expect(apps.has(botClientAddress)).toBe(false)
+        expect(joined.has(botClientAddress)).toBe(false)
     })
 })
