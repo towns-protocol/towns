@@ -87,7 +87,7 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
                 if (payload.content.value.appAddress) {
                     this.userStreamsView.setAppAddress(
                         this.streamId,
-                        payload.content.value.appAddress,
+                        userIdFromAddress(payload.content.value.appAddress),
                     )
                 }
                 break
