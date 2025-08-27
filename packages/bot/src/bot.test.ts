@@ -8,6 +8,7 @@ import {
     makeUserStreamId,
     MockEntitlementsDelegate,
     RiverDbManager,
+    RiverTimelineEvent,
     waitFor,
     type AppRegistryRpcClient,
     type Channel,
@@ -114,7 +115,7 @@ describe('Bot', { sequential: true }, () => {
         const tx = await appRegistryDapp.createApp(
             bob.signer,
             BOT_USERNAME,
-            [...Object.values(Permission)], // all permissions
+            [...Object.values(Permission).filter((p) => p !== Permission.React)], // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
             31536000n,
@@ -544,8 +545,25 @@ describe('Bot', { sequential: true }, () => {
     it('bot can redact his own message', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
-        const redactionId = await bot.removeEvent(channelId, messageId)
-        expect(redactionId).toBeDefined()
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const { eventId: redactionId } = await bot.removeEvent(channelId, messageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
     })
 
     it('bot can redact other people messages', async () => {
@@ -555,9 +573,26 @@ describe('Bot', { sequential: true }, () => {
             messages.push(e)
         })
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
         await waitFor(() => messages.length > 0)
-        const redactionId = await bot.removeEvent(channelId, bobMessageId)
-        expect(redactionId).toBeDefined()
+        const { eventId: redactionId } = await bot.adminRemoveEvent(channelId, bobMessageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
     })
     // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {

@@ -53,6 +53,9 @@ import {
     EncryptedDataSchema,
     type EncryptedData,
     Tags,
+    ChannelPayloadSchema,
+    type StreamEvent,
+    MessageInteractionType,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -563,6 +566,16 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
     }
 
     /**
+     * Remove an specific event from a stream as an admin. This is only available if you have Permission.Redact
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param refEventId - The eventId of the event to remove
+     */
+    async adminRemoveEvent(streamId: string, refEventId: string) {
+        const result = await this.client.adminRemoveEvent(streamId, refEventId)
+        return result
+    }
+
+    /**
      * Edit an specific message from a stream
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param messageId - The eventId of the message to edit
@@ -916,6 +929,40 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         return sendMessageEvent({ streamId, payload, tags })
     }
 
+    const adminRemoveEvent = async (streamId: string, messageId: string) => {
+        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
+        const event = await makeEvent(
+            client.signer,
+            {
+                case: 'channelPayload',
+                value: {
+                    content: {
+                        case: 'redaction',
+                        value: { eventId: bin_fromHexString(messageId) },
+                    },
+                },
+            },
+            prevMiniblockHash,
+            prevMiniblockNum,
+            {
+                participatingUserAddresses: [],
+                threadId: undefined,
+                messageInteractionType: MessageInteractionType.REDACTION,
+                groupMentionTypes: [],
+                mentionedUserAddresses: [],
+            },
+        )
+        const eventId = bin_toHexString(event.hash)
+        await client.rpc.addEvent({
+            streamId: streamIdAsBytes(streamId),
+            event,
+        })
+        return { eventId }
+    }
+
     const setUsername = async (streamId: string, username: string) => {
         const encryptedData = await client.crypto.encryptGroupEvent(
             streamId,
@@ -1120,6 +1167,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         sendDm,
         sendReaction,
         removeEvent,
+        adminRemoveEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
