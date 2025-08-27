@@ -18,7 +18,6 @@ export interface BaseChainConfig {
             towns?: Address
         }
     }
-    executionClient?: 'geth_dev' | undefined
 }
 
 export interface RiverChainConfig {
