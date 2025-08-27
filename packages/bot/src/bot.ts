@@ -53,6 +53,8 @@ import {
     Tags,
     type StreamEvent,
     MessageInteractionType,
+    ChannelPayloadSchema,
+    ChannelPayload_RedactionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
