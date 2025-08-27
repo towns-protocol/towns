@@ -236,7 +236,7 @@ message AppMetadata {
     repeated SlashCommand slash_commands = 6;
 
     // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
-    // Must be non-empty and unique across all bots.
+    // Must be non-empty.
     string display_name = 7;
 }
 
