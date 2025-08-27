@@ -514,7 +514,7 @@ func srStream(
 	return err
 }
 
-func nodesDump(cfg *config.Config, csv bool) error {
+func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(
@@ -538,7 +538,12 @@ func nodesDump(cfg *config.Config, csv bool) error {
 		return err
 	}
 
-	nodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+	blockNum := blockchain.InitialBlockNum
+	if atBlock >= 0 {
+		blockNum = crypto.BlockNumber(atBlock)
+	}
+
+	nodes, err := registryContract.GetAllNodes(ctx, blockNum)
 	if err != nil {
 		return err
 	}
@@ -563,6 +568,13 @@ func nodesDump(cfg *config.Config, csv bool) error {
 				node.Url,
 			)
 		}
+	}
+	fmt.Printf("%s\n", strings.Repeat("=", 140))
+
+	if header, err := blockchain.Client.HeaderByNumber(ctx, blockNum.AsBigInt()); err == nil {
+		fmt.Printf("At river block %d (%s)\n", blockNum, time.Unix(int64(header.Time), 0))
+	} else {
+		fmt.Printf("At river block %d\n", blockNum)
 	}
 
 	return nil
@@ -917,14 +929,20 @@ func init() {
 		Use:   "nodes",
 		Short: "Get node records from the registry contract",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			atBlock, err := cmd.Flags().GetInt64("river-block")
+			if err != nil {
+				return err
+			}
 			csv, err := cmd.Flags().GetBool("csv")
 			if err != nil {
 				return err
 			}
-			return nodesDump(cmdConfig, csv)
+			return nodesDump(cmdConfig, atBlock, csv)
 		},
 	}
+	nodesCmd.Flags().Int64("river-block", -1, "River chain block number to query on")
 	nodesCmd.Flags().Bool("csv", false, "Output in CSV format")
+
 	srCmd.AddCommand(nodesCmd)
 
 	srCmd.AddCommand(&cobra.Command{
