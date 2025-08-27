@@ -71,7 +71,6 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	data []byte,
 	location []byte,
 	uploadID string,
-	partNumber int,
 ) error {
 	
 	// Generate S3 key: streams/{streamId}

@@ -677,7 +677,7 @@ func (s *Stream) GetMiniblocks(
 		return nil, false, err
 	}
 	// TODO parallelize this
-	if streamInfo != nil {
+	if streamInfo != "" {
 		// for each block, get the data from external storage
 		for _, block := range blocks {
 			data, err := s.params.Storage.DownloadFromExternal(ctx, s.streamId, block.Data)

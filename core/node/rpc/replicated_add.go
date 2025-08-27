@@ -215,7 +215,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 		if uploadID != "" {
-			if s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, mbBytes, uploadID, )) != nil {
+			if s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, mbBytes, uploadID) != nil {
 				return err
 			}
 			mbBytes = []byte{}
