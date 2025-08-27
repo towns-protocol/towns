@@ -541,6 +541,24 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
+    it('bot can redact his own message', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
+        const redactionId = await bot.removeEvent(channelId, messageId)
+        expect(redactionId).toBeDefined()
+    })
+
+    it('bot can redact other people messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const messages: BotPayload<'message'>[] = []
+        bot.onMessage((_h, e) => {
+            messages.push(e)
+        })
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
+        await waitFor(() => messages.length > 0)
+        const redactionId = await bot.removeEvent(channelId, bobMessageId)
+        expect(redactionId).toBeDefined()
+    })
     // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
