@@ -368,6 +368,26 @@
       }
     },
     {
+      "label": "Playground - alpha",
+      "type": "shell",
+      "command": "cd packages/playground && yarn dev:alpha",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "apps"
+      }
+    },
+    {
+      "label": "Playground - omega",
+      "type": "shell",
+      "command": "cd packages/playground && yarn dev:omega",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "apps"
+      }
+    },
+    {
       "label": "WatchSdk",
       "type": "shell",
       "command": "cd packages/sdk && yarn watch",
