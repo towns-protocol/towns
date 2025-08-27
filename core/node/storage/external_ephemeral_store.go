@@ -69,7 +69,6 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
-	location []byte,
 	uploadID string,
 ) error {
 	
@@ -80,7 +79,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	_, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
 		Bucket:        &w.bucket,
 		Key:           &key,
-		PartNumber:    int32(partNumber),
+		PartNumber:    int32(1),
 		UploadId:      &uploadID,
 		Body:          bytes.NewReader(data),
 		ContentLength: int64(len(data)),
