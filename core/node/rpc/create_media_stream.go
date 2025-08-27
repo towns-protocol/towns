@@ -229,11 +229,11 @@ func (s *Service) createReplicatedMediaStream(
 	if isLocal {
 		// TODO use config file instead
 		if os.Getenv("STORAGE_TYPE") == "external" {
-			mbBytes, err = s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
 				return nil, err
 			}
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, mbBytes) != nil {
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID) != nil {
 				return nil, err
 			}
 		}
@@ -241,7 +241,7 @@ func (s *Service) createReplicatedMediaStream(
 			return s.storage.CreateEphemeralStreamStorage(
 				ctx,
 				streamId,
-				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
+				&storage.MiniblockDescriptor{Data: []byte{}, HasLegacySnapshot: true},
 			)
 		})
 	}

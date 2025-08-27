@@ -44,22 +44,72 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
-) ([]byte, error) {
-	// Generate S3 key: streams/{streamId}/{timestamp}
-	key := fmt.Sprintf("streams/%x/%d", streamId, time.Now().UnixNano())
-
-	// Upload to S3
-	_, err := w.s3Client.PutObject(ctx, &s3.PutObjectInput{
+) (string, error) {
+	// Generate S3 key: streams/{streamId}
+	key := fmt.Sprintf("streams/%x", streamId)
+	
+	// Start multipart upload
+	output, err := w.s3Client.CreateMultipartUpload(ctx, &s3.CreateMultipartUploadInput{
 		Bucket: &w.bucket,
 		Key:    &key,
-		Body:   bytes.NewReader(data),
+		Metadata: map[string]string{
+			"stream-id": fmt.Sprintf("%x", streamId),
+			"created":   time.Now().Format(time.RFC3339),
+		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload to S3: %w", err)
+		return "", fmt.Errorf("failed to create multipart upload: %w", err)
 	}
+	
+	// Return the upload ID
+	return *output.UploadId, nil
+}
 
-	// Return S3 URL
-	return fmt.Appendf(nil, "s3://%s/%s", w.bucket, key), nil
+func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
+	ctx context.Context,
+	streamId StreamId,
+	data []byte,
+	location []byte,
+	uploadID string,
+	partNumber int,
+) error {
+	
+	// Generate S3 key: streams/{streamId}
+	key := fmt.Sprintf("streams/%x", streamId)
+	
+	// Upload part
+	_, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
+		Bucket:        &w.bucket,
+		Key:           &key,
+		PartNumber:    int32(partNumber),
+		UploadId:      &uploadID,
+		Body:          bytes.NewReader(data),
+		ContentLength: int64(len(data)),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload part: %w", err)
+	}
+	return nil
+}
+
+func (w *ExternalMediaStore) CompleteMediaStreamUpload(
+	ctx context.Context,
+	streamId StreamId,
+	uploadID string,
+) error {
+	// Generate S3 key: streams/{streamId}
+	key := fmt.Sprintf("streams/%x", streamId)
+	
+	// Complete the multipart upload
+	_, err := w.s3Client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
+		Bucket:   &w.bucket,
+		Key:      &key,
+		UploadId: &uploadID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to complete multipart upload: %w", err)
+	}
+	return nil
 }
 
 func (w *ExternalMediaStore) DownloadFromExternal(

@@ -357,7 +357,7 @@ func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId St
 func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 	ctx context.Context,
 	streamId StreamId,
-	location []byte,
+	uploadID string,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -371,7 +371,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 				ctx,
 				tx,
 				streamId,
-				location,
+				uploadID,
 			)
 		},
 		nil,
@@ -383,15 +383,15 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	location []byte,
+	uploadID string,
 ) error {
 	// Query to insert a new ephemeral miniblock
 	query := s.sqlForStream(
-		"INSERT INTO {{external_media_streams}} (stream_id, location) VALUES ($1, $2);",
+		"INSERT INTO {{external_media_streams}} (stream_id, upload_id) VALUES ($1, $2);",
 		streamId,
 	)
 
-	_, err := tx.Exec(ctx, query, streamId, location)
+	_, err := tx.Exec(ctx, query, streamId, uploadID)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("ephemeral miniblock or stream already exists")
@@ -400,4 +400,36 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	}
 
 	return nil
+}
+
+func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var uploadID string
+	err := s.txRunner(
+		ctx,
+		"GetExternalMediaStreamInfo",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			uploadID, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	return uploadID, err
+}
+
+func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, error) {
+	var uploadID string
+	if err := tx.QueryRow(
+		ctx,
+		"SELECT upload_id FROM {{external_media_streams}} WHERE stream_id = $1",
+		streamId,
+	).Scan(&uploadID); err != nil {
+		return "", err
+	}
+	return uploadID, nil
 }

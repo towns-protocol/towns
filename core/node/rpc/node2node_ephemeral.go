@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -62,14 +61,14 @@ func (s *Service) allocateEphemeralStream(
 
 	// TODO use config file instead
 	if os.Getenv("STORAGE_TYPE") == "external" {
-		location, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
+		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, location) != nil {
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID) != nil {
 			return nil, err
 		}
-		storageMb.Data = location
+		storageMb.Data = []byte{}
 	}
 	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
 		return nil, err
@@ -118,18 +117,17 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
-	if os.Getenv("STORAGE_TYPE") == "external" {
-		// Get the location of the uploaded data
-		location, err := s.externalMediaStorage.GetExternalMediaStreamInfo(ctx, streamId)
+	// Get the uploadID of the uploaded data
+	uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	if err != nil {
+		return err
+	}
+	if uploadID != "" {
+		err = s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID)
 		if err != nil {
 			return err
 		}
-		
-		part, err := s.externalMediaStorage.AppendToExternalMediaStream(ctx, streamId, storageMb.Data, location)
-		if err != nil {
-			return err
-		}
-		storageMb.Data = []byte(fmt.Sprintf("%d", part))
+		storageMb.Data = []byte{}
 	}
 	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
@@ -171,5 +169,15 @@ func (s *Service) sealEphemeralStream(
 		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
+	uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	if uploadID != "" {
+		err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID)
+		if err != nil {
+			return common.Hash{}, err
+		}
+	}
 	return s.storage.NormalizeEphemeralStream(ctx, streamId)
 }

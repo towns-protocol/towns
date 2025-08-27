@@ -169,6 +169,16 @@ type (
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
+		// GetExternalMediaStreamInfo returns the upload ID for the given stream.
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, error)
+
+		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
+		WriteExternalMediaStreamInfo(
+			ctx context.Context,
+			streamId StreamId,
+			uploadID string,
+		) error
+
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
 			ctx context.Context,
@@ -211,13 +221,6 @@ type (
 		// WriteEphemeralMiniblock writes a miniblock as part of ephemeral stream. Skips a bunch of consistency checks.
 		// Stream with the given ID must be ephemeral.
 		WriteEphemeralMiniblock(ctx context.Context, streamId StreamId, miniblock *MiniblockDescriptor) error
-
-		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
-		WriteExternalMediaStreamInfo(
-			ctx context.Context,
-			streamId StreamId,
-			location []byte,
-		) error
 
 		// GetMaxArchivedMiniblockNumber returns the maximum miniblock number that has been archived for the given stream.
 		// If stream record is created, but no miniblocks are archived, returns -1.
@@ -297,10 +300,9 @@ type (
 	}
 
 	ExternalMediaStorage interface {
-		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) ([]byte, error)
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) ([]byte, error)
-		AppendToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, location []byte) (int, error)
+		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
+		UploadPartToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string) error
 		DownloadFromExternal(ctx context.Context, streamId StreamId, key string) ([]byte, error)
-		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId) error
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 	}
 )
