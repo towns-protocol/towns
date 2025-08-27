@@ -28,6 +28,7 @@ import {
     make_UserMetadataPayload_ProfileImage,
     spaceIdFromChannelId,
     type CreateTownsClientParams,
+    make_ChannelPayload_Redaction,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -37,7 +38,6 @@ import {
     type ChannelMessage_Post_Attachment,
     type ChannelMessage_Post_Mention,
     ChannelMessage,
-    type Envelope,
     ChannelMessageSchema,
     AppServiceRequestSchema,
     AppServiceResponseSchema,
@@ -53,9 +53,10 @@ import {
     EncryptedDataSchema,
     type EncryptedData,
     Tags,
-    ChannelPayloadSchema,
     type StreamEvent,
     MessageInteractionType,
+    ChannelPayloadSchema,
+    ChannelPayload_RedactionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -745,10 +746,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         tags?: PlainMessage<Tags>
     }) => {
         const stream = await client.getStream(streamId)
-        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
-            await client.rpc.getLastMiniblockHash({
-                streamId: streamIdAsBytes(streamId),
-            })
         const eventTags = {
             ...unsafe_makeTags(payload),
             participatingUserAddresses: tags?.participatingUserAddresses || [],
@@ -764,86 +761,44 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 
-        let event: Envelope
+        let eventPayload: PlainMessage<StreamEvent>['payload']
         if (isChannelStreamId(streamId)) {
-            event = await makeEvent(
-                client.signer,
-                make_ChannelPayload_Message(message),
-                prevMiniblockHash,
-                prevMiniblockNum,
-                eventTags,
-            )
+            eventPayload = make_ChannelPayload_Message(message)
         } else if (isDMChannelStreamId(streamId)) {
-            event = await makeEvent(
-                client.signer,
-                make_DMChannelPayload_Message(message),
-                prevMiniblockHash,
-                prevMiniblockNum,
-                eventTags,
-            )
+            eventPayload = make_DMChannelPayload_Message(message)
         } else if (isGDMChannelStreamId(streamId)) {
-            event = await makeEvent(
-                client.signer,
-                make_GDMChannelPayload_Message(message),
-                prevMiniblockHash,
-                prevMiniblockNum,
-                eventTags,
-            )
+            eventPayload = make_GDMChannelPayload_Message(message)
         } else {
             throw new Error(`Invalid stream ID type: ${streamId}`)
         }
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return {
-            eventId,
-            prevMiniblockHash,
-        }
+        return client.sendEvent(streamId, eventPayload, eventTags)
     }
 
     const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
         const encryptionDevice = client.crypto.getUserDevice()
-
         const missingSessionIds = sessionIds.filter((sessionId) => sessionId !== '')
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
-        const event = await makeEvent(
-            client.signer,
+
+        return client.sendEvent(
+            streamId,
             make_MemberPayload_KeySolicitation({
                 deviceKey: encryptionDevice.deviceKey,
                 fallbackKey: encryptionDevice.fallbackKey,
                 isNewDevice: missingSessionIds.length === 0,
                 sessionIds: missingSessionIds,
             }),
-            prevMiniblockHash,
         )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return { eventId }
     }
 
     const uploadDeviceKeys = async () => {
-        const streamId = streamIdAsBytes(makeUserMetadataStreamId(client.userId))
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId,
-        })
+        const streamId = makeUserMetadataStreamId(client.userId)
         const encryptionDevice = client.crypto.getUserDevice()
-        const event = await makeEvent(
-            client.signer,
+
+        return client.sendEvent(
+            streamId,
             make_UserMetadataPayload_EncryptionDevice({
                 ...encryptionDevice,
             }),
-            prevMiniblockHash,
         )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({ streamId, event })
-        return { eventId }
     }
 
     const sendMessage = async (
@@ -930,23 +885,9 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
     }
 
     const adminRemoveEvent = async (streamId: string, messageId: string) => {
-        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
-            await client.rpc.getLastMiniblockHash({
-                streamId: streamIdAsBytes(streamId),
-            })
-        const event = await makeEvent(
-            client.signer,
-            {
-                case: 'channelPayload',
-                value: {
-                    content: {
-                        case: 'redaction',
-                        value: { eventId: bin_fromHexString(messageId) },
-                    },
-                },
-            },
-            prevMiniblockHash,
-            prevMiniblockNum,
+        return client.sendEvent(
+            streamId,
+            make_ChannelPayload_Redaction(bin_fromHexString(messageId)),
             {
                 participatingUserAddresses: [],
                 threadId: undefined,
@@ -955,12 +896,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 mentionedUserAddresses: [],
             },
         )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return { eventId }
     }
 
     const setUsername = async (streamId: string, username: string) => {
@@ -970,20 +905,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             client.defaultGroupEncryptionAlgorithm,
         )
         encryptedData.checksum = usernameChecksum(username, streamId)
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
-        const event = await makeEvent(
-            client.signer,
-            make_MemberPayload_Username(encryptedData),
-            prevMiniblockHash,
-        )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return { eventId }
+
+        return client.sendEvent(streamId, make_MemberPayload_Username(encryptedData))
     }
 
     const setDisplayName = async (streamId: string, displayName: string) => {
@@ -992,20 +915,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             new TextEncoder().encode(displayName),
             client.defaultGroupEncryptionAlgorithm,
         )
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
-        const event = await makeEvent(
-            client.signer,
-            make_MemberPayload_DisplayName(encryptedData),
-            prevMiniblockHash,
-        )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return { eventId }
+
+        return client.sendEvent(streamId, make_MemberPayload_DisplayName(encryptedData))
     }
 
     const setUserProfileImage = async (chunkedMediaInfo: PlainMessage<ChunkedMedia>) => {
@@ -1020,20 +931,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
             ciphertext: uint8ArrayToBase64(ciphertext),
             algorithm: AES_GCM_DERIVED_ALGORITHM,
         }) satisfies PlainMessage<EncryptedData>
-        const { hash: prevMiniblockHash } = await client.rpc.getLastMiniblockHash({
-            streamId: streamIdAsBytes(streamId),
-        })
-        const event = await makeEvent(
-            client.signer,
-            make_UserMetadataPayload_ProfileImage(encryptedData),
-            prevMiniblockHash,
-        )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
-        })
-        return { eventId }
+
+        return client.sendEvent(streamId, make_UserMetadataPayload_ProfileImage(encryptedData))
     }
 
     const decryptSessions = async (
