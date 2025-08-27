@@ -14,7 +14,7 @@
         "start": "node --enable-source-maps ./dist/start.cjs",
         "test:ci:with-entitlements": "vitest run --config ./vitest.config.entitlements.ts --silent",
         "test:stress": "vitest run --config ./vitest.config.entitlements.ts ./src/stress.test.ts",
-        "test:stress:dev": "pnpm run test:stress | pnpm run pino-pretty",
+        "test:stress:dev": "pnpm run test:stress | pnpm exec pino-pretty",
         "transfer-funds": "node --enable-source-maps ./dist/transferFunds.cjs",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"

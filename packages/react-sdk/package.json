@@ -3,12 +3,6 @@
     "description": "React Hooks for Towns Protocol SDK",
     "version": "0.0.322",
     "type": "module",
-    "exports": {
-        ".": {
-            "import": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
-    },
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
@@ -33,11 +27,13 @@
         "@microsoft/api-extractor-model": "^7.30.5",
         "@microsoft/tsdoc": "^0.15.0",
         "@microsoft/tsdoc-config": "^0.17.0",
+        "@types/debug": "^4.1.8",
         "@types/node": "^20.14.8",
         "@types/react": "^19.1.8",
         "@types/react-dom": "^19.1.6",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
+        "esbuild": "^0.21.5",
         "eslint": "^8.57.1",
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-react": "^7.32.2",
@@ -46,7 +42,7 @@
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "ts-morph": "^24.0.0",
-        "tsdown": "^0.12.7",
+        "tsdown": "^0.12.3",
         "tsx": "^4.7.1",
         "typescript": "^5.8.2"
     },
