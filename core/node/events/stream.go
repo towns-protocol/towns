@@ -672,7 +672,7 @@ func (s *Stream) GetMiniblocks(
 	}
 
 	// if stream is in the external_media table, we need to read from external storage
-	streamInfo, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
+	streamInfo, _, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
 	if err != nil {
 		return nil, false, err
 	}

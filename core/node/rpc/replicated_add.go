@@ -210,14 +210,16 @@ func (s *Service) replicatedAddMediaEventImpl(
 		
 
 		// Get the upload ID of the stream data
-		uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		uploadID, parts, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
 			return err
 		}
 		if uploadID != "" {
-			if s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, mbBytes, uploadID) != nil {
+			part := parts + 1
+			if s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, mbBytes, uploadID, part) != nil {
 				return err
 			}
+			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part)
 			mbBytes = []byte{}
 		}
 

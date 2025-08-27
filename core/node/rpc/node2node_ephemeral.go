@@ -65,7 +65,7 @@ func (s *Service) allocateEphemeralStream(
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID) != nil {
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
 			return nil, err
 		}
 		storageMb.Data = []byte{}
@@ -118,13 +118,17 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
 	// Get the uploadID of the uploaded data
-	uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, parts, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
 	if uploadID != "" {
-		err = s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID)
+		part := parts + 1
+		err = s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, part)
 		if err != nil {
+			return err
+		}
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part) != nil {
 			return err
 		}
 		storageMb.Data = []byte{}
@@ -169,7 +173,7 @@ func (s *Service) sealEphemeralStream(
 		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
-	uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return common.Hash{}, err
 	}

@@ -170,13 +170,14 @@ type (
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
 		// GetExternalMediaStreamInfo returns the upload ID for the given stream.
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, error)
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int, error)
 
 		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
 		WriteExternalMediaStreamInfo(
 			ctx context.Context,
 			streamId StreamId,
 			uploadID string,
+			part int,
 		) error
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
@@ -301,7 +302,7 @@ type (
 
 	ExternalMediaStorage interface {
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
-		UploadPartToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string) error
+		UploadPartToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) error
 		DownloadFromExternal(ctx context.Context, streamId StreamId, key string) ([]byte, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 	}

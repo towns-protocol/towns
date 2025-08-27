@@ -70,6 +70,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	streamId StreamId,
 	data []byte,
 	uploadID string,
+	partNum int,
 ) error {
 	
 	// Generate S3 key: streams/{streamId}
@@ -79,7 +80,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	_, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
 		Bucket:        &w.bucket,
 		Key:           &key,
-		PartNumber:    int32(1),
+		PartNumber:    int32(partNum),
 		UploadId:      &uploadID,
 		Body:          bytes.NewReader(data),
 		ContentLength: int64(len(data)),
