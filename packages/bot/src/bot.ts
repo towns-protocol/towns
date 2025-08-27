@@ -896,43 +896,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         )
     }
 
-    const setUsername = async (streamId: string, username: string) => {
-        const encryptedData = await client.crypto.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(username),
-            client.defaultGroupEncryptionAlgorithm,
-        )
-        encryptedData.checksum = usernameChecksum(username, streamId)
-
-        return client.sendEvent(streamId, make_MemberPayload_Username(encryptedData))
-    }
-
-    const setDisplayName = async (streamId: string, displayName: string) => {
-        const encryptedData = await client.crypto.encryptGroupEvent(
-            streamId,
-            new TextEncoder().encode(displayName),
-            client.defaultGroupEncryptionAlgorithm,
-        )
-
-        return client.sendEvent(streamId, make_MemberPayload_DisplayName(encryptedData))
-    }
-
-    const setUserProfileImage = async (chunkedMediaInfo: PlainMessage<ChunkedMedia>) => {
-        const streamId = makeUserMetadataStreamId(client.userId)
-        const { key, iv } = await deriveKeyAndIV(client.userId)
-        const { ciphertext } = await encryptAESGCM(
-            toBinary(ChunkedMediaSchema, create(ChunkedMediaSchema, chunkedMediaInfo)),
-            key,
-            iv,
-        )
-        const encryptedData = create(EncryptedDataSchema, {
-            ciphertext: uint8ArrayToBase64(ciphertext),
-            algorithm: AES_GCM_DERIVED_ALGORITHM,
-        }) satisfies PlainMessage<EncryptedData>
-
-        return client.sendEvent(streamId, make_UserMetadataPayload_ProfileImage(encryptedData))
-    }
-
     const decryptSessions = async (
         streamId: string,
         sessions: UserInboxPayload_GroupEncryptionSessions,
@@ -1068,9 +1031,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
-        setUsername,
-        setDisplayName,
-        setUserProfileImage,
         /** @deprecated Not planned for now */
         getUserData,
     }
