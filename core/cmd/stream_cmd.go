@@ -5,14 +5,19 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1111,6 +1116,131 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 	return nil
 }
 
+func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []string) error {
+	type (
+		nodeStreamState struct {
+			LastMiniblockNum  int64
+			LastMiniblockHash common.Hash
+			Err               error
+		}
+		streamState struct {
+			StreamID StreamId                            `json:"streamId"`
+			Nodes    map[common.Address]*nodeStreamState `json:"nodes"`
+		}
+
+		metaData struct {
+			RiverBlock crypto.BlockNumber `json:"riverBlock"`
+			Start      time.Time          `json:"start"`
+			Resumed    []time.Time        `json:"resumed,omitempty"`
+		}
+	)
+
+	var (
+		ctx              = cmd.Context()
+		outputDir        = args[0]
+		metaDataFile     = path.Join(outputDir, "metadata.json")
+		blockNumber      = crypto.BlockNumber(0)
+		processedStreams = make(map[StreamId]*streamState)
+	)
+
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return err
+	}
+
+	riverChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	defer riverChain.Close()
+
+	// check if command needs to resume or this is a fresh start
+	_, err = os.Stat(metaDataFile)
+	if freshStart := os.IsNotExist(err); freshStart {
+		blockNumber = riverChain.InitialBlockNum
+		fmt.Printf("Start from river block %d\n", blockNumber)
+		md := metaData{
+			RiverBlock: blockNumber,
+			Start:      time.Now(),
+		}
+		d, err := json.MarshalIndent(md, "", "  ")
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(metaDataFile, d, 0644); err != nil {
+			return err
+		}
+	} else if err == nil {
+		metaDataBytes, err := os.ReadFile(metaDataFile)
+		if err != nil {
+			return err
+		}
+
+		var md metaData
+		if err := json.Unmarshal(metaDataBytes, &md); err != nil {
+			return err
+		}
+
+		// load already processed stream state records
+		if err := filepath.WalkDir(outputDir, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				return nil // don't process sub directories
+			}
+			if !strings.HasSuffix(d.Name(), ".node.json") {
+				return nil // only process .node.json files
+			}
+
+			nodeFile, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer nodeFile.Close()
+
+			input := json.NewDecoder(nodeFile)
+			for {
+				var s streamState
+				if err := input.Decode(&s); err != nil {
+					if errors.Is(err, io.EOF) {
+						break
+					}
+					if err != nil {
+						return err
+					}
+					processedStreams[s.StreamID] = &s
+				}
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		md.Resumed = append(md.Resumed, time.Now())
+		d, err := json.MarshalIndent(md, "", "  ")
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(metaDataFile, d, 0644); err != nil {
+			return err
+		}
+
+		blockNumber = md.RiverBlock
+		fmt.Printf("Resuming from river block %d\n", blockNumber)
+	} else {
+		return err
+	}
+
+	return nil
+}
+
 func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -1436,6 +1566,16 @@ max-block-range is optional and limits the number of blocks to consider (default
 		},
 	}
 
+	cmdStreamCheckStreamState := &cobra.Command{
+		Use:   "check <output-dir>",
+		Short: "Check stream state consistency over nodes",
+		Long:  `Check stream state consistency over nodes by comparing the stream state on each node.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamCheckStateCmd(cmd, cmdConfig, args)
+		},
+	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
@@ -1452,6 +1592,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamValidate)
 	cmdStream.AddCommand(cmdStreamCompareMiniblockChain)
 	cmdStream.AddCommand(cmdStreamOutOfSync)
+	cmdStream.AddCommand(cmdStreamCheckStreamState)
 
 	rootCmd.AddCommand(cmdStream)
 }
