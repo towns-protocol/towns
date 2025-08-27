@@ -189,17 +189,17 @@ function updateData(uint256 value) external {
 
 ```bash
 # Install dependencies
-yarn
+pnpm install
 
 # Build contracts
 forge build
 # or
-yarn build
+pnpm run build
 
 # Run tests
 forge test --ffi --nmc Fork --fuzz-runs 4096
 # or
-yarn test
+pnpm test
 
 # Run specific test
 forge test --match-test testFunctionName -vvvv
@@ -208,13 +208,13 @@ forge test --match-test testFunctionName -vvvv
 forge snapshot --isolate
 
 # Format code
-yarn format
+pnpm run format
 
 # Lint
-yarn lint
+pnpm run lint
 
 # Generate TypeScript types
-yarn typings
+pnpm run typings
 ```
 
 ## Deployment

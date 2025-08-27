@@ -4,12 +4,10 @@ WORKDIR /river
 
 # monorepo root config
 COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 COPY ./turbo.json ./turbo.json
 COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
 
@@ -31,8 +29,9 @@ COPY ./packages/xchain-monitor /river/packages/xchain-monitor
 # install dependencies and build
 RUN apk add --no-cache git curl
 RUN corepack enable
-RUN yarn install
-RUN yarn run turbo build --filter @towns-protocol/xchain-monitor
+RUN corepack prepare pnpm@latest --activate
+RUN pnpm install --frozen-lockfile
+RUN pnpm turbo build --filter @towns-protocol/xchain-monitor
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
@@ -40,8 +39,9 @@ COPY --from=builder /river/packages/xchain-monitor/dist /river/packages/xchain-m
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
 WORKDIR /river/packages/xchain-monitor
-RUN yarn init --yes
-RUN yarn add dd-trace@^5.19.0
+RUN corepack prepare pnpm@latest --activate
+RUN pnpm init
+RUN pnpm add dd-trace@^5.19.0
 
 # run the service
 ARG GIT_SHA

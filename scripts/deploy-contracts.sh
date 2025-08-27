@@ -39,7 +39,7 @@ set +a
 : ${RIVER_ANVIL_RPC_URL:?}
 
 if [ "${1-}" != "nobuild" ]; then
-    yarn run -T turbo build --filter=@towns-protocol/contracts
+    pnpm turbo build --filter=@towns-protocol/contracts
 fi
 
 # Account Abstraction is not supported on anvil
@@ -77,4 +77,4 @@ fi
 
 # Update the config
 cd "$PROJECT_ROOT/packages/generated"
-yarn make-config
+pnpm make-config

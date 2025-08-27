@@ -1,16 +1,15 @@
 {
     "name": "@towns-protocol/sdk-crypto",
     "version": "0.0.322",
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "./dist/web/index.cjs",
     "types": "./dist/web/index.d.ts",
     "scripts": {
         "build": "tsdown",
-        "cb": "yarn clean && yarn build",
+        "cb": "pnpm run clean && pnpm run build",
         "clean": "rm -rf dist",
         "lint": "eslint --format unix ./src  --max-warnings=0",
-        "lint:fix": "yarn lint --fix",
+        "lint:fix": "pnpm run lint --fix",
         "test": "vitest",
         "test:unit": "vitest run",
         "watch": "tsdown --watch"

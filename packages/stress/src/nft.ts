@@ -18,7 +18,7 @@ interface NFTOptions {
 
 function printUsage() {
     console.log(`
-Usage: yarn nft <command> [options]
+Usage: pnpm nft <command> [options]
 
 Commands:
   check     Check owner of an NFT
@@ -35,10 +35,10 @@ Options:
 
 Examples:
   # Check NFT owner
-  yarn nft check --contract 0x789... --token-id 7
+  pnpm nft check --contract 0x789... --token-id 7
 
   # Transfer NFT
-  yarn nft transfer --from 0x123... --to 0x456... --contract 0x789... --token-id 7 --private-key 0x...
+  pnpm nft transfer --from 0x123... --to 0x456... --contract 0x789... --token-id 7 --private-key 0x...
 `)
 }
 

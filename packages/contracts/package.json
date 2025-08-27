@@ -1,18 +1,17 @@
 {
   "name": "@towns-protocol/contracts",
   "version": "0.0.322",
-  "packageManager": "yarn@3.8.0",
   "scripts": {
     "build": "forge build",
     "build-types": "bash scripts/build-contract-types.sh",
     "clean": "forge clean",
-    "format": "yarn prettier:write",
-    "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "format": "pnpm run prettier:write",
+    "lint": "solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
     "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
-    "test:unit": "yarn test",
+    "test:unit": "pnpm run test",
     "typings": "wagmi generate"
   },
   "dependencies": {

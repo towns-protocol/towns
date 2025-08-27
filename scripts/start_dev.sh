@@ -61,7 +61,7 @@ if ! command -v yq &> /dev/null; then
     echo "yq installed successfully."
 fi
 
-yarn install
+pnpm install
 
 # Create a new tmux session
 tmux new-session -d -s $SESSION_NAME
@@ -119,21 +119,21 @@ echo "STARTED ALL CHAINS AND BUILT ALL CONTRACTS"
 # Continue with rest of the script
 echo "Continuing with the rest of the script..."
 
-yarn csb:build
+pnpm run csb:build
 
 # Array of commands from the VS Code tasks
 commands=(
-    "watch_sdk:cd packages/sdk && yarn watch"
-    "watch_encryption:cd packages/encryption && yarn watch"
-    "watch_dlog:cd packages/dlog && yarn watch"
-    "watch_proto:cd packages/proto && yarn watch"
-    "watch_web3:cd packages/web3 && yarn watch"
-    "watch_go:cd protocol && yarn watch:go"
+    "watch_sdk:cd packages/sdk && pnpm run watch"
+    "watch_encryption:cd packages/encryption && pnpm run watch"
+    "watch_dlog:cd packages/dlog && pnpm run watch"
+    "watch_proto:cd packages/proto && pnpm run watch"
+    "watch_web3:cd packages/web3 && pnpm run watch"
+    "watch_go:cd protocol && pnpm run watch:go"
     "core_multi:(cd ./core && just RUN_ENV=multi run)"
     "core_multi_ne:(cd ./core && just RUN_ENV=multi_ne run)"
     "app_registry_multi:(cd ./core && just RUN_ENV=multi run-app-registry)"
     "app_registry_multi_ne:(cd ./core && just RUN_ENV=multi_ne run-app-registry)"
-    "river_stream_metadata_multi_ne:yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne"
+    "river_stream_metadata_multi_ne:turbo run dev:local_multi_ne --filter=@towns-protocol/stream-metadata"
 )
 
 # Create a Tmux window for each command
@@ -157,5 +157,5 @@ is_closed() {
 if is_closed ; then
     echo "Session $SESSION_NAME has closed; delete core postgres container and volume"
     ./core/scripts/stop_storage.sh
-    yarn workspace @towns-protocol/stream-metadata kill:local_multi_ne
+    turbo run kill:local_multi_ne --filter=@towns-protocol/stream-metadata
 fi

@@ -20,5 +20,5 @@ service. Running the script will:
 
 ```bash
 cd packages/stream-metadata
-yarn dev
+pnpm dev
 ```

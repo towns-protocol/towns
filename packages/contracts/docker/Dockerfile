@@ -26,13 +26,12 @@ RUN apt-get update && \
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs
 
-# Enable Corepack and install Yarn
+# Enable Corepack and install pnpm
 RUN corepack enable
-ENV YARN_VERSION=3.8.0
-RUN corepack prepare yarn@$YARN_VERSION --activate
+RUN corepack prepare pnpm@latest --activate
 
-# Verify Yarn installation
-RUN yarn --version
+# Verify pnpm installation
+RUN pnpm --version
 
 # Install just from precompiled binary
 RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
@@ -49,10 +48,8 @@ WORKDIR /app
 
 # Copy project files
 COPY ./core/justfile /app/core/justfile
-COPY ./yarn.lock /app/yarn.lock
-COPY ./.yarnrc.yml /app/.yarnrc.yml
-COPY ./.yarn/releases /app/.yarn/releases
-COPY ./.yarn/plugins /app/.yarn/plugins
+COPY ./pnpm-lock.yaml /app/pnpm-lock.yaml
+COPY ./pnpm-workspace.yaml /app/pnpm-workspace.yaml
 COPY ./turbo.json /app/turbo.json
 COPY ./package.json /app/package.json
 COPY ./packages/contracts /app/packages/contracts
@@ -63,8 +60,8 @@ COPY ./core/scripts /app/core/scripts
 COPY ./core/env /app/core/env
 
 # Install Node.js dependencies
-RUN yarn
-RUN yarn build
+RUN pnpm install --frozen-lockfile
+RUN pnpm build
 # Setup anvils
 RUN bash ./packages/contracts/docker/setup.sh && sleep 5
 

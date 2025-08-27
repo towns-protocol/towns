@@ -4,7 +4,7 @@ const debounce = require("lodash.debounce");
 
 const currentDirectory = process.cwd();
 const protocolDirectory = process.cwd() + "/../../protocol";
-const buildCommand = "yarn build";
+const buildCommand = "pnpm build";
 
 const handleFileChange = debounce((eventType, filename) => {
   console.log(`Detected ${eventType} in ${filename}, running build command...`);

@@ -4,12 +4,10 @@ WORKDIR /river
 
 # monorepo root config
 COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY ./buf.yaml ./buf.yaml
 COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
 COPY ./turbo.json ./turbo.json
 COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
 
@@ -35,8 +33,9 @@ COPY ./packages/stream-metadata /river/packages/stream-metadata
 # install dependencies and build
 RUN apk add --no-cache git curl
 RUN corepack enable
-RUN yarn install
-RUN yarn run turbo build --filter @towns-protocol/stream-metadata
+RUN corepack prepare pnpm@latest --activate
+RUN pnpm install --frozen-lockfile
+RUN pnpm turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
@@ -44,11 +43,12 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
-RUN yarn init --yes
+RUN corepack prepare pnpm@latest --activate
+RUN pnpm init
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28
+RUN pnpm add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28
 
 # run the service
 ARG GIT_SHA

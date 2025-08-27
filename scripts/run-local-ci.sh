@@ -43,7 +43,7 @@ fi
 
 # Format with prettier
 echo "Formatting event.json..."
-yarn prettier --write event.json
+pnpm exec prettier --write event.json
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."

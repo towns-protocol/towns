@@ -2,10 +2,9 @@
     "name": "@towns-protocol/stress",
     "version": "0.0.1",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "scripts": {
-        "bs": "yarn build && node --enable-source-maps ./dist/simpleChat.cjs",
-        "build": "yarn typecheck && yarn build-esbuild",
+        "bs": "pnpm run build && node --enable-source-maps ./dist/simpleChat.cjs",
+        "build": "pnpm run typecheck && pnpm run build-esbuild",
         "build-esbuild": "node esbuild.config.mjs",
         "demo": "node --enable-source-maps ./dist/demo.cjs",
         "generate-wallets": "node --enable-source-maps ./dist/generateWallets.cjs",
@@ -15,7 +14,7 @@
         "start": "node --enable-source-maps ./dist/start.cjs",
         "test:ci:with-entitlements": "vitest run --config ./vitest.config.entitlements.ts --silent",
         "test:stress": "vitest run --config ./vitest.config.entitlements.ts ./src/stress.test.ts",
-        "test:stress:dev": "yarn test:stress | yarn pino-pretty",
+        "test:stress:dev": "pnpm run test:stress | pnpm run pino-pretty",
         "transfer-funds": "node --enable-source-maps ./dist/transferFunds.cjs",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"

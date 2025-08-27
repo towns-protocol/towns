@@ -1,15 +1,14 @@
 {
     "name": "@towns-protocol/bot",
     "version": "0.0.322",
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf dist",
-        "lint": "yarn eslint --format unix ./src --max-warnings=0",
-        "lint:fix": "yarn lint --fix",
+        "lint": "eslint --format unix ./src --max-warnings=0",
+        "lint:fix": "pnpm run lint --fix",
         "test": "vitest",
         "test:ci:multi:ent": "vitest run",
         "test:watch": "vitest --watch",
@@ -19,6 +18,7 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@connectrpc/connect-node": "^2.0.0",
+        "@hono/node-server": "^1.14.0",
         "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",

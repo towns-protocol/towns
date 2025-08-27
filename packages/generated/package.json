@@ -1,7 +1,6 @@
 {
     "name": "@towns-protocol/generated",
     "version": "0.0.322",
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
         "build": "node ./scripts/prepare.js && node ./scripts/make-config.js",
@@ -22,6 +21,12 @@
         "#/v3/*": "./v3/*",
         "#/deployments/*": "./deployments/*",
         "#/config/*": "./config/*"
+    },
+    "peerDependencies": {
+        "ethers": "^5.7.2",
+        "@ethersproject/abi": "^5.7.0",
+        "@ethersproject/providers": "^5.7.0",
+        "@ethersproject/contracts": "^5.7.0"
     },
     "publishConfig": {
         "access": "public"

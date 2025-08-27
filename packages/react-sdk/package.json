@@ -3,22 +3,29 @@
     "description": "React Hooks for Towns Protocol SDK",
     "version": "0.0.322",
     "type": "module",
-    "main": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
-        "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+        "build": "pnpm run clean && tsdown",
         "clean": "rm -rf dist tsconfig.tsbuildinfo",
-        "gen": "yarn gen:extractor && yarn gen:docs",
+        "gen": "pnpm run gen:extractor && pnpm run gen:docs",
         "gen:docs": "tsx ./scripts/docgen/generate.ts",
         "gen:extractor": "api-extractor run --local",
         "lint": "eslint ./src --max-warnings=0",
         "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
         "typecheck": "tsc --noEmit",
-        "watch": "yarn build -w"
+        "watch": "pnpm run build -w"
     },
     "dependencies": {
+        "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2"
     },
     "devDependencies": {
@@ -39,6 +46,7 @@
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
         "ts-morph": "^24.0.0",
+        "tsdown": "^0.12.7",
         "tsx": "^4.7.1",
         "typescript": "^5.8.2"
     },
@@ -69,5 +77,5 @@
         "directory": "packages/react"
     },
     "sideEffects": false,
-    "typings": "./dist/types/index.d.ts"
+    "typings": "./dist/index.d.ts"
 }

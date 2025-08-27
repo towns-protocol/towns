@@ -26,8 +26,7 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 RUN corepack enable
 
 # Copy monorepo configuration from root
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/tsconfig.base.json ./packages/
 COPY buf.yaml ./
 
@@ -45,7 +44,7 @@ COPY protocol ./protocol/
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 
 # Install dependencies
-RUN yarn install
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
 # Build contracts
 WORKDIR /river/packages/contracts
@@ -53,19 +52,19 @@ RUN make build
 WORKDIR /river
 
 # Generate contract typings (needed for Ponder to import ABIs)
-RUN yarn workspace @towns-protocol/contracts typings
+RUN pnpm exec turbo run typings --filter=@towns-protocol/contracts
 
 # Build the generated contracts typings package
-RUN yarn workspace @towns-protocol/generated build
+RUN pnpm exec turbo run build --filter=@towns-protocol/generated
 
 # Build proto package (dependency of dlog)
-RUN yarn workspace @towns-protocol/proto build
+RUN pnpm exec turbo run build --filter=@towns-protocol/proto
 
 # Build dlog package (dependency of web3)
-RUN yarn workspace @towns-protocol/dlog build
+RUN pnpm exec turbo run build --filter=@towns-protocol/dlog
 
 # Build web3 package
-RUN yarn workspace @towns-protocol/web3 build
+RUN pnpm exec turbo run build --filter=@towns-protocol/web3
 
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph

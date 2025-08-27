@@ -7,8 +7,8 @@ This directory contains example implementations to help you get started with bui
 1. Browse the available example directories to find one that matches your needs
 2. Navigate to the specific example directory
 3. Copy `.env.sample` to `.env` and fill in your credentials
-4. Install dependencies: `yarn install`
-5. Run the example: `yarn dev`
+4. Install dependencies: `pnpm install`
+5. Run the example: `pnpm dev`
 
 ## Environment Variables
 

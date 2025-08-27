@@ -198,7 +198,7 @@ Two local development environments:
 
 - Definitions in `../protocol`
 - Generate Go bindings: `cd node && go generate -v -x protocol/gen.go`
-- Generate TypeScript bindings: `cd ../protocol && yarn buf:generate`
+- Generate TypeScript bindings: `cd ../protocol && pnpm run buf:generate`
 
 ### Database Schema Management
 
@@ -212,7 +212,7 @@ Two local development environments:
 
 - Structured JSON logging via zap with custom extensions in `node/logging/`
 - Log levels: debug, info, warn, error
-- Pretty formatting in development via `yarn exec pino-pretty`
+- Pretty formatting in development via `pnpm exec pino-pretty`
 
 ### Debugging Commands
 
