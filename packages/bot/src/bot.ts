@@ -5,11 +5,9 @@ import {
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
-    makeEvent,
     make_ChannelPayload_Message,
     make_DMChannelPayload_Message,
     make_GDMChannelPayload_Message,
-    streamIdAsBytes,
     createTownsClient,
     type ClientV2,
     streamIdAsString,
@@ -55,8 +53,6 @@ import {
     Tags,
     type StreamEvent,
     MessageInteractionType,
-    ChannelPayloadSchema,
-    ChannelPayload_RedactionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
