@@ -54,6 +54,7 @@ import {
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
     InfoResponse,
+    MessageInteractionType,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -2111,6 +2112,12 @@ export class Client
             make_ChannelPayload_Redaction(bin_fromHexString(eventId)),
             {
                 method: 'redactMessage',
+                tags: {
+                    groupMentionTypes: [],
+                    messageInteractionType: MessageInteractionType.REDACTION,
+                    mentionedUserAddresses: [],
+                    participatingUserAddresses: [],
+                },
             },
         )
     }
