@@ -11,8 +11,6 @@ npx towns-bot init my-bot
 # or
 bunx towns-bot init my-bot
 # or
-yarn dlx towns-bot init my-bot
-# or
 pnpm dlx towns-bot init my-bot
 ```
 

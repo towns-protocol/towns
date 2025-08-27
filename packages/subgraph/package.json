@@ -1,7 +1,6 @@
 {
     "name": "@towns-protocol/subgraph",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
         "build": "tsc",

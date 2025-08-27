@@ -413,7 +413,7 @@ _wait-node $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     source ${ENV_FILE}
     source ${INSTANCE_DIR}/config/config.env
     cd ..
-    yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=1 --timeout=300000
+    pnpm wait-on https://localhost:${RIVER_PORT}/status?blockchain=1 --timeout=300000
 
 wait-app-registry: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -421,7 +421,7 @@ wait-app-registry: _require_run_env
     source ${ENV_FILE}
     source ${INSTANCE_BASE}/app-registry/config/config.env
     cd ..
-    yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
+    pnpm wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
 
 wait-notifications: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -429,7 +429,7 @@ wait-notifications: _require_run_env
     source ${ENV_FILE}
     source ${INSTANCE_BASE}/notifications/config/config.env
     cd ..
-    yarn wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
+    pnpm wait-on https://localhost:${RIVER_PORT}/status?blockchain=0 --timeout=300000
 
 _wait-ctrl-c:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -442,21 +442,21 @@ tail-logs: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
-    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 500 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 tail-app-registry-logs: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/app-registry/logs/tty.*.log)
-    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 500 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 tail-notifications-logs: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/notifications/logs/tty.*.log)
-    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 500 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 # Tail logs from all instances starting with 10 last lines
 tail-logs-short:
@@ -464,7 +464,7 @@ tail-logs-short:
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
-    tail -n 10 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 10 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 # Tail new logs from all instances
 tail-logs-new: _require_run_env
@@ -472,7 +472,7 @@ tail-logs-new: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
-    tail -n 0 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 0 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 # Print last 10 lines from each instance log
 print-logs: _require_run_env
@@ -480,7 +480,7 @@ print-logs: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.*.log)
-    tail -n 10 ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 10 ${LOGS[@]} | pnpm exec pino-pretty
 
 # Tail stderr from all instances
 tail-stderr: _require_run_env
@@ -488,7 +488,7 @@ tail-stderr: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
-    tail -n 500 -F ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 500 -F ${LOGS[@]} | pnpm exec pino-pretty
 
 # Print stderr from all instances
 print-stderr: _require_run_env
@@ -496,7 +496,7 @@ print-stderr: _require_run_env
     source ${ENV_FILE}
     shopt -s nullglob
     LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
-    tail -n 10000 ${LOGS[@]} | yarn exec pino-pretty
+    tail -n 10000 ${LOGS[@]} | pnpm exec pino-pretty
 
 # Exits with error if any instance has non-empty stderr
 check-stderr: _require_run_env
@@ -506,7 +506,7 @@ check-stderr: _require_run_env
     LOGS=(${INSTANCE_BASE}/*/logs/tty.stderr.log)
     RESULT=$(tail -q ${LOGS[@]})
     if [ -n "${RESULT}" ]; then
-        tail -n 10000 ${LOGS[@]} | yarn exec pino-pretty
+        tail -n 10000 ${LOGS[@]} | pnpm exec pino-pretty
         echo "ERROR: Found non-empty stderr logs"
         exit 1
     fi
@@ -648,7 +648,7 @@ _test-from-dir $DIR *args:
     if [[ "${GITHUB_ACTIONS:-false}" == "true" ]]; then
         go test {{args}}
     else
-        go test {{args}} | yarn exec pino-pretty
+        go test {{args}} | pnpm exec pino-pretty
     fi
 
 _test-print-report-from-dir $DIR *args:

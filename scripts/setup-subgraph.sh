@@ -122,7 +122,7 @@ done
 # Generating typings if not exists
 if [ ! -f "contracts/typings/index.ts" ]; then
   echo "Generating contract typings..."
-  yarn workspace @towns-protocol/contracts typings
+  turbo run typings --filter=@towns-protocol/contracts
 fi
 
 # Now update the ponder.config.ts file to use the environment variables
@@ -131,7 +131,7 @@ echo "Updating Ponder configuration..."
 # Navigate to the subgraph directory and start Ponder
 echo "Starting Ponder development server..."
 cd packages/subgraph
-yarn ponder dev
+pnpm exec ponder dev
 
 # Note: The cleanup function will be called when this script exits
 # to ensure that the Anvil process is properly terminated

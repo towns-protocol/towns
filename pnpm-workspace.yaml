@@ -1,0 +1,6 @@
+packages:
+    - 'protocol'
+    - 'packages/*'
+    - 'packages/workers/*'
+    - 'packages/examples/*'
+    - 'services/*'

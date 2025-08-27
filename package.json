@@ -2,28 +2,22 @@
     "name": "towns-protocol",
     "version": "0.0.0",
     "license": "MIT",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "pnpm@9.12.3",
     "scripts": {
-        "anvil": "yarn workspace @towns-protocol/contracts exec anvil",
+        "anvil": "pnpm exec turbo run anvil --filter=@towns-protocol/contracts",
         "build": "turbo build",
-        "cast": "yarn workspace @towns-protocol/contracts exec cast",
-        "clean": "./scripts/yarn-clean.sh",
+        "cast": "pnpm exec turbo run cast --filter=@towns-protocol/contracts",
+        "clean": "./scripts/pnpm-clean.sh",
         "csb:build": "turbo build --filter @towns-protocol/sdk",
-        "csb:cb": "yarn csb:clean && yarn csb:build",
-        "csb:clean": "yarn csb:command run clean",
-        "csb:command": "bash -c 'yarn workspaces foreach --verbose $(yarn csb:list:include) $0 $@'",
-        "csb:list": "yarn workspaces list --json | grep packages | grep -o '\"name\":\"[^\"]*' | grep -o '[^\"]*$'",
-        "csb:list:exclude:filter": "yarn csb:list | xargs -I arg echo -n \"--filter=!arg \"",
-        "csb:list:filter": "yarn csb:list | xargs -I arg echo -n \"--filter arg \"",
-        "csb:list:filter-without-sdk": "yarn csb:list | grep -v sdk | xargs -I arg echo -n \"--filter arg \"",
-        "csb:list:include": "yarn csb:list | xargs -I arg echo -n \"--include arg \"",
+        "csb:cb": "pnpm run csb:clean && pnpm run csb:build",
+        "csb:clean": "turbo run clean --filter='@towns-protocol/*'",
         "csb:prettier:check": "prettier --check ./packages",
         "csb:prettier:fix": "prettier --write ./packages",
-        "csb:test": "yarn csb:command run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
-        "csb:test-remote": "yarn workspace @towns-protocol/sdk run test",
-        "csb:turbo": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter)'",
-        "csb:turbo-no-sdk": "bash -c 'yarn run turbo run build test:ci $(yarn csb:list:filter-without-sdk)'",
-        "csb:wait": "yarn csb:wait:entitlements",
+        "csb:test": "turbo run test --filter='@towns-protocol/*' && echo ALL GOOD || (echo NOT PASSED; exit 1)",
+        "csb:test-remote": "turbo run test --filter=@towns-protocol/sdk",
+        "csb:turbo": "turbo run build test:ci --filter='@towns-protocol/*'",
+        "csb:turbo-no-sdk": "turbo run build test:ci --filter='@towns-protocol/*' --filter='!@towns-protocol/sdk'",
+        "csb:wait": "pnpm run csb:wait:entitlements",
         "csb:wait:entitlements": "wait-on https://localhost:5157/info --timeout=900000 --i=5000 --verbose",
         "csb:wait:no-entitlements": "wait-on https://localhost:5158/info --timeout=900000 --i=5000 --verbose",
         "lint": "turbo lint",
@@ -38,7 +32,8 @@
         "test:unit": "turbo test:unit -- --silent"
     },
     "dependencies": {
-        "pino-pretty": "^13.0.0"
+        "pino-pretty": "^13.0.0",
+        "vite-plugin-wasm": "^3.4.1"
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.15.3",
@@ -107,12 +102,5 @@
                 ]
             }
         ]
-    },
-    "workspaces": [
-        "protocol",
-        "packages/*",
-        "packages/workers/*",
-        "packages/examples/*",
-        "services/*"
-    ]
+    }
 }

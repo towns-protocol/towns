@@ -45,9 +45,8 @@ lib/*
 out/*
 
 .turbo/*
-.yarn/*
 .vscode
-yarn.lock
+pnpm-lock.yaml
 
 packages/generated/*
 

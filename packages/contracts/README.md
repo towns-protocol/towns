@@ -58,7 +58,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 
 ## Requirements
 
-Install [yarn](https://yarnpkg.com/getting-started/install) via corepack:
+Install [pnpm](https://pnpm.io/installation) via corepack:
 
 ```shell
 npm install -g corepack
@@ -77,7 +77,7 @@ foundryup
 Clone the repo, then:
 
 ```shell
-yarn
+pnpm install
 ```
 
 **To compile the smart contracts:**

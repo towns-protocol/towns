@@ -25,8 +25,8 @@ This bot demonstrates the basic functionality of a Towns bot:
 ## Setup
 
 1. Copy `.env.sample` to `.env` and fill in your credentials
-2. Install dependencies: `yarn install`
-3. Run the bot: `yarn dev`
+2. Install dependencies: `pnpm install`
+3. Run the bot: `pnpm dev`
 
 ## Environment Variables
 

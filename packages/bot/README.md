@@ -44,7 +44,7 @@ You can take a look at the [bot-quickstart example](../examples/bot-quickstart/e
 
 ```bash
 # Build the bundle
-yarn build
+pnpm build
 
 # Run with Node.js
 node dist/bot.cjs

@@ -3,7 +3,7 @@ import { generateWalletsFromSeed } from './utils/wallets'
 
 function printUsage() {
     console.log(`
-Usage: yarn generate-wallets --seed "<seed phrase>" --start <number> --end <number>
+Usage: pnpm generate-wallets --seed "<seed phrase>" --start <number> --end <number>
 
 Options:
   --seed    The mnemonic seed phrase (required)
@@ -12,7 +12,7 @@ Options:
   --help    Show this help message
 
 Example:
-  yarn generate-wallets --seed "test test test test test test test test test test test junk" --start 0 --end 5
+  pnpm generate-wallets --seed "test test test test test test test test test test test junk" --start 0 --end 5
 `)
 }
 

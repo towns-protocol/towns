@@ -18,18 +18,18 @@ This package contains:
 
 ```bash
 # After fresh clone
-yarn install && yarn build
+pnpm install && pnpm run build
 
 # Get artifacts (auto-downloads or generates as needed)
-yarn build
+pnpm run build
 ```
 
 ## Troubleshooting
 
 ```bash
 # Missing artifacts error
-yarn build
+pnpm run build
 
 # Clean slate regeneration
-rm -rf dev/ && yarn build
+rm -rf dev/ && pnpm run build
 ```

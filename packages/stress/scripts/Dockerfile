@@ -8,20 +8,17 @@ COPY . .
 # Enable Corepack and install Yarn
 RUN corepack enable
 
-# Set the Yarn version
-ENV YARN_VERSION=3.8.0
+# Enable pnpm
+RUN corepack enable pnpm
 
-# Install Yarn globally
-RUN corepack prepare yarn@$YARN_VERSION --activate
-
-# Verify Yarn installation
-RUN yarn --version
+# Verify pnpm installation
+RUN pnpm --version
 
 # Set the image name
 LABEL org.opencontainers.image.name="stress-local"
 
 # Set the default command (optional)
-# CMD ["yarn", "start"]
+# CMD ["pnpm", "start"]
 # Copy CA files from host
 
 # Register CA files
@@ -40,5 +37,5 @@ RUN /root/.foundry/bin/foundryup
 ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Install dependencies
-RUN yarn install
-RUN yarn build
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build

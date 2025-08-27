@@ -17,7 +17,7 @@ interface TransferOptions {
 
 function printUsage() {
     console.log(`
-Usage: yarn transfer-funds <command> [options]
+Usage: pnpm transfer-funds <command> [options]
 
 Commands:
   check     Check balances of wallets from old seed
@@ -39,13 +39,13 @@ Options:
 
 Examples:
   # Check balances
-  yarn transfer-funds check --old-seed "your old seed phrase"
+  pnpm transfer-funds check --old-seed "your old seed phrase"
 
   # Transfer ETH between seed phrases
-  yarn transfer-funds transfer --old-seed "old phrase" --new-seed "new phrase"
+  pnpm transfer-funds transfer --old-seed "old phrase" --new-seed "new phrase"
 
   # Send gas money
-  yarn transfer-funds send-gas --from 0x123... --to 0x456... --amount 0.001 --private-key 0x...
+  pnpm transfer-funds send-gas --from 0x123... --to 0x456... --amount 0.001 --private-key 0x...
 `)
 }
 

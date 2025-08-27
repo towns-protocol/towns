@@ -18,7 +18,7 @@ packages/sdk/src/tests/
 
 **Purpose**: Test individual components in isolation without external dependencies
 **Location**: `packages/sdk/src/tests/unit/`
-**Run Command**: `yarn test:unit`
+**Run Command**: `pnpm test:unit`
 **Use For**:
 
 - Testing pure functions and utilities
@@ -31,7 +31,7 @@ packages/sdk/src/tests/
 
 **Purpose**: Test full functionality with blockchain-based permission checks
 **Location**: `packages/sdk/src/tests/multi/`
-**Run Command**: `yarn test:ci:multi:ent`
+**Run Command**: `pnpm test:ci:multi:ent`
 **Requires**: `RUN_ENV=multi just config-and-start` (from `/core/`)
 **Use For**:
 
@@ -44,7 +44,7 @@ packages/sdk/src/tests/
 
 **Purpose**: Test core functionality without permission overhead (faster)
 **Location**: `packages/sdk/src/tests/multi_ne/`
-**Run Command**: `yarn test:ci:multi:ne`
+**Run Command**: `pnpm test:ci:multi:ne`
 **Requires**: `RUN_ENV=multi_ne just config-and-start` (from `/core/`)
 **Use For**:
 
@@ -103,21 +103,21 @@ Tests commonly use `waitFor` patterns to handle asynchronous operations and even
 
 ```bash
 # Run all unit tests
-yarn test:unit
+pnpm test:unit
 
 # Run integration tests (requires appropriate backend)
-yarn test:ci:multi:ne    # Without entitlements (faster)
-yarn test:ci:multi:ent   # With entitlements (slower)
+pnpm test:ci:multi:ne    # Without entitlements (faster)
+pnpm test:ci:multi:ent   # With entitlements (slower)
 
 # Watch mode for development
-yarn test:watch
+pnpm test:watch
 ```
 
 ### CI Pipeline
 
 ```bash
 # Default CI test suite (multi_ne)
-yarn test:ci
+pnpm test:ci
 ```
 
 ### Prerequisites for Integration Tests
@@ -153,7 +153,7 @@ yarn test:ci
 
 ## Debugging Tests
 
-- Use `yarn test:watch` for interactive development
+- Use `pnpm test:watch` for interactive development
 - Add `console.log` or use Vitest's `--reporter=verbose`
 - For integration tests, check node logs: `RUN_ENV=multi_ne just tail-logs`
 - Use `test.only()` to focus on specific tests during debugging

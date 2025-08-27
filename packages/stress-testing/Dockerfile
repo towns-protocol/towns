@@ -27,18 +27,18 @@ RUN pip3 install --break-system-packages --no-cache --upgrade pip setuptools
 RUN GO111MODULE=on GOBIN=/usr/local/bin go install \
     github.com/bufbuild/buf/cmd/buf@v1.28.1
 
-# Install yarn
+# Install pnpm
 RUN npm install -g corepack@0.24.1
 RUN corepack enable
-RUN yarn set version 3.5.1
+RUN corepack prepare pnpm@latest --activate
 
 # Copy files
 COPY . /monorepo
 
 WORKDIR /monorepo
 
-RUN yarn
-RUN yarn csb:build
+RUN pnpm install --frozen-lockfile
+RUN pnpm csb:build
 
 ENV MONOREPO_ROOT=/monorepo
 ENV SINGLE_LINE_LOGS="true"

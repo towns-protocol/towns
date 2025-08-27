@@ -26,7 +26,7 @@ service YourService {
 go generate -v -x protocol/gen.go
 
 # From protocol directory:
-yarn buf:generate
+pnpm run buf:generate
 ```
 
 3. **Implement Service** in Go:

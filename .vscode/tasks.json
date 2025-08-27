@@ -13,7 +13,7 @@
       "dependsOn": [
         "CheckVersions",
         "FoundryUp",
-        "YarnInstall",
+        "PnpmInstall",
         "BuildProtobufs",
       ],
       "group": {
@@ -25,7 +25,7 @@
     {
       // start local dev:
       //
-      // 1. yarn install
+      // 1. pnpm install
       // 2. start blockchains
       // 3. configure nodes
       // 4. starts all servers and clients
@@ -153,9 +153,9 @@
       }
     },
     {
-      "label": "YarnInstall",
+      "label": "PnpmInstall",
       "type": "shell",
-      "command": "yarn",
+      "command": "pnpm install",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -165,9 +165,9 @@
       }
     },
     {
-      "label": "YarnClean & Cleanup",
+      "label": "PnpmClean & Cleanup",
       "type": "shell",
-      "command": "./scripts/yarn-clean.sh",
+      "command": "./scripts/pnpm-clean.sh",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -336,7 +336,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "yarn workspace @towns-protocol/contracts build-types",
+      "command": "pnpm exec turbo run build-types --filter=@towns-protocol/contracts",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -360,7 +360,7 @@
     {
       "label": "Playground",
       "type": "shell",
-      "command": "cd packages/playground && yarn dev",
+      "command": "cd packages/playground && pnpm run dev",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -370,7 +370,7 @@
     {
       "label": "WatchCasablancaSdk",
       "type": "shell",
-      "command": "cd packages/sdk && yarn watch",
+      "command": "cd packages/sdk && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -380,7 +380,7 @@
     {
       "label": "WatchReactSdk",
       "type": "shell",
-      "command": "cd packages/react-sdk && yarn watch",
+      "command": "cd packages/react-sdk && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -390,7 +390,7 @@
     {
       "label": "WatchBot",
       "type": "shell",
-      "command": "cd packages/bot && yarn watch",
+      "command": "cd packages/bot && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -400,7 +400,7 @@
     {
       "label": "WatchCasablancaEncryption",
       "type": "shell",
-      "command": "cd packages/encryption && yarn watch",
+      "command": "cd packages/encryption && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -410,7 +410,7 @@
     {
       "label": "WatchCasablancaDlog",
       "type": "shell",
-      "command": "cd packages/dlog && yarn watch",
+      "command": "cd packages/dlog && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -420,7 +420,7 @@
     {
       "label": "WatchCasablancaProto",
       "type": "shell",
-      "command": "cd packages/proto && yarn watch",
+      "command": "cd packages/proto && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -430,7 +430,7 @@
     {
       "label": "WatchStress",
       "type": "shell",
-      "command": "cd packages/stress && yarn watch",
+      "command": "cd packages/stress && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -440,7 +440,7 @@
     {
       "label": "WatchCasablancaWeb3",
       "type": "shell",
-      "command": "cd packages/web3 && yarn watch",
+      "command": "cd packages/web3 && pnpm run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -450,7 +450,7 @@
     {
       "label": "WatchCasablancaProto_Go",
       "type": "shell",
-      "command": "cd packages/proto && yarn watch:go",
+      "command": "cd packages/proto && pnpm run watch:go",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -520,7 +520,7 @@
       "label": "Kill All, Clean and Start Local Dev",
       "dependsOn": [
         "KillAllLocalDev",
-        "YarnClean & Cleanup",
+        "PnpmClean & Cleanup",
         "~Start Local Dev~",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them

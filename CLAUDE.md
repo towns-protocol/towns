@@ -10,13 +10,13 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 
 ### Root-level commands (from project root):
 
-- `yarn install && yarn prepare` - Install dependencies and setup hooks
-- `yarn build` - Build all packages using turbo
-- `yarn test` - Run all tests
-- `yarn test:unit` - Run unit tests only
-- `yarn lint` - Run linting across all packages
-- `yarn prettier:check` - Check code formatting
-- `yarn prettier:fix` - Fix code formatting
+- `pnpm install && pnpm prepare` - Install dependencies and setup hooks
+- `pnpm build` - Build all packages using turbo
+- `pnpm test` - Run all tests
+- `pnpm test:unit` - Run unit tests only
+- `pnpm lint` - Run linting across all packages
+- `pnpm prettier:check` - Check code formatting
+- `pnpm prettier:fix` - Fix code formatting
 
 ### Go backend commands (from /core directory):
 
@@ -40,8 +40,8 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 
 ### Contract commands (from root):
 
-- `yarn workspace @towns-protocol/contracts exec anvil` - Start Anvil
-- `yarn workspace @towns-protocol/contracts exec cast` - Use Cast CLI
+- `pnpm --filter @towns-protocol/contracts exec anvil` - Start Anvil
+- `pnpm --filter @towns-protocol/contracts exec cast` - Use Cast CLI
 
 ## Architecture Overview
 
@@ -89,7 +89,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ### Local Development Setup
 
 1. Install prerequisites: Go, Node v20.x, Docker, Anvil, Just, jq
-2. Run `yarn install && yarn prepare`
+2. Run `pnpm install && pnpm prepare`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
    - `RUN_ENV=multi just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
@@ -125,12 +125,12 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 
 #### For TypeScript, JavaScript, YAML, Solidity, and other non-Go files:
 - **All non-Go files must pass Prettier formatting**
-  - Run `yarn prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
+  - Run `pnpm prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
   - This command will check and fix any formatting issues in one step
 
 #### For all changes:
 - **All PRs must pass global linting**
-  - Run `yarn lint` from the root directory before committing
+  - Run `pnpm lint` from the root directory before committing
   - This ensures code quality and consistency across the entire repository
 
 ## Key Technology Stack
@@ -156,7 +156,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - **Docker**: Local PostgreSQL and Redis
 - **Anvil**: Local blockchain development
 - **Just**: Command runner for Go workflows
-- **Yarn 2**: Package management
+- **pnpm**: Package management
 
 ## Configuration Notes
 
