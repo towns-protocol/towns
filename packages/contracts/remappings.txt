@@ -11,3 +11,4 @@ crypto-lib/=node_modules/crypto-lib/src/
 @erc6900/reference-implementation/=node_modules/@erc6900/reference-implementation/src/
 @uniswap/permit2/=node_modules/@uniswap/permit2/
 @layerzerolabs/=node_modules/@layerzerolabs/
+modular-account/=node_modules/modular-account/
