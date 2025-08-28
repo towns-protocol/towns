@@ -20,10 +20,6 @@ import {
     unsafe_makeTags,
     getStreamMetadataUrl,
     makeBaseChainConfig,
-    usernameChecksum,
-    make_MemberPayload_Username,
-    make_MemberPayload_DisplayName,
-    make_UserMetadataPayload_ProfileImage,
     spaceIdFromChannelId,
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
@@ -46,15 +42,9 @@ import {
     AppPrivateDataSchema,
     MembershipOp,
     type PlainMessage,
-    ChunkedMediaSchema,
-    type ChunkedMedia,
-    EncryptedDataSchema,
-    type EncryptedData,
     Tags,
     type StreamEvent,
     MessageInteractionType,
-    ChannelPayloadSchema,
-    ChannelPayload_RedactionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -64,7 +54,6 @@ import {
     check,
 } from '@towns-protocol/dlog'
 import {
-    AES_GCM_DERIVED_ALGORITHM,
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
@@ -85,7 +74,6 @@ import {
     type WriteContractParameters,
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
-import { deriveKeyAndIV, encryptAESGCM, uint8ArrayToBase64 } from '@towns-protocol/sdk-crypto'
 import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
