@@ -59,7 +59,7 @@
     {
       "label": "Stage 2",
       "dependsOn": [
-        "CasablancaConfigureNodes",
+        "Configure Nodes",
         "Stage 3"
       ],
       "group": {
@@ -72,8 +72,8 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "Casablanca",
-        "Casablanca-No-Entitlements",
+        "Run Nodes",
+        "Run Nodes-No-Entitlements",
         "Playground",
         "AppRegistry",
         "AppRegistry-No-Entitlements",
@@ -87,11 +87,11 @@
     {
       "label": "Start Watches",
       "dependsOn": [
-        "WatchCasablancaDlog",
-        "WatchCasablancaEncryption",
-        "WatchCasablancaProto",
-        "WatchCasablancaWeb3",
-        "WatchCasablancaSdk",
+        "WatchDlog",
+        "WatchEncryption",
+        "WatchProto",
+        "WatchWeb3",
+        "WatchSdk",
         "WatchReactSdk",
         "WatchBot",
         "WatchStress",
@@ -187,7 +187,7 @@
       }
     },
     {
-      "label": "Casablanca",
+      "label": "Run Nodes",
       "type": "shell",
       "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-and-tail",
       "isBackground": true,
@@ -207,7 +207,7 @@
       }
     },
     {
-      "label": "Casablanca-No-Entitlements",
+      "label": "Run Nodes-No-Entitlements",
       "type": "shell",
       "command": "sleep 2 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
       "isBackground": true,
@@ -227,7 +227,7 @@
       }
     },
     {
-      "label": "Build Casablanca",
+      "label": "Build Nodes",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi build",
       "isBackground": true,
@@ -239,7 +239,7 @@
       }
     },
     {
-      "label": "Build Casablanca-No-Entitlements",
+      "label": "Build Nodes-No-Entitlements",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi_ne build",
       "isBackground": true,
@@ -251,7 +251,7 @@
       }
     },
     {
-      "label": "Stop Casablanca",
+      "label": "Stop Nodes",
       "type": "shell",
       "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop && just RUN_ENV=multi stop-app-registry && just RUN_ENV=multi_ne stop-app-registry",
       "isBackground": true,
@@ -263,10 +263,10 @@
       }
     },
     {
-      "label": "Both Casablancas",
+      "label": "Run Both Nodes",
       "dependsOn": [
-        "Casablanca",
-        "Casablanca-No-Entitlements",
+        "Run Nodes",
+        "Run Nodes-No-Entitlements",
         "AppRegistry",
         "AppRegistry-No-Entitlements",
       ],
@@ -276,12 +276,12 @@
       "problemMatcher": [],
     },
     {
-      "label": "Restart Casablanca",
+      "label": "Restart Nodes",
       "dependsOn": [
-        "Stop Casablanca",
-        "Build Casablanca",
-        "Build Casablanca-No-Entitlements",
-        "Both Casablancas"
+        "Stop Nodes",
+        "Build Nodes",
+        "Build Nodes-No-Entitlements",
+        "Both Nodess"
       ],
       "group": {
         "kind": "build",
@@ -290,7 +290,7 @@
       "problemMatcher": [],
     },
     {
-      "label": "CasablancaConfigureNodes",
+      "label": "Configure Nodes",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
       "isBackground": true,
@@ -368,7 +368,7 @@
       }
     },
     {
-      "label": "WatchCasablancaSdk",
+      "label": "WatchSdk",
       "type": "shell",
       "command": "cd packages/sdk && yarn watch",
       "isBackground": true,
@@ -398,7 +398,7 @@
       }
     },
     {
-      "label": "WatchCasablancaEncryption",
+      "label": "WatchEncryption",
       "type": "shell",
       "command": "cd packages/encryption && yarn watch",
       "isBackground": true,
@@ -408,7 +408,7 @@
       }
     },
     {
-      "label": "WatchCasablancaDlog",
+      "label": "WatchDlog",
       "type": "shell",
       "command": "cd packages/dlog && yarn watch",
       "isBackground": true,
@@ -418,7 +418,7 @@
       }
     },
     {
-      "label": "WatchCasablancaProto",
+      "label": "WatchProto",
       "type": "shell",
       "command": "cd packages/proto && yarn watch",
       "isBackground": true,
@@ -438,7 +438,7 @@
       }
     },
     {
-      "label": "WatchCasablancaWeb3",
+      "label": "WatchWeb3",
       "type": "shell",
       "command": "cd packages/web3 && yarn watch",
       "isBackground": true,
@@ -448,7 +448,7 @@
       }
     },
     {
-      "label": "WatchCasablancaProto_Go",
+      "label": "WatchProto_Go",
       "type": "shell",
       "command": "cd packages/proto && yarn watch:go",
       "isBackground": true,
@@ -458,7 +458,7 @@
       }
     },
     {
-      "label": "MITM - Casablanca",
+      "label": "MITM - Nodes",
       "type": "shell",
       "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
       "isBackground": true,
