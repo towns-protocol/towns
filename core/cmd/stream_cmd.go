@@ -1346,7 +1346,7 @@ func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []strin
 					highestNodeMiniblock = max(nodeResult.LastMiniblockNum, highestNodeMiniblock)
 					if len(nodeResult.Err) > 0 {
 						result.Status = "ERROR"
-					} else if result.Status == "OK" && (len(result.Nodes) != len(stream.Nodes()) || len(miniblockNums) != 1 && len(miniblockNums) != 1) {
+					} else if result.Status == "OK" && (len(result.Nodes) != len(stream.Nodes()) || len(miniblockNums) != 1 || len(miniblockHashes) != 1) {
 						// if all nodes are on the same miniblock and the registry is lagging, this is a migrated stream
 						// and didn't see a new miniblock after migration. This is ok and will be fixed in the node.
 						allMatch := true
