@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -678,9 +679,15 @@ func (s *Stream) GetMiniblocks(
 	}
 	// TODO parallelize this
 	if streamInfo != "" {
+		client, err := storage.CreateExternalClient()
+		if err != nil {
+			return nil, false, err
+		}
 		// for each block, get the data from external storage
 		for _, block := range blocks {
-			data, err := s.params.Storage.DownloadChunkFromExternal(ctx, s.streamId, block.Data)
+			// TODO get bucket from config file
+			bucket := os.Getenv("S3_BUCKET")
+			data, err := storage.DownloadChunkFromExternal(ctx, s.streamId, block.Data, bucket, client)
 			if err != nil {
 				return nil, false, err
 			}

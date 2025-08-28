@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
@@ -125,25 +126,20 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	return nil
 }
 
-func (w *ExternalMediaStore) DownloadChunkFromExternal(
+func DownloadChunkFromExternal(
 	ctx context.Context,
 	streamId StreamId,
-	rangeHeader string,
+	rangeHeader []byte,
+	bucket string,
+	client *s3.Client,
 ) ([]byte, error) {
-	if w.s3Client == nil {
-		return nil, fmt.Errorf("S3 client is not initialized")
-	}
-	if w.bucket == "" {
-		return nil, fmt.Errorf("S3 bucket is not set")
-	}
-
 	key := fmt.Sprintf("streams/%x", streamId)
 
 	// Download from S3 with range header
-	output, err := w.s3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &w.bucket,
+	output, err := client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
 		Key:    &key,
-		Range:  &rangeHeader,
+		Range:  aws.String(string(rangeHeader)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to download range %s from S3: %w", rangeHeader, err)

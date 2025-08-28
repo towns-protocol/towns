@@ -304,7 +304,6 @@ type (
 	ExternalMediaStorage interface {
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
 		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
-		DownloadChunkFromExternal(ctx context.Context, streamId StreamId, rangeHeader string) ([]byte, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, partToEtag map[int]string) error
 	}
 )
