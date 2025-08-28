@@ -225,7 +225,9 @@ func (s *PostgresStreamStore) maintainSchemaLock(
 
 			// Close the connection to encourage the db server to immediately clean up the
 			// session so we can go ahead and re-take the lock from a new session.
-			conn.Conn().Close(ctx)
+			if err := conn.Conn().Close(ctx); err != nil {
+				log.Warnw("Error closing bad connection", "error", err)
+			}
 			// Fine to call multiple times.
 			conn.Release()
 
