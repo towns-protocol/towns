@@ -16,14 +16,6 @@ function getEnvironmentId(): string {
     return 'local_multi'
 }
 
-// Test flag to toggle usage of legacy spaces
-export function useLegacySpaces(): boolean {
-    if (typeof process === 'object') {
-        return process.env.USE_LEGACY_SPACES === 'true'
-    }
-    return true
-}
-
 function getBaseRpcUrlForChain(chainId: number): string {
     if (typeof process === 'object') {
         if (process.env.BASE_CHAIN_RPC_URL) {
