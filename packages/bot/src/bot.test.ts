@@ -5,8 +5,10 @@ import {
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    makeUserStreamId,
     MockEntitlementsDelegate,
     RiverDbManager,
+    RiverTimelineEvent,
     waitFor,
     type AppRegistryRpcClient,
     type Channel,
@@ -40,6 +42,7 @@ type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
 type OnThreadMessageType = BotPayload<'threadMessage'>
 type OnMentionedType = BotPayload<'mentioned'>
+type OnMentionedInThreadType = BotPayload<'mentionedInThread'>
 
 describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
@@ -171,6 +174,7 @@ describe('Bot', { sequential: true }, () => {
                 create(AppPrivateDataSchema, {
                     privateKey: botWallet.privateKey,
                     encryptionDevice: exportedDevice,
+                    env: process.env.RIVER_ENV!,
                 }),
             ),
         )
@@ -191,8 +195,8 @@ describe('Bot', { sequential: true }, () => {
                 username: BOT_USERNAME,
                 displayName: 'Bot Witness of Infinity',
                 description: BOT_DESCRIPTION,
-                avatarUrl: 'https://placehold.co/64x64.png',
-                imageUrl: 'https://placehold.co/600x600.png',
+                avatarUrl: 'https://placehold.co/64x64',
+                imageUrl: 'https://placehold.co/600x600',
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -200,7 +204,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
@@ -223,6 +227,16 @@ describe('Bot', { sequential: true }, () => {
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
     }
+
+    it('should have app_address defined in user stream for bot', async () => {
+        const botUserStreamId = makeUserStreamId(botClientAddress)
+        const streamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(botUserStreamId)
+        })
+        const userStream = streamView.userContent.userStreamModel
+        expect(userStream.appAddress).toBeDefined()
+        expect(userStream.appAddress).toBe(appAddress)
+    })
 
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
@@ -419,6 +433,84 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
     })
 
+    it('onMentionedInThread should be triggered when bot is mentioned in a thread', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const { eventId: initialMessageId } =
+            await bobDefaultChannel.sendMessage('starting a thread')
+        const { eventId: threadMentionEventId } = await bobDefaultChannel.sendMessage(
+            'yo @bot check this thread',
+            {
+                threadId: initialMessageId,
+                mentions: [
+                    {
+                        userId: bot.botId,
+                        displayName: bot.botId,
+                        mentionBehavior: { case: undefined, value: undefined },
+                    },
+                ],
+            },
+        )
+
+        await waitFor(() => receivedMentionedInThreadEvents.length > 0)
+
+        const threadMentionEvent = receivedMentionedInThreadEvents.find(
+            (e) => e.eventId === threadMentionEventId,
+        )
+        expect(threadMentionEvent).toBeDefined()
+        expect(threadMentionEvent?.userId).toBe(bob.userId)
+        expect(threadMentionEvent?.threadId).toBe(initialMessageId)
+    })
+
+    it('onMentionedInThread should NOT be triggered for regular mentions outside threads', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const regularMentionMessage = 'Mentioning @bot outside thread'
+        const { eventId } = await bobDefaultChannel.sendMessage(regularMentionMessage, {
+            mentions: [
+                {
+                    userId: bot.botId,
+                    displayName: bot.botId,
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+        })
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        expect(receivedMentionedInThreadEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    it('onMentionedInThread should NOT be triggered for thread messages without bot mentions', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const initialMessage = 'Starting another thread'
+        const threadMessageWithoutMention = 'Thread message without mention'
+        const { eventId: initialMessageId } = await bobDefaultChannel.sendMessage(initialMessage)
+        const { eventId: threadEventId } = await bobDefaultChannel.sendMessage(
+            threadMessageWithoutMention,
+            {
+                threadId: initialMessageId,
+            },
+        )
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        expect(
+            receivedMentionedInThreadEvents.find((x) => x.eventId === threadEventId),
+        ).toBeUndefined()
+    })
+
     it('onReaction should be triggered when a reaction is added', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedReactionEvents: BotPayload<'reaction'>[] = []
@@ -450,6 +542,58 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
+    it('bot can redact his own message', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const { eventId: redactionId } = await bot.removeEvent(channelId, messageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
+    })
+
+    it('bot can redact other people messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const messages: BotPayload<'message'>[] = []
+        bot.onMessage((_h, e) => {
+            messages.push(e)
+        })
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        await waitFor(() => messages.length > 0)
+        const { eventId: redactionId } = await bot.adminRemoveEvent(channelId, bobMessageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
+    })
     // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)

@@ -140,3 +140,17 @@ export const stakingToOperator = relations(stakers, ({ one }) => ({
 export const operatorToStakings = relations(operator, ({ many }) => ({
     stakings: many(stakers),
 }))
+
+// apps
+export const app = onchainTable('apps', (t) => ({
+    address: t.hex().primaryKey(),
+    appId: t.hex(),
+    client: t.hex(),
+    module: t.hex(),
+    owner: t.hex(),
+    createdAt: t.bigint(),
+    permissions: t.text().array(),
+    isRegistered: t.boolean().default(false),
+    isBanned: t.boolean().default(false),
+    installedIn: t.hex().array(),
+}))

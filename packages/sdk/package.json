@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.312",
+    "version": "0.0.323",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -29,7 +29,6 @@
         "@noble/hashes": "^1.8.0",
         "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",
-        "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/rpc-connector": "workspace:^",
         "@towns-protocol/sdk-crypto": "workspace:^",

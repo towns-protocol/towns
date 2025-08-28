@@ -1,6 +1,5 @@
 import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
-import { createServer } from 'node:http2'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 
@@ -27,11 +26,7 @@ const state: State = {
 }
 const emojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
 
-const bot = await makeTownsBot(
-    process.env.APP_PRIVATE_DATA_BASE64!,
-    process.env.JWT_SECRET!,
-    process.env.RIVER_ENV,
-)
+const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA_BASE64!, process.env.JWT_SECRET!)
 
 bot.onMessage(async (handler, { message, channelId }) => {
     if (!message.startsWith('@poll')) return
@@ -117,9 +112,5 @@ const app = new Hono()
 app.use(logger())
 app.post('/webhook', jwtMiddleware, handler)
 
-serve({
-    fetch: app.fetch,
-    port: parseInt(process.env.PORT!),
-    createServer,
-})
+serve({ fetch: app.fetch, port: parseInt(process.env.PORT!) })
 console.log(`✅ Poll Bot is running on https://localhost:${process.env.PORT}`)

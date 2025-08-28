@@ -1,9 +1,10 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.312",
+  "version": "0.0.323",
   "packageManager": "yarn@3.8.0",
   "scripts": {
     "build": "forge build",
+    "build-types": "bash scripts/build-contract-types.sh",
     "clean": "forge clean",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
@@ -33,13 +34,15 @@
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
+    "@typechain/ethers-v5": "^10.1.1",
     "@wagmi/cli": "^2.2.0",
     "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
     "forge-std": "github:foundry-rs/forge-std#v1.10.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5",
-    "solidity-bytes-utils": "^0.8.4"
+    "solidity-bytes-utils": "^0.8.4",
+    "typechain": "^8.1.1"
   },
   "files": [
     "docs/**/*",

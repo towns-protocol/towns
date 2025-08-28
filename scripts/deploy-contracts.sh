@@ -12,7 +12,6 @@ export BASE_CHAIN_ID="${BASE_CHAIN_ID:-31337}"
 export RIVER_CHAIN_ID="${RIVER_CHAIN_ID:-31338}"
 
 SKIP_CHAIN_WAIT="${SKIP_CHAIN_WAIT:-false}"
-BASE_EXECUTION_CLIENT="${BASE_EXECUTION_CLIENT:-}"
 BASE_ANVIL_SOURCE_DIR=${BASE_ANVIL_SOURCE_DIR:-"base_anvil"}
 RIVER_ANVIL_SOURCE_DIR=${RIVER_ANVIL_SOURCE_DIR:-"river_anvil"}
 RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
@@ -70,10 +69,6 @@ cd "$PROJECT_ROOT"
 # Ensure the destination directory exists
 mkdir -p "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
 cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/"
-
-if [ -n "$BASE_EXECUTION_CLIENT" ]; then
-    echo "{\"executionClient\": \"${BASE_EXECUTION_CLIENT}\"}" > "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/base/executionClient.json"
-fi
 
 # Update the config
 cd "$PROJECT_ROOT/packages/generated"

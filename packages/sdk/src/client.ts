@@ -4,6 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
+    TipEventObject,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -53,6 +54,7 @@ import {
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
     InfoResponse,
+    MessageInteractionType,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -196,7 +198,6 @@ import {
     uint8ArrayToBase64,
 } from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
 import { NotificationsClient, INotificationStore } from './notificationsClient'
 import { RpcOptions } from './rpcCommon'
@@ -2111,6 +2112,12 @@ export class Client
             make_ChannelPayload_Redaction(bin_fromHexString(eventId)),
             {
                 method: 'redactMessage',
+                tags: {
+                    groupMentionTypes: [],
+                    messageInteractionType: MessageInteractionType.REDACTION,
+                    mentionedUserAddresses: [],
+                    participatingUserAddresses: [],
+                },
             },
         )
     }
