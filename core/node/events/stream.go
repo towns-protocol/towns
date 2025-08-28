@@ -672,7 +672,7 @@ func (s *Stream) GetMiniblocks(
 	}
 
 	// if stream is in the external_media table, we need to read from external storage
-	streamInfo, _, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
+	streamInfo, _, _, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
 	if err != nil {
 		return nil, false, err
 	}
@@ -680,7 +680,7 @@ func (s *Stream) GetMiniblocks(
 	if streamInfo != "" {
 		// for each block, get the data from external storage
 		for _, block := range blocks {
-			data, err := s.params.Storage.DownloadFromExternal(ctx, s.streamId, block.Data)
+			data, err := s.params.Storage.DownloadChunkFromExternal(ctx, s.streamId, block.Data)
 			if err != nil {
 				return nil, false, err
 			}

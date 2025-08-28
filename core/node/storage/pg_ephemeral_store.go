@@ -359,6 +359,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 	streamId StreamId,
 	uploadID string,
 	part int,
+	bytes_uploaded int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -374,6 +375,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 				streamId,
 				uploadID,
 				part,
+				bytes_uploaded,
 			)
 		},
 		nil,
@@ -387,14 +389,15 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	streamId StreamId,
 	uploadID string,
 	part int,
+	bytes_uploaded int64,
 ) error {
 	// Query to insert a new ephemeral miniblock
 	query := s.sqlForStream(
-		"INSERT INTO {{external_media_streams}} (stream_id, upload_id, part) VALUES ($1, $2, $3);",
+		"INSERT INTO {{external_media_streams}} (stream_id, upload_id, part, bytes_uploaded) VALUES ($1, $2, $3, $4);",
 		streamId,
 	)
 
-	_, err := tx.Exec(ctx, query, streamId, uploadID, part)
+	_, err := tx.Exec(ctx, query, streamId, uploadID, part, bytes_uploaded)
 	if err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("ephemeral miniblock or stream already exists")
@@ -405,36 +408,38 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	return nil
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int, error) {
+func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int, int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var uploadID string
 	var parts int
+	var bytes_uploaded int64
 	err := s.txRunner(
 		ctx,
 		"GetExternalMediaStreamInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, parts, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			uploadID, parts, bytes_uploaded, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
 	)
-	return uploadID, parts, err
+	return uploadID, parts, bytes_uploaded, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, int, error) {
+func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, int, int64, error) {
 	var uploadID string
 	var parts int
+	var bytes_uploaded int64
 	if err := tx.QueryRow(
 		ctx,
-		"SELECT upload_id, parts FROM {{external_media_streams}} WHERE stream_id = $1",
+		"SELECT upload_id, parts, bytes_uploaded FROM {{external_media_streams}} WHERE stream_id = $1",
 		streamId,
-	).Scan(&uploadID, &parts); err != nil {
-		return "", 0, err
+	).Scan(&uploadID, &parts, &bytes_uploaded); err != nil {
+		return "", 0, 0, err
 	}
-	return uploadID, parts, nil
+	return uploadID, parts, bytes_uploaded, nil
 }

@@ -65,7 +65,7 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 	return *output.UploadId, nil
 }
 
-func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
+func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
@@ -111,10 +111,10 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	return nil
 }
 
-func (w *ExternalMediaStore) DownloadFromExternal(
+func (w *ExternalMediaStore) DownloadChunkFromExternal(
 	ctx context.Context,
 	streamId StreamId,
-	key string,
+	rangeHeader string,
 ) ([]byte, error) {
 	if w.s3Client == nil {
 		return nil, fmt.Errorf("S3 client is not initialized")
@@ -123,19 +123,23 @@ func (w *ExternalMediaStore) DownloadFromExternal(
 		return nil, fmt.Errorf("S3 bucket is not set")
 	}
 
-	// Download from S3
+	key := fmt.Sprintf("streams/%x", streamId)
+
+	// Download from S3 with range header
 	output, err := w.s3Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &w.bucket,
 		Key:    &key,
+		Range:  &rangeHeader,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to download from S3: %w", err)
+		return nil, fmt.Errorf("failed to download range %s from S3: %w", rangeHeader, err)
 	}
 	defer output.Body.Close()
 
+	// Read the range data
 	data, err := io.ReadAll(output.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read S3 object body: %w", err)
+		return nil, fmt.Errorf("failed to read S3 object range body: %w", err)
 	}
 
 	return data, nil

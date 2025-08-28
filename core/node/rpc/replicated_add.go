@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -208,19 +209,20 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 		
-
 		// Get the upload ID of the stream data
-		uploadID, parts, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		uploadID, parts, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
 			return err
 		}
 		if uploadID != "" {
 			part := parts + 1
-			if s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, mbBytes, uploadID, part) != nil {
+			if s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, part) != nil {
 				return err
 			}
-			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part)
-			mbBytes = []byte{}
+			new_bytes_uploaded := bytes_uploaded + int64(len(mbBytes))
+			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part, new_bytes_uploaded)
+			mbBytes = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
+
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -65,7 +66,7 @@ func (s *Service) allocateEphemeralStream(
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0, 0) != nil {
 			return nil, err
 		}
 		storageMb.Data = []byte{}
@@ -118,20 +119,21 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
 	// Get the uploadID of the uploaded data
-	uploadID, parts, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, parts, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
 	if uploadID != "" {
 		part := parts + 1
-		err = s.externalMediaStorage.UploadPartToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, part)
+		err = s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, part)
 		if err != nil {
 			return err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part) != nil {
+		new_bytes_uploaded := bytes_uploaded + int64(len(storageMb.Data))
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part, new_bytes_uploaded) != nil {
 			return err
 		}
-		storageMb.Data = []byte{}
+		storageMb.Data = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
 	}
 	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 	if err != nil {
@@ -173,7 +175,7 @@ func (s *Service) sealEphemeralStream(
 		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
-	uploadID, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, _, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return common.Hash{}, err
 	}
