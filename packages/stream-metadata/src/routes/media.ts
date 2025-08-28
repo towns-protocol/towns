@@ -29,7 +29,7 @@ const querySchema = z.object({
 
 const CACHE_CONTROL = {
 	200: 'public, max-age=31536000, immutable',
-	'200-resized': 'public, max-age=86400, s-maxage=31536000',
+	'200-resized': 'public, max-age=31536000, immutable',
 	'4xx': 'public, max-age=30, s-maxage=3600',
 }
 
