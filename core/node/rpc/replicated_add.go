@@ -210,17 +210,19 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 		
 		// Get the upload ID of the stream data
-		uploadID, parts, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
 			return err
 		}
 		if uploadID != "" {
-			part := parts + 1
-			if s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, part) != nil {
+			partNum := len(partToEtag) + 1
+			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, partNum)
+			if err != nil {
 				return err
 			}
 			new_bytes_uploaded := bytes_uploaded + int64(len(mbBytes))
-			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part, new_bytes_uploaded)
+			partToEtag[partNum] = etag
+			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded)
 			mbBytes = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
 
 		}
@@ -239,7 +241,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 
 		if uploadID != "" {
-			s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID)
+			s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag)
 		}
 
 		// Normalize stream locally

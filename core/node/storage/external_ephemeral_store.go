@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -71,13 +72,13 @@ func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
 	data []byte,
 	uploadID string,
 	partNum int,
-) error {
+) (string, error) {
 	
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
 	
 	// Upload part
-	_, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
+	tag, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
 		Bucket:        &w.bucket,
 		Key:           &key,
 		PartNumber:    int32(partNum),
@@ -86,24 +87,37 @@ func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
 		ContentLength: int64(len(data)),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to upload part: %w", err)
+		return "", fmt.Errorf("failed to upload part: %w", err)
 	}
-	return nil
+	return *tag.ETag, nil
 }
 
 func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
+	partToEtag map[int]string,
 ) error {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
+	
+	// Convert map[int]string to []types.CompletedPart
+	var parts []types.CompletedPart
+	for partNum, etag := range partToEtag {
+		parts = append(parts, types.CompletedPart{
+			ETag:       &etag,
+			PartNumber: int32(partNum),
+		})
+	}
 	
 	// Complete the multipart upload
 	_, err := w.s3Client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
 		Bucket:   &w.bucket,
 		Key:      &key,
 		UploadId: &uploadID,
+		MultipartUpload: &types.CompletedMultipartUpload{
+			Parts: parts,
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("failed to complete multipart upload: %w", err)

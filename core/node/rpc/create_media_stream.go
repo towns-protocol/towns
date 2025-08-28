@@ -233,7 +233,8 @@ func (s *Service) createReplicatedMediaStream(
 			if err != nil {
 				return nil, err
 			}
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
+			partToEtag := make(map[int]string)
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
 				return nil, err
 			}
 		}

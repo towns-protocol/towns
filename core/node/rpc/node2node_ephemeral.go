@@ -66,7 +66,8 @@ func (s *Service) allocateEphemeralStream(
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0, 0) != nil {
+		partToEtag := make(map[int]string)
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
 			return nil, err
 		}
 		storageMb.Data = []byte{}
@@ -119,18 +120,19 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	// Here we are sure that the record of the stream exists in the storage.
 	// Get the uploadID of the uploaded data
-	uploadID, parts, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return err
 	}
 	if uploadID != "" {
-		part := parts + 1
-		err = s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, part)
+		partNum := len(partToEtag) + 1
+		etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, partNum)
 		if err != nil {
 			return err
 		}
 		new_bytes_uploaded := bytes_uploaded + int64(len(storageMb.Data))
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, part, new_bytes_uploaded) != nil {
+		partToEtag[partNum] = etag
+		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded) != nil {
 			return err
 		}
 		storageMb.Data = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
@@ -175,12 +177,12 @@ func (s *Service) sealEphemeralStream(
 		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
-	uploadID, _, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	uploadID, partToEtag, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 	if err != nil {
 		return common.Hash{}, err
 	}
 	if uploadID != "" {
-		err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID)
+		err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag)
 		if err != nil {
 			return common.Hash{}, err
 		}

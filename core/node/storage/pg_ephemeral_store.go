@@ -5,6 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -358,7 +360,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
-	part int,
+	partToEtag map[int]string,
 	bytes_uploaded int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -374,7 +376,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 				tx,
 				streamId,
 				uploadID,
-				part,
+				partToEtag,
 				bytes_uploaded,
 			)
 		},
@@ -388,58 +390,69 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	uploadID string,
-	part int,
+	partToEtag map[int]string,
 	bytes_uploaded int64,
 ) error {
-	// Query to insert a new ephemeral miniblock
-	query := s.sqlForStream(
-		"INSERT INTO {{external_media_streams}} (stream_id, upload_id, part, bytes_uploaded) VALUES ($1, $2, $3, $4);",
-		streamId,
-	)
-
-	_, err := tx.Exec(ctx, query, streamId, uploadID, part, bytes_uploaded)
+	// Convert map to JSON string
+	partToEtagJSON, err := json.Marshal(partToEtag)
 	if err != nil {
-		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
-			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("ephemeral miniblock or stream already exists")
-		}
 		return err
 	}
 
-	return nil
+	query := `
+		INSERT INTO external_media_streams (stream_id, upload_id, part_to_etag, bytes_uploaded) 
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (stream_id) 
+		DO UPDATE SET 
+			upload_id = EXCLUDED.upload_id,
+			part_to_etag = EXCLUDED.part_to_etag,
+			bytes_uploaded = EXCLUDED.bytes_uploaded
+	`
+
+	_, err = tx.Exec(ctx, query, streamId, uploadID, partToEtagJSON, bytes_uploaded)
+	return err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int, int64, error) {
+func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, map[int]string, int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var uploadID string
-	var parts int
+	var partToEtag map[int]string
 	var bytes_uploaded int64
 	err := s.txRunner(
 		ctx,
 		"GetExternalMediaStreamInfo",
-		pgx.ReadWrite,
+		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, parts, bytes_uploaded, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			uploadID, partToEtag, bytes_uploaded, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
 	)
-	return uploadID, parts, bytes_uploaded, err
+	return uploadID, partToEtag, bytes_uploaded, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, int, int64, error) {
+func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, map[int]string, int64, error) {
 	var uploadID string
-	var parts int
+	var partToEtagJSON []byte
 	var bytes_uploaded int64
+	
 	if err := tx.QueryRow(
 		ctx,
-		"SELECT upload_id, parts, bytes_uploaded FROM {{external_media_streams}} WHERE stream_id = $1",
+		"SELECT upload_id, part_to_etag, bytes_uploaded FROM external_media_streams WHERE stream_id = $1",
 		streamId,
-	).Scan(&uploadID, &parts, &bytes_uploaded); err != nil {
-		return "", 0, 0, err
+	).Scan(&uploadID, &partToEtagJSON, &bytes_uploaded); err != nil {
+		return "", nil, 0, err
 	}
-	return uploadID, parts, bytes_uploaded, nil
+	
+	// Parse JSONB back to map
+	var partToEtag map[int]string
+	if err := json.Unmarshal(partToEtagJSON, &partToEtag); err != nil {
+		return "", nil, 0, err
+	}
+	
+	return uploadID, partToEtag, bytes_uploaded, nil
 }
