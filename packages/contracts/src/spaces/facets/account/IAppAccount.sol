@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 // libraries
 
@@ -14,6 +15,9 @@ interface IAppAccountBase {
     error AppAlreadyInstalled();
     error UnauthorizedApp(address app);
     error InvalidCaller();
+
+    event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
+    event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
 }
 
 interface IAppAccount is IAppAccountBase {

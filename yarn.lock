@@ -1695,10 +1695,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@erc6900/reference-implementation@npm:^0.8.1":
-  version: 0.8.1
-  resolution: "@erc6900/reference-implementation@npm:0.8.1"
-  checksum: 2b5198a6136deea17f79f4376c77fe1c5fb7f5cbb8a9f2be39bfa982d496020a10fa5577b20b6016e18cfa6b38078f2e5da7aef7ca75501a8d523437f6529f3a
+"@erc6900/reference-implementation@https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz":
+  version: 0.8.0
+  resolution: "@erc6900/reference-implementation@https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
+  checksum: 7463bb2aec540fb9f3dc5089d8a8db0b29151cef3b2ad24ee5f81892a55d66715ecafb11b2babf3d7eec2b0c12eeb9762fd9f47b3348205360537180e945e205
   languageName: node
   linkType: hard
 
@@ -8802,7 +8802,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/contracts@workspace:packages/contracts"
   dependencies:
-    "@erc6900/reference-implementation": ^0.8.1
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
     "@ethereum-attestation-service/eas-contracts": ^1.8.0
     "@layerzerolabs/lz-evm-messagelib-v2": ^3.0.112
     "@layerzerolabs/lz-evm-protocol-v2": ^3.0.112
