@@ -22,7 +22,7 @@
 		"run-build": "yarn build && node ./dist/node_esbuild.cjs",
 		"start": "node ./dist/node_esbuild.cjs",
 		"test": "vitest run",
-		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3003 RIVER_ENV=local_multi_ne DEBUG='csb:*,test:*' vitest run --testNamePattern integration/stream-metadata",
+		"test:integration": "RIVER_STREAM_METADATA_BASE_URL=http://localhost:3003 RIVER_ENV=local_multi DEBUG='csb:*,test:*' vitest run --testNamePattern integration/stream-metadata",
 		"test:watch": "vitest --watch",
 		"typecheck": "tsc --noEmit"
 	},
