@@ -1,4 +1,4 @@
-package authentication
+package auth
 
 import (
     "context"
@@ -13,7 +13,7 @@ import (
 type testBypassCtxKey struct{}
 
 type testBypassInterceptor struct {
-    secret  string
+    secret string
 }
 
 func NewTestBypassInterceptor(secret string) connect.Interceptor {
@@ -22,7 +22,7 @@ func NewTestBypassInterceptor(secret string) connect.Interceptor {
 
 func (i *testBypassInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
     return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-            // If secret is empty, bypass is disabled.
+        // If secret is empty, bypass is disabled.
         if i.secret != "" && req != nil {
             hdr := req.Header().Get(headers.RiverTestBypassHeaderName)
             if hdr != "" && hdr == i.secret {
@@ -64,3 +64,4 @@ func TestEntitlementBypassFromContext(ctx context.Context) bool {
     b, _ := v.(bool)
     return b
 }
+

@@ -20,8 +20,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/towns-protocol/towns/core/config"
-	"github.com/towns-protocol/towns/core/node/auth"
-	"github.com/towns-protocol/towns/core/node/authentication"
+    "github.com/towns-protocol/towns/core/node/auth"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -806,7 +805,7 @@ func (s *Service) initHandlers() {
     // Stream service interceptors, optionally include test-bypass only for StreamService
     streamInterceptors := append([]connect.Interceptor{}, baseInterceptors...)
     if s.config.TestEntitlementsBypassSecret != "" {
-        streamInterceptors = append(streamInterceptors, authentication.NewTestBypassInterceptor(
+        streamInterceptors = append(streamInterceptors, auth.NewTestBypassInterceptor(
             s.config.TestEntitlementsBypassSecret,
         ))
     }

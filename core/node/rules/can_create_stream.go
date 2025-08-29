@@ -12,7 +12,6 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/auth"
-	"github.com/towns-protocol/towns/core/node/authentication"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -647,7 +646,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 
 	// Test-only bypass for user stream creation: if enabled and header present, suppress chain auth.
     if ru.cfg != nil && ru.cfg.TestEntitlementsBypassSecret != "" {
-        if authentication.TestEntitlementBypassFromContext(ru.ctx) {
+        if auth.TestEntitlementBypassFromContext(ru.ctx) {
             return nil, nil
         }
     }
