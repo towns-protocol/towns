@@ -13,17 +13,17 @@ import (
 type testBypassCtxKey struct{}
 
 type testBypassInterceptor struct {
-    enabled bool
     secret  string
 }
 
-func NewTestBypassInterceptor(enabled bool, secret string) connect.Interceptor {
-    return &testBypassInterceptor{enabled: enabled, secret: secret}
+func NewTestBypassInterceptor(secret string) connect.Interceptor {
+    return &testBypassInterceptor{secret: secret}
 }
 
 func (i *testBypassInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
     return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-        if i.enabled && req != nil {
+            // If secret is empty, bypass is disabled.
+        if i.secret != "" && req != nil {
             hdr := req.Header().Get(headers.RiverTestBypassHeaderName)
             if hdr != "" && hdr == i.secret {
                 ctx = context.WithValue(ctx, testBypassCtxKey{}, true)
@@ -41,7 +41,7 @@ func (i *testBypassInterceptor) WrapStreamingClient(next connect.StreamingClient
 
 func (i *testBypassInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
     return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
-        if i.enabled && conn != nil {
+        if i.secret != "" && conn != nil {
             hdr := conn.RequestHeader().Get(headers.RiverTestBypassHeaderName)
             if hdr != "" && hdr == i.secret {
                 ctx = context.WithValue(ctx, testBypassCtxKey{}, true)

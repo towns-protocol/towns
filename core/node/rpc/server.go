@@ -795,22 +795,27 @@ func (s *Service) initHandlers() {
     }
     ii = append(ii, s.NewMetricsInterceptor())
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
-    // Test-only entitlement bypass interceptor. Safe no-op if disabled in config.
-    ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestEntitlementsBypassSecret != "",
-        s.config.TestEntitlementsBypassSecret,
-    ))
+    // Base interceptors used for all services
+    baseInterceptors := ii
 
-	interceptors := connect.WithInterceptors(ii...)
-	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
-	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
+    // Stream service interceptors, optionally include test-bypass only for StreamService
+    streamInterceptors := append([]connect.Interceptor{}, baseInterceptors...)
+    if s.config.TestEntitlementsBypassSecret != "" {
+        streamInterceptors = append(streamInterceptors, authentication.NewTestBypassInterceptor(
+            s.config.TestEntitlementsBypassSecret,
+        ))
+    }
 
-	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
-	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
-		s.defaultLogger.Info("Enabling node2node authentication")
-		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
-	}
-	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
+    streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, connect.WithInterceptors(streamInterceptors...))
+    s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
+
+    // NodeToNode handler uses only base interceptors (no test-bypass)
+    nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, connect.WithInterceptors(baseInterceptors...))
+    if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+        s.defaultLogger.Info("Enabling node2node authentication")
+        nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
+    }
+    s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers()
 }
@@ -822,15 +827,11 @@ func (s *Service) initNotificationHandlers() error {
     }
     ii = append(ii, s.NewMetricsInterceptor())
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
-    ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestEntitlementsBypassSecret != "",
-        s.config.TestEntitlementsBypassSecret,
-    ))
 
-	authInceptor, err := authentication.NewAuthenticationInterceptor(
-		s.NotificationService.ShortServiceName(),
-		s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
-		s.config.Notifications.Authentication.SessionToken.Key.Key,
+    authInceptor, err := authentication.NewAuthenticationInterceptor(
+        s.NotificationService.ShortServiceName(),
+        s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
+        s.config.Notifications.Authentication.SessionToken.Key.Key,
 	)
 	if err != nil {
 		return err
@@ -863,10 +864,6 @@ func (s *Service) initAppRegistryHandlers() error {
     }
     ii = append(ii, s.NewMetricsInterceptor())
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
-    ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestEntitlementsBypassSecret != "",
-        s.config.TestEntitlementsBypassSecret,
-    ))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.AppRegistryService.ShortServiceName(),
