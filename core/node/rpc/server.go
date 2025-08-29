@@ -540,28 +540,33 @@ func (s *Service) runHttpServer() error {
 		mux.Handle("/metrics", s.metricsPublisher.CreateHandler())
 	}
 
-	corsMiddleware := cors.New(cors.Options{
-		AllowCredentials: false,
-		Debug:            cfg.Log.Level == "debug",
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
-        AllowedHeaders: []string{
-            "Origin",
-            "X-Requested-With",
-            "Accept",
-            "Content-Type",
-            "X-Grpc-Web",
-            "X-User-Agent",
-            "User-Agent",
-            "Connect-Protocol-Version",
-            "Connect-Timeout-Ms",
-            "x-river-request-id",
-            "Authorization",
-            headers.RiverTestBypassHeaderName,
-            headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
-        },
-	})
+    // Build allowed headers for CORS, optionally including the test-bypass header when enabled.
+    allowedHeaders := []string{
+        "Origin",
+        "X-Requested-With",
+        "Accept",
+        "Content-Type",
+        "X-Grpc-Web",
+        "X-User-Agent",
+        "User-Agent",
+        "Connect-Protocol-Version",
+        "Connect-Timeout-Ms",
+        "x-river-request-id",
+        "Authorization",
+        headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+    }
+    if s.config.TestEntitlementsBypassSecret != "" {
+        allowedHeaders = append(allowedHeaders, headers.RiverTestBypassHeaderName)
+    }
+
+    corsMiddleware := cors.New(cors.Options{
+        AllowCredentials: false,
+        Debug:            cfg.Log.Level == "debug",
+        AllowedOrigins:   []string{"*"},
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+        // AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
+        AllowedHeaders:   allowedHeaders,
+    })
 
 	handler := corsMiddleware.Handler(mux)
 
