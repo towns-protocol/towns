@@ -4,17 +4,8 @@ pragma solidity ^0.8.19;
 // utils
 import {ModulesBase} from "./ModulesBase.sol";
 
-//interfaces
-import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-
-//libraries
-import {Subscription} from "../../../src/apps/modules/subcription/SubscriptionModuleStorage.sol";
-
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
-
-// debuggging
-import {console} from "forge-std/console.sol";
 
 contract SubscriptionModuleTest is ModulesBase {
     function test_onInstall(address user) public {
@@ -39,23 +30,69 @@ contract SubscriptionModuleTest is ModulesBase {
         uint32 entityId = _installSubscriptionModule(userAccount, params);
 
         assertEq(entityId, nextEntityId);
-        Subscription memory sub = subscriptionModule.getSubscription(
-            address(userAccount),
-            entityId
-        );
-        assertTrue(sub.active, "Subscription should be active");
+        assertSubscriptionActive(address(userAccount), entityId);
 
-        _warpToExpiration(space, tokenId);
+        _warpToRenewalTime(space, tokenId);
 
         vm.deal(address(userAccount), params.renewalPrice);
 
-        uint256 balanceBefore = IPlatformRequirements(spaceFactory).getFeeRecipient().balance;
+        address feeRecipient = platformRequirements.getFeeRecipient();
+
+        BalanceSnapshot memory beforeSnap = snapshotBalances(
+            address(userAccount),
+            params.space,
+            feeRecipient
+        );
 
         _processRenewalAs(processor, address(userAccount), entityId);
 
-        assertEq(
-            IPlatformRequirements(spaceFactory).getFeeRecipient().balance,
-            balanceBefore + params.renewalPrice
+        BalanceSnapshot memory afterSnap = snapshotBalances(
+            address(userAccount),
+            params.space,
+            feeRecipient
         );
+
+        assertNativeDistribution(beforeSnap, afterSnap);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         PRICE CHANGES                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_processRenewal_AcceptsTenPercentIncrease(address user) public {
+        uint64 duration = 365 days;
+        uint256 price = 1 ether;
+
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user, duration, price);
+
+        uint256 newPrice = (params.renewalPrice * 110) / 100;
+
+        _setMembershipPrice(params.space, newPrice);
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.deal(address(account), newPrice);
+
+        address feeRecipient = platformRequirements.getFeeRecipient();
+        BalanceSnapshot memory beforeSnap = snapshotBalances(
+            address(account),
+            params.space,
+            feeRecipient
+        );
+
+        // Should succeed with 10% increase
+        _processRenewalAs(processor, address(account), entityId);
+
+        BalanceSnapshot memory afterSnap = snapshotBalances(
+            address(account),
+            params.space,
+            feeRecipient
+        );
+
+        assertNativeDistribution(beforeSnap, afterSnap);
     }
 }

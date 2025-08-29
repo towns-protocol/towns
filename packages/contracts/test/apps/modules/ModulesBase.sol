@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 // utils
 import {BaseSetup} from "../../spaces/BaseSetup.sol";
+import {BasisPoints} from "../../../src/utils/libraries/BasisPoints.sol";
 
 //interfaces
 import {IMembership} from "../../../src/spaces/facets/membership/IMembership.sol";
@@ -11,6 +12,10 @@ import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
 import {ISubscriptionModuleBase} from "../../../src/apps/modules/subcription/ISubscriptionModule.sol";
+import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+
+// types
+import {Subscription} from "../../../src/apps/modules/subcription/SubscriptionModuleStorage.sol";
 
 //libraries
 import {ValidationConfig} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
@@ -28,18 +33,10 @@ import {SubscriptionModule} from "../../../src/apps/modules/subcription/Subscrip
 import {SingleSignerValidationModule} from "modular-account/src/modules/validation/SingleSignerValidationModule.sol";
 
 contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
-    struct SubscriptionParams {
-        address account;
-        address space;
-        uint256 tokenId;
-        uint256 renewalPrice;
-        uint256 expirationTime;
-        uint32 entityId;
-    }
-
     AccountFactory accountFactory;
     ExecutionInstallDelegate executionInstallDelegate;
     SubscriptionModule subscriptionModule;
+    IPlatformRequirements platformRequirements;
 
     uint32 nextEntityId = 1;
     address owner = makeAddr("owner");
@@ -47,6 +44,8 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
     function setUp() public override {
         super.setUp();
+
+        platformRequirements = IPlatformRequirements(spaceFactory);
 
         executionInstallDelegate = new ExecutionInstallDelegate();
         subscriptionModule = SubscriptionModule(DeploySubscriptionModule.deploy());
@@ -70,6 +69,10 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         );
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    ACCOUNT HELPERS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function _createAccount(
         address user,
         uint256 balance
@@ -78,6 +81,10 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         account = accountFactory.createAccount(user, 0, entityId);
         vm.deal(address(account), balance);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   MEMBERSHIP HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _createSpace(uint256 price, uint64 duration) internal returns (address space) {
         IArchitectBase.SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo("ModulesSpace");
@@ -102,6 +109,24 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         hoax(account, price);
         IMembership(space).joinSpace{value: price}(account);
         tokenId = IERC721AQueryable(space).tokensOfOwner(account)[0];
+    }
+
+    function _setMembershipPrice(address space, uint256 price) internal {
+        vm.prank(address(owner));
+        IMembership(space).setMembershipPrice(price);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 SUBSCRIPTION HELPERS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    struct SubscriptionParams {
+        address account;
+        address space;
+        uint256 tokenId;
+        uint256 renewalPrice;
+        uint256 expirationTime;
+        uint32 entityId;
     }
 
     function _createSubscriptionParams(
@@ -166,7 +191,7 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
             SubscriptionParams memory params
         )
     {
-        account = _createAccount(user, 1 ether);
+        account = _createAccount(user, 0);
         address space = _createSpace(price, duration);
         tokenId = _joinSpace(address(account), space);
         params = _createSubscriptionParams(address(account), space, tokenId);
@@ -176,6 +201,10 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         return (account, tokenId, entityId, params);
     }
 
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    RENEWAL HELPERS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function _processRenewalAs(address caller, address account, uint32 entityId) internal {
         RenewalParams memory renewalParams = RenewalParams({account: account, entityId: entityId});
 
@@ -183,8 +212,64 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         subscriptionModule.processRenewal(renewalParams);
     }
 
-    function _warpToExpiration(address space, uint256 tokenId) internal {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                       TIME HELPERS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _warpToRenewalTime(address space, uint256 tokenId) internal {
         uint256 expiresAt = IMembership(space).expiresAt(tokenId);
         vm.warp(expiresAt - subscriptionModule.RENEWAL_BUFFER());
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     ASSERTION HELPERS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    struct BalanceSnapshot {
+        uint256 account;
+        uint256 space;
+        uint256 feeRecipient;
+    }
+
+    function snapshotBalances(
+        address account,
+        address space,
+        address feeRecipient
+    ) internal view returns (BalanceSnapshot memory b) {
+        b.account = address(account).balance;
+        b.space = address(space).balance;
+        b.feeRecipient = feeRecipient.balance;
+    }
+
+    function _calculateProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
+        uint256 minPrice = IPlatformRequirements(spaceFactory).getMembershipMinPrice();
+        if (membershipPrice < minPrice)
+            return IPlatformRequirements(spaceFactory).getMembershipFee();
+        return
+            BasisPoints.calculate(
+                membershipPrice,
+                IPlatformRequirements(spaceFactory).getMembershipBps()
+            );
+    }
+
+    function assertNativeDistribution(
+        BalanceSnapshot memory beforeSnap,
+        BalanceSnapshot memory afterSnap
+    ) internal view {
+        uint256 paidAmount = beforeSnap.account - afterSnap.account;
+        uint256 protocolFee = afterSnap.feeRecipient - beforeSnap.feeRecipient;
+        uint256 creatorAmount = afterSnap.space - beforeSnap.space;
+
+        uint256 expectedProtocolFee = _calculateProtocolFee(paidAmount);
+        uint256 expectedCreatorAmount = paidAmount - expectedProtocolFee;
+
+        assertEq(protocolFee, expectedProtocolFee, "protocol fee mismatch");
+        assertEq(creatorAmount, expectedCreatorAmount, "space amount mismatch");
+        assertEq(protocolFee + creatorAmount, paidAmount, "distribution must sum to payment");
+    }
+
+    function assertSubscriptionActive(address account, uint32 entityId) internal view {
+        Subscription memory sub = subscriptionModule.getSubscription(account, entityId);
+        assertTrue(sub.active, "Subscription should be active");
     }
 }
