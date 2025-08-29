@@ -8,7 +8,8 @@ export default mergeConfig(
             environment: 'happy-dom',
             name: 'multi_ne',
             env: {
-                RIVER_ENV: 'local_multi_ne',
+                RIVER_ENV: 'local_multi',
+                RIVER_TEST_ENT_BYPASS_SECRET: 'river-test-bypass-secret',
             },
             include: ['./src/tests/multi_ne/**/*.test.ts'],
             hookTimeout: 120_000,

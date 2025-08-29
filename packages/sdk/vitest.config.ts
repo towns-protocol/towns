@@ -9,7 +9,6 @@ export default mergeConfig(
             name: 'multi',
             env: {
                 RIVER_ENV: 'local_multi',
-                RIVER_TEST_ENT_BYPASS_SECRET: 'river-test-bypass-secret',
             },
             include: ['./src/tests/multi/**/*.test.ts', './src/tests/multi_v2/**/*.test.ts'],
             hookTimeout: 120_000,

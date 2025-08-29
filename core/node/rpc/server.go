@@ -546,20 +546,21 @@ func (s *Service) runHttpServer() error {
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
-		AllowedHeaders: []string{
-			"Origin",
-			"X-Requested-With",
-			"Accept",
-			"Content-Type",
-			"X-Grpc-Web",
-			"X-User-Agent",
-			"User-Agent",
-			"Connect-Protocol-Version",
-			"Connect-Timeout-Ms",
-			"x-river-request-id",
-			"Authorization",
-			headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
-		},
+        AllowedHeaders: []string{
+            "Origin",
+            "X-Requested-With",
+            "Accept",
+            "Content-Type",
+            "X-Grpc-Web",
+            "X-User-Agent",
+            "User-Agent",
+            "Connect-Protocol-Version",
+            "Connect-Timeout-Ms",
+            "x-river-request-id",
+            "Authorization",
+            headers.RiverTestBypassHeaderName,
+            headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+        },
 	})
 
 	handler := corsMiddleware.Handler(mux)
