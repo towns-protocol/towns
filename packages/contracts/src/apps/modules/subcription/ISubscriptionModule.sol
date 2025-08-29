@@ -46,9 +46,9 @@ interface ISubscriptionModuleBase {
     event SubscriptionConfigured(
         address indexed account,
         uint32 indexed entityId,
-        address indexed manager,
-        uint256 spendLimit,
-        uint256 resetPeriod
+        address indexed space,
+        uint256 tokenId,
+        uint256 renewalPrice
     );
 
     event SubscriptionDeactivated(address indexed account, uint32 indexed entityId);
