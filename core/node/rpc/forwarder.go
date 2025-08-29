@@ -26,13 +26,17 @@ func checkNoForward[T any](req *connect.Request[T], baseErr error) error {
 }
 
 func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *connect.Request[T] {
-	newReq := connect.NewRequest(req.Msg)
-	newReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
-	newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
-	if allowNoQuorum(req) {
-		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
-	}
-	return newReq
+    newReq := connect.NewRequest(req.Msg)
+    newReq.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+    newReq.Header().Set(RiverFromNodeHeader, s.wallet.Address.Hex())
+    if allowNoQuorum(req) {
+        newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
+    }
+    // Forward test bypass header if present so downstream node can honor it.
+    if v := req.Header().Get(RiverTestBypassHeaderName); v != "" {
+        newReq.Header().Set(RiverTestBypassHeaderName, v)
+    }
+    return newReq
 }
 
 func allowNoQuorum[T any](req *connect.Request[T]) bool {
