@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
     updateSpaceSwapVolume,
+    updateSpaceTipVolume,
 } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
@@ -698,5 +699,41 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
             `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
             error,
         )
+    }
+})
+
+ponder.on('Space:Tip', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        // Create unique ID from txHash and logIndex
+        const tipId = `${event.transaction.hash}-${event.log.logIndex}`
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        await context.db.insert(schema.tip).values({
+            id: tipId,
+            txHash: event.transaction.hash,
+            tokenId: event.args.tokenId,
+            currency: event.args.currency,
+            sender: event.args.sender,
+            receiver: event.args.receiver,
+            amount: event.args.amount,
+            messageId: event.args.messageId,
+            channelId: event.args.channelId,
+            spaceId: spaceId,
+            blockTimestamp: blockTimestamp,
+            createdAt: blockTimestamp,
+        })
+
+        // Update space tip volume tracking
+        await updateSpaceTipVolume(
+            context,
+            spaceId,
+            blockTimestamp,
+            event.args.currency,
+            event.args.amount,
+        )
+    } catch (error) {
+        console.error(`Error processing Tipping:Tip at timestamp ${blockTimestamp}:`, error)
     }
 })
