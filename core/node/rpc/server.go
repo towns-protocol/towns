@@ -797,8 +797,8 @@ func (s *Service) initHandlers() {
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
     // Test-only entitlement bypass interceptor. Safe no-op if disabled in config.
     ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestBypass.EntitlementsEnabled,
-        s.config.TestBypass.EntitlementsSecret,
+        s.config.TestEntitlementsBypassSecret != "",
+        s.config.TestEntitlementsBypassSecret,
     ))
 
 	interceptors := connect.WithInterceptors(ii...)
@@ -823,8 +823,8 @@ func (s *Service) initNotificationHandlers() error {
     ii = append(ii, s.NewMetricsInterceptor())
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
     ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestBypass.EntitlementsEnabled,
-        s.config.TestBypass.EntitlementsSecret,
+        s.config.TestEntitlementsBypassSecret != "",
+        s.config.TestEntitlementsBypassSecret,
     ))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
@@ -864,8 +864,8 @@ func (s *Service) initAppRegistryHandlers() error {
     ii = append(ii, s.NewMetricsInterceptor())
     ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
     ii = append(ii, authentication.NewTestBypassInterceptor(
-        s.config.TestBypass.EntitlementsEnabled,
-        s.config.TestBypass.EntitlementsSecret,
+        s.config.TestEntitlementsBypassSecret != "",
+        s.config.TestEntitlementsBypassSecret,
     ))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(

@@ -200,8 +200,9 @@ type Config struct {
 	// It is used for testing only.
     MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
 
-    // TestBypass contains test-only settings used to bypass certain checks locally.
-    TestBypass TestBypassConfig
+    // TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
+    // The value is a shared secret expected in the X-River-Test-Bypass header.
+    TestEntitlementsBypassSecret string
 }
 
 type TLSConfig struct {
@@ -353,13 +354,7 @@ type ContractConfig struct {
 }
 
 // TestBypassConfig holds test-only bypass flags. These must never be enabled in production.
-type TestBypassConfig struct {
-    // EntitlementsEnabled allows bypassing entitlement and membership checks when a matching
-    // request header is presented via an interceptor. Intended for local tests only.
-    EntitlementsEnabled bool
-    // EntitlementsSecret is the shared secret value expected in the bypass header.
-    EntitlementsSecret  string
-}
+// (removed) TestBypassConfig in favor of a single TestEntitlementsBypassSecret string flag
 
 type ArchiveConfig struct {
 	// ArchiveId is the unique identifier of the archive node. Must be set for nodes in archive mode.

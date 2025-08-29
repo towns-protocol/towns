@@ -1429,7 +1429,7 @@ func (ca *chainAuth) checkEntitlement(
     args *ChainAuthArgs,
 ) (CacheResult, error) {
     // Test-only bypass: if interceptor marked this context and config enabled it, allow immediately.
-    if cfg != nil && cfg.TestBypass.EntitlementsEnabled {
+    if cfg != nil && cfg.TestEntitlementsBypassSecret != "" {
         if authentication.TestEntitlementBypassFromContext(ctx) {
             return boolCacheResult{true, EntitlementResultReason_NONE}, nil
         }

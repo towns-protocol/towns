@@ -19,7 +19,5 @@ notifications:
                 algorithm: HS256
                 key: 'c69b1973792ad59bebb96a2ab1639aafc0c1e229a1c2138d91834f0f6953a544'
 
-# Test-only bypass for local development. Do NOT enable in production configs.
-testBypass:
-    entitlementsEnabled: true
-    entitlementsSecret: 'river-test-bypass-secret'
+# Test-only entitlement bypass secret for local development. Non-empty enables bypass.
+testEntitlementsBypassSecret: 'river-test-bypass-secret'
