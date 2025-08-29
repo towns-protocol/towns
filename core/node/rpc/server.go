@@ -20,7 +20,8 @@ import (
 	"golang.org/x/net/http2/h2c"
 
 	"github.com/towns-protocol/towns/core/config"
-    "github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/authentication"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -539,33 +540,33 @@ func (s *Service) runHttpServer() error {
 		mux.Handle("/metrics", s.metricsPublisher.CreateHandler())
 	}
 
-    // Build allowed headers for CORS, optionally including the test-bypass header when enabled.
-    allowedHeaders := []string{
-        "Origin",
-        "X-Requested-With",
-        "Accept",
-        "Content-Type",
-        "X-Grpc-Web",
-        "X-User-Agent",
-        "User-Agent",
-        "Connect-Protocol-Version",
-        "Connect-Timeout-Ms",
-        "x-river-request-id",
-        "Authorization",
-        headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
-    }
-    if s.config.TestEntitlementsBypassSecret != "" {
-        allowedHeaders = append(allowedHeaders, headers.RiverTestBypassHeaderName)
-    }
+	// Build allowed headers for CORS, optionally including the test-bypass header when enabled.
+	allowedHeaders := []string{
+		"Origin",
+		"X-Requested-With",
+		"Accept",
+		"Content-Type",
+		"X-Grpc-Web",
+		"X-User-Agent",
+		"User-Agent",
+		"Connect-Protocol-Version",
+		"Connect-Timeout-Ms",
+		"x-river-request-id",
+		"Authorization",
+		headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+	}
+	if s.config.TestEntitlementsBypassSecret != "" {
+		allowedHeaders = append(allowedHeaders, headers.RiverTestBypassHeaderName)
+	}
 
-    corsMiddleware := cors.New(cors.Options{
-        AllowCredentials: false,
-        Debug:            cfg.Log.Level == "debug",
-        AllowedOrigins:   []string{"*"},
-        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-        // AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
-        AllowedHeaders:   allowedHeaders,
-    })
+	corsMiddleware := cors.New(cors.Options{
+		AllowCredentials: false,
+		Debug:            cfg.Log.Level == "debug",
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
+		AllowedHeaders: allowedHeaders,
+	})
 
 	handler := corsMiddleware.Handler(mux)
 
@@ -793,55 +794,61 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 }
 
 func (s *Service) initHandlers() {
-    ii := []connect.Interceptor{}
-    if s.otelConnectIterceptor != nil {
-        ii = append(ii, s.otelConnectIterceptor)
-    }
-    ii = append(ii, s.NewMetricsInterceptor())
-    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
-    // Base interceptors used for all services
-    baseInterceptors := ii
+	ii := []connect.Interceptor{}
+	if s.otelConnectIterceptor != nil {
+		ii = append(ii, s.otelConnectIterceptor)
+	}
+	ii = append(ii, s.NewMetricsInterceptor())
+	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	// Base interceptors used for all services
+	baseInterceptors := ii
 
-    // Stream service interceptors, optionally include test-bypass only for StreamService
-    streamInterceptors := append([]connect.Interceptor{}, baseInterceptors...)
-    if s.config.TestEntitlementsBypassSecret != "" {
-        streamInterceptors = append(streamInterceptors, auth.NewTestBypassInterceptor(
-            s.config.TestEntitlementsBypassSecret,
-        ))
-    }
+	// Stream service interceptors, optionally include test-bypass only for StreamService
+	streamInterceptors := append([]connect.Interceptor{}, baseInterceptors...)
+	if s.config.TestEntitlementsBypassSecret != "" {
+		streamInterceptors = append(streamInterceptors, auth.NewTestBypassInterceptor(
+			s.config.TestEntitlementsBypassSecret,
+		))
+	}
 
-    streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, connect.WithInterceptors(streamInterceptors...))
-    s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
+	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(
+		s,
+		connect.WithInterceptors(streamInterceptors...),
+	)
+	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 
-    // NodeToNode handler uses only base interceptors (no test-bypass)
-    nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, connect.WithInterceptors(baseInterceptors...))
-    if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
-        s.defaultLogger.Info("Enabling node2node authentication")
-        nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
-    }
-    s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
+	// NodeToNode handler uses only base interceptors (no test-bypass)
+	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(
+		s,
+		connect.WithInterceptors(baseInterceptors...),
+	)
+	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
+		s.defaultLogger.Info("Enabling node2node authentication")
+		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)
+	}
+	s.mux.Handle(nodeServicePattern, newHttpHandler(nodeServiceHandler, s.defaultLogger))
 
 	s.registerDebugHandlers()
 }
 
 func (s *Service) initNotificationHandlers() error {
-    var ii []connect.Interceptor
-    if s.otelConnectIterceptor != nil {
-        ii = append(ii, s.otelConnectIterceptor)
-    }
-    ii = append(ii, s.NewMetricsInterceptor())
-    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	var ii []connect.Interceptor
+	if s.otelConnectIterceptor != nil {
+		ii = append(ii, s.otelConnectIterceptor)
+	}
+	ii = append(ii, s.NewMetricsInterceptor())
+	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
-    authInceptor, err := authentication.NewAuthenticationInterceptor(
-        s.NotificationService.ShortServiceName(),
-        s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
-        s.config.Notifications.Authentication.SessionToken.Key.Key,
+	authInceptor, err := authentication.NewAuthenticationInterceptor(
+		s.NotificationService.ShortServiceName(),
+		s.config.Notifications.Authentication.SessionToken.Key.Algorithm,
+		s.config.Notifications.Authentication.SessionToken.Key.Key,
 	)
 	if err != nil {
 		return err
 	}
 
-    ii = append(ii, authInceptor)
+	ii = append(ii, authInceptor)
 
 	interceptors := connect.WithInterceptors(ii...)
 	notificationServicePattern, notificationServiceHandler := protocolconnect.NewNotificationServiceHandler(
@@ -862,12 +869,12 @@ func (s *Service) initNotificationHandlers() error {
 }
 
 func (s *Service) initAppRegistryHandlers() error {
-    var ii []connect.Interceptor
-    if s.otelConnectIterceptor != nil {
-        ii = append(ii, s.otelConnectIterceptor)
-    }
-    ii = append(ii, s.NewMetricsInterceptor())
-    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	var ii []connect.Interceptor
+	if s.otelConnectIterceptor != nil {
+		ii = append(ii, s.otelConnectIterceptor)
+	}
+	ii = append(ii, s.NewMetricsInterceptor())
+	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.AppRegistryService.ShortServiceName(),

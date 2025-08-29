@@ -51,9 +51,9 @@ func (i *testBypassInterceptor) WrapStreamingHandler(next connect.StreamingHandl
     }
 }
 
-// TestEntitlementBypassFromContext returns true if the request context was marked by the
+// IsTestEntitlementBypassEnabled returns true if the request context was marked by the
 // test-bypass interceptor.
-func TestEntitlementBypassFromContext(ctx context.Context) bool {
+func IsTestEntitlementBypassEnabled(ctx context.Context) bool {
     if ctx == nil {
         return false
     }
@@ -64,4 +64,3 @@ func TestEntitlementBypassFromContext(ctx context.Context) bool {
     b, _ := v.(bool)
     return b
 }
-

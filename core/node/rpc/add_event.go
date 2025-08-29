@@ -244,7 +244,7 @@ func (s *Service) AddEventPayload(
 	}
 
 	addReq := connect.NewRequest(req)
-    if s.config.TestEntitlementsBypassSecret != "" && auth.TestEntitlementBypassFromContext(ctx) {
+    if s.config.TestEntitlementsBypassSecret != "" && auth.IsTestEntitlementBypassEnabled(ctx) {
         addReq.Header().Set(rpcHeaders.RiverTestBypassHeaderName, s.config.TestEntitlementsBypassSecret)
     }
 	resp, err := s.AddEvent(ctx, addReq)
