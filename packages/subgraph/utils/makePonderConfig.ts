@@ -15,6 +15,7 @@ import {
     swapFacetAbi,
     swapRouterAbi,
     iAppRegistryAbi,
+    tippingFacetAbi,
 } from '@towns-protocol/contracts/typings'
 
 import { getContractAddress } from './contractAddresses'
@@ -97,7 +98,7 @@ export function makePonderConfig(
                 chain: baseChainName,
             },
             Space: {
-                abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
+                abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi, tippingFacetAbi]),
                 address: factory({
                     address: spaceFactory,
                     event: parseAbiItem([
