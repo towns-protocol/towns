@@ -63,7 +63,6 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 		return "", fmt.Errorf("failed to create multipart upload: %w", err)
 	}
 	
-	// Return the upload ID
 	return *output.UploadId, nil
 }
 
@@ -133,9 +132,10 @@ func DownloadChunkFromExternal(
 	bucket string,
 	client *s3.Client,
 ) ([]byte, error) {
+	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
 
-	// Download from S3 with range header
+	// Download chunk from S3 with range header
 	output, err := client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &key,
@@ -146,7 +146,6 @@ func DownloadChunkFromExternal(
 	}
 	defer output.Body.Close()
 
-	// Read the range data
 	data, err := io.ReadAll(output.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read S3 object range body: %w", err)
@@ -155,7 +154,6 @@ func DownloadChunkFromExternal(
 	return data, nil
 }
 
-// Helper function to create S3 client (implementation depends on your AWS setup)
 func CreateExternalClient() (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {

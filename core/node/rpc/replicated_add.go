@@ -222,7 +222,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 			}
 			new_bytes_uploaded := bytes_uploaded + int64(len(mbBytes))
 			partToEtag[partNum] = etag
-			s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded)
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded) != nil {
+				return err
+			}
 			mbBytes = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
 
 		}
@@ -241,7 +243,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 
 		if uploadID != "" {
-			s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag)
+			if s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag) != nil {
+				return err
+			}
 		}
 
 		// Normalize stream locally

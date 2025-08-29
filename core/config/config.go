@@ -82,7 +82,6 @@ func GetDefaultConfig() *Config {
 			ProgressReportInterval: 10 * time.Second,
 		},
 		MetadataShardMask: 0x3ff, // 1023
-		MediaStreamStorageType: "external",
 	}
 }
 
@@ -200,9 +199,6 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
-
-	// Storage type for media streams
-	MediaStreamStorageType string
 }
 
 type TLSConfig struct {
