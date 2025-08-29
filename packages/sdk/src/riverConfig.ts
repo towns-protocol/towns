@@ -401,7 +401,7 @@ export type RiverConfig = {
     environmentId: string
     base: { rpcUrl: string; chainConfig: BaseChainConfig }
     river: { rpcUrl: string; chainConfig: RiverChainConfig }
-    services: { id: RiverService; url: string }[]
+    services: { id: RiverService; url: string | undefined }[]
 }
 
 /**
@@ -412,7 +412,7 @@ export type RiverConfig = {
  * If RIVER_ENV is one of the "deployments" in packages/generated/config/deployments.json,
  * you don't need to set any additional environment variables
  */
-export function makeRiverConfig(inEnvironmentId?: string) {
+export function makeRiverConfig(inEnvironmentId?: string): RiverConfig {
     const environmentId = inEnvironmentId ?? getEnvironmentId()
     const config = {
         environmentId,
@@ -423,6 +423,6 @@ export function makeRiverConfig(inEnvironmentId?: string) {
             { id: RiverService.AppRegistry, url: getAppRegistryUrl(environmentId) },
             { id: RiverService.StreamMetadata, url: getStreamMetadataUrl(environmentId) },
         ],
-    }
+    } satisfies RiverConfig
     return config
 }
