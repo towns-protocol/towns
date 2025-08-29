@@ -1,18 +1,18 @@
 package rpc
 
 import (
-    "context"
-    "time"
+	"context"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 
-    "github.com/towns-protocol/towns/core/node/auth"
+	"github.com/towns-protocol/towns/core/node/auth"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-    rpcHeaders "github.com/towns-protocol/towns/core/node/rpc/headers"
+	rpcHeaders "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -244,9 +244,9 @@ func (s *Service) AddEventPayload(
 	}
 
 	addReq := connect.NewRequest(req)
-    if s.config.TestEntitlementsBypassSecret != "" && auth.IsTestEntitlementBypassEnabled(ctx) {
-        addReq.Header().Set(rpcHeaders.RiverTestBypassHeaderName, s.config.TestEntitlementsBypassSecret)
-    }
+	if s.config.TestEntitlementsBypassSecret != "" && auth.IsTestEntitlementBypassEnabled(ctx) {
+		addReq.Header().Set(rpcHeaders.RiverTestBypassHeaderName, s.config.TestEntitlementsBypassSecret)
+	}
 	resp, err := s.AddEvent(ctx, addReq)
 	if err != nil {
 		return nil, err
