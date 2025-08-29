@@ -788,12 +788,17 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 }
 
 func (s *Service) initHandlers() {
-	ii := []connect.Interceptor{}
-	if s.otelConnectIterceptor != nil {
-		ii = append(ii, s.otelConnectIterceptor)
-	}
-	ii = append(ii, s.NewMetricsInterceptor())
-	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    ii := []connect.Interceptor{}
+    if s.otelConnectIterceptor != nil {
+        ii = append(ii, s.otelConnectIterceptor)
+    }
+    ii = append(ii, s.NewMetricsInterceptor())
+    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    // Test-only entitlement bypass interceptor. Safe no-op if disabled in config.
+    ii = append(ii, authentication.NewTestBypassInterceptor(
+        s.config.TestBypass.EntitlementsEnabled,
+        s.config.TestBypass.EntitlementsSecret,
+    ))
 
 	interceptors := connect.WithInterceptors(ii...)
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
@@ -810,12 +815,16 @@ func (s *Service) initHandlers() {
 }
 
 func (s *Service) initNotificationHandlers() error {
-	var ii []connect.Interceptor
-	if s.otelConnectIterceptor != nil {
-		ii = append(ii, s.otelConnectIterceptor)
-	}
-	ii = append(ii, s.NewMetricsInterceptor())
-	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    var ii []connect.Interceptor
+    if s.otelConnectIterceptor != nil {
+        ii = append(ii, s.otelConnectIterceptor)
+    }
+    ii = append(ii, s.NewMetricsInterceptor())
+    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    ii = append(ii, authentication.NewTestBypassInterceptor(
+        s.config.TestBypass.EntitlementsEnabled,
+        s.config.TestBypass.EntitlementsSecret,
+    ))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.NotificationService.ShortServiceName(),
@@ -826,7 +835,7 @@ func (s *Service) initNotificationHandlers() error {
 		return err
 	}
 
-	ii = append(ii, authInceptor)
+    ii = append(ii, authInceptor)
 
 	interceptors := connect.WithInterceptors(ii...)
 	notificationServicePattern, notificationServiceHandler := protocolconnect.NewNotificationServiceHandler(
@@ -847,12 +856,16 @@ func (s *Service) initNotificationHandlers() error {
 }
 
 func (s *Service) initAppRegistryHandlers() error {
-	var ii []connect.Interceptor
-	if s.otelConnectIterceptor != nil {
-		ii = append(ii, s.otelConnectIterceptor)
-	}
-	ii = append(ii, s.NewMetricsInterceptor())
-	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    var ii []connect.Interceptor
+    if s.otelConnectIterceptor != nil {
+        ii = append(ii, s.otelConnectIterceptor)
+    }
+    ii = append(ii, s.NewMetricsInterceptor())
+    ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+    ii = append(ii, authentication.NewTestBypassInterceptor(
+        s.config.TestBypass.EntitlementsEnabled,
+        s.config.TestBypass.EntitlementsSecret,
+    ))
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.AppRegistryService.ShortServiceName(),

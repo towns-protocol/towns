@@ -21,6 +21,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/authentication"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
@@ -1423,12 +1424,18 @@ func (ca *chainAuth) checkMembership(
  * App membership and entitlements are also evaluated via separate interfaces on the space contract.
  */
 func (ca *chainAuth) checkEntitlement(
-	ctx context.Context,
-	cfg *config.Config,
-	args *ChainAuthArgs,
+    ctx context.Context,
+    cfg *config.Config,
+    args *ChainAuthArgs,
 ) (CacheResult, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
-	defer cancel()
+    // Test-only bypass: if interceptor marked this context and config enabled it, allow immediately.
+    if cfg != nil && cfg.TestBypass.EntitlementsEnabled {
+        if authentication.TestEntitlementBypassFromContext(ctx) {
+            return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+        }
+    }
+    ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
+    defer cancel()
 
 	isEnabled, reason, err := ca.checkStreamIsEnabled(ctx, cfg, args)
 	if err != nil {

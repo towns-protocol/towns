@@ -1,0 +1,67 @@
+package authentication
+
+import (
+    "context"
+
+    "connectrpc.com/connect"
+)
+
+// Test-only entitlement bypass support. This interceptor reads a header and, when enabled,
+// annotates the context to allow downstream authorization to short-circuit.
+
+const testBypassHeader = "X-River-Test-Bypass"
+
+type testBypassCtxKey struct{}
+
+type testBypassInterceptor struct {
+    enabled bool
+    secret  string
+}
+
+func NewTestBypassInterceptor(enabled bool, secret string) connect.Interceptor {
+    return &testBypassInterceptor{enabled: enabled, secret: secret}
+}
+
+func (i *testBypassInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+    return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+        if i.enabled && req != nil {
+            hdr := req.Header().Get(testBypassHeader)
+            if hdr != "" && hdr == i.secret {
+                ctx = context.WithValue(ctx, testBypassCtxKey{}, true)
+            }
+        }
+        return next(ctx, req)
+    }
+}
+
+func (i *testBypassInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+    return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
+        return next(ctx, spec)
+    }
+}
+
+func (i *testBypassInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+    return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+        if i.enabled && conn != nil {
+            hdr := conn.RequestHeader().Get(testBypassHeader)
+            if hdr != "" && hdr == i.secret {
+                ctx = context.WithValue(ctx, testBypassCtxKey{}, true)
+            }
+        }
+        return next(ctx, conn)
+    }
+}
+
+// TestEntitlementBypassFromContext returns true if the request context was marked by the
+// test-bypass interceptor.
+func TestEntitlementBypassFromContext(ctx context.Context) bool {
+    if ctx == nil {
+        return false
+    }
+    v := ctx.Value(testBypassCtxKey{})
+    if v == nil {
+        return false
+    }
+    b, _ := v.(bool)
+    return b
+}

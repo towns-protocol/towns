@@ -186,7 +186,7 @@ type Config struct {
 	DebugEndpoints DebugEndpointsConfig
 
 	// RiverRegistry contains settings for calling registry contract on River chain.
-	RiverRegistry RiverRegistryConfig
+    RiverRegistry RiverRegistryConfig
 
 	// xChain configuration
 	// ====================
@@ -198,7 +198,10 @@ type Config struct {
 
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
-	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+    MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+    // TestBypass contains test-only settings used to bypass certain checks locally.
+    TestBypass TestBypassConfig
 }
 
 type TLSConfig struct {
@@ -345,8 +348,17 @@ type PerformanceTrackingConfig struct {
 }
 
 type ContractConfig struct {
-	// Address of the contract
-	Address common.Address
+    // Address of the contract
+    Address common.Address
+}
+
+// TestBypassConfig holds test-only bypass flags. These must never be enabled in production.
+type TestBypassConfig struct {
+    // EntitlementsEnabled allows bypassing entitlement and membership checks when a matching
+    // request header is presented via an interceptor. Intended for local tests only.
+    EntitlementsEnabled bool
+    // EntitlementsSecret is the shared secret value expected in the bypass header.
+    EntitlementsSecret  string
 }
 
 type ArchiveConfig struct {
