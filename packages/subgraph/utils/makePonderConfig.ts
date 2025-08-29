@@ -98,7 +98,12 @@ export function makePonderConfig(
                 chain: baseChainName,
             },
             Space: {
-                abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi, tippingFacetAbi]),
+                abi: mergeAbis([
+                    createSpaceFacetAbi,
+                    tokenPausableFacetAbi,
+                    swapFacetAbi,
+                    tippingFacetAbi,
+                ]),
                 address: factory({
                     address: spaceFactory,
                     event: parseAbiItem([
