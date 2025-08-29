@@ -259,7 +259,6 @@ export class Channel extends PersistedObservable<ChannelModel> {
             const stream = this.riverConnection.client?.stream(receiverUserStreamId)
             return stream?.view.userContent.appAddress
         })()
-        const tipRecipient = appAddress ? `0x${bin_toHexString(appAddress)}` : tip.receiver
 
         let tokenId: string
         if (appAddress) {
@@ -285,11 +284,11 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 amount: tip.amount,
                 messageId,
                 channelId: this.data.id,
-                receiver: tipRecipient,
+                receiver: appAddress ?? tip.receiver,
             },
             signer,
         )
-        const receipt = await tx.wait()
+        const receipt = await tx.wait(3)
         const senderAddress = await signer.getAddress()
         const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)
         if (!tipEvent) {
@@ -300,7 +299,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         const result = await this.riverConnection
             .withStream(channelId)
             .call((client) =>
-                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tipRecipient),
+                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
             )
         return result
     }
