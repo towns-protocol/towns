@@ -1,9 +1,11 @@
 package infra
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 )
 
 type MetricsFactory interface {
@@ -39,6 +41,14 @@ type MetricsFactory interface {
 	NewStatusCounterVecEx(name string, help string, labels ...string) *StatusCounterVec
 
 	Registry() *prometheus.Registry
+}
+
+type DebugMetricsFactory interface {
+	MetricsFactory
+
+	// GetMetricsAsMap returns all metrics as a structured map suitable for JSON logging.
+	// This is intended for debugging purposes only.
+	GetMetricsAsMap() (map[string]interface{}, error)
 }
 
 // NewMetricsFactory creates a new MetricsFactory.
@@ -256,4 +266,197 @@ func (f *metricsFactory) NewStatusCounterVecEx(name string, help string, labels 
 
 func (f *metricsFactory) Registry() *prometheus.Registry {
 	return f.registry
+}
+
+func (f *metricsFactory) GetMetricsAsMap() (map[string]interface{}, error) {
+	if f.registry == nil {
+		return nil, fmt.Errorf("no metrics registry available")
+	}
+
+	// Gather all metrics from the registry
+	metricFamilies, err := f.registry.Gather()
+	if err != nil {
+		return nil, fmt.Errorf("failed to gather metrics: %w", err)
+	}
+
+	result := make(map[string]interface{})
+
+	// Add metadata
+	result["namespace"] = f.namespace
+	result["subsystem"] = f.subsystem
+	result["metric_count"] = len(metricFamilies)
+
+	metrics := make(map[string]interface{})
+
+	for _, mf := range metricFamilies {
+		metricName := mf.GetName()
+		metricType := mf.GetType()
+
+		switch metricType {
+		case dto.MetricType_GAUGE:
+			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
+				// Simple gauge without labels
+				metrics[metricName] = mf.Metric[0].Gauge.GetValue()
+			} else {
+				// Gauge with labels
+				labeledValues := make(map[string]float64)
+				for _, m := range mf.Metric {
+					labelKey := buildLabelKey(m.Label)
+					labeledValues[labelKey] = m.Gauge.GetValue()
+				}
+				metrics[metricName] = labeledValues
+			}
+
+		case dto.MetricType_COUNTER:
+			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
+				// Simple counter without labels
+				metrics[metricName] = mf.Metric[0].Counter.GetValue()
+			} else {
+				// Counter with labels
+				labeledValues := make(map[string]float64)
+				for _, m := range mf.Metric {
+					labelKey := buildLabelKey(m.Label)
+					labeledValues[labelKey] = m.Counter.GetValue()
+				}
+				metrics[metricName] = labeledValues
+			}
+
+		case dto.MetricType_HISTOGRAM:
+			histogramData := make(map[string]interface{})
+			for _, m := range mf.Metric {
+				labelKey := buildLabelKey(m.Label)
+				if labelKey == "" {
+					labelKey = "default"
+				}
+
+				hist := m.Histogram
+				histData := map[string]interface{}{
+					"count": float64(hist.GetSampleCount()),
+					"sum":   hist.GetSampleSum(),
+				}
+
+				// Add average if count > 0
+				if hist.GetSampleCount() > 0 {
+					histData["avg"] = hist.GetSampleSum() / float64(hist.GetSampleCount())
+				}
+
+				// Add bucket summary (simplified)
+				if len(hist.Bucket) > 0 {
+					buckets := make(map[string]uint64)
+					for _, b := range hist.Bucket {
+						buckets[fmt.Sprintf("le_%.0f", b.GetUpperBound())] = b.GetCumulativeCount()
+					}
+					histData["buckets"] = buckets
+				}
+
+				histogramData[labelKey] = histData
+			}
+			metrics[metricName] = histogramData
+
+		case dto.MetricType_SUMMARY:
+			summaryData := make(map[string]interface{})
+			for _, m := range mf.Metric {
+				labelKey := buildLabelKey(m.Label)
+				if labelKey == "" {
+					labelKey = "default"
+				}
+
+				summary := m.Summary
+				sumData := map[string]interface{}{
+					"count": float64(summary.GetSampleCount()),
+					"sum":   summary.GetSampleSum(),
+				}
+
+				// Add quantiles if available
+				if len(summary.Quantile) > 0 {
+					quantiles := make(map[string]float64)
+					for _, q := range summary.Quantile {
+						quantiles[fmt.Sprintf("q%.2f", q.GetQuantile())] = q.GetValue()
+					}
+					sumData["quantiles"] = quantiles
+				}
+
+				summaryData[labelKey] = sumData
+			}
+			metrics[metricName] = summaryData
+
+		case dto.MetricType_GAUGE_HISTOGRAM:
+			gaugeHistogramData := make(map[string]interface{})
+			for _, m := range mf.Metric {
+				labelKey := buildLabelKey(m.Label)
+				if labelKey == "" {
+					labelKey = "default"
+				}
+
+				// GaugeHistogram uses the same Histogram field as regular histograms
+				hist := m.Histogram
+				ghData := map[string]interface{}{
+					"count": float64(hist.GetSampleCount()),
+					"sum":   hist.GetSampleSum(),
+				}
+
+				// Add average if count > 0
+				if hist.GetSampleCount() > 0 {
+					ghData["avg"] = hist.GetSampleSum() / float64(hist.GetSampleCount())
+				}
+
+				// Add bucket summary
+				if len(hist.Bucket) > 0 {
+					buckets := make(map[string]float64)
+					for _, b := range hist.Bucket {
+						buckets[fmt.Sprintf("le_%.0f", b.GetUpperBound())] = float64(b.GetCumulativeCount())
+					}
+					ghData["buckets"] = buckets
+				}
+
+				gaugeHistogramData[labelKey] = ghData
+			}
+			metrics[metricName] = gaugeHistogramData
+
+		case dto.MetricType_UNTYPED:
+			if len(mf.Metric) == 1 && len(mf.Metric[0].Label) == 0 {
+				// Simple untyped metric without labels
+				metrics[metricName] = mf.Metric[0].Untyped.GetValue()
+			} else {
+				// Untyped metric with labels
+				labeledValues := make(map[string]float64)
+				for _, m := range mf.Metric {
+					labelKey := buildLabelKey(m.Label)
+					labeledValues[labelKey] = m.Untyped.GetValue()
+				}
+				metrics[metricName] = labeledValues
+			}
+		}
+	}
+
+	result["metrics"] = metrics
+	return result, nil
+}
+
+// buildLabelKey creates a readable key from label pairs
+func buildLabelKey(labels []*dto.LabelPair) string {
+	if len(labels) == 0 {
+		return ""
+	}
+
+	// For single label, just use the value
+	if len(labels) == 1 {
+		return labels[0].GetValue()
+	}
+
+	// For multiple labels, create a map
+	labelMap := make(map[string]string)
+	for _, lp := range labels {
+		labelMap[lp.GetName()] = lp.GetValue()
+	}
+
+	// Create a consistent string representation
+	result := ""
+	for k, v := range labelMap {
+		if result != "" {
+			result += "_"
+		}
+		result += k + ":" + v
+	}
+	return result
 }
