@@ -127,6 +127,9 @@ deploy-contracts: _require_run_env anvils
     echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
+    # Generate a random test entitlements bypass secret and persist it for this run
+    TEST_SECRET=$(openssl rand -hex 32)
+    echo "RIVER_TESTENTITLEMENTSBYPASSSECRET=${TEST_SECRET}" >> ${RUN_BASE}/contracts.env
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR: _require_run_env
     #!/usr/bin/env -S bash {{BASH_OPTS}}

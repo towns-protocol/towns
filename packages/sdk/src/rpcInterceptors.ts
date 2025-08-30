@@ -246,7 +246,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
             } else {
                 logCalls(req.method.name, id)
             }
-            logProtos(req.method.name, 'REQUEST', id, req.message)
+            logProtos(req.method.name, 'REQUEST', id, req.message, req.header)
         }
         updateHistogram(req.method.name, streamId)
 

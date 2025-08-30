@@ -32,6 +32,10 @@ func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *conne
 	if allowNoQuorum(req) {
 		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
 	}
+	// Forward test bypass header if present so downstream node can honor it.
+	if v := req.Header().Get(RiverTestBypassHeaderName); v != "" {
+		newReq.Header().Set(RiverTestBypassHeaderName, v)
+	}
 	return newReq
 }
 
