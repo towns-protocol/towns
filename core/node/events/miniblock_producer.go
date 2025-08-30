@@ -228,7 +228,7 @@ func (p *miniblockProducer) testCheckAllDone(jobs []*mbJob) bool {
 //
 // If there are no events in the minipool and forceSnapshot is false, TestMakeMiniblock does nothing and succeeds.
 //
-// Returns the hash and number of the last know miniblock.
+// Returns the hash and number of the last known miniblock.
 func (p *miniblockProducer) TestMakeMiniblock(
 	ctx context.Context,
 	streamId StreamId,
