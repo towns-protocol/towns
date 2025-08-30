@@ -655,7 +655,7 @@ func (s *Stream) tryCleanup(expiration time.Duration) bool {
 	return true
 }
 
-// GetMiniblocks returns miniblock data directly fromn storage, bypassing the cache.
+// GetMiniblocks returns miniblock data directly from storage, bypassing the cache.
 // This is useful when we expect block data to be substantial and do not want to bust the cache.
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exclusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
