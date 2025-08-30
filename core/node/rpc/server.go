@@ -638,6 +638,8 @@ func (s *Service) initStore() error {
 		s.storage = store
 		s.onClose(store.Close)
 
+		s.externalMediaStorage = storage.NewExternalMediaStore()
+		
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {
 			return err

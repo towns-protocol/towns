@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -207,6 +208,26 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if err != nil {
 			return err
 		}
+		
+		// Get the upload ID of the stream data
+		uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		if err != nil {
+			return err
+		}
+		if uploadID != "" {
+			partNum := len(partToEtag) + 1
+			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, partNum)
+			if err != nil {
+				return err
+			}
+			new_bytes_uploaded := bytes_uploaded + int64(len(mbBytes))
+			partToEtag[partNum] = etag
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded) != nil {
+				return err
+			}
+			mbBytes = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
+
+		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
@@ -219,6 +240,12 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Return here if there are more chunks to upload.
 		if !seal {
 			return nil
+		}
+
+		if uploadID != "" {
+			if s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag) != nil {
+				return err
+			}
 		}
 
 		// Normalize stream locally
