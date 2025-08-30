@@ -13,6 +13,9 @@ const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
 
 describe('appRegistryService test', () => {
     test('authenticate with primary key', async () => {
+        if (!appRegistryUrl) {
+            throw new Error('App registry URL is not defined')
+        }
         const wallet = ethers.Wallet.createRandom()
         const { finishResponse } = await AppRegistryService.authenticateWithSigner(
             wallet.address,
@@ -22,6 +25,9 @@ describe('appRegistryService test', () => {
         expect(finishResponse.sessionToken).toBeDefined()
     })
     test('authenticate with delegate key', async () => {
+        if (!appRegistryUrl) {
+            throw new Error('App registry URL is not defined')
+        }
         const wallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
         const signerContext = await makeSignerContext(wallet, delegateWallet, { days: 1 })
@@ -33,6 +39,9 @@ describe('appRegistryService test', () => {
         expect(finishResponse.sessionToken).toBeDefined()
     })
     test('cannot register a non-app user stream', async () => {
+        if (!appRegistryUrl) {
+            throw new Error('App registry URL is not defined')
+        }
         // Set up wallets and contexts for space creation
         const { bob, bobProvider, bobSpaceDapp } = await setupWalletsAndContexts()
 
