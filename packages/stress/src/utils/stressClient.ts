@@ -85,7 +85,7 @@ export async function makeStressClient(
             pickleKey: sha256(botPrivateKey),
         },
         logId,
-        useSharedSyncer: false,
+        useSharedSyncer: true,
     })
     logger.info('makeStressClient: agent created')
     await agent.start()
