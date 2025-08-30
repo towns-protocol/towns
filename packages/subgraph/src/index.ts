@@ -6,6 +6,7 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
+    updateSpaceSwapVolume,
 } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
@@ -209,6 +210,17 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
+
+            // Update swap volume for the space
+            await updateSpaceSwapVolume(
+                context,
+                spaceId as `0x${string}`,
+                blockTimestamp,
+                event.args.tokenIn as `0x${string}`,
+                event.args.tokenOut as `0x${string}`,
+                event.args.amountIn,
+                event.args.amountOut,
+            )
         }
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)

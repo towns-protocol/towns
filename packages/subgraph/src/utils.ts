@@ -106,4 +106,91 @@ export function decodePermissions(permissions: readonly string[]): Permission[] 
     return decodedPermissions
 }
 
+export async function updateSpaceSwapVolume(
+    context: Context,
+    spaceId: `0x${string}`,
+    blockTimestamp: bigint,
+    tokenIn: `0x${string}`,
+    tokenOut: `0x${string}`,
+    amountIn: bigint,
+    amountOut: bigint,
+): Promise<void> {
+    const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+
+    // Calculate ETH volume: use amountIn if tokenIn is ETH, amountOut if tokenOut is ETH
+    let ethVolume = 0n
+    if (tokenIn.toLowerCase() === ETH_ADDRESS) {
+        ethVolume = amountIn
+    } else if (tokenOut.toLowerCase() === ETH_ADDRESS) {
+        ethVolume = amountOut
+    }
+
+    // If no ETH involved, skip volume tracking
+    if (ethVolume === 0n) {
+        console.log(`Skipping volume update for space ${spaceId} - no ETH in swap`)
+        return
+    }
+
+    const timestamp = Number(blockTimestamp)
+    const dayIndex = Math.floor(timestamp / 86400)
+    const dayId = `${spaceId}-${dayIndex}`
+
+    // Update daily volume
+    const existingDaily = await context.db.sql.query.spaceDailySwapVolume.findFirst({
+        where: eq(schema.spaceDailySwapVolume.id, dayId),
+    })
+
+    if (existingDaily) {
+        await context.db.sql
+            .update(schema.spaceDailySwapVolume)
+            .set({ volume: (existingDaily.volume ?? 0n) + ethVolume })
+            .where(eq(schema.spaceDailySwapVolume.id, dayId))
+    } else {
+        await context.db.insert(schema.spaceDailySwapVolume).values({
+            id: dayId,
+            spaceId,
+            day: dayIndex,
+            volume: ethVolume,
+        })
+    }
+
+    // Get current space to increment all-time volume
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, spaceId),
+    })
+
+    const currentAllTimeVolume = space?.swapVolumeAllTime ?? 0n
+
+    // Calculate 7d rolling volume (last 7 days)
+    const cutoff7d = dayIndex - 7
+    const daily7dRecords = await context.db.sql.query.spaceDailySwapVolume.findMany({
+        where: (t, { and, eq: eqOp, gte }) => and(eqOp(t.spaceId, spaceId), gte(t.day, cutoff7d)),
+    })
+    const swapVolumeLast7d = daily7dRecords.reduce((sum, record) => sum + (record.volume ?? 0n), 0n)
+
+    // Calculate 30d rolling volume (last 30 days)
+    const cutoff30d = dayIndex - 30
+    const daily30dRecords = await context.db.sql.query.spaceDailySwapVolume.findMany({
+        where: (t, { and, eq: eqOp, gte }) => and(eqOp(t.spaceId, spaceId), gte(t.day, cutoff30d)),
+    })
+    const swapVolumeLast30d = daily30dRecords.reduce(
+        (sum, record) => sum + (record.volume ?? 0n),
+        0n,
+    )
+
+    // Update space with all new volumes
+    await context.db.sql
+        .update(schema.space)
+        .set({
+            swapVolumeLast7d,
+            swapVolumeLast30d,
+            swapVolumeAllTime: currentAllTimeVolume + ethVolume,
+        })
+        .where(eq(schema.space.id, spaceId))
+
+    console.log(
+        `Updated space ${spaceId} swap volume - ETH amount: ${ethVolume}, 7d: ${swapVolumeLast7d}, 30d: ${swapVolumeLast30d}, all-time: ${currentAllTimeVolume + ethVolume}`,
+    )
+}
+
 export { publicClient, getLatestBlockNumber, getCreatedDate }

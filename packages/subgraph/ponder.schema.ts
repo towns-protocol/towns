@@ -11,6 +11,9 @@ export const space = onchainTable('spaces', (t) => ({
     createdAt: t.bigint(),
     paused: t.boolean(),
     totalAmountStaked: t.bigint().default(0n),
+    swapVolumeLast7d: t.bigint().default(0n),
+    swapVolumeLast30d: t.bigint().default(0n),
+    swapVolumeAllTime: t.bigint().default(0n),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
@@ -24,6 +27,13 @@ export const swap = onchainTable('swaps', (t) => ({
     poster: t.hex(),
     blockTimestamp: t.bigint(),
     createdAt: t.bigint(),
+}))
+
+export const spaceDailySwapVolume = onchainTable('space_daily_swap_volumes', (t) => ({
+    id: t.text().primaryKey(), // ${spaceId}-${dayIndex}
+    spaceId: t.hex(),
+    day: t.integer(),
+    volume: t.bigint().default(0n),
 }))
 
 export const swapFee = onchainTable('swap_fees', (t) => ({
@@ -43,9 +53,19 @@ export const spaceToSwaps = relations(space, ({ many }) => ({
     swaps: many(swap),
 }))
 
+// each space has many daily swap volumes
+export const spaceToDailySwapVolumes = relations(space, ({ many }) => ({
+    dailySwapVolumes: many(spaceDailySwapVolume),
+}))
+
 // each swap belongs to a space
 export const swapToSpace = relations(swap, ({ one }) => ({
     space: one(space, { fields: [swap.spaceId], references: [space.id] }),
+}))
+
+// each daily swap volume belongs to a space
+export const dailySwapVolumeToSpace = relations(spaceDailySwapVolume, ({ one }) => ({
+    space: one(space, { fields: [spaceDailySwapVolume.spaceId], references: [space.id] }),
 }))
 
 export const swapRouter = onchainTable('swap_router', (t) => ({
