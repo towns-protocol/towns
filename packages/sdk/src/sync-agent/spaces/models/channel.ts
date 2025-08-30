@@ -7,8 +7,9 @@ import {
     PlainMessage,
 } from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger, bin_toHexString } from '@towns-protocol/dlog'
 import { isDefined } from '../../../check'
+import { makeUserStreamId } from '../../../id'
 import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
@@ -242,10 +243,39 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
         signer: ethers.Signer,
     ) {
-        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tip.receiver)
-        if (!tokenId) {
-            throw new Error('tokenId not found')
+        const receiverUserStreamId = makeUserStreamId(tip.receiver)
+        const appAddress = await (async () => {
+            if (!this.riverConnection.client) {
+                return undefined
+            }
+            const firstTry = this.riverConnection.client?.stream(receiverUserStreamId)
+            if (firstTry) {
+                return firstTry.view.userContent.appAddress
+            }
+            // Force init the stream to get the app address
+            await this.riverConnection.client
+                .initStream(receiverUserStreamId)
+                .catch(() => undefined)
+            const stream = this.riverConnection.client?.stream(receiverUserStreamId)
+            return stream?.view.userContent.appAddress
+        })()
+
+        let tokenId: string
+        if (appAddress) {
+            // Since bots don't have a membership token, we're using a dummy tokenId of 0
+            tokenId = '0'
+        } else {
+            // For regular users, get their actual membership tokenId
+            const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
+                this.data.spaceId,
+                tip.receiver,
+            )
+            if (!membershipTokenId) {
+                throw new Error('tokenId not found')
+            }
+            tokenId = membershipTokenId
         }
+
         const tx = await this.spaceDapp.tip(
             {
                 spaceId: this.data.spaceId,
@@ -254,11 +284,11 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 amount: tip.amount,
                 messageId,
                 channelId: this.data.id,
-                receiver: tip.receiver,
+                receiver: appAddress ?? tip.receiver,
             },
             signer,
         )
-        const receipt = await tx.wait()
+        const receipt = await tx.wait(3)
         const senderAddress = await signer.getAddress()
         const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)
         if (!tipEvent) {
