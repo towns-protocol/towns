@@ -9,12 +9,14 @@ import {
     getRetryDelayMs,
     loggingInterceptor,
     retryInterceptor,
+    setHeaderInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
 import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
 import { RpcOptions } from './rpcCommon'
 import { streamIdAsBytes } from './id'
 import { ParsedMiniblock, ExclusionFilter } from './types'
+import packageJson from '../package.json' assert { type: 'json' }
 
 const logInfo = dlog('csb:rpc:info')
 let nextRpcClientNum = 0
@@ -42,6 +44,7 @@ export function makeStreamRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
+            setHeaderInterceptor({ Version: packageJson.version }),
             loggingInterceptor(transportId),
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
