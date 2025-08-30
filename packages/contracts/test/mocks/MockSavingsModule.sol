@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {ExecutionManifest, IExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 
@@ -40,8 +40,8 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
-            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
-            interfaceId == type(IERC6900Module).interfaceId ||
+            interfaceId == type(IExecutionModule).interfaceId ||
+            interfaceId == type(IModule).interfaceId ||
             interfaceId == type(ITownsApp).interfaceId ||
             interfaceId == type(IERC173).interfaceId;
     }
@@ -200,14 +200,14 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
     }
 
     /**
-     * @notice Required by IERC6900Module - called when module is installed
+     * @notice Required by IModule - called when module is installed
      */
     function onInstall(bytes calldata) external pure {
         // No initialization needed
     }
 
     /**
-     * @notice Required by IERC6900Module - called when module is uninstalled
+     * @notice Required by IModule - called when module is uninstalled
      */
     function onUninstall(bytes calldata) external view {
         // Ensure all funds are withdrawn before uninstall

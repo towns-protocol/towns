@@ -4,13 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISimpleApp} from "../../apps/helpers/ISimpleApp.sol";
 import {ITownsApp} from "../../apps/ITownsApp.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 
 // contracts
 import {BaseApp} from "../../apps/BaseApp.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 import {Initializable} from "solady/utils/Initializable.sol";
 
 // libraries
@@ -66,13 +65,13 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         return $.permissions;
     }
 
-    /// @inheritdoc IERC6900Module
+    /// @inheritdoc IModule
     function moduleId() public view returns (string memory) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.name;
     }
 
-    /// @inheritdoc IERC6900ExecutionModule
+    /// @inheritdoc IExecutionModule
     function executionManifest() external pure returns (ExecutionManifest memory) {
         // solhint-disable no-empty-blocks
     }

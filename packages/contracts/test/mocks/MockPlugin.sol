@@ -3,15 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 // contracts
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
@@ -45,8 +43,8 @@ contract MockPlugin is OwnableFacet, ITownsApp {
 
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return
-            interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
+            interfaceId == type(IModule).interfaceId ||
+            interfaceId == type(IExecutionModule).interfaceId ||
             interfaceId == type(ITownsApp).interfaceId ||
             interfaceId == type(IERC165).interfaceId ||
             interfaceId == type(IERC173).interfaceId;

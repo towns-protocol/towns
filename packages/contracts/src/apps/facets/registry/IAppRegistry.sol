@@ -8,7 +8,7 @@ import {ITownsApp} from "../../ITownsApp.sol";
 
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 interface IAppRegistryBase {
     struct AppParams {

@@ -2,15 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
 import {ISchemaRegistry} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {ISchemaBase} from "src/apps/facets/schema/ISchema.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 
 // types
-import {Attestation, EMPTY_UID, NotFound} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, AttestationRequestData, IEAS, RevocationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
@@ -397,7 +397,7 @@ contract AttestationRegistryTest is TestUtils, IAttestationRegistryBase, ISchema
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function registerApp(
-        IERC6900Module plugin,
+        IModule plugin,
         bool revocable
     ) internal returns (bytes32 schemaId, bytes32 attestationId) {
         schemaId = registerSchema(
