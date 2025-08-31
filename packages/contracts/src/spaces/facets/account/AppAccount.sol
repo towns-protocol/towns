@@ -22,6 +22,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @inheritdoc IAppAccount
     function execute(
         address target,
         uint256 value,
@@ -89,5 +90,10 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         bytes32 permission
     ) external view returns (bool) {
         return _isAppEntitled(app, publicKey, permission);
+    }
+
+    /// @inheritdoc IAppAccount
+    function isAppExecuting(address app) external view returns (bool) {
+        return _isAppExecuting(app);
     }
 }
