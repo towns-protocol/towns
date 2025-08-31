@@ -30,24 +30,24 @@ func getTLSConfig(ctx context.Context, getClientCert GetClientCertFunc) *tls.Con
 		return nil
 	}
 
-	// Attempt to load ~/river-ca-cert.pem
+	// Attempt to load ~/towns-ca-cert.pem
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Warnw("getTLSConfig Failed to get user home directory:", "error", err)
 		return nil
 	}
 	// TODO - hook this up to the config file
-	riverCaCertPath := filepath.Join(homeDir, "river-ca-cert.pem")
-	riverCaCertPEM, err := os.ReadFile(riverCaCertPath)
+	townsCaCertPath := filepath.Join(homeDir, "towns-ca-cert.pem")
+	townsCaCertPEM, err := os.ReadFile(townsCaCertPath)
 	if err != nil {
 		return nil
 	}
 
-	log.Warnw("getTLSConfig using river CA cert file for development only")
+	log.Warnw("getTLSConfig using towns CA cert file for development only")
 
-	// Append river CA cert to the system cert pool
-	if ok := sysCerts.AppendCertsFromPEM(riverCaCertPEM); !ok {
-		log.Errorw("Failed to append river CA cert to system cert pool")
+	// Append towns CA cert to the system cert pool
+	if ok := sysCerts.AppendCertsFromPEM(townsCaCertPEM); !ok {
+		log.Errorw("Failed to append towns CA cert to system cert pool")
 		return nil
 	}
 

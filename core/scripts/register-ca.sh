@@ -34,9 +34,9 @@ function is_github_actions() {
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 # Variables
-CA_KEY_PATH=~/river-ca-key.pem
-CA_CERT_PATH=~/river-ca-cert.pem
-CA_COMMON_NAME="RiverLocalhostCA"
+CA_KEY_PATH=~/towns-ca-key.pem
+CA_CERT_PATH=~/towns-ca-cert.pem
+CA_COMMON_NAME="TownsLocalhostCA"
 
 # Function to check if CA is already registered on macOS
 function is_ca_registered_macos() {
@@ -45,7 +45,7 @@ function is_ca_registered_macos() {
 
 # Function to check if CA is already registered on Ubuntu
 function is_ca_registered_ubuntu() {
-    grep -q "$CA_COMMON_NAME" /etc/ssl/certs/ca-certificates.crt 2>/dev/null || [ -f "/usr/local/share/ca-certificates/river-ca-cert.crt" ]
+    grep -q "$CA_COMMON_NAME" /etc/ssl/certs/ca-certificates.crt 2>/dev/null || [ -f "/usr/local/share/ca-certificates/towns-ca-cert.crt" ]
 }
 
 # Generate CA if it doesn't exist
@@ -83,7 +83,7 @@ elif is_ubuntu || is_github_actions; then
         
         # Copy certificate to the appropriate directory with .crt extension
         sudo mkdir -p /usr/local/share/ca-certificates/
-        sudo cp $CA_CERT_PATH /usr/local/share/ca-certificates/river-ca-cert.crt
+        sudo cp $CA_CERT_PATH /usr/local/share/ca-certificates/towns-ca-cert.crt
         sudo update-ca-certificates
         echo "Successfully added CA certificate to Ubuntu certificate store."
     fi

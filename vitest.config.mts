@@ -13,7 +13,7 @@ export const rootConfig = defineConfig({
         },
         globals: true,
         env: {
-            NODE_EXTRA_CA_CERTS: path.join(os.homedir(), 'river-ca-cert.pem'),
+            NODE_EXTRA_CA_CERTS: path.join(os.homedir(), 'towns-ca-cert.pem'),
             NODE_TLS_REJECT_UNAUTHORIZED: '0',
         },
         testTimeout: 20_000,
