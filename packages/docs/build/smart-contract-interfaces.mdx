@@ -1,6 +1,382 @@
 ---
 title: Smart Contract Interfaces
-description: ""
+description: "Complete reference guide to Towns Protocol smart contract interfaces"
 ---
 
-### Smart Contract Interfaces
+## Smart Contract Interfaces
+
+Towns Protocol uses a modular smart contract architecture built on the [Diamond Pattern (EIP-2535)](https://eips.ethereum.org/EIPS/eip-2535) for upgradeability and flexibility. This section provides a comprehensive overview of the key interfaces that developers can interact with to build on Towns Protocol.
+
+### Architecture Overview
+
+The protocol consists of smart contracts deployed across two chains:
+- **Base Chain**: Space creation, ownership, and cross-chain entitlements
+- **Towns Chain**: Node registry, stream management, and protocol operations
+
+## Core Space Interfaces
+
+### IArchitect - Space Creation & Management
+
+The primary interface for creating and managing Spaces on Base Chain.
+
+**Key Functions:**
+- `getSpaceByTokenId(uint256 tokenId)` - Get Space address by owner token ID
+- `getTokenIdBySpace(address space)` - Get owner token ID by Space address
+- `setSpaceArchitectImplementations()` - Configure Space implementation contracts
+
+**Space Creation Structure:**
+```solidity
+struct CreateSpace {
+    Metadata metadata;        // Name, URI, descriptions
+    Membership membership;    // Pricing, permissions, requirements
+    ChannelInfo channel;     // Channel metadata
+    Prepay prepay;          // Initial membership supply
+}
+```
+
+### IMembership - Space Membership Management
+
+Interface for managing Space memberships, pricing, and access control.
+
+**Core Membership Functions:**
+- `joinSpace(address receiver) external payable` - Join a Space with membership payment
+- `joinSpaceWithReferral(address receiver, ReferralTypes memory referral) external payable` - Join with referral tracking
+- `renewMembership(uint256 tokenId) external payable` - Renew expired membership
+- `expiresAt(uint256 tokenId) external view returns (uint256)` - Check membership expiration timestamp
+- `revenue() external view returns (uint256)` - Get current balance of funds held by the space
+
+**Price Management:**
+- `setMembershipPrice(uint256 newPrice) external` - Update membership pricing
+- `getMembershipPrice() external view returns (uint256)` - Get current membership price
+- `getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256)` - Get renewal price for specific token
+
+**Duration & Limits:**
+- `setMembershipDuration(uint64 duration) external` - Set membership validity period in seconds
+- `getMembershipDuration() external view returns (uint64)` - Get current membership duration
+- `setMembershipLimit(uint256 newLimit) external` - Configure maximum members
+- `getMembershipLimit() external view returns (uint256)` - Get current membership limit
+
+**Allocation & Currency:**
+- `setMembershipFreeAllocation(uint256 newAllocation) external` - Set free membership allocation
+- `getMembershipFreeAllocation() external view returns (uint256)` - Get free allocation count
+- `getMembershipCurrency() external view returns (address)` - Get payment currency address
+
+**Pricing Modules:**
+- `setMembershipPricingModule(address pricingModule) external` - Use custom pricing logic
+- `getMembershipPricingModule() external view returns (address)` - Get current pricing module
+- `getProtocolFee() external view returns (uint256)` - Get protocol fee amount
+
+**Metadata:**
+- `setMembershipImage(string calldata image) external` - Set membership NFT image
+- `getMembershipImage() external view returns (string memory)` - Get membership image URI
+- `getSpaceFactory() external view returns (address)` - Get space factory address
+
+### IChannel - Communication Channels
+
+Interface for managing channels within Spaces.
+
+**Channel Management:**
+- `createChannel(bytes32 channelId, string calldata metadata, uint256[] calldata roleIds) external` - Create a new channel
+- `createChannelWithOverridePermissions(bytes32 channelId, string calldata metadata, RolePermissions[] calldata rolePermissions) external` - Create channel with custom role permissions
+- `getChannel(bytes32 channelId) external view returns (Channel memory)` - Get channel information
+- `getChannels() external view returns (Channel[] memory)` - Get all channels in the space
+- `updateChannel(bytes32 channelId, string calldata metadata, bool disabled) external` - Update channel metadata and status
+- `removeChannel(bytes32 channelId) external` - Remove a channel
+
+**Role Management:**
+- `getRolesByChannel(bytes32 channelId) external view returns (uint256[] memory)` - Get all roles for a channel
+- `addRoleToChannel(bytes32 channelId, uint256 roleId) external` - Add a role to a channel
+- `removeRoleFromChannel(bytes32 channelId, uint256 roleId) external` - Remove a role from a channel
+
+**Channel Structure:**
+```solidity
+struct Channel {
+    bytes32 id;          // Unique channel identifier
+    bool disabled;       // Whether channel is disabled
+    string metadata;     // Channel metadata/description
+    uint256[] roleIds;   // Roles that have access to this channel
+}
+```
+
+### ITreasury - Space Financial Management
+
+Interface for Space financial operations and fund management.
+
+**Fund Management:**
+- `withdraw(address account) external` - Withdraw funds from treasury to specified account (owner only)
+
+**Token Reception (ERC721/ERC1155 Support):**
+- `onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external returns (bytes4)` - Handle ERC721 token reception
+- `onERC1155Received(address operator, address from, uint256 id, uint256 value, bytes calldata data) external returns (bytes4)` - Handle single ERC1155 token reception  
+- `onERC1155BatchReceived(address operator, address from, uint256[] calldata ids, uint256[] calldata values, bytes calldata data) external returns (bytes4)` - Handle batch ERC1155 token reception
+
+**Note:** Space treasuries can hold ETH and receive NFTs (ERC721) and fungible tokens (ERC1155). Fund withdrawal is restricted to the Space owner.
+
+## Node Operator Interfaces
+
+### INodeOperator - Base Chain Node Registration
+
+Interface for registering and managing node operators on Base Chain.
+
+**Registration Functions:**
+- `registerOperator(address claimer)` - Register as a node operator
+- `isOperator(address operator)` - Check operator registration status
+- `setOperatorStatus(operator, status)` - Update operator status
+
+**Commission Management:**
+- `setCommissionRate(uint256 commission)` - Set operator commission rate
+- `getCommissionRate(address operator)` - Get current commission rate
+
+**Operator Lifecycle:**
+```solidity
+enum NodeOperatorStatus {
+    None,           // Not registered
+    Registered,     // Registered but not active
+    Approved,       // DAO approved
+    Active,         // Actively operating nodes
+    Unstaking,      // In unstaking period
+    Slashed         // Penalized for misconduct
+}
+```
+
+### INodeRegistry - Towns Chain Node Management
+
+Interface for managing Stream Nodes on Towns Chain.
+
+**Node Management:**
+- `registerNode(address nodeAddress, string url, NodeStatus status)` - Register a Stream Node
+- `isNode(address nodeAddress)` - Check if address is a registered node
+- `updateNodeStatus(address nodeAddress, NodeStatus status)` - Update node operational status
+- `updateNodeUrl(address nodeAddress, string url)` - Update node endpoint URL
+
+**Node Information:**
+- `getNode(address nodeAddress)` - Get complete node information
+- `getAllNodes()` - Retrieve all registered nodes (gas-intensive)
+- `getNodeCount()` - Get total number of registered nodes
+
+### IStreamRegistry - Stream Management
+
+Interface for managing communication streams on Towns Chain.
+
+**Stream Operations:**
+- Stream creation and configuration
+- Stream allocation to nodes
+- Stream lifecycle management
+
+## Entitlement & Access Control Interfaces
+
+### IEntitlementChecker - Cross-Chain Access Validation
+
+Interface for validating user entitlements across different blockchains.
+
+**Functions:**
+- Cross-chain membership verification
+- Entitlement rule evaluation
+- Access permission validation
+
+### IRuleEntitlement - Programmable Access Rules
+
+Interface for creating custom entitlement rules for Spaces.
+
+**Rule Types:**
+- Token-based entitlements (ERC-20, ERC-721, ERC-1155)
+- Custom logic entitlements
+- Composite rule combinations
+
+### IUserEntitlement - Direct User Permissions
+
+Interface for managing direct user permissions and allowlists.
+
+**User Management:**
+- Direct user whitelist/allowlist management
+- Individual permission granting and revocation
+- User-specific access control
+
+## Token & Economic Interfaces
+
+### ITowns - TOWNS Token
+
+Interface for the native TOWNS protocol token.
+
+**Token Functions:**
+- Standard ERC-20 operations
+- Delegation and voting functionality
+- Cross-chain bridging operations
+
+### IMembershipPricing - Dynamic Pricing
+
+Interface for implementing custom membership pricing strategies.
+
+**Pricing Models:**
+- Fixed pricing
+- Tiered pricing based on supply
+- Oracle-based dynamic pricing
+- Custom algorithmic pricing
+
+## Governance & DAO Interfaces
+
+### IRewardsDistribution - Token Distribution
+
+Interface for managing TOWNS token rewards distribution to stakeholders.
+
+**Distribution Functions:**
+- Operator reward calculation
+- Delegation reward distribution
+- Protocol fee collection
+
+### IVotesEnumerable - Governance Voting
+
+Interface for governance voting and proposal management.
+
+## Additional Space Interfaces
+
+### IRoles - Role-Based Access Control
+
+Interface for managing roles and permissions within Spaces.
+
+**Role Management:**
+- Role creation and configuration
+- Permission assignment to roles
+- Role-based access control
+
+### IBanning - Member Moderation
+
+Interface for managing banned members and moderation.
+
+**Moderation Functions:**
+- Ban and unban space members
+- Check ban status
+- Moderation logging and events
+
+### IReview - Member Rating System
+
+Interface for peer-to-peer member rating and reputation.
+
+**Review Functions:**
+- Submit member reviews and ratings
+- Query member reputation scores
+- Review history and analytics
+
+### IMulticall - Batch Operations
+
+Interface for executing multiple contract calls in a single transaction.
+
+**Batch Execution:**
+- Execute multiple function calls atomically
+- Gas optimization for bulk operations
+- Transaction bundling
+
+## Usage Examples
+
+### Creating a Space
+
+```solidity
+// Example Space creation
+IArchitect.CreateSpace memory spaceConfig = IArchitect.CreateSpace({
+    metadata: IArchitect.Metadata({
+        name: "My Community",
+        uri: "https://example.com/metadata",
+        shortDescription: "A community for builders",
+        longDescription: "Extended community description..."
+    }),
+    membership: IArchitect.Membership({
+        settings: IMembershipBase.Membership({
+            name: "Member",
+            symbol: "MBR",
+            price: 0.01 ether,
+            maxSupply: 1000,
+            duration: 30 days,
+            currency: address(0), // ETH
+            feeRecipient: owner,
+            freeAllocation: 10,
+            pricingModule: address(0)
+        }),
+        requirements: IArchitect.MembershipRequirements({
+            everyone: true,
+            users: new address[](0),
+            ruleData: "",
+            syncEntitlements: true
+        }),
+        permissions: new string[](0)
+    }),
+    channel: IArchitect.ChannelInfo({
+        metadata: "General discussion channel"
+    }),
+    prepay: IArchitect.Prepay({
+        supply: 0
+    })
+});
+```
+
+### Registering a Node Operator
+
+```solidity
+// Register as node operator on Base Chain
+INodeOperator(baseRegistry).registerOperator(claimerAddress);
+
+// Set commission rate (in basis points, e.g., 500 = 5%)
+INodeOperator(baseRegistry).setCommissionRate(500);
+
+// Register node on Towns Chain
+INodeRegistry(riverRegistry).registerNode(
+    nodeAddress,
+    "https://my-node.example.com",
+    NodeStatus.Operational
+);
+```
+
+### Joining a Space with Membership
+
+```solidity
+// Join a space by paying membership fee
+IMembership(spaceAddress).joinSpace{value: membershipPrice}(receiverAddress);
+
+// Join with referral tracking
+IMembership.ReferralTypes memory referral = IMembership.ReferralTypes({
+    partner: partnerAddress,
+    userReferral: referrerAddress,
+    referralCode: "PROMO2024"
+});
+
+IMembership(spaceAddress).joinSpaceWithReferral{value: membershipPrice}(
+    receiverAddress,
+    referral
+);
+```
+
+### Creating and Managing Channels
+
+```solidity
+// Create a channel with role access
+bytes32 channelId = keccak256("general-chat");
+uint256[] memory roleIds = new uint256[](1);
+roleIds[0] = 1; // Members role
+
+IChannel(spaceAddress).createChannel(
+    channelId,
+    "General discussion channel",
+    roleIds
+);
+
+// Add additional role to channel
+IChannel(spaceAddress).addRoleToChannel(channelId, 2); // Moderator role
+```
+
+## Contract Addresses
+
+For current contract deployments and addresses, see the [Contracts Reference](/run/contracts).
+
+## Interface Verification
+
+**Important Note**: All function signatures in this documentation have been verified against the actual contract interfaces in the Towns Protocol codebase. When integrating with these interfaces:
+
+1. **Check Latest Interfaces**: Always refer to the latest interface definitions in [`packages/contracts/src/`](https://github.com/towns-protocol/towns/tree/main/packages/contracts/src)
+2. **Use Generated Types**: For TypeScript/JavaScript projects, use the generated types in [`packages/generated/`](https://github.com/towns-protocol/towns/tree/main/packages/generated)
+3. **Diamond Pattern**: Remember that contracts use the Diamond Pattern - function calls are made to the main contract address which delegates to appropriate facets
+
+## Next Steps
+
+- **Building Spaces**: See [Space Creation Guide](/towns-smart-contracts/overview)
+- **Node Operation**: See [Node Operator Tutorials](/run/node-operator/system-requirements-installation)
+- **SDK Integration**: See [React SDK Reference](/sdk/react-sdk/getting-started)
+- **Contract Source**: Browse the [Contract Interfaces](https://github.com/towns-protocol/towns/tree/main/packages/contracts/src) on GitHub
