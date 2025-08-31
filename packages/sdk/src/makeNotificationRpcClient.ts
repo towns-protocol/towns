@@ -10,6 +10,7 @@ import {
     retryInterceptor,
     setHeaderInterceptor,
 } from './rpcInterceptors'
+import packageJson from '../package.json' assert { type: 'json' }
 
 const logInfo = dlog('csb:rpc:info')
 
@@ -37,7 +38,7 @@ export function makeNotificationRpcClient(
         baseUrl: url,
         interceptors: [
             ...(opts?.interceptors ?? []),
-            setHeaderInterceptor({ Authorization: sessionToken }),
+            setHeaderInterceptor({ Authorization: sessionToken , Version: packageJson.version }),
             loggingInterceptor(transportId, 'NotificationService'),
             retryInterceptor(retryParams),
         ],

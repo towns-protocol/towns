@@ -794,6 +794,7 @@ func (s *Service) initHandlers() {
 	}
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	ii = append(ii, NewVersionLoggingInterceptor())
 
 	interceptors := connect.WithInterceptors(ii...)
 	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
@@ -816,6 +817,7 @@ func (s *Service) initNotificationHandlers() error {
 	}
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	ii = append(ii, NewVersionLoggingInterceptor())
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.NotificationService.ShortServiceName(),
@@ -853,6 +855,7 @@ func (s *Service) initAppRegistryHandlers() error {
 	}
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	ii = append(ii, NewVersionLoggingInterceptor())
 
 	authInceptor, err := authentication.NewAuthenticationInterceptor(
 		s.AppRegistryService.ShortServiceName(),
