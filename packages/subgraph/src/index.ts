@@ -741,22 +741,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             ethAmount = event.args.amount
         }
 
-        // Write to tip table (for backward compatibility)
-        await context.db.insert(schema.tip).values({
-            id: tipId,
-            txHash: event.transaction.hash,
-            tokenId: event.args.tokenId,
-            currency: event.args.currency,
-            sender: event.args.sender,
-            receiver: event.args.receiver,
-            amount: event.args.amount,
-            messageId: event.args.messageId,
-            channelId: event.args.channelId,
-            spaceId: spaceId,
-            blockTimestamp: blockTimestamp,
-            createdAt: blockTimestamp,
-        })
-
         // Write to denormalized analytics events table
         await context.db.insert(schema.analyticsEvent).values({
             id: tipId,

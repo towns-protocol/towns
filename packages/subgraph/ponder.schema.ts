@@ -46,22 +46,8 @@ export const analyticsEvent = onchainTable('analytics_events', (t) => ({
     // Event-specific data stored as JSON
     // For swap: { tokenIn, tokenOut, amountIn, amountOut, recipient, poster }
     // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
+    // for join: { sender }
     eventData: t.json(),
-}))
-
-export const tip = onchainTable('tips', (t) => ({
-    id: t.text().primaryKey(), // ${txHash}-${logIndex}
-    txHash: t.hex(),
-    tokenId: t.bigint(),
-    currency: t.hex(),
-    sender: t.hex(),
-    receiver: t.hex(),
-    amount: t.bigint(),
-    messageId: t.hex(),
-    channelId: t.hex(),
-    spaceId: t.hex(),
-    blockTimestamp: t.bigint(),
-    createdAt: t.bigint(),
 }))
 
 export const swapFee = onchainTable('swap_fees', (t) => ({
@@ -86,11 +72,6 @@ export const spaceToAnalyticsEvents = relations(space, ({ many }) => ({
     analyticsEvents: many(analyticsEvent),
 }))
 
-// each space has many tips
-export const spaceToTips = relations(space, ({ many }) => ({
-    tips: many(tip),
-}))
-
 // each swap belongs to a space
 export const swapToSpace = relations(swap, ({ one }) => ({
     space: one(space, { fields: [swap.spaceId], references: [space.id] }),
@@ -99,11 +80,6 @@ export const swapToSpace = relations(swap, ({ one }) => ({
 // each analytics event belongs to a space
 export const analyticsEventToSpace = relations(analyticsEvent, ({ one }) => ({
     space: one(space, { fields: [analyticsEvent.spaceId], references: [space.id] }),
-}))
-
-// each tip belongs to a space
-export const tipToSpace = relations(tip, ({ one }) => ({
-    space: one(space, { fields: [tip.spaceId], references: [space.id] }),
 }))
 
 export const swapRouter = onchainTable('swap_router', (t) => ({
