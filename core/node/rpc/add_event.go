@@ -12,6 +12,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	rpcHeaders "github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -242,7 +243,11 @@ func (s *Service) AddEventPayload(
 		Event:    envelope,
 	}
 
-	resp, err := s.AddEvent(ctx, connect.NewRequest(req))
+	addReq := connect.NewRequest(req)
+	if s.config.TestEntitlementsBypassSecret != "" && auth.IsTestEntitlementBypassEnabled(ctx) {
+		addReq.Header().Set(rpcHeaders.RiverTestBypassHeaderName, s.config.TestEntitlementsBypassSecret)
+	}
+	resp, err := s.AddEvent(ctx, addReq)
 	if err != nil {
 		return nil, err
 	}
