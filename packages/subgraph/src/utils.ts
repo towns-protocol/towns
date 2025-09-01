@@ -119,8 +119,8 @@ export async function updateSpaceCachedMetrics(
     }
 
     const currentTimestamp = Number(blockTimestamp)
-    const sevenDaysAgo = currentTimestamp - (7 * 86400)
-    const thirtyDaysAgo = currentTimestamp - (30 * 86400)
+    const sevenDaysAgo = currentTimestamp - 7 * 86400
+    const thirtyDaysAgo = currentTimestamp - 30 * 86400
 
     // Get current space for all-time volume
     const space = await context.db.sql.query.space.findFirst({
@@ -136,7 +136,7 @@ export async function updateSpaceCachedMetrics(
     const recentEvents = await context.db.sql.query.analyticsEvent.findMany({
         where: and(
             eq(schema.analyticsEvent.spaceId, spaceId),
-            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo))
+            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo)),
         ),
     })
 
@@ -149,7 +149,7 @@ export async function updateSpaceCachedMetrics(
     for (const event of recentEvents) {
         const eventTimestamp = Number(event.blockTimestamp)
         const eventEthAmount = event.ethAmount || 0n
-        
+
         if (event.eventType === 'swap') {
             if (eventTimestamp >= sevenDaysAgo) {
                 swapVolume7d += eventEthAmount
@@ -169,17 +169,17 @@ export async function updateSpaceCachedMetrics(
         swapVolumeLast30d: bigint
         swapVolumeAllTime: bigint
     }
-    
+
     type TipMetrics = {
         tipVolumeLast7d: bigint
         tipVolumeLast30d: bigint
         tipVolumeAllTime: bigint
     }
-    
+
     type MetricUpdate = SwapMetrics | TipMetrics
-    
+
     let updates: MetricUpdate
-    
+
     if (eventType === 'swap') {
         updates = {
             swapVolumeLast7d: swapVolume7d,
@@ -197,12 +197,11 @@ export async function updateSpaceCachedMetrics(
         return
     }
 
-    await context.db.sql
-        .update(schema.space)
-        .set(updates)
-        .where(eq(schema.space.id, spaceId))
+    await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
 
-    console.log(`Updated cached metrics for space ${spaceId} - type: ${eventType}, amount: ${ethAmount}`)
+    console.log(
+        `Updated cached metrics for space ${spaceId} - type: ${eventType}, amount: ${ethAmount}`,
+    )
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }

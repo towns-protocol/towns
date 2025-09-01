@@ -39,10 +39,10 @@ export const analyticsEvent = onchainTable('analytics_events', (t) => ({
     eventType: t.text(), // 'swap', 'tip', etc.
     blockTimestamp: t.bigint(),
     txHash: t.hex(),
-    
+
     // ETH value for the event (calculated field for sorting/aggregation)
     ethAmount: t.bigint().default(0n),
-    
+
     // Event-specific data stored as JSON
     // For swap: { tokenIn, tokenOut, amountIn, amountOut, recipient, poster }
     // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
