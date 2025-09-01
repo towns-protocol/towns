@@ -195,7 +195,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
 
     try {
         const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-        
+
         // Calculate ETH amount for analytics
         let ethAmount = 0n
         if ((event.args.tokenIn as string).toLowerCase() === ETH_ADDRESS) {
@@ -243,7 +243,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 spaceId as `0x${string}`,
                 blockTimestamp,
                 ethAmount,
-                'swap'
+                'swap',
             )
         }
     } catch (error) {
@@ -730,11 +730,11 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
     try {
         const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-        
+
         // Create unique ID from txHash and logIndex
         const tipId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
-        
+
         // Calculate ETH amount for analytics
         let ethAmount = 0n
         if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
@@ -762,13 +762,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
         // Update cached metrics on space
         if (ethAmount > 0n) {
-            await updateSpaceCachedMetrics(
-                context,
-                spaceId,
-                blockTimestamp,
-                ethAmount,
-                'tip'
-            )
+            await updateSpaceCachedMetrics(context, spaceId, blockTimestamp, ethAmount, 'tip')
         }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
