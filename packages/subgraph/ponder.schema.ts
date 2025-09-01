@@ -17,6 +17,9 @@ export const space = onchainTable('spaces', (t) => ({
     tipVolumeLast7d: t.bigint().default(0n),
     tipVolumeLast30d: t.bigint().default(0n),
     tipVolumeAllTime: t.bigint().default(0n),
+    memberCountLast7d: t.bigint().default(0n),
+    memberCountLast30d: t.bigint().default(0n),
+    memberCountAllTime: t.bigint().default(0n),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({

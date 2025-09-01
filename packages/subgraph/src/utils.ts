@@ -111,10 +111,10 @@ export async function updateSpaceCachedMetrics(
     spaceId: `0x${string}`,
     blockTimestamp: bigint,
     ethAmount: bigint,
-    eventType: 'swap' | 'tip',
+    eventType: 'swap' | 'tip' | 'join',
 ): Promise<void> {
-    // Skip if no ETH value
-    if (ethAmount === 0n) {
+    // Skip if no ETH value (except for joins which count members)
+    if (ethAmount === 0n && eventType !== 'join') {
         return
     }
 
@@ -122,7 +122,7 @@ export async function updateSpaceCachedMetrics(
     const sevenDaysAgo = currentTimestamp - 7 * 86400
     const thirtyDaysAgo = currentTimestamp - 30 * 86400
 
-    // Get current space for all-time volume
+    // Get current space for all-time values
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, spaceId),
     })
@@ -140,11 +140,13 @@ export async function updateSpaceCachedMetrics(
         ),
     })
 
-    // Calculate volumes based on event type
+    // Calculate metrics based on event type
     let swapVolume7d = 0n
     let swapVolume30d = 0n
     let tipVolume7d = 0n
     let tipVolume30d = 0n
+    let memberCount7d = 0n
+    let memberCount30d = 0n
 
     for (const event of recentEvents) {
         const eventTimestamp = Number(event.blockTimestamp)
@@ -160,6 +162,11 @@ export async function updateSpaceCachedMetrics(
                 tipVolume7d += eventEthAmount
             }
             tipVolume30d += eventEthAmount
+        } else if (event.eventType === 'join') {
+            if (eventTimestamp >= sevenDaysAgo) {
+                memberCount7d += 1n
+            }
+            memberCount30d += 1n
         }
     }
 
@@ -176,7 +183,13 @@ export async function updateSpaceCachedMetrics(
         tipVolumeAllTime: bigint
     }
 
-    type MetricUpdate = SwapMetrics | TipMetrics
+    type MemberMetrics = {
+        memberCountLast7d: bigint
+        memberCountLast30d: bigint
+        memberCountAllTime: bigint
+    }
+
+    type MetricUpdate = SwapMetrics | TipMetrics | MemberMetrics
 
     let updates: MetricUpdate
 
@@ -192,6 +205,12 @@ export async function updateSpaceCachedMetrics(
             tipVolumeLast30d: tipVolume30d,
             tipVolumeAllTime: (space.tipVolumeAllTime || 0n) + ethAmount,
         }
+    } else if (eventType === 'join') {
+        updates = {
+            memberCountLast7d: memberCount7d,
+            memberCountLast30d: memberCount30d,
+            memberCountAllTime: (space.memberCountAllTime || 0n) + 1n,
+        }
     } else {
         console.warn(`Unknown event type: ${eventType} for space ${spaceId}`)
         return
@@ -200,7 +219,7 @@ export async function updateSpaceCachedMetrics(
     await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
 
     console.log(
-        `Updated cached metrics for space ${spaceId} - type: ${eventType}, amount: ${ethAmount}`,
+        `Updated cached metrics for space ${spaceId} - type: ${eventType}, ${eventType === 'join' ? 'count: 1' : `amount: ${ethAmount}`}`,
     )
 }
 
