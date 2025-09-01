@@ -106,181 +106,103 @@ export function decodePermissions(permissions: readonly string[]): Permission[] 
     return decodedPermissions
 }
 
-export async function updateSpaceSwapVolume(
+export async function updateSpaceCachedMetrics(
     context: Context,
     spaceId: `0x${string}`,
     blockTimestamp: bigint,
-    tokenIn: `0x${string}`,
-    tokenOut: `0x${string}`,
-    amountIn: bigint,
-    amountOut: bigint,
+    ethAmount: bigint,
+    eventType: 'swap' | 'tip',
 ): Promise<void> {
-    const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-
-    // Calculate ETH volume: use amountIn if tokenIn is ETH, amountOut if tokenOut is ETH
-    let ethVolume = 0n
-    if (tokenIn.toLowerCase() === ETH_ADDRESS) {
-        ethVolume = amountIn
-    } else if (tokenOut.toLowerCase() === ETH_ADDRESS) {
-        ethVolume = amountOut
-    }
-
-    // If no ETH involved, skip volume tracking
-    if (ethVolume === 0n) {
-        console.log(`Skipping volume update for space ${spaceId} - no ETH in swap`)
+    // Skip if no ETH value
+    if (ethAmount === 0n) {
         return
     }
 
-    const timestamp = Number(blockTimestamp)
-    const dayIndex = Math.floor(timestamp / 86400)
-    const dayId = `${spaceId}-${dayIndex}`
+    const currentTimestamp = Number(blockTimestamp)
+    const sevenDaysAgo = currentTimestamp - (7 * 86400)
+    const thirtyDaysAgo = currentTimestamp - (30 * 86400)
 
-    // Update daily volume
-    const existingDaily = await context.db.sql.query.spaceDailySwapVolume.findFirst({
-        where: eq(schema.spaceDailySwapVolume.id, dayId),
-    })
-
-    if (existingDaily) {
-        await context.db.sql
-            .update(schema.spaceDailySwapVolume)
-            .set({ volume: (existingDaily.volume ?? 0n) + ethVolume })
-            .where(eq(schema.spaceDailySwapVolume.id, dayId))
-    } else {
-        await context.db.insert(schema.spaceDailySwapVolume).values({
-            id: dayId,
-            spaceId,
-            day: dayIndex,
-            volume: ethVolume,
-        })
-    }
-
-    // Get current space to increment all-time volume
+    // Get current space for all-time volume
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, spaceId),
     })
 
-    const currentAllTimeVolume = space?.swapVolumeAllTime ?? 0n
-
-    // Calculate 7d rolling volume (last 7 days)
-    const cutoff7d = dayIndex - 7
-    const daily7dRecords = await context.db.sql.query.spaceDailySwapVolume.findMany({
-        where: (t, { and, eq: eqOp, gte }) => and(eqOp(t.spaceId, spaceId), gte(t.day, cutoff7d)),
-    })
-    const swapVolumeLast7d = daily7dRecords.reduce((sum, record) => sum + (record.volume ?? 0n), 0n)
-
-    // Calculate 30d rolling volume (last 30 days)
-    const cutoff30d = dayIndex - 30
-    const daily30dRecords = await context.db.sql.query.spaceDailySwapVolume.findMany({
-        where: (t, { and, eq: eqOp, gte }) => and(eqOp(t.spaceId, spaceId), gte(t.day, cutoff30d)),
-    })
-    const swapVolumeLast30d = daily30dRecords.reduce(
-        (sum, record) => sum + (record.volume ?? 0n),
-        0n,
-    )
-
-    // Update space with all new volumes
-    await context.db.sql
-        .update(schema.space)
-        .set({
-            swapVolumeLast7d,
-            swapVolumeLast30d,
-            swapVolumeAllTime: currentAllTimeVolume + ethVolume,
-        })
-        .where(eq(schema.space.id, spaceId))
-
-    console.log(
-        `Updated space ${spaceId} swap volume - ETH amount: ${ethVolume}, 7d: ${swapVolumeLast7d}, 30d: ${swapVolumeLast30d}, all-time: ${currentAllTimeVolume + ethVolume}`,
-    )
-}
-
-export async function updateSpaceTipVolume(
-    context: Context,
-    spaceId: `0x${string}`,
-    blockTimestamp: bigint,
-    currency: `0x${string}`,
-    amount: bigint,
-): Promise<void> {
-    const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-
-    // Only track ETH tips for now
-    let ethVolume = 0n
-    if (currency.toLowerCase() === ETH_ADDRESS) {
-        ethVolume = amount
-    }
-
-    // If not an ETH tip, skip volume tracking
-    if (ethVolume === 0n) {
+    if (!space) {
+        console.warn(`Space ${spaceId} not found`)
         return
     }
 
-    const currentDay = Math.floor(Number(blockTimestamp) / 86400)
-    const dailyVolumeId = `${spaceId}-${currentDay}`
-
-    // Update or create daily tip volume
-    const existingDailyVolume = await context.db.sql.query.spaceDailyTipVolume.findFirst({
-        where: eq(schema.spaceDailyTipVolume.id, dailyVolumeId),
+    // Query raw events for rolling windows from denormalized table
+    const recentEvents = await context.db.sql.query.analyticsEvent.findMany({
+        where: and(
+            eq(schema.analyticsEvent.spaceId, spaceId),
+            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo))
+        ),
     })
 
-    if (existingDailyVolume) {
-        await context.db.sql
-            .update(schema.spaceDailyTipVolume)
-            .set({
-                volume: (existingDailyVolume.volume || 0n) + ethVolume,
-            })
-            .where(eq(schema.spaceDailyTipVolume.id, dailyVolumeId))
-    } else {
-        await context.db.insert(schema.spaceDailyTipVolume).values({
-            id: dailyVolumeId,
-            spaceId: spaceId,
-            day: currentDay,
-            volume: ethVolume,
-        })
+    // Calculate volumes based on event type
+    let swapVolume7d = 0n
+    let swapVolume30d = 0n
+    let tipVolume7d = 0n
+    let tipVolume30d = 0n
+
+    for (const event of recentEvents) {
+        const eventTimestamp = Number(event.blockTimestamp)
+        const eventEthAmount = event.ethAmount || 0n
+        
+        if (event.eventType === 'swap') {
+            if (eventTimestamp >= sevenDaysAgo) {
+                swapVolume7d += eventEthAmount
+            }
+            swapVolume30d += eventEthAmount
+        } else if (event.eventType === 'tip') {
+            if (eventTimestamp >= sevenDaysAgo) {
+                tipVolume7d += eventEthAmount
+            }
+            tipVolume30d += eventEthAmount
+        }
     }
 
-    // Calculate rolling windows
-    const sevenDaysAgo = currentDay - 7
-    const thirtyDaysAgo = currentDay - 30
+    // Update cached metrics on space
+    type SwapMetrics = {
+        swapVolumeLast7d: bigint
+        swapVolumeLast30d: bigint
+        swapVolumeAllTime: bigint
+    }
+    
+    type TipMetrics = {
+        tipVolumeLast7d: bigint
+        tipVolumeLast30d: bigint
+        tipVolumeAllTime: bigint
+    }
+    
+    type MetricUpdate = SwapMetrics | TipMetrics
+    
+    let updates: MetricUpdate
+    
+    if (eventType === 'swap') {
+        updates = {
+            swapVolumeLast7d: swapVolume7d,
+            swapVolumeLast30d: swapVolume30d,
+            swapVolumeAllTime: (space.swapVolumeAllTime || 0n) + ethAmount,
+        }
+    } else if (eventType === 'tip') {
+        updates = {
+            tipVolumeLast7d: tipVolume7d,
+            tipVolumeLast30d: tipVolume30d,
+            tipVolumeAllTime: (space.tipVolumeAllTime || 0n) + ethAmount,
+        }
+    } else {
+        console.warn(`Unknown event type: ${eventType} for space ${spaceId}`)
+        return
+    }
 
-    // Get 7-day tip volume
-    const last7DaysVolumes = await context.db.sql.query.spaceDailyTipVolume.findMany({
-        where: and(
-            eq(schema.spaceDailyTipVolume.spaceId, spaceId),
-            gte(schema.spaceDailyTipVolume.day, sevenDaysAgo),
-        ),
-    })
-
-    const tipVolumeLast7d = last7DaysVolumes.reduce((sum, dv) => sum + (dv.volume || 0n), 0n)
-
-    // Get 30-day tip volume
-    const last30DaysVolumes = await context.db.sql.query.spaceDailyTipVolume.findMany({
-        where: and(
-            eq(schema.spaceDailyTipVolume.spaceId, spaceId),
-            gte(schema.spaceDailyTipVolume.day, thirtyDaysAgo),
-        ),
-    })
-
-    const tipVolumeLast30d = last30DaysVolumes.reduce((sum, dv) => sum + (dv.volume || 0n), 0n)
-
-    // Get current all-time volume and update
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, spaceId),
-    })
-
-    const currentAllTimeVolume = space?.tipVolumeAllTime || 0n
-
-    // Update space with new tip volumes
     await context.db.sql
         .update(schema.space)
-        .set({
-            tipVolumeLast7d: tipVolumeLast7d,
-            tipVolumeLast30d: tipVolumeLast30d,
-            tipVolumeAllTime: currentAllTimeVolume + ethVolume,
-        })
+        .set(updates)
         .where(eq(schema.space.id, spaceId))
 
-    console.log(
-        `Updated space ${spaceId} tip volume - ETH amount: ${ethVolume}, 7d: ${tipVolumeLast7d}, 30d: ${tipVolumeLast30d}, all-time: ${currentAllTimeVolume + ethVolume}`,
-    )
+    console.log(`Updated cached metrics for space ${spaceId} - type: ${eventType}, amount: ${ethAmount}`)
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }

@@ -32,18 +32,21 @@ export const swap = onchainTable('swaps', (t) => ({
     createdAt: t.bigint(),
 }))
 
-export const spaceDailySwapVolume = onchainTable('space_daily_swap_volumes', (t) => ({
-    id: t.text().primaryKey(), // ${spaceId}-${dayIndex}
+// Denormalized events table for all analytics
+export const analyticsEvent = onchainTable('analytics_events', (t) => ({
+    id: t.text().primaryKey(), // ${txHash}-${logIndex}
     spaceId: t.hex(),
-    day: t.integer(),
-    volume: t.bigint().default(0n),
-}))
-
-export const spaceDailyTipVolume = onchainTable('space_daily_tip_volumes', (t) => ({
-    id: t.text().primaryKey(), // ${spaceId}-${dayIndex}
-    spaceId: t.hex(),
-    day: t.integer(),
-    volume: t.bigint().default(0n),
+    eventType: t.text(), // 'swap', 'tip', etc.
+    blockTimestamp: t.bigint(),
+    txHash: t.hex(),
+    
+    // ETH value for the event (calculated field for sorting/aggregation)
+    ethAmount: t.bigint().default(0n),
+    
+    // Event-specific data stored as JSON
+    // For swap: { tokenIn, tokenOut, amountIn, amountOut, recipient, poster }
+    // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
+    eventData: t.json(),
 }))
 
 export const tip = onchainTable('tips', (t) => ({
@@ -78,9 +81,9 @@ export const spaceToSwaps = relations(space, ({ many }) => ({
     swaps: many(swap),
 }))
 
-// each space has many daily swap volumes
-export const spaceToDailySwapVolumes = relations(space, ({ many }) => ({
-    dailySwapVolumes: many(spaceDailySwapVolume),
+// each space has many analytics events
+export const spaceToAnalyticsEvents = relations(space, ({ many }) => ({
+    analyticsEvents: many(analyticsEvent),
 }))
 
 // each space has many tips
@@ -88,29 +91,19 @@ export const spaceToTips = relations(space, ({ many }) => ({
     tips: many(tip),
 }))
 
-// each space has many daily tip volumes
-export const spaceToDailyTipVolumes = relations(space, ({ many }) => ({
-    dailyTipVolumes: many(spaceDailyTipVolume),
-}))
-
 // each swap belongs to a space
 export const swapToSpace = relations(swap, ({ one }) => ({
     space: one(space, { fields: [swap.spaceId], references: [space.id] }),
 }))
 
-// each daily swap volume belongs to a space
-export const dailySwapVolumeToSpace = relations(spaceDailySwapVolume, ({ one }) => ({
-    space: one(space, { fields: [spaceDailySwapVolume.spaceId], references: [space.id] }),
+// each analytics event belongs to a space
+export const analyticsEventToSpace = relations(analyticsEvent, ({ one }) => ({
+    space: one(space, { fields: [analyticsEvent.spaceId], references: [space.id] }),
 }))
 
 // each tip belongs to a space
 export const tipToSpace = relations(tip, ({ one }) => ({
     space: one(space, { fields: [tip.spaceId], references: [space.id] }),
-}))
-
-// each daily tip volume belongs to a space
-export const dailyTipVolumeToSpace = relations(spaceDailyTipVolume, ({ one }) => ({
-    space: one(space, { fields: [spaceDailyTipVolume.spaceId], references: [space.id] }),
 }))
 
 export const swapRouter = onchainTable('swap_router', (t) => ({

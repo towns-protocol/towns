@@ -6,8 +6,7 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
-    updateSpaceSwapVolume,
-    updateSpaceTipVolume,
+    updateSpaceCachedMetrics,
 } from './utils'
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
@@ -195,32 +194,56 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     }
 
     try {
-        const existing = await context.db.sql.query.swap.findFirst({
-            where: eq(schema.swap.txHash, transactionHash),
+        const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+        
+        // Calculate ETH amount for analytics
+        let ethAmount = 0n
+        if ((event.args.tokenIn as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountIn
+        } else if ((event.args.tokenOut as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountOut
+        }
+
+        // Write to swap table (for backward compatibility)
+        await context.db.insert(schema.swap).values({
+            txHash: transactionHash,
+            spaceId: spaceId,
+            recipient: event.args.recipient,
+            tokenIn: event.args.tokenIn,
+            tokenOut: event.args.tokenOut,
+            amountIn: event.args.amountIn,
+            amountOut: event.args.amountOut,
+            poster: event.args.poster,
+            blockTimestamp: blockTimestamp,
+            createdAt: blockNumber,
         })
-        if (!existing) {
-            await context.db.insert(schema.swap).values({
-                txHash: transactionHash,
-                spaceId: spaceId,
-                recipient: event.args.recipient,
+
+        // Write to denormalized analytics events table
+        await context.db.insert(schema.analyticsEvent).values({
+            id: `${transactionHash}-${event.log.logIndex}`,
+            spaceId: spaceId,
+            eventType: 'swap',
+            blockTimestamp: blockTimestamp,
+            txHash: transactionHash,
+            ethAmount: ethAmount,
+            eventData: {
                 tokenIn: event.args.tokenIn,
                 tokenOut: event.args.tokenOut,
-                amountIn: event.args.amountIn,
-                amountOut: event.args.amountOut,
+                amountIn: event.args.amountIn.toString(),
+                amountOut: event.args.amountOut.toString(),
+                recipient: event.args.recipient,
                 poster: event.args.poster,
-                blockTimestamp: blockTimestamp,
-                createdAt: blockNumber,
-            })
+            },
+        })
 
-            // Update swap volume for the space
-            await updateSpaceSwapVolume(
+        // Update cached metrics on space
+        if (ethAmount > 0n) {
+            await updateSpaceCachedMetrics(
                 context,
                 spaceId as `0x${string}`,
                 blockTimestamp,
-                event.args.tokenIn as `0x${string}`,
-                event.args.tokenOut as `0x${string}`,
-                event.args.amountIn,
-                event.args.amountOut,
+                ethAmount,
+                'swap'
             )
         }
     } catch (error) {
@@ -706,10 +729,19 @@ ponder.on('Space:Tip', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
     try {
+        const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+        
         // Create unique ID from txHash and logIndex
         const tipId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
+        
+        // Calculate ETH amount for analytics
+        let ethAmount = 0n
+        if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amount
+        }
 
+        // Write to tip table (for backward compatibility)
         await context.db.insert(schema.tip).values({
             id: tipId,
             txHash: event.transaction.hash,
@@ -725,15 +757,36 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             createdAt: blockTimestamp,
         })
 
-        // Update space tip volume tracking
-        await updateSpaceTipVolume(
-            context,
-            spaceId,
-            blockTimestamp,
-            event.args.currency,
-            event.args.amount,
-        )
+        // Write to denormalized analytics events table
+        await context.db.insert(schema.analyticsEvent).values({
+            id: tipId,
+            spaceId: spaceId,
+            eventType: 'tip',
+            blockTimestamp: blockTimestamp,
+            txHash: event.transaction.hash,
+            ethAmount: ethAmount,
+            eventData: {
+                sender: event.args.sender,
+                receiver: event.args.receiver,
+                currency: event.args.currency,
+                amount: event.args.amount.toString(),
+                tokenId: event.args.tokenId.toString(),
+                messageId: event.args.messageId,
+                channelId: event.args.channelId,
+            },
+        })
+
+        // Update cached metrics on space
+        if (ethAmount > 0n) {
+            await updateSpaceCachedMetrics(
+                context,
+                spaceId,
+                blockTimestamp,
+                ethAmount,
+                'tip'
+            )
+        }
     } catch (error) {
-        console.error(`Error processing Tipping:Tip at timestamp ${blockTimestamp}:`, error)
+        console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
 })
