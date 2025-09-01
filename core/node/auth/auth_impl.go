@@ -1427,6 +1427,10 @@ func (ca *chainAuth) checkEntitlement(
 	cfg *config.Config,
 	args *ChainAuthArgs,
 ) (CacheResult, error) {
+	// Test-only bypass: if interceptor marked this context and config enabled it, allow immediately.
+	if cfg != nil && cfg.TestEntitlementsBypassSecret != "" && IsTestEntitlementBypassEnabled(ctx) {
+		return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+	}
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*time.Duration(ca.contractCallsTimeoutMs))
 	defer cancel()
 

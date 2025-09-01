@@ -7,4 +7,5 @@ const (
 	RiverToNodeHeader            = "X-River-To-Node"
 	RiverAllowNoQuorumHeader     = "X-River-Allow-No-Quorum" // Must be set to "true" to allow getting data if local node is not in quorum
 	RiverUseSharedSyncHeaderName = "X-Use-Shared-Sync"
+	RiverTestBypassHeaderName    = "X-River-Test-Bypass"
 )
