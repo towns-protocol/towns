@@ -22,6 +22,9 @@ func NewTestBypassInterceptor(secret string) connect.Interceptor {
 }
 
 func (i *testBypassInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	if i.secret == "" {
+		return next
+	}
 	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		// If secret is empty, bypass is disabled.
 		if i.secret != "" && req != nil {
@@ -35,12 +38,13 @@ func (i *testBypassInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryF
 }
 
 func (i *testBypassInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
-	return func(ctx context.Context, spec connect.Spec) connect.StreamingClientConn {
-		return next(ctx, spec)
-	}
+	return next
 }
 
 func (i *testBypassInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	if i.secret == "" {
+		return next
+	}
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
 		if i.secret != "" && conn != nil {
 			hdr := conn.RequestHeader().Get(headers.RiverTestBypassHeaderName)
