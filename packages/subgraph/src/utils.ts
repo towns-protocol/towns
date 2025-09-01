@@ -172,21 +172,21 @@ export async function updateSpaceCachedMetrics(
 
     // Update cached metrics on space
     type SwapMetrics = {
-        swapVolumeLast7d: bigint
-        swapVolumeLast30d: bigint
-        swapVolumeAllTime: bigint
+        swapVolume7d: bigint
+        swapVolume30d: bigint
+        swapVolume: bigint
     }
 
     type TipMetrics = {
-        tipVolumeLast7d: bigint
-        tipVolumeLast30d: bigint
-        tipVolumeAllTime: bigint
+        tipVolume7d: bigint
+        tipVolume30d: bigint
+        tipVolume: bigint
     }
 
     type MemberMetrics = {
-        memberCountLast7d: bigint
-        memberCountLast30d: bigint
-        memberCountAllTime: bigint
+        memberCount7d: bigint
+        memberCount30d: bigint
+        memberCount: bigint
     }
 
     type MetricUpdate = SwapMetrics | TipMetrics | MemberMetrics
@@ -195,21 +195,21 @@ export async function updateSpaceCachedMetrics(
 
     if (eventType === 'swap') {
         updates = {
-            swapVolumeLast7d: swapVolume7d,
-            swapVolumeLast30d: swapVolume30d,
-            swapVolumeAllTime: (space.swapVolumeAllTime || 0n) + ethAmount,
+            swapVolume7d: swapVolume7d,
+            swapVolume30d: swapVolume30d,
+            swapVolume: (space.swapVolume || 0n) + ethAmount,
         }
     } else if (eventType === 'tip') {
         updates = {
-            tipVolumeLast7d: tipVolume7d,
-            tipVolumeLast30d: tipVolume30d,
-            tipVolumeAllTime: (space.tipVolumeAllTime || 0n) + ethAmount,
+            tipVolume7d: tipVolume7d,
+            tipVolume30d: tipVolume30d,
+            tipVolume: (space.tipVolume || 0n) + ethAmount,
         }
     } else if (eventType === 'join') {
         updates = {
-            memberCountLast7d: memberCount7d,
-            memberCountLast30d: memberCount30d,
-            memberCountAllTime: (space.memberCountAllTime || 0n) + 1n,
+            memberCount7d: memberCount7d,
+            memberCount30d: memberCount30d,
+            memberCount: (space.memberCount || 0n) + 1n,
         }
     } else {
         console.warn(`Unknown event type: ${eventType} for space ${spaceId}`)
