@@ -351,7 +351,7 @@ jobs:
             - name: Run Stream Metadata Nodes
               run: |
                   yarn workspace @towns-protocol/stream-metadata dev:local_multi &
-                  yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
+                  yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
               run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
