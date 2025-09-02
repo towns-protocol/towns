@@ -204,7 +204,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             ethAmount = event.args.amountOut
         }
 
-        // Write to swap table (for backward compatibility)
+        // Write to swap table
         await context.db.insert(schema.swap).values({
             txHash: transactionHash,
             spaceId: spaceId,
@@ -218,7 +218,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             createdAt: blockNumber,
         })
 
-        // Write to denormalized analytics events table
         await context.db.insert(schema.analyticsEvent).values({
             id: `${transactionHash}-${event.log.logIndex}`,
             spaceId: spaceId,
@@ -236,7 +235,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             },
         })
 
-        // Update cached metrics on space
         await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
@@ -727,7 +725,6 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         // Get the ETH amount from the transaction value (payment to join)
         const ethAmount = event.transaction.value || 0n
 
-        // Write to denormalized analytics events table
         await context.db.insert(schema.analyticsEvent).values({
             id: joinId,
             spaceId: spaceId,
@@ -741,7 +738,6 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
             },
         })
 
-        // Update cached metrics including both member count and ETH volume
         await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(
@@ -761,13 +757,11 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         const tipId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
 
-        // Calculate ETH amount for analytics
         let ethAmount = 0n
         if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
             ethAmount = event.args.amount
         }
 
-        // Write to denormalized analytics events table
         await context.db.insert(schema.analyticsEvent).values({
             id: tipId,
             spaceId: spaceId,
@@ -786,7 +780,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             },
         })
 
-        // Update cached metrics on space
         await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
