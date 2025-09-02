@@ -100,8 +100,19 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Check if contracts have changed to decide Docker vs native Anvil
+            - name: Check for contract changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      contracts:
+                        - 'packages/contracts/**'
+                        - 'scripts/deploy-contracts.sh'
+                        - 'scripts/start-local-*.sh'
+
+            - name: Start blockchains
+              run: ./scripts/bc-all-start.sh ${{ steps.filter.outputs.contracts }}
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -314,8 +325,19 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Check if contracts have changed to decide Docker vs native Anvil
+            - name: Check for contract changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      contracts:
+                        - 'packages/contracts/**'
+                        - 'scripts/deploy-contracts.sh'
+                        - 'scripts/start-local-*.sh'
+
+            - name: Start blockchains
+              run: ./scripts/bc-all-start.sh ${{ steps.filter.outputs.contracts }}
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -335,9 +357,15 @@ jobs:
               run: |
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
-            - name: Run multiple nodes
+            - name: Run multiple nodes (Native - contracts changed)
+              if: steps.filter.outputs.contracts == 'true'
               working-directory: core
               run: just config-and-start
+
+            - name: Run multiple nodes (Docker - no contract changes)
+              if: steps.filter.outputs.contracts != 'true'
+              working-directory: core
+              run: just USE_DOCKER_CHAINS=1 config-and-start
 
             - name: Run app registry
               working-directory: core
@@ -451,8 +479,19 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
+            # Check if contracts have changed to decide Docker vs native Anvil
+            - name: Check for contract changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      contracts:
+                        - 'packages/contracts/**'
+                        - 'scripts/deploy-contracts.sh'
+                        - 'scripts/start-local-*.sh'
+
             - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+              run: ./scripts/bc-all-start.sh ${{ steps.filter.outputs.contracts }}
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -600,8 +639,19 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
+            # Check if contracts have changed to decide Docker vs native Anvil
+            - name: Check for contract changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      contracts:
+                        - 'packages/contracts/**'
+                        - 'scripts/deploy-contracts.sh'
+                        - 'scripts/start-local-*.sh'
+
             - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+              run: ./scripts/bc-all-start.sh ${{ steps.filter.outputs.contracts }}
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -733,8 +783,19 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
+            # Check if contracts have changed to decide Docker vs native Anvil
+            - name: Check for contract changes
+              uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      contracts:
+                        - 'packages/contracts/**'
+                        - 'scripts/deploy-contracts.sh'
+                        - 'scripts/start-local-*.sh'
+
             - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+              run: ./scripts/bc-all-start.sh ${{ steps.filter.outputs.contracts }}
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql

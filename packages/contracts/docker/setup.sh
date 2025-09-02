@@ -113,17 +113,18 @@ create_address_manifest() {
   echo "Creating contract address manifest for easy extraction..."
 
   if [ -d "./packages/generated/deployments/local_dev" ]; then
-    mkdir -p ./contract-addresses/local_dev
+    mkdir -p ./local_dev
 
     # Copy base and river addresses
     for chain in base river; do
       if [ -d "./packages/generated/deployments/local_dev/${chain}/addresses" ]; then
-        cp -r ./packages/generated/deployments/local_dev/${chain}/addresses ./contract-addresses/local_dev/${chain}
+        mkdir -p ./local_dev/${chain}
+        cp -r ./packages/generated/deployments/local_dev/${chain}/addresses ./local_dev/${chain}/
       fi
     done
   fi
 
-  echo "Contract addresses saved to ./contract-addresses/ for extraction"
+  echo "Contract addresses saved to ./local_dev/ for extraction"
 }
 
 test_node_registry() {
