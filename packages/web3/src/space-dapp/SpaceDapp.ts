@@ -155,11 +155,11 @@ const EmptyXchainConfig: XchainConfig = {
 }
 
 type EntitledWallet = string | undefined
-export class SpaceDapp {
+export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.providers.Provider> {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
     public readonly baseRegistry: BaseRegistry
-    public readonly provider: ethers.providers.Provider
+    public readonly provider: TProvider
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
@@ -175,7 +175,7 @@ export class SpaceDapp {
     public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
     public readonly isBannedTokenCache: SimpleCache<IsTokenBanned, boolean>
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+    constructor(config: BaseChainConfig, provider: TProvider) {
         this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
