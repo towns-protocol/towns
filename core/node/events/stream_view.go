@@ -636,7 +636,7 @@ func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snap
 	if len(miniblocks) > 0 {
 		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
 	}
-	return
+	return miniblocks, snapshot
 }
 
 func (r *StreamView) SyncCookie(localNodeAddress common.Address) *SyncCookie {
