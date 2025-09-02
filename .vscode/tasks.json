@@ -216,7 +216,7 @@
       }
     },
     {
-      "label": "Stop Nodes",
+      "label": "Stop Nodes and Services",
       "type": "shell",
       "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi stop-app-registry",
       "isBackground": true,
@@ -239,9 +239,9 @@
       "problemMatcher": [],
     },
     {
-      "label": "Restart Nodes",
+      "label": "Restart Nodes and Services",
       "dependsOn": [
-        "Stop Nodes",
+        "Stop Nodes and Services",
         "Build Nodes",
         "Run Nodes and Services"
       ],
