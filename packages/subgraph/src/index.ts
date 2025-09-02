@@ -237,15 +237,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         })
 
         // Update cached metrics on space
-        if (ethAmount > 0n) {
-            await updateSpaceCachedMetrics(
-                context,
-                spaceId as `0x${string}`,
-                blockTimestamp,
-                ethAmount,
-                'swap',
-            )
-        }
+        await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -750,7 +742,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         })
 
         // Update cached metrics including both member count and ETH volume
-        await updateSpaceCachedMetrics(context, spaceId, blockTimestamp, ethAmount, 'join')
+        await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -795,9 +787,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         })
 
         // Update cached metrics on space
-        if (ethAmount > 0n) {
-            await updateSpaceCachedMetrics(context, spaceId, blockTimestamp, ethAmount, 'tip')
-        }
+        await updateSpaceCachedMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
