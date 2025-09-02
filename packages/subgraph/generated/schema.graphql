@@ -57,6 +57,9 @@ type space {
   tipVolume7d: BigInt
   tipVolume30d: BigInt
   tipVolume: BigInt
+  joinVolume7d: BigInt
+  joinVolume30d: BigInt
+  joinVolume: BigInt
   memberCount7d: BigInt
   memberCount30d: BigInt
   memberCount: BigInt
@@ -517,6 +520,30 @@ input spaceFilter {
   tipVolume_lt: BigInt
   tipVolume_gte: BigInt
   tipVolume_lte: BigInt
+  joinVolume7d: BigInt
+  joinVolume7d_not: BigInt
+  joinVolume7d_in: [BigInt]
+  joinVolume7d_not_in: [BigInt]
+  joinVolume7d_gt: BigInt
+  joinVolume7d_lt: BigInt
+  joinVolume7d_gte: BigInt
+  joinVolume7d_lte: BigInt
+  joinVolume30d: BigInt
+  joinVolume30d_not: BigInt
+  joinVolume30d_in: [BigInt]
+  joinVolume30d_not_in: [BigInt]
+  joinVolume30d_gt: BigInt
+  joinVolume30d_lt: BigInt
+  joinVolume30d_gte: BigInt
+  joinVolume30d_lte: BigInt
+  joinVolume: BigInt
+  joinVolume_not: BigInt
+  joinVolume_in: [BigInt]
+  joinVolume_not_in: [BigInt]
+  joinVolume_gt: BigInt
+  joinVolume_lt: BigInt
+  joinVolume_gte: BigInt
+  joinVolume_lte: BigInt
   memberCount7d: BigInt
   memberCount7d_not: BigInt
   memberCount7d_in: [BigInt]

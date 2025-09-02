@@ -731,6 +731,9 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
     try {
         const joinId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
+        
+        // Get the ETH amount from the transaction value (payment to join)
+        const ethAmount = event.transaction.value || 0n
 
         // Write to denormalized analytics events table
         await context.db.insert(schema.analyticsEvent).values({
@@ -739,19 +742,19 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
             eventType: 'join',
             blockTimestamp: blockTimestamp,
             txHash: event.transaction.hash,
-            ethAmount: 0n, // Joins don't have ETH value
+            ethAmount: ethAmount,
             eventData: {
                 recipient: event.args.recipient,
                 tokenId: event.args.tokenId.toString(),
             },
         })
 
-        // Update cached member count metrics
+        // Update cached metrics including both member count and ETH volume
         await updateSpaceCachedMetrics(
             context,
             spaceId,
             blockTimestamp,
-            0n, // ETH amount is 0 for joins
+            ethAmount,
             'join',
         )
     } catch (error) {
