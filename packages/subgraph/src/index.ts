@@ -725,6 +725,40 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
     }
 })
 
+ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const joinId = `${event.transaction.hash}-${event.log.logIndex}`
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        // Get the ETH amount from the transaction value (payment to join)
+        const ethAmount = event.transaction.value || 0n
+
+        // Write to denormalized analytics events table
+        await context.db.insert(schema.analyticsEvent).values({
+            id: joinId,
+            spaceId: spaceId,
+            eventType: 'join',
+            blockTimestamp: blockTimestamp,
+            txHash: event.transaction.hash,
+            ethAmount: ethAmount,
+            eventData: {
+                recipient: event.args.recipient,
+                tokenId: event.args.tokenId.toString(),
+            },
+        })
+
+        // Update cached metrics including both member count and ETH volume
+        await updateSpaceCachedMetrics(context, spaceId, blockTimestamp, ethAmount, 'join')
+    } catch (error) {
+        console.error(
+            `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
+            error,
+        )
+    }
+})
+
 ponder.on('Space:Tip', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 

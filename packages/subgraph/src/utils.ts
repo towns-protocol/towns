@@ -111,18 +111,14 @@ export async function updateSpaceCachedMetrics(
     spaceId: `0x${string}`,
     blockTimestamp: bigint,
     ethAmount: bigint,
-    eventType: 'swap' | 'tip',
+    eventType: 'swap' | 'tip' | 'join',
 ): Promise<void> {
-    // Skip if no ETH value
-    if (ethAmount === 0n) {
-        return
-    }
-
     const currentTimestamp = Number(blockTimestamp)
+    const oneDayAgo = currentTimestamp - 86400
     const sevenDaysAgo = currentTimestamp - 7 * 86400
     const thirtyDaysAgo = currentTimestamp - 30 * 86400
 
-    // Get current space for all-time volume
+    // Get current space for all-time values
     const space = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, spaceId),
     })
@@ -140,57 +136,109 @@ export async function updateSpaceCachedMetrics(
         ),
     })
 
-    // Calculate volumes based on event type
+    // Calculate metrics based on event type
+    let swapVolume24h = 0n
     let swapVolume7d = 0n
     let swapVolume30d = 0n
+    let tipVolume24h = 0n
     let tipVolume7d = 0n
     let tipVolume30d = 0n
+    let joinVolume24h = 0n
+    let joinVolume7d = 0n
+    let joinVolume30d = 0n
+    let memberCount24h = 0n
+    let memberCount7d = 0n
+    let memberCount30d = 0n
 
     for (const event of recentEvents) {
         const eventTimestamp = Number(event.blockTimestamp)
         const eventEthAmount = event.ethAmount || 0n
 
         if (event.eventType === 'swap') {
+            if (eventTimestamp >= oneDayAgo) {
+                swapVolume24h += eventEthAmount
+            }
             if (eventTimestamp >= sevenDaysAgo) {
                 swapVolume7d += eventEthAmount
             }
             swapVolume30d += eventEthAmount
         } else if (event.eventType === 'tip') {
+            if (eventTimestamp >= oneDayAgo) {
+                tipVolume24h += eventEthAmount
+            }
             if (eventTimestamp >= sevenDaysAgo) {
                 tipVolume7d += eventEthAmount
             }
             tipVolume30d += eventEthAmount
+        } else if (event.eventType === 'join') {
+            // Track both member count and join revenue
+            if (eventTimestamp >= oneDayAgo) {
+                memberCount24h += 1n
+                joinVolume24h += eventEthAmount
+            }
+            if (eventTimestamp >= sevenDaysAgo) {
+                memberCount7d += 1n
+                joinVolume7d += eventEthAmount
+            }
+            memberCount30d += 1n
+            joinVolume30d += eventEthAmount
         }
     }
 
     // Update cached metrics on space
     type SwapMetrics = {
-        swapVolumeLast7d: bigint
-        swapVolumeLast30d: bigint
-        swapVolumeAllTime: bigint
+        swapVolume24h: bigint
+        swapVolume7d: bigint
+        swapVolume30d: bigint
+        swapVolume: bigint
     }
 
     type TipMetrics = {
-        tipVolumeLast7d: bigint
-        tipVolumeLast30d: bigint
-        tipVolumeAllTime: bigint
+        tipVolume24h: bigint
+        tipVolume7d: bigint
+        tipVolume30d: bigint
+        tipVolume: bigint
     }
 
-    type MetricUpdate = SwapMetrics | TipMetrics
+    type JoinMetrics = {
+        memberCount24h: bigint
+        memberCount7d: bigint
+        memberCount30d: bigint
+        memberCount: bigint
+        joinVolume24h: bigint
+        joinVolume7d: bigint
+        joinVolume30d: bigint
+        joinVolume: bigint
+    }
+
+    type MetricUpdate = SwapMetrics | TipMetrics | JoinMetrics
 
     let updates: MetricUpdate
 
     if (eventType === 'swap') {
         updates = {
-            swapVolumeLast7d: swapVolume7d,
-            swapVolumeLast30d: swapVolume30d,
-            swapVolumeAllTime: (space.swapVolumeAllTime || 0n) + ethAmount,
+            swapVolume24h: swapVolume24h,
+            swapVolume7d: swapVolume7d,
+            swapVolume30d: swapVolume30d,
+            swapVolume: (space.swapVolume || 0n) + ethAmount,
         }
     } else if (eventType === 'tip') {
         updates = {
-            tipVolumeLast7d: tipVolume7d,
-            tipVolumeLast30d: tipVolume30d,
-            tipVolumeAllTime: (space.tipVolumeAllTime || 0n) + ethAmount,
+            tipVolume24h: tipVolume24h,
+            tipVolume7d: tipVolume7d,
+            tipVolume30d: tipVolume30d,
+            tipVolume: (space.tipVolume || 0n) + ethAmount,
+        }
+    } else if (eventType === 'join') {
+        updates = {
+            memberCount24h: memberCount24h,
+            memberCount7d: memberCount7d,
+            memberCount30d: memberCount30d,
+            memberCount: (space.memberCount || 0n) + 1n,
+            joinVolume24h: joinVolume24h,
+            joinVolume7d: joinVolume7d,
+            joinVolume30d: joinVolume30d,
+            joinVolume: (space.joinVolume || 0n) + ethAmount,
         }
     } else {
         console.warn(`Unknown event type: ${eventType} for space ${spaceId}`)
