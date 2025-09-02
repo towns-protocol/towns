@@ -9,6 +9,8 @@ import {
     updateSpaceCachedMetrics,
 } from './utils'
 
+const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
+
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
     const blockNumber = await getLatestBlockNumber()
@@ -194,8 +196,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     }
 
     try {
-        const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-
         // Calculate ETH amount for analytics
         let ethAmount = 0n
         if ((event.args.tokenIn as string).toLowerCase() === ETH_ADDRESS) {
@@ -751,8 +751,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
     try {
-        const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
-
         // Create unique ID from txHash and logIndex
         const tipId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
