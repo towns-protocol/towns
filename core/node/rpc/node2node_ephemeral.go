@@ -121,13 +121,24 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	}
 
 	// Save the ephemeral miniblock.
-	// Here we are sure that the record of the stream exists in the storage.
-	// Get the uploadID of the uploaded data
-	uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 	if err != nil {
 		return err
 	}
-	if uploadID != "" {
+	if location != "" {
+		uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		if err != nil {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+			}
+			return err
+		}
+		if location != s.externalMediaStorage.GetBucket() {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+			}
+			return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
+		}
 		partNum := len(partToEtag) + 1
 		etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, storageMb.Data, uploadID, partNum)
 		if err != nil {

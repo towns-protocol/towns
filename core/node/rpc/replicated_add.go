@@ -215,15 +215,18 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 		if location != "" {
-			if location != s.externalMediaStorage.GetBucket() {
-				return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
-			}
 			uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 			if err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
 				}
 				return err
+			}
+			if location != s.externalMediaStorage.GetBucket() {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
+				return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
 			}
 			partNum := len(partToEtag) + 1
 			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, partNum)
@@ -259,9 +262,6 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 
 		if location != "" {
-			if location != s.externalMediaStorage.GetBucket() {
-				return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
-			}
 			uploadID, partToEtag, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 			if err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
