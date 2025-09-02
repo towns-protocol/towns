@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS external_media_streams;

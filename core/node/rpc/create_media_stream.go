@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	"connectrpc.com/connect"
@@ -226,11 +228,26 @@ func (s *Service) createReplicatedMediaStream(
 
 	// Create ephemeral stream within the local node
 	if isLocal {
+		// TODO use config file instead
+		if os.Getenv("STORAGE_TYPE") == "external" {
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			if err != nil {
+				return nil, err
+			}
+			partToEtag := make(map[int]string)
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
+				return nil, err
+			}
+		}
 		sender.AddTask(func(ctx context.Context) error {
 			return s.storage.CreateEphemeralStreamStorage(
 				ctx,
 				streamId,
-				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
+				&storage.MiniblockDescriptor{Data: []byte{}, HasLegacySnapshot: true},
+				s.externalMediaStorage.GetBucket(),
 			)
 		})
 	}

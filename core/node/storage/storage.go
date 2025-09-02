@@ -117,6 +117,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			genesisMiniblock *MiniblockDescriptor,
+			location string,
 		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
@@ -139,6 +140,9 @@ type (
 
 		// IsStreamEphemeral returns true if the stream is ephemeral.
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
+
+		// GetMediaStreamLocation returns the location of the media stream.
+		GetMediaStreamLocation(ctx context.Context, streamId StreamId) (string, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 		ReadMiniblocks(
@@ -168,6 +172,18 @@ type (
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
+
+		// GetExternalMediaStreamInfo returns the upload ID for the given stream.
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, map[int]string, int64, error)
+
+		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
+		WriteExternalMediaStreamInfo(
+			ctx context.Context,
+			streamId StreamId,
+			uploadID string,
+			partToEtag map[int]string,
+			bytes_uploaded int64,
+		) error
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
@@ -287,5 +303,13 @@ type (
 
 		// Close closes the storage.
 		Close(ctx context.Context)
+	}
+
+	ExternalMediaStorage interface {
+		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
+		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, partToEtag map[int]string) error
+		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
+		GetBucket() string
 	}
 )
