@@ -238,6 +238,17 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		}
 	}
 
+	if streamRecord.LastMbNum() < lastMiniblockNum {
+		if streamRecord.ReplicationFactor() > 1 && streamRecord.Nodes()[0] == s.params.Wallet.Address {
+			// Before replicated streams nodes would only register miniblocks every N miniblocks.
+			// Therefore, it is possible that registry stream record for streams that haven't seen new miniblocks
+			// after the stream was migrated to a replicated stream is lagging behind. For those streams register
+			// the latest miniblock to bring the record up to date.
+			go s.writeLatestMbToBlockchain(ctx, stream)
+		}
+		return nil
+	}
+
 	if streamRecord.LastMbNum() <= lastMiniblockNum {
 		return nil
 	}
