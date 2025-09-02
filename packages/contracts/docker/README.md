@@ -29,7 +29,7 @@ Build-time setup script that:
 - Starts both blockchain networks with Anvil
 - Deploys all smart contracts to both chains
 - Creates persistent state files (`base-anvil-state.json`, `river-anvil-state.json`)
-- Copies contract addresses to `/app/contract-addresses/` for extraction
+- Copies contract addresses to `/app/multi/` for extraction
 - Validates node registry deployment
 
 ### `run.sh`
@@ -54,13 +54,14 @@ The image is automatically built and published to AWS ECR when contract changes 
 cd core
 
 # Start both chains with pre-deployed contracts
-just anvils-docker
+USE_DOCKER_CHAINS=1 just anvils
 
-# Extract contract addresses for local development
-just extract-contract-addresses
+# Contract addresses are automatically available after anvils start
+# Configuration will use Docker chains automatically
+USE_DOCKER_CHAINS=1 just config
 
 # Stop chains
-just anvils-docker-stop
+just anvils-stop
 ```
 
 ### Building Image Locally
@@ -73,60 +74,54 @@ cd core
 just docker-build-local
 
 # Use local image
-DOCKER_IMAGE=towns-anvil:local just anvils-docker
+USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils
 ```
 
 ### VSCode Integration
 
-The default VSCode tasks now use Docker chains:
+VSCode tasks automatically use Docker chains when configured:
 
-- **BaseChain** - Starts Base chain from Docker
-- **RiverChain** - Starts River chain from Docker
-- **CasablancaConfigureNodes** - Configures nodes using Docker chains
-
-Legacy local anvil tasks are available as:
-
-- **BaseChain-Local**
-- **RiverChain-Local**
-- **CasablancaConfigureNodes-Local**
+- **BaseChain** - Starts Base chain (Docker or native based on environment)
+- **RiverChain** - Starts River chain (Docker or native based on environment)
+- **Configure Nodes** - Configures nodes using Docker chains by default
+- **AnvilsLocalDocker** - Uses local Docker image for development
 
 ## Contract Address Extraction
 
-When using Docker chains, contract addresses are extracted from the container:
+When using Docker chains, contract addresses are automatically extracted during the deployment process:
 
 ```bash
-# Extract addresses and create contracts.env
-just RUN_ENV=multi extract-contract-addresses
-just RUN_ENV=multi_ne extract-contract-addresses
+# Addresses are automatically extracted when using Docker chains
+USE_DOCKER_CHAINS=1 just config
 ```
 
 This creates:
 
-- `./run_files/{multi,multi_ne}/contracts.env` with environment variables
-- `../packages/generated/deployments/local_{multi,multi_ne}/` with full deployment artifacts
+- `./run_files/multi/contracts.env` with environment variables
+- `../packages/generated/deployments/local_multi/` with full deployment artifacts
 
 ## Available Just Targets
 
-### Docker-based targets:
+### Unified targets (Docker or native):
 
-- `anvils-docker` - Start both chains from Docker
-- `anvil-base-docker` - Start only Base chain from Docker
-- `anvil-river-docker` - Start only River chain from Docker
-- `anvils-docker-stop` - Stop Docker chains
-- `extract-contract-addresses` - Extract contract addresses from Docker
-- `config-base-chain-docker` - Configure base chain using Docker
+- `anvils` - Start both chains (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
+- `anvil-base` - Start Base chain (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
+- `anvil-river` - Start River chain (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
+- `anvils-stop` - Stop both chains
+- `deploy-contracts` - Deploy/extract contracts (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
+- `config-base-chain` - Configure base chain (uses Docker when `USE_DOCKER_CHAINS=1`)
+- `config-river-chain` - Configure river chain (uses Docker when `USE_DOCKER_CHAINS=1`)
+
+### Docker-specific targets:
+
 - `docker-build-local` - Build Docker image locally
-
-### Legacy local targets (still available):
-
-- `anvils` - Start local Anvil instances
-- `deploy-contracts` - Deploy contracts to local Anvil
-- `config-base-chain` - Configure base chain using local Anvil
 
 ## Environment Variables
 
+- `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
+- `USE_LOCAL_DOCKER` - Set to `1` to use local Docker image instead of AWS ECR
 - `DOCKER_IMAGE` - Override Docker image (default: AWS ECR image)
-- `RUN_ENV` - Environment (multi/multi_ne)
+- `RUN_ENV` - Environment (defaults to `multi`)
 
 ## CI/CD Integration
 

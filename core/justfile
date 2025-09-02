@@ -51,19 +51,37 @@ _anvil-start $NAME $PORT $CHAIN_ID:
     if nc -z localhost ${PORT} > /dev/null 2>&1; then
         echo "Anvil already running on port ${PORT}"
     else
-        echo "Starting ${NAME} on port ${PORT}"
-        mkdir -p ./run_files/anvil
-        nohup anvil --chain-id ${CHAIN_ID} \
-            --port ${PORT} \
-            --block-time 1 \
-            --block-base-fee-per-gas 1 \
-            --disable-block-gas-limit \
-            --disable-code-size-limit \
-            --disable-min-priority-fee \
-            --max-persisted-states 50 \
-            --gas-price 1 \
-            > ./run_files/anvil/${NAME}.log 2>&1 &
-        ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
+        if [ "${USE_DOCKER_CHAINS:-0}" = "1" ]; then
+            echo "Starting Docker ${NAME} chain on port ${PORT}"
+            # Use local image if USE_LOCAL_DOCKER=1, otherwise use AWS
+            if [ "${USE_LOCAL_DOCKER:-0}" = "1" ]; then
+                IMAGE="towns-anvil:local"
+            else
+                IMAGE="${DOCKER_IMAGE:-public.ecr.aws/h5v6m2x1/towns-anvil:latest}"
+            fi
+
+            docker run -d \
+                --name towns-${NAME}-chain \
+                -p ${PORT}:${PORT} \
+                -e CHAIN=${NAME} \
+                $IMAGE
+
+            ../scripts/wait-for-port.sh ${PORT} "Docker_anvil_${NAME}"
+        else
+            echo "Starting ${NAME} on port ${PORT}"
+            mkdir -p ./run_files/anvil
+            nohup anvil --chain-id ${CHAIN_ID} \
+                --port ${PORT} \
+                --block-time 1 \
+                --block-base-fee-per-gas 1 \
+                --disable-block-gas-limit \
+                --disable-code-size-limit \
+                --disable-min-priority-fee \
+                --max-persisted-states 50 \
+                --gas-price 1 \
+                > ./run_files/anvil/${NAME}.log 2>&1 &
+            ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
+        fi
     fi
 
 anvil-base:
@@ -72,12 +90,23 @@ anvil-base:
 
 anvil-base-stop:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    ../scripts/kill-on-port.sh 8545 anvil_base
+    if [ "${USE_DOCKER_CHAINS:-0}" = "1" ]; then
+        docker stop towns-base-chain 2>/dev/null || true
+        docker rm towns-base-chain 2>/dev/null || true
+    else
+        ../scripts/kill-on-port.sh 8545 anvil_base
+    fi
 
 anvil-river: (_anvil-start "river" "8546" "31338")
 
 anvil-river-stop:
-    ../scripts/kill-on-port.sh 8546 anvil_river
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    if [ "${USE_DOCKER_CHAINS:-0}" = "1" ]; then
+        docker stop towns-river-chain 2>/dev/null || true
+        docker rm towns-river-chain 2>/dev/null || true
+    else
+        ../scripts/kill-on-port.sh 8546 anvil_river
+    fi
 
 anvils: anvil-base anvil-river
 
@@ -87,83 +116,13 @@ anvils-tail-logs:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     tail -n 10 -F ./run_files/anvil/*.log
 
-# Docker-based anvil targets
-
-# Start anvil base chain from Docker (local build or AWS)
-anvil-base-docker:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    # Use local image if USE_LOCAL_DOCKER=1, otherwise use AWS
-    if [ "${USE_LOCAL_DOCKER:-0}" = "1" ]; then
-        IMAGE="towns-anvil:local"
-    else
-        IMAGE="${DOCKER_IMAGE:-public.ecr.aws/h5v6m2x1/towns-anvil:latest}"
-    fi
-
-    # Start container with name for easy reference
-    docker run -d \
-        --name towns-base-chain \
-        -p 8545:8545 \
-        -e CHAIN=base \
-        $IMAGE
-
-    ../scripts/wait-for-port.sh 8545 "Docker_Base_Chain"
-
-# Start anvil river chain from Docker
-anvil-river-docker:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    # Use local image if USE_LOCAL_DOCKER=1, otherwise use AWS
-    if [ "${USE_LOCAL_DOCKER:-0}" = "1" ]; then
-        IMAGE="towns-anvil:local"
-    else
-        IMAGE="${DOCKER_IMAGE:-public.ecr.aws/h5v6m2x1/towns-anvil:latest}"
-    fi
-
-    docker run -d \
-        --name towns-river-chain \
-        -p 8546:8546 \
-        -e CHAIN=river \
-        $IMAGE
-
-    ../scripts/wait-for-port.sh 8546 "Docker_River_Chain"
-
-# Start both anvil chains from Docker
-anvils-docker: anvil-base-docker anvil-river-docker
-
-# Stop Docker anvil chains
-anvils-docker-stop:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    docker stop towns-base-chain towns-river-chain 2>/dev/null || true
-    docker rm towns-base-chain towns-river-chain 2>/dev/null || true
-
-# Extract contract addresses from Docker container
-extract-contract-addresses: _require_run_env
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
-    mkdir -p ${RUN_BASE}
-
-    # Determine which environment to extract
-    ENV_NAME="${RIVER_ENV#local_}"  # Remove 'local_' prefix to get 'multi' or 'multi_ne'
-
-    # Copy deployment files from container
-    echo "Extracting contract addresses for environment: $ENV_NAME"
-    docker cp towns-base-chain:/app/contract-addresses/$ENV_NAME/base ${CONTRACTS_DIR}/base/addresses
-    docker cp towns-base-chain:/app/contract-addresses/$ENV_NAME/river ${CONTRACTS_DIR}/river/addresses
-
-    # Create contracts.env with extracted addresses
-    echo "" > ${RUN_BASE}/contracts.env
-    echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
-    echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
-    echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
-    echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
-    echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
-
 # Build Docker image locally
 docker-build-local:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     cd ../
     docker build -t towns-anvil:local -f ./packages/contracts/docker/Dockerfile .
     echo "Built local image: towns-anvil:local"
-    echo "To use it, run: DOCKER_IMAGE=towns-anvil:local just anvils-docker"
+    echo "To use it, run: USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils"
 
 storage-start:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -190,7 +149,22 @@ deploy-contracts: anvils
     source ${ENV_FILE}
     echo "Deploying contracts"
     mkdir -p ${RUN_BASE}
-    ../scripts/deploy-contracts.sh
+    
+    if [ "${USE_DOCKER_CHAINS:-0}" = "1" ]; then
+        # Create parent directory for contract addresses
+        mkdir -p ${CONTRACTS_DIR}/base
+        mkdir -p ${CONTRACTS_DIR}/river
+
+        # Copy deployment files from container
+        echo "Extracting contract addresses from Docker containers"
+        docker cp towns-base-chain:/app/multi/base/addresses/. ${CONTRACTS_DIR}/base/addresses/
+        docker cp towns-river-chain:/app/multi/river/addresses/. ${CONTRACTS_DIR}/river/addresses/
+    else
+        echo "Deploying contracts"
+        ../scripts/deploy-contracts.sh
+    fi
+
+    # Create contracts.env with extracted addresses
     echo "" > ${RUN_BASE}/contracts.env
     echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
     echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
@@ -257,11 +231,7 @@ _remove-instance $INSTANCE_NUM $INSTANCE_DIR:
 
 remove-instances: (_loop-instances "_remove-instance")
 
-# Legacy config-base-chain (uses local anvil deployment)
 config-base-chain: deploy-contracts
-
-# Docker-based config-base-chain (uses pre-deployed contracts from Docker)
-config-base-chain-docker: extract-contract-addresses
 
 # Run build node binary for environment
 [positional-arguments]
@@ -326,7 +296,7 @@ just-config-river-chain:
         just run-bin \
         on-chain-config set-csv ../../${ENV_PATH}/on_chain.csv
 
-config-river-chain:  deploy-contracts config-root build just-config-river-chain
+config-river-chain: deploy-contracts config-root build just-config-river-chain
 
 config-root:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
