@@ -1153,27 +1153,27 @@ func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []strin
 		clients              = make(map[common.Address]*Client)
 	)
 
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return err
 	}
 
 	var outputFileMu sync.Mutex
-	okOutputFile, err := os.OpenFile(okOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	okOutputFile, err := os.OpenFile(okOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
 	defer okOutputFile.Close()
-	noticeOutputFile, err := os.OpenFile(noticeOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	noticeOutputFile, err := os.OpenFile(noticeOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
 	defer noticeOutputFile.Close()
-	warnOutputFile, err := os.OpenFile(warnOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	warnOutputFile, err := os.OpenFile(warnOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
 	defer warnOutputFile.Close()
-	errorOutputFile, err := os.OpenFile(errorOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	errorOutputFile, err := os.OpenFile(errorOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
