@@ -210,15 +210,24 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 		
 		// Get the upload ID of the stream data
-		uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 		if err != nil {
 			return err
 		}
-		if uploadID != "" {
+		if location != "" {
+			if location != s.externalMediaStorage.GetBucket() {
+				return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
+			}
+			uploadID, partToEtag, bytes_uploaded, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+			if err != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
+				return err
+			}
 			partNum := len(partToEtag) + 1
 			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, partNum)
 			if err != nil {
-				// If S3 upload fails, abort the entire multipart upload
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return fmt.Errorf("failed to upload chunk to S3: %w, and failed to abort upload: %v", err, abortErr)
 				}
@@ -249,7 +258,17 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return nil
 		}
 
-		if uploadID != "" {
+		if location != "" {
+			if location != s.externalMediaStorage.GetBucket() {
+				return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
+			}
+			uploadID, partToEtag, _, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+			if err != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to get external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
+				return err
+			}
 			if s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag) != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return fmt.Errorf("failed to complete multipart upload: %w, and failed to abort upload: %v", err, abortErr)

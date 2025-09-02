@@ -68,11 +68,14 @@ func (s *Service) allocateEphemeralStream(
 		}
 		partToEtag := make(map[int]string)
 		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+			}
 			return nil, err
 		}
 		storageMb.Data = []byte{}
 	}
-	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, s.externalMediaStorage.GetBucket()); err != nil {
 		return nil, err
 	}
 

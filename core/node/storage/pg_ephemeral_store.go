@@ -56,13 +56,14 @@ func (s *PostgresStreamStore) CreateEphemeralStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	location string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"CreateEphemeralStreamStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createEphemeralStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
+			return s.createEphemeralStreamStorageTx(ctx, tx, streamId, genesisMiniblock, location)
 		},
 		nil,
 		"streamId", streamId,
@@ -74,10 +75,11 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	location string,
 ) error {
 	sql := s.sqlForStream(
 		`
-			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);
+			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, location) VALUES ($1, 0, true, true, $2);
 			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);`,
 		streamId,
 	)
@@ -354,6 +356,40 @@ func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId St
 	)
 	return
 }
+
+func (s *PostgresStreamStore) GetMediaStreamLocation(ctx context.Context, streamId StreamId) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var location string
+	err := s.txRunner(
+		ctx,
+		"GetMediaStreamLocation",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			location, err = s.getMediaStreamLocationTx(
+				ctx,
+				tx,
+				streamId,
+			)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	return location, err
+}
+
+func (s *PostgresStreamStore) getMediaStreamLocationTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, error) {
+	var location string
+	if err := tx.QueryRow(ctx, "SELECT location FROM es WHERE stream_id = $1", streamId).Scan(&location); err != nil {
+		return "", err
+	}
+	return location, nil
+}
+
+
 
 // Add the media stream data location to the table (for external)
 func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(

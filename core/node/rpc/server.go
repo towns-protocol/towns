@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -638,7 +639,9 @@ func (s *Service) initStore() error {
 		s.storage = store
 		s.onClose(store.Close)
 
-		s.externalMediaStorage = storage.NewExternalMediaStore()
+		// TODO: use config file instead
+		bucket := os.Getenv("S3_BUCKET")
+		s.externalMediaStorage = storage.NewExternalMediaStore(bucket)
 		
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {

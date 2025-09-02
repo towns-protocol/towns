@@ -4,3 +4,5 @@ CREATE TABLE external_media_streams (
     part_to_etag JSONB NOT NULL DEFAULT '{}',       -- map of part number to ETag
     bytes_uploaded BIGINT NOT NULL DEFAULT 0,        -- size of the stream so far
 );
+
+ALTER TABLE es ADD COLUMN IF NOT EXISTS location TEXT NOT NULL DEFAULT '';

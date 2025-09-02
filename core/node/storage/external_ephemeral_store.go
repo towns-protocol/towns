@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -21,19 +20,15 @@ type ExternalMediaStore struct {
 	bucket   string
 }
 
-func NewExternalMediaStore() *ExternalMediaStore {
+func NewExternalMediaStore(bucket string) *ExternalMediaStore {
 	var s3Client *s3.Client
-	var bucket string
 
-	// TODO: Configuration should be added to chain or config files
-	// For now, check environment variable as a temporary solution
-	if os.Getenv("STORAGE_TYPE") == "external" {
+	if bucket != "" {
 		var err error
 		s3Client, err = CreateExternalClient()
 		if err != nil {
 			panic(err)
 		}
-		bucket = os.Getenv("S3_BUCKET")
 	}
 
 	return &ExternalMediaStore{
@@ -148,6 +143,10 @@ func (w *ExternalMediaStore) AbortMediaStreamUpload(
 		return fmt.Errorf("failed to abort multipart upload: %w", err)
 	}
 	return nil
+}
+
+func (w *ExternalMediaStore) GetBucket() string {
+	return w.bucket
 }
 
 func DownloadChunkFromExternal(

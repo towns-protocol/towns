@@ -117,6 +117,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			genesisMiniblock *MiniblockDescriptor,
+			location string,
 		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
@@ -139,6 +140,9 @@ type (
 
 		// IsStreamEphemeral returns true if the stream is ephemeral.
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
+
+		// GetMediaStreamLocation returns the location of the media stream.
+		GetMediaStreamLocation(ctx context.Context, streamId StreamId) (string, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 		ReadMiniblocks(
@@ -306,5 +310,6 @@ type (
 		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, partToEtag map[int]string) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
+		GetBucket() string
 	}
 )

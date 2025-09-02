@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -235,6 +236,9 @@ func (s *Service) createReplicatedMediaStream(
 			}
 			partToEtag := make(map[int]string)
 			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
 				return nil, err
 			}
 		}
@@ -243,6 +247,7 @@ func (s *Service) createReplicatedMediaStream(
 				ctx,
 				streamId,
 				&storage.MiniblockDescriptor{Data: []byte{}, HasLegacySnapshot: true},
+				s.externalMediaStorage.GetBucket(),
 			)
 		})
 	}

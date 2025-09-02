@@ -673,12 +673,12 @@ func (s *Stream) GetMiniblocks(
 	}
 
 	// if stream is in the external_media table, we need to read from external storage
-	streamInfo, _, _, err := s.params.Storage.GetExternalMediaStreamInfo(ctx, s.streamId)
+	location, err := s.params.Storage.GetMediaStreamLocation(ctx, s.streamId)
 	if err != nil {
 		return nil, false, err
 	}
 	// TODO parallelize this
-	if streamInfo != "" {
+	if location != "" {
 		client, err := storage.CreateExternalClient()
 		if err != nil {
 			return nil, false, err
