@@ -731,7 +731,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
     try {
         const joinId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
-        
+
         // Get the ETH amount from the transaction value (payment to join)
         const ethAmount = event.transaction.value || 0n
 
@@ -750,13 +750,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         })
 
         // Update cached metrics including both member count and ETH volume
-        await updateSpaceCachedMetrics(
-            context,
-            spaceId,
-            blockTimestamp,
-            ethAmount,
-            'join',
-        )
+        await updateSpaceCachedMetrics(context, spaceId, blockTimestamp, ethAmount, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,

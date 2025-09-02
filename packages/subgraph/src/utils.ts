@@ -113,7 +113,6 @@ export async function updateSpaceCachedMetrics(
     ethAmount: bigint,
     eventType: 'swap' | 'tip' | 'join',
 ): Promise<void> {
-
     const currentTimestamp = Number(blockTimestamp)
     const oneDayAgo = currentTimestamp - 86400
     const sevenDaysAgo = currentTimestamp - 7 * 86400
