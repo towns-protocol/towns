@@ -120,7 +120,32 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 		},
 	})
 	if err != nil {
+		// If completion fails, abort the upload to clean up
+		abortErr := w.AbortMediaStreamUpload(ctx, streamId, uploadID)
+		if abortErr != nil {
+			return fmt.Errorf("failed to complete multipart upload: %w, and failed to abort: %v", err, abortErr)
+		}
 		return fmt.Errorf("failed to complete multipart upload: %w", err)
+	}
+	return nil
+}
+
+// AbortMediaStreamUpload aborts a multipart upload and cleans up resources
+func (w *ExternalMediaStore) AbortMediaStreamUpload(
+	ctx context.Context,
+	streamId StreamId,
+	uploadID string,
+) error {
+	// Generate S3 key: streams/{streamId}
+	key := fmt.Sprintf("streams/%x", streamId)
+	
+	_, err := w.s3Client.AbortMultipartUpload(ctx, &s3.AbortMultipartUploadInput{
+		Bucket:   &w.bucket,
+		Key:      &key,
+		UploadId: &uploadID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to abort multipart upload: %w", err)
 	}
 	return nil
 }

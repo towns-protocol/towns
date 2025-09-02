@@ -218,11 +218,18 @@ func (s *Service) replicatedAddMediaEventImpl(
 			partNum := len(partToEtag) + 1
 			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(ctx, streamId, mbBytes, uploadID, partNum)
 			if err != nil {
+				// If S3 upload fails, abort the entire multipart upload
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to upload chunk to S3: %w, and failed to abort upload: %v", err, abortErr)
+				}
 				return err
 			}
 			new_bytes_uploaded := bytes_uploaded + int64(len(mbBytes))
 			partToEtag[partNum] = etag
 			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, new_bytes_uploaded) != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to write external media stream info: %w, and failed to abort upload: %v", err, abortErr)
+				}
 				return err
 			}
 			mbBytes = []byte(fmt.Sprintf("bytes=%d-%d", bytes_uploaded, new_bytes_uploaded))
@@ -244,6 +251,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 
 		if uploadID != "" {
 			if s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, partToEtag) != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return fmt.Errorf("failed to complete multipart upload: %w, and failed to abort upload: %v", err, abortErr)
+				}
 				return err
 			}
 		}

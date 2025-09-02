@@ -305,5 +305,6 @@ type (
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
 		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, partToEtag map[int]string) error
+		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 	}
 )
