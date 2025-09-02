@@ -1134,12 +1134,6 @@ type (
 		Status                    string                              `json:"status"`
 	}
 
-	metaData struct {
-		RiverBlock crypto.BlockNumber `json:"riverBlock"`
-		Start      time.Time          `json:"start"`
-		Resumed    []time.Time        `json:"resumed,omitempty"`
-	}
-
 	Client struct {
 		sem    *semaphore.Weighted
 		client protocolconnect.StreamServiceClient
@@ -1212,7 +1206,6 @@ func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []strin
 
 		nodeFile, err := os.Open(path)
 		if err != nil {
-			panic(err)
 			return err
 		}
 		defer nodeFile.Close()
