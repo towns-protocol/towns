@@ -72,7 +72,7 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "Run Nodes And Services",
+        "Run Nodes and Services",
         "Playground",
       ],
       "group": {
