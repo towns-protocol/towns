@@ -51,15 +51,19 @@ type space {
   createdAt: BigInt
   paused: Boolean
   totalAmountStaked: BigInt
+  swapVolume24h: BigInt
   swapVolume7d: BigInt
   swapVolume30d: BigInt
   swapVolume: BigInt
+  tipVolume24h: BigInt
   tipVolume7d: BigInt
   tipVolume30d: BigInt
   tipVolume: BigInt
+  joinVolume24h: BigInt
   joinVolume7d: BigInt
   joinVolume30d: BigInt
   joinVolume: BigInt
+  memberCount24h: BigInt
   memberCount7d: BigInt
   memberCount30d: BigInt
   memberCount: BigInt
@@ -472,6 +476,14 @@ input spaceFilter {
   totalAmountStaked_lt: BigInt
   totalAmountStaked_gte: BigInt
   totalAmountStaked_lte: BigInt
+  swapVolume24h: BigInt
+  swapVolume24h_not: BigInt
+  swapVolume24h_in: [BigInt]
+  swapVolume24h_not_in: [BigInt]
+  swapVolume24h_gt: BigInt
+  swapVolume24h_lt: BigInt
+  swapVolume24h_gte: BigInt
+  swapVolume24h_lte: BigInt
   swapVolume7d: BigInt
   swapVolume7d_not: BigInt
   swapVolume7d_in: [BigInt]
@@ -496,6 +508,14 @@ input spaceFilter {
   swapVolume_lt: BigInt
   swapVolume_gte: BigInt
   swapVolume_lte: BigInt
+  tipVolume24h: BigInt
+  tipVolume24h_not: BigInt
+  tipVolume24h_in: [BigInt]
+  tipVolume24h_not_in: [BigInt]
+  tipVolume24h_gt: BigInt
+  tipVolume24h_lt: BigInt
+  tipVolume24h_gte: BigInt
+  tipVolume24h_lte: BigInt
   tipVolume7d: BigInt
   tipVolume7d_not: BigInt
   tipVolume7d_in: [BigInt]
@@ -520,6 +540,14 @@ input spaceFilter {
   tipVolume_lt: BigInt
   tipVolume_gte: BigInt
   tipVolume_lte: BigInt
+  joinVolume24h: BigInt
+  joinVolume24h_not: BigInt
+  joinVolume24h_in: [BigInt]
+  joinVolume24h_not_in: [BigInt]
+  joinVolume24h_gt: BigInt
+  joinVolume24h_lt: BigInt
+  joinVolume24h_gte: BigInt
+  joinVolume24h_lte: BigInt
   joinVolume7d: BigInt
   joinVolume7d_not: BigInt
   joinVolume7d_in: [BigInt]
@@ -544,6 +572,14 @@ input spaceFilter {
   joinVolume_lt: BigInt
   joinVolume_gte: BigInt
   joinVolume_lte: BigInt
+  memberCount24h: BigInt
+  memberCount24h_not: BigInt
+  memberCount24h_in: [BigInt]
+  memberCount24h_not_in: [BigInt]
+  memberCount24h_gt: BigInt
+  memberCount24h_lt: BigInt
+  memberCount24h_gte: BigInt
+  memberCount24h_lte: BigInt
   memberCount7d: BigInt
   memberCount7d_not: BigInt
   memberCount7d_in: [BigInt]
