@@ -8,7 +8,7 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/deckarep/golang-set/v2 v2.8.0
-	github.com/ethereum/go-ethereum v1.16.2
+	github.com/ethereum/go-ethereum v1.15.5
 	github.com/exaring/otelpgx v0.9.3
 	github.com/gammazero/workerpool v1.1.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
