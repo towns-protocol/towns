@@ -56,7 +56,7 @@ export const analyticsEvent = onchainTable('analytics_events', (t) => ({
     // Event-specific data stored as JSON
     // For swap: { tokenIn, tokenOut, amountIn, amountOut, recipient, poster }
     // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
-    // for join: { sender }
+    // for join: { recipient, tokenId }
     eventData: t.json(),
 }))
 
