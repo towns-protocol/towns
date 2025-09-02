@@ -21,6 +21,8 @@ type Query {
   spaces(where: spaceFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): spacePage!
   swap(txHash: String!): swap
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage!
+  analyticsEvent(id: String!): analyticsEvent
+  analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage!
   swapFee(spaceId: String!): swapFee
   swapFees(where: swapFeeFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapFeePage!
   swapRouter(txHash: String!): swapRouter
@@ -49,8 +51,15 @@ type space {
   createdAt: BigInt
   paused: Boolean
   totalAmountStaked: BigInt
+  swapVolumeLast7d: BigInt
+  swapVolumeLast30d: BigInt
+  swapVolumeAllTime: BigInt
+  tipVolumeLast7d: BigInt
+  tipVolumeLast30d: BigInt
+  tipVolumeAllTime: BigInt
   swapFee: swapFee
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage
+  analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage
   stakers(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
 }
 
@@ -197,6 +206,84 @@ input swapFilter {
   createdAt_lt: BigInt
   createdAt_gte: BigInt
   createdAt_lte: BigInt
+}
+
+type analyticsEventPage {
+  items: [analyticsEvent!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type analyticsEvent {
+  id: String!
+  spaceId: String
+  eventType: String
+  blockTimestamp: BigInt
+  txHash: String
+  ethAmount: BigInt
+  eventData: JSON
+  space: space
+}
+
+input analyticsEventFilter {
+  AND: [analyticsEventFilter]
+  OR: [analyticsEventFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
+  eventType: String
+  eventType_not: String
+  eventType_in: [String]
+  eventType_not_in: [String]
+  eventType_contains: String
+  eventType_not_contains: String
+  eventType_starts_with: String
+  eventType_ends_with: String
+  eventType_not_starts_with: String
+  eventType_not_ends_with: String
+  blockTimestamp: BigInt
+  blockTimestamp_not: BigInt
+  blockTimestamp_in: [BigInt]
+  blockTimestamp_not_in: [BigInt]
+  blockTimestamp_gt: BigInt
+  blockTimestamp_lt: BigInt
+  blockTimestamp_gte: BigInt
+  blockTimestamp_lte: BigInt
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  ethAmount: BigInt
+  ethAmount_not: BigInt
+  ethAmount_in: [BigInt]
+  ethAmount_not_in: [BigInt]
+  ethAmount_gt: BigInt
+  ethAmount_lt: BigInt
+  ethAmount_gte: BigInt
+  ethAmount_lte: BigInt
 }
 
 type stakersPage {
@@ -379,6 +466,54 @@ input spaceFilter {
   totalAmountStaked_lt: BigInt
   totalAmountStaked_gte: BigInt
   totalAmountStaked_lte: BigInt
+  swapVolumeLast7d: BigInt
+  swapVolumeLast7d_not: BigInt
+  swapVolumeLast7d_in: [BigInt]
+  swapVolumeLast7d_not_in: [BigInt]
+  swapVolumeLast7d_gt: BigInt
+  swapVolumeLast7d_lt: BigInt
+  swapVolumeLast7d_gte: BigInt
+  swapVolumeLast7d_lte: BigInt
+  swapVolumeLast30d: BigInt
+  swapVolumeLast30d_not: BigInt
+  swapVolumeLast30d_in: [BigInt]
+  swapVolumeLast30d_not_in: [BigInt]
+  swapVolumeLast30d_gt: BigInt
+  swapVolumeLast30d_lt: BigInt
+  swapVolumeLast30d_gte: BigInt
+  swapVolumeLast30d_lte: BigInt
+  swapVolumeAllTime: BigInt
+  swapVolumeAllTime_not: BigInt
+  swapVolumeAllTime_in: [BigInt]
+  swapVolumeAllTime_not_in: [BigInt]
+  swapVolumeAllTime_gt: BigInt
+  swapVolumeAllTime_lt: BigInt
+  swapVolumeAllTime_gte: BigInt
+  swapVolumeAllTime_lte: BigInt
+  tipVolumeLast7d: BigInt
+  tipVolumeLast7d_not: BigInt
+  tipVolumeLast7d_in: [BigInt]
+  tipVolumeLast7d_not_in: [BigInt]
+  tipVolumeLast7d_gt: BigInt
+  tipVolumeLast7d_lt: BigInt
+  tipVolumeLast7d_gte: BigInt
+  tipVolumeLast7d_lte: BigInt
+  tipVolumeLast30d: BigInt
+  tipVolumeLast30d_not: BigInt
+  tipVolumeLast30d_in: [BigInt]
+  tipVolumeLast30d_not_in: [BigInt]
+  tipVolumeLast30d_gt: BigInt
+  tipVolumeLast30d_lt: BigInt
+  tipVolumeLast30d_gte: BigInt
+  tipVolumeLast30d_lte: BigInt
+  tipVolumeAllTime: BigInt
+  tipVolumeAllTime_not: BigInt
+  tipVolumeAllTime_in: [BigInt]
+  tipVolumeAllTime_not_in: [BigInt]
+  tipVolumeAllTime_gt: BigInt
+  tipVolumeAllTime_lt: BigInt
+  tipVolumeAllTime_gte: BigInt
+  tipVolumeAllTime_lte: BigInt
 }
 
 type swapFeePage {
