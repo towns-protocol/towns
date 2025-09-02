@@ -248,7 +248,7 @@ export async function updateSpaceCachedMetrics(
     await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
 
     console.log(
-        `Updated cached metrics for space ${spaceId} - type: ${eventType}, ${eventType === 'join' ? `count: 1, amount: ${ethAmount}` : `amount: ${ethAmount}`}`,
+        `Updated cached metrics for space ${spaceId} - type: ${eventType}, amount: ${ethAmount}`,
     )
 }
 
