@@ -21,7 +21,7 @@ type Query {
   spaces(where: spaceFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): spacePage!
   swap(txHash: String!): swap
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage!
-  analyticsEvent(id: String!): analyticsEvent
+  analyticsEvent(txHash: String!, logIndex: Float!): analyticsEvent
   analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage!
   swapFee(spaceId: String!): swapFee
   swapFees(where: swapFeeFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapFeePage!
@@ -225,11 +225,11 @@ type analyticsEventPage {
 }
 
 type analyticsEvent {
-  id: String!
+  txHash: String
+  logIndex: Int
   spaceId: String
   eventType: String
   blockTimestamp: BigInt
-  txHash: String
   ethAmount: BigInt
   eventData: JSON
   space: space
@@ -238,16 +238,24 @@ type analyticsEvent {
 input analyticsEventFilter {
   AND: [analyticsEventFilter]
   OR: [analyticsEventFilter]
-  id: String
-  id_not: String
-  id_in: [String]
-  id_not_in: [String]
-  id_contains: String
-  id_not_contains: String
-  id_starts_with: String
-  id_ends_with: String
-  id_not_starts_with: String
-  id_not_ends_with: String
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  logIndex: Int
+  logIndex_not: Int
+  logIndex_in: [Int]
+  logIndex_not_in: [Int]
+  logIndex_gt: Int
+  logIndex_lt: Int
+  logIndex_gte: Int
+  logIndex_lte: Int
   spaceId: String
   spaceId_not: String
   spaceId_in: [String]
@@ -276,16 +284,6 @@ input analyticsEventFilter {
   blockTimestamp_lt: BigInt
   blockTimestamp_gte: BigInt
   blockTimestamp_lte: BigInt
-  txHash: String
-  txHash_not: String
-  txHash_in: [String]
-  txHash_not_in: [String]
-  txHash_contains: String
-  txHash_not_contains: String
-  txHash_starts_with: String
-  txHash_ends_with: String
-  txHash_not_starts_with: String
-  txHash_not_ends_with: String
   ethAmount: BigInt
   ethAmount_not: BigInt
   ethAmount_in: [BigInt]

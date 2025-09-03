@@ -1,4 +1,4 @@
-import { onchainTable, relations } from 'ponder'
+import { onchainTable, primaryKey, relations, index } from 'ponder'
 
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
@@ -44,12 +44,11 @@ export const swap = onchainTable('swaps', (t) => ({
 
 // Denormalized events table for all analytics
 export const analyticsEvent = onchainTable('analytics_events', (t) => ({
-    id: t.text().primaryKey(), // ${txHash}-${logIndex}
+    txHash: t.hex(),
+    logIndex: t.integer(),
     spaceId: t.hex(),
     eventType: t.text(), // 'swap', 'tip', etc.
     blockTimestamp: t.bigint(),
-    txHash: t.hex(),
-
     // ETH value for the event (calculated field for sorting/aggregation)
     ethAmount: t.bigint().default(0n),
 
@@ -58,7 +57,12 @@ export const analyticsEvent = onchainTable('analytics_events', (t) => ({
     // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
     // for join: { recipient, tokenId }
     eventData: t.json(),
-}))
+}), (table) => ({ 
+    pk: primaryKey({ columns: [table.txHash, table.logIndex] }),
+    txHashIdx: index().on(table.txHash),
+    logIndexIdx: index().on(table.logIndex),
+  }) 
+)
 
 export const swapFee = onchainTable('swap_fees', (t) => ({
     spaceId: t.hex().primaryKey(),

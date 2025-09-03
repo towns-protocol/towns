@@ -219,11 +219,11 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         })
 
         await context.db.insert(schema.analyticsEvent).values({
-            id: `${transactionHash}-${event.log.logIndex}`,
+            txHash: transactionHash,
+            logIndex: event.log.logIndex,
             spaceId: spaceId,
             eventType: 'swap',
             blockTimestamp: blockTimestamp,
-            txHash: transactionHash,
             ethAmount: ethAmount,
             eventData: {
                 tokenIn: event.args.tokenIn,
@@ -719,18 +719,17 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
     try {
-        const joinId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
 
         // Get the ETH amount from the transaction value (payment to join)
         const ethAmount = event.transaction.value || 0n
 
         await context.db.insert(schema.analyticsEvent).values({
-            id: joinId,
+            txHash: event.transaction.hash,
+            logIndex: event.log.logIndex,
             spaceId: spaceId,
             eventType: 'join',
             blockTimestamp: blockTimestamp,
-            txHash: event.transaction.hash,
             ethAmount: ethAmount,
             eventData: {
                 recipient: event.args.recipient,
@@ -751,8 +750,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
     try {
-        // Create unique ID from txHash and logIndex
-        const tipId = `${event.transaction.hash}-${event.log.logIndex}`
         const spaceId = event.log.address // The space contract that emitted the event
 
         let ethAmount = 0n
@@ -761,11 +758,11 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         }
 
         await context.db.insert(schema.analyticsEvent).values({
-            id: tipId,
+            txHash: event.transaction.hash,
+            logIndex: event.log.logIndex,
             spaceId: spaceId,
             eventType: 'tip',
             blockTimestamp: blockTimestamp,
-            txHash: event.transaction.hash,
             ethAmount: ethAmount,
             eventData: {
                 sender: event.args.sender,
