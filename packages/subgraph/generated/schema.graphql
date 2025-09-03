@@ -228,11 +228,17 @@ type analyticsEvent {
   txHash: String
   logIndex: Int
   spaceId: String
-  eventType: String
+  eventType: analyticsEventType!
   blockTimestamp: BigInt
   ethAmount: BigInt
   eventData: JSON
   space: space
+}
+
+enum analyticsEventType {
+  swap
+  tip
+  join
 }
 
 input analyticsEventFilter {
@@ -266,16 +272,10 @@ input analyticsEventFilter {
   spaceId_ends_with: String
   spaceId_not_starts_with: String
   spaceId_not_ends_with: String
-  eventType: String
-  eventType_not: String
-  eventType_in: [String]
-  eventType_not_in: [String]
-  eventType_contains: String
-  eventType_not_contains: String
-  eventType_starts_with: String
-  eventType_ends_with: String
-  eventType_not_starts_with: String
-  eventType_not_ends_with: String
+  eventType: analyticsEventType
+  eventType_not: analyticsEventType
+  eventType_in: [analyticsEventType]
+  eventType_not_in: [analyticsEventType]
   blockTimestamp: BigInt
   blockTimestamp_not: BigInt
   blockTimestamp_in: [BigInt]

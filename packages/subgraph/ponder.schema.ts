@@ -1,4 +1,10 @@
-import { onchainTable, primaryKey, relations, index } from 'ponder'
+import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
+
+export const analyticsEventType = onchainEnum('analytics_event_type', [
+    'swap',
+    'tip',
+    'join'
+])
 
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
@@ -47,7 +53,7 @@ export const analyticsEvent = onchainTable('analytics_events', (t) => ({
     txHash: t.hex(),
     logIndex: t.integer(),
     spaceId: t.hex(),
-    eventType: t.text(), // 'swap', 'tip', etc.
+    eventType: analyticsEventType().notNull(),
     blockTimestamp: t.bigint(),
     // ETH value for the event (calculated field for sorting/aggregation)
     ethAmount: t.bigint().default(0n),
