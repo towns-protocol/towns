@@ -17,7 +17,7 @@ A bot that creates interactive polls with emoji reactions for voting.
 
 ## Environment Variables
 
-- `APP_PRIVATE_DATA_BASE64`: Your Towns app private data
+- `APP_PRIVATE_DATA`: Your Towns app private data
 - `JWT_SECRET`: JWT secret for authentication
 - `RIVER_ENV`: Environment (development/production)
 - `PORT`: Port to run the bot on
