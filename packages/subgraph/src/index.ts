@@ -1,4 +1,4 @@
-import { eq, sql } from 'ponder'
+import { eq, sql, and } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
 import {
@@ -218,37 +218,47 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             createdAt: blockNumber,
         })
 
-        await context.db.insert(schema.analyticsEvent).values({
-            txHash: transactionHash,
-            logIndex: event.log.logIndex,
-            spaceId: spaceId,
-            eventType: 'swap',
-            blockTimestamp: blockTimestamp,
-            ethAmount: ethAmount,
-            eventData: {
-                tokenIn: event.args.tokenIn,
-                tokenOut: event.args.tokenOut,
-                amountIn: event.args.amountIn.toString(),
-                amountOut: event.args.amountOut.toString(),
-                recipient: event.args.recipient,
-                poster: event.args.poster,
-            },
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, transactionHash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+            ),
         })
+        
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: transactionHash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'swap',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    tokenIn: event.args.tokenIn,
+                    tokenOut: event.args.tokenOut,
+                    amountIn: event.args.amountIn.toString(),
+                    amountOut: event.args.amountOut.toString(),
+                    recipient: event.args.recipient,
+                    poster: event.args.poster,
+                },
+            })
 
-        // Increment all-time swap volume
-        const currentSpace = await context.db.sql.query.space.findFirst({
-            where: eq(schema.space.id, spaceId),
-        })
-        if (currentSpace) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    swapVolume: (currentSpace.swapVolume ?? 0n) + ethAmount,
-                })
-                .where(eq(schema.space.id, spaceId))
+            // Increment all-time swap volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        swapVolume: (currentSpace.swapVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'swap')
         }
-
-        await updateSpaceCachedMetrics(context, spaceId, 'swap')
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -737,34 +747,44 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         // Get the ETH amount from the transaction value (payment to join)
         const ethAmount = event.transaction.value || 0n
 
-        await context.db.insert(schema.analyticsEvent).values({
-            txHash: event.transaction.hash,
-            logIndex: event.log.logIndex,
-            spaceId: spaceId,
-            eventType: 'join',
-            blockTimestamp: blockTimestamp,
-            ethAmount: ethAmount,
-            eventData: {
-                recipient: event.args.recipient,
-                tokenId: event.args.tokenId.toString(),
-            },
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+            ),
         })
+        
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'join',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    recipient: event.args.recipient,
+                    tokenId: event.args.tokenId.toString(),
+                },
+            })
 
-        // Increment all-time join volume and member count
-        const currentSpace = await context.db.sql.query.space.findFirst({
-            where: eq(schema.space.id, spaceId),
-        })
-        if (currentSpace) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    joinVolume: (currentSpace.joinVolume ?? 0n) + ethAmount,
-                    memberCount: (currentSpace.memberCount ?? 0n) + 1n,
-                })
-                .where(eq(schema.space.id, spaceId))
+            // Increment all-time join volume and member count only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        joinVolume: (currentSpace.joinVolume ?? 0n) + ethAmount,
+                        memberCount: (currentSpace.memberCount ?? 0n) + 1n,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'join')
         }
-
-        await updateSpaceCachedMetrics(context, spaceId, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -784,38 +804,48 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             ethAmount = event.args.amount
         }
 
-        await context.db.insert(schema.analyticsEvent).values({
-            txHash: event.transaction.hash,
-            logIndex: event.log.logIndex,
-            spaceId: spaceId,
-            eventType: 'tip',
-            blockTimestamp: blockTimestamp,
-            ethAmount: ethAmount,
-            eventData: {
-                sender: event.args.sender,
-                receiver: event.args.receiver,
-                currency: event.args.currency,
-                amount: event.args.amount.toString(),
-                tokenId: event.args.tokenId.toString(),
-                messageId: event.args.messageId,
-                channelId: event.args.channelId,
-            },
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+            ),
         })
+        
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'tip',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    sender: event.args.sender,
+                    receiver: event.args.receiver,
+                    currency: event.args.currency,
+                    amount: event.args.amount.toString(),
+                    tokenId: event.args.tokenId.toString(),
+                    messageId: event.args.messageId,
+                    channelId: event.args.channelId,
+                },
+            })
 
-        // Increment all-time tip volume
-        const currentSpace = await context.db.sql.query.space.findFirst({
-            where: eq(schema.space.id, spaceId),
-        })
-        if (currentSpace) {
-            await context.db.sql
-                .update(schema.space)
-                .set({
-                    tipVolume: (currentSpace.tipVolume ?? 0n) + ethAmount,
-                })
-                .where(eq(schema.space.id, spaceId))
+            // Increment all-time tip volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        tipVolume: (currentSpace.tipVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'tip')
         }
-
-        await updateSpaceCachedMetrics(context, spaceId, 'tip')
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
