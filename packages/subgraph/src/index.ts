@@ -208,7 +208,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         const existingSwap = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
         })
-        
+
         if (!existingSwap) {
             // Write to swap table
             await context.db.insert(schema.swap).values({
@@ -229,10 +229,10 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
         const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
             where: and(
                 eq(schema.analyticsEvent.txHash, transactionHash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
             ),
         })
-        
+
         if (!existingAnalytics) {
             await context.db.insert(schema.analyticsEvent).values({
                 txHash: transactionHash,
@@ -758,10 +758,10 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
             where: and(
                 eq(schema.analyticsEvent.txHash, event.transaction.hash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
             ),
         })
-        
+
         if (!existingAnalytics) {
             await context.db.insert(schema.analyticsEvent).values({
                 txHash: event.transaction.hash,
@@ -815,10 +815,10 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
             where: and(
                 eq(schema.analyticsEvent.txHash, event.transaction.hash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex)
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
             ),
         })
-        
+
         if (!existingAnalytics) {
             await context.db.insert(schema.analyticsEvent).values({
                 txHash: event.transaction.hash,

@@ -132,7 +132,7 @@ export async function updateSpaceCachedMetrics(
         where: and(
             eq(schema.analyticsEvent.spaceId, spaceId),
             eq(schema.analyticsEvent.eventType, eventType),
-            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo))
+            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo)),
         ),
     })
 
