@@ -10,7 +10,6 @@ export interface BaseChainConfig {
         baseRegistry: Address
         riverAirdrop: Address | undefined
         swapRouter: Address | undefined
-        towns: Address | undefined
         appRegistry: Address | undefined
         utils: {
             mockNFT: Address | undefined // mockErc721aAddress
