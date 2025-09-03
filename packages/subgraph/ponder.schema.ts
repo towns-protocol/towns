@@ -66,6 +66,10 @@ export const analyticsEvent = onchainTable(
         pk: primaryKey({ columns: [table.txHash, table.logIndex] }),
         txHashIdx: index().on(table.txHash),
         logIndexIdx: index().on(table.logIndex),
+        spaceIdx: index().on(table.spaceId),
+        timestampIdx: index().on(table.blockTimestamp),
+        eventTypeIdx: index().on(table.eventType),
+        spaceEventTypeTimestampIdx: index().on(table.spaceId, table.eventType, table.blockTimestamp),
     }),
 )
 
