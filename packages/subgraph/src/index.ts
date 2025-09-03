@@ -44,6 +44,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
             owner: event.args.owner,
             tokenId: event.args.tokenId,
             name: space.name,
+            nameLowercased: space.name.toLowerCase(),
             uri: space.uri,
             shortDescription: space.shortDescription,
             longDescription: space.longDescription,
@@ -93,6 +94,7 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
             .set({
                 paused: paused,
                 name: spaceInfo.name,
+                nameLowercased: spaceInfo.name.toLowerCase(),
                 uri: spaceInfo.uri,
                 shortDescription: spaceInfo.shortDescription,
                 longDescription: spaceInfo.longDescription,

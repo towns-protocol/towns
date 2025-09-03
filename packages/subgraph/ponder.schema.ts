@@ -5,6 +5,7 @@ export const space = onchainTable('spaces', (t) => ({
     owner: t.hex(),
     tokenId: t.bigint(),
     name: t.text(),
+    nameLowercased: t.text(),
     uri: t.text(),
     shortDescription: t.text(),
     longDescription: t.text(),
