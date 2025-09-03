@@ -234,8 +234,7 @@ func (s *Service) createReplicatedMediaStream(
 			if err != nil {
 				return nil, err
 			}
-			partToEtag := make(map[int]string)
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, partToEtag, 0) != nil {
+			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to abort upload: %v", err, abortErr)
 				}

@@ -173,17 +173,17 @@ type (
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
-		// GetExternalMediaStreamInfo returns the upload ID for the given stream.
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, map[int]string, int64, error)
-
-		// WriteExternalMediaStreamInfo creates an entry in the media stream index pointing to where the data was uploaded
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int64, error)
 		WriteExternalMediaStreamInfo(
 			ctx context.Context,
 			streamId StreamId,
 			uploadID string,
-			partToEtag map[int]string,
 			bytes_uploaded int64,
 		) error
+
+		GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error)
+		GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {PartNumber int; Etag string}, error)
+		WriteExternalMediaStreamChunkInfo(ctx context.Context, streamId StreamId, miniblock int64, partNumber int, etag string, rangeHeader string) error
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
@@ -308,7 +308,7 @@ type (
 	ExternalMediaStorage interface {
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
 		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
-		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, partToEtag map[int]string) error
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []struct {PartNumber int; Etag string}) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 		GetBucket() string
 	}

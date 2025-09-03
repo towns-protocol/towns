@@ -91,17 +91,17 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
-	partToEtag map[int]string,
+	etags []struct {PartNumber int; Etag string},
 ) error {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
 	
 	// Convert map[int]string to []types.CompletedPart
 	var parts []types.CompletedPart
-	for partNum, etag := range partToEtag {
+	for _, etag := range etags {
 		parts = append(parts, types.CompletedPart{
-			ETag:       &etag,
-			PartNumber: int32(partNum),
+			ETag:       &etag.Etag,
+			PartNumber: int32(etag.PartNumber),
 		})
 	}
 	
@@ -152,7 +152,7 @@ func (w *ExternalMediaStore) GetBucket() string {
 func DownloadChunkFromExternal(
 	ctx context.Context,
 	streamId StreamId,
-	rangeHeader []byte,
+	rangeHeader string,
 	bucket string,
 	client *s3.Client,
 ) ([]byte, error) {
@@ -163,7 +163,7 @@ func DownloadChunkFromExternal(
 	output, err := client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &key,
-		Range:  aws.String(string(rangeHeader)),
+		Range:  aws.String(rangeHeader),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to download range %s from S3: %w", rangeHeader, err)

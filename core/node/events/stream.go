@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"time"
@@ -672,7 +671,7 @@ func (s *Stream) GetMiniblocks(
 		return nil, false, err
 	}
 
-	// if stream is in the external_media table, we need to read from external storage
+	// if stream is external, we need to read from external storage
 	location, err := s.params.Storage.GetMediaStreamLocation(ctx, s.streamId)
 	if err != nil {
 		return nil, false, err
@@ -685,9 +684,11 @@ func (s *Stream) GetMiniblocks(
 		}
 		// for each block, get the data from external storage
 		for _, block := range blocks {
-			// TODO get bucket from config file
-			bucket := os.Getenv("S3_BUCKET")
-			data, err := storage.DownloadChunkFromExternal(ctx, s.streamId, block.Data, bucket, client)
+			rangeHeader, err := s.params.Storage.GetExternalMediaStreamChunkRangeByMiniblock(ctx, block.Number)
+			if err != nil {
+				return nil, false, err
+			}
+			data, err := storage.DownloadChunkFromExternal(ctx, s.streamId, rangeHeader, location, client)
 			if err != nil {
 				return nil, false, err
 			}
