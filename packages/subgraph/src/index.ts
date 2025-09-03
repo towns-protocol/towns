@@ -235,7 +235,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             },
         })
 
-        await updateSpaceCachedMetrics(context, spaceId)
+        await updateSpaceCachedMetrics(context, spaceId, 'swap')
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -737,7 +737,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
             },
         })
 
-        await updateSpaceCachedMetrics(context, spaceId)
+        await updateSpaceCachedMetrics(context, spaceId, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -775,7 +775,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             },
         })
 
-        await updateSpaceCachedMetrics(context, spaceId)
+        await updateSpaceCachedMetrics(context, spaceId, 'tip')
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }

@@ -109,6 +109,7 @@ export function decodePermissions(permissions: readonly string[]): Permission[] 
 export async function updateSpaceCachedMetrics(
     context: Context,
     spaceId: `0x${string}`,
+    eventType: 'swap' | 'tip' | 'join',
 ): Promise<void> {
     // Get current timestamp for rolling window calculations
     const currentTimestamp = Math.floor(Date.now() / 1000)
@@ -126,34 +127,53 @@ export async function updateSpaceCachedMetrics(
         return
     }
 
-    // Query ALL events for all-time totals
-    const allEvents = await context.db.sql.query.analyticsEvent.findMany({
+    // Query only events of the specific type
+    const events = await context.db.sql.query.analyticsEvent.findMany({
         where: eq(schema.analyticsEvent.spaceId, spaceId),
     })
 
-    // Calculate all metrics from scratch
-    let swapVolume24h = 0n
-    let swapVolume7d = 0n
-    let swapVolume30d = 0n
-    let swapVolume = 0n
-    let tipVolume24h = 0n
-    let tipVolume7d = 0n
-    let tipVolume30d = 0n
-    let tipVolume = 0n
-    let joinVolume24h = 0n
-    let joinVolume7d = 0n
-    let joinVolume30d = 0n
-    let joinVolume = 0n
-    let memberCount24h = 0n
-    let memberCount7d = 0n
-    let memberCount30d = 0n
-    let memberCount = 0n
+    // Filter for the specific event type
+    const filteredEvents = events.filter(e => e.eventType === eventType)
 
-    for (const event of allEvents) {
-        const eventTimestamp = Number(event.blockTimestamp)
-        const eventEthAmount = event.ethAmount || 0n
+    // Initialize update object with existing space values
+    type SwapMetrics = {
+        swapVolume24h: bigint
+        swapVolume7d: bigint
+        swapVolume30d: bigint
+        swapVolume: bigint
+    }
+    
+    type TipMetrics = {
+        tipVolume24h: bigint
+        tipVolume7d: bigint
+        tipVolume30d: bigint
+        tipVolume: bigint
+    }
+    
+    type JoinMetrics = {
+        joinVolume24h: bigint
+        joinVolume7d: bigint
+        joinVolume30d: bigint
+        joinVolume: bigint
+        memberCount24h: bigint
+        memberCount7d: bigint
+        memberCount30d: bigint
+        memberCount: bigint
+    }
+    
+    let updates: SwapMetrics | TipMetrics | JoinMetrics
 
-        if (event.eventType === 'swap') {
+    if (eventType === 'swap') {
+        // Calculate swap metrics
+        let swapVolume24h = 0n
+        let swapVolume7d = 0n
+        let swapVolume30d = 0n
+        let swapVolume = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
             swapVolume += eventEthAmount
             if (eventTimestamp >= oneDayAgo) {
                 swapVolume24h += eventEthAmount
@@ -164,7 +184,25 @@ export async function updateSpaceCachedMetrics(
             if (eventTimestamp >= thirtyDaysAgo) {
                 swapVolume30d += eventEthAmount
             }
-        } else if (event.eventType === 'tip') {
+        }
+
+        updates = {
+            swapVolume24h,
+            swapVolume7d,
+            swapVolume30d,
+            swapVolume
+        }
+    } else if (eventType === 'tip') {
+        // Calculate tip metrics
+        let tipVolume24h = 0n
+        let tipVolume7d = 0n
+        let tipVolume30d = 0n
+        let tipVolume = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
             tipVolume += eventEthAmount
             if (eventTimestamp >= oneDayAgo) {
                 tipVolume24h += eventEthAmount
@@ -175,7 +213,29 @@ export async function updateSpaceCachedMetrics(
             if (eventTimestamp >= thirtyDaysAgo) {
                 tipVolume30d += eventEthAmount
             }
-        } else if (event.eventType === 'join') {
+        }
+
+        updates = {
+            tipVolume24h,
+            tipVolume7d,
+            tipVolume30d,
+            tipVolume
+        }
+    } else if (eventType === 'join') {
+        // Calculate join metrics
+        let joinVolume24h = 0n
+        let joinVolume7d = 0n
+        let joinVolume30d = 0n
+        let joinVolume = 0n
+        let memberCount24h = 0n
+        let memberCount7d = 0n
+        let memberCount30d = 0n
+        let memberCount = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
             memberCount += 1n
             joinVolume += eventEthAmount
             if (eventTimestamp >= oneDayAgo) {
@@ -191,31 +251,26 @@ export async function updateSpaceCachedMetrics(
                 joinVolume30d += eventEthAmount
             }
         }
-    }
 
-    // Update all metrics at once
-    const updates = {
-        swapVolume24h,
-        swapVolume7d,
-        swapVolume30d,
-        swapVolume,
-        tipVolume24h,
-        tipVolume7d,
-        tipVolume30d,
-        tipVolume,
-        joinVolume24h,
-        joinVolume7d,
-        joinVolume30d,
-        joinVolume,
-        memberCount24h,
-        memberCount7d,
-        memberCount30d,
-        memberCount,
+        updates = {
+            joinVolume24h,
+            joinVolume7d,
+            joinVolume30d,
+            joinVolume,
+            memberCount24h,
+            memberCount7d,
+            memberCount30d,
+            memberCount
+        }
+    } else {
+        // This should never happen due to the type constraint, but TypeScript needs it
+        console.error(`Unknown event type: ${eventType}`)
+        return
     }
 
     await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
 
-    console.log(`Updated cached metrics for space ${spaceId}`)
+    console.log(`Updated ${eventType} metrics for space ${spaceId}`)
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }
