@@ -68,7 +68,7 @@ func TestStreamsToNodeAssignment(t *testing.T) {
 		cfg.RiverChain.NetworkUrl = "https://mainnet.rpc.towns.com/http"
 		cfg.RiverChain.ChainId = 550
 		cfg.RiverChain.BlockTimeMs = 2000
-		cfg.RegistryContract.Address = common.HexToAddress("0x1298c03Fde548dc433a452573E36A713b38A0404")
+		cfg.RegistryContract.Address = common.HexToAddress("0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE")
 
 		blockchain, err := crypto.NewBlockchain(
 			ctx,
