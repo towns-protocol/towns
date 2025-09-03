@@ -46,7 +46,6 @@ import {
     Tags,
     type StreamEvent,
     MessageInteractionType,
-    MemberPayload,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
