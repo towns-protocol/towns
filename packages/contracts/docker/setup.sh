@@ -103,7 +103,7 @@ wait_for_river_chain() {
 
 deploy_contracts() {
   pushd ./core
-    just RUN_ENV=multi _require_run_env config-root deploy-contracts 
+    just RUN_ENV=multi config-root deploy-contracts
   popd
 }
 
