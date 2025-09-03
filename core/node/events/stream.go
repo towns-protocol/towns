@@ -12,6 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 
+	"sync"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -676,23 +678,45 @@ func (s *Stream) GetMiniblocks(
 	if err != nil {
 		return nil, false, err
 	}
-	// TODO parallelize this
 	if location != "" {
 		client, err := storage.CreateExternalClient()
 		if err != nil {
 			return nil, false, err
 		}
-		// for each block, get the data from external storage
-		for _, block := range blocks {
-			rangeHeader, err := s.params.Storage.GetExternalMediaStreamChunkRangeByMiniblock(ctx, block.Number)
+		// for each block, get the data from external storage in parallel
+		var wg sync.WaitGroup
+		errChan := make(chan error, len(blocks))
+
+		for i, block := range blocks {
+			wg.Add(1)
+			go func(idx int, blk *storage.MiniblockDescriptor) {
+				defer wg.Done()
+
+				rangeHeader, err := s.params.Storage.GetExternalMediaStreamChunkRangeByMiniblock(ctx, blk.Number)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to get range header for block %d: %w", blk.Number, err)
+					return
+				}
+
+				data, err := storage.DownloadChunkFromExternal(ctx, s.streamId, rangeHeader, location, client)
+				if err != nil {
+					errChan <- fmt.Errorf("failed to download chunk for block %d: %w", blk.Number, err)
+					return
+				}
+
+				blocks[idx].Data = data
+			}(i, block)
+		}
+
+		// Wait for all downloads to complete
+		wg.Wait()
+		close(errChan)
+
+		// Check for any errors
+		for err := range errChan {
 			if err != nil {
 				return nil, false, err
 			}
-			data, err := storage.DownloadChunkFromExternal(ctx, s.streamId, rangeHeader, location, client)
-			if err != nil {
-				return nil, false, err
-			}
-			block.Data = data
 		}
 	}
 
