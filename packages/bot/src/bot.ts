@@ -1,4 +1,5 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
+import { utils } from 'ethers'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -172,6 +173,12 @@ export type BotEvents = {
     tip: (
         handler: BotActions,
         event: BasePayload & {
+            /** The message ID of the parent of the tip */
+            messageId: string
+            /** The address of the sender of the tip */
+            senderAddress: string
+            /** The address of the receiver of the tip */
+            receiverAddress: string
             /** The amount of the tip */
             amount: bigint
             /** The currency of the tip */
@@ -390,27 +397,93 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
                         break
                     }
                     case 'memberPayload': {
-                        if (parsed.event.payload.value.content.case === 'membership') {
-                            const membership = parsed.event.payload.value.content.value
-                            const isChannel = isChannelStreamId(streamId)
-                            // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
-                            if (!isChannel) continue
-                            if (membership.op === MembershipOp.SO_JOIN) {
-                                this.emitter.emit('channelJoin', this.client, {
-                                    userId: userIdFromAddress(membership.userAddress),
-                                    spaceId: spaceIdFromChannelId(streamId),
-                                    channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                })
-                            }
-                            if (membership.op === MembershipOp.SO_LEAVE) {
-                                this.emitter.emit('channelLeave', this.client, {
-                                    userId: userIdFromAddress(membership.userAddress),
-                                    spaceId: spaceIdFromChannelId(streamId),
-                                    channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                })
-                            }
+                        switch (parsed.event.payload.value.content.case) {
+                            case 'membership':
+                                {
+                                    const membership = parsed.event.payload.value.content.value
+                                    const isChannel = isChannelStreamId(streamId)
+                                    // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
+                                    if (!isChannel) continue
+                                    if (membership.op === MembershipOp.SO_JOIN) {
+                                        this.emitter.emit('channelJoin', this.client, {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            spaceId: spaceIdFromChannelId(streamId),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
+                                    }
+                                    if (membership.op === MembershipOp.SO_LEAVE) {
+                                        this.emitter.emit('channelLeave', this.client, {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            spaceId: spaceIdFromChannelId(streamId),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
+                                    }
+                                }
+                                break
+
+                            case 'memberBlockchainTransaction':
+                                {
+                                    const transactionContent =
+                                        parsed.event.payload.value.content.value.transaction
+                                            ?.content
+
+                                    switch (transactionContent?.case) {
+                                        case 'spaceReview':
+                                            break
+                                        case 'tokenTransfer':
+                                            break
+                                        case 'tip':
+                                            {
+                                                const tipEvent = transactionContent.value.event
+                                                if (!tipEvent) {
+                                                    return
+                                                }
+                                                const currency = utils.getAddress(
+                                                    bin_toHexString(tipEvent.currency),
+                                                )
+                                                const senderAddressBytes =
+                                                    parsed.event.payload.value.content.value
+                                                        .fromUserAddress
+                                                const senderAddress =
+                                                    userIdFromAddress(senderAddressBytes)
+                                                this.emitter.emit('tip', this.client, {
+                                                    userId: senderAddress,
+                                                    spaceId: spaceIdFromChannelId(streamId),
+                                                    channelId: streamId,
+                                                    eventId: parsed.hashStr,
+                                                    amount: tipEvent.amount,
+                                                    currency: currency as `0x${string}`,
+                                                    senderAddress: senderAddress,
+                                                    receiverAddress: userIdFromAddress(
+                                                        transactionContent.value.toUserAddress,
+                                                    ),
+                                                    messageId: bin_toHexString(tipEvent.messageId),
+                                                })
+                                            }
+                                            break
+                                        case undefined:
+                                            break
+                                        default:
+                                            logNever(transactionContent)
+                                    }
+                                }
+                                break
+                            case 'keySolicitation':
+                            case 'keyFulfillment':
+                            case 'displayName':
+                            case 'username':
+                            case 'ensAddress':
+                            case 'nft':
+                            case 'pin':
+                            case 'unpin':
+                            case 'encryptionAlgorithm':
+                                break
+                            case undefined:
+                                break
+                            default:
+                                logNever(parsed.event.payload.value.content)
                         }
                     }
                 }
@@ -647,7 +720,6 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
 
     /**
      * Triggered when someone tips the bot
-     * TODO: impl
      */
     onTip(fn: BotEvents['tip']) {
         this.emitter.on('tip', fn)
