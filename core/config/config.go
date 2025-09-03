@@ -772,9 +772,9 @@ func (c *Config) parseChains() error {
 	return nil
 }
 
-type confifCtxKeyType struct{}
+type configCtxKeyType struct{}
 
-var configCtxKey = confifCtxKeyType{}
+var configCtxKey = configCtxKeyType{}
 
 func CtxWithConfig(ctx context.Context, c *Config) context.Context {
 	return context.WithValue(ctx, configCtxKey, c)
