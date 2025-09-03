@@ -4,7 +4,7 @@ FROM golang:1.24.6-alpine AS builder
 # Install build-base for GCC (C compiler and related tools), git, and other dependencies.
 # Install libsecp256k1-dev if available or compile it from source.
 RUN apk add --no-cache build-base git libsecp256k1-dev
-RUN apk add cargo=1.89.0-r0
+RUN apk add cargo
 
 ARG VER_VERSION=version_unset
 ARG VER_BRANCH=branch_unset
