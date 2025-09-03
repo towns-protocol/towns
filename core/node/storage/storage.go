@@ -182,8 +182,18 @@ type (
 		) error
 
 		GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error)
-		GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {PartNumber int; Etag string}, error)
-		WriteExternalMediaStreamChunkInfo(ctx context.Context, streamId StreamId, miniblock int64, partNumber int, etag string, rangeHeader string) error
+		GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {
+			PartNumber int
+			Etag       string
+		}, error)
+		WriteExternalMediaStreamChunkInfo(
+			ctx context.Context,
+			streamId StreamId,
+			miniblock int64,
+			partNumber int,
+			etag string,
+			rangeHeader string,
+		) error
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
@@ -307,8 +317,17 @@ type (
 
 	ExternalMediaStorage interface {
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
-		UploadChunkToExternalMediaStream(ctx context.Context, streamId StreamId, data []byte, uploadID string, partNum int) (string, error)
-		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []struct {PartNumber int; Etag string}) error
+		UploadChunkToExternalMediaStream(
+			ctx context.Context,
+			streamId StreamId,
+			data []byte,
+			uploadID string,
+			partNum int,
+		) (string, error)
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []struct {
+			PartNumber int
+			Etag       string
+		}) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 		GetBucket() string
 	}

@@ -379,7 +379,11 @@ func (s *PostgresStreamStore) GetMediaStreamLocation(ctx context.Context, stream
 	return location, err
 }
 
-func (s *PostgresStreamStore) getMediaStreamLocationTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, error) {
+func (s *PostgresStreamStore) getMediaStreamLocationTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (string, error) {
 	var location string
 	if err := tx.QueryRow(ctx, "SELECT location FROM es WHERE stream_id = $1", streamId).Scan(&location); err != nil {
 		return "", err
@@ -419,10 +423,9 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	uploadID string,	
+	uploadID string,
 	bytes_uploaded int64,
 ) error {
-
 	query := `
 		INSERT INTO external_media_streams (stream_id, upload_id, bytes_uploaded) 
 		VALUES ($1, $2, $3)
@@ -436,7 +439,10 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	return err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int64, error) {
+func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
+	ctx context.Context,
+	streamId StreamId,
+) (string, int64, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -457,10 +463,14 @@ func (s *PostgresStreamStore) GetExternalMediaStreamInfo(ctx context.Context, st
 	return uploadID, bytes_uploaded, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId) (string, int64, error) {
+func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (string, int64, error) {
 	var uploadID string
 	var bytes_uploaded int64
-	
+
 	if err := tx.QueryRow(
 		ctx,
 		"SELECT upload_id, bytes_uploaded FROM external_media_streams WHERE stream_id = $1",
@@ -472,7 +482,10 @@ func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(ctx context.Context, 
 	return uploadID, bytes_uploaded, nil
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error) {
+func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(
+	ctx context.Context,
+	miniblock int64,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -492,14 +505,17 @@ func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(ctx co
 	return rangeHeader, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(ctx context.Context, tx pgx.Tx, miniblock int64) (string, error) {
+func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	miniblock int64,
+) (string, error) {
 	var rangeHeader string
 	err := tx.QueryRow(ctx, `
 		SELECT range_header 
 		FROM external_media_chunks 
 		WHERE miniblock = $1`,
 		miniblock).Scan(&rangeHeader)
-	
 	if err != nil {
 		return "", err
 	}
@@ -507,11 +523,18 @@ func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(ctx 
 	return rangeHeader, nil
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {PartNumber int; Etag string}, error) {
+func (s *PostgresStreamStore) GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {
+	PartNumber int
+	Etag       string
+}, error,
+) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	var etags []struct {PartNumber int; Etag string}
+	var etags []struct {
+		PartNumber int
+		Etag       string
+	}
 	err := s.txRunner(
 		ctx,
 		"GetExternalMediaStreamEtags",
@@ -527,7 +550,15 @@ func (s *PostgresStreamStore) GetExternalMediaStreamEtags(ctx context.Context, s
 	return etags, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(ctx context.Context, tx pgx.Tx, streamId StreamId) ([]struct {PartNumber int; Etag string}, error) {
+func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) ([]struct {
+	PartNumber int
+	Etag       string
+}, error,
+) {
 	rows, err := tx.Query(ctx, `
 		SELECT part_number, etag 
 		FROM external_media_chunks 
@@ -538,7 +569,10 @@ func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(ctx context.Context,
 	}
 	defer rows.Close()
 
-	var etags []struct {PartNumber int; Etag string}
+	var etags []struct {
+		PartNumber int
+		Etag       string
+	}
 	for rows.Next() {
 		var partNumber int
 		var etag string
@@ -546,7 +580,10 @@ func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		etags = append(etags, struct {PartNumber int; Etag string}{PartNumber: partNumber, Etag: etag})
+		etags = append(etags, struct {
+			PartNumber int
+			Etag       string
+		}{PartNumber: partNumber, Etag: etag})
 	}
 
 	if err := rows.Err(); err != nil {
@@ -556,7 +593,14 @@ func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(ctx context.Context,
 	return etags, nil
 }
 
-func (s *PostgresStreamStore) WriteExternalMediaStreamChunkInfo(ctx context.Context, streamId StreamId, miniblock int64, partNumber int, etag string, rangeHeader string) error {
+func (s *PostgresStreamStore) WriteExternalMediaStreamChunkInfo(
+	ctx context.Context,
+	streamId StreamId,
+	miniblock int64,
+	partNumber int,
+	etag string,
+	rangeHeader string,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -576,7 +620,15 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamChunkInfo(ctx context.Cont
 	)
 }
 
-func (s *PostgresStreamStore) writeExternalMediaStreamChunkInfoTx(ctx context.Context, tx pgx.Tx, streamId StreamId, miniblock int64, partNumber int, etag string, rangeHeader string) error {
+func (s *PostgresStreamStore) writeExternalMediaStreamChunkInfoTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblock int64,
+	partNumber int,
+	etag string,
+	rangeHeader string,
+) error {
 	query := `
 		INSERT INTO external_media_chunks (stream_id, miniblock, part_number, etag, range_header) 
 		VALUES ($1, $2, $3, $4, $5)

@@ -26,35 +26,32 @@ const (
 // retryWithBackoff executes a function with exponential backoff retry logic
 func retryWithBackoff(ctx context.Context, operation string, fn func() error) error {
 	var lastErr error
-	
+
 	for attempt := 0; attempt <= maxRetries; attempt++ {
 		if attempt > 0 {
 			// Calculate delay with exponential backoff
-			delay := time.Duration(float64(baseDelay) * math.Pow(2, float64(attempt-1)))
-			if delay > maxDelay {
-				delay = maxDelay
-			}
-			
+			delay := min(time.Duration(float64(baseDelay)*math.Pow(2, float64(attempt-1))), maxDelay)
+
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.After(delay):
 			}
 		}
-		
+
 		err := fn()
 		if err == nil {
 			return nil
 		}
-		
+
 		lastErr = err
-		
+
 		// Don't retry on certain errors (e.g., authentication, invalid parameters)
 		if !isRetryableError(err) {
 			return err
 		}
 	}
-	
+
 	return fmt.Errorf("%s failed after %d attempts: %w", operation, maxRetries+1, lastErr)
 }
 
@@ -94,7 +91,7 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 ) (string, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
-	
+
 	var uploadID string
 	err := retryWithBackoff(ctx, "CreateMultipartUpload", func() error {
 		output, err := w.s3Client.CreateMultipartUpload(ctx, &s3.CreateMultipartUploadInput{
@@ -111,11 +108,10 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 		uploadID = *output.UploadId
 		return nil
 	})
-	
 	if err != nil {
 		return "", fmt.Errorf("failed to create multipart upload: %w", err)
 	}
-	
+
 	return uploadID, nil
 }
 
@@ -128,7 +124,7 @@ func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
 ) (string, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
-	
+
 	var etag string
 	err := retryWithBackoff(ctx, "UploadPart", func() error {
 		tag, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
@@ -145,7 +141,6 @@ func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
 		etag = *tag.ETag
 		return nil
 	})
-	
 	if err != nil {
 		return "", fmt.Errorf("failed to upload part: %w", err)
 	}
@@ -156,11 +151,14 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
-	etags []struct {PartNumber int; Etag string},
+	etags []struct {
+		PartNumber int
+		Etag       string
+	},
 ) error {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
-	
+
 	// Convert to []types.CompletedPart
 	var parts []types.CompletedPart
 	for _, etag := range etags {
@@ -169,7 +167,7 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 			PartNumber: int32(etag.PartNumber),
 		})
 	}
-	
+
 	err := retryWithBackoff(ctx, "CompleteMultipartUpload", func() error {
 		_, err := w.s3Client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
 			Bucket:   &w.bucket,
@@ -181,7 +179,6 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 		})
 		return err
 	})
-	
 	if err != nil {
 		// If completion fails, abort the upload to clean up
 		abortErr := w.AbortMediaStreamUpload(ctx, streamId, uploadID)
@@ -201,7 +198,7 @@ func (w *ExternalMediaStore) AbortMediaStreamUpload(
 ) error {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
-	
+
 	err := retryWithBackoff(ctx, "AbortMultipartUpload", func() error {
 		_, err := w.s3Client.AbortMultipartUpload(ctx, &s3.AbortMultipartUploadInput{
 			Bucket:   &w.bucket,
@@ -210,7 +207,6 @@ func (w *ExternalMediaStore) AbortMediaStreamUpload(
 		})
 		return err
 	})
-	
 	if err != nil {
 		return fmt.Errorf("failed to abort multipart upload: %w", err)
 	}
@@ -251,7 +247,6 @@ func DownloadChunkFromExternal(
 		data = bodyData
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to download range %s from S3: %w", rangeHeader, err)
 	}

@@ -642,7 +642,7 @@ func (s *Service) initStore() error {
 		// TODO: use config file instead
 		bucket := os.Getenv("S3_BUCKET")
 		s.externalMediaStorage = storage.NewExternalMediaStore(bucket)
-		
+
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {
 			return err
