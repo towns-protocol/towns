@@ -15,6 +15,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type reconcileTask struct {
@@ -253,6 +254,20 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		return nil
 	}
 
+	// Several streams are in a state where the genesis miniblock is still stored on-chain, but
+	// the node that has the genesis block left the network and other nodes can't reconcile this
+	// stream anymore.
+	// This was the result of a bug when a node left the network, and the logic that checked if
+	// the leaving node didn't have any streams assigned didn't handle streamRecord.MbRef.Num == 0
+	// correct.
+	// If the stream record is still at miniblock 0, try to reconcile the stream from the genesis
+	// block in the stream registry instead of a peer.
+	if streamRecord.LastMbNum() == 0 {
+		if err := s.reconcileStreamFromStreamRegistryGenesisBlock(stream); err == nil {
+			return nil
+		}
+	}
+
 	stream.mu.Lock()
 	nonReplicatedStream := len(stream.nodesLocked.GetQuorumNodes()) == 1
 	stream.mu.Unlock()
@@ -301,6 +316,33 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		"No peer could provide miniblocks for stream reconciliation",
 	).
 		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
+}
+
+// reconcileStreamFromStreamRegistryGenesisBlock reconciles the database for the given stream from the stream registry.
+// If the stream record has advanced beyond the genesis miniblock, this function returns an error and the caller is
+// expected to reconcile from peers.
+func (s *StreamCache) reconcileStreamFromStreamRegistryGenesisBlock(stream *Stream) error {
+	ctx, cancel := context.WithTimeout(s.params.ServerCtx, time.Minute)
+	defer cancel()
+
+	streamID := stream.StreamId()
+	_, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamID, 0)
+	if err != nil {
+		return err
+	}
+
+	if len(mb) == 0 {
+		return RiverError(Err_UNAVAILABLE, "Unable to read genesis mb from registry").
+			Tags("streamId", streamID).
+			Func("reconcileStreamFromStreamRegistryGenesisBlock")
+	}
+
+	genesisBlock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{Data: mb, HasLegacySnapshot: true})
+	if err != nil {
+		return err
+	}
+
+	return stream.importMiniblocks(ctx, []*MiniblockInfo{genesisBlock})
 }
 
 // reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
