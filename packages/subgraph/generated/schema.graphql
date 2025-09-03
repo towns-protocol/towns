@@ -232,7 +232,7 @@ type analyticsEvent {
   eventType: analyticsEventType!
   blockTimestamp: BigInt
   ethAmount: BigInt
-  eventData: JSON
+  eventData: JSON!
   space: space
 }
 

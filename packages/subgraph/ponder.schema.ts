@@ -2,6 +2,36 @@ import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
 
 export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join'])
 
+// Type definitions for analytics event data
+export type SwapEventData = {
+    type: 'swap'
+    tokenIn: string
+    tokenOut: string
+    amountIn: string
+    amountOut: string
+    recipient: string
+    poster: string
+}
+
+export type TipEventData = {
+    type: 'tip'
+    sender: string
+    receiver: string
+    currency: string
+    amount: string
+    tokenId: string
+    messageId: string
+    channelId: string
+}
+
+export type JoinEventData = {
+    type: 'join'
+    recipient: string
+    tokenId: string
+}
+
+export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData
+
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
     owner: t.hex(),
@@ -57,11 +87,8 @@ export const analyticsEvent = onchainTable(
         // ETH value for the event (calculated field for sorting/aggregation)
         ethAmount: t.bigint().default(0n),
 
-        // Event-specific data stored as JSON
-        // For swap: { tokenIn, tokenOut, amountIn, amountOut, recipient, poster }
-        // For tip: { sender, receiver, currency, amount, tokenId, messageId, channelId }
-        // for join: { recipient, tokenId }
-        eventData: t.json(),
+        // Event-specific data stored as typed JSON
+        eventData: t.json<AnalyticsEventData>().notNull(),
     }),
     (table) => ({
         pk: primaryKey({ columns: [table.txHash, table.logIndex] }),

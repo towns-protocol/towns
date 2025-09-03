@@ -244,6 +244,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
                 eventData: {
+                    type: 'swap',
                     tokenIn: event.args.tokenIn,
                     tokenOut: event.args.tokenOut,
                     amountIn: event.args.amountIn.toString(),
@@ -773,6 +774,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
                 eventData: {
+                    type: 'join',
                     recipient: event.args.recipient,
                     tokenId: event.args.tokenId.toString(),
                 },
@@ -830,6 +832,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 ethAmount: ethAmount,
                 eventData: {
+                    type: 'tip',
                     sender: event.args.sender,
                     receiver: event.args.receiver,
                     currency: event.args.currency,
