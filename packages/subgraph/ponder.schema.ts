@@ -88,7 +88,7 @@ export const analyticsEvent = onchainTable(
         ethAmount: t.bigint().default(0n),
 
         // Event-specific data stored as typed JSON
-        eventData: t.json<AnalyticsEventData>().notNull(),
+        eventData: t.json().notNull(),
     }),
     (table) => ({
         pk: primaryKey({ columns: [table.txHash, table.logIndex] }),
