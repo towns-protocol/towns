@@ -45,6 +45,7 @@ type space {
   owner: String
   tokenId: BigInt
   name: String
+  nameLowercased: String
   uri: String
   shortDescription: String
   longDescription: String
@@ -424,6 +425,16 @@ input spaceFilter {
   name_ends_with: String
   name_not_starts_with: String
   name_not_ends_with: String
+  nameLowercased: String
+  nameLowercased_not: String
+  nameLowercased_in: [String]
+  nameLowercased_not_in: [String]
+  nameLowercased_contains: String
+  nameLowercased_not_contains: String
+  nameLowercased_starts_with: String
+  nameLowercased_ends_with: String
+  nameLowercased_not_starts_with: String
+  nameLowercased_not_ends_with: String
   uri: String
   uri_not: String
   uri_in: [String]

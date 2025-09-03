@@ -72,11 +72,8 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "Run Nodes",
-        "Run Nodes-No-Entitlements",
+        "Run Nodes and Services",
         "Playground",
-        "AppRegistry",
-        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -207,26 +204,6 @@
       }
     },
     {
-      "label": "Run Nodes-No-Entitlements",
-      "type": "shell",
-      "command": "sleep 2 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "AppRegistry-No-Entitlements",
-      "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi_ne run-app-registry-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
       "label": "Build Nodes",
       "type": "shell",
       "command": "cd ./core && just RUN_ENV=multi build",
@@ -239,9 +216,9 @@
       }
     },
     {
-      "label": "Build Nodes-No-Entitlements",
+      "label": "Stop Nodes and Services",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi_ne build",
+      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -251,24 +228,10 @@
       }
     },
     {
-      "label": "Stop Nodes",
-      "type": "shell",
-      "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop && just RUN_ENV=multi stop-app-registry && just RUN_ENV=multi_ne stop-app-registry",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Run Both Nodes",
+      "label": "Run Nodes and Services",
       "dependsOn": [
         "Run Nodes",
-        "Run Nodes-No-Entitlements",
         "AppRegistry",
-        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -276,12 +239,11 @@
       "problemMatcher": [],
     },
     {
-      "label": "Restart Nodes",
+      "label": "Restart Nodes and Services",
       "dependsOn": [
-        "Stop Nodes",
+        "Stop Nodes and Services",
         "Build Nodes",
-        "Build Nodes-No-Entitlements",
-        "Both Nodess"
+        "Run Nodes and Services"
       ],
       "group": {
         "kind": "build",
@@ -292,7 +254,7 @@
     {
       "label": "Configure Nodes",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
+      "command": "cd ./core && just RUN_ENV=multi config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

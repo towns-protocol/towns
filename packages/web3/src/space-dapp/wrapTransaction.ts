@@ -33,7 +33,8 @@ export async function wrapTransaction(
             } catch (error) {
                 retryCount++
                 if (retryCount >= retryLimit) {
-                    throw new Error('Transaction failed after retries: ' + (error as Error).message)
+                    logger.error('Transaction failed after retries', { error, retryCount })
+                    throw error
                 }
                 logger.error('Transaction submission failed, retrying...', { error, retryCount })
                 await new Promise((resolve) => setTimeout(resolve, 1000))

@@ -139,8 +139,6 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             return 'https://delta.river.delivery'
         case 'local_multi':
             return 'http://localhost:3002'
-        case 'local_multi_ne':
-            return 'http://localhost:3003'
         default:
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
     }
@@ -150,8 +148,6 @@ export const getAppRegistryUrl = (environmentId: string) => {
     switch (environmentId) {
         case 'local_multi':
             return 'https://localhost:6170'
-        case 'local_multi_ne':
-            return 'https://localhost:6190'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
         case 'gamma':

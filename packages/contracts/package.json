@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.324",
+  "version": "0.0.329",
   "packageManager": "yarn@3.8.0",
   "scripts": {
     "build": "forge build",
@@ -16,7 +16,7 @@
     "typings": "wagmi generate"
   },
   "dependencies": {
-    "@erc6900/reference-implementation": "^0.8.1",
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
     "@layerzerolabs/oft-evm": "^3.1.4",
     "@openzeppelin/contracts": "^5.4.0",

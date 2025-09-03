@@ -26,7 +26,7 @@ func (s *Service) initTracing(serviceName, instanceID string) {
 	var exporters []trace.TracerProviderOption
 
 	if s.config.PerformanceTracking.OtlpFile != "" {
-		f, err := os.OpenFile(s.config.PerformanceTracking.OtlpFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(s.config.PerformanceTracking.OtlpFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 		if err != nil {
 			s.defaultLogger.Errorw("initTracing: failed to create trace file", "error", err)
 		} else {
