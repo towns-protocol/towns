@@ -204,19 +204,26 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             ethAmount = event.args.amountOut
         }
 
-        // Write to swap table
-        await context.db.insert(schema.swap).values({
-            txHash: transactionHash,
-            spaceId: spaceId,
-            recipient: event.args.recipient,
-            tokenIn: event.args.tokenIn,
-            tokenOut: event.args.tokenOut,
-            amountIn: event.args.amountIn,
-            amountOut: event.args.amountOut,
-            poster: event.args.poster,
-            blockTimestamp: blockTimestamp,
-            createdAt: blockNumber,
+        // Check if swap already exists
+        const existingSwap = await context.db.sql.query.swap.findFirst({
+            where: eq(schema.swap.txHash, transactionHash),
         })
+        
+        if (!existingSwap) {
+            // Write to swap table
+            await context.db.insert(schema.swap).values({
+                txHash: transactionHash,
+                spaceId: spaceId,
+                recipient: event.args.recipient,
+                tokenIn: event.args.tokenIn,
+                tokenOut: event.args.tokenOut,
+                amountIn: event.args.amountIn,
+                amountOut: event.args.amountOut,
+                poster: event.args.poster,
+                blockTimestamp: blockTimestamp,
+                createdAt: blockNumber,
+            })
+        }
 
         // Check if analytics event already exists
         const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
