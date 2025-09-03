@@ -1280,6 +1280,14 @@ func (ca *chainAuth) linkWallets(
 				return boolCacheResult{true, EntitlementResultReason_NONE}, nil, nil
 			}
 		}
+		// If the user is an app, their app address is considered linked to them.
+		isApp, appAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+		if err != nil {
+			return nil, nil, err
+		}
+		if isApp && appAddress == args.walletAddress {
+			return boolCacheResult{true, EntitlementResultReason_NONE}, nil, nil
+		}
 		return boolCacheResult{false, EntitlementResultReason_WALLET_NOT_LINKED}, nil, nil
 	}
 
