@@ -1,5 +1,5 @@
 import { Permission } from '@towns-protocol/web3'
-import { eq } from 'ponder'
+import { eq, and, gte } from 'ponder'
 import { Context } from 'ponder:registry'
 import schema from 'ponder:schema'
 import { createPublicClient, http } from 'viem'
@@ -127,62 +127,57 @@ export async function updateSpaceCachedMetrics(
         return
     }
 
-    // Query only events of the specific type
-    const events = await context.db.sql.query.analyticsEvent.findMany({
-        where: eq(schema.analyticsEvent.spaceId, spaceId),
+    // Query only events from the last 30 days for the specific type
+    const filteredEvents = await context.db.sql.query.analyticsEvent.findMany({
+        where: and(
+            eq(schema.analyticsEvent.spaceId, spaceId),
+            eq(schema.analyticsEvent.eventType, eventType),
+            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo))
+        ),
     })
-
-    // Filter for the specific event type
-    const filteredEvents = events.filter(e => e.eventType === eventType)
 
     // Initialize update object with existing space values
     type SwapMetrics = {
         swapVolume24h: bigint
         swapVolume7d: bigint
         swapVolume30d: bigint
-        swapVolume: bigint
     }
-    
+
     type TipMetrics = {
         tipVolume24h: bigint
         tipVolume7d: bigint
         tipVolume30d: bigint
-        tipVolume: bigint
     }
-    
+
     type JoinMetrics = {
         joinVolume24h: bigint
         joinVolume7d: bigint
         joinVolume30d: bigint
-        joinVolume: bigint
         memberCount24h: bigint
         memberCount7d: bigint
         memberCount30d: bigint
-        memberCount: bigint
     }
-    
+
     let updates: SwapMetrics | TipMetrics | JoinMetrics
 
     if (eventType === 'swap') {
-        // Calculate swap metrics
+        // Calculate swap metrics for rolling windows
         let swapVolume24h = 0n
         let swapVolume7d = 0n
         let swapVolume30d = 0n
-        let swapVolume = 0n
 
         for (const event of filteredEvents) {
             const eventTimestamp = Number(event.blockTimestamp)
             const eventEthAmount = event.ethAmount || 0n
 
-            swapVolume += eventEthAmount
+            // All events are already within 30 days due to filtering
+            swapVolume30d += eventEthAmount
+
             if (eventTimestamp >= oneDayAgo) {
                 swapVolume24h += eventEthAmount
             }
             if (eventTimestamp >= sevenDaysAgo) {
                 swapVolume7d += eventEthAmount
-            }
-            if (eventTimestamp >= thirtyDaysAgo) {
-                swapVolume30d += eventEthAmount
             }
         }
 
@@ -190,28 +185,25 @@ export async function updateSpaceCachedMetrics(
             swapVolume24h,
             swapVolume7d,
             swapVolume30d,
-            swapVolume
         }
     } else if (eventType === 'tip') {
-        // Calculate tip metrics
+        // Calculate tip metrics for rolling windows
         let tipVolume24h = 0n
         let tipVolume7d = 0n
         let tipVolume30d = 0n
-        let tipVolume = 0n
 
         for (const event of filteredEvents) {
             const eventTimestamp = Number(event.blockTimestamp)
             const eventEthAmount = event.ethAmount || 0n
 
-            tipVolume += eventEthAmount
+            // All events are already within 30 days due to filtering
+            tipVolume30d += eventEthAmount
+
             if (eventTimestamp >= oneDayAgo) {
                 tipVolume24h += eventEthAmount
             }
             if (eventTimestamp >= sevenDaysAgo) {
                 tipVolume7d += eventEthAmount
-            }
-            if (eventTimestamp >= thirtyDaysAgo) {
-                tipVolume30d += eventEthAmount
             }
         }
 
@@ -219,25 +211,24 @@ export async function updateSpaceCachedMetrics(
             tipVolume24h,
             tipVolume7d,
             tipVolume30d,
-            tipVolume
         }
     } else if (eventType === 'join') {
-        // Calculate join metrics
+        // Calculate join metrics for rolling windows
         let joinVolume24h = 0n
         let joinVolume7d = 0n
         let joinVolume30d = 0n
-        let joinVolume = 0n
         let memberCount24h = 0n
         let memberCount7d = 0n
         let memberCount30d = 0n
-        let memberCount = 0n
 
         for (const event of filteredEvents) {
             const eventTimestamp = Number(event.blockTimestamp)
             const eventEthAmount = event.ethAmount || 0n
 
-            memberCount += 1n
-            joinVolume += eventEthAmount
+            // All events are already within 30 days due to filtering
+            memberCount30d += 1n
+            joinVolume30d += eventEthAmount
+
             if (eventTimestamp >= oneDayAgo) {
                 memberCount24h += 1n
                 joinVolume24h += eventEthAmount
@@ -246,21 +237,15 @@ export async function updateSpaceCachedMetrics(
                 memberCount7d += 1n
                 joinVolume7d += eventEthAmount
             }
-            if (eventTimestamp >= thirtyDaysAgo) {
-                memberCount30d += 1n
-                joinVolume30d += eventEthAmount
-            }
         }
 
         updates = {
             joinVolume24h,
             joinVolume7d,
             joinVolume30d,
-            joinVolume,
             memberCount24h,
             memberCount7d,
             memberCount30d,
-            memberCount
         }
     } else {
         // This should never happen due to the type constraint, but TypeScript needs it
@@ -270,7 +255,7 @@ export async function updateSpaceCachedMetrics(
 
     await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
 
-    console.log(`Updated ${eventType} metrics for space ${spaceId}`)
+    console.log(`Updated ${eventType} rolling window metrics for space ${spaceId}`)
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }
