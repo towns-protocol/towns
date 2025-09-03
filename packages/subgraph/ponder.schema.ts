@@ -1,4 +1,36 @@
-import { onchainTable, relations } from 'ponder'
+import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
+
+export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join'])
+
+// Type definitions for analytics event data
+export type SwapEventData = {
+    type: 'swap'
+    tokenIn: string
+    tokenOut: string
+    amountIn: string
+    amountOut: string
+    recipient: string
+    poster: string
+}
+
+export type TipEventData = {
+    type: 'tip'
+    sender: string
+    receiver: string
+    currency: string
+    amount: string
+    tokenId: string
+    messageId: string
+    channelId: string
+}
+
+export type JoinEventData = {
+    type: 'join'
+    recipient: string
+    tokenId: string
+}
+
+export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData
 
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
@@ -12,6 +44,22 @@ export const space = onchainTable('spaces', (t) => ({
     createdAt: t.bigint(),
     paused: t.boolean(),
     totalAmountStaked: t.bigint().default(0n),
+    swapVolume24h: t.bigint().default(0n),
+    swapVolume7d: t.bigint().default(0n),
+    swapVolume30d: t.bigint().default(0n),
+    swapVolume: t.bigint().default(0n),
+    tipVolume24h: t.bigint().default(0n),
+    tipVolume7d: t.bigint().default(0n),
+    tipVolume30d: t.bigint().default(0n),
+    tipVolume: t.bigint().default(0n),
+    joinVolume24h: t.bigint().default(0n),
+    joinVolume7d: t.bigint().default(0n),
+    joinVolume30d: t.bigint().default(0n),
+    joinVolume: t.bigint().default(0n),
+    memberCount24h: t.bigint().default(0n),
+    memberCount7d: t.bigint().default(0n),
+    memberCount30d: t.bigint().default(0n),
+    memberCount: t.bigint().default(0n),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
@@ -26,6 +74,36 @@ export const swap = onchainTable('swaps', (t) => ({
     blockTimestamp: t.bigint(),
     createdAt: t.bigint(),
 }))
+
+// Denormalized events table for all analytics
+export const analyticsEvent = onchainTable(
+    'analytics_events',
+    (t) => ({
+        txHash: t.hex(),
+        logIndex: t.integer(),
+        spaceId: t.hex(),
+        eventType: analyticsEventType().notNull(),
+        blockTimestamp: t.bigint(),
+        // ETH value for the event (calculated field for sorting/aggregation)
+        ethAmount: t.bigint().default(0n),
+
+        // Event-specific data stored as typed JSON
+        eventData: t.json().$type<AnalyticsEventData>().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.txHash, table.logIndex] }),
+        txHashIdx: index().on(table.txHash),
+        logIndexIdx: index().on(table.logIndex),
+        spaceIdx: index().on(table.spaceId),
+        timestampIdx: index().on(table.blockTimestamp),
+        eventTypeIdx: index().on(table.eventType),
+        spaceEventTypeTimestampIdx: index().on(
+            table.spaceId,
+            table.eventType,
+            table.blockTimestamp,
+        ),
+    }),
+)
 
 export const swapFee = onchainTable('swap_fees', (t) => ({
     spaceId: t.hex().primaryKey(),
@@ -44,9 +122,19 @@ export const spaceToSwaps = relations(space, ({ many }) => ({
     swaps: many(swap),
 }))
 
+// each space has many analytics events
+export const spaceToAnalyticsEvents = relations(space, ({ many }) => ({
+    analyticsEvents: many(analyticsEvent),
+}))
+
 // each swap belongs to a space
 export const swapToSpace = relations(swap, ({ one }) => ({
     space: one(space, { fields: [swap.spaceId], references: [space.id] }),
+}))
+
+// each analytics event belongs to a space
+export const analyticsEventToSpace = relations(analyticsEvent, ({ one }) => ({
+    space: one(space, { fields: [analyticsEvent.spaceId], references: [space.id] }),
 }))
 
 export const swapRouter = onchainTable('swap_router', (t) => ({

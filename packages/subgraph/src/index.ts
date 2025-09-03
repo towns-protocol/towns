@@ -1,4 +1,4 @@
-import { eq, sql } from 'ponder'
+import { eq, sql, and } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
 import {
@@ -6,7 +6,10 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
+    updateSpaceCachedMetrics,
 } from './utils'
+
+const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get latest block number
@@ -195,10 +198,21 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     }
 
     try {
-        const existing = await context.db.sql.query.swap.findFirst({
+        // Calculate ETH amount for analytics
+        let ethAmount = 0n
+        if ((event.args.tokenIn as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountIn
+        } else if ((event.args.tokenOut as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountOut
+        }
+
+        // Check if swap already exists
+        const existingSwap = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
         })
-        if (!existing) {
+
+        if (!existingSwap) {
+            // Write to swap table
             await context.db.insert(schema.swap).values({
                 txHash: transactionHash,
                 spaceId: spaceId,
@@ -211,6 +225,49 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
+        }
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, transactionHash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: transactionHash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'swap',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'swap',
+                    tokenIn: event.args.tokenIn,
+                    tokenOut: event.args.tokenOut,
+                    amountIn: event.args.amountIn.toString(),
+                    amountOut: event.args.amountOut.toString(),
+                    recipient: event.args.recipient,
+                    poster: event.args.poster,
+                },
+            })
+
+            // Increment all-time swap volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        swapVolume: (currentSpace.swapVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'swap')
         }
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
@@ -688,5 +745,120 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
             `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
             error,
         )
+    }
+})
+
+ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        // Get the ETH amount from the transaction value (payment to join)
+        const ethAmount = event.transaction.value || 0n
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'join',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'join',
+                    recipient: event.args.recipient,
+                    tokenId: event.args.tokenId.toString(),
+                },
+            })
+
+            // Increment all-time join volume and member count only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        joinVolume: (currentSpace.joinVolume ?? 0n) + ethAmount,
+                        memberCount: (currentSpace.memberCount ?? 0n) + 1n,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'join')
+        }
+    } catch (error) {
+        console.error(
+            `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('Space:Tip', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        let ethAmount = 0n
+        if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amount
+        }
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'tip',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'tip',
+                    sender: event.args.sender,
+                    receiver: event.args.receiver,
+                    currency: event.args.currency,
+                    amount: event.args.amount.toString(),
+                    tokenId: event.args.tokenId.toString(),
+                    messageId: event.args.messageId,
+                    channelId: event.args.channelId,
+                },
+            })
+
+            // Increment all-time tip volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        tipVolume: (currentSpace.tipVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            await updateSpaceCachedMetrics(context, spaceId, 'tip')
+        }
+    } catch (error) {
+        console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
 })
