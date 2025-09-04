@@ -12,6 +12,7 @@ import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdro
 import {DeploySpace} from "scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
 import {DeploySpaceOwner} from "scripts/deployments/diamonds/DeploySpaceOwner.s.sol";
+import {DeployAppRegistry} from "scripts/deployments/diamonds/DeployAppRegistry.s.sol";
 import {AlphaHelper} from "scripts/interactions/helpers/AlphaHelper.sol";
 
 contract InteractBaseAlpha is AlphaHelper {
@@ -20,6 +21,7 @@ contract InteractBaseAlpha is AlphaHelper {
     DeployBaseRegistry deployBaseRegistry = new DeployBaseRegistry();
     DeploySpaceOwner deploySpaceOwner = new DeploySpaceOwner();
     DeployRiverAirdrop deployRiverAirdrop = new DeployRiverAirdrop();
+    DeployAppRegistry deployAppRegistry = new DeployAppRegistry();
 
     function __interact(address deployer) internal override {
         address space = getDeployment("space");
@@ -27,6 +29,7 @@ contract InteractBaseAlpha is AlphaHelper {
         address spaceFactory = getDeployment("spaceFactory");
         address baseRegistry = getDeployment("baseRegistry");
         address riverAirdrop = getDeployment("riverAirdrop");
+        address appRegistry = getDeployment("appRegistry");
 
         vm.pauseGasMetering();
         removeRemoteFacets(deployer, space);
@@ -34,13 +37,14 @@ contract InteractBaseAlpha is AlphaHelper {
         removeRemoteFacets(deployer, spaceFactory);
         removeRemoteFacets(deployer, baseRegistry);
         removeRemoteFacets(deployer, riverAirdrop);
+        removeRemoteFacets(deployer, appRegistry);
 
         deploySpaceCuts(deployer, space);
         deploySpaceOwnerCuts(deployer, spaceOwner);
         deploySpaceFactoryCuts(deployer, spaceFactory);
         deployBaseRegistryCuts(deployer, baseRegistry);
         deployRiverAirdropCuts(deployer, riverAirdrop);
-
+        deployAppRegistryCuts(deployer, appRegistry);
         vm.resumeGasMetering();
     }
 
@@ -79,5 +83,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory newCuts = deployRiverAirdrop.getCuts();
         vm.broadcast(deployer);
         IDiamondCut(riverAirdrop).diamondCut(newCuts, address(0), "");
+    }
+
+    function deployAppRegistryCuts(address deployer, address appRegistry) internal {
+        deployAppRegistry.diamondInitParams(deployer);
+        FacetCut[] memory newCuts = deployAppRegistry.getCuts();
+        vm.broadcast(deployer);
+        IDiamondCut(appRegistry).diamondCut(newCuts, address(0), "");
     }
 }

@@ -88,6 +88,9 @@ contract DeployBaseRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("NodeOperatorFacet");
         facetHelper.add("MetadataFacet");
         facetHelper.add("EntitlementChecker");
+
+        facetHelper.deployBatch(deployer);
+
         facetHelper.add("RewardsDistributionV2");
         facetHelper.add("SpaceDelegationFacet");
         facetHelper.add("MainnetDelegation");
