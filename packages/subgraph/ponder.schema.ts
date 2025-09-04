@@ -74,6 +74,7 @@ export const space = onchainTable('spaces', (t) => ({
     memberCount: t.bigint().default(0n),
     reviewCount: t.bigint().default(0n),
     averageRating: t.real().default(0),
+    weightedRating: t.real().default(0),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({

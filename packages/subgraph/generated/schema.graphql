@@ -72,6 +72,7 @@ type space {
   memberCount: BigInt
   reviewCount: BigInt
   averageRating: Float
+  weightedRating: Float
   swapFee: swapFee
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage
   analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage
@@ -710,6 +711,14 @@ input spaceFilter {
   averageRating_lt: Float
   averageRating_gte: Float
   averageRating_lte: Float
+  weightedRating: Float
+  weightedRating_not: Float
+  weightedRating_in: [Float]
+  weightedRating_not_in: [Float]
+  weightedRating_gt: Float
+  weightedRating_lt: Float
+  weightedRating_gte: Float
+  weightedRating_lte: Float
 }
 
 type swapFeePage {
