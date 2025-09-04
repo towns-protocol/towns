@@ -6,7 +6,7 @@ import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IMod
 
 // utils
 import {ModulesBase} from "./ModulesBase.sol";
-import {Subscription} from "../../../src/apps/modules/subcription/SubscriptionModuleStorage.sol";
+import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";

@@ -80,8 +80,13 @@ contract SubscriptionModuleFacet is
         sub.entityId = entityId;
         sub.tokenId = tokenId;
         sub.renewalPrice = renewalPrice;
-        sub.nextRenewalTime = uint64(expiresAt > 0 ? expiresAt - RENEWAL_BUFFER : block.timestamp);
         sub.active = true;
+
+        if (expiresAt > RENEWAL_BUFFER) {
+            sub.nextRenewalTime = uint64(expiresAt - RENEWAL_BUFFER);
+        } else {
+            sub.nextRenewalTime = uint64(block.timestamp);
+        }
 
         $.entityIds[msg.sender].add(uint256(entityId));
 
@@ -148,7 +153,7 @@ contract SubscriptionModuleFacet is
         uint32 /* entityId */,
         PackedUserOperation calldata /* userOp */,
         bytes32 /* userOpHash */
-    ) external pure returns (uint256) {
+    ) external pure override returns (uint256) {
         return _SIG_VALIDATION_FAILED;
     }
 
@@ -169,7 +174,7 @@ contract SubscriptionModuleFacet is
         address /* sender */,
         bytes32 /* hash */,
         bytes calldata /* signature */
-    ) external pure {
+    ) external pure override {
         SubscriptionModule__NotSupported.selector.revertWith();
     }
 

@@ -11,11 +11,11 @@ import {IArchitectBase} from "../../../src/factory/facets/architect/IArchitect.s
 import {ICreateSpace} from "src/factory/facets/create/ICreateSpace.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
-import {ISubscriptionModuleBase} from "../../../src/apps/modules/subcription/ISubscriptionModule.sol";
+import {ISubscriptionModuleBase} from "../../../src/apps/modules/subscription/ISubscriptionModule.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
 // types
-import {Subscription} from "../../../src/apps/modules/subcription/SubscriptionModuleStorage.sol";
+import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
 
 //libraries
 import {ValidationConfigLib, ValidationConfig} from "@erc6900/reference-implementation/libraries/ValidationConfigLib.sol";
@@ -30,7 +30,7 @@ import {SemiModularAccountBytecode} from "modular-account/src/account/SemiModula
 
 // modules
 import {DeploySubscriptionModule} from "../../../scripts/deployments/diamonds/DeploySubscriptionModule.s.sol";
-import {SubscriptionModuleFacet} from "../../../src/apps/modules/subcription/SubscriptionModuleFacet.sol";
+import {SubscriptionModuleFacet} from "../../../src/apps/modules/subscription/SubscriptionModuleFacet.sol";
 import {SingleSignerValidationModule} from "modular-account/src/modules/validation/SingleSignerValidationModule.sol";
 
 contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
@@ -151,19 +151,25 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
     ) internal view returns (SubscriptionParams memory params) {
         IMembership membershipFacet = IMembership(space);
 
-        uint64 nextRenewalTime = uint64(
-            membershipFacet.expiresAt(tokenId) > 0
-                ? membershipFacet.expiresAt(tokenId) - subscriptionModule.RENEWAL_BUFFER()
-                : block.timestamp
-        );
+        uint256 expirationTime = membershipFacet.expiresAt(tokenId);
+        uint256 buf = subscriptionModule.RENEWAL_BUFFER();
+        uint64 nextRenewalTime;
+
+        if (expirationTime > buf) {
+            nextRenewalTime = uint64(expirationTime - buf);
+        } else {
+            nextRenewalTime = uint64(block.timestamp);
+        }
+
+        uint256 renewalPrice = membershipFacet.getMembershipRenewalPrice(tokenId);
 
         return
             SubscriptionParams({
                 account: account,
                 space: space,
                 tokenId: tokenId,
-                renewalPrice: membershipFacet.getMembershipRenewalPrice(tokenId),
-                expirationTime: membershipFacet.expiresAt(tokenId),
+                renewalPrice: renewalPrice,
+                expirationTime: expirationTime,
                 entityId: nextEntityId,
                 nextRenewalTime: nextRenewalTime
             });
