@@ -269,7 +269,6 @@ export const review = onchainTable(
         pk: primaryKey({ columns: [table.spaceId, table.user] }),
         spaceIdx: index().on(table.spaceId),
         userIdx: index().on(table.user),
-        ratingIdx: index().on(table.rating),
     }),
 )
 
