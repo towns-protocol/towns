@@ -5,7 +5,7 @@ import { rootConfig } from '../../vitest.config.mjs'
 
 function readBypassSecret(): string | undefined {
     try {
-        const contractsPath = resolve(__dirname, `../../core/run_files/multi/contracts.env`)
+        const contractsPath = resolve(__dirname, `../../core/run_files/local_dev/contracts.env`)
         const content = readFileSync(contractsPath, 'utf8')
         const line = content
             .split(/\r?\n/)
