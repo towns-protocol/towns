@@ -258,6 +258,18 @@ export async function updateSpaceCachedMetrics(
     console.log(`Updated ${eventType} rolling window metrics for space ${spaceId}`)
 }
 
+export function calculateWeightedRating(averageRating: number, reviewCount: number): number {
+    // Bayesian average formula: pulls rating toward global average when few reviews exist
+    // This prevents spaces with 1-2 five-star reviews from ranking highest
+    const globalAverage = 3.0 // Middle rating on 1-5 scale
+    const minReviews = 10 // Threshold for confidence
+
+    const weightedRating =
+        (reviewCount * averageRating + minReviews * globalAverage) / (reviewCount + minReviews)
+
+    return weightedRating
+}
+
 export async function updateSpaceReviewMetrics(
     context: Context,
     spaceId: `0x${string}`,
@@ -277,17 +289,21 @@ export async function updateSpaceReviewMetrics(
         const reviewCount = BigInt(allReviews.length)
         const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
 
+        // Calculate weighted rating using Bayesian average
+        const weightedRating = calculateWeightedRating(averageRating, allReviews.length)
+
         // Update space with calculated metrics
         await context.db.sql
             .update(schema.space)
             .set({
                 reviewCount: reviewCount,
                 averageRating: averageRating,
+                weightedRating: weightedRating,
             })
             .where(eq(schema.space.id, spaceId))
 
         console.log(
-            `Updated review metrics for space ${spaceId}: count=${reviewCount}, average=${averageRating.toFixed(2)}`,
+            `Updated review metrics for space ${spaceId}: count=${reviewCount}, average=${averageRating.toFixed(2)}, weighted=${weightedRating.toFixed(2)}`,
         )
     } catch (error) {
         console.error(`Error updating review metrics for space ${spaceId}:`, error)
