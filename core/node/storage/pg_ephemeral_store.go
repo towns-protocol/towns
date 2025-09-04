@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -597,16 +598,18 @@ func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(
 	tx pgx.Tx,
 	miniblock int64,
 ) (string, error) {
-	var rangeHeader string
+	var startBytes, endBytes int64
 	err := tx.QueryRow(ctx, `
-		SELECT range_header 
+		SELECT start_bytes, end_bytes 
 		FROM external_media_chunks 
 		WHERE miniblock = $1`,
-		miniblock).Scan(&rangeHeader)
+		miniblock).Scan(&startBytes, &endBytes)
 	if err != nil {
 		return "", err
 	}
 
+	// Construct range header in S3 format: bytes=start-end
+	rangeHeader := fmt.Sprintf("bytes=%d-%d", startBytes, endBytes)
 	return rangeHeader, nil
 }
 

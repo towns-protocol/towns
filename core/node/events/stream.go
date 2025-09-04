@@ -677,6 +677,7 @@ func (s *Stream) GetMiniblocks(
 	if err != nil {
 		return nil, false, err
 	}
+	// TODO check if location matches the external storage bucket
 	if location != "" {
 		client, err := storage.CreateExternalClient()
 		if err != nil {
