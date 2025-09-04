@@ -27,7 +27,7 @@ echo "stress/scripts/localhost_chat.sh"
 # stress mode=chat requires the following environment variables
 # SPACE_ID
 # CHANNEL_IDS
-# RIVER_ENV (default=local_dev) 
+# RIVER_ENV (default=local_multi) 
 # STRESS_MODE (default=chat)
 # STRESS_DURATION (default=120)
 #
@@ -40,7 +40,11 @@ export CHANNEL_IDS="${CHANNEL_IDS}"
 export ANNOUNCE_CHANNEL_ID="${ANNOUNCE_CHANNEL_ID:-}"
 export REDIS_HOST="${REDIS_HOST:-}"
 
-export RIVER_ENV="${RIVER_ENV:-local_dev}"
+export RIVER_ENV="${RIVER_ENV:-local_multi}"
+# if RIVER_ENV == local_multi, source the .env file
+if [ "$RIVER_ENV" == "local_multi" ]; then
+    source ../generated/deployments/local_multi/.env
+fi
 export STRESS_MODE="${STRESS_MODE:-chat}"
 export STRESS_DURATION="${STRESS_DURATION:-180}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"

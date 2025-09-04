@@ -24,7 +24,11 @@ for file in "${ENV_FILES[@]}"; do
     fi
 done
 
-export RIVER_ENV="${RIVER_ENV:-local_dev}"
+export RIVER_ENV="${RIVER_ENV:-local_multi}"
+# if RIVER_ENV == local_multi, source the .env file
+if [ "$RIVER_ENV" == "local_multi" ]; then
+    source ../generated/deployments/local_multi/.env
+fi
 export STRESS_MODE="${STRESS_MODE:-test}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 

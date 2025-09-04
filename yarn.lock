@@ -8781,6 +8781,7 @@ __metadata:
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
+    dotenv-cli: ^10.0.0
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -9028,6 +9029,7 @@ __metadata:
     autoprefixer: ^10.4.19
     class-variance-authority: ^0.7.0
     clsx: ^2.1.1
+    dotenv-cli: ^10.0.0
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -9194,6 +9196,7 @@ __metadata:
     "@typescript-eslint/parser": ^8.29.0
     debug: ^4.3.4
     dexie: ^4.0.7
+    dotenv-cli: ^10.0.0
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -9238,6 +9241,7 @@ __metadata:
     axios: ^1.9.0
     dd-trace: ^5.19.0
     dotenv: ^16.4.7
+    dotenv-cli: ^10.0.0
     esbuild: ^0.21.5
     esbuild-plugin-pino: ^2.2.0
     eslint: ^8.57.1
@@ -9278,6 +9282,7 @@ __metadata:
     "@typescript-eslint/parser": ^8.29.0
     bullmq: ^5.43.1
     dotenv: ^16.4.7
+    dotenv-cli: ^10.0.0
     esbuild: ^0.21.5
     esbuild-plugin-pino: ^2.2.0
     eslint: ^8.57.1
@@ -9328,6 +9333,7 @@ __metadata:
     "@typescript-eslint/parser": ^8.29.0
     abitype: ^0.9.10
     debug: ^4.3.4
+    dotenv-cli: ^10.0.0
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -13696,6 +13702,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cross-spawn@npm:^7.0.6":
+  version: 7.0.6
+  resolution: "cross-spawn@npm:7.0.6"
+  dependencies:
+    path-key: ^3.1.0
+    shebang-command: ^2.0.0
+    which: ^2.0.1
+  checksum: 8d306efacaf6f3f60e0224c287664093fa9185680b2d195852ba9a863f85d02dcc737094c6e512175f8ee0161f9b87c73c6826034c2422e39de7d6569cf4503b
+  languageName: node
+  linkType: hard
+
 "crossws@npm:^0.2.0, crossws@npm:^0.2.2":
   version: 0.2.4
   resolution: "crossws@npm:0.2.4"
@@ -14527,10 +14544,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv-cli@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "dotenv-cli@npm:10.0.0"
+  dependencies:
+    cross-spawn: ^7.0.6
+    dotenv: ^17.1.0
+    dotenv-expand: ^11.0.0
+    minimist: ^1.2.6
+  bin:
+    dotenv: cli.js
+  checksum: 8a49b24dff88731531ec13074e721073dbb38ad0953ff8b644136b2faa212261751b655b2d98c077501674585a30c81ac06a120a862149fa7658cde57f2ca4c7
+  languageName: node
+  linkType: hard
+
 "dotenv-expand@npm:^10.0.0, dotenv-expand@npm:~10.0.0":
   version: 10.0.0
   resolution: "dotenv-expand@npm:10.0.0"
   checksum: 2a38b470efe0abcb1ac8490421a55e1d764dc9440fd220942bce40965074f3fb00b585f4346020cb0f0f219966ee6b4ee5023458b3e2953fe5b3214de1b314ee
+  languageName: node
+  linkType: hard
+
+"dotenv-expand@npm:^11.0.0":
+  version: 11.0.7
+  resolution: "dotenv-expand@npm:11.0.7"
+  dependencies:
+    dotenv: ^16.4.5
+  checksum: 58455ad9ffedbf6180b49f8f35596da54f10b02efcaabcba5400363f432e1da057113eee39b42365535da41df1e794d54a4aa67b22b37c41686c3dce4e6a28c5
   languageName: node
   linkType: hard
 
@@ -14541,10 +14581,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.4.7":
+"dotenv@npm:^16.4.5, dotenv@npm:^16.4.7":
   version: 16.6.1
   resolution: "dotenv@npm:16.6.1"
   checksum: e8bd63c9a37f57934f7938a9cf35de698097fadf980cb6edb61d33b3e424ceccfe4d10f37130b904a973b9038627c2646a3365a904b4406514ea94d7f1816b69
+  languageName: node
+  linkType: hard
+
+"dotenv@npm:^17.1.0":
+  version: 17.2.1
+  resolution: "dotenv@npm:17.2.1"
+  checksum: 2a3842a5451eb64f41cd11bd30d4d9d83941058f952f5e3adc3ca470d381e46ed8acbb0c0e3059da9725df91b42796987fa1deb032fafac992c37b94870ef085
   languageName: node
   linkType: hard
 
