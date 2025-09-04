@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
     updateSpaceCachedMetrics,
+    updateSpaceReviewMetrics,
 } from './utils'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
@@ -861,5 +862,111 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewAdded', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+
+    try {
+        // Check if review already exists (shouldn't happen for ReviewAdded, but just in case)
+        const existingReview = await context.db.sql.query.review.findFirst({
+            where: and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)),
+        })
+
+        if (!existingReview) {
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+
+            // Add analytics event for the review
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'review',
+                blockTimestamp: blockTimestamp,
+                ethAmount: 0n, // Reviews don't have ETH value
+                eventData: {
+                    type: 'review',
+                    user: event.args.user,
+                    rating: event.args.rating,
+                    comment: event.args.comment,
+                },
+            })
+
+            // Update review metrics (count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
+        } else {
+            console.warn(`Review already exists for user ${event.args.user} in space ${spaceId}`)
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewAdded at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .update(schema.review)
+            .set({
+                comment: event.args.comment,
+                rating: event.args.rating,
+                updatedAt: blockTimestamp,
+            })
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+
+        if (result.changes === 0) {
+            // If the review doesn't exist, create it (edge case)
+            console.warn(
+                `Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`,
+            )
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+        }
+
+        // Update review metrics (recalculate average rating)
+        await updateSpaceReviewMetrics(context, spaceId)
+    } catch (error) {
+        console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .delete(schema.review)
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+
+        if (result.changes === 0) {
+            console.warn(
+                `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
+            )
+        } else {
+            // Update review metrics (recalculate count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
     }
 })

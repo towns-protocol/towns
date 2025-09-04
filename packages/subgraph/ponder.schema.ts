@@ -1,6 +1,11 @@
 import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
 
-export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join'])
+export const analyticsEventType = onchainEnum('analytics_event_type', [
+    'swap',
+    'tip',
+    'join',
+    'review',
+])
 
 // Type definitions for analytics event data
 export type SwapEventData = {
@@ -30,7 +35,14 @@ export type JoinEventData = {
     tokenId: string
 }
 
-export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData
+export type ReviewEventData = {
+    type: 'review'
+    user: string
+    rating: number
+    comment: string
+}
+
+export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
 
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
@@ -60,6 +72,9 @@ export const space = onchainTable('spaces', (t) => ({
     memberCount7d: t.bigint().default(0n),
     memberCount30d: t.bigint().default(0n),
     memberCount: t.bigint().default(0n),
+    reviewCount: t.bigint().default(0n),
+    averageRating: t.real().default(0),
+    weightedRating: t.real().default(0),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
@@ -242,4 +257,32 @@ export const app = onchainTable('apps', (t) => ({
     isRegistered: t.boolean().default(false),
     isBanned: t.boolean().default(false),
     installedIn: t.hex().array().notNull(),
+}))
+
+// reviews
+export const review = onchainTable(
+    'reviews',
+    (t) => ({
+        spaceId: t.hex().notNull(),
+        user: t.hex().notNull(),
+        comment: t.text().notNull(),
+        rating: t.integer().notNull(),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.spaceId, table.user] }),
+        spaceIdx: index().on(table.spaceId),
+        userIdx: index().on(table.user),
+    }),
+)
+
+// each space has many reviews
+export const spaceToReviews = relations(space, ({ many }) => ({
+    reviews: many(review),
+}))
+
+// each review belongs to a space
+export const reviewToSpace = relations(review, ({ one }) => ({
+    space: one(space, { fields: [review.spaceId], references: [space.id] }),
 }))
