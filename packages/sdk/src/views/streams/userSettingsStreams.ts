@@ -11,6 +11,7 @@ export interface UserSettingsStreamModel {
     streamId: string
     fullyReadMarkers: Record<string, Record<string, FullyReadMarker>>
     userBlocks: Record<string, UserSettingsPayload_Snapshot_UserBlocks>
+    appAddress?: string
 }
 
 const EMPTY_USER_BLOCKS: UserSettingsPayload_Snapshot_UserBlocks = create(
@@ -28,6 +29,7 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
                 streamId: userSettingsStreamId,
                 fullyReadMarkers: {},
                 userBlocks: {},
+                appAddress: undefined,
             }),
         })
     }
@@ -87,5 +89,18 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
                 },
             },
         }))
+    }
+
+    setAppAddress(userSettingsStreamId: string, appAddress: string | undefined) {
+        this.set((prev) => {
+            const prevStream = prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)
+            return {
+                ...prev,
+                [userSettingsStreamId]: {
+                    ...prevStream,
+                    appAddress,
+                },
+            }
+        })
     }
 }

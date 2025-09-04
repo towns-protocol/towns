@@ -60,3 +60,4 @@ packages/proto/src/protocol_*.ts
 packages/workers/**/*.json
 
 CLAUDE.md
+AGENTS.md

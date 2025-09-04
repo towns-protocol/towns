@@ -1,4 +1,5 @@
-import { eq } from 'ponder'
+import { Permission } from '@towns-protocol/web3'
+import { eq, and, gte } from 'ponder'
 import { Context } from 'ponder:registry'
 import schema from 'ponder:schema'
 import { createPublicClient, http } from 'viem'
@@ -76,7 +77,7 @@ export async function handleRedelegation(
 ): Promise<void> {
     try {
         if (oldDelegatee) {
-            await handleStakeToSpace(context, oldDelegatee, -amount)
+            await handleStakeToSpace(context, oldDelegatee, 0n - amount)
         }
         if (newDelegatee) {
             await handleStakeToSpace(context, newDelegatee, amount)
@@ -84,6 +85,177 @@ export async function handleRedelegation(
     } catch (error) {
         console.error(`Error handling redelegation:`, error)
     }
+}
+
+export function decodePermissions(permissions: readonly string[]): Permission[] {
+    const decodedPermissions: Permission[] = []
+    for (const perm of permissions) {
+        try {
+            const decoded = Buffer.from(perm.slice(2), 'hex')
+                .toString('utf8')
+                .replace(/\0/g, '')
+                .trim() as Permission
+
+            if (decoded && Object.values(Permission).includes(decoded)) {
+                decodedPermissions.push(decoded)
+            }
+        } catch (error) {
+            console.warn(`Failed to parse permission: ${perm}`, error)
+        }
+    }
+    return decodedPermissions
+}
+
+export async function updateSpaceCachedMetrics(
+    context: Context,
+    spaceId: `0x${string}`,
+    eventType: 'swap' | 'tip' | 'join',
+): Promise<void> {
+    // Get current timestamp for rolling window calculations
+    const currentTimestamp = Math.floor(Date.now() / 1000)
+    const oneDayAgo = currentTimestamp - 86400
+    const sevenDaysAgo = currentTimestamp - 7 * 86400
+    const thirtyDaysAgo = currentTimestamp - 30 * 86400
+
+    // Get current space
+    const space = await context.db.sql.query.space.findFirst({
+        where: eq(schema.space.id, spaceId),
+    })
+
+    if (!space) {
+        console.warn(`Space ${spaceId} not found`)
+        return
+    }
+
+    // Query only events from the last 30 days for the specific type
+    const filteredEvents = await context.db.sql.query.analyticsEvent.findMany({
+        where: and(
+            eq(schema.analyticsEvent.spaceId, spaceId),
+            eq(schema.analyticsEvent.eventType, eventType),
+            gte(schema.analyticsEvent.blockTimestamp, BigInt(thirtyDaysAgo)),
+        ),
+    })
+
+    // Initialize update object with existing space values
+    type SwapMetrics = {
+        swapVolume24h: bigint
+        swapVolume7d: bigint
+        swapVolume30d: bigint
+    }
+
+    type TipMetrics = {
+        tipVolume24h: bigint
+        tipVolume7d: bigint
+        tipVolume30d: bigint
+    }
+
+    type JoinMetrics = {
+        joinVolume24h: bigint
+        joinVolume7d: bigint
+        joinVolume30d: bigint
+        memberCount24h: bigint
+        memberCount7d: bigint
+        memberCount30d: bigint
+    }
+
+    let updates: SwapMetrics | TipMetrics | JoinMetrics
+
+    if (eventType === 'swap') {
+        // Calculate swap metrics for rolling windows
+        let swapVolume24h = 0n
+        let swapVolume7d = 0n
+        let swapVolume30d = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
+            // All events are already within 30 days due to filtering
+            swapVolume30d += eventEthAmount
+
+            if (eventTimestamp >= oneDayAgo) {
+                swapVolume24h += eventEthAmount
+            }
+            if (eventTimestamp >= sevenDaysAgo) {
+                swapVolume7d += eventEthAmount
+            }
+        }
+
+        updates = {
+            swapVolume24h,
+            swapVolume7d,
+            swapVolume30d,
+        }
+    } else if (eventType === 'tip') {
+        // Calculate tip metrics for rolling windows
+        let tipVolume24h = 0n
+        let tipVolume7d = 0n
+        let tipVolume30d = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
+            // All events are already within 30 days due to filtering
+            tipVolume30d += eventEthAmount
+
+            if (eventTimestamp >= oneDayAgo) {
+                tipVolume24h += eventEthAmount
+            }
+            if (eventTimestamp >= sevenDaysAgo) {
+                tipVolume7d += eventEthAmount
+            }
+        }
+
+        updates = {
+            tipVolume24h,
+            tipVolume7d,
+            tipVolume30d,
+        }
+    } else if (eventType === 'join') {
+        // Calculate join metrics for rolling windows
+        let joinVolume24h = 0n
+        let joinVolume7d = 0n
+        let joinVolume30d = 0n
+        let memberCount24h = 0n
+        let memberCount7d = 0n
+        let memberCount30d = 0n
+
+        for (const event of filteredEvents) {
+            const eventTimestamp = Number(event.blockTimestamp)
+            const eventEthAmount = event.ethAmount || 0n
+
+            // All events are already within 30 days due to filtering
+            memberCount30d += 1n
+            joinVolume30d += eventEthAmount
+
+            if (eventTimestamp >= oneDayAgo) {
+                memberCount24h += 1n
+                joinVolume24h += eventEthAmount
+            }
+            if (eventTimestamp >= sevenDaysAgo) {
+                memberCount7d += 1n
+                joinVolume7d += eventEthAmount
+            }
+        }
+
+        updates = {
+            joinVolume24h,
+            joinVolume7d,
+            joinVolume30d,
+            memberCount24h,
+            memberCount7d,
+            memberCount30d,
+        }
+    } else {
+        // This should never happen due to the type constraint, but TypeScript needs it
+        console.error(`Unknown event type: ${eventType}`)
+        return
+    }
+
+    await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
+
+    console.log(`Updated ${eventType} rolling window metrics for space ${spaceId}`)
 }
 
 export { publicClient, getLatestBlockNumber, getCreatedDate }

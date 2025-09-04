@@ -16,14 +16,6 @@ function getEnvironmentId(): string {
     return 'local_multi'
 }
 
-// Test flag to toggle usage of legacy spaces
-export function useLegacySpaces(): boolean {
-    if (typeof process === 'object') {
-        return process.env.USE_LEGACY_SPACES === 'true'
-    }
-    return true
-}
-
 function getBaseRpcUrlForChain(chainId: number): string {
     if (typeof process === 'object') {
         if (process.env.BASE_CHAIN_RPC_URL) {
@@ -87,6 +79,9 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                 baseRegistry: process.env.BASE_REGISTRY_ADDRESS as Address,
                 spaceFactory: process.env.SPACE_FACTORY_ADDRESS as Address,
                 spaceOwner: process.env.SPACE_OWNER_ADDRESS as Address,
+                riverAirdrop: process.env.RIVER_AIRDROP_ADDRESS as Address | undefined,
+                swapRouter: process.env.SWAP_ROUTER_ADDRESS as Address | undefined,
+                appRegistry: process.env.APP_REGISTRY_ADDRESS as Address | undefined,
                 utils: {
                     mockNFT: process.env.MOCK_NFT_ADDRESS as Address | undefined,
                     member: process.env.MEMBER_ADDRESS as Address | undefined,
@@ -143,8 +138,6 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             return 'https://delta.river.delivery'
         case 'local_multi':
             return 'http://localhost:3002'
-        case 'local_multi_ne':
-            return 'http://localhost:3003'
         default:
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
     }
@@ -154,8 +147,6 @@ export const getAppRegistryUrl = (environmentId: string) => {
     switch (environmentId) {
         case 'local_multi':
             return 'https://localhost:6170'
-        case 'local_multi_ne':
-            return 'https://localhost:6190'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
         case 'gamma':

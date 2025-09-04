@@ -298,6 +298,7 @@ export function makeTimelinesViewInterface(
             ...oldEvent,
             confirmedEventNum: confirmation.confirmedEventNum,
             confirmedInBlockNum: confirmation.confirmedInBlockNum,
+            confirmedAtEpochMs: confirmation.confirmedAtEpochMs,
         }
 
         const threadParentId = newEvent.threadParentId
@@ -495,6 +496,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedAtEpochMs: next.confirmedAtEpochMs,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
             content: {
@@ -516,6 +518,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedAtEpochMs: next.confirmedAtEpochMs,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
             threadParentId: prev.threadParentId,
@@ -529,6 +532,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedAtEpochMs: next.confirmedAtEpochMs,
         }
     } else {
         // make sure we carry the createdAtEpochMs of the previous event
@@ -542,6 +546,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
             latestEventNum: next.eventNum,
             confirmedEventNum: prev.confirmedEventNum ?? next.confirmedEventNum,
             confirmedInBlockNum: prev.confirmedInBlockNum ?? next.confirmedInBlockNum,
+            confirmedAtEpochMs: next.confirmedAtEpochMs,
             createdAtEpochMs: prev.createdAtEpochMs,
             updatedAtEpochMs: next.createdAtEpochMs,
         }

@@ -2,15 +2,15 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {ITownsApp} from "./ITownsApp.sol";
 
 /// @title BaseApp
 /// @notice Base contract for Towns apps implementing core ERC-6900 module functionality
 /// @dev Provides base implementation for module installation/uninstallation and interface support
 /// @dev Inheriting contracts should override _onInstall and _onUninstall as needed
-/// @dev Implements IERC6900Module, IERC6900ExecutionModule, and ITownsApp interfaces
+/// @dev Implements IModule, IExecutionModule, and ITownsApp interfaces
 
 abstract contract BaseApp is ITownsApp {
     receive() external payable {
@@ -20,17 +20,17 @@ abstract contract BaseApp is ITownsApp {
     // External functions
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
-            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
-            interfaceId == type(IERC6900Module).interfaceId ||
+            interfaceId == type(IExecutionModule).interfaceId ||
+            interfaceId == type(IModule).interfaceId ||
             interfaceId == type(ITownsApp).interfaceId;
     }
 
-    /// @notice Required by IERC6900Module - called when module is installed
+    /// @notice Required by IModule - called when module is installed
     function onInstall(bytes calldata postInstallData) external {
         _onInstall(postInstallData);
     }
 
-    /// @notice Required by IERC6900Module - called when module is uninstalled
+    /// @notice Required by IModule - called when module is uninstalled
     function onUninstall(bytes calldata postUninstallData) external {
         _onUninstall(postUninstallData);
     }

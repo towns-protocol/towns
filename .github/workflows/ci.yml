@@ -211,10 +211,6 @@ jobs:
                   working-directory: core
                   install-go: false
 
-            - name: Build town types
-              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: ./scripts/build-contract-types.sh localhost --frozen
-
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
@@ -341,11 +337,11 @@ jobs:
 
             - name: Run multiple nodes
               working-directory: core
-              run: just RUN_ENV=multi_ne config-and-start
+              run: just RUN_ENV=multi config-and-start
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi_ne start-and-wait-app-registry
+              run: just RUN_ENV=multi start-and-wait-app-registry
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
@@ -354,8 +350,8 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
-                  yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
+                  yarn workspace @towns-protocol/stream-metadata dev:local_multi &
+                  yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
               run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
@@ -751,7 +747,7 @@ jobs:
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run go tests with race detection exluding large tests
+            - name: Run go tests with race detection excluding large tests
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 

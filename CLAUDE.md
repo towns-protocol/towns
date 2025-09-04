@@ -25,13 +25,10 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
   - `just t` - Run all Go tests from current directory
   - `just t-debug` - Run tests with info logging and test printing
 - Development environments:
-  - `RUN_ENV=multi just config-and-start` - Start development environment WITH entitlement checks
-  - `RUN_ENV=multi_ne just config-and-start` - Start development environment WITHOUT entitlement checks (faster for SDK testing)
-  - `RUN_ENV=multi just stop` - Stop multi environment nodes
-  - `RUN_ENV=multi_ne just stop` - Stop multi_ne environment nodes
-  - `RUN_ENV=multi just tail-logs` - View logs from multi environment instances
-  - `RUN_ENV=multi_ne just tail-logs` - View logs from multi_ne environment instances
-  - `RUN_ENV=multi just build` - Build node binary
+  - `just config-and-start` - Start development environment WITH entitlement checks
+  - `just stop` - Stop multi environment nodes
+  - `just tail-logs` - View logs from multi environment instances
+  - `just build` - Build node binary
 - Infrastructure:
   - `just storage-start` - Start PostgreSQL via Docker
   - `just storage-stop` - Stop PostgreSQL
@@ -93,7 +90,6 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
    - `RUN_ENV=multi just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
-   - `RUN_ENV=multi_ne just config-and-start` - Faster environment without entitlement checks (required for other SDK tests)
 
 ### Testing Strategy
 
@@ -118,9 +114,17 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 
 ### Code Quality Requirements
 
-- **All TypeScript files must pass Prettier formatting**
-  - Run `yarn prettier:fix` to automatically format all TypeScript files
+#### For Go code changes:
+- **Format all Go files**: Run `./fmt.sh` from the `/core` directory
+- **Run the linter**: Execute `./lint.sh` from the `/core` directory
+- These scripts handle formatting and linting for all Go code
+
+#### For TypeScript, JavaScript, YAML, Solidity, and other non-Go files:
+- **All non-Go files must pass Prettier formatting**
+  - Run `yarn prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
   - This command will check and fix any formatting issues in one step
+
+#### For all changes:
 - **All PRs must pass global linting**
   - Run `yarn lint` from the root directory before committing
   - This ensures code quality and consistency across the entire repository
@@ -153,9 +157,6 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ## Configuration Notes
 
 - Environment-specific configs in `/core/env/`
-- Two development environments available:
-  - `RUN_ENV=multi` - Multi-node setup WITH entitlement checks (required for some SDK tests)
-  - `RUN_ENV=multi_ne` - Multi-node setup WITHOUT entitlement checks (faster, required for other SDK tests)
 - Local chains run on ports 8545 (Base) and 8546 (River)
 - PostgreSQL runs on port 5433 for local development
 - HTTPS certificates managed via `generate-certs.sh`

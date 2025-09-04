@@ -3,7 +3,7 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
-  ABIGEN_VERSION="v1.14.11"
+  ABIGEN_VERSION="v1.16.2"
 fi
 
 echo "Go version:"

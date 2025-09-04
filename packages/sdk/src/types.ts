@@ -86,6 +86,7 @@ export interface StreamTimelineEvent {
     decryptedContentError?: DecryptionSessionError
     miniblockNum?: bigint
     confirmedEventNum?: bigint
+    confirmedAtEpochMs?: number
 }
 
 export type RemoteTimelineEvent = Omit<StreamTimelineEvent, 'remoteEvent'> & {
@@ -103,6 +104,7 @@ export type ConfirmedTimelineEvent = Omit<
     remoteEvent: ParsedEvent
     confirmedEventNum: bigint
     miniblockNum: bigint
+    confirmedAtEpochMs: number
 }
 
 export type DecryptedTimelineEvent = Omit<
@@ -196,6 +198,7 @@ export function makeRemoteTimelineEvent(params: {
     eventNum: bigint
     miniblockNum?: bigint
     confirmedEventNum?: bigint
+    confirmedAtEpochMs?: number
 }): RemoteTimelineEvent {
     return {
         hashStr: params.parsedEvent.hashStr,
@@ -205,6 +208,7 @@ export function makeRemoteTimelineEvent(params: {
         remoteEvent: params.parsedEvent,
         miniblockNum: params.miniblockNum,
         confirmedEventNum: params.confirmedEventNum,
+        confirmedAtEpochMs: params.confirmedAtEpochMs,
     }
 }
 

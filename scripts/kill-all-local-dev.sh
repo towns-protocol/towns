@@ -73,7 +73,6 @@ echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
     (cd ./core && just RUN_ENV=multi stop)
-    (cd ./core && just RUN_ENV=multi_ne stop)
 
     # just in case
     do_kill './bin/river_node run'
@@ -82,7 +81,6 @@ fi
 if prompt 'Stop App registry?:y/n '
 then
     (cd ./core && just RUN_ENV=multi stop-app-registry)
-    (cd ./core && just RUN_ENV=multi_ne stop-app-registry)
 fi
 
 if prompt 'Stop Stress?:y/n '

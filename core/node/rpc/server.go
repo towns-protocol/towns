@@ -544,26 +544,32 @@ func (s *Service) runHttpServer() error {
 		mux.Handle("/metrics", s.metricsPublisher.CreateHandler())
 	}
 
+	// Build allowed headers for CORS, optionally including the test-bypass header when enabled.
+	allowedHeaders := []string{
+		"Origin",
+		"X-Requested-With",
+		"Accept",
+		"Content-Type",
+		"X-Grpc-Web",
+		"X-User-Agent",
+		"User-Agent",
+		"Connect-Protocol-Version",
+		"Connect-Timeout-Ms",
+		"x-river-request-id",
+		"Authorization",
+		headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
+	}
+	if s.config.TestEntitlementsBypassSecret != "" {
+		allowedHeaders = append(allowedHeaders, headers.RiverTestBypassHeaderName)
+	}
+
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
 		Debug:            cfg.Log.Level == "debug",
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
 		// AllowedHeaders: []string{"*"} also works for CORS issues w/ OPTIONS requests
-		AllowedHeaders: []string{
-			"Origin",
-			"X-Requested-With",
-			"Accept",
-			"Content-Type",
-			"X-Grpc-Web",
-			"X-User-Agent",
-			"User-Agent",
-			"Connect-Protocol-Version",
-			"Connect-Timeout-Ms",
-			"x-river-request-id",
-			"Authorization",
-			headers.RiverUseSharedSyncHeaderName, // TODO: remove after the legacy syncer is removed
-		},
+		AllowedHeaders: allowedHeaders,
 	})
 
 	handler := corsMiddleware.Handler(mux)
@@ -811,12 +817,28 @@ func (s *Service) initHandlers() {
 	}
 	ii = append(ii, s.NewMetricsInterceptor())
 	ii = append(ii, NewTimeoutInterceptor(s.config.Network.RequestTimeout))
+	// Base interceptors used for all services
+	baseInterceptors := ii
 
-	interceptors := connect.WithInterceptors(ii...)
-	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(s, interceptors)
+	// Stream service interceptors, optionally include test-bypass only for StreamService
+	streamInterceptors := append([]connect.Interceptor{}, baseInterceptors...)
+	if s.config.TestEntitlementsBypassSecret != "" {
+		streamInterceptors = append(streamInterceptors, auth.NewTestBypassInterceptor(
+			s.config.TestEntitlementsBypassSecret,
+		))
+	}
+
+	streamServicePattern, streamServiceHandler := protocolconnect.NewStreamServiceHandler(
+		s,
+		connect.WithInterceptors(streamInterceptors...),
+	)
 	s.mux.Handle(streamServicePattern, newHttpHandler(streamServiceHandler, s.defaultLogger))
 
-	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(s, interceptors)
+	// NodeToNode handler uses only base interceptors (no test-bypass)
+	nodeServicePattern, nodeServiceHandler := protocolconnect.NewNodeToNodeHandler(
+		s,
+		connect.WithInterceptors(baseInterceptors...),
+	)
 	if s.chainConfig.Get().ServerEnableNode2NodeAuth == 1 {
 		s.defaultLogger.Info("Enabling node2node authentication")
 		nodeServiceHandler = node2nodeauth.RequireCertMiddleware(nodeServiceHandler)

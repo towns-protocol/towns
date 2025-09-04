@@ -1695,10 +1695,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@erc6900/reference-implementation@npm:^0.8.1":
-  version: 0.8.1
-  resolution: "@erc6900/reference-implementation@npm:0.8.1"
-  checksum: 2b5198a6136deea17f79f4376c77fe1c5fb7f5cbb8a9f2be39bfa982d496020a10fa5577b20b6016e18cfa6b38078f2e5da7aef7ca75501a8d523437f6529f3a
+"@erc6900/reference-implementation@https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz":
+  version: 0.8.0
+  resolution: "@erc6900/reference-implementation@https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
+  checksum: 7463bb2aec540fb9f3dc5089d8a8db0b29151cef3b2ad24ee5f81892a55d66715ecafb11b2babf3d7eec2b0c12eeb9762fd9f47b3348205360537180e945e205
   languageName: node
   linkType: hard
 
@@ -8802,7 +8802,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/contracts@workspace:packages/contracts"
   dependencies:
-    "@erc6900/reference-implementation": ^0.8.1
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
     "@ethereum-attestation-service/eas-contracts": ^1.8.0
     "@layerzerolabs/lz-evm-messagelib-v2": ^3.0.112
     "@layerzerolabs/lz-evm-protocol-v2": ^3.0.112
@@ -8815,6 +8815,7 @@ __metadata:
     "@prb/test": ^0.6.4
     "@towns-protocol/diamond": ^0.6.1
     "@towns-protocol/prettier-config": "workspace:^"
+    "@typechain/ethers-v5": ^10.1.1
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
@@ -8825,6 +8826,7 @@ __metadata:
     solady: ^0.1.24
     solhint: ^5.0.5
     solidity-bytes-utils: ^0.8.4
+    typechain: ^8.1.1
   languageName: unknown
   linkType: soft
 
@@ -9180,7 +9182,6 @@ __metadata:
     "@noble/hashes": ^1.8.0
     "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
-    "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
@@ -9300,6 +9301,7 @@ __metadata:
   dependencies:
     "@towns-protocol/contracts": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
     eslint: ^8.57.1
     eslint-config-ponder: ^0.9.27
@@ -29330,7 +29332,6 @@ __metadata:
   resolution: "towns-protocol@workspace:."
   dependencies:
     "@arethetypeswrong/cli": ^0.15.3
-    "@typechain/ethers-v5": ^10.1.1
     "@types/node": ^20.14.8
     eslint: ^8.57.1
     eslint-config-prettier: ^10.1.2
@@ -29344,7 +29345,6 @@ __metadata:
     syncpack: ^10.7.3
     ts-node: ^10.9.1
     turbo: ^2.5.4
-    typechain: ^8.1.1
     typescript: ^5.8.2
     vitest: ^3.2.3
     wait-on: ^7.0.1

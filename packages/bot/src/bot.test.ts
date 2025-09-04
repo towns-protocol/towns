@@ -5,8 +5,10 @@ import {
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    makeUserStreamId,
     MockEntitlementsDelegate,
     RiverDbManager,
+    RiverTimelineEvent,
     waitFor,
     type AppRegistryRpcClient,
     type Channel,
@@ -40,6 +42,7 @@ type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
 type OnThreadMessageType = BotPayload<'threadMessage'>
 type OnMentionedType = BotPayload<'mentioned'>
+type OnMentionedInThreadType = BotPayload<'mentionedInThread'>
 
 describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
@@ -71,6 +74,7 @@ describe('Bot', { sequential: true }, () => {
     let appRegistryRpcClient: AppRegistryRpcClient
     let appAddress: Address
     let bobDefaultChannel: Channel
+    let ethersProvider: ethers.providers.StaticJsonRpcProvider
 
     beforeAll(async () => {
         await shouldInitializeBotOwner()
@@ -78,6 +82,7 @@ describe('Bot', { sequential: true }, () => {
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
+        ethersProvider = makeBaseProvider(riverConfig)
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -171,6 +176,7 @@ describe('Bot', { sequential: true }, () => {
                 create(AppPrivateDataSchema, {
                     privateKey: botWallet.privateKey,
                     encryptionDevice: exportedDevice,
+                    env: process.env.RIVER_ENV!,
                 }),
             ),
         )
@@ -191,8 +197,8 @@ describe('Bot', { sequential: true }, () => {
                 username: BOT_USERNAME,
                 displayName: 'Bot Witness of Infinity',
                 description: BOT_DESCRIPTION,
-                avatarUrl: 'https://placehold.co/64x64.png',
-                imageUrl: 'https://placehold.co/600x600.png',
+                avatarUrl: 'https://placehold.co/64x64',
+                imageUrl: 'https://placehold.co/600x600',
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -200,7 +206,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64, process.env.RIVER_ENV)
+        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
@@ -223,6 +229,16 @@ describe('Bot', { sequential: true }, () => {
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
     }
+
+    it('should have app_address defined in user stream for bot', async () => {
+        const botUserStreamId = makeUserStreamId(botClientAddress)
+        const streamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(botUserStreamId)
+        })
+        const userStream = streamView.userContent.userStreamModel
+        expect(userStream.appAddress).toBeDefined()
+        expect(userStream.appAddress).toBe(appAddress)
+    })
 
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
@@ -419,6 +435,84 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
     })
 
+    it('onMentionedInThread should be triggered when bot is mentioned in a thread', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const { eventId: initialMessageId } =
+            await bobDefaultChannel.sendMessage('starting a thread')
+        const { eventId: threadMentionEventId } = await bobDefaultChannel.sendMessage(
+            'yo @bot check this thread',
+            {
+                threadId: initialMessageId,
+                mentions: [
+                    {
+                        userId: bot.botId,
+                        displayName: bot.botId,
+                        mentionBehavior: { case: undefined, value: undefined },
+                    },
+                ],
+            },
+        )
+
+        await waitFor(() => receivedMentionedInThreadEvents.length > 0)
+
+        const threadMentionEvent = receivedMentionedInThreadEvents.find(
+            (e) => e.eventId === threadMentionEventId,
+        )
+        expect(threadMentionEvent).toBeDefined()
+        expect(threadMentionEvent?.userId).toBe(bob.userId)
+        expect(threadMentionEvent?.threadId).toBe(initialMessageId)
+    })
+
+    it('onMentionedInThread should NOT be triggered for regular mentions outside threads', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const regularMentionMessage = 'Mentioning @bot outside thread'
+        const { eventId } = await bobDefaultChannel.sendMessage(regularMentionMessage, {
+            mentions: [
+                {
+                    userId: bot.botId,
+                    displayName: bot.botId,
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+        })
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        expect(receivedMentionedInThreadEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    it('onMentionedInThread should NOT be triggered for thread messages without bot mentions', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
+        bot.onMentionedInThread((_h, e) => {
+            receivedMentionedInThreadEvents.push(e)
+        })
+
+        const initialMessage = 'Starting another thread'
+        const threadMessageWithoutMention = 'Thread message without mention'
+        const { eventId: initialMessageId } = await bobDefaultChannel.sendMessage(initialMessage)
+        const { eventId: threadEventId } = await bobDefaultChannel.sendMessage(
+            threadMessageWithoutMention,
+            {
+                threadId: initialMessageId,
+            },
+        )
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        expect(
+            receivedMentionedInThreadEvents.find((x) => x.eventId === threadEventId),
+        ).toBeUndefined()
+    })
+
     it('onReaction should be triggered when a reaction is added', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedReactionEvents: BotPayload<'reaction'>[] = []
@@ -450,6 +544,58 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
 
+    it('bot can redact his own message', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const { eventId: redactionId } = await bot.removeEvent(channelId, messageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
+    })
+
+    it('bot can redact other people messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const messages: BotPayload<'message'>[] = []
+        bot.onMessage((_h, e) => {
+            messages.push(e)
+        })
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        await waitFor(() => messages.length > 0)
+        const { eventId: redactionId } = await bot.adminRemoveEvent(channelId, bobMessageId)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactionActionEvent),
+        )
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.RedactedEvent),
+        )
+    })
     // TODO: flaky test
     it.skip('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
@@ -465,39 +611,42 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
     })
 
-    // TODO: I couldnt get onTip to work somehow
-    // ConnectError: [failed_precondition] AddEvent: (62:DOWNSTREAM_NETWORK_ERROR)
-    // <base 0: unavailable: AddEvent: (14:UNAVAILABLE) Forwarding disabled by request header
-    // nodeAddress = 0x9CfBCA75Bc64E67Ff415C60367A78DC110BC9239
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 8.350417ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    // >>base 0 end
-    // nodeAddress = 0xC0C4e900678EcA2d9C17d7771351BDf7a225Ca1d
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 9.889292ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    it.skip('onTip should be triggered wfhen a tip is received', async () => {
+    it('onTip should be triggered when a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
         bot.onTip((_h, e) => {
             receivedTipEvents.push(e)
         })
+
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+
+        const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // bob tips the bot
         await bobDefaultChannel.sendTip(
             messageId,
             {
-                amount: ethers.utils.parseUnits('0.1').toBigInt(),
+                amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
-                chainId: 1,
-                receiver: bot.botId,
+                chainId: riverConfig.base.chainConfig.chainId,
+                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
             bob.signer,
         )
+        // app address is the address of the bot contract (not the bot client, since client is per installation)
+        const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
+        expect(balance).toBeGreaterThan(balanceBefore)
         await waitFor(() => receivedTipEvents.length > 0)
-        expect(receivedTipEvents.find((x) => x.eventId === messageId)).toBeDefined()
+        const tipEvent = receivedTipEvents.find((x) => x.messageId === messageId)
+        expect(tipEvent).toBeDefined()
+        expect(tipEvent?.userId).toBe(bob.userId)
+        expect(tipEvent?.spaceId).toBe(spaceId)
+        expect(tipEvent?.channelId).toBe(channelId)
+        expect(tipEvent?.amount).toBe(ethers.utils.parseUnits('0.01').toBigInt())
+        expect(tipEvent?.currency).toBe(ETH_ADDRESS)
+        expect(tipEvent?.senderAddress).toBe(bob.userId)
+        expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {

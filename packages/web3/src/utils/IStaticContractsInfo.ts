@@ -8,17 +8,15 @@ export interface BaseChainConfig {
         spaceFactory: Address
         spaceOwner: Address
         baseRegistry: Address
-        riverAirdrop?: Address
-        swapRouter?: Address
-        towns?: Address
-        appRegistry?: Address
+        riverAirdrop: Address | undefined
+        swapRouter: Address | undefined
+        appRegistry: Address | undefined
         utils: {
-            mockNFT?: Address // mockErc721aAddress
-            member?: Address // testGatingTokenAddress - For tesing token gating scenarios
-            towns?: Address
+            mockNFT: Address | undefined // mockErc721aAddress
+            member: Address | undefined // testGatingTokenAddress - For tesing token gating scenarios
+            towns: Address | undefined
         }
     }
-    executionClient?: 'geth_dev' | undefined
 }
 
 export interface RiverChainConfig {

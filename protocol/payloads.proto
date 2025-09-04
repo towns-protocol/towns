@@ -236,4 +236,5 @@ message ExportedDevice {
 message AppPrivateData {
     string private_key = 1;
     ExportedDevice encryption_device = 2;
+    string env = 3; // alpha, gamma, delta, omega
 }
