@@ -26,9 +26,10 @@ const baseConfig = {
         utils: {
             mockNFT: base.addresses.utils.mockNFT,
             member: base.addresses.utils.member,
+            towns: base.addresses.utils.towns,
         },
     },
-}
+} satisfies BaseChainConfig
 
 test('getJoinSpacePriceDetails returns correct values for free space', async () => {
     const wallet = ethers.Wallet.createRandom()
