@@ -202,6 +202,11 @@ func (s *Service) sealEphemeralStream(
 	if err != nil {
 		return common.Hash{}, err
 	}
+	if location != s.externalMediaStorage.GetBucket() {
+		return common.Hash{}, fmt.Errorf(
+			"external media stream storage changed after this ephemeral media was created.",
+		)
+	}
 	if location != "" {
 		uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
@@ -213,18 +218,6 @@ func (s *Service) sealEphemeralStream(
 				)
 			}
 			return common.Hash{}, err
-		}
-		if location != s.externalMediaStorage.GetBucket() {
-			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
-				return common.Hash{}, fmt.Errorf(
-					"failed to get external media stream info: %w, and failed to abort upload: %v",
-					err,
-					abortErr,
-				)
-			}
-			return common.Hash{}, fmt.Errorf(
-				"external media stream storage changed after this ephemeral media was created.",
-			)
 		}
 		etags, err := s.storage.GetExternalMediaStreamEtags(ctx, streamId)
 		if err != nil {
