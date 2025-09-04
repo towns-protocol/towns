@@ -1,6 +1,11 @@
 import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
 
-export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join', 'review'])
+export const analyticsEventType = onchainEnum('analytics_event_type', [
+    'swap',
+    'tip',
+    'join',
+    'review',
+])
 
 // Type definitions for analytics event data
 export type SwapEventData = {

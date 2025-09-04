@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
     updateSpaceCachedMetrics,
+    updateSpaceReviewMetrics,
 } from './utils'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
@@ -872,10 +873,7 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
     try {
         // Check if review already exists (shouldn't happen for ReviewAdded, but just in case)
         const existingReview = await context.db.sql.query.review.findFirst({
-            where: and(
-                eq(schema.review.spaceId, spaceId),
-                eq(schema.review.user, event.args.user),
-            ),
+            where: and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)),
         })
 
         if (!existingReview) {
@@ -905,31 +903,8 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 },
             })
 
-            // Get all reviews to calculate average
-            const allReviews = await context.db.sql.query.review.findMany({
-                where: eq(schema.review.spaceId, spaceId),
-            })
-
-            // Calculate average rating
-            let totalRating = 0
-            for (const review of allReviews) {
-                totalRating += review.rating
-            }
-            const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
-
-            // Update space with new review count and average
-            const currentSpace = await context.db.sql.query.space.findFirst({
-                where: eq(schema.space.id, spaceId),
-            })
-            if (currentSpace) {
-                await context.db.sql
-                    .update(schema.space)
-                    .set({
-                        reviewCount: (currentSpace.reviewCount ?? 0n) + 1n,
-                        averageRating: averageRating,
-                    })
-                    .where(eq(schema.space.id, spaceId))
-            }
+            // Update review metrics (count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
         } else {
             console.warn(`Review already exists for user ${event.args.user} in space ${spaceId}`)
         }
@@ -951,16 +926,13 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
                 rating: event.args.rating,
                 updatedAt: blockTimestamp,
             })
-            .where(
-                and(
-                    eq(schema.review.spaceId, spaceId),
-                    eq(schema.review.user, event.args.user),
-                ),
-            )
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
 
         if (result.changes === 0) {
             // If the review doesn't exist, create it (edge case)
-            console.warn(`Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`)
+            console.warn(
+                `Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`,
+            )
             await context.db.insert(schema.review).values({
                 spaceId: spaceId,
                 user: event.args.user,
@@ -988,24 +960,8 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
             },
         })
 
-        // Recalculate average rating after update
-        const allReviews = await context.db.sql.query.review.findMany({
-            where: eq(schema.review.spaceId, spaceId),
-        })
-
-        let totalRating = 0
-        for (const review of allReviews) {
-            totalRating += review.rating
-        }
-        const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
-
-        // Update space with new average rating
-        await context.db.sql
-            .update(schema.space)
-            .set({
-                averageRating: averageRating,
-            })
-            .where(eq(schema.space.id, spaceId))
+        // Update review metrics (recalculate average rating)
+        await updateSpaceReviewMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
     }
@@ -1019,15 +975,12 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
     try {
         const result = await context.db.sql
             .delete(schema.review)
-            .where(
-                and(
-                    eq(schema.review.spaceId, spaceId),
-                    eq(schema.review.user, event.args.user),
-                ),
-            )
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
 
         if (result.changes === 0) {
-            console.warn(`Review not found for deletion for user ${event.args.user} in space ${spaceId}`)
+            console.warn(
+                `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
+            )
         } else {
             // Add analytics event for the review deletion
             await context.db.insert(schema.analyticsEvent).values({
@@ -1045,30 +998,8 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
                 },
             })
 
-            // Get remaining reviews to recalculate average
-            const allReviews = await context.db.sql.query.review.findMany({
-                where: eq(schema.review.spaceId, spaceId),
-            })
-
-            let totalRating = 0
-            for (const review of allReviews) {
-                totalRating += review.rating
-            }
-            const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
-
-            // Update space with new review count and average rating
-            const currentSpace = await context.db.sql.query.space.findFirst({
-                where: eq(schema.space.id, spaceId),
-            })
-            if (currentSpace && currentSpace.reviewCount && currentSpace.reviewCount > 0n) {
-                await context.db.sql
-                    .update(schema.space)
-                    .set({
-                        reviewCount: currentSpace.reviewCount - 1n,
-                        averageRating: averageRating,
-                    })
-                    .where(eq(schema.space.id, spaceId))
-            }
+            // Update review metrics (recalculate count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
         }
     } catch (error) {
         console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
