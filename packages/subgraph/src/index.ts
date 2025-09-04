@@ -863,3 +863,117 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
 })
+
+ponder.on('Space:ReviewAdded', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        // Check if review already exists (shouldn't happen for ReviewAdded, but just in case)
+        const existingReview = await context.db.sql.query.review.findFirst({
+            where: and(
+                eq(schema.review.spaceId, spaceId),
+                eq(schema.review.user, event.args.user),
+            ),
+        })
+
+        if (!existingReview) {
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockNumber,
+                updatedAt: blockNumber,
+            })
+
+            // Increment review count for the space
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        reviewCount: (currentSpace.reviewCount ?? 0n) + 1n,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+        } else {
+            console.warn(`Review already exists for user ${event.args.user} in space ${spaceId}`)
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewAdded at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .update(schema.review)
+            .set({
+                comment: event.args.comment,
+                rating: event.args.rating,
+                updatedAt: blockNumber,
+            })
+            .where(
+                and(
+                    eq(schema.review.spaceId, spaceId),
+                    eq(schema.review.user, event.args.user),
+                ),
+            )
+
+        if (result.changes === 0) {
+            // If the review doesn't exist, create it (edge case)
+            console.warn(`Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`)
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockNumber,
+                updatedAt: blockNumber,
+            })
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .delete(schema.review)
+            .where(
+                and(
+                    eq(schema.review.spaceId, spaceId),
+                    eq(schema.review.user, event.args.user),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(`Review not found for deletion for user ${event.args.user} in space ${spaceId}`)
+        } else {
+            // Decrement review count for the space
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace && currentSpace.reviewCount && currentSpace.reviewCount > 0n) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        reviewCount: currentSpace.reviewCount - 1n,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
+    }
+})

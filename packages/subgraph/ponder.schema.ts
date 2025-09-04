@@ -60,6 +60,7 @@ export const space = onchainTable('spaces', (t) => ({
     memberCount7d: t.bigint().default(0n),
     memberCount30d: t.bigint().default(0n),
     memberCount: t.bigint().default(0n),
+    reviewCount: t.bigint().default(0n),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
@@ -242,4 +243,33 @@ export const app = onchainTable('apps', (t) => ({
     isRegistered: t.boolean().default(false),
     isBanned: t.boolean().default(false),
     installedIn: t.hex().array().notNull(),
+}))
+
+// reviews
+export const review = onchainTable(
+    'reviews',
+    (t) => ({
+        spaceId: t.hex().notNull(),
+        user: t.hex().notNull(),
+        comment: t.text().notNull(),
+        rating: t.integer().notNull(),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.spaceId, table.user] }),
+        spaceIdx: index().on(table.spaceId),
+        userIdx: index().on(table.user),
+        ratingIdx: index().on(table.rating),
+    }),
+)
+
+// each space has many reviews
+export const spaceToReviews = relations(space, ({ many }) => ({
+    reviews: many(review),
+}))
+
+// each review belongs to a space
+export const reviewToSpace = relations(review, ({ one }) => ({
+    space: one(space, { fields: [review.spaceId], references: [space.id] }),
 }))
