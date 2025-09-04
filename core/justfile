@@ -6,8 +6,7 @@ ENV_PATH_BASE := './env/local'
 ENV_PATH := ENV_PATH_BASE / RUN_ENV
 ENV_FILE := ENV_PATH / "env.env"
 RUN_BASE := './run_files' / RUN_ENV
-RIVER_ENV := 'local_' + RUN_ENV
-CONTRACTS_DIR := '../packages/generated/deployments' / RIVER_ENV
+CONTRACTS_DIR := '../packages/generated/deployments' / RUN_ENV
 INSTANCE_BASE := RUN_BASE
 RPC_BASE := 'http://127.0.0.1:8545'
 RPC_RIVER := 'http://127.0.0.1:8546'
@@ -30,7 +29,6 @@ print-env:
     @echo "ENV_PATH=${ENV_PATH}"
     @echo "ENV_FILE=${ENV_FILE}"
     @echo "RUN_BASE=${RUN_BASE}"
-    @echo "RIVER_ENV=${RIVER_ENV}"
     @echo "CONTRACTS_DIR=${CONTRACTS_DIR}"
     @echo "INSTANCE_BASE=${INSTANCE_BASE}"
     @echo "RPC_BASE=${RPC_BASE}"
