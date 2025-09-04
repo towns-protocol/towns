@@ -290,10 +290,7 @@ export async function updateSpaceReviewMetrics(
         const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
 
         // Calculate weighted rating using Bayesian average
-        const weightedRating = calculateWeightedRating(
-            averageRating,
-            allReviews.length,
-        )
+        const weightedRating = calculateWeightedRating(averageRating, allReviews.length)
 
         // Update space with calculated metrics
         await context.db.sql
