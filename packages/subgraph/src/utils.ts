@@ -258,19 +258,15 @@ export async function updateSpaceCachedMetrics(
     console.log(`Updated ${eventType} rolling window metrics for space ${spaceId}`)
 }
 
-export function calculateWeightedRating(
-    averageRating: number,
-    reviewCount: number
-): number {
+export function calculateWeightedRating(averageRating: number, reviewCount: number): number {
     // Bayesian average formula: pulls rating toward global average when few reviews exist
     // This prevents spaces with 1-2 five-star reviews from ranking highest
-    const globalAverage = 3.0  // Middle rating on 1-5 scale
-    const minReviews = 10      // Threshold for confidence
-    
-    const weightedRating = 
-        (reviewCount * averageRating + minReviews * globalAverage) / 
-        (reviewCount + minReviews)
-    
+    const globalAverage = 3.0 // Middle rating on 1-5 scale
+    const minReviews = 10 // Threshold for confidence
+
+    const weightedRating =
+        (reviewCount * averageRating + minReviews * globalAverage) / (reviewCount + minReviews)
+
     return weightedRating
 }
 
@@ -292,11 +288,11 @@ export async function updateSpaceReviewMetrics(
 
         const reviewCount = BigInt(allReviews.length)
         const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
-        
+
         // Calculate weighted rating using Bayesian average
         const weightedRating = calculateWeightedRating(
             averageRating,
-            allReviews.length  // Use number, not BigInt for calculation
+            allReviews.length, // Use number, not BigInt for calculation
         )
 
         // Update space with calculated metrics
