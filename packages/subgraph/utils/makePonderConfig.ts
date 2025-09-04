@@ -17,6 +17,7 @@ import {
     iAppRegistryAbi,
     tippingFacetAbi,
     membershipFacetAbi,
+    reviewFacetAbi,
 } from '@towns-protocol/contracts/typings'
 
 import { getContractAddress } from './contractAddresses'
@@ -105,6 +106,7 @@ export function makePonderConfig(
                     swapFacetAbi,
                     tippingFacetAbi,
                     membershipFacetAbi,
+                    reviewFacetAbi,
                 ]),
                 address: factory({
                     address: spaceFactory,
