@@ -896,7 +896,6 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 ethAmount: 0n, // Reviews don't have ETH value
                 eventData: {
                     type: 'review',
-                    action: 'added',
                     user: event.args.user,
                     rating: event.args.rating,
                     comment: event.args.comment,
@@ -943,23 +942,6 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
             })
         }
 
-        // Add analytics event for the review update
-        await context.db.insert(schema.analyticsEvent).values({
-            txHash: event.transaction.hash,
-            logIndex: event.log.logIndex,
-            spaceId: spaceId,
-            eventType: 'review',
-            blockTimestamp: blockTimestamp,
-            ethAmount: 0n,
-            eventData: {
-                type: 'review',
-                action: 'updated',
-                user: event.args.user,
-                rating: event.args.rating,
-                comment: event.args.comment,
-            },
-        })
-
         // Update review metrics (recalculate average rating)
         await updateSpaceReviewMetrics(context, spaceId)
     } catch (error) {
@@ -969,7 +951,6 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
 
 ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
 
     try {
@@ -982,22 +963,6 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
                 `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
             )
         } else {
-            // Add analytics event for the review deletion
-            await context.db.insert(schema.analyticsEvent).values({
-                txHash: event.transaction.hash,
-                logIndex: event.log.logIndex,
-                spaceId: spaceId,
-                eventType: 'review',
-                blockTimestamp: blockTimestamp,
-                ethAmount: 0n,
-                eventData: {
-                    type: 'review',
-                    action: 'deleted',
-                    user: event.args.user,
-                    rating: 0, // We don't have the rating in delete event
-                },
-            })
-
             // Update review metrics (recalculate count and average rating)
             await updateSpaceReviewMetrics(context, spaceId)
         }

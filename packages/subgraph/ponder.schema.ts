@@ -37,10 +37,9 @@ export type JoinEventData = {
 
 export type ReviewEventData = {
     type: 'review'
-    action: 'added' | 'updated' | 'deleted'
     user: string
     rating: number
-    comment?: string
+    comment: string
 }
 
 export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
