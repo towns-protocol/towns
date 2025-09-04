@@ -42,15 +42,15 @@ type Query {
 
 type space {
   id: String!
-  owner: String
-  tokenId: BigInt
-  name: String
-  nameLowercased: String
-  uri: String
-  shortDescription: String
-  longDescription: String
-  createdAt: BigInt
-  paused: Boolean
+  owner: String!
+  tokenId: BigInt!
+  name: String!
+  nameLowercased: String!
+  uri: String!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: BigInt!
+  paused: Boolean!
   totalAmountStaked: BigInt
   swapVolume24h: BigInt
   swapVolume7d: BigInt
@@ -76,9 +76,9 @@ type space {
 
 type swapFee {
   spaceId: String!
-  posterFeeBps: Int
-  collectPosterFeeToSpace: Boolean
-  createdAt: BigInt
+  posterFeeBps: Int!
+  collectPosterFeeToSpace: Boolean!
+  createdAt: BigInt!
 }
 
 type swapPage {
@@ -89,15 +89,15 @@ type swapPage {
 
 type swap {
   txHash: String!
-  spaceId: String
-  recipient: String
-  tokenIn: String
-  tokenOut: String
-  amountIn: BigInt
-  amountOut: BigInt
-  poster: String
-  blockTimestamp: BigInt
-  createdAt: BigInt
+  spaceId: String!
+  recipient: String!
+  tokenIn: String!
+  tokenOut: String!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  poster: String!
+  blockTimestamp: BigInt!
+  createdAt: BigInt!
   space: space
   swapRouter: swapRouter
   swapRouterSwap: swapRouterSwap
@@ -105,21 +105,21 @@ type swap {
 
 type swapRouter {
   txHash: String!
-  spaceFactory: String
-  createdAt: BigInt
+  spaceFactory: String!
+  createdAt: BigInt!
 }
 
 type swapRouterSwap {
   txHash: String!
-  router: String
-  caller: String
-  tokenIn: String
-  tokenOut: String
-  amountIn: BigInt
-  amountOut: BigInt
-  recipient: String
-  blockTimestamp: BigInt
-  createdAt: BigInt
+  router: String!
+  caller: String!
+  tokenIn: String!
+  tokenOut: String!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  recipient: String!
+  blockTimestamp: BigInt!
+  createdAt: BigInt!
 }
 
 input swapFilter {
@@ -226,11 +226,11 @@ type analyticsEventPage {
 }
 
 type analyticsEvent {
-  txHash: String
-  logIndex: Int
-  spaceId: String
+  txHash: String!
+  logIndex: Int!
+  spaceId: String!
   eventType: analyticsEventType!
-  blockTimestamp: BigInt
+  blockTimestamp: BigInt!
   ethAmount: BigInt
   eventData: JSON!
   space: space
@@ -303,19 +303,19 @@ type stakersPage {
 
 type stakers {
   depositId: BigInt!
-  owner: String
-  delegatee: String
-  beneficiary: String
-  amount: BigInt
-  createdAt: BigInt
+  owner: String!
+  delegatee: String!
+  beneficiary: String!
+  amount: BigInt!
+  createdAt: BigInt!
   space: space
   operator: operator
 }
 
 type operator {
   address: String!
-  status: Int
-  createdAt: BigInt
+  status: Int!
+  createdAt: BigInt!
   stakings(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
 }
 
@@ -800,12 +800,12 @@ input swapRouterSwapFilter {
 
 type feeDistribution {
   txHash: String!
-  token: String
-  treasury: String
-  poster: String
-  treasuryAmount: BigInt
-  posterAmount: BigInt
-  createdAt: BigInt
+  token: String!
+  treasury: String!
+  poster: String!
+  treasuryAmount: BigInt!
+  posterAmount: BigInt!
+  createdAt: BigInt!
   swapRouterSwap: swapRouterSwap
 }
 
@@ -923,15 +923,15 @@ input operatorFilter {
 
 type app {
   address: String!
-  appId: String
-  client: String
-  module: String
-  owner: String
-  createdAt: BigInt
-  permissions: [String!]
+  appId: String!
+  client: String!
+  module: String!
+  owner: String!
+  createdAt: BigInt!
+  permissions: [String!]!
   isRegistered: Boolean
   isBanned: Boolean
-  installedIn: [String!]
+  installedIn: [String!]!
 }
 
 type appPage {

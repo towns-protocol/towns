@@ -46,6 +46,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
             id: event.args.space,
             owner: event.args.owner,
             tokenId: event.args.tokenId,
+            memberCount: 1n, // the first member is the owner
             name: space.name,
             nameLowercased: space.name.toLowerCase(),
             uri: space.uri,
