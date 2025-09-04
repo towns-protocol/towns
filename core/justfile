@@ -1,7 +1,7 @@
 set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set export
 
-RUN_ENV := env_var_or_default("RUN_ENV", "multi")
+RUN_ENV := env_var_or_default("RUN_ENV", "local_dev")
 ENV_PATH_BASE := './env/local'
 ENV_PATH := ENV_PATH_BASE / RUN_ENV
 ENV_FILE := ENV_PATH / "env.env"
