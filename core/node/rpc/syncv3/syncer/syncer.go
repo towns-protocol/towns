@@ -82,22 +82,18 @@ type (
 
 	// Registry is a registry of stream update emitters (syncers).
 	Registry interface {
-		// Subscribe subscribes to the given stream updates.
+		// SubscribeAndBackfill subscribes to the given stream updates and sends a backfill message to the
+		// target sync operation by the given sync IDs.
 		//
 		// If the given stream ID is not found, it sends the stream down message to the subscriber
 		// with the reason (message field in proto).
-		Subscribe(streamID StreamId, subscriber StreamSubscriber)
+		SubscribeAndBackfill(cookie *SyncCookie, syncIDs []string)
 
 		// Unsubscribe unsubscribes from the given stream updates.
-		//
-		// If StreamSubscriber has received the stream down message, it should call the given Unsubscribe function.
-		// If no more subscribers are left for the stream, the emitter should be closed.
+		// The registry stops and removes the emitter for the given stream ID. Should be called to stop receiving updates
+		// for the stream and to clean up resources.
 		//
 		// Note: the event bus is the only subscriber for the stream.
-		Unsubscribe(streamID StreamId, subscriber StreamSubscriber)
-
-		// Backfill sends a request to appropriate syncer to backfill a specific sync operation by the given
-		// chain of sync identifiers.
-		Backfill(cookie *SyncCookie, syncIDs []string) error
+		Unsubscribe(streamID StreamId)
 	}
 )

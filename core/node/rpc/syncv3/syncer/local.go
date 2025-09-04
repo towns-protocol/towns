@@ -128,9 +128,7 @@ func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string
 
 // Close closes the emitter and stops receiving updates for the stream.
 func (s *localStreamUpdateEmitter) Close() {
-	if s.state.CompareAndSwap(streamUpdateEmitterStateRunning, streamUpdateEmitterStateClosed) {
-		s.cancel(nil)
-	}
+	s.cancel(nil)
 }
 
 // run initializes and runs the local stream update emitter.
