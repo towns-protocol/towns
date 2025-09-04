@@ -236,6 +236,11 @@ type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
     onLocalEventAppended?: (localId: string) => void
     disableTags?: boolean // if true, tags will not be added to the message
+    /**
+     * If provided, the app client address will be added to the tags
+     * and the message will be treated as a slash command.
+     */
+    appClientAddress?: string
 }
 
 type SendBlockchainTransactionOptions = {
@@ -1810,6 +1815,7 @@ export class Client
         }
         return this.makeAndSendChannelMessageEvent(streamId, payload, localId, {
             disableTags: opts?.disableTags,
+            appClientAddress: opts?.appClientAddress,
         })
     }
 
@@ -1817,7 +1823,7 @@ export class Client
         streamId: string,
         payload: ChannelMessage,
         localId?: string,
-        opts?: { disableTags?: boolean },
+        opts?: { disableTags?: boolean; appClientAddress?: string },
     ) {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -1862,7 +1868,13 @@ export class Client
             }
         }
 
-        const tags = opts?.disableTags === true ? undefined : makeTags(payload, stream.view)
+        const tags =
+            opts?.disableTags === true
+                ? undefined
+                : makeTags(payload, stream.view, !!opts?.appClientAddress)
+        if (opts?.appClientAddress && tags) {
+            tags.appClientAddress = bin_fromHexString(opts.appClientAddress)
+        }
         const cleartext = toBinary(ChannelMessageSchema, payload)
 
         let message: EncryptedData

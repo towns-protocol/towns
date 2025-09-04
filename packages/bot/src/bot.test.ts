@@ -21,7 +21,7 @@ import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@to
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
-import { ForwardSettingValue } from '@towns-protocol/proto'
+import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -37,12 +37,18 @@ import { randomUUID } from 'crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
+const SLASH_COMMANDS = [
+    { name: 'help', description: 'Get help with bot commands' },
+    { name: 'status', description: 'Check bot status' },
+] as const satisfies PlainMessage<SlashCommand>[]
+
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
 type OnThreadMessageType = BotPayload<'threadMessage'>
 type OnMentionedType = BotPayload<'mentioned'>
 type OnMentionedInThreadType = BotPayload<'mentionedInThread'>
+type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
@@ -64,7 +70,7 @@ describe('Bot', { sequential: true }, () => {
     const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DESCRIPTION = 'I shall witness everything'
 
-    let bot: Bot
+    let bot: Bot<typeof SLASH_COMMANDS>
     let spaceId: string
     let channelId: string
     let botWallet: ethers.Wallet
@@ -195,6 +201,7 @@ describe('Bot', { sequential: true }, () => {
                 description: BOT_DESCRIPTION,
                 avatarUrl: 'https://placehold.co/64x64',
                 imageUrl: 'https://placehold.co/600x600',
+                slashCommands: SLASH_COMMANDS,
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -202,7 +209,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateData, jwtSecretBase64)
+        bot = await makeTownsBot<typeof SLASH_COMMANDS>(appPrivateData, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
@@ -300,6 +307,36 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.isDm).toBe(true)
         expect(event?.isGdm).toBe(false)
         expect(event?.message).toBe(TEST_MESSAGE)
+    })
+
+    it('should receive slash command messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('help', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+            appClientAddress: bot.botId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('help')
+        expect(event?.args).toBe([])
+    })
+
+    it('should receive slash command with arguments', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('status', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId } = await bobDefaultChannel.sendMessage('/status detailed info', {
+            appClientAddress: bot.botId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('status')
+        expect(event?.args).toBe(['detailed', 'info'])
     })
 
     it.skip('SHOULD NOT receive gdm messages', { fails: true }, async () => {
