@@ -73,7 +73,7 @@ wait_for_river_chain() {
 
 test_node_registry() {
   pushd ./core
-    if ! NODE_ADDRESSES=$(RUN_ENV=multi just get_all_node_addresses); then
+    if ! NODE_ADDRESSES=$(just get_all_node_addresses); then
         echo "Failed to get node addresses"
         exit 1
     fi

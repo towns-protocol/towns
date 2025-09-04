@@ -89,7 +89,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 2. Run `yarn install && yarn prepare`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
-   - `RUN_ENV=multi just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
+   - `just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
 
 ### Testing Strategy
 
