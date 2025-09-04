@@ -404,7 +404,7 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
             await context.db.sql
                 .update(schema.stakers)
                 .set({
-                    amount: (existingStake.amount ?? 0n) + event.args.amount,
+                    amount: existingStake.amount + event.args.amount,
                     createdAt: blockNumber,
                 })
                 .where(eq(schema.stakers.depositId, event.args.depositId))
@@ -439,7 +439,7 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
                 context,
                 existingStake.delegatee,
                 event.args.delegatee as `0x${string}`,
-                existingStake.amount ?? 0n,
+                existingStake.amount,
             )
 
             await context.db.sql
