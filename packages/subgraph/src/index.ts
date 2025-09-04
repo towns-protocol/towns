@@ -866,6 +866,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
 ponder.on('Space:ReviewAdded', async ({ event, context }) => {
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
 
     try {
@@ -883,11 +884,40 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 user: event.args.user,
                 comment: event.args.comment,
                 rating: event.args.rating,
-                createdAt: blockNumber,
-                updatedAt: blockNumber,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
             })
 
-            // Increment review count for the space
+            // Add analytics event for the review
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'review',
+                blockTimestamp: blockTimestamp,
+                ethAmount: 0n, // Reviews don't have ETH value
+                eventData: {
+                    type: 'review',
+                    action: 'added',
+                    user: event.args.user,
+                    rating: event.args.rating,
+                    comment: event.args.comment,
+                },
+            })
+
+            // Get all reviews to calculate average
+            const allReviews = await context.db.sql.query.review.findMany({
+                where: eq(schema.review.spaceId, spaceId),
+            })
+
+            // Calculate average rating
+            let totalRating = 0
+            for (const review of allReviews) {
+                totalRating += review.rating
+            }
+            const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
+
+            // Update space with new review count and average
             const currentSpace = await context.db.sql.query.space.findFirst({
                 where: eq(schema.space.id, spaceId),
             })
@@ -896,6 +926,7 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                     .update(schema.space)
                     .set({
                         reviewCount: (currentSpace.reviewCount ?? 0n) + 1n,
+                        averageRating: averageRating,
                     })
                     .where(eq(schema.space.id, spaceId))
             }
@@ -909,6 +940,7 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
 
 ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
 
     try {
@@ -917,7 +949,7 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
             .set({
                 comment: event.args.comment,
                 rating: event.args.rating,
-                updatedAt: blockNumber,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -934,10 +966,46 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
                 user: event.args.user,
                 comment: event.args.comment,
                 rating: event.args.rating,
-                createdAt: blockNumber,
-                updatedAt: blockNumber,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
             })
         }
+
+        // Add analytics event for the review update
+        await context.db.insert(schema.analyticsEvent).values({
+            txHash: event.transaction.hash,
+            logIndex: event.log.logIndex,
+            spaceId: spaceId,
+            eventType: 'review',
+            blockTimestamp: blockTimestamp,
+            ethAmount: 0n,
+            eventData: {
+                type: 'review',
+                action: 'updated',
+                user: event.args.user,
+                rating: event.args.rating,
+                comment: event.args.comment,
+            },
+        })
+
+        // Recalculate average rating after update
+        const allReviews = await context.db.sql.query.review.findMany({
+            where: eq(schema.review.spaceId, spaceId),
+        })
+
+        let totalRating = 0
+        for (const review of allReviews) {
+            totalRating += review.rating
+        }
+        const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
+
+        // Update space with new average rating
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                averageRating: averageRating,
+            })
+            .where(eq(schema.space.id, spaceId))
     } catch (error) {
         console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
     }
@@ -945,6 +1013,7 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
 
 ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
     const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
 
     try {
@@ -960,7 +1029,34 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
         if (result.changes === 0) {
             console.warn(`Review not found for deletion for user ${event.args.user} in space ${spaceId}`)
         } else {
-            // Decrement review count for the space
+            // Add analytics event for the review deletion
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'review',
+                blockTimestamp: blockTimestamp,
+                ethAmount: 0n,
+                eventData: {
+                    type: 'review',
+                    action: 'deleted',
+                    user: event.args.user,
+                    rating: 0, // We don't have the rating in delete event
+                },
+            })
+
+            // Get remaining reviews to recalculate average
+            const allReviews = await context.db.sql.query.review.findMany({
+                where: eq(schema.review.spaceId, spaceId),
+            })
+
+            let totalRating = 0
+            for (const review of allReviews) {
+                totalRating += review.rating
+            }
+            const averageRating = allReviews.length > 0 ? totalRating / allReviews.length : 0
+
+            // Update space with new review count and average rating
             const currentSpace = await context.db.sql.query.space.findFirst({
                 where: eq(schema.space.id, spaceId),
             })
@@ -969,6 +1065,7 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
                     .update(schema.space)
                     .set({
                         reviewCount: currentSpace.reviewCount - 1n,
+                        averageRating: averageRating,
                     })
                     .where(eq(schema.space.id, spaceId))
             }

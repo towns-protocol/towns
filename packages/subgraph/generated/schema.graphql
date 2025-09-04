@@ -37,6 +37,8 @@ type Query {
   operators(where: operatorFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): operatorPage!
   app(address: String!): app
   apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage!
+  review(spaceId: String!, user: String!): review
+  reviews(where: reviewFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): reviewPage!
   _meta: Meta
 }
 
@@ -68,10 +70,13 @@ type space {
   memberCount7d: BigInt
   memberCount30d: BigInt
   memberCount: BigInt
+  reviewCount: BigInt
+  averageRating: Float
   swapFee: swapFee
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage
   analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage
   stakers(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
+  reviews(where: reviewFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): reviewPage
 }
 
 type swapFee {
@@ -240,6 +245,7 @@ enum analyticsEventType {
   swap
   tip
   join
+  review
 }
 
 input analyticsEventFilter {
@@ -376,6 +382,81 @@ input stakersFilter {
   createdAt_lt: BigInt
   createdAt_gte: BigInt
   createdAt_lte: BigInt
+}
+
+type reviewPage {
+  items: [review!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type review {
+  spaceId: String!
+  user: String!
+  comment: String!
+  rating: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  space: space
+}
+
+input reviewFilter {
+  AND: [reviewFilter]
+  OR: [reviewFilter]
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  comment: String
+  comment_not: String
+  comment_in: [String]
+  comment_not_in: [String]
+  comment_contains: String
+  comment_not_contains: String
+  comment_starts_with: String
+  comment_ends_with: String
+  comment_not_starts_with: String
+  comment_not_ends_with: String
+  rating: Int
+  rating_not: Int
+  rating_in: [Int]
+  rating_not_in: [Int]
+  rating_gt: Int
+  rating_lt: Int
+  rating_gte: Int
+  rating_lte: Int
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_in: [BigInt]
+  updatedAt_not_in: [BigInt]
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
 }
 
 type spacePage {
@@ -613,6 +694,22 @@ input spaceFilter {
   memberCount_lt: BigInt
   memberCount_gte: BigInt
   memberCount_lte: BigInt
+  reviewCount: BigInt
+  reviewCount_not: BigInt
+  reviewCount_in: [BigInt]
+  reviewCount_not_in: [BigInt]
+  reviewCount_gt: BigInt
+  reviewCount_lt: BigInt
+  reviewCount_gte: BigInt
+  reviewCount_lte: BigInt
+  averageRating: Float
+  averageRating_not: Float
+  averageRating_in: [Float]
+  averageRating_not_in: [Float]
+  averageRating_gt: Float
+  averageRating_lt: Float
+  averageRating_gte: Float
+  averageRating_lte: Float
 }
 
 type swapFeePage {

@@ -1,6 +1,6 @@
 import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
 
-export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join'])
+export const analyticsEventType = onchainEnum('analytics_event_type', ['swap', 'tip', 'join', 'review'])
 
 // Type definitions for analytics event data
 export type SwapEventData = {
@@ -30,7 +30,15 @@ export type JoinEventData = {
     tokenId: string
 }
 
-export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData
+export type ReviewEventData = {
+    type: 'review'
+    action: 'added' | 'updated' | 'deleted'
+    user: string
+    rating: number
+    comment?: string
+}
+
+export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
 
 export const space = onchainTable('spaces', (t) => ({
     id: t.hex().primaryKey(),
@@ -61,6 +69,7 @@ export const space = onchainTable('spaces', (t) => ({
     memberCount30d: t.bigint().default(0n),
     memberCount: t.bigint().default(0n),
     reviewCount: t.bigint().default(0n),
+    averageRating: t.real().default(0),
 }))
 
 export const swap = onchainTable('swaps', (t) => ({
