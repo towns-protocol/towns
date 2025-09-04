@@ -173,12 +173,24 @@ type (
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, int64, error)
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, error)
+
+		IncrementExternalMediaStreamNextChunk(ctx context.Context, streamId StreamId) (string, int, error)
+
 		WriteExternalMediaStreamInfo(
 			ctx context.Context,
 			streamId StreamId,
 			uploadID string,
 			bytes_uploaded int64,
+		) error
+
+		WriteExternalMediaStreamNextChunkInfo(
+			ctx context.Context,
+			streamId StreamId,
+			miniblock int64,
+			partNumber int,
+			etag string,
+			length int,
 		) error
 
 		GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error)

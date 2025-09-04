@@ -439,47 +439,134 @@ func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
 	return err
 }
 
+func (s *PostgresStreamStore) WriteExternalMediaStreamNextChunkInfo(
+	ctx context.Context,
+	streamId StreamId,
+	miniblock int64,
+	partNumber int,
+	etag string,
+	length int,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return s.txRunner(
+		ctx,
+		"WriteExternalMediaStreamNextChunkInfo",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.writeExternalMediaStreamNextChunkInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
+		},
+		nil,
+		"streamId", streamId,
+	)
+}
+
+func (s *PostgresStreamStore) writeExternalMediaStreamNextChunkInfoTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	miniblock int64,
+	partNumber int,
+	etag string,
+	length int,
+) error {
+	query := `
+		WITH max_end_bytes AS (
+			SELECT COALESCE(MAX(end_bytes), 0) as max_end
+			FROM external_media_chunks 
+			WHERE stream_id = $1
+		)
+		INSERT INTO external_media_chunks (stream_id, miniblock, part_number, etag, start_bytes, end_bytes, bytes_size) 
+		SELECT $1, $2, $3, $4, max_end + 1, max_end + $5, $5
+		FROM max_end_bytes
+	`
+	_, err := tx.Exec(ctx, query, streamId, miniblock, partNumber, etag, length)
+	return err
+}
+
 func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
 	ctx context.Context,
 	streamId StreamId,
-) (string, int64, error) {
+) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var uploadID string
-	var bytes_uploaded int64
 	err := s.txRunner(
 		ctx,
 		"GetExternalMediaStreamInfo",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, bytes_uploaded, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			uploadID, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
 	)
-	return uploadID, bytes_uploaded, err
+	return uploadID, err
 }
 
 func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-) (string, int64, error) {
+) (string, error) {
 	var uploadID string
-	var bytes_uploaded int64
 
 	if err := tx.QueryRow(
 		ctx,
-		"SELECT upload_id, bytes_uploaded FROM external_media_streams WHERE stream_id = $1",
+		"SELECT upload_id FROM external_media_streams WHERE stream_id = $1",
 		streamId,
-	).Scan(&uploadID, &bytes_uploaded); err != nil {
-		return "", 0, err
+	).Scan(&uploadID); err != nil {
+		return "", err
 	}
 
-	return uploadID, bytes_uploaded, nil
+	return uploadID, nil
+}
+
+func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunk(
+	ctx context.Context,
+	streamId StreamId,
+) (string, int, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var uploadID string
+	var partNumber int
+	err := s.txRunner(
+		ctx,
+		"IncrementExternalMediaStreamNextChunk",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			uploadID, partNumber, err = s.IncrementExternalMediaStreamNextChunkTx(ctx, tx, streamId)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+	return uploadID, partNumber, err
+}
+
+func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunkTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) (string, int, error) {
+	var uploadID string
+	var partNumber int
+
+	// Atomic increment and return current value
+	err := tx.QueryRow(ctx, `
+		UPDATE external_media_streams 
+		SET parts = parts + 1
+		WHERE stream_id = $1
+		RETURNING upload_id, parts - 1
+	`, streamId).Scan(&uploadID, &partNumber)
+
+	return uploadID, partNumber, err
 }
 
 func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(
