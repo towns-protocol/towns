@@ -321,7 +321,7 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.command).toBe('help')
-        expect(event?.args).toBe([])
+        expect(event?.args).toStrictEqual([])
     })
 
     it('should receive slash command with arguments', async () => {
@@ -336,7 +336,7 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.command).toBe('status')
-        expect(event?.args).toBe(['detailed', 'info'])
+        expect(event?.args).toStrictEqual(['detailed', 'info'])
     })
 
     it.skip('SHOULD NOT receive gdm messages', { fails: true }, async () => {
