@@ -24,7 +24,7 @@ export default mergeConfig(
             environment: 'happy-dom',
             name: 'multi_ne',
             env: {
-                RIVER_ENV: 'local_multi',
+                RIVER_ENV: 'local_dev',
                 RIVER_TEST_ENT_BYPASS_SECRET: readBypassSecret() ?? '',
             },
             include: ['./src/tests/multi_ne/**/*.test.ts'],

@@ -22,7 +22,7 @@ export default mergeConfig(
 			include: ['tests/**/*.test.ts'],
 			setupFiles: './vitest.setup.ts',
 			env: {
-				RIVER_ENV: process.env.RIVER_ENV || 'local_multi',
+				RIVER_ENV: process.env.RIVER_ENV || 'local_dev',
 				RIVER_TEST_ENT_BYPASS_SECRET: readBypassSecret() ?? '',
 			},
 		},

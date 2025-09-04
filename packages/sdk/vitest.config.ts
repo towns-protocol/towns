@@ -8,7 +8,7 @@ export default mergeConfig(
             environment: 'happy-dom',
             name: 'multi',
             env: {
-                RIVER_ENV: 'local_multi',
+                RIVER_ENV: 'local_dev',
             },
             include: ['./src/tests/multi/**/*.test.ts', './src/tests/multi_v2/**/*.test.ts'],
             hookTimeout: 120_000,
