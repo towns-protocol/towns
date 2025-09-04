@@ -837,7 +837,7 @@ func (tc *testClient) startSync() {
 
 	// TODO: Remove after removing the legacy syncer
 	req := connect.NewRequest(&SyncStreamsRequest{})
-	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
 
 	updates, err := tc.client.SyncStreams(tc.ctx, req)
 	tc.require.NoError(err)
