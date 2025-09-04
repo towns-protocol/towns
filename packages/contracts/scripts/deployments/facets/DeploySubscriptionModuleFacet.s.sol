@@ -8,7 +8,7 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
-import {SubscriptionModuleFacet} from "../../../src/apps/modules/subcription/SubscriptionModuleFacet.sol";
+import {SubscriptionModuleFacet} from "../../../src/apps/modules/subscription/SubscriptionModuleFacet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeploySubscriptionModuleFacet {
