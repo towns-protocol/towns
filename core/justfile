@@ -6,6 +6,7 @@ ENV_PATH_BASE := './env/local'
 ENV_PATH := ENV_PATH_BASE / RUN_ENV
 ENV_FILE := ENV_PATH / "env.env"
 RUN_BASE := './run_files' / RUN_ENV
+RIVER_ENV := RUN_ENV
 CONTRACTS_DIR := '../packages/generated/deployments' / RUN_ENV
 INSTANCE_BASE := RUN_BASE
 RPC_BASE := 'http://127.0.0.1:8545'
