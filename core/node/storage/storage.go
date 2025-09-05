@@ -188,6 +188,8 @@ type (
 			uploadID string,
 		) error
 
+		DeleteExternalMediaStreamUploadEntry(ctx context.Context, streamId StreamId) error
+
 		WriteExternalMediaStreamPartInfo(
 			ctx context.Context,
 			streamId StreamId,

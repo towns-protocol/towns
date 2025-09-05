@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -279,6 +280,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 					)
 				}
 				return err
+			}
+			if s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId) != nil {
+				log.Error("failed to delete external media stream upload entry", "streamId", streamId)
 			}
 		}
 

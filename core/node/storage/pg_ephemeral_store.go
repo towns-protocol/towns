@@ -642,3 +642,31 @@ func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(
 	rangeHeader := fmt.Sprintf("bytes=%d-%d", startBytes, endBytes)
 	return rangeHeader, nil
 }
+
+func (s *PostgresStreamStore) DeleteExternalMediaStreamUploadEntry(
+	ctx context.Context,
+	streamId StreamId,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	return s.txRunner(
+		ctx,
+		"DeleteExternalMediaStreamUploadEntry",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.DeleteExternalMediaStreamUploadEntryTx(ctx, tx, streamId)
+		},
+		nil,
+		"streamId", streamId,
+	)
+}
+
+func (s *PostgresStreamStore) DeleteExternalMediaStreamUploadEntryTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) error {
+	_, err := tx.Exec(ctx, "DELETE FROM external_media_uploads WHERE stream_id = $1", streamId)
+	return err
+}

@@ -8,6 +8,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
@@ -73,6 +74,9 @@ func (s *Service) allocateEphemeralStream(
 					err,
 					abortErr,
 				)
+			}
+			if s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId) != nil {
+				return nil, fmt.Errorf("failed to delete external media stream upload entry: %w", err)
 			}
 			return nil, err
 		}
@@ -228,6 +232,9 @@ func (s *Service) sealEphemeralStream(
 				)
 			}
 			return common.Hash{}, err
+		}
+		if s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId) != nil {
+			log.Error("failed to delete external media stream upload entry", "streamId", streamId)
 		}
 	}
 	return s.storage.NormalizeEphemeralStream(ctx, streamId)
