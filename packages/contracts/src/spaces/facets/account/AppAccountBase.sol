@@ -127,6 +127,33 @@ abstract contract AppAccountBase is
         emit ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
+    function _onUpdateApp(bytes32 appId, bytes calldata data) internal {
+        address module = abi.decode(data, (address));
+
+        if (!_isAppInstalled(module)) AppNotInstalled.selector.revertWith();
+
+        bytes32 currentAppId = _getInstalledAppId(module);
+        if (currentAppId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+
+        App memory app = _getAppRegistry().getAppById(appId);
+
+        // revoke the current app
+        _revokeGroupAccess(currentAppId, app.client);
+        _setGroupStatus(currentAppId, false);
+
+        // update the app
+        _addApp(module, appId);
+        _setGroupStatus(appId, true, _getAppExpiration(appId, app.duration));
+        _grantGroupAccess({
+            groupId: appId,
+            account: app.client,
+            grantDelay: _getGroupGrantDelay(appId),
+            executionDelay: 0
+        });
+
+        emit ExecutionUpdated(app.module, app.manifest);
+    }
+
     function _onRenewApp(bytes32 appId, bytes calldata /* data */) internal {
         // Get the app data to determine the duration
         App memory app = _getAppRegistry().getAppById(appId);

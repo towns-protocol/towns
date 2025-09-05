@@ -61,6 +61,7 @@ interface IAppRegistryBase {
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpdated(address indexed app, address indexed account, bytes32 indexed appId);
 }
 
 /// @title IAppRegistry Interface
