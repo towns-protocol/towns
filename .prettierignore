@@ -61,3 +61,4 @@ packages/workers/**/*.json
 
 CLAUDE.md
 AGENTS.md
+**/AGENTS.md
