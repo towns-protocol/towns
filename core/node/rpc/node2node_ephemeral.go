@@ -66,7 +66,7 @@ func (s *Service) allocateEphemeralStream(
 		if err != nil {
 			return nil, err
 		}
-		if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
+		if s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID) != nil {
 			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 				return nil, fmt.Errorf(
 					"failed to write external media stream info: %w, and failed to abort upload: %v",
@@ -76,7 +76,6 @@ func (s *Service) allocateEphemeralStream(
 			}
 			return nil, err
 		}
-		storageMb.Data = []byte{}
 	}
 	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, s.externalMediaStorage.GetBucket()); err != nil {
 		return nil, err
@@ -132,11 +131,11 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
 	}
 	if location != "" {
-		uploadID, partNum, err := s.storage.IncrementExternalMediaStreamNextChunk(ctx, streamId)
+		uploadID, partNum, err := s.storage.GetExternalMediaStreamNextPart(ctx, streamId)
 		if err != nil {
 			return err
 		}
-		etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(
+		etag, err := s.externalMediaStorage.UploadPartToExternalMediaStream(
 			ctx,
 			streamId,
 			storageMb.Data,
@@ -146,7 +145,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		if err != nil {
 			return err
 		}
-		if s.storage.WriteExternalMediaStreamNextChunkInfo(
+		if s.storage.WriteExternalMediaStreamPartInfo(
 			ctx,
 			streamId,
 			storageMb.Number,
@@ -208,22 +207,11 @@ func (s *Service) sealEphemeralStream(
 		)
 	}
 	if location != "" {
-		uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		uploadID, etags, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 		if err != nil {
 			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 				return common.Hash{}, fmt.Errorf(
 					"failed to get external media stream info: %w, and failed to abort upload: %v",
-					err,
-					abortErr,
-				)
-			}
-			return common.Hash{}, err
-		}
-		etags, err := s.storage.GetExternalMediaStreamEtags(ctx, streamId)
-		if err != nil {
-			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
-				return common.Hash{}, fmt.Errorf(
-					"failed to complete multipart upload: %w, and failed to abort upload: %v",
 					err,
 					abortErr,
 				)

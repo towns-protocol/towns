@@ -234,7 +234,7 @@ func (s *Service) createReplicatedMediaStream(
 			if err != nil {
 				return nil, err
 			}
-			if s.storage.WriteExternalMediaStreamInfo(ctx, streamId, uploadID, 0) != nil {
+			if s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID) != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return nil, fmt.Errorf(
 						"failed to write external media stream info: %w, and failed to abort upload: %v",
@@ -249,7 +249,7 @@ func (s *Service) createReplicatedMediaStream(
 			return s.storage.CreateEphemeralStreamStorage(
 				ctx,
 				streamId,
-				&storage.MiniblockDescriptor{Data: []byte{}, HasLegacySnapshot: true},
+				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
 				s.externalMediaStorage.GetBucket(),
 			)
 		})

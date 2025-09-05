@@ -83,6 +83,11 @@ type (
 		EndInclusive   int64
 	}
 
+	Etag struct {
+		PartNumber int    `json:"part_number"`
+		Etag       string `json:"etag"`
+	}
+
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
@@ -173,18 +178,17 @@ type (
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, error)
+		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, []Etag, error)
 
-		IncrementExternalMediaStreamNextChunk(ctx context.Context, streamId StreamId) (string, int, error)
+		GetExternalMediaStreamNextPart(ctx context.Context, streamId StreamId) (string, int, error)
 
-		WriteExternalMediaStreamInfo(
+		CreateExternalMediaStreamUploadEntry(
 			ctx context.Context,
 			streamId StreamId,
 			uploadID string,
-			bytes_uploaded int64,
 		) error
 
-		WriteExternalMediaStreamNextChunkInfo(
+		WriteExternalMediaStreamPartInfo(
 			ctx context.Context,
 			streamId StreamId,
 			miniblock int64,
@@ -194,18 +198,6 @@ type (
 		) error
 
 		GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error)
-		GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {
-			PartNumber int
-			Etag       string
-		}, error)
-		WriteExternalMediaStreamChunkInfo(
-			ctx context.Context,
-			streamId StreamId,
-			miniblock int64,
-			partNumber int,
-			etag string,
-			rangeHeader string,
-		) error
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
@@ -329,17 +321,14 @@ type (
 
 	ExternalMediaStorage interface {
 		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
-		UploadChunkToExternalMediaStream(
+		UploadPartToExternalMediaStream(
 			ctx context.Context,
 			streamId StreamId,
 			data []byte,
 			uploadID string,
 			partNum int,
 		) (string, error)
-		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []struct {
-			PartNumber int
-			Etag       string
-		}) error
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []Etag) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 		GetBucket() string
 	}

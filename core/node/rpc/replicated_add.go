@@ -218,11 +218,11 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
 		}
 		if location != "" {
-			uploadID, partNum, err := s.storage.IncrementExternalMediaStreamNextChunk(ctx, streamId)
+			uploadID, partNum, err := s.storage.GetExternalMediaStreamNextPart(ctx, streamId)
 			if err != nil {
 				return err
 			}
-			etag, err := s.externalMediaStorage.UploadChunkToExternalMediaStream(
+			etag, err := s.externalMediaStorage.UploadPartToExternalMediaStream(
 				ctx,
 				streamId,
 				mbBytes,
@@ -232,7 +232,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			if err != nil {
 				return err
 			}
-			if s.storage.WriteExternalMediaStreamNextChunkInfo(
+			if s.storage.WriteExternalMediaStreamPartInfo(
 				ctx,
 				streamId,
 				cc.MiniblockNum,
@@ -259,22 +259,11 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 
 		if location != "" {
-			uploadID, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+			uploadID, etags, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
 			if err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return fmt.Errorf(
 						"failed to get external media stream info: %w, and failed to abort upload: %v",
-						err,
-						abortErr,
-					)
-				}
-				return err
-			}
-			etags, err := s.storage.GetExternalMediaStreamEtags(ctx, streamId)
-			if err != nil {
-				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
-					return fmt.Errorf(
-						"failed to get external media stream etags: %w, and failed to abort upload: %v",
 						err,
 						abortErr,
 					)

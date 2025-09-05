@@ -115,7 +115,7 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 	return uploadID, nil
 }
 
-func (w *ExternalMediaStore) UploadChunkToExternalMediaStream(
+func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
@@ -151,10 +151,7 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
-	etags []struct {
-		PartNumber int
-		Etag       string
-	},
+	etags []Etag,
 ) error {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)

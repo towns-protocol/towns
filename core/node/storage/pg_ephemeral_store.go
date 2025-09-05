@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -393,11 +394,10 @@ func (s *PostgresStreamStore) getMediaStreamLocationTx(
 }
 
 // Add the media stream data location to the table (for external)
-func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
+func (s *PostgresStreamStore) CreateExternalMediaStreamUploadEntry(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
-	bytes_uploaded int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -407,12 +407,11 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 		"WriteMediaStreamInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeExternalMediaStreamInfoTx(
+			return s.CreateExternalMediaStreamUploadEntryTx(
 				ctx,
 				tx,
 				streamId,
 				uploadID,
-				bytes_uploaded,
 			)
 		},
 		nil,
@@ -420,27 +419,22 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamInfo(
 	)
 }
 
-func (s *PostgresStreamStore) writeExternalMediaStreamInfoTx(
+func (s *PostgresStreamStore) CreateExternalMediaStreamUploadEntryTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	uploadID string,
-	bytes_uploaded int64,
 ) error {
 	query := `
-		INSERT INTO external_media_streams (stream_id, upload_id, bytes_uploaded) 
-		VALUES ($1, $2, $3)
-		ON CONFLICT (stream_id) 
-		DO UPDATE SET 
-			upload_id = EXCLUDED.upload_id,
-			bytes_uploaded = EXCLUDED.bytes_uploaded
+		INSERT INTO external_media_uploads (stream_id, upload_id) 
+		VALUES ($1, $2)
 	`
 
-	_, err := tx.Exec(ctx, query, streamId, uploadID, bytes_uploaded)
+	_, err := tx.Exec(ctx, query, streamId, uploadID)
 	return err
 }
 
-func (s *PostgresStreamStore) WriteExternalMediaStreamNextChunkInfo(
+func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfo(
 	ctx context.Context,
 	streamId StreamId,
 	miniblock int64,
@@ -453,17 +447,17 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamNextChunkInfo(
 
 	return s.txRunner(
 		ctx,
-		"WriteExternalMediaStreamNextChunkInfo",
+		"WriteExternalMediaStreamPartInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeExternalMediaStreamNextChunkInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
+			return s.WriteExternalMediaStreamPartInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
 		},
 		nil,
 		"streamId", streamId,
 	)
 }
 
-func (s *PostgresStreamStore) writeExternalMediaStreamNextChunkInfoTx(
+func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -472,62 +466,98 @@ func (s *PostgresStreamStore) writeExternalMediaStreamNextChunkInfoTx(
 	etag string,
 	length int,
 ) error {
+	// First, update the external_media_uploads table with the new etag
+	updateUploadQuery := `
+		INSERT INTO external_media_uploads (stream_id, etags) 
+		VALUES ($1, $2)
+		ON CONFLICT (stream_id) 
+		DO UPDATE SET etags = external_media_uploads.etags || $2
+	`
+
+	// Add the new etag to the JSONB array
+	etagJSON := fmt.Sprintf(`[{"part_number": %d, "etag": "%s"}]`, partNumber, etag)
+	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
+	if err != nil {
+		return err
+	}
+
+	// Then, insert/update the marker in external_media_markers table
 	query := `
 		WITH max_end_bytes AS (
 			SELECT COALESCE(MAX(end_bytes), 0) as max_end
-			FROM external_media_chunks 
+			FROM external_media_markers 
 			WHERE stream_id = $1
 		)
-		INSERT INTO external_media_chunks (stream_id, miniblock, part_number, etag, start_bytes, end_bytes, bytes_size) 
-		SELECT $1, $2, $3, $4, max_end + 1, max_end + $5, $5
+		INSERT INTO external_media_markers (stream_id, miniblock, start_bytes, end_bytes) 
+		SELECT $1, $2, max_end + 1, max_end + $3
 		FROM max_end_bytes
 	`
-	_, err := tx.Exec(ctx, query, streamId, miniblock, partNumber, etag, length)
+	_, err = tx.Exec(ctx, query, streamId, miniblock, length)
 	return err
 }
 
 func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
 	ctx context.Context,
 	streamId StreamId,
-) (string, error) {
+) (string, []Etag, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var uploadID string
+	var etags []Etag
 	err := s.txRunner(
 		ctx,
 		"GetExternalMediaStreamInfo",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			uploadID, etags, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
 	)
-	return uploadID, err
+	return uploadID, etags, err
 }
 
 func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-) (string, error) {
-	var uploadID string
-
-	if err := tx.QueryRow(
-		ctx,
-		"SELECT upload_id FROM external_media_streams WHERE stream_id = $1",
-		streamId,
-	).Scan(&uploadID); err != nil {
-		return "", err
+) (string, []Etag, error) {
+	// Get both upload ID and etags in a single query
+	var uploadID, etagsJSON string
+	err := tx.QueryRow(ctx, `
+		SELECT upload_id, etags 
+		FROM external_media_uploads 
+		WHERE stream_id = $1`, streamId).Scan(&uploadID, &etagsJSON)
+	if err != nil {
+		return "", nil, err
 	}
 
-	return uploadID, nil
+	// Parse the JSONB array to extract etags
+	var etags []Etag
+
+	if etagsJSON != "" && etagsJSON != "[]" {
+		err = json.Unmarshal([]byte(etagsJSON), &etags)
+		if err != nil {
+			return uploadID, nil, err
+		}
+	}
+
+	// Convert etags to the expected type without struct tags
+	etagsNoTags := make([]Etag, len(etags))
+	for i, e := range etags {
+		etagsNoTags[i] = Etag{
+			PartNumber: e.PartNumber,
+			Etag:       e.Etag,
+		}
+	}
+
+	return uploadID, etagsNoTags, nil
 }
 
-func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunk(
+func (s *PostgresStreamStore) GetExternalMediaStreamNextPart(
 	ctx context.Context,
 	streamId StreamId,
 ) (string, int, error) {
@@ -538,11 +568,11 @@ func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunk(
 	var partNumber int
 	err := s.txRunner(
 		ctx,
-		"IncrementExternalMediaStreamNextChunk",
+		"GetExternalMediaStreamNextPart",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, partNumber, err = s.IncrementExternalMediaStreamNextChunkTx(ctx, tx, streamId)
+			uploadID, partNumber, err = s.GetExternalMediaStreamNextPartTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
@@ -551,7 +581,7 @@ func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunk(
 	return uploadID, partNumber, err
 }
 
-func (s *PostgresStreamStore) IncrementExternalMediaStreamNextChunkTx(
+func (s *PostgresStreamStore) GetExternalMediaStreamNextPartTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -611,120 +641,4 @@ func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(
 	// Construct range header in S3 format: bytes=start-end
 	rangeHeader := fmt.Sprintf("bytes=%d-%d", startBytes, endBytes)
 	return rangeHeader, nil
-}
-
-func (s *PostgresStreamStore) GetExternalMediaStreamEtags(ctx context.Context, streamId StreamId) ([]struct {
-	PartNumber int
-	Etag       string
-}, error,
-) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	var etags []struct {
-		PartNumber int
-		Etag       string
-	}
-	err := s.txRunner(
-		ctx,
-		"GetExternalMediaStreamEtags",
-		pgx.ReadOnly,
-		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			etags, err = s.getExternalMediaStreamEtagsTx(ctx, tx, streamId)
-			return err
-		},
-		nil,
-		"streamId", streamId,
-	)
-	return etags, err
-}
-
-func (s *PostgresStreamStore) getExternalMediaStreamEtagsTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) ([]struct {
-	PartNumber int
-	Etag       string
-}, error,
-) {
-	rows, err := tx.Query(ctx, `
-		SELECT part_number, etag 
-		FROM external_media_chunks 
-		WHERE stream_id = $1 
-		ORDER BY part_number`, streamId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var etags []struct {
-		PartNumber int
-		Etag       string
-	}
-	for rows.Next() {
-		var partNumber int
-		var etag string
-		err := rows.Scan(&partNumber, &etag)
-		if err != nil {
-			return nil, err
-		}
-		etags = append(etags, struct {
-			PartNumber int
-			Etag       string
-		}{PartNumber: partNumber, Etag: etag})
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return etags, nil
-}
-
-func (s *PostgresStreamStore) WriteExternalMediaStreamChunkInfo(
-	ctx context.Context,
-	streamId StreamId,
-	miniblock int64,
-	partNumber int,
-	etag string,
-	rangeHeader string,
-) error {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	return s.txRunner(
-		ctx,
-		"WriteExternalMediaStreamChunkInfo",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeExternalMediaStreamChunkInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, rangeHeader)
-		},
-		nil,
-		"streamId", streamId,
-		"miniblock", miniblock,
-		"partNumber", partNumber,
-		"etag", etag,
-		"rangeHeader", rangeHeader,
-	)
-}
-
-func (s *PostgresStreamStore) writeExternalMediaStreamChunkInfoTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-	miniblock int64,
-	partNumber int,
-	etag string,
-	rangeHeader string,
-) error {
-	query := `
-		INSERT INTO external_media_chunks (stream_id, miniblock, part_number, etag, range_header) 
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (stream_id, miniblock, part_number) 
-		DO UPDATE SET etag = EXCLUDED.etag, range_header = EXCLUDED.range_header
-	`
-	_, err := tx.Exec(ctx, query, streamId, miniblock, partNumber, etag, rangeHeader)
-	return err
 }
