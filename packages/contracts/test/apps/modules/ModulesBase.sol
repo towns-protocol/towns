@@ -192,13 +192,7 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
         bytes[] memory hooks = new bytes[](0);
 
-        bytes memory installData = abi.encode(
-            params.entityId,
-            params.space,
-            params.tokenId,
-            params.renewalPrice,
-            params.expirationTime
-        );
+        bytes memory installData = abi.encode(params.entityId, params.space, params.tokenId);
 
         vm.prank(address(entryPoint));
         account.installValidation(validationConfig, selectors, installData, hooks);

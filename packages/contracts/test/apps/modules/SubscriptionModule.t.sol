@@ -7,6 +7,7 @@ import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IMod
 // utils
 import {ModulesBase} from "./ModulesBase.sol";
 import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
+import {Validator} from "../../../src/utils/libraries/Validator.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
@@ -77,19 +78,18 @@ contract SubscriptionModuleTest is ModulesBase {
             nextRenewalTime: 0
         });
 
-        expectInstallFailed(address(subscriptionModule), SubscriptionModule__InvalidSpace.selector);
+        expectInstallFailed(address(subscriptionModule), Validator.InvalidAddress.selector);
         _installSubscriptionModule(userAccount, params);
     }
 
-    function test_onInstall_revertWhen_InvalidRenewalPrice(address user) public {
+    function test_onInstall_revertWhen_InvalidTokenOwner(address user) public {
         ModularAccount userAccount = _createAccount(user, 0);
         address space = _createSpace(0, 0);
-        uint256 tokenId = _joinSpace(address(userAccount), space);
 
         SubscriptionParams memory params = SubscriptionParams({
             account: address(userAccount),
             space: space,
-            tokenId: tokenId,
+            tokenId: 0,
             renewalPrice: 0,
             expirationTime: 0,
             entityId: 0,
@@ -98,7 +98,7 @@ contract SubscriptionModuleTest is ModulesBase {
 
         expectInstallFailed(
             address(subscriptionModule),
-            SubscriptionModule__InvalidRenewalPrice.selector
+            SubscriptionModule__InvalidTokenOwner.selector
         );
         _installSubscriptionModule(userAccount, params);
     }
@@ -445,13 +445,13 @@ contract SubscriptionModuleTest is ModulesBase {
     }
 
     function test_grantOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(SubscriptionModule__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         vm.prank(deployer);
         subscriptionModule.grantOperator(address(0));
     }
 
     function test_revokeOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(SubscriptionModule__InvalidAddress.selector);
+        vm.expectRevert(Validator.InvalidAddress.selector);
         vm.prank(deployer);
         subscriptionModule.revokeOperator(address(0));
     }

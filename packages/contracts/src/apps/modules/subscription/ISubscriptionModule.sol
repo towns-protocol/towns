@@ -28,20 +28,16 @@ interface ISubscriptionModuleBase {
 
     error SubscriptionModule__InactiveSubscription();
     error SubscriptionModule__InvalidSpace();
-    error SubscriptionModule__InvalidTokenId();
-    error SubscriptionModule__InvalidRenewalPrice();
-    error SubscriptionModule__SpendLimitExceeded();
     error SubscriptionModule__RenewalNotDue();
-    error SubscriptionModule__InsufficientPayment();
     error SubscriptionModule__RenewalFailed();
     error SubscriptionModule__InvalidSender();
     error SubscriptionModule__NotSupported();
-    error SubscriptionModule__UnauthorizedCaller();
     error SubscriptionModule__InvalidEntityId();
     error SubscriptionModule__InvalidCaller();
     error SubscriptionModule__InvalidAddress();
     error SubscriptionModule__ExceedsMaxBatchSize();
     error SubscriptionModule__EmptyBatch();
+    error SubscriptionModule__InvalidTokenOwner();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
