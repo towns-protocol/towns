@@ -280,7 +280,6 @@ contract SubscriptionModuleFacet is
     ) internal {
         Subscription storage sub = $.subscriptions[params.account][params.entityId];
 
-        // ====== CHECKS ======
         // Validate subscription state
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
         if (block.timestamp < sub.nextRenewalTime)
@@ -298,7 +297,6 @@ contract SubscriptionModuleFacet is
         // Get current renewal price from Towns contract
         uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
-        // ====== EFFECTS ======
         // Store the current nextRenewalTime in case we need to revert
         uint64 previousNextRenewalTime = sub.nextRenewalTime;
 
@@ -307,20 +305,18 @@ contract SubscriptionModuleFacet is
         // This ensures the "renewal not due" check will fail if re-entered
         sub.nextRenewalTime = uint64(block.timestamp + 365 days);
 
-        // ====== INTERACTIONS ======
         // Construct the renewal call to space contract
-        bytes memory renewalCall = abi.encodeWithSelector(
-            MembershipFacet.renewMembership.selector,
-            sub.tokenId
-        );
+        bytes memory renewalCall = abi.encodeCall(MembershipFacet.renewMembership, (sub.tokenId));
 
         // Create the data parameter for executeWithRuntimeValidation
         // This should be an execute() call to the space contract
-        bytes memory executeData = abi.encodeWithSelector(
-            IModularAccount.execute.selector,
-            sub.space, // target
-            actualRenewalPrice, // value
-            renewalCall // data
+        bytes memory executeData = abi.encodeCall(
+            IModularAccount.execute,
+            (
+                sub.space, // target
+                actualRenewalPrice, // value
+                renewalCall // data
+            )
         );
 
         bytes memory extraData = abi.encode(sub.space, sub.tokenId);
@@ -329,10 +325,12 @@ contract SubscriptionModuleFacet is
         bytes memory authorization = _runtimeFinal(sub.entityId, extraData);
 
         // Call executeWithRuntimeValidation with the correct parameters
-        bytes memory runtimeValidationCall = abi.encodeWithSelector(
-            IModularAccount.executeWithRuntimeValidation.selector,
-            executeData, // The execute() call data
-            authorization // Authorization for validation
+        bytes memory runtimeValidationCall = abi.encodeCall(
+            IModularAccount.executeWithRuntimeValidation,
+            (
+                executeData, // The execute() call data
+                authorization // Authorization for validation
+            )
         );
 
         // External call happens here

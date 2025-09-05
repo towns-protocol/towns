@@ -3,16 +3,15 @@ pragma solidity ^0.8.29;
 
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
-// structs
 struct Subscription {
-    address space; // slot 0: 20 bytes
-    uint32 entityId; // slot 0: 4 bytes
-    uint64 nextRenewalTime; // slot 0: 8 bytes (32 bytes total - packed!)
-    uint256 renewalPrice; // slot 1: 16 bytes
-    uint256 spent; // slot 1: 16 bytes (32 bytes total - packed!)
-    uint256 tokenId; // slot 2: 32 bytes
-    uint64 lastRenewalTime; // slot 3: 8 bytes
-    bool active; // slot 3: 1 byte (9 bytes used, 23 bytes free)
+    address space;
+    uint32 entityId;
+    uint64 nextRenewalTime;
+    uint256 renewalPrice;
+    uint256 spent;
+    uint256 tokenId;
+    uint64 lastRenewalTime;
+    bool active;
 }
 
 library SubscriptionModuleStorage {
