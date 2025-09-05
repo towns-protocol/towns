@@ -25,88 +25,139 @@ var (
 	_ Registry = (*syncStreamHandlerRegistryImpl)(nil)
 )
 
-type (
-	// SyncStreamHandler is a client sync operation. It subscribes for stream updates on behalf of
-	// the client and sends updates to the client. The client can add, remove stream subscription
-	// or cancel the sync operation.
-	SyncStreamHandler interface {
-		// SyncID returns the unique identifier for the sync operation that is shared with the client.
-		SyncID() string
+// SyncStreamHandler is a client sync operation. It subscribes for stream updates on behalf of
+// the client and sends updates to the client. The client can add, remove stream subscription
+// or cancel the sync operation.
+type SyncStreamHandler interface {
+	// Run runs the sync stream handler.
+	Run() error
 
-		// Modify allows the client to add or remove the streams it is subscribed on for update.
-		//
-		// For each stream that is added, it will subscribe for streams updates. Note that it
-		// is possible to receive stream updates before receiving the initial updates from the
-		// given sync position. The operation must temporarily buffer incoming updates until the
-		// update from the given sync position is sent to the client (backfill).
-		//
-		// For each stream that is removed, the operation will unsubscribe from further stream updates.
-		Modify(req *ModifySyncRequest) (*ModifySyncResponse, error)
+	// SyncID returns the unique identifier for the sync operation that is shared with the client.
+	SyncID() string
 
-		// Cancel the stream sync operation.
-		// The given operation must be removed from the SyncStreamHandlerRegistry.
-		//
-		// It is safe to call this method multiple times. e.g., the sync operation is canceled due
-		// to a node shutdown and at the same time the client cancels the sync operation.
-		Cancel(ctx context.Context) error
-
-		// Ping is used to keep the sync operation alive and make sure it is operational.
-		Ping(ctx context.Context, nonce string)
-
-		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
-		// Sends a SyncOp_SYNC_DOWN message to the receiver and unsubscribes from the stream updates.
-		DebugDropStream(ctx context.Context, streamId StreamId) error
-	}
-
-	// Receiver is a final receiver of the stream update message, i.e. client.
-	// It is not thread safe so the race detector will throw an error if multiple goroutines
-	// try to call Send at the same time.
-	Receiver interface {
-		Send(*SyncStreamsResponse) error
-	}
-
-	// Registry is the sync stream handler registry.
-	// Registry holds a mapping from syncId that is shared with the client and
-	// its associated SyncStreamHandler that is responsible to send stream updates to the client.
-	Registry interface {
-		// Get sync stream handler by sync id.
-		Get(syncID string) (SyncStreamHandler, bool)
-
-		// New create a new sync stream handler.
-		New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error)
-	}
-
-	// syncStreamHandlerImpl is a concrete implementation of the SyncStreamHandler interface.
+	// Modify allows the client to add or remove the streams it is subscribed on for update.
 	//
-	// TODO: Remove sync operation from event bas after its cancellation.
-	syncStreamHandlerImpl struct {
-		// ctx is the context of the sync operation.
-		ctx context.Context
-		// cancel is the cancel function for the operation context.
-		cancel context.CancelCauseFunc
-		// log is the logger for the operation.
-		log *logging.Log
-		// syncID is the unique identifier for the sync operation.
-		syncID string
-		// receiver is the final receiver of the stream update message, i.e. client.
-		receiver Receiver
-		// eventBus is the event bus that is used to subscribe for stream updates.
-		eventBus eventbus.StreamSubscriptionManager
-		// streamUpdates is the stream updates queue.
-		// When a stream update is received, it should be sent to the queue so the updates processor can handle them.
-		streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	// For each stream that is added, it will subscribe for streams updates. Note that it
+	// is possible to receive stream updates before receiving the initial updates from the
+	// given sync position. The operation must temporarily buffer incoming updates until the
+	// update from the given sync position is sent to the client (backfill).
+	//
+	// For each stream that is removed, the operation will unsubscribe from further stream updates.
+	Modify(req *ModifySyncRequest) (*ModifySyncResponse, error)
+
+	// Cancel the stream sync operation.
+	// The given operation must be removed from the SyncStreamHandlerRegistry.
+	//
+	// It is safe to call this method multiple times. e.g., the sync operation is canceled due
+	// to a node shutdown and at the same time the client cancels the sync operation.
+	Cancel(ctx context.Context) error
+
+	// Ping is used to keep the sync operation alive and make sure it is operational.
+	Ping(ctx context.Context, nonce string)
+
+	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
+	// Sends a SyncOp_SYNC_DOWN message to the receiver and unsubscribes from the stream updates.
+	DebugDropStream(ctx context.Context, streamId StreamId) error
+}
+
+// Receiver is a final receiver of the stream update message, i.e. client.
+// It is not thread safe so the race detector will throw an error if multiple goroutines
+// try to call Send at the same time.
+type Receiver interface {
+	Send(*SyncStreamsResponse) error
+}
+
+// Registry is the sync stream handler registry.
+// Registry holds a mapping from syncId that is shared with the client and
+// its associated SyncStreamHandler that is responsible to send stream updates to the client.
+type Registry interface {
+	// Get sync stream handler by sync id.
+	Get(syncID string) (SyncStreamHandler, bool)
+
+	// New create a new sync stream handler.
+	New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error)
+}
+
+// syncStreamHandlerImpl is a concrete implementation of the SyncStreamHandler interface.
+//
+// TODO: Remove sync operation from event bas after its cancellation.
+type syncStreamHandlerImpl struct {
+	// ctx is the context of the sync operation.
+	ctx context.Context
+	// cancel is the cancel function for the operation context.
+	cancel context.CancelCauseFunc
+	// log is the logger for the operation.
+	log *logging.Log
+	// syncID is the unique identifier for the sync operation.
+	syncID string
+	// receiver is the final receiver of the stream update message, i.e. client.
+	receiver Receiver
+	// eventBus is the event bus that is used to subscribe for stream updates.
+	eventBus eventbus.StreamSubscriptionManager
+	// streamUpdates is the stream updates queue.
+	// When a stream update is received, it should be sent to the queue so the updates processor can handle them.
+	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+}
+
+// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
+type syncStreamHandlerRegistryImpl struct {
+	// handlersLock is a mutex that protects access to the handlers map.
+	handlersLock sync.Mutex
+	// handlers is a map of sync stream handlers by their sync ID.
+	handlers map[string]*syncStreamHandlerImpl
+	// eventBus is the event bus that is used to subscribe for stream updates.
+	eventBus eventbus.StreamSubscriptionManager
+}
+
+func (s *syncStreamHandlerImpl) Run() error {
+	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
+	if err := s.receiver.Send(&SyncStreamsResponse{
+		SyncId: s.syncID,
+		SyncOp: SyncOp_SYNC_NEW,
+	}); err != nil {
+		return err
 	}
 
-	// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
-	syncStreamHandlerRegistryImpl struct {
-		// handlersLock is a mutex that protects access to the handlers map.
-		handlersLock sync.Mutex
-		// handlers is a map of sync stream handlers by their sync ID.
-		handlers map[string]*syncStreamHandlerImpl
-		// eventBus is the event bus that is used to subscribe for stream updates.
-		eventBus eventbus.StreamSubscriptionManager
+	// Start processing stream updates.
+	var msgs []*SyncStreamsResponse
+	for {
+		select {
+		case <-s.ctx.Done():
+			return s.ctx.Err()
+		case _, open := <-s.streamUpdates.Wait():
+			msgs = s.streamUpdates.GetBatch(msgs)
+
+			// nil msgs indicates the buffer is closed.
+			if msgs == nil {
+				_ = s.receiver.Send(&SyncStreamsResponse{
+					SyncId: s.syncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				s.cancel(nil)
+				return nil
+			}
+
+			// Process each message in the batch.
+			// Messages must be processed in the order they were received.
+			for _, msg := range msgs {
+				if stop := s.processMessage(msg); stop {
+					return nil
+				}
+			}
+
+			// If the client sent a close message, stop sending messages to client from the buffer.
+			// In theory should not happen, but just in case.
+			if !open {
+				_ = s.receiver.Send(&SyncStreamsResponse{
+					SyncId: s.syncID,
+					SyncOp: SyncOp_SYNC_CLOSE,
+				})
+				s.cancel(nil)
+				return nil
+			}
+		}
 	}
-)
+}
 
 func (s *syncStreamHandlerImpl) SyncID() string {
 	return s.syncID
@@ -121,7 +172,7 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 	var res ModifySyncResponse
 
 	for _, cookie := range req.GetAddStreams() {
-		if err := s.eventBus.Subscribe(cookie, s); err != nil {
+		if err := s.eventBus.EnqueueSubscribe(cookie, s); err != nil {
 			rvrErr := AsRiverError(err)
 			res.Adds = append(res.Adds, &SyncStreamOpStatus{
 				StreamId: cookie.GetStreamId(),
@@ -132,7 +183,7 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 	}
 
 	for _, streamID := range req.GetRemoveStreams() {
-		if err := s.eventBus.Unsubscribe(StreamId(streamID), s); err != nil {
+		if err := s.eventBus.EnqueueUnsubscribe(StreamId(streamID), s); err != nil {
 			rvrErr := AsRiverError(err)
 			res.Removals = append(res.Removals, &SyncStreamOpStatus{
 				StreamId: streamID[:],
@@ -143,7 +194,7 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 	}
 
 	for _, cookie := range req.GetBackfillStreams().GetStreams() {
-		if err := s.eventBus.Backfill(cookie, s.syncID, req.BackfillStreams.GetSyncId()); err != nil {
+		if err := s.eventBus.EnqueueBackfill(cookie, s.syncID, req.BackfillStreams.GetSyncId()); err != nil {
 			rvrErr := AsRiverError(err)
 			res.Backfills = append(res.Backfills, &SyncStreamOpStatus{
 				StreamId: cookie.GetStreamId(),
@@ -204,7 +255,7 @@ func (s *syncStreamHandlerImpl) DebugDropStream(ctx context.Context, streamId St
 	default:
 	}
 
-	if err := s.eventBus.Unsubscribe(streamId, s); err != nil {
+	if err := s.eventBus.EnqueueUnsubscribe(streamId, s); err != nil {
 		return err
 	}
 
@@ -229,67 +280,19 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 	}
 }
 
-// startUpdatesProcessor starts the updates processor that sends stream updates to the receiver.
-func (s *syncStreamHandlerImpl) startUpdatesProcessor() {
-	var msgs []*SyncStreamsResponse
-	for {
-		select {
-		case <-s.ctx.Done():
-			return
-		case _, open := <-s.streamUpdates.Wait():
-			msgs = s.streamUpdates.GetBatch(msgs)
-
-			// nil msgs indicates the buffer is closed.
-			if msgs == nil {
-				_ = s.receiver.Send(&SyncStreamsResponse{
-					SyncId: s.syncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				s.cancel(nil)
-				return
-			}
-
-			// Process each message in the batch.
-			// Messages must be processed in the order they were received.
-			for _, msg := range msgs {
-				if stop := s.processMessage(msg); stop {
-					return
-				}
-			}
-
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
-			if !open {
-				_ = s.receiver.Send(&SyncStreamsResponse{
-					SyncId: s.syncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				s.cancel(nil)
-				return
-			}
-		}
-	}
-}
-
 // processMessage processes a single message from the stream updates queue.
 // Returns true if the processor should stop processing messages.
 func (s *syncStreamHandlerImpl) processMessage(msg *SyncStreamsResponse) bool {
-	// Check context before AND after preparing the message
 	select {
 	case <-s.ctx.Done():
 		return true
 	default:
 	}
 
-	select {
-	case <-s.ctx.Done():
+	msg.SyncId = s.syncID
+	if err := s.receiver.Send(msg); err != nil {
+		s.cancel(err)
 		return true
-	default:
-		msg.SyncId = s.syncID
-		if err := s.receiver.Send(msg); err != nil {
-			s.cancel(err)
-			return true
-		}
 	}
 
 	// Special cases depending on the message type that should be applied after sending the message.
@@ -343,17 +346,7 @@ func (s *syncStreamHandlerRegistryImpl) New(
 		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
 	}
 
-	go handler.startUpdatesProcessor()
-
 	s.handlers[syncID] = handler
-
-	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
-	if err := receiver.Send(&SyncStreamsResponse{
-		SyncId: syncID,
-		SyncOp: SyncOp_SYNC_NEW,
-	}); err != nil {
-		return nil, err
-	}
 
 	return handler, nil
 }

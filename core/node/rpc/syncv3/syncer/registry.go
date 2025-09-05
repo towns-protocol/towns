@@ -3,11 +3,9 @@ package syncer
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -17,42 +15,41 @@ import (
 
 var _ Registry = (*registryImpl)(nil)
 
-type (
-	registryMsgSubAndBackfill struct {
-		cookie  *SyncCookie
-		syncIDs []string
-	}
+type registryMsgSubAndBackfill struct {
+	cookie  *SyncCookie
+	syncIDs []string
+}
 
-	registryMsgUnsub struct {
-		streamID StreamId
-	}
-	registryMsg struct {
-		subAndBackfill *registryMsgSubAndBackfill
-		unsub          *registryMsgUnsub
-	}
+type registryMsgUnsub struct {
+	streamID StreamId
+}
 
-	// registryImpl is an implementation of the Registry interface.
-	registryImpl struct {
-		// ctx is the global node context.
-		ctx context.Context
-		// log is the logger for the registry.
-		log *logging.Log
-		// localAddr is the address of the current node.
-		localAddr common.Address
-		// streamCache is the global stream cache.
-		streamCache StreamCache
-		// nodeRegistry is the global node registry.
-		nodeRegistry nodes.NodeRegistry
-		// subscriber is the StreamSubscriber that receives updates from all syncers.
-		subscriber StreamSubscriber
-		// syncersLock is a mutex to protect the syncers map.
-		syncersLock sync.Mutex
-		// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
-		syncers map[StreamId]StreamUpdateEmitter
-		// queue of sync registry commands.
-		queue *dynmsgbuf.DynamicBuffer[*registryMsg]
-	}
-)
+type registryMsg struct {
+	subAndBackfill *registryMsgSubAndBackfill
+	unsub          *registryMsgUnsub
+}
+
+// registryImpl is an implementation of the Registry interface.
+type registryImpl struct {
+	// ctx is the global node context.
+	ctx context.Context
+	// log is the logger for the registry.
+	log *logging.Log
+	// localAddr is the address of the current node.
+	localAddr common.Address
+	// streamCache is the global stream cache.
+	streamCache StreamCache
+	// nodeRegistry is the global node registry.
+	nodeRegistry nodes.NodeRegistry
+	// subscriber is the StreamSubscriber that receives updates from all syncers.
+	subscriber StreamSubscriber
+	// syncersLock is a mutex to protect the syncers map.
+	syncersLock sync.Mutex
+	// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
+	syncers map[StreamId]StreamUpdateEmitter
+	// queue of sync registry commands.
+	queue *dynmsgbuf.DynamicBuffer[*registryMsg]
+}
 
 // NewRegistry creates a new instance of the Registry.
 func NewRegistry(
@@ -61,7 +58,7 @@ func NewRegistry(
 	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
-) *registryImpl {
+) Registry {
 	r := &registryImpl{
 		ctx: ctx,
 		log: logging.FromCtx(ctx).
@@ -74,7 +71,15 @@ func NewRegistry(
 		syncers:      make(map[StreamId]StreamUpdateEmitter),
 		queue:        dynmsgbuf.NewDynamicBuffer[*registryMsg](),
 	}
-	go r.run()
+
+	go func() {
+		if err := r.run(); err != nil {
+			r.log.Errorw("sync registry stopped with error", "error", err)
+		} else {
+			r.log.Info("sync registry stopped")
+		}
+	}()
+
 	return r
 }
 
@@ -96,12 +101,12 @@ func (r *registryImpl) Unsubscribe(streamID StreamId) {
 	}
 }
 
-func (r *registryImpl) run() {
+func (r *registryImpl) run() error {
 	var msgs []*registryMsg
 	for {
 		select {
 		case <-r.ctx.Done():
-			return
+			return r.ctx.Err()
 		case _, open := <-r.queue.Wait():
 			msgs = r.queue.GetBatch(msgs)
 
@@ -115,8 +120,7 @@ func (r *registryImpl) run() {
 			}
 
 			if !open {
-				r.log.Error("sync registry queue closed, stopping the registry")
-				return
+				return nil
 			}
 		}
 	}
@@ -134,28 +138,28 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 
 	emitter, ok := r.syncers[streamID]
 	if !ok {
-		emitter, err = r.createEmitterNoLock(streamID, 1)
-		if err != nil {
-			r.log.Errorw("failed to create stream emitter for backfill", "streamID", streamID, "error", err)
-			r.subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				0,
-			)
-			return
-		}
+		emitter = newSharedStreamUpdateEmitter(
+			r.ctx,
+			r.localAddr,
+			r.streamCache,
+			r.nodeRegistry,
+			r.subscriber,
+			streamID,
+			1,
+		)
 	}
 
 	if !emitter.Backfill(cookie, syncIDs) {
 		currentVersion := emitter.Version()
-		emitter, err = r.createEmitterNoLock(streamID, currentVersion+1)
-		if err != nil {
-			r.log.Errorw("failed to recreate stream emitter for backfill", "streamID", streamID, "error", err)
-			r.subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				0,
-			)
-			return
-		}
+		emitter = newSharedStreamUpdateEmitter(
+			r.ctx,
+			r.localAddr,
+			r.streamCache,
+			r.nodeRegistry,
+			r.subscriber,
+			streamID,
+			currentVersion+1,
+		)
 
 		if !emitter.Backfill(cookie, syncIDs) {
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
@@ -176,44 +180,4 @@ func (r *registryImpl) processUnsubscribe(streamID StreamId) {
 		emitter.Close()
 		delete(r.syncers, streamID)
 	}
-}
-
-// createEmitterNoLock creates a new StreamUpdateEmitter for the given streamID without acquiring the lock.
-func (r *registryImpl) createEmitterNoLock(streamID StreamId, version int32) (StreamUpdateEmitter, error) {
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(r.ctx, 20*time.Second)
-	defer ctxWithCancel()
-
-	// Get stream remote nodes first
-	stream, err := r.streamCache.GetStreamNoWait(ctxWithTimeout, streamID)
-	if err != nil {
-		return nil, AsRiverError(err).Func("registryImpl.createEmitterNoLock")
-	}
-
-	// Create a new emitter based on whether the address is local or remote.
-	var streamUpdateEmitter StreamUpdateEmitter
-	if stream.IsLocal() {
-		streamUpdateEmitter = NewLocalStreamUpdateEmitter(
-			r.ctx,
-			r.localAddr,
-			r.streamCache,
-			streamID,
-			r.subscriber,
-			version,
-		)
-	} else {
-		streamUpdateEmitter = NewRemoteStreamUpdateEmitter(
-			r.ctx,
-			stream,
-			r.nodeRegistry,
-			streamID,
-			r.subscriber,
-			version,
-		)
-	}
-
-	// Store the given emitter in the registry without acquiring the lock.
-	// This function is called with the lock already held, so we can safely add it to the map.
-	r.syncers[streamID] = streamUpdateEmitter
-
-	return streamUpdateEmitter, nil
 }

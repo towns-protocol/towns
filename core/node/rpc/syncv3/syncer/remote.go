@@ -112,7 +112,6 @@ func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 		r.state.Store(streamUpdateEmitterStateClosed)
 		return false
 	}
-
 	return true
 }
 

@@ -11,23 +11,21 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-type (
-	// Service defines the behavior of the sync V3 service.
-	Service interface {
-		// SyncStreams creates and starts a sync operation. Given streams are immediately going to be added
-		// to the sync operation, and the receiver will receive updates for these streams.
-		SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error
-		// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
-		// It can also backfill a specific stream by the given cookie which is already in the sync.
-		ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
-		// CancelSync cancels an existing sync operation by its ID.
-		CancelSync(ctx context.Context, id string) error
-		// PingSync pings an existing sync operation by its ID to keep it alive.
-		PingSync(ctx context.Context, id, nonce string) error
-		// DebugDropStream is a debug method to drop a specific stream from the sync operation.
-		DebugDropStream(ctx context.Context, id string, streamId StreamId) error
-	}
-)
+// Service defines the behavior of the sync V3 service.
+type Service interface {
+	// SyncStreams creates and starts a sync operation. Given streams are immediately going to be added
+	// to the sync operation, and the receiver will receive updates for these streams.
+	SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error
+	// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
+	// It can also backfill a specific stream by the given cookie which is already in the sync.
+	ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
+	// CancelSync cancels an existing sync operation by its ID.
+	CancelSync(ctx context.Context, id string) error
+	// PingSync pings an existing sync operation by its ID to keep it alive.
+	PingSync(ctx context.Context, id, nonce string) error
+	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
+	DebugDropStream(ctx context.Context, id string, streamId StreamId) error
+}
 
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
@@ -66,9 +64,7 @@ func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*Syn
 		}
 	}
 
-	<-ctx.Done()
-
-	return context.Cause(ctx)
+	return h.Run()
 }
 
 func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
