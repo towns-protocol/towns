@@ -23,6 +23,10 @@ interface ISimpleAppBase {
     /// @param installPrice The new install price
     /// @param accessDuration The new access duration
     event PricingUpdated(uint256 installPrice, uint48 accessDuration);
+
+    /// @notice Emitted when permissions are updated
+    /// @param permissions The new permissions
+    event PermissionsUpdated(bytes32[] permissions);
 }
 
 interface ISimpleApp is ISimpleAppBase {
@@ -34,6 +38,10 @@ interface ISimpleApp is ISimpleAppBase {
     /// @param installPrice The new install price
     /// @param accessDuration The new access duration
     function updatePricing(uint256 installPrice, uint48 accessDuration) external;
+
+    /// @notice Updates the permissions of the app
+    /// @param permissions The new permissions of the app
+    function updatePermissions(bytes32[] calldata permissions) external;
 
     /// @notice Initializes the app
     /// @param owner The owner of the app
