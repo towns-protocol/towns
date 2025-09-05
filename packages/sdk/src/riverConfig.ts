@@ -11,9 +11,9 @@ import { check } from '@towns-protocol/dlog'
 
 function getEnvironmentId(): string {
     if (typeof process === 'object') {
-        return process.env.RIVER_ENV || 'local_multi'
+        return process.env.RIVER_ENV || 'local_dev'
     }
-    return 'local_multi'
+    return 'local_dev'
 }
 
 function getBaseRpcUrlForChain(chainId: number): string {
@@ -136,7 +136,7 @@ export const getStreamMetadataUrl = (environmentId: string) => {
             return 'https://river.delivery'
         case 'delta':
             return 'https://delta.river.delivery'
-        case 'local_multi':
+        case 'local_dev':
             return 'http://localhost:3002'
         default:
             throw new Error(`No stream metadata url for environmentId ${environmentId}`)
@@ -150,7 +150,7 @@ export function getAppRegistryUrl(environmentId: string): string {
         }
     }
     switch (environmentId) {
-        case 'local_multi':
+        case 'local_dev':
             return 'https://localhost:6170'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'

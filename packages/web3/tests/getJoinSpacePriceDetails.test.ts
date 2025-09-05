@@ -10,7 +10,7 @@ import { expect, test } from 'vitest'
 // temp until there's a better way to do this without importing sdk
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-const base = DeploymentsJson?.local_multi?.base as BaseChainConfig
+const base = DeploymentsJson?.local_dev?.base as BaseChainConfig
 
 if (!base) {
     throw new Error('getJoinSpacePriceDetails.test.ts: Base config not found')

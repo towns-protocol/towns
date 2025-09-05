@@ -7,8 +7,7 @@ import { resolve } from 'path'
 
 export function readBypassSecret(): string | undefined {
     try {
-        const riverEnv = process.env.RIVER_ENV || 'local_multi'
-        const runEnv = riverEnv.replace('local_', '')
+        const runEnv = process.env.RIVER_ENV || 'local_dev'
         const contractsPath = resolve(__dirname, `./core/run_files/${runEnv}/contracts.env`)
         const content = readFileSync(contractsPath, 'utf8')
         const line = content

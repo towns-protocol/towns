@@ -8,7 +8,7 @@ export default mergeConfig(
             environment: 'happy-dom',
             name: 'multi_ne',
             env: {
-                RIVER_ENV: 'local_multi',
+                RIVER_ENV: 'local_dev',
                 // skip entitlements for these tests
                 RIVER_TEST_ENT_BYPASS_SECRET: readBypassSecret() ?? '',
             },

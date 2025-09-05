@@ -7,7 +7,7 @@ export default mergeConfig(
         test: {
             env: {
                 BOT_PORT: '5123',
-                RIVER_ENV: 'local_multi',
+                RIVER_ENV: 'local_dev',
             },
             include: ['./src/**/*.test.ts'],
             hookTimeout: 120_000,

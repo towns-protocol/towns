@@ -6,7 +6,7 @@ export default mergeConfig(
     defineConfig({
         test: {
             env: {
-                RIVER_ENV: 'local_multi',
+                RIVER_ENV: 'local_dev',
             },
             include: ['./src/**/*.test.ts'],
             hookTimeout: 120_000,

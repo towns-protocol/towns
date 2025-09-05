@@ -158,7 +158,7 @@ export const RiverEnvSwitcherContent = (props: {
                                     </Button>
                                 </DialogClose>
                             ))}
-                        {currentEnv === 'local_multi' && <FundWallet />}
+                        {currentEnv === 'local_dev' && <FundWallet />}
                     </div>
                 </div>
             )}

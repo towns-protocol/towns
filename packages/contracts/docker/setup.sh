@@ -103,13 +103,13 @@ wait_for_river_chain() {
 
 deploy_contracts() {
   pushd ./core
-    just RUN_ENV=multi config-root deploy-contracts
+    just config-root deploy-contracts
   popd
 }
 
 test_node_registry() {
   pushd ./core
-    if ! NODE_ADDRESSES=$(RUN_ENV=multi just get_all_node_addresses); then
+    if ! NODE_ADDRESSES=$(just get_all_node_addresses); then
         echo "Failed to get node addresses"
         exit 1
     fi
@@ -128,5 +128,5 @@ test_node_registry() {
   popd
 }
 
-# cd ./core && just RUN_ENV=multi config build
+# cd ./core && just config build
 main

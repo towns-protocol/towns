@@ -58,7 +58,7 @@ const DEFAULT_OPTIONS: AddressResolverOptions = {
  * Get a contract address based on environment and contract name
  *
  * @param contractName - Name of the contract (e.g., 'spaceFactory')
- * @param environment - Environment name (e.g., 'gamma', 'alpha', 'omega', 'delta', 'local_multi')
+ * @param environment - Environment name (e.g., 'gamma', 'alpha', 'omega', 'delta', 'local_dev')
  * @param options - Configuration options
  * @returns The contract address or null if not found and throwOnError is false
  */

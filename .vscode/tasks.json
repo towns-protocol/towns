@@ -186,7 +186,7 @@
     {
       "label": "Run Nodes",
       "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-and-tail",
+      "command": "sleep 1 && cd ./core && just run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -196,7 +196,7 @@
     {
       "label": "AppRegistry",
       "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-app-registry-and-tail",
+      "command": "sleep 1 && cd ./core && just run-app-registry-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -206,7 +206,7 @@
     {
       "label": "Build Nodes",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi build",
+      "command": "cd ./core && just build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -218,7 +218,7 @@
     {
       "label": "Stop Nodes and Services",
       "type": "shell",
-      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi stop-app-registry",
+      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -254,7 +254,7 @@
     {
       "label": "Configure Nodes",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi config build",
+      "command": "cd ./core && just config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
