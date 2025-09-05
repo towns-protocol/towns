@@ -5769,7 +5769,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openzeppelin/contracts@npm:^5.0.0, @openzeppelin/contracts@npm:^5.3.0":
+"@openzeppelin/contracts@npm:^5.0.0":
   version: 5.3.0
   resolution: "@openzeppelin/contracts@npm:5.3.0"
   checksum: 1d1629c42d170e070c112779c33b3b81c133995695271bc62a696160b598b56455a3c56d1f976a42ee3dd426c4ad984451b1752139f2b7897c9e1ba56c1947da
@@ -8813,7 +8813,7 @@ __metadata:
     "@openzeppelin/merkle-tree": ^1.0.8
     "@prb/math": ^4.1.0
     "@prb/test": ^0.6.4
-    "@towns-protocol/diamond": ^0.6.1
+    "@towns-protocol/diamond": ^0.6.3
     "@towns-protocol/prettier-config": "workspace:^"
     "@typechain/ethers-v5": ^10.1.1
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
@@ -8830,15 +8830,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/diamond@npm:^0.6.1":
-  version: 0.6.1
-  resolution: "@towns-protocol/diamond@npm:0.6.1"
+"@towns-protocol/diamond@npm:^0.6.3":
+  version: 0.6.3
+  resolution: "@towns-protocol/diamond@npm:0.6.3"
   dependencies:
-    "@openzeppelin/contracts": ^5.3.0
+    "@openzeppelin/contracts": ^5.4.0
     "@prb/test": ^0.6.4
-    forge-std: "github:foundry-rs/forge-std#v1.9.7"
-    solady: ^0.1.14
-  checksum: 144cb0bb4d1ddce56a1499d5cf5fe96b2a3a9c09da6f2626f26a7e0b6a93cc0fe11290b92a38967fb7d612b46ea7d102e8a39eca1a29bd1f60634e3526d4c397
+    forge-std: "github:foundry-rs/forge-std#v1.10.0"
+    solady: ^0.1.24
+  checksum: 3da5094a2abe1bd8f2b042b9b07289b73a96bc1ff93e151b917e1cccca24d82fcc2858775695d6118301a6f4fcb672d76a0af185b75abf03d026c9da0f10886e
   languageName: node
   linkType: hard
 
@@ -17114,13 +17114,6 @@ __metadata:
   version: 1.9.5
   resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b93cf4bc34ff214c099dc970b153f85ade8c9f66"
   checksum: 71aead7ca70cc51b46f0336074a9721aa765ba85030080577460c76f2a824abfb26bd1f4a77811c8ffbbce2cb9788f95dc0340926b041a3e2477c9a624f3503b
-  languageName: node
-  linkType: hard
-
-"forge-std@github:foundry-rs/forge-std#v1.9.7":
-  version: 1.9.7
-  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=77041d2ce690e692d6e03cc812b57d1ddaa4d505"
-  checksum: beeabd58860022fb97269f8737786c5c94ed9936fc27b62f067d7781de3e958d5728604d17455975112e8d6535a16b0dc221658d7fb7bf5054d876289be542ac
   languageName: node
   linkType: hard
 
@@ -28101,13 +28094,6 @@ __metadata:
     ip-address: ^9.0.5
     smart-buffer: ^4.2.0
   checksum: 7a6b7f6eedf7482b9e4597d9a20e09505824208006ea8f2c49b71657427f3c137ca2ae662089baa73e1971c62322d535d9d0cf1c9235cf6f55e315c18203eadd
-  languageName: node
-  linkType: hard
-
-"solady@npm:^0.1.14":
-  version: 0.1.14
-  resolution: "solady@npm:0.1.14"
-  checksum: e6f71338251b8e4642bf012355e6f0274345d99cb886075980a7600dc126e3ddacbd5435c56e4d446b0d6248eb9005b62cf6f28672c2033827866620d0c4104e
   languageName: node
   linkType: hard
 
