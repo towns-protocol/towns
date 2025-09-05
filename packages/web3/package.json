@@ -10,7 +10,7 @@
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
-        "load-env": "dotenv -e ../generated/deployments/local_multi/.env",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env",
         "lint:fix": "yarn lint --fix",
         "test": "yarn load-env -- vitest run",
         "test:ci": "yarn test",

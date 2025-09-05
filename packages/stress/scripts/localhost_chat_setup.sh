@@ -8,11 +8,11 @@ echo "stress/scripts/localhost_chat_setup.sh"
 #
 # create space and channels for stress testing
 #
-export RIVER_ENV="${RIVER_ENV:-local_multi}"
+export RIVER_ENV="${RIVER_ENV:-local_dev}"
 
-# if RIVER_ENV == local_multi, source the .env file
-if [ "$RIVER_ENV" == "local_multi" ]; then
-    source ../generated/deployments/local_multi/.env
+# if RIVER_ENV == local_dev, source the .env file
+if [ "$RIVER_ENV" == "local_dev" ]; then
+    source ../generated/deployments/local_dev/.env
 fi
 
 export STRESS_MODE="${STRESS_MODE:-setup_chat}"

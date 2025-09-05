@@ -263,7 +263,7 @@ export function getNotificationServiceUrl(environmentId: string): string {
         }
     }
     switch (environmentId) {
-        case 'local_multi':
+        case 'local_dev':
             return 'http://localhost:7170'
         case 'alpha':
             return 'https://river-notification-service-alpha.towns.com'
@@ -285,7 +285,7 @@ export function getStreamMetadataUrl(environmentId: string): string {
         }
     }
     switch (environmentId) {
-        case 'local_multi':
+        case 'local_dev':
             return 'http://localhost:3002'
         case 'alpha':
             return 'https://alpha.river.delivery'
@@ -307,7 +307,7 @@ export function getAppRegistryUrl(environmentId: string): string {
         }
     }
     switch (environmentId) {
-        case 'local_multi':
+        case 'local_dev':
             return 'https://localhost:6170'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
