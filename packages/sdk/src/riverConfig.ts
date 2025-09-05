@@ -143,15 +143,23 @@ export const getStreamMetadataUrl = (environmentId: string) => {
     }
 }
 
-export const getAppRegistryUrl = (environmentId: string) => {
+export function getAppRegistryUrl(environmentId: string): string {
+    if (typeof process === 'object') {
+        if (process.env.APP_REGISTRY_URL) {
+            return process.env.APP_REGISTRY_URL
+        }
+    }
     switch (environmentId) {
         case 'local_multi':
             return 'https://localhost:6170'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
         case 'gamma':
+            return 'https://app-registry.gamma.towns.com'
         case 'omega':
+            return 'https://app-registry.omega.towns.com'
         case 'delta':
+            return 'https://app-registry.delta.towns.com'
         default:
             throw new Error(`No app registry url for environmentId ${environmentId}`)
     }
