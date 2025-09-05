@@ -1,5 +1,6 @@
 import {
     Client,
+    makeAppPrivateData,
     makeBaseProvider,
     makeRiverConfig,
     makeRiverProvider,
@@ -20,8 +21,7 @@ import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@to
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
-import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
-import { toBinary, create } from '@bufbuild/protobuf'
+import { ForwardSettingValue } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -69,7 +69,7 @@ describe('Bot', { sequential: true }, () => {
     let channelId: string
     let botWallet: ethers.Wallet
     let botClientAddress: Address
-    let appPrivateDataBase64: string
+    let appPrivateData: string
     let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
     let appAddress: Address
@@ -170,17 +170,12 @@ describe('Bot', { sequential: true }, () => {
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
-        appPrivateDataBase64 = bin_toBase64(
-            toBinary(
-                AppPrivateDataSchema,
-                create(AppPrivateDataSchema, {
-                    privateKey: botWallet.privateKey,
-                    encryptionDevice: exportedDevice,
-                    env: process.env.RIVER_ENV!,
-                }),
-            ),
+        appPrivateData = makeAppPrivateData(
+            botWallet.privateKey,
+            exportedDevice!,
+            process.env.RIVER_ENV!,
         )
-        expect(appPrivateDataBase64).toBeDefined()
+        expect(appPrivateData).toBeDefined()
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
@@ -207,7 +202,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
+        bot = await makeTownsBot(appPrivateData, jwtSecretBase64)
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
