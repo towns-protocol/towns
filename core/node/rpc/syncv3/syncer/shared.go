@@ -50,8 +50,8 @@ func newSharedStreamUpdateEmitter(
 		if err != nil {
 			logging.FromCtx(ctx).
 				Named("newSharedStreamUpdateEmitter").
-				With("version", version, "streamID", streamID).
-				Errorw("failed to get stream for further emitter initialization", "err", err)
+				With("version", version, "streamID", streamID, "error", err).
+				Error("failed to get stream for further emitter initialization")
 
 			pendingBackfills := emitter.backfillsQueue.Close()
 			for _, br := range pendingBackfills {
@@ -130,5 +130,7 @@ func (s *sharedStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []strin
 }
 
 func (s *sharedStreamUpdateEmitter) Close() {
-	s.emitter.Close()
+	if s.emitter != nil {
+		s.emitter.Close()
+	}
 }

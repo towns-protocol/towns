@@ -127,14 +127,14 @@ func (r *registryImpl) run() error {
 }
 
 func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
-	r.syncersLock.Lock()
-	defer r.syncersLock.Unlock()
-
 	streamID, err := StreamIdFromBytes(cookie.GetStreamId())
 	if err != nil {
 		r.log.Errorw("invalid stream ID in cookie", "streamID", cookie.GetStreamId(), "error", err)
 		return
 	}
+
+	r.syncersLock.Lock()
+	defer r.syncersLock.Unlock()
 
 	emitter, ok := r.syncers[streamID]
 	if !ok {
@@ -147,6 +147,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			streamID,
 			1,
 		)
+		r.syncers[streamID] = emitter
 	}
 
 	if !emitter.Backfill(cookie, syncIDs) {
@@ -160,6 +161,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			streamID,
 			currentVersion+1,
 		)
+		r.syncers[streamID] = emitter
 
 		if !emitter.Backfill(cookie, syncIDs) {
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
