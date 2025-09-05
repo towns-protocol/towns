@@ -21,6 +21,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     using CustomRevert for bytes4;
     using SimpleAppStorage for SimpleAppStorage.Layout;
 
+    // External functions
     /// @inheritdoc ISimpleApp
     function initialize(
         address owner,
@@ -59,16 +60,11 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         emit PricingUpdated(installPrice, accessDuration);
     }
 
-    /// @inheritdoc ITownsApp
-    function requiredPermissions() external view returns (bytes32[] memory) {
+    /// @inheritdoc ISimpleApp
+    function updatePermissions(bytes32[] calldata permissions) external onlyOwner {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        return $.permissions;
-    }
-
-    /// @inheritdoc IModule
-    function moduleId() public view returns (string memory) {
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        return $.name;
+        $.permissions = permissions;
+        emit PermissionsUpdated(permissions);
     }
 
     /// @inheritdoc IExecutionModule
@@ -76,10 +72,20 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         // solhint-disable no-empty-blocks
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           OVERRIDES                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    // Public functions
+    /// @inheritdoc IModule
+    function moduleId() public view returns (string memory) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.name;
+    }
 
+    /// @inheritdoc ITownsApp
+    function requiredPermissions() external view returns (bytes32[] memory) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        return $.permissions;
+    }
+
+    // Internal functions
     function _installPrice() internal view override returns (uint256) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.installPrice;

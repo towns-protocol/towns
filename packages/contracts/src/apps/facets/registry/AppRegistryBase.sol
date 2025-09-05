@@ -16,7 +16,7 @@ import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
-import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {AppRegistryStorage, ClientInfo, AppInfo} from "./AppRegistryStorage.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
@@ -73,7 +73,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @param app The address of the app
     /// @return The latest version ID
     function _getLatestAppId(address app) internal view returns (bytes32) {
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
         return appInfo.latestVersion;
     }
 
@@ -153,10 +153,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         _verifyAddAppInputs(app, client);
 
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
-        AppRegistryStorage.AppInfo storage appInfo = $.apps[app];
-        AppRegistryStorage.ClientInfo storage clientInfo = $.client[client];
+        AppInfo storage appInfo = $.apps[app];
+        ClientInfo storage clientInfo = $.client[client];
 
-        if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
+        // if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
         ITownsApp appContract = ITownsApp(app);
@@ -215,9 +215,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         App memory appData = abi.decode(att.data, (App));
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[
-            appData.module
-        ];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[appData.module];
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
@@ -225,9 +223,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         request.uid = appId;
         _revoke(att.schema, request, revoker, 0, true);
 
-        AppRegistryStorage.ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[
-            appData.client
-        ];
+        ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[appData.client];
         clientInfo.app = address(0);
 
         emit AppUnregistered(appData.module, appId);
@@ -261,6 +257,20 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         IAppAccount(account).onUninstallApp(appId, data);
         emit AppUninstalled(app, address(account), appId);
+    }
+
+    function _updateApp(address app, address account) internal {
+        bytes32 appId = IAppAccount(account).getAppId(app);
+        if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+        if (_isBanned(app)) BannedApp.selector.revertWith();
+
+        Attestation memory att = _getAttestation(appId);
+        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
+
+        IAppAccount(account).onUpdateApp(appId, abi.encode(app));
+
+        emit AppUpdated(app, address(account), appId);
     }
 
     function _renewApp(address app, address account, bytes calldata data) internal {
@@ -356,7 +366,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     function _banApp(address app) internal returns (bytes32 version) {
         if (app == address(0)) AppNotRegistered.selector.revertWith();
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
 
         if (appInfo.app == address(0)) AppNotRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
