@@ -50,8 +50,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deploySpace.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(space, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             vm.broadcast(deployer);
             IDiamondCut(space).diamondCut(smartCuts, address(0), "");
@@ -67,8 +71,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deploySpaceOwner.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(spaceOwner, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             vm.broadcast(deployer);
             IDiamondCut(spaceOwner).diamondCut(smartCuts, address(0), "");
@@ -84,8 +92,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deploySpaceFactory.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(spaceFactory, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             address spaceFactoryInit = deploySpaceFactory.spaceFactoryInit();
             bytes memory initData = deploySpaceFactory.spaceFactoryInitData();
@@ -103,8 +115,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deployBaseRegistry.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(baseRegistry, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             vm.broadcast(deployer);
             IDiamondCut(baseRegistry).diamondCut(smartCuts, address(0), "");
@@ -120,8 +136,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deployRiverAirdrop.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(riverAirdrop, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             vm.broadcast(deployer);
             IDiamondCut(riverAirdrop).diamondCut(smartCuts, address(0), "");
@@ -137,8 +157,12 @@ contract InteractBaseAlpha is AlphaHelper {
         FacetCut[] memory proposedCuts = deployAppRegistry.getCuts();
         FacetCut[] memory smartCuts = generateSmartCuts(appRegistry, proposedCuts);
 
-        console.log("[INFO]: Generated %d smart cuts from %d proposed cuts", smartCuts.length, proposedCuts.length);
-        
+        console.log(
+            "[INFO]: Generated %d smart cuts from %d proposed cuts",
+            smartCuts.length,
+            proposedCuts.length
+        );
+
         if (smartCuts.length > 0) {
             vm.broadcast(deployer);
             IDiamondCut(appRegistry).diamondCut(smartCuts, address(0), "");
