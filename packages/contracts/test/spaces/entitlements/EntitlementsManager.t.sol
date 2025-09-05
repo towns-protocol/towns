@@ -50,18 +50,17 @@ contract EntitlementsManagerTest is BaseSetup, IEntitlementsManagerBase, IMember
     }
 
     function test_addImmutableEntitlements_revert_when_invalid_entitlement_address() external {
-        address[] memory invalidEntitlements = new address[](1);
-        invalidEntitlements[0] = address(0);
-
         vm.prank(founder);
         vm.expectRevert(EntitlementsManagerService.InvalidEntitlementAddress.selector);
-        entitlements.addImmutableEntitlements(invalidEntitlements);
+        entitlements.addImmutableEntitlements(new address[](1));
     }
 
     function test_addImmutableEntitlements_revert_when_invalid_entitlement_interface() external {
         vm.prank(founder);
-        vm.expectRevert(EntitlementsManagerService.InvalidEntitlementAddress.selector);
-        entitlements.addImmutableEntitlements(new address[](1));
+        vm.expectRevert(EntitlementsManagerService.InvalidEntitlementInterface.selector);
+        address[] memory invalidEntitlements = new address[](1);
+        invalidEntitlements[0] = address(this);
+        entitlements.addImmutableEntitlements(invalidEntitlements);
     }
 
     function test_addImmutableEntitlements_revert_when_already_exists() external {

@@ -39,12 +39,15 @@ library EntitlementsManagerService {
             EntitlementAlreadyExists.selector.revertWith();
         }
 
+        bool isCrosschain = IEntitlement(entitlement).isCrosschain();
+
         ds.entitlements.add(entitlement);
-        ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage.Entitlement({
-            entitlement: IEntitlement(entitlement),
-            isImmutable: isImmutable,
-            isCrosschain: IEntitlement(entitlement).isCrosschain()
-        });
+        EntitlementsManagerStorage.Entitlement storage entitlementData = ds.entitlementByAddress[
+            entitlement
+        ];
+        entitlementData.entitlement = IEntitlement(entitlement);
+        entitlementData.isImmutable = isImmutable;
+        entitlementData.isCrosschain = isCrosschain;
     }
 
     function removeEntitlement(address entitlement) internal {
