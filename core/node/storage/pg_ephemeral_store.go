@@ -407,7 +407,7 @@ func (s *PostgresStreamStore) CreateExternalMediaStreamUploadEntry(
 		"WriteMediaStreamInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.CreateExternalMediaStreamUploadEntryTx(
+			return s.createExternalMediaStreamUploadEntryTx(
 				ctx,
 				tx,
 				streamId,
@@ -419,7 +419,7 @@ func (s *PostgresStreamStore) CreateExternalMediaStreamUploadEntry(
 	)
 }
 
-func (s *PostgresStreamStore) CreateExternalMediaStreamUploadEntryTx(
+func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -450,14 +450,14 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfo(
 		"WriteExternalMediaStreamPartInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.WriteExternalMediaStreamPartInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
+			return s.writeExternalMediaStreamPartInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
 		},
 		nil,
 		"streamId", streamId,
 	)
 }
 
-func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfoTx(
+func (s *PostgresStreamStore) writeExternalMediaStreamPartInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -572,7 +572,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamNextPart(
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, partNumber, err = s.GetExternalMediaStreamNextPartTx(ctx, tx, streamId)
+			uploadID, partNumber, err = s.getExternalMediaStreamNextPartTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
@@ -581,7 +581,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamNextPart(
 	return uploadID, partNumber, err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamNextPartTx(
+func (s *PostgresStreamStore) getExternalMediaStreamNextPartTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -655,14 +655,14 @@ func (s *PostgresStreamStore) DeleteExternalMediaStreamUploadEntry(
 		"DeleteExternalMediaStreamUploadEntry",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.DeleteExternalMediaStreamUploadEntryTx(ctx, tx, streamId)
+			return s.deleteExternalMediaStreamUploadEntryTx(ctx, tx, streamId)
 		},
 		nil,
 		"streamId", streamId,
 	)
 }
 
-func (s *PostgresStreamStore) DeleteExternalMediaStreamUploadEntryTx(
+func (s *PostgresStreamStore) deleteExternalMediaStreamUploadEntryTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
