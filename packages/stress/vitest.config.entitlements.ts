@@ -5,9 +5,7 @@ export default mergeConfig(
     rootConfig,
     defineConfig({
         test: {
-            env: {
-                RIVER_ENV: 'local_dev',
-            },
+            env: {},
             include: ['./src/**/*.test.ts'],
             hookTimeout: 120_000,
             testTimeout: 120_000,

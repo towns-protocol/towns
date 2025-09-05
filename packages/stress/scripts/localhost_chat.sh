@@ -41,6 +41,10 @@ export ANNOUNCE_CHANNEL_ID="${ANNOUNCE_CHANNEL_ID:-}"
 export REDIS_HOST="${REDIS_HOST:-}"
 
 export RIVER_ENV="${RIVER_ENV:-local_dev}"
+# if RIVER_ENV == local_dev, source the .env file
+if [ "$RIVER_ENV" == "local_dev" ]; then
+    source ../generated/deployments/local_dev/.env
+fi
 export STRESS_MODE="${STRESS_MODE:-chat}"
 export STRESS_DURATION="${STRESS_DURATION:-180}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"

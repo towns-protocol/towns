@@ -322,7 +322,7 @@
     {
       "label": "Playground",
       "type": "shell",
-      "command": "cd packages/playground && yarn dev",
+      "command": "cd packages/playground && yarn dev:local",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

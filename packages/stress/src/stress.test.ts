@@ -9,7 +9,6 @@ describe('stress', () => {
             PROCESS_COUNT: '15',
             SESSION_ID: genShortId(),
             STRESS_MODE: 'short_chat',
-            RIVER_ENV: 'local_dev',
             REDIS_URL: 'redis://localhost:6379',
             MNEMONIC: 'test test test test test test test test test test test junk',
         }

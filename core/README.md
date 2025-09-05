@@ -145,13 +145,7 @@ Then generate the TLS certificates for the node:
 
     scripts/generate-ca.sh
 
-# Running River Tests
-
-Run client tests:
-
-    yarn csb:turbo
-
-Run node tests:
+# Run node tests:
 
     cd node
     go test -v ./...

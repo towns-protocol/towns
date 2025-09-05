@@ -187,6 +187,8 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             } = formData
             console.log('mutate', formData)
 
+            const appRegistryUrl = getAppRegistryUrl(sync.config.riverConfig.environmentId)
+
             const baseProvider = makeBaseProvider(sync.config.riverConfig)
             if (!signer) {
                 throw new Error('Signer is not set')
@@ -253,7 +255,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 user.id,
                 signer,
-                getAppRegistryUrl(riverConfig.environmentId),
+                appRegistryUrl,
             )
             const { hs256SharedSecret } = await appRegistryRpcClient.register({
                 appId: bin_fromHexString(botWallet.address),
