@@ -199,6 +199,12 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+	// MediaStreamDataLocation is the bucket where media stream data is to be stored.
+	MediaStreamDataLocation string
+
+	// MediaStreamDataOffloadingEnabled is a flag to enable media stream data offloading.
+	MediaStreamDataOffloadingEnabled bool
 }
 
 type TLSConfig struct {

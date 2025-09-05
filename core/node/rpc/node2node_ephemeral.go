@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"connectrpc.com/connect"
@@ -61,8 +60,7 @@ func (s *Service) allocateEphemeralStream(
 		return nil, err
 	}
 
-	// TODO use config file instead
-	if os.Getenv("STORAGE_TYPE") == "external" {
+	if s.config.MediaStreamDataOffloadingEnabled {
 		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
 		if err != nil {
 			return nil, err

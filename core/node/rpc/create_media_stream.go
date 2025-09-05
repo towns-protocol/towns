@@ -3,7 +3,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"connectrpc.com/connect"
@@ -228,8 +227,7 @@ func (s *Service) createReplicatedMediaStream(
 
 	// Create ephemeral stream within the local node
 	if isLocal {
-		// TODO use config file instead
-		if os.Getenv("STORAGE_TYPE") == "external" {
+		if s.config.MediaStreamDataOffloadingEnabled {
 			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
 				return nil, err
