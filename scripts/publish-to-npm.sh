@@ -108,7 +108,7 @@ while true; do
     
     if [[ -n "$FAILED_CHECKS" && "$FAILED_CHECKS" != " " ]]; then
         echo "Failed checks: $FAILED_CHECKS"
-        if [[ $USER_MODE -eq 1 ]]; then
+        if [[ ${USER_MODE:-0} -eq 1 ]]; then
             read -p "Harmony CI is failing. Restart CI. (any key to retry/q) " -n 1 -r
             echo ""
             if [[ $REPLY =~ ^[Qq]$ ]]; then
@@ -116,9 +116,11 @@ while true; do
                 exit 1
             fi
         else
-            echo "Harmony CI is failing. Restart CI."
-            exit 1
+            echo "Harmony CI is failing. Waiting for CI to be rerun..."
         fi
+        # Sleep before retrying to avoid hammering the GitHub API
+        sleep ${RETRY_SLEEP:-30}
+        continue
     fi
     
     if [[ -z "$PENDING_CHECKS" || "$PENDING_CHECKS" == " " ]]; then
