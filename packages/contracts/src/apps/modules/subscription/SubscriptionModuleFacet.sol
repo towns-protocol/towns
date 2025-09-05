@@ -319,10 +319,11 @@ contract SubscriptionModuleFacet is
             )
         );
 
-        bytes memory extraData = abi.encode(sub.space, sub.tokenId);
-
         // Use the proper pack function from ValidationLocatorLib
-        bytes memory authorization = _runtimeFinal(sub.entityId, extraData);
+        bytes memory authorization = _runtimeFinal(
+            sub.entityId,
+            abi.encode(sub.space, sub.tokenId)
+        );
 
         // Call executeWithRuntimeValidation with the correct parameters
         bytes memory runtimeValidationCall = abi.encodeCall(
