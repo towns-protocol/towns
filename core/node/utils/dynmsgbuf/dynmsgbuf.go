@@ -107,9 +107,12 @@ func (db *DynamicBuffer[T]) Wait() <-chan struct{} {
 	return db.signalChan
 }
 
-// Close closes the buffer.
-func (db *DynamicBuffer[T]) Close() {
+// Close closes the buffer. Returns all remaining messages.
+func (db *DynamicBuffer[T]) Close() []T {
+	var ret []T
+
 	db.mu.Lock()
+	ret = db.buffer
 	db.buffer = nil
 	db.mu.Unlock()
 
@@ -118,4 +121,6 @@ func (db *DynamicBuffer[T]) Close() {
 	case db.signalChan <- struct{}{}:
 	default:
 	}
+
+	return ret
 }

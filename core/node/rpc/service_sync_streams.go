@@ -94,7 +94,7 @@ func (s *Service) ModifySync(
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
 		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			res.Msg, err = s.syncv3.ModifySync(ctx, req.Msg)
+			res.Msg, err = s.syncv3.ModifySync(req.Msg)
 		} else {
 			res, err = s.sync.ModifySync(ctx, req)
 		}

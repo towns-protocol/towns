@@ -20,6 +20,8 @@ import (
 type sharedStreamUpdateEmitter struct {
 	// backfillsQueue is a dynamic buffer that holds backfill requests until the emitter is initialized.
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
+	streamID       StreamId
+	version        int32
 	// emitter is the actual emitter that is initialized in the background.
 	emitter StreamUpdateEmitter
 }
@@ -35,6 +37,8 @@ func newSharedStreamUpdateEmitter(
 ) *sharedStreamUpdateEmitter {
 	emitter := &sharedStreamUpdateEmitter{
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
+		streamID:       streamID,
+		version:        version,
 	}
 
 	// Initialize emitter in a separate goroutine to avoid blocking caller.
@@ -49,8 +53,7 @@ func newSharedStreamUpdateEmitter(
 				With("version", version, "streamID", streamID).
 				Errorw("failed to get stream for further emitter initialization", "err", err)
 
-			emitter.backfillsQueue.Close()
-			pendingBackfills := emitter.backfillsQueue.GetBatch(nil)
+			pendingBackfills := emitter.backfillsQueue.Close()
 			for _, br := range pendingBackfills {
 				subscriber.OnStreamEvent(
 					&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: br.syncIDs},
@@ -81,8 +84,7 @@ func newSharedStreamUpdateEmitter(
 		}
 
 		// Pending backfill requests have to be processed after successful emitter creation.
-		emitter.backfillsQueue.Close()
-		pendingBackfills := emitter.backfillsQueue.GetBatch(nil)
+		pendingBackfills := emitter.backfillsQueue.Close()
 		for _, br := range pendingBackfills {
 			if !emitter.emitter.Backfill(br.cookie, br.syncIDs) {
 				subscriber.OnStreamEvent(
@@ -97,15 +99,19 @@ func newSharedStreamUpdateEmitter(
 }
 
 func (s *sharedStreamUpdateEmitter) StreamID() StreamId {
-	return s.emitter.StreamID()
+	return s.streamID
 }
 
 func (s *sharedStreamUpdateEmitter) Node() common.Address {
-	return s.emitter.Node()
+	if s.emitter != nil {
+		return s.emitter.Node()
+	}
+
+	return common.Address{}
 }
 
 func (s *sharedStreamUpdateEmitter) Version() int32 {
-	return s.emitter.Version()
+	return s.version
 }
 
 func (s *sharedStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
