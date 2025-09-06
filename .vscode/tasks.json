@@ -515,7 +515,7 @@
       "label": "BuildLocalDockerImage",
       "type": "shell",
       "command": "just build-local-docker",
-      "isBackground": true,
+      "isBackground": false,
       "problemMatcher": [],
       "options": {
         "cwd": "./core"

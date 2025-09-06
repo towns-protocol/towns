@@ -38,7 +38,6 @@ start_river_chain() {
 trap_cleanup() {
   echo "Trap cleanup"
   cleanup
-  exit $?
 }
 
 assert_dump_state() {
