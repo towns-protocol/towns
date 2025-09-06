@@ -514,7 +514,7 @@
     {
       "label": "BuildLocalDockerImage",
       "type": "shell",
-      "command": "just docker-build-local",
+      "command": "just build-local-docker",
       "isBackground": true,
       "problemMatcher": [],
       "options": {
