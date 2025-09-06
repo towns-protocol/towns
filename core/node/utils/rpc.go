@@ -120,8 +120,10 @@ func PeerNodeRequestWithRetries[T any](
 		// TODO: move to a helper function.
 		if connectErr := new(connect.Error); errors.As(err, &connectErr) {
 			if connect.IsWireError(connectErr) {
-				// Error is received from another node. TODO: classify into retryable and non-retryable.
-				retry = true
+				// Error is received from another node.
+				if IsOperationRetriableOnRemotes(err) {
+					retry = true
+				}
 			} else {
 				// Error is produced locally.
 				// Check if it's a network error and retry in this case.
