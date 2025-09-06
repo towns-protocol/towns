@@ -31,11 +31,43 @@ done
 # Create event.json file
 echo "Creating event.json for $EVENT_TYPE event..."
 if [ "$EVENT_TYPE" == "schedule" ]; then
-  echo "{\"schedule\": {\"scheduled_at\": \"$EVENT_TIME\"}}" > event.json
+  cat > event.json << EOF
+{
+  "schedule": {
+    "scheduled_at": "$EVENT_TIME"
+  },
+  "repository": {
+    "default_branch": "main"
+  }
+}
+EOF
 elif [ "$EVENT_TYPE" == "pull_request" ]; then
-  echo "{\"pull_request\": {\"head\": {\"ref\": \"$(git branch --show-current)\"}}}" > event.json
+  cat > event.json << EOF
+{
+  "pull_request": {
+    "head": {
+      "ref": "$(git branch --show-current)",
+      "sha": "$(git rev-parse HEAD)"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "$(git rev-parse main 2>/dev/null || git rev-parse origin/main 2>/dev/null || echo 'main-sha')"
+    }
+  },
+  "repository": {
+    "default_branch": "main"
+  }
+}
+EOF
 elif [ "$EVENT_TYPE" == "workflow_dispatch" ]; then
-  echo "{\"inputs\": {}}" > event.json
+  cat > event.json << EOF
+{
+  "inputs": {},
+  "repository": {
+    "default_branch": "main"
+  }
+}
+EOF
 else
   echo "Unsupported event type: $EVENT_TYPE"
   exit 1
@@ -50,7 +82,7 @@ echo "Running Act for job: $JOB..."
 TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file
-act -j "$JOB" --secret-file .env -P arc-runners=ghcr.io/catthehacker/ubuntu:act-latest \
+act -j "$JOB" --secret-file .env -P ubuntu-x64-16core=ghcr.io/catthehacker/ubuntu:act-latest \
   --container-architecture "$ARCH" --eventpath event.json --detect-event "$EVENT_TYPE" \
   2>&1 | tee "$TEMP_LOG"
 EXIT_CODE=${PIPESTATUS[0]}
