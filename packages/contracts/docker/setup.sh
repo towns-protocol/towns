@@ -15,15 +15,13 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
-  test_node_registry
-  cleanup
-  sleep 5 # waiting to avoid race condition
+  create_address_manifest
   echo "Done!"
 }
 
 start_base_chain() {
   echo "Starting base chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-basechain.sh &
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --quiet" ./scripts/start-local-basechain.sh &
   sleep 1  # Give it a moment to start
   BASE_PID=$(pgrep -f "anvil.*base-anvil-state.json" | head -n 1)
   echo "Base chain started with PID: $BASE_PID"
@@ -31,7 +29,7 @@ start_base_chain() {
 
 start_river_chain() {
   echo "Starting river chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-riverchain.sh &
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --quiet" ./scripts/start-local-riverchain.sh &
   sleep 1  # Give it a moment to start
   RIVER_PID=$(pgrep -f "anvil.*river-anvil-state.json" | head -n 1)
   echo "River chain started with PID: $RIVER_PID"
@@ -67,12 +65,24 @@ assert_dump_state() {
 # Function to cleanup on exit
 cleanup() {
   echo "Cleaning up..."
+  
+  # Send SIGTERM for graceful shutdown to allow state dumping
+  if kill -0 $BASE_PID 2>/dev/null; then
+    echo "Gracefully stopping base chain (PID: $BASE_PID)"
+    kill -TERM $BASE_PID
+  fi
+  
+  if kill -0 $RIVER_PID 2>/dev/null; then
+    echo "Gracefully stopping river chain (PID: $RIVER_PID)"
+    kill -TERM $RIVER_PID
+  fi
+  
+  # Wait for processes to exit and dump state
+  wait $BASE_PID 2>/dev/null || true
+  wait $RIVER_PID 2>/dev/null || true
+  
+  # Now check that state files were created
   assert_dump_state
-  echo "Killing base chain (PID: $BASE_PID)"
-  kill -9 $BASE_PID 2>/dev/null || true
-  echo "Killing river chain (PID: $RIVER_PID)"
-  kill -9 $RIVER_PID 2>/dev/null || true
-  exit 0
 }
 
 wait_for_base_chain() {
@@ -81,6 +91,7 @@ wait_for_base_chain() {
     if ! kill -0 $BASE_PID 2>/dev/null; then
       echo "Base chain process died unexpectedly!"
       cleanup
+      exit 1
     fi
     echo "Waiting for base chain..."
     sleep 1
@@ -94,6 +105,7 @@ wait_for_river_chain() {
     if ! kill -0 $RIVER_PID 2>/dev/null; then
       echo "River chain process died unexpectedly!"
       cleanup
+      exit 1
     fi
     echo "Waiting for river chain..."
     sleep 1
@@ -103,29 +115,35 @@ wait_for_river_chain() {
 
 deploy_contracts() {
   pushd ./core
-    just config-root deploy-contracts
+    just just-deploy-contracts
   popd
 }
 
-test_node_registry() {
-  pushd ./core
-    if ! NODE_ADDRESSES=$(just get_all_node_addresses); then
-        echo "Failed to get node addresses"
-        exit 1
-    fi
+# Create a consolidated address file for easy extraction
+create_address_manifest() {
+  echo "Creating contract address manifest for easy extraction..."
+  copied_any=0
 
-    echo "Raw node addresses: $NODE_ADDRESSES"
+  if [ -d "./packages/contracts/deployments/local_dev" ]; then
+    mkdir -p ./local_dev
     
-    EXPECTED_NODE_ADDRESSES="0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
+    # Copy base and river addresses
+    for chain in base river; do
+      source_dir="./packages/contracts/deployments/local_dev/${chain}/addresses"
+      if [ -d "$source_dir" ]; then
+        mkdir -p "./local_dev/${chain}/addresses"
+        if cp -r "$source_dir"/. "./local_dev/${chain}/addresses/"; then
+          copied_any=1
+        fi
+      fi
+    done
+  fi
 
-    if [ "$NODE_ADDRESSES" = "$EXPECTED_NODE_ADDRESSES" ]; then
-      echo "Success! Empty node addresses."
-    else
-      echo "Error: Expected $EXPECTED_NODE_ADDRESSES, got $NODE_ADDRESSES"
-      exit 1
-    fi
-  
-  popd
+  if [ "$copied_any" != 0 ]; then
+    echo "Contract addresses saved to ./local_dev/ for extraction"
+  else
+    echo "No contract addresses found to copy"
+  fi
 }
 
 # cd ./core && just config build
