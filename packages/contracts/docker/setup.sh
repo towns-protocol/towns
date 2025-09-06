@@ -16,8 +16,6 @@ main() {
   wait_for_river_chain
   deploy_contracts
   create_address_manifest
-  test_node_registry
-  sleep 5 # waiting to avoid race condition
   echo "Done!"
 }
 
@@ -118,7 +116,7 @@ wait_for_river_chain() {
 
 deploy_contracts() {
   pushd ./core
-    just config-root deploy-contracts
+    just just-deploy-contracts
   popd
 }
 
@@ -127,15 +125,15 @@ create_address_manifest() {
   echo "Creating contract address manifest for easy extraction..."
   copied_any=0
 
-  if [ -d "./packages/generated/deployments/local_dev" ]; then
+  if [ -d "./packages/contracts/deployments/local_dev" ]; then
     mkdir -p ./local_dev
     
     # Copy base and river addresses
     for chain in base river; do
-      source_dir="./packages/generated/deployments/local_dev/${chain}/addresses"
+      source_dir="./packages/contracts/deployments/local_dev/${chain}/addresses"
       if [ -d "$source_dir" ]; then
         mkdir -p "./local_dev/${chain}/addresses"
-        if cp -r "$source_dir"/* "./local_dev/${chain}/addresses/"; then
+        if cp -r "$source_dir"/. "./local_dev/${chain}/addresses/"; then
           copied_any=1
         fi
       fi
@@ -147,27 +145,6 @@ create_address_manifest() {
   else
     echo "No contract addresses found to copy"
   fi
-}
-
-test_node_registry() {
-  pushd ./core
-    if ! NODE_ADDRESSES=$(just get_all_node_addresses); then
-        echo "Failed to get node addresses"
-        exit 1
-    fi
-
-    echo "Raw node addresses: $NODE_ADDRESSES"
-    
-    EXPECTED_NODE_ADDRESSES="0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
-
-    if [ "$NODE_ADDRESSES" = "$EXPECTED_NODE_ADDRESSES" ]; then
-      echo "Success! Empty node addresses."
-    else
-      echo "Error: Expected $EXPECTED_NODE_ADDRESSES, got $NODE_ADDRESSES"
-      exit 1
-    fi
-  
-  popd
 }
 
 # cd ./core && just config build

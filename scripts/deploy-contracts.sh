@@ -66,10 +66,13 @@ cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
 
 cd "$PROJECT_ROOT"
 
-# Ensure the destination directory exists
-mkdir -p "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
-cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/"
+# Make copy to packages/generated conditional (skip in Docker)
+GENERATED_DIR="$PROJECT_ROOT/packages/generated"
+if [ -d "$GENERATED_DIR" ]; then
+    # Ensure the destination directory exists
+    mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
+    cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
 
-# Update the config
-cd "$PROJECT_ROOT/packages/generated"
-yarn make-config
+    # Update the config
+    cd "$GENERATED_DIR" && yarn make-config
+fi
