@@ -492,5 +492,18 @@
       },
       "dependsOrder": "sequence"
     },
+    {
+      "label": "Test CI Locally",
+      "type": "shell",
+      "command": "./scripts/run-local-ci.sh",
+      "args": ["-j", "Common_CI"],
+      "isBackground": false,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared"
+      }
+    }
   ]
 }
