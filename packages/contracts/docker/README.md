@@ -11,69 +11,24 @@ The Docker environment provides:
 - **Fast startup** by loading pre-deployed blockchain state
 - **Contract address extraction** for local development integration
 
-## Files
+All just targets support both Docker and native modes - Docker is used when `USE_DOCKER_CHAINS=1`, native Anvil otherwise.
 
-### `Dockerfile`
-
-Multi-stage Docker build that:
-
-- Installs dependencies (Node.js, Foundry, build tools)
-- Copies project files and builds contracts
-- Runs `setup.sh` to deploy contracts and save state
-- Creates final image with pre-deployed chains
-
-### `setup.sh`
-
-Build-time setup script that:
-
-- Starts both blockchain networks with Anvil
-- Deploys all smart contracts to both chains
-- Creates persistent state files (`base-anvil-state.json`, `river-anvil-state.json`)
-- Copies contract addresses to `/app/local_dev/` for extraction
-- Validates node registry deployment
-
-### `run.sh`
-
-Runtime script that starts blockchain networks with pre-loaded state and supports:
-
-- `CHAIN=base` - Start only Base chain
-- `CHAIN=river` - Start only River chain
-
-### `test.sh`
-
-Test runner for validating deployed contracts.
-
-## Usage
+## Getting Started
 
 ### Using Pre-built Image (Recommended)
 
-The image is automatically built and published to AWS ECR when contract changes are pushed to main branch.
-
 ```bash
-# From the core directory
 cd core
-
-# Start both chains with pre-deployed contracts
-USE_DOCKER_CHAINS=1 just anvils
-
-# Contract addresses are automatically available after anvils start
-# Configuration will use Docker chains automatically
-USE_DOCKER_CHAINS=1 just config
-
-# Stop chains
-just anvils-stop
+USE_DOCKER_CHAINS=1 just anvils        # Start chains with pre-deployed contracts
+USE_DOCKER_CHAINS=1 just config        # Configure nodes
+just anvils-stop                       # Stop chains
 ```
 
 ### Building Image Locally
 
 ```bash
-# From the core directory
 cd core
-
-# Build local image
-just docker-build-local
-
-# Use local image
+just build-local-docker                # Build local image
 USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils
 ```
 
@@ -86,6 +41,24 @@ VSCode tasks automatically use Docker chains when configured:
 - **Configure Nodes** - Configures nodes using Docker chains by default
 - **AnvilsLocalDocker** - Uses local Docker image for development
 
+## Files
+
+### `Dockerfile`
+
+Multi-stage build: installs dependencies, builds contracts, deploys via `setup.sh`, creates optimized runtime image.
+
+### `setup.sh`
+
+Build-time script: starts chains, deploys contracts, saves state files, copies addresses to `/app/local_dev/`.
+
+### `run.sh`
+
+Runtime script: starts chains with pre-loaded state. Supports `CHAIN=base` or `CHAIN=river`.
+
+### `test.sh`
+
+Test runner for validating deployed contracts.
+
 ## Contract Address Extraction
 
 When using Docker chains, contract addresses are automatically extracted during the deployment process:
@@ -95,7 +68,7 @@ When using Docker chains, contract addresses are automatically extracted during 
 USE_DOCKER_CHAINS=1 just config
 ```
 
-This creates:
+If `packages/generated` exists, this creates:
 
 - `./run_files/local_dev/contracts.env` with environment variables
 - `../packages/generated/deployments/local_dev/` with full deployment artifacts
@@ -104,17 +77,16 @@ This creates:
 
 ### Unified targets (Docker or native):
 
-- `anvils` - Start both chains (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
-- `anvil-base` - Start Base chain (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
-- `anvil-river` - Start River chain (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
+- `anvils` - Start both chains
+- `anvil-base` - Start Base chain
+- `anvil-river` - Start River chain
 - `anvils-stop` - Stop both chains
-- `deploy-contracts` - Deploy/extract contracts (Docker when `USE_DOCKER_CHAINS=1`, native otherwise)
-- `config-base-chain` - Configure base chain (uses Docker when `USE_DOCKER_CHAINS=1`)
-- `config-river-chain` - Configure river chain (uses Docker when `USE_DOCKER_CHAINS=1`)
+- `deploy-contracts` - Deploy contracts and create configs (calls `just-deploy-contracts` + creates `contracts.env`)
+- `just-deploy-contracts` - Deploy contracts only (used internally by Docker, no config creation)
 
 ### Docker-specific targets:
 
-- `docker-build-local` - Build Docker image locally
+- `build-local-docker` - Build Docker image locally
 
 ## Environment Variables
 
