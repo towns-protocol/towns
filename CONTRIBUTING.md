@@ -52,7 +52,7 @@ Test GitHub CI workflows locally using `./scripts/run-local-ci.sh` (requires Doc
 # Test Common_CI job (linting, formatting, unit tests)
 ./scripts/run-local-ci.sh -j Common_CI
 
-# Test Multinode job  
+# Test Multinode job
 ./scripts/run-local-ci.sh -j Multinode
 ```
 
