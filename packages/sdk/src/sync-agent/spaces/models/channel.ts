@@ -101,21 +101,29 @@ export class Channel extends PersistedObservable<ChannelModel> {
             mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
             /** The attachments in the message. You can attach images, videos, links, files, or even other messages. */
             attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+            /** The app client address that should receive the slash command. */
+            appClientAddress?: string
         },
     ): Promise<{ eventId: string }> {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client) => {
-            return client.sendChannelMessage_Text(channelId, {
-                threadId: options?.threadId,
-                threadPreview: options?.threadId ? '🙉' : undefined,
-                replyId: options?.replyId,
-                replyPreview: options?.replyId ? '🙈' : undefined,
-                content: {
-                    body: message,
-                    mentions: options?.mentions ?? [],
-                    attachments: options?.attachments ?? [],
+            return client.sendChannelMessage_Text(
+                channelId,
+                {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadId ? '🙉' : undefined,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyId ? '🙈' : undefined,
+                    content: {
+                        body: message,
+                        mentions: options?.mentions ?? [],
+                        attachments: options?.attachments ?? [],
+                    },
                 },
-            })
+                {
+                    appClientAddress: options?.appClientAddress,
+                },
+            )
         })
         return result
     }

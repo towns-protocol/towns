@@ -46,6 +46,7 @@ import {
     Tags,
     type StreamEvent,
     MessageInteractionType,
+    type SlashCommand,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -79,7 +80,10 @@ import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
-export type BotPayload<T extends keyof BotEvents> = Parameters<BotEvents[T]>[1]
+export type BotPayload<
+    T extends keyof BotEvents<Commands>,
+    Commands extends PlainMessage<SlashCommand>[] = [],
+> = Parameters<BotEvents<Commands>[T]>[1]
 
 type MessageOpts = {
     threadId?: string
@@ -109,7 +113,7 @@ export type UserData = {
     profilePictureUrl: string
 }
 
-export type BotEvents = {
+export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     message: (
         handler: BotActions,
         event: BasePayload & {
@@ -209,6 +213,26 @@ export type BotEvents = {
             message: string
         },
     ) => Promise<void> | void
+
+    slashCommand: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The slash command that was invoked (without the /) */
+            command: Commands[number]['name']
+            /** Arguments passed after the command
+             * @example
+             * ```
+             * /help
+             * args: []
+             * ```
+             * ```
+             * /sum 1 2
+             * args: ['1', '2']
+             * ```
+             */
+            args: string[]
+        },
+    ) => Promise<void> | void
 }
 
 type BasePayload = {
@@ -222,13 +246,18 @@ type BasePayload = {
     eventId: string
 }
 
-export class Bot<HonoEnv extends Env = BlankEnv> {
+export class Bot<
+    const Commands extends PlainMessage<SlashCommand>[] = [],
+    HonoEnv extends Env = BlankEnv,
+> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
-    private readonly emitter: Emitter<BotEvents> = createNanoEvents()
+    private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
+    private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
+        new Map()
 
     constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
         this.client = clientV2
@@ -512,7 +541,7 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
                     const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
-                    const forwardPayload: BotPayload<'message'> = {
+                    const forwardPayload: BotPayload<'message', Commands> = {
                         userId,
                         eventId: parsed.hashStr,
                         spaceId: spaceIdFromChannelId(streamId),
@@ -520,6 +549,23 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
                         message: payload.value.content.value.body,
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
+                    }
+
+                    if (
+                        parsed.event.tags?.messageInteractionType ===
+                        MessageInteractionType.SLASH_COMMAND
+                    ) {
+                        const { command, args } = parseSlashCommand(
+                            payload.value.content.value.body,
+                        )
+                        const handler = this.slashCommandHandlers.get(command)
+                        if (handler) {
+                            void handler(this.client, {
+                                ...forwardPayload,
+                                command: command as Commands[number]['name'],
+                                args,
+                            })
+                        }
                     }
 
                     if (replyId) {
@@ -754,12 +800,15 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
         this.emitter.on('mentionedInThread', fn)
     }
 
-    // onSlashCommand(command: Commands, fn: (client: BotActions, opts: BasePayload) => void) {
-    //     this.cb.onSlashCommand.set(command, fn)
-    // }
+    onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
+        this.slashCommandHandlers.set(command, fn)
+    }
 }
 
-export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
+export const makeTownsBot = async <
+    Commands extends PlainMessage<SlashCommand>[] = [],
+    HonoEnv extends Env = BlankEnv,
+>(
     appPrivateData: string,
     jwtSecretBase64: string,
     opts: {
@@ -787,7 +836,7 @@ export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
         },
         ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot<HonoEnv>(client, viemClient, jwtSecretBase64)
+    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
@@ -1091,4 +1140,24 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         /** @deprecated Not planned for now */
         getUserData,
     }
+}
+
+/**
+ * Given a slash command message, returns the command and the arguments
+ * @example
+ * ```
+ * /help
+ * args: []
+ * ```
+ * ```
+ * /sum 1 2
+ * args: ['1', '2']
+ * ```
+ */
+const parseSlashCommand = (message: string): { command: string; args: string[] } => {
+    const parts = message.split(' ')
+    const commandWithSlash = parts[0]
+    const command = commandWithSlash.substring(1)
+    const args = parts.slice(1)
+    return { command, args }
 }
