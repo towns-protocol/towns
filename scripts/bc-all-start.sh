@@ -16,6 +16,7 @@ if [ "$CONTRACTS_CHANGED" = "true" ]; then
 else
     echo "Starting Docker-based Anvil chains (no contract changes)..."
     cd ./core
-    just USE_DOCKER_CHAINS=1 anvils
+    export USE_DOCKER_CHAINS=1
+    just anvils
     echo "STARTED DOCKER ANVIL CHAINS, BLOCK_TIME=${RIVER_BLOCK_TIME}"
 fi

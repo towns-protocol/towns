@@ -125,24 +125,24 @@ deploy_contracts() {
 # Create a consolidated address file for easy extraction
 create_address_manifest() {
   echo "Creating contract address manifest for easy extraction..."
-  local copied_any=false
+  copied_any=0
 
   if [ -d "./packages/generated/deployments/local_dev" ]; then
     mkdir -p ./local_dev
     
     # Copy base and river addresses
     for chain in base river; do
-      local source_dir="./packages/generated/deployments/local_dev/${chain}/addresses"
+      source_dir="./packages/generated/deployments/local_dev/${chain}/addresses"
       if [ -d "$source_dir" ]; then
-        mkdir -p "./local_dev/${chain}"
-        if cp -r "$source_dir" "./local_dev/${chain}/"; then
-          copied_any=true
+        mkdir -p "./local_dev/${chain}/addresses"
+        if cp -r "$source_dir"/* "./local_dev/${chain}/addresses/"; then
+          copied_any=1
         fi
       fi
     done
   fi
 
-  if [ "$copied_any" = true ]; then
+  if [ "$copied_any" != 0 ]; then
     echo "Contract addresses saved to ./local_dev/ for extraction"
   else
     echo "No contract addresses found to copy"
