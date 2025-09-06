@@ -59,6 +59,8 @@ jobs:
             - name: Print bash environment
               run: env
 
+            - uses: taiki-e/install-action@just
+
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
               uses: styfle/cancel-workflow-action@0.12.1
@@ -357,15 +359,11 @@ jobs:
               run: |
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
-            - name: Run multiple nodes (Native - contracts changed)
-              if: steps.filter.outputs.contracts == 'true'
+            - name: Run multiple nodes
               working-directory: core
               run: just config-and-start
-
-            - name: Run multiple nodes (Docker - no contract changes)
-              if: steps.filter.outputs.contracts != 'true'
-              working-directory: core
-              run: just USE_DOCKER_CHAINS=1 config-and-start
+              env:
+                  USE_DOCKER_CHAINS: ${{ steps.filter.outputs.contracts != 'true' && '1' || '0' }}
 
             - name: Run app registry
               working-directory: core
@@ -524,6 +522,8 @@ jobs:
             - name: Run multiple nodes
               run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: ${{ steps.filter.outputs.contracts != 'true' && '1' || '0' }}
 
             - name: Run app registry
               working-directory: core
@@ -684,6 +684,8 @@ jobs:
             - name: Run multiple nodes
               run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: ${{ steps.filter.outputs.contracts != 'true' && '1' || '0' }}
 
             - name: Run app registry
               working-directory: core
