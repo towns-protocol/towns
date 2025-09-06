@@ -151,14 +151,14 @@ deploy-contracts: anvils
     mkdir -p ${RUN_BASE}
     
     if [ "${USE_DOCKER_CHAINS:-0}" = "1" ]; then
-        # Create parent directory for contract addresses
-        mkdir -p ${CONTRACTS_DIR}/base
-        mkdir -p ${CONTRACTS_DIR}/river
+        # Create destination directories for contract addresses
+        mkdir -p ${CONTRACTS_DIR}/base/addresses
+        mkdir -p ${CONTRACTS_DIR}/river/addresses
 
         # Copy deployment files from container
         echo "Extracting contract addresses from Docker containers"
-        docker cp towns-base-chain:/app/multi/base/addresses/. ${CONTRACTS_DIR}/base/addresses/
-        docker cp towns-river-chain:/app/multi/river/addresses/. ${CONTRACTS_DIR}/river/addresses/
+        docker cp towns-base-chain:/app/local_dev/base/addresses/. ${CONTRACTS_DIR}/base/addresses/
+        docker cp towns-river-chain:/app/local_dev/river/addresses/. ${CONTRACTS_DIR}/river/addresses/
     else
         echo "Deploying contracts"
         ../scripts/deploy-contracts.sh
