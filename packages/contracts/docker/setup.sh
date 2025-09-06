@@ -17,14 +17,13 @@ main() {
   deploy_contracts
   create_address_manifest
   test_node_registry
-  cleanup
   sleep 5 # waiting to avoid race condition
   echo "Done!"
 }
 
 start_base_chain() {
   echo "Starting base chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-basechain.sh &
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --quiet" ./scripts/start-local-basechain.sh &
   sleep 1  # Give it a moment to start
   BASE_PID=$(pgrep -f "anvil.*base-anvil-state.json" | head -n 1)
   echo "Base chain started with PID: $BASE_PID"
@@ -32,7 +31,7 @@ start_base_chain() {
 
 start_river_chain() {
   echo "Starting river chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-riverchain.sh &
+  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --quiet" ./scripts/start-local-riverchain.sh &
   sleep 1  # Give it a moment to start
   RIVER_PID=$(pgrep -f "anvil.*river-anvil-state.json" | head -n 1)
   echo "River chain started with PID: $RIVER_PID"
@@ -41,6 +40,7 @@ start_river_chain() {
 trap_cleanup() {
   echo "Trap cleanup"
   cleanup
+  exit $?
 }
 
 assert_dump_state() {
@@ -68,12 +68,24 @@ assert_dump_state() {
 # Function to cleanup on exit
 cleanup() {
   echo "Cleaning up..."
+  
+  # Send SIGTERM for graceful shutdown to allow state dumping
+  if kill -0 $BASE_PID 2>/dev/null; then
+    echo "Gracefully stopping base chain (PID: $BASE_PID)"
+    kill -TERM $BASE_PID
+  fi
+  
+  if kill -0 $RIVER_PID 2>/dev/null; then
+    echo "Gracefully stopping river chain (PID: $RIVER_PID)"
+    kill -TERM $RIVER_PID
+  fi
+  
+  # Wait for processes to exit and dump state
+  wait $BASE_PID 2>/dev/null || true
+  wait $RIVER_PID 2>/dev/null || true
+  
+  # Now check that state files were created
   assert_dump_state
-  echo "Killing base chain (PID: $BASE_PID)"
-  kill -9 $BASE_PID 2>/dev/null || true
-  echo "Killing river chain (PID: $RIVER_PID)"
-  kill -9 $RIVER_PID 2>/dev/null || true
-  exit 0
 }
 
 wait_for_base_chain() {
@@ -82,6 +94,7 @@ wait_for_base_chain() {
     if ! kill -0 $BASE_PID 2>/dev/null; then
       echo "Base chain process died unexpectedly!"
       cleanup
+      exit 1
     fi
     echo "Waiting for base chain..."
     sleep 1
@@ -95,6 +108,7 @@ wait_for_river_chain() {
     if ! kill -0 $RIVER_PID 2>/dev/null; then
       echo "River chain process died unexpectedly!"
       cleanup
+      exit 1
     fi
     echo "Waiting for river chain..."
     sleep 1
@@ -111,20 +125,28 @@ deploy_contracts() {
 # Create a consolidated address file for easy extraction
 create_address_manifest() {
   echo "Creating contract address manifest for easy extraction..."
+  local copied_any=false
 
   if [ -d "./packages/generated/deployments/local_dev" ]; then
     mkdir -p ./local_dev
-
+    
     # Copy base and river addresses
     for chain in base river; do
-      if [ -d "./packages/generated/deployments/local_dev/${chain}/addresses" ]; then
-        mkdir -p ./local_dev/${chain}
-        cp -r ./packages/generated/deployments/local_dev/${chain}/addresses ./local_dev/${chain}/
+      local source_dir="./packages/generated/deployments/local_dev/${chain}/addresses"
+      if [ -d "$source_dir" ]; then
+        mkdir -p "./local_dev/${chain}"
+        if cp -r "$source_dir" "./local_dev/${chain}/"; then
+          copied_any=true
+        fi
       fi
     done
   fi
 
-  echo "Contract addresses saved to ./local_dev/ for extraction"
+  if [ "$copied_any" = true ]; then
+    echo "Contract addresses saved to ./local_dev/ for extraction"
+  else
+    echo "No contract addresses found to copy"
+  fi
 }
 
 test_node_registry() {

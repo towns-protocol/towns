@@ -29,7 +29,7 @@ Build-time setup script that:
 - Starts both blockchain networks with Anvil
 - Deploys all smart contracts to both chains
 - Creates persistent state files (`base-anvil-state.json`, `river-anvil-state.json`)
-- Copies contract addresses to `/app/multi/` for extraction
+- Copies contract addresses to `/app/local_dev/` for extraction
 - Validates node registry deployment
 
 ### `run.sh`
@@ -97,8 +97,8 @@ USE_DOCKER_CHAINS=1 just config
 
 This creates:
 
-- `./run_files/multi/contracts.env` with environment variables
-- `../packages/generated/deployments/local_multi/` with full deployment artifacts
+- `./run_files/local_dev/contracts.env` with environment variables
+- `../packages/generated/deployments/local_dev/` with full deployment artifacts
 
 ## Available Just Targets
 
@@ -121,7 +121,7 @@ This creates:
 - `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
 - `USE_LOCAL_DOCKER` - Set to `1` to use local Docker image instead of AWS ECR
 - `DOCKER_IMAGE` - Override Docker image (default: AWS ECR image)
-- `RUN_ENV` - Environment (defaults to `multi`)
+- `RUN_ENV` - Environment (defaults to `local_dev`)
 
 ## CI/CD Integration
 
