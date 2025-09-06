@@ -94,7 +94,7 @@ export class SyncAgent {
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
                 streamOpts: {
-                    useSharedSyncer: config.useSharedSyncer ?? false,
+                    useSharedSyncer: config.useSharedSyncer ?? true,
                 },
             },
             rpcRetryParams: config.retryParams,
