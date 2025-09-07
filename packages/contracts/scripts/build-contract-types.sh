@@ -8,7 +8,7 @@ PARENT_DIR="$(dirname "$(pwd)")"
 ABI_DIR="$PARENT_DIR/generated/dev/abis"
 TYPINGS_DIR="$PARENT_DIR/generated/dev/typings"
 
-yarn run -T turbo build --filter=@towns-protocol/contracts
+forge build
 
 CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|Architect|ILegacyArchitect|MockLegacyArchitect|IProxyManager|IPausable|IEntitlementsManager|EntitlementsManager|IChannel|Channels|IRoles|Roles|IMulticall|IRuleEntitlement|IRuleEntitlementV2|IWalletLink|WalletLink|INodeRegistry|NodeRegistry|IOperatorRegistry|OperatorRegistry|IStreamRegistry|StreamRegistry|OwnableFacet|TokenPausableFacet|UserEntitlement|SpaceOwner|MockERC721A|MembershipFacet|IMembershipMetadata|Member|IBanning|IPricingModules|ICrossChainEntitlement|MockEntitlementGated|PrepayFacet|IERC721AQueryable|IEntitlementDataQueryable|PlatformRequirementsFacet|IERC721A|INodeOperator|ISpaceDelegation|IEntitlementChecker|IERC5267|ICreateSpace|IDropFacet|DropFacet|ITownsPoints|ITipping|IReview|ITreasury|ISwapRouter|ISwapFacet|IAppRegistry|IAppAccount|SimpleApp|Towns|RewardsDistributionV2|MainnetDelegation|GuardianFacet)"
 

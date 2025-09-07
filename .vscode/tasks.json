@@ -286,7 +286,7 @@
     {
       "label": "Build Contracts",
       "type": "shell",
-      "command": "./scripts/build-contracts.sh",
+      "command": "yarn workspace @towns-protocol/contracts compile",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

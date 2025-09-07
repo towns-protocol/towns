@@ -3,9 +3,9 @@
   "version": "0.0.332",
   "packageManager": "yarn@3.8.0",
   "scripts": {
-    "build": "forge build",
     "build-types": "bash scripts/build-contract-types.sh",
     "clean": "forge clean",
+    "compile": "forge build",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
