@@ -101,13 +101,7 @@ function getThreadId(
     return undefined
 }
 
-function getMessageInteractionType(
-    message: PlainMessage<ChannelMessage>,
-    isSlashCommand?: boolean,
-): MessageInteractionType {
-    if (isSlashCommand) {
-        return MessageInteractionType.SLASH_COMMAND
-    }
+function getMessageInteractionType(message: PlainMessage<ChannelMessage>): MessageInteractionType {
     switch (message.payload.case) {
         case 'reaction':
             return MessageInteractionType.REACTION
