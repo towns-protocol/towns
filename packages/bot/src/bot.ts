@@ -247,7 +247,7 @@ type BasePayload = {
 }
 
 export class Bot<
-    const Commands extends PlainMessage<SlashCommand>[] = [],
+    Commands extends PlainMessage<SlashCommand>[] = [],
     HonoEnv extends Env = BlankEnv,
 > {
     private readonly client: ClientV2<BotActions>
@@ -258,13 +258,20 @@ export class Bot<
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
     private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
         new Map()
+    private readonly commands: Commands | undefined
 
-    constructor(clientV2: ClientV2<BotActions>, viemClient: ViemClient, jwtSecretBase64: string) {
+    constructor(
+        clientV2: ClientV2<BotActions>,
+        viemClient: ViemClient,
+        jwtSecretBase64: string,
+        commands?: Commands,
+    ) {
         this.client = clientV2
         this.botId = clientV2.userId
         this.viemClient = viemClient
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
+        this.commands = commands
     }
 
     async start() {
@@ -813,6 +820,7 @@ export const makeTownsBot = async <
     jwtSecretBase64: string,
     opts: {
         baseRpcUrl?: string
+        commands?: Commands
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -836,7 +844,7 @@ export const makeTownsBot = async <
         },
         ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64)
+    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {

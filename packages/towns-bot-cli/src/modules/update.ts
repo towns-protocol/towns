@@ -4,13 +4,13 @@ import { default as spawn } from 'cross-spawn'
 import { green, red, yellow, cyan } from 'picocolors'
 import * as jsonc from 'jsonc-parser'
 import { getPackageManager, getInstallCommand, runCommand, type PackageJson } from './utils.js'
-import type { Argv } from '../index.js'
+import type { UpdateArgs } from '../parser.js'
 
 interface PackageVersions {
     [key: string]: string
 }
 
-export async function update(_argv: Argv) {
+export async function update(_argv: UpdateArgs) {
     const packageJsonPath = path.join(process.cwd(), 'package.json')
 
     if (!fs.existsSync(packageJsonPath)) {
