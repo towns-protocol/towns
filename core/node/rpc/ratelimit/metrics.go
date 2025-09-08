@@ -182,24 +182,24 @@ func NewMetrics() *Metrics {
 }
 
 // RecordRequest records a request for metrics (always active)
-func (m *Metrics) RecordRequest(endpoint string, ip string, duration time.Duration) {
-	ipHash := hashIP(ip)
-	m.requestsTotal.WithLabelValues(endpoint, ipHash).Inc()
+func (m *Metrics) RecordRequest(endpoint string, key string, duration time.Duration) {
+	keyHash := hashKey(key)
+	m.requestsTotal.WithLabelValues(endpoint, keyHash).Inc()
 	m.requestDuration.WithLabelValues(endpoint).Observe(duration.Seconds())
 	m.endpointUsage.WithLabelValues(endpoint).Observe(duration.Seconds())
 }
 
 // RecordAllowed records an allowed request
-func (m *Metrics) RecordAllowed(endpoint string, ip string) {
-	ipHash := hashIP(ip)
-	m.rateLimitAllowed.WithLabelValues(endpoint, ipHash).Inc()
+func (m *Metrics) RecordAllowed(endpoint string, key string) {
+	keyHash := hashKey(key)
+	m.rateLimitAllowed.WithLabelValues(endpoint, keyHash).Inc()
 }
 
 // RecordDenied records a denied request
-func (m *Metrics) RecordDenied(endpoint string, ip string) {
-	ipHash := hashIP(ip)
-	m.rateLimitDenied.WithLabelValues(endpoint, ipHash).Inc()
-	m.rateLimitViolations.WithLabelValues(endpoint, ipHash).Inc()
+func (m *Metrics) RecordDenied(endpoint string, key string) {
+	keyHash := hashKey(key)
+	m.rateLimitDenied.WithLabelValues(endpoint, keyHash).Inc()
+	m.rateLimitViolations.WithLabelValues(endpoint, keyHash).Inc()
 }
 
 // RecordTokenBucketState records the current state of a token bucket
@@ -233,25 +233,25 @@ func (m *Metrics) RecordConfigReload() {
 	m.configReloads.Inc()
 }
 
-// RecordIPBehavior records IP behavior pattern for burst detection
-func (m *Metrics) RecordIPBehavior(ip string, requestsPerMinute float64) {
-	ipHash := hashIP(ip)
-	m.ipBehaviorPattern.WithLabelValues(ipHash).Observe(requestsPerMinute)
+// RecordKeyBehavior records key behavior pattern for burst detection
+func (m *Metrics) RecordKeyBehavior(key string, requestsPerMinute float64) {
+	keyHash := hashKey(key)
+	m.ipBehaviorPattern.WithLabelValues(keyHash).Observe(requestsPerMinute)
 }
 
-// SetPeakConcurrencyPerIP sets peak concurrency for an IP
-func (m *Metrics) SetPeakConcurrencyPerIP(ip string, concurrency int) {
-	ipHash := hashIP(ip)
-	m.peakConcurrencyPerIP.WithLabelValues(ipHash).Set(float64(concurrency))
+// SetPeakConcurrencyPerKey sets peak concurrency for a key
+func (m *Metrics) SetPeakConcurrencyPerKey(key string, concurrency int) {
+	keyHash := hashKey(key)
+	m.peakConcurrencyPerIP.WithLabelValues(keyHash).Set(float64(concurrency))
 }
 
-// hashIP creates a privacy-protecting hash of the IP address for metrics
+// hashKey creates a privacy-protecting hash of the key for metrics
 // Uses only first 8 bytes to control cardinality while maintaining some uniqueness
-func hashIP(ip string) string {
-	if ip == "" {
+func hashKey(key string) string {
+	if key == "" {
 		return "unknown"
 	}
 	hasher := sha256.New()
-	hasher.Write([]byte(ip))
+	hasher.Write([]byte(key))
 	return fmt.Sprintf("%x", hasher.Sum(nil)[:8])
 }

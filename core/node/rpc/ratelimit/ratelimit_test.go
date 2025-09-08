@@ -133,7 +133,7 @@ func TestRateLimiter_IPExemptions(t *testing.T) {
 			ip := tc.ip
 
 			// Check exemption status
-			exempt := rl.IsIPExempt(ip)
+			exempt := rl.IsKeyExempt(ip)
 			assert.Equal(t, tc.exempt, exempt)
 
 			// Exempt IPs should always be allowed even with many requests

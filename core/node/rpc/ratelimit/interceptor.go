@@ -52,7 +52,7 @@ func (i *RateLimitInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFu
 		}()
 
 		// Rate limiting logic (only if enabled)
-		if i.limiter.IsEnabled() && !i.limiter.IsEndpointExempt(endpoint) && !i.limiter.IsIPExempt(clientIP) {
+		if i.limiter.IsEnabled() && !i.limiter.IsEndpointExempt(endpoint) && !i.limiter.IsKeyExempt(clientIP) {
 			allowed, quotaInfo, err := i.limiter.Allow(ctx, clientIP, endpoint)
 			if err != nil {
 				i.logger.Error("Rate limiter error",
@@ -101,7 +101,7 @@ func (i *RateLimitInterceptor) WrapStreamingHandler(next connect.StreamingHandle
 		}()
 
 		// Rate limiting for streaming connections
-		if i.limiter.IsEnabled() && !i.limiter.IsEndpointExempt(endpoint) && !i.limiter.IsIPExempt(clientIP) {
+		if i.limiter.IsEnabled() && !i.limiter.IsEndpointExempt(endpoint) && !i.limiter.IsKeyExempt(clientIP) {
 			allowed, quotaInfo, err := i.limiter.Allow(ctx, clientIP, endpoint)
 			if err != nil {
 				i.logger.Error("Rate limiter error for streaming",
@@ -121,7 +121,7 @@ func (i *RateLimitInterceptor) WrapStreamingHandler(next connect.StreamingHandle
 }
 
 // buildRateLimitError creates a rate limit error response
-func (i *RateLimitInterceptor) buildRateLimitError(quotaInfo *QuotaInfo, endpoint string, clientIP string) *connect.Error {
+func (i *RateLimitInterceptor) buildRateLimitError(quotaInfo *QuotaInfo, endpoint string, clientKey string) *connect.Error {
 	var retryAfter time.Duration
 	var resetTime time.Time
 	
@@ -139,7 +139,7 @@ func (i *RateLimitInterceptor) buildRateLimitError(quotaInfo *QuotaInfo, endpoin
 
 	// Log the rate limit violation
 	i.logger.Warn("Rate limit exceeded",
-		zap.String("ip", clientIP),
+		zap.String("key", clientKey),
 		zap.String("endpoint", endpoint),
 		zap.Duration("retry_after", retryAfter),
 		zap.Time("reset_time", resetTime))
@@ -157,7 +157,7 @@ func (i *RateLimitInterceptor) buildRateLimitError(quotaInfo *QuotaInfo, endpoin
 }
 
 // buildStreamingRateLimitError creates a rate limit error for streaming connections
-func (i *RateLimitInterceptor) buildStreamingRateLimitError(quotaInfo *QuotaInfo, endpoint string, clientIP string) error {
+func (i *RateLimitInterceptor) buildStreamingRateLimitError(quotaInfo *QuotaInfo, endpoint string, clientKey string) error {
 	// For streaming, we return a regular error that will be sent to the client
 	var retryAfter time.Duration
 	if quotaInfo != nil {
@@ -170,7 +170,7 @@ func (i *RateLimitInterceptor) buildStreamingRateLimitError(quotaInfo *QuotaInfo
 	}
 
 	i.logger.Warn("Rate limit exceeded for streaming connection",
-		zap.String("ip", clientIP),
+		zap.String("key", clientKey),
 		zap.String("endpoint", endpoint),
 		zap.Duration("retry_after", retryAfter))
 

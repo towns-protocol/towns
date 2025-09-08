@@ -15,17 +15,17 @@ import (
 
 // RateLimiter defines the interface for rate limiting operations
 type RateLimiter interface {
-	// Check if operation is allowed for IP on specific endpoint
-	Allow(ctx context.Context, ip string, endpoint string) (bool, *QuotaInfo, error)
+	// Check if operation is allowed for key on specific endpoint
+	Allow(ctx context.Context, key string, endpoint string) (bool, *QuotaInfo, error)
 
-	// Get remaining quota information for specific IP and endpoint
-	GetQuota(ctx context.Context, ip string, endpoint string) (*QuotaInfo, error)
+	// Get remaining quota information for specific key and endpoint
+	GetQuota(ctx context.Context, key string, endpoint string) (*QuotaInfo, error)
 
 	// Check if endpoint has rate limiting disabled
 	IsEndpointExempt(endpoint string) bool
 
-	// Check if IP is exempt from rate limiting
-	IsIPExempt(ip string) bool
+	// Check if key is exempt from rate limiting
+	IsKeyExempt(key string) bool
 
 	// Check if rate limiting is globally enabled
 	IsEnabled() bool
@@ -108,8 +108,8 @@ func newIPRateLimiterWithRegistry(config *Config, logger *zap.Logger, registry p
 	return rl, nil
 }
 
-// Allow checks if a request from the given IP to the given endpoint is allowed
-func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (bool, *QuotaInfo, error) {
+// Allow checks if a request from the given key to the given endpoint is allowed
+func (r *IPRateLimiter) Allow(ctx context.Context, key string, endpoint string) (bool, *QuotaInfo, error) {
 	// If rate limiting is disabled, always allow but still collect metrics
 	if !r.IsEnabled() {
 		return true, &QuotaInfo{
@@ -120,9 +120,9 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 		}, nil
 	}
 
-	// Check if IP is exempt
-	if r.IsIPExempt(ip) {
-		r.metrics.RecordAllowed(endpoint, ip)
+	// Check if key is exempt
+	if r.IsKeyExempt(key) {
+		r.metrics.RecordAllowed(endpoint, key)
 		return true, &QuotaInfo{
 			Tokens:    ^uint64(0), // Max uint64 for unlimited
 			Remaining: ^uint64(0),
@@ -133,7 +133,7 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 
 	// Check if endpoint is exempt
 	if r.IsEndpointExempt(endpoint) {
-		r.metrics.RecordAllowed(endpoint, ip)
+		r.metrics.RecordAllowed(endpoint, key)
 		return true, &QuotaInfo{
 			Tokens:    ^uint64(0), // Max uint64 for unlimited
 			Remaining: ^uint64(0),
@@ -142,15 +142,15 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 		}, nil
 	}
 
-	// Use IP as key for rate limiting
-	ipKey := ip
+	// Use key for rate limiting
+	limiterKey := key
 	var quotaInfo *QuotaInfo
 	var allowed bool
 	var err error
 
 	// Try endpoint-specific limiter first
 	if endpointLimiter, exists := r.endpointLimiters[endpoint]; exists {
-		tokens, remaining, reset, ok, takeErr := endpointLimiter.Take(ctx, ipKey)
+		tokens, remaining, reset, ok, takeErr := endpointLimiter.Take(ctx, limiterKey)
 		quotaInfo = &QuotaInfo{
 			Tokens:    tokens,
 			Remaining: remaining,
@@ -161,7 +161,7 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 		err = takeErr
 	} else {
 		// Fall back to global limiter
-		tokens, remaining, reset, ok, takeErr := r.globalLimiter.Take(ctx, ipKey)
+		tokens, remaining, reset, ok, takeErr := r.globalLimiter.Take(ctx, limiterKey)
 		quotaInfo = &QuotaInfo{
 			Tokens:    tokens,
 			Remaining: remaining,
@@ -173,16 +173,16 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 	}
 
 	if err != nil {
-		r.logger.Error("Rate limiter error", zap.Error(err), zap.String("ip", ip), zap.String("endpoint", endpoint))
+		r.logger.Error("Rate limiter error", zap.Error(err), zap.String("key", key), zap.String("endpoint", endpoint))
 		// Fail open - allow request
 		return true, nil, err
 	}
 
 	// Record metrics
 	if allowed {
-		r.metrics.RecordAllowed(endpoint, ip)
+		r.metrics.RecordAllowed(endpoint, key)
 	} else {
-		r.metrics.RecordDenied(endpoint, ip)
+		r.metrics.RecordDenied(endpoint, key)
 	}
 
 	// Record token bucket state for monitoring
@@ -193,8 +193,8 @@ func (r *IPRateLimiter) Allow(ctx context.Context, ip string, endpoint string) (
 	return allowed, quotaInfo, nil
 }
 
-// GetQuota returns quota information for the given IP and endpoint
-func (r *IPRateLimiter) GetQuota(ctx context.Context, ip string, endpoint string) (*QuotaInfo, error) {
+// GetQuota returns quota information for the given key and endpoint
+func (r *IPRateLimiter) GetQuota(ctx context.Context, key string, endpoint string) (*QuotaInfo, error) {
 	if !r.IsEnabled() {
 		// Return unlimited quota when disabled
 		return &QuotaInfo{
@@ -205,7 +205,7 @@ func (r *IPRateLimiter) GetQuota(ctx context.Context, ip string, endpoint string
 		}, nil
 	}
 
-	if r.IsIPExempt(ip) || r.IsEndpointExempt(endpoint) {
+	if r.IsKeyExempt(key) || r.IsEndpointExempt(endpoint) {
 		return &QuotaInfo{
 			Tokens:    ^uint64(0),
 			Remaining: ^uint64(0),
@@ -214,13 +214,13 @@ func (r *IPRateLimiter) GetQuota(ctx context.Context, ip string, endpoint string
 		}, nil
 	}
 
-	ipKey := ip
+	limiterKey := key
 	
 	// Check endpoint-specific limiter first
 	if endpointLimiter, exists := r.endpointLimiters[endpoint]; exists {
 		// Note: We'd ideally have a Get() method, but Take() is what's available
 		// This will consume a token - not ideal for quota checking but functional
-		tokens, remaining, reset, _, getErr := endpointLimiter.Take(ctx, ipKey)
+		tokens, remaining, reset, _, getErr := endpointLimiter.Take(ctx, limiterKey)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -232,7 +232,7 @@ func (r *IPRateLimiter) GetQuota(ctx context.Context, ip string, endpoint string
 		}, nil
 	} else {
 		// Fall back to global limiter
-		tokens, remaining, reset, _, getErr := r.globalLimiter.Take(ctx, ipKey)
+		tokens, remaining, reset, _, getErr := r.globalLimiter.Take(ctx, limiterKey)
 		if getErr != nil {
 			return nil, getErr
 		}
@@ -256,14 +256,16 @@ func (r *IPRateLimiter) IsEndpointExempt(endpoint string) bool {
 	return false
 }
 
-// IsIPExempt checks if an IP address is exempt from rate limiting
-func (r *IPRateLimiter) IsIPExempt(ip string) bool {
+// IsKeyExempt checks if a key is exempt from rate limiting
+// For IP-based keys, this checks against IP exemption lists
+func (r *IPRateLimiter) IsKeyExempt(key string) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	parsedIP := net.ParseIP(ip)
+	// Try to parse as IP address for IP-based exemptions
+	parsedIP := net.ParseIP(key)
 	if parsedIP == nil {
-		return false // Invalid IP, not exempt
+		return false // Not a valid IP, not exempt
 	}
 	
 	for _, exemptNet := range r.config.ExemptIPNets {
