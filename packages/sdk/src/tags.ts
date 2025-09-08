@@ -36,10 +36,10 @@ export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMes
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
     streamView: StreamStateView,
-    isSlashCommand?: boolean,
+    messageInteractionType?: MessageInteractionType,
 ): PlainMessage<Tags> {
     return {
-        messageInteractionType: getMessageInteractionType(message, isSlashCommand),
+        messageInteractionType: messageInteractionType ?? getMessageInteractionType(message),
         groupMentionTypes: getGroupMentionTypes(message),
         mentionedUserAddresses: getMentionedUserAddresses(message),
         participatingUserAddresses: getParticipatingUserAddresses(message, streamView),
@@ -101,13 +101,7 @@ function getThreadId(
     return undefined
 }
 
-function getMessageInteractionType(
-    message: PlainMessage<ChannelMessage>,
-    isSlashCommand?: boolean,
-): MessageInteractionType {
-    if (isSlashCommand) {
-        return MessageInteractionType.SLASH_COMMAND
-    }
+function getMessageInteractionType(message: PlainMessage<ChannelMessage>): MessageInteractionType {
     switch (message.payload.case) {
         case 'reaction':
             return MessageInteractionType.REACTION

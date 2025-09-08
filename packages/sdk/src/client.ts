@@ -1871,7 +1871,11 @@ export class Client
         const tags =
             opts?.disableTags === true
                 ? undefined
-                : makeTags(payload, stream.view, !!opts?.appClientAddress)
+                : makeTags(
+                      payload,
+                      stream.view,
+                      opts?.appClientAddress ? MessageInteractionType.SLASH_COMMAND : undefined,
+                  )
         if (opts?.appClientAddress && tags) {
             tags.appClientAddress = bin_fromHexString(opts.appClientAddress)
         }
