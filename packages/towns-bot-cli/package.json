@@ -12,7 +12,12 @@
     },
     "bin": "index.js",
     "dependencies": {
+        "@bufbuild/protobuf": "^2.2.2",
+        "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
         "cross-spawn": "^7.0.5",
+        "dotenv": "^16.4.5",
+        "ethers": "^5.7.2",
         "jsonc-parser": "^3.3.1",
         "minimist": "^1.2.8",
         "picocolors": "^1.1.1",

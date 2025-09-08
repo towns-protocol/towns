@@ -29338,6 +29338,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "towns-bot@workspace:packages/towns-bot-cli"
   dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/sdk": "workspace:^"
     "@types/cross-spawn": ^6.0.6
     "@types/minimist": ^1.2.5
     "@types/node": ^20.14.8
@@ -29345,9 +29348,11 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     cross-spawn: ^7.0.5
+    dotenv: ^16.4.5
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    ethers: ^5.7.2
     jsonc-parser: ^3.3.1
     minimist: ^1.2.8
     picocolors: ^1.1.1
