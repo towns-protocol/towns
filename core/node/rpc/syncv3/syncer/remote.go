@@ -30,18 +30,12 @@ const (
 // TODO: Advance sticky peer on failure.
 type remoteStreamUpdateEmitter struct {
 	// cancel is the cancel function for the context.
-	cancel context.CancelCauseFunc
-	// log is the logger for the emitter.
-	log *logging.Log
-	// syncID is the ID of the current sync operation.
-	syncID string
-	// streamID is the ID of the stream that this emitter emits events for.
-	streamID StreamId
-	// remoteAddr is the address of the remote node.
-	remoteAddr common.Address
-	// client is the RPC client for the remote node.
-	client protocolconnect.StreamServiceClient
-	// responseStream is the response stream for the sync operation.
+	cancel         context.CancelCauseFunc
+	log            *logging.Log
+	syncID         string
+	streamID       StreamId
+	remoteAddr     common.Address
+	client         protocolconnect.StreamServiceClient
 	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
 	// subscriber is the subscriber that receives updates from the stream.
 	subscriber StreamSubscriber

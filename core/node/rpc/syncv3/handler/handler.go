@@ -86,13 +86,10 @@ type syncStreamHandlerImpl struct {
 	ctx context.Context
 	// cancel is the cancel function for the operation context.
 	cancel context.CancelCauseFunc
-	// log is the logger for the operation.
-	log *logging.Log
-	// syncID is the unique identifier for the sync operation.
+	log    *logging.Log
 	syncID string
 	// receiver is the final receiver of the stream update message, i.e. client.
 	receiver Receiver
-	// eventBus is the event bus that is used to subscribe for stream updates.
 	eventBus eventbus.StreamSubscriptionManager
 	// streamUpdates is the stream updates queue.
 	// When a stream update is received, it should be sent to the queue so the updates processor can handle them.
@@ -101,12 +98,9 @@ type syncStreamHandlerImpl struct {
 
 // syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
 type syncStreamHandlerRegistryImpl struct {
-	// handlersLock is a mutex that protects access to the handlers map.
 	handlersLock sync.Mutex
-	// handlers is a map of sync stream handlers by their sync ID.
-	handlers map[string]*syncStreamHandlerImpl
-	// eventBus is the event bus that is used to subscribe for stream updates.
-	eventBus eventbus.StreamSubscriptionManager
+	handlers     map[string]*syncStreamHandlerImpl
+	eventBus     eventbus.StreamSubscriptionManager
 }
 
 func (s *syncStreamHandlerImpl) Run() error {

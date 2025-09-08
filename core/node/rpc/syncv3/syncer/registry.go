@@ -41,23 +41,16 @@ type registryMsg struct {
 // registryImpl is an implementation of the Registry interface.
 type registryImpl struct {
 	// ctx is the global node context.
-	ctx context.Context
-	// log is the logger for the registry.
-	log *logging.Log
-	// localAddr is the address of the current node.
-	localAddr common.Address
-	// streamCache is the global stream cache.
-	streamCache StreamCache
-	// nodeRegistry is the global node registry.
+	ctx          context.Context
+	log          *logging.Log
+	localAddr    common.Address
+	streamCache  StreamCache
 	nodeRegistry nodes.NodeRegistry
 	// subscriber is the StreamSubscriber that receives updates from all syncers.
-	subscriber StreamSubscriber
-	// syncersLock is a mutex to protect the syncers map.
+	subscriber  StreamSubscriber
 	syncersLock sync.Mutex
-	// syncers is a map of stream IDs to their corresponding StreamUpdateEmitter instances.
-	syncers map[StreamId]StreamUpdateEmitter
-	// queue of sync registry commands.
-	queue *dynmsgbuf.DynamicBuffer[*registryMsg]
+	syncers     map[StreamId]StreamUpdateEmitter
+	queue       *dynmsgbuf.DynamicBuffer[*registryMsg]
 }
 
 // NewRegistry creates a new instance of the Registry.

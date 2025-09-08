@@ -29,10 +29,8 @@ type Service interface {
 
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
-	// handlerRegistry is used to manage sync stream handlers.
 	handlerRegistry handler.Registry
-	// otelTracer is used to trace individual sync operations, tracing is disabled if nil
-	otelTracer trace.Tracer
+	otelTracer      trace.Tracer
 }
 
 // NewService creates a new instance of the sync V3 service.

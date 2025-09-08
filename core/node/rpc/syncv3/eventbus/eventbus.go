@@ -98,12 +98,10 @@ type eventBusMessage struct {
 // It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
 // to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
 type eventBusImpl struct {
-	// log is the event bus named logger
 	log *logging.Log
 	// TODO: discuss if we want to have an unbounded queue here?
 	// Processing items on the queue should be fast enough to always keep up with the added items.
-	queue *dynmsgbuf.DynamicBuffer[*eventBusMessage]
-	// registry is the syncer registry.
+	queue    *dynmsgbuf.DynamicBuffer[*eventBusMessage]
 	registry syncer.Registry
 	// subscribers is the list of subscribers grouped by stream ID and syncer version.
 	subscribers map[StreamId]map[int][]StreamSubscriber

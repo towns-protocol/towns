@@ -10,13 +10,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// List of possible states of the stream update emitter.
-const (
-	streamUpdateEmitterStateInitializing int32 = iota
-	streamUpdateEmitterStateRunning
-	streamUpdateEmitterStateClosed
-)
-
 // backfillRequest is used by syncers as an element in the backfill queue.
 type backfillRequest struct {
 	cookie  *SyncCookie

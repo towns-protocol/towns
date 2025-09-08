@@ -21,16 +21,11 @@ const (
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
 type localStreamUpdateEmitter struct {
-	// cancel is the cancel function for the context.
-	cancel context.CancelCauseFunc
-	// log is the logger for the emitter.
-	log *logging.Log
-	// localAddr is the address of the current node.
+	cancel    context.CancelCauseFunc
+	log       *logging.Log
 	localAddr common.Address
-	// streamID is the ID of the stream that this emitter emits updates for.
-	streamID StreamId
-	// stream is the current stream.
-	stream *events.Stream
+	streamID  StreamId
+	stream    *events.Stream
 	// subscriber is the subscriber that receives updates from the stream.
 	subscriber StreamSubscriber
 	// backfillsQueue is a dynamic buffer that holds backfill requests.
@@ -112,22 +107,18 @@ func (s *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
 	s.cancel(nil)
 }
 
-// StreamID returns the StreamId of the stream that this emitter emits events for.
 func (s *localStreamUpdateEmitter) StreamID() StreamId {
 	return s.streamID
 }
 
-// Node returns the address of the stream node. This is the local node address for local streams.
 func (s *localStreamUpdateEmitter) Node() common.Address {
 	return s.localAddr
 }
 
-// Version returns the version of the emitter.
 func (s *localStreamUpdateEmitter) Version() int {
 	return s.version
 }
 
-// EnqueueBackfill adds the given backfill request to the queue for further processing.
 func (s *localStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
 	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
@@ -138,7 +129,6 @@ func (s *localStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs [
 	return true
 }
 
-// Close closes the emitter and stops receiving updates for the stream.
 func (s *localStreamUpdateEmitter) Close() {
 	s.cancel(nil)
 }
