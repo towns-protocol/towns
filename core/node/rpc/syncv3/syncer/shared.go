@@ -79,9 +79,9 @@ func (s *sharedStreamUpdateEmitter) run(
 		return
 	}
 
-	s.lock.Lock()
+	var emitter StreamUpdateEmitter
 	if stream.IsLocal() {
-		s.emitter = NewLocalStreamUpdateEmitter(
+		emitter, err = NewLocalStreamUpdateEmitter(
 			ctx,
 			localAddr,
 			streamCache,
@@ -90,7 +90,7 @@ func (s *sharedStreamUpdateEmitter) run(
 			s.version,
 		)
 	} else {
-		s.emitter = NewRemoteStreamUpdateEmitter(
+		emitter, err = NewRemoteStreamUpdateEmitter(
 			ctx,
 			stream,
 			nodeRegistry,
@@ -99,6 +99,28 @@ func (s *sharedStreamUpdateEmitter) run(
 			s.version,
 		)
 	}
+	if err != nil {
+		logging.FromCtx(ctx).
+			Named("newSharedStreamUpdateEmitter").
+			With("version", s.version, "streamID", s.streamID, "error", err).
+			Error("failed to create stream updates emitter")
+
+		s.lock.Lock()
+		backfills = s.backfills
+		s.backfills = nil
+		s.lock.Unlock()
+
+		for _, br := range backfills {
+			subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
+				0,
+			)
+		}
+		return
+	}
+
+	s.lock.Lock()
+	s.emitter = emitter
 	backfills = s.backfills
 	s.backfills = nil
 	s.lock.Unlock()

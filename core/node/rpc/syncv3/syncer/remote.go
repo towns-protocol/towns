@@ -46,13 +46,11 @@ type remoteStreamUpdateEmitter struct {
 	// subscriber is the subscriber that receives updates from the stream.
 	subscriber StreamSubscriber
 	// backfillsQueue is a dynamic buffer that holds backfill requests.
-	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
+	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
 	version int
-	// state is the current state of the emitter.
-	state atomic.Int32
 }
 
 // NewRemoteStreamUpdateEmitter creates a new remote stream update emitter for the given stream ID and remote address.
@@ -64,14 +62,97 @@ func NewRemoteStreamUpdateEmitter(
 	streamID StreamId,
 	subscriber StreamSubscriber,
 	version int,
-) StreamUpdateEmitter {
+) (StreamUpdateEmitter, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
+
+	remoteAddr := stream.GetStickyPeer()
+
+	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure that the first valid update is received within remoteStreamUpdateEmitterTimeout,
+	// if not, cancel the operation and return an unavailable error
+	var firstUpdateReceived atomic.Bool
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-time.After(remoteStreamUpdateEmitterTimeout):
+			if !firstUpdateReceived.Load() {
+				cancel(
+					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for first update",
+						"addr", remoteAddr, "version", version, "streamID", streamID),
+				)
+			}
+		}
+	}()
+
+	req := connect.NewRequest(&SyncStreamsRequest{SyncPos: []*SyncCookie{{
+		StreamId:    streamID[:],
+		NodeAddress: remoteAddr[:],
+	}}})
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
+	responseStream, err := client.SyncStreams(ctx, req)
+	if err != nil {
+		cancel(err)
+		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams failed", err).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteStreamUpdateEmitter")
+	}
+
+	firstUpdateReceived.Store(responseStream.Receive())
+
+	if !firstUpdateReceived.Load() || ctx.Err() != nil {
+		cancel(nil)
+		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages", responseStream.Err()).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteStreamUpdateEmitter")
+	}
+
+	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
+		cancel(nil)
+		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
+			Tags("syncOp", responseStream.Msg().SyncOp, "syncId", responseStream.Msg().SyncId, "remote", remoteAddr).
+			Func("NewRemoteStreamUpdateEmitter")
+	}
+
+	syncID := responseStream.Msg().GetSyncId()
+
+	// Ensure that the second update is received within remoteStreamUpdateEmitterTimeout,
+	// if not, cancel the operation and return an unavailable error. The second update should be a SYNC_UPDATE message
+	// which should be ignored since each client has its own cookie.
+	var secondUpdateReceived atomic.Bool
+	go func() {
+		select {
+		case <-ctx.Done():
+		case <-time.After(remoteStreamUpdateEmitterTimeout):
+			if !secondUpdateReceived.Load() {
+				cancel(
+					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
+						"addr", remoteAddr, "version", version, "syncID", syncID, "streamID", streamID),
+				)
+			}
+		}
+	}()
+
+	secondUpdateReceived.Store(responseStream.Receive())
+
+	if !secondUpdateReceived.Load() || ctx.Err() != nil {
+		cancel(nil)
+		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams stream closed without receiving an initial update", responseStream.Err()).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteStreamUpdateEmitter")
+	}
 
 	r := &remoteStreamUpdateEmitter{
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
-			With("version", version, "addr", stream.GetStickyPeer().Hex(), "streamID", streamID),
+			With("version", version, "addr", stream.GetStickyPeer().Hex(), "streamID", streamID, "syncID", syncID),
+		syncID:         syncID,
+		responseStream: responseStream,
+		client:         client,
 		streamID:       streamID,
 		remoteAddr:     stream.GetStickyPeer(),
 		subscriber:     subscriber,
@@ -79,11 +160,9 @@ func NewRemoteStreamUpdateEmitter(
 		version:        version,
 	}
 
-	r.state.Store(streamUpdateEmitterStateInitializing)
+	go r.run(ctx, stream)
 
-	go r.run(ctx, nodeRegistry, stream)
-
-	return r
+	return r, nil
 }
 
 func (r *remoteStreamUpdateEmitter) SyncID() string {
@@ -107,7 +186,6 @@ func (r *remoteStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs 
 	if err != nil {
 		r.cancel(err)
 		r.log.Errorw("failed to add backfill request to the queue", "error", err)
-		r.state.Store(streamUpdateEmitterStateClosed)
 		return false
 	}
 	return true
@@ -115,146 +193,18 @@ func (r *remoteStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs 
 
 // Close closes the emitter and stops receiving updates for the stream.
 func (r *remoteStreamUpdateEmitter) Close() {
-	if r.state.CompareAndSwap(streamUpdateEmitterStateRunning, streamUpdateEmitterStateClosed) {
-		r.cancel(nil)
-	}
+	r.cancel(nil)
 }
 
 func (r *remoteStreamUpdateEmitter) run(
 	ctx context.Context,
-	nodeRegistry nodes.NodeRegistry,
 	stream *events.Stream,
 ) {
-	var msgs []*backfillRequest
+	defer r.cleanup()
 
-	defer func() {
-		// Close the queue to stop receiving backfill requests.
-		r.backfillsQueue.Close()
-
-		// Updating the state to closed to indicate that the emitter is no longer active.
-		r.state.Store(streamUpdateEmitterStateClosed)
-
-		// Send a stream down message to all active syncs of the current syncer version via event bus.
-		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID[:]}, r.version)
-
-		// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
-		msgs = r.backfillsQueue.GetBatch(msgs)
-		for _, msg := range msgs {
-			r.subscriber.OnStreamEvent(&SyncStreamsResponse{
-				SyncOp:        SyncOp_SYNC_DOWN,
-				StreamId:      r.streamID[:],
-				TargetSyncIds: msg.syncIDs,
-			}, r.version)
-		}
-	}()
-
-	// Get remote node RPC client
-	client, err := nodeRegistry.GetStreamServiceClientForAddress(r.remoteAddr)
-	if err != nil {
-		r.cancel(err)
-		r.log.Errorw("initialization failed: failed to get stream service client by address", "error", err)
-		return
-	}
-
-	// Ensure that the first valid update is received within remoteStreamUpdateEmitterTimeout,
-	// if not, cancel the operation and return an unavailable error
-	var firstUpdateReceived atomic.Bool
-	go func() {
-		select {
-		case <-ctx.Done():
-		case <-time.After(remoteStreamUpdateEmitterTimeout):
-			if !firstUpdateReceived.Load() {
-				r.cancel(
-					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for first update",
-						"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID),
-				)
-			}
-		}
-	}()
-
-	// Create a new sync operation for the given stream only.
-	req := connect.NewRequest(&SyncStreamsRequest{
-		SyncPos: []*SyncCookie{{
-			StreamId:    r.streamID[:],
-			NodeAddress: r.remoteAddr[:],
-		}},
-	})
-	req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
-	responseStream, err := client.SyncStreams(ctx, req)
-	if err != nil {
-		r.cancel(err)
-		r.log.Errorw("initialization failed: failed to create sync operation", "error", err)
-		return
-	}
-
-	// Store indication if the first update was received.
-	firstUpdateReceived.Store(responseStream.Receive())
-
-	// If the sync operation was canceled, return an unavailable error.
-	if !firstUpdateReceived.Load() || ctx.Err() != nil {
-		r.cancel(nil)
-		r.log.Errorw(
-			"initialization failed: [1] SyncStreams stream closed without receiving any messages",
-			"error",
-			responseStream.Err(),
-		)
-		return
-	}
-
-	// Test that the first update is a SYNC_NEW message with a valid syncID set.
-	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		r.cancel(nil)
-		r.log.Errorw("initialization failed: received unexpected sync stream message",
-			"syncOp", responseStream.Msg().SyncOp, "syncID", responseStream.Msg().SyncId)
-		return
-	}
-
-	r.syncID = responseStream.Msg().GetSyncId()
-	r.responseStream = responseStream
-	r.client = client
-	r.log = r.log.With("syncID", r.syncID)
-
-	// Ensure that the second update is received within remoteStreamUpdateEmitterTimeout,
-	// if not, cancel the operation and return an unavailable error. The second update should be a SYNC_UPDATE message
-	// which should be ignored since each client has its own cookie.
-	var secondUpdateReceived atomic.Bool
-	go func() {
-		select {
-		case <-ctx.Done():
-		case <-time.After(remoteStreamUpdateEmitterTimeout):
-			if !secondUpdateReceived.Load() {
-				r.cancel(
-					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
-						"addr", r.remoteAddr, "version", r.version, "syncID", r.syncID, "streamID", r.streamID),
-				)
-			}
-		}
-	}()
-
-	// Store indication if the second update was received.
-	secondUpdateReceived.Store(responseStream.Receive())
-
-	// If the sync operation was canceled, return an unavailable error.
-	if !secondUpdateReceived.Load() || ctx.Err() != nil {
-		r.cancel(nil)
-		r.log.Errorw(
-			"initialization failed: [2] SyncStreams stream closed without receiving any messages",
-			"error",
-			responseStream.Err(),
-		)
-		return
-	}
-
-	// Update the state to running to indicate that the emitter is ready to process updates.
-	if !r.state.CompareAndSwap(streamUpdateEmitterStateInitializing, streamUpdateEmitterStateRunning) {
-		// The emitter is closed. Do not proceed with processing updates.
-		return
-	}
-
-	// Start processing stream updates received from the remote node.
 	go r.processStreamUpdates(ctx, stream)
 
-	// Start processing backfill requests
+	var msgs []*backfillRequest
 	for {
 		select {
 		case <-ctx.Done():
@@ -275,7 +225,7 @@ func (r *remoteStreamUpdateEmitter) run(
 				case <-ctx.Done():
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
-						if err = r.backfillsQueue.AddMessage(m); err != nil {
+						if err := r.backfillsQueue.AddMessage(m); err != nil {
 							r.log.Errorw(
 								"failed to re-add unprocessed backfill request to the queue",
 								"cookie",
@@ -290,7 +240,7 @@ func (r *remoteStreamUpdateEmitter) run(
 				default:
 				}
 
-				if err = r.processBackfillRequest(ctx, msg); err != nil {
+				if err := r.processBackfillRequest(ctx, msg); err != nil {
 					r.cancel(err)
 					r.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 
@@ -317,6 +267,23 @@ func (r *remoteStreamUpdateEmitter) run(
 				return
 			}
 		}
+	}
+}
+
+func (r *remoteStreamUpdateEmitter) cleanup() {
+	r.backfillsQueue.Close()
+
+	// Send a stream down message to all active syncs of the current syncer version via event bus.
+	r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID[:]}, r.version)
+
+	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
+	msgs := r.backfillsQueue.GetBatch(nil)
+	for _, msg := range msgs {
+		r.subscriber.OnStreamEvent(&SyncStreamsResponse{
+			SyncOp:        SyncOp_SYNC_DOWN,
+			StreamId:      r.streamID[:],
+			TargetSyncIds: msg.syncIDs,
+		}, r.version)
 	}
 }
 
