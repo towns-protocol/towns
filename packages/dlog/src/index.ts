@@ -4,4 +4,5 @@
 export * from './binary'
 export * from './check'
 export * from './dlog'
+export * from './envUtils'
 export * from './utils'

@@ -1,13 +1,15 @@
 import {
-    Address,
     BaseChainConfig,
     RiverChainConfig,
-    Web3Deployment,
     getWeb3Deployment,
     getWeb3Deployments,
+    getRiverEnv,
 } from '@towns-protocol/web3'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { dlogger, safeEnv } from '@towns-protocol/dlog'
+
 const logger = dlogger('csb:config')
+
+const RIVER_ENV = getRiverEnv()
 
 export enum RiverService {
     Notifications,
@@ -20,66 +22,6 @@ export type RiverConfig = {
     base: { rpcUrl: string; chainConfig: BaseChainConfig }
     river: { rpcUrl: string; chainConfig: RiverChainConfig }
     services: { id: RiverService; url: string | undefined }[]
-}
-
-const RIVER_ENV = safeEnv(['RIVER_ENV'])
-
-function safeEnv(keys: string[]): string | undefined {
-    if (typeof process !== 'object') {
-        return undefined
-    }
-    for (const key of keys) {
-        // look for the key in process.env
-        if (process.env[key]) {
-            return process.env[key]
-        }
-        // look for the key in process.env.VITE_ for vite apps
-        const viteKey = `VITE_${key}`
-        if (process.env[viteKey]) {
-            return process.env[viteKey]
-        }
-    }
-    return undefined
-}
-
-function optionalEnv({
-    environmentId,
-    keys,
-    defaultValue,
-}: {
-    environmentId: string
-    keys: string[]
-    defaultValue?: string
-}): string | undefined {
-    if (environmentId === RIVER_ENV) {
-        const value = safeEnv(keys)
-        if (value) {
-            return value
-        }
-    }
-    if (defaultValue) {
-        return defaultValue
-    }
-    return undefined
-}
-
-function requiredEnv({
-    environmentId,
-    keys,
-    defaultValue,
-}: {
-    environmentId: string
-    keys: string[]
-    defaultValue?: string
-}): string {
-    check(keys.length > 0, 'keys must be an array of at least one key')
-    const value = optionalEnv({ environmentId, keys, defaultValue })
-    if (!value) {
-        throw new Error(
-            `One of ${keys.join(', ')}, ${keys.map((key) => `VITE_${key}`).join(', ')} is required to be set in process.env`,
-        )
-    }
-    return value
 }
 
 function getEnvironmentId(): string {
@@ -143,122 +85,9 @@ function getRiverRpcUrlForChain(chainId: number): string {
     }
 }
 
-function makeWeb3Deployment(environmentId: string): Web3Deployment {
-    const deployment = getWeb3Deployments().includes(environmentId)
-        ? getWeb3Deployment(environmentId)
-        : undefined
-    // use the checked in deployment if it exists, otherwise use the environment variables
-    return {
-        base: {
-            chainId: parseInt(
-                requiredEnv({
-                    environmentId,
-                    keys: ['BASE_CHAIN_ID'],
-                    defaultValue: deployment?.base.chainId.toString(),
-                }),
-            ),
-            addresses: {
-                baseRegistry: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_APP_REGISTRY',
-                        'BASE_REGISTRY_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.baseRegistry,
-                }) as Address,
-                spaceFactory: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_SPACE_FACTORY',
-                        'SPACE_FACTORY_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.spaceFactory,
-                }) as Address,
-                spaceOwner: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_SPACE_OWNER',
-                        'SPACE_OWNER_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.spaceOwner,
-                }) as Address,
-                riverAirdrop: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_RIVER_AIRDROP',
-                        'RIVER_AIRDROP_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.riverAirdrop,
-                }) as Address,
-                swapRouter: optionalEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_SWAP_ROUTER',
-                        'SWAP_ROUTER_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.swapRouter,
-                }) as Address,
-                appRegistry: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'BASE_ADDRESSES_APP_REGISTRY',
-                        'APP_REGISTRY_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.base.addresses.appRegistry,
-                }) as Address,
-                utils: {
-                    mockNFT: optionalEnv({
-                        environmentId,
-                        keys: [
-                            'BASE_ADDRESSES_MOCK_NFT',
-                            'MOCK_NFT_ADDRESS', // deprecated
-                        ],
-                        defaultValue: deployment?.base.addresses.utils.mockNFT,
-                    }) as Address,
-                    member: optionalEnv({
-                        environmentId,
-                        keys: [
-                            'BASE_ADDRESSES_MEMBER',
-                            'MEMBER_ADDRESS', // deprecated
-                        ],
-                        defaultValue: deployment?.base.addresses.utils.member,
-                    }) as Address,
-                    towns: optionalEnv({
-                        environmentId,
-                        keys: [
-                            'BASE_ADDRESSES_TOWNS',
-                            'TOWNS_ADDRESS', // deprecated
-                        ],
-                        defaultValue: deployment?.base.addresses.utils.towns,
-                    }) as Address,
-                },
-            },
-        } satisfies BaseChainConfig,
-        river: {
-            chainId: parseInt(
-                requiredEnv({
-                    environmentId,
-                    keys: ['RIVER_CHAIN_ID'],
-                    defaultValue: deployment?.river.chainId.toString(),
-                }),
-            ),
-            addresses: {
-                riverRegistry: requiredEnv({
-                    environmentId,
-                    keys: [
-                        'RIVER_ADDRESSES_RIVER_REGISTRY',
-                        'RIVER_REGISTRY_ADDRESS', // deprecated
-                    ],
-                    defaultValue: deployment?.river.addresses.riverRegistry,
-                }) as Address,
-            },
-        } satisfies RiverChainConfig,
-    }
-}
-
 export function getNotificationServiceUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (process.env.NOTIFICATION_SERVICE_URL) {
+        if (typeof process === 'object' && process.env.NOTIFICATION_SERVICE_URL) {
             return process.env.NOTIFICATION_SERVICE_URL
         }
     }
@@ -280,7 +109,7 @@ export function getNotificationServiceUrl(environmentId: string): string {
 
 export function getStreamMetadataUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (process.env.STREAM_METADATA_URL) {
+        if (typeof process === 'object' && process.env.STREAM_METADATA_URL) {
             return process.env.STREAM_METADATA_URL
         }
     }
@@ -302,7 +131,7 @@ export function getStreamMetadataUrl(environmentId: string): string {
 
 export function getAppRegistryUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (process.env.APP_REGISTRY_URL) {
+        if (typeof process === 'object' && process.env.APP_REGISTRY_URL) {
             return process.env.APP_REGISTRY_URL
         }
     }
@@ -323,7 +152,7 @@ export function getAppRegistryUrl(environmentId: string): string {
 }
 
 export function makeRiverChainConfig(environmentId?: string): RiverConfig['river'] {
-    const env = makeWeb3Deployment(environmentId ?? getEnvironmentId())
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId())
     return {
         rpcUrl: getRiverRpcUrlForChain(env.river.chainId),
         chainConfig: env.river,
@@ -331,7 +160,7 @@ export function makeRiverChainConfig(environmentId?: string): RiverConfig['river
 }
 
 export function makeBaseChainConfig(environmentId?: string): RiverConfig['base'] {
-    const env = makeWeb3Deployment(environmentId ?? getEnvironmentId())
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId())
     return {
         rpcUrl: getBaseRpcUrlForChain(env.base.chainId),
         chainConfig: env.base,
@@ -368,14 +197,8 @@ export function makeRiverConfig(inEnvironmentId?: string): RiverConfig {
 }
 
 /**
- * If RIVER_ENV is defined, it will be included in the list of environment ids.
- * If RIVER_ENV is not defined, it will return the list of environment ids from the web3 deployments.
- * @returns Environment ids
+ * @returns Available environment ids
  */
 export function getEnvironmentIds(): string[] {
-    const deployments = getWeb3Deployments()
-    if (RIVER_ENV && !deployments.includes(RIVER_ENV)) {
-        return [RIVER_ENV, ...deployments]
-    }
-    return deployments
+    return getWeb3Deployments()
 }
