@@ -36,9 +36,7 @@ type remoteStreamUpdateEmitter struct {
 	remoteAddr     common.Address
 	client         protocolconnect.StreamServiceClient
 	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
-	// subscriber is the subscriber that receives updates from the stream.
-	subscriber StreamSubscriber
-	// backfillsQueue is a dynamic buffer that holds backfill requests.
+	subscriber     StreamSubscriber
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
@@ -151,12 +149,12 @@ func NewRemoteStreamUpdateEmitter(
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.remoteStreamUpdateEmitter").
-			With("version", version, "addr", stream.GetStickyPeer().Hex(), "streamID", streamID, "syncID", syncID),
+			With("version", version, "addr", remoteAddr.Hex(), "streamID", streamID, "syncID", syncID),
 		syncID:         syncID,
 		responseStream: responseStream,
 		client:         client,
 		streamID:       streamID,
-		remoteAddr:     stream.GetStickyPeer(),
+		remoteAddr:     remoteAddr,
 		subscriber:     subscriber,
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,

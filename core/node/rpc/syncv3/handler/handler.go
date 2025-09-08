@@ -74,25 +74,20 @@ type Registry interface {
 	// Get sync stream handler by sync id.
 	Get(syncID string) (SyncStreamHandler, bool)
 
-	// New create a new sync stream handler.
+	// New creates a new sync stream handler.
 	New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error)
 }
 
-// syncStreamHandlerImpl is a concrete implementation of the SyncStreamHandler interface.
+// syncStreamHandlerImpl implements SyncStreamHandler interface.
 //
 // TODO: Remove sync operation from event bas after its cancellation.
 type syncStreamHandlerImpl struct {
-	// ctx is the context of the sync operation.
-	ctx context.Context
-	// cancel is the cancel function for the operation context.
-	cancel context.CancelCauseFunc
-	log    *logging.Log
-	syncID string
-	// receiver is the final receiver of the stream update message, i.e. client.
-	receiver Receiver
-	eventBus eventbus.StreamSubscriptionManager
-	// streamUpdates is the stream updates queue.
-	// When a stream update is received, it should be sent to the queue so the updates processor can handle them.
+	ctx           context.Context
+	cancel        context.CancelCauseFunc
+	log           *logging.Log
+	syncID        string
+	receiver      Receiver
+	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 }
 

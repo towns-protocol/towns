@@ -46,11 +46,10 @@ type registryImpl struct {
 	localAddr    common.Address
 	streamCache  StreamCache
 	nodeRegistry nodes.NodeRegistry
-	// subscriber is the StreamSubscriber that receives updates from all syncers.
-	subscriber  StreamSubscriber
-	syncersLock sync.Mutex
-	syncers     map[StreamId]StreamUpdateEmitter
-	queue       *dynmsgbuf.DynamicBuffer[*registryMsg]
+	subscriber   StreamSubscriber
+	syncersLock  sync.Mutex
+	syncers      map[StreamId]StreamUpdateEmitter
+	queue        *dynmsgbuf.DynamicBuffer[*registryMsg]
 }
 
 // NewRegistry creates a new instance of the Registry.

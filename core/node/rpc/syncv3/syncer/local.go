@@ -21,14 +21,12 @@ const (
 
 // localStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a local stream.
 type localStreamUpdateEmitter struct {
-	cancel    context.CancelCauseFunc
-	log       *logging.Log
-	localAddr common.Address
-	streamID  StreamId
-	stream    *events.Stream
-	// subscriber is the subscriber that receives updates from the stream.
-	subscriber StreamSubscriber
-	// backfillsQueue is a dynamic buffer that holds backfill requests.
+	cancel         context.CancelCauseFunc
+	log            *logging.Log
+	localAddr      common.Address
+	streamID       StreamId
+	stream         *events.Stream
+	subscriber     StreamSubscriber
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
 	// firstUpdateReceived indicates whether the first update has been received. The first update is ignored
 	// since it is sent immediately after subscribing to the stream and should not be forwarded to sync operations.
