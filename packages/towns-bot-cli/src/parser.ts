@@ -12,17 +12,13 @@ export interface InitArgs extends BaseArgs {
 
 export type UpdateArgs = BaseArgs
 
-export interface ListCommandsArgs extends BaseArgs {
-    file?: string
-}
-
 export interface UpdateCommandsArgs extends BaseArgs {
     file?: string
     bearerToken?: string
     envFile?: string
 }
 
-export type CommandArgs = InitArgs | UpdateArgs | ListCommandsArgs | UpdateCommandsArgs
+export type CommandArgs = InitArgs | UpdateArgs | UpdateCommandsArgs
 
 // Command configurations for minimist
 const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
@@ -103,10 +99,6 @@ export function isInitArgs(args: CommandArgs): args is InitArgs {
 
 export function isUpdateArgs(args: CommandArgs): args is UpdateArgs {
     return args._[0] === 'update'
-}
-
-export function isListCommandsArgs(args: CommandArgs): args is ListCommandsArgs {
-    return args._[0] === 'list-commands'
 }
 
 export function isUpdateCommandsArgs(args: CommandArgs): args is UpdateCommandsArgs {

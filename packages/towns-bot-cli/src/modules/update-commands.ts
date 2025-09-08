@@ -3,6 +3,7 @@ import path from 'path'
 import { pathToFileURL } from 'url'
 import * as dotenv from 'dotenv'
 import { ethers } from 'ethers'
+import { z } from 'zod'
 import { green, red, yellow, cyan } from 'picocolors'
 import {
     makeSignerContextFromBearerToken,
@@ -11,9 +12,26 @@ import {
     parseAppPrivateData,
 } from '@towns-protocol/sdk'
 import { bin_fromHexString } from '@towns-protocol/dlog'
-import { SlashCommandSchema, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
+import { SlashCommandSchema, type SlashCommand } from '@towns-protocol/proto'
 import type { UpdateCommandsArgs } from '../parser.js'
 import { create } from '@bufbuild/protobuf'
+
+const slashCommandSchema = z
+    .object({
+        name: z
+            .string()
+            .min(1, 'Command name is required')
+            .max(32, 'Command name must be 32 characters or less')
+            .regex(
+                /^[a-zA-Z][a-zA-Z0-9_]*$/,
+                'Command name must start with a letter and contain only letters, numbers, and underscores',
+            ),
+        description: z
+            .string()
+            .min(1, 'Command description is required')
+            .max(256, 'Command description must be 256 characters or less'),
+    })
+    .transform((data) => create(SlashCommandSchema, data))
 
 export async function updateCommands(argv: UpdateCommandsArgs) {
     const filePath = argv.file || argv._[1]
@@ -46,7 +64,6 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
         process.exit(1)
     }
 
-    // Load environment variables from the specified .env file
     const envPath = path.resolve(envFile)
     if (!fs.existsSync(envPath)) {
         console.error(red(`Error: Environment file not found: ${envPath}`))
@@ -56,7 +73,6 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
 
     dotenv.config({ path: envPath })
 
-    // Get APP_PRIVATE_DATA from environment
     const appPrivateDataStr = process.env.APP_PRIVATE_DATA
     if (!appPrivateDataStr) {
         console.error(red('Error: APP_PRIVATE_DATA not found in environment variables'))
@@ -64,7 +80,6 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
         process.exit(1)
     }
 
-    // Parse APP_PRIVATE_DATA to get private key and environment
     let privateKey: string
     let env: string | undefined
     try {
@@ -94,21 +109,15 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
     }
 
     try {
-        // Resolve the file path
         const resolvedPath = path.resolve(filePath)
-
         if (!fs.existsSync(resolvedPath)) {
             throw new Error(`File not found: ${resolvedPath}`)
         }
-
-        // Import the commands file
-        let commands: PlainMessage<SlashCommand>[]
+        let commands: SlashCommand[] = []
         const fileUrl = pathToFileURL(resolvedPath).href
-
         try {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const module = await import(fileUrl)
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             commands = module.default || module.commands
             if (!commands) {
                 throw new Error('No default export or "commands" export found in file')
@@ -119,32 +128,20 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
             )
         }
 
-        // Validate commands structure
-        if (!Array.isArray(commands)) {
-            throw new Error('Commands must be an array')
-        }
-
-        for (const cmd of commands) {
-            if (!cmd.name || typeof cmd.name !== 'string') {
-                throw new Error(`Invalid command: missing or invalid "name" field`)
+        try {
+            const validatedCommands = z.array(slashCommandSchema).parse(commands)
+            commands = validatedCommands
+        } catch (zodError) {
+            if (zodError instanceof z.ZodError) {
+                const errors = zodError.errors
+                    .map((err) => {
+                        const path = err.path.length > 0 ? `[${err.path.join('.')}]` : ''
+                        return `  ${path} ${err.message}`
+                    })
+                    .join('\n')
+                throw new Error(`Invalid slash commands:\n${errors}`)
             }
-            if (!cmd.description || typeof cmd.description !== 'string') {
-                throw new Error(
-                    `Invalid command "${cmd.name}": missing or invalid "description" field`,
-                )
-            }
-            // Validate name format (1-32 chars, letters/numbers/underscores, starts with letter)
-            if (!/^[a-zA-Z][a-zA-Z0-9_]{0,31}$/.test(cmd.name)) {
-                throw new Error(
-                    `Invalid command name "${cmd.name}": must be 1-32 characters, contain only letters, numbers, and underscores, and start with a letter`,
-                )
-            }
-            // Validate description length (1-256 chars)
-            if (cmd.description.length < 1 || cmd.description.length > 256) {
-                throw new Error(
-                    `Invalid command description for "${cmd.name}": must be 1-256 characters`,
-                )
-            }
+            throw zodError
         }
 
         console.log(cyan('Found'), green(commands.length.toString()), cyan('commands:'))
@@ -153,49 +150,30 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
         }
 
         try {
-            // Create signer context from bearer token
             const signerContext = await makeSignerContextFromBearerToken(bearerToken)
-
-            // Get app registry URL based on environment
             const appRegistryUrl = getAppRegistryUrl(env)
-            // Authenticate with the app registry
             const { appRegistryRpcClient } = await AppRegistryService.authenticate(
                 signerContext,
                 appRegistryUrl,
             )
-
-            // Get the app ID from the client address
             const appId = bin_fromHexString(appClientAddress)
 
-            // Get existing metadata
             const { metadata } = await appRegistryRpcClient.getAppMetadata({ appId })
             if (!metadata) {
                 throw new Error('App not found or you do not have permission to modify it')
             }
-            console.log(cyan('Bot:'), metadata.displayName)
 
-            // Set updated metadata with properly formatted slash commands
+            console.log()
             await appRegistryRpcClient.setAppMetadata({
                 appId,
                 metadata: {
                     ...metadata,
-                    slashCommands: commands.map((cmd) =>
-                        create(SlashCommandSchema, {
-                            name: cmd.name,
-                            description: cmd.description,
-                        }),
-                    ),
+                    slashCommands: commands,
                 },
             })
-            const oldCommands = new Set(metadata.slashCommands)
-            const newCommands = new Set(commands)
-            const addedCommands = newCommands.difference(oldCommands)
-            const removedCommands = oldCommands.difference(newCommands)
 
-            console.log()
+            console.log(cyan('Bot:'), metadata.displayName)
             console.log(green('✓'), 'Slash commands updated successfully!')
-            console.log(cyan('Removed commands:'), removedCommands.size)
-            console.log(cyan('Added commands:'), addedCommands.size)
             process.exit(0)
         } catch (authError: unknown) {
             const errorMessage = authError instanceof Error ? authError.message : String(authError)
