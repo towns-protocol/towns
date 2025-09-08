@@ -50,7 +50,7 @@ type remoteStreamUpdateEmitter struct {
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
-	version int32
+	version int
 	// state is the current state of the emitter.
 	state atomic.Int32
 }
@@ -63,7 +63,7 @@ func NewRemoteStreamUpdateEmitter(
 	nodeRegistry nodes.NodeRegistry,
 	streamID StreamId,
 	subscriber StreamSubscriber,
-	version int32,
+	version int,
 ) StreamUpdateEmitter {
 	ctx, cancel := context.WithCancelCause(ctx)
 
@@ -79,10 +79,8 @@ func NewRemoteStreamUpdateEmitter(
 		version:        version,
 	}
 
-	// Set the current state to initializing.
 	r.state.Store(streamUpdateEmitterStateInitializing)
 
-	// Initialize and start the emitter.
 	go r.run(ctx, nodeRegistry, stream)
 
 	return r
@@ -100,11 +98,11 @@ func (r *remoteStreamUpdateEmitter) Node() common.Address {
 	return r.remoteAddr
 }
 
-func (r *remoteStreamUpdateEmitter) Version() int32 {
+func (r *remoteStreamUpdateEmitter) Version() int {
 	return r.version
 }
 
-func (r *remoteStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
+func (r *remoteStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
 	err := r.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
 		r.cancel(err)

@@ -41,7 +41,7 @@ type StreamSubscriber interface {
 	//
 	// Version indicates which version of the syncer the update is sent from. If node A goes down
 	// and node B takes over the sync operation, the version will be incremented.
-	OnStreamEvent(update *SyncStreamsResponse, version int32)
+	OnStreamEvent(update *SyncStreamsResponse, version int)
 }
 
 // StreamUpdateEmitter emit events related to a specific stream.
@@ -64,13 +64,13 @@ type StreamUpdateEmitter interface {
 	// version of the emitter is created. For example, if node A goes down, only subscriptions that receive stream
 	// updates the given emitter will receive the sync down message with the version of the emitter. Subscriptions
 	// from the next version must not receive the sync down message.
-	Version() int32
+	Version() int
 
-	// Backfill backfills the given stream by the given cookie.
+	// EnqueueBackfill adds the given backfill operation to the queue for further processing.
 	// syncIDs is the chain of sync IDs that the backfill request should be sent to.
 	//
 	// Returns false if the given emitter is closed.
-	Backfill(cookie *SyncCookie, syncIDs []string) bool
+	EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool
 
 	// Close the emitter.
 	// This method should be called by the registry to stop receiving updates for the stream.

@@ -68,7 +68,7 @@ type StreamSubscriptionManager interface {
 
 type eventBusMessageStreamUpdate struct {
 	msg     *SyncStreamsResponse
-	version int32
+	version int
 }
 
 type eventBusMessageSub struct {
@@ -108,7 +108,7 @@ type eventBusImpl struct {
 	// registry is the syncer registry.
 	registry syncer.Registry
 	// subscribers is the list of subscribers grouped by stream ID and syncer version.
-	subscribers map[StreamId]map[int32][]StreamSubscriber
+	subscribers map[StreamId]map[int][]StreamSubscriber
 }
 
 // New creates a new instance of the event bus implementation.
@@ -124,7 +124,7 @@ func New(
 	e := &eventBusImpl{
 		log:         logging.FromCtx(ctx).Named("syncv3.eventbus"),
 		queue:       dynmsgbuf.NewDynamicBuffer[*eventBusMessage](),
-		subscribers: make(map[StreamId]map[int32][]StreamSubscriber),
+		subscribers: make(map[StreamId]map[int][]StreamSubscriber),
 	}
 
 	e.registry = syncer.NewRegistry(ctx, localAddr, streamCache, nodeRegistry, e)
@@ -150,7 +150,7 @@ func New(
 // from the stream. A stream down message could be an indicator for a client to re-subscribe on a given stream.
 //
 // TODO: Add retry mechanism?
-func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int32) {
+func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{msg: update, version: version}})
 	if err == nil {
 		// All good, just return
@@ -258,7 +258,7 @@ func (e *eventBusImpl) run(ctx context.Context) error {
 //
 // version is the syncer version that the update is sent from. "0" version means that the update is sent
 // to all subscribers of the stream regardless of their sync ID.
-func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, version int32) {
+func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, version int) {
 	if msg == nil {
 		return
 	}
@@ -342,7 +342,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 //     to the given version list so it can start receiving updates.
 //   - SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
 //     regardless of their version.
-func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsResponse, version int32) {
+func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsResponse, version int) {
 	if msg == nil {
 		return
 	}
@@ -445,7 +445,7 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers, ok := e.subscribers[streamID]
 	if !ok {
-		e.subscribers[streamID] = map[int32][]StreamSubscriber{0: {msg.subscriber}}
+		e.subscribers[streamID] = map[int][]StreamSubscriber{0: {msg.subscriber}}
 	} else {
 		var found bool
 		for _, subscribers := range currentSubscribers {

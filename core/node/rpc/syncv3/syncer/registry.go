@@ -148,9 +148,21 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			1,
 		)
 		r.syncers[streamID] = emitter
+
+		if !emitter.EnqueueBackfill(cookie, syncIDs) {
+			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
+			r.subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
+				0, // TODO: Add comment what 0 means, maybe constant
+			)
+		}
+
+		return
 	}
 
-	if !emitter.Backfill(cookie, syncIDs) {
+	// Trying to backfill using the existing emitter.
+	// If it fails, creating a new emitter with an incremented version and trying again.
+	if !emitter.EnqueueBackfill(cookie, syncIDs) {
 		currentVersion := emitter.Version()
 		emitter = newSharedStreamUpdateEmitter(
 			r.ctx,
@@ -163,17 +175,17 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 		)
 		r.syncers[streamID] = emitter
 
-		if !emitter.Backfill(cookie, syncIDs) {
+		if !emitter.EnqueueBackfill(cookie, syncIDs) {
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
 			r.subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				0,
+				0, // TODO: Add comment what 0 means, maybe constant
 			)
-			return
 		}
 	}
 }
 
+// TODO: Call when no subscribers left
 func (r *registryImpl) processUnsubscribe(streamID StreamId) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()

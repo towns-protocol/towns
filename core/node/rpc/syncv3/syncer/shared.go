@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,7 +11,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 // sharedStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that
@@ -18,12 +18,11 @@ import (
 // While the emitter is being initialized, backfill requests are queued in a dynamic buffer so the
 // caller can immediately start processing backfills.
 type sharedStreamUpdateEmitter struct {
-	// backfillsQueue is a dynamic buffer that holds backfill requests until the emitter is initialized.
-	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
-	streamID       StreamId
-	version        int32
-	// emitter is the actual emitter that is initialized in the background.
-	emitter StreamUpdateEmitter
+	lock      sync.Mutex
+	backfills []*backfillRequest
+	emitter   StreamUpdateEmitter
+	streamID  StreamId
+	version   int
 }
 
 func newSharedStreamUpdateEmitter(
@@ -33,69 +32,85 @@ func newSharedStreamUpdateEmitter(
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
 	streamID StreamId,
-	version int32,
+	version int,
 ) *sharedStreamUpdateEmitter {
 	emitter := &sharedStreamUpdateEmitter{
-		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
-		streamID:       streamID,
-		version:        version,
+		backfills: make([]*backfillRequest, 0),
+		streamID:  streamID,
+		version:   version,
 	}
 
 	// Initialize emitter in a separate goroutine to avoid blocking caller.
-	go func() {
-		ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, 20*time.Second)
-		defer ctxWithCancel()
-
-		stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, streamID)
-		if err != nil {
-			logging.FromCtx(ctx).
-				Named("newSharedStreamUpdateEmitter").
-				With("version", version, "streamID", streamID, "error", err).
-				Error("failed to get stream for further emitter initialization")
-
-			pendingBackfills := emitter.backfillsQueue.Close()
-			for _, br := range pendingBackfills {
-				subscriber.OnStreamEvent(
-					&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: br.syncIDs},
-					0,
-				)
-			}
-			return
-		}
-
-		if stream.IsLocal() {
-			emitter.emitter = NewLocalStreamUpdateEmitter(
-				ctx,
-				localAddr,
-				streamCache,
-				streamID,
-				subscriber,
-				version,
-			)
-		} else {
-			emitter.emitter = NewRemoteStreamUpdateEmitter(
-				ctx,
-				stream,
-				nodeRegistry,
-				streamID,
-				subscriber,
-				version,
-			)
-		}
-
-		// Pending backfill requests have to be processed after successful emitter creation.
-		pendingBackfills := emitter.backfillsQueue.Close()
-		for _, br := range pendingBackfills {
-			if !emitter.emitter.Backfill(br.cookie, br.syncIDs) {
-				subscriber.OnStreamEvent(
-					&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: br.syncIDs},
-					0,
-				)
-			}
-		}
-	}()
+	go emitter.run(ctx, localAddr, streamCache, nodeRegistry, subscriber)
 
 	return emitter
+}
+
+func (s *sharedStreamUpdateEmitter) run(
+	ctx context.Context,
+	localAddr common.Address,
+	streamCache StreamCache,
+	nodeRegistry nodes.NodeRegistry,
+	subscriber StreamSubscriber,
+) {
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, 20*time.Second)
+	defer ctxWithCancel()
+
+	var backfills []*backfillRequest
+
+	stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, s.streamID)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Named("newSharedStreamUpdateEmitter").
+			With("version", s.version, "streamID", s.streamID, "error", err).
+			Error("failed to get stream for further emitter initialization")
+
+		s.lock.Lock()
+		backfills = s.backfills
+		s.backfills = nil
+		s.lock.Unlock()
+
+		for _, br := range backfills {
+			subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
+				0,
+			)
+		}
+		return
+	}
+
+	s.lock.Lock()
+	if stream.IsLocal() {
+		s.emitter = NewLocalStreamUpdateEmitter(
+			ctx,
+			localAddr,
+			streamCache,
+			s.streamID,
+			subscriber,
+			s.version,
+		)
+	} else {
+		s.emitter = NewRemoteStreamUpdateEmitter(
+			ctx,
+			stream,
+			nodeRegistry,
+			s.streamID,
+			subscriber,
+			s.version,
+		)
+	}
+	backfills = s.backfills
+	s.backfills = nil
+	s.lock.Unlock()
+
+	for _, br := range backfills {
+		if !s.emitter.EnqueueBackfill(br.cookie, br.syncIDs) {
+			subscriber.OnStreamEvent(
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
+				0,
+			)
+		}
+	}
 }
 
 func (s *sharedStreamUpdateEmitter) StreamID() StreamId {
@@ -110,21 +125,26 @@ func (s *sharedStreamUpdateEmitter) Node() common.Address {
 	return common.Address{}
 }
 
-func (s *sharedStreamUpdateEmitter) Version() int32 {
+func (s *sharedStreamUpdateEmitter) Version() int {
 	return s.version
 }
 
-func (s *sharedStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
+func (s *sharedStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	if s.emitter != nil {
-		return s.emitter.Backfill(cookie, syncIDs)
+		return s.emitter.EnqueueBackfill(cookie, syncIDs)
 	}
 
-	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
-	if err != nil {
-		// Cannot add a message to the queue: buffer is full or closed due to emitter initialization error.
-		// TODO: implement a proper behavior when a message buffer gets full before the emitter is initialized.
+	if s.backfills == nil {
 		return false
 	}
+
+	s.backfills = append(s.backfills, &backfillRequest{
+		cookie:  cookie,
+		syncIDs: syncIDs,
+	})
 
 	return true
 }

@@ -34,12 +34,12 @@ type localStreamUpdateEmitter struct {
 	// subscriber is the subscriber that receives updates from the stream.
 	subscriber StreamSubscriber
 	// backfillsQueue is a dynamic buffer that holds backfill requests.
-	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
+	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Might be not need it, alternatively replace to slice and mutex
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
-	version int32
-	// state is the current state of the emitter.
+	version int
+	// state is the current state of the emitter. TODO: Add more descriptive comment
 	state atomic.Int32
 }
 
@@ -51,7 +51,7 @@ func NewLocalStreamUpdateEmitter(
 	streamCache StreamCache,
 	streamID StreamId,
 	subscriber StreamSubscriber,
-	version int32,
+	version int,
 ) StreamUpdateEmitter {
 	ctx, cancel := context.WithCancelCause(ctx)
 
@@ -71,6 +71,7 @@ func NewLocalStreamUpdateEmitter(
 	l.state.Store(streamUpdateEmitterStateInitializing)
 
 	// Initialize and start the emitter.
+	// TODO: Given that there is a shared emitter, we might not need to run it in parallel
 	go l.run(ctx, streamCache)
 
 	return l
@@ -110,12 +111,12 @@ func (s *localStreamUpdateEmitter) Node() common.Address {
 }
 
 // Version returns the version of the emitter.
-func (s *localStreamUpdateEmitter) Version() int32 {
+func (s *localStreamUpdateEmitter) Version() int {
 	return s.version
 }
 
-// Backfill adds the given backfill request to the queue for further processing.
-func (s *localStreamUpdateEmitter) Backfill(cookie *SyncCookie, syncIDs []string) bool {
+// EnqueueBackfill adds the given backfill request to the queue for further processing.
+func (s *localStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
 	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
 		s.log.Errorw("failed to add backfill request to the queue", "error", err)
@@ -138,6 +139,7 @@ func (s *localStreamUpdateEmitter) run(
 ) {
 	var msgs []*backfillRequest
 
+	// TODO: move to a separate function
 	defer func() {
 		// Close the queue to stop receiving updates.
 		s.backfillsQueue.Close()
