@@ -247,8 +247,8 @@ type BasePayload = {
 }
 
 export class Bot<
-    HonoEnv extends Env = BlankEnv,
     Commands extends PlainMessage<SlashCommand>[] = [],
+    HonoEnv extends Env = BlankEnv,
 > {
     private readonly client: ClientV2<BotActions>
     botId: string
@@ -813,7 +813,7 @@ export class Bot<
 }
 
 export const makeTownsBot = async <
-    Commands extends PlainMessage<SlashCommand>[] = never[],
+    Commands extends PlainMessage<SlashCommand>[] = [],
     HonoEnv extends Env = BlankEnv,
 >(
     appPrivateData: string,
@@ -844,7 +844,7 @@ export const makeTownsBot = async <
         },
         ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
-    return new Bot<HonoEnv, Commands>(client, viemClient, jwtSecretBase64, opts.commands)
+    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
