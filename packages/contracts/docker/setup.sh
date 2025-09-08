@@ -15,7 +15,9 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
-  create_address_manifest
+  create_contracts_env
+  configure_and_register_nodes
+  export_node_configs
   echo "Done!"
 }
 
@@ -119,30 +121,70 @@ deploy_contracts() {
   popd
 }
 
-# Create a consolidated address file for easy extraction
-create_address_manifest() {
-  echo "Creating contract address manifest for easy extraction..."
-  copied_any=0
-
-  if [ -d "./packages/contracts/deployments/local_dev" ]; then
-    mkdir -p ./local_dev
-    
-    # Copy base and river addresses
-    for chain in base river; do
-      source_dir="./packages/contracts/deployments/local_dev/${chain}/addresses"
-      if [ -d "$source_dir" ]; then
-        mkdir -p "./local_dev/${chain}/addresses"
-        if cp -r "$source_dir"/. "./local_dev/${chain}/addresses/"; then
-          copied_any=1
-        fi
-      fi
-    done
+# Create contracts.env file with contract addresses
+create_contracts_env() {
+  echo "Creating contracts.env with contract addresses..."
+  
+  contracts_dir="./packages/contracts/deployments/local_dev"
+  target_dir="./core/run_files/local_dev"
+  
+  # Fail if contract deployment directory doesn't exist
+  if [ ! -d "$contracts_dir" ]; then
+    echo "ERROR: Contract deployment directory not found: $contracts_dir"
+    echo "Contract deployment may have failed."
+    exit 1
   fi
+  
+  mkdir -p "$target_dir"
+  
+  # Copy contract addresses and fail if any are missing
+  for chain in base river; do
+    source_dir="${contracts_dir}/${chain}/addresses"
+    if [ ! -d "$source_dir" ]; then
+      echo "ERROR: Contract addresses not found for $chain chain: $source_dir"
+      exit 1
+    fi
+    
+    target_chain_dir="${target_dir}/${chain}/addresses"
+    mkdir -p "$target_chain_dir"
+    if ! cp -r "$source_dir"/. "$target_chain_dir/"; then
+      echo "ERROR: Failed to copy $chain contract addresses"
+      exit 1
+    fi
+  done
+  
+  echo "Contract addresses copied to $target_dir"
+  
+  # Create contracts.env using justfile
+  cd ./core
+  just CONTRACTS_DIR="./run_files/local_dev" create-contracts-env
+  cd ..
+  
+  echo "contracts.env created with contract addresses"
+}
 
-  if [ "$copied_any" != 0 ]; then
-    echo "Contract addresses saved to ./local_dev/ for extraction"
+configure_and_register_nodes() {
+  echo "Configuring and registering nodes..."
+  cd ./core
+
+  # Setup CA
+  ./scripts/register-ca.sh
+  
+  # Run complete Docker configuration sequence
+  just config-docker
+  
+  cd ..
+  echo "Node configuration and registration complete!"
+}
+
+export_node_configs() {
+  echo "Exporting node configurations..."
+  mkdir -p /app/configs
+  if [ -d "./core/run_files/local_dev" ]; then
+    cp -r ./core/run_files/local_dev/* /app/configs/
+    echo "Configs exported to /app/configs"
   else
-    echo "No contract addresses found to copy"
+    echo "Warning: No config files found to export"
   fi
 }
 
