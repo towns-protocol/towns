@@ -49,7 +49,7 @@ Multi-stage build: installs dependencies, builds contracts, deploys via `setup.s
 
 ### `setup.sh`
 
-Build-time script: starts chains, deploys contracts, saves state files, copies addresses to `/app/local_dev/`.
+Build-time script: starts chains, deploys contracts, configures and registers nodes via `just config-docker`.
 
 ### `run.sh`
 
@@ -59,19 +59,20 @@ Runtime script: starts chains with pre-loaded state. Supports `CHAIN=base` or `C
 
 Test runner for validating deployed contracts.
 
-## Contract Address Extraction
+## Node Configuration Extraction  
 
-When using Docker chains, contract addresses are automatically extracted during the deployment process:
+Docker image includes complete node setup (wallets, certificates, registrations). Extract with:
 
 ```bash
-# Addresses are automatically extracted when using Docker chains
+# Extracts complete node configurations including contracts
 USE_DOCKER_CHAINS=1 just config
 ```
 
-If `packages/generated` exists, this creates:
-
-- `./run_files/local_dev/contracts.env` with environment variables
-- `../packages/generated/deployments/local_dev/` with full deployment artifacts
+This creates complete node configurations in `./run_files/local_dev/` including:
+- Node wallets and certificates
+- River chain registrations  
+- App registry configurations
+- Contract addresses and deployment artifacts
 
 ## Available Just Targets
 

@@ -26,13 +26,16 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
   - `just t-debug` - Run tests with info logging and test printing
 - Development environments:
   - `just config-and-start` - Start development environment WITH entitlement checks
+  - `just config` - Configure nodes (extracts from Docker when USE_DOCKER_CHAINS=1) 
+  - `just config-from-docker` - Extract pre-built configs from Docker containers
+  - `just build-local-docker` - Build Docker image with chains and node configs
   - `just stop` - Stop multi environment nodes
   - `just tail-logs` - View logs from multi environment instances
   - `just build` - Build node binary
 - Infrastructure:
   - `just storage-start` - Start PostgreSQL via Docker
   - `just storage-stop` - Stop PostgreSQL
-  - `just anvils` - Start local Anvil chains (Base + River)
+  - `just anvils` - Start local Anvil chains (Docker or native based on USE_DOCKER_CHAINS)
   - `just anvils-stop` - Stop local Anvil chains
 
 ### Contract commands (from root):
