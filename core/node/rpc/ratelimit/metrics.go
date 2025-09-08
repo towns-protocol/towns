@@ -3,7 +3,6 @@ package ratelimit
 import (
 	"crypto/sha256"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -183,7 +182,7 @@ func NewMetrics() *Metrics {
 }
 
 // RecordRequest records a request for metrics (always active)
-func (m *Metrics) RecordRequest(endpoint string, ip net.IP, duration time.Duration) {
+func (m *Metrics) RecordRequest(endpoint string, ip string, duration time.Duration) {
 	ipHash := hashIP(ip)
 	m.requestsTotal.WithLabelValues(endpoint, ipHash).Inc()
 	m.requestDuration.WithLabelValues(endpoint).Observe(duration.Seconds())
@@ -191,13 +190,13 @@ func (m *Metrics) RecordRequest(endpoint string, ip net.IP, duration time.Durati
 }
 
 // RecordAllowed records an allowed request
-func (m *Metrics) RecordAllowed(endpoint string, ip net.IP) {
+func (m *Metrics) RecordAllowed(endpoint string, ip string) {
 	ipHash := hashIP(ip)
 	m.rateLimitAllowed.WithLabelValues(endpoint, ipHash).Inc()
 }
 
 // RecordDenied records a denied request
-func (m *Metrics) RecordDenied(endpoint string, ip net.IP) {
+func (m *Metrics) RecordDenied(endpoint string, ip string) {
 	ipHash := hashIP(ip)
 	m.rateLimitDenied.WithLabelValues(endpoint, ipHash).Inc()
 	m.rateLimitViolations.WithLabelValues(endpoint, ipHash).Inc()
@@ -235,24 +234,24 @@ func (m *Metrics) RecordConfigReload() {
 }
 
 // RecordIPBehavior records IP behavior pattern for burst detection
-func (m *Metrics) RecordIPBehavior(ip net.IP, requestsPerMinute float64) {
+func (m *Metrics) RecordIPBehavior(ip string, requestsPerMinute float64) {
 	ipHash := hashIP(ip)
 	m.ipBehaviorPattern.WithLabelValues(ipHash).Observe(requestsPerMinute)
 }
 
 // SetPeakConcurrencyPerIP sets peak concurrency for an IP
-func (m *Metrics) SetPeakConcurrencyPerIP(ip net.IP, concurrency int) {
+func (m *Metrics) SetPeakConcurrencyPerIP(ip string, concurrency int) {
 	ipHash := hashIP(ip)
 	m.peakConcurrencyPerIP.WithLabelValues(ipHash).Set(float64(concurrency))
 }
 
 // hashIP creates a privacy-protecting hash of the IP address for metrics
 // Uses only first 8 bytes to control cardinality while maintaining some uniqueness
-func hashIP(ip net.IP) string {
-	if ip == nil {
+func hashIP(ip string) string {
+	if ip == "" {
 		return "unknown"
 	}
 	hasher := sha256.New()
-	hasher.Write(ip)
+	hasher.Write([]byte(ip))
 	return fmt.Sprintf("%x", hasher.Sum(nil)[:8])
 }

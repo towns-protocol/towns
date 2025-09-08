@@ -3,7 +3,6 @@ package ratelimit
 import (
 	"context"
 	"fmt"
-	"net"
 	"sync"
 	"testing"
 	"time"
@@ -26,7 +25,7 @@ func TestRateLimiter_BasicFunctionality(t *testing.T) {
 	defer rl.Close()
 
 	ctx := context.Background()
-	ip := net.ParseIP("192.168.1.1")
+	ip := "192.168.1.1"
 	endpoint := "/river.StreamService/CreateStream"
 
 	// First request should be allowed
@@ -54,7 +53,7 @@ func TestRateLimiter_DisabledState(t *testing.T) {
 	defer rl.Close()
 
 	ctx := context.Background()
-	ip := net.ParseIP("192.168.1.1")
+	ip := "192.168.1.1"
 	endpoint := "/river.StreamService/CreateStream"
 
 	// Should always allow when disabled
@@ -88,7 +87,7 @@ func TestRateLimiter_EndpointConfiguration(t *testing.T) {
 	defer rl.Close()
 
 	ctx := context.Background()
-	ip := net.ParseIP("192.168.1.1")
+	ip := "192.168.1.1"
 	endpoint := "/test/strict"
 
 	// Should allow first 2 requests
@@ -131,8 +130,7 @@ func TestRateLimiter_IPExemptions(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ip := net.ParseIP(tc.ip)
-			require.NotNil(t, ip)
+			ip := tc.ip
 
 			// Check exemption status
 			exempt := rl.IsIPExempt(ip)
@@ -161,7 +159,7 @@ func TestRateLimiter_EndpointExemptions(t *testing.T) {
 	defer rl.Close()
 
 	ctx := context.Background()
-	ip := net.ParseIP("192.168.1.1")
+	ip := "192.168.1.1"
 
 	// Test disabled endpoint (from default config)
 	disabledEndpoint := "/river.AppRegistryService/GetStatus"
@@ -205,7 +203,7 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 		wg.Add(1)
 		go func(ipSuffix int) {
 			defer wg.Done()
-			ip := net.ParseIP(fmt.Sprintf("192.168.1.%d", ipSuffix))
+			ip := fmt.Sprintf("192.168.1.%d", ipSuffix)
 			
 			for j := 0; j < requestsPerGoroutine; j++ {
 				allowed, _, err := rl.Allow(ctx, ip, endpoint)
@@ -248,7 +246,7 @@ func TestRateLimiter_MultipleIPs(t *testing.T) {
 	// Test that different IPs can make requests to the same endpoint
 	// Each IP should be treated separately by the same endpoint limiter
 	for i := 1; i <= 5; i++ {
-		ip := net.ParseIP(fmt.Sprintf("192.168.1.%d", i))
+		ip := fmt.Sprintf("192.168.1.%d", i)
 		allowed, quotaInfo, err := rl.Allow(ctx, ip, endpoint)
 		require.NoError(t, err)
 		assert.True(t, allowed)
@@ -268,7 +266,7 @@ func TestRateLimiter_MetricsCollection(t *testing.T) {
 	defer rl.Close()
 
 	ctx := context.Background()
-	ip := net.ParseIP("192.168.1.1")
+	ip := "192.168.1.1"
 	endpoint := "/river.StreamService/CreateStream"
 
 	// Make some requests
@@ -289,7 +287,7 @@ func TestIPExtractor_BasicFunctionality(t *testing.T) {
 	ctx := context.Background()
 	ip, err := extractor.ExtractIP(ctx, nil)
 	require.NoError(t, err)
-	assert.Equal(t, "127.0.0.1", ip.String())
+	assert.Equal(t, "127.0.0.1", ip)
 }
 
 func TestConfig_ParseConfig(t *testing.T) {
