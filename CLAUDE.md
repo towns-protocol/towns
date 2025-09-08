@@ -40,6 +40,14 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 - `yarn workspace @towns-protocol/contracts exec anvil` - Start Anvil
 - `yarn workspace @towns-protocol/contracts exec cast` - Use Cast CLI
 
+### CI testing commands (from root):
+
+- `./scripts/run-local-ci.sh` - Test GitHub CI workflows locally using act (requires Docker)
+  - `-j JOB_NAME` - Specify which job to run (default: Common_CI)
+  - Examples:
+    - `./scripts/run-local-ci.sh -j Common_CI` - Test Common_CI job
+    - `./scripts/run-local-ci.sh -j Multinode` - Test Multinode job
+
 ## Architecture Overview
 
 ### Core Components
@@ -89,7 +97,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 2. Run `yarn install && yarn prepare`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
-   - `RUN_ENV=multi just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
+   - `just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
 
 ### Testing Strategy
 

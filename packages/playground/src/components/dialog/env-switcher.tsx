@@ -8,12 +8,11 @@ import {
 
 import { foundry } from 'viem/chains'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
-import { makeRiverConfig } from '@towns-protocol/sdk'
+import { getEnvironmentIds, makeRiverConfig } from '@towns-protocol/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getWeb3Deployment, getWeb3Deployments } from '@towns-protocol/web3'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Button } from '../ui/button'
@@ -29,10 +28,10 @@ import {
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
-const environments = getWeb3Deployments().map((id) => ({
+const environments = getEnvironmentIds().map((id) => ({
     id: id,
     name: id,
-    chainId: getWeb3Deployment(id).base.chainId,
+    chainId: makeRiverConfig(id).base.chainConfig.chainId,
 }))
 
 const privateNetworks =
@@ -158,7 +157,7 @@ export const RiverEnvSwitcherContent = (props: {
                                     </Button>
                                 </DialogClose>
                             ))}
-                        {currentEnv === 'local_multi' && <FundWallet />}
+                        {currentEnv === 'local_dev' && <FundWallet />}
                     </div>
                 </div>
             )}

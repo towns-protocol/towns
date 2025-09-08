@@ -24,6 +24,7 @@ import {
     spaceIdFromChannelId,
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
+    parseAppPrivateData,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -40,7 +41,6 @@ import {
     type EventPayload,
     SessionKeysSchema,
     type UserInboxPayload_GroupEncryptionSessions,
-    AppPrivateDataSchema,
     MembershipOp,
     type PlainMessage,
     Tags,
@@ -760,19 +760,16 @@ export class Bot<HonoEnv extends Env = BlankEnv> {
 }
 
 export const makeTownsBot = async <HonoEnv extends Env = BlankEnv>(
-    appPrivateDataBase64: string,
+    appPrivateData: string,
     jwtSecretBase64: string,
     opts: {
         baseRpcUrl?: string
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
-    const { privateKey, encryptionDevice, env } = fromBinary(
-        AppPrivateDataSchema,
-        bin_fromBase64(appPrivateDataBase64),
-    )
+    const { privateKey, encryptionDevice, env } = parseAppPrivateData(appPrivateData)
     if (!env) {
-        throw new Error('Failed to parse APP_PRIVATE_DATA_BASE64')
+        throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
     const baseConfig = makeBaseChainConfig(env)
     const viemClient = createViemClient({

@@ -8,7 +8,6 @@ export default mergeConfig(
 			include: ['tests/**/*.test.ts'],
 			setupFiles: './vitest.setup.ts',
 			env: {
-				RIVER_ENV: process.env.RIVER_ENV || 'local_multi',
 				// skip entitlements for these tests
 				RIVER_TEST_ENT_BYPASS_SECRET: readBypassSecret() ?? '',
 			},

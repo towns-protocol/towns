@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/encryption",
-    "version": "0.0.331",
+    "version": "0.0.333",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",

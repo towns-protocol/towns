@@ -5,19 +5,13 @@ pragma solidity ^0.8.23;
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IDiamondInitHelper} from "../deployments/diamonds/IDiamondInitHelper.sol";
 
-import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
-import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
-
 // libraries
+import {console} from "forge-std/console.sol";
 import {stdJson} from "forge-std/StdJson.sol";
-import "forge-std/console.sol";
 
 // contracts
-
 import {AlphaHelper, DiamondFacetData, FacetData} from "scripts/interactions/helpers/AlphaHelper.sol";
-
 import {DeployBaseRegistry} from "scripts/deployments/diamonds/DeployBaseRegistry.s.sol";
-
 import {DeployRiverAirdrop} from "scripts/deployments/diamonds/DeployRiverAirdrop.s.sol";
 import {DeploySpace} from "scripts/deployments/diamonds/DeploySpace.s.sol";
 import {DeploySpaceFactory} from "scripts/deployments/diamonds/DeploySpaceFactory.s.sol";
@@ -99,7 +93,7 @@ contract InteractAlphaSparse is AlphaHelper {
         uint256 updatedDiamondLen = abi.decode(vm.parseJson(jsonData, ".numUpdated"), (uint256));
         DiamondFacetData[] memory diamonds = new DiamondFacetData[](updatedDiamondLen);
 
-        for (uint256 i = 0; i < updatedDiamondLen; i++) {
+        for (uint256 i; i < updatedDiamondLen; ++i) {
             // Decode diamond name and number of facets
             DiamondFacetData memory diamondData = abi.decode(
                 vm.parseJson(jsonData, string.concat("$.updated[", vm.toString(i), "]")),
@@ -143,7 +137,7 @@ contract InteractAlphaSparse is AlphaHelper {
         console.log("interact::diamonds decoded", diamonds.length);
 
         // Iterate over diamonds array and process each diamond
-        for (uint256 i = 0; i < diamonds.length; i++) {
+        for (uint256 i; i < diamonds.length; ++i) {
             console.log("interact::diamondName", diamonds[i].diamond);
             string memory diamondName = diamonds[i].diamond;
             address diamondDeployedAddress;
@@ -152,7 +146,7 @@ contract InteractAlphaSparse is AlphaHelper {
             string[] memory facetNames = new string[](numFacets);
             address[] memory facetAddresses = new address[](numFacets);
 
-            for (uint256 j = 0; j < numFacets; j++) {
+            for (uint256 j; j < numFacets; ++j) {
                 FacetData memory facetData = diamonds[i].facets[j];
                 facetAddresses[j] = facetData.deployedAddress;
                 facetNames[j] = facetData.facetName;

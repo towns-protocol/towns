@@ -337,11 +337,11 @@ jobs:
 
             - name: Run multiple nodes
               working-directory: core
-              run: just RUN_ENV=multi config-and-start
+              run: just config-and-start
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi start-and-wait-app-registry
+              run: just start-and-wait-app-registry
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
@@ -350,7 +350,7 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_multi &
+                  yarn workspace @towns-protocol/stream-metadata dev:local_dev &
                   yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
@@ -483,12 +483,12 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: just RUN_ENV=multi config-and-start
+              run: just config-and-start
               working-directory: core
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi start-and-wait-app-registry
+              run: just start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -632,12 +632,12 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: just RUN_ENV=multi config-and-start
+              run: just config-and-start
               working-directory: core
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi start-and-wait-app-registry
+              run: just start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk

@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.331",
+    "version": "0.0.333",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -10,8 +10,9 @@
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src --max-warnings=0",
         "lint:fix": "yarn lint --fix",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env",
         "test": "vitest",
-        "test:ci:multi:ent": "vitest run",
+        "test:ci:multi:ent": "yarn load-env -- vitest run",
         "test:watch": "vitest --watch",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"
@@ -35,6 +36,7 @@
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
