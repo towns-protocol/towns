@@ -11,6 +11,8 @@ import (
 	"github.com/sethvargo/go-limiter"
 	"github.com/sethvargo/go-limiter/memorystore"
 	"go.uber.org/zap"
+
+	"github.com/towns-protocol/towns/core/config"
 )
 
 // RateLimiter defines the interface for rate limiting operations
@@ -44,34 +46,34 @@ type QuotaInfo struct {
 
 // IPRateLimiter implements rate limiting based on endpoints with IP-based keys
 type IPRateLimiter struct {
-	endpointLimiters map[string]limiter.Store  // One limiter per endpoint
-	globalLimiter    limiter.Store             // Fallback limiter for unconfigured endpoints
-	config           *ParsedConfig             // Parsed configuration
-	metrics          *Metrics                 // Prometheus metrics
-	logger           *zap.Logger              // Logger instance
-	ctx              context.Context          // Context for shutdown
-	cancel           context.CancelFunc       // Cancel function for shutdown
-	mu               sync.RWMutex             // Protects config changes
+	endpointLimiters map[string]limiter.Store        // One limiter per endpoint
+	globalLimiter    limiter.Store                   // Fallback limiter for unconfigured endpoints
+	config           *config.ParsedRateLimitConfig   // Parsed configuration
+	metrics          *Metrics                       // Prometheus metrics
+	logger           *zap.Logger                    // Logger instance
+	ctx              context.Context                // Context for shutdown
+	cancel           context.CancelFunc             // Cancel function for shutdown
+	mu               sync.RWMutex                   // Protects config changes
 }
 
 
 // NewIPRateLimiter creates a new IP-based rate limiter
-func NewIPRateLimiter(config *Config, logger *zap.Logger) (*IPRateLimiter, error) {
-	return newIPRateLimiterWithRegistry(config, logger, prometheus.DefaultRegisterer)
+func NewIPRateLimiter(rateLimitConfig *config.RateLimitConfig, logger *zap.Logger) (*IPRateLimiter, error) {
+	return newIPRateLimiterWithRegistry(rateLimitConfig, logger, prometheus.DefaultRegisterer)
 }
 
 // newIPRateLimiterWithRegistry creates a rate limiter with custom metrics registry (for testing)
-func newIPRateLimiterWithRegistry(config *Config, logger *zap.Logger, registry prometheus.Registerer) (*IPRateLimiter, error) {
+func newIPRateLimiterWithRegistry(rateLimitConfig *config.RateLimitConfig, logger *zap.Logger, registry prometheus.Registerer) (*IPRateLimiter, error) {
 	// Parse configuration
-	parsedConfig, err := ParseConfig(config)
+	parsedConfig, err := config.ParseRateLimitConfig(rateLimitConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	// Create memory store
 	store, err := memorystore.New(&memorystore.Config{
-		Tokens:   config.GlobalLimits.Rate,
-		Interval: config.GlobalLimits.Interval,
+		Tokens:   rateLimitConfig.GlobalLimits.Rate,
+		Interval: rateLimitConfig.GlobalLimits.Interval,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create memory store: %w", err)

@@ -11,16 +11,23 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+
+	"github.com/towns-protocol/towns/core/config"
 )
+
+// getDefaultRateLimitConfig returns the default rate limit config for testing
+func getDefaultRateLimitConfig() *config.RateLimitConfig {
+	return &config.GetDefaultConfig().RateLimit
+}
 
 func TestRateLimiter_BasicFunctionality(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
-	config.Enabled = true
+	rateLimitConfig := getDefaultRateLimitConfig()
+	rateLimitConfig.Enabled = true
 	
 	// Use test-specific metrics registry to avoid conflicts
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -43,7 +50,7 @@ func TestRateLimiter_BasicFunctionality(t *testing.T) {
 
 func TestRateLimiter_DisabledState(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = false // Disabled by default
 	
 	// Use test-specific metrics registry to avoid conflicts
@@ -71,7 +78,7 @@ func TestRateLimiter_DisabledState(t *testing.T) {
 
 func TestRateLimiter_EndpointConfiguration(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = true
 	
 	// Add specific endpoint configuration
@@ -105,7 +112,7 @@ func TestRateLimiter_EndpointConfiguration(t *testing.T) {
 
 func TestRateLimiter_IPExemptions(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = true
 	config.ExemptIPs = []string{"127.0.0.1", "10.0.0.0/8"}
 	
@@ -150,7 +157,7 @@ func TestRateLimiter_IPExemptions(t *testing.T) {
 
 func TestRateLimiter_EndpointExemptions(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = true
 	
 	reg := prometheus.NewRegistry()
@@ -179,7 +186,7 @@ func TestRateLimiter_EndpointExemptions(t *testing.T) {
 
 func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = true
 	config.GlobalLimits.Rate = 100 // Allow more requests for concurrency test
 	
@@ -232,7 +239,7 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 
 func TestRateLimiter_MultipleIPs(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = true
 	
 	reg := prometheus.NewRegistry()
@@ -257,7 +264,7 @@ func TestRateLimiter_MultipleIPs(t *testing.T) {
 
 func TestRateLimiter_MetricsCollection(t *testing.T) {
 	logger := zaptest.NewLogger(t)
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	config.Enabled = false // Test metrics collection when disabled
 	
 	reg := prometheus.NewRegistry()
@@ -308,7 +315,7 @@ func TestConfig_ParseConfig(t *testing.T) {
 }
 
 func TestConfig_DefaultConfig(t *testing.T) {
-	config := DefaultConfig()
+	rateLimitConfig := getDefaultRateLimitConfig()
 	
 	// Should have sensible defaults
 	assert.False(t, config.Enabled) // Disabled by default

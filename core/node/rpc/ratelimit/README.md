@@ -18,7 +18,7 @@ This package implements IP-based rate limiting for the Towns Protocol using `set
 import "github.com/towns-protocol/towns/core/node/rpc/ratelimit"
 
 // Create configuration
-config := ratelimit.DefaultConfig()
+config := ratelimit.GetDefaultConfig()
 config.Enabled = false // Start with metrics-only mode
 
 // Create rate limiter

@@ -7,40 +7,40 @@ import (
 
 // Config represents the complete rate limiting configuration
 type Config struct {
-	// Global enable/disable flag - defaults to FALSE
-	Enabled bool `yaml:"enabled" default:"false"`
+	// Global enable/disable flag
+	Enabled bool
 
 	// Memory management for IP tracking
-	MaxTrackedIPs     int           `yaml:"maxTrackedIPs" default:"100000"`
-	CleanupInterval   time.Duration `yaml:"cleanupInterval" default:"5m"`
-	InactivityTimeout time.Duration `yaml:"inactivityTimeout" default:"30m"`
+	MaxTrackedIPs     int
+	CleanupInterval   time.Duration
+	InactivityTimeout time.Duration
 
 	// Global defaults for unconfigured endpoints
-	GlobalLimits GlobalLimitConfig `yaml:"globalLimits"`
+	GlobalLimits GlobalLimitConfig
 
 	// Per-endpoint configurations
-	EndpointLimits []EndpointLimitConfig `yaml:"endpointLimits"`
+	EndpointLimits []EndpointLimitConfig
 
 	// Special IP exemptions (allowlist)
-	ExemptIPs []string `yaml:"exemptIPs"`
+	ExemptIPs []string
 
-	// Metrics always enabled
-	MetricsEnabled bool `yaml:"metricsEnabled" default:"true"`
+	// Metrics collection
+	MetricsEnabled bool
 }
 
 
 // GlobalLimitConfig represents fallback limits for endpoints not explicitly configured
 type GlobalLimitConfig struct {
-	Rate     uint64        `yaml:"rate" default:"50"`     // Default rate for unconfigured endpoints
-	Interval time.Duration `yaml:"interval" default:"1m"` // Default interval
+	Rate     uint64        // Default rate for unconfigured endpoints
+	Interval time.Duration // Default interval
 }
 
 // EndpointLimitConfig represents rate limit configuration for a specific endpoint
 type EndpointLimitConfig struct {
-	Endpoint string        `yaml:"endpoint"`   // Full gRPC method path (e.g., "/river.StreamService/CreateStream")
-	Rate     uint64        `yaml:"rate"`       // Number of requests allowed
-	Interval time.Duration `yaml:"interval"`   // Time window (e.g., 1m, 1h, 24h)
-	Disabled bool          `yaml:"disabled"`   // If true, no rate limiting applied to this endpoint
+	Endpoint string        // Full gRPC method path (e.g., "/river.StreamService/CreateStream")
+	Rate     uint64        // Number of requests allowed
+	Interval time.Duration // Time window (e.g., 1m, 1h, 24h)
+	Disabled bool          // If true, no rate limiting applied to this endpoint
 }
 
 // ParsedConfig contains the processed configuration with parsed network ranges
@@ -84,8 +84,8 @@ func ParseConfig(config *Config) (*ParsedConfig, error) {
 	return parsed, nil
 }
 
-// DefaultConfig returns a sensible default configuration
-func DefaultConfig() *Config {
+// GetDefaultConfig returns a sensible default configuration
+func GetDefaultConfig() *Config {
 	return &Config{
 		Enabled:           false,
 		MaxTrackedIPs:     100000,
