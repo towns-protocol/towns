@@ -105,7 +105,11 @@ func NewRemoteStreamUpdateEmitter(
 
 	if !firstUpdateReceived.Load() || ctx.Err() != nil {
 		cancel(nil)
-		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages", responseStream.Err()).
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams stream closed without receiving any messages",
+			responseStream.Err(),
+		).
 			Tags("remote", remoteAddr).
 			Func("NewRemoteStreamUpdateEmitter")
 	}
@@ -140,7 +144,11 @@ func NewRemoteStreamUpdateEmitter(
 
 	if !secondUpdateReceived.Load() || ctx.Err() != nil {
 		cancel(nil)
-		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams stream closed without receiving an initial update", responseStream.Err()).
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams stream closed without receiving an initial update",
+			responseStream.Err(),
+		).
 			Tags("remote", remoteAddr).
 			Func("NewRemoteStreamUpdateEmitter")
 	}

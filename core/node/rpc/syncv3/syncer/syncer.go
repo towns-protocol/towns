@@ -79,17 +79,17 @@ type StreamUpdateEmitter interface {
 
 // Registry is a registry of stream update emitters (syncers).
 type Registry interface {
-	// SubscribeAndBackfill subscribes to the given stream updates and sends a backfill message to the
-	// target sync operation by the given sync IDs.
+	// EnqueueSubscribeAndBackfill adds a message to the queue to subscribe to the given stream updates and
+	// send a backfill message to the target sync operation by the given sync IDs.
 	//
 	// If the given stream ID is not found, it sends the stream down message to the subscriber
 	// with the reason (message field in proto).
-	SubscribeAndBackfill(cookie *SyncCookie, syncIDs []string)
+	EnqueueSubscribeAndBackfill(cookie *SyncCookie, syncIDs []string)
 
-	// Unsubscribe unsubscribes from the given stream updates.
+	// EnqueueUnsubscribe adds a message to the queue to unsubscribe from the given stream updates.
 	// The registry stops and removes the emitter for the given stream ID. Should be called to stop receiving updates
 	// for the stream and to clean up resources.
 	//
 	// Note: the event bus is the only subscriber for the stream.
-	Unsubscribe(streamID StreamId)
+	EnqueueUnsubscribe(streamID StreamId)
 }

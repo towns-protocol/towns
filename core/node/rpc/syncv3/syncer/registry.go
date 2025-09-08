@@ -13,6 +13,15 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
+const (
+	// PendingSubscribersVersion is the version number assigned to pending subscribers of a stream.
+	// When a new subscriber subscribes to a stream updates but the beckfill message from a specific emitter
+	// is not received yet, we assign emitter version 0 to that subscriber unit the backfill is received.
+	PendingSubscribersVersion = 0
+	// AllSubscribersVersion is the version number used to indicate that an update should be sent to all subscribers.
+	AllSubscribersVersion = -1
+)
+
 var _ Registry = (*registryImpl)(nil)
 
 type registryMsgSubAndBackfill struct {
@@ -83,18 +92,21 @@ func NewRegistry(
 	return r
 }
 
-func (r *registryImpl) SubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
+func (r *registryImpl) EnqueueSubscribeAndBackfill(cookie *SyncCookie, syncIDs []string) {
 	err := r.queue.AddMessage(
 		&registryMsg{subAndBackfill: &registryMsgSubAndBackfill{cookie: cookie, syncIDs: syncIDs}},
 	)
 	if err != nil {
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		r.log.Errorw("failed to enqueue subscribe-and-backfill request", "streamID", streamID, "error", err)
-		r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId()}, 0)
+		r.subscriber.OnStreamEvent(
+			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId()},
+			AllSubscribersVersion,
+		)
 	}
 }
 
-func (r *registryImpl) Unsubscribe(streamID StreamId) {
+func (r *registryImpl) EnqueueUnsubscribe(streamID StreamId) {
 	err := r.queue.AddMessage(&registryMsg{unsub: &registryMsgUnsub{streamID: streamID}})
 	if err != nil {
 		r.log.Errorw("failed to enqueue unsubscribe request", "streamID", streamID, "error", err)
@@ -153,7 +165,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
 			r.subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				0, // TODO: Add comment what 0 means, maybe constant
+				PendingSubscribersVersion,
 			)
 		}
 
@@ -179,13 +191,12 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
 			r.subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				0, // TODO: Add comment what 0 means, maybe constant
+				PendingSubscribersVersion,
 			)
 		}
 	}
 }
 
-// TODO: Call when no subscribers left
 func (r *registryImpl) processUnsubscribe(streamID StreamId) {
 	r.syncersLock.Lock()
 	defer r.syncersLock.Unlock()

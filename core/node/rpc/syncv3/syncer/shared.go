@@ -73,7 +73,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		for _, br := range backfills {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				0,
+				PendingSubscribersVersion,
 			)
 		}
 		return
@@ -113,7 +113,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		for _, br := range backfills {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				0,
+				PendingSubscribersVersion,
 			)
 		}
 		return
@@ -129,7 +129,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		if !s.emitter.EnqueueBackfill(br.cookie, br.syncIDs) {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				0,
+				PendingSubscribersVersion,
 			)
 		}
 	}

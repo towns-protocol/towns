@@ -97,8 +97,6 @@ type eventBusMessage struct {
 // eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
 // It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
 // to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
-//
-// TODO: Periodically unsubscribe from streams that have no subscribers.
 type eventBusImpl struct {
 	// log is the event bus named logger
 	log *logging.Log
@@ -167,7 +165,7 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 	e.log.Errorw("failed to add stream update message to the queue", "streamID", streamID, "error", err)
 
 	// Unsubscribe event bus from receiving updates of the given stream.
-	e.registry.Unsubscribe(streamID)
+	e.registry.EnqueueUnsubscribe(streamID)
 
 	// Send sync down message directly to clients to avoid common queue
 	var wg sync.WaitGroup
@@ -282,9 +280,9 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	// 1. If the version is "0", it means that the update is sent to all subscribers of the stream
+	// 1. If the version is AllSubscribersVersion, it means that the update is sent to all subscribers of the stream
 	//    regardless of their version.
-	if version == 0 {
+	if version == syncer.AllSubscribersVersion {
 		var wg sync.WaitGroup
 		for _, subscribers := range groupedSubscribers {
 			for _, sub := range subscribers {
@@ -310,7 +308,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	// 2. If the version is not "0", it means that the update is sent to subscribers of the stream
+	// 2. If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the stream
 	//    with the given version. We need to find the subscribers for the given version and send the update to them.
 	var wg sync.WaitGroup
 	wg.Add(len(groupedSubscribers[version]))
@@ -338,7 +336,7 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 
 // processTargetedStreamUpdateCommand processes the given stream update command that is targeted to a specific sync ID.
 //
-//   - SyncOp_SYNC_UPDATE message is a backfill one and should move the given subscriber from the "0" version list
+//   - SyncOp_SYNC_UPDATE message is a backfill one and should move the given subscriber from the PendingSubscribersVersion list
 //     to the given version list so it can start receiving updates.
 //   - SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
 //     regardless of their version.
@@ -394,16 +392,17 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 			return
 		}
 
-		// 1. Try to find the given subscriber in the "0" version list. If found, this is the first backfill message,
+		// 1. Try to find the given subscriber in PendingSubscribersVersion list. If found, this is the first backfill message,
 		//    and we need to move the subscriber to the given version list.
 		var found bool
-		for i, sub := range e.subscribers[streamID][0] {
-			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
+		for i, sub := range e.subscribers[streamID][syncer.PendingSubscribersVersion] {
+			if sub.SyncID() == msg.GetTargetSyncIds()[syncer.PendingSubscribersVersion] {
 				found = true
 				// Move the subscriber to the given version list.
 				e.subscribers[streamID][version] = append(e.subscribers[streamID][version], sub)
-				// Remove the subscriber from the "0" version list.
-				e.subscribers[streamID][0] = slices.Delete(e.subscribers[streamID][0], i, i+1)
+				// Remove the subscriber from the PendingSubscribersVersion list.
+				e.subscribers[streamID][syncer.PendingSubscribersVersion] = slices.Delete(
+					e.subscribers[streamID][syncer.PendingSubscribersVersion], i, i+1)
 				// Send the backfill message to the subscriber.
 				msg.TargetSyncIds = msg.TargetSyncIds[1:]
 				sub.OnUpdate(msg)
@@ -414,7 +413,7 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 			return
 		}
 
-		// 2. If the subscriber was not found in the "0" version list, it means that it is already subscribed to the stream
+		// 2. If the subscriber was not found in the PendingSubscribersVersion list, it means that it is already subscribed to the stream
 		//    with the given sync ID and version. Just send the update to it.
 		for _, sub := range e.subscribers[streamID][version] {
 			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
@@ -445,7 +444,7 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers, ok := e.subscribers[streamID]
 	if !ok {
-		e.subscribers[streamID] = map[int][]StreamSubscriber{0: {msg.subscriber}}
+		e.subscribers[streamID] = map[int][]StreamSubscriber{syncer.PendingSubscribersVersion: {msg.subscriber}}
 	} else {
 		var found bool
 		for _, subscribers := range currentSubscribers {
@@ -456,15 +455,17 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		}
 
 		if !found {
-			if _, ok = e.subscribers[streamID][0]; !ok {
-				e.subscribers[streamID][0] = []StreamSubscriber{}
+			if _, ok = e.subscribers[streamID][syncer.PendingSubscribersVersion]; !ok {
+				e.subscribers[streamID][syncer.PendingSubscribersVersion] = []StreamSubscriber{}
 			}
-			e.subscribers[streamID][0] = append(e.subscribers[streamID][0], msg.subscriber)
+			e.subscribers[streamID][syncer.PendingSubscribersVersion] = append(
+				e.subscribers[streamID][syncer.PendingSubscribersVersion],
+				msg.subscriber,
+			)
 		}
 	}
 
-	// Send a request to backfill the stream for the given subscriber.
-	e.registry.SubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
+	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
 }
 
 func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
@@ -479,6 +480,14 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 				return subscriber == msg.subscriber
 			},
 		)
+		if len(e.subscribers[msg.streamID][version]) == 0 {
+			delete(e.subscribers[msg.streamID], version)
+		}
+	}
+
+	if len(e.subscribers[msg.streamID]) == 0 {
+		delete(e.subscribers, msg.streamID)
+		e.registry.EnqueueUnsubscribe(msg.streamID)
 	}
 }
 
@@ -487,5 +496,5 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 		return
 	}
 
-	e.registry.SubscribeAndBackfill(msg.cookie, msg.syncIDs)
+	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, msg.syncIDs)
 }
