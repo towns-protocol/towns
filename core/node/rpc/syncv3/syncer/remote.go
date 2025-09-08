@@ -29,7 +29,6 @@ const (
 // remoteStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that emits updates for a remote stream.
 // TODO: Advance sticky peer on failure.
 type remoteStreamUpdateEmitter struct {
-	// cancel is the cancel function for the context.
 	cancel         context.CancelCauseFunc
 	log            *logging.Log
 	syncID         string
@@ -63,6 +62,7 @@ func NewRemoteStreamUpdateEmitter(
 
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
 	if err != nil {
+		cancel(nil)
 		return nil, err
 	}
 

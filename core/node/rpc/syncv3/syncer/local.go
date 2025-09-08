@@ -56,6 +56,7 @@ func NewLocalStreamUpdateEmitter(
 
 	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, streamID)
 	if err != nil {
+		cancel(nil)
 		return nil, err
 	}
 
@@ -77,6 +78,7 @@ func NewLocalStreamUpdateEmitter(
 		NodeAddress: l.localAddr.Bytes(),
 	}, l)
 	if err != nil {
+		cancel(nil)
 		return nil, err
 	}
 
