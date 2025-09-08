@@ -59,7 +59,7 @@ Runtime script: starts chains with pre-loaded state. Supports `CHAIN=base` or `C
 
 Test runner for validating deployed contracts.
 
-## Node Configuration Extraction  
+## Node Configuration Extraction
 
 Docker image includes complete node setup (wallets, certificates, registrations). Extract with:
 
@@ -69,8 +69,9 @@ USE_DOCKER_CHAINS=1 just config
 ```
 
 This creates complete node configurations in `./run_files/local_dev/` including:
+
 - Node wallets and certificates
-- River chain registrations  
+- River chain registrations
 - App registry configurations
 - Contract addresses and deployment artifacts
 
