@@ -49,10 +49,10 @@ export function makePonderConfig(
         throw new Error('Space owner address not found')
     }
 
-    const swapRouter = getContractAddress('swapRouter', baseChainName, environment)
-    if (!swapRouter) {
-        throw new Error('Swap router address not found')
-    }
+    // SwapRouter only exists in Omega environment, make it optional
+    const swapRouter = getContractAddress('swapRouter', baseChainName, environment, {
+        throwOnError: false,
+    })
 
     const baseRegistry = getContractAddress('baseRegistry', baseChainName, environment)
     if (!baseRegistry) {
@@ -124,12 +124,15 @@ export function makePonderConfig(
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
             },
-            SwapRouter: {
-                abi: swapRouterAbi,
-                address: swapRouter,
-                startBlock: baseChainStartBlock,
-                chain: baseChainName,
-            },
+            // Only add SwapRouter if it exists (only in Omega environment)
+            ...(swapRouter && {
+                SwapRouter: {
+                    abi: swapRouterAbi,
+                    address: swapRouter,
+                    startBlock: baseChainStartBlock,
+                    chain: baseChainName,
+                },
+            }),
             RiverAirdrop: {
                 abi: mergeAbis([rewardsDistributionV2Abi]),
                 address: riverAirdrop,
