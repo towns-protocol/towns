@@ -140,44 +140,38 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             duration
         );
 
-        version = _registerApp(app, params.client);
+        version = _registerApp(ITownsApp(app), params.client);
         emit AppCreated(app, version);
     }
 
-    /// @notice Registers a new app in the registry
-    /// @param app The address of the app to register
-    /// @param client The client address that can use the app
-    /// @return version The version ID of the registered app
-    /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
-    function _registerApp(address app, address client) internal returns (bytes32 version) {
-        _verifyAddAppInputs(app, client);
+    function _upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 versionId
+    ) internal returns (bytes32 newVersionId) {
+        (
+            address owner,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest,
+            uint48 duration
+        ) = _validateApp(app, client);
+
+        if (msg.sender != owner) NotAllowed.selector.revertWith();
+        if (versionId == EMPTY_UID) InvalidAppId.selector.revertWith();
+
+        address appAddress = address(app);
 
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
-        AppInfo storage appInfo = $.apps[app];
+        AppInfo storage appInfo = $.apps[appAddress];
         ClientInfo storage clientInfo = $.client[client];
 
-        // if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
-
-        ITownsApp appContract = ITownsApp(app);
-
-        uint256 installPrice = appContract.installPrice();
-        _validatePricing(installPrice);
-
-        uint48 accessDuration = appContract.accessDuration();
-        uint48 duration = _validateDuration(accessDuration);
-
-        bytes32[] memory permissions = appContract.requiredPermissions();
-        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
-
-        address owner = appContract.moduleOwner();
-        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
-
-        ExecutionManifest memory manifest = appContract.executionManifest();
+        if (appInfo.latestVersion != versionId) InvalidAppId.selector.revertWith();
+        if (clientInfo.app == address(0)) ClientNotRegistered.selector.revertWith();
 
         App memory appData = App({
-            appId: EMPTY_UID,
-            module: app,
+            appId: versionId,
+            module: appAddress,
             owner: owner,
             client: client,
             permissions: permissions,
@@ -187,17 +181,61 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         AttestationRequest memory request;
         request.schema = _getSchemaId();
-        request.data.recipient = app;
+        request.data.recipient = appAddress;
+        request.data.revocable = true;
+        request.data.refUID = versionId;
+        request.data.data = abi.encode(appData);
+        newVersionId = _attest(msg.sender, msg.value, request).uid;
+
+        appInfo.latestVersion = newVersionId;
+        emit AppUpgraded(appAddress, versionId, newVersionId);
+    }
+
+    /// @notice Registers a new app in the registry
+    /// @param app The address of the app to register
+    /// @param client The client address that can use the app
+    /// @return version The version ID of the registered app
+    /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
+    function _registerApp(ITownsApp app, address client) internal returns (bytes32 version) {
+        (
+            address owner,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest,
+            uint48 duration
+        ) = _validateApp(app, client);
+
+        address appAddress = address(app);
+
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+        AppInfo storage appInfo = $.apps[appAddress];
+        ClientInfo storage clientInfo = $.client[client];
+
+        if (appInfo.isBanned) BannedApp.selector.revertWith();
+        if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
+
+        App memory appData = App({
+            appId: EMPTY_UID,
+            module: appAddress,
+            owner: owner,
+            client: client,
+            permissions: permissions,
+            manifest: manifest,
+            duration: duration
+        });
+
+        AttestationRequest memory request;
+        request.schema = _getSchemaId();
+        request.data.recipient = appAddress;
         request.data.revocable = true;
         request.data.refUID = appInfo.latestVersion;
         request.data.data = abi.encode(appData);
         version = _attest(msg.sender, msg.value, request).uid;
 
         appInfo.latestVersion = version;
-        appInfo.app = app;
-        clientInfo.app = app;
+        appInfo.app = appAddress;
+        clientInfo.app = appAddress;
 
-        emit AppRegistered(app, version);
+        emit AppRegistered(appAddress, version);
     }
 
     /// @notice Removes a app from the registry
@@ -378,10 +416,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return appInfo.latestVersion;
     }
 
-    function _validatePricing(uint256 price) internal view {
-        IPlatformRequirements reqs = _getPlatformRequirements();
-        uint256 minPlatformFee = reqs.getMembershipFee();
+    function _validatePricing(uint256 price) internal view returns (uint256) {
+        uint256 minPlatformFee = _getPlatformRequirements().getMembershipFee();
         if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
+        return price;
     }
 
     function _validateDuration(uint48 duration) internal pure returns (uint48) {
@@ -390,21 +428,51 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return duration;
     }
 
-    /// @notice Verifies inputs for adding a new app
-    /// @param app The app address to verify
+    /// @notice Validates inputs for adding a new app
+    /// @param appContract The app contract to verify
     /// @param client The client address to verify
     /// @dev Reverts if any input is invalid or app doesn't implement required interfaces
-    function _verifyAddAppInputs(address app, address client) internal view {
-        if (app == address(0)) InvalidAddressInput.selector.revertWith();
+    /// @return owner The owner of the app
+    /// @return permissions The permissions of the app
+    /// @return manifest The manifest of the app
+    /// @return duration The duration of the app
+    function _validateApp(
+        ITownsApp appContract,
+        address client
+    ) internal view returns (address, bytes32[] memory, ExecutionManifest memory, uint48) {
+        address appAddress = address(appContract);
+        if (appAddress == address(0)) InvalidAddressInput.selector.revertWith();
         if (client == address(0)) InvalidAddressInput.selector.revertWith();
 
+        (
+            uint256 installPrice,
+            uint48 accessDuration,
+            bytes32[] memory permissions,
+            address owner,
+            ExecutionManifest memory manifest
+        ) = (
+                appContract.installPrice(),
+                appContract.accessDuration(),
+                appContract.requiredPermissions(),
+                appContract.moduleOwner(),
+                appContract.executionManifest()
+            );
+
+        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
+        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
+
+        _validatePricing(installPrice);
+        uint48 duration = _validateDuration(accessDuration);
+
         if (
-            !IERC165(app).supportsInterface(type(IModule).interfaceId) ||
-            !IERC165(app).supportsInterface(type(IExecutionModule).interfaceId) ||
-            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId)
+            !IERC165(appAddress).supportsInterface(type(IModule).interfaceId) ||
+            !IERC165(appAddress).supportsInterface(type(IExecutionModule).interfaceId) ||
+            !IERC165(appAddress).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             AppDoesNotImplementInterface.selector.revertWith();
         }
+
+        return (owner, permissions, manifest, duration);
     }
 
     function _getPlatformRequirements() internal view returns (IPlatformRequirements) {

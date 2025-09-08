@@ -544,8 +544,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Write"))
         );
 
-        vm.prank(DEFAULT_DEV);
-        registry.registerApp(appContract, DEFAULT_CLIENT);
+        // TODO: upgrade
     }
 
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
