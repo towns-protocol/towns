@@ -47,7 +47,6 @@ interface ISubscriptionModuleBase {
         uint32 indexed entityId,
         address indexed space,
         uint256 tokenId,
-        uint256 renewalPrice,
         uint64 nextRenewalTime
     );
 

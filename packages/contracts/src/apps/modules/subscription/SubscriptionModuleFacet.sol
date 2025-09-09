@@ -74,33 +74,18 @@ contract SubscriptionModuleFacet is
             SubscriptionModule__InvalidTokenOwner.selector.revertWith();
 
         MembershipFacet membershipFacet = MembershipFacet(space);
-        SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
-
-        Subscription storage sub = $.subscriptions[msg.sender][entityId];
-        sub.space = space;
-        sub.entityId = entityId;
-        sub.tokenId = tokenId;
-        sub.active = true;
-        sub.renewalPrice = membershipFacet.getMembershipRenewalPrice(tokenId);
-
         uint256 expiresAt = membershipFacet.expiresAt(tokenId);
 
-        if (expiresAt > RENEWAL_BUFFER) {
-            sub.nextRenewalTime = uint64(expiresAt - RENEWAL_BUFFER);
-        } else {
-            sub.nextRenewalTime = uint64(block.timestamp);
-        }
+        SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
+        Subscription storage sub = $.subscriptions[msg.sender][entityId];
+        sub.space = space;
+        sub.active = true;
+        sub.tokenId = tokenId;
+        sub.nextRenewalTime = uint40(expiresAt - RENEWAL_BUFFER);
 
-        $.entityIds[msg.sender].add(uint256(entityId));
+        $.entityIds[msg.sender].add(entityId);
 
-        emit SubscriptionConfigured(
-            msg.sender,
-            entityId,
-            space,
-            tokenId,
-            sub.renewalPrice,
-            sub.nextRenewalTime
-        );
+        emit SubscriptionConfigured(msg.sender, entityId, space, tokenId, sub.nextRenewalTime);
     }
 
     /// @inheritdoc IModule
@@ -194,7 +179,7 @@ contract SubscriptionModuleFacet is
         SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
 
         for (uint256 i; i < length; ++i) {
-            if (!_isAllowed($, params[i].account, msg.sender))
+            if (!_isAllowed($.operators, params[i].account))
                 SubscriptionModule__InvalidCaller.selector.revertWith();
 
             Subscription storage sub = $.subscriptions[params[i].account][params[i].entityId];
@@ -217,16 +202,19 @@ contract SubscriptionModuleFacet is
                 continue;
             }
 
-            _processRenewal($, params[i]);
+            _processRenewal(sub, params[i]);
         }
     }
 
     /// @inheritdoc ISubscriptionModule
     function processRenewal(RenewalParams calldata renewalParams) external nonReentrant {
         SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
-        if (!_isAllowed($, renewalParams.account, msg.sender))
+        if (!_isAllowed($.operators, renewalParams.account))
             SubscriptionModule__InvalidCaller.selector.revertWith();
-        _processRenewal($, renewalParams);
+        _processRenewal(
+            $.subscriptions[renewalParams.account][renewalParams.entityId],
+            renewalParams
+        );
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -274,12 +262,7 @@ contract SubscriptionModuleFacet is
     /*                           Internal                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _processRenewal(
-        SubscriptionModuleStorage.Layout storage $,
-        RenewalParams calldata params
-    ) internal {
-        Subscription storage sub = $.subscriptions[params.account][params.entityId];
-
+    function _processRenewal(Subscription storage sub, RenewalParams calldata params) internal {
         // Validate subscription state
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
         if (block.timestamp < sub.nextRenewalTime)
@@ -297,13 +280,10 @@ contract SubscriptionModuleFacet is
         // Get current renewal price from Towns contract
         uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
-        // Store the current nextRenewalTime in case we need to revert
-        uint64 previousNextRenewalTime = sub.nextRenewalTime;
-
         // Update state BEFORE external calls to prevent reentrancy
         // Set to a far future time to prevent re-entry while processing
         // This ensures the "renewal not due" check will fail if re-entered
-        sub.nextRenewalTime = uint64(block.timestamp + 365 days);
+        sub.nextRenewalTime = uint40(block.timestamp + 365 days);
 
         // Construct the renewal call to space contract
         bytes memory renewalCall = abi.encodeCall(MembershipFacet.renewMembership, (sub.tokenId));
@@ -321,7 +301,7 @@ contract SubscriptionModuleFacet is
 
         // Use the proper pack function from ValidationLocatorLib
         bytes memory authorization = _runtimeFinal(
-            sub.entityId,
+            params.entityId,
             abi.encode(sub.space, sub.tokenId)
         );
 
@@ -335,24 +315,17 @@ contract SubscriptionModuleFacet is
         );
 
         // External call happens here
-        bytes memory result = LibCall.callContract(params.account, 0, runtimeValidationCall);
-
-        // Check if the call succeeded
-        if (result.length == 0) {
-            // Revert state on failure
-            sub.nextRenewalTime = previousNextRenewalTime;
-            SubscriptionModule__RenewalFailed.selector.revertWith();
-        }
+        LibCall.callContract(params.account, 0, runtimeValidationCall);
 
         // Get the actual new expiration time after successful renewal
         uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
 
         // Update subscription state after successful renewal
-        sub.nextRenewalTime = uint64(newExpiresAt - RENEWAL_BUFFER);
-        sub.lastRenewalTime = uint64(block.timestamp);
+        sub.nextRenewalTime = uint40(newExpiresAt - RENEWAL_BUFFER);
+        sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
-        emit SubscriptionRenewed(params.account, sub.entityId, sub.nextRenewalTime);
+        emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime);
     }
 
     function _runtimeFinal(
@@ -368,11 +341,10 @@ contract SubscriptionModuleFacet is
     }
 
     function _isAllowed(
-        SubscriptionModuleStorage.Layout storage $,
-        address account,
-        address caller
+        EnumerableSetLib.AddressSet storage operators,
+        address account
     ) internal view returns (bool) {
-        if (account == caller) return true;
-        return $.operators.contains(caller);
+        if (account == msg.sender) return true;
+        return operators.contains(msg.sender);
     }
 }

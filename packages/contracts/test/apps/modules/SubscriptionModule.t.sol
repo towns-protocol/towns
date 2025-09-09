@@ -29,7 +29,6 @@ contract SubscriptionModuleTest is ModulesBase {
             params.entityId,
             params.space,
             params.tokenId,
-            params.renewalPrice,
             params.nextRenewalTime
         );
 
@@ -272,7 +271,6 @@ contract SubscriptionModuleTest is ModulesBase {
             subAfter.nextRenewalTime != subBefore.nextRenewalTime,
             "Next renewal time should be updated"
         );
-        assertEq(subBefore.renewalPrice, subAfter.renewalPrice, "Renewal price should be updated");
     }
 
     function test_processRenewal_multipleRenewals(address user) external {

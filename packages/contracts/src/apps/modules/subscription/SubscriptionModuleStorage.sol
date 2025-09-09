@@ -5,13 +5,11 @@ import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 struct Subscription {
     address space;
-    uint32 entityId;
-    uint64 nextRenewalTime;
-    uint256 renewalPrice;
+    bool active;
+    uint40 lastRenewalTime;
+    uint40 nextRenewalTime;
     uint256 spent;
     uint256 tokenId;
-    uint64 lastRenewalTime;
-    bool active;
 }
 
 library SubscriptionModuleStorage {
