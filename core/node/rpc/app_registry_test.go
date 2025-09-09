@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/app_registry"
 	"github.com/towns-protocol/towns/core/node/app_registry/app_client"
@@ -70,11 +71,11 @@ func (ar *appRegistryServiceTester) newTestClients(numClients int, opts testClie
 
 func appMetadataForBot(address []byte) *protocol.AppMetadata {
 	return &protocol.AppMetadata{
-		Username:    fmt.Sprintf("app_%x", address),
-		DisplayName: fmt.Sprintf("App %x Bot", address),
-		Description: fmt.Sprintf("Bot description - %x", address),
-		ImageUrl:    fmt.Sprintf("http://image.com/%x/image.png", address),
-		AvatarUrl:   fmt.Sprintf("http://image.com/%x/avatar.png", address),
+		Username:    proto.String(fmt.Sprintf("app_%x", address)),
+		DisplayName: proto.String(fmt.Sprintf("App %x Bot", address)),
+		Description: proto.String(fmt.Sprintf("Bot description - %x", address)),
+		ImageUrl:    proto.String(fmt.Sprintf("http://image.com/%x/image.png", address)),
+		AvatarUrl:   proto.String(fmt.Sprintf("http://image.com/%x/avatar.png", address)),
 		SlashCommands: []*protocol.SlashCommand{
 			{Name: "help", Description: "Get help with bot commands"},
 			{Name: "status", Description: "Check bot status"},
@@ -497,18 +498,16 @@ func safeNewWallet(ctx context.Context, require *require.Assertions) *crypto.Wal
 // Helper function to create test metadata
 func testAppMetadata() *protocol.AppMetadata {
 	return &protocol.AppMetadata{
-		Username:    "test_bot_app",
-		DisplayName: "Test Bot App Display",
-		Description: "A test bot application for integration testing",
-		ImageUrl:    "https://example.com/test-image.png",
-		AvatarUrl:   "https://example.com/test-avatar.png",
-		ExternalUrl: stringPtr("https://example.com/test-app"),
+		Username:    proto.String("test_bot_app"),
+		DisplayName: proto.String("Test Bot App Display"),
+		Description: proto.String("A test bot application for integration testing"),
+		ImageUrl:    proto.String("https://example.com/test-image.png"),
+		AvatarUrl:   proto.String("https://example.com/test-avatar.png"),
+		ExternalUrl: proto.String("https://example.com/test-app"),
 	}
 }
 
-func stringPtr(s string) *string {
-	return &s
-}
+// stringPtr helper function removed - use proto.String() instead
 
 func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 3})
@@ -520,327 +519,295 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 
 	// Test valid metadata
 	validMetadata := &protocol.AppMetadata{
-		Username:    "updated_test_app",
-		DisplayName: "Updated Test App Display",
-		Description: "Updated description for testing",
-		ImageUrl:    "https://example.com/updated-image.jpg",
-		AvatarUrl:   "https://example.com/updated-avatar.jpg",
-		ExternalUrl: stringPtr("https://updated.example.com"),
+		Username:    proto.String("updated_test_app"),
+		DisplayName: proto.String("Updated Test App Display"),
+		Description: proto.String("Updated description for testing"),
+		ImageUrl:    proto.String("https://example.com/updated-image.jpg"),
+		AvatarUrl:   proto.String("https://example.com/updated-avatar.jpg"),
+		ExternalUrl: proto.String("https://updated.example.com"),
 	}
 
 	tests := map[string]struct {
 		appId                []byte
 		authenticatingWallet *crypto.Wallet
 		metadata             *protocol.AppMetadata
+		updateMask           []string
 		expectedErr          string
 	}{
 		"Update Success (app wallet signer)": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "updated_test_app_1",
-
-				DisplayName: "Updated Test App 1",
-				Description: validMetadata.Description,
-				ImageUrl:    validMetadata.ImageUrl,
-				AvatarUrl:   validMetadata.AvatarUrl,
+				Username:    proto.String("updated_test_app_1"),
+				DisplayName: proto.String("Updated Test App 1"),
+				Description: proto.String(validMetadata.GetDescription()),
+				ImageUrl:    proto.String(validMetadata.GetImageUrl()),
+				AvatarUrl:   proto.String(validMetadata.GetAvatarUrl()),
 				ExternalUrl: validMetadata.ExternalUrl,
+				SlashCommands: []*protocol.SlashCommand{},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
 		},
 		"Update Success (owner wallet signer)": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: ownerWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "owner_updated_app_2",
-
-				DisplayName: "Owner Updated App 2",
-				Description: "Updated by owner wallet",
-				ImageUrl:    "https://owner.example.com/image.png",
-				AvatarUrl:   "https://owner.example.com/avatar.png",
-				ExternalUrl: stringPtr("https://owner.example.com"),
+				Username: proto.String("owner_updated_app_2"),
+				DisplayName: proto.String("Owner Updated App 2"),
+				Description: proto.String("Updated by owner wallet"),
+				ImageUrl:    proto.String("https://owner.example.com/image.png"),
+				AvatarUrl:   proto.String("https://owner.example.com/avatar.png"),
+				ExternalUrl: proto.String("https://owner.example.com"),
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "status", Description: "Check bot status"},
+				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url"},
 		},
 		"Update Success (empty optional fields)": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "minimal_app",
-
-				DisplayName: "Minimal App",
-				Description: "App with minimal metadata",
-				ImageUrl:    "https://example.com/minimal-image.png",
-				AvatarUrl:   "https://example.com/minimal-avatar.png",
+				Username: proto.String("minimal_app"),
+				DisplayName: proto.String("Minimal App"),
+				Description: proto.String("App with minimal metadata"),
+				ImageUrl:    proto.String("https://example.com/minimal-image.png"),
+				AvatarUrl:   proto.String("https://example.com/minimal-avatar.png"),
 				ExternalUrl: nil,
+				SlashCommands: []*protocol.SlashCommand{},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
 		},
 		"Failure: missing username": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username:    "",
-				DisplayName: "Valid Display Name",
-				Description: "Missing username test",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String(""),
 			},
-			expectedErr: "metadata username is required",
+			updateMask:  []string{"username"},
+			expectedErr: "username cannot be empty",
 		},
 		"Failure: empty display name": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username:    "test_app_with_empty_display",
-				DisplayName: "",
-				Description: "Testing empty display name validation",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String(""),
 			},
-			expectedErr: "metadata display_name is required",
+			updateMask:  []string{"display_name"},
+			expectedErr: "display_name cannot be empty",
 		},
 		"Failure: missing description": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Description: proto.String(""),
 			},
-			expectedErr: "metadata description is required",
+			updateMask:  []string{"description"},
+			expectedErr: "description cannot be empty",
 		},
 		"Failure: missing image URL": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Missing image URL",
-				ImageUrl:    "",
-				AvatarUrl:   "https://example.com/avatar.png",
+				ImageUrl: proto.String(""),
 			},
-			expectedErr: "metadata image_url validation failed",
+			updateMask:  []string{"image_url"},
+			expectedErr: "image_url validation failed",
 		},
 		"Failure: invalid image URL": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Invalid image URL",
-				ImageUrl:    "invalid-url",
-				AvatarUrl:   "https://example.com/avatar.png",
+				ImageUrl: proto.String("invalid-url"),
 			},
-			expectedErr: "metadata image_url validation failed",
+			updateMask:  []string{"image_url"},
+			expectedErr: "image_url validation failed",
 		},
 		"Failure: missing avatar URL": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Missing avatar URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "",
+				AvatarUrl:   proto.String(""),
 			},
-			expectedErr: "metadata avatar_url validation failed",
+			updateMask:  []string{"avatar_url"},
+			expectedErr: "avatar_url validation failed",
 		},
 		"Failure: invalid avatar URL format": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Invalid avatar URL format",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "not-a-url",
+				AvatarUrl: proto.String("not-a-url"),
 			},
-			expectedErr: "metadata avatar_url validation failed",
+			updateMask:  []string{"avatar_url"},
+			expectedErr: "avatar_url validation failed",
 		},
 		"Failure: avatar URL invalid scheme": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Avatar URL with invalid scheme",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "ftp://example.com/avatar.png",
+				AvatarUrl: proto.String("ftp://example.com/avatar.png"),
 			},
-			expectedErr: "metadata avatar_url validation failed",
+			updateMask:  []string{"avatar_url"},
+			expectedErr: "avatar_url validation failed",
 		},
 		"Failure: image URL invalid scheme": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Image URL with invalid scheme",
-				ImageUrl:    "ftp://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				ImageUrl: proto.String("ftp://example.com/image.png"),
 			},
-			expectedErr: "metadata image_url validation failed",
+			updateMask:  []string{"image_url"},
+			expectedErr: "image_url validation failed",
 		},
 		"Success: IPFS scheme avatar": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "ipfs_avatar_app_1",
-
-				DisplayName: "IPFS Avatar App 1",
-				Description: "App with IPFS avatar",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "ipfs://QmHashExample/avatar.png",
+				Username: proto.String("ipfs_avatar_app_1"),
+				DisplayName: proto.String("IPFS Avatar App 1"),
+				Description: proto.String("App with IPFS avatar"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("ipfs://QmHashExample/avatar.png"),
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "status", Description: "Check bot status"},
+				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url"},
 		},
 		"Success: IPFS scheme image": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "ipfs_image_app_1",
-
-				DisplayName: "IPFS Image App 1",
-				Description: "App with IPFS image",
-				ImageUrl:    "ipfs://QmHashExample/image.jpg",
-				AvatarUrl:   "https://example.com/avatar.png",
-			},
-		},
-		"Success: HTTP scheme URLs": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "http_urls_app",
-
-				DisplayName: "HTTP URLs App",
-				Description: "App with HTTP URLs",
-				ImageUrl:    "http://example.com/image.jpeg",
-				AvatarUrl:   "http://example.com/avatar.gif",
-			},
-		},
-		"Success: various file extensions": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "various_extensions_app",
-
-				DisplayName: "Various Extensions App",
-				Description: "App with various supported extensions",
-				ImageUrl:    "https://example.com/image.webp",
-				AvatarUrl:   "https://example.com/avatar.svg",
-			},
-		},
-		"Failure: invalid external URL": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Invalid external URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
-				ExternalUrl: stringPtr("not-valid-url"),
-			},
-			expectedErr: "URL must have a valid external URL scheme",
-		},
-		"Failure: invalid external URL schema": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "test_app",
-
-				DisplayName: "Test App",
-				Description: "Invalid external URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
-				ExternalUrl: stringPtr("ssh://external-url"),
-			},
-			expectedErr: "URL must have a valid external URL scheme",
-		},
-		"Failure: unregistered app": {
-			appId:                unregisteredAppWallet.Address[:],
-			authenticatingWallet: unregisteredAppWallet,
-			metadata:             validMetadata,
-			expectedErr:          "app was not found in registry",
-		},
-		"Failure: missing authentication": {
-			appId:       appWallet.Address[:],
-			metadata:    validMetadata,
-			expectedErr: "missing session token",
-		},
-		"Failure: unauthorized user": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: unregisteredAppWallet,
-			metadata:             validMetadata,
-			expectedErr:          "authenticated user must be app or owner",
-		},
-		"Success: valid slash commands": {
-			appId:                appWallet.Address[:],
-			authenticatingWallet: appWallet,
-			metadata: &protocol.AppMetadata{
-				Username: "app_with_commands",
-
-				DisplayName: "App with Commands",
-				Description: "App with valid slash commands",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String("ipfs_image_app_1"),
+				DisplayName: proto.String("IPFS Image App 1"),
+				Description: proto.String("App with IPFS image"),
+				ImageUrl:    proto.String("ipfs://QmHashExample/image.jpg"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help", Description: "Get help with bot commands"},
 					{Name: "search", Description: "Search for content"},
 					{Name: "config", Description: "Configure settings"},
 				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url"},
+		},
+		"Success: HTTP scheme URLs": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Username: proto.String("http_urls_app"),
+				DisplayName: proto.String("HTTP URLs App"),
+				Description: proto.String("App with HTTP URLs"),
+				ImageUrl:    proto.String("http://example.com/image.jpeg"),
+				AvatarUrl:   proto.String("http://example.com/avatar.gif"),
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "search", Description: "Search for content"},
+					{Name: "config", Description: "Configure settings"},
+				},
+			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url"},
+		},
+		"Success: various file extensions": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Username: proto.String("various_extensions_app"),
+				DisplayName: proto.String("Various Extensions App"),
+				Description: proto.String("App with various supported extensions"),
+				ImageUrl:    proto.String("https://example.com/image.webp"),
+				AvatarUrl:   proto.String("https://example.com/avatar.svg"),
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "status", Description: "Check bot status"},
+				},
+			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url"},
+		},
+		"Failure: invalid external URL": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				ExternalUrl: proto.String("not-valid-url"),
+			},
+			updateMask:  []string{"external_url"},
+			expectedErr: "URL must have a valid external URL scheme",
+		},
+		"Failure: invalid external URL schema": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				ExternalUrl: proto.String("ssh://external-url"),
+			},
+			updateMask:  []string{"external_url"},
+			expectedErr: "URL must have a valid external URL scheme",
+		},
+		"Failure: unregistered app": {
+			appId:                unregisteredAppWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			updateMask:           []string{"username", "display_name", "description", "image_url", "avatar_url"},
+			expectedErr:          "app was not found in registry",
+		},
+		"Failure: missing authentication": {
+			appId:       appWallet.Address[:],
+			metadata:    validMetadata,
+			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url"},
+			expectedErr: "missing session token",
+		},
+		"Failure: unauthorized user": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: unregisteredAppWallet,
+			metadata:             validMetadata,
+			updateMask:           []string{"username", "display_name", "description", "image_url", "avatar_url"},
+			expectedErr:          "authenticated user must be app or owner",
+		},
+		"Success: valid slash commands": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadata{
+				Username: proto.String("app_with_commands"),
+				DisplayName: proto.String("App with Commands"),
+				Description: proto.String("App with valid slash commands"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
+				SlashCommands: []*protocol.SlashCommand{
+					{Name: "help", Description: "Get help with bot commands"},
+					{Name: "search", Description: "Search for content"},
+					{Name: "config", Description: "Configure settings"},
+				},
+			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Failure: invalid command name with special characters": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_invalid_command",
-
-				DisplayName: "App with Invalid Command",
-				Description: "App with invalid command name",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help-me", Description: "Invalid name with hyphen"},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command name must contain only letters, numbers, and underscores",
 		},
 		"Failure: duplicate command names": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_duplicate_commands",
-
-				DisplayName: "App with Duplicate Commands",
-				Description: "App with duplicate command names",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help", Description: "Get help"},
 					{Name: "help", Description: "Also get help"},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "duplicate command name",
 		},
 		"Failure: too many commands": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_too_many_commands",
-
-				DisplayName: "App with Too Many Commands",
-				Description: "App exceeding command limit",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: func() []*protocol.SlashCommand {
 					commands := make([]*protocol.SlashCommand, 26)
 					for i := 0; i < 26; i++ {
@@ -852,79 +819,64 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					return commands
 				}(),
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "app metadata slash command count exceeds maximum",
 		},
 		"Failure: empty command description": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_empty_description",
-
-				DisplayName: "App with Empty Description",
-				Description: "App with command missing description",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help", Description: ""},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command description is required",
 		},
 		"Failure: command name too long": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_long_command_name",
-
-				DisplayName: "App with Long Command Name",
-				Description: "App with command name exceeding limit",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "thiscommandnameiswaytoolongandexceedsthemaximumlength", Description: "Too long"},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command name must not exceed 32 characters",
 		},
 		"Failure: command name starts with number": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_invalid_command_start",
-
-				DisplayName: "App with Invalid Command Start",
-				Description: "App with command starting with number",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "1help", Description: "Starts with number"},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command name must start with a letter",
 		},
 		"Success: empty slash commands array": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_without_commands",
-
-				DisplayName:   "App without Commands",
-				Description:   "App with no slash commands",
-				ImageUrl:      "https://example.com/image.png",
-				AvatarUrl:     "https://example.com/avatar.png",
+				Username: proto.String("app_without_commands"),
+				DisplayName:   proto.String("App without Commands"),
+				Description:   proto.String("App with no slash commands"),
+				ImageUrl:      proto.String("https://example.com/image.png"),
+				AvatarUrl:     proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Success: maximum length command name and description": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_max_length_commands",
-
-				DisplayName: "App with Max Length Commands",
-				Description: "Testing maximum lengths",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String("app_with_max_length_commands"),
+				DisplayName: proto.String("App with Max Length Commands"),
+				Description: proto.String("Testing maximum lengths"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{
 						Name:        strings.Repeat("a", 32),  // Exactly 32 characters
@@ -932,50 +884,50 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					},
 				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Success: unicode in command descriptions": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_unicode_commands",
-
-				DisplayName: "App with Unicode Commands",
-				Description: "Testing unicode in descriptions",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String("app_with_unicode_commands"),
+				DisplayName: proto.String("App with Unicode Commands"),
+				Description: proto.String("Testing unicode in descriptions"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help", Description: "Get help 🚀 with émojis and 中文"},
 					{Name: "status", Description: "Check status 📊 with various symbols ♠♣♥♦"},
 				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Success: case-sensitive command names": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_case_sensitive_commands",
-
-				DisplayName: "App with Case Sensitive Commands",
-				Description: "Testing case sensitivity",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String("app_with_case_sensitive_commands"),
+				DisplayName: proto.String("App with Case Sensitive Commands"),
+				Description: proto.String("Testing case sensitivity"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help", Description: "Lowercase help"},
 					{Name: "Help", Description: "Uppercase Help"},
 					{Name: "HELP", Description: "All caps HELP"},
 				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Success: valid alphanumeric command names": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_alphanumeric_commands",
-
-				DisplayName: "App with Alphanumeric Commands",
-				Description: "Testing valid command names",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				Username: proto.String("app_with_alphanumeric_commands"),
+				DisplayName: proto.String("App with Alphanumeric Commands"),
+				Description: proto.String("Testing valid command names"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help123", Description: "Command with numbers"},
 					{Name: "test_command_2", Description: "Command with underscores and numbers"},
@@ -983,37 +935,28 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "mixedCase123", Description: "Mixed case with numbers"},
 				},
 			},
+			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
 		},
 		"Failure: command description too long": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_too_long_description",
-
-				DisplayName: "App with Too Long Description",
-				Description: "Testing description length limit",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "test", Description: strings.Repeat("x", 257)}, // One over the limit
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command description must not exceed 256 characters",
 		},
 		"Failure: command name with underscore prefix": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadata{
-				Username: "app_with_underscore_prefix",
-
-				DisplayName: "App with Underscore Prefix",
-				Description: "Testing invalid underscore prefix",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "_private", Description: "Command starting with underscore"},
 				},
 			},
+			updateMask:  []string{"slash_commands"},
 			expectedErr: "command name must start with a letter",
 		},
 	}
@@ -1022,8 +965,9 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			req := &connect.Request[protocol.SetAppMetadataRequest]{
 				Msg: &protocol.SetAppMetadataRequest{
-					AppId:    tc.appId,
-					Metadata: tc.metadata,
+					AppId:      tc.appId,
+					Metadata:   tc.metadata,
+					UpdateMask: tc.updateMask,
 				},
 			}
 			if tc.authenticatingWallet != nil {
@@ -1896,7 +1840,7 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 		},
 	)
 	tester.require.NoError(err)
-	existingBotUsername := getMetadataResp.Msg.Metadata.Username
+	existingBotUsername := getMetadataResp.Msg.Metadata.GetUsername()
 
 	tests := map[string]struct {
 		name             string
@@ -1988,9 +1932,9 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_bot_app_success_1",
+				Username: proto.String("test_bot_app_success_1"),
 
-				DisplayName: "Test Bot App Success 1",
+				DisplayName: proto.String("Test Bot App Success 1"),
 				Description: testAppMetadata().Description,
 				ImageUrl:    testAppMetadata().ImageUrl,
 				AvatarUrl:   testAppMetadata().AvatarUrl,
@@ -2002,12 +1946,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet2.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "minimal_app_success_2",
+				Username: proto.String("minimal_app_success_2"),
 
-				DisplayName: "Minimal App Success 2",
-				Description: "Minimal app description",
-				ImageUrl:    "https://example.com/minimal-image.png",
-				AvatarUrl:   "https://example.com/minimal-avatar.png",
+				DisplayName: proto.String("Minimal App Success 2"),
+				Description: proto.String("Minimal app description"),
+				ImageUrl:    proto.String("https://example.com/minimal-image.png"),
+				AvatarUrl:   proto.String("https://example.com/minimal-avatar.png"),
 				ExternalUrl: nil,
 			},
 			authenticatingWallet: ownerWallet,
@@ -2037,12 +1981,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "",
+				Username: proto.String(""),
 
-				DisplayName: "",
-				Description: "Missing name",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String(""),
+				Description: proto.String("Missing name"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata username is required",
@@ -2051,12 +1995,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
+				Username: proto.String("test_app"),
 
-				DisplayName: "Test App",
-				Description: "",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String("Test App"),
+				Description: proto.String(""),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata description is required",
@@ -2065,12 +2009,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
+				Username: proto.String("test_app"),
 
-				DisplayName: "Test App",
-				Description: "Missing avatar URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "",
+				DisplayName: proto.String("Test App"),
+				Description: proto.String("Missing avatar URL"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String(""),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata avatar_url validation failed",
@@ -2079,12 +2023,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
+				Username: proto.String("test_app"),
 
-				DisplayName: "Test App",
-				Description: "Invalid avatar URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "not-a-valid-url",
+				DisplayName: proto.String("Test App"),
+				Description: proto.String("Invalid avatar URL"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("not-a-valid-url"),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata avatar_url validation failed",
@@ -2093,12 +2037,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
+				Username: proto.String("test_app"),
 
-				DisplayName: "Test App",
-				Description: "Invalid image URL",
-				ImageUrl:    "invalid-url",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String("Test App"),
+				Description: proto.String("Invalid image URL"),
+				ImageUrl:    proto.String("invalid-url"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata image_url validation failed",
@@ -2107,13 +2051,13 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app",
+				Username: proto.String("test_app"),
 
-				DisplayName: "Test App",
-				Description: "Invalid external URL",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
-				ExternalUrl: stringPtr("not-valid-url"),
+				DisplayName: proto.String("Test App"),
+				Description: proto.String("Invalid external URL"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
+				ExternalUrl: proto.String("not-valid-url"),
 			},
 			authenticatingWallet: ownerWallet,
 			expectedErr:          "metadata external_url must be a valid URL",
@@ -2135,12 +2079,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app_invalid_command",
+				Username: proto.String("test_app_invalid_command"),
 
-				DisplayName: "Test App Invalid Command",
-				Description: "Test app with invalid command",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String("Test App Invalid Command"),
+				Description: proto.String("Test app with invalid command"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "help!", Description: "Invalid command name"},
 				},
@@ -2152,12 +2096,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app_duplicate_commands",
+				Username: proto.String("test_app_duplicate_commands"),
 
-				DisplayName: "Test App Duplicate Commands",
-				Description: "Test app with duplicate commands",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String("Test App Duplicate Commands"),
+				Description: proto.String("Test app with duplicate commands"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{
 					{Name: "ping", Description: "Ping command"},
 					{Name: "ping", Description: "Another ping command"},
@@ -2170,12 +2114,12 @@ func TestAppRegistry_Register(t *testing.T) {
 			appId:   appWallet.Address[:],
 			ownerId: ownerWallet.Address[:],
 			metadata: &protocol.AppMetadata{
-				Username: "test_app_many_commands",
+				Username: proto.String("test_app_many_commands"),
 
-				DisplayName: "Test App Many Commands",
-				Description: "Test app with too many commands",
-				ImageUrl:    "https://example.com/image.png",
-				AvatarUrl:   "https://example.com/avatar.png",
+				DisplayName: proto.String("Test App Many Commands"),
+				Description: proto.String("Test app with too many commands"),
+				ImageUrl:    proto.String("https://example.com/image.png"),
+				AvatarUrl:   proto.String("https://example.com/avatar.png"),
 				SlashCommands: func() []*protocol.SlashCommand {
 					commands := make([]*protocol.SlashCommand, 26)
 					for i := 0; i < 26; i++ {
@@ -2232,4 +2176,163 @@ func TestAppRegistry_Register(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAppRegistry_SetAppMetadata_PartialUpdates(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{numBots: 1})
+	tester.StartBotServices()
+	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED)
+
+	appWallet, _ := tester.BotWallets(0)
+
+	// Test partial update - username only
+	t.Run("update username only", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					Username: proto.String("new_username_partial"),
+				},
+				UpdateMask: []string{"username"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.NoError(err)
+		tester.require.NotNil(resp)
+
+		// Verify only username changed
+		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
+			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+		})
+		tester.require.NoError(err)
+		tester.require.Equal("new_username_partial", getResp.Msg.Metadata.GetUsername())
+		// Other fields should remain unchanged from original registration
+	})
+
+	// Test partial update - display name and description
+	t.Run("update multiple fields", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					DisplayName: proto.String("Updated Display Name"),
+					Description: proto.String("Updated description text"),
+				},
+				UpdateMask: []string{"display_name", "description"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.NoError(err)
+		tester.require.NotNil(resp)
+
+		// Verify only specified fields changed
+		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
+			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+		})
+		tester.require.NoError(err)
+		tester.require.Equal("Updated Display Name", getResp.Msg.Metadata.GetDisplayName())
+		tester.require.Equal("Updated description text", getResp.Msg.Metadata.GetDescription())
+		tester.require.Equal("new_username_partial", getResp.Msg.Metadata.GetUsername()) // Should remain from previous test
+	})
+
+	// Test empty field mask validation
+	t.Run("empty field mask", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					Username: proto.String("should_be_ignored"),
+				},
+				UpdateMask: []string{}, // Empty mask
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.Error(err)
+		tester.require.Nil(resp)
+		tester.require.ErrorContains(err, "update_mask cannot be empty")
+	})
+
+	// Test invalid field in mask
+	t.Run("invalid field in mask", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					Username: proto.String("valid_username"),
+				},
+				UpdateMask: []string{"username", "invalid_field"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.Error(err)
+		tester.require.Nil(resp)
+		tester.require.ErrorContains(err, "invalid field in update mask")
+	})
+
+	// Test field-specific validation
+	t.Run("field validation - empty username", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					Username: proto.String(""), // Empty username
+				},
+				UpdateMask: []string{"username"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.Error(err)
+		tester.require.Nil(resp)
+		tester.require.ErrorContains(err, "username cannot be empty")
+	})
+
+	// Test clearing optional field
+	t.Run("clear external URL", func(t *testing.T) {
+		// First set an external URL
+		req := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					ExternalUrl: proto.String("https://example.com"),
+				},
+				UpdateMask: []string{"external_url"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, req)
+
+		_, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		tester.require.NoError(err)
+
+		// Now clear it
+		clearReq := &connect.Request[protocol.SetAppMetadataRequest]{
+			Msg: &protocol.SetAppMetadataRequest{
+				AppId: appWallet.Address[:],
+				Metadata: &protocol.AppMetadata{
+					ExternalUrl: nil, // Clear the field
+				},
+				UpdateMask: []string{"external_url"},
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, clearReq)
+
+		_, err = tester.appRegistryClient.SetAppMetadata(tester.ctx, clearReq)
+		tester.require.NoError(err)
+
+		// Verify it's cleared
+		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
+			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+		})
+		tester.require.NoError(err)
+		tester.require.Empty(getResp.Msg.Metadata.GetExternalUrl())
+	})
 }

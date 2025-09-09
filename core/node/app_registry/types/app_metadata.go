@@ -12,81 +12,6 @@ const MAX_RESOURCE_URL_LENGTH = 8192
 
 const MAX_SLASH_COMMANDS = 25
 
-type SlashCommand struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type AppMetadata struct {
-	// We omit the username property from the JSON serialization of the app metadata object because
-	// we store the username in a separate column so that we can performantly guarantee uniqueness
-	// between bot usernames.
-	Username      string         `json:"-"`
-	Description   string         `json:"description"`
-	ImageUrl      string         `json:"image_url"`
-	ExternalUrl   string         `json:"external_url,omitempty"`
-	AvatarUrl     string         `json:"avatar_url"`
-	SlashCommands []SlashCommand `json:"slash_commands,omitempty"`
-	DisplayName   string         `json:"display_name"`
-}
-
-func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
-	if metadata == nil {
-		return AppMetadata{}
-	}
-
-	externalUrl := ""
-	if metadata.ExternalUrl != nil {
-		externalUrl = *metadata.ExternalUrl
-	}
-
-	// Convert slash commands
-	var slashCommands []SlashCommand
-	for _, cmd := range metadata.GetSlashCommands() {
-		if cmd != nil {
-			slashCommands = append(slashCommands, SlashCommand{
-				Name:        cmd.GetName(),
-				Description: cmd.GetDescription(),
-			})
-		}
-	}
-
-	return AppMetadata{
-		Username:      metadata.GetUsername(),
-		Description:   metadata.GetDescription(),
-		ImageUrl:      metadata.GetImageUrl(),
-		ExternalUrl:   externalUrl,
-		AvatarUrl:     metadata.GetAvatarUrl(),
-		SlashCommands: slashCommands,
-		DisplayName:   metadata.GetDisplayName(),
-	}
-}
-
-func StorageToProtocolAppMetadata(metadata AppMetadata) *protocol.AppMetadata {
-	var externalUrl *string
-	if metadata.ExternalUrl != "" {
-		externalUrl = &metadata.ExternalUrl
-	}
-
-	// Convert slash commands
-	var slashCommands []*protocol.SlashCommand
-	for _, cmd := range metadata.SlashCommands {
-		slashCommands = append(slashCommands, &protocol.SlashCommand{
-			Name:        cmd.Name,
-			Description: cmd.Description,
-		})
-	}
-
-	return &protocol.AppMetadata{
-		Username:      metadata.Username,
-		Description:   metadata.Description,
-		ImageUrl:      metadata.ImageUrl,
-		ExternalUrl:   externalUrl,
-		AvatarUrl:     metadata.AvatarUrl,
-		SlashCommands: slashCommands,
-		DisplayName:   metadata.DisplayName,
-	}
-}
 
 // validFileUrlSchemes defines allowed URL schemes for image files.
 var validFileUrlSchemes = map[string]struct{}{
@@ -151,7 +76,66 @@ func ValidateExternalUrl(urlStr string) error {
 	return nil
 }
 
-// ValidateAppMetadata validates app metadata and returns an error if validation fails
+// ValidateAppMetadataFields validates app metadata fields based on update mask
+func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []string) error {
+	if metadata == nil {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
+	}
+
+	for _, field := range fieldMask {
+		switch field {
+		case "username":
+			if metadata.Username != nil {
+				if *metadata.Username == "" {
+					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
+				}
+			}
+		case "description":
+			if metadata.Description != nil {
+				if *metadata.Description == "" {
+					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
+				}
+			}
+		case "image_url":
+			if metadata.ImageUrl != nil {
+				if err := ValidateImageFileUrl(*metadata.ImageUrl); err != nil {
+					return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "image_url validation failed", err).
+						Tag("image_url", *metadata.ImageUrl)
+				}
+			}
+		case "avatar_url":
+			if metadata.AvatarUrl != nil {
+				if err := ValidateImageFileUrl(*metadata.AvatarUrl); err != nil {
+					return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "avatar_url validation failed", err).
+						Tag("avatar_url", *metadata.AvatarUrl)
+				}
+			}
+		case "external_url":
+			if metadata.ExternalUrl != nil && *metadata.ExternalUrl != "" {
+				if err := ValidateExternalUrl(*metadata.ExternalUrl); err != nil {
+					return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "external_url validation failed", err).
+						Tag("external_url", *metadata.ExternalUrl)
+				}
+			}
+		case "display_name":
+			if metadata.DisplayName != nil {
+				if *metadata.DisplayName == "" {
+					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
+				}
+			}
+		case "slash_commands":
+			if err := ValidateSlashCommands(metadata.GetSlashCommands()); err != nil {
+				return err
+			}
+		default:
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "invalid field in update mask").
+				Tag("field", field)
+		}
+	}
+	return nil
+}
+
+// ValidateAppMetadata validates complete app metadata (for compatibility during transition)
 func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	if metadata == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
@@ -188,18 +172,50 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		}
 	}
 
-	// Validate slash commands
-	slashCommands := metadata.GetSlashCommands()
-	if len(slashCommands) > MAX_SLASH_COMMANDS {
+	if err := ValidateSlashCommands(metadata.GetSlashCommands()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ValidateUpdateMask validates the update mask
+func ValidateUpdateMask(mask []string) error {
+	if len(mask) == 0 {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "update_mask cannot be empty")
+	}
+	
+	allowedFields := map[string]bool{
+		"username":       true,
+		"description":    true,
+		"image_url":      true,
+		"external_url":   true,
+		"avatar_url":     true,
+		"slash_commands": true,
+		"display_name":   true,
+	}
+	
+	for _, field := range mask {
+		if !allowedFields[field] {
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "invalid field in update mask").
+				Tag("field", field)
+		}
+	}
+	return nil
+}
+
+// ValidateSlashCommands validates slash commands
+func ValidateSlashCommands(commands []*protocol.SlashCommand) error {
+	if len(commands) > MAX_SLASH_COMMANDS {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT,
 			"app metadata slash command count exceeds maximum").
-			Tag("commandCount", len(slashCommands)).
+			Tag("commandCount", len(commands)).
 			Tag("maximum", MAX_SLASH_COMMANDS)
 	}
 
 	// Check for duplicate command names
 	commandNames := make(map[string]bool)
-	for _, cmd := range slashCommands {
+	for _, cmd := range commands {
 		if err := validateSlashCommand(cmd); err != nil {
 			return err
 		}

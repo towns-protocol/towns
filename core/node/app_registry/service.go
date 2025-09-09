@@ -417,7 +417,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error validating app contract address in user stream")
 	}
 
-	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), types.ProtocolToStorageAppMetadata(metadata), encrypted); err != nil {
+	if err := s.store.CreateApp(ctx, owner, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings()), metadata, encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
@@ -827,13 +827,20 @@ func (s *Service) SetAppMetadata(
 			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
 	}
 
-	// Validate metadata
+	// Validate update mask
+	updateMask := req.Msg.GetUpdateMask()
+	if err := types.ValidateUpdateMask(updateMask); err != nil {
+		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+			Tag("appId", app).Func("SetAppMetadata").Message("invalid update mask")
+	}
+
+	// Validate metadata fields based on update mask
 	metadata := req.Msg.GetMetadata()
-	if err := types.ValidateAppMetadata(metadata); err != nil {
+	if err := types.ValidateAppMetadataFields(metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
 			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
 	}
-	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
+	logging.FromCtx(ctx).Infow("meta", "meta", metadata, "updateMask", updateMask)
 
 	appInfo, err := s.store.GetAppInfo(ctx, app)
 	if err != nil {
@@ -847,7 +854,7 @@ func (s *Service) SetAppMetadata(
 			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
 	}
 
-	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+	if err := s.store.SetAppMetadata(ctx, app, metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Unable to update app metadata").
 			Tag("appId", app).
@@ -885,7 +892,7 @@ func (s *Service) GetAppMetadata(
 
 	return &connect.Response[GetAppMetadataResponse]{
 		Msg: &GetAppMetadataResponse{
-			Metadata: types.StorageToProtocolAppMetadata(*metadata),
+			Metadata: metadata,
 		},
 	}, nil
 }

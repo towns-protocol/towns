@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"encoding/hex"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"google.golang.org/protobuf/proto"
 
 	mapset "github.com/deckarep/golang-set/v2"
 
@@ -113,7 +115,7 @@ type (
 		Owner            common.Address
 		EncryptedSecret  [32]byte
 		Settings         types.AppSettings
-		Metadata         types.AppMetadata
+		Metadata         *protocol.AppMetadata
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
 	}
@@ -126,7 +128,7 @@ type (
 			owner common.Address,
 			app common.Address,
 			settings types.AppSettings,
-			metadata types.AppMetadata,
+			metadata *protocol.AppMetadata,
 			encryptedSharedSecret [32]byte,
 		) error
 
@@ -192,18 +194,19 @@ type (
 			sessionId string,
 		) (encryptionEnvelope []byte, err error)
 
-		// SetAppMetadata sets the metadata for an app
+		// SetAppMetadata sets the metadata for an app with partial update support
 		SetAppMetadata(
 			ctx context.Context,
 			app common.Address,
-			metadata types.AppMetadata,
+			metadata *protocol.AppMetadata,
+			fieldMask []string,
 		) error
 
 		// GetAppMetadata gets the metadata for an app
 		GetAppMetadata(
 			ctx context.Context,
 			app common.Address,
-		) (*types.AppMetadata, error)
+		) (*protocol.AppMetadata, error)
 
 		// IsUsernameAvailable checks if a username is available (case-sensitive)
 		IsUsernameAvailable(
@@ -317,7 +320,7 @@ func (s *PostgresAppRegistryStore) CreateApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
 	encryptedSharedSecret [32]byte,
 ) error {
 	return s.txRunner(
@@ -340,29 +343,54 @@ func (s *PostgresAppRegistryStore) createApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
 	encryptedSharedSecret [32]byte,
 	txn pgx.Tx,
 ) error {
-	// Marshal metadata to JSON (Name field is omitted via json:"-" tag)
-	metadataJSON, err := json.Marshal(metadata)
-	if err != nil {
-		return AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to marshal app metadata to JSON")
+	// Convert slash commands to JSON
+	var slashCommandsJSON []byte
+	if len(metadata.SlashCommands) > 0 {
+		var commands []map[string]string
+		for _, cmd := range metadata.SlashCommands {
+			if cmd != nil {
+				commands = append(commands, map[string]string{
+					"name":        cmd.GetName(),
+					"description": cmd.GetDescription(),
+				})
+			}
+		}
+		var err error
+		slashCommandsJSON, err = json.Marshal(commands)
+		if err != nil {
+			return AsRiverError(err, protocol.Err_INTERNAL).
+				Message("Unable to marshal slash commands to JSON")
+		}
+	} else {
+		slashCommandsJSON = []byte("[]")
+	}
+
+	var externalUrl *string
+	if metadata.ExternalUrl != nil && *metadata.ExternalUrl != "" {
+		externalUrl = metadata.ExternalUrl
 	}
 
 	if _, err := txn.Exec(
 		ctx,
-		"insert into app_registry (app_id, app_owner_id, encrypted_shared_secret, forward_setting, username, app_metadata) values ($1, $2, $3, $4, $5, $6);",
+		`insert into app_registry 
+		(app_id, app_owner_id, encrypted_shared_secret, forward_setting, 
+		 username, description, image_url, external_url, avatar_url, slash_commands, display_name) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
 		PGAddress(app),
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
 		int16(settings.ForwardSetting),
-		// We store the username in a separate column from the metadata so we can guarantee unique bot
-		// usernames. Therefore, the username field is removed from the JSON output of the app metadata struct,
-		// and is stored separately in its own column.
-		metadata.Username,
-		string(metadataJSON),
+		metadata.GetUsername(),
+		metadata.GetDescription(),
+		metadata.GetImageUrl(),
+		externalUrl,
+		metadata.GetAvatarUrl(),
+		string(slashCommandsJSON),
+		metadata.GetDisplayName(),
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			if strings.Contains(err.Error(), "app_registry_username_idx") {
@@ -370,6 +398,12 @@ func (s *PostgresAppRegistryStore) createApp(
 					protocol.Err_ALREADY_EXISTS,
 					err,
 				).Message("another app with the same username already exists")
+			}
+			if strings.Contains(err.Error(), "app_registry_display_name_idx") {
+				return WrapRiverError(
+					protocol.Err_ALREADY_EXISTS,
+					err,
+				).Message("another app with the same display name already exists")
 			}
 			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("app already exists")
 		} else {
@@ -549,13 +583,15 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	var encryptedSecret PGSecret
 	app = PGAddress(appAddr)
 	var appInfo AppInfo
-	var metadataJSON string
-	var username string
+	var username, description, imageUrl, externalUrl, avatarUrl, displayName sql.NullString
+	var slashCommandsJSON string
+	
 	if err := tx.QueryRow(
 		ctx,
 		`
-		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata, username,
-			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
+		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, 
+		           username, description, image_url, external_url, avatar_url, slash_commands, display_name,
+			       COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
 		    FROM app_registry WHERE app_id = $1
 		`,
 		app,
@@ -564,8 +600,13 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&owner,
 		&encryptedSecret,
 		&appInfo.Settings.ForwardSetting,
-		&metadataJSON,
 		&username,
+		&description,
+		&imageUrl,
+		&externalUrl,
+		&avatarUrl,
+		&slashCommandsJSON,
+		&displayName,
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
@@ -581,14 +622,44 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		appInfo.Owner = common.BytesToAddress(owner[:])
 		appInfo.EncryptedSecret = encryptedSecret
 
-		// Parse metadata JSON and apply the username field from its separate column.
-		// The metadata JSON will not have a Username field defined, as it is omitted from
-		// the json serialization of the object. DisplayName is stored within the JSON.
-		if err := json.Unmarshal([]byte(metadataJSON), &appInfo.Metadata); err != nil {
-			return nil, AsRiverError(err, protocol.Err_INTERNAL).
-				Message("Unable to unmarshal app metadata from JSON")
+		// Build metadata from individual columns
+		appInfo.Metadata = &protocol.AppMetadata{}
+		
+		if username.Valid && username.String != "" {
+			appInfo.Metadata.Username = proto.String(username.String)
 		}
-		appInfo.Metadata.Username = username
+		if description.Valid && description.String != "" {
+			appInfo.Metadata.Description = proto.String(description.String)
+		}
+		if imageUrl.Valid && imageUrl.String != "" {
+			appInfo.Metadata.ImageUrl = proto.String(imageUrl.String)
+		}
+		if externalUrl.Valid && externalUrl.String != "" {
+			appInfo.Metadata.ExternalUrl = proto.String(externalUrl.String)
+		}
+		if avatarUrl.Valid && avatarUrl.String != "" {
+			appInfo.Metadata.AvatarUrl = proto.String(avatarUrl.String)
+		}
+		if displayName.Valid && displayName.String != "" {
+			appInfo.Metadata.DisplayName = proto.String(displayName.String)
+		}
+		
+		// Parse slash commands
+		if slashCommandsJSON != "" && slashCommandsJSON != "[]" {
+			var commands []map[string]string
+			if err := json.Unmarshal([]byte(slashCommandsJSON), &commands); err == nil {
+				for _, cmd := range commands {
+					if name, ok := cmd["name"]; ok {
+						if desc, ok := cmd["description"]; ok {
+							appInfo.Metadata.SlashCommands = append(appInfo.Metadata.SlashCommands, &protocol.SlashCommand{
+								Name:        name,
+								Description: desc,
+							})
+						}
+					}
+				}
+			}
+		}
 	}
 	return &appInfo, nil
 }
@@ -1031,50 +1102,128 @@ func (s *PostgresAppRegistryStore) Close(ctx context.Context) {
 func (s *PostgresAppRegistryStore) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
+	fieldMask []string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"SetAppMetadata",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.setAppMetadata(ctx, app, metadata, tx)
+			return s.setAppMetadata(ctx, app, metadata, fieldMask, tx)
 		},
 		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"metadata", metadata,
+		"fieldMask", fieldMask,
 	)
 }
 
 func (s *PostgresAppRegistryStore) setAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
+	fieldMask []string,
 	txn pgx.Tx,
 ) error {
-	// Marshal metadata to JSON (Username field is omitted via json:"-" tag)
-	metadataJSON, err := json.Marshal(metadata)
-	if err != nil {
-		return AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to marshal app metadata to JSON").
-			Tag("metadata", metadata).Tag("username", metadata.Username)
+	if len(fieldMask) == 0 {
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "no fields to update")
 	}
 
-	tag, err := txn.Exec(
-		ctx,
-		`UPDATE app_registry SET app_metadata = $2, username = $3 WHERE app_id = $1`,
-		PGAddress(app),
-		string(metadataJSON),
-		// We store the username in a separate column so we can guarantee unique bot usernames.
-		// The Username field is omitted from the serialized JSON, so there is no duplication here.
-		metadata.Username,
-	)
+	// Build dynamic SQL based on fieldMask
+	setParts := make([]string, 0, len(fieldMask))
+	args := []interface{}{PGAddress(app)}
+	argIndex := 2
+
+	for _, field := range fieldMask {
+		switch field {
+		case "username":
+			if metadata.Username != nil {
+				setParts = append(setParts, fmt.Sprintf("username = $%d", argIndex))
+				args = append(args, *metadata.Username)
+				argIndex++
+			}
+		case "description":
+			if metadata.Description != nil {
+				setParts = append(setParts, fmt.Sprintf("description = $%d", argIndex))
+				args = append(args, *metadata.Description)
+				argIndex++
+			}
+		case "image_url":
+			if metadata.ImageUrl != nil {
+				setParts = append(setParts, fmt.Sprintf("image_url = $%d", argIndex))
+				args = append(args, *metadata.ImageUrl)
+				argIndex++
+			}
+		case "external_url":
+			setParts = append(setParts, fmt.Sprintf("external_url = $%d", argIndex))
+			if metadata.ExternalUrl != nil && *metadata.ExternalUrl != "" {
+				args = append(args, *metadata.ExternalUrl)
+			} else {
+				args = append(args, nil)
+			}
+			argIndex++
+		case "avatar_url":
+			if metadata.AvatarUrl != nil {
+				setParts = append(setParts, fmt.Sprintf("avatar_url = $%d", argIndex))
+				args = append(args, *metadata.AvatarUrl)
+				argIndex++
+			}
+		case "display_name":
+			if metadata.DisplayName != nil {
+				setParts = append(setParts, fmt.Sprintf("display_name = $%d", argIndex))
+				args = append(args, *metadata.DisplayName)
+				argIndex++
+			}
+		case "slash_commands":
+			var slashCommandsJSON []byte
+			if len(metadata.SlashCommands) > 0 {
+				var commands []map[string]string
+				for _, cmd := range metadata.SlashCommands {
+					if cmd != nil {
+						commands = append(commands, map[string]string{
+							"name":        cmd.GetName(),
+							"description": cmd.GetDescription(),
+						})
+					}
+				}
+				var err error
+				slashCommandsJSON, err = json.Marshal(commands)
+				if err != nil {
+					return AsRiverError(err, protocol.Err_INTERNAL).
+						Message("Unable to marshal slash commands to JSON")
+				}
+			} else {
+				slashCommandsJSON = []byte("[]")
+			}
+			setParts = append(setParts, fmt.Sprintf("slash_commands = $%d", argIndex))
+			args = append(args, string(slashCommandsJSON))
+			argIndex++
+		}
+	}
+
+	if len(setParts) == 0 {
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "no fields to update")
+	}
+
+	query := fmt.Sprintf("UPDATE app_registry SET %s WHERE app_id = $1", strings.Join(setParts, ", "))
+	tag, err := txn.Exec(ctx, query, args...)
+	
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
-			return WrapRiverError(
-				protocol.Err_ALREADY_EXISTS,
-				err,
-			).Message("another app with the same username already exists")
+			if strings.Contains(err.Error(), "app_registry_username_idx") {
+				return WrapRiverError(
+					protocol.Err_ALREADY_EXISTS,
+					err,
+				).Message("another app with the same username already exists")
+			}
+			if strings.Contains(err.Error(), "app_registry_display_name_idx") {
+				return WrapRiverError(
+					protocol.Err_ALREADY_EXISTS,
+					err,
+				).Message("another app with the same display name already exists")
+			}
+			return WrapRiverError(protocol.Err_ALREADY_EXISTS, err).Message("constraint violation")
 		} else {
 			return RiverErrorWithBase(protocol.Err_DB_OPERATION_FAILURE, "unable to update the app metadata", err)
 		}
@@ -1089,8 +1238,8 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 func (s *PostgresAppRegistryStore) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-) (*types.AppMetadata, error) {
-	var metadata *types.AppMetadata
+) (*protocol.AppMetadata, error) {
+	var metadata *protocol.AppMetadata
 	err := s.txRunner(
 		ctx,
 		"GetAppMetadata",
@@ -1113,14 +1262,18 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	ctx context.Context,
 	app common.Address,
 	tx pgx.Tx,
-) (*types.AppMetadata, error) {
-	var metadataJSON string
-	var username string
+) (*protocol.AppMetadata, error) {
+	var username, description, imageUrl, externalUrl, avatarUrl, displayName sql.NullString
+	var slashCommandsJSON string
+	
 	if err := tx.QueryRow(
 		ctx,
-		`SELECT app_metadata, username FROM app_registry WHERE app_id = $1`,
+		`SELECT username, description, image_url, external_url, avatar_url, slash_commands, display_name 
+		 FROM app_registry WHERE app_id = $1`,
 		PGAddress(app),
-	).Scan(&metadataJSON, &username); err != nil {
+	).Scan(
+		&username, &description, &imageUrl, &externalUrl, &avatarUrl, &slashCommandsJSON, &displayName,
+	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
@@ -1129,16 +1282,46 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		}
 	}
 
-	var metadata types.AppMetadata
-	if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
-		return nil, AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to unmarshal app metadata from JSON")
+	// Build protobuf object directly
+	metadata := &protocol.AppMetadata{}
+	
+	if username.Valid && username.String != "" {
+		metadata.Username = proto.String(username.String)
 	}
-	// Set the Username field from its separate column.
-	// DisplayName is already in the metadata JSON.
-	metadata.Username = username
-
-	return &metadata, nil
+	if description.Valid && description.String != "" {
+		metadata.Description = proto.String(description.String)
+	}
+	if imageUrl.Valid && imageUrl.String != "" {
+		metadata.ImageUrl = proto.String(imageUrl.String)
+	}
+	if externalUrl.Valid && externalUrl.String != "" {
+		metadata.ExternalUrl = proto.String(externalUrl.String)
+	}
+	if avatarUrl.Valid && avatarUrl.String != "" {
+		metadata.AvatarUrl = proto.String(avatarUrl.String)
+	}
+	if displayName.Valid && displayName.String != "" {
+		metadata.DisplayName = proto.String(displayName.String)
+	}
+	
+	// Parse slash commands
+	if slashCommandsJSON != "" && slashCommandsJSON != "[]" {
+		var commands []map[string]string
+		if err := json.Unmarshal([]byte(slashCommandsJSON), &commands); err == nil {
+			for _, cmd := range commands {
+				if name, ok := cmd["name"]; ok {
+					if desc, ok := cmd["description"]; ok {
+						metadata.SlashCommands = append(metadata.SlashCommands, &protocol.SlashCommand{
+							Name:        name,
+							Description: desc,
+						})
+					}
+				}
+			}
+		}
+	}
+	
+	return metadata, nil
 }
 
 func (s *PostgresAppRegistryStore) IsUsernameAvailable(

@@ -48,7 +48,7 @@ type CachedEncryptedMessageQueue struct {
 
 // metadataCacheEntry holds cached metadata with a timestamp for TTL validation
 type metadataCacheEntry struct {
-	metadata  *types.AppMetadata
+	metadata  *protocol.AppMetadata
 	timestamp time.Time
 }
 
@@ -82,7 +82,7 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	owner common.Address,
 	app common.Address,
 	settings types.AppSettings,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
 	sharedSecret [32]byte,
 ) error {
 	fs := &ForwardState{}
@@ -97,7 +97,7 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	// Pre-warm metadata cache for newly created app
 	cacheKey := app.String()
 	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
-		metadata:  &metadata,
+		metadata:  metadata,
 		timestamp: time.Now(),
 	})
 
@@ -161,22 +161,17 @@ func (q *CachedEncryptedMessageQueue) GetSessionKey(
 func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata types.AppMetadata,
+	metadata *protocol.AppMetadata,
+	fieldMask []string,
 ) error {
-	err := q.store.SetAppMetadata(ctx, app, metadata)
+	err := q.store.SetAppMetadata(ctx, app, metadata, fieldMask)
 	if err != nil {
 		return err
 	}
 
-	// Invalidate cache on successful update
+	// Invalidate cache on successful update since we don't have the full object
 	cacheKey := app.String()
 	q.metadataCache.Remove(cacheKey)
-
-	// Pre-populate with new value
-	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
-		metadata:  &metadata,
-		timestamp: time.Now(),
-	})
 
 	return nil
 }
@@ -184,7 +179,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-) (*types.AppMetadata, error) {
+) (*protocol.AppMetadata, error) {
 	cacheKey := app.String()
 
 	// Check cache with TTL validation (15 seconds)
