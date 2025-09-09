@@ -105,6 +105,11 @@ type eventBusImpl struct {
 	registry syncer.Registry
 	// subscribers is the list of subscribers grouped by stream ID and syncer version.
 	subscribers map[StreamId]map[int][]StreamSubscriber
+	// subscribersLock protects the subscribers map.
+	// The given lock is used to avoid race condition when the queue is full and stream update cannot be added to the queue
+	// for further processing. In this case we need to send SyncOp_SYNC_DOWN message directly to subscribers in
+	// OnStreamEvent method, and we need to lock the subscribers map for that.
+	subscribersLock sync.Mutex
 }
 
 // New creates a new instance of the event bus implementation.
@@ -153,34 +158,15 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 		return
 	}
 
-	streamID, parseErr := StreamIdFromBytes(update.StreamID())
-	if parseErr != nil {
-		e.log.Errorw("failed to unsubscribe: failed to parse stream id",
-			"streamID", update.StreamID(), "error", err, "parseErr", parseErr)
-		return
-	}
+	e.log.Errorw("failed to add stream update message to the queue", "error", err)
 
-	e.log.Errorw("failed to add stream update message to the queue", "streamID", streamID, "error", err)
-
-	// Unsubscribe event bus from receiving updates of the given stream.
-	e.registry.EnqueueUnsubscribe(streamID)
-
-	// Send sync down message directly to clients to avoid common queue.
-	// TODO: Explore using worker pool here.
-	var wg sync.WaitGroup
-	for _, subscribers := range e.subscribers[streamID] {
-		wg.Add(len(subscribers))
-		for _, sub := range subscribers {
-			go func(sub StreamSubscriber) {
-				sub.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
-				wg.Done()
-			}(sub)
-		}
-	}
-	wg.Wait()
-
-	// Remove the given stream from the list
-	delete(e.subscribers, streamID)
+	// Send sync down message for the given stream directly to clients.
+	// Subscribers do not want to unsubscribe from the given stream here so after receiving the sync down message
+	// they most likely will immediately re-subscribe -> we can keep the current syncer for the given stream active.
+	e.processStreamUpdateCommand(
+		&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: update.StreamID()},
+		version,
+	)
 }
 
 func (e *eventBusImpl) EnqueueSubscribe(cookie *SyncCookie, subscriber StreamSubscriber) error {
@@ -273,6 +259,9 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
+	e.subscribersLock.Lock()
+	defer e.subscribersLock.Unlock()
+
 	groupedSubscribers, ok := e.subscribers[streamID]
 	if !ok {
 		// No subscribers for the given stream, do nothing
@@ -355,6 +344,9 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 			"streamID", msg.StreamID(), "error", err)
 		return
 	}
+
+	e.subscribersLock.Lock()
+	defer e.subscribersLock.Unlock()
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The following logic removes the subscriber with the given sync ID from the list of subscribers
@@ -439,6 +431,9 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		return
 	}
 
+	e.subscribersLock.Lock()
+	defer e.subscribersLock.Unlock()
+
 	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers, ok := e.subscribers[streamID]
@@ -471,6 +466,9 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 	if msg == nil {
 		return
 	}
+
+	e.subscribersLock.Lock()
+	defer e.subscribersLock.Unlock()
 
 	for version := range e.subscribers[msg.streamID] {
 		e.subscribers[msg.streamID][version] = slices.DeleteFunc(
