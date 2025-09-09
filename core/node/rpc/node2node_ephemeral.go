@@ -74,7 +74,11 @@ func (s *Service) allocateEphemeralStream(
 				)
 			}
 			if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
-				return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w", err, deleteErr)
+				return nil, fmt.Errorf(
+					"failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w",
+					err,
+					deleteErr,
+				)
 			}
 			return nil, fmt.Errorf("failed to create external media stream upload entry: %w.", err)
 		}
@@ -232,7 +236,13 @@ func (s *Service) sealEphemeralStream(
 			return common.Hash{}, fmt.Errorf("failed to complete multipart upload: %w", err)
 		}
 		if err = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); err != nil {
-			log.Error("failed to delete external media stream upload entry, with error: %w", "streamId", streamId, "error", err)
+			log.Error(
+				"failed to delete external media stream upload entry, with error: %w",
+				"streamId",
+				streamId,
+				"error",
+				err,
+			)
 		}
 	}
 	return s.storage.NormalizeEphemeralStream(ctx, streamId)

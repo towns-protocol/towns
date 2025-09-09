@@ -282,7 +282,13 @@ func (s *Service) replicatedAddMediaEventImpl(
 				return fmt.Errorf("failed to complete multipart upload: %w", err)
 			}
 			if err = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); err != nil {
-				log.Error("failed to delete external media stream upload entry, with error: %w", "streamId", streamId, "error", err)
+				log.Error(
+					"failed to delete external media stream upload entry, with error: %w",
+					"streamId",
+					streamId,
+					"error",
+					err,
+				)
 			}
 		}
 

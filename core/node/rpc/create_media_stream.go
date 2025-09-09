@@ -241,7 +241,11 @@ func (s *Service) createReplicatedMediaStream(
 					)
 				}
 				if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
-					return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w", err, deleteErr)
+					return nil, fmt.Errorf(
+						"failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w",
+						err,
+						deleteErr,
+					)
 				}
 				return nil, fmt.Errorf("failed to create external media stream upload entry: %w.", err)
 			}
