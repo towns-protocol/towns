@@ -6406,16 +6406,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ponder/utils@npm:0.2.8":
-  version: 0.2.8
-  resolution: "@ponder/utils@npm:0.2.8"
+"@ponder/utils@npm:0.2.12":
+  version: 0.2.12
+  resolution: "@ponder/utils@npm:0.2.12"
   peerDependencies:
     typescript: ">=5.0.4"
     viem: ">=2"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: e2656263850f5d134359ae93f130da25dc2f3e8924b9b296ad6db5dbe0e5c2fdabf1b44f8a4b792499e1de155ad72bcb6f537d92b5392c223eb65e26940e203e
+  checksum: 0bb0c705415bf4387c2b9df7978c8e1396f54d70b94d5f2698aa8751cc5e9b32c5893f417a0c86cd40dda1e5fffe203e573b0a98f5297fff57d5c78994be1734
   languageName: node
   linkType: hard
 
@@ -9706,7 +9706,7 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-prettier: ^5.2.6
     hono: ^4.7.11
-    ponder: ^0.11.17
+    ponder: ^0.12.21
     prettier: ^3.5.3
     tsx: ^4.7.1
     typescript: ^5.8.2
@@ -25787,9 +25787,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ponder@npm:^0.11.17":
-  version: 0.11.17
-  resolution: "ponder@npm:0.11.17"
+"ponder@npm:^0.12.21":
+  version: 0.12.21
+  resolution: "ponder@npm:0.12.21"
   dependencies:
     "@babel/code-frame": ^7.23.4
     "@commander-js/extra-typings": ^12.0.1
@@ -25798,7 +25798,7 @@ __metadata:
     "@escape.tech/graphql-armor-max-depth": ^2.2.0
     "@escape.tech/graphql-armor-max-tokens": ^2.3.0
     "@hono/node-server": 1.13.3
-    "@ponder/utils": 0.2.8
+    "@ponder/utils": 0.2.12
     abitype: ^0.10.2
     ansi-escapes: ^7.0.0
     commander: ^12.0.0
@@ -25826,6 +25826,7 @@ __metadata:
     vite: 5.0.7
     vite-node: 1.0.2
     vite-tsconfig-paths: 4.3.1
+    ws: ^8.18.3
   peerDependencies:
     hono: ">=4.5"
     typescript: ">=5.0.4"
@@ -25835,7 +25836,7 @@ __metadata:
       optional: true
   bin:
     ponder: dist/esm/bin/ponder.js
-  checksum: 07450b78391b3256e2a209a73f14e4b45de1cac19025791335f8a48e9dfcb4ef6ddea21228a6dad143001f8591853eac4a44ee481d8fae6ace1a9ad1d980ebca
+  checksum: 7201beefacc52b566519195af1ba65b755cd4fbf21c0851ce62093b2cdd9b897efcd74593ddd6ba9b33a1cb3c1f512f442a715f38e623f8d1aafbcfd22527115
   languageName: node
   linkType: hard
 
@@ -32624,6 +32625,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: c3c100a181b731f40b7f2fddf004aa023f79d64f489706a28bc23ff88e87f6a64b3c6651fbec3a84a53960b75159574d7a7385709847a62ddb7ad6af76f49138
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.18.3":
+  version: 8.18.3
+  resolution: "ws@npm:8.18.3"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: d64ef1631227bd0c5fe21b3eb3646c9c91229402fb963d12d87b49af0a1ef757277083af23a5f85742bae1e520feddfb434cb882ea59249b15673c16dc3f36e0
   languageName: node
   linkType: hard
 
