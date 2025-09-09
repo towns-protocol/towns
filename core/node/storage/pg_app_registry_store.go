@@ -1246,7 +1246,15 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	}
 
 	// Build protobuf object using helper function
-	return buildAppMetadata(username, description, imageUrl, externalUrl, avatarUrl, displayName, slashCommandsJSON), nil
+	return buildAppMetadata(
+		username,
+		description,
+		imageUrl,
+		externalUrl,
+		avatarUrl,
+		displayName,
+		slashCommandsJSON,
+	), nil
 }
 
 // buildAppMetadata creates an AppMetadata protobuf from individual database columns
