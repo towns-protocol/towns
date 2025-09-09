@@ -1,4 +1,4 @@
-# CLAUDE.md - Stress Test Package
+# Overview - Stress Test Package
 
 This file provides guidance for working with the stress test package.
 

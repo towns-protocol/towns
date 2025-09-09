@@ -1,4 +1,4 @@
-# CLAUDE.md - Towns Protocol Contracts
+# Overview - Towns Protocol Contracts
 
 ## Overview
 

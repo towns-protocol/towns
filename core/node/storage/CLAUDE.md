@@ -1,6 +1,6 @@
-# CLAUDE.md - Towns Storage Layer
+# Overview - Towns Storage Layer
 
-This file provides guidance to Claude Code when working with the Towns (formerly River) storage implementation.
+This file provides guidance to coding agents when working with the Towns (formerly River) storage implementation.
 
 ## Overview
 
