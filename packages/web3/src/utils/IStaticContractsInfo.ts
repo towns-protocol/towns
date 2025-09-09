@@ -140,6 +140,10 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                         'APP_REGISTRY_ADDRESS', // deprecated
                     ],
                 }) as Address,
+                subscriptionModule: requiredEnv({
+                    environmentId,
+                    keys: ['BASE_ADDRESSES_SUBSCRIPTION_MODULE'],
+                }) as Address,
                 utils: {
                     mockNFT: optionalEnv({
                         environmentId,
