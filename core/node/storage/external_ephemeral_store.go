@@ -128,8 +128,8 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	var etag string
 	err := retryWithBackoff(ctx, "UploadPart", func() error {
 		tag, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
-			Bucket:        &w.bucket,
-			Key:           &key,
+			Bucket: &w.bucket,
+			Key:    &key,
 			// Part number is 1-indexed
 			PartNumber:    int32(miniblock + 1),
 			UploadId:      &uploadID,
@@ -161,9 +161,9 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	var parts []types.CompletedPart
 	for _, etag := range etags {
 		parts = append(parts, types.CompletedPart{
-			ETag:       &etag.Etag,
+			ETag: &etag.Etag,
 			// Part number is 1-indexed
-			PartNumber: int32(etag.Miniblock+1),
+			PartNumber: int32(etag.Miniblock + 1),
 		})
 	}
 
@@ -216,15 +216,22 @@ func (w *ExternalMediaStore) GetBucket() string {
 	return w.bucket
 }
 
-func DownloadChunkFromExternal(
+func DownloadRangeFromExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
-	rangeHeader string,
+	rangeHeaders []MiniblockRange,
 	bucket string,
 	client *s3.Client,
 ) ([]byte, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
+
+	// Get the range of the entire data to read
+	rangeHeader := fmt.Sprintf(
+		"bytes=%d-%d",
+		rangeHeaders[0].StartInclusive,
+		rangeHeaders[len(rangeHeaders)-1].EndInclusive,
+	)
 
 	var data []byte
 	err := retryWithBackoff(ctx, "GetObject", func() error {

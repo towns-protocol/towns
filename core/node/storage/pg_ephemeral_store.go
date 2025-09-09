@@ -548,54 +548,76 @@ func (s *PostgresStreamStore) getExternalMediaStreamUploadInfoTx(
 	for i, e := range etags {
 		etagsNoTags[i] = Etag{
 			Miniblock: e.Miniblock,
-			Etag:       e.Etag,
+			Etag:      e.Etag,
 		}
 	}
 
 	return uploadID, etagsNoTags, nil
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkers(
+func (s *PostgresStreamStore) GetExternalMediaStreamRangeMarkers(
 	ctx context.Context,
-	miniblock int64,
-) (string, error) {
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) ([]MiniblockRange, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	var rangeHeader string
+	var rangeMarkers []MiniblockRange
 	err := s.txRunner(
 		ctx,
-		"GetExternalMediaStreamMiniblockDataMarkers",
+		"GetExternalMediaStreamRangeMarkers",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			rangeHeader, err = s.getExternalMediaStreamMiniblockDataMarkersTx(ctx, tx, miniblock)
+			rangeMarkers, err = s.GetExternalMediaStreamRangeMarkersTx(ctx, tx, streamId, fromInclusive, toExclusive)
 			return err
 		},
 		nil,
-		"miniblock", miniblock,
+		"streamId", streamId,
+		"fromInclusive", fromInclusive,
+		"toExclusive", toExclusive,
 	)
-	return rangeHeader, err
+	return rangeMarkers, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamMiniblockDataMarkersTx(
+func (s *PostgresStreamStore) GetExternalMediaStreamRangeMarkersTx(
 	ctx context.Context,
 	tx pgx.Tx,
-	miniblock int64,
-) (string, error) {
-	var startBytes, endBytes int64
-	err := tx.QueryRow(ctx, `
+	streamId StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) ([]MiniblockRange, error) {
+	rows, err := tx.Query(ctx, `
 		SELECT start_bytes, end_bytes 
-		FROM external_media_chunks 
-		WHERE miniblock = $1`,
-		miniblock).Scan(&startBytes, &endBytes)
+		FROM external_media_markers
+		WHERE stream_id = $1 AND miniblock >= $2 AND miniblock < $3
+		ORDER BY miniblock`,
+		streamId, fromInclusive, toExclusive)
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rangeMarkers []MiniblockRange
+	for rows.Next() {
+		var startBytes, endBytes int64
+		if err := rows.Scan(&startBytes, &endBytes); err != nil {
+			return nil, err
+		}
+
+		rangeMarkers = append(rangeMarkers, MiniblockRange{
+			StartInclusive: startBytes,
+			EndInclusive:   endBytes,
+		})
 	}
 
-	// Construct range header in S3 format: bytes=start-end
-	rangeHeader := fmt.Sprintf("bytes=%d-%d", startBytes, endBytes)
-	return rangeHeader, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return rangeMarkers, nil
 }
 
 func (s *PostgresStreamStore) DeleteExternalMediaStreamUploadEntry(

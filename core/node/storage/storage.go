@@ -85,7 +85,7 @@ type (
 
 	Etag struct {
 		Miniblock int    `json:"miniblock"`
-		Etag       string `json:"etag"`
+		Etag      string `json:"etag"`
 	}
 
 	StreamStorage interface {
@@ -196,7 +196,12 @@ type (
 			length int,
 		) error
 
-		GetExternalMediaStreamMiniblockDataMarkers(ctx context.Context, miniblock int64) (string, error)
+		GetExternalMediaStreamRangeMarkers(
+			ctx context.Context,
+			streamId StreamId,
+			fromInclusive int64,
+			toExclusive int64,
+		) ([]MiniblockRange, error)
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
