@@ -218,7 +218,7 @@
     {
       "label": "Stop Nodes and Services",
       "type": "shell",
-      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
+      "command": "echo 'killing local_dev' && kill $(ps -ax | grep 'run_files/local_dev' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -254,9 +254,15 @@
     {
       "label": "Configure Nodes",
       "type": "shell",
-      "command": "cd ./core && just config build",
+      "command": "just config build",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
       "presentation": {
         "group": "ephemeral",
         "focus": true,
@@ -266,9 +272,15 @@
     {
       "label": "BaseChain",
       "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-basechain.sh",
+      "command": "just anvil-base",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
       "presentation": {
         "group": "local-blockchains"
       }
@@ -276,9 +288,15 @@
     {
       "label": "RiverChain",
       "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-riverchain.sh",
+      "command": "just anvil-river",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
       "presentation": {
         "group": "local-blockchains"
       }
@@ -286,7 +304,7 @@
     {
       "label": "Build Contracts",
       "type": "shell",
-      "command": "./scripts/build-contracts.sh",
+      "command": "yarn workspace @towns-protocol/contracts compile",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -477,6 +495,53 @@
         "isDefault": true
       },
       "dependsOrder": "sequence"
+    },
+    {
+      "label": "~Start Local Docker Dev~",
+      "dependsOn": [
+        "Dependencies",
+        "BuildLocalDockerImage",
+        "AnvilsLocalDocker",
+        "Configure Nodes",
+        "Stage 3"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "BuildLocalDockerImage",
+      "type": "shell",
+      "command": "just build-local-docker",
+      "isBackground": false,
+      "problemMatcher": [],
+      "options": {
+        "cwd": "./core"
+      },
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "AnvilsLocalDocker",
+      "type": "shell",
+      "command": "just anvils",
+      "isBackground": true,
+      "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_LOCAL_DOCKER": "1",
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
+      "presentation": {
+        "group": "local-blockchains"
+      }
     },
     {
       "label": "Kill All, Clean and Start Local Dev",
