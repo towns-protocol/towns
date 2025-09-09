@@ -169,7 +169,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 		return err
 	}
 
-	// Invalidate cache on successful update since we don't have the full object
+	// Invalidate cache on successful update
 	cacheKey := app.String()
 	q.metadataCache.Remove(cacheKey)
 
