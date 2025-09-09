@@ -166,10 +166,6 @@ contract SubscriptionModuleFacet is
         SubscriptionModule__NotSupported.selector.revertWith();
     }
 
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                         Renewals                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
     /// @inheritdoc ISubscriptionModule
     function batchProcessRenewals(RenewalParams[] calldata params) external nonReentrant {
         uint256 length = params.length;
@@ -216,10 +212,6 @@ contract SubscriptionModuleFacet is
             renewalParams
         );
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Subscription                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISubscriptionModule
     function getSubscription(
