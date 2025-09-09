@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"hash/fnv"
@@ -1795,6 +1796,11 @@ func (tcs testClients) compareNowImpl(
 
 			success = success && assert.Equal(len(firstUpdates), len(clientUpdates))
 
+			clientEvents := make(map[common.Hash]*Envelope)
+			clientMiniblocks := make(map[common.Hash]*Miniblock)
+			firstEvents := make(map[common.Hash]*Envelope)
+			firstMiniblocks := make(map[common.Hash]*Miniblock)
+
 			for j, first := range firstUpdates {
 				if !success {
 					break LOOP
@@ -1824,22 +1830,56 @@ func (tcs testClients) compareNowImpl(
 					first.GetStream().GetSyncReset(),
 					clientUpdate.GetStream().GetSyncReset())
 
-				success = success && assert.Equal(
-					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen(),
-					"minipool gen differs [%d:%d]: %d / %d",
-					i+1, j,
-					first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
+				// Compare next sync cookie only if node address matches
+				if bytes.Equal(
+					first.GetStream().GetNextSyncCookie().GetNodeAddress(),
+					clientUpdate.GetStream().GetNextSyncCookie().GetNodeAddress()) {
+					success = success && assert.Equal(
+						first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+						clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+						"minipool gen differs [%d:%d]: %d / %d",
+						i+1, j,
+						first.GetStream().GetNextSyncCookie().GetMinipoolGen(),
+						clientUpdate.GetStream().GetNextSyncCookie().GetMinipoolGen())
 
-				success = success && assert.Equal(
-					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
-					"prev miniblock hash differs [%d:%d]: %x / %x",
-					i+1, j,
-					first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
-					clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
+					success = success && assert.Equal(
+						first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+						clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+						"prev miniblock hash differs [%d:%d]: %x / %x",
+						i+1, j,
+						first.GetStream().GetNextSyncCookie().GetPrevMiniblockHash(),
+						clientUpdate.GetStream().GetNextSyncCookie().GetPrevMiniblockHash())
+				}
+
+				for _, event := range first.GetStream().GetEvents() {
+					firstEvents[common.BytesToHash(event.Hash)] = event
+				}
+				for _, mb := range first.GetStream().GetMiniblocks() {
+					firstMiniblocks[common.BytesToHash(mb.Header.Hash)] = mb
+				}
+				for _, event := range clientUpdate.GetStream().GetEvents() {
+					clientEvents[common.BytesToHash(event.Hash)] = event
+				}
+				for _, mb := range clientUpdate.GetStream().GetMiniblocks() {
+					clientMiniblocks[common.BytesToHash(mb.Header.Hash)] = mb
+				}
 			}
+
+			success = success && assert.Equal(
+				firstEvents,
+				clientEvents,
+				"events differ [%d]: %v / %v",
+				i+1,
+				firstEvents,
+				clientEvents)
+
+			success = success && assert.Equal(
+				firstMiniblocks,
+				clientMiniblocks,
+				"miniblocks differ [%d]: %v / %v",
+				i+1,
+				firstMiniblocks,
+				clientMiniblocks)
 		}
 	}
 
