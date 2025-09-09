@@ -225,12 +225,10 @@ message AppMetadata {
 
     string description = 2;
 
-    // image_url is an image URL with an acceptable schema and file extension.
     string image_url = 3;
 
     optional string external_url = 4;
 
-    // avatar_url is an image URL with an acceptable schema and file extension.
     string avatar_url = 5;
 
     // slash_commands is a list of commands the bot supports.
@@ -238,7 +236,7 @@ message AppMetadata {
     repeated SlashCommand slash_commands = 6;
 
     // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
-    // Must be non-empty and unique across all bots.
+    // Must be non-empty.
     string display_name = 7;
 }
 

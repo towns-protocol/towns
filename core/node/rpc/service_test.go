@@ -28,6 +28,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
@@ -592,7 +593,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 			channel,
 		},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := client.SyncStreams(
@@ -755,7 +756,7 @@ func testSyncStreams(tester *serviceTester) {
 			channel1,
 		},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	// sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
@@ -844,7 +845,7 @@ func testAddStreamsToSync(tester *serviceTester) {
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	// bob sync streams
 	syncCtx, syncCancel := context.WithCancel(ctx)
@@ -936,7 +937,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{
 		SyncPos: []*protocol.SyncCookie{},
 	})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 	syncCtx, syncCancel := context.WithCancel(ctx)
 	syncRes, err := bobClient.SyncStreams(
 		syncCtx,
@@ -1274,7 +1275,7 @@ func TestStreamSyncPingPong(t *testing.T) {
 	// create stream sub
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: nil})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 	syncRes, err := client.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
 
@@ -1374,7 +1375,7 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 	defer syncCancel()
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 	updates, err := alice.client.SyncStreams(syncCtx, connReq)
 	tt.require.NoError(err)
 	testfmt.Print(t, "StartSync with wrong cookie done")

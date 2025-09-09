@@ -40,10 +40,21 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet, Featur
     }
 
     /// @inheritdoc IFeatureManagerFacet
+    function disableFeatureCondition(bytes32 featureId) external onlyOwner {
+        _disableFeatureCondition(featureId);
+        emit FeatureConditionDisabled(featureId);
+    }
+
+    /// @inheritdoc IFeatureManagerFacet
     function getFeatureCondition(
         bytes32 featureId
-    ) external view returns (FeatureCondition memory) {
-        return _getFeatureCondition(featureId);
+    ) external view returns (FeatureCondition memory result) {
+        // Gas optimization: Reclaim implicit memory allocation for return variable
+        // since we're loading from storage, not using the pre-allocated memory
+        assembly ("memory-safe") {
+            mstore(0x40, result)
+        }
+        result = _getFeatureCondition(featureId);
     }
 
     /// @inheritdoc IFeatureManagerFacet
@@ -56,12 +67,6 @@ contract FeatureManagerFacet is IFeatureManagerFacet, OwnableBase, Facet, Featur
         address space
     ) external view returns (FeatureCondition[] memory) {
         return _getFeatureConditionsForSpace(space);
-    }
-
-    /// @inheritdoc IFeatureManagerFacet
-    function disableFeatureCondition(bytes32 featureId) external onlyOwner {
-        _disableFeatureCondition(featureId);
-        emit FeatureConditionDisabled(featureId);
     }
 
     /// @inheritdoc IFeatureManagerFacet

@@ -58,6 +58,12 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             const userId = userIdFromAddress(userBlocks.userId)
             this.userSettingsStreamsView.setUserBlocks(this.streamId, userId, userBlocks)
         }
+        if (content.inception?.appAddress) {
+            this.userSettingsStreamsView.setAppAddress(
+                this.streamId,
+                userIdFromAddress(content.inception.appAddress),
+            )
+        }
     }
 
     prependEvent(
@@ -94,6 +100,12 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userSettingsStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'fullyReadMarkers':
                 this.fullyReadMarkerUpdate(payload.content.value, stateEmitter)

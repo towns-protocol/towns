@@ -2,15 +2,14 @@
     "name": "@towns-protocol/example-bot-ask-poll",
     "version": "0.0.1",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "src/index.ts",
     "scripts": {
         "build": "tsc",
         "clean": "rm -rf dist",
         "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx --watch --env-file=.env src/index.ts",
-        "lint": "yarn eslint --format unix ./src  --max-warnings=0",
-        "lint:fix": "yarn lint --fix",
+        "lint": "eslint --format unix ./src  --max-warnings=0",
+        "lint:fix": "eslint --format unix ./src  --max-warnings=0 --fix",
         "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx src/index.ts"
     },
     "dependencies": {

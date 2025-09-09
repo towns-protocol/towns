@@ -1,7 +1,6 @@
 import OpenAI from 'openai'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { serve } from '@hono/node-server'
-import { createServer } from 'node:http2'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 
@@ -20,11 +19,7 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
 
-const bot = await makeTownsBot(
-    process.env.APP_PRIVATE_DATA_BASE64!,
-    process.env.JWT_SECRET!,
-    process.env.RIVER_ENV,
-)
+const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!)
 
 bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
     console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)
@@ -94,9 +89,5 @@ const app = new Hono()
 app.use(logger())
 app.post('/webhook', jwtMiddleware, handler)
 
-serve({
-    fetch: app.fetch,
-    port: parseInt(process.env.PORT!),
-    createServer,
-})
+serve({ fetch: app.fetch, port: parseInt(process.env.PORT!) })
 console.log(`✅ Thread AI Bot is running on https://localhost:${process.env.PORT}`)

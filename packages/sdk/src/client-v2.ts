@@ -38,7 +38,13 @@ import {
 } from './sign'
 import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { toJsonString } from '@bufbuild/protobuf'
-import { SessionKeysSchema, type Envelope } from '@towns-protocol/proto'
+import {
+    SessionKeysSchema,
+    type Envelope,
+    type PlainMessage,
+    type StreamEvent,
+    type Tags,
+} from '@towns-protocol/proto'
 
 type Client_Base = {
     /** The userId of the Client. */
@@ -65,6 +71,12 @@ type Client_Base = {
     unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
     /** Unpack envelopes using client config */
     unpackEnvelopes: (envelopes: Envelope[]) => Promise<ParsedEvent[]>
+    /** Send an event to a stream */
+    sendEvent: (
+        streamId: string,
+        eventPayload: PlainMessage<StreamEvent>['payload'],
+        tags?: PlainMessage<Tags>,
+    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array }>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -158,6 +170,30 @@ export const createTownsClient = async (
     const unpackEnvelopes = async (envelopes: Envelope[]): Promise<ParsedEvent[]> => {
         const { disableHashValidation, disableSignatureValidation } = client
         return sdk_unpackEnvelopes(envelopes, { disableHashValidation, disableSignatureValidation })
+    }
+
+    const sendEvent = async (
+        streamId: string,
+        eventPayload: PlainMessage<StreamEvent>['payload'],
+        tags?: PlainMessage<Tags>,
+    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array }> => {
+        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
+        const event = await makeEvent(
+            client.signer,
+            eventPayload,
+            prevMiniblockHash,
+            prevMiniblockNum,
+            tags,
+        )
+        const eventId = bin_toHexString(event.hash)
+        await client.rpc.addEvent({
+            streamId: streamIdAsBytes(streamId),
+            event,
+        })
+        return { eventId, prevMiniblockHash }
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
@@ -293,6 +329,7 @@ export const createTownsClient = async (
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
         getStream,
+        sendEvent,
         unpackEnvelope,
         unpackEnvelopes,
         env: config.environmentId,

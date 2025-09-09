@@ -28,11 +28,18 @@ RUN corepack enable
 # Copy monorepo configuration from root
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn ./.yarn
+COPY packages/tsconfig.base.json ./packages/
+COPY buf.yaml ./
 
 # Copy the required packages
 COPY packages/subgraph ./packages/subgraph/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/contracts ./packages/contracts/
+COPY packages/web3 ./packages/web3/
+COPY packages/generated ./packages/generated/
+COPY packages/dlog ./packages/dlog/
+COPY packages/proto ./packages/proto/
+COPY protocol ./protocol/
 
 # Add entrypoint script
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
@@ -45,8 +52,20 @@ WORKDIR /river/packages/contracts
 RUN make build
 WORKDIR /river
 
-# Generate contract typings
+# Generate contract typings (needed for Ponder to import ABIs)
 RUN yarn workspace @towns-protocol/contracts typings
+
+# Build the generated contracts typings package
+RUN yarn workspace @towns-protocol/generated build
+
+# Build proto package (dependency of dlog)
+RUN yarn workspace @towns-protocol/proto build
+
+# Build dlog package (dependency of web3)
+RUN yarn workspace @towns-protocol/dlog build
+
+# Build web3 package
+RUN yarn workspace @towns-protocol/web3 build
 
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph

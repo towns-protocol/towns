@@ -32,13 +32,19 @@ if [ -z "${DB_PASSWORD}" ]; then
   exit 1
 fi
 
+# Set the log format if PONDER_LOG_FORMAT is set
+LOG_FORMAT=""
+if [ -n "${PONDER_LOG_FORMAT:-}" ]; then
+  LOG_FORMAT="--log-format ${PONDER_LOG_FORMAT}"
+fi
+
 # Build the pg db url:
 export DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/postgres"
 
 if [ "$NODE_ENV" = "development" ]; then
   echo "Starting Ponder in development mode"
-  yarn ponder dev --config "${PONDER_CONFIG}"
+  yarn ponder dev --config "${PONDER_CONFIG}" ${LOG_FORMAT}
 else
   echo "Starting Ponder in production mode"
-  yarn ponder start --config "${PONDER_CONFIG}"
+  yarn ponder start --config "${PONDER_CONFIG}" ${LOG_FORMAT}
 fi

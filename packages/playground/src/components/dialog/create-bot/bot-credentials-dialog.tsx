@@ -12,7 +12,7 @@ import { cn } from '@/utils'
 
 interface BotCredentialsData {
     botAddress: string
-    appPrivateDataBase64: string
+    appPrivateData: string
     jwtSecretBase64: string
 }
 
@@ -27,7 +27,7 @@ export const BotCredentialsDialog = ({ open, onOpenChange, data }: BotCredential
         return null
     }
 
-    const envContent = `APP_PRIVATE_DATA_BASE64=${data.appPrivateDataBase64}
+    const envContent = `APP_PRIVATE_DATA=${data.appPrivateData}
 JWT_SECRET=${data.jwtSecretBase64}`
 
     return (

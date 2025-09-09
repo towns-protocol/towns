@@ -144,7 +144,6 @@ func testBotConversation(
 }
 
 func TestBotConversationNoRace(t *testing.T) {
-	t.Skip("Skipping TestBotConversationNoRace - flaky")
 	t.Parallel()
 
 	t.Run("Small bot chat test", func(t *testing.T) {
@@ -156,6 +155,6 @@ func TestBotConversationNoRace(t *testing.T) {
 	})
 
 	t.Run("Large bot chat test", func(t *testing.T) {
-		testBotConversation(t, 5, 10, 10, 50, 120*time.Second, 1*time.Second)
+		testBotConversation(t, 5, 10, 20, 50, 120*time.Second, 1*time.Second)
 	})
 }

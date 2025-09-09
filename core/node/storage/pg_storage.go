@@ -49,8 +49,9 @@ type PostgresEventStore struct {
 }
 
 type txRunnerOpts struct {
-	skipLoggingNotFound bool
-	useStreamingPool    bool
+	skipLoggingNotFound    bool
+	useStreamingPool       bool
+	overrideIsolationLevel *pgx.TxIsoLevel // Optional custom isolation level
 }
 
 func rollbackTx(ctx context.Context, tx pgx.Tx) {
@@ -68,7 +69,13 @@ func (s *PostgresEventStore) txRunnerInner(
 		pool = s.streamingPool
 	}
 
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: s.isolationLevel, AccessMode: accessMode})
+	// Use override isolation level if provided, otherwise use default
+	isolationLevel := s.isolationLevel
+	if opts != nil && opts.overrideIsolationLevel != nil {
+		isolationLevel = *opts.overrideIsolationLevel
+	}
+
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: isolationLevel, AccessMode: accessMode})
 	if err != nil {
 		return err
 	}
@@ -94,6 +101,10 @@ func (s *PostgresEventStore) txRunner(
 	opts *txRunnerOpts,
 	tags ...any,
 ) error {
+	// Add override isolation level to tags if provided
+	if opts != nil && opts.overrideIsolationLevel != nil {
+		tags = append(tags, "overrideIsolationLevel", string(*opts.overrideIsolationLevel))
+	}
 	log := logging.FromCtx(ctx).With(append(tags, "name", name, "dbSchema", s.schemaName)...)
 
 	if accessMode == pgx.ReadWrite {
@@ -130,9 +141,9 @@ func (s *PostgresEventStore) txRunner(
 				}
 				log.Warnw("pg.txRunner: transaction failed", "pgErr", pgErr)
 			} else {
-				level := zapcore.WarnLevel
+				level := zapcore.DebugLevel
 				if opts != nil && opts.skipLoggingNotFound && AsRiverError(err).Code == Err_NOT_FOUND {
-					// Count "not found" as succeess if error is potentially expected
+					// Count "not found" as success if error is potentially expected
 					pass = true
 					level = zapcore.DebugLevel
 				}

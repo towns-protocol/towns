@@ -544,7 +544,7 @@ func (b *TestAppServer) respondToSendMessages(
 			return logAndReturnErr(log, fmt.Errorf("could not parse message envelope: %w", err))
 		}
 		streamEvent := parsedEvent.Event
-		log.Infow("testAppServer observed streamEvent", "streamEvent", parsedEvent, "envelope", envelope)
+		log.Debugw("testAppServer observed streamEvent", "streamEvent", parsedEvent)
 
 		switch payload := streamEvent.Payload.(type) {
 		case *protocol.StreamEvent_MemberPayload:
@@ -799,7 +799,7 @@ func (b *TestAppServer) rootHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not marshal protobuf request", http.StatusBadRequest)
 		return
 	}
-	log.Infow("rootHandler: Received request", "request", &request)
+	log.Infow("rootHandler: Received request", "request", request.GetPayload())
 
 	var response protocol.AppServiceResponse
 	if request.Payload != nil {

@@ -28,6 +28,7 @@ contract DeployTownsBase is Deployer {
 
         address vault = _getVault(deployer);
         proxy = _proxyAddress(_implAddress(implSalt), proxySalt, l1Token, vault);
+        if (proxy.code.length != 0) return proxy;
 
         if (!isTesting()) {
             vm.broadcast(deployer);

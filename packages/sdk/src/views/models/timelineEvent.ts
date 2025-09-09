@@ -116,6 +116,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isSendFailed: timelineEvent.localEvent?.status === 'failed',
         confirmedEventNum: timelineEvent.confirmedEventNum,
         confirmedInBlockNum: timelineEvent.miniblockNum,
+        confirmedAtEpochMs: timelineEvent.confirmedAtEpochMs,
         threadParentId: getThreadParentId(content),
         replyParentId: getReplyParentId(content),
         reactionParentId: getReactionParentId(content),
@@ -304,6 +305,9 @@ function toTownsContent_MemberPayload(
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
                     reason: value.content.value.reason,
+                    appAddress: value.content.value.appAddress
+                        ? userIdFromAddress(value.content.value.appAddress)
+                        : undefined,
                 } satisfies StreamMembershipEvent,
             }
         case 'keySolicitation':
@@ -485,6 +489,9 @@ function toTownsContent_UserPayload(
                     kind: RiverTimelineEvent.Inception,
                     creatorId: message.creatorUserId,
                     type: message.event.payload.case,
+                    appAddress: value.content.value.appAddress
+                        ? userIdFromAddress(value.content.value.appAddress)
+                        : undefined,
                 } satisfies InceptionEvent,
             }
         }

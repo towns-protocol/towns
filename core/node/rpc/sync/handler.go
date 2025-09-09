@@ -17,6 +17,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
@@ -158,7 +159,7 @@ func (h *handlerImpl) SyncStreams(
 	}
 
 	h.metrics.completedSyncOpsCounter.WithLabelValues(
-		fmt.Sprintf("%t", req.Header().Get(UseSharedSyncHeaderName) == "true"),
+		fmt.Sprintf("%t", req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true"),
 		errCode,
 	).Inc()
 
@@ -219,7 +220,7 @@ func (h *handlerImpl) runSyncStreams(
 	}
 
 	// run until sub.ctx expires or until the client calls CancelSync
-	if req.Header().Get(UseSharedSyncHeaderName) == "true" {
+	if req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true" {
 		// Run sync operation using shared syncer.
 		doneChan <- op.Run(req, res)
 	} else {

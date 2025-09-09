@@ -33,6 +33,64 @@ The subgraph consists of:
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
+### Running with Docker Compose
+
+```bash
+# For Alpha environment
+docker compose --env-file .env.alpha up -d
+
+# For Gamma environment
+docker compose --env-file .env.gamma up -d
+
+# For Omega environment
+docker compose --env-file .env.omega up -d
+```
+
+### Testing the Setup
+
+After starting the services, the API server will be available at http://localhost:42069
+
+Check the following endpoints:
+
+- http://localhost:42069/graphql - Interactive GraphQL playground
+- http://localhost:42069/status - Service status information
+- http://localhost:42069/ready - Readiness check
+- http://localhost:42069/metrics - Prometheus metrics
+- http://localhost:42069/health - Health check endpoint
+
+### Managing Services
+
+```bash
+# View logs for the indexer (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-indexer
+
+# View logs for the API server (specify environment file)
+docker compose --env-file .env.alpha logs -f subgraph-server
+
+# Stop all services (specify environment file)
+docker compose --env-file .env.alpha down
+
+# Stop services and remove volumes (specify environment file)
+docker compose --env-file .env.alpha down -v
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. **Indexer not starting**: Check that the database is healthy and accessible
+2. **API server not responding**: Ensure the indexer has started successfully first
+3. **Data not appearing**: Verify the indexer is processing events (check logs)
+4. **Port conflicts**: Ensure port 42069 (API) and 5432 (PostgreSQL) are available
+5. **Indexer crashing with schema conflict**: Ensure you've removed volume as part of shutdown to prevent schema name conflicts.
+
+## Update schema.graphql
+
+```
+# regenerate schema.graphql file with a headless instance
+yarn dev:no-ui
+```
+
 ## Getting Started
 
 Follow these steps to set up and run the River Subgraph locally:
@@ -101,13 +159,7 @@ The subgraph uses a dynamic contract address resolution system to find the corre
 
 ```typescript
 // Get a single contract address
-const spaceFactoryAddress = getContractAddress("spaceFactory");
-
-// Get multiple contract addresses
-const { spaceFactory, createSpace } = getContractAddresses([
-  "spaceFactory",
-  "createSpace",
-]);
+const spaceFactoryAddress = getContractAddress("spaceFactory", "base", "alpha");
 ```
 
 This system automatically:
@@ -129,7 +181,9 @@ yarn find-paths
 You can also enable debug mode in the code:
 
 ```typescript
-const address = getContractAddress("contractName", undefined, { debug: true });
+const address = getContractAddress("contractName", network, env, {
+  debug: true,
+});
 ```
 
 ## Available Commands
@@ -196,7 +250,7 @@ If you encounter issues:
 1. **Contract Address Resolution**:
 
    - Run `yarn find-paths` to debug path resolution
-   - Enable debug mode: `getContractAddress('contractName', undefined, { debug: true })`
+   - Enable debug mode: `getContractAddress('contractName', network, env, { debug: true })`
    - Check that the environment is correctly set
 
 2. **Anvil Fork Issues**:
@@ -229,6 +283,12 @@ You can create custom contract interactions to generate specific events:
 ```bash
 # Create a custom interaction script
 make interact-any-local context=gamma rpc=base_anvil contract=YourCustomInteraction
+```
+
+### Transfer Ownership
+
+```bash
+yarn transfer-ownership
 ```
 
 ### Working with Multiple Networks
@@ -265,31 +325,16 @@ ponder.on("CreateSpace:SpaceCreated", async ({ event, context }) => {
 
 ## Setup Ponder for Docker
 
-You can run Ponder in a docker container with a local postgres database pointing to the gamma network.
+You can run Ponder in a docker container with a local postgres database. The setup uses a dual-instance architecture for better performance and scalability:
 
-```bash
-# build ponder image
-docker build --no-cache -t towns-subgraph -f packages/subgraph/Dockerfile .
+- **subgraph-indexer**: Handles blockchain event indexing and data processing
+- **subgraph-server**: Serves HTTP API requests (GraphQL/SQL) without affecting indexing performance
 
-# start subgraph with local attached postgrs pointing to gamma network in daemon mode
-docker compose -f docker-compose-gamma.yml up -d
-```
+### Architecture Benefits
 
-Navigate to http://localhost:42069/graphql to interact with the subgraph over the graphql api.
+This separation provides:
 
-Check endpoints below for more information.
-
-http://localhost:42069/status
-
-http://localhost:42069/ready
-
-http://localhost:42069/metrics
-
-http://localhost:42069/health
-
-## Update schema.graphql
-
-```
-# regenerate schema.graphql file with a headless instance
-yarn dev:no-ui
-```
+- Improved performance by preventing HTTP traffic from affecting indexing
+- Ability to scale API servers horizontally if needed
+- Better resource isolation between indexing and serving
+- Continued indexing even if the API server experiences issues

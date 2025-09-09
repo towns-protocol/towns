@@ -1229,18 +1229,16 @@ type AppMetadata struct {
 
 	// username is the identifier used to mention the bot (e.g., "@mybot").
 	// Must be unique across all bots.
-	Username    string `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
-	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// image_url is an image URL with an acceptable schema and file extension.
+	Username    string  `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	Description string  `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	ImageUrl    string  `protobuf:"bytes,3,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
 	ExternalUrl *string `protobuf:"bytes,4,opt,name=external_url,json=externalUrl,proto3,oneof" json:"external_url,omitempty"`
-	// avatar_url is an image URL with an acceptable schema and file extension.
-	AvatarUrl string `protobuf:"bytes,5,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
+	AvatarUrl   string  `protobuf:"bytes,5,opt,name=avatar_url,json=avatarUrl,proto3" json:"avatar_url,omitempty"`
 	// slash_commands is a list of commands the bot supports.
 	// Maximum of 25 commands per bot.
 	SlashCommands []*SlashCommand `protobuf:"bytes,6,rep,name=slash_commands,json=slashCommands,proto3" json:"slash_commands,omitempty"`
 	// display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
-	// Must be non-empty and unique across all bots.
+	// Must be non-empty.
 	DisplayName string `protobuf:"bytes,7,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
 }
 

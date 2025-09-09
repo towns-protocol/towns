@@ -10,12 +10,11 @@ This module implements the backend River node server for Towns Protocol, a distr
 
 ### Development Environment Management
 
-- `RUN_ENV=multi just config-and-start` - Start full development environment WITH entitlement checks
-- `RUN_ENV=multi_ne just config-and-start` - Start development environment WITHOUT entitlement checks (faster)
-- `RUN_ENV=multi just stop` - Stop all nodes in multi environment
-- `RUN_ENV=multi just restart` - Stop, rebuild, and restart nodes
-- `RUN_ENV=multi just tail-logs` - View live logs with pretty formatting
-- `RUN_ENV=multi just build` - Build node binary only
+- `just config-and-start` - Start full development environment WITH entitlement checks
+- `just stop` - Stop all nodes in multi environment
+- `just restart` - Stop, rebuild, and restart nodes
+- `just tail-logs` - View live logs with pretty formatting
+- `just build` - Build node binary only
 
 ### Testing Commands
 
@@ -162,17 +161,9 @@ Before committing any Go code changes:
 
 ## Configuration and Environment
 
-### Environment Setup
-
-Two local development environments:
-
-- `multi` - Full environment with entitlement checks (required for some SDK tests)
-- `multi_ne` - No entitlements environment (faster, required for other SDK tests)
-
 ### Key Configuration Files
 
 - `env/local/multi/config.yaml` - Multi-node development config with entitlements
-- `env/local/multi_ne/config.yaml` - Multi-node development config without entitlements
 - `node/default_config.yaml` - Default node configuration template
 - Database runs on port 5433, node instances start from port 80xx
 
@@ -216,9 +207,9 @@ Two local development environments:
 
 ### Debugging Commands
 
-- `just RUN_ENV=multi tail-logs` - Live log tailing with formatting
-- `just RUN_ENV=multi print-logs` - Print recent logs
-- `just RUN_ENV=multi check-stderr` - Check for errors in stderr logs
+- `just tail-logs` - Live log tailing with formatting
+- `just print-logs` - Print recent logs
+- `just check-stderr` - Check for errors in stderr logs
 
 ### Development Utilities
 

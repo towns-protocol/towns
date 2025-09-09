@@ -43,6 +43,16 @@ if [ $exit_status_yarn -ne 0 ]; then
     exit 1
 fi
 
+# Generate contract types for publishing
+echo "Generating contract types for publishing..."
+yarn workspace @towns-protocol/contracts build-types
+exit_status_contracts=$?
+
+if [ $exit_status_contracts -ne 0 ]; then
+    echo "Contract type generation failed."
+    exit 1
+fi
+
 # build docs
 yarn workspace @towns-protocol/react-sdk gen
 exit_status_docgen=$?
@@ -80,39 +90,46 @@ gh pr merge "${PR_NUMBER}" --auto --squash
 
 echo "Created PR #${PR_NUMBER}"
 
+# Wait for required checks to pass (skip CodeRabbit and other non-required checks)
 while true; do
-    WAIT_TIME=5
-    while true; do
-    OUTPUT=$(gh pr checks "${BRANCH_NAME}" 2>&1)
-    if [[ "$OUTPUT" == *"no checks reported on the '${BRANCH_NAME}' branch"* ]]; then
-        echo "Checks for '${BRANCH_NAME}' haven't started yet. Waiting for $WAIT_TIME seconds..."
+    WAIT_TIME=10
+    # Get status of all checks except CodeRabbit
+    CHECKS_OUTPUT=$(gh pr checks "${BRANCH_NAME}" --json name,state 2>/dev/null || echo "[]")
+    
+    if [[ "$CHECKS_OUTPUT" == "[]" ]]; then
+        echo "No checks reported yet, waiting..."
         sleep $WAIT_TIME
-    else
-        break
+        continue
     fi
-    done
-
-    gh pr checks "${BRANCH_NAME}" --fail-fast --interval 2 --watch
-    exit_status=$?
-
-    # Check if the command succeeded or failed
-    if [ $exit_status -ne 0 ]; then
-        echo "Failure detected in PR checks."
-        if [[ $USER_MODE -eq 1 ]]; then
+    
+    # Filter out CodeRabbit and check if all other checks passed
+    FAILED_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.state == "FAILURE") | .name' 2>/dev/null | tr '\n' ' ')
+    PENDING_CHECKS=$(echo "$CHECKS_OUTPUT" | jq -r '.[] | select(.name != "CodeRabbit") | select(.state == "IN_PROGRESS" or .state == "PENDING" or .state == "QUEUED") | .name' 2>/dev/null | tr '\n' ' ')
+    
+    if [[ -n "$FAILED_CHECKS" && "$FAILED_CHECKS" != " " ]]; then
+        echo "Failed checks: $FAILED_CHECKS"
+        if [[ ${USER_MODE:-0} -eq 1 ]]; then
             read -p "Harmony CI is failing. Restart CI. (any key to retry/q) " -n 1 -r
             echo ""
             if [[ $REPLY =~ ^[Qq]$ ]]; then
                 echo "Pull request creation aborted."
-                exit $exit_status
+                exit 1
             fi
         else
-            echo "Harmony CI is failing. Restart CI."
-            exit $exit_status
+            echo "Harmony CI is failing. Waiting for CI to be rerun..."
         fi
-    else 
-        echo "All checks passed."
+        # Sleep before retrying to avoid hammering the GitHub API
+        sleep ${RETRY_SLEEP:-30}
+        continue
+    fi
+    
+    if [[ -z "$PENDING_CHECKS" || "$PENDING_CHECKS" == " " ]]; then
+        echo "All required checks passed (ignoring CodeRabbit)"
         break
     fi
+    
+    echo "Waiting for checks: $PENDING_CHECKS"
+    sleep $WAIT_TIME
 done
 
 # Wait for PR to be merged using the specific PR number

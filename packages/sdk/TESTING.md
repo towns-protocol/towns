@@ -32,7 +32,7 @@ packages/sdk/src/tests/
 **Purpose**: Test full functionality with blockchain-based permission checks
 **Location**: `packages/sdk/src/tests/multi/`
 **Run Command**: `yarn test:ci:multi:ent`
-**Requires**: `RUN_ENV=multi just config-and-start` (from `/core/`)
+**Requires**: `just config-and-start` (from `/core/`)
 **Use For**:
 
 - Testing access control and permissions
@@ -45,7 +45,7 @@ packages/sdk/src/tests/
 **Purpose**: Test core functionality without permission overhead (faster)
 **Location**: `packages/sdk/src/tests/multi_ne/`
 **Run Command**: `yarn test:ci:multi:ne`
-**Requires**: `RUN_ENV=multi_ne just config-and-start` (from `/core/`)
+**Requires**: `just config-and-start` (from `/core/`)
 **Use For**:
 
 - General messaging functionality
@@ -122,9 +122,8 @@ yarn test:ci
 
 ### Prerequisites for Integration Tests
 
-1. Start the appropriate backend environment from `/core/`:
-   - For `multi` tests: `RUN_ENV=multi just config-and-start`
-   - For `multi_ne` tests: `RUN_ENV=multi_ne just config-and-start`
+1. Start the backend environment from `/core/`:
+   - `just config-and-start`
 2. Ensure PostgreSQL is running: `just storage-start`
 3. Ensure Anvil chains are running: `just anvils`
 
@@ -155,5 +154,5 @@ yarn test:ci
 
 - Use `yarn test:watch` for interactive development
 - Add `console.log` or use Vitest's `--reporter=verbose`
-- For integration tests, check node logs: `RUN_ENV=multi_ne just tail-logs`
+- For integration tests, check node logs: `just tail-logs`
 - Use `test.only()` to focus on specific tests during debugging

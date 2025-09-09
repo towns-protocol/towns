@@ -7,36 +7,34 @@ To list all available commands:
 
     just
 
-There are two local environments available:
-
-- multi_ne - no entitlements
-- multi - entitlements are enabled
+Default local development environment is `multi`.
+RUN_ENV parameter for just commands is set by default to `multi`.
 
 The environment name always needs to be provided through RUN_ENV variable.
 
 Config, build and start in background:
 
-    just RUN_ENV=multi config-and-start
+    just config-and-start
 
 Stop:
 
-    just RUN_ENV=multi stop
+    just stop
 
 See colored logs in realtime (Ctrl-C to exit):
 
-    just RUN_ENV=multi tail-logs
+    just tail-logs
 
 Just build:
 
-    just RUN_ENV=multi build
+    just build
 
 Just start with the existing config and binary:
 
-    just RUN_ENV=multi start
+    just start
 
 Restart after rebuilding with current changes:
 
-    just RUN_ENV=multi restart
+    just restart
 
 # Building and running go tests
 
@@ -147,13 +145,7 @@ Then generate the TLS certificates for the node:
 
     scripts/generate-ca.sh
 
-# Running River Tests
-
-Run client tests:
-
-    yarn csb:turbo
-
-Run node tests:
+# Run node tests:
 
     cd node
     go test -v ./...
