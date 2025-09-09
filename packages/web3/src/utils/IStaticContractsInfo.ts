@@ -14,6 +14,7 @@ export interface BaseChainConfig {
         riverAirdrop: Address | undefined
         swapRouter: Address | undefined
         appRegistry: Address
+        subscriptionModule: Address | undefined
         utils: {
             mockNFT: Address | undefined // mockErc721aAddress
             member: Address | undefined // testGatingTokenAddress - For tesing token gating scenarios
@@ -57,6 +58,13 @@ export function getWeb3Deployments() {
 
 export function getRiverEnv() {
     return RIVER_ENV
+}
+
+export function getRiverEnvDeployment() {
+    if (!RIVER_ENV) {
+        throw new Error('RIVER_ENV is not defined')
+    }
+    return getWeb3Deployment(RIVER_ENV)
 }
 
 function optionalEnv({
@@ -138,6 +146,10 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                         'BASE_ADDRESSES_APP_REGISTRY',
                         'APP_REGISTRY_ADDRESS', // deprecated
                     ],
+                }) as Address,
+                subscriptionModule: requiredEnv({
+                    environmentId,
+                    keys: ['BASE_ADDRESSES_SUBSCRIPTION_MODULE'],
                 }) as Address,
                 utils: {
                     mockNFT: optionalEnv({
