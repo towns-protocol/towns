@@ -108,16 +108,12 @@ func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []strin
 	for _, field := range fieldMask {
 		switch field {
 		case "username":
-			if metadata.Username != nil {
-				if *metadata.Username == "" {
-					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
-				}
+			if metadata.Username != nil && *metadata.Username == "" {
+				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
 			}
 		case "description":
-			if metadata.Description != nil {
-				if *metadata.Description == "" {
-					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
-				}
+			if metadata.Description != nil && *metadata.Description == "" {
+				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
 			}
 		case "image_url":
 			if metadata.ImageUrl != nil {
@@ -141,10 +137,8 @@ func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []strin
 				}
 			}
 		case "display_name":
-			if metadata.DisplayName != nil {
-				if *metadata.DisplayName == "" {
-					return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
-				}
+			if metadata.DisplayName != nil && *metadata.DisplayName == "" {
+				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
 			}
 		case "slash_commands":
 			if err := ValidateSlashCommands(metadata.GetSlashCommands()); err != nil {
