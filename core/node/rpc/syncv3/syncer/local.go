@@ -86,68 +86,68 @@ func NewLocalStreamUpdateEmitter(
 }
 
 // OnUpdate implements events.SyncResultReceiver interface.
-func (s *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
+func (l *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
 	// The first received update should be ignored since all sync ops are starting from their own cookie.
-	if s.firstUpdateReceived.CompareAndSwap(false, true) {
+	if l.firstUpdateReceived.CompareAndSwap(false, true) {
 		return
 	}
 
-	s.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, s.version)
+	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, l.version)
 }
 
 // OnSyncError implements events.SyncResultReceiver interface.
-func (s *localStreamUpdateEmitter) OnSyncError(err error) {
-	s.log.Error("sync error for local stream", "error", err)
-	s.cancel(err)
+func (l *localStreamUpdateEmitter) OnSyncError(err error) {
+	l.log.Error("sync error for local stream", "error", err)
+	l.cancel(err)
 }
 
 // OnStreamSyncDown implements events.SyncResultReceiver interface.
-func (s *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
-	s.log.Warn("local stream sync down")
-	s.cancel(nil)
+func (l *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
+	l.log.Warn("local stream sync down")
+	l.cancel(nil)
 }
 
-func (s *localStreamUpdateEmitter) StreamID() StreamId {
-	return s.streamID
+func (l *localStreamUpdateEmitter) StreamID() StreamId {
+	return l.streamID
 }
 
-func (s *localStreamUpdateEmitter) Node() common.Address {
-	return s.localAddr
+func (l *localStreamUpdateEmitter) Node() common.Address {
+	return l.localAddr
 }
 
-func (s *localStreamUpdateEmitter) Version() int {
-	return s.version
+func (l *localStreamUpdateEmitter) Version() int {
+	return l.version
 }
 
-func (s *localStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
-	err := s.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
+func (l *localStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs []string) bool {
+	err := l.backfillsQueue.AddMessage(&backfillRequest{cookie: cookie, syncIDs: syncIDs})
 	if err != nil {
-		s.log.Errorw("failed to add backfill request to the queue", "error", err)
-		s.cancel(err)
+		l.log.Errorw("failed to add backfill request to the queue", "error", err)
+		l.cancel(err)
 		return false
 	}
 	return true
 }
 
-func (s *localStreamUpdateEmitter) Close() {
-	s.cancel(nil)
+func (l *localStreamUpdateEmitter) Close() {
+	l.cancel(nil)
 }
 
 // run initializes and runs the local stream update emitter.
-func (s *localStreamUpdateEmitter) run(ctx context.Context) {
-	defer s.cleanup()
+func (l *localStreamUpdateEmitter) run(ctx context.Context) {
+	defer l.cleanup()
 
 	var msgs []*backfillRequest
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case _, open := <-s.backfillsQueue.Wait():
-			msgs = s.backfillsQueue.GetBatch(msgs)
+		case _, open := <-l.backfillsQueue.Wait():
+			msgs = l.backfillsQueue.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
 			if msgs == nil {
-				s.cancel(nil)
+				l.cancel(nil)
 				return
 			}
 
@@ -158,8 +158,8 @@ func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 				case <-ctx.Done():
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
-						if err := s.backfillsQueue.AddMessage(m); err != nil {
-							s.log.Errorw(
+						if err := l.backfillsQueue.AddMessage(m); err != nil {
+							l.log.Errorw(
 								"failed to re-add unprocessed backfill request to the queue",
 								"cookie",
 								m.cookie,
@@ -173,14 +173,14 @@ func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 				default:
 				}
 
-				if err := s.processBackfillRequest(ctx, msg, s.stream); err != nil {
-					s.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
-					s.cancel(err)
+				if err := l.processBackfillRequest(ctx, msg, l.stream); err != nil {
+					l.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
+					l.cancel(err)
 
 					// Send unprocessed messages back to the queue for further processing by sending the down message back.
 					for _, m := range msgs[i:] {
-						if err = s.backfillsQueue.AddMessage(m); err != nil {
-							s.log.Errorw(
+						if err = l.backfillsQueue.AddMessage(m); err != nil {
+							l.log.Errorw(
 								"failed to re-add unprocessed backfill request to the queue",
 								"cookie",
 								m.cookie,
@@ -196,34 +196,34 @@ func (s *localStreamUpdateEmitter) run(ctx context.Context) {
 
 			// The queue is closed, so we can stop the emitter.
 			if !open {
-				s.cancel(nil)
+				l.cancel(nil)
 				return
 			}
 		}
 	}
 }
 
-func (s *localStreamUpdateEmitter) cleanup() {
-	s.backfillsQueue.Close()
-	s.stream.Unsub(s)
+func (l *localStreamUpdateEmitter) cleanup() {
+	l.backfillsQueue.Close()
+	l.stream.Unsub(l)
 
-	// Send a stream down message to all active syncs of the current syncer version via event bus.
-	s.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]}, s.version)
+	// Send a stream down message to all active syncs of the current syncer version via event bul.
+	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: l.streamID[:]}, l.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
-	msgs := s.backfillsQueue.GetBatch(nil)
+	msgs := l.backfillsQueue.GetBatch(nil)
 	for _, msg := range msgs {
-		s.subscriber.OnStreamEvent(&SyncStreamsResponse{
+		l.subscriber.OnStreamEvent(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
-			StreamId:      s.streamID[:],
+			StreamId:      l.streamID[:],
 			TargetSyncIds: msg.syncIDs,
-		}, s.version)
+		}, l.version)
 	}
 }
 
 // processBackfillRequest processes the given backfill request by fetching updates since the given cookie
 // and sending the message back to the event bus for further forwarding to the specified sync operation.
-func (s *localStreamUpdateEmitter) processBackfillRequest(
+func (l *localStreamUpdateEmitter) processBackfillRequest(
 	ctx context.Context,
 	msg *backfillRequest,
 	stream *events.Stream,
@@ -234,17 +234,17 @@ func (s *localStreamUpdateEmitter) processBackfillRequest(
 	return stream.UpdatesSinceCookie(
 		ctxWithTimeout,
 		&SyncCookie{
-			NodeAddress:       s.localAddr.Bytes(),
+			NodeAddress:       l.localAddr.Bytes(),
 			StreamId:          msg.cookie.GetStreamId(),
 			MinipoolGen:       msg.cookie.GetMinipoolGen(),
 			PrevMiniblockHash: msg.cookie.GetPrevMiniblockHash(),
 		},
 		func(streamAndCookie *StreamAndCookie) error {
-			s.subscriber.OnStreamEvent(&SyncStreamsResponse{
+			l.subscriber.OnStreamEvent(&SyncStreamsResponse{
 				SyncOp:        SyncOp_SYNC_UPDATE,
 				Stream:        streamAndCookie,
 				TargetSyncIds: msg.syncIDs,
-			}, s.version)
+			}, l.version)
 			return nil
 		},
 	)

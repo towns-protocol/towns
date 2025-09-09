@@ -3,28 +3,33 @@ package syncv3
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 // Service defines the behavior of the sync V3 service.
 type Service interface {
-	// SyncStreams creates and starts a sync operation. Given streams are immediately going to be added
-	// to the sync operation, and the receiver will receive updates for these streams.
-	SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error
+	// SyncStreams creates and starts a sync operation. Given streams will be added
+	// to the sync operation. If the function returns without error, it is gurarnteed that the given recipient
+	// will receive >= 1 update for each stream (either backfill or stream down message).
+	SyncStreams(ctx context.Context, syncID string, streams []*SyncCookie, rec handler.Receiver) error
 	// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
 	// It can also backfill a specific stream by the given cookie which is already in the sync.
 	ModifySync(req *ModifySyncRequest) (*ModifySyncResponse, error)
 	// CancelSync cancels an existing sync operation by its ID.
-	CancelSync(ctx context.Context, id string) error
+	CancelSync(ctx context.Context, syncID string) error
 	// PingSync pings an existing sync operation by its ID to keep it alive.
-	PingSync(ctx context.Context, id, nonce string) error
+	PingSync(ctx context.Context, syncID, nonce string) error
 	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
-	DebugDropStream(ctx context.Context, id string, streamId StreamId) error
+	DebugDropStream(ctx context.Context, syncID string, streamID StreamId) error
 }
 
 // serviceImpl implements the Service interface with the default business logic.
@@ -35,23 +40,33 @@ type serviceImpl struct {
 
 // NewService creates a new instance of the sync V3 service.
 func NewService(
-	handlerRegistry handler.Registry,
+	ctx context.Context,
+	localAddr common.Address,
+	cache *events.StreamCache,
+	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) Service {
+	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry)
+	registry := handler.NewRegistry(eventBus)
 	return &serviceImpl{
-		handlerRegistry: handlerRegistry,
+		handlerRegistry: registry,
 		otelTracer:      otelTracer,
 	}
 }
 
-func (s *serviceImpl) SyncStreams(ctx context.Context, id string, streams []*SyncCookie, rec handler.Receiver) error {
-	h, err := s.handlerRegistry.New(ctx, id, rec)
+func (s *serviceImpl) SyncStreams(
+	ctx context.Context,
+	syncID string,
+	streams []*SyncCookie,
+	rec handler.Receiver,
+) error {
+	h, err := s.handlerRegistry.New(ctx, syncID, rec)
 	if err != nil {
 		return err
 	}
 
 	if len(streams) > 0 {
-		res, err := h.Modify(&ModifySyncRequest{SyncId: id, AddStreams: streams})
+		res, err := h.Modify(&ModifySyncRequest{SyncId: syncID, AddStreams: streams})
 		if err != nil {
 			_ = h.Cancel(ctx)
 			return err
@@ -74,8 +89,8 @@ func (s *serviceImpl) ModifySync(req *ModifySyncRequest) (*ModifySyncResponse, e
 	return h.Modify(req)
 }
 
-func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
-	h, ok := s.handlerRegistry.Get(id)
+func (s *serviceImpl) CancelSync(ctx context.Context, syncID string) error {
+	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
@@ -83,8 +98,8 @@ func (s *serviceImpl) CancelSync(ctx context.Context, id string) error {
 	return h.Cancel(ctx)
 }
 
-func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
-	h, ok := s.handlerRegistry.Get(id)
+func (s *serviceImpl) PingSync(ctx context.Context, syncID, nonce string) error {
+	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
@@ -94,11 +109,11 @@ func (s *serviceImpl) PingSync(ctx context.Context, id, nonce string) error {
 	return nil
 }
 
-func (s *serviceImpl) DebugDropStream(ctx context.Context, id string, streamId StreamId) error {
-	h, ok := s.handlerRegistry.Get(id)
+func (s *serviceImpl) DebugDropStream(ctx context.Context, syncID string, streamID StreamId) error {
+	h, ok := s.handlerRegistry.Get(syncID)
 	if !ok {
 		return RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
 
-	return h.DebugDropStream(ctx, streamId)
+	return h.DebugDropStream(ctx, streamID)
 }

@@ -40,8 +40,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
-	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
-	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -796,14 +794,13 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 
 	// Sync v3 setup
 	{
-		eventBus := eventbus.New(
+		s.syncv3 = syncv3.NewService(
 			s.serverCtx,
 			s.wallet.Address,
 			s.cache,
 			s.nodeRegistry,
+			s.otelTracer,
 		)
-		registry := handler.NewRegistry(eventBus)
-		s.syncv3 = syncv3.NewService(registry, s.otelTracer)
 		s.v3Syncs = xsync.NewMap[string, struct{}]()
 	}
 

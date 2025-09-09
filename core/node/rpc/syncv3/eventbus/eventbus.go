@@ -110,7 +110,7 @@ type eventBusImpl struct {
 // New creates a new instance of the event bus implementation.
 //
 // It creates an internal queue for stream updates and a background goroutine that reads updates from this queue
-// and distributes them to subscribers.
+// and distributes them to subscribers until the given ctx expires.
 func New(
 	ctx context.Context,
 	localAddr common.Address,
@@ -168,8 +168,8 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 	// Send sync down message directly to clients to avoid common queue
 	var wg sync.WaitGroup
 	for _, subscribers := range e.subscribers[streamID] {
+		wg.Add(len(subscribers))
 		for _, sub := range subscribers {
-			wg.Add(1)
 			go func(sub StreamSubscriber) {
 				sub.OnUpdate(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 				wg.Done()

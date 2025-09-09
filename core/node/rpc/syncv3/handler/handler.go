@@ -61,9 +61,9 @@ type SyncStreamHandler interface {
 }
 
 // Receiver is a final receiver of the stream update message, i.e. client.
-// It is not thread safe so the race detector will throw an error if multiple goroutines
-// try to call Send at the same time.
 type Receiver interface {
+	// Send sends the given SyncStreamsResponse to the client.
+	// Caller of the given function MUST NOT make an assumption that the function is thread safe.
 	Send(*SyncStreamsResponse) error
 }
 
@@ -263,7 +263,6 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 	default:
 	}
 
-	// Add update to internal queue
 	if err := s.streamUpdates.AddMessage(update); err != nil {
 		s.cancel(err)
 	}
