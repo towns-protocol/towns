@@ -445,7 +445,7 @@ func TestCreateApp(t *testing.T) {
 	require.NoError(err)
 	require.Equal(metadataWithDuplicateDisplayName.Username, info5.Metadata.Username)
 	require.Equal(metadataWithDuplicateDisplayName.DisplayName, info5.Metadata.DisplayName)
-	require.Equal("app Bot", info5.Metadata.DisplayName, "Display name should be the same as first app")
+	require.Equal("app Bot", *info5.Metadata.DisplayName, "Display name should be the same as first app")
 
 	info, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
