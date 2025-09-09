@@ -9,6 +9,9 @@
         "preinstall": "node ./scripts/make-config.js",
         "prepare": "node ./scripts/prepare.js"
     },
+    "devDependencies": {
+        "@towns-protocol/contracts": "workspace:^"
+    },
     "files": [
         "config/**/*",
         "deployments/**/*",

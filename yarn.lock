@@ -9149,6 +9149,8 @@ __metadata:
 "@towns-protocol/generated@workspace:^, @towns-protocol/generated@workspace:packages/generated":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/generated@workspace:packages/generated"
+  dependencies:
+    "@towns-protocol/contracts": "workspace:^"
   languageName: unknown
   linkType: soft
 
