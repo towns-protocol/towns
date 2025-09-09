@@ -19,7 +19,7 @@ const CACHE_CONTROL = {
 	// Client caches for 30s, uses cached version for up to 7 days while revalidating in background
 	307: 'public, max-age=30, s-maxage=3600, stale-while-revalidate=604800',
 	400: 'public, max-age=30, s-maxage=3600',
-	404: 'public, max-age=5, s-maxage=3600', // 5s max-age to avoid user showing themselves a broken image during client cration flow
+	404: 'public, max-age=5, s-maxage=3600', // 5s max-age to avoid user showing themselves a broken image during client creation flow
 	422: 'public, max-age=30, s-maxage=3600',
 }
 
@@ -85,9 +85,13 @@ export async function fetchUserProfileImage(request: FastifyRequest, reply: Fast
 				.header('Cache-Control', CACHE_CONTROL[422])
 				.send('Failed to get encryption key')
 		}
-		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
-			profileImage.streamId
-		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
+
+		// Construct redirect URL with preserved query parameters
+		const queryParams = new URLSearchParams(request.query as Record<string, string>)
+		queryParams.set('key', bin_toHexString(key))
+		queryParams.set('iv', bin_toHexString(iv))
+
+		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${profileImage.streamId}?${queryParams.toString()}`
 
 		return (
 			reply

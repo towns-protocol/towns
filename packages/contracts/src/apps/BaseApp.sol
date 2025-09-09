@@ -11,7 +11,6 @@ import {ITownsApp} from "./ITownsApp.sol";
 /// @dev Provides base implementation for module installation/uninstallation and interface support
 /// @dev Inheriting contracts should override _onInstall and _onUninstall as needed
 /// @dev Implements IModule, IExecutionModule, and ITownsApp interfaces
-
 abstract contract BaseApp is ITownsApp {
     receive() external payable {
         _onPayment(msg.sender, msg.value);
