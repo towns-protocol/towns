@@ -20,7 +20,7 @@
     "dependencies": {
         "@towns-protocol/web3": "workspace:^",
         "hono": "^4.7.11",
-        "ponder": "^0.11.17",
+        "ponder": "^0.12.21",
         "viem": "^2.29.3"
     },
     "devDependencies": {
