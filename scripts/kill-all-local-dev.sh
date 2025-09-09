@@ -95,6 +95,12 @@ do_kill anvil "$1"
 do_kill wrangler "$1"
 do_kill mitmweb "$1"
 
+echo ""
+if prompt 'Stop Anvil Docker Containers?:y/n '
+then
+    docker stop towns-base-chain towns-river-chain 2>/dev/null || true
+    docker rm towns-base-chain towns-river-chain 2>/dev/null || true
+fi
 
 echo ""
 if prompt 'Remove Casbablanca Docker Containers?:y/n '
