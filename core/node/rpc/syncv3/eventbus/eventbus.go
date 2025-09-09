@@ -151,8 +151,8 @@ func New(
 // from the stream. A stream down message could be an indicator for a client to re-subscribe on a given stream.
 //
 // TODO: Add retry mechanism?
-func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
-	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{msg: update, version: version}})
+func (e *eventBusImpl) OnStreamEvent(msg *SyncStreamsResponse, version int) {
+	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{msg: msg, version: version}})
 	if err == nil {
 		// All good, just return
 		return
@@ -163,10 +163,17 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 	// Send sync down message for the given stream directly to clients.
 	// Subscribers do not want to unsubscribe from the given stream here so after receiving the sync down message
 	// they most likely will immediately re-subscribe -> we can keep the current syncer for the given stream active.
-	e.processStreamUpdateCommand(
-		&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: update.StreamID()},
-		version,
-	)
+	if len(msg.GetTargetSyncIds()) > 0 {
+		e.processTargetedStreamUpdateCommand(
+			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: msg.StreamID()},
+			version,
+		)
+	} else {
+		e.processStreamUpdateCommand(
+			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: msg.StreamID()},
+			version,
+		)
+	}
 }
 
 func (e *eventBusImpl) EnqueueSubscribe(cookie *SyncCookie, subscriber StreamSubscriber) error {
