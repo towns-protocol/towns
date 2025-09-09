@@ -1,10 +1,10 @@
 # Rate Limiter Implementation
 
-This package implements IP-based rate limiting for the Towns Protocol using `sethvargo/go-limiter`.
+This package implements generic key-based rate limiting for the Towns Protocol using `sethvargo/go-limiter`.
 
 ## Features
 
-- **IP-based rate limiting** with support for proxy headers
+- **Generic key-based rate limiting** with IP address support and proxy headers
 - **Endpoint-specific rate limits** with per-endpoint configuration
 - **Always-on metrics collection** even when rate limiting is disabled
 - **Memory management** with automatic cleanup of inactive IPs
@@ -15,14 +15,17 @@ This package implements IP-based rate limiting for the Towns Protocol using `set
 ## Quick Start
 
 ```go
-import "github.com/towns-protocol/towns/core/node/rpc/ratelimit"
+import (
+    "github.com/towns-protocol/towns/core/config"
+    "github.com/towns-protocol/towns/core/node/rpc/ratelimit"
+)
 
-// Create configuration
-config := ratelimit.GetDefaultConfig()
-config.Enabled = false // Start with metrics-only mode
+// Get main node configuration
+nodeConfig := config.GetDefaultConfig()
+nodeConfig.RateLimit.Enabled = false // Start with metrics-only mode
 
 // Create rate limiter
-rateLimiter, err := ratelimit.NewIPRateLimiter(config, logger)
+rateLimiter, err := ratelimit.NewIPRateLimiter(&nodeConfig.RateLimit, logger)
 if err != nil {
     return err
 }

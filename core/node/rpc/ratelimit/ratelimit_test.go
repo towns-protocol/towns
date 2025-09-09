@@ -51,11 +51,11 @@ func TestRateLimiter_BasicFunctionality(t *testing.T) {
 func TestRateLimiter_DisabledState(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = false // Disabled by default
+	rateLimitConfig.Enabled = false // Disabled by default
 	
 	// Use test-specific metrics registry to avoid conflicts
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -79,17 +79,17 @@ func TestRateLimiter_DisabledState(t *testing.T) {
 func TestRateLimiter_EndpointConfiguration(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = true
+	rateLimitConfig.Enabled = true
 	
 	// Add specific endpoint configuration
-	config.EndpointLimits = append(config.EndpointLimits, EndpointLimitConfig{
+	rateLimitConfig.EndpointLimits = append(rateLimitConfig.EndpointLimits, config.EndpointLimitConfig{
 		Endpoint: "/test/strict",
 		Rate:     2,
 		Interval: time.Minute,
 	})
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -113,11 +113,11 @@ func TestRateLimiter_EndpointConfiguration(t *testing.T) {
 func TestRateLimiter_IPExemptions(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = true
-	config.ExemptIPs = []string{"127.0.0.1", "10.0.0.0/8"}
+	rateLimitConfig.Enabled = true
+	rateLimitConfig.ExemptIPs = []string{"127.0.0.1", "10.0.0.0/8"}
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -158,10 +158,10 @@ func TestRateLimiter_IPExemptions(t *testing.T) {
 func TestRateLimiter_EndpointExemptions(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = true
+	rateLimitConfig.Enabled = true
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -187,11 +187,11 @@ func TestRateLimiter_EndpointExemptions(t *testing.T) {
 func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = true
-	config.GlobalLimits.Rate = 100 // Allow more requests for concurrency test
+	rateLimitConfig.Enabled = true
+	rateLimitConfig.GlobalLimits.Rate = 100 // Allow more requests for concurrency test
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -240,10 +240,10 @@ func TestRateLimiter_ConcurrentAccess(t *testing.T) {
 func TestRateLimiter_MultipleIPs(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = true
+	rateLimitConfig.Enabled = true
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -265,10 +265,10 @@ func TestRateLimiter_MultipleIPs(t *testing.T) {
 func TestRateLimiter_MetricsCollection(t *testing.T) {
 	logger := zaptest.NewLogger(t)
 	rateLimitConfig := getDefaultRateLimitConfig()
-	config.Enabled = false // Test metrics collection when disabled
+	rateLimitConfig.Enabled = false // Test metrics collection when disabled
 	
 	reg := prometheus.NewRegistry()
-	rl, err := newIPRateLimiterWithRegistry(config, logger, reg)
+	rl, err := newIPRateLimiterWithRegistry(rateLimitConfig, logger, reg)
 	require.NoError(t, err)
 	defer rl.Close()
 
@@ -298,17 +298,17 @@ func TestIPExtractor_BasicFunctionality(t *testing.T) {
 }
 
 func TestConfig_ParseConfig(t *testing.T) {
-	config := &Config{
+	rateLimitConfig := &config.RateLimitConfig{
 		ExemptIPs: []string{"127.0.0.1", "10.0.0.0/8", "invalid-ip"},
 	}
 	
 	// Should fail due to invalid IP
-	_, err := ParseConfig(config)
+	_, err := config.ParseRateLimitConfig(rateLimitConfig)
 	assert.Error(t, err)
 	
 	// Fix the config
-	config.ExemptIPs = []string{"127.0.0.1", "10.0.0.0/8"}
-	parsed, err := ParseConfig(config)
+	rateLimitConfig.ExemptIPs = []string{"127.0.0.1", "10.0.0.0/8"}
+	parsed, err := config.ParseRateLimitConfig(rateLimitConfig)
 	require.NoError(t, err)
 	
 	assert.Len(t, parsed.ExemptIPNets, 2)
@@ -318,16 +318,16 @@ func TestConfig_DefaultConfig(t *testing.T) {
 	rateLimitConfig := getDefaultRateLimitConfig()
 	
 	// Should have sensible defaults
-	assert.False(t, config.Enabled) // Disabled by default
-	assert.True(t, config.MetricsEnabled)
-	assert.Equal(t, 100000, config.MaxTrackedIPs)
-	assert.Equal(t, 5*time.Minute, config.CleanupInterval)
-	assert.Equal(t, uint64(50), config.GlobalLimits.Rate)
-	assert.NotEmpty(t, config.EndpointLimits)
-	assert.NotEmpty(t, config.ExemptIPs)
+	assert.False(t, rateLimitConfig.Enabled) // Disabled by default
+	assert.True(t, rateLimitConfig.MetricsEnabled)
+	assert.Equal(t, 100000, rateLimitConfig.MaxTrackedIPs)
+	assert.Equal(t, 5*time.Minute, rateLimitConfig.CleanupInterval)
+	assert.Equal(t, uint64(50), rateLimitConfig.GlobalLimits.Rate)
+	assert.NotEmpty(t, rateLimitConfig.EndpointLimits)
+	assert.NotEmpty(t, rateLimitConfig.ExemptIPs)
 	
 	// Should parse successfully
-	_, err := ParseConfig(config)
+	_, err := config.ParseRateLimitConfig(rateLimitConfig)
 	assert.NoError(t, err)
 }
 
