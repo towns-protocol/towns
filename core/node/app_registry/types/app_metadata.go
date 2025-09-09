@@ -2,6 +2,9 @@ package types
 
 import (
 	"net/url"
+	"sync"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -11,7 +14,6 @@ import (
 const MAX_RESOURCE_URL_LENGTH = 8192
 
 const MAX_SLASH_COMMANDS = 25
-
 
 // validFileUrlSchemes defines allowed URL schemes for image files.
 var validFileUrlSchemes = map[string]struct{}{
@@ -25,6 +27,27 @@ var validExternalUrlSchemes = map[string]struct{}{
 	"https": {},
 	"http":  {},
 }
+
+// getAppMetadataFields returns valid field names from the AppMetadata protobuf definition
+func getAppMetadataFields() map[string]bool {
+	// Get the protobuf descriptor for AppMetadata
+	msg := &protocol.AppMetadata{}
+	descriptor := msg.ProtoReflect().Descriptor()
+
+	allowedFields := make(map[string]bool)
+
+	// Iterate through all fields in the protobuf message
+	fields := descriptor.Fields()
+	for i := 0; i < fields.Len(); i++ {
+		var fieldName protoreflect.Name = fields.Get(i).Name()
+		allowedFields[string(fieldName)] = true
+	}
+
+	return allowedFields
+}
+
+// appMetadataFields caches the result of getAppMetadataFields for performance
+var appMetadataFields = sync.OnceValue(getAppMetadataFields)
 
 func ValidateImageFileUrl(urlStr string) error {
 	if urlStr == "" {
@@ -179,22 +202,14 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	return nil
 }
 
-// ValidateUpdateMask validates the update mask
 func ValidateUpdateMask(mask []string) error {
 	if len(mask) == 0 {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "update_mask cannot be empty")
 	}
-	
-	allowedFields := map[string]bool{
-		"username":       true,
-		"description":    true,
-		"image_url":      true,
-		"external_url":   true,
-		"avatar_url":     true,
-		"slash_commands": true,
-		"display_name":   true,
-	}
-	
+
+	// Get allowed fields dynamically from protobuf definition
+	allowedFields := appMetadataFields()
+
 	for _, field := range mask {
 		if !allowedFields[field] {
 			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "invalid field in update mask").
