@@ -230,9 +230,9 @@ func (s *Service) createReplicatedMediaStream(
 		if s.config.MediaStreamDataOffloadingEnabled {
 			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to create external media stream: %w", err)
 			}
-			if s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID) != nil {
+			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return nil, fmt.Errorf(
 						"failed to write external media stream info: %w, and failed to abort upload: %v",
@@ -240,10 +240,10 @@ func (s *Service) createReplicatedMediaStream(
 						abortErr,
 					)
 				}
-				if s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId) != nil {
-					return nil, fmt.Errorf("failed to delete external media stream upload entry: %w", err)
+				if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
+					return nil, fmt.Errorf("failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w", err, deleteErr)
 				}
-				return nil, err
+				return nil, fmt.Errorf("failed to create external media stream upload entry: %w.", err)
 			}
 		}
 		sender.AddTask(func(ctx context.Context) error {

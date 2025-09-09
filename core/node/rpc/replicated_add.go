@@ -213,7 +213,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Get the location of the stream data
 		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get media stream location: %w", err)
 		}
 		if location != s.externalMediaStorage.GetBucket() {
 			return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
@@ -221,7 +221,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if location != "" {
 			uploadID, partNum, err := s.storage.GetExternalMediaStreamNextPart(ctx, streamId)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get external media stream next part: %w", err)
 			}
 			etag, err := s.externalMediaStorage.UploadPartToExternalMediaStream(
 				ctx,
@@ -231,17 +231,17 @@ func (s *Service) replicatedAddMediaEventImpl(
 				partNum,
 			)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to upload part to external media stream: %w", err)
 			}
-			if s.storage.WriteExternalMediaStreamPartInfo(
+			if err = s.storage.WriteExternalMediaStreamPartInfo(
 				ctx,
 				streamId,
 				cc.MiniblockNum,
 				partNum,
 				etag,
 				len(mbBytes),
-			) != nil {
-				return err
+			); err != nil {
+				return fmt.Errorf("failed to write external media stream part info: %w", err)
 			}
 			mbBytes = []byte{}
 		}
@@ -251,7 +251,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
 		}); err != nil {
-			return err
+			return fmt.Errorf("failed to write ephemeral miniblock: %w", err)
 		}
 
 		// Return here if there are more chunks to upload.
@@ -269,9 +269,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 						abortErr,
 					)
 				}
-				return err
+				return fmt.Errorf("failed to get external media stream info: %w", err)
 			}
-			if s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, etags) != nil {
+			if err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, etags); err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 					return fmt.Errorf(
 						"failed to complete multipart upload: %w, and failed to abort upload: %v",
@@ -279,17 +279,17 @@ func (s *Service) replicatedAddMediaEventImpl(
 						abortErr,
 					)
 				}
-				return err
+				return fmt.Errorf("failed to complete multipart upload: %w", err)
 			}
-			if s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId) != nil {
-				log.Error("failed to delete external media stream upload entry", "streamId", streamId)
+			if err = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); err != nil {
+				log.Error("failed to delete external media stream upload entry, with error: %w", "streamId", streamId, "error", err)
 			}
 		}
 
 		// Normalize stream locally
 		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to normalize ephemeral stream: %w", err)
 		}
 
 		quorumCheckMu.Lock()

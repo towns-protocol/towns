@@ -199,7 +199,7 @@ type (
 			length int,
 		) error
 
-		GetExternalMediaStreamChunkRangeByMiniblock(ctx context.Context, miniblock int64) (string, error)
+		GetExternalMediaStreamMiniblockDataMarkers(ctx context.Context, miniblock int64) (string, error)
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(

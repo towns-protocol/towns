@@ -600,7 +600,7 @@ func (s *PostgresStreamStore) getExternalMediaStreamNextPartTx(
 	return uploadID, partNumber, err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(
+func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkers(
 	ctx context.Context,
 	miniblock int64,
 ) (string, error) {
@@ -610,11 +610,11 @@ func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(
 	var rangeHeader string
 	err := s.txRunner(
 		ctx,
-		"GetExternalMediaStreamChunkRangeByMiniblock",
+		"GetExternalMediaStreamMiniblockDataMarkers",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			rangeHeader, err = s.getExternalMediaStreamChunkRangeByMiniblockTx(ctx, tx, miniblock)
+			rangeHeader, err = s.GetExternalMediaStreamMiniblockDataMarkersTx(ctx, tx, miniblock)
 			return err
 		},
 		nil,
@@ -623,7 +623,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamChunkRangeByMiniblock(
 	return rangeHeader, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamChunkRangeByMiniblockTx(
+func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkersTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	miniblock int64,

@@ -692,7 +692,7 @@ func (s *Stream) GetMiniblocks(
 			go func(idx int, blk *storage.MiniblockDescriptor) {
 				defer wg.Done()
 
-				rangeHeader, err := s.params.Storage.GetExternalMediaStreamChunkRangeByMiniblock(ctx, blk.Number)
+				rangeHeader, err := s.params.Storage.GetExternalMediaStreamMiniblockDataMarkers(ctx, blk.Number)
 				if err != nil {
 					errChan <- fmt.Errorf("failed to get range header for block %d: %w", blk.Number, err)
 					return
