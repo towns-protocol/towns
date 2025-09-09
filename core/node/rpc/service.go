@@ -58,10 +58,10 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache   *StreamCache
-	sync    riversync.Handler
-	syncv3  riversyncv3.Service
-	v3Syncs *xsync.Map[string, struct{}]
+	cache       *StreamCache
+	syncSvc     riversync.Handler
+	syncv3Svc   riversyncv3.Service
+	syncv3OpIDs *xsync.Map[string, struct{}]
 
 	// Notifications
 	notifications notifications.UserPreferencesStore

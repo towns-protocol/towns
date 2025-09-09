@@ -123,10 +123,10 @@ func (s *Service) debugDropStream(
 		return nil, err
 	}
 
-	if _, ok := s.v3Syncs.Load(syncID); ok {
-		err = s.syncv3.DebugDropStream(ctx, syncID, streamID)
+	if _, ok := s.syncv3OpIDs.Load(syncID); ok {
+		err = s.syncv3Svc.DebugDropStream(ctx, syncID, streamID)
 	} else {
-		dbgHandler, ok := s.sync.(sync.DebugHandler)
+		dbgHandler, ok := s.syncSvc.(sync.DebugHandler)
 		if !ok {
 			return nil, RiverError(Err_UNAVAILABLE, "Drop stream not supported")
 		}

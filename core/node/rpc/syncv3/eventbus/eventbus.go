@@ -165,7 +165,8 @@ func (e *eventBusImpl) OnStreamEvent(update *SyncStreamsResponse, version int) {
 	// Unsubscribe event bus from receiving updates of the given stream.
 	e.registry.EnqueueUnsubscribe(streamID)
 
-	// Send sync down message directly to clients to avoid common queue
+	// Send sync down message directly to clients to avoid common queue.
+	// TODO: Explore using worker pool here.
 	var wg sync.WaitGroup
 	for _, subscribers := range e.subscribers[streamID] {
 		wg.Add(len(subscribers))

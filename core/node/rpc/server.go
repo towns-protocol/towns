@@ -783,7 +783,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.sync = sync.NewHandler(
+	s.syncSvc = sync.NewHandler(
 		s.serverCtx,
 		s.wallet.Address,
 		s.cache,
@@ -791,18 +791,14 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.metrics,
 		s.otelTracer,
 	)
-
-	// Sync v3 setup
-	{
-		s.syncv3 = syncv3.NewService(
-			s.serverCtx,
-			s.wallet.Address,
-			s.cache,
-			s.nodeRegistry,
-			s.otelTracer,
-		)
-		s.v3Syncs = xsync.NewMap[string, struct{}]()
-	}
+	s.syncv3Svc = syncv3.NewService(
+		s.serverCtx,
+		s.wallet.Address,
+		s.cache,
+		s.nodeRegistry,
+		s.otelTracer,
+	)
+	s.syncv3OpIDs = xsync.NewMap[string, struct{}]()
 
 	return nil
 }
