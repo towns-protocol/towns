@@ -1,2 +1,2 @@
-DROP TABLE IF EXISTS external_media_chunks;
-DROP TABLE IF EXISTS external_media_streams;
+DROP TABLE IF EXISTS external_media_uploads;
+DROP TABLE IF EXISTS external_media_markers;

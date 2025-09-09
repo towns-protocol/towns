@@ -84,7 +84,7 @@ type (
 	}
 
 	Etag struct {
-		PartNumber int    `json:"part_number"`
+		Miniblock int    `json:"miniblock"`
 		Etag       string `json:"etag"`
 	}
 
@@ -178,9 +178,7 @@ type (
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
 
-		GetExternalMediaStreamInfo(ctx context.Context, streamId StreamId) (string, []Etag, error)
-
-		GetExternalMediaStreamNextPart(ctx context.Context, streamId StreamId) (string, int, error)
+		GetExternalMediaStreamUploadInfo(ctx context.Context, streamId StreamId) (string, []Etag, error)
 
 		CreateExternalMediaStreamUploadEntry(
 			ctx context.Context,
@@ -190,11 +188,10 @@ type (
 
 		DeleteExternalMediaStreamUploadEntry(ctx context.Context, streamId StreamId) error
 
-		WriteExternalMediaStreamPartInfo(
+		WriteExternalMediaStreamPartUploadInfo(
 			ctx context.Context,
 			streamId StreamId,
 			miniblock int64,
-			partNumber int,
 			etag string,
 			length int,
 		) error
@@ -328,7 +325,7 @@ type (
 			streamId StreamId,
 			data []byte,
 			uploadID string,
-			partNum int,
+			miniblockNum int64,
 		) (string, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []Etag) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error

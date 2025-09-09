@@ -120,7 +120,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	streamId StreamId,
 	data []byte,
 	uploadID string,
-	partNum int,
+	miniblock int64,
 ) (string, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
@@ -130,7 +130,8 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 		tag, err := w.s3Client.UploadPart(ctx, &s3.UploadPartInput{
 			Bucket:        &w.bucket,
 			Key:           &key,
-			PartNumber:    int32(partNum),
+			// Part number is 1-indexed
+			PartNumber:    int32(miniblock + 1),
 			UploadId:      &uploadID,
 			Body:          bytes.NewReader(data),
 			ContentLength: int64(len(data)),
@@ -161,7 +162,8 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 	for _, etag := range etags {
 		parts = append(parts, types.CompletedPart{
 			ETag:       &etag.Etag,
-			PartNumber: int32(etag.PartNumber),
+			// Part number is 1-indexed
+			PartNumber: int32(etag.Miniblock+1),
 		})
 	}
 

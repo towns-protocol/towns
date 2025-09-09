@@ -79,12 +79,12 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 ) error {
 	sql := s.sqlForStream(
 		`
-			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, location) VALUES ($1, 0, true, true, $2);
+			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, location) VALUES ($1, 0, true, true, $4);
 			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);`,
 		streamId,
 	)
 
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
+	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot, location); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
@@ -434,11 +434,10 @@ func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 	return err
 }
 
-func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfo(
+func (s *PostgresStreamStore) WriteExternalMediaStreamPartUploadInfo(
 	ctx context.Context,
 	streamId StreamId,
 	miniblock int64,
-	partNumber int,
 	etag string,
 	length int,
 ) error {
@@ -447,22 +446,21 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamPartInfo(
 
 	return s.txRunner(
 		ctx,
-		"WriteExternalMediaStreamPartInfo",
+		"WriteExternalMediaStreamPartUploadInfo",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeExternalMediaStreamPartInfoTx(ctx, tx, streamId, miniblock, partNumber, etag, length)
+			return s.writeExternalMediaStreamPartUploadInfoTx(ctx, tx, streamId, miniblock, etag, length)
 		},
 		nil,
 		"streamId", streamId,
 	)
 }
 
-func (s *PostgresStreamStore) writeExternalMediaStreamPartInfoTx(
+func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	miniblock int64,
-	partNumber int,
 	etag string,
 	length int,
 ) error {
@@ -475,7 +473,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartInfoTx(
 	`
 
 	// Add the new etag to the JSONB array
-	etagJSON := fmt.Sprintf(`[{"part_number": %d, "etag": "%s"}]`, partNumber, etag)
+	etagJSON := fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag)
 	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
 	if err != nil {
 		return err
@@ -496,7 +494,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartInfoTx(
 	return err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
+func (s *PostgresStreamStore) GetExternalMediaStreamUploadInfo(
 	ctx context.Context,
 	streamId StreamId,
 ) (string, []Etag, error) {
@@ -507,11 +505,11 @@ func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
 	var etags []Etag
 	err := s.txRunner(
 		ctx,
-		"GetExternalMediaStreamInfo",
+		"GetExternalMediaStreamUploadInfo",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			uploadID, etags, err = s.getExternalMediaStreamInfoTx(ctx, tx, streamId)
+			uploadID, etags, err = s.getExternalMediaStreamUploadInfoTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
@@ -520,7 +518,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamInfo(
 	return uploadID, etags, err
 }
 
-func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(
+func (s *PostgresStreamStore) getExternalMediaStreamUploadInfoTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
@@ -549,55 +547,12 @@ func (s *PostgresStreamStore) getExternalMediaStreamInfoTx(
 	etagsNoTags := make([]Etag, len(etags))
 	for i, e := range etags {
 		etagsNoTags[i] = Etag{
-			PartNumber: e.PartNumber,
+			Miniblock: e.Miniblock,
 			Etag:       e.Etag,
 		}
 	}
 
 	return uploadID, etagsNoTags, nil
-}
-
-func (s *PostgresStreamStore) GetExternalMediaStreamNextPart(
-	ctx context.Context,
-	streamId StreamId,
-) (string, int, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	var uploadID string
-	var partNumber int
-	err := s.txRunner(
-		ctx,
-		"GetExternalMediaStreamNextPart",
-		pgx.ReadOnly,
-		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			uploadID, partNumber, err = s.getExternalMediaStreamNextPartTx(ctx, tx, streamId)
-			return err
-		},
-		nil,
-		"streamId", streamId,
-	)
-	return uploadID, partNumber, err
-}
-
-func (s *PostgresStreamStore) getExternalMediaStreamNextPartTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) (string, int, error) {
-	var uploadID string
-	var partNumber int
-
-	// Atomic increment and return current value
-	err := tx.QueryRow(ctx, `
-		UPDATE external_media_streams 
-		SET parts = parts + 1
-		WHERE stream_id = $1
-		RETURNING upload_id, parts - 1
-	`, streamId).Scan(&uploadID, &partNumber)
-
-	return uploadID, partNumber, err
 }
 
 func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkers(
@@ -614,7 +569,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkers(
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			rangeHeader, err = s.GetExternalMediaStreamMiniblockDataMarkersTx(ctx, tx, miniblock)
+			rangeHeader, err = s.getExternalMediaStreamMiniblockDataMarkersTx(ctx, tx, miniblock)
 			return err
 		},
 		nil,
@@ -623,7 +578,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkers(
 	return rangeHeader, err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamMiniblockDataMarkersTx(
+func (s *PostgresStreamStore) getExternalMediaStreamMiniblockDataMarkersTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	miniblock int64,

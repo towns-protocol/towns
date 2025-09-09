@@ -137,7 +137,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return fmt.Errorf("external media stream storage changed after this ephemeral media was created.")
 	}
 	if location != "" {
-		uploadID, partNum, err := s.storage.GetExternalMediaStreamNextPart(ctx, streamId)
+		uploadID, _, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 		if err != nil {
 			return fmt.Errorf("failed to get external media stream next part: %w", err)
 		}
@@ -146,16 +146,15 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 			streamId,
 			storageMb.Data,
 			uploadID,
-			partNum,
+			storageMb.Number,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to upload part to external media stream: %w", err)
 		}
-		if err = s.storage.WriteExternalMediaStreamPartInfo(
+		if err = s.storage.WriteExternalMediaStreamPartUploadInfo(
 			ctx,
 			streamId,
 			storageMb.Number,
-			partNum,
 			etag,
 			len(storageMb.Data),
 		); err != nil {
@@ -213,7 +212,7 @@ func (s *Service) sealEphemeralStream(
 		)
 	}
 	if location != "" {
-		uploadID, etags, err := s.storage.GetExternalMediaStreamInfo(ctx, streamId)
+		uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 		if err != nil {
 			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
 				return common.Hash{}, fmt.Errorf(
