@@ -13,5 +13,9 @@ wait_for_process() {
 ./scripts/kill-on-port.sh 8545 & PID1=$!
 ./scripts/kill-on-port.sh 8546 & PID2=$!
 
+# Stop Docker containers if they exist
+docker stop towns-base-chain towns-river-chain 2>/dev/null || true
+docker rm towns-base-chain towns-river-chain 2>/dev/null || true
+
 wait_for_process "$PID1" "stop_base_anvil"
 wait_for_process "$PID2" "stop_river_anvil"
