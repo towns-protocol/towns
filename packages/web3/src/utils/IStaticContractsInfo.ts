@@ -60,6 +60,13 @@ export function getRiverEnv() {
     return RIVER_ENV
 }
 
+export function getRiverEnvDeployment() {
+    if (!RIVER_ENV) {
+        throw new Error('RIVER_ENV is not defined')
+    }
+    return getWeb3Deployment(RIVER_ENV)
+}
+
 function optionalEnv({
     environmentId,
     keys,
