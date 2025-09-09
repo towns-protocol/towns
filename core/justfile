@@ -12,10 +12,6 @@ INSTANCE_BASE := RUN_BASE
 RPC_BASE := 'http://127.0.0.1:8545'
 RPC_RIVER := 'http://127.0.0.1:8546'
 
-# Docker-related environment variables
-USE_DOCKER_CHAINS := env_var_or_default("USE_DOCKER_CHAINS", "0")
-USE_LOCAL_DOCKER := env_var_or_default("USE_LOCAL_DOCKER", "0")
-
 OPERATOR_ADDRESS := `source ../packages/contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
 LOCAL_PRIVATE_KEY := `source ../packages/contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
 
@@ -55,37 +51,19 @@ _anvil-start $NAME $PORT $CHAIN_ID:
     if nc -z localhost ${PORT} > /dev/null 2>&1; then
         echo "Anvil already running on port ${PORT}"
     else
-        if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
-            echo "Starting Docker ${NAME} chain on port ${PORT}"
-            # Use local image if USE_LOCAL_DOCKER=1, otherwise use AWS
-            if [ "${USE_LOCAL_DOCKER}" = "1" ]; then
-                IMAGE="towns-anvil:local"
-            else
-                IMAGE="${DOCKER_IMAGE:-public.ecr.aws/h5v6m2x1/towns-anvil:latest}"
-            fi
-
-            docker run -d \
-                --name towns-${NAME}-chain \
-                -p ${PORT}:${PORT} \
-                -e CHAIN=${NAME} \
-                $IMAGE
-
-            ../scripts/wait-for-port.sh ${PORT} "Docker_anvil_${NAME}"
-        else
-            echo "Starting ${NAME} on port ${PORT}"
-            mkdir -p ./run_files/anvil
-            nohup anvil --chain-id ${CHAIN_ID} \
-                --port ${PORT} \
-                --block-time 1 \
-                --block-base-fee-per-gas 1 \
-                --disable-block-gas-limit \
-                --disable-code-size-limit \
-                --disable-min-priority-fee \
-                --max-persisted-states 50 \
-                --gas-price 1 \
-                > ./run_files/anvil/${NAME}.log 2>&1 &
-            ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
-        fi
+        echo "Starting ${NAME} on port ${PORT}"
+        mkdir -p ./run_files/anvil
+        nohup anvil --chain-id ${CHAIN_ID} \
+            --port ${PORT} \
+            --block-time 1 \
+            --block-base-fee-per-gas 1 \
+            --disable-block-gas-limit \
+            --disable-code-size-limit \
+            --disable-min-priority-fee \
+            --max-persisted-states 50 \
+            --gas-price 1 \
+            > ./run_files/anvil/${NAME}.log 2>&1 &
+        ../scripts/wait-for-port.sh ${PORT} anvil_${NAME}
     fi
 
 anvil-base:
@@ -94,23 +72,12 @@ anvil-base:
 
 anvil-base-stop:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
-        docker stop towns-base-chain 2>/dev/null || true
-        docker rm towns-base-chain 2>/dev/null || true
-    else
-        ../scripts/kill-on-port.sh 8545 anvil_base
-    fi
+    ../scripts/kill-on-port.sh 8545 anvil_base
 
 anvil-river: (_anvil-start "river" "8546" "31338")
 
 anvil-river-stop:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
-        docker stop towns-river-chain 2>/dev/null || true
-        docker rm towns-river-chain 2>/dev/null || true
-    else
-        ../scripts/kill-on-port.sh 8546 anvil_river
-    fi
+    ../scripts/kill-on-port.sh 8546 anvil_river
 
 anvils: anvil-base anvil-river
 
@@ -119,14 +86,6 @@ anvils-stop: anvil-base-stop anvil-river-stop
 anvils-tail-logs:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     tail -n 10 -F ./run_files/anvil/*.log
-
-# Build Docker image locally
-build-local-docker:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    cd ../
-    docker build -t towns-anvil:local -f ./packages/contracts/docker/Dockerfile .
-    echo "Built local image: towns-anvil:local"
-    echo "To use it, run: USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils"
 
 storage-start:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -148,47 +107,21 @@ storage-clean:
     cd ./scripts
     docker compose --project-name river down --volumes --rmi all
 
-just-deploy-contracts:
+deploy-contracts: anvils
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     source ${ENV_FILE}
     echo "Deploying contracts"
-
-    if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
-        # Create destination directories for contract addresses
-        mkdir -p ${CONTRACTS_DIR}/base/addresses
-        mkdir -p ${CONTRACTS_DIR}/river/addresses
-
-        # Copy deployment files from container
-        echo "Extracting contract addresses from Docker containers"
-        docker cp towns-base-chain:/app/local_dev/base/addresses/. ${CONTRACTS_DIR}/base/addresses/
-        docker cp towns-river-chain:/app/local_dev/river/addresses/. ${CONTRACTS_DIR}/river/addresses/
-    else
-        echo "Deploying contracts"
-        ../scripts/deploy-contracts.sh
-    fi
-
-deploy-contracts: anvils just-deploy-contracts create-contracts-env
-
-# Create contracts.env file with extracted addresses
-create-contracts-env:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    if [ -d "${CONTRACTS_DIR}" ]; then
-        # Create contracts.env with extracted addresses
-        mkdir -p ${RUN_BASE}
-        echo "" > ${RUN_BASE}/contracts.env
-        echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
-        echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
-        echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
-        echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
-        echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
-        # Generate a random test entitlements bypass secret and persist it for this run
-        TEST_SECRET=$(openssl rand -hex 32)
-        echo "RIVER_TESTENTITLEMENTSBYPASSSECRET=${TEST_SECRET}" >> ${RUN_BASE}/contracts.env
-    else
-        echo "ERROR: Contract directory not found: ${CONTRACTS_DIR}"
-        echo "Contract deployment may have failed. Cannot create contracts.env."
-        exit 1
-    fi
+    mkdir -p ${RUN_BASE}
+    ../scripts/deploy-contracts.sh
+    echo "" > ${RUN_BASE}/contracts.env
+    echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_REGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/river/addresses/riverRegistry.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_TEST_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/utils/entitlementGatedExample.json)" >> ${RUN_BASE}/contracts.env
+    echo "RIVER_APPREGISTRYCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/appRegistry.json)" >> ${RUN_BASE}/contracts.env
+    # Generate a random test entitlements bypass secret and persist it for this run
+    TEST_SECRET=$(openssl rand -hex 32)
+    echo "RIVER_TESTENTITLEMENTSBYPASSSECRET=${TEST_SECRET}" >> ${RUN_BASE}/contracts.env
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -311,7 +244,7 @@ just-config-river-chain:
         just run-bin \
         on-chain-config set-csv ../../${ENV_PATH}/on_chain.csv
 
-config-river-chain: deploy-contracts config-root build just-config-river-chain
+config-river-chain:  deploy-contracts config-root build just-config-river-chain
 
 config-root:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
