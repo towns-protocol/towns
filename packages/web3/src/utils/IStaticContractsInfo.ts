@@ -35,8 +35,11 @@ export interface Web3Deployment {
 }
 export function getWeb3Deployment(riverEnv: string): Web3Deployment {
     // Cast to unknown first to avoid TypeScript error about property compatibility
-    const deployments = DeploymentsJson as unknown as Record<string, Web3Deployment>
-    return makeWeb3Deployment(riverEnv, deployments[riverEnv])
+    const deployments = DeploymentsJson as unknown as Record<string, Web3Deployment | undefined>
+    if (deployments[riverEnv]) {
+        return deployments[riverEnv]
+    }
+    return makeWeb3Deployment(riverEnv)
 }
 
 /**
@@ -59,11 +62,9 @@ export function getRiverEnv() {
 function optionalEnv({
     environmentId,
     keys,
-    defaultValue,
 }: {
     environmentId: string
     keys: string[]
-    defaultValue?: string
 }): string | undefined {
     if (environmentId === RIVER_ENV) {
         const value = safeEnv(keys)
@@ -71,23 +72,12 @@ function optionalEnv({
             return value
         }
     }
-    if (defaultValue) {
-        return defaultValue
-    }
     return undefined
 }
 
-function requiredEnv({
-    environmentId,
-    keys,
-    defaultValue,
-}: {
-    environmentId: string
-    keys: string[]
-    defaultValue?: string
-}): string {
+function requiredEnv({ environmentId, keys }: { environmentId: string; keys: string[] }): string {
     check(keys.length > 0, 'keys must be an array of at least one key')
-    const value = optionalEnv({ environmentId, keys, defaultValue })
+    const value = optionalEnv({ environmentId, keys })
     if (!value) {
         throw new Error(
             `One of ${keys.join(', ')}, ${keys.map((key) => `VITE_${key}`).join(', ')} is required to be set in process.env`,
@@ -96,7 +86,7 @@ function requiredEnv({
     return value
 }
 
-function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment): Web3Deployment {
+function makeWeb3Deployment(environmentId: string): Web3Deployment {
     // check for environment variable overrides, if not use the deployment from the json file
     return {
         base: {
@@ -104,7 +94,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                 requiredEnv({
                     environmentId,
                     keys: ['BASE_CHAIN_ID'],
-                    defaultValue: deployment?.base.chainId.toString(),
                 }),
             ),
             addresses: {
@@ -114,7 +103,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_APP_REGISTRY',
                         'BASE_REGISTRY_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.baseRegistry,
                 }) as Address,
                 spaceFactory: requiredEnv({
                     environmentId,
@@ -122,7 +110,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_SPACE_FACTORY',
                         'SPACE_FACTORY_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.spaceFactory,
                 }) as Address,
                 spaceOwner: requiredEnv({
                     environmentId,
@@ -130,7 +117,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_SPACE_OWNER',
                         'SPACE_OWNER_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.spaceOwner,
                 }) as Address,
                 riverAirdrop: requiredEnv({
                     environmentId,
@@ -138,7 +124,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_RIVER_AIRDROP',
                         'RIVER_AIRDROP_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.riverAirdrop,
                 }) as Address,
                 swapRouter: optionalEnv({
                     environmentId,
@@ -146,7 +131,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_SWAP_ROUTER',
                         'SWAP_ROUTER_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.swapRouter,
                 }) as Address,
                 appRegistry: requiredEnv({
                     environmentId,
@@ -154,7 +138,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'BASE_ADDRESSES_APP_REGISTRY',
                         'APP_REGISTRY_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.base.addresses.appRegistry,
                 }) as Address,
                 utils: {
                     mockNFT: optionalEnv({
@@ -163,7 +146,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                             'BASE_ADDRESSES_MOCK_NFT',
                             'MOCK_NFT_ADDRESS', // deprecated
                         ],
-                        defaultValue: deployment?.base.addresses.utils.mockNFT,
                     }) as Address,
                     member: optionalEnv({
                         environmentId,
@@ -171,7 +153,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                             'BASE_ADDRESSES_MEMBER',
                             'MEMBER_ADDRESS', // deprecated
                         ],
-                        defaultValue: deployment?.base.addresses.utils.member,
                     }) as Address,
                     towns: optionalEnv({
                         environmentId,
@@ -179,7 +160,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                             'BASE_ADDRESSES_TOWNS',
                             'TOWNS_ADDRESS', // deprecated
                         ],
-                        defaultValue: deployment?.base.addresses.utils.towns,
                     }) as Address,
                 },
             },
@@ -189,7 +169,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                 requiredEnv({
                     environmentId,
                     keys: ['RIVER_CHAIN_ID'],
-                    defaultValue: deployment?.river.chainId.toString(),
                 }),
             ),
             addresses: {
@@ -199,7 +178,6 @@ function makeWeb3Deployment(environmentId: string, deployment?: Web3Deployment):
                         'RIVER_ADDRESSES_RIVER_REGISTRY',
                         'RIVER_REGISTRY_ADDRESS', // deprecated
                     ],
-                    defaultValue: deployment?.river.addresses.riverRegistry,
                 }) as Address,
             },
         } satisfies RiverChainConfig,
