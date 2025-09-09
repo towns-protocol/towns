@@ -4,13 +4,12 @@ import { SpaceDapp } from '../src/space-dapp/SpaceDapp'
 import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
 import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
-import DeploymentsJson from '@towns-protocol/generated/config/deployments.json'
 import { BaseChainConfig } from '../src/utils/IStaticContractsInfo'
 import { expect, test } from 'vitest'
 // temp until there's a better way to do this without importing sdk
 // @ts-ignore
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-const base = DeploymentsJson?.local_dev?.base as BaseChainConfig
+const base = getRiverEnvDeployment().base
 
 if (!base) {
     throw new Error('getJoinSpacePriceDetails.test.ts: Base config not found')
@@ -23,6 +22,9 @@ const baseConfig = {
         baseRegistry: base.addresses.baseRegistry,
         spaceFactory: base.addresses.spaceFactory,
         spaceOwner: base.addresses.spaceOwner,
+        riverAirdrop: base.addresses.riverAirdrop,
+        swapRouter: base.addresses.swapRouter,
+        appRegistry: base.addresses.appRegistry,
         utils: {
             mockNFT: base.addresses.utils.mockNFT,
             member: base.addresses.utils.member,
