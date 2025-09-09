@@ -15,7 +15,7 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
-  create_address_manifest
+  copy_contract_addresses
   echo "Done!"
 }
 
@@ -119,31 +119,37 @@ deploy_contracts() {
   popd
 }
 
-# Create a consolidated address file for easy extraction
-create_address_manifest() {
-  echo "Creating contract address manifest for easy extraction..."
-  copied_any=0
+# Copy contract addresses to a known location for easy extraction
+copy_contract_addresses() {
+  echo "Copying contract addresses..."
+  contracts_dir="./packages/contracts/deployments/local_dev"
 
-  if [ -d "./packages/contracts/deployments/local_dev" ]; then
-    mkdir -p ./local_dev
-    
-    # Copy base and river addresses
-    for chain in base river; do
-      source_dir="./packages/contracts/deployments/local_dev/${chain}/addresses"
-      if [ -d "$source_dir" ]; then
-        mkdir -p "./local_dev/${chain}/addresses"
-        if cp -r "$source_dir"/. "./local_dev/${chain}/addresses/"; then
-          copied_any=1
-        fi
-      fi
-    done
+  # Fail if contract deployment directory doesn't exist
+  if [ ! -d "$contracts_dir" ]; then
+    echo "ERROR: Contract deployment directory not found: $contracts_dir"
+    echo "Contract deployment may have failed."
+    exit 1
   fi
 
-  if [ "$copied_any" != 0 ]; then
-    echo "Contract addresses saved to ./local_dev/ for extraction"
-  else
-    echo "No contract addresses found to copy"
-  fi
+  mkdir -p ./local_dev
+
+  # Copy contract addresses and fail if any are missing
+  for chain in base river; do
+    source_dir="${contracts_dir}/${chain}/addresses"
+    if [ ! -d "$source_dir" ]; then
+      echo "ERROR: Contract addresses not found for $chain chain: $source_dir"
+      exit 1
+    fi
+
+    target_dir="./local_dev/${chain}/addresses"
+    mkdir -p "$target_dir"
+    if ! cp -r "$source_dir"/. "$target_dir/"; then
+      echo "ERROR: Failed to copy $chain contract addresses"
+      exit 1
+    fi
+  done
+
+  echo "Contract addresses copied to ./local_dev"
 }
 
 # cd ./core && just config build

@@ -9,8 +9,9 @@ on:
         paths:
             - '.github/workflows/Towns_anvil_docker.yml'
             - 'packages/contracts/**'
-            - 'scripts/deploy*contracts.sh'
+            - 'scripts/deploy-contracts.sh'
             - 'scripts/start-local-*.sh'
+            - 'core/justfile'
 
     workflow_dispatch: # A build was manually requested
 

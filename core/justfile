@@ -167,13 +167,14 @@ just-deploy-contracts:
         ../scripts/deploy-contracts.sh
     fi
 
-deploy-contracts: anvils just-deploy-contracts
+deploy-contracts: anvils just-deploy-contracts create-contracts-env
+
+# Create contracts.env file with extracted addresses
+create-contracts-env:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    mkdir -p ${RUN_BASE}
-    
-    # Only create contracts.env if CONTRACTS_DIR exists (not in Docker)
     if [ -d "${CONTRACTS_DIR}" ]; then
         # Create contracts.env with extracted addresses
+        mkdir -p ${RUN_BASE}
         echo "" > ${RUN_BASE}/contracts.env
         echo "RIVER_ARCHITECTCONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/spaceFactory.json)" >> ${RUN_BASE}/contracts.env
         echo "RIVER_ENTITLEMENT_CONTRACT_ADDRESS=$(jq -r '.address' ${CONTRACTS_DIR}/base/addresses/baseRegistry.json)" >> ${RUN_BASE}/contracts.env
@@ -183,6 +184,10 @@ deploy-contracts: anvils just-deploy-contracts
         # Generate a random test entitlements bypass secret and persist it for this run
         TEST_SECRET=$(openssl rand -hex 32)
         echo "RIVER_TESTENTITLEMENTSBYPASSSECRET=${TEST_SECRET}" >> ${RUN_BASE}/contracts.env
+    else
+        echo "ERROR: Contract directory not found: ${CONTRACTS_DIR}"
+        echo "Contract deployment may have failed. Cannot create contracts.env."
+        exit 1
     fi
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR:

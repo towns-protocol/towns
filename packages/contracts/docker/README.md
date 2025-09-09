@@ -68,10 +68,7 @@ When using Docker chains, contract addresses are automatically extracted during 
 USE_DOCKER_CHAINS=1 just config
 ```
 
-If `packages/generated` exists, this creates:
-
-- `./run_files/local_dev/contracts.env` with environment variables
-- `../packages/generated/deployments/local_dev/` with full deployment artifacts
+which runs `just-deploy-contracts`. Contract addresses are extracted to `packages/generated/deployments/local_dev/`.
 
 ## Available Just Targets
 
