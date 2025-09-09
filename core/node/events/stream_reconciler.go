@@ -118,14 +118,32 @@ func (sr *streamReconciler) reconcile() error {
 		}
 	}
 
-	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
-		// Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
-		if enableBackwardReconciliation {
-			return sr.backfillGaps()
-		} else {
-			return nil
-		}
-	}
+    // If registry shows an older miniblock than local, optionally update registry and exit.
+    if sr.expectedLastMbInclusive < sr.localLastMbInclusive {
+        if sr.streamRecord.ReplicationFactor() > 1 && sr.streamRecord.Nodes()[0] == sr.cache.params.Wallet.Address {
+            // Before replicated streams nodes would only register miniblocks every N miniblocks.
+            // Therefore, it is possible that registry stream record for streams that haven't seen new miniblocks
+            // after the stream was migrated to a replicated stream is lagging behind. For those streams register
+            // the latest miniblock to bring the record up to date.
+            go sr.cache.writeLatestMbToBlockchain(sr.ctx, sr.stream)
+        }
+        return nil
+    }
+
+    if sr.expectedLastMbInclusive == sr.localLastMbInclusive {
+        // Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
+        if enableBackwardReconciliation {
+            return sr.backfillGaps()
+        }
+        return nil
+    }
+
+    // Special-case: if stream is stuck at genesis (mb 0), try to import genesis from the stream registry.
+    if sr.expectedLastMbInclusive == 0 {
+        if err := sr.reconcileFromRegistryGenesisBlock(); err == nil {
+            return nil
+        }
+    }
 
 	if !enableBackwardReconciliation {
 		return sr.reconcileForward()
@@ -142,6 +160,33 @@ func (sr *streamReconciler) reconcile() error {
 	}
 
 	return sr.backfillGaps()
+}
+
+// reconcileFromRegistryGenesisBlock attempts to load the genesis miniblock from the stream registry
+// and import it locally. Used when the stream registry indicates miniblock 0 and peers may not have
+// the genesis due to original node leaving the network.
+func (sr *streamReconciler) reconcileFromRegistryGenesisBlock() error {
+    ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
+    defer cancel()
+
+    streamID := sr.stream.StreamId()
+    _, _, mb, err := sr.cache.params.Registry.GetStreamWithGenesis(ctx, streamID, 0)
+    if err != nil {
+        return err
+    }
+
+    if len(mb) == 0 {
+        return RiverError(Err_UNAVAILABLE, "Unable to read genesis mb from registry").
+            Tags("streamId", streamID).
+            Func("reconcileFromRegistryGenesisBlock")
+    }
+
+    genesisBlock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{Data: mb, HasLegacySnapshot: true})
+    if err != nil {
+        return err
+    }
+
+    return sr.stream.importMiniblocks(ctx, []*MiniblockInfo{genesisBlock})
 }
 
 func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) error {
