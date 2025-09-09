@@ -130,7 +130,8 @@ create_contracts_env() {
     exit 1
   fi
 
-  mkdir -p ./local_dev
+  output_dir="/app/local_dev"
+  mkdir -p $output_dir
 
   # Copy contract addresses and fail if any are missing
   for chain in base river; do
@@ -140,7 +141,7 @@ create_contracts_env() {
       exit 1
     fi
 
-    target_dir="./local_dev/${chain}/addresses"
+    target_dir="${output_dir}/${chain}/addresses"
     mkdir -p "$target_dir"
     if ! cp -r "$source_dir"/. "$target_dir/"; then
       echo "ERROR: Failed to copy $chain contract addresses"
@@ -150,7 +151,7 @@ create_contracts_env() {
 
   # Create contracts.env file using justfile recipe
   cd ./core
-  just CONTRACTS_DIR="../${contracts_dir}" RUN_BASE="../local_dev" create-contracts-env
+  just CONTRACTS_DIR="../${contracts_dir}" RUN_BASE="${output_dir}" create-contracts-env
   cd ..
   
   # Generate config using packages/generated
@@ -158,7 +159,7 @@ create_contracts_env() {
     cd ./packages/generated
     yarn make-config
     # Copy generated .env to local_dev for extraction
-    cp "./deployments/local_dev/.env" "../../local_dev/.env"
+    cp "./deployments/local_dev/.env" "${output_dir}/.env"
     cd ../..
   fi
   
