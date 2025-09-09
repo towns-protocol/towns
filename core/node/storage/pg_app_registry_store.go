@@ -622,44 +622,8 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		appInfo.Owner = common.BytesToAddress(owner[:])
 		appInfo.EncryptedSecret = encryptedSecret
 
-		// Build metadata from individual columns
-		appInfo.Metadata = &protocol.AppMetadata{}
-
-		if username.Valid && username.String != "" {
-			appInfo.Metadata.Username = proto.String(username.String)
-		}
-		if description.Valid && description.String != "" {
-			appInfo.Metadata.Description = proto.String(description.String)
-		}
-		if imageUrl.Valid && imageUrl.String != "" {
-			appInfo.Metadata.ImageUrl = proto.String(imageUrl.String)
-		}
-		if externalUrl.Valid && externalUrl.String != "" {
-			appInfo.Metadata.ExternalUrl = proto.String(externalUrl.String)
-		}
-		if avatarUrl.Valid && avatarUrl.String != "" {
-			appInfo.Metadata.AvatarUrl = proto.String(avatarUrl.String)
-		}
-		if displayName.Valid && displayName.String != "" {
-			appInfo.Metadata.DisplayName = proto.String(displayName.String)
-		}
-
-		// Parse slash commands
-		if slashCommandsJSON != "" && slashCommandsJSON != "[]" {
-			var commands []map[string]string
-			if err := json.Unmarshal([]byte(slashCommandsJSON), &commands); err == nil {
-				for _, cmd := range commands {
-					if name, ok := cmd["name"]; ok {
-						if desc, ok := cmd["description"]; ok {
-							appInfo.Metadata.SlashCommands = append(appInfo.Metadata.SlashCommands, &protocol.SlashCommand{
-								Name:        name,
-								Description: desc,
-							})
-						}
-					}
-				}
-			}
-		}
+		// Build metadata from individual columns using helper function
+		appInfo.Metadata = buildAppMetadata(username, description, imageUrl, externalUrl, avatarUrl, displayName, slashCommandsJSON)
 	}
 	return &appInfo, nil
 }
@@ -1281,7 +1245,15 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		}
 	}
 
-	// Build protobuf object directly
+	// Build protobuf object using helper function
+	return buildAppMetadata(username, description, imageUrl, externalUrl, avatarUrl, displayName, slashCommandsJSON), nil
+}
+
+// buildAppMetadata creates an AppMetadata protobuf from individual database columns
+func buildAppMetadata(
+	username, description, imageUrl, externalUrl, avatarUrl, displayName sql.NullString,
+	slashCommandsJSON string,
+) *protocol.AppMetadata {
 	metadata := &protocol.AppMetadata{}
 
 	if username.Valid && username.String != "" {
@@ -1320,7 +1292,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 		}
 	}
 
-	return metadata, nil
+	return metadata
 }
 
 func (s *PostgresAppRegistryStore) IsUsernameAvailable(
