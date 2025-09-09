@@ -14,7 +14,7 @@ export interface BaseChainConfig {
         riverAirdrop: Address | undefined
         swapRouter: Address | undefined
         appRegistry: Address
-        subscriptionModule: Address
+        subscriptionModule: Address | undefined
         utils: {
             mockNFT: Address | undefined // mockErc721aAddress
             member: Address | undefined // testGatingTokenAddress - For tesing token gating scenarios
