@@ -61,12 +61,7 @@ COPY ./turbo.json turbo.json
 # Copy workspace package.json files (needed for workspace resolution)
 COPY ./protocol/package.json protocol/package.json
 COPY ./packages/contracts/package.json packages/contracts/package.json
-COPY ./packages/generated/package.json packages/generated/package.json
-COPY ./packages/generated/scripts packages/generated/scripts
 COPY ./packages/prettier-config/package.json packages/prettier-config/package.json
-
-# Create empty deployments directory to satisfy preinstall script
-RUN mkdir -p packages/generated/deployments
 
 # Install dependencies with Yarn
 RUN yarn install && yarn cache clean

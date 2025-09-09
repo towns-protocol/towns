@@ -2,7 +2,7 @@
 
 set -e
 
-# This script deploys contracts to base and river chains and creates contracts.env.
+# This script deploys our contracts to base and river chains, and registers the nodes.
 # The anvil instances are run with --dump-state, so we can load the state into the chains.
 # This file is meant to be run in a `RUN` block in a Dockerfile as part of the build process.
 # run.sh is the entrypoint for the container.
@@ -15,7 +15,8 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
-  create_contracts_env
+  copy_contract_addresses
+  echo "Done!"
 }
 
 start_base_chain() {
@@ -118,10 +119,10 @@ deploy_contracts() {
   popd
 }
 
-# Copy contract addresses and create contracts.env file
-create_contracts_env() {
-  echo "Copying contract addresses and creating contracts.env..."
-  contracts_dir="packages/contracts/deployments/local_dev"
+# Copy contract addresses to a known location for easy extraction
+copy_contract_addresses() {
+  echo "Copying contract addresses..."
+  contracts_dir="./packages/contracts/deployments/local_dev"
 
   # Fail if contract deployment directory doesn't exist
   if [ ! -d "$contracts_dir" ]; then
@@ -130,8 +131,7 @@ create_contracts_env() {
     exit 1
   fi
 
-  output_dir="/app/local_dev"
-  mkdir -p $output_dir
+  mkdir -p ./local_dev
 
   # Copy contract addresses and fail if any are missing
   for chain in base river; do
@@ -141,7 +141,7 @@ create_contracts_env() {
       exit 1
     fi
 
-    target_dir="${output_dir}/${chain}/addresses"
+    target_dir="./local_dev/${chain}/addresses"
     mkdir -p "$target_dir"
     if ! cp -r "$source_dir"/. "$target_dir/"; then
       echo "ERROR: Failed to copy $chain contract addresses"
@@ -149,21 +149,7 @@ create_contracts_env() {
     fi
   done
 
-  # Create contracts.env file using justfile recipe
-  cd ./core
-  just CONTRACTS_DIR="../${contracts_dir}" RUN_BASE="${output_dir}" create-contracts-env
-  cd ..
-  
-  # Generate config using packages/generated
-  if [ -d "./packages/generated" ]; then
-    cd ./packages/generated
-    yarn make-config
-    # Copy generated .env to local_dev for extraction
-    cp "./deployments/local_dev/.env" "${output_dir}/.env"
-    cd ../..
-  fi
-  
-  echo "Contract addresses and contracts.env created successfully"
+  echo "Contract addresses copied to ./local_dev"
 }
 
 # cd ./core && just config build

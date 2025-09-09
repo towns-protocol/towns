@@ -154,9 +154,14 @@ just-deploy-contracts:
     echo "Deploying contracts"
 
     if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
-        # Copy entire local_dev structure from container
-        echo "Extracting contracts and configs from Docker container"
-        docker cp towns-base-chain:/app/local_dev/. ${CONTRACTS_DIR}/
+        # Create destination directories for contract addresses
+        mkdir -p ${CONTRACTS_DIR}/base/addresses
+        mkdir -p ${CONTRACTS_DIR}/river/addresses
+
+        # Copy deployment files from container
+        echo "Extracting contract addresses from Docker containers"
+        docker cp towns-base-chain:/app/local_dev/base/addresses/. ${CONTRACTS_DIR}/base/addresses/
+        docker cp towns-river-chain:/app/local_dev/river/addresses/. ${CONTRACTS_DIR}/river/addresses/
     else
         echo "Deploying contracts"
         ../scripts/deploy-contracts.sh
