@@ -585,7 +585,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 	var appInfo AppInfo
 	var username, description, imageUrl, externalUrl, avatarUrl, displayName sql.NullString
 	var slashCommandsJSON string
-	
+
 	if err := tx.QueryRow(
 		ctx,
 		`
@@ -624,7 +624,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 
 		// Build metadata from individual columns
 		appInfo.Metadata = &protocol.AppMetadata{}
-		
+
 		if username.Valid && username.String != "" {
 			appInfo.Metadata.Username = proto.String(username.String)
 		}
@@ -643,7 +643,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		if displayName.Valid && displayName.String != "" {
 			appInfo.Metadata.DisplayName = proto.String(displayName.String)
 		}
-		
+
 		// Parse slash commands
 		if slashCommandsJSON != "" && slashCommandsJSON != "[]" {
 			var commands []map[string]string
@@ -1208,7 +1208,6 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 
 	query := fmt.Sprintf("UPDATE app_registry SET %s WHERE app_id = $1", strings.Join(setParts, ", "))
 	tag, err := txn.Exec(ctx, query, args...)
-	
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			if strings.Contains(err.Error(), "app_registry_username_idx") {
@@ -1265,7 +1264,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 ) (*protocol.AppMetadata, error) {
 	var username, description, imageUrl, externalUrl, avatarUrl, displayName sql.NullString
 	var slashCommandsJSON string
-	
+
 	if err := tx.QueryRow(
 		ctx,
 		`SELECT username, description, image_url, external_url, avatar_url, slash_commands, display_name 
@@ -1284,7 +1283,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 
 	// Build protobuf object directly
 	metadata := &protocol.AppMetadata{}
-	
+
 	if username.Valid && username.String != "" {
 		metadata.Username = proto.String(username.String)
 	}
@@ -1303,7 +1302,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 	if displayName.Valid && displayName.String != "" {
 		metadata.DisplayName = proto.String(displayName.String)
 	}
-	
+
 	// Parse slash commands
 	if slashCommandsJSON != "" && slashCommandsJSON != "[]" {
 		var commands []map[string]string
@@ -1320,7 +1319,7 @@ func (s *PostgresAppRegistryStore) getAppMetadata(
 			}
 		}
 	}
-	
+
 	return metadata, nil
 }
 

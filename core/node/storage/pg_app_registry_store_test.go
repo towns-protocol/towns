@@ -1217,7 +1217,15 @@ func TestSetAppMetadata(t *testing.T) {
 		},
 	}
 
-	allFields := []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"}
+	allFields := []string{
+		"username",
+		"display_name",
+		"description",
+		"image_url",
+		"avatar_url",
+		"external_url",
+		"slash_commands",
+	}
 	err = store.SetAppMetadata(params.ctx, app, updatedMetadata, allFields)
 	require.NoError(err)
 
@@ -1278,7 +1286,11 @@ func TestSetAppMetadata(t *testing.T) {
 		appInfo2.Metadata.GetDisplayName(),
 		"Both apps should have the same display name",
 	)
-	require.NotEqual(appInfo1.Metadata.GetUsername(), appInfo2.Metadata.GetUsername(), "Apps should have different usernames")
+	require.NotEqual(
+		appInfo1.Metadata.GetUsername(),
+		appInfo2.Metadata.GetUsername(),
+		"Apps should have different usernames",
+	)
 
 	// Test updating slash commands - remove all commands
 	emptyCommandsUpdate := &AppMetadata{
@@ -1349,7 +1361,7 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		appInfo, err := store.GetAppInfo(params.ctx, app)
 		require.NoError(err)
 		require.Equal("new_username", appInfo.Metadata.GetUsername())
-		require.Equal("test_partial Bot", appInfo.Metadata.GetDisplayName()) // Should remain unchanged
+		require.Equal("test_partial Bot", appInfo.Metadata.GetDisplayName())   // Should remain unchanged
 		require.Equal("A test application", appInfo.Metadata.GetDescription()) // Should remain unchanged
 	})
 
@@ -1380,7 +1392,7 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		// Verify only description changed
 		appInfo, err := store.GetAppInfo(params.ctx, app)
 		require.NoError(err)
-		require.Equal("new_username", appInfo.Metadata.GetUsername()) // Should remain unchanged
+		require.Equal("new_username", appInfo.Metadata.GetUsername())        // Should remain unchanged
 		require.Equal("New Display Name", appInfo.Metadata.GetDisplayName()) // Should remain unchanged
 		require.Equal("Updated description text", appInfo.Metadata.GetDescription())
 	})
@@ -1412,7 +1424,10 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		appInfo, err := store.GetAppInfo(params.ctx, app)
 		require.NoError(err)
 		require.Equal("https://newavatar.example.com/avatar.png", appInfo.Metadata.GetAvatarUrl())
-		require.Equal("https://newimage.example.com/image.png", appInfo.Metadata.GetImageUrl()) // Should remain unchanged
+		require.Equal(
+			"https://newimage.example.com/image.png",
+			appInfo.Metadata.GetImageUrl(),
+		) // Should remain unchanged
 	})
 
 	// Test partial update - external URL only
@@ -1427,7 +1442,10 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		appInfo, err := store.GetAppInfo(params.ctx, app)
 		require.NoError(err)
 		require.Equal("https://external.newdomain.com", appInfo.Metadata.GetExternalUrl())
-		require.Equal("https://newavatar.example.com/avatar.png", appInfo.Metadata.GetAvatarUrl()) // Should remain unchanged
+		require.Equal(
+			"https://newavatar.example.com/avatar.png",
+			appInfo.Metadata.GetAvatarUrl(),
+		) // Should remain unchanged
 	})
 
 	// Test partial update - slash commands only
@@ -1465,9 +1483,9 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		require.NoError(err)
 		require.Equal("Multi-field update description", appInfo.Metadata.GetDescription())
 		require.Equal("https://multi.example.com/image.png", appInfo.Metadata.GetImageUrl())
-		require.Equal("new_username", appInfo.Metadata.GetUsername()) // Should remain unchanged
+		require.Equal("new_username", appInfo.Metadata.GetUsername())        // Should remain unchanged
 		require.Equal("New Display Name", appInfo.Metadata.GetDisplayName()) // Should remain unchanged
-		require.Len(appInfo.Metadata.SlashCommands, 2) // Should remain unchanged
+		require.Len(appInfo.Metadata.SlashCommands, 2)                       // Should remain unchanged
 	})
 
 	// Test empty field mask - storage layer should reject this
@@ -1585,11 +1603,11 @@ func TestGetAppMetadata(t *testing.T) {
 
 	// Create an app with metadata
 	originalMetadata := &AppMetadata{
-		Username: proto.String("my_test_app"),
+		Username:    proto.String("my_test_app"),
 		DisplayName: proto.String("My Test App Display"),
 		Description: proto.String("This is a test application for unit testing"),
-		ImageUrl: proto.String("https://example.com/my-image.png"),
-		AvatarUrl: proto.String("https://example.com/my-avatar.png"),
+		ImageUrl:    proto.String("https://example.com/my-image.png"),
+		AvatarUrl:   proto.String("https://example.com/my-avatar.png"),
 		ExternalUrl: proto.String("https://my-external-site.com"),
 	}
 
@@ -1632,11 +1650,11 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 
 	// Create an app with comprehensive metadata
 	metadata := &AppMetadata{
-		Username: proto.String("comprehensive_test_app"),
+		Username:    proto.String("comprehensive_test_app"),
 		DisplayName: proto.String("Comprehensive Test App Display"),
 		Description: proto.String("This app tests all metadata fields integration with AppInfo"),
-		ImageUrl: proto.String("https://example.com/comprehensive-image.jpg"),
-		AvatarUrl: proto.String("https://example.com/comprehensive-avatar.jpg"),
+		ImageUrl:    proto.String("https://example.com/comprehensive-image.jpg"),
+		AvatarUrl:   proto.String("https://example.com/comprehensive-avatar.jpg"),
 		ExternalUrl: proto.String("https://comprehensive-test.com"),
 	}
 
@@ -1701,11 +1719,11 @@ func TestIsUsernameAvailable(t *testing.T) {
 
 	// Create an app with a specific username
 	metadata1 := &AppMetadata{
-		Username: proto.String("existing_bot"),
+		Username:    proto.String("existing_bot"),
 		DisplayName: proto.String("Existing Bot Display"),
 		Description: proto.String("First bot"),
-		ImageUrl: proto.String("https://example.com/bot1.png"),
-		AvatarUrl: proto.String("https://example.com/avatar1.png"),
+		ImageUrl:    proto.String("https://example.com/bot1.png"),
+		AvatarUrl:   proto.String("https://example.com/avatar1.png"),
 	}
 
 	err = store.CreateApp(
@@ -1730,11 +1748,11 @@ func TestIsUsernameAvailable(t *testing.T) {
 
 	// Create another app with a different username
 	metadata2 := &AppMetadata{
-		Username: proto.String("second_bot"),
+		Username:    proto.String("second_bot"),
 		DisplayName: proto.String("Second Bot Display"),
 		Description: proto.String("Second bot"),
-		ImageUrl: proto.String("https://example.com/bot2.png"),
-		AvatarUrl: proto.String("https://example.com/avatar2.png"),
+		ImageUrl:    proto.String("https://example.com/bot2.png"),
+		AvatarUrl:   proto.String("https://example.com/avatar2.png"),
 	}
 
 	err = store.CreateApp(

@@ -546,7 +546,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				ExternalUrl:   validMetadata.ExternalUrl,
 				SlashCommands: []*protocol.SlashCommand{},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"external_url",
+				"slash_commands",
+			},
 		},
 		"Update Success (owner wallet signer)": {
 			appId:                appWallet.Address[:],
@@ -563,7 +571,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "status", Description: "Check bot status"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"external_url",
+				"slash_commands",
+			},
 		},
 		"Update Success (empty optional fields)": {
 			appId:                appWallet.Address[:],
@@ -577,7 +593,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				ExternalUrl:   nil,
 				SlashCommands: []*protocol.SlashCommand{},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"external_url",
+				"slash_commands",
+			},
 		},
 		"Failure: missing username": {
 			appId:                appWallet.Address[:],
@@ -675,7 +699,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "status", Description: "Check bot status"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: IPFS scheme image": {
 			appId:                appWallet.Address[:],
@@ -693,7 +725,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "config", Description: "Configure settings"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: HTTP scheme URLs": {
 			appId:                appWallet.Address[:],
@@ -711,7 +751,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "config", Description: "Configure settings"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: various file extensions": {
 			appId:                appWallet.Address[:],
@@ -728,7 +776,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "status", Description: "Check bot status"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"external_url",
+				"slash_commands",
+			},
 		},
 		"Failure: invalid external URL": {
 			appId:                appWallet.Address[:],
@@ -784,7 +840,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "config", Description: "Configure settings"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Failure: invalid command name with special characters": {
 			appId:                appWallet.Address[:],
@@ -872,7 +936,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				ExternalUrl:   proto.String("https://example.com/app"),
 				SlashCommands: []*protocol.SlashCommand{},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: maximum length command name and description": {
 			appId:                appWallet.Address[:],
@@ -891,7 +963,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: unicode in command descriptions": {
 			appId:                appWallet.Address[:],
@@ -908,7 +988,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "status", Description: "Check status 📊 with various symbols ♠♣♥♦"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"external_url",
+				"slash_commands",
+			},
 		},
 		"Success: case-sensitive command names": {
 			appId:                appWallet.Address[:],
@@ -926,7 +1014,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "HELP", Description: "All caps HELP"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Success: valid alphanumeric command names": {
 			appId:                appWallet.Address[:],
@@ -945,7 +1041,15 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "mixedCase123", Description: "Mixed case with numbers"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands", "external_url"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+				"external_url",
+			},
 		},
 		"Failure: command description too long": {
 			appId:                appWallet.Address[:],
@@ -1034,9 +1138,17 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		// the app's metadata.
 		req := &connect.Request[protocol.SetAppMetadataRequest]{
 			Msg: &protocol.SetAppMetadataRequest{
-				AppId:      secondAppWallet.Address[:],
-				Metadata:   app2MetadataWithApp1Username,
-				UpdateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "external_url", "slash_commands"},
+				AppId:    secondAppWallet.Address[:],
+				Metadata: app2MetadataWithApp1Username,
+				UpdateMask: []string{
+					"username",
+					"display_name",
+					"description",
+					"image_url",
+					"avatar_url",
+					"external_url",
+					"slash_commands",
+				},
 			},
 		}
 		authenticateBS(tester.ctx, tester.require, tester.authClient, secondAppWallet, req)
@@ -2214,9 +2326,12 @@ func TestAppRegistry_SetAppMetadata_PartialUpdates(t *testing.T) {
 		tester.require.NotNil(resp)
 
 		// Verify only username changed
-		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
-			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
-		})
+		getResp, err := tester.appRegistryClient.GetAppMetadata(
+			tester.ctx,
+			&connect.Request[protocol.GetAppMetadataRequest]{
+				Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+			},
+		)
 		tester.require.NoError(err)
 		tester.require.Equal("new_username_partial", getResp.Msg.Metadata.GetUsername())
 		// Other fields should remain unchanged from original registration
@@ -2241,13 +2356,19 @@ func TestAppRegistry_SetAppMetadata_PartialUpdates(t *testing.T) {
 		tester.require.NotNil(resp)
 
 		// Verify only specified fields changed
-		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
-			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
-		})
+		getResp, err := tester.appRegistryClient.GetAppMetadata(
+			tester.ctx,
+			&connect.Request[protocol.GetAppMetadataRequest]{
+				Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+			},
+		)
 		tester.require.NoError(err)
 		tester.require.Equal("Updated Display Name", getResp.Msg.Metadata.GetDisplayName())
 		tester.require.Equal("Updated description text", getResp.Msg.Metadata.GetDescription())
-		tester.require.Equal("new_username_partial", getResp.Msg.Metadata.GetUsername()) // Should remain from previous test
+		tester.require.Equal(
+			"new_username_partial",
+			getResp.Msg.Metadata.GetUsername(),
+		) // Should remain from previous test
 	})
 
 	// Test empty field mask validation
@@ -2340,9 +2461,12 @@ func TestAppRegistry_SetAppMetadata_PartialUpdates(t *testing.T) {
 		tester.require.NoError(err)
 
 		// Verify it's cleared
-		getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, &connect.Request[protocol.GetAppMetadataRequest]{
-			Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
-		})
+		getResp, err := tester.appRegistryClient.GetAppMetadata(
+			tester.ctx,
+			&connect.Request[protocol.GetAppMetadataRequest]{
+				Msg: &protocol.GetAppMetadataRequest{AppId: appWallet.Address[:]},
+			},
+		)
 		tester.require.NoError(err)
 		tester.require.Empty(getResp.Msg.Metadata.GetExternalUrl())
 	})
