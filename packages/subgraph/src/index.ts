@@ -6,7 +6,6 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
-    updateSpaceCachedMetrics,
     updateSpaceReviewMetrics,
 } from './utils'
 
@@ -269,7 +268,8 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                     .where(eq(schema.space.id, spaceId))
             }
 
-            await updateSpaceCachedMetrics(context, spaceId, 'swap')
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'swap')
         }
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
@@ -796,7 +796,8 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                     .where(eq(schema.space.id, spaceId))
             }
 
-            await updateSpaceCachedMetrics(context, spaceId, 'join')
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'join')
         }
     } catch (error) {
         console.error(
@@ -858,7 +859,8 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                     .where(eq(schema.space.id, spaceId))
             }
 
-            await updateSpaceCachedMetrics(context, spaceId, 'tip')
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'tip')
         }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
