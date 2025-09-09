@@ -2,7 +2,7 @@
 
 set -e
 
-# This script deploys our contracts to base and river chains, and registers the nodes.
+# This script deploys contracts to base and river chains and creates contracts.env.
 # The anvil instances are run with --dump-state, so we can load the state into the chains.
 # This file is meant to be run in a `RUN` block in a Dockerfile as part of the build process.
 # run.sh is the entrypoint for the container.
@@ -15,8 +15,7 @@ main() {
   wait_for_base_chain
   wait_for_river_chain
   deploy_contracts
-  copy_contract_addresses
-  echo "Done!"
+  create_contracts_env
 }
 
 start_base_chain() {
@@ -119,10 +118,10 @@ deploy_contracts() {
   popd
 }
 
-# Copy contract addresses to a known location for easy extraction
-copy_contract_addresses() {
-  echo "Copying contract addresses..."
-  contracts_dir="./packages/contracts/deployments/local_dev"
+# Copy contract addresses and create contracts.env file
+create_contracts_env() {
+  echo "Copying contract addresses and creating contracts.env..."
+  contracts_dir="packages/contracts/deployments/local_dev"
 
   # Fail if contract deployment directory doesn't exist
   if [ ! -d "$contracts_dir" ]; then
@@ -149,7 +148,21 @@ copy_contract_addresses() {
     fi
   done
 
-  echo "Contract addresses copied to ./local_dev"
+  # Create contracts.env file using justfile recipe
+  cd ./core
+  just CONTRACTS_DIR="../${contracts_dir}" RUN_BASE="../local_dev" create-contracts-env
+  cd ..
+  
+  # Generate config using packages/generated
+  if [ -d "./packages/generated" ]; then
+    cd ./packages/generated
+    yarn make-config
+    # Copy generated .env to local_dev for extraction
+    cp "./deployments/local_dev/.env" "../../local_dev/.env"
+    cd ../..
+  fi
+  
+  echo "Contract addresses and contracts.env created successfully"
 }
 
 # cd ./core && just config build
