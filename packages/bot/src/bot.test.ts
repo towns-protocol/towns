@@ -6,6 +6,7 @@ import {
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    makeUniqueChannelStreamId,
     makeUserStreamId,
     MockEntitlementsDelegate,
     RiverDbManager,
@@ -24,7 +25,12 @@ import { ethers } from 'ethers'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
+    CheckOperationType,
+    encodeRuleData,
+    encodeRuleDataV2,
+    encodeThresholdParams,
     ETH_ADDRESS,
+    OperationType,
     Permission,
     SpaceAddressFromSpaceId,
     SpaceDapp,
@@ -719,6 +725,66 @@ describe('Bot', { sequential: true }, () => {
             expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
         },
     )
+
+    it('should act normal when receiving message in a gated channel', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
+        })
+
+        const { spaceId: spaceIdThatWillBeUsedToGateOtherSpaces } =
+            await bobClient.spaces.createSpace(
+                { spaceName: 'space-that-will-use-to-gate-other-spaces' },
+                bob.signer,
+            )
+        const newSpaceAddress = SpaceAddressFromSpaceId(
+            spaceIdThatWillBeUsedToGateOtherSpaces,
+        ) as Address
+        const gatedRoleTx = await spaceDapp.createRole(
+            spaceId,
+            'gated',
+            [Permission.Read, Permission.Write],
+            [],
+            {
+                checkOperations: [
+                    {
+                        opType: CheckOperationType.ERC721,
+                        chainId: 84532n, // Base Sepolia chain ID
+                        contractAddress: newSpaceAddress,
+                        params: encodeThresholdParams({ threshold: 1n }),
+                    },
+                ],
+                operations: [],
+                logicalOperations: [],
+            },
+            bob.signer,
+        )
+        const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(
+            spaceId,
+            gatedRoleTx,
+        )
+        expect(roleError).toBeUndefined()
+        expect(roleId).toBeDefined()
+        const gatedChannelId = makeUniqueChannelStreamId(spaceId)
+        const gatedChannelTx = await spaceDapp.createChannel(
+            spaceId,
+            'gated-channel',
+            '',
+            gatedChannelId,
+            [roleId!],
+            bob.signer,
+        )
+        await gatedChannelTx.wait()
+        await bobClient.riverConnection.call((client) =>
+            client.createChannel(spaceId, 'gated-channel', '', gatedChannelId),
+        )
+        const TEST_MESSAGE = 'Hello bot!'
+        await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        await waitFor(() => receivedMessages.length > 0)
+        expect(receivedMessages.find((x) => x.message === TEST_MESSAGE)).toBeDefined()
+    })
 
     it('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
