@@ -265,6 +265,22 @@ describe('Bot', { sequential: true }, () => {
         receivedMessages = []
     })
 
+    it('should check if bob is admin and has read/write permissions', async () => {
+        const isBobAdmin = await bot.isAdmin(bob.userId, spaceId)
+        const bobCanRead = await bot.checkPermission(spaceId, bob.userId, Permission.Read)
+        const bobCanWrite = await bot.checkPermission(spaceId, bob.userId, Permission.Write)
+        expect(isBobAdmin).toBe(true)
+        expect(bobCanRead).toBe(true)
+        expect(bobCanWrite).toBe(true)
+    })
+
+    it('should check if bot has read/write permissions', async () => {
+        const botCanRead = await bot.checkPermission(spaceId, bot.botId, Permission.Read)
+        const botCanWrite = await bot.checkPermission(spaceId, bot.botId, Permission.Write)
+        expect(botCanRead).toBe(true)
+        expect(botCanWrite).toBe(true)
+    })
+
     it('should not receive messages when forwarding is set to no messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES)
 
