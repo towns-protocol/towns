@@ -848,15 +848,15 @@ func (s *Service) SetAppMetadata(
 			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
 	}
 
-	// Convert to storage format and perform partial update
-	updates := types.AppMetadataUpdateToMap(metadata, updateMask)
-	newVersion, err := s.store.SetAppMetadataPartial(ctx, app, updates)
+	// Perform partial update (conversion to storage format happens inside)
+	newVersion, err := s.store.SetAppMetadataPartial(ctx, app, metadata, updateMask)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Unable to update app metadata").
 			Tag("appId", app).
 			Tag("userId", userId).
-			Tag("updates", updates).
+			Tag("metadata", metadata).
+			Tag("updateMask", updateMask).
 			Func("SetAppMetadata")
 	}
 	
