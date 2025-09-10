@@ -1679,23 +1679,31 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 	// Get full app info and verify all fields including metadata
 	appInfo, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(
-		&storage.AppInfo{
-			App:             app,
-			Owner:           owner,
-			EncryptedSecret: secret,
-			Settings: types.AppSettings{
-				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
-			},
-			Metadata:   metadata,
-			WebhookUrl: webhookUrl,
-			EncryptionDevice: storage.EncryptionDevice{
-				DeviceKey:   deviceKey,
-				FallbackKey: fallbackKey,
-			},
+
+	// Verify non-metadata fields with struct comparison
+	expectedAppInfo := &storage.AppInfo{
+		App:             app,
+		Owner:           owner,
+		EncryptedSecret: secret,
+		Settings: types.AppSettings{
+			ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 		},
-		appInfo,
-	)
+		WebhookUrl: webhookUrl,
+		EncryptionDevice: storage.EncryptionDevice{
+			DeviceKey:   deviceKey,
+			FallbackKey: fallbackKey,
+		},
+	}
+
+	require.Equal(expectedAppInfo.App, appInfo.App)
+	require.Equal(expectedAppInfo.Owner, appInfo.Owner)
+	require.Equal(expectedAppInfo.EncryptedSecret, appInfo.EncryptedSecret)
+	require.Equal(expectedAppInfo.Settings, appInfo.Settings)
+	require.Equal(expectedAppInfo.WebhookUrl, appInfo.WebhookUrl)
+	require.Equal(expectedAppInfo.EncryptionDevice, appInfo.EncryptionDevice)
+
+	// Verify metadata using protobuf-aware comparison
+	require.True(proto.Equal(metadata, appInfo.Metadata))
 }
 
 func TestIsUsernameAvailable(t *testing.T) {
