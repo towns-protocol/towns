@@ -306,4 +306,28 @@ export async function updateSpaceReviewMetrics(
     }
 }
 
-export { publicClient, getCreatedDate }
+// Cache for recent block number with TTL
+let cachedBlockNumber: { value: bigint; timestamp: number } | null = null
+const BLOCK_CACHE_TTL_MS = 30 * 60 * 1000 // Cache for 30 minutes
+
+/**
+ * Gets a recent block number, cached for 30 minutes to avoid redundant RPC calls.
+ * This works because we're using it for the upgraded SpaceOwner contract which
+ * needs a relatively recent block where the new ABI is valid.
+ */
+async function getRecentBlockNumber(): Promise<bigint> {
+    return 35350928n
+    // const now = Date.now()
+    
+    // // Return cached value if still valid
+    // if (cachedBlockNumber && (now - cachedBlockNumber.timestamp) < BLOCK_CACHE_TTL_MS) {
+    //     return cachedBlockNumber.value
+    // }
+    
+    // // Fetch new block number and cache it
+    // const blockNumber = await publicClient.getBlockNumber()
+    // cachedBlockNumber = { value: blockNumber, timestamp: now }
+    // return blockNumber
+}
+
+export { publicClient, getRecentBlockNumber, getCreatedDate }

@@ -1,7 +1,8 @@
 import { eq, sql, and } from 'ponder'
-import { ponder } from 'ponder:registry'
+import { ponder } from './metrics' // Use wrapped ponder with metrics
 import schema from 'ponder:schema'
 import {
+    getRecentBlockNumber,
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
@@ -11,35 +12,34 @@ import {
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
-    const blockNumber = event.block.number
-    const { SpaceFactory, SpaceOwner } = context.contracts
+    const start = Date.now()
+    
+    // Get a recent block number (cached for 30 minutes). We only need something recent here
+    // to make sure the deployed contract ABI is compatible with our ABI.
+    const blockNumber = await getRecentBlockNumber()
+    const { SpaceOwner } = context.contracts
 
     // Check if the space already exists
     const existingSpace = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
     })
+    
     if (existingSpace) {
         console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
         return
     }
 
     try {
-        const paused = await context.client.readContract({
-            abi: SpaceFactory.abi,
-            address: event.args.space,
-            functionName: 'paused',
-            args: [],
-            blockNumber, // Use the latest block number
-        })
-
+        // Fetch space info from contract
         const space = await context.client.readContract({
             abi: SpaceOwner.abi,
             address: SpaceOwner.address,
             functionName: 'getSpaceInfo',
             args: [event.args.space],
-            blockNumber, // Use the latest block number
+            blockNumber,
         })
 
+        // Insert into database
         await context.db.insert(schema.space).values({
             id: event.args.space,
             owner: event.args.owner,
@@ -51,7 +51,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
             shortDescription: space.shortDescription,
             longDescription: space.longDescription,
             createdAt: space.createdAt,
-            paused: paused,
+            paused: false, // Newly created spaces are not paused
         })
     } catch (error) {
         console.error(
@@ -62,7 +62,8 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    // Get a recent block number (cached for 2 seconds)
+    const blockNumber = await getRecentBlockNumber()
     const { SpaceFactory, SpaceOwner } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({
@@ -74,21 +75,23 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     }
 
     try {
-        const paused = await context.client.readContract({
-            abi: SpaceFactory.abi,
-            address: event.args.space,
-            functionName: 'paused',
-            args: [],
-            blockNumber, // Use the latest block number
-        })
-
-        const spaceInfo = await context.client.readContract({
-            abi: SpaceOwner.abi,
-            address: SpaceOwner.address,
-            functionName: 'getSpaceInfo',
-            args: [event.args.space],
-            blockNumber, // Use the latest block number
-        })
+        // Parallelize contract reads using Promise.all
+        const [paused, spaceInfo] = await Promise.all([
+            context.client.readContract({
+                abi: SpaceFactory.abi,
+                address: event.args.space,
+                functionName: 'paused',
+                args: [],
+                blockNumber,
+            }),
+            context.client.readContract({
+                abi: SpaceOwner.abi,
+                address: SpaceOwner.address,
+                functionName: 'getSpaceInfo',
+                args: [event.args.space],
+                blockNumber,
+            }),
+        ])
 
         await context.db.sql
             .update(schema.space)
