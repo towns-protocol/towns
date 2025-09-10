@@ -28,6 +28,7 @@ type AppMetadata struct {
 	AvatarUrl     string         `json:"avatar_url"`
 	SlashCommands []SlashCommand `json:"slash_commands,omitempty"`
 	DisplayName   string         `json:"display_name"`
+	Motto         string         `json:"motto"`
 }
 
 func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
@@ -59,6 +60,7 @@ func ProtocolToStorageAppMetadata(metadata *protocol.AppMetadata) AppMetadata {
 		AvatarUrl:     metadata.GetAvatarUrl(),
 		SlashCommands: slashCommands,
 		DisplayName:   metadata.GetDisplayName(),
+		Motto:         metadata.GetMotto(),
 	}
 }
 
@@ -85,6 +87,7 @@ func StorageToProtocolAppMetadata(metadata AppMetadata) *protocol.AppMetadata {
 		AvatarUrl:     metadata.AvatarUrl,
 		SlashCommands: slashCommands,
 		DisplayName:   metadata.DisplayName,
+		Motto:         metadata.Motto,
 	}
 }
 
@@ -350,6 +353,14 @@ func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []str
 		} else {
 			// Clear slash commands (set to empty array)
 			updates["slash_commands"] = []SlashCommand{}
+		}
+	}
+
+	if maskSet["motto"] {
+		if update.Motto != nil {
+			updates["motto"] = *update.Motto
+		} else {
+			updates["motto"] = ""
 		}
 	}
 
