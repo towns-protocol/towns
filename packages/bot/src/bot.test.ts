@@ -26,11 +26,8 @@ import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@town
 import {
     AppRegistryDapp,
     CheckOperationType,
-    encodeRuleData,
-    encodeRuleDataV2,
     encodeThresholdParams,
     ETH_ADDRESS,
-    OperationType,
     Permission,
     SpaceAddressFromSpaceId,
     SpaceDapp,
@@ -781,7 +778,9 @@ describe('Bot', { sequential: true }, () => {
             client.createChannel(spaceId, 'gated-channel', '', gatedChannelId),
         )
         const TEST_MESSAGE = 'Hello bot!'
-        await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        await bobClient.riverConnection.call((client) => client.joinUser(gatedChannelId, bot.botId))
+        const bobGatedChannel = bobClient.spaces.getSpace(spaceId).getChannel(gatedChannelId)
+        await bobGatedChannel.sendMessage(TEST_MESSAGE)
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages.find((x) => x.message === TEST_MESSAGE)).toBeDefined()
     })
