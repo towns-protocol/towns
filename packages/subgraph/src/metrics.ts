@@ -1,7 +1,7 @@
 import { ponder as originalPonder } from 'ponder:registry'
 
 // Configuration
-const SLOW_THRESHOLD_MS = parseInt(process.env.SLOW_EVENT_THRESHOLD_MS || '3000')
+const SLOW_THRESHOLD_MS = 3000
 const LOG_METRICS = process.env.LOG_METRICS !== 'false' // default to true
 
 // Simple metrics tracking
