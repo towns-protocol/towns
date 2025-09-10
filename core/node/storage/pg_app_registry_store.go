@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"google.golang.org/protobuf/proto"
 
 	mapset "github.com/deckarep/golang-set/v2"
 
@@ -198,7 +197,7 @@ type (
 		SetAppMetadata(
 			ctx context.Context,
 			app common.Address,
-			metadata *protocol.AppMetadata,
+			metadata *protocol.AppMetadataUpdate,
 			fieldMask []string,
 		) error
 
@@ -370,8 +369,8 @@ func (s *PostgresAppRegistryStore) createApp(
 	}
 
 	var externalUrl *string
-	if metadata.ExternalUrl != nil && *metadata.ExternalUrl != "" {
-		externalUrl = metadata.ExternalUrl
+	if metadata.ExternalUrl != "" {
+		externalUrl = &metadata.ExternalUrl
 	}
 
 	if _, err := txn.Exec(
@@ -384,13 +383,13 @@ func (s *PostgresAppRegistryStore) createApp(
 		PGAddress(owner),
 		PGSecret(encryptedSharedSecret),
 		int16(settings.ForwardSetting),
-		metadata.GetUsername(),
-		metadata.GetDescription(),
-		metadata.GetImageUrl(),
+		metadata.Username,
+		metadata.Description,
+		metadata.ImageUrl,
 		externalUrl,
-		metadata.GetAvatarUrl(),
+		metadata.AvatarUrl,
 		string(slashCommandsJSON),
-		metadata.GetDisplayName(),
+		metadata.DisplayName,
 	); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			if strings.Contains(err.Error(), "app_registry_username_idx") {
@@ -1066,7 +1065,7 @@ func (s *PostgresAppRegistryStore) Close(ctx context.Context) {
 func (s *PostgresAppRegistryStore) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata *protocol.AppMetadata,
+	metadata *protocol.AppMetadataUpdate,
 	fieldMask []string,
 ) error {
 	return s.txRunner(
@@ -1086,7 +1085,7 @@ func (s *PostgresAppRegistryStore) SetAppMetadata(
 func (s *PostgresAppRegistryStore) setAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata *protocol.AppMetadata,
+	metadata *protocol.AppMetadataUpdate,
 	fieldMask []string,
 	txn pgx.Tx,
 ) error {
@@ -1264,23 +1263,24 @@ func buildAppMetadata(
 ) *protocol.AppMetadata {
 	metadata := &protocol.AppMetadata{}
 
-	if username.Valid && username.String != "" {
-		metadata.Username = proto.String(username.String)
+	// Since AppMetadata now has required fields, we always assign values (empty string if not valid)
+	if username.Valid {
+		metadata.Username = username.String
 	}
-	if description.Valid && description.String != "" {
-		metadata.Description = proto.String(description.String)
+	if description.Valid {
+		metadata.Description = description.String
 	}
-	if imageUrl.Valid && imageUrl.String != "" {
-		metadata.ImageUrl = proto.String(imageUrl.String)
+	if imageUrl.Valid {
+		metadata.ImageUrl = imageUrl.String
 	}
-	if externalUrl.Valid && externalUrl.String != "" {
-		metadata.ExternalUrl = proto.String(externalUrl.String)
+	if externalUrl.Valid {
+		metadata.ExternalUrl = externalUrl.String
 	}
-	if avatarUrl.Valid && avatarUrl.String != "" {
-		metadata.AvatarUrl = proto.String(avatarUrl.String)
+	if avatarUrl.Valid {
+		metadata.AvatarUrl = avatarUrl.String
 	}
-	if displayName.Valid && displayName.String != "" {
-		metadata.DisplayName = proto.String(displayName.String)
+	if displayName.Valid {
+		metadata.DisplayName = displayName.String
 	}
 
 	// Parse slash commands

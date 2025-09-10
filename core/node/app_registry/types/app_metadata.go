@@ -99,8 +99,8 @@ func ValidateExternalUrl(urlStr string) error {
 	return nil
 }
 
-// ValidateAppMetadataFields validates app metadata fields based on update mask
-func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []string) error {
+// ValidateAppMetadataUpdateFields validates app metadata update fields based on update mask
+func ValidateAppMetadataUpdateFields(metadata *protocol.AppMetadataUpdate, fieldMask []string) error {
 	if metadata == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
@@ -141,7 +141,7 @@ func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []strin
 				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
 			}
 		case "slash_commands":
-			if err := ValidateSlashCommands(metadata.GetSlashCommands()); err != nil {
+			if err := ValidateSlashCommands(metadata.SlashCommands); err != nil {
 				return err
 			}
 		default:
@@ -152,44 +152,46 @@ func ValidateAppMetadataFields(metadata *protocol.AppMetadata, fieldMask []strin
 	return nil
 }
 
-// ValidateAppMetadata validates complete app metadata (for compatibility during transition)
+// ValidateAppMetadata validates complete app metadata with required fields
 func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	if metadata == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
 
-	if metadata.GetUsername() == "" {
+	if metadata.Username == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata username is required")
 	}
 
-	if metadata.GetDisplayName() == "" {
+	if metadata.DisplayName == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata display_name is required")
 	}
 
-	if metadata.GetDescription() == "" {
+	if metadata.Description == "" {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
 	}
 
-	imageUrl := metadata.GetImageUrl()
-	if err := ValidateImageFileUrl(imageUrl); err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
-			Tag("image_url", imageUrl)
-	}
-
-	avatarUrl := metadata.GetAvatarUrl()
-	if err := ValidateImageFileUrl(avatarUrl); err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
-			Tag("avatar_url", avatarUrl)
-	}
-
-	if externalUrl := metadata.GetExternalUrl(); externalUrl != "" {
-		if err := ValidateExternalUrl(externalUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
-				Tag("external_url", metadata.GetExternalUrl())
+	if metadata.ImageUrl != "" {
+		if err := ValidateImageFileUrl(metadata.ImageUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
+				Tag("image_url", metadata.ImageUrl)
 		}
 	}
 
-	if err := ValidateSlashCommands(metadata.GetSlashCommands()); err != nil {
+	if metadata.AvatarUrl != "" {
+		if err := ValidateImageFileUrl(metadata.AvatarUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
+				Tag("avatar_url", metadata.AvatarUrl)
+		}
+	}
+
+	if metadata.ExternalUrl != "" {
+		if err := ValidateExternalUrl(metadata.ExternalUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
+				Tag("external_url", metadata.ExternalUrl)
+		}
+	}
+
+	if err := ValidateSlashCommands(metadata.SlashCommands); err != nil {
 		return err
 	}
 

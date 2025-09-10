@@ -836,7 +836,7 @@ func (s *Service) SetAppMetadata(
 
 	// Validate metadata fields based on update mask
 	metadata := req.Msg.GetMetadata()
-	if err := types.ValidateAppMetadataFields(metadata, updateMask); err != nil {
+	if err := types.ValidateAppMetadataUpdateFields(metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
 			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
 	}

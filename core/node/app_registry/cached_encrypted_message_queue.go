@@ -161,7 +161,7 @@ func (q *CachedEncryptedMessageQueue) GetSessionKey(
 func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-	metadata *protocol.AppMetadata,
+	metadata *protocol.AppMetadataUpdate,
 	fieldMask []string,
 ) error {
 	err := q.store.SetAppMetadata(ctx, app, metadata, fieldMask)

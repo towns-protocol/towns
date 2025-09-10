@@ -218,7 +218,9 @@ message SlashCommand {
     string description = 2;
 }
 
-message AppMetadata {
+// AppMetadataUpdate is used for partial updates to app metadata.
+// All fields are optional to support update masks.
+message AppMetadataUpdate {
     // username is the identifier used to mention the bot (e.g., "@mybot").
     // Must be unique across all bots.
     optional string username = 1;
@@ -240,10 +242,33 @@ message AppMetadata {
     optional string display_name = 7;
 }
 
+// AppMetadata represents complete app metadata with required fields.
+message AppMetadata {
+    // username is the identifier used to mention the bot (e.g., "@mybot").
+    // Must be unique across all bots.
+    string username = 1;
+
+    string description = 2;
+
+    string image_url = 3;
+
+    string external_url = 4;
+
+    string avatar_url = 5;
+
+    // slash_commands is a list of commands the bot supports.
+    // Maximum of 25 commands per bot.
+    repeated SlashCommand slash_commands = 6;
+
+    // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
+    // Must be non-empty.
+    string display_name = 7;
+}
+
 // Set app metadata
 message SetAppMetadataRequest {
     bytes app_id = 1;
-    AppMetadata metadata = 2;
+    AppMetadataUpdate metadata = 2;
     repeated string update_mask = 3;  // Fields to update
 }
 
