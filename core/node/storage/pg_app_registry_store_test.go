@@ -46,13 +46,6 @@ func testAppMetadataWithName(name string) *AppMetadata {
 	}
 }
 
-// Helper function to create test metadata update with optional fields
-func testAppMetadataUpdateWithUsername(username string) *AppMetadataUpdate {
-	return &AppMetadataUpdate{
-		Username: proto.String(username),
-	}
-}
-
 type testAppRegistryStoreParams struct {
 	ctx                context.Context
 	pgAppRegistryStore *storage.PostgresAppRegistryStore
