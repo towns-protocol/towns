@@ -274,11 +274,11 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 
 // AppMetadataUpdateToMap converts protocol AppMetadataUpdate to map for storage
 func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []string) map[string]interface{} {
-	if update == nil {
-		return map[string]interface{}{}
-	}
-
 	updates := make(map[string]interface{})
+
+	if update == nil {
+		return updates
+	}
 
 	// Only include fields specified in the update mask
 	maskSet := make(map[string]bool)
@@ -286,42 +286,71 @@ func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []str
 		maskSet[field] = true
 	}
 
-	if maskSet["username"] && update.Username != nil {
-		updates["username"] = *update.Username
-	}
-
-	if maskSet["display_name"] && update.DisplayName != nil {
-		updates["display_name"] = *update.DisplayName
-	}
-
-	if maskSet["description"] && update.Description != nil {
-		updates["description"] = *update.Description
-	}
-
-	if maskSet["image_url"] && update.ImageUrl != nil {
-		updates["image_url"] = *update.ImageUrl
-	}
-
-	if maskSet["avatar_url"] && update.AvatarUrl != nil {
-		updates["avatar_url"] = *update.AvatarUrl
-	}
-
-	if maskSet["external_url"] && update.ExternalUrl != nil {
-		updates["external_url"] = *update.ExternalUrl
-	}
-
-	if maskSet["slash_commands"] && update.SlashCommands != nil {
-		// Convert protocol slash commands to storage format
-		var slashCommands []SlashCommand
-		for _, cmd := range update.SlashCommands {
-			if cmd != nil {
-				slashCommands = append(slashCommands, SlashCommand{
-					Name:        cmd.GetName(),
-					Description: cmd.GetDescription(),
-				})
-			}
+	if maskSet["username"] {
+		if update.Username != nil {
+			updates["username"] = *update.Username
+		} else {
+			updates["username"] = ""
 		}
-		updates["slash_commands"] = slashCommands
+	}
+
+	if maskSet["display_name"] {
+		if update.DisplayName != nil {
+			updates["display_name"] = *update.DisplayName
+		} else {
+			updates["display_name"] = ""
+		}
+	}
+
+	if maskSet["description"] {
+		if update.Description != nil {
+			updates["description"] = *update.Description
+		} else {
+			updates["description"] = ""
+		}
+	}
+
+	if maskSet["image_url"] {
+		if update.ImageUrl != nil {
+			updates["image_url"] = *update.ImageUrl
+		} else {
+			updates["image_url"] = ""
+		}
+	}
+
+	if maskSet["avatar_url"] {
+		if update.AvatarUrl != nil {
+			updates["avatar_url"] = *update.AvatarUrl
+		} else {
+			updates["avatar_url"] = ""
+		}
+	}
+
+	if maskSet["external_url"] {
+		if update.ExternalUrl != nil {
+			updates["external_url"] = *update.ExternalUrl
+		} else {
+			updates["external_url"] = ""
+		}
+	}
+
+	if maskSet["slash_commands"] {
+		if update.SlashCommands != nil {
+			// Convert protocol slash commands to storage format
+			var slashCommands []SlashCommand
+			for _, cmd := range update.SlashCommands {
+				if cmd != nil {
+					slashCommands = append(slashCommands, SlashCommand{
+						Name:        cmd.GetName(),
+						Description: cmd.GetDescription(),
+					})
+				}
+			}
+			updates["slash_commands"] = slashCommands
+		} else {
+			// Clear slash commands (set to empty array)
+			updates["slash_commands"] = []SlashCommand{}
+		}
 	}
 
 	return updates

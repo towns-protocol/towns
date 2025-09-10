@@ -1126,6 +1126,22 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			},
 			expectedErr: "command name must start with a letter",
 		},
+		"Success: clear external_url (nil value)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadataUpdate{
+				ExternalUrl: nil, // This should clear the external_url field
+			},
+			updateMask: []string{"external_url"},
+		},
+		"Success: clear slash_commands (nil value)": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadataUpdate{
+				SlashCommands: nil, // This should clear the slash_commands field
+			},
+			updateMask: []string{"slash_commands"},
+		},
 	}
 
 	for name, tc := range tests {
@@ -1160,23 +1176,66 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				// Note: We can't directly compare AppMetadataUpdate with AppMetadata
 				// Instead, verify that specific fields were updated correctly based on updateMask
 				retrievedMetadata := getResp.Msg.GetMetadata()
-				if contains(tc.updateMask, "username") && tc.metadata.Username != nil {
-					tester.require.Equal(*tc.metadata.Username, retrievedMetadata.GetUsername())
+
+				// Mandatory fields - these should never be nil when in update mask
+				if contains(tc.updateMask, "username") {
+					if tc.metadata.Username != nil {
+						tester.require.Equal(*tc.metadata.Username, retrievedMetadata.GetUsername())
+					} else {
+						tester.require.Equal("", retrievedMetadata.GetUsername())
+					}
 				}
-				if contains(tc.updateMask, "display_name") && tc.metadata.DisplayName != nil {
-					tester.require.Equal(*tc.metadata.DisplayName, retrievedMetadata.GetDisplayName())
+				if contains(tc.updateMask, "display_name") {
+					if tc.metadata.DisplayName != nil {
+						tester.require.Equal(*tc.metadata.DisplayName, retrievedMetadata.GetDisplayName())
+					} else {
+						tester.require.Equal("", retrievedMetadata.GetDisplayName())
+					}
 				}
-				if contains(tc.updateMask, "description") && tc.metadata.Description != nil {
-					tester.require.Equal(*tc.metadata.Description, retrievedMetadata.GetDescription())
+				if contains(tc.updateMask, "description") {
+					if tc.metadata.Description != nil {
+						tester.require.Equal(*tc.metadata.Description, retrievedMetadata.GetDescription())
+					} else {
+						tester.require.Equal("", retrievedMetadata.GetDescription())
+					}
 				}
-				if contains(tc.updateMask, "image_url") && tc.metadata.ImageUrl != nil {
-					tester.require.Equal(*tc.metadata.ImageUrl, retrievedMetadata.GetImageUrl())
+				if contains(tc.updateMask, "image_url") {
+					if tc.metadata.ImageUrl != nil {
+						tester.require.Equal(*tc.metadata.ImageUrl, retrievedMetadata.GetImageUrl())
+					} else {
+						tester.require.Equal("", retrievedMetadata.GetImageUrl())
+					}
 				}
-				if contains(tc.updateMask, "avatar_url") && tc.metadata.AvatarUrl != nil {
-					tester.require.Equal(*tc.metadata.AvatarUrl, retrievedMetadata.GetAvatarUrl())
+				if contains(tc.updateMask, "avatar_url") {
+					if tc.metadata.AvatarUrl != nil {
+						tester.require.Equal(*tc.metadata.AvatarUrl, retrievedMetadata.GetAvatarUrl())
+					} else {
+						tester.require.Equal("", retrievedMetadata.GetAvatarUrl())
+					}
 				}
-				if contains(tc.updateMask, "external_url") && tc.metadata.ExternalUrl != nil {
-					tester.require.Equal(*tc.metadata.ExternalUrl, retrievedMetadata.GetExternalUrl())
+
+				// Optional fields - can be nil to clear the field
+				if contains(tc.updateMask, "external_url") {
+					if tc.metadata.ExternalUrl != nil {
+						tester.require.Equal(*tc.metadata.ExternalUrl, retrievedMetadata.GetExternalUrl())
+					} else {
+						// When ExternalUrl is nil, it should clear the field (empty string)
+						tester.require.Equal("", retrievedMetadata.GetExternalUrl())
+					}
+				}
+				if contains(tc.updateMask, "slash_commands") {
+					if tc.metadata.SlashCommands != nil {
+						// Verify slash commands match
+						retrievedCommands := retrievedMetadata.GetSlashCommands()
+						tester.require.Len(retrievedCommands, len(tc.metadata.SlashCommands))
+						for i, expectedCmd := range tc.metadata.SlashCommands {
+							tester.require.Equal(expectedCmd.GetName(), retrievedCommands[i].GetName())
+							tester.require.Equal(expectedCmd.GetDescription(), retrievedCommands[i].GetDescription())
+						}
+					} else {
+						// When SlashCommands is nil, it should clear the field (empty array)
+						tester.require.Empty(retrievedMetadata.GetSlashCommands())
+					}
 				}
 			} else {
 				tester.require.Nil(resp)
