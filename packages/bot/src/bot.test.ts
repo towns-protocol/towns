@@ -783,7 +783,7 @@ describe('Bot', { sequential: true }, () => {
         await bobGatedChannel.sendMessage(TEST_MESSAGE)
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages.find((x) => x.message === TEST_MESSAGE)).toBeDefined()
-        expect(receivedMessages.find((x) => x.userId === bot.botId)).toBeDefined()
+        expect(receivedMessages.find((x) => x.userId === bob.userId)).toBeDefined()
         expect(receivedMessages.find((x) => x.channelId === gatedChannelId)).toBeDefined()
     })
 
