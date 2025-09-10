@@ -725,10 +725,13 @@ describe('Bot', { sequential: true }, () => {
 
     it('should act normal when receiving message in a gated channel', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const BOB_TEST_MESSAGE = 'Hello bot!'
+        const BOT_TEST_MESSAGE = 'hello from bot'
 
         const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
+        bot.onMessage(async (h, e) => {
             receivedMessages.push(e)
+            await h.sendMessage(e.channelId, BOT_TEST_MESSAGE)
         })
 
         const { spaceId: spaceIdThatWillBeUsedToGateOtherSpaces } =
@@ -777,12 +780,11 @@ describe('Bot', { sequential: true }, () => {
         await bobClient.riverConnection.call((client) =>
             client.createChannel(spaceId, 'gated-channel', '', gatedChannelId),
         )
-        const TEST_MESSAGE = 'Hello bot!'
         await bobClient.riverConnection.call((client) => client.joinUser(gatedChannelId, bot.botId))
         const bobGatedChannel = bobClient.spaces.getSpace(spaceId).getChannel(gatedChannelId)
-        await bobGatedChannel.sendMessage(TEST_MESSAGE)
+        await bobGatedChannel.sendMessage(BOB_TEST_MESSAGE)
         await waitFor(() => receivedMessages.length > 0)
-        expect(receivedMessages.find((x) => x.message === TEST_MESSAGE)).toBeDefined()
+        expect(receivedMessages.find((x) => x.message === BOB_TEST_MESSAGE)).toBeDefined()
         expect(receivedMessages.find((x) => x.userId === bob.userId)).toBeDefined()
         expect(receivedMessages.find((x) => x.channelId === gatedChannelId)).toBeDefined()
     })
