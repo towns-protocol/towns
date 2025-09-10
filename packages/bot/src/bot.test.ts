@@ -245,7 +245,7 @@ describe('Bot', { sequential: true }, () => {
 
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-
+        const timeBeforeSendMessage = Date.now()
         let receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
             receivedMessages.push(e)
@@ -258,6 +258,10 @@ describe('Bot', { sequential: true }, () => {
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.message).toBe(TEST_MESSAGE)
         expect(event?.isDm).toBe(false)
+        expect(event?.createdTimestamp).toBeDefined()
+        expect(event?.createdTimestamp).toBeGreaterThanOrEqual(timeBeforeSendMessage)
+        expect(event?.createdAt).toBeInstanceOf(Date)
+
         expect(event?.isGdm).toBe(false)
         receivedMessages = []
     })
