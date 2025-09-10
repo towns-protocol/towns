@@ -258,10 +258,9 @@ describe('Bot', { sequential: true }, () => {
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.message).toBe(TEST_MESSAGE)
         expect(event?.isDm).toBe(false)
-        expect(event?.createdTimestamp).toBeDefined()
-        expect(event?.createdTimestamp).toBeGreaterThanOrEqual(timeBeforeSendMessage)
+        expect(event?.createdAt).toBeDefined()
         expect(event?.createdAt).toBeInstanceOf(Date)
-
+        expect(event?.createdAt.getTime()).toBeGreaterThanOrEqual(timeBeforeSendMessage)
         expect(event?.isGdm).toBe(false)
         receivedMessages = []
     })

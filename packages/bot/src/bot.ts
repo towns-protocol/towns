@@ -246,8 +246,6 @@ type BasePayload = {
     eventId: string
     /** The creation time of the event */
     createdAt: Date
-    /** The creation time of the event in ms */
-    createdTimestamp: number
 }
 
 export class Bot<
@@ -382,8 +380,7 @@ export class Bot<
                 if (!parsed.event.payload.case) {
                     continue
                 }
-                const createdTimestamp = Number(parsed.event.createdAtEpochMs)
-                const createdAt = new Date(createdTimestamp)
+                const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
                 this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
@@ -391,7 +388,6 @@ export class Bot<
                     channelId: streamId,
                     eventId: parsed.hashStr,
                     event: parsed,
-                    createdTimestamp,
                     createdAt,
                 })
                 switch (parsed.event.payload.case) {
@@ -428,7 +424,6 @@ export class Bot<
                                     parsed.event.payload.value.content.value.eventId,
                                 ),
                                 eventId: parsed.hashStr,
-                                createdTimestamp,
                                 createdAt,
                             })
                         } else if (
@@ -456,7 +451,6 @@ export class Bot<
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
-                                            createdTimestamp,
                                             createdAt,
                                         })
                                     }
@@ -466,7 +460,6 @@ export class Bot<
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
-                                            createdTimestamp,
                                             createdAt,
                                         })
                                     }
@@ -503,7 +496,6 @@ export class Bot<
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
                                                     eventId: parsed.hashStr,
-                                                    createdTimestamp,
                                                     createdAt,
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
@@ -555,8 +547,7 @@ export class Bot<
             return
         }
 
-        const createdTimestamp = Number(parsed.event.createdAtEpochMs)
-        const createdAt = new Date(createdTimestamp)
+        const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
@@ -574,7 +565,6 @@ export class Bot<
                         message: payload.value.content.value.body,
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
-                        createdTimestamp,
                         createdAt,
                     }
 
@@ -623,7 +613,6 @@ export class Bot<
                     channelId: streamId,
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
-                    createdTimestamp,
                     createdAt,
                 })
                 break
@@ -638,7 +627,6 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
-                    createdTimestamp,
                     createdAt,
                 })
                 break
@@ -650,7 +638,6 @@ export class Bot<
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
-                    createdTimestamp,
                     createdAt,
                 })
                 break
