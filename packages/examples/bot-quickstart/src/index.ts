@@ -14,7 +14,7 @@ async function main() {
         await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
     })
 
-    bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
+    bot.onMessage(async (handler, { message, channelId, userId, eventId, createdAt }) => {
         if (userId === bot.botId) return
 
         if (message.toLowerCase().includes('hello')) {
@@ -29,7 +29,11 @@ async function main() {
         }
 
         if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
+            const now = new Date()
+            await handler.sendMessage(
+                channelId,
+                `Pong! 🏓 ${now.getTime() - createdAt.getTime()}ms`,
+            )
         }
 
         if (message.toLowerCase().includes('react')) {
@@ -45,7 +49,7 @@ async function main() {
         }
     })
 
-    bot.onMentioned(async (handler, { message, channelId, userId, eventId }) => {
+    bot.onMentioned(async (handler, { message, channelId, userId, eventId, createdAt }) => {
         if (userId === bot.botId) return
 
         if (message.toLowerCase().includes('hello')) {
@@ -60,7 +64,11 @@ async function main() {
         }
 
         if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
+            const now = new Date()
+            await handler.sendMessage(
+                channelId,
+                `Pong! 🏓 ${now.getTime() - createdAt.getTime()}ms`,
+            )
         }
 
         if (message.toLowerCase().includes('react')) {

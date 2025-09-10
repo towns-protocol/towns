@@ -244,6 +244,8 @@ type BasePayload = {
     channelId: string
     /** The ID of the event that triggered */
     eventId: string
+    /** The creation time of the event */
+    createdAt: Date
 }
 
 export class Bot<
@@ -378,6 +380,7 @@ export class Bot<
                 if (!parsed.event.payload.case) {
                     continue
                 }
+                const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
                 this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
@@ -385,6 +388,7 @@ export class Bot<
                     channelId: streamId,
                     eventId: parsed.hashStr,
                     event: parsed,
+                    createdAt,
                 })
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
@@ -420,6 +424,7 @@ export class Bot<
                                     parsed.event.payload.value.content.value.eventId,
                                 ),
                                 eventId: parsed.hashStr,
+                                createdAt,
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -446,6 +451,7 @@ export class Bot<
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
+                                            createdAt,
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
@@ -454,6 +460,7 @@ export class Bot<
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
+                                            createdAt,
                                         })
                                     }
                                 }
@@ -489,6 +496,7 @@ export class Bot<
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
                                                     eventId: parsed.hashStr,
+                                                    createdAt,
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress: senderAddress,
@@ -539,6 +547,7 @@ export class Bot<
             return
         }
 
+        const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
@@ -556,6 +565,7 @@ export class Bot<
                         message: payload.value.content.value.body,
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
+                        createdAt,
                     }
 
                     if (
@@ -603,6 +613,7 @@ export class Bot<
                     channelId: streamId,
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
+                    createdAt,
                 })
                 break
             }
@@ -616,6 +627,7 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
+                    createdAt,
                 })
                 break
             }
@@ -626,6 +638,7 @@ export class Bot<
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
+                    createdAt,
                 })
                 break
             }
