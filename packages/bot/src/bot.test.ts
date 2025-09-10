@@ -743,7 +743,7 @@ describe('Bot', { sequential: true }, () => {
             spaceId,
             'gated',
             [Permission.Read, Permission.Write],
-            [`0x${bob.userId}`],
+            [bob.rootWallet.address],
             {
                 checkOperations: [
                     {
