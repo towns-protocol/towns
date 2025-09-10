@@ -149,19 +149,7 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 				// Context could be cancelled while processing messages so adding one more check here.
 				select {
 				case <-ctx.Done():
-					// Send unprocessed messages back to the queue for further processing by sending the down message back.
-					for _, m := range msgs[i:] {
-						if err := l.backfillsQueue.AddMessage(m); err != nil {
-							l.log.Errorw(
-								"failed to re-add unprocessed backfill request to the queue",
-								"cookie",
-								m.cookie,
-								"error",
-								err,
-							)
-						}
-					}
-
+					l.reAddUnprocessedBackfills(msgs[i:])
 					return
 				default:
 				}
@@ -169,20 +157,7 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 				if err := l.processBackfillRequest(ctx, msg, l.stream); err != nil {
 					l.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					l.cancel(err)
-
-					// Send unprocessed messages back to the queue for further processing by sending the down message back.
-					for _, m := range msgs[i:] {
-						if err = l.backfillsQueue.AddMessage(m); err != nil {
-							l.log.Errorw(
-								"failed to re-add unprocessed backfill request to the queue",
-								"cookie",
-								m.cookie,
-								"error",
-								err,
-							)
-						}
-					}
-
+					l.reAddUnprocessedBackfills(msgs[i:])
 					return
 				}
 			}
@@ -192,6 +167,23 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 				l.cancel(nil)
 				return
 			}
+		}
+	}
+}
+
+// reAddUnprocessedBackfills re-adds the given backfill requests back to the queue for further processing
+// by the deferred cleanup function. Basically, in case of the emitter failure, given requests must be addressed
+// by sending sync down message to the sync operations that requested them.
+func (l *localStreamUpdateEmitter) reAddUnprocessedBackfills(msgs []*backfillRequest) {
+	for _, m := range msgs {
+		if err := l.backfillsQueue.AddMessage(m); err != nil {
+			l.log.Errorw(
+				"failed to re-add unprocessed backfill request to the queue",
+				"cookie",
+				m.cookie,
+				"error",
+				err,
+			)
 		}
 	}
 }

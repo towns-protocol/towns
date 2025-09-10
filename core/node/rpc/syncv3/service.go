@@ -21,13 +21,17 @@ type Service interface {
 	// to the sync operation. If the function returns without error, it is gurarnteed that the given recipient
 	// will receive >= 1 update for each stream (either backfill or stream down message).
 	SyncStreams(ctx context.Context, syncID string, streams []*SyncCookie, rec handler.Receiver) error
+
 	// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
-	// It can also backfill a specific stream by the given cookie which is already in the sync.
+	// It can also backfill a specific stream by the given cookie which is already syncing.
 	ModifySync(req *ModifySyncRequest) (*ModifySyncResponse, error)
+
 	// CancelSync cancels an existing sync operation by its ID.
 	CancelSync(ctx context.Context, syncID string) error
+
 	// PingSync pings an existing sync operation by its ID to keep it alive.
 	PingSync(ctx context.Context, syncID, nonce string) error
+
 	// DebugDropStream is a debug method to drop a specific stream from the sync operation.
 	DebugDropStream(ctx context.Context, syncID string, streamID StreamId) error
 }
