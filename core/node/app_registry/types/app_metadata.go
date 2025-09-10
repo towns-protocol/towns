@@ -180,9 +180,11 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 			Tag("avatar_url", metadata.AvatarUrl)
 	}
 
-	if err := ValidateExternalUrl(metadata.ExternalUrl); err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
-			Tag("external_url", metadata.ExternalUrl)
+	if metadata.ExternalUrl != "" {
+		if err := ValidateExternalUrl(metadata.ExternalUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
+				Tag("external_url", metadata.ExternalUrl)
+		}
 	}
 
 	if err := ValidateSlashCommands(metadata.SlashCommands); err != nil {
