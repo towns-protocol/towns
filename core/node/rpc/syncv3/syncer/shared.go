@@ -83,9 +83,8 @@ func (s *sharedStreamUpdateEmitter) run(
 	if stream.IsLocal() {
 		emitter, err = NewLocalStreamUpdateEmitter(
 			ctx,
+			stream,
 			localAddr,
-			streamCache,
-			s.streamID,
 			subscriber,
 			s.version,
 		)
@@ -94,7 +93,6 @@ func (s *sharedStreamUpdateEmitter) run(
 			ctx,
 			stream,
 			nodeRegistry,
-			s.streamID,
 			subscriber,
 			s.version,
 		)
@@ -140,6 +138,9 @@ func (s *sharedStreamUpdateEmitter) StreamID() StreamId {
 }
 
 func (s *sharedStreamUpdateEmitter) Node() common.Address {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	if s.emitter != nil {
 		return s.emitter.Node()
 	}
@@ -172,7 +173,9 @@ func (s *sharedStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs 
 }
 
 func (s *sharedStreamUpdateEmitter) Close() {
+	s.lock.Lock()
 	if s.emitter != nil {
 		s.emitter.Close()
 	}
+	s.lock.Unlock()
 }

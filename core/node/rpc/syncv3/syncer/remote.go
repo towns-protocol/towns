@@ -50,13 +50,13 @@ func NewRemoteStreamUpdateEmitter(
 	ctx context.Context,
 	stream *events.Stream,
 	nodeRegistry nodes.NodeRegistry,
-	streamID StreamId,
 	subscriber StreamSubscriber,
 	version int,
 ) (StreamUpdateEmitter, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 
 	remoteAddr := stream.GetStickyPeer()
+	streamID := stream.StreamId()
 
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
 	if err != nil {

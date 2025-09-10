@@ -41,9 +41,8 @@ type localStreamUpdateEmitter struct {
 // Context is used to control the lifetime (stopping emitter when context is done) of the emitter.
 func NewLocalStreamUpdateEmitter(
 	ctx context.Context,
+	stream *events.Stream,
 	localAddr common.Address,
-	streamCache StreamCache,
-	streamID StreamId,
 	subscriber StreamSubscriber,
 	version int,
 ) (StreamUpdateEmitter, error) {
@@ -52,26 +51,20 @@ func NewLocalStreamUpdateEmitter(
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	defer ctxWithCancel()
 
-	stream, err := streamCache.GetStreamWaitForLocal(ctxWithTimeout, streamID)
-	if err != nil {
-		cancel(nil)
-		return nil, err
-	}
-
 	l := &localStreamUpdateEmitter{
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.localStreamUpdateEmitter").
-			With("addr", localAddr, "streamID", streamID, "version", version),
+			With("addr", localAddr, "streamID", stream.StreamId(), "version", version),
 		localAddr:      localAddr,
-		streamID:       streamID,
+		streamID:       stream.StreamId(),
 		stream:         stream,
 		subscriber:     subscriber,
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,
 	}
 
-	err = stream.Sub(ctxWithTimeout, &SyncCookie{
+	err := stream.Sub(ctxWithTimeout, &SyncCookie{
 		StreamId:    l.streamID[:],
 		NodeAddress: l.localAddr.Bytes(),
 	}, l)
