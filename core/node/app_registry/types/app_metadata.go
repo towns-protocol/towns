@@ -275,6 +275,17 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 	return nil
 }
 
+// addStringFieldUpdate is a helper function for adding optional string fields to the updates map
+func addStringFieldUpdate(updates map[string]interface{}, maskSet map[string]bool, fieldName string, fieldValue *string) {
+	if maskSet[fieldName] {
+		if fieldValue != nil {
+			updates[fieldName] = *fieldValue
+		} else {
+			updates[fieldName] = ""
+		}
+	}
+}
+
 // AppMetadataUpdateToMap converts protocol AppMetadataUpdate to map for storage
 func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []string) map[string]interface{} {
 	updates := make(map[string]interface{})
@@ -289,54 +300,16 @@ func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []str
 		maskSet[field] = true
 	}
 
-	if maskSet["username"] {
-		if update.Username != nil {
-			updates["username"] = *update.Username
-		} else {
-			updates["username"] = ""
-		}
-	}
+	// Handle string fields using helper function
+	addStringFieldUpdate(updates, maskSet, "username", update.Username)
+	addStringFieldUpdate(updates, maskSet, "display_name", update.DisplayName)
+	addStringFieldUpdate(updates, maskSet, "description", update.Description)
+	addStringFieldUpdate(updates, maskSet, "image_url", update.ImageUrl)
+	addStringFieldUpdate(updates, maskSet, "avatar_url", update.AvatarUrl)
+	addStringFieldUpdate(updates, maskSet, "external_url", update.ExternalUrl)
+	addStringFieldUpdate(updates, maskSet, "motto", update.Motto)
 
-	if maskSet["display_name"] {
-		if update.DisplayName != nil {
-			updates["display_name"] = *update.DisplayName
-		} else {
-			updates["display_name"] = ""
-		}
-	}
-
-	if maskSet["description"] {
-		if update.Description != nil {
-			updates["description"] = *update.Description
-		} else {
-			updates["description"] = ""
-		}
-	}
-
-	if maskSet["image_url"] {
-		if update.ImageUrl != nil {
-			updates["image_url"] = *update.ImageUrl
-		} else {
-			updates["image_url"] = ""
-		}
-	}
-
-	if maskSet["avatar_url"] {
-		if update.AvatarUrl != nil {
-			updates["avatar_url"] = *update.AvatarUrl
-		} else {
-			updates["avatar_url"] = ""
-		}
-	}
-
-	if maskSet["external_url"] {
-		if update.ExternalUrl != nil {
-			updates["external_url"] = *update.ExternalUrl
-		} else {
-			updates["external_url"] = ""
-		}
-	}
-
+	// Handle slash commands (special case)
 	if maskSet["slash_commands"] {
 		if update.SlashCommands != nil {
 			// Convert protocol slash commands to storage format
@@ -353,14 +326,6 @@ func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []str
 		} else {
 			// Clear slash commands (set to empty array)
 			updates["slash_commands"] = []SlashCommand{}
-		}
-	}
-
-	if maskSet["motto"] {
-		if update.Motto != nil {
-			updates["motto"] = *update.Motto
-		} else {
-			updates["motto"] = ""
 		}
 	}
 
