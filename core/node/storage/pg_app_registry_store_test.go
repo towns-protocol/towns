@@ -1207,7 +1207,7 @@ func TestSetAppMetadata(t *testing.T) {
 	// Verify initial metadata
 	appInfo, err := store.GetAppInfo(params.ctx, app)
 	require.NoError(err)
-	require.Equal(initialMetadata, appInfo.Metadata)
+	require.True(proto.Equal(initialMetadata, appInfo.Metadata))
 
 	// Update metadata - test all fields at once
 	updatedMetadata := &AppMetadataUpdate{
