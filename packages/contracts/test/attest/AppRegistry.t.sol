@@ -39,6 +39,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     address private DEFAULT_DEV;
     bytes32 private DEFAULT_APP_ID;
 
+    address private SIMPLE_APP;
+    bytes32 private SIMPLE_APP_ID;
+
     function setUp() public override {
         super.setUp();
         registry = AppRegistryFacet(appRegistry);
@@ -70,6 +73,23 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     modifier givenAppIsRegistered() {
         vm.prank(DEFAULT_DEV);
         DEFAULT_APP_ID = registry.registerApp(mockModule, DEFAULT_CLIENT);
+        _;
+    }
+
+    modifier givenSimpleAppIsRegistered() {
+        // create app
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        vm.prank(DEFAULT_DEV);
+        (SIMPLE_APP, SIMPLE_APP_ID) = registry.createApp(appData);
         _;
     }
 
@@ -509,44 +529,6 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         registry.installApp{value: price}(mockModule, appAccount, "");
     }
 
-    function test_revertWhen_installApp_permissionsChanged() external {
-        // create app
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            client: DEFAULT_CLIENT,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-
-        vm.prank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
-
-        SimpleApp appContract = SimpleApp(payable(app));
-
-        uint256 totalRequired = registry.getAppPrice(address(appContract));
-
-        hoax(founder, totalRequired);
-        registry.installApp{value: totalRequired}(appContract, appAccount, "");
-
-        assertTrue(appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Read")));
-
-        bytes32[] memory newPermissions = new bytes32[](2);
-        newPermissions[0] = bytes32("Read");
-        newPermissions[1] = bytes32("Write");
-
-        vm.prank(DEFAULT_DEV);
-        appContract.updatePermissions(newPermissions);
-
-        assertFalse(
-            appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Write"))
-        );
-
-        // TODO: upgrade
-    }
-
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
@@ -731,6 +713,35 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
         registry.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        UPDATE APP TESTS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_upgradeApp() external givenSimpleAppIsRegistered {
+        SimpleApp appContract = SimpleApp(payable(SIMPLE_APP));
+
+        uint256 totalRequired = registry.getAppPrice(address(appContract));
+
+        hoax(founder, totalRequired);
+        registry.installApp{value: totalRequired}(appContract, appAccount, "");
+
+        assertTrue(appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Read")));
+
+        bytes32[] memory newPermissions = new bytes32[](2);
+        newPermissions[0] = bytes32("Read");
+        newPermissions[1] = bytes32("Write");
+
+        vm.prank(DEFAULT_DEV);
+        appContract.updatePermissions(newPermissions);
+
+        assertFalse(
+            appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Write"))
+        );
+
+        vm.prank(DEFAULT_DEV);
+        SIMPLE_APP_ID = registry.upgradeApp(appContract, DEFAULT_CLIENT, SIMPLE_APP_ID);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
