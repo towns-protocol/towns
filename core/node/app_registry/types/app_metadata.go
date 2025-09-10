@@ -276,7 +276,12 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 }
 
 // addStringFieldUpdate is a helper function for adding optional string fields to the updates map
-func addStringFieldUpdate(updates map[string]interface{}, maskSet map[string]bool, fieldName string, fieldValue *string) {
+func addStringFieldUpdate(
+	updates map[string]interface{},
+	maskSet map[string]bool,
+	fieldName string,
+	fieldValue *string,
+) {
 	if maskSet[fieldName] {
 		if fieldValue != nil {
 			updates[fieldName] = *fieldValue

@@ -1215,6 +1215,12 @@ func (s *PostgresAppRegistryStore) applyUpdates(
 			if commands, ok := value.([]types.SlashCommand); ok {
 				updated.SlashCommands = commands
 			}
+		case "motto":
+			if value == nil {
+				updated.Motto = ""
+			} else if str, ok := value.(string); ok {
+				updated.Motto = str
+			}
 		}
 	}
 
