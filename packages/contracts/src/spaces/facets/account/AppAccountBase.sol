@@ -40,11 +40,15 @@ abstract contract AppAccountBase is
 
     uint48 private constant DEFAULT_DURATION = 365 days;
 
-    // External Functions
+    /// @notice Checks if the caller is the registry.
+    /// @dev Reverts if the caller is not the registry.
     function _onlyRegistry() internal view {
         if (msg.sender != address(_getAppRegistry())) InvalidCaller.selector.revertWith();
     }
 
+    /// @notice Installs an app.
+    /// @param appId The ID of the app to install.
+    /// @param postInstallData The data to pass to the app's onInstall function.
     function _installApp(bytes32 appId, bytes calldata postInstallData) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
@@ -57,7 +61,7 @@ abstract contract AppAccountBase is
         if (_isAppInstalled(app.module)) AppAlreadyInstalled.selector.revertWith();
 
         // set the group status to active
-        _setGroupStatus(app.appId, true, _getAppExpiration(app.appId, app.duration));
+        _setGroupStatus(app.appId, true, _calcExpiration(app.appId, app.duration));
         _addApp(app.module, app.appId);
         _grantGroupAccess({
             groupId: app.appId,
@@ -130,10 +134,9 @@ abstract contract AppAccountBase is
     function _onUpdateApp(bytes32 appId, bytes calldata data) internal {
         address module = abi.decode(data, (address));
 
-        if (!_isAppInstalled(module)) AppNotInstalled.selector.revertWith();
-
         bytes32 currentAppId = _getInstalledAppId(module);
         if (currentAppId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+        if (currentAppId == appId) AppAlreadyInstalled.selector.revertWith();
 
         App memory app = _getAppRegistry().getAppById(appId);
 
@@ -142,8 +145,8 @@ abstract contract AppAccountBase is
         _setGroupStatus(currentAppId, false);
 
         // update the app
-        _addApp(module, appId);
-        _setGroupStatus(appId, true, _getAppExpiration(appId, app.duration));
+        _addApp(app.module, appId);
+        _setGroupStatus(appId, true, _calcExpiration(appId, app.duration));
         _grantGroupAccess({
             groupId: appId,
             account: app.client,
@@ -160,7 +163,7 @@ abstract contract AppAccountBase is
         if (app.appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
 
         // Calculate the new expiration time (extends current expiration by app duration)
-        uint48 newExpiration = _getAppExpiration(app.appId, app.duration);
+        uint48 newExpiration = _calcExpiration(app.appId, app.duration);
 
         // Update the group expiration
         _setGroupExpiration(app.appId, newExpiration);
@@ -176,7 +179,12 @@ abstract contract AppAccountBase is
     }
 
     // Internal Functions
-    function _getAppExpiration(
+
+    /// @notice Calculates the expiration for a group.
+    /// @param appId The ID of the app.
+    /// @param duration The duration of the app.
+    /// @return expiration The expiration for the group.
+    function _calcExpiration(
         bytes32 appId,
         uint48 duration
     ) internal view returns (uint48 expiration) {
@@ -188,29 +196,43 @@ abstract contract AppAccountBase is
         }
     }
 
+    /// @notice Adds an app to the account.
+    /// @param module The module of the app.
+    /// @param appId The ID of the app.
     function _addApp(address module, bytes32 appId) internal {
         AppAccountStorage.Layout storage $ = AppAccountStorage.getLayout();
         $.installedApps.add(module);
         $.appIdByApp[module] = appId;
     }
 
+    /// @notice Removes an app from the account.
+    /// @param module The module of the app.
     function _removeApp(address module) internal {
         AppAccountStorage.getLayout().installedApps.remove(module);
         delete AppAccountStorage.getLayout().appIdByApp[module];
     }
 
+    /// @notice Enables an app.
+    /// @param app The address of the app.
     function _enableApp(address app) internal {
         bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, true);
     }
 
+    /// @notice Disables an app.
+    /// @param app The address of the app.
     function _disableApp(address app) internal {
         bytes32 appId = AppAccountStorage.getInstalledAppId(app);
         if (appId == EMPTY_UID) AppNotRegistered.selector.revertWith();
         _setGroupStatus(appId, false);
     }
 
+    /// @notice Checks if an app is entitled to a permission.
+    /// @param module The module of the app.
+    /// @param client The client of the app.
+    /// @param permission The permission to check.
+    /// @return entitled True if the app is entitled to the permission, false otherwise.
     function _isAppEntitled(
         address module,
         address client,
@@ -219,22 +241,35 @@ abstract contract AppAccountBase is
         return AppAccountStorage.isAppEntitled(module, client, permission);
     }
 
+    /// @notice Gets the ID of the installed app.
+    /// @param module The module of the app.
+    /// @return appId The ID of the installed app.
     function _getInstalledAppId(address module) internal view returns (bytes32) {
         return AppAccountStorage.getInstalledAppId(module);
     }
 
+    /// @notice Gets the app.
+    /// @param module The module of the app.
+    /// @return app The app.
     function _getApp(address module) internal view returns (App memory app) {
         return AppAccountStorage.getApp(module);
     }
 
+    /// @notice Gets the app registry.
+    /// @return appRegistry The app registry.
     function _getAppRegistry() internal view returns (IAppRegistry) {
         return DependencyLib.getAppRegistry();
     }
 
+    /// @notice Gets the apps.
+    /// @return apps The apps.
     function _getApps() internal view returns (address[] memory) {
         return AppAccountStorage.getLayout().installedApps.values();
     }
 
+    /// @notice Checks if an app is executing.
+    /// @param app The address of the app.
+    /// @return executing True if the app is executing, false otherwise.
     function _isAppExecuting(address app) internal view returns (bool) {
         bytes32 currentExecutionId = ExecutorStorage.getExecutionId();
         if (currentExecutionId == bytes32(0)) return false;
@@ -249,10 +284,15 @@ abstract contract AppAccountBase is
         return true;
     }
 
+    /// @notice Checks if an app is installed.
+    /// @param module The module of the app.
+    /// @return installed True if the app is installed, false otherwise.
     function _isAppInstalled(address module) internal view returns (bool) {
         return AppAccountStorage.getLayout().installedApps.contains(module);
     }
 
+    /// @notice Checks if an app is authorized.
+    /// @param module The module of the app.
     function _checkAuthorized(address module) internal view {
         if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
@@ -277,6 +317,11 @@ abstract contract AppAccountBase is
         }
     }
 
+    /// @notice Checks if an app is unauthorized.
+    /// @param module The module of the app.
+    /// @param factory The factory of the app.
+    /// @param deps The dependencies of the app.
+    /// @return unauthorized True if the app is unauthorized, false otherwise.
     function _isUnauthorizedTarget(
         address module,
         address factory,
@@ -290,6 +335,9 @@ abstract contract AppAccountBase is
             module == deps[3]; // AppRegistry
     }
 
+    /// @notice Checks if a selector is invalid.
+    /// @param selector The selector to check.
+    /// @return invalid True if the selector is invalid, false otherwise.
     function _isInvalidSelector(bytes4 selector) internal pure returns (bool) {
         return
             selector == IERC165.supportsInterface.selector ||
