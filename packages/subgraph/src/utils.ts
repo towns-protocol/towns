@@ -8,10 +8,6 @@ const publicClient = createPublicClient({
     transport: http(process.env.PONDER_RPC_URL_1),
 })
 
-async function getLatestBlockNumber() {
-    return await publicClient.getBlockNumber()
-}
-
 function getCreatedDate(blockTimestamp: bigint): Date | null {
     // 1970-01-01T00:00:00Z in ms
     const MIN_PG_TIMESTAMP_MS = -62135596800000
@@ -310,4 +306,31 @@ export async function updateSpaceReviewMetrics(
     }
 }
 
-export { publicClient, getLatestBlockNumber, getCreatedDate }
+/**
+ * Returns a block number suitable for reading the SpaceOwner contract.
+ * The SpaceOwner contract was upgraded at different blocks on different environments,
+ * so we need to ensure we're reading from a block where the new ABI is valid.
+ *
+ * Note: Ponder caches RPC requests based on block number, so using a consistent
+ * block number for contract reads helps maximize cache efficiency.
+ */
+async function getReadSpaceInfoBlockNumber(blockNumber: bigint): Promise<bigint> {
+    const environment = process.env.PONDER_ENVIRONMENT || 'local_dev'
+
+    // For local dev, use the latest block number
+    if (environment === 'local_dev') {
+        return await publicClient.getBlockNumber()
+    }
+
+    // Environment-specific minimum block numbers where the upgraded contract is available
+    const minBlockByEnvironment: Record<string, bigint> = {
+        alpha: 30861709n, // Sep 10, 2025
+        gamma: 30861709n, // Sep 10, 2025
+        omega: 35350928n, // Sep 10, 2025
+    }
+
+    const minBlock = minBlockByEnvironment[environment] ?? 0n
+    return blockNumber > minBlock ? blockNumber : minBlock
+}
+
+export { publicClient, getReadSpaceInfoBlockNumber, getCreatedDate }
