@@ -312,7 +312,10 @@ export const BotSettingsDialog = ({
                                     <FormItem>
                                         <FormLabel>Motto</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Your bot's tagline or slogan" {...field} />
+                                            <Input
+                                                placeholder="Your bot's tagline or slogan"
+                                                {...field}
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
