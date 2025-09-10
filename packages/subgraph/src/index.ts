@@ -2,7 +2,6 @@ import { eq, sql, and } from 'ponder'
 import { ponder } from 'ponder:registry'
 import schema from 'ponder:schema'
 import {
-    getLatestBlockNumber,
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
@@ -12,8 +11,7 @@ import {
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
-    // Get latest block number
-    const blockNumber = await getLatestBlockNumber()
+    const blockNumber = event.block.number
     const { SpaceFactory, SpaceOwner } = context.contracts
 
     // Check if the space already exists
@@ -64,8 +62,7 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
-    // Get latest block number
-    const blockNumber = await getLatestBlockNumber()
+    const blockNumber = event.block.number
     const { SpaceFactory, SpaceOwner } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({

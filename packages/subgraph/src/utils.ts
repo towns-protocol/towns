@@ -8,10 +8,6 @@ const publicClient = createPublicClient({
     transport: http(process.env.PONDER_RPC_URL_1),
 })
 
-async function getLatestBlockNumber() {
-    return await publicClient.getBlockNumber()
-}
-
 function getCreatedDate(blockTimestamp: bigint): Date | null {
     // 1970-01-01T00:00:00Z in ms
     const MIN_PG_TIMESTAMP_MS = -62135596800000
@@ -310,4 +306,4 @@ export async function updateSpaceReviewMetrics(
     }
 }
 
-export { publicClient, getLatestBlockNumber, getCreatedDate }
+export { publicClient, getCreatedDate }
