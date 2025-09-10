@@ -14,11 +14,11 @@ export const ponder = new Proxy(originalPonder, {
         if (prop === 'on') {
             return <TEventName extends Parameters<typeof originalPonder.on>[0]>(
                 eventName: TEventName,
-                handler: Parameters<typeof originalPonder.on<TEventName>>[1]
+                handler: Parameters<typeof originalPonder.on<TEventName>>[1],
             ) => {
                 // Store the event name as a string for metrics tracking
                 const eventNameStr = String(eventName)
-                
+
                 // Wrap the handler with metrics tracking
                 const wrappedHandler = async (context: any) => {
                     const start = Date.now()
