@@ -1625,7 +1625,7 @@ func TestGetAppMetadata(t *testing.T) {
 	metadata, err := store.GetAppMetadata(params.ctx, app)
 	require.NoError(err)
 	require.NotNil(metadata)
-	require.Equal(originalMetadata, metadata)
+	require.True(proto.Equal(originalMetadata, metadata))
 
 	// Test getting metadata for non-existent app
 	metadata, err = store.GetAppMetadata(params.ctx, unregisteredApp)
