@@ -9325,6 +9325,7 @@ __metadata:
     "@connectrpc/connect-node": ^2.0.0
     "@hono/node-server": ^1.14.0
     "@towns-protocol/bot": "workspace:^"
+    "@towns-protocol/proto": "workspace:^"
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
