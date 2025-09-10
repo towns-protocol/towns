@@ -859,7 +859,7 @@ func (s *Service) SetAppMetadata(
 			Tag("updateMask", updateMask).
 			Func("SetAppMetadata")
 	}
-	
+
 	logging.FromCtx(ctx).Infow("Updated app metadata")
 
 	return &connect.Response[SetAppMetadataResponse]{

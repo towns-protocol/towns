@@ -1122,35 +1122,34 @@ func (s *PostgresAppRegistryStore) setAppMetadataPartial(
 	var metadataJSON string
 	var username string
 	var currentVersion int32
-	
-	err := tx.QueryRow(ctx, 
+
+	err := tx.QueryRow(ctx,
 		`SELECT app_metadata, username, version FROM app_registry 
-         WHERE app_id = $1 FOR UPDATE`, 
-        PGAddress(app)).Scan(&metadataJSON, &username, &currentVersion)
-	
+         WHERE app_id = $1 FOR UPDATE`,
+		PGAddress(app)).Scan(&metadataJSON, &username, &currentVersion)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return 0, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		}
 		return 0, AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE)
 	}
-	
+
 	// 2. Parse current metadata
 	var currentMetadata types.AppMetadata
 	if err := json.Unmarshal([]byte(metadataJSON), &currentMetadata); err != nil {
 		return 0, AsRiverError(err, protocol.Err_INTERNAL).Message("Unable to unmarshal app metadata")
 	}
 	currentMetadata.Username = username
-	
+
 	// 3. Apply updates to current data
 	updatedMetadata := s.applyUpdates(currentMetadata, updates)
-	
+
 	// 4. Marshal updated metadata
 	updatedJSON, err := json.Marshal(updatedMetadata)
 	if err != nil {
 		return 0, AsRiverError(err, protocol.Err_INTERNAL).Message("Unable to marshal updated metadata")
 	}
-	
+
 	// 5. Write back with incremented version, using current version in WHERE clause
 	newVersion := currentVersion + 1
 	result, err := tx.Exec(ctx,
@@ -1162,7 +1161,6 @@ func (s *PostgresAppRegistryStore) setAppMetadataPartial(
 		updatedMetadata.Username,
 		newVersion,
 		currentVersion) // Use the version we just read
-	
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return 0, WrapRiverError(protocol.Err_ALREADY_EXISTS, err).
@@ -1170,20 +1168,23 @@ func (s *PostgresAppRegistryStore) setAppMetadataPartial(
 		}
 		return 0, AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE)
 	}
-	
+
 	// 6. Check if update succeeded (row existed with expected version)
 	if result.RowsAffected() == 0 {
-		return 0, RiverError(protocol.Err_ABORTED, 
+		return 0, RiverError(protocol.Err_ABORTED,
 			"metadata was modified by another process (version mismatch)")
 	}
-	
+
 	return newVersion, nil
 }
 
 // applyUpdates applies the field updates to the current metadata
-func (s *PostgresAppRegistryStore) applyUpdates(current types.AppMetadata, updates map[string]interface{}) types.AppMetadata {
+func (s *PostgresAppRegistryStore) applyUpdates(
+	current types.AppMetadata,
+	updates map[string]interface{},
+) types.AppMetadata {
 	updated := current // Copy current metadata
-	
+
 	for field, value := range updates {
 		switch field {
 		case "username":
@@ -1216,7 +1217,7 @@ func (s *PostgresAppRegistryStore) applyUpdates(current types.AppMetadata, updat
 			}
 		}
 	}
-	
+
 	return updated
 }
 

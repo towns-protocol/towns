@@ -189,7 +189,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 ) error {
 	// Convert to storage format
 	updates := types.AppMetadataUpdateToMap(update, updateMask)
-	
+
 	// Early return if there are no updates to apply
 	if len(updates) == 0 {
 		// No updates to apply

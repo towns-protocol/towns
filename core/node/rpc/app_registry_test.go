@@ -611,6 +611,17 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 			updateMask:  []string{"description"},
 			expectedErr: "description cannot be empty",
 		},
+		"Failure: nil field in update_mask": {
+			appId:                appWallet.Address[:],
+			authenticatingWallet: appWallet,
+			metadata: &protocol.AppMetadataUpdate{
+				// Intentionally not setting Username field, so it remains nil
+				DisplayName: proto.String("Valid Display Name"),
+				Description: proto.String("Valid description"),
+			},
+			updateMask:  []string{"username", "display_name", "description"}, // username is in mask but nil
+			expectedErr: "username cannot be empty",
+		},
 		"Failure: missing image URL": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
@@ -618,7 +629,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				ImageUrl: proto.String(""),
 			},
 			updateMask:  []string{"image_url"},
-			expectedErr: "image_url validation failed",
+			expectedErr: "image_url cannot be empty",
 		},
 		"Failure: invalid image URL": {
 			appId:                appWallet.Address[:],
@@ -636,7 +647,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				AvatarUrl: proto.String(""),
 			},
 			updateMask:  []string{"avatar_url"},
-			expectedErr: "avatar_url validation failed",
+			expectedErr: "avatar_url cannot be empty",
 		},
 		"Failure: invalid avatar URL format": {
 			appId:                appWallet.Address[:],
@@ -797,7 +808,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "config", Description: "Configure settings"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Failure: invalid command name with special characters": {
 			appId:                appWallet.Address[:],
@@ -812,7 +830,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "help-me", Description: "Invalid name with hyphen"},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command name must contain only letters, numbers, and underscores",
 		},
 		"Failure: duplicate command names": {
@@ -829,7 +854,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "help", Description: "Also get help"},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "duplicate command name",
 		},
 		"Failure: too many commands": {
@@ -852,7 +884,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					return commands
 				}(),
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "slash command count exceeds maximum",
 		},
 		"Failure: empty command description": {
@@ -868,7 +907,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "help", Description: ""},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command description is required",
 		},
 		"Failure: command name too long": {
@@ -884,7 +930,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "thiscommandnameiswaytoolongandexceedsthemaximumlength", Description: "Too long"},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command name must not exceed 32 characters",
 		},
 		"Failure: command name starts with number": {
@@ -900,21 +953,35 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "1help", Description: "Starts with number"},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command name must start with a letter",
 		},
 		"Success: empty slash commands array": {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: appWallet,
 			metadata: &protocol.AppMetadataUpdate{
-				Username:    proto.String("app_without_commands"),
-				DisplayName: proto.String("App without Commands"),
-				Description: proto.String("App with no slash commands"),
-				ImageUrl:    proto.String("https://example.com/image.png"),
-				AvatarUrl:   proto.String("https://example.com/avatar.png"),
+				Username:      proto.String("app_without_commands"),
+				DisplayName:   proto.String("App without Commands"),
+				Description:   proto.String("App with no slash commands"),
+				ImageUrl:      proto.String("https://example.com/image.png"),
+				AvatarUrl:     proto.String("https://example.com/avatar.png"),
 				SlashCommands: []*protocol.SlashCommand{},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Success: maximum length command name and description": {
 			appId:                appWallet.Address[:],
@@ -932,7 +999,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Success: unicode in command descriptions": {
 			appId:                appWallet.Address[:],
@@ -948,7 +1022,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "status", Description: "Check status 📊 with various symbols ♠♣♥♦"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Success: case-sensitive command names": {
 			appId:                appWallet.Address[:],
@@ -965,7 +1046,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "HELP", Description: "All caps HELP"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Success: valid alphanumeric command names": {
 			appId:                appWallet.Address[:],
@@ -983,7 +1071,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "mixedCase123", Description: "Mixed case with numbers"},
 				},
 			},
-			updateMask: []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 		},
 		"Failure: command description too long": {
 			appId:                appWallet.Address[:],
@@ -998,7 +1093,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "test", Description: strings.Repeat("x", 257)}, // One over the limit
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command description must not exceed 256 characters",
 		},
 		"Failure: command name with underscore prefix": {
@@ -1014,7 +1116,14 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 					{Name: "_private", Description: "Command starting with underscore"},
 				},
 			},
-			updateMask:  []string{"username", "display_name", "description", "image_url", "avatar_url", "slash_commands"},
+			updateMask: []string{
+				"username",
+				"display_name",
+				"description",
+				"image_url",
+				"avatar_url",
+				"slash_commands",
+			},
 			expectedErr: "command name must start with a letter",
 		},
 	}
@@ -1047,7 +1156,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				getResp, err := tester.appRegistryClient.GetAppMetadata(tester.ctx, getReq)
 				tester.require.NoError(err)
 				tester.require.NotNil(getResp)
-				
+
 				// Note: We can't directly compare AppMetadataUpdate with AppMetadata
 				// Instead, verify that specific fields were updated correctly based on updateMask
 				retrievedMetadata := getResp.Msg.GetMetadata()
