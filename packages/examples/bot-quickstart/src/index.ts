@@ -2,9 +2,17 @@ import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
+import commands from './commands'
 
 async function main() {
-    const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA_BASE64!, process.env.JWT_SECRET!)
+    const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!, {
+        commands,
+    })
+
+    bot.onSlashCommand('time', async (handler, { channelId }) => {
+        const currentTime = new Date().toLocaleString()
+        await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
+    })
 
     bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
         if (userId === bot.botId) return
@@ -22,11 +30,6 @@ async function main() {
 
         if (message.toLowerCase().includes('ping')) {
             await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
         }
 
         if (message.toLowerCase().includes('react')) {
@@ -58,11 +61,6 @@ async function main() {
 
         if (message.toLowerCase().includes('ping')) {
             await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
         }
 
         if (message.toLowerCase().includes('react')) {

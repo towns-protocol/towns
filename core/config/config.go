@@ -199,6 +199,10 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+	// TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
+	// The value is a shared secret expected in the X-River-Test-Bypass header.
+	TestEntitlementsBypassSecret string
 }
 
 type TLSConfig struct {

@@ -249,17 +249,17 @@ interact-any-ledger :;
 # 				Base Anvil
 # ===========================
 deploy-base-anvil :;
-	@$(MAKE) deploy-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) deploy-any-local context=local_dev rpc=base_anvil
 
 # THIS IS FOR TESTING ONLY
 deploy-base-anvil-ledger :;
-	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-local-ledger context=local_dev rpc=base_anvil hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 interact-base-anvil :;
-	@$(MAKE) interact-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) interact-any-local context=local_dev rpc=base_anvil
 
 fork-base-anvil :;
-	@$(MAKE) fork-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) fork-any-local context=local_dev rpc=base_anvil
 
 # ===========================
 # 				River Anvil

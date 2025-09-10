@@ -1,54 +1,54 @@
-import { eq, sql } from 'ponder'
-import { ponder } from 'ponder:registry'
+import { eq, sql, and } from 'ponder'
+import { ponder } from './metrics' // Use wrapped ponder with metrics
 import schema from 'ponder:schema'
 import {
-    getLatestBlockNumber,
+    getReadSpaceInfoBlockNumber,
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
+    updateSpaceReviewMetrics,
 } from './utils'
 
+const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
+
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
-    // Get latest block number
-    const blockNumber = await getLatestBlockNumber()
-    const { SpaceFactory, SpaceOwner } = context.contracts
+    // Get a block number suitable for reading the SpaceOwner contract
+    const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
+    const { SpaceOwner } = context.contracts
 
     // Check if the space already exists
     const existingSpace = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
     })
+
     if (existingSpace) {
         console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
         return
     }
 
     try {
-        const paused = await context.client.readContract({
-            abi: SpaceFactory.abi,
-            address: event.args.space,
-            functionName: 'paused',
-            args: [],
-            blockNumber, // Use the latest block number
-        })
-
+        // Fetch space info from contract
         const space = await context.client.readContract({
             abi: SpaceOwner.abi,
             address: SpaceOwner.address,
             functionName: 'getSpaceInfo',
             args: [event.args.space],
-            blockNumber, // Use the latest block number
+            blockNumber,
         })
 
+        // Insert into database
         await context.db.insert(schema.space).values({
             id: event.args.space,
             owner: event.args.owner,
             tokenId: event.args.tokenId,
+            memberCount: 1n, // the first member is the owner
             name: space.name,
+            nameLowercased: space.name.toLowerCase(),
             uri: space.uri,
             shortDescription: space.shortDescription,
             longDescription: space.longDescription,
             createdAt: space.createdAt,
-            paused: paused,
+            paused: false, // Newly created spaces are not paused
         })
     } catch (error) {
         console.error(
@@ -59,8 +59,8 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
-    // Get latest block number
-    const blockNumber = await getLatestBlockNumber()
+    // Get a block number suitable for reading the SpaceOwner contract
+    const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceFactory, SpaceOwner } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({
@@ -72,27 +72,30 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
     }
 
     try {
-        const paused = await context.client.readContract({
-            abi: SpaceFactory.abi,
-            address: event.args.space,
-            functionName: 'paused',
-            args: [],
-            blockNumber, // Use the latest block number
-        })
-
-        const spaceInfo = await context.client.readContract({
-            abi: SpaceOwner.abi,
-            address: SpaceOwner.address,
-            functionName: 'getSpaceInfo',
-            args: [event.args.space],
-            blockNumber, // Use the latest block number
-        })
+        // Parallelize contract reads using Promise.all
+        const [paused, spaceInfo] = await Promise.all([
+            context.client.readContract({
+                abi: SpaceFactory.abi,
+                address: event.args.space,
+                functionName: 'paused',
+                args: [],
+                blockNumber,
+            }),
+            context.client.readContract({
+                abi: SpaceOwner.abi,
+                address: SpaceOwner.address,
+                functionName: 'getSpaceInfo',
+                args: [event.args.space],
+                blockNumber,
+            }),
+        ])
 
         await context.db.sql
             .update(schema.space)
             .set({
                 paused: paused,
                 name: spaceInfo.name,
+                nameLowercased: spaceInfo.name.toLowerCase(),
                 uri: spaceInfo.uri,
                 shortDescription: spaceInfo.shortDescription,
                 longDescription: spaceInfo.longDescription,
@@ -193,10 +196,21 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     }
 
     try {
-        const existing = await context.db.sql.query.swap.findFirst({
+        // Calculate ETH amount for analytics
+        let ethAmount = 0n
+        if ((event.args.tokenIn as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountIn
+        } else if ((event.args.tokenOut as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amountOut
+        }
+
+        // Check if swap already exists
+        const existingSwap = await context.db.sql.query.swap.findFirst({
             where: eq(schema.swap.txHash, transactionHash),
         })
-        if (!existing) {
+
+        if (!existingSwap) {
+            // Write to swap table
             await context.db.insert(schema.swap).values({
                 txHash: transactionHash,
                 spaceId: spaceId,
@@ -209,6 +223,50 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
+        }
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, transactionHash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: transactionHash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'swap',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'swap',
+                    tokenIn: event.args.tokenIn,
+                    tokenOut: event.args.tokenOut,
+                    amountIn: event.args.amountIn.toString(),
+                    amountOut: event.args.amountOut.toString(),
+                    recipient: event.args.recipient,
+                    poster: event.args.poster,
+                },
+            })
+
+            // Increment all-time swap volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        swapVolume: (currentSpace.swapVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'swap')
         }
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
@@ -344,7 +402,7 @@ ponder.on('BaseRegistry:IncreaseStake', async ({ event, context }) => {
             await context.db.sql
                 .update(schema.stakers)
                 .set({
-                    amount: (existingStake.amount ?? 0n) + event.args.amount,
+                    amount: existingStake.amount + event.args.amount,
                     createdAt: blockNumber,
                 })
                 .where(eq(schema.stakers.depositId, event.args.depositId))
@@ -379,7 +437,7 @@ ponder.on('BaseRegistry:Redelegate', async ({ event, context }) => {
                 context,
                 existingStake.delegatee,
                 event.args.delegatee as `0x${string}`,
-                existingStake.amount ?? 0n,
+                existingStake.amount,
             )
 
             await context.db.sql
@@ -686,5 +744,228 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
             `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
             error,
         )
+    }
+})
+
+ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        // Get the ETH amount from the transaction value (payment to join)
+        const ethAmount = event.transaction.value || 0n
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'join',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'join',
+                    recipient: event.args.recipient,
+                    tokenId: event.args.tokenId.toString(),
+                },
+            })
+
+            // Increment all-time join volume and member count only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        joinVolume: (currentSpace.joinVolume ?? 0n) + ethAmount,
+                        memberCount: (currentSpace.memberCount ?? 0n) + 1n,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'join')
+        }
+    } catch (error) {
+        console.error(
+            `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('Space:Tip', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const spaceId = event.log.address // The space contract that emitted the event
+
+        let ethAmount = 0n
+        if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
+            ethAmount = event.args.amount
+        }
+
+        // Check if analytics event already exists
+        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
+            where: and(
+                eq(schema.analyticsEvent.txHash, event.transaction.hash),
+                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
+            ),
+        })
+
+        if (!existingAnalytics) {
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'tip',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'tip',
+                    sender: event.args.sender,
+                    receiver: event.args.receiver,
+                    currency: event.args.currency,
+                    amount: event.args.amount.toString(),
+                    tokenId: event.args.tokenId.toString(),
+                    messageId: event.args.messageId,
+                    channelId: event.args.channelId,
+                },
+            })
+
+            // Increment all-time tip volume only for new events
+            const currentSpace = await context.db.sql.query.space.findFirst({
+                where: eq(schema.space.id, spaceId),
+            })
+            if (currentSpace) {
+                await context.db.sql
+                    .update(schema.space)
+                    .set({
+                        tipVolume: (currentSpace.tipVolume ?? 0n) + ethAmount,
+                    })
+                    .where(eq(schema.space.id, spaceId))
+            }
+
+            // Temp disabled rolling window metrics
+            // await updateSpaceCachedMetrics(context, spaceId, 'tip')
+        }
+    } catch (error) {
+        console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewAdded', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+
+    try {
+        // Check if review already exists (shouldn't happen for ReviewAdded, but just in case)
+        const existingReview = await context.db.sql.query.review.findFirst({
+            where: and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)),
+        })
+
+        if (!existingReview) {
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+
+            // Add analytics event for the review
+            await context.db.insert(schema.analyticsEvent).values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'review',
+                blockTimestamp: blockTimestamp,
+                ethAmount: 0n, // Reviews don't have ETH value
+                eventData: {
+                    type: 'review',
+                    user: event.args.user,
+                    rating: event.args.rating,
+                    comment: event.args.comment,
+                },
+            })
+
+            // Update review metrics (count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
+        } else {
+            console.warn(`Review already exists for user ${event.args.user} in space ${spaceId}`)
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewAdded at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .update(schema.review)
+            .set({
+                comment: event.args.comment,
+                rating: event.args.rating,
+                updatedAt: blockTimestamp,
+            })
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+
+        if (result.changes === 0) {
+            // If the review doesn't exist, create it (edge case)
+            console.warn(
+                `Review not found for update, creating new review for user ${event.args.user} in space ${spaceId}`,
+            )
+            await context.db.insert(schema.review).values({
+                spaceId: spaceId,
+                user: event.args.user,
+                comment: event.args.comment,
+                rating: event.args.rating,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+        }
+
+        // Update review metrics (recalculate average rating)
+        await updateSpaceReviewMetrics(context, spaceId)
+    } catch (error) {
+        console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
+    }
+})
+
+ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        const result = await context.db.sql
+            .delete(schema.review)
+            .where(and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)))
+
+        if (result.changes === 0) {
+            console.warn(
+                `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
+            )
+        } else {
+            // Update review metrics (recalculate count and average rating)
+            await updateSpaceReviewMetrics(context, spaceId)
+        }
+    } catch (error) {
+        console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
     }
 })

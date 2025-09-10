@@ -101,21 +101,29 @@ export class Channel extends PersistedObservable<ChannelModel> {
             mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
             /** The attachments in the message. You can attach images, videos, links, files, or even other messages. */
             attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+            /** The app client address that should receive the slash command. */
+            appClientAddress?: string
         },
     ): Promise<{ eventId: string }> {
         const channelId = this.data.id
         const result = await this.riverConnection.withStream(channelId).call((client) => {
-            return client.sendChannelMessage_Text(channelId, {
-                threadId: options?.threadId,
-                threadPreview: options?.threadId ? '🙉' : undefined,
-                replyId: options?.replyId,
-                replyPreview: options?.replyId ? '🙈' : undefined,
-                content: {
-                    body: message,
-                    mentions: options?.mentions ?? [],
-                    attachments: options?.attachments ?? [],
+            return client.sendChannelMessage_Text(
+                channelId,
+                {
+                    threadId: options?.threadId,
+                    threadPreview: options?.threadId ? '🙉' : undefined,
+                    replyId: options?.replyId,
+                    replyPreview: options?.replyId ? '🙈' : undefined,
+                    content: {
+                        body: message,
+                        mentions: options?.mentions ?? [],
+                        attachments: options?.attachments ?? [],
+                    },
                 },
-            })
+                {
+                    appClientAddress: options?.appClientAddress,
+                },
+            )
         })
         return result
     }
@@ -242,10 +250,24 @@ export class Channel extends PersistedObservable<ChannelModel> {
         },
         signer: ethers.Signer,
     ) {
-        const tokenId = await this.spaceDapp.getTokenIdOfOwner(this.data.spaceId, tip.receiver)
-        if (!tokenId) {
-            throw new Error('tokenId not found')
+        const appAddress = this.members.get(tip.receiver)?.data.appAddress
+
+        let tokenId: string
+        if (appAddress) {
+            // Since bots don't have a membership token, we're using a dummy tokenId of 0
+            tokenId = '0'
+        } else {
+            // For regular users, get their actual membership tokenId
+            const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
+                this.data.spaceId,
+                tip.receiver,
+            )
+            if (!membershipTokenId) {
+                throw new Error('tokenId not found')
+            }
+            tokenId = membershipTokenId
         }
+
         const tx = await this.spaceDapp.tip(
             {
                 spaceId: this.data.spaceId,
@@ -254,11 +276,11 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 amount: tip.amount,
                 messageId,
                 channelId: this.data.id,
-                receiver: tip.receiver,
+                receiver: appAddress ?? tip.receiver,
             },
             signer,
         )
-        const receipt = await tx.wait()
+        const receipt = await tx.wait(3)
         const senderAddress = await signer.getAddress()
         const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)
         if (!tipEvent) {

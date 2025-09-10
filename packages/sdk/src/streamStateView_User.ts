@@ -11,7 +11,7 @@ import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './strea
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { bin_toHexString, check } from '@towns-protocol/dlog'
 import { logNever } from './check'
-import { streamIdFromBytes } from './id'
+import { streamIdFromBytes, userIdFromAddress } from './id'
 import { utils } from 'ethers'
 import { UserStreamModel, UserStreamsView } from './views/streams/userStreamsView'
 
@@ -34,6 +34,9 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
     }
     get tokenTransfers() {
         return this.userStreamModel.tokenTransfers
+    }
+    get appAddress() {
+        return this.userStreamModel.appAddress
     }
 
     get userStreamModel(): UserStreamModel {
@@ -63,6 +66,12 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
             tipsSentCount: { ...content.tipsSentCount },
             tipsReceivedCount: { ...content.tipsReceivedCount },
         })
+        if (content.inception?.appAddress) {
+            this.userStreamsView.setAppAddress(
+                this.streamId,
+                userIdFromAddress(content.inception.appAddress),
+            )
+        }
     }
 
     prependEvent(
@@ -75,6 +84,12 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'userMembership':
                 // memberships are handled in the snapshot
@@ -115,6 +130,12 @@ export class StreamStateView_User extends StreamStateView_AbstractContent {
         const payload: UserPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'userMembership':
                 this.addUserPayload_userMembership(payload.content.value, stateEmitter)

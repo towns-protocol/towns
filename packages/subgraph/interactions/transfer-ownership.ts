@@ -18,7 +18,7 @@ import { generatePrivateKey, mnemonicToAccount, privateKeyToAccount } from 'viem
 import { mergeAbis } from 'ponder'
 import { waitForTransactionReceipt } from 'viem/actions'
 
-const ENV = 'local_multi'
+const ENV = 'local_dev'
 const RPC = 'http://localhost:8545'
 const anvilDeployer = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 
@@ -36,11 +36,11 @@ const walletClient = createWalletClient({
     transport: http(RPC),
 })
 
-const spaceOwner = getContractAddress('spaceOwner', ENV, {
+const spaceOwner = getContractAddress('spaceOwner', 'base', ENV, {
     debug: true,
 })
 
-const spaceFactory = getContractAddress('spaceFactory', ENV, {
+const spaceFactory = getContractAddress('spaceFactory', 'base', ENV, {
     debug: true,
 })
 

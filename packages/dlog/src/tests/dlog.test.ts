@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog, dlogError } from '../dlog'
+import { dlog, dlogError, dlogger, dlogWarn } from '../dlog'
 import debug from 'debug'
 import { bin_fromHexString } from '../binary'
 
@@ -210,5 +210,18 @@ describe.concurrent('dlogTest', () => {
         // Disabled explicitly by settings, default ignored
         log = dlog(ns, { defaultEnabled: true, allowJest: true })
         expect(log.enabled).toBeFalsy()
+    })
+
+    it('tests warn', () => {
+        const log = dlogWarn('test:dlog:warn')
+        log('test warn')
+    })
+
+    it('tests logger with warn', () => {
+        const log = dlogger('test:dlogger')
+        log.log('test log')
+        log.info('test info')
+        log.warn('test warn')
+        log.error('test error')
     })
 })
