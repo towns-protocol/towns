@@ -1,6 +1,6 @@
-# CLAUDE.md
+# Overview
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Project Overview
 
@@ -20,20 +20,7 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 
 ### Go backend commands (from /core directory):
 
-- Testing:
-  - `just test-all` - Run all Go tests from module root
-  - `just t` - Run all Go tests from current directory
-  - `just t-debug` - Run tests with info logging and test printing
-- Development environments:
-  - `just config-and-start` - Start development environment WITH entitlement checks
-  - `just stop` - Stop multi environment nodes
-  - `just tail-logs` - View logs from multi environment instances
-  - `just build` - Build node binary
-- Infrastructure:
-  - `just storage-start` - Start PostgreSQL via Docker
-  - `just storage-stop` - Stop PostgreSQL
-  - `just anvils` - Start local Anvil chains (Base + River)
-  - `just anvils-stop` - Stop local Anvil chains
+Read instructions in `core/AGENTS.md` for more details.
 
 ### Contract commands (from root):
 
@@ -216,5 +203,5 @@ Key lessons:
 When creating git commits:
 - Write clear, concise commit messages that describe the changes
 - Follow conventional commit format when applicable (feat:, fix:, docs:, etc.)
-- Do NOT mention Claude, AI assistance, or automated generation in commit messages
+- Do NOT mention AI assistants or automated generation in commit messages
 - Focus on describing what changed and why, not how it was created
