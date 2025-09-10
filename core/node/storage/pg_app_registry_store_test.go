@@ -1545,9 +1545,7 @@ func TestSetAppMetadataPartial(t *testing.T) {
 		existingDisplayName := appInfo.Metadata.DisplayName
 
 		// Find the second app created in the previous test
-		var app2 common.Address
-		// We need to get the second app address - let's create a new one for this test
-		app2 = safeAddress(t)
+		app2 := safeAddress(t)
 		app2Metadata := types.AppMetadata{
 			Username:    "app2_for_display_test",
 			DisplayName: "Original Display Name",
