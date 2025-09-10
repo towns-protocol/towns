@@ -9214,6 +9214,7 @@ __metadata:
     account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
     crypto-lib: "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
     forge-std: "github:foundry-rs/forge-std#v1.10.0"
+    modular-account: "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz"
     prettier: ^3.5.3
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.24
@@ -23647,6 +23648,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"modular-account@https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz":
+  version: v1.0.1
+  resolution: "modular-account@https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz"
+  dependencies:
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
+    account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
+    solady: ^0.1.24
+  checksum: b061dd31941eb3e0139129789be97e0911428208368f2cfb0d5e15fb42779507e3c0650c4b34d087e52f43a6857eb3a8aecb503b240f90619ddd91dc20c951d1
+  languageName: node
+  linkType: hard
+
 "module-details-from-path@npm:^1.0.3":
   version: 1.0.3
   resolution: "module-details-from-path@npm:1.0.3"
@@ -29900,6 +29912,7 @@ __metadata:
   resolution: "towns-bot@workspace:packages/towns-bot-cli"
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
+    "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
     "@types/cross-spawn": ^6.0.6
