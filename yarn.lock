@@ -970,7 +970,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@connectrpc/connect-node@npm:^2.1.0":
+"@connectrpc/connect-node@npm:^2.0.0, @connectrpc/connect-node@npm:^2.1.0":
   version: 2.1.0
   resolution: "@connectrpc/connect-node@npm:2.1.0"
   peerDependencies:
@@ -10232,6 +10232,24 @@ __metadata:
 "@towns-protocol/eslint-config@workspace:^, @towns-protocol/eslint-config@workspace:packages/eslint-config":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/eslint-config@workspace:packages/eslint-config"
+  languageName: unknown
+  linkType: soft
+
+"@towns-protocol/example-bot-quickstart-bun@workspace:packages/examples/bot-quickstart-bun":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/example-bot-quickstart-bun@workspace:packages/examples/bot-quickstart-bun"
+  dependencies:
+    "@connectrpc/connect-node": ^2.0.0
+    "@towns-protocol/bot": "workspace:^"
+    "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    esbuild: ^0.25.9
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    hono: ^4.7.11
+    typescript: ^5.8.2
   languageName: unknown
   linkType: soft
 
@@ -32242,6 +32260,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^5.8.2":
+  version: 5.9.3
+  resolution: "typescript@npm:5.9.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 0d0ffb84f2cd072c3e164c79a2e5a1a1f4f168e84cb2882ff8967b92afe1def6c2a91f6838fb58b168428f9458c57a2ba06a6737711fdd87a256bbe83e9a217f
+  languageName: node
+  linkType: hard
+
 "typescript@npm:~5.8.3":
   version: 5.8.3
   resolution: "typescript@npm:5.8.3"
@@ -32299,6 +32327,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 1f8f3b6aaea19f0f67cba79057674ba580438a7db55057eb89cc06950483c5d632115c14077f6663ea76fd09fce3c190e6414bb98582ec80aa5a4eaf345d5b68
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@^5.8.2#~builtin<compat/typescript>":
+  version: 5.9.3
+  resolution: "typescript@patch:typescript@npm%3A5.9.3#~builtin<compat/typescript>::version=5.9.3&hash=d69c25"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 8bb8d86819ac86a498eada254cad7fb69c5f74778506c700c2a712daeaff21d3a6f51fd0d534fe16903cb010d1b74f89437a3d02d4d0ff5ca2ba9a4660de8497
   languageName: node
   linkType: hard
 
