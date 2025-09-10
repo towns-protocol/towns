@@ -201,6 +201,7 @@ func (s StreamHistoryMiniblocks) ForType(streamType byte) uint64 {
 	case shared.STREAM_USER_SETTINGS_BIN:
 		ret = s.UserSettings
 	}
+	// If value for streamType is not explicitly set, fallback to the default for all streams.
 	if ret == 0 {
 		ret = s.Default
 	}

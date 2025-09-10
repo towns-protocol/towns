@@ -548,7 +548,7 @@ func MiniblockInfosToStorageMbs(mbs []*MiniblockInfo) ([]*storage.MiniblockDescr
 	var err error
 	for i, mb := range mbs {
 		if i > 0 {
-			if mb.Ref.Num != mbs[i].Ref.Num+int64(i) ||
+			if mb.Ref.Num != mbs[0].Ref.Num+int64(i) ||
 				mbs[i-1].Ref.Hash != common.BytesToHash(mb.Header().PrevMiniblockHash) {
 				return nil, RiverError(
 					Err_INTERNAL,
