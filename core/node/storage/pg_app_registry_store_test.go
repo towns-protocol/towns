@@ -1306,6 +1306,291 @@ func TestSetAppMetadata(t *testing.T) {
 	require.Len(appInfo.Metadata.SlashCommands, 30)
 }
 
+func TestSetAppMetadataPartial(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	unregisteredApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Create an app with initial metadata
+	initialMetadata := testAppMetadataWithName("initial_app")
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
+		initialMetadata,
+		secret,
+	)
+	require.NoError(err)
+
+	t.Run("Update single field", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"username": "updated_username",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the update
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("updated_username", appInfo.Metadata.Username)
+		// Other fields should remain unchanged
+		require.Equal(initialMetadata.DisplayName, appInfo.Metadata.DisplayName)
+		require.Equal(initialMetadata.Description, appInfo.Metadata.Description)
+	})
+
+	t.Run("Update multiple fields", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"display_name": "New Display Name",
+			"description":  "New description for the app",
+			"image_url":    "https://example.com/new-image.png",
+			"avatar_url":   "https://example.com/new-avatar.png",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the updates
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("New Display Name", appInfo.Metadata.DisplayName)
+		require.Equal("New description for the app", appInfo.Metadata.Description)
+		require.Equal("https://example.com/new-image.png", appInfo.Metadata.ImageUrl)
+		require.Equal("https://example.com/new-avatar.png", appInfo.Metadata.AvatarUrl)
+		// Username should remain from previous test
+		require.Equal("updated_username", appInfo.Metadata.Username)
+	})
+
+	t.Run("Update optional field", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"external_url": "https://external.example.com",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the update
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("https://external.example.com", appInfo.Metadata.ExternalUrl)
+	})
+
+	t.Run("Clear optional field", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"external_url": "",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the field is cleared
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("", appInfo.Metadata.ExternalUrl)
+	})
+
+	t.Run("Update slash commands", func(t *testing.T) {
+		slashCommands := []types.SlashCommand{
+			{Name: "help", Description: "Show help information"},
+			{Name: "search", Description: "Search for content"},
+			{Name: "config", Description: "Configure bot settings"},
+		}
+		updates := map[string]interface{}{
+			"slash_commands": slashCommands,
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the commands
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Len(appInfo.Metadata.SlashCommands, 3)
+		require.Equal("help", appInfo.Metadata.SlashCommands[0].Name)
+		require.Equal("Show help information", appInfo.Metadata.SlashCommands[0].Description)
+	})
+
+	t.Run("Clear slash commands", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"slash_commands": []types.SlashCommand{},
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify commands are cleared
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Empty(appInfo.Metadata.SlashCommands)
+	})
+
+	t.Run("Update with many slash commands", func(t *testing.T) {
+		manyCommands := make([]types.SlashCommand, 30)
+		for i := 0; i < 30; i++ {
+			manyCommands[i] = types.SlashCommand{
+				Name:        fmt.Sprintf("command%d", i),
+				Description: fmt.Sprintf("Description for command %d", i),
+			}
+		}
+		updates := map[string]interface{}{
+			"slash_commands": manyCommands,
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err) // Storage layer doesn't validate, just stores
+
+		// Verify all commands were stored
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Len(appInfo.Metadata.SlashCommands, 30)
+	})
+
+	t.Run("Empty update", func(t *testing.T) {
+		updates := map[string]interface{}{}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err) // Should succeed with no changes
+
+		// Verify no changes were made (should still have 30 commands from previous test)
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Len(appInfo.Metadata.SlashCommands, 30)
+	})
+
+	t.Run("Non-existent app", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"username": "test_username",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, unregisteredApp, updates)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+		require.ErrorContains(err, "app was not found in registry")
+	})
+
+	t.Run("Optimistic locking version mechanism", func(t *testing.T) {
+		// This test verifies that the version mechanism works correctly
+		// Testing actual version conflicts requires concurrent access which is complex in unit tests
+
+		// Make an update
+		updates := map[string]interface{}{
+			"description": "Description updated for version test",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the update worked correctly
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("Description updated for version test", appInfo.Metadata.Description)
+
+		// Make another update to verify versions continue to work
+		updates2 := map[string]interface{}{
+			"description": "Second version update",
+		}
+		err = store.SetAppMetadataPartial(params.ctx, app, updates2)
+		require.NoError(err)
+
+		// Verify the second update
+		appInfo2, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("Second version update", appInfo2.Metadata.Description)
+	})
+
+	t.Run("Duplicate username constraint", func(t *testing.T) {
+		// Create a second app
+		app2 := safeAddress(t)
+		app2Metadata := types.AppMetadata{
+			Username:    "app2_original",
+			DisplayName: "App 2 Display",
+			Description: "A second test application",
+			ImageUrl:    "https://example.com/second-image.png",
+			AvatarUrl:   "https://example.com/second-avatar.png",
+		}
+		err := store.CreateApp(
+			params.ctx,
+			owner,
+			app2,
+			types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+			app2Metadata,
+			secret,
+		)
+		require.NoError(err)
+
+		// Get the username from the first app
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		existingUsername := appInfo.Metadata.Username
+
+		// Try to update app2's username to match app's username - should fail
+		updates := map[string]interface{}{
+			"username": existingUsername,
+		}
+		err = store.SetAppMetadataPartial(params.ctx, app2, updates)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_ALREADY_EXISTS))
+		require.ErrorContains(err, "another app with the same username already exists")
+
+		// Verify app2's username wasn't changed
+		app2Info, err := store.GetAppInfo(params.ctx, app2)
+		require.NoError(err)
+		require.Equal("app2_original", app2Info.Metadata.Username)
+	})
+
+	t.Run("Duplicate display names allowed", func(t *testing.T) {
+		// Get app info to get an existing display name
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		existingDisplayName := appInfo.Metadata.DisplayName
+
+		// Find the second app created in the previous test
+		app2 := safeAddress(t)
+		app2Metadata := types.AppMetadata{
+			Username:    "app2_for_display_test",
+			DisplayName: "Original Display Name",
+			Description: "Another test application",
+			ImageUrl:    "https://example.com/test-image.png",
+			AvatarUrl:   "https://example.com/test-avatar.png",
+		}
+		err = store.CreateApp(
+			params.ctx,
+			owner,
+			app2,
+			types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+			app2Metadata,
+			secret,
+		)
+		require.NoError(err)
+
+		// Update app2's display name to match app's display name - should succeed
+		updates := map[string]interface{}{
+			"display_name": existingDisplayName,
+		}
+		err = store.SetAppMetadataPartial(params.ctx, app2, updates)
+		require.NoError(err, "Should be able to set duplicate display name")
+
+		// Verify both apps have the same display name
+		app2Info, err := store.GetAppInfo(params.ctx, app2)
+		require.NoError(err)
+		require.Equal(existingDisplayName, app2Info.Metadata.DisplayName)
+	})
+
+	t.Run("Invalid field names ignored", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"invalid_field": "some_value",
+			"username":      "valid_update",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err) // Should succeed, invalid fields are ignored
+
+		// Verify valid field was updated
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("valid_update", appInfo.Metadata.Username)
+	})
+}
+
 func TestGetAppMetadata(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 

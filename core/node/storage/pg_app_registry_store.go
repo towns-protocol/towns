@@ -35,7 +35,7 @@ import (
 //    - PublishSessionKeys: Writes to app_session_keys, deletes from enqueued_messages
 //
 // 2. READ COMMITTED: Safe for non-queue operations
-//    - CreateApp, UpdateSettings, RotateSecret, SetAppMetadata: Simple field updates
+//    - CreateApp, UpdateSettings, RotateSecret, SetAppMetadata, SetAppMetadataPartial: Simple field updates
 //    - RegisterWebhook: Updates device_key (can only succeed if no queue entries exist)
 //    - GetAppInfo, GetAppMetadata, IsUsernameAvailable: Read-only operations
 //
@@ -197,6 +197,13 @@ type (
 			ctx context.Context,
 			app common.Address,
 			metadata types.AppMetadata,
+		) error
+
+		// SetAppMetadataPartial performs a partial update with optimistic locking
+		SetAppMetadataPartial(
+			ctx context.Context,
+			app common.Address,
+			updates map[string]interface{}, // field updates
 		) error
 
 		// GetAppMetadata gets the metadata for an app
@@ -1046,6 +1053,25 @@ func (s *PostgresAppRegistryStore) SetAppMetadata(
 	)
 }
 
+func (s *PostgresAppRegistryStore) SetAppMetadataPartial(
+	ctx context.Context,
+	app common.Address,
+	updates map[string]interface{},
+) error {
+	return s.txRunner(
+		ctx,
+		"SetAppMetadataPartial",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			_, err := s.setAppMetadataPartial(ctx, app, updates, tx)
+			return err
+		},
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
+		"appAddress", app,
+		"updates", updates,
+	)
+}
+
 func (s *PostgresAppRegistryStore) setAppMetadata(
 	ctx context.Context,
 	app common.Address,
@@ -1084,6 +1110,115 @@ func (s *PostgresAppRegistryStore) setAppMetadata(
 	}
 
 	return nil
+}
+
+func (s *PostgresAppRegistryStore) setAppMetadataPartial(
+	ctx context.Context,
+	app common.Address,
+	updates map[string]interface{},
+	tx pgx.Tx,
+) (int32, error) {
+	// 1. Lock and read current data (including version)
+	var metadataJSON string
+	var username string
+	var currentVersion int32
+
+	err := tx.QueryRow(ctx,
+		`SELECT app_metadata, username, version FROM app_registry 
+         WHERE app_id = $1 FOR UPDATE`,
+		PGAddress(app)).Scan(&metadataJSON, &username, &currentVersion)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+		}
+		return 0, AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE)
+	}
+
+	// 2. Parse current metadata
+	var currentMetadata types.AppMetadata
+	if err := json.Unmarshal([]byte(metadataJSON), &currentMetadata); err != nil {
+		return 0, AsRiverError(err, protocol.Err_INTERNAL).Message("Unable to unmarshal app metadata")
+	}
+	currentMetadata.Username = username
+
+	// 3. Apply updates to current data
+	updatedMetadata := s.applyUpdates(currentMetadata, updates)
+
+	// 4. Marshal updated metadata
+	updatedJSON, err := json.Marshal(updatedMetadata)
+	if err != nil {
+		return 0, AsRiverError(err, protocol.Err_INTERNAL).Message("Unable to marshal updated metadata")
+	}
+
+	// 5. Write back with incremented version, using current version in WHERE clause
+	newVersion := currentVersion + 1
+	result, err := tx.Exec(ctx,
+		`UPDATE app_registry 
+         SET app_metadata = $2, username = $3, version = $4 
+         WHERE app_id = $1 AND version = $5`,
+		PGAddress(app),
+		string(updatedJSON),
+		updatedMetadata.Username,
+		newVersion,
+		currentVersion) // Use the version we just read
+	if err != nil {
+		if isPgError(err, pgerrcode.UniqueViolation) {
+			return 0, WrapRiverError(protocol.Err_ALREADY_EXISTS, err).
+				Message("another app with the same username already exists")
+		}
+		return 0, AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE)
+	}
+
+	// 6. Check if update succeeded (row existed with expected version)
+	if result.RowsAffected() == 0 {
+		return 0, RiverError(protocol.Err_ABORTED,
+			"metadata was modified by another process (version mismatch)")
+	}
+
+	return newVersion, nil
+}
+
+// applyUpdates applies the field updates to the current metadata
+func (s *PostgresAppRegistryStore) applyUpdates(
+	current types.AppMetadata,
+	updates map[string]interface{},
+) types.AppMetadata {
+	updated := current // Copy current metadata
+
+	for field, value := range updates {
+		switch field {
+		case "username":
+			if str, ok := value.(string); ok {
+				updated.Username = str
+			}
+		case "display_name":
+			if str, ok := value.(string); ok {
+				updated.DisplayName = str
+			}
+		case "description":
+			if str, ok := value.(string); ok {
+				updated.Description = str
+			}
+		case "image_url":
+			if str, ok := value.(string); ok {
+				updated.ImageUrl = str
+			}
+		case "avatar_url":
+			if str, ok := value.(string); ok {
+				updated.AvatarUrl = str
+			}
+		case "external_url":
+			if str, ok := value.(string); ok {
+				updated.ExternalUrl = str
+			}
+		case "slash_commands":
+			if commands, ok := value.([]types.SlashCommand); ok {
+				updated.SlashCommands = commands
+			}
+		}
+	}
+
+	return updated
 }
 
 func (s *PostgresAppRegistryStore) GetAppMetadata(
