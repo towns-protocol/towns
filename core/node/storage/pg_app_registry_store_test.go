@@ -1492,7 +1492,7 @@ func TestSetAppMetadata_PartialUpdates(t *testing.T) {
 		require.Equal("https://multi.example.com/image.png", appInfo.Metadata.ImageUrl)
 		require.Equal("new_username", appInfo.Metadata.Username)        // Should remain unchanged
 		require.Equal("New Display Name", appInfo.Metadata.DisplayName) // Should remain unchanged
-		require.Len(appInfo.Metadata.SlashCommands, 2)                       // Should remain unchanged
+		require.Len(appInfo.Metadata.SlashCommands, 2)                  // Should remain unchanged
 	})
 
 	// Test empty field mask - storage layer should reject this
