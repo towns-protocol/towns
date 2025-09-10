@@ -170,25 +170,19 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
 	}
 
-	if metadata.ImageUrl != "" {
-		if err := ValidateImageFileUrl(metadata.ImageUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
-				Tag("image_url", metadata.ImageUrl)
-		}
+	if err := ValidateImageFileUrl(metadata.ImageUrl); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
+			Tag("image_url", metadata.ImageUrl)
 	}
 
-	if metadata.AvatarUrl != "" {
-		if err := ValidateImageFileUrl(metadata.AvatarUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
-				Tag("avatar_url", metadata.AvatarUrl)
-		}
+	if err := ValidateImageFileUrl(metadata.AvatarUrl); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
+			Tag("avatar_url", metadata.AvatarUrl)
 	}
 
-	if metadata.ExternalUrl != "" {
-		if err := ValidateExternalUrl(metadata.ExternalUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
-				Tag("external_url", metadata.ExternalUrl)
-		}
+	if err := ValidateExternalUrl(metadata.ExternalUrl); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
+			Tag("external_url", metadata.ExternalUrl)
 	}
 
 	if err := ValidateSlashCommands(metadata.SlashCommands); err != nil {
