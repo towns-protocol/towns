@@ -179,13 +179,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             duration: duration
         });
 
-        AttestationRequest memory request;
-        request.schema = _getSchemaId();
-        request.data.recipient = appAddress;
-        request.data.revocable = true;
-        request.data.refUID = versionId;
-        request.data.data = abi.encode(appData);
-        newVersionId = _attest(msg.sender, msg.value, request).uid;
+        newVersionId = _attestApp(appData);
 
         appInfo.latestVersion = newVersionId;
         emit AppUpgraded(appAddress, versionId, newVersionId);
@@ -223,14 +217,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             duration: duration
         });
 
-        AttestationRequest memory request;
-        request.schema = _getSchemaId();
-        request.data.recipient = appAddress;
-        request.data.revocable = true;
-        request.data.refUID = appInfo.latestVersion;
-        request.data.data = abi.encode(appData);
-        version = _attest(msg.sender, msg.value, request).uid;
-
+        version = _attestApp(appData);
         appInfo.latestVersion = version;
         appInfo.app = appAddress;
         clientInfo.app = appAddress;
@@ -239,11 +226,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     /// @notice Removes a app from the registry
-    /// @param revoker The address revoking the app
     /// @param appId The version ID of the app to remove
     /// @dev Reverts if app is not registered, revoked, or banned
     /// @dev Spaces that install this app will need to uninstall it
-    function _removeApp(address revoker, bytes32 appId) internal {
+    function _removeApp(bytes32 appId) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
@@ -252,6 +238,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
         App memory appData = abi.decode(att.data, (App));
+        if (appData.owner != msg.sender) NotAllowed.selector.revertWith();
 
         AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[appData.module];
 
@@ -259,7 +246,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         RevocationRequestData memory request;
         request.uid = appId;
-        _revoke(att.schema, request, revoker, 0, true);
+        _revoke(att.schema, request, msg.sender, 0, true);
 
         ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[appData.client];
         clientInfo.app = address(0);
@@ -297,18 +284,18 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppUninstalled(app, address(account), appId);
     }
 
-    function _updateApp(address app, address account) internal {
-        bytes32 appId = IAppAccount(account).getAppId(app);
-        if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+    function _updateApp(address app, address space) internal {
         if (_isBanned(app)) BannedApp.selector.revertWith();
+
+        bytes32 appId = _getLatestAppId(app);
+        if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
         if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
-        IAppAccount(account).onUpdateApp(appId, abi.encode(app));
-
-        emit AppUpdated(app, address(account), appId);
+        IAppAccount(space).onUpdateApp(appId, abi.encode(app));
+        emit AppUpdated(app, address(space), appId);
     }
 
     function _renewApp(address app, address account, bytes calldata data) internal {
@@ -414,6 +401,16 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppBanned(app, appInfo.latestVersion);
 
         return appInfo.latestVersion;
+    }
+
+    function _attestApp(App memory appData) internal returns (bytes32 newVersionId) {
+        AttestationRequest memory request;
+        request.schema = _getSchemaId();
+        request.data.recipient = appData.module;
+        request.data.revocable = true;
+        request.data.refUID = appData.appId;
+        request.data.data = abi.encode(appData);
+        newVersionId = _attest(msg.sender, msg.value, request).uid;
     }
 
     function _validatePricing(uint256 price) internal view returns (uint256) {

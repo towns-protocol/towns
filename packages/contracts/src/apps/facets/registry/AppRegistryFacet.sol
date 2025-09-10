@@ -88,7 +88,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param appId The app ID to remove
     /// @dev Only the owner of the app can remove it
     function removeApp(bytes32 appId) external nonReentrant {
-        _removeApp(msg.sender, appId);
+        _removeApp(appId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -110,22 +110,23 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Uninstall an app
     /// @param app The app address to uninstall
-    /// @param account The account to uninstall the app from
+    /// @param space The space to uninstall the app from
     /// @param data The data to pass to the app's onUninstall function
     function uninstallApp(
         ITownsApp app,
-        IAppAccount account,
+        IAppAccount space,
         bytes calldata data
     ) external nonReentrant {
-        _onlyAllowed(address(account));
-        return _uninstallApp(address(app), address(account), data);
+        _onlyAllowed(address(space));
+        return _uninstallApp(address(app), address(space), data);
     }
 
     /// @notice Update an app to the latest version
     /// @param app The app address to update
-    /// @param client The client address part of the app's identity
-    function updateApp(address app, address client) external nonReentrant {
-        return _updateApp(app, client);
+    /// @param space The space to update the app to
+    function updateApp(ITownsApp app, IAppAccount space) external nonReentrant {
+        _onlyAllowed(address(space));
+        return _updateApp(address(app), address(space));
     }
 
     /// @notice Renew an app
