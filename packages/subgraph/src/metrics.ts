@@ -12,7 +12,13 @@ let globalEventCount = 0
 export const ponder = new Proxy(originalPonder, {
     get(target, prop) {
         if (prop === 'on') {
-            return (eventName: string, handler: any) => {
+            return <TEventName extends Parameters<typeof originalPonder.on>[0]>(
+                eventName: TEventName,
+                handler: Parameters<typeof originalPonder.on<TEventName>>[1]
+            ) => {
+                // Store the event name as a string for metrics tracking
+                const eventNameStr = String(eventName)
+                
                 // Wrap the handler with metrics tracking
                 const wrappedHandler = async (context: any) => {
                     const start = Date.now()
@@ -23,16 +29,16 @@ export const ponder = new Proxy(originalPonder, {
                         const duration = Date.now() - start
 
                         // Track metrics
-                        if (!eventMetrics.has(eventName)) {
-                            eventMetrics.set(eventName, { count: 0, totalMs: 0, slowCount: 0 })
+                        if (!eventMetrics.has(eventNameStr)) {
+                            eventMetrics.set(eventNameStr, { count: 0, totalMs: 0, slowCount: 0 })
                         }
-                        const metrics = eventMetrics.get(eventName)!
+                        const metrics = eventMetrics.get(eventNameStr)!
                         metrics.count++
                         metrics.totalMs += duration
                         if (duration > SLOW_THRESHOLD_MS) {
                             metrics.slowCount++
                             console.warn(
-                                `⚠️ SLOW: ${eventName} at block ${blockNumber} took ${duration}ms`,
+                                `⚠️ SLOW: ${eventNameStr} at block ${blockNumber} took ${duration}ms`,
                             )
                         }
 
@@ -47,7 +53,7 @@ export const ponder = new Proxy(originalPonder, {
                     } catch (error) {
                         const duration = Date.now() - start
                         console.error(
-                            `❌ ERROR: ${eventName} at block ${blockNumber} failed after ${duration}ms`,
+                            `❌ ERROR: ${eventNameStr} at block ${blockNumber} failed after ${duration}ms`,
                         )
                         throw error
                     }
