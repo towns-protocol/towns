@@ -827,13 +827,14 @@ func (s *Service) SetAppMetadata(
 			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
 	}
 
-	// Validate metadata
+	// Validate partial metadata update
 	metadata := req.Msg.GetMetadata()
-	if err := types.ValidateAppMetadata(metadata); err != nil {
+	updateMask := req.Msg.GetUpdateMask()
+	if err := types.ValidateAppMetadataUpdate(metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
+			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata update")
 	}
-	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
+	logging.FromCtx(ctx).Infow("meta", "metadata", metadata, "updateMask", updateMask)
 
 	appInfo, err := s.store.GetAppInfo(ctx, app)
 	if err != nil {
@@ -847,13 +848,19 @@ func (s *Service) SetAppMetadata(
 			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
 	}
 
-	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+	// Convert to storage format and perform partial update
+	updates := types.AppMetadataUpdateToMap(metadata, updateMask)
+	newVersion, err := s.store.SetAppMetadataPartial(ctx, app, updates)
+	if err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Unable to update app metadata").
 			Tag("appId", app).
 			Tag("userId", userId).
+			Tag("updates", updates).
 			Func("SetAppMetadata")
 	}
+	
+	logging.FromCtx(ctx).Infow("Updated app metadata", "newVersion", newVersion)
 
 	return &connect.Response[SetAppMetadataResponse]{
 		Msg: &SetAppMetadataResponse{},

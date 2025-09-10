@@ -271,3 +271,149 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 
 	return nil
 }
+
+// AppMetadataUpdateToMap converts protocol AppMetadataUpdate to map for storage
+func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []string) map[string]interface{} {
+	if update == nil {
+		return map[string]interface{}{}
+	}
+
+	updates := make(map[string]interface{})
+	
+	// Only include fields specified in the update mask
+	maskSet := make(map[string]bool)
+	for _, field := range updateMask {
+		maskSet[field] = true
+	}
+	
+	if maskSet["username"] && update.Username != nil {
+		updates["username"] = *update.Username
+	}
+	
+	if maskSet["display_name"] && update.DisplayName != nil {
+		updates["display_name"] = *update.DisplayName
+	}
+	
+	if maskSet["description"] && update.Description != nil {
+		updates["description"] = *update.Description
+	}
+	
+	if maskSet["image_url"] && update.ImageUrl != nil {
+		updates["image_url"] = *update.ImageUrl
+	}
+	
+	if maskSet["avatar_url"] && update.AvatarUrl != nil {
+		updates["avatar_url"] = *update.AvatarUrl
+	}
+	
+	if maskSet["external_url"] && update.ExternalUrl != nil {
+		updates["external_url"] = *update.ExternalUrl
+	}
+	
+	if maskSet["slash_commands"] && update.SlashCommands != nil {
+		// Convert protocol slash commands to storage format
+		var slashCommands []SlashCommand
+		for _, cmd := range update.SlashCommands {
+			if cmd != nil {
+				slashCommands = append(slashCommands, SlashCommand{
+					Name:        cmd.GetName(),
+					Description: cmd.GetDescription(),
+				})
+			}
+		}
+		updates["slash_commands"] = slashCommands
+	}
+	
+	return updates
+}
+
+// ValidateAppMetadataUpdate validates partial app metadata updates and returns an error if validation fails
+func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []string) error {
+	if update == nil {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata update is required")
+	}
+	
+	if len(updateMask) == 0 {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "update_mask is required and cannot be empty")
+	}
+	
+	// Create mask set for efficient lookup
+	maskSet := make(map[string]bool)
+	for _, field := range updateMask {
+		maskSet[field] = true
+	}
+	
+	// Validate username if being updated
+	if maskSet["username"] && update.Username != nil {
+		if *update.Username == "" {
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
+		}
+	}
+	
+	// Validate display_name if being updated
+	if maskSet["display_name"] && update.DisplayName != nil {
+		if *update.DisplayName == "" {
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
+		}
+	}
+	
+	// Validate description if being updated
+	if maskSet["description"] && update.Description != nil {
+		if *update.Description == "" {
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
+		}
+	}
+	
+	// Validate image_url if being updated
+	if maskSet["image_url"] && update.ImageUrl != nil {
+		if err := ValidateImageFileUrl(*update.ImageUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "image_url validation failed", err).
+				Tag("image_url", *update.ImageUrl)
+		}
+	}
+	
+	// Validate avatar_url if being updated
+	if maskSet["avatar_url"] && update.AvatarUrl != nil {
+		if err := ValidateImageFileUrl(*update.AvatarUrl); err != nil {
+			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "avatar_url validation failed", err).
+				Tag("avatar_url", *update.AvatarUrl)
+		}
+	}
+	
+	// Validate external_url if being updated
+	if maskSet["external_url"] && update.ExternalUrl != nil {
+		if *update.ExternalUrl != "" {
+			if err := ValidateExternalUrl(*update.ExternalUrl); err != nil {
+				return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "external_url validation failed", err).
+					Tag("external_url", *update.ExternalUrl)
+			}
+		}
+	}
+	
+	// Validate slash_commands if being updated
+	if maskSet["slash_commands"] && update.SlashCommands != nil {
+		if len(update.SlashCommands) > MAX_SLASH_COMMANDS {
+			return base.RiverError(protocol.Err_INVALID_ARGUMENT,
+				"slash command count exceeds maximum").
+				Tag("commandCount", len(update.SlashCommands)).
+				Tag("maximum", MAX_SLASH_COMMANDS)
+		}
+		
+		// Check for duplicate command names
+		commandNames := make(map[string]bool)
+		for _, cmd := range update.SlashCommands {
+			if err := validateSlashCommand(cmd); err != nil {
+				return err
+			}
+			
+			cmdName := cmd.GetName()
+			if commandNames[cmdName] {
+				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
+					Tag("commandName", cmdName)
+			}
+			commandNames[cmdName] = true
+		}
+	}
+	
+	return nil
+}

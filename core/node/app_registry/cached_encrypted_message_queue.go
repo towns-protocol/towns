@@ -181,6 +181,25 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	return nil
 }
 
+func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
+	ctx context.Context,
+	app common.Address,
+	updates map[string]interface{},
+) (int32, error) {
+	newVersion, err := q.store.SetAppMetadataPartial(ctx, app, updates)
+	if err != nil {
+		return 0, err
+	}
+
+	// Invalidate cache on successful update
+	// We don't re-populate the cache because we'd need to fetch the full metadata
+	// to do so, and the partial update doesn't return the complete updated metadata
+	cacheKey := app.String()
+	q.metadataCache.Remove(cacheKey)
+
+	return newVersion, nil
+}
+
 func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
