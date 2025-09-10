@@ -18,7 +18,9 @@ import (
 // While the emitter is being initialized, backfill requests are queued in a dynamic buffer so the
 // caller can immediately start processing backfills.
 type sharedStreamUpdateEmitter struct {
-	lock      sync.Mutex
+	lock sync.Mutex
+	// backfills is the queue of backfill requests that are received while the emitter is being initialized.
+	// If the emitter initialization fails, the queue is set to nil to indicate that no further backfill.
 	backfills []*backfillRequest
 	emitter   StreamUpdateEmitter
 	streamID  StreamId
@@ -156,10 +158,13 @@ func (s *sharedStreamUpdateEmitter) EnqueueBackfill(cookie *SyncCookie, syncIDs 
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	// If emitter is initialized (not nil), forward backfill request to it.
 	if s.emitter != nil {
 		return s.emitter.EnqueueBackfill(cookie, syncIDs)
 	}
 
+	// If the backfill queue is nil, it means the emitter initialization has failed, so just returns false
+	// to let the caller know that the backfill request cannot be executed.
 	if s.backfills == nil {
 		return false
 	}

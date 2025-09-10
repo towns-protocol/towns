@@ -38,32 +38,39 @@ type StreamSubscriber interface {
 
 // StreamSubscriptionManager allows subscribers to subscribe and unsubscribe on/from stream updates.
 type StreamSubscriptionManager interface {
-	// EnqueueSubscribe on stream events.
+	// EnqueueSubscribe adds the given stream subscriber request to the internal queue for further processing.
 	//
 	// Implementation must make this a non-blocking operation.
 	//
-	// This can fail with (Err_NOT_FOUND) when the stream is not found.
-	// If the subscriber is already subscribed to the stream, this is a noop.
-	//
+	// The processor executes the stream subscription request for the given cookie and subscriber.
 	// When the subscriber receives a SyncOp_SYNC_DOWN stream update the subscriber is automatically
 	// unsubscribed from the stream and won't receive further updates.
 	EnqueueSubscribe(cookie *SyncCookie, subscriber StreamSubscriber) error
 
-	// EnqueueUnsubscribe from events.
+	// EnqueueUnsubscribe adds the given stream unsubscribe request to the internal queue for further processing.
 	//
 	// Implementation must make this a non-blocking operation.
 	//
+	// The processor unsubscribes the given subscriber from the given stream.
 	// Note that unsubscribing happens automatically when the subscriber
 	// receives a SyncOp_SYNC_DOWN update for the stream.
-	//
 	// If the subscriber is not subscribed to the stream, this is a noop.
 	EnqueueUnsubscribe(streamID StreamId, subscriber StreamSubscriber) error
 
-	// EnqueueBackfill requests a backfill message.
+	// EnqueueBackfill adds the given backfill request to the internal queue for further processing.
+	//
+	// Implementation must make this a non-blocking operation.
 	//
 	// The target syncer will request a stream update message by the given cookie and send it
 	// back to the target sync operation through the given chain of sync IDs.
 	EnqueueBackfill(cookie *SyncCookie, syncIDs ...string) error
+
+	// EnqueueRemoveSubscriber removes the given subscriber from all streams it is subscribed to.
+	//
+	// Implementation must make this a non-blocking operation.
+	//
+	// If the given subscriber is not subscribed to any stream, this is a noop.
+	EnqueueRemoveSubscriber(syncID string) error
 }
 
 type eventBusMessageStreamUpdate struct {
@@ -86,12 +93,17 @@ type eventBusMessageBackfill struct {
 	syncIDs []string
 }
 
+type eventBusMessageRemove struct {
+	syncID string
+}
+
 // eventBusMessage is put on the internal event bus queue for processing in eventBusImpl.run.
 type eventBusMessage struct {
 	update   *eventBusMessageStreamUpdate
 	sub      *eventBusMessageSub
 	unsub    *eventBusMessageUnsub
 	backfill *eventBusMessageBackfill
+	remove   *eventBusMessageRemove
 }
 
 // eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
@@ -203,6 +215,14 @@ func (e *eventBusImpl) EnqueueBackfill(cookie *SyncCookie, syncIDs ...string) er
 	})
 }
 
+func (e *eventBusImpl) EnqueueRemoveSubscriber(syncID string) error {
+	return e.queue.AddMessage(&eventBusMessage{
+		remove: &eventBusMessageRemove{
+			syncID: syncID,
+		},
+	})
+}
+
 func (e *eventBusImpl) run(ctx context.Context) error {
 	var msgs []*eventBusMessage
 	for {
@@ -234,6 +254,8 @@ func (e *eventBusImpl) run(ctx context.Context) error {
 				e.processUnsubscribeCommand(msg.unsub)
 			} else if msg.backfill != nil {
 				e.processBackfillCommand(msg.backfill)
+			} else if msg.remove != nil {
+				e.processRemoveCommand(msg.remove)
 			}
 		}
 
@@ -498,4 +520,32 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 	}
 
 	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, msg.syncIDs)
+}
+
+func (e *eventBusImpl) processRemoveCommand(msg *eventBusMessageRemove) {
+	if msg == nil {
+		return
+	}
+
+	e.subscribersLock.Lock()
+	defer e.subscribersLock.Unlock()
+
+	for streamID, groupedSubscribers := range e.subscribers {
+		for version := range groupedSubscribers {
+			e.subscribers[streamID][version] = slices.DeleteFunc(
+				e.subscribers[streamID][version],
+				func(subscriber StreamSubscriber) bool {
+					return subscriber.SyncID() == msg.syncID
+				},
+			)
+			if len(e.subscribers[streamID][version]) == 0 {
+				delete(e.subscribers[streamID], version)
+			}
+		}
+
+		if len(e.subscribers[streamID]) == 0 {
+			delete(e.subscribers, streamID)
+			e.registry.EnqueueUnsubscribe(streamID)
+		}
+	}
 }

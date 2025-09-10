@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -21,9 +20,14 @@ const (
 var (
 	_ SyncStreamHandler         = (*syncStreamHandlerImpl)(nil)
 	_ eventbus.StreamSubscriber = (*syncStreamHandlerImpl)(nil)
-
-	_ Registry = (*syncStreamHandlerRegistryImpl)(nil)
 )
+
+// Receiver is a final receiver of the stream update message, i.e. client.
+type Receiver interface {
+	// Send sends the given SyncStreamsResponse to the client.
+	// Caller of the given function MUST NOT make an assumption that the function is thread safe.
+	Send(*SyncStreamsResponse) error
+}
 
 // SyncStreamHandler is a client sync operation. It subscribes for stream updates on behalf of
 // the client and sends updates to the client. The client can add, remove stream subscription
@@ -60,27 +64,7 @@ type SyncStreamHandler interface {
 	DebugDropStream(ctx context.Context, streamId StreamId) error
 }
 
-// Receiver is a final receiver of the stream update message, i.e. client.
-type Receiver interface {
-	// Send sends the given SyncStreamsResponse to the client.
-	// Caller of the given function MUST NOT make an assumption that the function is thread safe.
-	Send(*SyncStreamsResponse) error
-}
-
-// Registry is the sync stream handler registry.
-// Registry holds a mapping from syncId that is shared with the client and
-// its associated SyncStreamHandler that is responsible to send stream updates to the client.
-type Registry interface {
-	// Get sync stream handler by sync id.
-	Get(syncID string) (SyncStreamHandler, bool)
-
-	// New creates a new sync stream handler.
-	New(ctx context.Context, syncID string, receiver Receiver) (SyncStreamHandler, error)
-}
-
 // syncStreamHandlerImpl implements SyncStreamHandler interface.
-//
-// TODO: Remove sync operation from event bas after its cancellation.
 type syncStreamHandlerImpl struct {
 	ctx           context.Context
 	cancel        context.CancelCauseFunc
@@ -89,16 +73,12 @@ type syncStreamHandlerImpl struct {
 	receiver      Receiver
 	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-}
-
-// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
-type syncStreamHandlerRegistryImpl struct {
-	handlersLock sync.Mutex
-	handlers     map[string]*syncStreamHandlerImpl
-	eventBus     eventbus.StreamSubscriptionManager
+	registry      Registry
 }
 
 func (s *syncStreamHandlerImpl) Run() error {
+	defer s.cleanup()
+
 	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
 	if err := s.receiver.Send(&SyncStreamsResponse{
 		SyncId: s.syncID,
@@ -145,6 +125,14 @@ func (s *syncStreamHandlerImpl) Run() error {
 				return nil
 			}
 		}
+	}
+}
+
+func (s *syncStreamHandlerImpl) cleanup() {
+	s.registry.Remove(s.syncID)
+
+	if err := s.eventBus.EnqueueRemoveSubscriber(s.syncID); err != nil {
+		s.log.Errorw("failed to remove sync operation from the event bus", "error", err)
 	}
 }
 
@@ -237,7 +225,7 @@ func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
 	}
 }
 
-func (s *syncStreamHandlerImpl) DebugDropStream(ctx context.Context, streamId StreamId) error {
+func (s *syncStreamHandlerImpl) DebugDropStream(_ context.Context, streamId StreamId) error {
 	select {
 	case <-s.ctx.Done():
 		return s.ctx.Err()
@@ -285,56 +273,9 @@ func (s *syncStreamHandlerImpl) processMessage(msg *SyncStreamsResponse) bool {
 
 	// Special cases depending on the message type that should be applied after sending the message.
 	if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
-		// Close the operation and return from the stream updates processor.
 		s.cancel(nil)
 		return true
 	}
 
 	return false
-}
-
-// NewRegistry creates a new instance of the Registry.
-func NewRegistry(eventBus eventbus.StreamSubscriptionManager) Registry {
-	return &syncStreamHandlerRegistryImpl{
-		handlers: make(map[string]*syncStreamHandlerImpl),
-		eventBus: eventBus,
-	}
-}
-
-// Get retrieves a sync stream handler by its sync ID.
-func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, bool) {
-	s.handlersLock.Lock()
-	handler, ok := s.handlers[syncID]
-	s.handlersLock.Unlock()
-	return handler, ok
-}
-
-// New creates a new sync stream handler and registers it in the registry.
-func (s *syncStreamHandlerRegistryImpl) New(
-	ctx context.Context,
-	syncID string,
-	receiver Receiver,
-) (SyncStreamHandler, error) {
-	s.handlersLock.Lock()
-	defer s.handlersLock.Unlock()
-
-	if _, exists := s.handlers[syncID]; exists {
-		return nil, RiverError(Err_ALREADY_EXISTS, "sync operation with the given ID already exists")
-	}
-
-	ctx, cancel := context.WithCancelCause(ctx)
-
-	handler := &syncStreamHandlerImpl{
-		ctx:           ctx,
-		cancel:        cancel,
-		log:           logging.FromCtx(ctx).Named("syncv3.handler").With("syncID", syncID),
-		syncID:        syncID,
-		receiver:      receiver,
-		eventBus:      s.eventBus,
-		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-	}
-
-	s.handlers[syncID] = handler
-
-	return handler, nil
 }
