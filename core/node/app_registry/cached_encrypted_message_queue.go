@@ -186,19 +186,19 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 	app common.Address,
 	update *protocol.AppMetadataUpdate,
 	updateMask []string,
-) (int32, error) {
+) error {
 	// Convert to storage format
 	updates := types.AppMetadataUpdateToMap(update, updateMask)
 	
 	// Early return if there are no updates to apply
 	if len(updates) == 0 {
-		// No updates to apply, return 0 to indicate no change
-		return 0, nil
+		// No updates to apply
+		return nil
 	}
 
-	newVersion, err := q.store.SetAppMetadataPartial(ctx, app, updates)
+	err := q.store.SetAppMetadataPartial(ctx, app, updates)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	// Invalidate cache on successful update
@@ -207,7 +207,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 	cacheKey := app.String()
 	q.metadataCache.Remove(cacheKey)
 
-	return newVersion, nil
+	return nil
 }
 
 func (q *CachedEncryptedMessageQueue) GetAppMetadata(

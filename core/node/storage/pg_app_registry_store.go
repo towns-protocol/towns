@@ -204,7 +204,7 @@ type (
 			ctx context.Context,
 			app common.Address,
 			updates map[string]interface{}, // field updates
-		) (newVersion int32, err error)
+		) error
 
 		// GetAppMetadata gets the metadata for an app
 		GetAppMetadata(
@@ -1057,25 +1057,19 @@ func (s *PostgresAppRegistryStore) SetAppMetadataPartial(
 	ctx context.Context,
 	app common.Address,
 	updates map[string]interface{},
-) (int32, error) {
-	var newVersion int32
-	err := s.txRunner(
+) error {
+	return s.txRunner(
 		ctx,
 		"SetAppMetadataPartial",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			newVersion, err = s.setAppMetadataPartial(ctx, app, updates, tx)
+			_, err := s.setAppMetadataPartial(ctx, app, updates, tx)
 			return err
 		},
 		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"updates", updates,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return newVersion, nil
 }
 
 func (s *PostgresAppRegistryStore) setAppMetadata(

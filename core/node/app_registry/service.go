@@ -849,7 +849,7 @@ func (s *Service) SetAppMetadata(
 	}
 
 	// Perform partial update (conversion to storage format happens inside)
-	newVersion, err := s.store.SetAppMetadataPartial(ctx, app, metadata, updateMask)
+	err = s.store.SetAppMetadataPartial(ctx, app, metadata, updateMask)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Unable to update app metadata").
@@ -860,7 +860,7 @@ func (s *Service) SetAppMetadata(
 			Func("SetAppMetadata")
 	}
 	
-	logging.FromCtx(ctx).Infow("Updated app metadata", "newVersion", newVersion)
+	logging.FromCtx(ctx).Infow("Updated app metadata")
 
 	return &connect.Response[SetAppMetadataResponse]{
 		Msg: &SetAppMetadataResponse{},
