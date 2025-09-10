@@ -76,7 +76,6 @@ func (s *syncStreamHandlerRegistryImpl) New(
 		receiver:      receiver,
 		eventBus:      s.eventBus,
 		streamUpdates: dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		registry:      s,
 	}
 
 	s.handlers[syncID] = handler

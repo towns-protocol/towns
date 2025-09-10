@@ -73,11 +73,14 @@ type syncStreamHandlerImpl struct {
 	receiver      Receiver
 	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	registry      Registry
 }
 
 func (s *syncStreamHandlerImpl) Run() error {
-	defer s.cleanup()
+	defer func() {
+		if err := s.eventBus.EnqueueRemoveSubscriber(s.syncID); err != nil {
+			s.log.Errorw("failed to remove sync operation from the event bus", "error", err)
+		}
+	}()
 
 	// The first message must be a SyncOp_SYNC_NEW message to notify the receiver about the new sync operation with ID.
 	if err := s.receiver.Send(&SyncStreamsResponse{
@@ -125,14 +128,6 @@ func (s *syncStreamHandlerImpl) Run() error {
 				return nil
 			}
 		}
-	}
-}
-
-func (s *syncStreamHandlerImpl) cleanup() {
-	s.registry.Remove(s.syncID)
-
-	if err := s.eventBus.EnqueueRemoveSubscriber(s.syncID); err != nil {
-		s.log.Errorw("failed to remove sync operation from the event bus", "error", err)
 	}
 }
 

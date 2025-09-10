@@ -64,6 +64,7 @@ func (s *serviceImpl) SyncStreams(
 	if err != nil {
 		return err
 	}
+	defer s.handlerRegistry.Remove(syncID)
 
 	if len(streams) > 0 {
 		res, err := h.Modify(&ModifySyncRequest{SyncId: syncID, AddStreams: streams})
