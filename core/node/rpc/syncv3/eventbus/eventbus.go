@@ -109,6 +109,8 @@ type eventBusMessage struct {
 // eventBusImpl is a concrete implementation of the StreamUpdateEmitter and StreamSubscriber interfaces.
 // It is responsible for handling stream updates from syncer.StreamUpdateEmitter and distributes updates
 // to subscribers. As such it keeps track of which subscribers are subscribed on updates on which streams.
+//
+// TODO: Use worker pool to process updates in parallel
 type eventBusImpl struct {
 	log *logging.Log
 	// TODO: discuss if we want to have an unbounded queue here?
