@@ -1169,6 +1169,14 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 }
 
+// reinitialize replaces the stream's storage and view with data from a remote peer.
+// This is used during stream reconciliation when the local stream is significantly behind
+// or missing data. The function validates the incoming stream data and snapshot,
+// writes new miniblocks and snapshot to storage (creates or updates based on updateExisting),
+// and creates a new stream view from the provided data.
+//
+// If updateExisting is false, returns an error if the stream already exists in storage.
+// If updateExisting is true, allows updating an existing stream with new data.
 func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, updateExisting bool) error {
 	if stream == nil {
 		return RiverError(Err_INTERNAL, "stream is nil")
