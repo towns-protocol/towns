@@ -24,7 +24,7 @@ service AppRegistryService {
     rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
 
     // App metadata management.
-    rpc SetAppMetadata(SetAppMetadataRequest) returns (SetAppMetadataResponse);
+    rpc UpdateAppMetadata(UpdateAppMetadataRequest) returns (UpdateAppMetadataResponse);
     rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
 
     // RotateSecret allows the bot owner to rotate the shared secret the app registry
@@ -252,14 +252,14 @@ message AppMetadataUpdate {
     optional string display_name = 7;
 }
 
-// Set app metadata
-message SetAppMetadataRequest {
+// Update app metadata
+message UpdateAppMetadataRequest {
     bytes app_id = 1;
     AppMetadataUpdate metadata = 2;  // Changed from AppMetadata
     repeated string update_mask = 3;  // Added update mask
 }
 
-message SetAppMetadataResponse {}
+message UpdateAppMetadataResponse {}
 
 // Get app metadata
 message GetAppMetadataRequest {

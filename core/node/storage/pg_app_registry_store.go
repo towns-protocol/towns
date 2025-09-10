@@ -35,7 +35,7 @@ import (
 //    - PublishSessionKeys: Writes to app_session_keys, deletes from enqueued_messages
 //
 // 2. READ COMMITTED: Safe for non-queue operations
-//    - CreateApp, UpdateSettings, RotateSecret, SetAppMetadata: Simple field updates
+//    - CreateApp, UpdateSettings, RotateSecret, SetAppMetadata, SetAppMetadataPartial: Simple field updates
 //    - RegisterWebhook: Updates device_key (can only succeed if no queue entries exist)
 //    - GetAppInfo, GetAppMetadata, IsUsernameAvailable: Read-only operations
 //

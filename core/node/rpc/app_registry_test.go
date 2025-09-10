@@ -1146,8 +1146,8 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			req := &connect.Request[protocol.SetAppMetadataRequest]{
-				Msg: &protocol.SetAppMetadataRequest{
+			req := &connect.Request[protocol.UpdateAppMetadataRequest]{
+				Msg: &protocol.UpdateAppMetadataRequest{
 					AppId:      tc.appId,
 					Metadata:   tc.metadata,
 					UpdateMask: tc.updateMask,
@@ -1157,7 +1157,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 				authenticateBS(tester.ctx, tester.require, tester.authClient, tc.authenticatingWallet, req)
 			}
 
-			resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+			resp, err := tester.appRegistryClient.UpdateAppMetadata(tester.ctx, req)
 
 			if tc.expectedErr == "" {
 				tester.require.NoError(err)
@@ -1269,8 +1269,8 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 
 		// Update the username of app2 to match the username of the other app, and expect a failure to update
 		// the app's metadata.
-		req := &connect.Request[protocol.SetAppMetadataRequest]{
-			Msg: &protocol.SetAppMetadataRequest{
+		req := &connect.Request[protocol.UpdateAppMetadataRequest]{
+			Msg: &protocol.UpdateAppMetadataRequest{
 				AppId: secondAppWallet.Address[:],
 				Metadata: &protocol.AppMetadataUpdate{
 					Username: proto.String(firstAppUsername),
@@ -1280,7 +1280,7 @@ func TestAppRegistry_SetGetAppMetadata(t *testing.T) {
 		}
 		authenticateBS(tester.ctx, tester.require, tester.authClient, secondAppWallet, req)
 
-		resp, err := tester.appRegistryClient.SetAppMetadata(tester.ctx, req)
+		resp, err := tester.appRegistryClient.UpdateAppMetadata(tester.ctx, req)
 		tester.require.Nil(resp)
 		tester.require.Error(err)
 		tester.require.ErrorContains(err, "another app with the same username already exists")
