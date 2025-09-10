@@ -306,28 +306,31 @@ export async function updateSpaceReviewMetrics(
     }
 }
 
-// Cache for recent block number with TTL
-let cachedBlockNumber: { value: bigint; timestamp: number } | null = null
-const BLOCK_CACHE_TTL_MS = 30 * 60 * 1000 // Cache for 30 minutes
-
 /**
- * Gets a recent block number, cached for 30 minutes to avoid redundant RPC calls.
- * This works because we're using it for the upgraded SpaceOwner contract which
- * needs a relatively recent block where the new ABI is valid.
+ * Returns a block number suitable for reading the SpaceOwner contract.
+ * The SpaceOwner contract was upgraded at different blocks on different environments,
+ * so we need to ensure we're reading from a block where the new ABI is valid.
+ *
+ * Note: Ponder caches RPC requests based on block number, so using a consistent
+ * block number for contract reads helps maximize cache efficiency.
  */
-async function getRecentBlockNumber(): Promise<bigint> {
-    return 35350928n
-    // const now = Date.now()
-    
-    // // Return cached value if still valid
-    // if (cachedBlockNumber && (now - cachedBlockNumber.timestamp) < BLOCK_CACHE_TTL_MS) {
-    //     return cachedBlockNumber.value
-    // }
-    
-    // // Fetch new block number and cache it
-    // const blockNumber = await publicClient.getBlockNumber()
-    // cachedBlockNumber = { value: blockNumber, timestamp: now }
-    // return blockNumber
+async function getReadSpaceInfoBlockNumber(blockNumber: bigint): Promise<bigint> {
+    const environment = process.env.PONDER_ENVIRONMENT || 'local_dev'
+
+    // For local dev, use the latest block number
+    if (environment === 'local_dev') {
+        return await publicClient.getBlockNumber()
+    }
+
+    // Environment-specific minimum block numbers where the upgraded contract is available
+    const minBlockByEnvironment: Record<string, bigint> = {
+        alpha: 30861709n, // Sep 10, 2025
+        gamma: 30861709n, // Sep 10, 2025
+        omega: 35350928n, // Sep 10, 2025
+    }
+
+    const minBlock = minBlockByEnvironment[environment] ?? 0n
+    return blockNumber > minBlock ? blockNumber : minBlock
 }
 
-export { publicClient, getRecentBlockNumber, getCreatedDate }
+export { publicClient, getReadSpaceInfoBlockNumber, getCreatedDate }

@@ -2,7 +2,7 @@ import { eq, sql, and } from 'ponder'
 import { ponder } from './metrics' // Use wrapped ponder with metrics
 import schema from 'ponder:schema'
 import {
-    getRecentBlockNumber,
+    getReadSpaceInfoBlockNumber,
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
@@ -12,18 +12,15 @@ import {
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
-    const start = Date.now()
-    
-    // Get a recent block number (cached for 30 minutes). We only need something recent here
-    // to make sure the deployed contract ABI is compatible with our ABI.
-    const blockNumber = await getRecentBlockNumber()
+    // Get a block number suitable for reading the SpaceOwner contract
+    const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceOwner } = context.contracts
 
     // Check if the space already exists
     const existingSpace = await context.db.sql.query.space.findFirst({
         where: eq(schema.space.id, event.args.space),
     })
-    
+
     if (existingSpace) {
         console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
         return
@@ -62,8 +59,8 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
-    // Get a recent block number (cached for 2 seconds)
-    const blockNumber = await getRecentBlockNumber()
+    // Get a block number suitable for reading the SpaceOwner contract
+    const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceFactory, SpaceOwner } = context.contracts
 
     const space = await context.db.sql.query.space.findFirst({
