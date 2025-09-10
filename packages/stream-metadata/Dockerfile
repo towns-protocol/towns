@@ -2,6 +2,9 @@ FROM node:lts-alpine3.20 AS builder
 
 WORKDIR /river
 
+# Install dependencies needed for Sharp and other native modules
+RUN apk add --no-cache git curl libc6-compat vips-dev
+
 # monorepo root config
 COPY ./package.json ./package.json
 COPY ./.yarn/plugins ./.yarn/plugins
@@ -33,22 +36,29 @@ COPY ./packages/rpc-connector /river/packages/rpc-connector
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
 # install dependencies and build
-RUN apk add --no-cache git curl
 RUN corepack enable
 RUN yarn install
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
+
+# Install runtime dependencies for Sharp
+RUN apk add --no-cache libc6-compat vips
+
 COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-metadata/dist
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
 RUN yarn init --yes
+
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28
+RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3
+
+# Force rebuild sharp to ensure correct Linux binaries
+RUN yarn remove sharp && yarn add sharp@0.34.3
 
 # run the service
 ARG GIT_SHA
