@@ -1,17 +1,20 @@
 import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
-import { createServer } from 'node:http2'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
+import commands from './commands'
 
 async function main() {
-    const bot = await makeTownsBot(
-        process.env.APP_PRIVATE_DATA_BASE64!,
-        process.env.JWT_SECRET!,
-        process.env.RIVER_ENV,
-    )
+    const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!, {
+        commands,
+    })
 
-    bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
+    bot.onSlashCommand('time', async (handler, { channelId }) => {
+        const currentTime = new Date().toLocaleString()
+        await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
+    })
+
+    bot.onMessage(async (handler, { message, channelId, userId, eventId, createdAt }) => {
         if (userId === bot.botId) return
 
         if (message.toLowerCase().includes('hello')) {
@@ -26,12 +29,11 @@ async function main() {
         }
 
         if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
+            const now = new Date()
+            await handler.sendMessage(
+                channelId,
+                `Pong! 🏓 ${now.getTime() - createdAt.getTime()}ms`,
+            )
         }
 
         if (message.toLowerCase().includes('react')) {
@@ -47,7 +49,7 @@ async function main() {
         }
     })
 
-    bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
+    bot.onMentioned(async (handler, { message, channelId, userId, eventId, createdAt }) => {
         if (userId === bot.botId) return
 
         if (message.toLowerCase().includes('hello')) {
@@ -62,12 +64,11 @@ async function main() {
         }
 
         if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
+            const now = new Date()
+            await handler.sendMessage(
+                channelId,
+                `Pong! 🏓 ${now.getTime() - createdAt.getTime()}ms`,
+            )
         }
 
         if (message.toLowerCase().includes('react')) {
@@ -89,11 +90,7 @@ async function main() {
     app.use(logger())
     app.post('/webhook', jwtMiddleware, handler)
 
-    serve({
-        fetch: app.fetch,
-        port: parseInt(process.env.PORT!),
-        createServer,
-    })
+    serve({ fetch: app.fetch, port: parseInt(process.env.PORT!) })
     console.log(`✅ Quickstart Bot is running on https://localhost:${process.env.PORT}`)
 }
 

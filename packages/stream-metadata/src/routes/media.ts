@@ -4,6 +4,7 @@ import { isValidStreamId } from '@towns-protocol/sdk'
 import { bin_fromHexString } from '@towns-protocol/dlog'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
+import { parseSizeParam, processImage, shouldProcessImage } from '../imageProcessing'
 
 const paramsSchema = z.object({
 	mediaStreamId: z
@@ -23,6 +24,7 @@ const querySchema = z.object({
 		.string()
 		.transform((value) => bin_fromHexString(value))
 		.optional(),
+	size: z.string().optional(),
 })
 
 const CACHE_CONTROL = {
@@ -53,8 +55,19 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 	}
 
 	const { mediaStreamId } = paramsResult.data
-	const { key, iv } = queryResult.data
-	logger.info({ mediaStreamId, key, iv }, 'Fetching media stream content')
+	const { key, iv, size } = queryResult.data
+
+	// Parse and validate size parameter
+	const sizeOptions = parseSizeParam(size)
+	if (!sizeOptions.isValid) {
+		logger.info({ size }, 'Invalid size parameter format')
+		return reply
+			.code(400)
+			.header('Cache-Control', CACHE_CONTROL['4xx'])
+			.send({ error: 'Bad Request', message: 'Size must be in format WxH, xH, or Wx' })
+	}
+
+	logger.info({ mediaStreamId, key, iv, size, sizeOptions }, 'Fetching media stream content')
 
 	try {
 		const mediaContent = await getMediaStreamContent(logger, mediaStreamId, key, iv)
@@ -80,10 +93,51 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 				.send('Invalid data or mimeType')
 		}
 
+		let processedImageBuffer = Buffer.from(data)
+		let outputMimeType = mimeType
+
+		// Process image if size parameters provided and image type is processable
+		if ((sizeOptions.width || sizeOptions.height) && shouldProcessImage(mimeType)) {
+			try {
+				const result = await processImage(logger, processedImageBuffer, mimeType, {
+					width: sizeOptions.width,
+					height: sizeOptions.height,
+				})
+
+				processedImageBuffer = result.buffer
+				outputMimeType = result.mimeType
+
+				logger.info(
+					{
+						wasProcessed: result.wasProcessed,
+						isAnimated: result.isAnimated,
+						outputMimeType,
+					},
+					result.isAnimated
+						? 'Animated media GIF resized with animation preserved'
+						: 'Static media processed to WebP successfully',
+				)
+			} catch (error) {
+				logger.error(
+					{
+						err: error,
+						mediaStreamId,
+						targetWidth: sizeOptions.width,
+						targetHeight: sizeOptions.height,
+					},
+					'Failed to process image, serving original',
+				)
+				// Continue with original image if processing fails
+			}
+		}
+
+		// Determine cache control based on whether image was resized
+		const cacheControl = CACHE_CONTROL[200]
+
 		return reply
-			.header('Content-Type', mimeType)
-			.header('Cache-Control', CACHE_CONTROL[200])
-			.send(Buffer.from(data))
+			.header('Content-Type', outputMimeType)
+			.header('Cache-Control', cacheControl)
+			.send(processedImageBuffer)
 	} catch (error) {
 		logger.error({ mediaStreamId, err: error }, 'Failed to fetch media stream content')
 

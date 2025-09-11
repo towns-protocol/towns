@@ -152,6 +152,7 @@ describe('clientTest', () => {
             )
             expect(event).toBeDefined()
             expect(event?.confirmedInBlockNum).toBeDefined()
+            expect(event?.confirmedAtEpochMs).toBeDefined()
         })
 
         await bobsClient.stopSync()
@@ -540,6 +541,7 @@ describe('clientTest', () => {
             )
             expect(event).toBeDefined()
             expect(event?.confirmedInBlockNum).toBeDefined()
+            expect(event?.confirmedAtEpochMs).toBeDefined()
         })
 
         log('bobSendsSingleMessage done')

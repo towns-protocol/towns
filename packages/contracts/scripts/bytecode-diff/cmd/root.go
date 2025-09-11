@@ -171,7 +171,7 @@ var rootCmd = &cobra.Command{
 		baseConfig := utils.BaseConfig{
 			BaseRpcUrl:        baseRpcUrl,
 			BaseSepoliaRpcUrl: baseSepoliaRpcUrl,
-			BasescanAPIKey:    os.Getenv("BASESCAN_API_KEY"),
+			EtherscanAPIKey:   os.Getenv("ETHERSCAN_API_KEY"),
 		}
 		riverConfig := utils.RiverChainConfig{
 			MainnetRpcUrl:   riverRpcUrl,
@@ -217,9 +217,9 @@ var rootCmd = &cobra.Command{
 				}
 			}
 
-			basescanAPIKey := os.Getenv("BASESCAN_API_KEY")
-			if basescanAPIKey == "" {
-				log.Fatal().Msg("BaseScan API key not provided. Set it using BASESCAN_API_KEY environment variable")
+			etherscanAPIKey := os.Getenv("ETHERSCAN_API_KEY")
+			if etherscanAPIKey == "" {
+				log.Fatal().Msg("Etherscan API key not provided. Set it using ETHERSCAN_API_KEY environment variable")
 			}
 
 			log.Info().Str("sourceEnvironment", sourceEnvironment).Str("targetEnvironment", targetEnvironment).Msg("Running diff for environment")
@@ -307,7 +307,7 @@ func executeSourceDiff(
 		facets, err := utils.ReadAllFacets(
 			clients.BaseClient,
 			diamondAddress,
-			chainConfig.BaseConfig.BasescanAPIKey,
+			chainConfig.BaseConfig.EtherscanAPIKey,
 			false,
 			&baseScanChain,
 		)
@@ -438,7 +438,7 @@ func executeEnvrionmentDiff(
 		facets, err := utils.ReadAllFacets(
 			clients[sourceEnvironment].BaseRpcClient,
 			diamondAddress,
-			chainConfig.BaseConfig.BasescanAPIKey,
+			chainConfig.BaseConfig.EtherscanAPIKey,
 			true,
 			&baseScanChain,
 		)
@@ -485,7 +485,7 @@ func executeEnvrionmentDiff(
 		facets, err := utils.ReadAllFacets(
 			clients[targetEnvironment].BaseRpcClient,
 			diamondAddress,
-			chainConfig.BaseConfig.BasescanAPIKey,
+			chainConfig.BaseConfig.EtherscanAPIKey,
 			true,
 			&baseScanChain,
 		)

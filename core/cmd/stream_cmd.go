@@ -5,17 +5,24 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"reflect"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/sync/semaphore"
 
 	"github.com/gammazero/workerpool"
 
@@ -398,7 +405,8 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 		formatBytes(proto.Size(miniblock)),
 	)
 	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
-	fmt.Printf("  Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	fmt.Printf("  Hash:      %v\n", hex.EncodeToString(miniblock.Header.Hash))
+	fmt.Printf("  Author:    %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
 	if info.Snapshot != nil {
 		fmt.Printf(
 			"  **********************\n  Snapshot: (size %s)\n  **********************\n",
@@ -681,27 +689,9 @@ func runStreamNodeDumpCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		for n, miniblock := range miniblocks.Msg.GetMiniblocks() {
-			// Parse header
-			info, err := events.NewMiniblockInfoFromProto(
-				miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)),
-				events.NewParsedMiniblockInfoOpts().
-					WithExpectedBlockNumber(from+int64(n)),
-			)
-			if err != nil {
+			if err := printMbSummary(miniblock, miniblocks.Msg.GetMiniblockSnapshot(from+int64(n)), from+int64(n)); err != nil {
 				return err
 			}
-
-			mbHeader, ok := info.HeaderEvent().Event.Payload.(*protocol.StreamEvent_MiniblockHeader)
-			if !ok {
-				return fmt.Errorf("unable to parse header event as miniblock header")
-			}
-
-			fmt.Printf(
-				"\nMiniblock %d\n=========\n%s",
-				mbHeader.MiniblockHeader.MiniblockNum,
-				protojson.Format(miniblock),
-			)
-			fmt.Printf("\n(Parsed Header)\n-------------\n%s\n", protojson.Format(mbHeader.MiniblockHeader))
 		}
 		blocksRead = len(miniblocks.Msg.Miniblocks)
 		from = from + int64(blocksRead)
@@ -1128,6 +1118,313 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 	return nil
 }
 
+type (
+	nodeStreamState struct {
+		LastMiniblockNum  int64       `json:"lastMiniblockNum"`
+		LastMiniblockHash common.Hash `json:"lastMiniblockHash"`
+		Err               string      `json:"error,omitempty"`
+	}
+	streamState struct {
+		StreamID                  StreamId                            `json:"streamId"`
+		RiverBlock                crypto.BlockNumber                  `json:"riverBlock"`
+		RegistryLastMiniblockNum  int64                               `json:"registryLastMiniblockNum"`
+		RegistryLastMiniblockHash common.Hash                         `json:"registryLastMiniblockHash"`
+		When                      time.Time                           `json:"when"`
+		Nodes                     map[common.Address]*nodeStreamState `json:"nodes"`
+		Status                    string                              `json:"status"`
+	}
+
+	Client struct {
+		sem    *semaphore.Weighted
+		client protocolconnect.StreamServiceClient
+	}
+)
+
+func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []string) error {
+	var (
+		ctx                  = cmd.Context()
+		outputDir            = args[0]
+		okOutputFileName     = path.Join(outputDir, "streams.OK.jsonl")
+		noticeOutputFileName = path.Join(outputDir, "streams.NOTICE.jsonl")
+		warnOutputFileName   = path.Join(outputDir, "streams.WARN.jsonl")
+		errorOutputFileName  = path.Join(outputDir, "streams.ERROR.jsonl")
+		processedStreamsMu   sync.Mutex
+		processedStreams     = make(map[StreamId]*streamState)
+		clients              = make(map[common.Address]*Client)
+	)
+
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		return err
+	}
+
+	var outputFileMu sync.Mutex
+	okOutputFile, err := os.OpenFile(okOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer okOutputFile.Close()
+	noticeOutputFile, err := os.OpenFile(noticeOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer noticeOutputFile.Close()
+	warnOutputFile, err := os.OpenFile(warnOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer warnOutputFile.Close()
+	errorOutputFile, err := os.OpenFile(errorOutputFileName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return err
+	}
+	defer errorOutputFile.Close()
+
+	riverChain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	defer riverChain.Close()
+
+	// load already processed stream state records
+	if err := filepath.WalkDir(outputDir, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil // don't process sub directories
+		}
+		if !strings.HasSuffix(d.Name(), ".jsonl") {
+			return nil // only process .jsonl files
+		}
+
+		nodeFile, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer nodeFile.Close()
+
+		input := json.NewDecoder(nodeFile)
+		for {
+			var s streamState
+			if err := input.Decode(&s); err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+				if err != nil {
+					return err
+				}
+			}
+			processedStreams[s.StreamID] = &s
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	fmt.Printf("Loaded %d processed streams\n", len(processedStreams))
+
+	// loop over registered streams at river block and check their state if not already processed
+	riverRegistry, err := registries.NewRiverRegistryContract(
+		ctx,
+		riverChain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	allNodesResp, err := riverRegistry.NodeRegistry.GetAllNodes(&bind.CallOpts{
+		BlockNumber: riverChain.InitialBlockNum.AsBigInt(),
+	})
+	if err != nil {
+		return err
+	}
+
+	// limit concurrent requests to each node to prevent interfering with normal operations.
+	const maxConcurrentRequestPerNode = 8
+
+	for _, n := range allNodesResp {
+		clients[n.NodeAddress] = &Client{
+			sem:    semaphore.NewWeighted(maxConcurrentRequestPerNode),
+			client: protocolconnect.NewStreamServiceClient(http.DefaultClient, n.Url),
+		}
+	}
+
+	wp := workerpool.New(len(clients) * maxConcurrentRequestPerNode)
+
+	expStreamCount, err := riverRegistry.GetStreamCount(ctx, riverChain.InitialBlockNum)
+	if err != nil {
+		return err
+	}
+
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-time.After(time.Minute):
+				processedStreamsMu.Lock()
+				fmt.Printf("%s processed %d/%d streams\n", time.Now(), len(processedStreams), expStreamCount)
+				processedStreamsMu.Unlock()
+			}
+		}
+	}()
+
+	if err := riverRegistry.ForAllStreams(ctx, riverChain.InitialBlockNum, func(stream *river.StreamWithId) bool {
+		processedStreamsMu.Lock()
+		if _, ok := processedStreams[stream.StreamId()]; !ok {
+			processedStreamsMu.Unlock()
+			wp.Submit(func() {
+				result := fetchStreamStateSummaryOnNodes(ctx, stream, riverChain, clients)
+
+				d, err := json.MarshalIndent(result, "", "  ")
+				if err != nil {
+					panic(err)
+				}
+				d = append(d, '\n')
+
+				var outputFile *os.File
+				switch result.Status {
+				case "OK":
+					outputFile = okOutputFile
+				case "NOTICE":
+					outputFile = noticeOutputFile
+				case "WARN":
+					outputFile = warnOutputFile
+				case "ERROR":
+					outputFile = errorOutputFile
+				}
+
+				outputFileMu.Lock()
+				_, _ = outputFile.Write(d)
+				outputFileMu.Unlock()
+
+				processedStreamsMu.Lock()
+				processedStreams[stream.StreamId()] = &result
+				processedStreamsMu.Unlock()
+			})
+		} else {
+			processedStreamsMu.Unlock()
+		}
+		return true
+	}); err != nil {
+		return err
+	}
+
+	wp.StopWait()
+
+	processedStreamsMu.Lock()
+	fmt.Printf("Expected %d streams, actually processed %d streams on block %d\n",
+		expStreamCount, len(processedStreams), riverChain.InitialBlockNum)
+	processedStreamsMu.Unlock()
+
+	return nil
+}
+
+func fetchStreamStateSummaryOnNodes(
+	ctx context.Context,
+	stream *river.StreamWithId,
+	riverChain *crypto.Blockchain,
+	clients map[common.Address]*Client,
+) streamState {
+	streamID := stream.StreamId()
+	result := streamState{
+		StreamID:                  streamID,
+		RiverBlock:                riverChain.InitialBlockNum,
+		RegistryLastMiniblockNum:  stream.LastMbNum(),
+		RegistryLastMiniblockHash: stream.LastMbHash(),
+		When:                      time.Now(),
+		Nodes:                     make(map[common.Address]*nodeStreamState),
+		Status:                    "OK",
+	}
+
+	for _, n := range stream.Nodes() {
+		client, found := clients[n]
+		if !found {
+			result.Nodes[n] = &nodeStreamState{Err: fmt.Sprintf("no client for node %s", n)}
+			continue
+		}
+
+		req := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: streamID[:]})
+		req.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+		req.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
+
+		if err := client.sem.Acquire(context.Background(), 1); err != nil {
+			panic(err)
+		}
+		resp, err := client.client.GetLastMiniblockHash(ctx, req)
+		client.sem.Release(1)
+
+		if err != nil {
+			result.Nodes[n] = &nodeStreamState{Err: fmt.Sprintf("unable to retrieve last miniblock: %s", err)}
+			continue
+		}
+
+		result.Nodes[n] = &nodeStreamState{
+			LastMiniblockNum:  resp.Msg.MiniblockNum,
+			LastMiniblockHash: common.BytesToHash(resp.Msg.Hash),
+		}
+	}
+
+	var (
+		miniblockNums = map[int64]struct{}{
+			result.RegistryLastMiniblockNum: {},
+		}
+		miniblockHashes = map[common.Hash]struct{}{
+			result.RegistryLastMiniblockHash: {},
+		}
+		highestNodeMiniblock = int64(-1)
+	)
+
+	for _, nodeResult := range result.Nodes {
+		miniblockNums[nodeResult.LastMiniblockNum] = struct{}{}
+		miniblockHashes[nodeResult.LastMiniblockHash] = struct{}{}
+		highestNodeMiniblock = max(nodeResult.LastMiniblockNum, highestNodeMiniblock)
+		if len(nodeResult.Err) > 0 {
+			result.Status = "ERROR"
+		} else if result.Status == "OK" && (len(result.Nodes) != len(stream.Nodes()) || len(miniblockNums) != 1 || len(miniblockHashes) != 1) {
+			// if all nodes are on the same miniblock and the registry is lagging, this is a migrated stream
+			// and didn't see a new miniblock after migration. This is ok and will be fixed in the node.
+			allMatch := true
+			foundNum := int64(-1)
+			var foundHash common.Hash
+			for _, check := range result.Nodes {
+				if foundNum == -1 {
+					foundNum = check.LastMiniblockNum
+					foundHash = check.LastMiniblockHash
+				} else {
+					allMatch = allMatch &&
+						check.LastMiniblockNum == foundNum &&
+						check.LastMiniblockHash == foundHash
+				}
+			}
+
+			if len(miniblockNums) == 2 && allMatch && foundNum > result.RegistryLastMiniblockNum {
+				result.Status = "NOTICE"
+			} else {
+				result.Status = "WARN"
+			}
+		}
+	}
+
+	if result.RegistryLastMiniblockNum > highestNodeMiniblock {
+		result.Status = "ERROR"
+	}
+
+	return result
+}
+
 func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -1453,6 +1750,16 @@ max-block-range is optional and limits the number of blocks to consider (default
 		},
 	}
 
+	cmdStreamCheckStreamState := &cobra.Command{
+		Use:   "check <output-dir>",
+		Short: "Check stream state consistency over nodes",
+		Long:  `Check stream state consistency over nodes by comparing the stream state on each node.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamCheckStateCmd(cmd, cmdConfig, args)
+		},
+	}
+
 	cmdStreamValidate.Flags().String("node", "", "Optional node address to fetch stream from")
 	cmdStreamValidate.Flags().Duration("timeout", 30*time.Second, "Timeout for running the command")
 	cmdStreamValidate.Flags().Int("page-size", 1000, "Number of miniblocks to fetch per page")
@@ -1469,6 +1776,7 @@ max-block-range is optional and limits the number of blocks to consider (default
 	cmdStream.AddCommand(cmdStreamValidate)
 	cmdStream.AddCommand(cmdStreamCompareMiniblockChain)
 	cmdStream.AddCommand(cmdStreamOutOfSync)
+	cmdStream.AddCommand(cmdStreamCheckStreamState)
 
 	rootCmd.AddCommand(cmdStream)
 }

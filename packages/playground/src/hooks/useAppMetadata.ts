@@ -10,6 +10,7 @@ export const getAppMetadataQueryKey = (appId: string) => ['appMetadata', appId]
 export const useAppMetadata = (appId: string | undefined) => {
     const signer = useEthersSigner()
     const sync = useSyncAgent()
+    const appRegistryUrl = getAppRegistryUrl(sync.config.riverConfig.environmentId)
 
     return useQuery({
         queryKey: getAppMetadataQueryKey(appId || ''),
@@ -21,7 +22,7 @@ export const useAppMetadata = (appId: string | undefined) => {
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticate(
                 signerContext,
-                getAppRegistryUrl(sync.config.riverConfig.environmentId),
+                appRegistryUrl,
             )
 
             const response = await appRegistryRpcClient.getAppMetadata({

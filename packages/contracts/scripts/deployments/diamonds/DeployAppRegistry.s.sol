@@ -13,7 +13,6 @@ import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
 import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
-import {DeploySimpleApp} from "../facets/DeploySimpleApp.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -99,15 +98,13 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MultiInit");
         facetHelper.add("UpgradeableBeaconFacet");
         facetHelper.add("AppRegistryFacet");
+        facetHelper.add("SimpleApp");
 
-        // Deploy all facets in a batch
         facetHelper.deployBatch(deployer);
 
-        vm.broadcast(deployer);
-        address simpleApp = DeploySimpleApp.deploy();
-
-        // Add feature facets
+        address simpleApp = facetHelper.getDeployedAddress("SimpleApp");
         address facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
+
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployUpgradeableBeacon.selectors()),
             facet,

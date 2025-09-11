@@ -16,6 +16,7 @@ build({
 		// esbuild cannot bundle native modules
 		'@datadog/native-metrics',
 		'@towns-protocol/olm',
+		'sharp', // Sharp has native binaries that cannot be bundled
 
 		// required if you use profiling
 		'@datadog/pprof',

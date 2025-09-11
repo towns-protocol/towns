@@ -1,9 +1,11 @@
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { TipEventObject as GeneratedTipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { ITipping__factory } from '@towns-protocol/generated/dev/typings/factories/ITipping__factory'
 import { BaseContractShim } from '../BaseContractShim'
 import { ContractReceipt, ethers } from 'ethers'
 
 const { abi, connect } = ITipping__factory
+
+export type TipEventObject = GeneratedTipEventObject
 
 export class ITippingShim extends BaseContractShim<typeof connect> {
     constructor(address: string, provider: ethers.providers.Provider) {

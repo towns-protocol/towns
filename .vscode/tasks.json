@@ -59,7 +59,7 @@
     {
       "label": "Stage 2",
       "dependsOn": [
-        "CasablancaConfigureNodes",
+        "Configure Nodes",
         "Stage 3"
       ],
       "group": {
@@ -72,11 +72,8 @@
       "label": "Stage 3",
       "dependsOn": [
         "Start Watches",
-        "Casablanca",
-        "Casablanca-No-Entitlements",
+        "Run Nodes and Services",
         "Playground",
-        "AppRegistry",
-        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -87,11 +84,11 @@
     {
       "label": "Start Watches",
       "dependsOn": [
-        "WatchCasablancaDlog",
-        "WatchCasablancaEncryption",
-        "WatchCasablancaProto",
-        "WatchCasablancaWeb3",
-        "WatchCasablancaSdk",
+        "WatchDlog",
+        "WatchEncryption",
+        "WatchProto",
+        "WatchWeb3",
+        "WatchSdk",
         "WatchReactSdk",
         "WatchBot",
         "WatchStress",
@@ -187,9 +184,9 @@
       }
     },
     {
-      "label": "Casablanca",
+      "label": "Run Nodes",
       "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-and-tail",
+      "command": "sleep 1 && cd ./core && just run-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -199,7 +196,7 @@
     {
       "label": "AppRegistry",
       "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi run-app-registry-and-tail",
+      "command": "sleep 1 && cd ./core && just run-app-registry-and-tail",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -207,29 +204,9 @@
       }
     },
     {
-      "label": "Casablanca-No-Entitlements",
+      "label": "Build Nodes",
       "type": "shell",
-      "command": "sleep 2 && cd ./core && just RUN_ENV=multi_ne run-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "AppRegistry-No-Entitlements",
-      "type": "shell",
-      "command": "sleep 1 && cd ./core && just RUN_ENV=multi_ne run-app-registry-and-tail",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "local-servers"
-      }
-    },
-    {
-      "label": "Build Casablanca",
-      "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi build",
+      "command": "cd ./core && just build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -239,9 +216,9 @@
       }
     },
     {
-      "label": "Build Casablanca-No-Entitlements",
+      "label": "Stop Nodes and Services",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi_ne build",
+      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -251,24 +228,10 @@
       }
     },
     {
-      "label": "Stop Casablanca",
-      "type": "shell",
-      "command": "echo 'killing multi && multi_ne' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && kill $(ps -ax | grep 'run_files/multi_ne' | awk '{print $1}') && cd ./core && just RUN_ENV=multi stop && just RUN_ENV=multi_ne stop && just RUN_ENV=multi stop-app-registry && just RUN_ENV=multi_ne stop-app-registry",
-      "isBackground": true,
-      "problemMatcher": [],
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared",
-      }
-    },
-    {
-      "label": "Both Casablancas",
+      "label": "Run Nodes and Services",
       "dependsOn": [
-        "Casablanca",
-        "Casablanca-No-Entitlements",
+        "Run Nodes",
         "AppRegistry",
-        "AppRegistry-No-Entitlements",
       ],
       "group": {
         "kind": "build",
@@ -276,12 +239,11 @@
       "problemMatcher": [],
     },
     {
-      "label": "Restart Casablanca",
+      "label": "Restart Nodes and Services",
       "dependsOn": [
-        "Stop Casablanca",
-        "Build Casablanca",
-        "Build Casablanca-No-Entitlements",
-        "Both Casablancas"
+        "Stop Nodes and Services",
+        "Build Nodes",
+        "Run Nodes and Services"
       ],
       "group": {
         "kind": "build",
@@ -290,9 +252,9 @@
       "problemMatcher": [],
     },
     {
-      "label": "CasablancaConfigureNodes",
+      "label": "Configure Nodes",
       "type": "shell",
-      "command": "cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build",
+      "command": "cd ./core && just config build",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -324,7 +286,7 @@
     {
       "label": "Build Contracts",
       "type": "shell",
-      "command": "./scripts/build-contracts.sh",
+      "command": "yarn workspace @towns-protocol/contracts compile",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -336,7 +298,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "./scripts/build-contract-types.sh localhost",
+      "command": "yarn workspace @towns-protocol/contracts build-types",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -360,7 +322,7 @@
     {
       "label": "Playground",
       "type": "shell",
-      "command": "cd packages/playground && yarn dev",
+      "command": "cd packages/playground && yarn dev:local",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -368,7 +330,7 @@
       }
     },
     {
-      "label": "WatchCasablancaSdk",
+      "label": "WatchSdk",
       "type": "shell",
       "command": "cd packages/sdk && yarn watch",
       "isBackground": true,
@@ -398,7 +360,7 @@
       }
     },
     {
-      "label": "WatchCasablancaEncryption",
+      "label": "WatchEncryption",
       "type": "shell",
       "command": "cd packages/encryption && yarn watch",
       "isBackground": true,
@@ -408,7 +370,7 @@
       }
     },
     {
-      "label": "WatchCasablancaDlog",
+      "label": "WatchDlog",
       "type": "shell",
       "command": "cd packages/dlog && yarn watch",
       "isBackground": true,
@@ -418,7 +380,7 @@
       }
     },
     {
-      "label": "WatchCasablancaProto",
+      "label": "WatchProto",
       "type": "shell",
       "command": "cd packages/proto && yarn watch",
       "isBackground": true,
@@ -438,7 +400,7 @@
       }
     },
     {
-      "label": "WatchCasablancaWeb3",
+      "label": "WatchWeb3",
       "type": "shell",
       "command": "cd packages/web3 && yarn watch",
       "isBackground": true,
@@ -448,7 +410,7 @@
       }
     },
     {
-      "label": "WatchCasablancaProto_Go",
+      "label": "WatchProto_Go",
       "type": "shell",
       "command": "cd packages/proto && yarn watch:go",
       "isBackground": true,
@@ -458,7 +420,7 @@
       }
     },
     {
-      "label": "MITM - Casablanca",
+      "label": "MITM - Nodes",
       "type": "shell",
       "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
       "isBackground": true,
@@ -530,5 +492,18 @@
       },
       "dependsOrder": "sequence"
     },
+    {
+      "label": "Test CI Locally",
+      "type": "shell",
+      "command": "./scripts/run-local-ci.sh",
+      "args": ["-j", "Common_CI"],
+      "isBackground": false,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared"
+      }
+    }
   ]
 }

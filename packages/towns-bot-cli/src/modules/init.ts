@@ -11,7 +11,7 @@ import {
     printSuccess,
     type PackageJson,
 } from './utils.js'
-import type { Argv } from '../index.js'
+import type { InitArgs } from '../parser.js'
 
 export type Template = (typeof TEMPLATES)[keyof typeof TEMPLATES]
 export const TEMPLATES = {
@@ -32,7 +32,7 @@ export const TEMPLATES = {
     },
 } as const
 
-export async function init(argv: Argv) {
+export async function init(argv: InitArgs) {
     const projectName = argv._[1]
     const template = argv.template || 'quickstart'
 

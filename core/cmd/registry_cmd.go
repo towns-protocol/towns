@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/core/types"
 	eth_crypto "github.com/ethereum/go-ethereum/crypto"
@@ -512,7 +514,7 @@ func srStream(
 	return err
 }
 
-func nodesDump(cfg *config.Config, csv bool) error {
+func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	blockchain, err := crypto.NewBlockchain(
@@ -536,7 +538,12 @@ func nodesDump(cfg *config.Config, csv bool) error {
 		return err
 	}
 
-	nodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
+	blockNum := blockchain.InitialBlockNum
+	if atBlock >= 0 {
+		blockNum = crypto.BlockNumber(atBlock)
+	}
+
+	nodes, err := registryContract.GetAllNodes(ctx, blockNum)
 	if err != nil {
 		return err
 	}
@@ -561,6 +568,13 @@ func nodesDump(cfg *config.Config, csv bool) error {
 				node.Url,
 			)
 		}
+	}
+	fmt.Printf("%s\n", strings.Repeat("=", 140))
+
+	if header, err := blockchain.Client.HeaderByNumber(ctx, blockNum.AsBigInt()); err == nil {
+		fmt.Printf("At river block %d (%s)\n", blockNum, time.Unix(int64(header.Time), 0))
+	} else {
+		fmt.Printf("At river block %d\n", blockNum)
 	}
 
 	return nil
@@ -915,14 +929,20 @@ func init() {
 		Use:   "nodes",
 		Short: "Get node records from the registry contract",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			atBlock, err := cmd.Flags().GetInt64("river-block")
+			if err != nil {
+				return err
+			}
 			csv, err := cmd.Flags().GetBool("csv")
 			if err != nil {
 				return err
 			}
-			return nodesDump(cmdConfig, csv)
+			return nodesDump(cmdConfig, atBlock, csv)
 		},
 	}
+	nodesCmd.Flags().Int64("river-block", -1, "River chain block number to query on")
 	nodesCmd.Flags().Bool("csv", false, "Output in CSV format")
+
 	srCmd.AddCommand(nodesCmd)
 
 	srCmd.AddCommand(&cobra.Command{
@@ -970,6 +990,18 @@ Marks node 0xaa..ff as the single quorum node and node 0xbb..ff and 0xcc..ff as 
 			return runRegistryUpdateStream(args, cmdConfig)
 		},
 	})
+
+	cmdStreamInception := &cobra.Command{
+		Use:   "stream-inception <stream-id>",
+		Short: "Find stream allocation/creation details",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runStreamInception(cmd, cmdConfig, args)
+		},
+	}
+
+	cmdStreamInception.Flags().Bool("json", false, "Output in JSON format")
+	srCmd.AddCommand(cmdStreamInception)
 }
 
 func runRegistryUpdateStream(args []string, cfg *config.Config) error {
@@ -1068,6 +1100,233 @@ func runRegistryUpdateStream(args []string, cfg *config.Config) error {
 	fmt.Printf("      node address: %v\n", nodes)
 	fmt.Printf("  transaction hash: %s\n", receipt.TxHash.Hex())
 	fmt.Printf("           success: %v\n", receipt.Status == types.ReceiptStatusSuccessful)
+
+	return nil
+}
+
+// runStreamInception prints details when a stream was registered in the stream registry.
+func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	streamID, err := StreamIdFromString(args[0])
+	if err != nil {
+		return err
+	}
+
+	outputInJSON, err := cmd.Flags().GetBool("json")
+	if err != nil {
+		outputInJSON = false
+	}
+
+	blockchain, err := crypto.NewBlockchain(
+		ctx,
+		&cfg.RiverChain,
+		nil,
+		infra.NewMetricsFactory(nil, "river", "cmdline"),
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	registryContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		blockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	if err != nil {
+		return err
+	}
+
+	// do a binary search for the River block that contains the transaction
+	// that allocated/created the stream.
+	low := crypto.BlockNumber(0)
+	high := blockchain.InitialBlockNum
+	for {
+		if low >= high {
+			break
+		}
+
+		mid := (low + high) / 2
+
+		_, err := registryContract.GetStream(ctx, streamID, mid)
+		if err == nil {
+			high = mid
+		} else if IsRiverErrorCode(err, Err_NOT_FOUND) {
+			low = mid + 1
+		} else {
+			return err
+		}
+	}
+
+	logs, err := blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
+		FromBlock: low.AsBigInt(),
+		ToBlock:   low.AsBigInt(),
+		Addresses: []common.Address{cfg.RegistryContract.Address},
+	})
+	if err != nil {
+		return err
+	}
+
+	printInceptionDetails := func(
+		txHash common.Hash,
+		blockNumber uint64,
+		blockHash common.Hash,
+		nodes []common.Address,
+		mb common.Hash,
+		replFactor int,
+		genesisMiniblock []byte,
+		outputInJSON bool,
+	) {
+		if outputInJSON {
+			output, _ := json.MarshalIndent(map[string]any{
+				"stream": streamID,
+				"riverBlock": map[string]any{
+					"number": blockNumber,
+					"hash":   blockHash,
+				},
+				"transaction":       txHash,
+				"genesisHash":       mb,
+				"initialNodes":      nodes,
+				"replicationFactor": replFactor,
+				"genesisMiniblock":  fmt.Sprintf("0x%x", genesisMiniblock),
+			}, "  ", "  ")
+			fmt.Printf("%s\n", output)
+		} else {
+			fmt.Printf("            Stream: %s\n", streamID)
+			fmt.Printf("       River block: %d / %s\n", blockNumber, blockHash)
+			fmt.Printf("       Transaction: %s\n", txHash)
+			fmt.Printf("      Genesis hash: %s\n", mb)
+			fmt.Printf("     Initial nodes: %v\n", nodes)
+			fmt.Printf("Replication factor: %d\n", replFactor)
+			fmt.Printf("  Genesis miniblock:\n0x%x\n", genesisMiniblock)
+		}
+	}
+
+	for _, log := range logs {
+		if len(log.Topics) == 0 {
+			continue
+		}
+
+		switch log.Topics[0] {
+		// StreamUpdates 0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb
+		case common.HexToHash("0x378ece20ebca29c2f887798617154658265a73d80c84fad8c9c49639ffdb29bb"):
+			streamEvents, errs := registryContract.FilterStreamUpdatedEvents(ctx, []*types.Log{&log})
+			if len(errs) > 0 {
+				return errs[0]
+			}
+
+			if events, found := streamEvents[streamID]; found {
+				for _, event := range events {
+					if event.Reason() == river.StreamUpdatedEventTypeAllocate ||
+						event.Reason() == river.StreamUpdatedEventTypeCreate {
+						streamState := events[0].(*river.StreamState)
+
+						var genesisBlock []byte
+						if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+							genesisBlock = gb
+						}
+
+						printInceptionDetails(
+							log.TxHash,
+							log.BlockNumber,
+							log.BlockHash,
+							streamState.Stream.Nodes(),
+							streamState.Stream.LastMb().Hash,
+							streamState.Stream.ReplicationFactor(),
+							genesisBlock,
+							outputInJSON,
+						)
+						return nil
+					}
+				}
+			}
+
+		// Legacy StreamAllocated(bytes32,address[],bytes32,bytes)
+		case common.HexToHash("0x55ef7efc60ef99743e54209752c9a8e047e013917ec91572db75875069dd65bb"):
+			t := abi.Arguments{
+				{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}},
+				{Type: abi.Type{T: abi.SliceTy, Elem: &abi.Type{T: abi.AddressTy}}},
+				{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}},
+				{Type: abi.Type{T: abi.BytesTy}},
+			}
+
+			v, err := t.UnpackValues(log.Data)
+			if err != nil {
+				return err
+			}
+
+			eventStreamID := StreamId(v[0].([32]byte))
+			if eventStreamID != streamID {
+				continue
+			}
+
+			genesisBlockHash := common.Hash(v[2].([32]byte))
+
+			var genesisBlock []byte
+			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+				genesisBlock = gb
+			}
+
+			printInceptionDetails(log.TxHash, log.BlockNumber, log.BlockHash, v[1].([]common.Address),
+				genesisBlockHash, len(v[1].([]common.Address)), genesisBlock, outputInJSON)
+
+			return nil
+
+		// Legacy StreamCreated(bytes32 streamId, bytes32 genesisMiniblockHash, (bytes32,uint64,uint64,uint64,address[]) stream)
+		case common.HexToHash("0xac1b69e6e0382c43def3cccabf63091ba47b5d8b10a705d16a1076668643fe4d"):
+			// Define the tuple structure for the stream parameter
+			tuple, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+				{Name: "field0", Type: "bytes32"},  // First bytes32 in tuple
+				{Name: "field1", Type: "uint64"},   // First uint64
+				{Name: "field2", Type: "uint64"},   // Second uint64
+				{Name: "field3", Type: "uint64"},   // Third uint64
+				{Name: "nodes", Type: "address[]"}, // Address array
+			})
+			if err != nil {
+				return err
+			}
+
+			// Define the full event arguments structure
+			t := abi.Arguments{
+				{Name: "streamId", Type: abi.Type{Size: 32, T: abi.FixedBytesTy}},
+				{Name: "genesisMiniblockHash", Type: abi.Type{Size: 32, T: abi.FixedBytesTy}},
+				{Name: "stream", Type: tuple},
+			}
+
+			v, err := t.UnpackValues(log.Data)
+			if err != nil {
+				return err
+			}
+
+			eventStreamID := StreamId(v[0].([32]byte))
+
+			if eventStreamID != streamID {
+				continue
+			}
+
+			genesisMiniblockHash := common.Hash(v[1].([32]byte))
+			stream := v[2].(struct {
+				Field0 [32]uint8        `json:"field0"`
+				Field1 uint64           `json:"field1"`
+				Field2 uint64           `json:"field2"`
+				Field3 uint64           `json:"field3"`
+				Nodes  []common.Address `json:"nodes"`
+			})
+
+			var genesisBlock []byte
+			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+				genesisBlock = gb
+			}
+
+			printInceptionDetails(log.TxHash, log.BlockNumber, log.BlockHash, stream.Nodes,
+				genesisMiniblockHash, len(stream.Nodes), genesisBlock, outputInJSON)
+
+			return nil
+		}
+	}
 
 	return nil
 }

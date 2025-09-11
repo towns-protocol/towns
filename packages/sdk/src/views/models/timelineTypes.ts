@@ -58,6 +58,7 @@ export interface TimelineEvent {
     isSendFailed: boolean
     confirmedEventNum?: bigint
     confirmedInBlockNum?: bigint
+    confirmedAtEpochMs?: number // time miniblock containing this event was created, should be around 2 seconds after the event was created
     threadParentId?: string
     replyParentId?: string
     reactionParentId?: string
@@ -102,6 +103,13 @@ export type TimelineEvent_OneOf =
     | UserBlockchainTransactionEvent
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
+
+export type TimelineEventWithContent<T extends TimelineEvent_OneOf> = Omit<
+    TimelineEvent,
+    'content'
+> & {
+    content: T
+}
 
 export enum RiverTimelineEvent {
     ChannelCreate = 'm.channel.create',
@@ -163,6 +171,7 @@ export interface InceptionEvent {
     creatorId: string
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
+    appAddress?: string
 }
 
 export interface ChannelCreateEvent {
@@ -278,6 +287,7 @@ export interface StreamMembershipEvent {
     membership: Membership
     reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
+    appAddress?: string
 }
 
 export interface UserBlockchainTransactionEvent {
@@ -376,6 +386,13 @@ export interface ChannelMessageEvent {
     attachments?: Attachment[]
 }
 
+export type ChannelMessageEventWithContent<T extends ChannelMessageEventContentOneOf> = Omit<
+    ChannelMessageEvent,
+    'content'
+> & {
+    content: T
+}
+
 // original event: the event that was redacted
 export interface RedactedEvent {
     kind: RiverTimelineEvent.RedactedEvent
@@ -393,6 +410,7 @@ export interface TimelineEventConfirmation {
     eventId: string
     confirmedEventNum: bigint
     confirmedInBlockNum: bigint
+    confirmedAtEpochMs: number
 }
 
 export interface ThreadStatsData {
@@ -559,13 +577,26 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     const post = create(ChannelMessage_PostSchema, {
                         threadId: channelMessageEvent.threadId,
                         threadPreview: channelMessageEvent.threadPreview,
-                        content: {
-                            case: 'text' as const,
-                            value: {
-                                ...channelMessageEvent,
-                                attachments: transformAttachments(channelMessageEvent.attachments),
-                            },
-                        },
+                        content:
+                            channelMessageEvent.content.msgType === MessageType.Text
+                                ? {
+                                      case: 'text' as const,
+                                      value: {
+                                          ...channelMessageEvent,
+                                          attachments: transformAttachments(
+                                              channelMessageEvent.attachments,
+                                          ),
+                                      },
+                                  }
+                                : channelMessageEvent.content.msgType === MessageType.Image
+                                  ? {
+                                        case: 'image' as const,
+                                        value: {
+                                            title: channelMessageEvent.body,
+                                            ...channelMessageEvent.content,
+                                        },
+                                    }
+                                  : undefined,
                     })
                     const value = create(ChannelMessage_Post_AttachmentSchema, {
                         content: {

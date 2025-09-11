@@ -75,3 +75,4 @@ jobs:
                   GH_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: ./scripts/publish-to-npm.sh
+              timeout-minutes: 60

@@ -199,6 +199,10 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+	// TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
+	// The value is a shared secret expected in the X-River-Test-Bypass header.
+	TestEntitlementsBypassSecret string
 }
 
 type TLSConfig struct {
@@ -442,6 +446,16 @@ type StreamTrackingConfig struct {
 	UseSharedSyncer bool
 }
 
+// AppNotificationConfig holds notification configuration for a specific app.
+type AppNotificationConfig struct {
+	// App identifies which app this configuration is for
+	App string
+	// APN holds the Apple Push Notification settings for this app
+	APN APNPushNotificationsConfig
+	// Web holds the Web Push notification settings for this app
+	Web WebPushNotificationConfig `mapstructure:"webpush"`
+}
+
 type NotificationsConfig struct {
 	// SubscriptionExpirationDuration if the client isn't seen within this duration stop sending
 	// notifications to it. Defaults to 90 days.
@@ -450,10 +464,15 @@ type NotificationsConfig struct {
 	// send notifications to the client but only logs them.
 	// This is intended for development purposes. Defaults to false.
 	Simulate bool
-	// APN holds the Apple Push Notification settings
-	APN APNPushNotificationsConfig
-	// Web holds the Web Push notification settings
-	Web WebPushNotificationConfig `mapstructure:"webpush"`
+	// Since viper does not support arrays configurations via env var,
+	// we can't use the Apps field directly. using two flat configuration
+	// for towns and sendit apps for now.
+	// in the future, this configuration (both *App and Apps) will be moved to
+	// a database, to allow dynamic config without code changes
+	TownsApp  AppNotificationConfig
+	SenditApp AppNotificationConfig
+	// Apps holds the notification configuration for each app
+	Apps []AppNotificationConfig
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig

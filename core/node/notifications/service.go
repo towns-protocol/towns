@@ -16,6 +16,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	notificationssync "github.com/towns-protocol/towns/core/node/notifications/sync"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -324,6 +325,7 @@ func (s *Service) SubscribeWebPush(
 		msg          = req.Msg
 		subscription = msg.GetSubscription()
 		keys         = subscription.GetKeys()
+		app          = msg.GetApp()
 		webPushSub   = &webpush.Subscription{
 			Endpoint: subscription.GetEndpoint(),
 			Keys: webpush.Keys{
@@ -338,11 +340,12 @@ func (s *Service) SubscribeWebPush(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
-	if userID == (common.Address{}) {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
+	// Default to Towns app for backward compatibility
+	if app == "" {
+		app = apps.Default
 	}
 
-	if err := s.userPreferences.AddWebPushSubscription(ctx, userID, webPushSub); err != nil {
+	if err := s.userPreferences.AddWebPushSubscription(ctx, userID, webPushSub, app); err != nil {
 		return nil, err
 	}
 
@@ -371,10 +374,6 @@ func (s *Service) UnsubscribeWebPush(
 		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
 	}
 
-	if userID == (common.Address{}) {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "Invalid user id")
-	}
-
 	if err := s.userPreferences.RemoveWebPushSubscription(ctx, userID, webPushSub); err != nil {
 		return nil, err
 	}
@@ -392,6 +391,7 @@ func (s *Service) SubscribeAPN(
 		deviceToken = msg.GetDeviceToken()
 		environment = msg.GetEnvironment()
 		pushVersion = msg.GetPushVersion()
+		app         = msg.GetApp()
 	)
 
 	if len(deviceToken) == 0 {
@@ -405,7 +405,12 @@ func (s *Service) SubscribeAPN(
 		pushVersion = NotificationPushVersion_NOTIFICATION_PUSH_VERSION_1
 	}
 
-	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion); err != nil {
+	// Default to Towns app for backward compatibility
+	if app == "" {
+		app = apps.Default
+	}
+
+	if err := s.userPreferences.AddAPNSubscription(ctx, userID, deviceToken, environment, pushVersion, app); err != nil {
 		return nil, err
 	}
 

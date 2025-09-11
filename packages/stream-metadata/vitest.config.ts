@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from 'vitest/config'
-import { rootConfig } from '../../vitest.config.mjs'
+import { rootConfig, readBypassSecret } from '../../vitest.config.mjs'
 
 export default mergeConfig(
 	rootConfig,
@@ -7,6 +7,10 @@ export default mergeConfig(
 		test: {
 			include: ['tests/**/*.test.ts'],
 			setupFiles: './vitest.setup.ts',
+			env: {
+				// skip entitlements for these tests
+				RIVER_TEST_ENT_BYPASS_SECRET: readBypassSecret() ?? '',
+			},
 		},
 	}),
 )

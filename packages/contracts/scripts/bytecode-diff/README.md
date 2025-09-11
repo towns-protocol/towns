@@ -136,7 +136,7 @@ You can also set the following environment variables instead of using flags:
 - `BASE_RPC_URL`: Base RPC provider URL
 - `BASE_SEPOLIA_RPC_URL`: Base Sepolia RPC provider URL
 - `FACET_SOURCE_PATH`: Path to facet source files
-- `BASESCAN_API_KEY`: Your API key for BaseScan.
+- `ETHERSCAN_API_KEY`: Your API key for Etherscan.
 - `COMPILED_FACETS_PATH`: (Optional) Path to compiled facets
 - `DEPLOYMENTS_PATH`: (Optional) Path to deployed contracts
 - `REPORT_OUT_DIR`: (Optional) Path to report output directory

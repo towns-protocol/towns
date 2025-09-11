@@ -14,9 +14,9 @@ This directory contains example implementations to help you get started with bui
 
 Most examples require these core environment variables:
 
-- `APP_PRIVATE_DATA_BASE64`: Your Towns app private data
+- `APP_PRIVATE_DATA`: Your Towns app private data
 - `JWT_SECRET`: JWT secret for authentication
-- `RIVER_ENV`: Environment (local_multi/alpha/omega)
+- `RIVER_ENV`: Environment (local_dev/alpha/omega)
 - `PORT`: Port to run the application on
 
 **Important**: Always check the `.env.sample` file in each example directory to see the complete list of required environment variables, as different examples may need additional configuration (like API keys for external services).

@@ -1,13 +1,22 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.301",
+    "version": "0.0.337",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
-        "build": "yarn make-config",
+        "build": "node ./scripts/prepare.js && node ./scripts/make-config.js",
         "make-config": "node ./scripts/make-config.js",
-        "preinstall": "node ./scripts/make-config.js"
+        "preinstall": "node ./scripts/make-config.js",
+        "prepare": "node ./scripts/prepare.js"
     },
+    "files": [
+        "config/**/*",
+        "deployments/**/*",
+        "dev/**/*",
+        "scripts/**/*",
+        "v3/**/*",
+        "README.md"
+    ],
     "imports": {
         "#/dev/*": "./dev/*",
         "#/v3/*": "./v3/*",

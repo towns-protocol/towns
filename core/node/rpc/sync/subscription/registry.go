@@ -117,7 +117,7 @@ func (r *registry) AddStreamToSubscription(
 		},
 	)
 
-	return
+	return shouldAddToRemote, shouldBackfill
 }
 
 // RemoveStreamFromSubscription removes a stream from a subscription
@@ -149,7 +149,7 @@ func (r *registry) DeleteStreamSubscriptions(streamID StreamId) {
 func (r *registry) GetStats() (streamCount, subscriptionCount int) {
 	streamCount = r.subscriptionsByStream.Size()
 	subscriptionCount = r.subscriptionsByID.Size()
-	return
+	return streamCount, subscriptionCount
 }
 
 // CancelAll cancels all subscriptions with the given error.

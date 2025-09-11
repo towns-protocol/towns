@@ -5,7 +5,8 @@ pragma solidity ^0.8.23;
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+
 // contracts
 
 library TippingBase {

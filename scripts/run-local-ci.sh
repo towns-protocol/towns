@@ -13,33 +13,33 @@ function show_usage {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -j, --job JOB_NAME     Specify the job to run (default: Common_CI)"
-  echo "  -e, --event TYPE       Event type: schedule, pull_request, workflow_dispatch (default: schedule)"
   echo "  -h, --help             Show this help message"
+  echo ""
+  echo "Note: Uses 'schedule' event type (only type that works reliably with act)"
 }
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -j|--job) JOB="$2"; shift ;;
-    -e|--event) EVENT_TYPE="$2"; shift ;;
     -h|--help) show_usage; exit 0 ;;
     *) echo "Unknown parameter: $1"; show_usage; exit 1 ;;
   esac
   shift
 done
 
-# Create event.json file
-echo "Creating event.json for $EVENT_TYPE event..."
-if [ "$EVENT_TYPE" == "schedule" ]; then
-  echo "{\"schedule\": {\"scheduled_at\": \"$EVENT_TIME\"}}" > event.json
-elif [ "$EVENT_TYPE" == "pull_request" ]; then
-  echo "{\"pull_request\": {\"head\": {\"ref\": \"$(git branch --show-current)\"}}}" > event.json
-elif [ "$EVENT_TYPE" == "workflow_dispatch" ]; then
-  echo "{\"inputs\": {}}" > event.json
-else
-  echo "Unsupported event type: $EVENT_TYPE"
-  exit 1
-fi
+# Create event.json file for schedule event
+echo "Creating event.json for schedule event..."
+cat > event.json << EOF
+{
+  "schedule": {
+    "scheduled_at": "$EVENT_TIME"
+  },
+  "repository": {
+    "default_branch": "main"
+  }
+}
+EOF
 
 # Format with prettier
 echo "Formatting event.json..."
@@ -50,8 +50,8 @@ echo "Running Act for job: $JOB..."
 TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file
-act -j "$JOB" --secret-file .env -P arc-runners=ghcr.io/catthehacker/ubuntu:act-latest \
-  --container-architecture "$ARCH" --eventpath event.json --detect-event "$EVENT_TYPE" \
+act "$EVENT_TYPE" -j "$JOB" --secret-file .env -P ubuntu-x64-16core=ghcr.io/catthehacker/ubuntu:act-latest \
+  --container-architecture "$ARCH" --eventpath event.json \
   2>&1 | tee "$TEMP_LOG"
 EXIT_CODE=${PIPESTATUS[0]}
 

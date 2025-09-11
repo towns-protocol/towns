@@ -24,6 +24,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -311,7 +312,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
 
 	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")
@@ -503,11 +504,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 	mu.Unlock()
 
@@ -523,11 +524,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 	rand.Shuffle(len(channels), func(i, j int) { channels[i], channels[j] = channels[j], channels[i] })
 	for i, syncCookie := range channels {
 		streamID, _ := StreamIdFromBytes(syncCookie.GetStreamId())
-		_, err = client1.RemoveStreamFromSync(ctx, connect.NewRequest(&protocol.RemoveStreamFromSyncRequest{
-			SyncId:   syncID,
-			StreamId: streamID[:],
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:        syncID,
+			RemoveStreams: [][]byte{streamID[:]},
 		}))
-		req.NoError(err, "RemoveStreamFromSync")
+		req.NoError(err, "ModifySync")
 
 		unsubbedStreams[streamID] = struct{}{}
 
@@ -554,11 +555,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 	mu.Unlock()
 
@@ -624,11 +625,11 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 		}))
 		req.NoError(err, "GetStream")
 
-		_, err = client1.AddStreamToSync(ctx, connect.NewRequest(&protocol.AddStreamToSyncRequest{
-			SyncId:  syncID,
-			SyncPos: getStreamResp.Msg.GetStream().GetNextSyncCookie(),
+		_, err = client1.ModifySync(ctx, connect.NewRequest(&protocol.ModifySyncRequest{
+			SyncId:     syncID,
+			AddStreams: []*protocol.SyncCookie{getStreamResp.Msg.GetStream().GetNextSyncCookie()},
 		}))
-		req.NoError(err, "AddStreamToSync")
+		req.NoError(err, "ModifySync")
 	}
 
 	sendMessagesAndReceive(100, wallets, channels, req, client0, ctx, messages, func(streamID StreamId) bool {

@@ -48,6 +48,7 @@ export type StreamMember = {
     tipsReceived?: { [key: string]: bigint }
     tipsSentCount?: { [key: string]: bigint }
     tipsReceivedCount?: { [key: string]: bigint }
+    appAddress?: string
 }
 
 export interface Pin {
@@ -142,6 +143,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 tipsReceived: member.tipsReceived,
                 tipsSentCount: member.tipsSentCount,
                 tipsReceivedCount: member.tipsReceivedCount,
+                appAddress: member.appAddress ? userIdFromAddress(member.appAddress) : undefined,
             })
             this.applyMembershipEvent(userId, MembershipOp.SO_JOIN, 'confirmed', undefined)
         }
@@ -301,6 +303,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 miniblockNum: event.miniblockNum,
                                 eventNum: event.eventNum,
                                 solicitations: [],
+                                appAddress: membership.appAddress
+                                    ? userIdFromAddress(membership.appAddress)
+                                    : undefined,
                             })
                             this.streamMemberIdsView.addMember(this.streamId, userId)
                             break

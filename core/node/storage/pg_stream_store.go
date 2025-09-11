@@ -225,7 +225,9 @@ func (s *PostgresStreamStore) maintainSchemaLock(
 
 			// Close the connection to encourage the db server to immediately clean up the
 			// session so we can go ahead and re-take the lock from a new session.
-			conn.Conn().Close(ctx)
+			if err := conn.Conn().Close(ctx); err != nil {
+				log.Warnw("Error closing bad connection", "error", err)
+			}
 			// Fine to call multiple times.
 			conn.Release()
 
@@ -474,10 +476,9 @@ func (s *PostgresStreamStore) lockStream(
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
-) (
-	lastSnapshotMiniblock int64,
-	err error,
-) {
+) (int64, error) {
+	var lastSnapshotMiniblock int64
+	var err error
 	if write {
 		err = tx.QueryRow(
 			ctx,
@@ -502,6 +503,16 @@ func (s *PostgresStreamStore) lockStream(
 			).Func("PostgresStreamStore.lockStream")
 		}
 		return 0, err
+	}
+
+	// There is a data corruption in prod when lastSnapshotMiniblock is -1.
+	if lastSnapshotMiniblock < 0 {
+		lastSnapshotMiniblock = 0
+		logging.FromCtx(ctx).Warnw(
+			"lastSnapshotMiniblock is -1, setting to 0",
+			"streamId",
+			streamId,
+		)
 	}
 
 	return lastSnapshotMiniblock, nil
@@ -634,7 +645,7 @@ func (s *PostgresStreamStore) createStreamArchiveStorageTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) error {
-	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, -1, true);`
+	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, 0, true);`
 	if _, err := tx.Exec(ctx, sql, streamId); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
@@ -1727,8 +1738,8 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 
 	// Delete old minipool and check old data for consistency.
 	type mpRow struct {
-		generation int64
-		slot       int64
+		Generation int64
+		Slot       int64
 	}
 	rows, _ := tx.Query(
 		ctx,
@@ -1738,53 +1749,58 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		),
 		streamId,
 	)
-	mpRows, err := pgx.CollectRows(
-		rows,
-		func(row pgx.CollectableRow) (mpRow, error) {
-			var gen, slot int64
-			err := row.Scan(&gen, &slot)
-			return mpRow{generation: gen, slot: slot}, err
-		},
-	)
+	mpRows, err := pgx.CollectRows(rows, pgx.RowToStructByPos[mpRow])
 	if err != nil {
 		return err
 	}
-	slices.SortFunc(mpRows, func(a, b mpRow) int {
-		if a.generation != b.generation {
-			return int(a.generation - b.generation)
-		} else {
-			return int(a.slot - b.slot)
-		}
-	})
-	expectedSlot := int64(-1)
-	for _, mp := range mpRows {
-		if mp.generation != prevMinipoolGeneration {
+	if len(mpRows) == 0 {
+		if prevMinipoolSize != 0 {
 			return RiverError(
 				Err_INTERNAL,
-				"DB data consistency check failed: Minipool contains unexpected generation",
-				"generation",
-				mp.generation,
+				"DB data consistency check failed: no minipool found in db, but prev minipool size is not 0",
+				"prevMinipoolSize", prevMinipoolSize,
 			)
 		}
-		if mp.slot != expectedSlot {
+		logging.FromCtx(ctx).Warnw("No minipool found in db for stream, resetting", "streamId", streamId)
+	} else {
+		slices.SortFunc(mpRows, func(a, b mpRow) int {
+			if a.Generation != b.Generation {
+				return int(a.Generation - b.Generation)
+			} else {
+				return int(a.Slot - b.Slot)
+			}
+		})
+		expectedSlot := int64(-1)
+		for _, mp := range mpRows {
+			if mp.Generation != prevMinipoolGeneration {
+				return RiverError(
+					Err_INTERNAL,
+					"DB data consistency check failed: Minipool contains unexpected generation",
+					"generation",
+					mp.Generation,
+				)
+			}
+			if mp.Slot != expectedSlot {
+				return RiverError(
+					Err_INTERNAL,
+					"DB data consistency check failed: Minipool contains unexpected slot number",
+					"slot_num",
+					mp.Slot,
+					"expected_slot_num",
+					expectedSlot,
+				)
+			}
+			expectedSlot++
+		}
+		// TODO: fix tests and remove -1 options which is not used in mainline code.
+		if prevMinipoolSize != -1 && expectedSlot != int64(prevMinipoolSize) {
 			return RiverError(
 				Err_INTERNAL,
-				"DB data consistency check failed: Minipool contains unexpected slot number",
-				"slot_num",
-				mp.slot,
-				"expected_slot_num",
+				"DB data consistency check failed: Previous minipool size mismatch",
+				"actual_size",
 				expectedSlot,
 			)
 		}
-		expectedSlot++
-	}
-	if prevMinipoolSize != -1 && expectedSlot != int64(prevMinipoolSize) {
-		return RiverError(
-			Err_INTERNAL,
-			"DB data consistency check failed: Previous minipool size mismatch",
-			"actual_size",
-			expectedSlot,
-		)
 	}
 
 	// Insert -1 marker and all new minipool events into minipool.
@@ -1825,7 +1841,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 			len(miniblocks),
 			func(i int) ([]any, error) {
 				snapshot := miniblocks[i].Snapshot
-				if snapshot != nil {
+				if len(snapshot) > 0 || miniblocks[i].HasLegacySnapshot {
 					newLastSnapshotMiniblock = miniblocks[i].Number
 				}
 
