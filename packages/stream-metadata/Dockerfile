@@ -60,6 +60,9 @@ RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3
 # Force rebuild sharp to ensure correct Linux binaries
 RUN yarn remove sharp && yarn add sharp@0.34.3
 
+# Clean yarn cache to reduce image size
+RUN yarn cache clean
+
 # run the service
 ARG GIT_SHA
 
