@@ -7,10 +7,12 @@ import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.so
 import {IDiamondLoupe, IDiamondLoupeBase} from "@towns-protocol/diamond/src/facets/loupe/IDiamondLoupe.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IOwnablePending} from "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
+import {IDiamondInitHelper} from "scripts/deployments/diamonds/IDiamondInitHelper.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
+import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
@@ -37,6 +39,7 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    using LibString for *;
 
     struct DiamondInfo {
         DiamondCutStorage.Layout layout;
@@ -254,6 +257,68 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
                 addCut(FacetCut(address(0), FacetCutAction.Remove, asBytes4Array(removeSelectors)));
             }
         }
+    }
+
+    /// @notice Execute diamond cuts with smart cut optimization and logging
+    /// @param deployer The address that will execute the diamond cut
+    /// @param diamond The diamond contract address
+    /// @param diamondName Name of the diamond for logging purposes
+    /// @param deployContract The deployment contract that provides cuts and initialization
+    /// @param initAddress Optional initialization contract address
+    /// @param initData Optional initialization data
+    function executeDiamondCutsWithLogging(
+        address deployer,
+        address diamond,
+        string memory diamondName,
+        IDiamondInitHelper deployContract,
+        address initAddress,
+        bytes memory initData
+    ) internal {
+        info(string.concat("=== Upgrading ", diamondName, " diamond ==="), "");
+
+        deployContract.diamondInitParams(deployer);
+        FacetCut[] memory proposedCuts = DiamondHelper(address(deployContract)).getCuts();
+        FacetCut[] memory smartCuts = generateSmartCuts(diamond, proposedCuts);
+
+        info(
+            string.concat(
+                "Generated ",
+                smartCuts.length.toString(),
+                " smart cuts from ",
+                proposedCuts.length.toString(),
+                " proposed cuts"
+            ),
+            ""
+        );
+
+        if (smartCuts.length > 0) {
+            vm.broadcast(deployer);
+            IDiamondCut(diamond).diamondCut(smartCuts, initAddress, initData);
+            info(string.concat(unicode"✅ ", diamondName, " diamond upgrade completed"), "");
+        } else {
+            info(string.concat(diamondName, " diamond already up to date - no cuts needed"), "");
+        }
+    }
+
+    /// @notice Execute diamond cuts with smart cut optimization and logging (no initialization)
+    /// @param deployer The address that will execute the diamond cut
+    /// @param diamond The diamond contract address
+    /// @param diamondName Name of the diamond for logging purposes
+    /// @param deployContract The deployment contract that provides cuts and initialization
+    function executeDiamondCutsWithLogging(
+        address deployer,
+        address diamond,
+        string memory diamondName,
+        IDiamondInitHelper deployContract
+    ) internal {
+        executeDiamondCutsWithLogging(
+            deployer,
+            diamond,
+            diamondName,
+            deployContract,
+            address(0),
+            ""
+        );
     }
 
     function asBytes4Array(

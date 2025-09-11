@@ -49,6 +49,7 @@ const metadataFormSchema = z.object({
     imageUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
     avatarUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
     externalUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
+    motto: z.string().optional(),
 })
 
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
@@ -88,6 +89,7 @@ export const BotSettingsDialog = ({
             imageUrl: metadata?.imageUrl || '',
             avatarUrl: metadata?.avatarUrl || '',
             externalUrl: metadata?.externalUrl || '',
+            motto: metadata?.motto || '',
         },
     })
 
@@ -100,6 +102,7 @@ export const BotSettingsDialog = ({
                 imageUrl: metadata.imageUrl || '',
                 avatarUrl: metadata.avatarUrl || '',
                 externalUrl: metadata.externalUrl || '',
+                motto: metadata.motto || '',
             })
         }
     }, [metadata, isLoadingMetadata, open, metadataForm])
@@ -173,6 +176,7 @@ export const BotSettingsDialog = ({
                     imageUrl: metadataData.imageUrl || '',
                     avatarUrl: metadataData.avatarUrl || '',
                     externalUrl: metadataData.externalUrl,
+                    motto: metadataData.motto || '',
                 },
                 updateMask: [
                     'username',
@@ -181,6 +185,7 @@ export const BotSettingsDialog = ({
                     'image_url',
                     'avatar_url',
                     'external_url',
+                    'motto',
                 ],
             })
         },
@@ -295,6 +300,23 @@ export const BotSettingsDialog = ({
                                         <FormDescription>
                                             Link to your bot's homepage or documentation
                                         </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={metadataForm.control}
+                                name="motto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Motto</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Your bot's tagline or slogan"
+                                                {...field}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

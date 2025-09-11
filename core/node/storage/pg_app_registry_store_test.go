@@ -1395,6 +1395,32 @@ func TestSetAppMetadataPartial(t *testing.T) {
 		require.Equal("", appInfo.Metadata.ExternalUrl)
 	})
 
+	t.Run("Update motto field", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"motto": "The best bot in town!",
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the update
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("The best bot in town!", appInfo.Metadata.Motto)
+	})
+
+	t.Run("Clear motto field", func(t *testing.T) {
+		updates := map[string]interface{}{
+			"motto": nil,
+		}
+		err := store.SetAppMetadataPartial(params.ctx, app, updates)
+		require.NoError(err)
+
+		// Verify the field is cleared
+		appInfo, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		require.Equal("", appInfo.Metadata.Motto)
+	})
+
 	t.Run("Update slash commands", func(t *testing.T) {
 		slashCommands := []types.SlashCommand{
 			{Name: "help", Description: "Show help information"},
