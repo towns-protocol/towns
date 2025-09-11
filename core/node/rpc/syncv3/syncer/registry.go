@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -20,6 +21,9 @@ const (
 	PendingSubscribersVersion = 0
 	// AllSubscribersVersion is the version number used to indicate that an update should be sent to all subscribers.
 	AllSubscribersVersion = -1
+
+	// InitialEmitterVersion is the initial version assigned to a newly created emitter.
+	InitialEmitterVersion = 1
 )
 
 var _ Registry = (*registryImpl)(nil)
@@ -50,6 +54,7 @@ type registryImpl struct {
 	syncersLock  sync.Mutex
 	syncers      map[StreamId]StreamUpdateEmitter
 	queue        *dynmsgbuf.DynamicBuffer[*registryMsg]
+	otelTracer   trace.Tracer
 }
 
 // NewRegistry creates a new instance of the Registry.
@@ -59,6 +64,7 @@ func NewRegistry(
 	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
+	otelTracer trace.Tracer,
 ) Registry {
 	r := &registryImpl{
 		ctx: ctx,
@@ -71,6 +77,7 @@ func NewRegistry(
 		subscriber:   subscriber,
 		syncers:      make(map[StreamId]StreamUpdateEmitter),
 		queue:        dynmsgbuf.NewDynamicBuffer[*registryMsg](),
+		otelTracer:   otelTracer,
 	}
 
 	go func() {
@@ -149,7 +156,8 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			r.nodeRegistry,
 			r.subscriber,
 			streamID,
-			1,
+			InitialEmitterVersion,
+			r.otelTracer,
 		)
 		r.syncers[streamID] = emitter
 
@@ -176,6 +184,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			r.subscriber,
 			streamID,
 			currentVersion+1,
+			r.otelTracer,
 		)
 		r.syncers[streamID] = emitter
 

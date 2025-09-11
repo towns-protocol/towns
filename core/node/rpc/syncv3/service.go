@@ -50,7 +50,7 @@ func NewService(
 	nodeRegistry nodes.NodeRegistry,
 	otelTracer trace.Tracer,
 ) Service {
-	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry)
+	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry, otelTracer)
 	registry := handler.NewRegistry(eventBus)
 	return &serviceImpl{
 		handlerRegistry: registry,

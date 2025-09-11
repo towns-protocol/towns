@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -41,6 +43,7 @@ func newSharedStreamUpdateEmitter(
 	subscriber StreamSubscriber,
 	streamID StreamId,
 	version int,
+	otelTracer trace.Tracer,
 ) *sharedStreamUpdateEmitter {
 	emitter := &sharedStreamUpdateEmitter{
 		log: logging.FromCtx(ctx).
@@ -52,7 +55,7 @@ func newSharedStreamUpdateEmitter(
 	}
 
 	// Initialize emitter in a separate goroutine to avoid blocking caller.
-	go emitter.run(ctx, localAddr, streamCache, nodeRegistry, subscriber)
+	go emitter.run(ctx, localAddr, streamCache, nodeRegistry, subscriber, otelTracer)
 
 	return emitter
 }
@@ -63,8 +66,18 @@ func (s *sharedStreamUpdateEmitter) run(
 	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
+	otelTracer trace.Tracer,
 ) {
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, 20*time.Second)
+	if otelTracer != nil {
+		var span trace.Span
+		ctx, span = otelTracer.Start(ctx, "syncv3.syncer.sharedStreamUpdateEmitter.run",
+			trace.WithAttributes(
+				attribute.String("streamID", s.streamID.String()),
+				attribute.Int("version", s.version)))
+		defer span.End()
+	}
+
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, sharedStreamUpdateEmitterTimeout)
 	defer ctxWithCancel()
 
 	var backfills []*backfillRequest
@@ -95,6 +108,7 @@ func (s *sharedStreamUpdateEmitter) run(
 			localAddr,
 			subscriber,
 			s.version,
+			otelTracer,
 		)
 	} else {
 		emitter, err = NewRemoteStreamUpdateEmitter(
@@ -103,6 +117,7 @@ func (s *sharedStreamUpdateEmitter) run(
 			nodeRegistry,
 			subscriber,
 			s.version,
+			otelTracer,
 		)
 	}
 	if err != nil {

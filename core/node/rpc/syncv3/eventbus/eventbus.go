@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
@@ -124,6 +125,7 @@ type eventBusImpl struct {
 	// for further processing. In this case we need to send SyncOp_SYNC_DOWN message directly to subscribers in
 	// OnStreamEvent method, and we need to lock the subscribers map for that.
 	subscribersLock sync.Mutex
+	otelTracer      trace.Tracer
 }
 
 // New creates a new instance of the event bus implementation.
@@ -135,14 +137,16 @@ func New(
 	localAddr common.Address,
 	streamCache syncer.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	otelTracer trace.Tracer,
 ) *eventBusImpl {
 	e := &eventBusImpl{
 		log:         logging.FromCtx(ctx).Named("syncv3.eventbus"),
 		queue:       dynmsgbuf.NewDynamicBuffer[*eventBusMessage](),
 		subscribers: make(map[StreamId]map[int][]StreamSubscriber),
+		otelTracer:  otelTracer,
 	}
 
-	e.registry = syncer.NewRegistry(ctx, localAddr, streamCache, nodeRegistry, e)
+	e.registry = syncer.NewRegistry(ctx, localAddr, streamCache, nodeRegistry, e, otelTracer)
 
 	go func() {
 		if err := e.run(ctx); err != nil {

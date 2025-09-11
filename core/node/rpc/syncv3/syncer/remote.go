@@ -9,6 +9,8 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events"
@@ -35,13 +37,13 @@ type remoteStreamUpdateEmitter struct {
 	streamID       StreamId
 	remoteAddr     common.Address
 	client         protocolconnect.StreamServiceClient
-	responseStream *connect.ServerStreamForClient[SyncStreamsResponse]
 	subscriber     StreamSubscriber
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
-	version int
+	version    int
+	otelTracer trace.Tracer
 }
 
 // NewRemoteStreamUpdateEmitter creates a new remote stream update emitter for the given stream ID and remote address.
@@ -52,11 +54,22 @@ func NewRemoteStreamUpdateEmitter(
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
 	version int,
+	otelTracer trace.Tracer,
 ) (StreamUpdateEmitter, error) {
-	ctx, cancel := context.WithCancelCause(ctx)
-
 	remoteAddr := stream.GetStickyPeer()
 	streamID := stream.StreamId()
+
+	if otelTracer != nil {
+		var span trace.Span
+		ctx, span = otelTracer.Start(ctx, "syncv3.syncer.NewRemoteStreamUpdateEmitter",
+			trace.WithAttributes(
+				attribute.String("streamID", streamID.String()),
+				attribute.String("remoteAddr", remoteAddr.String()),
+				attribute.Int("version", version)))
+		defer span.End()
+	}
+
+	ctx, cancel := context.WithCancelCause(ctx)
 
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
 	if err != nil {
@@ -151,16 +164,16 @@ func NewRemoteStreamUpdateEmitter(
 			Named("syncv3.remoteStreamUpdateEmitter").
 			With("version", version, "addr", remoteAddr.Hex(), "streamID", streamID, "syncID", syncID),
 		syncID:         syncID,
-		responseStream: responseStream,
 		client:         client,
 		streamID:       streamID,
 		remoteAddr:     remoteAddr,
 		subscriber:     subscriber,
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,
+		otelTracer:     otelTracer,
 	}
 
-	go r.run(ctx, stream)
+	go r.run(ctx, stream, responseStream)
 
 	return r, nil
 }
@@ -199,10 +212,11 @@ func (r *remoteStreamUpdateEmitter) Close() {
 func (r *remoteStreamUpdateEmitter) run(
 	ctx context.Context,
 	stream *events.Stream,
+	responseStream *connect.ServerStreamForClient[SyncStreamsResponse],
 ) {
 	defer r.cleanup()
 
-	go r.processStreamUpdates(ctx, stream)
+	go r.processStreamUpdates(ctx, stream, responseStream)
 
 	var msgs []*backfillRequest
 	for {
@@ -266,14 +280,14 @@ func (r *remoteStreamUpdateEmitter) cleanup() {
 	r.backfillsQueue.Close()
 
 	// Send a stream down message to all active syncs of the current syncer version via event bus.
-	r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID[:]}, r.version)
+	r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID.Bytes()}, r.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
 	msgs := r.backfillsQueue.GetBatch(nil)
 	for _, msg := range msgs {
 		r.subscriber.OnStreamEvent(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
-			StreamId:      r.streamID[:],
+			StreamId:      r.streamID.Bytes(),
 			TargetSyncIds: msg.syncIDs,
 		}, r.version)
 	}
@@ -282,9 +296,10 @@ func (r *remoteStreamUpdateEmitter) cleanup() {
 func (r *remoteStreamUpdateEmitter) processStreamUpdates(
 	ctx context.Context,
 	stream *events.Stream,
+	responseStream *connect.ServerStreamForClient[SyncStreamsResponse],
 ) {
 	defer func() {
-		if err := r.responseStream.Close(); err != nil {
+		if err := responseStream.Close(); err != nil {
 			r.log.Errorw("failed to close sync stream", "error", err)
 		}
 	}()
@@ -295,8 +310,8 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates(
 	go r.connectionAlive(ctx, &latestMsgReceived)
 
 	// Receive messages from the sync stream.
-	for r.responseStream.Receive() {
-		res := r.responseStream.Msg()
+	for responseStream.Receive() {
+		res := responseStream.Msg()
 		if res == nil {
 			break
 		}
@@ -311,7 +326,7 @@ func (r *remoteStreamUpdateEmitter) processStreamUpdates(
 		}
 	}
 
-	err := r.responseStream.Err()
+	err := responseStream.Err()
 	if err == nil || errors.Is(err, context.Canceled) {
 		r.log.Info("remote node disconnected")
 	} else {
@@ -377,10 +392,17 @@ func (r *remoteStreamUpdateEmitter) connectionAlive(
 }
 
 // processBackfillRequest processes the given backfill request by sending it to the remote node.
-func (r *remoteStreamUpdateEmitter) processBackfillRequest(
-	ctx context.Context,
-	msg *backfillRequest,
-) error {
+func (r *remoteStreamUpdateEmitter) processBackfillRequest(ctx context.Context, msg *backfillRequest) error {
+	if r.otelTracer != nil {
+		var span trace.Span
+		ctx, span = r.otelTracer.Start(ctx, "syncv3.syncer.remoteStreamUpdateEmitter.processBackfillRequest",
+			trace.WithAttributes(
+				attribute.String("streamID", r.streamID.String()),
+				attribute.String("remoteAddr", r.remoteAddr.String()),
+				attribute.Int("version", r.version)))
+		defer span.End()
+	}
+
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, remoteStreamUpdateEmitterTimeout)
 	defer cancel()
 

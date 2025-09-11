@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -24,7 +26,6 @@ type localStreamUpdateEmitter struct {
 	cancel         context.CancelCauseFunc
 	log            *logging.Log
 	localAddr      common.Address
-	streamID       StreamId
 	stream         *events.Stream
 	subscriber     StreamSubscriber
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
@@ -34,7 +35,8 @@ type localStreamUpdateEmitter struct {
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
-	version int
+	version    int
+	otelTracer trace.Tracer
 }
 
 // NewLocalStreamUpdateEmitter creates a new local stream update emitter for the given stream ID.
@@ -45,25 +47,25 @@ func NewLocalStreamUpdateEmitter(
 	localAddr common.Address,
 	subscriber StreamSubscriber,
 	version int,
+	otelTracer trace.Tracer,
 ) (StreamUpdateEmitter, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
-
 	l := &localStreamUpdateEmitter{
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
 			Named("syncv3.localStreamUpdateEmitter").
 			With("addr", localAddr, "streamID", stream.StreamId(), "version", version),
 		localAddr:      localAddr,
-		streamID:       stream.StreamId(),
 		stream:         stream,
 		subscriber:     subscriber,
 		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
 		version:        version,
+		otelTracer:     otelTracer,
 	}
 
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	err := stream.Sub(ctxWithTimeout, &SyncCookie{
-		StreamId:    l.streamID[:],
+		StreamId:    stream.StreamId().Bytes(),
 		NodeAddress: l.localAddr.Bytes(),
 	}, l)
 	ctxWithCancel()
@@ -100,7 +102,7 @@ func (l *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
 }
 
 func (l *localStreamUpdateEmitter) StreamID() StreamId {
-	return l.streamID
+	return l.stream.StreamId()
 }
 
 func (l *localStreamUpdateEmitter) Node() common.Address {
@@ -153,7 +155,7 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 				default:
 				}
 
-				if err := l.processBackfillRequest(ctx, msg, l.stream); err != nil {
+				if err := l.processBackfillRequest(ctx, msg); err != nil {
 					l.log.Errorw("failed to process backfill request", "cookie", msg.cookie, "error", err)
 					l.cancel(err)
 					l.reAddUnprocessedBackfills(msgs[i:])
@@ -192,14 +194,17 @@ func (l *localStreamUpdateEmitter) cleanup() {
 	l.stream.Unsub(l)
 
 	// Send a stream down message to all active syncs of the current syncer version via event bul.
-	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: l.streamID[:]}, l.version)
+	l.subscriber.OnStreamEvent(&SyncStreamsResponse{
+		SyncOp:   SyncOp_SYNC_DOWN,
+		StreamId: l.stream.StreamId().Bytes(),
+	}, l.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
 	msgs := l.backfillsQueue.GetBatch(nil)
 	for _, msg := range msgs {
 		l.subscriber.OnStreamEvent(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
-			StreamId:      l.streamID[:],
+			StreamId:      l.stream.StreamId().Bytes(),
 			TargetSyncIds: msg.syncIDs,
 		}, l.version)
 	}
@@ -207,15 +212,20 @@ func (l *localStreamUpdateEmitter) cleanup() {
 
 // processBackfillRequest processes the given backfill request by fetching updates since the given cookie
 // and sending the message back to the event bus for further forwarding to the specified sync operation.
-func (l *localStreamUpdateEmitter) processBackfillRequest(
-	ctx context.Context,
-	msg *backfillRequest,
-	stream *events.Stream,
-) error {
+func (l *localStreamUpdateEmitter) processBackfillRequest(ctx context.Context, msg *backfillRequest) error {
+	if l.otelTracer != nil {
+		var span trace.Span
+		ctx, span = l.otelTracer.Start(ctx, "syncv3.syncer.localStreamUpdateEmitter.processBackfillRequest",
+			trace.WithAttributes(
+				attribute.String("streamID", l.stream.StreamId().String()),
+				attribute.Int("version", l.version)))
+		defer span.End()
+	}
+
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	defer cancel()
 
-	return stream.UpdatesSinceCookie(
+	return l.stream.UpdatesSinceCookie(
 		ctxWithTimeout,
 		&SyncCookie{
 			NodeAddress:       l.localAddr.Bytes(),
