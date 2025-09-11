@@ -24,7 +24,7 @@ export const ponder = new Proxy(originalPonder, {
                 const wrappedHandler = async (context: any) => {
                     const start = Date.now()
                     const blockNumber = context.event?.block?.number || 'unknown'
-                    
+
                     // Update latest block number
                     if (typeof blockNumber === 'bigint') {
                         latestBlockNumber = blockNumber
