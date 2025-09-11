@@ -1,5 +1,6 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
-import { utils } from 'ethers'
+import { utils, ethers } from 'ethers'
+import { SpaceDapp, Permission } from '@towns-protocol/web3'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -709,6 +710,14 @@ export class Bot<
         return readContract(this.viemClient, parameters)
     }
 
+    async hasAdminPermission(userId: string, spaceId: string) {
+        return this.client.hasAdminPermission(userId, spaceId)
+    }
+
+    async checkPermission(streamId: string, userId: string, permission: Permission) {
+        return this.client.checkPermission(streamId, userId, permission)
+    }
+
     /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
@@ -821,6 +830,10 @@ export const makeTownsBot = async <
         // TODO: would be nice if makeBaseChainConfig returned a viem chain
         chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
+    const spaceDapp = new SpaceDapp(
+        baseConfig.chainConfig,
+        new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
+    )
     const client = await createTownsClient({
         privateKey,
         env,
@@ -828,11 +841,11 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
+    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
     return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
-const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
+const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
     const sendMessageEvent = async ({
         streamId,
         payload,
@@ -1025,6 +1038,30 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }))
     }
 
+    const hasAdminPermission = async (userId: string, spaceId: string): Promise<boolean> => {
+        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
+        // If you can ban, you're probably an "admin"
+        return spaceDapp
+            .isEntitledToSpace(spaceId, userAddress, Permission.ModifyBanning)
+            .catch(() => false)
+    }
+
+    const checkPermission = async (
+        streamId: string,
+        userId: string,
+        permission: Permission,
+    ): Promise<boolean> => {
+        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
+        if (isChannelStreamId(streamId)) {
+            const spaceId = spaceIdFromChannelId(streamId)
+            return spaceDapp
+                .isEntitledToChannel(spaceId, streamId, userAddress, permission)
+                .catch(() => false)
+        } else {
+            return spaceDapp.isEntitledToSpace(streamId, userAddress, permission).catch(() => false)
+        }
+    }
+
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1054,6 +1091,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
+        hasAdminPermission,
+        checkPermission,
     }
 }
 
