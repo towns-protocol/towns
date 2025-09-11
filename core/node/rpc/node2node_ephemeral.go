@@ -12,6 +12,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -59,7 +60,7 @@ func (s *Service) allocateEphemeralStream(
 		return nil, err
 	}
 
-	if s.config.MediaStreamDataOffloadingEnabled {
+	if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
 		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
 		if err != nil {
 			return nil, RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
@@ -138,10 +139,13 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	if err != nil {
 		return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 	}
-	if location != s.externalMediaStorage.GetBucket() {
-		return RiverError(Err_INTERNAL, "external media stream storage changed after this ephemeral media was created.")
-	}
 	if location != "" {
+		if location != s.externalMediaStorage.GetBucket() {
+			return RiverError(
+				Err_INTERNAL,
+				"external media stream storage changed after this ephemeral media was created.",
+			)
+		}
 		uploadID, _, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 		if err != nil {
 			return RiverError(Err_INTERNAL, "failed to get external media stream next part", "error", err)

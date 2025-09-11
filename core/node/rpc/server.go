@@ -638,8 +638,23 @@ func (s *Service) initStore() error {
 		s.storage = store
 		s.onClose(store.Close)
 
-		bucket := s.config.MediaStreamDataLocation
-		s.externalMediaStorage = storage.NewExternalMediaStore(bucket)
+		switch s.config.MediaStreamDataStorage {
+		case storage.StreamStorageTypeAWS:
+			s.externalMediaStorage, err = storage.NewS3MediaStore(s.config.ExternalMediaStreamDataBucket)
+			if err != nil {
+				return err
+			}
+		case storage.StreamStorageTypeGCS:
+			s.externalMediaStorage, err = storage.NewGCSExternalMediaStore(
+				s.config.ExternalMediaStreamDataBucket,
+				s.config.ExternalMediaStreamDataToken,
+			)
+			if err != nil {
+				return err
+			}
+		default:
+			log.Infow("Using default postgres media storage", "storageType", s.config.MediaStreamDataStorage)
+		}
 
 		streamsCount, err := store.GetStreamsNumber(ctx)
 		if err != nil {

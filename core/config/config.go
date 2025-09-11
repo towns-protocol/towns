@@ -81,7 +81,10 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
-		MetadataShardMask: 0x3ff, // 1023
+		MetadataShardMask:             0x3ff, // 1023
+		MediaStreamDataStorage:        "postgres",
+		ExternalMediaStreamDataBucket: "",
+		ExternalMediaStreamDataToken:  "",
 	}
 }
 
@@ -200,11 +203,13 @@ type Config struct {
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
 
-	// MediaStreamDataLocation is the bucket where media stream data is to be stored.
-	MediaStreamDataLocation string
+	// MediaStreamDataStorage is the storage type for media stream data.
+	// Allowed values: "postgres", "gcs", "s3".
+	MediaStreamDataStorage string
 
-	// MediaStreamDataOffloadingEnabled is a flag to enable media stream data offloading.
-	MediaStreamDataOffloadingEnabled bool
+	// ExternalMediaStreamDataBucket is the bucket where media stream data is to be stored.
+	ExternalMediaStreamDataBucket string
+	ExternalMediaStreamDataToken  string
 }
 
 type TLSConfig struct {

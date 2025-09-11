@@ -10,7 +10,11 @@ import (
 
 const (
 	postgres                        = "postgres"
+	google                          = "gcs"
+	amazon                          = "s3"
 	StreamStorageTypePostgres       = postgres
+	StreamStorageTypeGCS            = google
+	StreamStorageTypeAWS            = amazon
 	NotificationStorageTypePostgres = postgres
 	AppRegistryStorageTypePostgres  = postgres
 )

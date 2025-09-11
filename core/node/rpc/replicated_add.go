@@ -213,13 +213,13 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if err != nil {
 			return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 		}
-		if location != s.externalMediaStorage.GetBucket() {
-			return RiverError(
-				Err_INTERNAL,
-				"external media stream storage changed after this ephemeral media was created.",
-			)
-		}
 		if location != "" {
+			if location != s.externalMediaStorage.GetBucket() {
+				return RiverError(
+					Err_INTERNAL,
+					"external media stream storage changed after this ephemeral media was created.",
+				)
+			}
 			uploadID, _, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 			if err != nil {
 				return RiverError(Err_INTERNAL, "failed to get external media stream next part", "error", err)

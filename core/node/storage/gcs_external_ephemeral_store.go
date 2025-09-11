@@ -46,27 +46,20 @@ type CompleteMultipartUploadResult struct {
 type GCSExternalMediaStore struct {
 	httpClient *http.Client
 	bucket     string
-	projectId  string
 	token      string
 }
 
-func NewGCSExternalMediaStore(bucket, projectId, token string) *GCSExternalMediaStore {
-	var httpClient *http.Client
-
-	if bucket != "" {
-		var err error
-		httpClient, err = CreateGCSExternalClient(projectId, token)
-		if err != nil {
-			panic(err)
-		}
+func NewGCSExternalMediaStore(bucket, token string) (*GCSExternalMediaStore, error) {
+	httpClient, err := CreateGCSClient(token)
+	if err != nil {
+		return nil, err
 	}
 
 	return &GCSExternalMediaStore{
 		httpClient: httpClient,
 		bucket:     bucket,
-		projectId:  projectId,
 		token:      token,
-	}
+	}, nil
 }
 
 func (w *GCSExternalMediaStore) CreateExternalMediaStream(
@@ -93,7 +86,14 @@ func (w *GCSExternalMediaStore) CreateExternalMediaStream(
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			return RiverError(Err_INTERNAL, "initiate multipart upload failed with status", "status", resp.StatusCode, "body", string(body))
+			return RiverError(
+				Err_INTERNAL,
+				"initiate multipart upload failed with status",
+				"status",
+				resp.StatusCode,
+				"body",
+				string(body),
+			)
 		}
 
 		var result InitiateMultipartUploadResult
@@ -137,7 +137,14 @@ func (w *GCSExternalMediaStore) UploadPartToExternalMediaStream(
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			return RiverError(Err_INTERNAL, "upload part failed with status", "status", resp.StatusCode, "body", string(body))
+			return RiverError(
+				Err_INTERNAL,
+				"upload part failed with status",
+				"status",
+				resp.StatusCode,
+				"body",
+				string(body),
+			)
 		}
 
 		etag = resp.Header.Get("ETag")
@@ -187,7 +194,14 @@ func (w *GCSExternalMediaStore) CompleteMediaStreamUpload(
 
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			return RiverError(Err_INTERNAL, "complete multipart upload failed with status", "status", resp.StatusCode, "body", string(body))
+			return RiverError(
+				Err_INTERNAL,
+				"complete multipart upload failed with status",
+				"status",
+				resp.StatusCode,
+				"body",
+				string(body),
+			)
 		}
 
 		var result CompleteMultipartUploadResult
@@ -232,7 +246,14 @@ func (w *GCSExternalMediaStore) AbortMediaStreamUpload(
 
 		if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
-			return RiverError(Err_INTERNAL, "abort multipart upload failed with status", "status", resp.StatusCode, "body", string(body))
+			return RiverError(
+				Err_INTERNAL,
+				"abort multipart upload failed with status",
+				"status",
+				resp.StatusCode,
+				"body",
+				string(body),
+			)
 		}
 
 		return nil
@@ -247,7 +268,7 @@ func (w *GCSExternalMediaStore) GetBucket() string {
 	return w.bucket
 }
 
-func DownloadRangeFromGCSExternalMediaStream(
+func DownloadRangeFromGCSMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	rangeHeaders []MiniblockRange,
@@ -282,7 +303,14 @@ func DownloadRangeFromGCSExternalMediaStream(
 
 		if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
 			body, _ := io.ReadAll(resp.Body)
-			return RiverError(Err_INTERNAL, "get object failed with status", "status", resp.StatusCode, "body", string(body))
+			return RiverError(
+				Err_INTERNAL,
+				"get object failed with status",
+				"status",
+				resp.StatusCode,
+				"body",
+				string(body),
+			)
 		}
 
 		bodyData, err := io.ReadAll(resp.Body)
@@ -299,7 +327,7 @@ func DownloadRangeFromGCSExternalMediaStream(
 	return data, nil
 }
 
-func CreateGCSExternalClient(projectId, token string) (*http.Client, error) {
+func CreateGCSClient() (*http.Client, error) {
 	// Return a configured HTTP client for GCS
 	return &http.Client{
 		Timeout: 30 * time.Second,

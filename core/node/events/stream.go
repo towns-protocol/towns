@@ -677,10 +677,6 @@ func (s *Stream) GetMiniblocks(
 		return nil, false, err
 	}
 	if location != "" {
-		client, err := storage.CreateExternalClient()
-		if err != nil {
-			return nil, false, err
-		}
 		byteRanges, err := s.params.Storage.GetExternalMediaStreamRangeMarkers(
 			ctx,
 			s.streamId,
@@ -696,10 +692,40 @@ func (s *Stream) GetMiniblocks(
 				"getMiniblocks: number of byte ranges does not match number of blocks",
 			)
 		}
-		data, err := storage.DownloadRangeFromExternalMediaStream(ctx, s.streamId, byteRanges, location, client)
-		if err != nil {
-			return nil, false, err
+		var data []byte
+		switch s.params.Config.MediaStreamDataStorage {
+		case storage.StreamStorageTypeAWS:
+			client, err := storage.CreateS3Client()
+			if err != nil {
+				return nil, false, err
+			}
+			data, err = storage.DownloadRangeFromS3MediaStream(ctx, s.streamId, byteRanges, location, client)
+			if err != nil {
+				return nil, false, err
+			}
+		case storage.StreamStorageTypeGCS:
+			client, err := storage.CreateGCSClient()
+			if err != nil {
+				return nil, false, err
+			}
+			data, err = storage.DownloadRangeFromGCSMediaStream(
+				ctx,
+				s.streamId,
+				byteRanges,
+				location,
+				client,
+				s.params.Config.ExternalMediaStreamDataToken,
+			)
+			if err != nil {
+				return nil, false, err
+			}
+		default:
+			return nil, false, RiverError(
+				Err_INTERNAL,
+				"getMiniblocks: external media stream data storage not configured: "+s.params.Config.MediaStreamDataStorage,
+			)
 		}
+
 		for i, block := range blocks {
 			r := byteRanges[i]
 			if int(r.StartInclusive) > len(data) || int(r.EndInclusive) > len(data) ||

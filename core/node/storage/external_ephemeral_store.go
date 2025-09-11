@@ -64,29 +64,23 @@ func isRetryableError(err error) bool {
 	return err != context.Canceled && err != context.DeadlineExceeded
 }
 
-type ExternalMediaStore struct {
+type S3MediaStore struct {
 	s3Client *s3.Client
 	bucket   string
 }
 
-func NewExternalMediaStore(bucket string) *ExternalMediaStore {
-	var s3Client *s3.Client
-
-	if bucket != "" {
-		var err error
-		s3Client, err = CreateExternalClient()
-		if err != nil {
-			panic(err)
-		}
+func NewS3MediaStore(bucket string) (*S3MediaStore, error) {
+	s3Client, err := CreateS3Client()
+	if err != nil {
+		return nil, err
 	}
-
-	return &ExternalMediaStore{
+	return &S3MediaStore{
 		s3Client: s3Client,
 		bucket:   bucket,
-	}
+	}, nil
 }
 
-func (w *ExternalMediaStore) CreateExternalMediaStream(
+func (w *S3MediaStore) CreateExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
@@ -117,7 +111,7 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 	return uploadID, nil
 }
 
-func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
+func (w *S3MediaStore) UploadPartToExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	data []byte,
@@ -150,7 +144,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 	return etag, nil
 }
 
-func (w *ExternalMediaStore) CompleteMediaStreamUpload(
+func (w *S3MediaStore) CompleteMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
@@ -192,7 +186,7 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 }
 
 // AbortMediaStreamUpload aborts a multipart upload and cleans up resources
-func (w *ExternalMediaStore) AbortMediaStreamUpload(
+func (w *S3MediaStore) AbortMediaStreamUpload(
 	ctx context.Context,
 	streamId StreamId,
 	uploadID string,
@@ -214,11 +208,11 @@ func (w *ExternalMediaStore) AbortMediaStreamUpload(
 	return nil
 }
 
-func (w *ExternalMediaStore) GetBucket() string {
+func (w *S3MediaStore) GetBucket() string {
 	return w.bucket
 }
 
-func DownloadRangeFromExternalMediaStream(
+func DownloadRangeFromS3MediaStream(
 	ctx context.Context,
 	streamId StreamId,
 	rangeHeaders []MiniblockRange,
@@ -262,7 +256,7 @@ func DownloadRangeFromExternalMediaStream(
 	return data, nil
 }
 
-func CreateExternalClient() (*s3.Client, error) {
+func CreateS3Client() (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, RiverError(Err_INTERNAL, "unable to load SDK config", "error", err)
