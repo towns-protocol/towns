@@ -50,7 +50,7 @@ type GCSExternalMediaStore struct {
 }
 
 func NewGCSExternalMediaStore(bucket, token string) (*GCSExternalMediaStore, error) {
-	httpClient, err := CreateGCSClient(token)
+	httpClient, err := CreateGCSClient()
 	if err != nil {
 		return nil, err
 	}
