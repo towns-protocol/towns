@@ -12,11 +12,8 @@ const allow = [searchForWorkspaceRoot(process.cwd()), 'node_modules/@towns-proto
 
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
-    const env = loadEnv(mode, process.cwd(), '')
-
     return defineConfig({
         define: {
-            'process.env': env,
             'process.browser': true,
         },
         plugins: [

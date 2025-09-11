@@ -61,7 +61,12 @@ function convertToEnv(data, prefix = '') {
   return envContent;
 }
 
-
+function makeEnvFile(key, outputData, fileName, keyPrefix = '') {
+  const envFile = path.join(deploymentsSourceDir, key, fileName);
+  const data = outputData[key];
+  const envData = convertToEnv(data, keyPrefix);
+  fs.writeFileSync(envFile, `${keyPrefix}RIVER_ENV=${key}\n${envData}`);
+}
 
 const outputData = combineJson(deploymentsSourceDir);
 
@@ -69,10 +74,8 @@ const outputData = combineJson(deploymentsSourceDir);
 // for each top level key in outputData, write a .env file in the deployments/<key> folder
 // with all keys in the json converted to UPPER SNAKE CASE
 for (const key of Object.keys(outputData)) {
-  const envFile = path.join(deploymentsSourceDir, key, '.env');
-  const data = outputData[key];
-  const envData = convertToEnv(data);
-  fs.writeFileSync(envFile, `RIVER_ENV=${key}\n${envData}`);
+  makeEnvFile(key, outputData, '.env', '')
+  makeEnvFile(key, outputData, '.env.vite', 'VITE_')
 }
 
 // write a config.json file

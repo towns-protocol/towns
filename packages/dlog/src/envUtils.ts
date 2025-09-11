@@ -5,13 +5,12 @@ declare global {
 }
 
 export function safeEnv(keys: string[]): string | undefined {
-    if (typeof process !== 'object') {
-        return undefined
-    }
     for (const key of keys) {
         // look for the key in process.env
-        if (process.env[key]) {
-            return process.env[key]
+        if (typeof process === 'object' && 'env' in process) {
+            if (process.env[key]) {
+                return process.env[key]
+            }
         }
         // look for the key in process.env.VITE_ for vite apps
         if (typeof import.meta === 'object' && 'env' in import.meta) {

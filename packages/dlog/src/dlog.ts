@@ -2,6 +2,7 @@ import { bin_toHexString, isHexString, shortenHexString } from './binary'
 import debug, { Debugger } from 'debug'
 
 import { isTestEnv } from './utils'
+import { safeEnv } from './envUtils'
 
 // Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.
 debug.enabled = (ns: string): boolean => {
@@ -174,8 +175,7 @@ export const setDlogWarnLogger = (logger: ((...args: unknown[]) => void) | undef
 }
 
 // github#722
-const isSingleLineLogsMode =
-    typeof process !== 'undefined' && process.env.SINGLE_LINE_LOGS === 'true'
+const isSingleLineLogsMode = safeEnv(['SINGLE_LINE_LOGS']) === 'true'
 
 const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
     if (opts?.warn) {
