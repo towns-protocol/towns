@@ -96,6 +96,7 @@ _anvil-start $NAME $PORT $CHAIN_ID:
                 --name towns-${NAME}-chain \
                 -p ${PORT}:${PORT} \
                 -e CHAIN=${NAME} \
+                -e RIVER_BLOCK_TIME \
                 $IMAGE
 
             ../scripts/wait-for-port.sh ${PORT} "Docker_anvil_${NAME}"
