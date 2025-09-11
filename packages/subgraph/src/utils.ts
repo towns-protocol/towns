@@ -297,10 +297,6 @@ export async function updateSpaceReviewMetrics(
                 weightedRating: weightedRating,
             })
             .where(eq(schema.space.id, spaceId))
-
-        console.log(
-            `Updated review metrics for space ${spaceId}: count=${reviewCount}, average=${averageRating.toFixed(2)}, weighted=${weightedRating.toFixed(2)}`,
-        )
     } catch (error) {
         console.error(`Error updating review metrics for space ${spaceId}:`, error)
     }
