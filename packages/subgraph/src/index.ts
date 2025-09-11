@@ -756,16 +756,11 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
         // Get the ETH amount from the transaction value (payment to join)
         const ethAmount = event.transaction.value || 0n
 
-        // Check if analytics event already exists
-        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
-            where: and(
-                eq(schema.analyticsEvent.txHash, event.transaction.hash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
-            ),
-        })
-
-        if (!existingAnalytics) {
-            await context.db.insert(schema.analyticsEvent).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
+        // This leverages the existing primary key constraint (txHash, logIndex)
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
                 txHash: event.transaction.hash,
                 logIndex: event.log.logIndex,
                 spaceId: spaceId,
@@ -778,24 +773,20 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                     tokenId: event.args.tokenId.toString(),
                 },
             })
+            .onConflictDoNothing()
 
-            // Increment all-time join volume and member count only for new events
-            const currentSpace = await context.db.sql.query.space.findFirst({
-                where: eq(schema.space.id, spaceId),
+        // Directly update space metrics with inline calculations
+        // This eliminates the need to query current values first
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                joinVolume: sql`COALESCE(${schema.space.joinVolume}, 0) + ${ethAmount}`,
+                memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
             })
-            if (currentSpace) {
-                await context.db.sql
-                    .update(schema.space)
-                    .set({
-                        joinVolume: (currentSpace.joinVolume ?? 0n) + ethAmount,
-                        memberCount: (currentSpace.memberCount ?? 0n) + 1n,
-                    })
-                    .where(eq(schema.space.id, spaceId))
-            }
+            .where(eq(schema.space.id, spaceId))
 
-            // Temp disabled rolling window metrics
-            // await updateSpaceCachedMetrics(context, spaceId, 'join')
-        }
+        // Temp disabled rolling window metrics
+        // await updateSpaceCachedMetrics(context, spaceId, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -815,16 +806,11 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             ethAmount = event.args.amount
         }
 
-        // Check if analytics event already exists
-        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
-            where: and(
-                eq(schema.analyticsEvent.txHash, event.transaction.hash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
-            ),
-        })
-
-        if (!existingAnalytics) {
-            await context.db.insert(schema.analyticsEvent).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
+        // This leverages the existing primary key constraint (txHash, logIndex)
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
                 txHash: event.transaction.hash,
                 logIndex: event.log.logIndex,
                 spaceId: spaceId,
@@ -842,23 +828,19 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                     channelId: event.args.channelId,
                 },
             })
+            .onConflictDoNothing()
 
-            // Increment all-time tip volume only for new events
-            const currentSpace = await context.db.sql.query.space.findFirst({
-                where: eq(schema.space.id, spaceId),
+        // Directly update space metrics with inline calculations
+        // This eliminates the need to query current values first
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
             })
-            if (currentSpace) {
-                await context.db.sql
-                    .update(schema.space)
-                    .set({
-                        tipVolume: (currentSpace.tipVolume ?? 0n) + ethAmount,
-                    })
-                    .where(eq(schema.space.id, spaceId))
-            }
+            .where(eq(schema.space.id, spaceId))
 
-            // Temp disabled rolling window metrics
-            // await updateSpaceCachedMetrics(context, spaceId, 'tip')
-        }
+        // Temp disabled rolling window metrics
+        // await updateSpaceCachedMetrics(context, spaceId, 'tip')
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
