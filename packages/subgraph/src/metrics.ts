@@ -50,8 +50,8 @@ export const ponder = new Proxy(originalPonder, {
 
                         globalEventCount++
 
-                        // Log summary every 100 events
-                        if (LOG_METRICS && globalEventCount % 100 === 0) {
+                        // Log summary every N events
+                        if (LOG_METRICS && globalEventCount % 1000 === 0) {
                             logMetricsSummary()
                         }
 
