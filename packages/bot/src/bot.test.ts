@@ -266,7 +266,7 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('should check if bob is admin and has read/write permissions', async () => {
-        const isBobAdmin = await bot.isAdmin(bob.userId, spaceId)
+        const isBobAdmin = await bot.hasAdminPermission(bob.userId, spaceId)
         const bobCanRead = await bot.checkPermission(spaceId, bob.userId, Permission.Read)
         const bobCanWrite = await bot.checkPermission(spaceId, bob.userId, Permission.Write)
         expect(isBobAdmin).toBe(true)
