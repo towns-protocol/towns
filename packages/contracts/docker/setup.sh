@@ -11,7 +11,7 @@ export RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
 
 main() {
   # Set up trap to catch exit signals
-  trap trap_cleanup SIGINT SIGTERM EXIT 
+  trap trap_cleanup SIGINT SIGTERM EXIT
   start_base_chain
   start_river_chain
   wait_for_base_chain
@@ -49,15 +49,15 @@ assert_dump_state() {
     if [ -f "base-anvil-state.json" ] && [ -f "river-anvil-state.json" ]; then
       break
     fi
-    
+
     local current_time=$(date +%s)
     local elapsed=$((current_time - start_time))
-    
+
     if [ $elapsed -ge $timeout ]; then
       echo "Timeout waiting for state dumps after ${timeout} seconds"
       exit 1
     fi
-    
+
     echo "Waiting for state dumps... (${elapsed}s elapsed)"
     sleep 1
   done
@@ -88,7 +88,7 @@ cleanup() {
 
 wait_for_base_chain() {
   echo "Waiting for base chain to be ready on port 8545..."
-  while ! kill -0 $BASE_PID 2>/dev/null || ! nc -z localhost 8545; do 
+  while ! kill -0 $BASE_PID 2>/dev/null || ! nc -z localhost 8545; do
     if ! kill -0 $BASE_PID 2>/dev/null; then
       echo "Base chain process died unexpectedly!"
       cleanup
@@ -102,7 +102,7 @@ wait_for_base_chain() {
 
 wait_for_river_chain() {
   echo "Waiting for river chain to be ready on port 8546..."
-  while ! kill -0 $RIVER_PID 2>/dev/null || ! nc -z localhost 8546; do 
+  while ! kill -0 $RIVER_PID 2>/dev/null || ! nc -z localhost 8546; do
     if ! kill -0 $RIVER_PID 2>/dev/null; then
       echo "River chain process died unexpectedly!"
       cleanup
@@ -135,21 +135,11 @@ create_contracts_env() {
   output_dir="/app/local_dev"
   mkdir -p $output_dir
 
-  # Copy contract addresses and fail if any are missing
-  for chain in base river; do
-    source_dir="${contracts_dir}/${chain}/addresses"
-    if [ ! -d "$source_dir" ]; then
-      echo "ERROR: Contract addresses not found for $chain chain: $source_dir"
-      exit 1
-    fi
-
-    target_dir="${output_dir}/${chain}/addresses"
-    mkdir -p "$target_dir"
-    if ! cp -r "$source_dir"/. "$target_dir/"; then
-      echo "ERROR: Failed to copy $chain contract addresses"
-      exit 1
-    fi
-  done
+  # Copy entire contract deployments directory structure
+  if ! cp -r "$contracts_dir"/. "$output_dir/"; then
+    echo "ERROR: Failed to copy contracts directory structure"
+    exit 1
+  fi
 
   # Create contracts.env file using justfile recipe
   cd ./core
