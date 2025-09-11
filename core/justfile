@@ -14,7 +14,6 @@ RPC_RIVER := 'http://127.0.0.1:8546'
 
 # Docker-related environment variables
 USE_DOCKER_CHAINS := env_var_or_default("USE_DOCKER_CHAINS", "0")
-USE_LOCAL_DOCKER := env_var_or_default("USE_LOCAL_DOCKER", "0")
 
 OPERATOR_ADDRESS := `source ../packages/contracts/.env.localhost && echo "${SENDER_ADDRESS}"`
 LOCAL_PRIVATE_KEY := `source ../packages/contracts/.env.localhost && echo "${LOCAL_PRIVATE_KEY}"`
@@ -49,6 +48,40 @@ clear-logs: (_loop-instances "_clear_instance_logs")
 _clear_instance_logs $INSTANCE_NUM $INSTANCE_DIR:
     @rm -rf $INSTANCE_DIR/logs/*
 
+_get-contracts-hash:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    git rev-parse HEAD:../packages/contracts/src 2>/dev/null || echo "dev"
+
+_check-remote-image IMAGE_TAG:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    docker manifest inspect {{IMAGE_TAG}} >/dev/null 2>&1
+
+_get-docker-image:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    CONTRACTS_HASH=$(just _get-contracts-hash)
+    IMAGE_TAG="public.ecr.aws/h5v6m2x1/towns-anvil:${CONTRACTS_HASH}"
+    
+    echo "Checking for remote image: ${IMAGE_TAG}" >&2
+    if just _check-remote-image "${IMAGE_TAG}"; then
+        echo "Found remote image with hash: ${CONTRACTS_HASH}" >&2
+        echo "${IMAGE_TAG}"
+    else
+        echo "Remote image not found for hash: ${CONTRACTS_HASH}" >&2
+        echo "Building local image..." >&2
+        
+        # Build the image locally with the contracts hash tag
+        just build-anvil-docker "${CONTRACTS_HASH}"
+        
+        echo "towns-anvil:${CONTRACTS_HASH}"
+    fi
+
+# Build Docker image locally with specified tag
+build-anvil-docker $TAG="local":
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    cd ../
+    docker build -t towns-anvil:${TAG} -f ./packages/contracts/docker/Dockerfile .
+    echo "Built local image: towns-anvil:${TAG}" >&2
+
 _anvil-start $NAME $PORT $CHAIN_ID:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     mkdir -p ./run_files/anvil
@@ -57,12 +90,7 @@ _anvil-start $NAME $PORT $CHAIN_ID:
     else
         if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
             echo "Starting Docker ${NAME} chain on port ${PORT}"
-            # Use local image if USE_LOCAL_DOCKER=1, otherwise use AWS
-            if [ "${USE_LOCAL_DOCKER}" = "1" ]; then
-                IMAGE="towns-anvil:local"
-            else
-                IMAGE="${DOCKER_IMAGE:-public.ecr.aws/h5v6m2x1/towns-anvil:latest}"
-            fi
+            IMAGE=$(just _get-docker-image)
 
             docker run -d \
                 --name towns-${NAME}-chain \
@@ -119,14 +147,6 @@ anvils-stop: anvil-base-stop anvil-river-stop
 anvils-tail-logs:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     tail -n 10 -F ./run_files/anvil/*.log
-
-# Build Docker image locally
-build-local-docker:
-    #!/usr/bin/env -S bash {{BASH_OPTS}}
-    cd ../
-    docker build -t towns-anvil:local -f ./packages/contracts/docker/Dockerfile .
-    echo "Built local image: towns-anvil:local"
-    echo "To use it, run: USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils"
 
 storage-start:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
