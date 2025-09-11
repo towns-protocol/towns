@@ -16,16 +16,6 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceOwner } = context.contracts
 
-    // Check if the space already exists
-    const existingSpace = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, event.args.space),
-    })
-
-    if (existingSpace) {
-        console.warn(`Space already exists for SpaceFactory:SpaceCreated`, event.args.space)
-        return
-    }
-
     try {
         // Fetch space info from contract
         const space = await context.client.readContract({
@@ -36,20 +26,24 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
             blockNumber,
         })
 
-        // Insert into database
-        await context.db.insert(schema.space).values({
-            id: event.args.space,
-            owner: event.args.owner,
-            tokenId: event.args.tokenId,
-            memberCount: 1n, // the first member is the owner
-            name: space.name,
-            nameLowercased: space.name.toLowerCase(),
-            uri: space.uri,
-            shortDescription: space.shortDescription,
-            longDescription: space.longDescription,
-            createdAt: space.createdAt,
-            paused: false, // Newly created spaces are not paused
-        })
+        // Use INSERT ... ON CONFLICT DO NOTHING
+        // id is the primary key for spaces
+        await context.db
+            .insert(schema.space)
+            .values({
+                id: event.args.space,
+                owner: event.args.owner,
+                tokenId: event.args.tokenId,
+                memberCount: 1n, // the first member is the owner
+                name: space.name,
+                nameLowercased: space.name.toLowerCase(),
+                uri: space.uri,
+                shortDescription: space.shortDescription,
+                longDescription: space.longDescription,
+                createdAt: space.createdAt,
+                paused: false, // Newly created spaces are not paused
+            })
+            .onConflictDoNothing()
     } catch (error) {
         console.error(
             `Error processing SpaceFactory:SpaceCreated at blockNumber ${blockNumber}:`,
@@ -114,27 +108,21 @@ ponder.on('SpaceOwner:Transfer', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        // find the space by tokenId
-        const space = await context.db.sql.query.space.findFirst({
-            where: eq(schema.space.tokenId, event.args.tokenId),
-        })
-
-        if (!space) {
-            console.warn(`Space not found for tokenId ${event.args.tokenId} in Transfer event`)
-            return
-        }
-
-        // update the owner
+        // Note: SpaceOwner:Transfer events are emitted during the space creation process,
+        // often BEFORE the SpaceFactory:SpaceCreated event is processed. This is because
+        // the NFT minting (which triggers Transfer) happens as part of the space initialization
+        // sequence. Therefore, it's normal and expected that many Transfer events won't find
+        // a corresponding space in the database yet.
+        //
+        // We directly update without checking existence - if the space doesn't exist yet,
+        // the UPDATE will affect 0 rows (harmless). The space will be created when
+        // SpaceFactory:SpaceCreated is processed, with the correct owner already set.
         await context.db.sql
             .update(schema.space)
             .set({
                 owner: event.args.to,
             })
             .where(eq(schema.space.tokenId, event.args.tokenId))
-
-        console.log(
-            `Space ${space.id} (tokenId: ${event.args.tokenId}) transferred from ${event.args.from} to ${event.args.to} at block ${blockNumber}`,
-        )
     } catch (error) {
         console.error(`Error processing SpaceOwner:Transfer at blockNumber ${blockNumber}:`, error)
     }
@@ -829,13 +817,11 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
     const spaceId = event.log.address
 
     try {
-        // Check if review already exists (shouldn't happen for ReviewAdded, but just in case)
-        const existingReview = await context.db.sql.query.review.findFirst({
-            where: and(eq(schema.review.spaceId, spaceId), eq(schema.review.user, event.args.user)),
-        })
-
-        if (!existingReview) {
-            await context.db.insert(schema.review).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING for review
+        // The primary key is (spaceId, user)
+        await context.db
+            .insert(schema.review)
+            .values({
                 spaceId: spaceId,
                 user: event.args.user,
                 comment: event.args.comment,
@@ -843,9 +829,12 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 createdAt: blockTimestamp,
                 updatedAt: blockTimestamp,
             })
+            .onConflictDoNothing()
 
-            // Add analytics event for the review
-            await context.db.insert(schema.analyticsEvent).values({
+        // Add analytics event for the review using ON CONFLICT DO NOTHING
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
                 txHash: event.transaction.hash,
                 logIndex: event.log.logIndex,
                 spaceId: spaceId,
@@ -859,12 +848,11 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                     comment: event.args.comment,
                 },
             })
+            .onConflictDoNothing()
 
-            // Update review metrics (count and average rating)
-            await updateSpaceReviewMetrics(context, spaceId)
-        } else {
-            console.warn(`Review already exists for user ${event.args.user} in space ${spaceId}`)
-        }
+        // Update review metrics - this will recalculate for all reviews
+        // including the one we just inserted (if it was new)
+        await updateSpaceReviewMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:ReviewAdded at blockNumber ${blockNumber}:`, error)
     }
