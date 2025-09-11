@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -52,7 +54,7 @@ func retryWithBackoff(ctx context.Context, operation string, fn func() error) er
 		}
 	}
 
-	return fmt.Errorf("%s failed after %d attempts: %w", operation, maxRetries+1, lastErr)
+	return RiverError(Err_INTERNAL, fmt.Sprintf("%s failed after %d attempts: %w", operation, maxRetries+1, lastErr))
 }
 
 // isRetryableError determines if an error should be retried
@@ -109,7 +111,7 @@ func (w *ExternalMediaStore) CreateExternalMediaStream(
 		return nil
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to create multipart upload: %w", err)
+		return "", RiverError(Err_INTERNAL, "failed to create multipart upload", "error", err)
 	}
 
 	return uploadID, nil
@@ -143,7 +145,7 @@ func (w *ExternalMediaStore) UploadPartToExternalMediaStream(
 		return nil
 	})
 	if err != nil {
-		return "", fmt.Errorf("failed to upload part: %w", err)
+		return "", RiverError(Err_INTERNAL, "failed to upload part", "error", err)
 	}
 	return etag, nil
 }
@@ -182,9 +184,9 @@ func (w *ExternalMediaStore) CompleteMediaStreamUpload(
 		// If completion fails, abort the upload to clean up
 		abortErr := w.AbortMediaStreamUpload(ctx, streamId, uploadID)
 		if abortErr != nil {
-			return fmt.Errorf("failed to complete multipart upload: %w, and failed to abort: %v", err, abortErr)
+			return RiverError(Err_INTERNAL, "failed to complete multipart upload", "error", err, "abortErr", abortErr)
 		}
-		return fmt.Errorf("failed to complete multipart upload: %w", err)
+		return RiverError(Err_INTERNAL, "failed to complete multipart upload", "error", err)
 	}
 	return nil
 }
@@ -207,7 +209,7 @@ func (w *ExternalMediaStore) AbortMediaStreamUpload(
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("failed to abort multipart upload: %w", err)
+		return RiverError(Err_INTERNAL, "failed to abort multipart upload", "error", err)
 	}
 	return nil
 }
@@ -254,7 +256,7 @@ func DownloadRangeFromExternalMediaStream(
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to download range %s from S3: %w", rangeHeader, err)
+		return nil, RiverError(Err_INTERNAL, "failed to download range", "error", err, "rangeHeader", rangeHeader)
 	}
 
 	return data, nil
@@ -263,7 +265,7 @@ func DownloadRangeFromExternalMediaStream(
 func CreateExternalClient() (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("unable to load SDK config: %w", err)
+		return nil, RiverError(Err_INTERNAL, "unable to load SDK config", "error", err)
 	}
 	return s3.NewFromConfig(cfg), nil
 }

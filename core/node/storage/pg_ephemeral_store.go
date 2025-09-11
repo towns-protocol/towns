@@ -473,7 +473,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	`
 
 	// Add the new etag to the JSONB array
-	etagJSON := fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag)
+	etagJSON := RiverError(Err_INTERNAL, fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag))
 	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
 	if err != nil {
 		return err
@@ -571,7 +571,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamRangeMarkers(
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			rangeMarkers, err = s.GetExternalMediaStreamRangeMarkersTx(ctx, tx, streamId, fromInclusive, toExclusive)
+			rangeMarkers, err = s.getExternalMediaStreamRangeMarkersTx(ctx, tx, streamId, fromInclusive, toExclusive)
 			return err
 		},
 		nil,
@@ -582,7 +582,7 @@ func (s *PostgresStreamStore) GetExternalMediaStreamRangeMarkers(
 	return rangeMarkers, err
 }
 
-func (s *PostgresStreamStore) GetExternalMediaStreamRangeMarkersTx(
+func (s *PostgresStreamStore) getExternalMediaStreamRangeMarkersTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
