@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.29;
 
-import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
+import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeploySimpleApp {
     function deploy() internal returns (address) {
-        return address(new SimpleApp());
+        return LibDeploy.deployCode("SimpleApp.sol", "");
     }
 }
