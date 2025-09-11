@@ -7,7 +7,7 @@ import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.so
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
+import {ITipping, ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
@@ -270,6 +270,213 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
                 amount: amount,
                 messageId: DEFAULT_MESSAGE_ID,
                 channelId: DEFAULT_CHANNEL_ID
+            })
+        );
+    }
+
+    // App Tipping Tests
+
+    function test_tipApp_withETH(
+        address sender,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId,
+        bytes memory metadata
+    ) external {
+        // Deploy a mock app contract
+        MockApp mockApp = new MockApp();
+
+        assumeUnusedAddress(sender);
+        vm.assume(sender != platformRecipient);
+        vm.assume(sender != address(mockApp));
+        amount = bound(amount, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        vm.prank(sender);
+        membership.joinSpace(sender);
+
+        uint256 appBalanceBefore = address(mockApp).balance;
+        uint256 platformBalanceBefore = platformRecipient.balance;
+        uint256 protocolFee = BasisPoints.calculate(amount, 50);
+        uint256 tipAmount = amount - protocolFee;
+
+        hoax(sender, amount);
+        vm.expectEmit(address(tipping));
+        emit TipApp(
+            address(mockApp),
+            CurrencyTransfer.NATIVE_TOKEN,
+            sender,
+            amount,
+            messageId,
+            channelId,
+            metadata
+        );
+
+        tipping.tipApp{value: amount}(
+            ITippingBase.TipAppRequest({
+                appAddress: address(mockApp),
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId,
+                metadata: metadata
+            })
+        );
+
+        assertEq(address(mockApp).balance - appBalanceBefore, tipAmount, "app balance");
+        assertEq(platformRecipient.balance - platformBalanceBefore, protocolFee, "protocol fee");
+        assertEq(sender.balance, 0, "sender balance");
+        assertEq(
+            tipping.tipsByCurrencyAndApp(address(mockApp), CurrencyTransfer.NATIVE_TOKEN),
+            tipAmount
+        );
+        assertContains(tipping.tippingCurrencies(), CurrencyTransfer.NATIVE_TOKEN);
+    }
+
+    function test_tipApp_withERC20(
+        address sender,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId
+    ) external {
+        MockApp mockApp = new MockApp();
+
+        assumeUnusedAddress(sender);
+        vm.assume(sender != address(mockApp));
+        vm.assume(amount != 0);
+
+        vm.prank(sender);
+        membership.joinSpace(sender);
+
+        mockERC20.mint(sender, amount);
+
+        vm.startPrank(sender);
+        mockERC20.approve(address(tipping), amount);
+        vm.expectEmit(address(tipping));
+        emit TipApp(address(mockApp), address(mockERC20), sender, amount, messageId, channelId, "");
+
+        tipping.tipApp(
+            ITippingBase.TipAppRequest({
+                appAddress: address(mockApp),
+                currency: address(mockERC20),
+                amount: amount,
+                messageId: messageId,
+                channelId: channelId,
+                metadata: ""
+            })
+        );
+        vm.stopPrank();
+
+        assertEq(mockERC20.balanceOf(sender), 0);
+        assertEq(mockERC20.balanceOf(address(mockApp)), amount);
+        assertEq(tipping.tipsByCurrencyAndApp(address(mockApp), address(mockERC20)), amount);
+        assertContains(tipping.tippingCurrencies(), address(mockERC20));
+    }
+
+    function test_tipApp_revertWhen_invalidAppAddress(address sender) external {
+        assumeUnusedAddress(sender);
+
+        vm.prank(sender);
+        membership.joinSpace(sender);
+
+        hoax(sender, 1 ether);
+        vm.expectRevert(InvalidReceiver.selector);
+        tipping.tipApp{value: 1 ether}(
+            ITippingBase.TipAppRequest({
+                appAddress: address(0),
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: 1 ether,
+                messageId: DEFAULT_MESSAGE_ID,
+                channelId: DEFAULT_CHANNEL_ID,
+                metadata: ""
+            })
+        );
+    }
+
+    function test_tipApp_revertWhen_appIsNotContract(address sender, address notContract) external {
+        assumeUnusedAddress(sender);
+        assumeUnusedAddress(notContract);
+        vm.assume(notContract.code.length == 0);
+
+        vm.prank(sender);
+        membership.joinSpace(sender);
+
+        hoax(sender, 1 ether);
+        vm.expectRevert(InvalidReceiver.selector);
+        tipping.tipApp{value: 1 ether}(
+            ITippingBase.TipAppRequest({
+                appAddress: notContract,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: 1 ether,
+                messageId: DEFAULT_MESSAGE_ID,
+                channelId: DEFAULT_CHANNEL_ID,
+                metadata: ""
+            })
+        );
+    }
+
+    function test_tipApp_revertWhen_cannotTipSelf() external {
+        // Deploy an app that tries to tip itself
+        SelfTippingApp selfTippingApp = new SelfTippingApp();
+
+        // Fund the app so it can pay for membership and tipping
+        deal(address(selfTippingApp), 2 ether);
+
+        // The app needs to be a member to tip (even though it's trying to tip itself)
+        // For simplicity, we'll have a regular user be the member who deploys the app
+        address deployer = makeAddr("deployer");
+        vm.prank(deployer);
+        membership.joinSpace(deployer);
+
+        // Now have the app try to tip itself
+        vm.expectRevert(CannotTipSelf.selector);
+        selfTippingApp.tryToTipSelf{value: 1 ether}(address(tipping));
+    }
+
+    function test_tipApp_revertWhen_amountIsZero(address sender) external {
+        MockApp mockApp = new MockApp();
+        assumeUnusedAddress(sender);
+        vm.assume(sender != address(mockApp));
+
+        vm.prank(sender);
+        membership.joinSpace(sender);
+
+        vm.prank(sender);
+        vm.expectRevert(AmountIsZero.selector);
+        tipping.tipApp(
+            ITippingBase.TipAppRequest({
+                appAddress: address(mockApp),
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: 0,
+                messageId: DEFAULT_MESSAGE_ID,
+                channelId: DEFAULT_CHANNEL_ID,
+                metadata: ""
+            })
+        );
+    }
+}
+
+// Mock app contract for testing
+contract MockApp {
+    receive() external payable {}
+
+    function doSomething() external pure returns (string memory) {
+        return "App did something";
+    }
+}
+
+// Mock app that can call tipApp to test self-tipping
+contract SelfTippingApp {
+    receive() external payable {}
+
+    function tryToTipSelf(address tippingContract) external payable {
+        TippingFacet(tippingContract).tipApp{value: msg.value}(
+            ITippingBase.TipAppRequest({
+                appAddress: address(this),
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: msg.value,
+                messageId: bytes32(0),
+                channelId: bytes32(0),
+                metadata: ""
             })
         );
     }

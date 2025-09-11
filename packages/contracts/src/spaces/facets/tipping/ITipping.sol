@@ -15,6 +15,15 @@ interface ITippingBase {
         bytes32 channelId;
     }
 
+    struct TipAppRequest {
+        address appAddress;
+        address currency;
+        uint256 amount;
+        bytes32 messageId;
+        bytes32 channelId;
+        bytes metadata; // Optional metadata for the app to process
+    }
+
     // =============================================================
     //                           Events
     // =============================================================
@@ -29,6 +38,16 @@ interface ITippingBase {
         bytes32 channelId
     );
 
+    event TipApp(
+        address indexed appAddress,
+        address indexed currency,
+        address indexed sender,
+        uint256 amount,
+        bytes32 messageId,
+        bytes32 channelId,
+        bytes metadata
+    );
+
     // =============================================================
     //                           Errors
     // =============================================================
@@ -40,6 +59,9 @@ interface ITippingBase {
     error CurrencyIsZero();
     error MsgValueMismatch();
     error UnexpectedETH();
+
+    error InvalidReceiver();
+    error AppNotAllowed();
 }
 
 interface ITipping is ITippingBase {
@@ -51,12 +73,30 @@ interface ITipping is ITippingBase {
     /// @dev Emits Tip event
     function tip(TipRequest calldata tipRequest) external payable;
 
+    /// @notice Sends a tip to an app contract
+    /// @param tipAppRequest The tip request containing app address, currency, amount, message ID,
+    /// channel ID and optional metadata
+    /// @dev Requires sender to be a member of the space
+    /// @dev Requires amount > 0 and valid currency address
+    /// @dev Requires app address to be a contract
+    /// @dev Emits TipApp event
+    function tipApp(TipAppRequest calldata tipAppRequest) external payable;
+
     /// @notice Gets the total tips received for a token ID in a specific currency
     /// @param tokenId The token ID to get tips for
     /// @param currency The currency address to get tips in
     /// @return The total amount of tips received in the specified currency
     function tipsByCurrencyAndTokenId(
         uint256 tokenId,
+        address currency
+    ) external view returns (uint256);
+
+    /// @notice Gets the total tips received by an app in a specific currency
+    /// @param appAddress The app address to get tips for
+    /// @param currency The currency address to get tips in
+    /// @return The total amount of tips received in the specified currency
+    function tipsByCurrencyAndApp(
+        address appAddress,
         address currency
     ) external view returns (uint256);
 

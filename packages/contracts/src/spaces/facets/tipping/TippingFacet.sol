@@ -11,16 +11,18 @@ import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
-import {TippingBase} from "./TippingBase.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {ERC721ABase} from "../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {PointsBase} from "../points/PointsBase.sol";
+import {TippingBase} from "./TippingBase.sol";
 
-contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGuard {
+contract TippingFacet is ITipping, TippingBase, ERC721ABase, PointsBase, Facet, ReentrancyGuard {
     using CustomRevert for bytes4;
+
+    uint256 internal constant PROTOCOL_FEE_BPS = 50; // 0.5%
 
     function __Tipping_init() external onlyInitializing {
         _addInterface(type(ITipping).interfaceId);
@@ -35,26 +37,9 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
             tipRequest.amount
         );
 
-        uint256 tipAmount = tipRequest.amount;
+        uint256 tipAmount = _processTipPayment(msg.sender, tipRequest.currency, tipRequest.amount);
 
-        if (tipRequest.currency != CurrencyTransfer.NATIVE_TOKEN) {
-            if (msg.value != 0) UnexpectedETH.selector.revertWith();
-        } else {
-            if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
-
-            uint256 protocolFee = _payProtocol(msg.sender, tipAmount);
-            tipAmount -= protocolFee;
-
-            address airdropDiamond = _getAirdropDiamond();
-            uint256 points = _getPoints(
-                airdropDiamond,
-                ITownsPointsBase.Action.Tip,
-                abi.encode(protocolFee)
-            );
-            _mintPoints(airdropDiamond, msg.sender, points);
-        }
-
-        TippingBase.tip(
+        _tipMember(
             msg.sender,
             tipRequest.receiver,
             tipRequest.tokenId,
@@ -74,8 +59,38 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
     }
 
     /// @inheritdoc ITipping
+    function tipApp(TipAppRequest calldata tipAppRequest) external payable nonReentrant {
+        _validateTipRequest(
+            msg.sender,
+            tipAppRequest.appAddress,
+            tipAppRequest.currency,
+            tipAppRequest.amount
+        );
+
+        _validateReceiverIsContract(tipAppRequest.appAddress);
+
+        uint256 tipAmount = _processTipPayment(
+            msg.sender,
+            tipAppRequest.currency,
+            tipAppRequest.amount
+        );
+
+        _tipApp(msg.sender, tipAppRequest.appAddress, tipAppRequest.currency, tipAmount);
+
+        emit TipApp(
+            tipAppRequest.appAddress,
+            tipAppRequest.currency,
+            msg.sender,
+            tipAppRequest.amount,
+            tipAppRequest.messageId,
+            tipAppRequest.channelId,
+            tipAppRequest.metadata
+        );
+    }
+
+    /// @inheritdoc ITipping
     function tippingCurrencies() external view returns (address[] memory) {
-        return TippingBase.tippingCurrencies();
+        return _tippingCurrencies();
     }
 
     /// @inheritdoc ITipping
@@ -83,39 +98,40 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
         uint256 tokenId,
         address currency
     ) external view returns (uint256) {
-        return TippingBase.tipsByCurrencyByTokenId(tokenId, currency);
+        return _tipsByCurrencyByTokenId(tokenId, currency);
     }
 
     /// @inheritdoc ITipping
     function totalTipsByCurrency(address currency) external view returns (uint256) {
-        return TippingBase.totalTipsByCurrency(currency);
+        return _totalTipsByCurrency(currency);
     }
 
     /// @inheritdoc ITipping
     function tipAmountByCurrency(address currency) external view returns (uint256) {
-        return TippingBase.tipAmountByCurrency(currency);
+        return _tipAmountByCurrency(currency);
+    }
+
+    /// @inheritdoc ITipping
+    function tipsByCurrencyAndApp(
+        address appAddress,
+        address currency
+    ) external view returns (uint256) {
+        return _tipsByCurrencyByApp(appAddress, currency);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         Internal                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _validateTipRequest(
-        address sender,
-        address receiver,
-        address currency,
-        uint256 amount
-    ) internal pure {
-        if (currency == address(0)) CurrencyIsZero.selector.revertWith();
-        if (sender == receiver) CannotTipSelf.selector.revertWith();
-        if (amount == 0) AmountIsZero.selector.revertWith();
-    }
-
+    /// @notice Pays the protocol fee to the platform fee recipient
+    /// @param sender The address sending the tip
+    /// @param amount The amount being tipped
+    /// @return protocolFee The protocol fee amount
     function _payProtocol(address sender, uint256 amount) internal returns (uint256 protocolFee) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
 
-        protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
+        protocolFee = BasisPoints.calculate(amount, PROTOCOL_FEE_BPS);
 
         CurrencyTransfer.transferCurrency(
             CurrencyTransfer.NATIVE_TOKEN,
@@ -123,5 +139,35 @@ contract TippingFacet is ITipping, ERC721ABase, PointsBase, Facet, ReentrancyGua
             platform.getFeeRecipient(),
             protocolFee
         );
+    }
+
+    /// @notice Processes tip payment including currency validation, protocol fee, and points minting
+    /// @param sender The address sending the tip
+    /// @param currency The currency being used for the tip
+    /// @param amount The amount being tipped
+    /// @return tipAmount The final tip amount after protocol fee deduction
+    function _processTipPayment(
+        address sender,
+        address currency,
+        uint256 amount
+    ) internal returns (uint256 tipAmount) {
+        tipAmount = amount;
+
+        if (currency != CurrencyTransfer.NATIVE_TOKEN) {
+            if (msg.value != 0) UnexpectedETH.selector.revertWith();
+        } else {
+            if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
+
+            uint256 protocolFee = _payProtocol(sender, tipAmount);
+            tipAmount -= protocolFee;
+
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Tip,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, sender, points);
+        }
     }
 }
