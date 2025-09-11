@@ -86,27 +86,6 @@ type MessageOpts = {
     attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
 }
 
-export type UserData = {
-    /** The user ID of the user */
-    userId: string
-    /** The username of the user */
-    username: string | null
-    /** The display name of the user */
-    displayName: string | null
-    /** The ENS address of the user */
-    ensAddress?: string
-    /** The bio of the user */
-    bio: string | null
-    /** The NFT that the user is currently showcasing */
-    nft?: {
-        tokenId: string
-        contractAddress: string
-        chainId: number
-    }
-    /** URL that points to the profile picture of the user */
-    profilePictureUrl: string
-}
-
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     message: (
         handler: BotActions,
