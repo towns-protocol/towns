@@ -238,6 +238,9 @@ message AppMetadata {
     // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
     // Must be non-empty.
     string display_name = 7;
+
+    // motto is a short tagline or slogan for the bot.
+    string motto = 8;
 }
 
 // AppMetadataUpdate represents a partial update to app metadata
@@ -250,6 +253,7 @@ message AppMetadataUpdate {
     optional string avatar_url = 5;
     repeated SlashCommand slash_commands = 6;
     optional string display_name = 7;
+    optional string motto = 8;
 }
 
 // Update app metadata
