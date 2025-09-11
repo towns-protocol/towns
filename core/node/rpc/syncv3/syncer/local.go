@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	// localStreamUpdateEmitterTimeout is the default timeout to get updates from the local stream.
+	// localStreamUpdateEmitterTimeout is the default timeout for operations in localStreamUpdateEmitter.
 	localStreamUpdateEmitterTimeout = time.Second * 10
 )
 
@@ -48,9 +48,6 @@ func NewLocalStreamUpdateEmitter(
 ) (StreamUpdateEmitter, error) {
 	ctx, cancel := context.WithCancelCause(ctx)
 
-	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
-	defer ctxWithCancel()
-
 	l := &localStreamUpdateEmitter{
 		cancel: cancel,
 		log: logging.FromCtx(ctx).
@@ -64,10 +61,12 @@ func NewLocalStreamUpdateEmitter(
 		version:        version,
 	}
 
+	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
 	err := stream.Sub(ctxWithTimeout, &SyncCookie{
 		StreamId:    l.streamID[:],
 		NodeAddress: l.localAddr.Bytes(),
 	}, l)
+	ctxWithCancel()
 	if err != nil {
 		cancel(nil)
 		return nil, err

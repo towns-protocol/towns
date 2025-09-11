@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	// remoteStreamUpdateEmitterTimeout is the default timeout to get updates from the remote stream.
+	// remoteStreamUpdateEmitterTimeout is the default timeout for operations in remote stream update emitter.
 	remoteStreamUpdateEmitterTimeout = time.Second * 20
 )
 

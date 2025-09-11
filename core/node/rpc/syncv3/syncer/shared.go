@@ -13,11 +13,17 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// sharedStreamUpdateEmitterTimeout is the default timeout for operations in sharedStreamUpdateEmitter.
+	sharedStreamUpdateEmitterTimeout = time.Second * 10
+)
+
 // sharedStreamUpdateEmitter is an implementation of the StreamUpdateEmitter interface that
 // initializes either a local or remote emitter based on the stream location in a background.
 // While the emitter is being initialized, backfill requests are queued in a dynamic buffer so the
 // caller can immediately start processing backfills.
 type sharedStreamUpdateEmitter struct {
+	log  *logging.Log
 	lock sync.Mutex
 	// backfills is the queue of backfill requests that are received while the emitter is being initialized.
 	// If the emitter initialization fails, the queue is set to nil to indicate that no further backfill.
@@ -37,6 +43,9 @@ func newSharedStreamUpdateEmitter(
 	version int,
 ) *sharedStreamUpdateEmitter {
 	emitter := &sharedStreamUpdateEmitter{
+		log: logging.FromCtx(ctx).
+			Named("syncv3.sharedStreamUpdateEmitter").
+			With("version", version, "streamID", streamID),
 		backfills: make([]*backfillRequest, 0),
 		streamID:  streamID,
 		version:   version,
@@ -62,10 +71,7 @@ func (s *sharedStreamUpdateEmitter) run(
 
 	stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, s.streamID)
 	if err != nil {
-		logging.FromCtx(ctx).
-			Named("newSharedStreamUpdateEmitter").
-			With("version", s.version, "streamID", s.streamID, "error", err).
-			Error("failed to get stream for further emitter initialization")
+		s.log.With("error", err).Error("failed to get stream for further emitter initialization")
 
 		s.lock.Lock()
 		backfills = s.backfills
@@ -100,10 +106,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		)
 	}
 	if err != nil {
-		logging.FromCtx(ctx).
-			Named("newSharedStreamUpdateEmitter").
-			With("version", s.version, "streamID", s.streamID, "error", err).
-			Error("failed to create stream updates emitter")
+		s.log.With("error", err).Error("failed to create stream updates emitter")
 
 		s.lock.Lock()
 		backfills = s.backfills
