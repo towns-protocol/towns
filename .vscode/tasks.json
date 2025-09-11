@@ -26,7 +26,7 @@
       // start local dev:
       //
       // 1. yarn install
-      // 2. start blockchains
+      // 2. start blockchains (Docker by default)
       // 3. configure nodes
       // 4. starts all servers and clients
       //
@@ -35,32 +35,30 @@
       "label": "~Start Local Dev~",
       "dependsOn": [
         "Dependencies",
-        "Stage 1",
+        "Start Anvil Chains",
+        "Configure Nodes",
+        "Start Services"
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "dependsOrder": "sequence"
+      "dependsOrder": "sequence",
+      "options": {
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      }
     },
     {
-      "label": "Stage 1",
+      // Native Anvil fallback - same as above but without Docker
+      "label": "~Start Local Dev (Native Anvil)~",
       "dependsOn": [
-        "BaseChain",
-        "RiverChain",
-        "Stage 2"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      },
-    },
-    {
-      "label": "Stage 2",
-      "dependsOn": [
-        "Configure Nodes",
-        "Stage 3"
+        "Dependencies",
+        "Start Anvil Chains (Native)",
+        "Configure Nodes (Native)",
+        "Start Services"
       ],
       "group": {
         "kind": "build",
@@ -69,7 +67,7 @@
       "dependsOrder": "sequence"
     },
     {
-      "label": "Stage 3",
+      "label": "Start Services",
       "dependsOn": [
         "Start Watches",
         "Run Nodes and Services",
@@ -270,9 +268,24 @@
       }
     },
     {
-      "label": "BaseChain",
+      "label": "Configure Nodes (Native)",
       "type": "shell",
-      "command": "just anvil-base",
+      "command": "just config build",
+      "isBackground": true,
+      "problemMatcher": [],
+      "options": {
+        "cwd": "./core"
+      },
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "Start Anvil Chains",
+      "type": "shell",
+      "command": "just anvils",
       "isBackground": true,
       "problemMatcher": [],
       "options": {
@@ -286,16 +299,13 @@
       }
     },
     {
-      "label": "RiverChain",
+      "label": "Start Anvil Chains (Native)",
       "type": "shell",
-      "command": "just anvil-river",
+      "command": "just anvils",
       "isBackground": true,
       "problemMatcher": [],
       "options": {
-        "cwd": "./core",
-        "env": {
-          "USE_DOCKER_CHAINS": "1"
-        }
+        "cwd": "./core"
       },
       "presentation": {
         "group": "local-blockchains"
@@ -495,53 +505,6 @@
         "isDefault": true
       },
       "dependsOrder": "sequence"
-    },
-    {
-      "label": "~Start Local Docker Dev~",
-      "dependsOn": [
-        "Dependencies",
-        "BuildLocalDockerImage",
-        "AnvilsLocalDocker",
-        "Configure Nodes",
-        "Stage 3"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      },
-      "dependsOrder": "sequence"
-    },
-    {
-      "label": "BuildLocalDockerImage",
-      "type": "shell",
-      "command": "just build-local-docker",
-      "isBackground": false,
-      "problemMatcher": [],
-      "options": {
-        "cwd": "./core"
-      },
-      "presentation": {
-        "group": "ephemeral",
-        "focus": true,
-        "panel": "shared"
-      }
-    },
-    {
-      "label": "AnvilsLocalDocker",
-      "type": "shell",
-      "command": "just anvils",
-      "isBackground": true,
-      "problemMatcher": [],
-      "options": {
-        "cwd": "./core",
-        "env": {
-          "USE_LOCAL_DOCKER": "1",
-          "USE_DOCKER_CHAINS": "1"
-        }
-      },
-      "presentation": {
-        "group": "local-blockchains"
-      }
     },
     {
       "label": "Kill All, Clean and Start Local Dev",

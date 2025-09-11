@@ -28,8 +28,8 @@ just anvils-stop                       # Stop chains
 
 ```bash
 cd core
-just build-local-docker                # Build local image
-USE_LOCAL_DOCKER=1 USE_DOCKER_CHAINS=1 just anvils
+just build-anvil-docker
+USE_DOCKER_CHAINS=1 just anvils
 ```
 
 ### VSCode Integration
@@ -39,7 +39,6 @@ VSCode tasks automatically use Docker chains when configured:
 - **BaseChain** - Starts Base chain (Docker or native based on environment)
 - **RiverChain** - Starts River chain (Docker or native based on environment)
 - **Configure Nodes** - Configures nodes using Docker chains by default
-- **AnvilsLocalDocker** - Uses local Docker image for development
 
 ## Files
 
@@ -83,13 +82,11 @@ which runs `just-deploy-contracts`. Contract addresses are extracted to `package
 
 ### Docker-specific targets:
 
-- `build-local-docker` - Build Docker image locally
+- `build-anvil-docker` - Build Anvil Docker image locally
 
 ## Environment Variables
 
 - `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
-- `USE_LOCAL_DOCKER` - Set to `1` to use local Docker image instead of AWS ECR
-- `DOCKER_IMAGE` - Override Docker image (default: AWS ECR image)
 - `RUN_ENV` - Environment (defaults to `local_dev`)
 
 ## CI/CD Integration
