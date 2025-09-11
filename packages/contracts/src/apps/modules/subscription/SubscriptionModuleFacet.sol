@@ -242,21 +242,31 @@ contract SubscriptionModuleFacet is
     function grantOperator(address operator) external onlyOwner {
         Validator.checkAddress(operator);
         SubscriptionModuleStorage.getLayout().operators.add(operator);
+        emit OperatorGranted(operator);
+    }
+
+    /// @inheritdoc ISubscriptionModule
+    function isOperator(address operator) external view returns (bool) {
+        return SubscriptionModuleStorage.getLayout().operators.contains(operator);
     }
 
     /// @inheritdoc ISubscriptionModule
     function revokeOperator(address operator) external onlyOwner {
         Validator.checkAddress(operator);
         SubscriptionModuleStorage.getLayout().operators.remove(operator);
+        emit OperatorRevoked(operator);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Internal                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @dev Processes a single subscription renewal
+    /// @param sub The subscription to renew
+    /// @param params The parameters for the renewal
     function _processRenewal(Subscription storage sub, RenewalParams calldata params) internal {
-        // Validate subscription state
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
+
         if (block.timestamp < sub.nextRenewalTime)
             SubscriptionModule__RenewalNotDue.selector.revertWith();
 
@@ -272,10 +282,9 @@ contract SubscriptionModuleFacet is
         // Get current renewal price from Towns contract
         uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
-        // Update state BEFORE external calls to prevent reentrancy
-        // Set to a far future time to prevent re-entry while processing
-        // This ensures the "renewal not due" check will fail if re-entered
-        sub.nextRenewalTime = uint40(block.timestamp + 365 days);
+        // Check if the account has enough balance
+        if (params.account.balance < actualRenewalPrice)
+            SubscriptionModule__InsufficientBalance.selector.revertWith();
 
         // Construct the renewal call to space contract
         bytes memory renewalCall = abi.encodeCall(MembershipFacet.renewMembership, (sub.tokenId));
@@ -320,6 +329,10 @@ contract SubscriptionModuleFacet is
         emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime);
     }
 
+    /// @dev Creates the runtime final data for the renewal
+    /// @param entityId The entity ID of the subscription
+    /// @param finalData The final data for the renewal
+    /// @return The runtime final data
     function _runtimeFinal(
         uint32 entityId,
         bytes memory finalData
@@ -332,6 +345,10 @@ contract SubscriptionModuleFacet is
             );
     }
 
+    /// @dev Checks if the caller is allowed to call the function
+    /// @param operators The set of operators
+    /// @param account The account to check
+    /// @return True if the caller is allowed to call the function
     function _isAllowed(
         EnumerableSetLib.AddressSet storage operators,
         address account

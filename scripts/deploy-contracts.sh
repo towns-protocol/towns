@@ -45,9 +45,12 @@ fi
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntrypoint
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployAccountFactory
 
-# Deploying contracts with automine is faster
-cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
-cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
+# Deploying contracts with automine is faster if RIVER_BLOCK_TIME is ge 1
+# NOTE anvil fails if you try to set the block time to 0.1, but it's fine to start it with 0.1
+if [ "$RIVER_BLOCK_TIME" -ge 1 ]; then
+    cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
+    cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
+fi
 
 # Deploy base contracts
 "$SCRIPT_DIR/deploy-base-contracts.sh" nobuild
@@ -61,18 +64,17 @@ cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $RIVER
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry
 
 # Restore to interval mining
-cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
-cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
+if [ "$RIVER_BLOCK_TIME" -ge 1 ]; then
+    cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
+    cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
+fi
 
 cd "$PROJECT_ROOT"
 
-# Make copy to packages/generated conditional (skip in Docker)
-GENERATED_DIR="$PROJECT_ROOT/packages/generated"
-if [ -d "$GENERATED_DIR" ]; then
-    # Ensure the destination directory exists
-    mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
-    cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
+# Ensure the destination directory exists
+mkdir -p "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
+cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/"
 
-    # Update the config
-    cd "$GENERATED_DIR" && yarn make-config
-fi
+# Update the config
+cd "$PROJECT_ROOT/packages/generated"
+yarn make-config

@@ -38,6 +38,7 @@ interface ISubscriptionModuleBase {
     error SubscriptionModule__ExceedsMaxBatchSize();
     error SubscriptionModule__EmptyBatch();
     error SubscriptionModule__InvalidTokenOwner();
+    error SubscriptionModule__InsufficientBalance();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -68,6 +69,9 @@ interface ISubscriptionModuleBase {
     event SubscriptionPaused(address indexed account, uint32 indexed entityId);
 
     event BatchRenewalSkipped(address indexed account, uint32 indexed entityId, string reason);
+
+    event OperatorGranted(address indexed operator);
+    event OperatorRevoked(address indexed operator);
 }
 
 interface ISubscriptionModule is ISubscriptionModuleBase {
@@ -100,6 +104,10 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
     /// @param account The address of the account to get the entity IDs for
     /// @return The entity IDs for the account
     function getEntityIds(address account) external view returns (uint256[] memory);
+
+    /// @notice Checks if an operator has access to call processRenewal
+    /// @param operator The address of the operator to check
+    function isOperator(address operator) external view returns (bool);
 
     /// @notice Grants an operator access to call processRenewal
     /// @param operator The address of the operator to grant

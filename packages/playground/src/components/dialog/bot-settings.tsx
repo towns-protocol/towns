@@ -164,7 +164,7 @@ export const BotSettingsDialog = ({
                 signer,
                 appRegistryUrl,
             )
-            await appRegistryRpcClient.setAppMetadata({
+            await appRegistryRpcClient.updateAppMetadata({
                 appId: bin_fromHexString(appClientId),
                 metadata: {
                     username: metadataData.name,
@@ -174,6 +174,14 @@ export const BotSettingsDialog = ({
                     avatarUrl: metadataData.avatarUrl || '',
                     externalUrl: metadataData.externalUrl,
                 },
+                updateMask: [
+                    'username',
+                    'display_name',
+                    'description',
+                    'image_url',
+                    'avatar_url',
+                    'external_url',
+                ],
             })
         },
         onSuccess: () => {

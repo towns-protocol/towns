@@ -60,6 +60,13 @@ export function getRiverEnv() {
     return RIVER_ENV
 }
 
+export function getRiverEnvDeployment() {
+    if (!RIVER_ENV) {
+        throw new Error('RIVER_ENV is not defined')
+    }
+    return getWeb3Deployment(RIVER_ENV)
+}
+
 function optionalEnv({
     environmentId,
     keys,
@@ -148,21 +155,21 @@ function makeWeb3Deployment(environmentId: string): Web3Deployment {
                     mockNFT: optionalEnv({
                         environmentId,
                         keys: [
-                            'BASE_ADDRESSES_MOCK_NFT',
+                            'BASE_ADDRESSES_UTILS_MOCK_NFT',
                             'MOCK_NFT_ADDRESS', // deprecated
                         ],
                     }) as Address,
                     member: optionalEnv({
                         environmentId,
                         keys: [
-                            'BASE_ADDRESSES_MEMBER',
+                            'BASE_ADDRESSES_UTILS_MEMBER',
                             'MEMBER_ADDRESS', // deprecated
                         ],
                     }) as Address,
                     towns: optionalEnv({
                         environmentId,
                         keys: [
-                            'BASE_ADDRESSES_TOWNS',
+                            'BASE_ADDRESSES_UTILS_TOWNS',
                             'TOWNS_ADDRESS', // deprecated
                         ],
                     }) as Address,

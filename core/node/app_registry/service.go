@@ -811,52 +811,59 @@ func (s *Service) GetStatus(
 	}, nil
 }
 
-func (s *Service) SetAppMetadata(
+func (s *Service) UpdateAppMetadata(
 	ctx context.Context,
-	req *connect.Request[SetAppMetadataRequest],
+	req *connect.Request[UpdateAppMetadataRequest],
 ) (
-	*connect.Response[SetAppMetadataResponse],
+	*connect.Response[UpdateAppMetadataResponse],
 	error,
 ) {
-	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppMetadata"))
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "UpdateAppMetadata"))
 
 	var app common.Address
 	var err error
 	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
 		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetAppMetadata")
+			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("UpdateAppMetadata")
 	}
 
-	// Validate metadata
+	// Validate partial metadata update
 	metadata := req.Msg.GetMetadata()
-	if err := types.ValidateAppMetadata(metadata); err != nil {
+	updateMask := req.Msg.GetUpdateMask()
+	if err := types.ValidateAppMetadataUpdate(metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
-			Tag("appId", app).Func("SetAppMetadata").Message("invalid app metadata")
+			Tag("appId", app).Func("UpdateAppMetadata").Message("invalid app metadata update")
 	}
-	logging.FromCtx(ctx).Infow("meta", "meta", metadata)
+	logging.FromCtx(ctx).Infow("meta", "metadata", metadata, "updateMask", updateMask)
 
 	appInfo, err := s.store.GetAppInfo(ctx, app)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("appId", app).Func("SetAppMetadata")
+			Tag("appId", app).Func("UpdateAppMetadata")
 	}
 
 	userId := authentication.UserFromAuthenticatedContext(ctx)
 	if app != userId && appInfo.Owner != userId {
 		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
-			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetAppMetadata")
+			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("UpdateAppMetadata")
 	}
 
-	if err := s.store.SetAppMetadata(ctx, app, types.ProtocolToStorageAppMetadata(metadata)); err != nil {
+	// Perform partial update (conversion to storage format happens inside)
+	err = s.store.SetAppMetadataPartial(ctx, app, metadata, updateMask)
+	if err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Unable to update app metadata").
 			Tag("appId", app).
 			Tag("userId", userId).
-			Func("SetAppMetadata")
+			Tag("metadata", metadata).
+			Tag("updateMask", updateMask).
+			Func("UpdateAppMetadata")
 	}
 
-	return &connect.Response[SetAppMetadataResponse]{
-		Msg: &SetAppMetadataResponse{},
+	logging.FromCtx(ctx).Infow("Updated app metadata")
+
+	return &connect.Response[UpdateAppMetadataResponse]{
+		Msg: &UpdateAppMetadataResponse{},
 	}, nil
 }
 

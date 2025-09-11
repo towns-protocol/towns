@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.29;
 
 // interfaces
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
@@ -233,6 +233,20 @@ contract SubscriptionModuleTest is ModulesBase {
         assertNativeDistribution(beforeSnap, afterSnap);
     }
 
+    function test_processRenewal_revertWhen_InsufficientBalance(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.expectRevert(SubscriptionModule__InsufficientBalance.selector);
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         EXPIRATION                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -384,6 +398,8 @@ contract SubscriptionModuleTest is ModulesBase {
 
         vm.prank(deployer);
         subscriptionModule.grantOperator(newOperator);
+
+        assertTrue(subscriptionModule.isOperator(newOperator));
 
         // Test that the operator can now process renewals
         (

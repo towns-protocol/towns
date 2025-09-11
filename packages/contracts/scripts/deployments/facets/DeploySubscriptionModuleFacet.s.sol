@@ -15,7 +15,7 @@ library DeploySubscriptionModuleFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(19);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(20);
         arr.p(SubscriptionModuleFacet.moduleId.selector);
         arr.p(SubscriptionModuleFacet.onInstall.selector);
         arr.p(SubscriptionModuleFacet.onUninstall.selector);
@@ -30,6 +30,7 @@ library DeploySubscriptionModuleFacet {
         arr.p(SubscriptionModuleFacet.getSubscription.selector);
         arr.p(SubscriptionModuleFacet.pauseSubscription.selector);
         arr.p(SubscriptionModuleFacet.getEntityIds.selector);
+        arr.p(SubscriptionModuleFacet.isOperator.selector);
         arr.p(SubscriptionModuleFacet.grantOperator.selector);
         arr.p(SubscriptionModuleFacet.revokeOperator.selector);
         arr.p(bytes4(keccak256("MAX_BATCH_SIZE()")));
