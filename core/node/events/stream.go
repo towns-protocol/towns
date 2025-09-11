@@ -691,7 +691,10 @@ func (s *Stream) GetMiniblocks(
 			return nil, false, err
 		}
 		if len(byteRanges) != len(blocks) {
-			return nil, false, fmt.Errorf("number of byte ranges does not match number of blocks")
+			return nil, false, RiverError(
+				Err_INTERNAL,
+				"getMiniblocks: number of byte ranges does not match number of blocks",
+			)
 		}
 		data, err := storage.DownloadRangeFromExternalMediaStream(ctx, s.streamId, byteRanges, location, client)
 		if err != nil {
@@ -701,7 +704,8 @@ func (s *Stream) GetMiniblocks(
 			r := byteRanges[i]
 			if int(r.StartInclusive) > len(data) || int(r.EndInclusive) > len(data) ||
 				r.StartInclusive > r.EndInclusive {
-				return nil, false, fmt.Errorf("invalid byte range for partitioning: %v", r)
+				return nil, false, RiverError(Err_INTERNAL, "getMiniblocks: invalid byte range for partitioning").
+					Tag("range", r)
 			}
 			block.Data = data[r.StartInclusive : r.EndInclusive+1]
 		}

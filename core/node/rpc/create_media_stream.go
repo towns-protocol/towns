@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -230,24 +229,35 @@ func (s *Service) createReplicatedMediaStream(
 		if s.config.MediaStreamDataOffloadingEnabled {
 			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create external media stream: %w", err)
+				return nil, RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
 			}
 			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
-					return nil, fmt.Errorf(
-						"failed to write external media stream info: %w, and failed to abort upload: %v",
+					return nil, RiverError(
+						Err_INTERNAL,
+						"failed to write external media stream info",
+						"error",
 						err,
+						"abortErr",
 						abortErr,
 					)
 				}
 				if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
-					return nil, fmt.Errorf(
-						"failed to write external media stream info: %w, and failed to delete external media stream upload entry: %w",
+					return nil, RiverError(
+						Err_INTERNAL,
+						"failed to write external media stream info",
+						"error",
 						err,
+						"deleteErr",
 						deleteErr,
 					)
 				}
-				return nil, fmt.Errorf("failed to create external media stream upload entry: %w.", err)
+				return nil, RiverError(
+					Err_INTERNAL,
+					"failed to create external media stream upload entry",
+					"error",
+					err,
+				)
 			}
 		}
 		sender.AddTask(func(ctx context.Context) error {
