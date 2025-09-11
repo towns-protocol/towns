@@ -127,10 +127,10 @@ func (w *S3MediaStore) UploadPartToExternalMediaStream(
 			Bucket: &w.bucket,
 			Key:    &key,
 			// Part number is 1-indexed
-			PartNumber:    int32(miniblock + 1),
+			PartNumber:    aws.Int32(int32(miniblock + 1)),
 			UploadId:      &uploadID,
 			Body:          bytes.NewReader(data),
-			ContentLength: int64(len(data)),
+			ContentLength: aws.Int64(int64(len(data))),
 		})
 		if err != nil {
 			return err
@@ -159,7 +159,7 @@ func (w *S3MediaStore) CompleteMediaStreamUpload(
 		parts = append(parts, types.CompletedPart{
 			ETag: &etag.Etag,
 			// Part number is 1-indexed
-			PartNumber: int32(etag.Miniblock + 1),
+			PartNumber: aws.Int32(int32(etag.Miniblock + 1)),
 		})
 	}
 
