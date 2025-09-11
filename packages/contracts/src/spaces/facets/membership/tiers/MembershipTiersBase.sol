@@ -6,7 +6,7 @@ import {IMembershipPricing} from "../pricing/IMembershipPricing.sol";
 import {IMembershipTiersBase} from "./IMembershipTiers.sol";
 
 // libraries
-import {MembershipTiersStorage} from "./MembershipTiersStorage.sol";
+import {MembershipTiersStorage, Tier} from "./MembershipTiersStorage.sol";
 import {CustomRevert} from "../../../../utils/libraries/CustomRevert.sol";
 
 // contracts
@@ -27,7 +27,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Creates a new membership tier and returns its id.
-    function _addTier(MembershipTiersStorage.Tier memory cfg) internal returns (uint32 tierId) {
+    function _addTier(Tier memory cfg) internal returns (uint32 tierId) {
         if (cfg.pricingModule != address(0)) {
             _verifyPricingModule(cfg.pricingModule);
         }
@@ -52,14 +52,14 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     }
 
     /// @notice Updates an existing tier.
-    function _updateTier(uint32 tierId, MembershipTiersStorage.Tier memory cfg) internal {
+    function _updateTier(uint32 tierId, Tier memory cfg) internal {
         if (tierId == 0) {
             // Tier 0 is virtual and cannot be updated
             Membership__InvalidTier.selector.revertWith();
         }
 
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
-        MembershipTiersStorage.Tier storage t = $.tiers[tierId];
+        Tier storage t = $.tiers[tierId];
 
         if (t.duration == 0 && t.basePrice == 0 && t.maxSupply == 0 && bytes(t.name).length == 0) {
             // rough existence check – tier was never created
@@ -82,11 +82,11 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
         }
 
         // Keep minted count; do not reset disabled flag
-        uint256 alreadyMinted = t.minted;
+        uint256 alreadyMinted = t.totalMinted;
         bool isDisabled = t.disabled;
 
         $.tiers[tierId] = cfg;
-        $.tiers[tierId].minted = alreadyMinted;
+        $.tiers[tierId].totalMinted = alreadyMinted;
         $.tiers[tierId].disabled = isDisabled;
 
         emit TierUpdated(tierId);
@@ -100,7 +100,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
         }
 
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
-        MembershipTiersStorage.Tier storage t = $.tiers[tierId];
+        Tier storage t = $.tiers[tierId];
 
         if (t.duration == 0 && t.basePrice == 0 && t.maxSupply == 0 && bytes(t.name).length == 0) {
             Membership__InvalidTier.selector.revertWith();
@@ -115,17 +115,17 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     /*                        INTERNAL HELPERS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _getTier(uint32 tierId) internal view returns (MembershipTiersStorage.Tier memory t) {
+    function _getTier(uint32 tierId) internal view returns (Tier memory t) {
         if (tierId == 0) {
-            t = MembershipTiersStorage.Tier({
+            t = Tier({
                 name: "Membership",
                 basePrice: _getMembershipPrice(_totalSupply()),
                 maxSupply: _getMembershipSupplyLimit(),
                 duration: _getMembershipDuration(),
                 freeAllocation: _getMembershipFreeAllocation(),
                 pricingModule: address(0),
-                minted: _totalSupply(),
-                image: _getMembershipImage(),
+                totalMinted: _totalSupply(),
+                url: _getMembershipImage(),
                 disabled: false
             });
         } else {
@@ -156,9 +156,9 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
             return;
         }
 
-        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
+        Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
         if (t.disabled) Membership__TierDisabled.selector.revertWith();
-        if (t.maxSupply != 0 && t.minted >= t.maxSupply) {
+        if (t.maxSupply != 0 && t.totalMinted >= t.maxSupply) {
             Membership__MaxSupplyReached.selector.revertWith();
         }
     }
@@ -166,14 +166,14 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     /// @dev Increments minted counter; caller MUST have verified availability first.
     /// @dev For tier 0 (virtual tier), no action is needed as minted count equals totalSupply.
     function _incrementTierMinted(uint32 tierId, uint256 amount) internal {
-        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
+        Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
 
-        if (tierId == 0 && t.minted == 0 && _totalSupply() > 0) {
-            t.minted = _totalSupply();
+        if (tierId == 0 && t.totalMinted == 0 && _totalSupply() > 0) {
+            t.totalMinted = _totalSupply();
             return;
         }
 
-        t.minted += amount;
+        t.totalMinted += amount;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -188,10 +188,10 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
             return _getMembershipPrice(_totalSupply());
         }
 
-        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
+        Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
 
         if (t.pricingModule != address(0)) {
-            price = IMembershipPricing(t.pricingModule).getPrice(t.freeAllocation, t.minted);
+            price = IMembershipPricing(t.pricingModule).getPrice(t.freeAllocation, t.totalMinted);
         } else {
             price = t.basePrice;
         }
@@ -203,7 +203,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
             return _getMembershipDuration();
         }
 
-        MembershipTiersStorage.Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
+        Tier storage t = MembershipTiersStorage.getLayout().tiers[tierId];
         duration = t.duration != 0 ? t.duration : _getMembershipDuration();
     }
 }

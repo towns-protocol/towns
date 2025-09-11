@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {MembershipTiersStorage} from "./MembershipTiersStorage.sol";
+import {Tier} from "./MembershipTiersStorage.sol";
 
 // libraries
 
@@ -29,7 +29,7 @@ interface IMembershipTiers is IMembershipTiersBase {
     /// @notice Get a tier by its ID.
     /// @param tierId The ID of the tier to get.
     /// @return The tier.
-    function getTier(uint32 tierId) external view returns (MembershipTiersStorage.Tier memory);
+    function getTier(uint32 tierId) external view returns (Tier memory);
 
     /// @notice Get the tier of a token.
     /// @param tokenId The ID of the token to get the tier of.
@@ -44,12 +44,12 @@ interface IMembershipTiers is IMembershipTiersBase {
     /// @notice Create a new tier.
     /// @param cfg The configuration of the tier to create.
     /// @return tierId The ID of the newly created tier.
-    function createTier(MembershipTiersStorage.Tier memory cfg) external returns (uint32 tierId);
+    function createTier(Tier memory cfg) external returns (uint32 tierId);
 
     /// @notice Update a tier.
     /// @param tierId The ID of the tier to update.
     /// @param cfg The configuration of the tier to update.
-    function updateTier(uint32 tierId, MembershipTiersStorage.Tier memory cfg) external;
+    function updateTier(uint32 tierId, Tier memory cfg) external;
 
     /// @notice Disable a tier.
     /// @param tierId The ID of the tier to disable.
