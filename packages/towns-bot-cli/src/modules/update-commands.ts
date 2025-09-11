@@ -164,10 +164,10 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
             }
 
             console.log()
-            await appRegistryRpcClient.setAppMetadata({
+            await appRegistryRpcClient.updateAppMetadata({
                 appId,
+                updateMask: ['slash_commands'],
                 metadata: {
-                    ...metadata,
                     slashCommands: commands,
                 },
             })
