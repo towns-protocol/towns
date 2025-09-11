@@ -19,7 +19,6 @@ import {
     makeUserMetadataStreamId,
     type ParsedEvent,
     unsafe_makeTags,
-    getStreamMetadataUrl,
     makeBaseChainConfig,
     spaceIdFromChannelId,
     type CreateTownsClientParams,
@@ -48,13 +47,7 @@ import {
     MessageInteractionType,
     type SlashCommand,
 } from '@towns-protocol/proto'
-import {
-    bin_fromBase64,
-    bin_fromHexString,
-    bin_toHexString,
-    bin_toString,
-    check,
-} from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
@@ -90,27 +83,6 @@ type MessageOpts = {
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
-}
-
-export type UserData = {
-    /** The user ID of the user */
-    userId: string
-    /** The username of the user */
-    username: string | null
-    /** The display name of the user */
-    displayName: string | null
-    /** The ENS address of the user */
-    ensAddress?: string
-    /** The bio of the user */
-    bio: string | null
-    /** The NFT that the user is currently showcasing */
-    nft?: {
-        tokenId: string
-        contractAddress: string
-        chainId: number
-    }
-    /** URL that points to the profile picture of the user */
-    profilePictureUrl: string
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -1053,82 +1025,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }))
     }
 
-    /**
-     * Fetches and attempts to decrypt member-specific data (username, display name, nft, ensAddress)
-     * for a given user within a specific stream (channel/space).
-     * It requires the data to be in the stream snapshot.
-     *
-     * NOTE: Decryption relies on the bot having the necessary group session keys for the
-     * specified stream. If somehow the keys are missing, decryption will fail, and null values will be returned for username/displayName.
-     *
-     * @deprecated Not planned for now
-     * @param streamId - The ID of the channel or space stream.
-     * @param userId -  The ID of the member whose data is being requested.
-     */
-    const getUserData = async (streamId: string, userId: string): Promise<UserData | null> => {
-        try {
-            const stream = await client.getStream(streamId)
-            const members = stream.snapshot.members?.joined
-            if (!members) {
-                return null
-            }
-            const member = members.find((m) => userIdFromAddress(m.userAddress) === userId)
-            if (!member) {
-                return null
-            }
-            let displayName: string | null = null
-            let username: string | null = null
-            const [usernameDecrypted, displayNameDecrypted] = await Promise.all([
-                member.username?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.username.data)
-                    : null,
-                member.displayName?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.displayName.data)
-                    : null,
-            ])
-            if (usernameDecrypted) {
-                username =
-                    typeof usernameDecrypted === 'string'
-                        ? usernameDecrypted
-                        : bin_toString(usernameDecrypted)
-            }
-            if (displayNameDecrypted) {
-                displayName =
-                    typeof displayNameDecrypted === 'string'
-                        ? displayNameDecrypted
-                        : bin_toString(displayNameDecrypted)
-            }
-            let ensAddress = undefined
-            if (member.ensAddress) {
-                ensAddress = `0x${bin_toHexString(member.ensAddress)}`
-            }
-            let nft = undefined
-            if (member.nft) {
-                nft = {
-                    tokenId: bin_toString(member.nft.tokenId),
-                    contractAddress: `0x${bin_toHexString(member.nft.contractAddress)}`,
-                    chainId: member.nft.chainId,
-                }
-            }
-            const bio = await fetch(`${getStreamMetadataUrl(client.env)}/user/${userId}/bio`)
-                .then((res) => res.json())
-                .then((data: { bio: string }) => data.bio)
-                .catch(() => null)
-            const profilePictureUrl = `${getStreamMetadataUrl(client.env)}/user/${userId}/image`
-            return {
-                userId,
-                username,
-                displayName,
-                ensAddress,
-                nft,
-                bio,
-                profilePictureUrl,
-            }
-        } catch {
-            return null
-        }
-    }
-
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1158,8 +1054,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
-        /** @deprecated Not planned for now */
-        getUserData,
     }
 }
 

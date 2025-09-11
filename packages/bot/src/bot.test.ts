@@ -16,7 +16,7 @@ import {
     type SyncAgent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
-import type { Bot, BotPayload, UserData } from './bot'
+import type { Bot, BotPayload } from './bot'
 import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
@@ -358,35 +358,6 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.isGdm).toBe(true)
         expect(event?.isDm).toBe(false)
         expect(event?.message).toBe(TEST_MESSAGE)
-    })
-
-    // TODO: not planned for now
-    it.skip('should be able to get user data', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const userData: UserData[] = []
-        bot.onMessage(async (h, e) => {
-            const data = await h.getUserData(e.channelId, e.userId)
-            if (data) {
-                userData.push(data)
-            }
-        })
-        const vitalikEnsAddress = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-        const azukiNft = {
-            chainId: 1,
-            contractAddress: '0xed5af388653567af2f388e6224dc7c4b3241c544',
-            tokenId: '3280',
-        }
-        await bobDefaultChannel.members.myself.setEnsAddress(vitalikEnsAddress)
-        await bobDefaultChannel.members.myself.setNft(azukiNft)
-
-        await bobDefaultChannel.sendMessage('Hello')
-        await waitFor(() => userData.length > 0)
-        const data = userData.find((x) => x.userId === bob.userId)
-        expect(data?.displayName).toBe(BOB_DISPLAY_NAME)
-        expect(data?.username).toBe(BOB_USERNAME)
-        expect(data?.ensAddress?.toLowerCase()).toBe(vitalikEnsAddress.toLowerCase())
-        expect(data?.userId).toBe(bob.userId)
-        expect(data?.nft).toEqual(azukiNft)
     })
 
     it('onMessageEdit should be triggered when a message is edited', async () => {
