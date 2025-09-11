@@ -54,7 +54,7 @@ func retryWithBackoff(ctx context.Context, operation string, fn func() error) er
 		}
 	}
 
-	return RiverError(Err_INTERNAL, fmt.Sprintf("%s failed after %d attempts: %w", operation, maxRetries+1, lastErr))
+	return RiverError(Err_INTERNAL, "operation", operation, "error", lastErr)
 }
 
 // isRetryableError determines if an error should be retried
