@@ -2,6 +2,21 @@ import path from 'path'
 import os from 'os'
 import { defineConfig } from 'vitest/config'
 import wasm from 'vite-plugin-wasm'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+
+export function readBypassSecret(): string | undefined {
+    try {
+        const runEnv = process.env.RIVER_ENV || 'local_dev'
+        const contractsPath = resolve(__dirname, `./core/run_files/${runEnv}/contracts.env`)
+        const content = readFileSync(contractsPath, 'utf8')
+        const line = content
+            .split(/\r?\n/)
+            .find((l) => l.startsWith('RIVER_TESTENTITLEMENTSBYPASSSECRET='))
+        if (line) return line.split('=', 2)[1]
+    } catch {}
+    return undefined
+}
 
 export const rootConfig = defineConfig({
     test: {
@@ -15,16 +30,6 @@ export const rootConfig = defineConfig({
         env: {
             NODE_EXTRA_CA_CERTS: path.join(os.homedir(), 'river-ca-cert.pem'),
             NODE_TLS_REJECT_UNAUTHORIZED: '0',
-            RIVER_ENV: process.env.RIVER_ENV,
-            BASE_CHAIN_ID: process.env.BASE_CHAIN_ID,
-            BASE_CHAIN_RPC_URL: process.env.BASE_CHAIN_RPC_URL,
-            BASE_REGISTRY_ADDRESS: process.env.BASE_REGISTRY_ADDRESS,
-            SPACE_FACTORY_ADDRESS: process.env.SPACE_FACTORY_ADDRESS,
-            SPACE_OWNER_ADDRESS: process.env.SPACE_OWNER_ADDRESS,
-            RIVER_CHAIN_ID: process.env.RIVER_CHAIN_ID,
-            RIVER_CHAIN_RPC_URL: process.env.RIVER_CHAIN_RPC_URL,
-            RIVER_REGISTRY_ADDRESS: process.env.RIVER_REGISTRY_ADDRESS,
-            APP_REGISTRY_ADDRESS: process.env.APP_REGISTRY_ADDRESS,
         },
         testTimeout: 20_000,
     },

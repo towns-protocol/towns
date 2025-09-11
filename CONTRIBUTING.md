@@ -44,6 +44,20 @@ If you want to restart just the server, `CMD+P` + `task RestartCasablanca` will 
 
 CI will gate PR merges via unit tests. However, failing e2e tests won't gate merges. In fact, they won't even be run pre-merge. e2e tests will be run after merging to main. This allows us to keep merging our work to main, while also staying aware of failing e2e tests.
 
+### Testing CI Locally
+
+Test GitHub CI workflows locally using `./scripts/run-local-ci.sh` (requires Docker):
+
+```bash
+# Test Common_CI job (linting, formatting, unit tests)
+./scripts/run-local-ci.sh -j Common_CI
+
+# Test Multinode job
+./scripts/run-local-ci.sh -j Multinode
+```
+
+Use `--help` for all options. Useful when modifying CI workflows.
+
 ## Package.json Scripts
 
 We use turborepo to maintain our monorepos CI setup. Since maintaining CI in monorepos are a bit more complex than conventional repos, we depend on this tool for housekeeping. It figures out the dependency graph by reading package.jsons and understands which builds and tests should be run first.

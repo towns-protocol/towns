@@ -1,11 +1,11 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.324",
+  "version": "0.0.337",
   "packageManager": "yarn@3.8.0",
   "scripts": {
-    "build": "forge build",
     "build-types": "bash scripts/build-contract-types.sh",
     "clean": "forge clean",
+    "compile": "forge build",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
@@ -16,15 +16,16 @@
     "typings": "wagmi generate"
   },
   "dependencies": {
-    "@erc6900/reference-implementation": "^0.8.1",
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
     "@layerzerolabs/oft-evm": "^3.1.4",
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@prb/math": "^4.1.0",
-    "@towns-protocol/diamond": "^0.6.1",
+    "@towns-protocol/diamond": "^0.6.3",
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
     "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
+    "modular-account": "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz",
     "solady": "^0.1.24"
   },
   "devDependencies": {

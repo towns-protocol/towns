@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 // libraries
 
@@ -14,6 +15,9 @@ interface IAppAccountBase {
     error AppAlreadyInstalled();
     error UnauthorizedApp(address app);
     error InvalidCaller();
+
+    event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
+    event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
 }
 
 interface IAppAccount is IAppAccountBase {
@@ -68,4 +72,20 @@ interface IAppAccount is IAppAccountBase {
         address publicKey,
         bytes32 permission
     ) external view returns (bool);
+
+    /// @notice Checks if an app is executing
+    /// @param app The address of the app to check
+    /// @return True if the app is executing, false otherwise
+    function isAppExecuting(address app) external view returns (bool);
+
+    /// @notice Executes a function on the app
+    /// @param target The address of the app to execute the function on
+    /// @param value The value to send with the function
+    /// @param data The data to send with the function
+    /// @return The result of the function
+    function execute(
+        address target,
+        uint256 value,
+        bytes calldata data
+    ) external payable returns (bytes memory);
 }

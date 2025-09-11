@@ -354,7 +354,7 @@ func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId St
 		nil,
 		"streamId", streamId,
 	)
-	return
+	return ephemeral, err
 }
 
 func (s *PostgresStreamStore) GetMediaStreamLocation(ctx context.Context, streamId StreamId) (string, error) {

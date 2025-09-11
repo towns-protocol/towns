@@ -36,9 +36,10 @@ export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMes
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
     streamView: StreamStateView,
+    messageInteractionType?: MessageInteractionType,
 ): PlainMessage<Tags> {
     return {
-        messageInteractionType: getMessageInteractionType(message),
+        messageInteractionType: messageInteractionType ?? getMessageInteractionType(message),
         groupMentionTypes: getGroupMentionTypes(message),
         mentionedUserAddresses: getMentionedUserAddresses(message),
         participatingUserAddresses: getParticipatingUserAddresses(message, streamView),

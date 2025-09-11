@@ -1,5 +1,6 @@
 import {
     Client,
+    makeAppPrivateData,
     makeBaseProvider,
     makeRiverConfig,
     makeRiverProvider,
@@ -20,8 +21,7 @@ import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@to
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
-import { AppPrivateDataSchema, ForwardSettingValue } from '@towns-protocol/proto'
-import { toBinary, create } from '@bufbuild/protobuf'
+import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -37,12 +37,18 @@ import { randomUUID } from 'crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
+const SLASH_COMMANDS = [
+    { name: 'help', description: 'Get help with bot commands' },
+    { name: 'status', description: 'Check bot status' },
+] as const satisfies PlainMessage<SlashCommand>[]
+
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
 type OnThreadMessageType = BotPayload<'threadMessage'>
 type OnMentionedType = BotPayload<'mentioned'>
 type OnMentionedInThreadType = BotPayload<'mentionedInThread'>
+type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
     const riverConfig = makeRiverConfig()
@@ -64,16 +70,17 @@ describe('Bot', { sequential: true }, () => {
     const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DESCRIPTION = 'I shall witness everything'
 
-    let bot: Bot
+    let bot: Bot<typeof SLASH_COMMANDS>
     let spaceId: string
     let channelId: string
     let botWallet: ethers.Wallet
     let botClientAddress: Address
-    let appPrivateDataBase64: string
+    let appPrivateData: string
     let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
     let appAddress: Address
     let bobDefaultChannel: Channel
+    let ethersProvider: ethers.providers.StaticJsonRpcProvider
 
     beforeAll(async () => {
         await shouldInitializeBotOwner()
@@ -81,6 +88,7 @@ describe('Bot', { sequential: true }, () => {
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
+        ethersProvider = makeBaseProvider(riverConfig)
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -168,24 +176,20 @@ describe('Bot', { sequential: true }, () => {
 
         const exportedDevice = await botClient.cryptoBackend?.exportDevice()
         expect(exportedDevice).toBeDefined()
-        appPrivateDataBase64 = bin_toBase64(
-            toBinary(
-                AppPrivateDataSchema,
-                create(AppPrivateDataSchema, {
-                    privateKey: botWallet.privateKey,
-                    encryptionDevice: exportedDevice,
-                    env: process.env.RIVER_ENV!,
-                }),
-            ),
+        appPrivateData = makeAppPrivateData(
+            botWallet.privateKey,
+            exportedDevice!,
+            process.env.RIVER_ENV!,
         )
-        expect(appPrivateDataBase64).toBeDefined()
+        expect(appPrivateData).toBeDefined()
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
+        const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,
-            getAppRegistryUrl(process.env.RIVER_ENV!),
+            appRegistryUrl,
         )
         appRegistryRpcClient = rpcClient
         const { hs256SharedSecret } = await appRegistryRpcClient.register({
@@ -197,6 +201,7 @@ describe('Bot', { sequential: true }, () => {
                 description: BOT_DESCRIPTION,
                 avatarUrl: 'https://placehold.co/64x64',
                 imageUrl: 'https://placehold.co/600x600',
+                slashCommands: SLASH_COMMANDS,
             },
         })
         jwtSecretBase64 = bin_toBase64(hs256SharedSecret)
@@ -204,7 +209,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRunBotServerAndRegisterWebhook = async () => {
-        bot = await makeTownsBot(appPrivateDataBase64, jwtSecretBase64)
+        bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         const { jwtMiddleware, handler } = await bot.start()
@@ -240,7 +245,7 @@ describe('Bot', { sequential: true }, () => {
 
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-
+        const timeBeforeSendMessage = Date.now()
         let receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
             receivedMessages.push(e)
@@ -253,6 +258,9 @@ describe('Bot', { sequential: true }, () => {
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.message).toBe(TEST_MESSAGE)
         expect(event?.isDm).toBe(false)
+        expect(event?.createdAt).toBeDefined()
+        expect(event?.createdAt).toBeInstanceOf(Date)
+        expect(event?.createdAt.getTime()).toBeGreaterThanOrEqual(timeBeforeSendMessage)
         expect(event?.isGdm).toBe(false)
         receivedMessages = []
     })
@@ -302,6 +310,36 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.isDm).toBe(true)
         expect(event?.isGdm).toBe(false)
         expect(event?.message).toBe(TEST_MESSAGE)
+    })
+
+    it('should receive slash command messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('help', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+            appClientAddress: bot.botId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('help')
+        expect(event?.args).toStrictEqual([])
+    })
+
+    it('should receive slash command with arguments', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('status', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId } = await bobDefaultChannel.sendMessage('/status detailed info', {
+            appClientAddress: bot.botId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('status')
+        expect(event?.args).toStrictEqual(['detailed', 'info'])
     })
 
     it.skip('SHOULD NOT receive gdm messages', { fails: true }, async () => {
@@ -609,39 +647,42 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
     })
 
-    // TODO: I couldnt get onTip to work somehow
-    // ConnectError: [failed_precondition] AddEvent: (62:DOWNSTREAM_NETWORK_ERROR)
-    // <base 0: unavailable: AddEvent: (14:UNAVAILABLE) Forwarding disabled by request header
-    // nodeAddress = 0x9CfBCA75Bc64E67Ff415C60367A78DC110BC9239
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 8.350417ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    // >>base 0 end
-    // nodeAddress = 0xC0C4e900678EcA2d9C17d7771351BDf7a225Ca1d
-    // nodeUrl =
-    // handler = AddEvent
-    // elapsed = 9.889292ms
-    // streamId = a898546bf3b74bb84457ead94fc0d89e64b837c7740000000000000000000000
-    it.skip('onTip should be triggered wfhen a tip is received', async () => {
+    it('onTip should be triggered when a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
         bot.onTip((_h, e) => {
             receivedTipEvents.push(e)
         })
+
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+
+        const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // bob tips the bot
         await bobDefaultChannel.sendTip(
             messageId,
             {
-                amount: ethers.utils.parseUnits('0.1').toBigInt(),
+                amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
-                chainId: 1,
-                receiver: bot.botId,
+                chainId: riverConfig.base.chainConfig.chainId,
+                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
             bob.signer,
         )
+        // app address is the address of the bot contract (not the bot client, since client is per installation)
+        const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
+        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
+        expect(balance).toBeGreaterThan(balanceBefore)
         await waitFor(() => receivedTipEvents.length > 0)
-        expect(receivedTipEvents.find((x) => x.eventId === messageId)).toBeDefined()
+        const tipEvent = receivedTipEvents.find((x) => x.messageId === messageId)
+        expect(tipEvent).toBeDefined()
+        expect(tipEvent?.userId).toBe(bob.userId)
+        expect(tipEvent?.spaceId).toBe(spaceId)
+        expect(tipEvent?.channelId).toBe(channelId)
+        expect(tipEvent?.amount).toBe(ethers.utils.parseUnits('0.01').toBigInt())
+        expect(tipEvent?.currency).toBe(ETH_ADDRESS)
+        expect(tipEvent?.senderAddress).toBe(bob.userId)
+        expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {

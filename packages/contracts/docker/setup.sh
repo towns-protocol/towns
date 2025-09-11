@@ -7,6 +7,8 @@ set -e
 # This file is meant to be run in a `RUN` block in a Dockerfile as part of the build process.
 # run.sh is the entrypoint for the container.
 
+export RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
+
 main() {
   # Set up trap to catch exit signals
   trap trap_cleanup SIGINT SIGTERM EXIT 
@@ -23,7 +25,7 @@ main() {
 
 start_base_chain() {
   echo "Starting base chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-basechain.sh &
+  RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-basechain.sh &
   sleep 1  # Give it a moment to start
   BASE_PID=$(pgrep -f "anvil.*base-anvil-state.json" | head -n 1)
   echo "Base chain started with PID: $BASE_PID"
@@ -31,7 +33,7 @@ start_base_chain() {
 
 start_river_chain() {
   echo "Starting river chain..."
-  RIVER_BLOCK_TIME=1 RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-riverchain.sh &
+  RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-riverchain.sh &
   sleep 1  # Give it a moment to start
   RIVER_PID=$(pgrep -f "anvil.*river-anvil-state.json" | head -n 1)
   echo "River chain started with PID: $RIVER_PID"
@@ -103,14 +105,13 @@ wait_for_river_chain() {
 
 deploy_contracts() {
   pushd ./core
-    just RUN_ENV=multi _require_run_env config-root deploy-contracts 
-    just RUN_ENV=multi_ne _require_run_env config-root deploy-contracts 
+    just config-root deploy-contracts
   popd
 }
 
 test_node_registry() {
   pushd ./core
-    if ! NODE_ADDRESSES=$(RUN_ENV=multi_ne just get_all_node_addresses); then
+    if ! NODE_ADDRESSES=$(just get_all_node_addresses); then
         echo "Failed to get node addresses"
         exit 1
     fi
@@ -129,6 +130,5 @@ test_node_registry() {
   popd
 }
 
-# cd ./core && just RUN_ENV=multi config build && just RUN_ENV=multi_ne config build
-
+# cd ./core && just config build
 main

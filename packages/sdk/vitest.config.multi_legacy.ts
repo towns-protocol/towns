@@ -9,7 +9,6 @@ export default mergeConfig(
             name: 'multi_legacy',
             env: {
                 USE_LEGACY_SPACES: 'true',
-                RIVER_ENV: 'local_multi',
             },
             include: ['./src/tests/multi/**/*.test.ts'],
             hookTimeout: 120_000,

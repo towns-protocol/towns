@@ -203,6 +203,10 @@ type Config struct {
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
 
+	// TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
+	// The value is a shared secret expected in the X-River-Test-Bypass header.
+	TestEntitlementsBypassSecret string
+
 	// MediaStreamDataStorage is the storage type for media stream data.
 	// Allowed values: "postgres", "gcs", "s3".
 	MediaStreamDataStorage string

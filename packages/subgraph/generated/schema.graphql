@@ -21,6 +21,8 @@ type Query {
   spaces(where: spaceFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): spacePage!
   swap(txHash: String!): swap
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage!
+  analyticsEvent(txHash: String!, logIndex: Float!): analyticsEvent
+  analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage!
   swapFee(spaceId: String!): swapFee
   swapFees(where: swapFeeFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapFeePage!
   swapRouter(txHash: String!): swapRouter
@@ -35,30 +37,54 @@ type Query {
   operators(where: operatorFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): operatorPage!
   app(address: String!): app
   apps(where: appFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): appPage!
+  review(spaceId: String!, user: String!): review
+  reviews(where: reviewFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): reviewPage!
   _meta: Meta
 }
 
 type space {
   id: String!
-  owner: String
-  tokenId: BigInt
-  name: String
-  uri: String
-  shortDescription: String
-  longDescription: String
-  createdAt: BigInt
-  paused: Boolean
+  owner: String!
+  tokenId: BigInt!
+  name: String!
+  nameLowercased: String!
+  uri: String!
+  shortDescription: String!
+  longDescription: String!
+  createdAt: BigInt!
+  paused: Boolean!
   totalAmountStaked: BigInt
+  swapVolume24h: BigInt
+  swapVolume7d: BigInt
+  swapVolume30d: BigInt
+  swapVolume: BigInt
+  tipVolume24h: BigInt
+  tipVolume7d: BigInt
+  tipVolume30d: BigInt
+  tipVolume: BigInt
+  joinVolume24h: BigInt
+  joinVolume7d: BigInt
+  joinVolume30d: BigInt
+  joinVolume: BigInt
+  memberCount24h: BigInt
+  memberCount7d: BigInt
+  memberCount30d: BigInt
+  memberCount: BigInt
+  reviewCount: BigInt
+  averageRating: Float
+  weightedRating: Float
   swapFee: swapFee
   swaps(where: swapFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): swapPage
+  analyticsEvents(where: analyticsEventFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): analyticsEventPage
   stakers(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
+  reviews(where: reviewFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): reviewPage
 }
 
 type swapFee {
   spaceId: String!
-  posterFeeBps: Int
-  collectPosterFeeToSpace: Boolean
-  createdAt: BigInt
+  posterFeeBps: Int!
+  collectPosterFeeToSpace: Boolean!
+  createdAt: BigInt!
 }
 
 type swapPage {
@@ -69,15 +95,15 @@ type swapPage {
 
 type swap {
   txHash: String!
-  spaceId: String
-  recipient: String
-  tokenIn: String
-  tokenOut: String
-  amountIn: BigInt
-  amountOut: BigInt
-  poster: String
-  blockTimestamp: BigInt
-  createdAt: BigInt
+  spaceId: String!
+  recipient: String!
+  tokenIn: String!
+  tokenOut: String!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  poster: String!
+  blockTimestamp: BigInt!
+  createdAt: BigInt!
   space: space
   swapRouter: swapRouter
   swapRouterSwap: swapRouterSwap
@@ -85,21 +111,21 @@ type swap {
 
 type swapRouter {
   txHash: String!
-  spaceFactory: String
-  createdAt: BigInt
+  spaceFactory: String!
+  createdAt: BigInt!
 }
 
 type swapRouterSwap {
   txHash: String!
-  router: String
-  caller: String
-  tokenIn: String
-  tokenOut: String
-  amountIn: BigInt
-  amountOut: BigInt
-  recipient: String
-  blockTimestamp: BigInt
-  createdAt: BigInt
+  router: String!
+  caller: String!
+  tokenIn: String!
+  tokenOut: String!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  recipient: String!
+  blockTimestamp: BigInt!
+  createdAt: BigInt!
 }
 
 input swapFilter {
@@ -199,6 +225,83 @@ input swapFilter {
   createdAt_lte: BigInt
 }
 
+type analyticsEventPage {
+  items: [analyticsEvent!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type analyticsEvent {
+  txHash: String!
+  logIndex: Int!
+  spaceId: String!
+  eventType: analyticsEventType!
+  blockTimestamp: BigInt!
+  ethAmount: BigInt
+  eventData: JSON!
+  space: space
+}
+
+enum analyticsEventType {
+  swap
+  tip
+  join
+  review
+}
+
+input analyticsEventFilter {
+  AND: [analyticsEventFilter]
+  OR: [analyticsEventFilter]
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+  logIndex: Int
+  logIndex_not: Int
+  logIndex_in: [Int]
+  logIndex_not_in: [Int]
+  logIndex_gt: Int
+  logIndex_lt: Int
+  logIndex_gte: Int
+  logIndex_lte: Int
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
+  eventType: analyticsEventType
+  eventType_not: analyticsEventType
+  eventType_in: [analyticsEventType]
+  eventType_not_in: [analyticsEventType]
+  blockTimestamp: BigInt
+  blockTimestamp_not: BigInt
+  blockTimestamp_in: [BigInt]
+  blockTimestamp_not_in: [BigInt]
+  blockTimestamp_gt: BigInt
+  blockTimestamp_lt: BigInt
+  blockTimestamp_gte: BigInt
+  blockTimestamp_lte: BigInt
+  ethAmount: BigInt
+  ethAmount_not: BigInt
+  ethAmount_in: [BigInt]
+  ethAmount_not_in: [BigInt]
+  ethAmount_gt: BigInt
+  ethAmount_lt: BigInt
+  ethAmount_gte: BigInt
+  ethAmount_lte: BigInt
+}
+
 type stakersPage {
   items: [stakers!]!
   pageInfo: PageInfo!
@@ -207,19 +310,19 @@ type stakersPage {
 
 type stakers {
   depositId: BigInt!
-  owner: String
-  delegatee: String
-  beneficiary: String
-  amount: BigInt
-  createdAt: BigInt
+  owner: String!
+  delegatee: String!
+  beneficiary: String!
+  amount: BigInt!
+  createdAt: BigInt!
   space: space
   operator: operator
 }
 
 type operator {
   address: String!
-  status: Int
-  createdAt: BigInt
+  status: Int!
+  createdAt: BigInt!
   stakings(where: stakersFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): stakersPage
 }
 
@@ -282,6 +385,81 @@ input stakersFilter {
   createdAt_lte: BigInt
 }
 
+type reviewPage {
+  items: [review!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type review {
+  spaceId: String!
+  user: String!
+  comment: String!
+  rating: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  space: space
+}
+
+input reviewFilter {
+  AND: [reviewFilter]
+  OR: [reviewFilter]
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  comment: String
+  comment_not: String
+  comment_in: [String]
+  comment_not_in: [String]
+  comment_contains: String
+  comment_not_contains: String
+  comment_starts_with: String
+  comment_ends_with: String
+  comment_not_starts_with: String
+  comment_not_ends_with: String
+  rating: Int
+  rating_not: Int
+  rating_in: [Int]
+  rating_not_in: [Int]
+  rating_gt: Int
+  rating_lt: Int
+  rating_gte: Int
+  rating_lte: Int
+  createdAt: BigInt
+  createdAt_not: BigInt
+  createdAt_in: [BigInt]
+  createdAt_not_in: [BigInt]
+  createdAt_gt: BigInt
+  createdAt_lt: BigInt
+  createdAt_gte: BigInt
+  createdAt_lte: BigInt
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_in: [BigInt]
+  updatedAt_not_in: [BigInt]
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+}
+
 type spacePage {
   items: [space!]!
   pageInfo: PageInfo!
@@ -329,6 +507,16 @@ input spaceFilter {
   name_ends_with: String
   name_not_starts_with: String
   name_not_ends_with: String
+  nameLowercased: String
+  nameLowercased_not: String
+  nameLowercased_in: [String]
+  nameLowercased_not_in: [String]
+  nameLowercased_contains: String
+  nameLowercased_not_contains: String
+  nameLowercased_starts_with: String
+  nameLowercased_ends_with: String
+  nameLowercased_not_starts_with: String
+  nameLowercased_not_ends_with: String
   uri: String
   uri_not: String
   uri_in: [String]
@@ -379,6 +567,158 @@ input spaceFilter {
   totalAmountStaked_lt: BigInt
   totalAmountStaked_gte: BigInt
   totalAmountStaked_lte: BigInt
+  swapVolume24h: BigInt
+  swapVolume24h_not: BigInt
+  swapVolume24h_in: [BigInt]
+  swapVolume24h_not_in: [BigInt]
+  swapVolume24h_gt: BigInt
+  swapVolume24h_lt: BigInt
+  swapVolume24h_gte: BigInt
+  swapVolume24h_lte: BigInt
+  swapVolume7d: BigInt
+  swapVolume7d_not: BigInt
+  swapVolume7d_in: [BigInt]
+  swapVolume7d_not_in: [BigInt]
+  swapVolume7d_gt: BigInt
+  swapVolume7d_lt: BigInt
+  swapVolume7d_gte: BigInt
+  swapVolume7d_lte: BigInt
+  swapVolume30d: BigInt
+  swapVolume30d_not: BigInt
+  swapVolume30d_in: [BigInt]
+  swapVolume30d_not_in: [BigInt]
+  swapVolume30d_gt: BigInt
+  swapVolume30d_lt: BigInt
+  swapVolume30d_gte: BigInt
+  swapVolume30d_lte: BigInt
+  swapVolume: BigInt
+  swapVolume_not: BigInt
+  swapVolume_in: [BigInt]
+  swapVolume_not_in: [BigInt]
+  swapVolume_gt: BigInt
+  swapVolume_lt: BigInt
+  swapVolume_gte: BigInt
+  swapVolume_lte: BigInt
+  tipVolume24h: BigInt
+  tipVolume24h_not: BigInt
+  tipVolume24h_in: [BigInt]
+  tipVolume24h_not_in: [BigInt]
+  tipVolume24h_gt: BigInt
+  tipVolume24h_lt: BigInt
+  tipVolume24h_gte: BigInt
+  tipVolume24h_lte: BigInt
+  tipVolume7d: BigInt
+  tipVolume7d_not: BigInt
+  tipVolume7d_in: [BigInt]
+  tipVolume7d_not_in: [BigInt]
+  tipVolume7d_gt: BigInt
+  tipVolume7d_lt: BigInt
+  tipVolume7d_gte: BigInt
+  tipVolume7d_lte: BigInt
+  tipVolume30d: BigInt
+  tipVolume30d_not: BigInt
+  tipVolume30d_in: [BigInt]
+  tipVolume30d_not_in: [BigInt]
+  tipVolume30d_gt: BigInt
+  tipVolume30d_lt: BigInt
+  tipVolume30d_gte: BigInt
+  tipVolume30d_lte: BigInt
+  tipVolume: BigInt
+  tipVolume_not: BigInt
+  tipVolume_in: [BigInt]
+  tipVolume_not_in: [BigInt]
+  tipVolume_gt: BigInt
+  tipVolume_lt: BigInt
+  tipVolume_gte: BigInt
+  tipVolume_lte: BigInt
+  joinVolume24h: BigInt
+  joinVolume24h_not: BigInt
+  joinVolume24h_in: [BigInt]
+  joinVolume24h_not_in: [BigInt]
+  joinVolume24h_gt: BigInt
+  joinVolume24h_lt: BigInt
+  joinVolume24h_gte: BigInt
+  joinVolume24h_lte: BigInt
+  joinVolume7d: BigInt
+  joinVolume7d_not: BigInt
+  joinVolume7d_in: [BigInt]
+  joinVolume7d_not_in: [BigInt]
+  joinVolume7d_gt: BigInt
+  joinVolume7d_lt: BigInt
+  joinVolume7d_gte: BigInt
+  joinVolume7d_lte: BigInt
+  joinVolume30d: BigInt
+  joinVolume30d_not: BigInt
+  joinVolume30d_in: [BigInt]
+  joinVolume30d_not_in: [BigInt]
+  joinVolume30d_gt: BigInt
+  joinVolume30d_lt: BigInt
+  joinVolume30d_gte: BigInt
+  joinVolume30d_lte: BigInt
+  joinVolume: BigInt
+  joinVolume_not: BigInt
+  joinVolume_in: [BigInt]
+  joinVolume_not_in: [BigInt]
+  joinVolume_gt: BigInt
+  joinVolume_lt: BigInt
+  joinVolume_gte: BigInt
+  joinVolume_lte: BigInt
+  memberCount24h: BigInt
+  memberCount24h_not: BigInt
+  memberCount24h_in: [BigInt]
+  memberCount24h_not_in: [BigInt]
+  memberCount24h_gt: BigInt
+  memberCount24h_lt: BigInt
+  memberCount24h_gte: BigInt
+  memberCount24h_lte: BigInt
+  memberCount7d: BigInt
+  memberCount7d_not: BigInt
+  memberCount7d_in: [BigInt]
+  memberCount7d_not_in: [BigInt]
+  memberCount7d_gt: BigInt
+  memberCount7d_lt: BigInt
+  memberCount7d_gte: BigInt
+  memberCount7d_lte: BigInt
+  memberCount30d: BigInt
+  memberCount30d_not: BigInt
+  memberCount30d_in: [BigInt]
+  memberCount30d_not_in: [BigInt]
+  memberCount30d_gt: BigInt
+  memberCount30d_lt: BigInt
+  memberCount30d_gte: BigInt
+  memberCount30d_lte: BigInt
+  memberCount: BigInt
+  memberCount_not: BigInt
+  memberCount_in: [BigInt]
+  memberCount_not_in: [BigInt]
+  memberCount_gt: BigInt
+  memberCount_lt: BigInt
+  memberCount_gte: BigInt
+  memberCount_lte: BigInt
+  reviewCount: BigInt
+  reviewCount_not: BigInt
+  reviewCount_in: [BigInt]
+  reviewCount_not_in: [BigInt]
+  reviewCount_gt: BigInt
+  reviewCount_lt: BigInt
+  reviewCount_gte: BigInt
+  reviewCount_lte: BigInt
+  averageRating: Float
+  averageRating_not: Float
+  averageRating_in: [Float]
+  averageRating_not_in: [Float]
+  averageRating_gt: Float
+  averageRating_lt: Float
+  averageRating_gte: Float
+  averageRating_lte: Float
+  weightedRating: Float
+  weightedRating_not: Float
+  weightedRating_in: [Float]
+  weightedRating_not_in: [Float]
+  weightedRating_gt: Float
+  weightedRating_lt: Float
+  weightedRating_gte: Float
+  weightedRating_lte: Float
 }
 
 type swapFeePage {
@@ -566,12 +906,12 @@ input swapRouterSwapFilter {
 
 type feeDistribution {
   txHash: String!
-  token: String
-  treasury: String
-  poster: String
-  treasuryAmount: BigInt
-  posterAmount: BigInt
-  createdAt: BigInt
+  token: String!
+  treasury: String!
+  poster: String!
+  treasuryAmount: BigInt!
+  posterAmount: BigInt!
+  createdAt: BigInt!
   swapRouterSwap: swapRouterSwap
 }
 
@@ -689,15 +1029,15 @@ input operatorFilter {
 
 type app {
   address: String!
-  appId: String
-  client: String
-  module: String
-  owner: String
-  createdAt: BigInt
-  permissions: [String!]
+  appId: String!
+  client: String!
+  module: String!
+  owner: String!
+  createdAt: BigInt!
+  permissions: [String!]!
   isRegistered: Boolean
   isBanned: Boolean
-  installedIn: [String!]
+  installedIn: [String!]!
 }
 
 type appPage {

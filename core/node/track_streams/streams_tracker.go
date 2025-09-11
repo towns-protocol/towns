@@ -267,7 +267,9 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
 			"streamId", event.GetStreamId(),
 			"error", err)
+		return
 	}
+	logging.FromCtx(ctx).Infow("Added stream on miniblock update", "streamId", event.GetStreamId())
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamPlacementUpdated(

@@ -5,12 +5,11 @@ pragma solidity ^0.8.23;
 import {IAppAccountBase} from "./IAppAccount.sol";
 import {IAppRegistry} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 
 // libraries
 import {MembershipStorage} from "src/spaces/facets/membership/MembershipStorage.sol";
@@ -19,13 +18,14 @@ import {DependencyLib} from "../DependencyLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {AppAccountStorage} from "./AppAccountStorage.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+import {ExecutorStorage} from "../executor/ExecutorStorage.sol";
 
 // contracts
 import {ExecutorBase} from "../executor/ExecutorBase.sol";
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
 // types
-import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest, ManifestExecutionFunction} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 abstract contract AppAccountBase is
@@ -86,11 +86,11 @@ abstract contract AppAccountBase is
         // Call module's onInstall if it has install data using LibCall
         // revert if it fails
         if (postInstallData.length > 0) {
-            bytes memory callData = abi.encodeCall(IERC6900Module.onInstall, (postInstallData));
+            bytes memory callData = abi.encodeCall(IModule.onInstall, (postInstallData));
             LibCall.callContract(app.module, 0, callData);
         }
 
-        emit IERC6900Account.ExecutionInstalled(app.module, app.manifest);
+        emit ExecutionInstalled(app.module, app.manifest);
     }
 
     function _uninstallApp(bytes32 appId, bytes calldata uninstallData) internal {
@@ -119,12 +119,12 @@ abstract contract AppAccountBase is
         bool onUninstallSuccess = true;
         if (uninstallData.length > 0) {
             // solhint-disable-next-line no-empty-blocks
-            try IERC6900Module(app.module).onUninstall(uninstallData) {} catch {
+            try IModule(app.module).onUninstall(uninstallData) {} catch {
                 onUninstallSuccess = false;
             }
         }
 
-        emit IERC6900Account.ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
+        emit ExecutionUninstalled(app.module, onUninstallSuccess, app.manifest);
     }
 
     function _onRenewApp(bytes32 appId, bytes calldata /* data */) internal {
@@ -208,6 +208,20 @@ abstract contract AppAccountBase is
         return AppAccountStorage.getLayout().installedApps.values();
     }
 
+    function _isAppExecuting(address app) internal view returns (bool) {
+        bytes32 currentExecutionId = ExecutorStorage.getExecutionId();
+        if (currentExecutionId == bytes32(0)) return false;
+
+        bytes32 targetId = ExecutorStorage.getTargetExecutionId(app);
+        if (targetId == bytes32(0)) return false;
+        if (currentExecutionId != targetId) return false;
+
+        bytes32 appId = _getInstalledAppId(app);
+        if (appId == EMPTY_UID) return false;
+
+        return true;
+    }
+
     function _isAppInstalled(address module) internal view returns (bool) {
         return AppAccountStorage.getLayout().installedApps.contains(module);
     }
@@ -251,19 +265,11 @@ abstract contract AppAccountBase is
 
     function _isInvalidSelector(bytes4 selector) internal pure returns (bool) {
         return
-            selector == IERC6900Account.installExecution.selector ||
-            selector == IERC6900Account.uninstallExecution.selector ||
-            selector == IERC6900Account.installValidation.selector ||
-            selector == IERC6900Account.uninstallValidation.selector ||
-            selector == IERC6900Account.execute.selector ||
-            selector == IERC6900Account.executeBatch.selector ||
-            selector == IERC6900Account.executeWithRuntimeValidation.selector ||
-            selector == IERC6900Account.accountId.selector ||
             selector == IERC165.supportsInterface.selector ||
-            selector == IERC6900Module.moduleId.selector ||
-            selector == IERC6900Module.onInstall.selector ||
-            selector == IERC6900Module.onUninstall.selector ||
-            selector == IERC6900ExecutionModule.executionManifest.selector ||
+            selector == IModule.moduleId.selector ||
+            selector == IModule.onInstall.selector ||
+            selector == IModule.onUninstall.selector ||
+            selector == IExecutionModule.executionManifest.selector ||
             selector == IDiamondCut.diamondCut.selector ||
             selector == ITownsApp.requiredPermissions.selector;
     }

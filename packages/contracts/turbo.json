@@ -1,0 +1,21 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "compile": {
+      "cache": true,
+      "outputs": ["out/**", "cache/**"],
+      "dependsOn": []
+    },
+    "test:unit": {
+      "cache": false,
+      "outputs": [],
+      "dependsOn": ["compile"]
+    },
+    "typings": {
+      "cache": true,
+      "outputs": ["typings/**"],
+      "dependsOn": ["compile"]
+    }
+  }
+}

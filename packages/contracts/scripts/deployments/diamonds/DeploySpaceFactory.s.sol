@@ -134,7 +134,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        // Queue up all feature facets for batch deployment
+        // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
         facetHelper.add("Architect");
@@ -145,6 +145,10 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("PricingModulesFacet");
         facetHelper.add("ImplementationRegistryFacet");
         facetHelper.add("SCL_EIP6565");
+
+        // Deploy the second batch of facets
+        facetHelper.deployBatch(deployer);
+
         facetHelper.add("WalletLink");
         facetHelper.add("EIP712Facet");
         facetHelper.add("PartnerRegistry");
@@ -157,7 +161,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             facetHelper.add("MockLegacyArchitect");
         }
 
-        // Deploy the feature facets in a batch
+        // Deploy the third batch of facets
         facetHelper.deployBatch(deployer);
 
         if (isAnvil()) {
