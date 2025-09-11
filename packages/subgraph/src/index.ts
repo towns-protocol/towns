@@ -187,14 +187,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
     const spaceId = event.log.address
     const transactionHash = event.transaction.hash
 
-    const space = await context.db.sql.query.space.findFirst({
-        where: eq(schema.space.id, spaceId),
-    })
-    if (!space) {
-        console.warn(`Space not found for Space:Swap`, spaceId)
-        return
-    }
-
     try {
         // Calculate ETH amount for analytics
         let ethAmount = 0n
@@ -204,14 +196,11 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             ethAmount = event.args.amountOut
         }
 
-        // Check if swap already exists
-        const existingSwap = await context.db.sql.query.swap.findFirst({
-            where: eq(schema.swap.txHash, transactionHash),
-        })
-
-        if (!existingSwap) {
-            // Write to swap table
-            await context.db.insert(schema.swap).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING for swap table
+        // txHash is the primary key
+        await context.db
+            .insert(schema.swap)
+            .values({
                 txHash: transactionHash,
                 spaceId: spaceId,
                 recipient: event.args.recipient,
@@ -223,18 +212,13 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
-        }
+            .onConflictDoNothing()
 
-        // Check if analytics event already exists
-        const existingAnalytics = await context.db.sql.query.analyticsEvent.findFirst({
-            where: and(
-                eq(schema.analyticsEvent.txHash, transactionHash),
-                eq(schema.analyticsEvent.logIndex, event.log.logIndex),
-            ),
-        })
-
-        if (!existingAnalytics) {
-            await context.db.insert(schema.analyticsEvent).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING for analytics event
+        // This leverages the existing primary key constraint (txHash, logIndex)
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
                 txHash: transactionHash,
                 logIndex: event.log.logIndex,
                 spaceId: spaceId,
@@ -251,23 +235,19 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                     poster: event.args.poster,
                 },
             })
+            .onConflictDoNothing()
 
-            // Increment all-time swap volume only for new events
-            const currentSpace = await context.db.sql.query.space.findFirst({
-                where: eq(schema.space.id, spaceId),
+        // Directly update space metrics with inline calculations
+        // This eliminates the need to query current values first
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                swapVolume: sql`COALESCE(${schema.space.swapVolume}, 0) + ${ethAmount}`,
             })
-            if (currentSpace) {
-                await context.db.sql
-                    .update(schema.space)
-                    .set({
-                        swapVolume: (currentSpace.swapVolume ?? 0n) + ethAmount,
-                    })
-                    .where(eq(schema.space.id, spaceId))
-            }
+            .where(eq(schema.space.id, spaceId))
 
-            // Temp disabled rolling window metrics
-            // await updateSpaceCachedMetrics(context, spaceId, 'swap')
-        }
+        // Temp disabled rolling window metrics
+        // await updateSpaceCachedMetrics(context, spaceId, 'swap')
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -279,12 +259,11 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
     const transactionHash = event.transaction.hash
 
     try {
-        // update swap router swap table
-        const existing = await context.db.sql.query.swapRouterSwap.findFirst({
-            where: eq(schema.swapRouterSwap.txHash, transactionHash),
-        })
-        if (!existing) {
-            await context.db.insert(schema.swapRouterSwap).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING
+        // txHash is the primary key
+        await context.db
+            .insert(schema.swapRouterSwap)
+            .values({
                 txHash: transactionHash,
                 router: event.args.router,
                 caller: event.args.caller,
@@ -296,7 +275,7 @@ ponder.on('SwapRouter:Swap', async ({ event, context }) => {
                 blockTimestamp: blockTimestamp,
                 createdAt: blockNumber,
             })
-        }
+            .onConflictDoNothing()
     } catch (error) {
         console.error(`Error processing SwapRouter:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -308,12 +287,11 @@ ponder.on('SwapRouter:FeeDistribution', async ({ event, context }) => {
     const transactionHash = event.transaction.hash
 
     try {
-        // update fee distribution table
-        const existing = await context.db.sql.query.feeDistribution.findFirst({
-            where: eq(schema.feeDistribution.txHash, transactionHash),
-        })
-        if (!existing) {
-            await context.db.insert(schema.feeDistribution).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING
+        // txHash is the primary key
+        await context.db
+            .insert(schema.feeDistribution)
+            .values({
                 txHash: transactionHash,
                 token: event.args.token,
                 treasury: event.args.protocol,
@@ -322,7 +300,7 @@ ponder.on('SwapRouter:FeeDistribution', async ({ event, context }) => {
                 posterAmount: event.args.posterAmount,
                 createdAt: blockNumber,
             })
-        }
+            .onConflictDoNothing()
     } catch (error) {
         console.error(
             `Error processing SwapRouter:FeeDistribution at blockNumber ${blockNumber}:`,
@@ -337,17 +315,16 @@ ponder.on('SwapRouter:SwapRouterInitialized', async ({ event, context }) => {
     const transactionHash = event.transaction.hash
 
     try {
-        // update swap router onchainTable
-        const existing = await context.db.sql.query.swapRouter.findFirst({
-            where: eq(schema.swapRouter.txHash, transactionHash),
-        })
-        if (!existing) {
-            await context.db.insert(schema.swapRouter).values({
+        // Use INSERT ... ON CONFLICT DO NOTHING
+        // txHash is the primary key
+        await context.db
+            .insert(schema.swapRouter)
+            .values({
                 txHash: transactionHash,
                 spaceFactory: event.args.spaceFactory,
                 createdAt: blockNumber,
             })
-        }
+            .onConflictDoNothing()
     } catch (error) {
         console.error(
             `Error processing SwapRouter:SwapRouterInitialized at blockNumber ${blockNumber}:`,
