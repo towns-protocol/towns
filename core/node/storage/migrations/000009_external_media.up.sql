@@ -2,8 +2,7 @@
 CREATE TABLE external_media_uploads (
     stream_id CHAR(64) PRIMARY KEY,                  -- Stream ID as primary key (matches other tables)
     upload_id TEXT NOT NULL DEFAULT '',              -- upload ID for multipart uploads
-    etags JSONB NOT NULL DEFAULT '[]',               -- etags for each part in the multipart upload
-    PRIMARY KEY (stream_id)
+    etags JSONB NOT NULL DEFAULT '[]'                -- etags for each part in the multipart upload
 );
 
 -- Create partitioned tables for external_media_markers
