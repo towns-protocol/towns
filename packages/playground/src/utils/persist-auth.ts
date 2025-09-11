@@ -1,4 +1,4 @@
-import type { RiverConfig, SignerContext } from '@towns-protocol/sdk'
+import { type RiverConfig, type SignerContext, getEnvironmentIds } from '@towns-protocol/sdk'
 import superjson from 'superjson'
 
 export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {
@@ -15,6 +15,9 @@ export const loadAuth = () => {
     const signerContextString = window.localStorage.getItem('river-signer')
     const riverConfigString = window.localStorage.getItem('river-last-env')
     if (!signerContextString || !riverConfigString) {
+        return undefined
+    }
+    if (getEnvironmentIds().find((id) => id === riverConfigString) === undefined) {
         return undefined
     }
     const signerContext = superjson.parse<Record<string, string>>(signerContextString)
