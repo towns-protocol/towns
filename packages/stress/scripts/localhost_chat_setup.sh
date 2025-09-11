@@ -12,7 +12,9 @@ export RIVER_ENV="${RIVER_ENV:-local_dev}"
 
 # if RIVER_ENV == local_dev, source the .env file
 if [ "$RIVER_ENV" == "local_dev" ]; then
+    set -a  # automatically export all variables
     source ../generated/deployments/local_dev/.env
+    set +a  # turn off automatic export
 fi
 
 export STRESS_MODE="${STRESS_MODE:-setup_chat}"
