@@ -9,7 +9,7 @@ EVENT_TYPE="schedule"
 EVENT_TIME="2023-01-01T00:00:00Z"
 
 # Function to display usage info
-function show_usage {
+show_usage() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -j, --job JOB_NAME     Specify the job to run (default: Common_CI)"
@@ -44,6 +44,17 @@ EOF
 # Format with prettier
 echo "Formatting event.json..."
 yarn prettier --write event.json
+
+# Cleanup function to stop Anvil containers
+cleanup_anvil_containers() {
+    echo "Stopping Anvil containers..."
+    if command -v just >/dev/null 2>&1 && [ -d "core" ]; then
+        (cd core && USE_DOCKER_CHAINS=1 just anvils-stop) 2>/dev/null || true
+    fi
+}
+
+# Set up trap to cleanup on exit
+trap cleanup_anvil_containers EXIT INT TERM
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
