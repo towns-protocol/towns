@@ -92,6 +92,10 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
             /** You can use this to check if the message is a direct message */
             isDm: boolean
             /** You can use this to check if the message is a group message */
@@ -113,24 +117,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** The event ID of the message that got edited */
             refEventId: string
             /** New message */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => void | Promise<void>
-    mentioned: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => void | Promise<void>
-    reply: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
             message: string
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
@@ -578,23 +564,7 @@ export class Bot<
                         }
                     }
 
-                    if (replyId) {
-                        this.emitter.emit('reply', this.client, forwardPayload)
-                    } else if (threadId && hasBotMention) {
-                        this.emitter.emit('mentionedInThread', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (threadId) {
-                        this.emitter.emit('threadMessage', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (hasBotMention) {
-                        this.emitter.emit('mentioned', this.client, forwardPayload)
-                    } else {
-                        this.emitter.emit('message', this.client, forwardPayload)
-                    }
+                    this.emitter.emit('message', this.client, forwardPayload)
                 }
                 break
             }
@@ -759,20 +729,6 @@ export class Bot<
     }
 
     /**
-     * Triggered when someone mentions the bot in a message
-     */
-    onMentioned(fn: BotEvents['mentioned']) {
-        this.emitter.on('mentioned', fn)
-    }
-
-    /**
-     * Triggered when someone replies to a message
-     */
-    onReply(fn: BotEvents['reply']) {
-        this.emitter.on('reply', fn)
-    }
-
-    /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
@@ -809,17 +765,6 @@ export class Bot<
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
         this.emitter.on('streamEvent', fn)
-    }
-
-    onThreadMessage(fn: BotEvents['threadMessage']) {
-        this.emitter.on('threadMessage', fn)
-    }
-
-    /**
-     * Triggered when someone mentions the bot in a thread message
-     */
-    onMentionedInThread(fn: BotEvents['mentionedInThread']) {
-        this.emitter.on('mentionedInThread', fn)
     }
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
