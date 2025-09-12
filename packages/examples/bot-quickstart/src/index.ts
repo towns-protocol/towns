@@ -39,9 +39,7 @@ async function main() {
         }
     })
 
-    bot.onReaction(async (handler, { reaction, channelId, userId }) => {
-        if (userId === bot.botId) return
-
+    bot.onReaction(async (handler, { reaction, channelId }) => {
         if (reaction === '👋') {
             await handler.sendMessage(channelId, 'Thanks for the wave! 👋')
         }
