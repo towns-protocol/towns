@@ -475,15 +475,6 @@ func (s *Service) DeleteApp(
 		)
 	}
 
-	// Remove the app's user inbox stream from tracking
-	userInboxStreamId := shared.UserInboxStreamIdFromAddress(app)
-	if err := s.streamsTracker.RemoveStream(userInboxStreamId); err != nil {
-		// Log error but don't fail the deletion - this is not critical
-		logging.FromCtx(ctx).Warn("failed to remove app's user inbox stream from tracking",
-			"error", err,
-			"streamId", userInboxStreamId)
-	}
-
 	// Delete the app and all associated data
 	if err := s.store.DeleteApp(ctx, app); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).

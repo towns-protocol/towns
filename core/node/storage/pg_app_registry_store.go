@@ -31,7 +31,7 @@ import (
 // Operations are divided into two categories:
 //
 // 1. SERIALIZABLE (default): Required for queue operations
-//    - EnqueueUnsendableMessage: Reads app_session_keys, writes to enqueued_messages
+//    - EnqueueUnsendableMessages: Reads app_session_keys, writes to enqueued_messages
 //    - PublishSessionKeys: Writes to app_session_keys, deletes from enqueued_messages
 //
 // 2. READ COMMITTED: Safe for non-queue operations
@@ -413,7 +413,6 @@ func (s *PostgresAppRegistryStore) deleteApp(
 	app common.Address,
 	tx pgx.Tx,
 ) error {
-	// First, get the device_key for cascading deletes, if it exists
 	var deviceKey *string
 	err := tx.QueryRow(ctx,
 		`SELECT device_key FROM app_registry WHERE app_id = $1`,
