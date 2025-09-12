@@ -102,6 +102,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             isGdm: boolean
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            hasBotMention: boolean
         },
     ) => void | Promise<void>
     redaction: (
@@ -118,8 +120,14 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
             /** New message */
             message: string
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            hasBotMention: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -161,29 +169,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & { event: ParsedEvent },
     ) => Promise<void> | void
-    threadMessage: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => Promise<void> | void
-    mentionedInThread: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => Promise<void> | void
-
     slashCommand: (
         handler: BotActions,
         event: BasePayload & {
@@ -527,12 +512,11 @@ export class Bot<
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    const hasBotMention = payload.value.content.value.mentions.some(
-                        (m) => m.userId === this.botId,
-                    )
                     const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
+                    const mentions = parseMentions(payload.value.content.value.mentions)
+                    const hasBotMention = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
                         userId,
                         eventId: parsed.hashStr,
@@ -542,7 +526,10 @@ export class Bot<
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
-                        mentions: parseMentions(payload.value.content.value.mentions),
+                        mentions,
+                        hasBotMention,
+                        replyId,
+                        threadId,
                     }
 
                     if (
@@ -562,9 +549,9 @@ export class Bot<
                                 threadId,
                             })
                         }
+                    } else {
+                        this.emitter.emit('message', this.client, forwardPayload)
                     }
-
-                    this.emitter.emit('message', this.client, forwardPayload)
                 }
                 break
             }
@@ -583,6 +570,8 @@ export class Bot<
             case 'edit': {
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
+                const mentions = parseMentions(payload.value.post?.content.value.mentions)
+                const hasBotMention = mentions.some((m) => m.userId === this.botId)
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -590,8 +579,11 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
-                    mentions: parseMentions(payload.value.post?.content.value.mentions),
+                    mentions,
+                    hasBotMention,
                     createdAt,
+                    replyId: payload.value.post?.replyId,
+                    threadId: payload.value.post?.threadId,
                 })
                 break
             }
