@@ -211,8 +211,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Get the location of the stream data
 		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 		if err != nil {
-			// Default to config storage type
-			location = s.config.MediaStreamDataStorage
+			return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 		}
 		if location != "" {
 			if location != s.config.ExternalMediaStreamDataBucket {

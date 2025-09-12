@@ -388,6 +388,9 @@ func (s *PostgresStreamStore) getMediaStreamLocationTx(
 ) (string, error) {
 	var location string
 	if err := tx.QueryRow(ctx, "SELECT location FROM es WHERE stream_id = $1", streamId).Scan(&location); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
 		return "", err
 	}
 	return location, nil

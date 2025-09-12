@@ -137,8 +137,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 	if err != nil {
-		// Default to config storage type
-		location = s.config.MediaStreamDataStorage
+		return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 	}
 	if location != "" {
 		if location != s.config.ExternalMediaStreamDataBucket {
