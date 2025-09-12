@@ -59,8 +59,16 @@ _check-remote-image IMAGE_TAG:
 _get-docker-image:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     CONTRACTS_HASH=$(just _get-contracts-hash)
-    IMAGE_TAG="public.ecr.aws/h5v6m2x1/towns-anvil:${CONTRACTS_HASH}"
     
+    # Check if image exists locally first (from CI artifact or previous build)
+    if docker images -q "towns-anvil:${CONTRACTS_HASH}" 2>/dev/null | grep -q .; then
+        echo "Using local image with hash: ${CONTRACTS_HASH}" >&2
+        echo "towns-anvil:${CONTRACTS_HASH}"
+        exit 0
+    fi
+    
+    # Check remote ECR
+    IMAGE_TAG="public.ecr.aws/h5v6m2x1/towns-anvil:${CONTRACTS_HASH}"
     echo "Checking for remote image: ${IMAGE_TAG}" >&2
     if just _check-remote-image "${IMAGE_TAG}"; then
         echo "Found remote image with hash: ${CONTRACTS_HASH}" >&2
@@ -68,10 +76,7 @@ _get-docker-image:
     else
         echo "Remote image not found for hash: ${CONTRACTS_HASH}" >&2
         echo "Building local image..." >&2
-        
-        # Build the image locally with the contracts hash tag
         just build-anvil-docker "${CONTRACTS_HASH}"
-        
         echo "towns-anvil:${CONTRACTS_HASH}"
     fi
 
