@@ -24,7 +24,7 @@ import {
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
-import { default as jwt } from 'jsonwebtoken'
+import { verify } from 'hono/jwt'
 import { createNanoEvents, type Emitter } from 'nanoevents'
 import {
     type ChannelMessage_Post_Attachment,
@@ -265,17 +265,22 @@ export class Bot<
         try {
             const botAddressBytes = bin_fromHexString(this.botId)
             const expectedAudience = bin_toHexString(botAddressBytes)
-            jwt.verify(tokenString, Buffer.from(this.jwtSecret), {
-                algorithms: ['HS256'],
-                audience: expectedAudience,
-            })
-        } catch (err) {
-            let errorMessage = 'Unauthorized: Token verification failed'
-            if (err instanceof jwt.TokenExpiredError) {
-                errorMessage = 'Unauthorized: Token expired'
-            } else if (err instanceof jwt.JsonWebTokenError) {
-                errorMessage = `Unauthorized: Invalid token (${err.message})`
+            const secretString = new TextDecoder().decode(this.jwtSecret)
+            const payload = await verify(tokenString, secretString, 'HS256')
+            if (payload.aud !== expectedAudience) {
+                return c.text('Unauthorized: Invalid audience', 401)
             }
+            if (payload.exp && typeof payload.exp === 'number') {
+                const now = Math.floor(Date.now() / 1000)
+                if (payload.exp < now) {
+                    return c.text('Unauthorized: Token expired', 401)
+                }
+            }
+        } catch (err) {
+            const errorMessage =
+                err instanceof Error
+                    ? `Unauthorized: Invalid token (${err.message})`
+                    : 'Unauthorized: Token verification failed'
             return c.text(errorMessage, 401)
         }
 
