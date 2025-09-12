@@ -29,7 +29,7 @@ import {
     evaluateOperationsForEntitledWallet,
     findEthereumProviders,
 } from '../src/space/entitlements/entitlement'
-import { IRuleEntitlementV2Base } from '../src/space/entitlements/IRuleEntitlementV2Shim'
+import { IRuleEntitlementV2Base } from '../src/space/entitlements/RuleEntitlementV2Shim'
 import { convertRuleDataV2ToV1 } from '../src/space/entitlements/ConvertersEntitlements'
 import {
     MOCK_ADDRESS,
