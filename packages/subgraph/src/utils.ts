@@ -327,4 +327,4 @@ async function getReadSpaceInfoBlockNumber(blockNumber: bigint): Promise<bigint>
     return blockNumber > minBlock ? blockNumber : minBlock
 }
 
-export { publicClient, getReadSpaceInfoBlockNumber, getCreatedDate }
+export { getReadSpaceInfoBlockNumber, getCreatedDate }
