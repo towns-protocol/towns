@@ -619,8 +619,8 @@ describe('Bot', { sequential: true }, () => {
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
     })
-    // TODO: flaky test
-    it.skip('onReply should be triggered when a message is replied to', async () => {
+
+    it('onReply should be triggered when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const receivedReplyEvents: BotPayload<'reply'>[] = []
         bot.onReply((_h, e) => {
@@ -631,7 +631,9 @@ describe('Bot', { sequential: true }, () => {
             replyId: messageId,
         })
         await waitFor(() => receivedReplyEvents.length > 0)
-        expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
+        const receivedReplyEvent = receivedReplyEvents.find((x) => x.eventId === replyEventId)
+        expect(receivedReplyEvent).toBeDefined()
+        expect(receivedReplyEvent?.replyId).toBe(messageId)
     })
 
     it('onTip should be triggered when a tip is received', async () => {
