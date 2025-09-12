@@ -171,12 +171,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		}
 		storageMb.Data = []byte{}
 	}
-	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
-	if err != nil {
-		return RiverError(Err_INTERNAL, "failed to write ephemeral miniblock", "error", err)
-	}
-
-	return nil
+	return s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 }
 
 func (s *Service) SealEphemeralStream(

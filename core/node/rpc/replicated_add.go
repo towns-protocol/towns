@@ -252,7 +252,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
 		}); err != nil {
-			return RiverError(Err_INTERNAL, "failed to write ephemeral miniblock", "error", err)
+			return err
 		}
 
 		// Return here if there are more chunks to upload.
@@ -296,7 +296,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Normalize stream locally
 		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
 		if err != nil {
-			return RiverError(Err_INTERNAL, "failed to normalize ephemeral stream", "error", err)
+			return err
 		}
 
 		quorumCheckMu.Lock()

@@ -191,7 +191,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// If the given ephemeral stream does not exist, create one by adding an extra query.
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			query += `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);`
+			query += `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, location) VALUES ($1, 0, true, true, '');`
 		} else {
 			return err
 		}
@@ -431,6 +431,8 @@ func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 	query := `
 		INSERT INTO external_media_uploads (stream_id, upload_id) 
 		VALUES ($1, $2)
+		ON CONFLICT (stream_id) 
+		DO UPDATE SET upload_id = $2
 	`
 
 	_, err := tx.Exec(ctx, query, streamId, uploadID)
@@ -492,6 +494,10 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 		INSERT INTO external_media_markers (stream_id, miniblock, start_bytes, end_bytes) 
 		SELECT $1, $2, max_end + 1, max_end + $3
 		FROM max_end_bytes
+		ON CONFLICT (stream_id, miniblock) 
+		DO UPDATE SET 
+			start_bytes = EXCLUDED.start_bytes,
+			end_bytes = EXCLUDED.end_bytes
 	`
 	_, err = tx.Exec(ctx, query, streamId, miniblock, length)
 	return err
