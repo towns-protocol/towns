@@ -627,6 +627,12 @@ describe('Bot', { sequential: true }, () => {
             receivedReplyEvents.push(e)
         })
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+        // bob should receive the message
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId),
+            ).toBeDefined(),
+        )
         const { eventId: replyEventId } = await bobDefaultChannel.sendMessage('hi back', {
             replyId: messageId,
         })
