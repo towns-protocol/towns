@@ -558,6 +558,8 @@ export class Bot<
                                 ...forwardPayload,
                                 command: command as Commands[number]['name'],
                                 args,
+                                replyId,
+                                threadId,
                             })
                         }
                     }
