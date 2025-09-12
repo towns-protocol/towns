@@ -9197,7 +9197,7 @@ __metadata:
     viem: ^2.29.3
     vitest: ^3.2.3
   peerDependencies:
-    hono: ^4.7.11
+    hono: ">=4.7.11"
   languageName: unknown
   linkType: soft
 
