@@ -265,7 +265,7 @@ func (s *Service) createReplicatedMediaStream(
 				ctx,
 				streamId,
 				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
-				s.externalMediaStorage.GetBucket(),
+				s.config.ExternalMediaStreamDataBucket,
 			)
 		})
 	}
