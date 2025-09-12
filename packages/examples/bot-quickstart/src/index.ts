@@ -45,8 +45,8 @@ async function main() {
         }
     })
 
-    bot.onMessage(async (handler, { channelId, hasBotMention }) => {
-        if (hasBotMention) {
+    bot.onMessage(async (handler, { channelId, isMentioned }) => {
+        if (isMentioned) {
             await handler.sendMessage(channelId, 'You mentioned me! 🤖')
         }
     })

@@ -10,8 +10,8 @@ import { serve } from "@hono/node-server";
 
 const bot = await makeTownsBot("<app-private-data-base64>", "<jwt-secret>");
 
-bot.onMessage((client, { channelId, hasBotMention }) => {
-  if (hasBotMention) {
+bot.onMessage((client, { channelId, isMentioned }) => {
+  if (isMentioned) {
     client.sendMessage(channelId, "Hello, world!");
   }
 });

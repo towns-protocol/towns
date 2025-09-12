@@ -454,11 +454,11 @@ describe('Bot', { sequential: true }, () => {
         expect(threadEvent?.threadId).toBe(initialMessageId)
     })
 
-    it('onMessage should be triggered with hasBotMention when a bot is mentioned', async () => {
+    it('onMessage should be triggered with isMentioned when a bot is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
         bot.onMessage((_h, e) => {
-            if (e.hasBotMention) {
+            if (e.isMentioned) {
                 receivedMentionedEvents.push(e)
             }
         })
@@ -475,12 +475,12 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMentionedEvents.length > 0)
         const mentionedEvent = receivedMentionedEvents.find((x) => x.eventId === eventId)
         expect(mentionedEvent).toBeDefined()
-        expect(mentionedEvent?.hasBotMention).toBe(true)
+        expect(mentionedEvent?.isMentioned).toBe(true)
         expect(mentionedEvent?.mentions[0].userId).toBe(bot.botId)
         expect(mentionedEvent?.mentions[0].displayName).toBe(BOT_DISPLAY_NAME)
     })
 
-    it('hasBotMention should be false when someone else is mentioned', async () => {
+    it('isMentioned should be false when someone else is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -499,10 +499,10 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         const message = receivedMessages.find((x) => x.eventId === eventId)
         expect(message).toBeDefined()
-        expect(message?.hasBotMention).toBe(false)
+        expect(message?.isMentioned).toBe(false)
     })
 
-    it('onMessage should be triggered with both threadId and hasBotMention when bot is mentioned in a thread', async () => {
+    it('onMessage should be triggered with both threadId and isMentioned when bot is mentioned in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedInThreadEvents: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -533,10 +533,10 @@ describe('Bot', { sequential: true }, () => {
         expect(threadMentionEvent).toBeDefined()
         expect(threadMentionEvent?.userId).toBe(bob.userId)
         expect(threadMentionEvent?.threadId).toBe(initialMessageId)
-        expect(threadMentionEvent?.hasBotMention).toBe(true)
+        expect(threadMentionEvent?.isMentioned).toBe(true)
     })
 
-    it('thread message without bot mention should have hasBotMention false', async () => {
+    it('thread message without bot mention should have isMentioned false', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -557,7 +557,7 @@ describe('Bot', { sequential: true }, () => {
         const message = receivedMessages.find((x) => x.eventId === threadEventId)
         expect(message).toBeDefined()
         expect(message?.threadId).toBe(initialMessageId)
-        expect(message?.hasBotMention).toBe(false)
+        expect(message?.isMentioned).toBe(false)
     })
 
     it('onReaction should be triggered when a reaction is added', async () => {

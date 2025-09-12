@@ -103,7 +103,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
-            hasBotMention: boolean
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     redaction: (
@@ -127,7 +127,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
-            hasBotMention: boolean
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -516,7 +516,7 @@ export class Bot<
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
                     const mentions = parseMentions(payload.value.content.value.mentions)
-                    const hasBotMention = mentions.some((m) => m.userId === this.botId)
+                    const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
                         userId,
                         eventId: parsed.hashStr,
@@ -527,7 +527,7 @@ export class Bot<
                         isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
                         mentions,
-                        hasBotMention,
+                        isMentioned,
                         replyId,
                         threadId,
                     }
@@ -571,7 +571,7 @@ export class Bot<
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
                 const mentions = parseMentions(payload.value.post?.content.value.mentions)
-                const hasBotMention = mentions.some((m) => m.userId === this.botId)
+                const isMentioned = mentions.some((m) => m.userId === this.botId)
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -580,7 +580,7 @@ export class Bot<
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
                     mentions,
-                    hasBotMention,
+                    isMentioned,
                     createdAt,
                     replyId: payload.value.post?.replyId,
                     threadId: payload.value.post?.threadId,
