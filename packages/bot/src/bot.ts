@@ -154,7 +154,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
         },
     ) => Promise<void> | void
-    // TODO:
     tip: (
         handler: BotActions,
         event: BasePayload & {
@@ -216,6 +215,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
              * ```
              */
             args: string[]
+            /** Users mentioned in the command */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** The eventId of the message that got replied */
             replyId: string | undefined
             /** The thread id where the message belongs to */
