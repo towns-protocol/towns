@@ -23,6 +23,7 @@ COPY ./protocol ./protocol
 COPY ./scripts ./scripts
 
 # monorepo packages
+COPY ./packages/contracts /river/packages/contracts
 COPY ./packages/eslint-config /river/packages/eslint-config
 COPY ./packages/prettier-config /river/packages/prettier-config
 COPY ./packages/generated /river/packages/generated
@@ -36,7 +37,8 @@ COPY ./packages/rpc-connector /river/packages/rpc-connector
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
 # install dependencies and build
-RUN corepack enable
+RUN corepack enable && \
+    corepack prepare yarn@3.8.0 --activate
 RUN yarn install
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
