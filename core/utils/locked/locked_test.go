@@ -1,8 +1,9 @@
 package locked
 
 import (
-    "testing"
-    "github.com/stretchr/testify/require"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // State and RO interface used across tests to demonstrate the recommended pattern
@@ -32,10 +33,10 @@ func TestLocked_StatePattern(t *testing.T) {
 	s.Inc()
 	p.st.Unlock()
 
-    // read under lock
-    s = p.st.Lock()
-    require.Equal(t, 42, s.Get())
-    p.st.Unlock()
+	// read under lock
+	s = p.st.Lock()
+	require.Equal(t, 42, s.Get())
+	p.st.Unlock()
 }
 
 func TestLockedPtr_StatePattern(t *testing.T) {
@@ -47,15 +48,15 @@ func TestLockedPtr_StatePattern(t *testing.T) {
 	s.Inc()
 	p.st.Unlock()
 
-    s = p.st.Lock()
-    require.Equal(t, 11, s.Get())
-    p.st.Unlock()
+	s = p.st.Lock()
+	require.Equal(t, 11, s.Get())
+	p.st.Unlock()
 
 	// Swap underlying pointer
 	p.st.Set(state{n: 5})
-    s = p.st.Lock()
-    require.Equal(t, 5, s.Get())
-    p.st.Unlock()
+	s = p.st.Lock()
+	require.Equal(t, 5, s.Get())
+	p.st.Unlock()
 }
 
 func TestRWLocked_StatePattern(t *testing.T) {
@@ -67,34 +68,34 @@ func TestRWLocked_StatePattern(t *testing.T) {
 	s.Inc()
 	p.st.Unlock()
 
-    // reader path via RO interface
-    ro := p.st.RLock()
-    require.Equal(t, 2, ro.Get())
-    p.st.RUnlock()
+	// reader path via RO interface
+	ro := p.st.RLock()
+	require.Equal(t, 2, ro.Get())
+	p.st.RUnlock()
 }
 
 func TestRWLockedPtr_StatePattern(t *testing.T) {
 	p := &parentRWLockedPtr{}
 	p.st.Set(state{n: 0})
 
-    ro := p.st.RLock()
-    require.Equal(t, 0, ro.Get())
-    p.st.RUnlock()
+	ro := p.st.RLock()
+	require.Equal(t, 0, ro.Get())
+	p.st.RUnlock()
 
 	s := p.st.Lock()
 	s.Inc()
 	p.st.Unlock()
 
-    ro = p.st.RLock()
-    require.Equal(t, 1, ro.Get())
-    p.st.RUnlock()
+	ro = p.st.RLock()
+	require.Equal(t, 1, ro.Get())
+	p.st.RUnlock()
 }
 
 func TestRWLocked_RLockPanicsWhenRONotImplemented(t *testing.T) {
 	type badRO interface{ Get() int }
 	var l RWLocked[int, badRO]
 
-    require.Panics(t, func() {
-        _ = l.RLock()
-    })
+	require.Panics(t, func() {
+		_ = l.RLock()
+	})
 }
