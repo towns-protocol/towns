@@ -204,6 +204,10 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
              * ```
              */
             args: string[]
+            /** The eventId of the message that got replied */
+            replyId: string | undefined
+            /** The thread id where the message belongs to */
+            threadId: string | undefined
         },
     ) => Promise<void> | void
 }
@@ -554,6 +558,8 @@ export class Bot<
                                 ...forwardPayload,
                                 command: command as Commands[number]['name'],
                                 args,
+                                replyId,
+                                threadId,
                             })
                         }
                     }
