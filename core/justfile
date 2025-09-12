@@ -213,7 +213,6 @@ create-contracts-env:
 
 _config-instance $INSTANCE_NUM $INSTANCE_DIR:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
     mkdir -p ${INSTANCE_DIR}/{config,logs,wallet,certs}
     echo "RIVER_PORT=$((${RPC_PORT} + ${INSTANCE_NUM}))" > ${INSTANCE_DIR}/config/config.env
 
@@ -233,13 +232,13 @@ _config-instance $INSTANCE_NUM $INSTANCE_DIR:
         ./scripts/generate-certs.sh $(realpath ${INSTANCE_DIR}/certs)
     fi
 
-    # Next command fails if running with geth, ignore error
-    cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
-    cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
-    cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff || true
-    cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff
+    # Run all anvil_setBalance calls in background (fails if running with geth, ignore errors)
+    cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff > /dev/null 2>&1 &
+    cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/operator_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff > /dev/null 2>&1 &
+    cast rpc -r ${RPC_BASE} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff > /dev/null 2>&1 &
+    cast rpc -r ${RPC_RIVER} anvil_setBalance $(cat "${INSTANCE_DIR}/wallet/node_address") 0xfffffffffffffffffffffffffffffffffffffffffffffffffff > /dev/null 2>&1 &
 
-config-instances: (_loop-instances "_config-instance")
+config-instances: (_parallel-just "_config-instance")
 
 config-app-registry:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
@@ -344,11 +343,16 @@ config-root:
 
 _register-node-base $INSTANCE_NUM $INSTANCE_DIR:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
     if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
-        source ${RUN_BASE}/contracts.env
         NODE_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/node_address)
+        NONCE=$((BASE_REGISTRATION_NONCE + INSTANCE_NUM))
+        
+        echo "Registering instance ${INSTANCE_NUM} with nonce ${NONCE}"
         cast send \
+            --async \
+            --nonce ${NONCE} \
+            --gas-limit ${BASE_REGISTRATION_GAS_LIMIT} \
+            --gas-price 1gwei \
             --rpc-url ${RPC_BASE} \
             --private-key $LOCAL_PRIVATE_KEY \
             $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
@@ -366,34 +370,134 @@ get_all_node_addresses:
             $RIVER_REGISTRYCONTRACT_ADDRESS \
             "getAllNodeAddresses()"
 
-just-register-nodes-base: (_loop-instances-seq "_register-node-base")
+just-register-nodes-base:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    if [ "${DISABLE_BASE_CHAIN}" != "true" ]; then
+        set -a  # Enable auto-export
+        source ${RUN_BASE}/contracts.env
+        set +a  # Disable auto-export
+        
+        # Get initial nonce for LOCAL_PRIVATE_KEY
+        LOCAL_ADDRESS=$(cast wallet address $LOCAL_PRIVATE_KEY)
+        export BASE_REGISTRATION_NONCE=$(cast nonce --rpc-url ${RPC_BASE} $LOCAL_ADDRESS)
+        
+        echo "Starting parallel Base chain registration with initial nonce ${BASE_REGISTRATION_NONCE}"
+        
+        # Get first node address for gas estimation
+        FIRST_NODE_ADDRESS=$(cat ${INSTANCE_BASE}/00/wallet/node_address)
+        
+        # Estimate gas for the first transaction
+        echo "Estimating gas limit..."
+        GAS_ESTIMATE=$(cast estimate \
+            --rpc-url ${RPC_BASE} \
+            --from $LOCAL_ADDRESS \
+            $RIVER_ENTITLEMENT_CONTRACT_ADDRESS \
+            "registerNode(address)" \
+            $FIRST_NODE_ADDRESS)
+        
+        # Add 20% buffer to gas estimate
+        export BASE_REGISTRATION_GAS_LIMIT=$((GAS_ESTIMATE * 120 / 100))
+        echo "Using gas limit: ${BASE_REGISTRATION_GAS_LIMIT} (estimate: ${GAS_ESTIMATE})"
+        
+        # Use parallel helper to run all registrations
+        just _parallel-just "_register-node-base"
+        
+        echo "All Base chain registrations launched"
+    fi
 
 register-nodes-base: config-base-chain config-instances just-register-nodes-base
 
-_register-node-river $INSTANCE_NUM $INSTANCE_DIR:
+_approve-operator-river $INSTANCE_NUM $INSTANCE_DIR:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
-    source ${ENV_FILE}
-    source ${RUN_BASE}/contracts.env
-    NODE_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/node_address)
-    NODE_OPERATOR_KEY=$(cat ${INSTANCE_DIR}/wallet/operator_private_key)
-    NODE_OPERATOR_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/operator_address)
-    source ${INSTANCE_DIR}/config/config.env
+    OPERATOR_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/operator_address)
+    NONCE=$((RIVER_APPROVE_NONCE + INSTANCE_NUM))
+    
+    echo "Approving operator for instance ${INSTANCE_NUM} with nonce ${NONCE}"
     cast send \
+        --async \
+        --nonce ${NONCE} \
+        --gas-limit ${RIVER_APPROVE_GAS_LIMIT} \
+        --gas-price 1gwei \
         --rpc-url ${RPC_RIVER} \
         --private-key $LOCAL_PRIVATE_KEY \
         $RIVER_REGISTRYCONTRACT_ADDRESS \
         "approveOperator(address)" \
-        $NODE_OPERATOR_ADDRESS > /dev/null
+        $OPERATOR_ADDRESS > /dev/null
+
+_register-node-river $INSTANCE_NUM $INSTANCE_DIR:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    NODE_ADDRESS=$(cat ${INSTANCE_DIR}/wallet/node_address)
+    OPERATOR_KEY=$(cat ${INSTANCE_DIR}/wallet/operator_private_key)
+    source ${INSTANCE_DIR}/config/config.env
+    
+    echo "Registering node for instance ${INSTANCE_NUM} (operator nonce: 0)"
     cast send \
+        --async \
+        --nonce 0 \
+        --gas-limit ${RIVER_REGISTER_GAS_LIMIT} \
+        --gas-price 1gwei \
         --rpc-url ${RPC_RIVER} \
-        --private-key $NODE_OPERATOR_KEY \
+        --private-key $OPERATOR_KEY \
         $RIVER_REGISTRYCONTRACT_ADDRESS \
         "registerNode(address,string,uint8)" \
         $NODE_ADDRESS \
         https://localhost:${RIVER_PORT} \
         2 > /dev/null
 
-just-register-nodes-river: (_loop-instances-seq "_register-node-river")
+just-register-nodes-river:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    source ${ENV_FILE}
+    set -a  # Enable auto-export
+    source ${RUN_BASE}/contracts.env
+    set +a  # Disable auto-export
+    
+    # Get initial nonce for LOCAL_PRIVATE_KEY
+    LOCAL_ADDRESS=$(cast wallet address $LOCAL_PRIVATE_KEY)
+    export RIVER_APPROVE_NONCE=$(cast nonce --rpc-url ${RPC_RIVER} $LOCAL_ADDRESS)
+    
+    echo "Starting parallel River chain registration with LOCAL_PRIVATE_KEY nonce ${RIVER_APPROVE_NONCE}"
+    
+    # Get first operator address for gas estimation
+    FIRST_OPERATOR_ADDRESS=$(cat ${INSTANCE_BASE}/00/wallet/operator_address)
+    
+    # Estimate gas for approveOperator transaction
+    echo "Estimating gas for approveOperator..."
+    APPROVE_GAS_ESTIMATE=$(cast estimate \
+        --rpc-url ${RPC_RIVER} \
+        --from $LOCAL_ADDRESS \
+        $RIVER_REGISTRYCONTRACT_ADDRESS \
+        "approveOperator(address)" \
+        $FIRST_OPERATOR_ADDRESS)
+    export RIVER_APPROVE_GAS_LIMIT=$((APPROVE_GAS_ESTIMATE * 120 / 100))
+    echo "Using gas limit for approve: ${RIVER_APPROVE_GAS_LIMIT}"
+
+    # Phase 1: Run all approveOperator transactions in parallel
+    echo "Phase 1: Running all approveOperator transactions..."
+    just _parallel-just "_approve-operator-river"
+    echo "All operators approved"
+
+    # Now estimate gas for registerNode (after operators are approved)
+    echo "Estimating gas for registerNode..."
+    FIRST_NODE_ADDRESS=$(cat ${INSTANCE_BASE}/00/wallet/node_address)
+    source ${INSTANCE_BASE}/00/config/config.env
+    FIRST_RIVER_PORT=${RIVER_PORT}
+    
+    REGISTER_GAS_ESTIMATE=$(cast estimate \
+        --rpc-url ${RPC_RIVER} \
+        --from $FIRST_OPERATOR_ADDRESS \
+        $RIVER_REGISTRYCONTRACT_ADDRESS \
+        "registerNode(address,string,uint8)" \
+        $FIRST_NODE_ADDRESS \
+        https://localhost:${FIRST_RIVER_PORT} \
+        2)
+    export RIVER_REGISTER_GAS_LIMIT=$((REGISTER_GAS_ESTIMATE * 120 / 100))
+    echo "Using gas limit for register: ${RIVER_REGISTER_GAS_LIMIT}"
+
+    # Phase 2: Run all registerNode transactions in parallel
+    echo "Phase 2: Running all registerNode transactions..."
+    just _parallel-just "_register-node-river"
+    echo "All nodes registered"
 
 register-nodes-river: config-river-chain config-instances just-register-nodes-river
 
@@ -632,6 +736,23 @@ run-and-tail: _start-all _wait-all tail-logs stop
 
 # Stop, build, and start nodes in background
 restart: stop build start
+
+# Simple parallel loop helper for just recipes
+_parallel-just $CMD:
+    #!/usr/bin/env -S bash {{BASH_OPTS}}
+    set -a  # Enable automatic export of all variables
+    source ${ENV_FILE}
+    set +a  # Disable automatic export
+    echo "Starting parallel ${CMD}..."
+    for ((i=0; i<${NUM_INSTANCES}; i++)); do
+        INSTANCE_NAME=$(printf "%02d" ${i})
+        INSTANCE_DIR="${INSTANCE_BASE}/${INSTANCE_NAME}"
+        just ${CMD} ${i} ${INSTANCE_DIR} &
+    done
+    
+    echo "Waiting for all ${CMD} to complete..."
+    wait
+    echo "All ${CMD} completed"
 
 _loop-instances-seq $CMD:
     #!/usr/bin/env -S bash {{BASH_OPTS}}
