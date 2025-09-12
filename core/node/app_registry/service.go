@@ -434,6 +434,68 @@ func (s *Service) Register(
 	}, nil
 }
 
+func (s *Service) DeleteApp(
+	ctx context.Context,
+	req *connect.Request[DeleteAppRequest],
+) (
+	*connect.Response[DeleteAppResponse],
+	error,
+) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "DeleteApp"))
+
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").
+			Tag("appId", req.Msg.AppId)
+	}
+
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+
+	// Get app info to check ownership and existence
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("error retrieving app info").
+			Tag("appId", app)
+	}
+
+	// Authorization: user must be app owner OR the app itself
+	if appInfo.Owner != userId && app != userId {
+		return nil, base.RiverError(
+			Err_PERMISSION_DENIED,
+			"authenticated user must be app owner or the app itself",
+			"owner",
+			appInfo.Owner,
+			"app",
+			app,
+			"userId",
+			userId,
+		)
+	}
+
+	// Remove the app's user inbox stream from tracking
+	userInboxStreamId := shared.UserInboxStreamIdFromAddress(app)
+	if err := s.streamsTracker.RemoveStream(userInboxStreamId); err != nil {
+		// Log error but don't fail the deletion - this is not critical
+		logging.FromCtx(ctx).Warn("failed to remove app's user inbox stream from tracking",
+			"error", err,
+			"streamId", userInboxStreamId)
+	}
+
+	// Delete the app and all associated data
+	if err := s.store.DeleteApp(ctx, app); err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("error deleting app").
+			Tag("appId", app)
+	}
+
+	return &connect.Response[DeleteAppResponse]{
+		Msg: &DeleteAppResponse{},
+	}, nil
+}
+
 // validateAppContractAddress waits up to 10 seconds for the app's user stream to become
 // available and validates that the app_address in the inception event matches the app registry contract on Base.
 func (s *Service) validateAppContractAddress(

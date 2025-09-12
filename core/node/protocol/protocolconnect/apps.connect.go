@@ -63,12 +63,16 @@ const (
 	// AppRegistryServiceValidateBotNameProcedure is the fully-qualified name of the
 	// AppRegistryService's ValidateBotName RPC.
 	AppRegistryServiceValidateBotNameProcedure = "/river.AppRegistryService/ValidateBotName"
+	// AppRegistryServiceDeleteAppProcedure is the fully-qualified name of the AppRegistryService's
+	// DeleteApp RPC.
+	AppRegistryServiceDeleteAppProcedure = "/river.AppRegistryService/DeleteApp"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
 	appRegistryServiceServiceDescriptor                 = protocol.File_apps_proto.Services().ByName("AppRegistryService")
 	appRegistryServiceRegisterMethodDescriptor          = appRegistryServiceServiceDescriptor.Methods().ByName("Register")
+	appRegistryServiceDeleteAppMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("DeleteApp")
 	appRegistryServiceRegisterWebhookMethodDescriptor   = appRegistryServiceServiceDescriptor.Methods().ByName("RegisterWebhook")
 	appRegistryServiceGetStatusMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
 	appRegistryServiceSetAppSettingsMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppSettings")
@@ -83,6 +87,8 @@ var (
 // AppRegistryServiceClient is a client for the river.AppRegistryService service.
 type AppRegistryServiceClient interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
+	// DeleteApp allows the app owner or app itself to delete the app and all associated data.
+	DeleteApp(context.Context, *connect.Request[protocol.DeleteAppRequest]) (*connect.Response[protocol.DeleteAppResponse], error)
 	// Webhook status / registration.
 	RegisterWebhook(context.Context, *connect.Request[protocol.RegisterWebhookRequest]) (*connect.Response[protocol.RegisterWebhookResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
@@ -115,6 +121,12 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			httpClient,
 			baseURL+AppRegistryServiceRegisterProcedure,
 			connect.WithSchema(appRegistryServiceRegisterMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
+		deleteApp: connect.NewClient[protocol.DeleteAppRequest, protocol.DeleteAppResponse](
+			httpClient,
+			baseURL+AppRegistryServiceDeleteAppProcedure,
+			connect.WithSchema(appRegistryServiceDeleteAppMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
 		registerWebhook: connect.NewClient[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse](
@@ -177,6 +189,7 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 // appRegistryServiceClient implements AppRegistryServiceClient.
 type appRegistryServiceClient struct {
 	register          *connect.Client[protocol.RegisterRequest, protocol.RegisterResponse]
+	deleteApp         *connect.Client[protocol.DeleteAppRequest, protocol.DeleteAppResponse]
 	registerWebhook   *connect.Client[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse]
 	getStatus         *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
 	setAppSettings    *connect.Client[protocol.SetAppSettingsRequest, protocol.SetAppSettingsResponse]
@@ -191,6 +204,11 @@ type appRegistryServiceClient struct {
 // Register calls river.AppRegistryService.Register.
 func (c *appRegistryServiceClient) Register(ctx context.Context, req *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error) {
 	return c.register.CallUnary(ctx, req)
+}
+
+// DeleteApp calls river.AppRegistryService.DeleteApp.
+func (c *appRegistryServiceClient) DeleteApp(ctx context.Context, req *connect.Request[protocol.DeleteAppRequest]) (*connect.Response[protocol.DeleteAppResponse], error) {
+	return c.deleteApp.CallUnary(ctx, req)
 }
 
 // RegisterWebhook calls river.AppRegistryService.RegisterWebhook.
@@ -241,6 +259,8 @@ func (c *appRegistryServiceClient) ValidateBotName(ctx context.Context, req *con
 // AppRegistryServiceHandler is an implementation of the river.AppRegistryService service.
 type AppRegistryServiceHandler interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
+	// DeleteApp allows the app owner or app itself to delete the app and all associated data.
+	DeleteApp(context.Context, *connect.Request[protocol.DeleteAppRequest]) (*connect.Response[protocol.DeleteAppResponse], error)
 	// Webhook status / registration.
 	RegisterWebhook(context.Context, *connect.Request[protocol.RegisterWebhookRequest]) (*connect.Response[protocol.RegisterWebhookResponse], error)
 	GetStatus(context.Context, *connect.Request[protocol.GetStatusRequest]) (*connect.Response[protocol.GetStatusResponse], error)
@@ -269,6 +289,12 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		AppRegistryServiceRegisterProcedure,
 		svc.Register,
 		connect.WithSchema(appRegistryServiceRegisterMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
+	appRegistryServiceDeleteAppHandler := connect.NewUnaryHandler(
+		AppRegistryServiceDeleteAppProcedure,
+		svc.DeleteApp,
+		connect.WithSchema(appRegistryServiceDeleteAppMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
 	appRegistryServiceRegisterWebhookHandler := connect.NewUnaryHandler(
@@ -329,6 +355,8 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		switch r.URL.Path {
 		case AppRegistryServiceRegisterProcedure:
 			appRegistryServiceRegisterHandler.ServeHTTP(w, r)
+		case AppRegistryServiceDeleteAppProcedure:
+			appRegistryServiceDeleteAppHandler.ServeHTTP(w, r)
 		case AppRegistryServiceRegisterWebhookProcedure:
 			appRegistryServiceRegisterWebhookHandler.ServeHTTP(w, r)
 		case AppRegistryServiceGetStatusProcedure:
@@ -358,6 +386,10 @@ type UnimplementedAppRegistryServiceHandler struct{}
 
 func (UnimplementedAppRegistryServiceHandler) Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.Register is not implemented"))
+}
+
+func (UnimplementedAppRegistryServiceHandler) DeleteApp(context.Context, *connect.Request[protocol.DeleteAppRequest]) (*connect.Response[protocol.DeleteAppResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.DeleteApp is not implemented"))
 }
 
 func (UnimplementedAppRegistryServiceHandler) RegisterWebhook(context.Context, *connect.Request[protocol.RegisterWebhookRequest]) (*connect.Response[protocol.RegisterWebhookResponse], error) {

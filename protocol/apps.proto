@@ -36,6 +36,10 @@ service AppRegistryService {
 
     // ValidateBotName checks if a bot name is available for use.
     rpc ValidateBotName(ValidateBotNameRequest) returns (ValidateBotNameResponse);
+
+    // DeleteApp allows the app owner or app itself to delete the app and all associated data.
+    rpc DeleteApp(DeleteAppRequest) returns (DeleteAppResponse);
+
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -76,6 +80,13 @@ message RegisterResponse {
     // app service. This secret will be exactly 32 bytes.
     bytes hs256_shared_secret = 1;
 }
+
+message DeleteAppRequest {
+    // public key of the app to delete
+    bytes app_id = 1;
+}
+
+message DeleteAppResponse { }
 
 message RegisterWebhookRequest {
     // public key of the app

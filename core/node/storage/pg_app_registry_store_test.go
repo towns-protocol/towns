@@ -482,6 +482,153 @@ func TestCreateApp(t *testing.T) {
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 }
 
+func TestDeleteApp(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Generate test addresses
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	app2 := safeAddress(t)
+	nonExistentApp := safeAddress(t)
+
+	secretBytes, err := hex.DecodeString(testSecretHexString)
+	require.NoError(err)
+	secret := [32]byte(secretBytes)
+
+	// Test deleting non-existent app
+	t.Run("Delete non-existent app", func(t *testing.T) {
+		err := store.DeleteApp(params.ctx, nonExistentApp)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+		require.ErrorContains(err, "app was not found in registry")
+	})
+
+	// Create test apps
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+		testAppMetadataWithName("test_app"),
+		secret,
+	)
+	require.NoError(err)
+
+	err = store.CreateApp(
+		params.ctx,
+		owner,
+		app2,
+		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS},
+		testAppMetadataWithName("test_app_2"),
+		secret,
+	)
+	require.NoError(err)
+
+	// Register webhooks to create device_key and related data
+	deviceKey := "test-device-key"
+	fallbackKey := "test-fallback-key"
+	webhook := "https://webhook.example.com/test"
+
+	err = store.RegisterWebhook(params.ctx, app, webhook, deviceKey, fallbackKey)
+	require.NoError(err)
+
+	// Create some session keys for testing cascading delete
+	spaceId, err := shared.MakeSpaceId()
+	require.NoError(err)
+	channelId, err := shared.MakeChannelId(spaceId)
+	require.NoError(err)
+	envelope := []byte("test-encryption-envelope")
+
+	_, err = store.PublishSessionKeys(
+		params.ctx,
+		channelId,
+		deviceKey,
+		[]string{"session1", "session2"},
+		envelope,
+	)
+	require.NoError(err)
+
+	// Create some enqueued messages for testing cascading delete
+	_, _, err = store.EnqueueUnsendableMessages(
+		params.ctx,
+		[]common.Address{app},
+		"session3",
+		[]byte("test-message"),
+	)
+	require.NoError(err)
+
+	// Verify app and related data exist before deletion
+	appInfo, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.Equal(app, appInfo.App)
+	require.Equal(webhook, appInfo.WebhookUrl)
+	require.Equal(deviceKey, appInfo.EncryptionDevice.DeviceKey)
+
+	// Verify session key exists
+	sessionEnvelope, err := store.GetSessionKey(params.ctx, app, "session1")
+	require.NoError(err)
+	require.Equal(envelope, sessionEnvelope)
+
+	t.Run("Successful deletion with cascading cleanup", func(t *testing.T) {
+		// Delete the app
+		err := store.DeleteApp(params.ctx, app)
+		require.NoError(err)
+
+		// Verify app no longer exists
+		_, err = store.GetAppInfo(params.ctx, app)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+
+		// Verify session keys were deleted
+		_, err = store.GetSessionKey(params.ctx, app, "session1")
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+
+		// Verify other app still exists (no collateral damage)
+		app2Info, err := store.GetAppInfo(params.ctx, app2)
+		require.NoError(err)
+		require.Equal(app2, app2Info.App)
+	})
+
+	t.Run("Delete already deleted app", func(t *testing.T) {
+		// Try to delete the same app again
+		err := store.DeleteApp(params.ctx, app)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+		require.ErrorContains(err, "app was not found in registry")
+	})
+
+	t.Run("Delete app without webhook", func(t *testing.T) {
+		// Create an app without registering webhook (no device_key)
+		app3 := safeAddress(t)
+		err := store.CreateApp(
+			params.ctx,
+			owner,
+			app3,
+			types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_NO_MESSAGES},
+			testAppMetadataWithName("app_without_webhook"),
+			secret,
+		)
+		require.NoError(err)
+
+		// Verify app exists
+		_, err = store.GetAppInfo(params.ctx, app3)
+		require.NoError(err)
+
+		// Delete should work even without device_key
+		err = store.DeleteApp(params.ctx, app3)
+		require.NoError(err)
+
+		// Verify app was deleted
+		_, err = store.GetAppInfo(params.ctx, app3)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+	})
+}
+
 func TestRotateSecret(t *testing.T) {
 	params := setupAppRegistryStorageTest(t)
 

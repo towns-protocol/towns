@@ -252,6 +252,92 @@ func (x *RegisterResponse) GetHs256SharedSecret() []byte {
 	return nil
 }
 
+type DeleteAppRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// public key of the app to delete
+	AppId []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+}
+
+func (x *DeleteAppRequest) Reset() {
+	*x = DeleteAppRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteAppRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAppRequest) ProtoMessage() {}
+
+func (x *DeleteAppRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAppRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAppRequest) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DeleteAppRequest) GetAppId() []byte {
+	if x != nil {
+		return x.AppId
+	}
+	return nil
+}
+
+type DeleteAppResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteAppResponse) Reset() {
+	*x = DeleteAppResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_apps_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteAppResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAppResponse) ProtoMessage() {}
+
+func (x *DeleteAppResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_apps_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAppResponse.ProtoReflect.Descriptor instead.
+func (*DeleteAppResponse) Descriptor() ([]byte, []int) {
+	return file_apps_proto_rawDescGZIP(), []int{4}
+}
+
 type RegisterWebhookRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -266,7 +352,7 @@ type RegisterWebhookRequest struct {
 func (x *RegisterWebhookRequest) Reset() {
 	*x = RegisterWebhookRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[3]
+		mi := &file_apps_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -279,7 +365,7 @@ func (x *RegisterWebhookRequest) String() string {
 func (*RegisterWebhookRequest) ProtoMessage() {}
 
 func (x *RegisterWebhookRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[3]
+	mi := &file_apps_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +378,7 @@ func (x *RegisterWebhookRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterWebhookRequest.ProtoReflect.Descriptor instead.
 func (*RegisterWebhookRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{3}
+	return file_apps_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RegisterWebhookRequest) GetAppId() []byte {
@@ -318,7 +404,7 @@ type RegisterWebhookResponse struct {
 func (x *RegisterWebhookResponse) Reset() {
 	*x = RegisterWebhookResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[4]
+		mi := &file_apps_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -331,7 +417,7 @@ func (x *RegisterWebhookResponse) String() string {
 func (*RegisterWebhookResponse) ProtoMessage() {}
 
 func (x *RegisterWebhookResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[4]
+	mi := &file_apps_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -344,7 +430,7 @@ func (x *RegisterWebhookResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterWebhookResponse.ProtoReflect.Descriptor instead.
 func (*RegisterWebhookResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{4}
+	return file_apps_proto_rawDescGZIP(), []int{6}
 }
 
 type SetAppSettingsRequest struct {
@@ -360,7 +446,7 @@ type SetAppSettingsRequest struct {
 func (x *SetAppSettingsRequest) Reset() {
 	*x = SetAppSettingsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[5]
+		mi := &file_apps_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -373,7 +459,7 @@ func (x *SetAppSettingsRequest) String() string {
 func (*SetAppSettingsRequest) ProtoMessage() {}
 
 func (x *SetAppSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[5]
+	mi := &file_apps_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -386,7 +472,7 @@ func (x *SetAppSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAppSettingsRequest.ProtoReflect.Descriptor instead.
 func (*SetAppSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{5}
+	return file_apps_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *SetAppSettingsRequest) GetAppId() []byte {
@@ -412,7 +498,7 @@ type SetAppSettingsResponse struct {
 func (x *SetAppSettingsResponse) Reset() {
 	*x = SetAppSettingsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[6]
+		mi := &file_apps_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -425,7 +511,7 @@ func (x *SetAppSettingsResponse) String() string {
 func (*SetAppSettingsResponse) ProtoMessage() {}
 
 func (x *SetAppSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[6]
+	mi := &file_apps_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -438,7 +524,7 @@ func (x *SetAppSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAppSettingsResponse.ProtoReflect.Descriptor instead.
 func (*SetAppSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{6}
+	return file_apps_proto_rawDescGZIP(), []int{8}
 }
 
 type GetAppSettingsRequest struct {
@@ -453,7 +539,7 @@ type GetAppSettingsRequest struct {
 func (x *GetAppSettingsRequest) Reset() {
 	*x = GetAppSettingsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[7]
+		mi := &file_apps_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -466,7 +552,7 @@ func (x *GetAppSettingsRequest) String() string {
 func (*GetAppSettingsRequest) ProtoMessage() {}
 
 func (x *GetAppSettingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[7]
+	mi := &file_apps_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -479,7 +565,7 @@ func (x *GetAppSettingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppSettingsRequest.ProtoReflect.Descriptor instead.
 func (*GetAppSettingsRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{7}
+	return file_apps_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetAppSettingsRequest) GetAppId() []byte {
@@ -500,7 +586,7 @@ type GetAppSettingsResponse struct {
 func (x *GetAppSettingsResponse) Reset() {
 	*x = GetAppSettingsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[8]
+		mi := &file_apps_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -513,7 +599,7 @@ func (x *GetAppSettingsResponse) String() string {
 func (*GetAppSettingsResponse) ProtoMessage() {}
 
 func (x *GetAppSettingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[8]
+	mi := &file_apps_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -526,7 +612,7 @@ func (x *GetAppSettingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppSettingsResponse.ProtoReflect.Descriptor instead.
 func (*GetAppSettingsResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{8}
+	return file_apps_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetAppSettingsResponse) GetSettings() *AppSettings {
@@ -548,7 +634,7 @@ type RotateSecretRequest struct {
 func (x *RotateSecretRequest) Reset() {
 	*x = RotateSecretRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[9]
+		mi := &file_apps_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -561,7 +647,7 @@ func (x *RotateSecretRequest) String() string {
 func (*RotateSecretRequest) ProtoMessage() {}
 
 func (x *RotateSecretRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[9]
+	mi := &file_apps_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -574,7 +660,7 @@ func (x *RotateSecretRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSecretRequest.ProtoReflect.Descriptor instead.
 func (*RotateSecretRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{9}
+	return file_apps_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RotateSecretRequest) GetAppId() []byte {
@@ -597,7 +683,7 @@ type RotateSecretResponse struct {
 func (x *RotateSecretResponse) Reset() {
 	*x = RotateSecretResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[10]
+		mi := &file_apps_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -610,7 +696,7 @@ func (x *RotateSecretResponse) String() string {
 func (*RotateSecretResponse) ProtoMessage() {}
 
 func (x *RotateSecretResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[10]
+	mi := &file_apps_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -623,7 +709,7 @@ func (x *RotateSecretResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RotateSecretResponse.ProtoReflect.Descriptor instead.
 func (*RotateSecretResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{10}
+	return file_apps_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RotateSecretResponse) GetHs256SharedSecret() []byte {
@@ -645,7 +731,7 @@ type GetStatusRequest struct {
 func (x *GetStatusRequest) Reset() {
 	*x = GetStatusRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[11]
+		mi := &file_apps_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -658,7 +744,7 @@ func (x *GetStatusRequest) String() string {
 func (*GetStatusRequest) ProtoMessage() {}
 
 func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[11]
+	mi := &file_apps_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,7 +757,7 @@ func (x *GetStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusRequest.ProtoReflect.Descriptor instead.
 func (*GetStatusRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{11}
+	return file_apps_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetStatusRequest) GetAppId() []byte {
@@ -698,7 +784,7 @@ type GetStatusResponse struct {
 func (x *GetStatusResponse) Reset() {
 	*x = GetStatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[12]
+		mi := &file_apps_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -711,7 +797,7 @@ func (x *GetStatusResponse) String() string {
 func (*GetStatusResponse) ProtoMessage() {}
 
 func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[12]
+	mi := &file_apps_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +810,7 @@ func (x *GetStatusResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetStatusResponse.ProtoReflect.Descriptor instead.
 func (*GetStatusResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{12}
+	return file_apps_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetStatusResponse) GetIsRegistered() bool {
@@ -761,7 +847,7 @@ type GetSessionRequest struct {
 func (x *GetSessionRequest) Reset() {
 	*x = GetSessionRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[13]
+		mi := &file_apps_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -774,7 +860,7 @@ func (x *GetSessionRequest) String() string {
 func (*GetSessionRequest) ProtoMessage() {}
 
 func (x *GetSessionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[13]
+	mi := &file_apps_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -787,7 +873,7 @@ func (x *GetSessionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionRequest.ProtoReflect.Descriptor instead.
 func (*GetSessionRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{13}
+	return file_apps_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetSessionRequest) GetAppId() []byte {
@@ -816,7 +902,7 @@ type GetSessionResponse struct {
 func (x *GetSessionResponse) Reset() {
 	*x = GetSessionResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[14]
+		mi := &file_apps_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -829,7 +915,7 @@ func (x *GetSessionResponse) String() string {
 func (*GetSessionResponse) ProtoMessage() {}
 
 func (x *GetSessionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[14]
+	mi := &file_apps_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -842,7 +928,7 @@ func (x *GetSessionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSessionResponse.ProtoReflect.Descriptor instead.
 func (*GetSessionResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{14}
+	return file_apps_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetSessionResponse) GetGroupEncryptionSessions() *Envelope {
@@ -872,7 +958,7 @@ type EventPayload struct {
 func (x *EventPayload) Reset() {
 	*x = EventPayload{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[15]
+		mi := &file_apps_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -885,7 +971,7 @@ func (x *EventPayload) String() string {
 func (*EventPayload) ProtoMessage() {}
 
 func (x *EventPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[15]
+	mi := &file_apps_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -898,7 +984,7 @@ func (x *EventPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventPayload.ProtoReflect.Descriptor instead.
 func (*EventPayload) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{15}
+	return file_apps_proto_rawDescGZIP(), []int{17}
 }
 
 func (m *EventPayload) GetPayload() isEventPayload_Payload {
@@ -949,7 +1035,7 @@ type EventsPayload struct {
 func (x *EventsPayload) Reset() {
 	*x = EventsPayload{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[16]
+		mi := &file_apps_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -962,7 +1048,7 @@ func (x *EventsPayload) String() string {
 func (*EventsPayload) ProtoMessage() {}
 
 func (x *EventsPayload) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[16]
+	mi := &file_apps_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +1061,7 @@ func (x *EventsPayload) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventsPayload.ProtoReflect.Descriptor instead.
 func (*EventsPayload) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{16}
+	return file_apps_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EventsPayload) GetEvents() []*EventPayload {
@@ -1001,7 +1087,7 @@ type AppServiceRequest struct {
 func (x *AppServiceRequest) Reset() {
 	*x = AppServiceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[17]
+		mi := &file_apps_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1014,7 +1100,7 @@ func (x *AppServiceRequest) String() string {
 func (*AppServiceRequest) ProtoMessage() {}
 
 func (x *AppServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[17]
+	mi := &file_apps_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1027,7 +1113,7 @@ func (x *AppServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppServiceRequest.ProtoReflect.Descriptor instead.
 func (*AppServiceRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{17}
+	return file_apps_proto_rawDescGZIP(), []int{19}
 }
 
 func (m *AppServiceRequest) GetPayload() isAppServiceRequest_Payload {
@@ -1095,7 +1181,7 @@ type AppServiceResponse struct {
 func (x *AppServiceResponse) Reset() {
 	*x = AppServiceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[18]
+		mi := &file_apps_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1108,7 +1194,7 @@ func (x *AppServiceResponse) String() string {
 func (*AppServiceResponse) ProtoMessage() {}
 
 func (x *AppServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[18]
+	mi := &file_apps_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1121,7 +1207,7 @@ func (x *AppServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppServiceResponse.ProtoReflect.Descriptor instead.
 func (*AppServiceResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{18}
+	return file_apps_proto_rawDescGZIP(), []int{20}
 }
 
 func (m *AppServiceResponse) GetPayload() isAppServiceResponse_Payload {
@@ -1179,7 +1265,7 @@ type SlashCommand struct {
 func (x *SlashCommand) Reset() {
 	*x = SlashCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[19]
+		mi := &file_apps_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1192,7 +1278,7 @@ func (x *SlashCommand) String() string {
 func (*SlashCommand) ProtoMessage() {}
 
 func (x *SlashCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[19]
+	mi := &file_apps_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1205,7 +1291,7 @@ func (x *SlashCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SlashCommand.ProtoReflect.Descriptor instead.
 func (*SlashCommand) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{19}
+	return file_apps_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *SlashCommand) GetName() string {
@@ -1247,7 +1333,7 @@ type AppMetadata struct {
 func (x *AppMetadata) Reset() {
 	*x = AppMetadata{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[20]
+		mi := &file_apps_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1260,7 +1346,7 @@ func (x *AppMetadata) String() string {
 func (*AppMetadata) ProtoMessage() {}
 
 func (x *AppMetadata) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[20]
+	mi := &file_apps_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1273,7 +1359,7 @@ func (x *AppMetadata) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppMetadata.ProtoReflect.Descriptor instead.
 func (*AppMetadata) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{20}
+	return file_apps_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *AppMetadata) GetUsername() string {
@@ -1352,7 +1438,7 @@ type AppMetadataUpdate struct {
 func (x *AppMetadataUpdate) Reset() {
 	*x = AppMetadataUpdate{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[21]
+		mi := &file_apps_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1365,7 +1451,7 @@ func (x *AppMetadataUpdate) String() string {
 func (*AppMetadataUpdate) ProtoMessage() {}
 
 func (x *AppMetadataUpdate) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[21]
+	mi := &file_apps_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1378,7 +1464,7 @@ func (x *AppMetadataUpdate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppMetadataUpdate.ProtoReflect.Descriptor instead.
 func (*AppMetadataUpdate) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{21}
+	return file_apps_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *AppMetadataUpdate) GetUsername() string {
@@ -1451,7 +1537,7 @@ type UpdateAppMetadataRequest struct {
 func (x *UpdateAppMetadataRequest) Reset() {
 	*x = UpdateAppMetadataRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[22]
+		mi := &file_apps_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1464,7 +1550,7 @@ func (x *UpdateAppMetadataRequest) String() string {
 func (*UpdateAppMetadataRequest) ProtoMessage() {}
 
 func (x *UpdateAppMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[22]
+	mi := &file_apps_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1477,7 +1563,7 @@ func (x *UpdateAppMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAppMetadataRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAppMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{22}
+	return file_apps_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *UpdateAppMetadataRequest) GetAppId() []byte {
@@ -1510,7 +1596,7 @@ type UpdateAppMetadataResponse struct {
 func (x *UpdateAppMetadataResponse) Reset() {
 	*x = UpdateAppMetadataResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[23]
+		mi := &file_apps_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1523,7 +1609,7 @@ func (x *UpdateAppMetadataResponse) String() string {
 func (*UpdateAppMetadataResponse) ProtoMessage() {}
 
 func (x *UpdateAppMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[23]
+	mi := &file_apps_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1536,7 +1622,7 @@ func (x *UpdateAppMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAppMetadataResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAppMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{23}
+	return file_apps_proto_rawDescGZIP(), []int{25}
 }
 
 // Get app metadata
@@ -1551,7 +1637,7 @@ type GetAppMetadataRequest struct {
 func (x *GetAppMetadataRequest) Reset() {
 	*x = GetAppMetadataRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[24]
+		mi := &file_apps_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1564,7 +1650,7 @@ func (x *GetAppMetadataRequest) String() string {
 func (*GetAppMetadataRequest) ProtoMessage() {}
 
 func (x *GetAppMetadataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[24]
+	mi := &file_apps_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1577,7 +1663,7 @@ func (x *GetAppMetadataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppMetadataRequest.ProtoReflect.Descriptor instead.
 func (*GetAppMetadataRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{24}
+	return file_apps_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetAppMetadataRequest) GetAppId() []byte {
@@ -1598,7 +1684,7 @@ type GetAppMetadataResponse struct {
 func (x *GetAppMetadataResponse) Reset() {
 	*x = GetAppMetadataResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[25]
+		mi := &file_apps_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1611,7 +1697,7 @@ func (x *GetAppMetadataResponse) String() string {
 func (*GetAppMetadataResponse) ProtoMessage() {}
 
 func (x *GetAppMetadataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[25]
+	mi := &file_apps_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1624,7 +1710,7 @@ func (x *GetAppMetadataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAppMetadataResponse.ProtoReflect.Descriptor instead.
 func (*GetAppMetadataResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{25}
+	return file_apps_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GetAppMetadataResponse) GetMetadata() *AppMetadata {
@@ -1646,7 +1732,7 @@ type ValidateBotNameRequest struct {
 func (x *ValidateBotNameRequest) Reset() {
 	*x = ValidateBotNameRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[26]
+		mi := &file_apps_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1659,7 +1745,7 @@ func (x *ValidateBotNameRequest) String() string {
 func (*ValidateBotNameRequest) ProtoMessage() {}
 
 func (x *ValidateBotNameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[26]
+	mi := &file_apps_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1672,7 +1758,7 @@ func (x *ValidateBotNameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateBotNameRequest.ProtoReflect.Descriptor instead.
 func (*ValidateBotNameRequest) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{26}
+	return file_apps_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ValidateBotNameRequest) GetUsername() string {
@@ -1694,7 +1780,7 @@ type ValidateBotNameResponse struct {
 func (x *ValidateBotNameResponse) Reset() {
 	*x = ValidateBotNameResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[27]
+		mi := &file_apps_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1707,7 +1793,7 @@ func (x *ValidateBotNameResponse) String() string {
 func (*ValidateBotNameResponse) ProtoMessage() {}
 
 func (x *ValidateBotNameResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[27]
+	mi := &file_apps_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1720,7 +1806,7 @@ func (x *ValidateBotNameResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateBotNameResponse.ProtoReflect.Descriptor instead.
 func (*ValidateBotNameResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{27}
+	return file_apps_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ValidateBotNameResponse) GetIsAvailable() bool {
@@ -1753,7 +1839,7 @@ type EventPayload_Messages struct {
 func (x *EventPayload_Messages) Reset() {
 	*x = EventPayload_Messages{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[28]
+		mi := &file_apps_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1766,7 +1852,7 @@ func (x *EventPayload_Messages) String() string {
 func (*EventPayload_Messages) ProtoMessage() {}
 
 func (x *EventPayload_Messages) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[28]
+	mi := &file_apps_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1779,7 +1865,7 @@ func (x *EventPayload_Messages) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventPayload_Messages.ProtoReflect.Descriptor instead.
 func (*EventPayload_Messages) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{15, 0}
+	return file_apps_proto_rawDescGZIP(), []int{17, 0}
 }
 
 func (x *EventPayload_Messages) GetStreamId() []byte {
@@ -1819,7 +1905,7 @@ type EventPayload_SolicitKeys struct {
 func (x *EventPayload_SolicitKeys) Reset() {
 	*x = EventPayload_SolicitKeys{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[29]
+		mi := &file_apps_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1832,7 +1918,7 @@ func (x *EventPayload_SolicitKeys) String() string {
 func (*EventPayload_SolicitKeys) ProtoMessage() {}
 
 func (x *EventPayload_SolicitKeys) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[29]
+	mi := &file_apps_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1845,7 +1931,7 @@ func (x *EventPayload_SolicitKeys) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventPayload_SolicitKeys.ProtoReflect.Descriptor instead.
 func (*EventPayload_SolicitKeys) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{15, 1}
+	return file_apps_proto_rawDescGZIP(), []int{17, 1}
 }
 
 func (x *EventPayload_SolicitKeys) GetStreamId() []byte {
@@ -1873,7 +1959,7 @@ type AppServiceResponse_InitializeResponse struct {
 func (x *AppServiceResponse_InitializeResponse) Reset() {
 	*x = AppServiceResponse_InitializeResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[30]
+		mi := &file_apps_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1886,7 +1972,7 @@ func (x *AppServiceResponse_InitializeResponse) String() string {
 func (*AppServiceResponse_InitializeResponse) ProtoMessage() {}
 
 func (x *AppServiceResponse_InitializeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[30]
+	mi := &file_apps_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1899,7 +1985,7 @@ func (x *AppServiceResponse_InitializeResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use AppServiceResponse_InitializeResponse.ProtoReflect.Descriptor instead.
 func (*AppServiceResponse_InitializeResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{18, 0}
+	return file_apps_proto_rawDescGZIP(), []int{20, 0}
 }
 
 func (x *AppServiceResponse_InitializeResponse) GetEncryptionDevice() *UserMetadataPayload_EncryptionDevice {
@@ -1922,7 +2008,7 @@ type AppServiceResponse_StatusResponse struct {
 func (x *AppServiceResponse_StatusResponse) Reset() {
 	*x = AppServiceResponse_StatusResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_apps_proto_msgTypes[31]
+		mi := &file_apps_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1935,7 +2021,7 @@ func (x *AppServiceResponse_StatusResponse) String() string {
 func (*AppServiceResponse_StatusResponse) ProtoMessage() {}
 
 func (x *AppServiceResponse_StatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_apps_proto_msgTypes[31]
+	mi := &file_apps_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1948,7 +2034,7 @@ func (x *AppServiceResponse_StatusResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use AppServiceResponse_StatusResponse.ProtoReflect.Descriptor instead.
 func (*AppServiceResponse_StatusResponse) Descriptor() ([]byte, []int) {
-	return file_apps_proto_rawDescGZIP(), []int{18, 1}
+	return file_apps_proto_rawDescGZIP(), []int{20, 1}
 }
 
 func (x *AppServiceResponse_StatusResponse) GetFrameworkVersion() int32 {
@@ -1999,7 +2085,11 @@ var file_apps_proto_rawDesc = []byte{
 	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2e, 0x0a, 0x13, 0x68, 0x73, 0x32, 0x35, 0x36, 0x5f, 0x73,
 	0x68, 0x61, 0x72, 0x65, 0x64, 0x5f, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0c, 0x52, 0x11, 0x68, 0x73, 0x32, 0x35, 0x36, 0x53, 0x68, 0x61, 0x72, 0x65, 0x64, 0x53,
-	0x65, 0x63, 0x72, 0x65, 0x74, 0x22, 0x50, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
+	0x65, 0x63, 0x72, 0x65, 0x74, 0x22, 0x29, 0x0a, 0x10, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41,
+	0x70, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x15, 0x0a, 0x06, 0x61, 0x70, 0x70,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x61, 0x70, 0x70, 0x49, 0x64,
+	0x22, 0x13, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x70, 0x70, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x50, 0x0a, 0x16, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65,
 	0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x15, 0x0a, 0x06, 0x61, 0x70, 0x70, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52,
 	0x05, 0x61, 0x70, 0x70, 0x49, 0x64, 0x12, 0x1f, 0x0a, 0x0b, 0x77, 0x65, 0x62, 0x68, 0x6f, 0x6f,
@@ -2210,11 +2300,15 @@ var file_apps_proto_rawDesc = []byte{
 	0x50, 0x4c, 0x49, 0x45, 0x53, 0x5f, 0x52, 0x45, 0x41, 0x43, 0x54, 0x49, 0x4f, 0x4e, 0x53, 0x10,
 	0x02, 0x12, 0x1f, 0x0a, 0x1b, 0x46, 0x4f, 0x52, 0x57, 0x41, 0x52, 0x44, 0x5f, 0x53, 0x45, 0x54,
 	0x54, 0x49, 0x4e, 0x47, 0x5f, 0x4e, 0x4f, 0x5f, 0x4d, 0x45, 0x53, 0x53, 0x41, 0x47, 0x45, 0x53,
-	0x10, 0x03, 0x32, 0x86, 0x06, 0x0a, 0x12, 0x41, 0x70, 0x70, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
+	0x10, 0x03, 0x32, 0xc6, 0x06, 0x0a, 0x12, 0x41, 0x70, 0x70, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
 	0x72, 0x79, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x3b, 0x0a, 0x08, 0x52, 0x65, 0x67,
 	0x69, 0x73, 0x74, 0x65, 0x72, 0x12, 0x16, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65,
 	0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x17, 0x2e,
 	0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a, 0x09, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x41, 0x70, 0x70, 0x12, 0x17, 0x2e, 0x72, 0x69, 0x76, 0x65, 0x72, 0x2e, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x41, 0x70, 0x70, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x18, 0x2e, 0x72,
+	0x69, 0x76, 0x65, 0x72, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x70, 0x70, 0x52, 0x65,
 	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x50, 0x0a, 0x0f, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74,
 	0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x12, 0x1d, 0x2e, 0x72, 0x69, 0x76, 0x65,
 	0x72, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f,
@@ -2278,90 +2372,94 @@ func file_apps_proto_rawDescGZIP() []byte {
 }
 
 var file_apps_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_apps_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_apps_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_apps_proto_goTypes = []interface{}{
 	(ForwardSettingValue)(0),                      // 0: river.ForwardSettingValue
 	(*AppSettings)(nil),                           // 1: river.AppSettings
 	(*RegisterRequest)(nil),                       // 2: river.RegisterRequest
 	(*RegisterResponse)(nil),                      // 3: river.RegisterResponse
-	(*RegisterWebhookRequest)(nil),                // 4: river.RegisterWebhookRequest
-	(*RegisterWebhookResponse)(nil),               // 5: river.RegisterWebhookResponse
-	(*SetAppSettingsRequest)(nil),                 // 6: river.SetAppSettingsRequest
-	(*SetAppSettingsResponse)(nil),                // 7: river.SetAppSettingsResponse
-	(*GetAppSettingsRequest)(nil),                 // 8: river.GetAppSettingsRequest
-	(*GetAppSettingsResponse)(nil),                // 9: river.GetAppSettingsResponse
-	(*RotateSecretRequest)(nil),                   // 10: river.RotateSecretRequest
-	(*RotateSecretResponse)(nil),                  // 11: river.RotateSecretResponse
-	(*GetStatusRequest)(nil),                      // 12: river.GetStatusRequest
-	(*GetStatusResponse)(nil),                     // 13: river.GetStatusResponse
-	(*GetSessionRequest)(nil),                     // 14: river.GetSessionRequest
-	(*GetSessionResponse)(nil),                    // 15: river.GetSessionResponse
-	(*EventPayload)(nil),                          // 16: river.EventPayload
-	(*EventsPayload)(nil),                         // 17: river.EventsPayload
-	(*AppServiceRequest)(nil),                     // 18: river.AppServiceRequest
-	(*AppServiceResponse)(nil),                    // 19: river.AppServiceResponse
-	(*SlashCommand)(nil),                          // 20: river.SlashCommand
-	(*AppMetadata)(nil),                           // 21: river.AppMetadata
-	(*AppMetadataUpdate)(nil),                     // 22: river.AppMetadataUpdate
-	(*UpdateAppMetadataRequest)(nil),              // 23: river.UpdateAppMetadataRequest
-	(*UpdateAppMetadataResponse)(nil),             // 24: river.UpdateAppMetadataResponse
-	(*GetAppMetadataRequest)(nil),                 // 25: river.GetAppMetadataRequest
-	(*GetAppMetadataResponse)(nil),                // 26: river.GetAppMetadataResponse
-	(*ValidateBotNameRequest)(nil),                // 27: river.ValidateBotNameRequest
-	(*ValidateBotNameResponse)(nil),               // 28: river.ValidateBotNameResponse
-	(*EventPayload_Messages)(nil),                 // 29: river.EventPayload.Messages
-	(*EventPayload_SolicitKeys)(nil),              // 30: river.EventPayload.SolicitKeys
-	(*AppServiceResponse_InitializeResponse)(nil), // 31: river.AppServiceResponse.InitializeResponse
-	(*AppServiceResponse_StatusResponse)(nil),     // 32: river.AppServiceResponse.StatusResponse
-	(*Envelope)(nil),                              // 33: river.Envelope
-	(*emptypb.Empty)(nil),                         // 34: google.protobuf.Empty
-	(*UserMetadataPayload_EncryptionDevice)(nil),  // 35: river.UserMetadataPayload.EncryptionDevice
+	(*DeleteAppRequest)(nil),                      // 4: river.DeleteAppRequest
+	(*DeleteAppResponse)(nil),                     // 5: river.DeleteAppResponse
+	(*RegisterWebhookRequest)(nil),                // 6: river.RegisterWebhookRequest
+	(*RegisterWebhookResponse)(nil),               // 7: river.RegisterWebhookResponse
+	(*SetAppSettingsRequest)(nil),                 // 8: river.SetAppSettingsRequest
+	(*SetAppSettingsResponse)(nil),                // 9: river.SetAppSettingsResponse
+	(*GetAppSettingsRequest)(nil),                 // 10: river.GetAppSettingsRequest
+	(*GetAppSettingsResponse)(nil),                // 11: river.GetAppSettingsResponse
+	(*RotateSecretRequest)(nil),                   // 12: river.RotateSecretRequest
+	(*RotateSecretResponse)(nil),                  // 13: river.RotateSecretResponse
+	(*GetStatusRequest)(nil),                      // 14: river.GetStatusRequest
+	(*GetStatusResponse)(nil),                     // 15: river.GetStatusResponse
+	(*GetSessionRequest)(nil),                     // 16: river.GetSessionRequest
+	(*GetSessionResponse)(nil),                    // 17: river.GetSessionResponse
+	(*EventPayload)(nil),                          // 18: river.EventPayload
+	(*EventsPayload)(nil),                         // 19: river.EventsPayload
+	(*AppServiceRequest)(nil),                     // 20: river.AppServiceRequest
+	(*AppServiceResponse)(nil),                    // 21: river.AppServiceResponse
+	(*SlashCommand)(nil),                          // 22: river.SlashCommand
+	(*AppMetadata)(nil),                           // 23: river.AppMetadata
+	(*AppMetadataUpdate)(nil),                     // 24: river.AppMetadataUpdate
+	(*UpdateAppMetadataRequest)(nil),              // 25: river.UpdateAppMetadataRequest
+	(*UpdateAppMetadataResponse)(nil),             // 26: river.UpdateAppMetadataResponse
+	(*GetAppMetadataRequest)(nil),                 // 27: river.GetAppMetadataRequest
+	(*GetAppMetadataResponse)(nil),                // 28: river.GetAppMetadataResponse
+	(*ValidateBotNameRequest)(nil),                // 29: river.ValidateBotNameRequest
+	(*ValidateBotNameResponse)(nil),               // 30: river.ValidateBotNameResponse
+	(*EventPayload_Messages)(nil),                 // 31: river.EventPayload.Messages
+	(*EventPayload_SolicitKeys)(nil),              // 32: river.EventPayload.SolicitKeys
+	(*AppServiceResponse_InitializeResponse)(nil), // 33: river.AppServiceResponse.InitializeResponse
+	(*AppServiceResponse_StatusResponse)(nil),     // 34: river.AppServiceResponse.StatusResponse
+	(*Envelope)(nil),                              // 35: river.Envelope
+	(*emptypb.Empty)(nil),                         // 36: google.protobuf.Empty
+	(*UserMetadataPayload_EncryptionDevice)(nil),  // 37: river.UserMetadataPayload.EncryptionDevice
 }
 var file_apps_proto_depIdxs = []int32{
 	0,  // 0: river.AppSettings.forward_setting:type_name -> river.ForwardSettingValue
 	1,  // 1: river.RegisterRequest.settings:type_name -> river.AppSettings
-	21, // 2: river.RegisterRequest.metadata:type_name -> river.AppMetadata
+	23, // 2: river.RegisterRequest.metadata:type_name -> river.AppMetadata
 	1,  // 3: river.SetAppSettingsRequest.settings:type_name -> river.AppSettings
 	1,  // 4: river.GetAppSettingsResponse.settings:type_name -> river.AppSettings
-	32, // 5: river.GetStatusResponse.status:type_name -> river.AppServiceResponse.StatusResponse
-	33, // 6: river.GetSessionResponse.group_encryption_sessions:type_name -> river.Envelope
-	29, // 7: river.EventPayload.messages:type_name -> river.EventPayload.Messages
-	30, // 8: river.EventPayload.solicitation:type_name -> river.EventPayload.SolicitKeys
-	16, // 9: river.EventsPayload.events:type_name -> river.EventPayload
-	34, // 10: river.AppServiceRequest.initialize:type_name -> google.protobuf.Empty
-	34, // 11: river.AppServiceRequest.status:type_name -> google.protobuf.Empty
-	17, // 12: river.AppServiceRequest.events:type_name -> river.EventsPayload
-	31, // 13: river.AppServiceResponse.initialize:type_name -> river.AppServiceResponse.InitializeResponse
-	32, // 14: river.AppServiceResponse.status:type_name -> river.AppServiceResponse.StatusResponse
-	20, // 15: river.AppMetadata.slash_commands:type_name -> river.SlashCommand
-	20, // 16: river.AppMetadataUpdate.slash_commands:type_name -> river.SlashCommand
-	22, // 17: river.UpdateAppMetadataRequest.metadata:type_name -> river.AppMetadataUpdate
-	21, // 18: river.GetAppMetadataResponse.metadata:type_name -> river.AppMetadata
-	33, // 19: river.EventPayload.Messages.messages:type_name -> river.Envelope
-	33, // 20: river.EventPayload.Messages.group_encryption_sessions_messages:type_name -> river.Envelope
-	35, // 21: river.AppServiceResponse.InitializeResponse.encryption_device:type_name -> river.UserMetadataPayload.EncryptionDevice
+	34, // 5: river.GetStatusResponse.status:type_name -> river.AppServiceResponse.StatusResponse
+	35, // 6: river.GetSessionResponse.group_encryption_sessions:type_name -> river.Envelope
+	31, // 7: river.EventPayload.messages:type_name -> river.EventPayload.Messages
+	32, // 8: river.EventPayload.solicitation:type_name -> river.EventPayload.SolicitKeys
+	18, // 9: river.EventsPayload.events:type_name -> river.EventPayload
+	36, // 10: river.AppServiceRequest.initialize:type_name -> google.protobuf.Empty
+	36, // 11: river.AppServiceRequest.status:type_name -> google.protobuf.Empty
+	19, // 12: river.AppServiceRequest.events:type_name -> river.EventsPayload
+	33, // 13: river.AppServiceResponse.initialize:type_name -> river.AppServiceResponse.InitializeResponse
+	34, // 14: river.AppServiceResponse.status:type_name -> river.AppServiceResponse.StatusResponse
+	22, // 15: river.AppMetadata.slash_commands:type_name -> river.SlashCommand
+	22, // 16: river.AppMetadataUpdate.slash_commands:type_name -> river.SlashCommand
+	24, // 17: river.UpdateAppMetadataRequest.metadata:type_name -> river.AppMetadataUpdate
+	23, // 18: river.GetAppMetadataResponse.metadata:type_name -> river.AppMetadata
+	35, // 19: river.EventPayload.Messages.messages:type_name -> river.Envelope
+	35, // 20: river.EventPayload.Messages.group_encryption_sessions_messages:type_name -> river.Envelope
+	37, // 21: river.AppServiceResponse.InitializeResponse.encryption_device:type_name -> river.UserMetadataPayload.EncryptionDevice
 	2,  // 22: river.AppRegistryService.Register:input_type -> river.RegisterRequest
-	4,  // 23: river.AppRegistryService.RegisterWebhook:input_type -> river.RegisterWebhookRequest
-	12, // 24: river.AppRegistryService.GetStatus:input_type -> river.GetStatusRequest
-	6,  // 25: river.AppRegistryService.SetAppSettings:input_type -> river.SetAppSettingsRequest
-	8,  // 26: river.AppRegistryService.GetAppSettings:input_type -> river.GetAppSettingsRequest
-	23, // 27: river.AppRegistryService.UpdateAppMetadata:input_type -> river.UpdateAppMetadataRequest
-	25, // 28: river.AppRegistryService.GetAppMetadata:input_type -> river.GetAppMetadataRequest
-	10, // 29: river.AppRegistryService.RotateSecret:input_type -> river.RotateSecretRequest
-	14, // 30: river.AppRegistryService.GetSession:input_type -> river.GetSessionRequest
-	27, // 31: river.AppRegistryService.ValidateBotName:input_type -> river.ValidateBotNameRequest
-	3,  // 32: river.AppRegistryService.Register:output_type -> river.RegisterResponse
-	5,  // 33: river.AppRegistryService.RegisterWebhook:output_type -> river.RegisterWebhookResponse
-	13, // 34: river.AppRegistryService.GetStatus:output_type -> river.GetStatusResponse
-	7,  // 35: river.AppRegistryService.SetAppSettings:output_type -> river.SetAppSettingsResponse
-	9,  // 36: river.AppRegistryService.GetAppSettings:output_type -> river.GetAppSettingsResponse
-	24, // 37: river.AppRegistryService.UpdateAppMetadata:output_type -> river.UpdateAppMetadataResponse
-	26, // 38: river.AppRegistryService.GetAppMetadata:output_type -> river.GetAppMetadataResponse
-	11, // 39: river.AppRegistryService.RotateSecret:output_type -> river.RotateSecretResponse
-	15, // 40: river.AppRegistryService.GetSession:output_type -> river.GetSessionResponse
-	28, // 41: river.AppRegistryService.ValidateBotName:output_type -> river.ValidateBotNameResponse
-	32, // [32:42] is the sub-list for method output_type
-	22, // [22:32] is the sub-list for method input_type
+	4,  // 23: river.AppRegistryService.DeleteApp:input_type -> river.DeleteAppRequest
+	6,  // 24: river.AppRegistryService.RegisterWebhook:input_type -> river.RegisterWebhookRequest
+	14, // 25: river.AppRegistryService.GetStatus:input_type -> river.GetStatusRequest
+	8,  // 26: river.AppRegistryService.SetAppSettings:input_type -> river.SetAppSettingsRequest
+	10, // 27: river.AppRegistryService.GetAppSettings:input_type -> river.GetAppSettingsRequest
+	25, // 28: river.AppRegistryService.UpdateAppMetadata:input_type -> river.UpdateAppMetadataRequest
+	27, // 29: river.AppRegistryService.GetAppMetadata:input_type -> river.GetAppMetadataRequest
+	12, // 30: river.AppRegistryService.RotateSecret:input_type -> river.RotateSecretRequest
+	16, // 31: river.AppRegistryService.GetSession:input_type -> river.GetSessionRequest
+	29, // 32: river.AppRegistryService.ValidateBotName:input_type -> river.ValidateBotNameRequest
+	3,  // 33: river.AppRegistryService.Register:output_type -> river.RegisterResponse
+	5,  // 34: river.AppRegistryService.DeleteApp:output_type -> river.DeleteAppResponse
+	7,  // 35: river.AppRegistryService.RegisterWebhook:output_type -> river.RegisterWebhookResponse
+	15, // 36: river.AppRegistryService.GetStatus:output_type -> river.GetStatusResponse
+	9,  // 37: river.AppRegistryService.SetAppSettings:output_type -> river.SetAppSettingsResponse
+	11, // 38: river.AppRegistryService.GetAppSettings:output_type -> river.GetAppSettingsResponse
+	26, // 39: river.AppRegistryService.UpdateAppMetadata:output_type -> river.UpdateAppMetadataResponse
+	28, // 40: river.AppRegistryService.GetAppMetadata:output_type -> river.GetAppMetadataResponse
+	13, // 41: river.AppRegistryService.RotateSecret:output_type -> river.RotateSecretResponse
+	17, // 42: river.AppRegistryService.GetSession:output_type -> river.GetSessionResponse
+	30, // 43: river.AppRegistryService.ValidateBotName:output_type -> river.ValidateBotNameResponse
+	33, // [33:44] is the sub-list for method output_type
+	22, // [22:33] is the sub-list for method input_type
 	22, // [22:22] is the sub-list for extension type_name
 	22, // [22:22] is the sub-list for extension extendee
 	0,  // [0:22] is the sub-list for field type_name
@@ -2411,7 +2509,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterWebhookRequest); i {
+			switch v := v.(*DeleteAppRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2423,7 +2521,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RegisterWebhookResponse); i {
+			switch v := v.(*DeleteAppResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2435,7 +2533,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetAppSettingsRequest); i {
+			switch v := v.(*RegisterWebhookRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2447,7 +2545,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SetAppSettingsResponse); i {
+			switch v := v.(*RegisterWebhookResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2459,7 +2557,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAppSettingsRequest); i {
+			switch v := v.(*SetAppSettingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2471,7 +2569,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAppSettingsResponse); i {
+			switch v := v.(*SetAppSettingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2483,7 +2581,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RotateSecretRequest); i {
+			switch v := v.(*GetAppSettingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2495,7 +2593,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RotateSecretResponse); i {
+			switch v := v.(*GetAppSettingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2507,7 +2605,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStatusRequest); i {
+			switch v := v.(*RotateSecretRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2519,7 +2617,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetStatusResponse); i {
+			switch v := v.(*RotateSecretResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2531,7 +2629,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSessionRequest); i {
+			switch v := v.(*GetStatusRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2543,7 +2641,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetSessionResponse); i {
+			switch v := v.(*GetStatusResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2555,7 +2653,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EventPayload); i {
+			switch v := v.(*GetSessionRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2567,7 +2665,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EventsPayload); i {
+			switch v := v.(*GetSessionResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2579,7 +2677,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppServiceRequest); i {
+			switch v := v.(*EventPayload); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2591,7 +2689,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppServiceResponse); i {
+			switch v := v.(*EventsPayload); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2603,7 +2701,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*SlashCommand); i {
+			switch v := v.(*AppServiceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2615,7 +2713,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppMetadata); i {
+			switch v := v.(*AppServiceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2627,7 +2725,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppMetadataUpdate); i {
+			switch v := v.(*SlashCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2639,7 +2737,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateAppMetadataRequest); i {
+			switch v := v.(*AppMetadata); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2651,7 +2749,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateAppMetadataResponse); i {
+			switch v := v.(*AppMetadataUpdate); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2663,7 +2761,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAppMetadataRequest); i {
+			switch v := v.(*UpdateAppMetadataRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2675,7 +2773,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAppMetadataResponse); i {
+			switch v := v.(*UpdateAppMetadataResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2687,7 +2785,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ValidateBotNameRequest); i {
+			switch v := v.(*GetAppMetadataRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2699,7 +2797,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ValidateBotNameResponse); i {
+			switch v := v.(*GetAppMetadataResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2711,7 +2809,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EventPayload_Messages); i {
+			switch v := v.(*ValidateBotNameRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2723,7 +2821,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EventPayload_SolicitKeys); i {
+			switch v := v.(*ValidateBotNameResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2735,7 +2833,7 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AppServiceResponse_InitializeResponse); i {
+			switch v := v.(*EventPayload_Messages); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2747,6 +2845,30 @@ func file_apps_proto_init() {
 			}
 		}
 		file_apps_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EventPayload_SolicitKeys); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*AppServiceResponse_InitializeResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_apps_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AppServiceResponse_StatusResponse); i {
 			case 0:
 				return &v.state
@@ -2759,28 +2881,28 @@ func file_apps_proto_init() {
 			}
 		}
 	}
-	file_apps_proto_msgTypes[15].OneofWrappers = []interface{}{
+	file_apps_proto_msgTypes[17].OneofWrappers = []interface{}{
 		(*EventPayload_Messages_)(nil),
 		(*EventPayload_Solicitation)(nil),
 	}
-	file_apps_proto_msgTypes[17].OneofWrappers = []interface{}{
+	file_apps_proto_msgTypes[19].OneofWrappers = []interface{}{
 		(*AppServiceRequest_Initialize)(nil),
 		(*AppServiceRequest_Status)(nil),
 		(*AppServiceRequest_Events)(nil),
 	}
-	file_apps_proto_msgTypes[18].OneofWrappers = []interface{}{
+	file_apps_proto_msgTypes[20].OneofWrappers = []interface{}{
 		(*AppServiceResponse_Initialize)(nil),
 		(*AppServiceResponse_Status)(nil),
 	}
-	file_apps_proto_msgTypes[20].OneofWrappers = []interface{}{}
-	file_apps_proto_msgTypes[21].OneofWrappers = []interface{}{}
+	file_apps_proto_msgTypes[22].OneofWrappers = []interface{}{}
+	file_apps_proto_msgTypes[23].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_apps_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   32,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

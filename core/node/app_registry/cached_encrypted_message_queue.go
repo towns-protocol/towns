@@ -104,6 +104,20 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	return nil
 }
 
+func (q *CachedEncryptedMessageQueue) DeleteApp(
+	ctx context.Context,
+	app common.Address,
+) error {
+	// Remove from cache
+	q.appIdCache.Delete(app)
+
+	// Remove from metadata cache
+	q.metadataCache.Remove(app.String())
+
+	// Delete from database
+	return q.store.DeleteApp(ctx, app)
+}
+
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
 	ctx context.Context,
 	app common.Address,

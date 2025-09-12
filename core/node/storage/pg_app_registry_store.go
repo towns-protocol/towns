@@ -31,7 +31,7 @@ import (
 // Operations are divided into two categories:
 //
 // 1. SERIALIZABLE (default): Required for queue operations
-//    - EnqueueUnsendableMessages: Reads app_session_keys, writes to enqueued_messages
+//    - EnqueueUnsendableMessage: Reads app_session_keys, writes to enqueued_messages
 //    - PublishSessionKeys: Writes to app_session_keys, deletes from enqueued_messages
 //
 // 2. READ COMMITTED: Safe for non-queue operations
@@ -128,6 +128,12 @@ type (
 			settings types.AppSettings,
 			metadata types.AppMetadata,
 			encryptedSharedSecret [32]byte,
+		) error
+
+		// DeleteApp removes an app and all its associated data (session keys, enqueued messages)
+		DeleteApp(
+			ctx context.Context,
+			app common.Address,
 		) error
 
 		// Note: the shared secret passed into this method call is stored directly on disk and
@@ -386,6 +392,68 @@ func (s *PostgresAppRegistryStore) createApp(
 	return nil
 }
 
+func (s *PostgresAppRegistryStore) DeleteApp(
+	ctx context.Context,
+	app common.Address,
+) error {
+	return s.txRunner(
+		ctx,
+		"DeleteApp",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.deleteApp(ctx, app, tx)
+		},
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
+		"appAddress", app,
+	)
+}
+
+func (s *PostgresAppRegistryStore) deleteApp(
+	ctx context.Context,
+	app common.Address,
+	tx pgx.Tx,
+) error {
+	// First, get the device_key for cascading deletes, if it exists
+	var deviceKey *string
+	err := tx.QueryRow(ctx,
+		`SELECT device_key FROM app_registry WHERE app_id = $1`,
+		PGAddress(app)).Scan(&deviceKey)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+		}
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE)
+	}
+
+	if deviceKey != nil {
+		_, err = tx.Exec(ctx, `DELETE FROM enqueued_messages WHERE device_key = $1`, *deviceKey)
+		if err != nil {
+			return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+				Message("failed to delete enqueued messages for app")
+		}
+	}
+
+	if deviceKey != nil {
+		_, err = tx.Exec(ctx, `DELETE FROM app_session_keys WHERE device_key = $1`, *deviceKey)
+		if err != nil {
+			return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+				Message("failed to delete session keys for app")
+		}
+	}
+
+	tag, err := tx.Exec(ctx, `DELETE FROM app_registry WHERE app_id = $1`, PGAddress(app))
+	if err != nil {
+		return AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("failed to delete app from registry")
+	}
+
+	if tag.RowsAffected() == 0 {
+		return RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+	}
+
+	return nil
+}
+
 func (s *PostgresAppRegistryStore) UpdateSettings(
 	ctx context.Context,
 	app common.Address,
@@ -637,9 +705,8 @@ func (s *PostgresAppRegistryStore) publishSessionKeys(
 ) (messages *SendableMessages, err error) {
 	_, err = tx.Exec(
 		ctx,
-		`   INSERT INTO app_session_keys (device_key, stream_id, session_ids, message_envelope)
-			VALUES ($1, $2, $3, $4);	
-		`,
+		`INSERT INTO app_session_keys (device_key, stream_id, session_ids, message_envelope)
+			VALUES ($1, $2, $3, $4);`,
 		deviceKey,
 		streamId,
 		sessionIds,
