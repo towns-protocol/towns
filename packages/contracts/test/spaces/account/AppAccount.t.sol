@@ -219,6 +219,21 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         assertEq(address(mockModule).balance, 0);
     }
 
+    function test_isAppExecuting() external givenAppIsInstalled {
+        vm.prank(client);
+        appAccount.execute({
+            target: address(mockModule),
+            value: 0,
+            data: abi.encodeWithSelector(mockModule.mockRequestFunds.selector)
+        });
+    }
+
+    function test_revertWhen_execute_appNotExecuting() external givenAppIsInstalled {
+        vm.prank(client);
+        bool isExecuting = appAccount.isAppExecuting(address(mockModule));
+        assertEq(isExecuting, false);
+    }
+
     function test_revertWhen_execute_bannedApp() external givenAppIsInstalled {
         vm.prank(deployer);
         registry.adminBanApp(address(mockModule));

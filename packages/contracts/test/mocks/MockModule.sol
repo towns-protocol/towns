@@ -5,6 +5,7 @@ import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} fro
 
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 
 // contracts
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
@@ -106,6 +107,12 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
         emit MockFunctionWithParamsCalled(msg.sender, msg.value, param);
     }
 
+    function mockRequestFunds() external view {
+        if (!IAppAccount(msg.sender).isAppExecuting(address(this))) {
+            revert("App is not executing");
+        }
+    }
+
     function mockValidateSignature(
         bytes calldata signature,
         bytes32 structHash
@@ -185,7 +192,7 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
     }
 
     function executionManifest() external pure virtual returns (ExecutionManifest memory) {
-        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](3);
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](4);
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);
 
         executionFunctions[0] = ManifestExecutionFunction({
@@ -209,6 +216,12 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
 
         executionFunctions[2] = ManifestExecutionFunction({
             executionSelector: this.mockValidateSignature.selector,
+            skipRuntimeValidation: false,
+            allowGlobalValidation: true
+        });
+
+        executionFunctions[3] = ManifestExecutionFunction({
+            executionSelector: this.mockRequestFunds.selector,
             skipRuntimeValidation: false,
             allowGlobalValidation: true
         });
