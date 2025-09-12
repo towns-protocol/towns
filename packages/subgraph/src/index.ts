@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
     updateSpaceReviewMetrics,
+    updateSpaceCachedMetrics,
 } from './utils'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
@@ -235,7 +236,7 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
             .where(eq(schema.space.id, spaceId))
 
         // Temp disabled rolling window metrics
-        // await updateSpaceCachedMetrics(context, spaceId, 'swap')
+        await updateSpaceCachedMetrics(context, spaceId, 'swap')
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -751,7 +752,7 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
             .where(eq(schema.space.id, spaceId))
 
         // Temp disabled rolling window metrics
-        // await updateSpaceCachedMetrics(context, spaceId, 'join')
+        await updateSpaceCachedMetrics(context, spaceId, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -805,7 +806,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             .where(eq(schema.space.id, spaceId))
 
         // Temp disabled rolling window metrics
-        // await updateSpaceCachedMetrics(context, spaceId, 'tip')
+        await updateSpaceCachedMetrics(context, spaceId, 'tip')
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
