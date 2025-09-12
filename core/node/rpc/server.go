@@ -796,6 +796,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.wallet.Address,
 		s.cache,
 		s.nodeRegistry,
+		s.metrics,
 		s.otelTracer,
 	)
 	s.syncv3OpIDs = xsync.NewMap[string, struct{}]()

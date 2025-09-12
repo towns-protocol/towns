@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -64,6 +65,7 @@ func NewRegistry(
 	streamCache StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	subscriber StreamSubscriber,
+	metrics infra.MetricsFactory,
 	otelTracer trace.Tracer,
 ) Registry {
 	r := &registryImpl{
@@ -87,6 +89,8 @@ func NewRegistry(
 			r.log.Info("sync registry stopped")
 		}
 	}()
+
+	r.runMetricsCollector(metrics)
 
 	return r
 }

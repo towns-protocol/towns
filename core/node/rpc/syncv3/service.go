@@ -8,6 +8,7 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
@@ -48,10 +49,11 @@ func NewService(
 	localAddr common.Address,
 	cache *events.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
+	metrics infra.MetricsFactory,
 	otelTracer trace.Tracer,
 ) Service {
-	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry, otelTracer)
-	registry := handler.NewRegistry(eventBus)
+	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry, metrics, otelTracer)
+	registry := handler.NewRegistry(eventBus, metrics)
 	return &serviceImpl{
 		handlerRegistry: registry,
 		otelTracer:      otelTracer,

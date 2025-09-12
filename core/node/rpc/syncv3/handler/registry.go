@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
@@ -27,18 +28,24 @@ type Registry interface {
 	Remove(syncID string)
 }
 
-// syncStreamHandlerRegistryImpl is a concrete implementation of the Registry interface.
 type syncStreamHandlerRegistryImpl struct {
 	handlersLock sync.Mutex
 	handlers     map[string]*syncStreamHandlerImpl
 	eventBus     eventbus.StreamSubscriptionManager
 }
 
-func NewRegistry(eventBus eventbus.StreamSubscriptionManager) Registry {
-	return &syncStreamHandlerRegistryImpl{
+func NewRegistry(
+	eventBus eventbus.StreamSubscriptionManager,
+	metrics infra.MetricsFactory,
+) Registry {
+	h := &syncStreamHandlerRegistryImpl{
 		handlers: make(map[string]*syncStreamHandlerImpl),
 		eventBus: eventBus,
 	}
+
+	h.runMetricsCollector(metrics)
+
+	return h
 }
 
 func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, bool) {
