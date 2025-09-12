@@ -119,6 +119,10 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
+            /** The eventId of the message that got replied */
+            replyId: string | undefined
+            /** The thread id where the message belongs to */
+            threadId: string | undefined
         },
     ) => void | Promise<void>
     reply: (
@@ -571,7 +575,11 @@ export class Bot<
                             threadId,
                         })
                     } else if (hasBotMention) {
-                        this.emitter.emit('mentioned', this.client, forwardPayload)
+                        this.emitter.emit('mentioned', this.client, {
+                            ...forwardPayload,
+                            threadId,
+                            replyId,
+                        })
                     } else {
                         this.emitter.emit('message', this.client, forwardPayload)
                     }

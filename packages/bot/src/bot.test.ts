@@ -438,6 +438,52 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeDefined()
     })
 
+    it('onMentioned can be triggered when a bot is mentioned in a thread', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedEvents: OnMentionedType[] = []
+        bot.onMentioned((_h, e) => {
+            receivedMentionedEvents.push(e)
+        })
+        const TEST_MESSAGE = 'Hello @bot'
+        const { eventId: threadId } = await bobDefaultChannel.sendMessage('starting a thread')
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+            mentions: [
+                {
+                    userId: bot.botId,
+                    displayName: bot.botId,
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+            threadId,
+        })
+        await waitFor(() => receivedMentionedEvents.length > 0)
+        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeDefined()
+        expect(receivedMentionedEvents.find((x) => x.threadId === threadId)).toBeDefined()
+    })
+
+    it('onMentioned can be triggered when a bot is mentioned in a reply', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMentionedEvents: OnMentionedType[] = []
+        bot.onMentioned((_h, e) => {
+            receivedMentionedEvents.push(e)
+        })
+        const TEST_MESSAGE = 'Hello @bot'
+        const { eventId: replyId } = await bobDefaultChannel.sendMessage('yo')
+        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+            mentions: [
+                {
+                    userId: bot.botId,
+                    displayName: bot.botId,
+                    mentionBehavior: { case: undefined, value: undefined },
+                },
+            ],
+            replyId,
+        })
+        await waitFor(() => receivedMentionedEvents.length > 0)
+        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeDefined()
+        expect(receivedMentionedEvents.find((x) => x.replyId === replyId)).toBeDefined()
+    })
+
     it('onMentioned should NOT BE triggered when someone else is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMentionedType[] = []
