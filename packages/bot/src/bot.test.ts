@@ -343,6 +343,42 @@ describe('Bot', { sequential: true }, () => {
         expect(event?.args).toStrictEqual([])
     })
 
+    it('should receive slash command in a thread', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('help', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId: threadId } = await bobDefaultChannel.sendMessage('starting a thread')
+        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+            appClientAddress: bot.botId,
+            threadId: threadId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('help')
+        expect(event?.args).toStrictEqual([])
+        expect(event?.threadId).toBe(threadId)
+    })
+
+    it('should receive slash command as a reply', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnSlashCommandType[] = []
+        bot.onSlashCommand('help', (_h, e) => {
+            receivedMessages.push(e)
+        })
+        const { eventId: replyId } = await bobDefaultChannel.sendMessage('yo')
+        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+            appClientAddress: bot.botId,
+            replyId: replyId,
+        })
+        await waitFor(() => receivedMessages.length > 0)
+        const event = receivedMessages.find((x) => x.eventId === eventId)
+        expect(event?.command).toBe('help')
+        expect(event?.args).toStrictEqual([])
+        expect(event?.replyId).toBe(replyId)
+    })
+
     it('should receive slash command with arguments', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
