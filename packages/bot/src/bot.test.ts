@@ -68,6 +68,7 @@ describe('Bot', { sequential: true }, () => {
     const BOB_DISPLAY_NAME = 'im_bob'
 
     const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
+    const BOT_DISPLAY_NAME = 'Uber Test Bot'
     const BOT_DESCRIPTION = 'I shall witness everything'
 
     let bot: Bot<typeof SLASH_COMMANDS>
@@ -197,7 +198,7 @@ describe('Bot', { sequential: true }, () => {
             appOwnerId: bin_fromHexString(bob.userId),
             metadata: {
                 username: BOT_USERNAME,
-                displayName: 'Bot Witness of Infinity',
+                displayName: BOT_DISPLAY_NAME,
                 description: BOT_DESCRIPTION,
                 avatarUrl: 'https://placehold.co/64x64',
                 imageUrl: 'https://placehold.co/600x600',
@@ -465,13 +466,16 @@ describe('Bot', { sequential: true }, () => {
             mentions: [
                 {
                     userId: bot.botId,
-                    displayName: bot.botId,
+                    displayName: BOT_DISPLAY_NAME,
                     mentionBehavior: { case: undefined, value: undefined },
                 },
             ],
         })
         await waitFor(() => receivedMentionedEvents.length > 0)
-        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeDefined()
+        const mentionedEvent = receivedMentionedEvents.find((x) => x.eventId === eventId)
+        expect(mentionedEvent).toBeDefined()
+        expect(mentionedEvent?.mentions[0].userId).toBe(bot.botId)
+        expect(mentionedEvent?.mentions[0].displayName).toBe(BOT_DISPLAY_NAME)
     })
 
     it('onMentioned should NOT BE triggered when someone else is mentioned', async () => {

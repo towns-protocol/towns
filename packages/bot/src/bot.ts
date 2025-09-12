@@ -96,6 +96,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             isDm: boolean
             /** You can use this to check if the message is a group message */
             isGdm: boolean
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => void | Promise<void>
     redaction: (
@@ -112,6 +114,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
             /** New message */
             message: string
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => void | Promise<void>
     mentioned: (
@@ -119,6 +123,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => void | Promise<void>
     reply: (
@@ -126,6 +132,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => void | Promise<void>
     reaction: (
@@ -146,7 +154,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
         },
     ) => Promise<void> | void
-    // TODO:
     tip: (
         handler: BotActions,
         event: BasePayload & {
@@ -175,6 +182,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             threadId: string
             /** The decrypted message content */
             message: string
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => Promise<void> | void
     mentionedInThread: (
@@ -184,6 +193,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             threadId: string
             /** The decrypted message content */
             message: string
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
         },
     ) => Promise<void> | void
 
@@ -204,6 +215,8 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
              * ```
              */
             args: string[]
+            /** Users mentioned in the command */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** The eventId of the message that got replied */
             replyId: string | undefined
             /** The thread id where the message belongs to */
@@ -543,6 +556,7 @@ export class Bot<
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
+                        mentions: parseMentions(payload.value.content.value.mentions),
                     }
 
                     if (
@@ -606,6 +620,7 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
+                    mentions: parseMentions(payload.value.post?.content.value.mentions),
                     createdAt,
                 })
                 break
@@ -1121,3 +1136,13 @@ const parseSlashCommand = (message: string): { command: string; args: string[] }
     const args = parts.slice(1)
     return { command, args }
 }
+
+const parseMentions = (
+    mentions: PlainMessage<ChannelMessage_Post_Mention>[],
+): Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[] =>
+    // Bots doesn't care about @channel or @role mentions
+    mentions.flatMap((m) =>
+        m.mentionBehavior.case === undefined
+            ? [{ userId: m.userId, displayName: m.displayName }]
+            : [],
+    )
