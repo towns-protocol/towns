@@ -22,7 +22,7 @@ main() {
 
 start_base_chain() {
   echo "Starting base chain..."
-  RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-basechain.sh &
+  RIVER_ANVIL_OPTS="--dump-state base-anvil-state.json --quiet" ./scripts/start-local-basechain.sh &
   sleep 1  # Give it a moment to start
   BASE_PID=$(pgrep -f "anvil.*base-anvil-state.json" | head -n 1)
   echo "Base chain started with PID: $BASE_PID"
@@ -30,7 +30,7 @@ start_base_chain() {
 
 start_river_chain() {
   echo "Starting river chain..."
-  RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --state-interval 1 --quiet" ./scripts/start-local-riverchain.sh &
+  RIVER_ANVIL_OPTS="--dump-state river-anvil-state.json --quiet" ./scripts/start-local-riverchain.sh &
   sleep 1  # Give it a moment to start
   RIVER_PID=$(pgrep -f "anvil.*river-anvil-state.json" | head -n 1)
   echo "River chain started with PID: $RIVER_PID"
