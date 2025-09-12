@@ -80,6 +80,32 @@ func (l *LockedPtr[T]) Set(value T) {
 //     interface implemented by *T. If *T does not implement RO, RLock will panic
 //     at the type assertion.
 //
+// Usage:
+//
+//	type state struct{ n int }
+//	func (s *state) Inc()    { s.n++ }
+//	func (s *state) Get() int { return s.n } // read-only method
+//
+//	// RO interface implemented by *state
+//	type roState interface{ Get() int }
+//
+//	// Parent owns the locked state field
+//	type Service struct {
+//	    st locked.RWLocked[state, roState]
+//	}
+//
+//	func (svc *Service) Write() {
+//	    s := svc.st.Lock()
+//	    s.Inc()
+//	    svc.st.Unlock()
+//	}
+//
+//	func (svc *Service) Read() int {
+//	    ro := svc.st.RLock()
+//	    defer svc.st.RUnlock()
+//	    return ro.Get()
+//	}
+//
 // See Locked for more details and suggested usage.
 type RWLocked[T any, RO any] struct {
 	value T
