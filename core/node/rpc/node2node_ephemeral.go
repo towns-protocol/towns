@@ -89,7 +89,7 @@ func (s *Service) allocateEphemeralStream(
 			return nil, RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
 		}
 	}
-	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, s.externalMediaStorage.GetBucket()); err != nil {
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, s.config.ExternalMediaStreamDataBucket); err != nil {
 		return nil, err
 	}
 
@@ -137,10 +137,11 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	// Save the ephemeral miniblock.
 	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 	if err != nil {
-		return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
+		// Default to config storage type
+		location = s.config.MediaStreamDataStorage
 	}
 	if location != "" {
-		if location != s.externalMediaStorage.GetBucket() {
+		if location != s.config.ExternalMediaStreamDataBucket {
 			return RiverError(
 				Err_INTERNAL,
 				"external media stream storage changed after this ephemeral media was created.",
@@ -215,7 +216,7 @@ func (s *Service) sealEphemeralStream(
 	if err != nil {
 		return common.Hash{}, RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 	}
-	if location != s.externalMediaStorage.GetBucket() {
+	if location != s.config.ExternalMediaStreamDataBucket {
 		return common.Hash{}, RiverError(
 			Err_INTERNAL,
 			"external media stream storage changed after this ephemeral media was created.",

@@ -208,10 +208,6 @@ func (w *S3MediaStore) AbortMediaStreamUpload(
 	return nil
 }
 
-func (w *S3MediaStore) GetBucket() string {
-	return w.bucket
-}
-
 func DownloadRangeFromS3MediaStream(
 	ctx context.Context,
 	streamId StreamId,

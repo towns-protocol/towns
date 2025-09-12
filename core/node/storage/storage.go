@@ -338,6 +338,5 @@ type (
 		) (string, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []Etag) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
-		GetBucket() string
 	}
 )

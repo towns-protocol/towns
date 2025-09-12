@@ -264,10 +264,6 @@ func (w *GCSExternalMediaStore) AbortMediaStreamUpload(
 	return nil
 }
 
-func (w *GCSExternalMediaStore) GetBucket() string {
-	return w.bucket
-}
-
 func DownloadRangeFromGCSMediaStream(
 	ctx context.Context,
 	streamId StreamId,
