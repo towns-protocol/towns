@@ -1,12 +1,13 @@
 import { ponder as originalPonder } from 'ponder:registry'
 
 // Configuration
-const SLOW_THRESHOLD_MS = 3000
+const SLOW_THRESHOLD_MS = 100
 const LOG_METRICS = process.env.LOG_METRICS !== 'false' // default to true
 
 // Simple metrics tracking
 const eventMetrics = new Map<string, { count: number; totalMs: number; slowCount: number }>()
 let globalEventCount = 0
+let latestBlockNumber = 0n
 
 // Wrapped ponder with automatic metrics
 export const ponder = new Proxy(originalPonder, {
@@ -23,6 +24,11 @@ export const ponder = new Proxy(originalPonder, {
                 const wrappedHandler = async (context: any) => {
                     const start = Date.now()
                     const blockNumber = context.event?.block?.number || 'unknown'
+
+                    // Update latest block number
+                    if (typeof blockNumber === 'bigint') {
+                        latestBlockNumber = blockNumber
+                    }
 
                     try {
                         const result = await handler(context)
@@ -44,8 +50,8 @@ export const ponder = new Proxy(originalPonder, {
 
                         globalEventCount++
 
-                        // Log summary every 100 events
-                        if (LOG_METRICS && globalEventCount % 100 === 0) {
+                        // Log summary every N events
+                        if (LOG_METRICS && globalEventCount % 1000 === 0) {
                             logMetricsSummary()
                         }
 
@@ -68,29 +74,29 @@ export const ponder = new Proxy(originalPonder, {
 })
 
 function logMetricsSummary() {
-    console.log('\n📊 Performance Summary:')
-    console.log('========================')
-
     const sorted = Array.from(eventMetrics.entries()).sort((a, b) => {
-        const avgA = a[1].totalMs / a[1].count
-        const avgB = b[1].totalMs / b[1].count
-        return avgB - avgA // Sort by average time, slowest first
+        return b[1].totalMs - a[1].totalMs // Sort by total time spent, highest first
     })
 
+    const eventStats: Record<string, any> = {}
     for (const [event, metrics] of sorted) {
         const avg = Math.round(metrics.totalMs / metrics.count)
-        const slowPct = ((metrics.slowCount / metrics.count) * 100).toFixed(1)
-        console.log(
-            `${event}: avg=${avg}ms, count=${metrics.count}, slow=${metrics.slowCount} (${slowPct}%)`,
-        )
+        const slowPct = parseFloat(((metrics.slowCount / metrics.count) * 100).toFixed(1))
+        eventStats[event] = {
+            avg_ms: avg,
+            count: metrics.count,
+            slow_count: metrics.slowCount,
+            slow_pct: slowPct,
+            total_ms: metrics.totalMs,
+        }
     }
-    console.log('========================\n')
-}
 
-// Export metrics for external access if needed
-export function getMetrics() {
-    return {
-        events: Object.fromEntries(eventMetrics),
-        totalEvents: globalEventCount,
-    }
+    console.log(
+        JSON.stringify({
+            type: 'metrics_summary',
+            block: latestBlockNumber.toString(),
+            total_events: globalEventCount,
+            events: eventStats,
+        }),
+    )
 }
