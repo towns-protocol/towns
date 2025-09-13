@@ -51,7 +51,7 @@ export const ponder = new Proxy(originalPonder, {
                         globalEventCount++
 
                         // Log summary every N events
-                        if (LOG_METRICS && globalEventCount % 1000 === 0) {
+                        if (LOG_METRICS && globalEventCount % 5000 === 0) {
                             logMetricsSummary()
                         }
 
@@ -81,12 +81,10 @@ function logMetricsSummary() {
     const eventStats: Record<string, any> = {}
     for (const [event, metrics] of sorted) {
         const avg = Math.round(metrics.totalMs / metrics.count)
-        const slowPct = parseFloat(((metrics.slowCount / metrics.count) * 100).toFixed(1))
         eventStats[event] = {
             avg_ms: avg,
             count: metrics.count,
             slow_count: metrics.slowCount,
-            slow_pct: slowPct,
             total_ms: metrics.totalMs,
         }
     }

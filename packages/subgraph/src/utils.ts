@@ -250,8 +250,6 @@ export async function updateSpaceCachedMetrics(
     }
 
     await context.db.sql.update(schema.space).set(updates).where(eq(schema.space.id, spaceId))
-
-    console.log(`Updated ${eventType} rolling window metrics for space ${spaceId}`)
 }
 
 export function calculateWeightedRating(averageRating: number, reviewCount: number): number {
@@ -297,10 +295,6 @@ export async function updateSpaceReviewMetrics(
                 weightedRating: weightedRating,
             })
             .where(eq(schema.space.id, spaceId))
-
-        console.log(
-            `Updated review metrics for space ${spaceId}: count=${reviewCount}, average=${averageRating.toFixed(2)}, weighted=${weightedRating.toFixed(2)}`,
-        )
     } catch (error) {
         console.error(`Error updating review metrics for space ${spaceId}:`, error)
     }
@@ -333,4 +327,4 @@ async function getReadSpaceInfoBlockNumber(blockNumber: bigint): Promise<bigint>
     return blockNumber > minBlock ? blockNumber : minBlock
 }
 
-export { publicClient, getReadSpaceInfoBlockNumber, getCreatedDate }
+export { getReadSpaceInfoBlockNumber, getCreatedDate }
