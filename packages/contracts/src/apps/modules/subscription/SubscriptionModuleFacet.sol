@@ -11,7 +11,7 @@ import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IMod
 
 // libraries
 import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
-import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
+import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
 import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLocatorLib.sol";
