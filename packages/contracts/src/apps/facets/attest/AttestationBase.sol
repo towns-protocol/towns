@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IAttestationRegistryBase} from "./IAttestationRegistry.sol";
-import {ISchemaBase} from "../schema/ISchema.sol";
 
 // libraries
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
@@ -14,7 +13,7 @@ import {AttestationStorage} from "./AttestationStorage.sol";
 
 // types
 import {SchemaStorage} from "../schema/SchemaStorage.sol";
-import {Attestation, EMPTY_UID, NO_EXPIRATION_TIME, NotFound} from "@ethereum-attestation-service/eas-contracts/Common.sol";
+import {Attestation, EMPTY_UID, NO_EXPIRATION_TIME} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, AttestationRequestData, IEAS, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 import {SchemaRecord} from "@ethereum-attestation-service/eas-contracts/ISchemaRegistry.sol";
 
@@ -154,6 +153,7 @@ abstract contract AttestationBase is IAttestationRegistryBase {
 
         // Get the resolver contract for this schema
         ISchemaResolver resolver = ISchemaResolver(schema.resolver);
+
         // If no resolver is set, handle zero-value case and refund if this is the last batch
         if (address(resolver) == address(0)) {
             _refundIfZeroValue(values, availableValue, last);

@@ -48,6 +48,7 @@ interface IAppRegistryBase {
     error InsufficientPayment();
     error NotAllowed();
     error ClientAlreadyRegistered();
+    error ClientNotRegistered();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -61,6 +62,12 @@ interface IAppRegistryBase {
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpdated(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpgraded(
+        address indexed app,
+        bytes32 indexed oldVersionId,
+        bytes32 indexed newVersionId
+    );
 }
 
 /// @title IAppRegistry Interface

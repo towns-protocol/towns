@@ -56,6 +56,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("OwnableFacet");
         facetHelper.add("MetadataFacet");
 
+        // Deploy the first batch of facets
+        facetHelper.deployBatch(deployer);
+
         // Get predicted addresses
         address facet = facetHelper.predictAddress("DiamondCutFacet");
         addFacet(

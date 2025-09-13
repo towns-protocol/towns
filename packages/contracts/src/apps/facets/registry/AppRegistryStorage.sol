@@ -7,21 +7,17 @@ pragma solidity ^0.8.23;
 
 // contracts
 
+struct AppInfo {
+    address app;
+    bytes32 latestVersion;
+    bool isBanned;
+}
+
+struct ClientInfo {
+    address app;
+}
+
 library AppRegistryStorage {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           STRUCTS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    struct AppInfo {
-        address app;
-        bytes32 latestVersion;
-        bool isBanned;
-    }
-
-    struct ClientInfo {
-        address app;
-    }
-
     struct Layout {
         // Registered schema ID
         bytes32 schemaId;
