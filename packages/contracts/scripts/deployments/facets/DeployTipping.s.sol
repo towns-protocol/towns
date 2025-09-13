@@ -10,12 +10,14 @@ import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 library DeployTipping {
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](5);
+        res = new bytes4[](7);
         res[0] = ITipping.tip.selector;
         res[1] = ITipping.tipsByCurrencyAndTokenId.selector;
         res[2] = ITipping.tippingCurrencies.selector;
         res[3] = ITipping.totalTipsByCurrency.selector;
         res[4] = ITipping.tipAmountByCurrency.selector;
+        res[5] = ITipping.tipApp.selector;
+        res[6] = ITipping.tipsByCurrencyAndApp.selector;
     }
 
     function makeCut(
