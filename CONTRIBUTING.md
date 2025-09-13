@@ -22,11 +22,14 @@
 
 Open VScode in the root of this directory: `code .`
 
-Launch local server via .vscode/tasks.json:
+Launch local environment via .vscode/tasks.json:
 
-- Use the keystroke: `CMD+P` to bring up the switcher and type `task ~Start Local Dev~` (Once you type the word "task" you will see all the options from task.json in the dropdown)
+- `CMD+P` + `task ~Start Local Dev~` - Uses pre-built Docker image (recommended)
+- `CMD+P` + `task ~Start Local Docker Dev~` - Uses locally built Docker image (for contract development)
 
 This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
+
+Both workflows use Docker containers with pre-deployed contracts.
 
 ![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
 
