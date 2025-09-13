@@ -92,12 +92,18 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
             /** You can use this to check if the message is a direct message */
             isDm: boolean
             /** You can use this to check if the message is a group message */
             isGdm: boolean
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     redaction: (
@@ -114,26 +120,14 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
             /** New message */
             message: string
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => void | Promise<void>
-    mentioned: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => void | Promise<void>
-    reply: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -175,29 +169,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & { event: ParsedEvent },
     ) => Promise<void> | void
-    threadMessage: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => Promise<void> | void
-    mentionedInThread: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-        },
-    ) => Promise<void> | void
-
     slashCommand: (
         handler: BotActions,
         event: BasePayload & {
@@ -541,12 +512,11 @@ export class Bot<
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    const hasBotMention = payload.value.content.value.mentions.some(
-                        (m) => m.userId === this.botId,
-                    )
                     const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
+                    const mentions = parseMentions(payload.value.content.value.mentions)
+                    const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
                         userId,
                         eventId: parsed.hashStr,
@@ -556,7 +526,10 @@ export class Bot<
                         isDm: isDMChannelStreamId(streamId),
                         isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
-                        mentions: parseMentions(payload.value.content.value.mentions),
+                        mentions,
+                        isMentioned,
+                        replyId,
+                        threadId,
                     }
 
                     if (
@@ -576,22 +549,6 @@ export class Bot<
                                 threadId,
                             })
                         }
-                    }
-
-                    if (replyId) {
-                        this.emitter.emit('reply', this.client, forwardPayload)
-                    } else if (threadId && hasBotMention) {
-                        this.emitter.emit('mentionedInThread', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (threadId) {
-                        this.emitter.emit('threadMessage', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (hasBotMention) {
-                        this.emitter.emit('mentioned', this.client, forwardPayload)
                     } else {
                         this.emitter.emit('message', this.client, forwardPayload)
                     }
@@ -613,6 +570,8 @@ export class Bot<
             case 'edit': {
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
+                const mentions = parseMentions(payload.value.post?.content.value.mentions)
+                const isMentioned = mentions.some((m) => m.userId === this.botId)
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -620,8 +579,11 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
-                    mentions: parseMentions(payload.value.post?.content.value.mentions),
+                    mentions,
+                    isMentioned,
                     createdAt,
+                    replyId: payload.value.post?.replyId,
+                    threadId: payload.value.post?.threadId,
                 })
                 break
             }
@@ -759,20 +721,6 @@ export class Bot<
     }
 
     /**
-     * Triggered when someone mentions the bot in a message
-     */
-    onMentioned(fn: BotEvents['mentioned']) {
-        this.emitter.on('mentioned', fn)
-    }
-
-    /**
-     * Triggered when someone replies to a message
-     */
-    onReply(fn: BotEvents['reply']) {
-        this.emitter.on('reply', fn)
-    }
-
-    /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
@@ -809,17 +757,6 @@ export class Bot<
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
         this.emitter.on('streamEvent', fn)
-    }
-
-    onThreadMessage(fn: BotEvents['threadMessage']) {
-        this.emitter.on('threadMessage', fn)
-    }
-
-    /**
-     * Triggered when someone mentions the bot in a thread message
-     */
-    onMentionedInThread(fn: BotEvents['mentionedInThread']) {
-        this.emitter.on('mentionedInThread', fn)
     }
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {

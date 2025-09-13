@@ -8,11 +8,13 @@ A bot framework for Towns.
 import { makeTownsBot } from "@towns-protocol/bot";
 import { serve } from "@hono/node-server";
 
-const bot = await makeTownsBot("<app-private-data-base64>", "<env>");
+const bot = await makeTownsBot("<app-private-data-base64>", "<jwt-secret>");
 
-bot.onMentioned((client, { channelId }) =>
-  client.sendMessage(channelId, "Hello, world!"),
-);
+bot.onMessage((client, { channelId, isMentioned }) => {
+  if (isMentioned) {
+    client.sendMessage(channelId, "Hello, world!");
+  }
+});
 
 const { fetch } = await bot.start();
 serve({ fetch });
