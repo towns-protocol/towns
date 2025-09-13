@@ -80,6 +80,7 @@ export const space = onchainTable(
     }),
     (table) => ({
         tokenIdIdx: index().on(table.tokenId),
+        totalAmountStakedIdx: index().on(table.totalAmountStaked),
     }),
 )
 
@@ -209,14 +210,20 @@ export const feeDistributionToSwapRouterSwap = relations(feeDistribution, ({ one
 }))
 
 // stakers
-export const stakers = onchainTable('stakers', (t) => ({
-    depositId: t.bigint().primaryKey(),
-    owner: t.hex().notNull(),
-    delegatee: t.hex().notNull(),
-    beneficiary: t.hex().notNull(),
-    amount: t.bigint().notNull(),
-    createdAt: t.bigint().notNull(),
-}))
+export const stakers = onchainTable(
+    'stakers',
+    (t) => ({
+        depositId: t.bigint().primaryKey(),
+        owner: t.hex().notNull(),
+        delegatee: t.hex().notNull(),
+        beneficiary: t.hex().notNull(),
+        amount: t.bigint().notNull(),
+        createdAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        ownerIdx: index().on(table.owner),
+    }),
+)
 
 // each staker can optionally belong to a space
 export const stakingToSpace = relations(stakers, ({ one }) => ({
