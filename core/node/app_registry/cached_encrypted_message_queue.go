@@ -53,7 +53,7 @@ type metadataCacheEntry struct {
 }
 
 type ForwardState struct {
-	HasWebhook bool
+	HasWebhook atomic.Pointer[bool]
 	Settings   atomic.Pointer[types.AppSettings]
 }
 
@@ -141,7 +141,8 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	fallbackKey string,
 ) error {
 	if fs, exists := q.appIdCache.Load(app); exists {
-		fs.(*ForwardState).HasWebhook = true
+		hasWebhook := true
+		fs.(*ForwardState).HasWebhook.Store(&hasWebhook)
 	}
 	if err := q.store.RegisterWebhook(ctx, app, webhook, deviceKey, fallbackKey); err != nil {
 		return err
@@ -363,9 +364,9 @@ func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.A
 				return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
 			}
 		}
-		fs := &ForwardState{
-			HasWebhook: info.WebhookUrl != "",
-		}
+		hasWebhook := info.WebhookUrl != ""
+		fs := &ForwardState{}
+		fs.HasWebhook.Store(&hasWebhook)
 		fs.Settings.Store(&info.Settings)
 		_, _ = q.appIdCache.LoadOrStore(userId, fs)
 		return true, nil
@@ -382,7 +383,7 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	fs, exists := q.appIdCache.Load(appId)
 	if exists {
 		forwardState := fs.(*ForwardState)
-		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
+		return *forwardState.HasWebhook.Load(), *forwardState.Settings.Load(), nil
 	} else {
 		info, err := q.store.GetAppInfo(ctx, appId)
 		if err != nil {
@@ -391,13 +392,13 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 			}
 			return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
 		}
-		forwardState := &ForwardState{
-			HasWebhook: info.WebhookUrl != "",
-		}
+		hasWebhook := info.WebhookUrl != ""
+		forwardState := &ForwardState{}
+		forwardState.HasWebhook.Store(&hasWebhook)
 		forwardState.Settings.Store(&info.Settings)
 		fs, _ = q.appIdCache.LoadOrStore(appId, forwardState)
 		forwardState = fs.(*ForwardState)
-		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
+		return *forwardState.HasWebhook.Load(), *forwardState.Settings.Load(), nil
 	}
 }
 
