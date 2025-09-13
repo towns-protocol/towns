@@ -6,8 +6,6 @@ import {
     handleStakeToSpace,
     handleRedelegation,
     decodePermissions,
-    updateSpaceReviewMetrics,
-    updateSpaceCachedMetrics,
 } from './utils'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
@@ -234,9 +232,6 @@ ponder.on('Space:SwapExecuted', async ({ event, context }) => {
                 swapVolume: sql`COALESCE(${schema.space.swapVolume}, 0) + ${ethAmount}`,
             })
             .where(eq(schema.space.id, spaceId))
-
-        // Temp disabled rolling window metrics
-        await updateSpaceCachedMetrics(context, spaceId, 'swap')
     } catch (error) {
         console.error(`Error processing Space:Swap at blockNumber ${blockNumber}:`, error)
     }
@@ -750,9 +745,6 @@ ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
                 memberCount: sql`COALESCE(${schema.space.memberCount}, 0) + 1`,
             })
             .where(eq(schema.space.id, spaceId))
-
-        // Temp disabled rolling window metrics
-        await updateSpaceCachedMetrics(context, spaceId, 'join')
     } catch (error) {
         console.error(
             `Error processing Space:MembershipTokenIssued at timestamp ${blockTimestamp}:`,
@@ -804,9 +796,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
             })
             .where(eq(schema.space.id, spaceId))
-
-        // Temp disabled rolling window metrics
-        await updateSpaceCachedMetrics(context, spaceId, 'tip')
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
@@ -850,10 +839,6 @@ ponder.on('Space:ReviewAdded', async ({ event, context }) => {
                 },
             })
             .onConflictDoNothing()
-
-        // Update review metrics - this will recalculate for all reviews
-        // including the one we just inserted (if it was new)
-        await updateSpaceReviewMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:ReviewAdded at blockNumber ${blockNumber}:`, error)
     }
@@ -888,9 +873,6 @@ ponder.on('Space:ReviewUpdated', async ({ event, context }) => {
                 updatedAt: blockTimestamp,
             })
         }
-
-        // Update review metrics (recalculate average rating)
-        await updateSpaceReviewMetrics(context, spaceId)
     } catch (error) {
         console.error(`Error processing Space:ReviewUpdated at blockNumber ${blockNumber}:`, error)
     }
@@ -909,9 +891,6 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
             console.warn(
                 `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
             )
-        } else {
-            // Update review metrics (recalculate count and average rating)
-            await updateSpaceReviewMetrics(context, spaceId)
         }
     } catch (error) {
         console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
