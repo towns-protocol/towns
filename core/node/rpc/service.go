@@ -52,8 +52,9 @@ type Service struct {
 	exitSignal chan error
 
 	// Storage
-	storagePoolInfo *storage.PgxPoolInfo
-	storage         storage.StreamStorage
+	storagePoolInfo      *storage.PgxPoolInfo
+	storage              storage.StreamStorage
+	externalMediaStorage storage.ExternalMediaStorage
 
 	// Streams
 	cache       *StreamCache

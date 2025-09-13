@@ -226,11 +226,46 @@ func (s *Service) createReplicatedMediaStream(
 
 	// Create ephemeral stream within the local node
 	if isLocal {
+		if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			if err != nil {
+				return nil, RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+			}
+			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return nil, RiverError(
+						Err_INTERNAL,
+						"failed to write external media stream info",
+						"error",
+						err,
+						"abortErr",
+						abortErr,
+					)
+				}
+				if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
+					return nil, RiverError(
+						Err_INTERNAL,
+						"failed to write external media stream info",
+						"error",
+						err,
+						"deleteErr",
+						deleteErr,
+					)
+				}
+				return nil, RiverError(
+					Err_INTERNAL,
+					"failed to create external media stream upload entry",
+					"error",
+					err,
+				)
+			}
+		}
 		sender.AddTask(func(ctx context.Context) error {
 			return s.storage.CreateEphemeralStreamStorage(
 				ctx,
 				streamId,
 				&storage.MiniblockDescriptor{Data: mbBytes, HasLegacySnapshot: true},
+				s.config.ExternalMediaStreamDataBucket,
 			)
 		})
 	}

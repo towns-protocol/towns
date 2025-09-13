@@ -341,7 +341,7 @@ func NewChainAuth(
 		return nil, err
 	}
 
-	// seperate cache for entitlement manager as the timeouts are shorter
+	// separate cache for entitlement manager as the timeouts are shorter
 	entitlementManagerCache, err := newEntitlementManagerCache(ctx, blockchain.Config)
 	if err != nil {
 		return nil, err
