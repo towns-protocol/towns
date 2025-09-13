@@ -213,7 +213,7 @@ func (tracker *StreamsTrackerImpl) AddStream(
 	streamId shared.StreamId,
 	applyHistoricalContent ApplyHistoricalContent,
 ) error {
-	// Check if the stream is already tracked, so we won't call the expensice GetStream.
+	// Check if the stream is already tracked, so we won't call the expensive GetStream.
 	// actually adding this stream to the tracked steams map is done in forwardStreamEvents
 	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
 		return nil
