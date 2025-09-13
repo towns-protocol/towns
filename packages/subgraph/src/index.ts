@@ -891,7 +891,6 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
             console.warn(
                 `Review not found for deletion for user ${event.args.user} in space ${spaceId}`,
             )
-        } else {
         }
     } catch (error) {
         console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
