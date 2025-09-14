@@ -56,6 +56,7 @@
         "space": "0x99a177F81902fddc4785c6fc108C8F21BDB2aFe9",
         "spaceFactory": "0x968696BC59431Ef085441641f550C8e2Eaca8BEd",
         "spaceOwner": "0x9dEdb330A126C6dF2893a33018bb81aFE8573805",
+        "subscriptionModule": "0x65b6079647b6BbB9672198cD16FeeFfEB6fEE8EF",
         "swapRouter": "0x4997CC907512275b8D7E1c682a46f17d676F4913",
         "utils": {
           "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
