@@ -13,13 +13,16 @@ The Docker environment provides:
 
 All just targets support both Docker and native modes - Docker is used when `USE_DOCKER_CHAINS=1`, native Anvil otherwise.
 
+**Hash-based Versioning**: Docker images are automatically tagged with the git hash of contract source code. The system pulls from AWS ECR if available, or builds locally if the specific version doesn't exist remotely.
+
 ## Getting Started
 
 ### Using Pre-built Image (Recommended)
 
 ```bash
 cd core
-USE_DOCKER_CHAINS=1 just anvils        # Start chains with pre-deployed contracts
+USE_DOCKER_CHAINS=1 just anvils        # Start chains with pre-deployed contracts (1s blocks)
+RIVER_BLOCK_TIME=2 USE_DOCKER_CHAINS=1 just anvils  # Start with 2-second blocks
 USE_DOCKER_CHAINS=1 just config        # Configure nodes
 just anvils-stop                       # Stop chains
 ```
@@ -34,11 +37,12 @@ USE_DOCKER_CHAINS=1 just anvils
 
 ### VSCode Integration
 
-VSCode tasks automatically use Docker chains when configured:
+VSCode tasks automatically use Docker chains by default:
 
-- **BaseChain** - Starts Base chain (Docker or native based on environment)
-- **RiverChain** - Starts River chain (Docker or native based on environment)
-- **Configure Nodes** - Configures nodes using Docker chains by default
+- **~Start Local Dev~** - Uses Docker chains with hash-based versioning
+- **~Start Local Dev (Native Anvil)~** - Fallback option using native Anvil
+- **Start Anvil Chains** - Starts both chains using Docker
+- **Start Anvil Chains (Native)** - Starts both chains using native Anvil
 
 ## Files
 
@@ -87,6 +91,7 @@ which runs `just-deploy-contracts`. Contract addresses are extracted to `package
 ## Environment Variables
 
 - `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
+- `RIVER_BLOCK_TIME` - Block time in seconds for Anvil chains (defaults to `1`)
 - `RUN_ENV` - Environment (defaults to `local_dev`)
 
 ## CI/CD Integration

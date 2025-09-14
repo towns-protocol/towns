@@ -7,8 +7,6 @@ set -e
 # This file is meant to be run in a `RUN` block in a Dockerfile as part of the build process.
 # run.sh is the entrypoint for the container.
 
-export RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
-
 main() {
   # Set up trap to catch exit signals
   trap trap_cleanup SIGINT SIGTERM EXIT
