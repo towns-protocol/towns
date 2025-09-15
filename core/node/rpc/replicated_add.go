@@ -277,6 +277,17 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return nil
 		}
 
+		// Normalize stream locally
+		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
+		if err != nil {
+			return err
+		}
+
+		quorumCheckMu.Lock()
+		genesisMiniblockHash = hash
+		streamSuccessCount++
+		quorumCheckMu.Unlock()
+		
 		if location != "postgres" {
 			uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 			if err != nil {
@@ -309,17 +320,6 @@ func (s *Service) replicatedAddMediaEventImpl(
 				return RiverError(Err_INTERNAL, "failed to delete external media stream upload entry", "error", err)
 			}
 		}
-
-		// Normalize stream locally
-		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
-		if err != nil {
-			return err
-		}
-
-		quorumCheckMu.Lock()
-		genesisMiniblockHash = hash
-		streamSuccessCount++
-		quorumCheckMu.Unlock()
 
 		return nil
 	})

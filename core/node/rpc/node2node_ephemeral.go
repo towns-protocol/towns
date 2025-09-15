@@ -63,7 +63,7 @@ func (s *Service) allocateEphemeralStream(
 	if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
 		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
 		if err != nil {
-			return nil, RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+			return nil, err
 		}
 		if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
 			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
@@ -76,16 +76,7 @@ func (s *Service) allocateEphemeralStream(
 					abortErr,
 				)
 			}
-			if deleteErr := s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); deleteErr != nil {
-				return nil, RiverError(
-					Err_INTERNAL,
-					"failed to write external media stream info",
-					"error",
-					err,
-					"deleteErr",
-					deleteErr,
-				)
-			}
+			_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
 			return nil, RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
 		}
 	}
@@ -134,12 +125,28 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	// Save the ephemeral miniblock.
+	// Get the location of the stream data
 	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
+	initializedStream := !AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND)
 	if err != nil {
-		return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
+		if initializedStream {
+			return err
+		} else {
+			location = s.config.ExternalMediaStreamDataBucket
+		}
 	}
 	if location != "postgres" {
+		if !initializedStream {
+			// The stream is not initialized, so the multipart upload is initiated here.
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			if err != nil {
+				return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+			}
+			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+				_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
+				return RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+			}
+		}
 		if location != s.config.ExternalMediaStreamDataBucket {
 			return RiverError(
 				Err_INTERNAL,
