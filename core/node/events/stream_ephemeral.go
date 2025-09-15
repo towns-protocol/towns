@@ -182,6 +182,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			switch s.params.Config.MediaStreamDataStorage {
 			case storage.StreamStorageTypeAWS:
 				externalMediaStorage, err = storage.NewS3MediaStore(
+					ctx,
 					s.params.Config.ExternalMediaStreamDataBucket,
 				)
 				if err != nil {
