@@ -64,9 +64,6 @@ describe('Bot', { sequential: true }, () => {
     const alice = new SyncAgentTest(undefined, riverConfig)
     let aliceClient: SyncAgent
 
-    const BOB_USERNAME = 'bob'
-    const BOB_DISPLAY_NAME = 'im_bob'
-
     const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DISPLAY_NAME = 'Uber Test Bot'
     const BOT_DESCRIPTION = 'I shall witness everything'
@@ -80,7 +77,7 @@ describe('Bot', { sequential: true }, () => {
     let jwtSecretBase64: string
     let appRegistryRpcClient: AppRegistryRpcClient
     let appAddress: Address
-    let bobDefaultChannel: Channel
+    let aliceDefaultChannel: Channel
     let ethersProvider: ethers.providers.StaticJsonRpcProvider
 
     beforeAll(async () => {
@@ -104,15 +101,18 @@ describe('Bot', { sequential: true }, () => {
         bobClient = await bob.makeSyncAgent()
         aliceClient = await alice.makeSyncAgent()
         await Promise.all([bobClient.start(), aliceClient.start()])
-        const { spaceId: spaceId_, defaultChannelId } = await bobClient.spaces.createSpace(
-            { spaceName: 'bobs-space' },
-            bob.signer,
+        // Alice creates the space (she's the space owner)
+        const { spaceId: spaceId_, defaultChannelId } = await aliceClient.spaces.createSpace(
+            { spaceName: 'alices-space' },
+            alice.signer,
         )
         spaceId = spaceId_
         channelId = defaultChannelId
-        bobDefaultChannel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
-        await bobDefaultChannel.members.myself.setUsername(BOB_USERNAME)
-        await bobDefaultChannel.members.myself.setDisplayName(BOB_DISPLAY_NAME)
+        aliceDefaultChannel = aliceClient.spaces.getSpace(spaceId).getChannel(channelId)
+        const ALICE_USERNAME = 'alice'
+        const ALICE_DISPLAY_NAME = 'im_alice'
+        await aliceDefaultChannel.members.myself.setUsername(ALICE_USERNAME)
+        await aliceDefaultChannel.members.myself.setDisplayName(ALICE_DISPLAY_NAME)
         expect(spaceId).toBeDefined()
         expect(channelId).toBeDefined()
     }
@@ -141,9 +141,9 @@ describe('Bot', { sequential: true }, () => {
             throw new Error('Space not found')
         }
 
-        // this adds the bot to the space (onchain)
+        // Alice installs Bob's bot to her space (onchain)
         const tx = await appRegistryDapp.installApp(
-            bob.signer,
+            alice.signer,
             appAddress,
             SpaceAddressFromSpaceId(spaceId) as Address,
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
@@ -168,8 +168,10 @@ describe('Bot', { sequential: true }, () => {
         )
         await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
 
-        await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
-        await bobClient.riverConnection.call((client) =>
+        await aliceClient.riverConnection.call((client) =>
+            client.joinUser(spaceId, botClient.userId),
+        )
+        await aliceClient.riverConnection.call((client) =>
             client.joinUser(channelId, botClient.userId),
         )
         const addResult = await botClient.uploadDeviceKeys()
@@ -236,7 +238,7 @@ describe('Bot', { sequential: true }, () => {
 
     it('should have app_address defined in user stream for bot', async () => {
         const botUserStreamId = makeUserStreamId(botClientAddress)
-        const streamView = await bobClient.riverConnection.call(async (client) => {
+        const streamView = await aliceClient.riverConnection.call(async (client) => {
             return await client.getStream(botUserStreamId)
         })
         const userStream = streamView.userContent.userStreamModel
@@ -253,7 +255,7 @@ describe('Bot', { sequential: true }, () => {
         })
         const TEST_MESSAGE = 'Hello bot!'
 
-        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        const { eventId } = await aliceDefaultChannel.sendMessage(TEST_MESSAGE)
 
         await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15_000 })
         const event = receivedMessages.find((x) => x.eventId === eventId)
@@ -266,13 +268,13 @@ describe('Bot', { sequential: true }, () => {
         receivedMessages = []
     })
 
-    it('should check if bob is admin and has read/write permissions', async () => {
-        const isBobAdmin = await bot.hasAdminPermission(bob.userId, spaceId)
-        const bobCanRead = await bot.checkPermission(spaceId, bob.userId, Permission.Read)
-        const bobCanWrite = await bot.checkPermission(spaceId, bob.userId, Permission.Write)
-        expect(isBobAdmin).toBe(true)
-        expect(bobCanRead).toBe(true)
-        expect(bobCanWrite).toBe(true)
+    it('should check if alice is admin and has read/write permissions', async () => {
+        const isAliceAdmin = await bot.hasAdminPermission(alice.userId, spaceId)
+        const aliceCanRead = await bot.checkPermission(spaceId, alice.userId, Permission.Read)
+        const aliceCanWrite = await bot.checkPermission(spaceId, alice.userId, Permission.Write)
+        expect(isAliceAdmin).toBe(true)
+        expect(aliceCanRead).toBe(true)
+        expect(aliceCanWrite).toBe(true)
     })
 
     it('should check if bot has read/write permissions', async () => {
@@ -291,21 +293,21 @@ describe('Bot', { sequential: true }, () => {
         })
 
         const TEST_MESSAGE = 'This message should not be forwarded'
-        await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        await aliceDefaultChannel.sendMessage(TEST_MESSAGE)
 
         await new Promise((resolve) => setTimeout(resolve, 2500))
         expect(receivedMessages).toHaveLength(0)
     })
 
-    it('should receive channel join event when carol joins the channel if bot is listening to channel join events', async () => {
+    it('should receive channel join event when bob joins the channel if bot is listening to channel join events', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedChannelJoinEvents: OnChannelJoin[] = []
         bot.onChannelJoin((_h, e) => {
             receivedChannelJoinEvents.push(e)
         })
-        await aliceClient.spaces.joinSpace(spaceId, alice.signer)
+        await bobClient.spaces.joinSpace(spaceId, bob.signer)
         await waitFor(() => receivedChannelJoinEvents.length > 0)
-        expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
+        expect(receivedChannelJoinEvents.find((x) => x.userId === bob.userId)).toBeDefined()
     })
 
     // TODO: re-enable the following two tests when the app registry contract behavior is verified
@@ -319,8 +321,8 @@ describe('Bot', { sequential: true }, () => {
         })
         const TEST_MESSAGE = 'hii bot'
 
-        const { streamId } = await bobClient.dms.createDM(bot.botId)
-        const dm = bobClient.dms.getDm(streamId)
+        const { streamId } = await aliceClient.dms.createDM(bot.botId)
+        const dm = aliceClient.dms.getDm(streamId)
         const { eventId } = await dm.sendMessage(TEST_MESSAGE)
         await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
         const event = receivedMessages.find((x) => x.eventId === eventId)
@@ -335,7 +337,7 @@ describe('Bot', { sequential: true }, () => {
         bot.onSlashCommand('help', (_h, e) => {
             receivedMessages.push(e)
         })
-        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+        const { eventId } = await aliceDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
         })
         await waitFor(() => receivedMessages.length > 0)
@@ -350,8 +352,8 @@ describe('Bot', { sequential: true }, () => {
         bot.onSlashCommand('help', (_h, e) => {
             receivedMessages.push(e)
         })
-        const { eventId: threadId } = await bobDefaultChannel.sendMessage('starting a thread')
-        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+        const { eventId: threadId } = await aliceDefaultChannel.sendMessage('starting a thread')
+        const { eventId } = await aliceDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
             threadId: threadId,
         })
@@ -368,8 +370,8 @@ describe('Bot', { sequential: true }, () => {
         bot.onSlashCommand('help', (_h, e) => {
             receivedMessages.push(e)
         })
-        const { eventId: replyId } = await bobDefaultChannel.sendMessage('yo')
-        const { eventId } = await bobDefaultChannel.sendMessage('/help', {
+        const { eventId: replyId } = await aliceDefaultChannel.sendMessage('yo')
+        const { eventId } = await aliceDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
             replyId: replyId,
         })
@@ -386,7 +388,7 @@ describe('Bot', { sequential: true }, () => {
         bot.onSlashCommand('status', (_h, e) => {
             receivedMessages.push(e)
         })
-        const { eventId } = await bobDefaultChannel.sendMessage('/status detailed info', {
+        const { eventId } = await aliceDefaultChannel.sendMessage('/status detailed info', {
             appClientAddress: bot.botId,
         })
         await waitFor(() => receivedMessages.length > 0)
@@ -403,8 +405,8 @@ describe('Bot', { sequential: true }, () => {
         })
         const TEST_MESSAGE = 'hii bot'
 
-        const { streamId } = await bobClient.gdms.createGDM([alice.userId, bot.botId])
-        const gdm = bobClient.gdms.getGdm(streamId)
+        const { streamId } = await aliceClient.gdms.createGDM([bob.userId, bot.botId])
+        const gdm = aliceClient.gdms.getGdm(streamId)
         const { eventId } = await gdm.sendMessage(TEST_MESSAGE)
         await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
         const event = receivedMessages.find((x) => x.eventId === eventId)
@@ -422,8 +424,9 @@ describe('Bot', { sequential: true }, () => {
 
         const originalMessage = 'Original message to delete'
         const editedMessage = 'Edited message content'
-        const { eventId: originalMessageId } = await bobDefaultChannel.sendMessage(originalMessage)
-        await bobDefaultChannel.editMessage(originalMessageId, editedMessage)
+        const { eventId: originalMessageId } =
+            await aliceDefaultChannel.sendMessage(originalMessage)
+        await aliceDefaultChannel.editMessage(originalMessageId, editedMessage)
 
         await waitFor(() => receivedEditEvents.length > 0)
 
@@ -441,8 +444,8 @@ describe('Bot', { sequential: true }, () => {
 
         const initialMessage = 'Starting a thread'
         const threadReply = 'Replying in thread'
-        const { eventId: initialMessageId } = await bobDefaultChannel.sendMessage(initialMessage)
-        const { eventId: replyEventId } = await bobDefaultChannel.sendMessage(threadReply, {
+        const { eventId: initialMessageId } = await aliceDefaultChannel.sendMessage(initialMessage)
+        const { eventId: replyEventId } = await aliceDefaultChannel.sendMessage(threadReply, {
             threadId: initialMessageId,
         })
 
@@ -451,7 +454,7 @@ describe('Bot', { sequential: true }, () => {
         const threadEvent = receivedThreadMessages.find((e) => e.eventId === replyEventId)
         expect(threadEvent).toBeDefined()
         expect(threadEvent?.message).toBe(threadReply)
-        expect(threadEvent?.userId).toBe(bob.userId)
+        expect(threadEvent?.userId).toBe(alice.userId)
         expect(threadEvent?.threadId).toBe(initialMessageId)
     })
 
@@ -462,7 +465,7 @@ describe('Bot', { sequential: true }, () => {
             receivedMentionedEvents.push(e)
         })
         const TEST_MESSAGE = 'Hello @bot'
-        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+        const { eventId } = await aliceDefaultChannel.sendMessage(TEST_MESSAGE, {
             mentions: [
                 {
                     userId: bot.botId,
@@ -484,12 +487,12 @@ describe('Bot', { sequential: true }, () => {
         bot.onMentioned((_h, e) => {
             receivedMentionedEvents.push(e)
         })
-        const TEST_MESSAGE = 'Hello @alice'
-        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
+        const TEST_MESSAGE = 'Hello @bob'
+        const { eventId } = await aliceDefaultChannel.sendMessage(TEST_MESSAGE, {
             mentions: [
                 {
-                    userId: alice.userId,
-                    displayName: 'alice',
+                    userId: bob.userId,
+                    displayName: 'bob',
                     mentionBehavior: { case: undefined, value: undefined },
                 },
             ],
@@ -506,8 +509,8 @@ describe('Bot', { sequential: true }, () => {
         })
 
         const { eventId: initialMessageId } =
-            await bobDefaultChannel.sendMessage('starting a thread')
-        const { eventId: threadMentionEventId } = await bobDefaultChannel.sendMessage(
+            await aliceDefaultChannel.sendMessage('starting a thread')
+        const { eventId: threadMentionEventId } = await aliceDefaultChannel.sendMessage(
             'yo @bot check this thread',
             {
                 threadId: initialMessageId,
@@ -527,7 +530,7 @@ describe('Bot', { sequential: true }, () => {
             (e) => e.eventId === threadMentionEventId,
         )
         expect(threadMentionEvent).toBeDefined()
-        expect(threadMentionEvent?.userId).toBe(bob.userId)
+        expect(threadMentionEvent?.userId).toBe(alice.userId)
         expect(threadMentionEvent?.threadId).toBe(initialMessageId)
     })
 
@@ -539,7 +542,7 @@ describe('Bot', { sequential: true }, () => {
         })
 
         const regularMentionMessage = 'Mentioning @bot outside thread'
-        const { eventId } = await bobDefaultChannel.sendMessage(regularMentionMessage, {
+        const { eventId } = await aliceDefaultChannel.sendMessage(regularMentionMessage, {
             mentions: [
                 {
                     userId: bot.botId,
@@ -562,8 +565,8 @@ describe('Bot', { sequential: true }, () => {
 
         const initialMessage = 'Starting another thread'
         const threadMessageWithoutMention = 'Thread message without mention'
-        const { eventId: initialMessageId } = await bobDefaultChannel.sendMessage(initialMessage)
-        const { eventId: threadEventId } = await bobDefaultChannel.sendMessage(
+        const { eventId: initialMessageId } = await aliceDefaultChannel.sendMessage(initialMessage)
+        const { eventId: threadEventId } = await aliceDefaultChannel.sendMessage(
             threadMessageWithoutMention,
             {
                 threadId: initialMessageId,
@@ -583,16 +586,16 @@ describe('Bot', { sequential: true }, () => {
             receivedReactionEvents.push(e)
         })
 
-        const { eventId: messageId } = await bobClient.spaces
+        const { eventId: messageId } = await aliceClient.spaces
             .getSpace(spaceId)
             .getChannel(channelId)
             .sendMessage('Hello')
-        const { eventId: reactionId } = await bobDefaultChannel.sendReaction(messageId, '👍')
+        const { eventId: reactionId } = await aliceDefaultChannel.sendReaction(messageId, '👍')
         await waitFor(() => receivedReactionEvents.length > 0)
         expect(receivedReactionEvents.find((x) => x.eventId === reactionId)).toBeDefined()
         expect(receivedReactionEvents.find((x) => x.reaction === '👍')).toBeDefined()
         expect(receivedReactionEvents.find((x) => x.messageId === messageId)).toBeDefined()
-        expect(receivedReactionEvents.find((x) => x.userId === bob.userId)).toBeDefined()
+        expect(receivedReactionEvents.find((x) => x.userId === alice.userId)).toBeDefined()
     })
 
     it('onRedaction should be triggered when a message is redacted', async () => {
@@ -601,8 +604,8 @@ describe('Bot', { sequential: true }, () => {
         bot.onRedaction((_h, e) => {
             receivedRedactionEvents.push(e)
         })
-        const { eventId: messageId } = await bobDefaultChannel.sendMessage('Hello')
-        const { eventId: redactionId } = await bobDefaultChannel.redact(messageId)
+        const { eventId: messageId } = await aliceDefaultChannel.sendMessage('Hello')
+        const { eventId: redactionId } = await aliceDefaultChannel.redact(messageId)
         await waitFor(() => receivedRedactionEvents.length > 0)
         expect(receivedRedactionEvents.find((x) => x.eventId === redactionId)).toBeDefined()
     })
@@ -612,20 +615,20 @@ describe('Bot', { sequential: true }, () => {
         const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.ChannelMessage),
         )
         const { eventId: redactionId } = await bot.removeEvent(channelId, messageId)
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactionActionEvent),
         )
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
@@ -637,24 +640,24 @@ describe('Bot', { sequential: true }, () => {
         bot.onMessage((_h, e) => {
             messages.push(e)
         })
-        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
+        const { eventId: aliceMessageId } = await aliceDefaultChannel.sendMessage('Hello')
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === aliceMessageId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.ChannelMessage),
         )
         await waitFor(() => messages.length > 0)
-        const { eventId: redactionId } = await bot.adminRemoveEvent(channelId, bobMessageId)
+        const { eventId: redactionId } = await bot.adminRemoveEvent(channelId, aliceMessageId)
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === redactionId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactionActionEvent),
         )
         await waitFor(() =>
             expect(
-                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === bobMessageId)
+                aliceDefaultChannel.timeline.events.value.find((x) => x.eventId === aliceMessageId)
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
@@ -667,7 +670,7 @@ describe('Bot', { sequential: true }, () => {
             receivedReplyEvents.push(e)
         })
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
-        const { eventId: replyEventId } = await bobDefaultChannel.sendMessage('hi back', {
+        const { eventId: replyEventId } = await aliceDefaultChannel.sendMessage('hi back', {
             replyId: messageId,
         })
         await waitFor(() => receivedReplyEvents.length > 0)
@@ -685,8 +688,8 @@ describe('Bot', { sequential: true }, () => {
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
 
         const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
-        // bob tips the bot
-        await bobDefaultChannel.sendTip(
+        // alice tips the bot
+        await aliceDefaultChannel.sendTip(
             messageId,
             {
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
@@ -694,7 +697,7 @@ describe('Bot', { sequential: true }, () => {
                 chainId: riverConfig.base.chainConfig.chainId,
                 receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
-            bob.signer,
+            alice.signer,
         )
         // app address is the address of the bot contract (not the bot client, since client is per installation)
         const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
@@ -703,12 +706,12 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedTipEvents.length > 0)
         const tipEvent = receivedTipEvents.find((x) => x.messageId === messageId)
         expect(tipEvent).toBeDefined()
-        expect(tipEvent?.userId).toBe(bob.userId)
+        expect(tipEvent?.userId).toBe(alice.userId)
         expect(tipEvent?.spaceId).toBe(spaceId)
         expect(tipEvent?.channelId).toBe(channelId)
         expect(tipEvent?.amount).toBe(ethers.utils.parseUnits('0.01').toBigInt())
         expect(tipEvent?.currency).toBe(ETH_ADDRESS)
-        expect(tipEvent?.senderAddress).toBe(bob.userId)
+        expect(tipEvent?.senderAddress).toBe(alice.userId)
         expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
@@ -719,7 +722,7 @@ describe('Bot', { sequential: true }, () => {
             receivedEventRevokeEvents.push(e)
         })
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
-        await bobDefaultChannel.adminRedact(messageId)
+        await aliceDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
     })
@@ -732,7 +735,7 @@ describe('Bot', { sequential: true }, () => {
             bot.onEventRevoke((_h, e) => {
                 receivedEventRevokeEvents.push(e)
             })
-            const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii @bot', {
+            const { eventId: messageId } = await aliceDefaultChannel.sendMessage('hii @bot', {
                 mentions: [
                     {
                         userId: bot.botId,
@@ -741,7 +744,7 @@ describe('Bot', { sequential: true }, () => {
                     },
                 ],
             })
-            await bobDefaultChannel.adminRedact(messageId)
+            await aliceDefaultChannel.adminRedact(messageId)
             await waitFor(() => receivedEventRevokeEvents.length > 0)
             expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
         },
@@ -749,7 +752,7 @@ describe('Bot', { sequential: true }, () => {
 
     it('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
-            bob.signer,
+            alice.signer,
             appAddress,
             SpaceAddressFromSpaceId(spaceId) as Address,
         )
@@ -759,7 +762,7 @@ describe('Bot', { sequential: true }, () => {
             receivedMentionedEvents.push(e)
         })
         const TEST_MESSAGE = 'wont be received'
-        const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
+        const { eventId } = await aliceDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
     })
