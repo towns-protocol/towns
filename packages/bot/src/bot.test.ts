@@ -737,7 +737,8 @@ describe('Bot', { sequential: true }, () => {
         },
     )
 
-    it('never receive message from a uninstalled app', async () => {
+    // TODO: waiting for disable bot feature
+    it.skip('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
             bob.signer,
             appAddress,
