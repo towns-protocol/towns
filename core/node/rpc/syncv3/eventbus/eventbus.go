@@ -2,7 +2,6 @@ package eventbus
 
 import (
 	"context"
-	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
@@ -74,6 +73,18 @@ type StreamSubscriptionManager interface {
 	EnqueueRemoveSubscriber(syncID string) error
 }
 
+// streamSubscribers is defined in stream_subscribers.go
+
+// getOrCreateStreamSubscribers returns the subscribers for a stream, creating if needed
+func (e *eventBusImpl) getOrCreateStreamSubscribers(streamID StreamId) streamSubscribers {
+	subs, ok := e.subscribers[streamID]
+	if !ok {
+		subs = newStreamSubscribers()
+		e.subscribers[streamID] = subs
+	}
+	return subs
+}
+
 type eventBusMessageStreamUpdate struct {
 	msg     *SyncStreamsResponse
 	version int
@@ -116,10 +127,11 @@ type eventBusImpl struct {
 	log *logging.Log
 	// queue is the internal unbounded queue for stream updates and subscription requests.
 	// Processing items on the queue should be fast enough to always keep up with the added items.
+	// Monitoring tools should be used to alert if the queue size grows too large.
 	queue    *dynmsgbuf.DynamicBuffer[*eventBusMessage]
 	registry syncer.Registry
 	// subscribers is the list of subscribers grouped by stream ID and syncer version.
-	subscribers map[StreamId]map[int][]StreamSubscriber
+	subscribers map[StreamId]streamSubscribers
 	otelTracer  trace.Tracer
 }
 
@@ -138,7 +150,7 @@ func New(
 	e := &eventBusImpl{
 		log:         logging.FromCtx(ctx).Named("syncv3.eventbus"),
 		queue:       dynmsgbuf.NewUnboundedDynamicBuffer[*eventBusMessage](),
-		subscribers: make(map[StreamId]map[int][]StreamSubscriber),
+		subscribers: make(map[StreamId]streamSubscribers),
 		otelTracer:  otelTracer,
 	}
 
@@ -269,50 +281,31 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	groupedSubscribers, ok := e.subscribers[streamID]
+	subscribers, ok := e.subscribers[streamID]
 	if !ok {
-		// No subscribers for the given stream, do nothing
 		return
 	}
 
-	// 1. If the version is AllSubscribersVersion, it means that the update is sent to all subscribers of the stream
-	//    regardless of their version.
 	if version == syncer.AllSubscribersVersion {
-		for _, subscribers := range groupedSubscribers {
-			for _, sub := range subscribers {
-				// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
-				// All other fields can be set by reference/pointer to prevent needless copying.
-				sub.OnUpdate(&SyncStreamsResponse{
-					SyncOp:   msg.GetSyncOp(),
-					Stream:   msg.GetStream(),
-					StreamId: msg.GetStreamId(),
-				})
-			}
-		}
+		// If the version is AllSubscribersVersion, it means that the update is sent to all subscribers of the stream
+		// regardless of their version.
+
+		subscribers.sendUpdateToAll(msg)
 
 		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 			delete(e.subscribers, streamID)
 		}
+	} else {
+		// If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the stream
+		// with the given version. We need to find the subscribers for the given version and send the update to them.
 
-		return
-	}
+		subscribers.sendUpdateToVersion(version, msg)
 
-	// 2. If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the stream
-	//    with the given version. We need to find the subscribers for the given version and send the update to them.
-	for _, sub := range groupedSubscribers[version] {
-		// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
-		// All other fields can be set by reference/pointer to prevent needless copying.
-		sub.OnUpdate(&SyncStreamsResponse{
-			SyncOp:   msg.GetSyncOp(),
-			Stream:   msg.GetStream(),
-			StreamId: msg.GetStreamId(),
-		})
-	}
-
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		delete(e.subscribers[streamID], version)
-		if len(e.subscribers[streamID]) == 0 {
-			delete(e.subscribers, streamID)
+		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
+			subscribers.clearVersion(version)
+			if subscribers.isEmpty() {
+				delete(e.subscribers, streamID)
+			}
 		}
 	}
 }
@@ -340,67 +333,33 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 		return
 	}
 
+	subscribers, ok := e.subscribers[streamID]
+	if !ok {
+		return
+	}
+
+	targetSyncID := msg.GetTargetSyncIds()[0]
+	msg.TargetSyncIds = msg.TargetSyncIds[1:]
+
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The following logic removes the subscriber with the given sync ID from the list of subscribers
 		// and sends the given stream down message to it.
-		// Noop if the subscriber is not found.
-		var target StreamSubscriber
-		for version = range e.subscribers[streamID] {
-			e.subscribers[streamID][version] = slices.DeleteFunc(
-				e.subscribers[streamID][version],
-				func(subscriber StreamSubscriber) bool {
-					if msg.GetTargetSyncIds()[0] == subscriber.SyncID() {
-						target = subscriber
-					}
-					return target != nil
-				},
-			)
-			if target != nil {
-				break
-			}
-		}
 
-		if target != nil {
-			msg.TargetSyncIds = msg.TargetSyncIds[1:]
-			target.OnUpdate(msg)
-		} else {
-			e.log.Debugw("no subscriber found for the given stream down message",
-				"streamID", streamID, "syncIDs", msg.GetTargetSyncIds())
+		subscriber := subscribers.removeBySyncID(targetSyncID)
+		if subscriber != nil {
+			if subscribers.isEmpty() {
+				delete(e.subscribers, streamID)
+			}
+
+			subscriber.OnUpdate(msg)
 		}
 	} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		if _, ok := e.subscribers[streamID]; !ok {
-			return
-		}
+		// The following logic moves the given subscriber from the pending subscribers list into a list with the given
+		// version and sends an update the subscriber with an updated target sync IDs.
 
-		// 1. Try to find the given subscriber in PendingSubscribersVersion list. If found, this is the first backfill message,
-		//    and we need to move the subscriber to the given version list.
-		var found bool
-		for i, sub := range e.subscribers[streamID][syncer.PendingSubscribersVersion] {
-			if sub.SyncID() == msg.GetTargetSyncIds()[syncer.PendingSubscribersVersion] {
-				found = true
-				// Move the subscriber to the given version list.
-				e.subscribers[streamID][version] = append(e.subscribers[streamID][version], sub)
-				// Remove the subscriber from the PendingSubscribersVersion list.
-				e.subscribers[streamID][syncer.PendingSubscribersVersion] = slices.Delete(
-					e.subscribers[streamID][syncer.PendingSubscribersVersion], i, i+1)
-				// Send the backfill message to the subscriber.
-				msg.TargetSyncIds = msg.TargetSyncIds[1:]
-				sub.OnUpdate(msg)
-				break
-			}
-		}
-		if found {
-			return
-		}
-
-		// 2. If the subscriber was not found in the PendingSubscribersVersion list, it means that it is already subscribed to the stream
-		//    with the given sync ID and version. Just send the update to it.
-		for _, sub := range e.subscribers[streamID][version] {
-			if sub.SyncID() == msg.GetTargetSyncIds()[0] {
-				msg.TargetSyncIds = msg.TargetSyncIds[1:]
-				sub.OnUpdate(msg)
-				break
-			}
+		subscriber := subscribers.movePendingToVersion(targetSyncID, version)
+		if subscriber != nil {
+			subscriber.OnUpdate(msg)
 		}
 	} else {
 		e.log.Errorw("received unsupported targeted stream update message",
@@ -422,27 +381,9 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 
 	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
 	// means that the given subscriber is waiting for the backfill message first.
-	currentSubscribers, ok := e.subscribers[streamID]
-	if !ok {
-		e.subscribers[streamID] = map[int][]StreamSubscriber{syncer.PendingSubscribersVersion: {msg.subscriber}}
-	} else {
-		var found bool
-		for _, subscribers := range currentSubscribers {
-			if slices.Contains(subscribers, msg.subscriber) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			if _, ok = e.subscribers[streamID][syncer.PendingSubscribersVersion]; !ok {
-				e.subscribers[streamID][syncer.PendingSubscribersVersion] = []StreamSubscriber{}
-			}
-			e.subscribers[streamID][syncer.PendingSubscribersVersion] = append(
-				e.subscribers[streamID][syncer.PendingSubscribersVersion],
-				msg.subscriber,
-			)
-		}
+	currentSubscribers := e.getOrCreateStreamSubscribers(streamID)
+	if !currentSubscribers.contains(msg.subscriber) {
+		currentSubscribers.addPending(msg.subscriber)
 	}
 
 	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
@@ -453,19 +394,14 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 		return
 	}
 
-	for version := range e.subscribers[msg.streamID] {
-		e.subscribers[msg.streamID][version] = slices.DeleteFunc(
-			e.subscribers[msg.streamID][version],
-			func(subscriber StreamSubscriber) bool {
-				return subscriber == msg.subscriber
-			},
-		)
-		if len(e.subscribers[msg.streamID][version]) == 0 {
-			delete(e.subscribers[msg.streamID], version)
-		}
+	subscribers, ok := e.subscribers[msg.streamID]
+	if !ok {
+		return
 	}
 
-	if len(e.subscribers[msg.streamID]) == 0 {
+	subscribers.removeBySyncID(msg.subscriber.SyncID())
+
+	if subscribers.isEmpty() {
 		delete(e.subscribers, msg.streamID)
 		e.registry.EnqueueUnsubscribe(msg.streamID)
 	}
@@ -484,20 +420,10 @@ func (e *eventBusImpl) processRemoveCommand(msg *eventBusMessageRemove) {
 		return
 	}
 
-	for streamID, groupedSubscribers := range e.subscribers {
-		for version := range groupedSubscribers {
-			e.subscribers[streamID][version] = slices.DeleteFunc(
-				e.subscribers[streamID][version],
-				func(subscriber StreamSubscriber) bool {
-					return subscriber.SyncID() == msg.syncID
-				},
-			)
-			if len(e.subscribers[streamID][version]) == 0 {
-				delete(e.subscribers[streamID], version)
-			}
-		}
+	for streamID, subscribers := range e.subscribers {
+		subscribers.removeBySyncID(msg.syncID)
 
-		if len(e.subscribers[streamID]) == 0 {
+		if subscribers.isEmpty() {
 			delete(e.subscribers, streamID)
 			e.registry.EnqueueUnsubscribe(streamID)
 		}
