@@ -210,10 +210,27 @@ func (s *Service) replicatedAddMediaEventImpl(
 
 		// Get the location of the stream data
 		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
+		initializedStream := !AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND)
 		if err != nil {
-			return err
+			if initializedStream {
+				return err
+			} else {
+				location = s.config.ExternalMediaStreamDataBucket
+			}
 		}
+
 		if location != "postgres" {
+			if !initializedStream {
+				// The stream is not initialized, so the multipart upload is initiated here.
+				uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+				if err != nil {
+					return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+				}
+				if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+					_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
+					return RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+				}
+			}
 			if location != s.config.ExternalMediaStreamDataBucket {
 				return RiverError(
 					Err_INTERNAL,
