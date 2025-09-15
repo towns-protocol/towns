@@ -229,7 +229,7 @@ func (s *Service) createReplicatedMediaStream(
 		if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
 			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
 			if err != nil {
-				return nil, RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+				return nil, err
 			}
 			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
