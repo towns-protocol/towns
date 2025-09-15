@@ -253,6 +253,12 @@ bot.onMessageEdit(async (handler, event) => {
 }
 ```
 
+**Message Deletion Types:**
+
+1. **User Deletion** - Users can delete their own messages using `removeEvent`
+2. **Admin Redaction** - Admins with `Permission.Redact` can delete any message using `adminRemoveEvent`
+3. **Bot Deletion** - Bots can delete their own messages using `removeEvent`
+
 **Use Case - Cleanup Related Data:**
 ```typescript
 bot.onRedaction(async (handler, event) => {
@@ -260,6 +266,36 @@ bot.onRedaction(async (handler, event) => {
   messageCache.delete(event.refEventId)
   polls.delete(event.refEventId)
   editHistory.delete(event.refEventId)
+  
+  // Log who deleted what
+  console.log(`Message ${event.refEventId} was deleted by ${event.userId}`)
+})
+```
+
+**Implementing Message Deletion:**
+```typescript
+bot.onSlashCommand("delete", async (handler, event) => {
+  if (!event.replyId) {
+    await handler.sendMessage(event.channelId, "Reply to a message to delete it")
+    return
+  }
+  
+  // Check if user has redaction permission
+  const canRedact = await handler.checkPermission(
+    event.channelId,
+    event.userId,
+    Permission.Redact
+  )
+  
+  if (canRedact) {
+    // Admin can delete any message
+    await handler.adminRemoveEvent(event.channelId, event.replyId)
+    await handler.sendMessage(event.channelId, "Message deleted by admin")
+  } else {
+    // Regular users can only delete their own messages
+    // Bot would need to track message ownership to verify
+    await handler.sendMessage(event.channelId, "You can only delete your own messages")
+  }
 })
 ```
 
@@ -479,32 +515,138 @@ await handler.sendReaction(
   messageId: string,       // Message to react to
   reaction: string         // Emoji
 )
-
-// Delete event (bot's own events)
-await handler.removeEvent(
-  channelId: string,
-  eventId: string
-)
-
-// Admin delete (requires Permission.Redact)
-await handler.adminRemoveEvent(
-  channelId: string,
-  eventId: string
-)
 ```
 
-### Permission Checks
+### Message Deletion (Redaction)
 
+**Two types of deletion:**
+
+1. **`removeEvent`** - Delete bot's own messages
 ```typescript
-// Check if user is space admin
-const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+// Bot deletes its own message
+const sentMessage = await handler.sendMessage(channelId, "Oops, wrong channel!")
+await handler.removeEvent(channelId, sentMessage.eventId)
+```
 
-// Check specific permission
+2. **`adminRemoveEvent`** - Admin deletion (requires Permission.Redact)
+```typescript
+// Admin bot deletes any message
+bot.onMessage(async (handler, event) => {
+  if (event.message.includes("inappropriate content")) {
+    // Check if bot has redaction permission
+    const canRedact = await handler.checkPermission(
+      event.channelId,
+      bot.botId,  // Check bot's permission
+      Permission.Redact
+    )
+    
+    if (canRedact) {
+      // Delete the inappropriate message
+      await handler.adminRemoveEvent(event.channelId, event.eventId)
+      await handler.sendMessage(event.channelId, "Message removed for violating guidelines")
+    }
+  }
+})
+```
+
+**Important Notes:**
+- `removeEvent` only works for messages sent by the bot itself
+- `adminRemoveEvent` requires the bot to have `Permission.Redact` in the space
+- Deleted messages trigger `onRedaction` event for all bots
+- Users can always delete their own messages through the UI
+
+### Permission System
+
+**Towns uses blockchain-based permissions that control what users can do in spaces.**
+
+#### Available Permissions
+```typescript
+Permission.Undefined         // No permission required
+Permission.Read              // Read messages in channels
+Permission.Write             // Send messages in channels
+Permission.Invite            // Invite users to space
+Permission.JoinSpace         // Join the space
+Permission.Redact            // Delete any message (admin redaction)
+Permission.ModifyBanning     // Ban/unban users (admin permission)
+Permission.PinMessage        // Pin/unpin messages
+Permission.AddRemoveChannels // Create/delete channels
+Permission.ModifySpaceSettings // Change space configuration
+Permission.React             // Add reactions to messages
+```
+
+#### Checking Permissions
+
+**`hasAdminPermission(userId, spaceId)`** - Quick check for admin status
+```typescript
+// Check if user is a space admin (has ModifyBanning permission)
+const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+if (isAdmin) {
+  // User can ban, manage channels, modify settings
+}
+```
+
+**`checkPermission(streamId, userId, permission)`** - Check specific permission
+```typescript
+// Import Permission enum from SDK
+import { Permission } from '@towns-protocol/sdk'
+
+// Check if user can delete messages
 const canRedact = await handler.checkPermission(
   channelId,
   userId,
   Permission.Redact
 )
+
+// Check if user can send messages
+const canWrite = await handler.checkPermission(
+  channelId,
+  userId,
+  Permission.Write
+)
+```
+
+#### Common Permission Patterns
+
+**Admin-Only Commands:**
+```typescript
+bot.onSlashCommand("ban", async (handler, event) => {
+  // Only admins can ban users
+  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
+    await handler.sendMessage(event.channelId, "You don't have permission to ban users")
+    return
+  }
+  
+  const userToBan = event.mentions[0]?.userId
+  if (userToBan) {
+    // Implement ban logic via smart contract
+    await handler.writeContract({...})
+  }
+})
+```
+
+**Permission-Based Features:**
+```typescript
+bot.onMessage(async (handler, event) => {
+  if (event.message.startsWith("!delete")) {
+    // Check if user can redact messages
+    const canRedact = await handler.checkPermission(
+      event.channelId,
+      event.userId,
+      Permission.Redact
+    )
+    
+    if (!canRedact) {
+      await handler.sendMessage(event.channelId, "You don't have permission to delete messages")
+      return
+    }
+    
+    // Delete the referenced message
+    const messageId = event.replyId // Assuming they replied to the message to delete
+    if (messageId) {
+      await handler.adminRemoveEvent(event.channelId, messageId)
+    }
+  }
+})
 ```
 
 ### Web3 Operations
