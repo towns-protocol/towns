@@ -168,32 +168,30 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 				PendingSubscribersVersion,
 			)
 		}
-
-		return
-	}
-
-	// Trying to backfill using the existing emitter.
-	// If it fails, creating a new emitter with an incremented version and trying again.
-	if !emitter.EnqueueBackfill(cookie, syncIDs) {
-		currentVersion := emitter.Version()
-		emitter = newSharedStreamUpdateEmitter(
-			r.ctx,
-			r.localAddr,
-			r.streamCache,
-			r.nodeRegistry,
-			r.subscriber,
-			streamID,
-			currentVersion+1,
-			r.otelTracer,
-		)
-		r.syncers[streamID] = emitter
-
+	} else {
+		// Trying to backfill using the existing emitter.
+		// If it fails, creating a new emitter with an incremented version and trying again.
 		if !emitter.EnqueueBackfill(cookie, syncIDs) {
-			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
-			r.subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				PendingSubscribersVersion,
+			currentVersion := emitter.Version()
+			emitter = newSharedStreamUpdateEmitter(
+				r.ctx,
+				r.localAddr,
+				r.streamCache,
+				r.nodeRegistry,
+				r.subscriber,
+				streamID,
+				currentVersion+1,
+				r.otelTracer,
 			)
+			r.syncers[streamID] = emitter
+
+			if !emitter.EnqueueBackfill(cookie, syncIDs) {
+				r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
+				r.subscriber.OnStreamEvent(
+					&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
+					PendingSubscribersVersion,
+				)
+			}
 		}
 	}
 }
