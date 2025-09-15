@@ -264,11 +264,9 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15_000 })
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.message).toBe(TEST_MESSAGE)
-        expect(event?.isDm).toBe(false)
         expect(event?.createdAt).toBeDefined()
         expect(event?.createdAt).toBeInstanceOf(Date)
         expect(event?.createdAt.getTime()).toBeGreaterThanOrEqual(timeBeforeSendMessage)
-        expect(event?.isGdm).toBe(false)
         receivedMessages = []
     })
 
@@ -309,30 +307,9 @@ describe('Bot', { sequential: true }, () => {
         bot.onChannelJoin((_h, e) => {
             receivedChannelJoinEvents.push(e)
         })
-        await aliceClient.spaces.joinSpace(spaceId, alice.signer)
+        await bobClient.spaces.joinSpace(spaceId, bob.signer)
         await waitFor(() => receivedChannelJoinEvents.length > 0)
-        expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
-    })
-
-    // TODO: re-enable the following two tests when the app registry contract behavior is verified
-    // and it is deployed on all environments, so we can re-enable the app registry contract check
-    // on GDM/DM creation.
-    it.skip('SHOULD NOT receive dm messages', { fails: true }, async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
-        const TEST_MESSAGE = 'hii bot'
-
-        const { streamId } = await bobClient.dms.createDM(bot.botId)
-        const dm = bobClient.dms.getDm(streamId)
-        const { eventId } = await dm.sendMessage(TEST_MESSAGE)
-        await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
-        const event = receivedMessages.find((x) => x.eventId === eventId)
-        expect(event?.isDm).toBe(true)
-        expect(event?.isGdm).toBe(false)
-        expect(event?.message).toBe(TEST_MESSAGE)
+        expect(receivedChannelJoinEvents.find((x) => x.userId === bob.userId)).toBeDefined()
     })
 
     it('should receive slash command messages', async () => {
@@ -399,24 +376,6 @@ describe('Bot', { sequential: true }, () => {
         const event = receivedMessages.find((x) => x.eventId === eventId)
         expect(event?.command).toBe('status')
         expect(event?.args).toStrictEqual(['detailed', 'info'])
-    })
-
-    it.skip('SHOULD NOT receive gdm messages', { fails: true }, async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
-        const TEST_MESSAGE = 'hii bot'
-
-        const { streamId } = await bobClient.gdms.createGDM([alice.userId, bot.botId])
-        const gdm = bobClient.gdms.getGdm(streamId)
-        const { eventId } = await gdm.sendMessage(TEST_MESSAGE)
-        await waitFor(() => expect(receivedMessages.length).toBeGreaterThan(0))
-        const event = receivedMessages.find((x) => x.eventId === eventId)
-        expect(event?.isGdm).toBe(true)
-        expect(event?.isDm).toBe(false)
-        expect(event?.message).toBe(TEST_MESSAGE)
     })
 
     it('onMessageEdit should be triggered when a message is edited', async () => {

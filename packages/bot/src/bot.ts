@@ -5,11 +5,7 @@ import { SpaceDapp, Permission } from '@towns-protocol/web3'
 import {
     getRefEventIdFromChannelMessage,
     isChannelStreamId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
     make_ChannelPayload_Message,
-    make_DMChannelPayload_Message,
-    make_GDMChannelPayload_Message,
     createTownsClient,
     type ClientV2,
     streamIdAsString,
@@ -44,7 +40,6 @@ import {
     MembershipOp,
     type PlainMessage,
     Tags,
-    type StreamEvent,
     MessageInteractionType,
     type SlashCommand,
 } from '@towns-protocol/proto'
@@ -97,10 +92,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             replyId: string | undefined
             /** In case of a thread, that's the thread id where the message belongs to */
             threadId: string | undefined
-            /** You can use this to check if the message is a direct message */
-            isDm: boolean
-            /** You can use this to check if the message is a group message */
-            isGdm: boolean
             /** Users mentioned in the message */
             mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
             /** Convenience flag to check if the bot was mentioned */
@@ -524,8 +515,6 @@ export class Bot<
                         spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
                         message: payload.value.content.value.body,
-                        isDm: isDMChannelStreamId(streamId),
-                        isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
                         mentions,
                         isMentioned,
@@ -852,16 +841,12 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 
-        let eventPayload: PlainMessage<StreamEvent>['payload']
-        if (isChannelStreamId(streamId)) {
-            eventPayload = make_ChannelPayload_Message(message)
-        } else if (isDMChannelStreamId(streamId)) {
-            eventPayload = make_DMChannelPayload_Message(message)
-        } else if (isGDMChannelStreamId(streamId)) {
-            eventPayload = make_GDMChannelPayload_Message(message)
-        } else {
-            throw new Error(`Invalid stream ID type: ${streamId}`)
+        if (!isChannelStreamId(streamId)) {
+            throw new Error(
+                `Invalid stream ID type: ${streamId} - only channel streams are supported`,
+            )
         }
+        const eventPayload = make_ChannelPayload_Message(message)
         return client.sendEvent(streamId, eventPayload, eventTags, ephemeral)
     }
 
@@ -939,17 +924,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         })
         return sendMessageEvent({ streamId, payload, tags })
     }
-
-    const sendDm = (
-        userId: string,
-        message: string,
-        opts?: {
-            threadId?: string
-            replyId?: string
-            mentions?: ChannelMessage_Post_Mention[]
-            attachments?: ChannelMessage_Post_Attachment[]
-        },
-    ) => sendMessage(userId, message, opts)
 
     const sendReaction = async (
         streamId: string,
@@ -1080,7 +1054,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         ) => readContract(viemClient, parameters),
         sendMessage,
         editMessage,
-        sendDm,
         sendReaction,
         removeEvent,
         adminRemoveEvent,
