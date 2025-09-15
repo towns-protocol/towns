@@ -20,6 +20,7 @@ COPY ./protocol ./protocol
 COPY ./scripts ./scripts
 
 # monorepo packages
+COPY ./packages/contracts /river/packages/contracts
 COPY ./packages/eslint-config /river/packages/eslint-config
 COPY ./packages/prettier-config /river/packages/prettier-config
 COPY ./packages/generated /river/packages/generated
@@ -30,12 +31,14 @@ COPY ./packages/xchain-monitor /river/packages/xchain-monitor
 
 # install dependencies and build
 RUN apk add --no-cache git curl
-RUN corepack enable
+RUN corepack enable && \
+    corepack prepare yarn@3.8.0 --activate
 RUN yarn install
 RUN yarn run turbo build --filter @towns-protocol/xchain-monitor
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
+
 COPY --from=builder /river/packages/xchain-monitor/dist /river/packages/xchain-monitor/dist
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)

@@ -87,10 +87,7 @@ import { MemberTokenTransfer } from '../streamStateView_Members'
 const log = dlog('csb:test:util')
 
 function useLegacySpaces(): boolean {
-    if (typeof process === 'object') {
-        return process.env.USE_LEGACY_SPACES === 'true'
-    }
-    return false
+    return process.env.USE_LEGACY_SPACES === 'true'
 }
 
 const initTestUrls = async (): Promise<{

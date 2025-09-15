@@ -58,28 +58,15 @@ export const space = onchainTable(
         createdAt: t.bigint().notNull(),
         paused: t.boolean().notNull(),
         totalAmountStaked: t.bigint().default(0n),
-        swapVolume24h: t.bigint().default(0n),
-        swapVolume7d: t.bigint().default(0n),
-        swapVolume30d: t.bigint().default(0n),
         swapVolume: t.bigint().default(0n),
-        tipVolume24h: t.bigint().default(0n),
-        tipVolume7d: t.bigint().default(0n),
-        tipVolume30d: t.bigint().default(0n),
         tipVolume: t.bigint().default(0n),
-        joinVolume24h: t.bigint().default(0n),
-        joinVolume7d: t.bigint().default(0n),
-        joinVolume30d: t.bigint().default(0n),
         joinVolume: t.bigint().default(0n),
-        memberCount24h: t.bigint().default(0n),
-        memberCount7d: t.bigint().default(0n),
-        memberCount30d: t.bigint().default(0n),
         memberCount: t.bigint().default(0n),
         reviewCount: t.bigint().default(0n),
-        averageRating: t.real().default(0),
-        weightedRating: t.real().default(0),
     }),
     (table) => ({
         tokenIdIdx: index().on(table.tokenId),
+        totalAmountStakedIdx: index().on(table.totalAmountStaked),
     }),
 )
 
@@ -209,14 +196,20 @@ export const feeDistributionToSwapRouterSwap = relations(feeDistribution, ({ one
 }))
 
 // stakers
-export const stakers = onchainTable('stakers', (t) => ({
-    depositId: t.bigint().primaryKey(),
-    owner: t.hex().notNull(),
-    delegatee: t.hex().notNull(),
-    beneficiary: t.hex().notNull(),
-    amount: t.bigint().notNull(),
-    createdAt: t.bigint().notNull(),
-}))
+export const stakers = onchainTable(
+    'stakers',
+    (t) => ({
+        depositId: t.bigint().primaryKey(),
+        owner: t.hex().notNull(),
+        delegatee: t.hex().notNull(),
+        beneficiary: t.hex().notNull(),
+        amount: t.bigint().notNull(),
+        createdAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        ownerIdx: index().on(table.owner),
+    }),
+)
 
 // each staker can optionally belong to a space
 export const stakingToSpace = relations(stakers, ({ one }) => ({

@@ -61,7 +61,13 @@ function convertToEnv(data, prefix = '') {
   return envContent;
 }
 
-
+function makeEnvFile(key, outputData, fileName, keyPrefix = '') {
+  const envFile = path.join(deploymentsSourceDir, key, fileName);
+  const data = outputData[key];
+  const envData = convertToEnv(data, keyPrefix);
+  fs.writeFileSync(envFile, `${keyPrefix}RIVER_ENV=${key}\n${envData}`);
+  return envFile;
+}
 
 const outputData = combineJson(deploymentsSourceDir);
 
@@ -69,14 +75,21 @@ const outputData = combineJson(deploymentsSourceDir);
 // for each top level key in outputData, write a .env file in the deployments/<key> folder
 // with all keys in the json converted to UPPER SNAKE CASE
 for (const key of Object.keys(outputData)) {
-  const envFile = path.join(deploymentsSourceDir, key, '.env');
-  const data = outputData[key];
-  const envData = convertToEnv(data);
-  fs.writeFileSync(envFile, `RIVER_ENV=${key}\n${envData}`);
+  const files = [
+    makeEnvFile(key, outputData, '.env', ''), 
+    makeEnvFile(key, outputData, '.env.vite', 'VITE_')
+  ];
+  console.log(`Wrote "${key}" env files at ${files.join(', ')}`);
+}
+
+// delete the local_ environments from the outputData
+for (const key of Object.keys(outputData)) {
+  if (key.startsWith('local')) {
+    delete outputData[key];
+  }
 }
 
 // write a config.json file
 fs.mkdirSync(path.dirname(deploymentsOutputFile), { recursive: true });
 fs.writeFileSync(deploymentsOutputFile, JSON.stringify(outputData, null, 2));
-
-console.log(`Combined deployments config JSON written to ${deploymentsOutputFile}`);
+console.log(`Combined deployments for [${Object.keys(outputData).join(', ')}] JSON written to ${deploymentsOutputFile}`);

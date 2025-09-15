@@ -67,7 +67,7 @@ git commit -m "docs for version ${VERSION_PREFIX}"
 
 # copy contracts
 ./packages/generated/scripts/copy-addresses.sh
-git add packages/generated/deployments
+git add packages/generated/deployments packages/generated/config/deployments.json
 git commit -m "deployments for version ${VERSION_PREFIX}"
 
 git push -u origin "${BRANCH_NAME}"

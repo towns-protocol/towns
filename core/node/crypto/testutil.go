@@ -18,8 +18,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/ethereum/go-ethereum/node"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
@@ -99,7 +101,14 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 		genesisAlloc[wallets[i].Address] = types.Account{Balance: Eth_100}
 	}
 
-	backend := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(30_000_000))
+	// With very short block period the eth node log indexing service can't keep up indexing logs.
+	// This can cause a deadlock when retrieving logs through the api. Disabled the indexing service,
+	// this hasn't got a noticeable performance impact in tests.
+	disableLogIndexing := func(nodeConf *node.Config, ethConf *ethconfig.Config) {
+		ethConf.LogNoHistory = true
+	}
+
+	backend := simulated.NewBackend(genesisAlloc, disableLogIndexing, simulated.WithBlockGasLimit(30_000_000))
 	return wallets, backend, nil
 }
 
