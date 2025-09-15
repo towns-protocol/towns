@@ -646,7 +646,10 @@ func (s *Service) initStore() error {
 
 		switch s.config.MediaStreamDataStorage {
 		case storage.StreamStorageTypeAWS:
-			s.externalMediaStorage, err = storage.NewS3MediaStore(s.config.ExternalMediaStreamDataBucket)
+			s.externalMediaStorage, err = storage.NewS3MediaStore(
+				s.config.ExternalMediaStreamDataBucket,
+				s.config.ExternalMediaStreamDataToken,
+			)
 			if err != nil {
 				return err
 			}

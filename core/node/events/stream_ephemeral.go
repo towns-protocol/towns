@@ -172,11 +172,19 @@ func (s *StreamCache) normalizeEphemeralStream(
 		var externalMediaStorage storage.ExternalMediaStorage
 		if location != "postgres" {
 			if location != s.params.Config.ExternalMediaStreamDataBucket {
-				return RiverError(Err_INTERNAL, "external media stream storage changed after this ephemeral media was created.", "streamId", stream.streamId)
+				return RiverError(
+					Err_INTERNAL,
+					"external media stream storage changed after this ephemeral media was created.",
+					"streamId",
+					stream.streamId,
+				)
 			}
 			switch s.params.Config.MediaStreamDataStorage {
 			case storage.StreamStorageTypeAWS:
-				externalMediaStorage, err = storage.NewS3MediaStore(s.params.Config.ExternalMediaStreamDataBucket)
+				externalMediaStorage, err = storage.NewS3MediaStore(
+					s.params.Config.ExternalMediaStreamDataBucket,
+					s.params.Config.ExternalMediaStreamDataToken,
+				)
 				if err != nil {
 					return err
 				}
@@ -189,7 +197,12 @@ func (s *StreamCache) normalizeEphemeralStream(
 					return err
 				}
 			default:
-				return RiverError(Err_INTERNAL, "external media stream data storage not configured", "storageType", s.params.Config.MediaStreamDataStorage)
+				return RiverError(
+					Err_INTERNAL,
+					"external media stream data storage not configured",
+					"storageType",
+					s.params.Config.MediaStreamDataStorage,
+				)
 			}
 			if !initializedStream {
 				// The stream is not initialized, so the multipart upload is initiated here.
