@@ -851,6 +851,169 @@ bot.onSlashCommand("stats", async (handler, event) => {
 })
 ```
 
+## Using Bot Methods Outside Handlers
+
+**IMPORTANT:** Bot methods like `sendMessage()` can be called directly on the bot instance, outside of event handlers. This enables integration with external services, webhooks, and scheduled tasks.
+
+### GitHub Integration Example
+
+```typescript
+import { serve } from '@hono/node-server'
+import { Hono } from 'hono'
+import { makeTownsBot } from '@towns-protocol/bot'
+
+const app = new Hono()
+const bot = await makeTownsBot(privateData, jwtSecret, { commands })
+
+// Store which channel wants GitHub notifications
+let githubChannelId: string | null = null
+
+// 1. Setup command to register channel for GitHub notifications
+bot.onSlashCommand("setup-github-here", async (handler, event) => {
+  githubChannelId = event.channelId
+  await handler.sendMessage(
+    event.channelId,
+    "GitHub notifications configured for this channel!"
+  )
+})
+
+// 2. Towns webhook endpoint (required for bot to work)
+const { jwtMiddleware, handler } = await bot.start()
+app.post('/webhook', jwtMiddleware, handler)
+
+// 3. GitHub webhook endpoint (separate from Towns webhook)
+app.post('/github-webhook', async (c) => {
+  const payload = await c.req.json()
+  
+  // Check if a channel is configured
+  if (!githubChannelId) {
+    return c.json({ error: "No channel configured" }, 400)
+  }
+  
+  // Send GitHub event to the configured Towns channel
+  // NOTE: Using bot.sendMessage() directly, outside any handler!
+  if (payload.action === 'opened' && payload.pull_request) {
+    await bot.sendMessage(
+      githubChannelId,
+      `PR opened: **${payload.pull_request.title}** by ${payload.sender.login}\n${payload.pull_request.html_url}`
+    )
+  } else if (payload.pusher) {
+    const commits = payload.commits?.length || 0
+    await bot.sendMessage(
+      githubChannelId,
+      `Push to ${payload.repository.name}: ${commits} commits by ${payload.pusher.name}`
+    )
+  }
+  
+  return c.json({ success: true })
+})
+
+serve({ fetch: app.fetch, port: 3000 })
+```
+
+### Health Check Monitoring Example
+
+```typescript
+const bot = await makeTownsBot(privateData, jwtSecret)
+
+// Store health check configurations
+const healthChecks = new Map<string, { 
+  interval: NodeJS.Timeout,
+  url: string,
+  secondsBetween: number 
+}>()
+
+bot.onSlashCommand("setup-healthcheck", async (handler, event) => {
+  const secondsBetween = parseInt(event.args[0]) || 60
+  const url = event.args[1] || 'https://api.example.com/health'
+  
+  // Clear existing interval for this channel if any
+  const existing = healthChecks.get(event.channelId)
+  if (existing) {
+    clearInterval(existing.interval)
+  }
+  
+  // Setup new health check interval
+  const interval = setInterval(async () => {
+    try {
+      const start = Date.now()
+      const response = await fetch(url)
+      const latency = Date.now() - start
+      
+      if (response.ok) {
+        // Direct bot.sendMessage() call from timer
+        await bot.sendMessage(
+          event.channelId,
+          `✅ Health Check OK: ${url} (${latency}ms)`
+        )
+      } else {
+        await bot.sendMessage(
+          event.channelId,
+          `❌ Health Check Failed: ${url} - Status ${response.status}`
+        )
+      }
+    } catch (error) {
+      await bot.sendMessage(
+        event.channelId,
+        `❌ Health Check Error: ${url} - Service unreachable`
+      )
+    }
+  }, secondsBetween * 1000)
+  
+  // Store the configuration
+  healthChecks.set(event.channelId, { interval, url, secondsBetween })
+  
+  await handler.sendMessage(
+    event.channelId,
+    `Health check configured! Monitoring ${url} every ${secondsBetween} seconds`
+  )
+})
+
+bot.onSlashCommand("stop-healthcheck", async (handler, event) => {
+  const config = healthChecks.get(event.channelId)
+  if (config) {
+    clearInterval(config.interval)
+    healthChecks.delete(event.channelId)
+    await handler.sendMessage(event.channelId, "Health check monitoring stopped")
+  } else {
+    await handler.sendMessage(event.channelId, "No health check configured for this channel")
+  }
+})
+```
+
+### Key Patterns for External Integration
+
+1. **Store Channel IDs**: Collect channel IDs from slash commands or messages
+2. **External Triggers**: Use webhooks, timers, or API calls to trigger messages
+3. **Direct Method Calls**: Call `bot.sendMessage()` directly, not through handlers
+4. **Error Handling**: Always handle errors when sending unprompted messages
+5. **Persistence**: Use a database for production storage of channel configurations
+
+### Available Bot Methods Outside Handlers
+
+```typescript
+// All these methods work outside event handlers:
+await bot.sendMessage(channelId, message, opts?)
+await bot.editMessage(channelId, messageId, newMessage)
+await bot.sendReaction(channelId, messageId, reaction)
+await bot.removeEvent(channelId, eventId)
+await bot.adminRemoveEvent(channelId, eventId)
+await bot.hasAdminPermission(userId, spaceId)
+await bot.checkPermission(channelId, userId, permission)
+await bot.readContract({ ... })
+await bot.writeContract({ ... })
+
+// Access bot properties:
+console.log(bot.botId)  // Bot's user ID (address)
+```
+
+**Important Notes:**
+- You must have a valid `channelId` to send messages
+- Store channel IDs from events (slash commands, messages, etc.)
+- Handle cases where no channel is configured
+- Consider rate limiting to avoid overwhelming channels
+- Always wrap external calls in try-catch for error handling
+
 ## Troubleshooting Guide
 
 ### Issue: Bot doesn't respond to messages
