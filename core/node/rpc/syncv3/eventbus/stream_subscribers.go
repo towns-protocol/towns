@@ -11,10 +11,6 @@ import (
 // The implementation is not thread-safe.
 type streamSubscribers map[int][]StreamSubscriber
 
-func newStreamSubscribers() streamSubscribers {
-	return make(streamSubscribers)
-}
-
 func (ss streamSubscribers) addPending(subscriber StreamSubscriber) {
 	ss[syncer.PendingSubscribersVersion] = append(ss[syncer.PendingSubscribersVersion], subscriber)
 }

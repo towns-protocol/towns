@@ -79,7 +79,7 @@ type StreamSubscriptionManager interface {
 func (e *eventBusImpl) getOrCreateStreamSubscribers(streamID StreamId) streamSubscribers {
 	subs, ok := e.subscribers[streamID]
 	if !ok {
-		subs = newStreamSubscribers()
+		subs = make(streamSubscribers)
 		e.subscribers[streamID] = subs
 	}
 	return subs
