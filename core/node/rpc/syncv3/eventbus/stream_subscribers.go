@@ -11,28 +11,14 @@ import (
 // The implementation is not thread-safe.
 type streamSubscribers map[int][]StreamSubscriber
 
-func (ss streamSubscribers) addPending(subscriber StreamSubscriber) {
-	ss[syncer.PendingSubscribersVersion] = append(ss[syncer.PendingSubscribersVersion], subscriber)
-}
-
-func (ss streamSubscribers) contains(subscriber StreamSubscriber) bool {
+func (ss streamSubscribers) addPendingUnique(subscriber StreamSubscriber) {
 	for _, subscribers := range ss {
 		if slices.Contains(subscribers, subscriber) {
-			return true
+			return
 		}
 	}
-	return false
-}
 
-func (ss streamSubscribers) findBySyncID(syncID string) StreamSubscriber {
-	for _, subscribers := range ss {
-		for _, sub := range subscribers {
-			if sub.SyncID() == syncID {
-				return sub
-			}
-		}
-	}
-	return nil
+	ss[syncer.PendingSubscribersVersion] = append(ss[syncer.PendingSubscribersVersion], subscriber)
 }
 
 func (ss streamSubscribers) movePendingToVersion(syncID string, toVersion int) StreamSubscriber {

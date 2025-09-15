@@ -382,9 +382,7 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers := e.getOrCreateStreamSubscribers(streamID)
-	if !currentSubscribers.contains(msg.subscriber) {
-		currentSubscribers.addPending(msg.subscriber)
-	}
+	currentSubscribers.addPendingUnique(msg.subscriber)
 
 	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
 }
