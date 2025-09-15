@@ -170,7 +170,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 
 		var uploadID string
 		var externalMediaStorage storage.ExternalMediaStorage
-		if location != "postgres" {
+		if location != "" {
 			if location != s.params.Config.ExternalMediaStreamDataBucket {
 				return RiverError(
 					Err_INTERNAL,
@@ -268,7 +268,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 					break
 				}
 
-				if location != "postgres" {
+				if location != "" {
 					etag, err := externalMediaStorage.UploadPartToExternalMediaStream(
 						ctx,
 						stream.streamId,

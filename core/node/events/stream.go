@@ -676,7 +676,7 @@ func (s *Stream) GetMiniblocks(
 	if err != nil {
 		return nil, false, err
 	}
-	if location != "postgres" {
+	if location != "" {
 		byteRanges, err := s.params.Storage.GetExternalMediaStreamRangeMarkers(
 			ctx,
 			s.streamId,
@@ -695,7 +695,7 @@ func (s *Stream) GetMiniblocks(
 		var data []byte
 		switch s.params.Config.MediaStreamDataStorage {
 		case storage.StreamStorageTypeAWS:
-			client, err := storage.CreateS3Client()
+			client, err := storage.CreateS3Client(ctx)
 			if err != nil {
 				return nil, false, err
 			}
