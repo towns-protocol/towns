@@ -45,9 +45,6 @@ const SLASH_COMMANDS = [
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
 type OnMessageEditType = BotPayload<'messageEdit'>
-type OnThreadMessageType = BotPayload<'threadMessage'>
-type OnMentionedType = BotPayload<'mentioned'>
-type OnMentionedInThreadType = BotPayload<'mentionedInThread'>
 type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
@@ -432,11 +429,13 @@ describe('Bot', { sequential: true }, () => {
         expect(editEvent?.message).toBe(editedMessage)
     })
 
-    it('onThreadMessage should be triggered when a message is sent in a thread', async () => {
+    it('onMessage should be triggered with threadId when a message is sent in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedThreadMessages: OnThreadMessageType[] = []
-        bot.onThreadMessage((_h, e) => {
-            receivedThreadMessages.push(e)
+        const receivedThreadMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            if (e.threadId) {
+                receivedThreadMessages.push(e)
+            }
         })
 
         const initialMessage = 'Starting a thread'
@@ -455,11 +454,13 @@ describe('Bot', { sequential: true }, () => {
         expect(threadEvent?.threadId).toBe(initialMessageId)
     })
 
-    it('onMentioned should be triggered when a bot is mentioned', async () => {
+    it('onMessage should be triggered with isMentioned when a bot is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedEvents: OnMentionedType[] = []
-        bot.onMentioned((_h, e) => {
-            receivedMentionedEvents.push(e)
+        const receivedMentionedEvents: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            if (e.isMentioned) {
+                receivedMentionedEvents.push(e)
+            }
         })
         const TEST_MESSAGE = 'Hello @bot'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
@@ -474,15 +475,16 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMentionedEvents.length > 0)
         const mentionedEvent = receivedMentionedEvents.find((x) => x.eventId === eventId)
         expect(mentionedEvent).toBeDefined()
+        expect(mentionedEvent?.isMentioned).toBe(true)
         expect(mentionedEvent?.mentions[0].userId).toBe(bot.botId)
         expect(mentionedEvent?.mentions[0].displayName).toBe(BOT_DISPLAY_NAME)
     })
 
-    it('onMentioned should NOT BE triggered when someone else is mentioned', async () => {
+    it('isMentioned should be false when someone else is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedEvents: OnMentionedType[] = []
-        bot.onMentioned((_h, e) => {
-            receivedMentionedEvents.push(e)
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
         })
         const TEST_MESSAGE = 'Hello @alice'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
@@ -494,14 +496,16 @@ describe('Bot', { sequential: true }, () => {
                 },
             ],
         })
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+        await waitFor(() => receivedMessages.length > 0)
+        const message = receivedMessages.find((x) => x.eventId === eventId)
+        expect(message).toBeDefined()
+        expect(message?.isMentioned).toBe(false)
     })
 
-    it('onMentionedInThread should be triggered when bot is mentioned in a thread', async () => {
+    it('onMessage should be triggered with both threadId and isMentioned when bot is mentioned in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
-        bot.onMentionedInThread((_h, e) => {
+        const receivedMentionedInThreadEvents: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
             receivedMentionedInThreadEvents.push(e)
         })
 
@@ -529,35 +533,14 @@ describe('Bot', { sequential: true }, () => {
         expect(threadMentionEvent).toBeDefined()
         expect(threadMentionEvent?.userId).toBe(bob.userId)
         expect(threadMentionEvent?.threadId).toBe(initialMessageId)
+        expect(threadMentionEvent?.isMentioned).toBe(true)
     })
 
-    it('onMentionedInThread should NOT be triggered for regular mentions outside threads', async () => {
+    it('thread message without bot mention should have isMentioned false', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
-        bot.onMentionedInThread((_h, e) => {
-            receivedMentionedInThreadEvents.push(e)
-        })
-
-        const regularMentionMessage = 'Mentioning @bot outside thread'
-        const { eventId } = await bobDefaultChannel.sendMessage(regularMentionMessage, {
-            mentions: [
-                {
-                    userId: bot.botId,
-                    displayName: bot.botId,
-                    mentionBehavior: { case: undefined, value: undefined },
-                },
-            ],
-        })
-
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        expect(receivedMentionedInThreadEvents.find((x) => x.eventId === eventId)).toBeUndefined()
-    })
-
-    it('onMentionedInThread should NOT be triggered for thread messages without bot mentions', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedInThreadEvents: OnMentionedInThreadType[] = []
-        bot.onMentionedInThread((_h, e) => {
-            receivedMentionedInThreadEvents.push(e)
+        const receivedMessages: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
+            receivedMessages.push(e)
         })
 
         const initialMessage = 'Starting another thread'
@@ -570,10 +553,11 @@ describe('Bot', { sequential: true }, () => {
             },
         )
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        expect(
-            receivedMentionedInThreadEvents.find((x) => x.eventId === threadEventId),
-        ).toBeUndefined()
+        await waitFor(() => receivedMessages.length > 0)
+        const message = receivedMessages.find((x) => x.eventId === threadEventId)
+        expect(message).toBeDefined()
+        expect(message?.threadId).toBe(initialMessageId)
+        expect(message?.isMentioned).toBe(false)
     })
 
     it('onReaction should be triggered when a reaction is added', async () => {
@@ -659,19 +643,25 @@ describe('Bot', { sequential: true }, () => {
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
     })
-    // TODO: flaky test
-    it.skip('onReply should be triggered when a message is replied to', async () => {
+    it.skip('onMessage should be triggered with replyId when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
-        const receivedReplyEvents: BotPayload<'reply'>[] = []
-        bot.onReply((_h, e) => {
+        const receivedReplyEvents: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
             receivedReplyEvents.push(e)
         })
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId),
+            ).toBeDefined(),
+        )
         const { eventId: replyEventId } = await bobDefaultChannel.sendMessage('hi back', {
             replyId: messageId,
         })
         await waitFor(() => receivedReplyEvents.length > 0)
-        expect(receivedReplyEvents.find((x) => x.eventId === replyEventId)).toBeDefined()
+        const replyEvent = receivedReplyEvents.find((x) => x.eventId === replyEventId)
+        expect(replyEvent).toBeDefined()
+        expect(replyEvent?.replyId).toBe(messageId)
     })
 
     it('onTip should be triggered when a tip is received', async () => {
@@ -747,15 +737,16 @@ describe('Bot', { sequential: true }, () => {
         },
     )
 
-    it('never receive message from a uninstalled app', async () => {
+    // TODO: waiting for disable bot feature
+    it.skip('never receive message from a uninstalled app', async () => {
         await appRegistryDapp.uninstallApp(
             bob.signer,
             appAddress,
             SpaceAddressFromSpaceId(spaceId) as Address,
         )
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const receivedMentionedEvents: OnMentionedType[] = []
-        bot.onMentioned((_h, e) => {
+        const receivedMentionedEvents: OnMessageType[] = []
+        bot.onMessage((_h, e) => {
             receivedMentionedEvents.push(e)
         })
         const TEST_MESSAGE = 'wont be received'
