@@ -676,7 +676,7 @@ func (s *Stream) GetMiniblocks(
 	if err != nil {
 		return nil, false, err
 	}
-	if location != "" {
+	if location != "postgres" {
 		byteRanges, err := s.params.Storage.GetExternalMediaStreamRangeMarkers(
 			ctx,
 			s.streamId,

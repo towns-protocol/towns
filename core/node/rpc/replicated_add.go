@@ -211,9 +211,9 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Get the location of the stream data
 		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
 		if err != nil {
-			return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
+			return err
 		}
-		if location != "" {
+		if location != "postgres" {
 			if location != s.config.ExternalMediaStreamDataBucket {
 				return RiverError(
 					Err_INTERNAL,
@@ -260,7 +260,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return nil
 		}
 
-		if location != "" {
+		if location != "postgres" {
 			uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 			if err != nil {
 				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {

@@ -139,7 +139,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	if err != nil {
 		return RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
 	}
-	if location != "" {
+	if location != "postgres" {
 		if location != s.config.ExternalMediaStreamDataBucket {
 			return RiverError(
 				Err_INTERNAL,
@@ -216,7 +216,7 @@ func (s *Service) sealEphemeralStream(
 			"external media stream storage changed after this ephemeral media was created.",
 		)
 	}
-	if location != "" {
+	if location != "postgres" {
 		uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 		if err != nil {
 			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
