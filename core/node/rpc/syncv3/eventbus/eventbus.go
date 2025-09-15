@@ -357,8 +357,11 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 		// The following logic moves the given subscriber from the pending subscribers list into a list with the given
 		// version and sends an update the subscriber with an updated target sync IDs.
 
-		subscriber := subscribers.movePendingToVersion(targetSyncID, version)
+		subscriber, ver := subscribers.findBySyncID(targetSyncID)
 		if subscriber != nil {
+			if ver == syncer.PendingSubscribersVersion {
+				subscribers.movePendingToVersion(targetSyncID, version)
+			}
 			subscriber.OnUpdate(msg)
 		}
 	} else {

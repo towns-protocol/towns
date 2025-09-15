@@ -21,7 +21,18 @@ func (ss streamSubscribers) addPendingUnique(subscriber StreamSubscriber) {
 	ss[syncer.PendingSubscribersVersion] = append(ss[syncer.PendingSubscribersVersion], subscriber)
 }
 
-func (ss streamSubscribers) movePendingToVersion(syncID string, toVersion int) StreamSubscriber {
+func (ss streamSubscribers) findBySyncID(syncID string) (StreamSubscriber, int) {
+	for version, subscribers := range ss {
+		for _, sub := range subscribers {
+			if sub.SyncID() == syncID {
+				return sub, version
+			}
+		}
+	}
+	return nil, 0
+}
+
+func (ss streamSubscribers) movePendingToVersion(syncID string, toVersion int) {
 	pendingList := ss[syncer.PendingSubscribersVersion]
 
 	// Find the subscriber
@@ -37,7 +48,7 @@ func (ss streamSubscribers) movePendingToVersion(syncID string, toVersion int) S
 	}
 
 	if foundIndex == -1 {
-		return nil
+		return
 	}
 
 	// Add to target version
@@ -57,8 +68,6 @@ func (ss streamSubscribers) movePendingToVersion(syncID string, toVersion int) S
 	if lastIdx == 0 {
 		delete(ss, syncer.PendingSubscribersVersion)
 	}
-
-	return found
 }
 
 func (ss streamSubscribers) removeBySyncID(syncID string) StreamSubscriber {
