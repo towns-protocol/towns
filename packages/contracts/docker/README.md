@@ -1,73 +1,117 @@
-# Docker Development Environment
+# Towns Anvil Docker Environment
 
-This directory contains Docker configuration and scripts for running the River blockchain development environment in a containerized setup.
+This directory contains Docker configuration for running local blockchain networks with pre-deployed smart contracts for Towns Protocol development.
 
 ## Overview
 
-The Docker environment provides a complete development setup for the River blockchain project, including:
+The Docker environment provides:
 
-- Local blockchain networks (Base chain and River chain)
-- Smart contract deployment and testing capabilities
-- All necessary build tools and dependencies
+- **Base Chain** (port 8545) and **River Chain** (port 8546) with Anvil
+- **Pre-deployed smart contracts** in both chains during image build
+- **Fast startup** by loading pre-deployed blockchain state
+- **Contract address extraction** for local development integration
+
+All just targets support both Docker and native modes - Docker is used when `USE_DOCKER_CHAINS=1`, native Anvil otherwise.
+
+**Hash-based Versioning**: Docker images are automatically tagged with the git hash of contract source code. The system pulls from AWS ECR if available, or builds locally if the specific version doesn't exist remotely.
+
+## Getting Started
+
+### Using Pre-built Image (Recommended)
+
+```bash
+cd core
+USE_DOCKER_CHAINS=1 just anvils        # Start chains with pre-deployed contracts (1s blocks)
+RIVER_BLOCK_TIME=2 USE_DOCKER_CHAINS=1 just anvils  # Start with 2-second blocks
+USE_DOCKER_CHAINS=1 just config        # Configure nodes
+just anvils-stop                       # Stop chains
+```
+
+### Building Image Locally
+
+```bash
+cd core
+just build-anvil-docker
+USE_DOCKER_CHAINS=1 just anvils
+```
+
+### VSCode Integration
+
+VSCode tasks automatically use Docker chains by default:
+
+- **~Start Local Dev~** - Uses Docker chains with hash-based versioning
+- **~Start Local Dev (Native Anvil)~** - Fallback option using native Anvil
+- **Start Anvil Chains** - Starts both chains using Docker
+- **Start Anvil Chains (Native)** - Starts both chains using native Anvil
 
 ## Files
 
+### `Dockerfile`
+
+Multi-stage build: installs dependencies, builds contracts, deploys via `setup.sh`, creates optimized runtime image.
+
 ### `setup.sh`
 
-Build-time setup script that:
-
-- Starts both Base chain (port 8545) and River chain (port 8546) with Anvil
-- Deploys all smart contracts to both chains
-- Creates persistent blockchain state files (`base-anvil-state.json`, `river-anvil-state.json`)
-- Validates node registry deployment
-- Runs during Docker image build process
+Build-time script: starts chains, deploys contracts, saves state files, copies addresses to `/app/local_dev/`.
 
 ### `run.sh`
 
-Runtime script that starts both blockchain networks and keeps them running for development.
+Runtime script: starts chains with pre-loaded state. Supports `CHAIN=base` or `CHAIN=river`.
 
 ### `test.sh`
 
-Test runner script that:
+Test runner for validating deployed contracts.
 
-- Starts both blockchain networks
-- Runs node registry tests
-- Kills anvil processes and exits after tests complete
+## Contract Address Extraction
 
-## Usage
-
-### Building the Docker Image
-
-From the project root:
+When using Docker chains, contract addresses are automatically extracted during the deployment process:
 
 ```bash
-docker build -t towns-anvil:latest -f ./packages/contracts/docker/Dockerfile .
+# Addresses are automatically extracted when using Docker chains
+USE_DOCKER_CHAINS=1 just config
 ```
 
-### Running the Container
+which runs `just-deploy-contracts`. Contract addresses are extracted to `packages/generated/deployments/local_dev/`.
 
-**Start blockchain networks:**
+## Available Just Targets
 
-```bash
-docker run -it --rm -p 8545:8545 -e CHAIN=base towns-anvil:latest
-docker run -it --rm -p 8546:8546 -e CHAIN=river towns-anvil:latest
-```
+### Unified targets (Docker or native):
 
-**Interactive shell:**
+- `anvils` - Start both chains
+- `anvil-base` - Start Base chain
+- `anvil-river` - Start River chain
+- `anvils-stop` - Stop both chains
+- `deploy-contracts` - Deploy contracts and create configs (calls `just-deploy-contracts` + creates `contracts.env`)
+- `just-deploy-contracts` - Deploy contracts only (used internally by Docker, no config creation)
 
-```bash
-docker run -it --rm towns-anvil:latest /bin/bash
-```
+### Docker-specific targets:
+
+- `build-anvil-docker` - Build Anvil Docker image locally
+
+## Environment Variables
+
+- `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
+- `RIVER_BLOCK_TIME` - Block time in seconds for Anvil chains (defaults to `1`)
+- `RUN_ENV` - Environment (defaults to `local_dev`)
+
+## CI/CD Integration
+
+The Docker image is automatically built when changes are made to:
+
+- `packages/contracts/**`
+- `scripts/deploy-*.sh`
+- `scripts/start-local-*.sh`
+- `.github/workflows/Towns_anvil_docker.yml`
+
+This prevents unnecessary rebuilds when only Go/TypeScript code changes.
 
 ## Network Configuration
 
-- **Base Chain**:
+- **Base Chain**: Port 8545, Chain ID 31337, RPC: `http://localhost:8545`
+- **River Chain**: Port 8546, Chain ID 31338, RPC: `http://localhost:8546`
 
-  - Port: 8545
-  - RPC URL: `http://localhost:8545`
-  - State file: `base-anvil-state.json`
+Both chains include pre-deployed contracts:
 
-- **River Chain**:
-  - Port: 8546
-  - RPC URL: `http://localhost:8546`
-  - State file: `river-anvil-state.json`
+- Space Factory, Base Registry, App Registry
+- River Registry, Multicall3, Permit2
+- Test contracts and utilities

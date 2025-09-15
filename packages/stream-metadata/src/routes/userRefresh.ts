@@ -40,7 +40,7 @@ export async function userRefresh(request: FastifyRequest, reply: FastifyReply) 
 
 	const paths =
 		target === 'image'
-			? [`/user/${userId}/image`]
+			? [`/user/${userId}/image*`]
 			: target === 'bio'
 				? [`/user/${userId}/bio`]
 				: [`/user/${userId}/*`]

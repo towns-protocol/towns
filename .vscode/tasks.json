@@ -26,7 +26,7 @@
       // start local dev:
       //
       // 1. yarn install
-      // 2. start blockchains
+      // 2. start blockchains (Docker by default)
       // 3. configure nodes
       // 4. starts all servers and clients
       //
@@ -35,32 +35,30 @@
       "label": "~Start Local Dev~",
       "dependsOn": [
         "Dependencies",
-        "Stage 1",
+        "Start Anvil Chains",
+        "Configure Nodes",
+        "Start Services"
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "dependsOrder": "sequence"
+      "dependsOrder": "sequence",
+      "options": {
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      }
     },
     {
-      "label": "Stage 1",
+      // Native Anvil fallback - same as above but without Docker
+      "label": "~Start Local Dev (Native Anvil)~",
       "dependsOn": [
-        "BaseChain",
-        "RiverChain",
-        "Stage 2"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": false
-      },
-    },
-    {
-      "label": "Stage 2",
-      "dependsOn": [
-        "Configure Nodes",
-        "Stage 3"
+        "Dependencies",
+        "Start Anvil Chains (Native)",
+        "Configure Nodes (Native)",
+        "Start Services"
       ],
       "group": {
         "kind": "build",
@@ -69,7 +67,7 @@
       "dependsOrder": "sequence"
     },
     {
-      "label": "Stage 3",
+      "label": "Start Services",
       "dependsOn": [
         "Start Watches",
         "Run Nodes and Services",
@@ -218,7 +216,7 @@
     {
       "label": "Stop Nodes and Services",
       "type": "shell",
-      "command": "echo 'killing multi' && kill $(ps -ax | grep 'run_files/multi' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
+      "command": "echo 'killing local_dev' && kill $(ps -ax | grep 'run_files/local_dev' | awk '{print $1}') && cd ./core && just stop && just stop-app-registry",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -254,9 +252,15 @@
     {
       "label": "Configure Nodes",
       "type": "shell",
-      "command": "cd ./core && just config build",
+      "command": "just config build",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
       "presentation": {
         "group": "ephemeral",
         "focus": true,
@@ -264,21 +268,45 @@
       }
     },
     {
-      "label": "BaseChain",
+      "label": "Configure Nodes (Native)",
       "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-basechain.sh",
+      "command": "just config build",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core"
+      },
+      "presentation": {
+        "group": "ephemeral",
+        "focus": true,
+        "panel": "shared",
+      }
+    },
+    {
+      "label": "Start Anvil Chains",
+      "type": "shell",
+      "command": "just anvils",
+      "isBackground": true,
+      "problemMatcher": [],
+      "options": {
+        "cwd": "./core",
+        "env": {
+          "USE_DOCKER_CHAINS": "1"
+        }
+      },
       "presentation": {
         "group": "local-blockchains"
       }
     },
     {
-      "label": "RiverChain",
+      "label": "Start Anvil Chains (Native)",
       "type": "shell",
-      "command": "RIVER_BLOCK_TIME=1 ./scripts/start-local-riverchain.sh",
+      "command": "just anvils",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core"
+      },
       "presentation": {
         "group": "local-blockchains"
       }
