@@ -122,7 +122,7 @@ func (r *registryImpl) run() error {
 		select {
 		case <-r.ctx.Done():
 			return r.ctx.Err()
-		case _, open := <-r.queue.Wait():
+		case <-r.queue.Wait():
 			msgs = r.queue.GetBatch(msgs)
 
 			// Messages must be processed in the order they were received.
@@ -132,10 +132,6 @@ func (r *registryImpl) run() error {
 				} else if msg.unsub != nil {
 					r.processUnsubscribe(msg.unsub.streamID)
 				}
-			}
-
-			if !open {
-				return nil
 			}
 		}
 	}

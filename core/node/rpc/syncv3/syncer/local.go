@@ -136,7 +136,7 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case _, open := <-l.backfillsQueue.Wait():
+		case <-l.backfillsQueue.Wait():
 			msgs = l.backfillsQueue.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
@@ -161,12 +161,6 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 					l.reAddUnprocessedBackfills(msgs[i:])
 					return
 				}
-			}
-
-			// The queue is closed, so we can stop the emitter.
-			if !open {
-				l.cancel(nil)
-				return
 			}
 		}
 	}

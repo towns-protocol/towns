@@ -187,7 +187,11 @@ func (e *eventBusImpl) OnStreamEvent(msg *SyncStreamsResponse, version int) {
 	// they most likely will immediately re-subscribe -> we can keep the current syncer for the given stream active.
 	if len(msg.GetTargetSyncIds()) > 0 {
 		e.processTargetedStreamUpdateCommand(
-			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: msg.StreamID()},
+			&SyncStreamsResponse{
+				SyncOp:        SyncOp_SYNC_DOWN,
+				StreamId:      msg.StreamID(),
+				TargetSyncIds: msg.GetTargetSyncIds(),
+			},
 			version,
 		)
 	} else {
@@ -236,11 +240,10 @@ func (e *eventBusImpl) EnqueueRemoveSubscriber(syncID string) error {
 func (e *eventBusImpl) run(ctx context.Context) error {
 	var msgs []*eventBusMessage
 	for {
-		var open bool
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case _, open = <-e.queue.Wait():
+		case <-e.queue.Wait():
 		}
 
 		msgs = e.queue.GetBatch(msgs)
@@ -267,11 +270,6 @@ func (e *eventBusImpl) run(ctx context.Context) error {
 			} else if msg.remove != nil {
 				e.processRemoveCommand(msg.remove)
 			}
-		}
-
-		if !open {
-			// If the queue is closed, we stop processing commands.
-			return nil
 		}
 	}
 }
@@ -310,23 +308,17 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 	// 1. If the version is AllSubscribersVersion, it means that the update is sent to all subscribers of the stream
 	//    regardless of their version.
 	if version == syncer.AllSubscribersVersion {
-		var wg sync.WaitGroup
 		for _, subscribers := range groupedSubscribers {
 			for _, sub := range subscribers {
-				wg.Add(1)
-				go func(sub StreamSubscriber) {
-					// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
-					// All other fields can be set by reference/pointer to prevent needless copying.
-					sub.OnUpdate(&SyncStreamsResponse{
-						SyncOp:   msg.GetSyncOp(),
-						Stream:   msg.GetStream(),
-						StreamId: msg.GetStreamId(),
-					})
-					wg.Done()
-				}(sub)
+				// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
+				// All other fields can be set by reference/pointer to prevent needless copying.
+				sub.OnUpdate(&SyncStreamsResponse{
+					SyncOp:   msg.GetSyncOp(),
+					Stream:   msg.GetStream(),
+					StreamId: msg.GetStreamId(),
+				})
 			}
 		}
-		wg.Wait()
 
 		if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 			delete(e.subscribers, streamID)
@@ -337,21 +329,15 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 
 	// 2. If the version is not PendingSubscribersVersion, it means that the update is sent to subscribers of the stream
 	//    with the given version. We need to find the subscribers for the given version and send the update to them.
-	var wg sync.WaitGroup
-	wg.Add(len(groupedSubscribers[version]))
 	for _, sub := range groupedSubscribers[version] {
-		go func(sub StreamSubscriber) {
-			// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
-			// All other fields can be set by reference/pointer to prevent needless copying.
-			sub.OnUpdate(&SyncStreamsResponse{
-				SyncOp:   msg.GetSyncOp(),
-				Stream:   msg.GetStream(),
-				StreamId: msg.GetStreamId(),
-			})
-			wg.Done()
-		}(sub)
+		// Create a copy of the update and unset syncID because each subscriber has its own unique syncID.
+		// All other fields can be set by reference/pointer to prevent needless copying.
+		sub.OnUpdate(&SyncStreamsResponse{
+			SyncOp:   msg.GetSyncOp(),
+			Stream:   msg.GetStream(),
+			StreamId: msg.GetStreamId(),
+		})
 	}
-	wg.Wait()
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		delete(e.subscribers[streamID], version)

@@ -223,7 +223,7 @@ func (r *remoteStreamUpdateEmitter) run(
 		select {
 		case <-ctx.Done():
 			return
-		case _, open := <-r.backfillsQueue.Wait():
+		case <-r.backfillsQueue.Wait():
 			msgs = r.backfillsQueue.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
@@ -248,12 +248,6 @@ func (r *remoteStreamUpdateEmitter) run(
 					r.reAddUnprocessedBackfills(msgs[i:])
 					return
 				}
-			}
-
-			// The queue is closed, so we can stop the emitter.
-			if !open {
-				r.cancel(nil)
-				return
 			}
 		}
 	}

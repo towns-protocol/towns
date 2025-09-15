@@ -96,7 +96,7 @@ func (s *syncStreamHandlerImpl) Run() error {
 		select {
 		case <-s.ctx.Done():
 			return s.ctx.Err()
-		case _, open := <-s.streamUpdates.Wait():
+		case <-s.streamUpdates.Wait():
 			msgs = s.streamUpdates.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed.
@@ -115,17 +115,6 @@ func (s *syncStreamHandlerImpl) Run() error {
 				if stop := s.processMessage(msg); stop {
 					return nil
 				}
-			}
-
-			// If the client sent a close message, stop sending messages to client from the buffer.
-			// In theory should not happen, but just in case.
-			if !open {
-				_ = s.receiver.Send(&SyncStreamsResponse{
-					SyncId: s.syncID,
-					SyncOp: SyncOp_SYNC_CLOSE,
-				})
-				s.cancel(nil)
-				return nil
 			}
 		}
 	}
