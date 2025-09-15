@@ -328,7 +328,7 @@ type (
 	}
 
 	ExternalMediaStorage interface {
-		CreateExternalMediaStream(ctx context.Context, streamId StreamId, data []byte) (string, error)
+		CreateExternalMediaStream(ctx context.Context, streamId StreamId) (string, error)
 		UploadPartToExternalMediaStream(
 			ctx context.Context,
 			streamId StreamId,

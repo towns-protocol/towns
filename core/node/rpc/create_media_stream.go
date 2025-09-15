@@ -227,7 +227,7 @@ func (s *Service) createReplicatedMediaStream(
 	// Create ephemeral stream within the local node
 	if isLocal {
 		if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
-			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
 			if err != nil {
 				return nil, err
 			}

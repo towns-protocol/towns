@@ -61,7 +61,7 @@ func (s *Service) allocateEphemeralStream(
 	}
 
 	if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
-		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, storageMb.Data)
+		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +138,7 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 	if location != "postgres" {
 		if !initializedStream {
 			// The stream is not initialized, so the multipart upload is initiated here.
-			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
 			if err != nil {
 				return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
 			}

@@ -83,7 +83,6 @@ func NewS3MediaStore(bucket string) (*S3MediaStore, error) {
 func (w *S3MediaStore) CreateExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
-	data []byte,
 ) (string, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)

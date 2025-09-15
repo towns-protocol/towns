@@ -65,7 +65,6 @@ func NewGCSExternalMediaStore(bucket, token string) (*GCSExternalMediaStore, err
 func (w *GCSExternalMediaStore) CreateExternalMediaStream(
 	ctx context.Context,
 	streamId StreamId,
-	data []byte,
 ) (string, error) {
 	// Generate GCS key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)

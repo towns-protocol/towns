@@ -222,7 +222,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		if location != "postgres" {
 			if !initializedStream {
 				// The stream is not initialized, so the multipart upload is initiated here.
-				uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId, mbBytes)
+				uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
 				if err != nil {
 					return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
 				}
@@ -287,7 +287,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		genesisMiniblockHash = hash
 		streamSuccessCount++
 		quorumCheckMu.Unlock()
-		
+
 		if location != "postgres" {
 			uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
 			if err != nil {

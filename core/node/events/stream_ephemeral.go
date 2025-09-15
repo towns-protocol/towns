@@ -10,6 +10,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // TODO: FIX: move to correct file
@@ -156,6 +157,56 @@ func (s *StreamCache) normalizeEphemeralStream(
 	if len(missingMbs) > 0 {
 		remotes, _ := stream.GetRemotesAndIsLocal()
 		currentStickyPeer := stream.GetStickyPeer()
+		// Offload the miniblock data to the external storage if configured.
+		location, err := s.params.Storage.GetMediaStreamLocation(ctx, stream.streamId)
+		initializedStream := !AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND)
+		if err != nil {
+			if initializedStream {
+				return err
+			} else {
+				location = s.params.Config.ExternalMediaStreamDataBucket
+			}
+		}
+
+		var uploadID string
+		var externalMediaStorage storage.ExternalMediaStorage
+		if location != "postgres" {
+			if location != s.params.Config.ExternalMediaStreamDataBucket {
+				return RiverError(Err_INTERNAL, "external media stream storage changed after this ephemeral media was created.", "streamId", stream.streamId)
+			}
+			switch s.params.Config.MediaStreamDataStorage {
+			case storage.StreamStorageTypeAWS:
+				externalMediaStorage, err = storage.NewS3MediaStore(s.params.Config.ExternalMediaStreamDataBucket)
+				if err != nil {
+					return err
+				}
+			case storage.StreamStorageTypeGCS:
+				externalMediaStorage, err = storage.NewGCSExternalMediaStore(
+					s.params.Config.ExternalMediaStreamDataBucket,
+					s.params.Config.ExternalMediaStreamDataToken,
+				)
+				if err != nil {
+					return err
+				}
+			default:
+				return RiverError(Err_INTERNAL, "external media stream data storage not configured", "storageType", s.params.Config.MediaStreamDataStorage)
+			}
+			if !initializedStream {
+				// The stream is not initialized, so the multipart upload is initiated here.
+				uploadID, err := externalMediaStorage.CreateExternalMediaStream(ctx, stream.streamId)
+				if err != nil {
+					return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+				}
+				if err := s.params.Storage.CreateExternalMediaStreamUploadEntry(ctx, stream.streamId, uploadID); err != nil {
+					_ = s.params.Storage.DeleteExternalMediaStreamUploadEntry(ctx, stream.streamId)
+					return RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+				}
+			}
+			uploadID, _, err = s.params.Storage.GetExternalMediaStreamUploadInfo(ctx, stream.streamId)
+			if err != nil {
+				return RiverError(Err_INTERNAL, "failed to get external media stream upload info", "error", err)
+			}
+		}
 		for range len(remotes) {
 			resp, err := s.params.RemoteMiniblockProvider.GetMiniblocksByIds(
 				ctx,
@@ -202,6 +253,37 @@ func (s *StreamCache) normalizeEphemeralStream(
 					_ = resp.Close()
 					toNextPeer = true
 					break
+				}
+
+				if location != "postgres" {
+					etag, err := externalMediaStorage.UploadPartToExternalMediaStream(
+						ctx,
+						stream.streamId,
+						storageMb.Data,
+						uploadID,
+						storageMb.Number,
+					)
+					if err != nil {
+						logging.FromCtx(ctx).
+							Errorw("Failed to upload part to external media stream", "error", err, "streamId", stream.streamId)
+						_ = resp.Close()
+						toNextPeer = true
+						break
+					}
+					if err = s.params.Storage.WriteExternalMediaStreamPartUploadInfo(
+						ctx,
+						stream.streamId,
+						storageMb.Number,
+						etag,
+						len(storageMb.Data),
+					); err != nil {
+						logging.FromCtx(ctx).
+							Errorw("Failed to write external media stream part info", "error", err, "streamId", stream.streamId)
+						_ = resp.Close()
+						toNextPeer = true
+						break
+					}
+					storageMb.Data = []byte{}
 				}
 
 				if err = s.params.Storage.WriteEphemeralMiniblock(ctx, stream.streamId, storageMb); err != nil {
