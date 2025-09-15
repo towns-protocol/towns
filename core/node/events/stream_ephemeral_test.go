@@ -87,7 +87,7 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 		tc.require.NoError(err)
 	})
 
-	t.Run("normalize ephemeral stream - replicas has nothing", func(t *testing.T) {
+	t.Run("normalize ephemeral stream - replicas have no data", func(t *testing.T) {
 		streamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("2", 62))
 		tc.require.NoError(err)
 

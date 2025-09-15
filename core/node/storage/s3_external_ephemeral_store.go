@@ -67,10 +67,9 @@ func isRetryableError(err error) bool {
 type S3MediaStore struct {
 	s3Client *s3.Client
 	bucket   string
-	token    string
 }
 
-func NewS3MediaStore(bucket, token string) (*S3MediaStore, error) {
+func NewS3MediaStore(bucket string) (*S3MediaStore, error) {
 	s3Client, err := CreateS3Client()
 	if err != nil {
 		return nil, err
@@ -78,7 +77,6 @@ func NewS3MediaStore(bucket, token string) (*S3MediaStore, error) {
 	return &S3MediaStore{
 		s3Client: s3Client,
 		bucket:   bucket,
-		token:    token,
 	}, nil
 }
 
@@ -256,7 +254,7 @@ func DownloadRangeFromS3MediaStream(
 func CreateS3Client() (*s3.Client, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, RiverError(Err_INTERNAL, "unable to load SDK config", "error", err)
+		return nil, RiverError(Err_INTERNAL, "unable to load S3 config", "error", err)
 	}
 	return s3.NewFromConfig(cfg), nil
 }
