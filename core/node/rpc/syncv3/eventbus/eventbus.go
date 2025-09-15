@@ -3,7 +3,6 @@ package eventbus
 import (
 	"context"
 	"slices"
-	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/trace"
@@ -115,18 +114,13 @@ type eventBusMessage struct {
 // TODO: Use worker pool to process updates in parallel
 type eventBusImpl struct {
 	log *logging.Log
-	// TODO: discuss if we want to have an unbounded queue here?
+	// queue is the internal unbounded queue for stream updates and subscription requests.
 	// Processing items on the queue should be fast enough to always keep up with the added items.
 	queue    *dynmsgbuf.DynamicBuffer[*eventBusMessage]
 	registry syncer.Registry
 	// subscribers is the list of subscribers grouped by stream ID and syncer version.
 	subscribers map[StreamId]map[int][]StreamSubscriber
-	// subscribersLock protects the subscribers map.
-	// The given lock is used to avoid race condition when the queue is full and stream update cannot be added to the queue
-	// for further processing. In this case we need to send SyncOp_SYNC_DOWN message directly to subscribers in
-	// OnStreamEvent method, and we need to lock the subscribers map for that.
-	subscribersLock sync.Mutex
-	otelTracer      trace.Tracer
+	otelTracer  trace.Tracer
 }
 
 // New creates a new instance of the event bus implementation.
@@ -143,7 +137,7 @@ func New(
 ) *eventBusImpl {
 	e := &eventBusImpl{
 		log:         logging.FromCtx(ctx).Named("syncv3.eventbus"),
-		queue:       dynmsgbuf.NewDynamicBuffer[*eventBusMessage](),
+		queue:       dynmsgbuf.NewUnboundedDynamicBuffer[*eventBusMessage](),
 		subscribers: make(map[StreamId]map[int][]StreamSubscriber),
 		otelTracer:  otelTracer,
 	}
@@ -175,30 +169,9 @@ func New(
 // TODO: Add retry mechanism?
 func (e *eventBusImpl) OnStreamEvent(msg *SyncStreamsResponse, version int) {
 	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{msg: msg, version: version}})
-	if err == nil {
-		// All good, just return
-		return
-	}
-
-	e.log.Errorw("failed to add stream update message to the queue", "error", err)
-
-	// Send sync down message for the given stream directly to clients.
-	// Subscribers do not want to unsubscribe from the given stream here so after receiving the sync down message
-	// they most likely will immediately re-subscribe -> we can keep the current syncer for the given stream active.
-	if len(msg.GetTargetSyncIds()) > 0 {
-		e.processTargetedStreamUpdateCommand(
-			&SyncStreamsResponse{
-				SyncOp:        SyncOp_SYNC_DOWN,
-				StreamId:      msg.StreamID(),
-				TargetSyncIds: msg.GetTargetSyncIds(),
-			},
-			version,
-		)
-	} else {
-		e.processStreamUpdateCommand(
-			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: msg.StreamID()},
-			version,
-		)
+	if err != nil {
+		// The failure could happen only if the queue is closed which is theoretically impossible here.
+		e.log.Errorw("failed to add stream update message to the unbounded queue", "error", err)
 	}
 }
 
@@ -296,9 +269,6 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 		return
 	}
 
-	e.subscribersLock.Lock()
-	defer e.subscribersLock.Unlock()
-
 	groupedSubscribers, ok := e.subscribers[streamID]
 	if !ok {
 		// No subscribers for the given stream, do nothing
@@ -369,9 +339,6 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 			"streamID", msg.StreamID(), "error", err)
 		return
 	}
-
-	e.subscribersLock.Lock()
-	defer e.subscribersLock.Unlock()
 
 	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
 		// The following logic removes the subscriber with the given sync ID from the list of subscribers
@@ -453,9 +420,6 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 		return
 	}
 
-	e.subscribersLock.Lock()
-	defer e.subscribersLock.Unlock()
-
 	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers, ok := e.subscribers[streamID]
@@ -489,9 +453,6 @@ func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
 		return
 	}
 
-	e.subscribersLock.Lock()
-	defer e.subscribersLock.Unlock()
-
 	for version := range e.subscribers[msg.streamID] {
 		e.subscribers[msg.streamID][version] = slices.DeleteFunc(
 			e.subscribers[msg.streamID][version],
@@ -522,9 +483,6 @@ func (e *eventBusImpl) processRemoveCommand(msg *eventBusMessageRemove) {
 	if msg == nil {
 		return
 	}
-
-	e.subscribersLock.Lock()
-	defer e.subscribersLock.Unlock()
 
 	for streamID, groupedSubscribers := range e.subscribers {
 		for version := range groupedSubscribers {
