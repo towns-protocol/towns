@@ -193,7 +193,7 @@ func (s *syncStreamHandlerImpl) Cancel(ctx context.Context) error {
 }
 
 func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
-	if err := s.ctx.Err(); err != nil {
+	if s.ctx.Err() != nil {
 		return
 	}
 
@@ -223,7 +223,7 @@ func (s *syncStreamHandlerImpl) DebugDropStream(_ context.Context, streamId Stre
 // OnUpdate implements the eventbus.StreamSubscriber interface.
 // It is expected to receive SyncOp_SYNC_UPDATE and SyncOp_SYNC_DOWN messages here.
 func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
-	if err := s.ctx.Err(); err != nil {
+	if s.ctx.Err() != nil {
 		return
 	}
 
@@ -235,7 +235,7 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 // processMessage processes a single message from the stream updates queue.
 // Returns true if the processor should stop processing messages.
 func (s *syncStreamHandlerImpl) processMessage(msg *SyncStreamsResponse) bool {
-	if err := s.ctx.Err(); err != nil {
+	if s.ctx.Err() != nil {
 		return true
 	}
 
