@@ -29,7 +29,7 @@ type ViewStream interface {
 }
 
 type SyncResultReceiver interface {
-	// OnUpdate is called each time a new cookie is available for a stream
+	// OnUpdate is called each time a new event is available for a stream.
 	OnUpdate(StreamId, *StreamAndCookie)
 
 	// OnSyncDown is called when updates for a stream could not be given.
