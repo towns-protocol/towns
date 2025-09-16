@@ -33,7 +33,7 @@ import {
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -61,12 +61,12 @@ describe('Bot', { sequential: true }, () => {
     const alice = new SyncAgentTest(undefined, riverConfig)
     let aliceClient: SyncAgent
 
+    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
-    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOT_DISPLAY_NAME = 'Uber Test Bot'
-    const BOT_DESCRIPTION = 'I shall witness everything'
+    const BOT_DESCRIPTION = 'Beep boop boop beep'
 
     let bot: Bot<typeof SLASH_COMMANDS>
     let spaceId: string
@@ -87,6 +87,12 @@ describe('Bot', { sequential: true }, () => {
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
         ethersProvider = makeBaseProvider(riverConfig)
+        await bobClient.riverConnection.call((client) =>
+            Promise.all([
+                client.debugForceMakeMiniblock(spaceId, { forceSnapshot: true }),
+                client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+            ]),
+        )
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -712,6 +718,11 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
+    })
+
+    it('should be able to get channel inception event', async () => {
+        const inception = await bot.snapshot.getChannelInception(channelId)
+        expect(inception?.spaceId).toBeDefined()
     })
 
     it.fails(
