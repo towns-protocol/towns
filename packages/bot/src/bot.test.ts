@@ -241,6 +241,10 @@ describe('Bot', { sequential: true }, () => {
         expect(userStream.appAddress).toBe(appAddress)
     })
 
+    it('1+1=2', () => {
+        expect(1 + 1).toBe(2)
+    })
+
     it('should receive a message forwarded', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const timeBeforeSendMessage = Date.now()
@@ -294,7 +298,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMessages).toHaveLength(0)
     })
 
-    it('should receive channel join event when carol joins the channel if bot is listening to channel join events', async () => {
+    it('should receive channel join event when alice joins the channel if bot is listening to channel join events', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedChannelJoinEvents: OnChannelJoin[] = []
         bot.onChannelJoin((_h, e) => {
