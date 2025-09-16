@@ -488,9 +488,9 @@ func (s *testSubscriber) OnSyncDown(streamID StreamId) {
 	s.streamErrors = append(s.streamErrors, streamID)
 }
 
-func (sub *testSubscriber) eventsReceived() int {
+func (s *testSubscriber) eventsReceived() int {
 	count := 0
-	for _, sac := range sub.receivedUpdates {
+	for _, sac := range s.receivedUpdates {
 		count += len(sac.Events)
 	}
 	return count
