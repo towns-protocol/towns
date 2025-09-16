@@ -307,9 +307,9 @@ describe('Bot', { sequential: true }, () => {
         bot.onChannelJoin((_h, e) => {
             receivedChannelJoinEvents.push(e)
         })
-        await bobClient.spaces.joinSpace(spaceId, bob.signer)
+        await aliceClient.spaces.joinSpace(spaceId, alice.signer)
         await waitFor(() => receivedChannelJoinEvents.length > 0)
-        expect(receivedChannelJoinEvents.find((x) => x.userId === bob.userId)).toBeDefined()
+        expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
     })
 
     it('should receive slash command messages', async () => {
