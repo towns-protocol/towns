@@ -75,12 +75,15 @@ func (s *serviceImpl) SyncStreams(
 	if len(streams) > 0 {
 		res, err := h.Modify(&ModifySyncRequest{SyncId: syncID, AddStreams: streams})
 		if err != nil {
-			_ = h.Cancel(ctx)
 			return err
 		}
 
+		// If there were any errors when adding initial streams, just cancel the sync operation and return error.
+		// In theory, there should not be any errors when adding initial streams since the only error that can
+		// happen is the event bus queue is closed one which should not happen. Just in case, handle it here.
 		if len(res.GetAdds()) > 0 {
-			return h.Cancel(ctx)
+			return RiverError(Err_INVALID_ARGUMENT, "failed to add initial streams").
+				Tags("failedStreams", res.GetAdds())
 		}
 	}
 
