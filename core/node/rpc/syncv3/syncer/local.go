@@ -27,7 +27,7 @@ type localStreamUpdateEmitter struct {
 	localAddr      common.Address
 	stream         *events.Stream
 	subscriber     StreamSubscriber
-	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
+	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.

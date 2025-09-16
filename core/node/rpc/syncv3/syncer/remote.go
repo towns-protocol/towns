@@ -38,7 +38,7 @@ type remoteStreamUpdateEmitter struct {
 	remoteAddr     common.Address
 	client         protocolconnect.StreamServiceClient
 	subscriber     StreamSubscriber
-	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
+	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest]
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
