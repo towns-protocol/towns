@@ -24,6 +24,7 @@
     "@prb/math": "^4.1.0",
     "@towns-protocol/diamond": "^0.6.3",
     "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
+    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
     "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
     "modular-account": "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz",
     "solady": "^0.1.24"
@@ -37,7 +38,6 @@
     "@towns-protocol/prettier-config": "workspace:^",
     "@typechain/ethers-v5": "^10.1.1",
     "@wagmi/cli": "^2.2.0",
-    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
     "forge-std": "github:foundry-rs/forge-std#v1.10.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
