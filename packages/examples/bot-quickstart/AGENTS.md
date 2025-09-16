@@ -567,7 +567,7 @@ Permission.Write             // Send messages in channels
 Permission.Invite            // Invite users to space
 Permission.JoinSpace         // Join the space
 Permission.Redact            // Delete any message (admin redaction)
-Permission.ModifyBanning     // Ban/unban users (admin permission)
+Permission.ModifyBanning     // Ban/unban users (requires bot app to have this permission)
 Permission.PinMessage        // Pin/unpin messages
 Permission.AddRemoveChannels // Create/delete channels
 Permission.ModifySpaceSettings // Change space configuration
@@ -616,10 +616,33 @@ bot.onSlashCommand("ban", async (handler, event) => {
     return
   }
   
-  const userToBan = event.mentions[0]?.userId
+  const userToBan = event.mentions[0]?.userId || event.args[0]
   if (userToBan) {
-    // Implement ban logic via smart contract
-    await handler.writeContract({...})
+    try {
+      // Bot must have ModifyBanning permission for this to work
+      const result = await handler.ban(userToBan, event.spaceId)
+      await handler.sendMessage(event.channelId, `Successfully banned user ${userToBan}`)
+    } catch (error) {
+      await handler.sendMessage(event.channelId, `Failed to ban: ${error.message}`)
+    }
+  }
+})
+
+bot.onSlashCommand("unban", async (handler, event) => {
+  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
+    await handler.sendMessage(event.channelId, "You don't have permission to unban users")
+    return
+  }
+  
+  const userToUnban = event.args[0]
+  if (userToUnban) {
+    try {
+      // Bot must have ModifyBanning permission for this to work
+      const result = await handler.unban(userToUnban, event.spaceId)
+      await handler.sendMessage(event.channelId, `Successfully unbanned user ${userToUnban}`)
+    } catch (error) {
+      await handler.sendMessage(event.channelId, `Failed to unban: ${error.message}`)
+    }
   }
 })
 ```
@@ -1000,6 +1023,8 @@ await bot.removeEvent(channelId, eventId)
 await bot.adminRemoveEvent(channelId, eventId)
 await bot.hasAdminPermission(userId, spaceId)
 await bot.checkPermission(channelId, userId, permission)
+await bot.ban(userId, spaceId)  // Requires ModifyBanning permission
+await bot.unban(userId, spaceId)  // Requires ModifyBanning permission
 await bot.readContract({ ... })
 await bot.writeContract({ ... })
 
