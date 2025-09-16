@@ -205,11 +205,9 @@ func (r *remoteStreamUpdateEmitter) run(
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
 				// Context could be canceled while processing backfill requests so one more check here.
-				select {
-				case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
 					r.reAddUnprocessedBackfills(msgs[i:])
 					return
-				default:
 				}
 
 				if err := r.processBackfillRequest(ctx, msg); err != nil {

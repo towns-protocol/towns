@@ -169,10 +169,8 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 }
 
 func (s *syncStreamHandlerImpl) Cancel(ctx context.Context) error {
-	select {
-	case <-s.ctx.Done():
-		return s.ctx.Err()
-	default:
+	if err := s.ctx.Err(); err != nil {
+		return err
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
@@ -195,10 +193,8 @@ func (s *syncStreamHandlerImpl) Cancel(ctx context.Context) error {
 }
 
 func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
-	select {
-	case <-s.ctx.Done():
+	if err := s.ctx.Err(); err != nil {
 		return
-	default:
 	}
 
 	if err := s.streamUpdates.AddMessage(&SyncStreamsResponse{
@@ -210,10 +206,8 @@ func (s *syncStreamHandlerImpl) Ping(_ context.Context, nonce string) {
 }
 
 func (s *syncStreamHandlerImpl) DebugDropStream(_ context.Context, streamId StreamId) error {
-	select {
-	case <-s.ctx.Done():
-		return s.ctx.Err()
-	default:
+	if err := s.ctx.Err(); err != nil {
+		return err
 	}
 
 	if err := s.eventBus.EnqueueUnsubscribe(streamId, s); err != nil {
@@ -229,10 +223,8 @@ func (s *syncStreamHandlerImpl) DebugDropStream(_ context.Context, streamId Stre
 // OnUpdate implements the eventbus.StreamSubscriber interface.
 // It is expected to receive SyncOp_SYNC_UPDATE and SyncOp_SYNC_DOWN messages here.
 func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
-	select {
-	case <-s.ctx.Done():
+	if err := s.ctx.Err(); err != nil {
 		return
-	default:
 	}
 
 	if err := s.streamUpdates.AddMessage(update); err != nil {
@@ -243,10 +235,8 @@ func (s *syncStreamHandlerImpl) OnUpdate(update *SyncStreamsResponse) {
 // processMessage processes a single message from the stream updates queue.
 // Returns true if the processor should stop processing messages.
 func (s *syncStreamHandlerImpl) processMessage(msg *SyncStreamsResponse) bool {
-	select {
-	case <-s.ctx.Done():
+	if err := s.ctx.Err(); err != nil {
 		return true
-	default:
 	}
 
 	msg.SyncId = s.syncID

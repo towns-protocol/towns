@@ -136,11 +136,9 @@ func (l *localStreamUpdateEmitter) run(ctx context.Context) {
 			// Messages must be processed in the order they were received.
 			for i, msg := range msgs {
 				// Context could be cancelled while processing messages so adding one more check here.
-				select {
-				case <-ctx.Done():
+				if err := ctx.Err(); err != nil {
 					l.reAddUnprocessedBackfills(msgs[i:])
 					return
-				default:
 				}
 
 				if err := l.processBackfillRequest(ctx, msg); err != nil {
