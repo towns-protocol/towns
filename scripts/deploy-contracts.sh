@@ -71,13 +71,10 @@ fi
 
 cd "$PROJECT_ROOT"
 
-# Make copy to packages/generated conditional (skip in Docker)
 GENERATED_DIR="$PROJECT_ROOT/packages/generated"
-if [ -d "$GENERATED_DIR" ]; then
-    # Ensure the destination directory exists
-    mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
-    cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
+# Ensure the destination directory exists
+mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
+cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
 
-    # Update the config
-    cd "$GENERATED_DIR" && yarn make-config
-fi
+# Update the config
+cd "$GENERATED_DIR" && yarn make-config
