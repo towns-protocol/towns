@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
 import {IERC721A} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IArchitect} from "src/factory/facets/architect/IArchitect.sol";
 import {IGuardianBase} from "src/spaces/facets/guardian/IGuardian.sol";
@@ -11,8 +10,7 @@ import {IGuardian} from "src/spaces/facets/guardian/IGuardian.sol";
 // libraries
 
 // contracts
-
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccount} from "@eth-infinitism/account-abstraction/samples/SimpleAccount.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 contract GuardianTest is BaseSetup, IGuardianBase {
