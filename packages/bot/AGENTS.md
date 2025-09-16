@@ -104,6 +104,11 @@ Methods available on the `handler` parameter in event callbacks:
 
 **Message Operations:**
 - `sendMessage(streamId, message, opts?, tags?)` - Send to channel
+  - `opts.ephemeral`: Send ephemeral message (won't persist after refresh)
+  - `opts.threadId`: Send message in a thread
+  - `opts.replyId`: Reply to a specific message
+  - `opts.mentions`: Array of user mentions
+  - `opts.attachments`: Array of attachments
 - `editMessage(streamId, messageId, message, tags?)` - Edit message
 - `sendReaction(streamId, messageId, reaction, tags?)` - Add reaction
 - `removeEvent(streamId, messageId, tags?)` - Remove event
@@ -225,6 +230,24 @@ bot.onMessage(async (handler, { userId, spaceId, channelId, eventId }) => {
     // Admin-only functionality
     await handler.adminRemoveEvent(channelId, eventId)
   }
+})
+```
+
+### Sending Ephemeral Messages
+```typescript
+bot.onSlashCommand("ai", async (handler, { channelId, args }) => {
+  // Send temporary status message that won't persist after refresh
+  await handler.sendMessage(
+    channelId, 
+    "I'll think about it. This may take a while...", 
+    { ephemeral: true }
+  )
+  
+  // Process the complex task
+  const result = await processComplexTask(args)
+  
+  // Send the actual persistent result
+  await handler.sendMessage(channelId, result)
 })
 ```
 
