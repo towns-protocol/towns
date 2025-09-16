@@ -172,7 +172,7 @@ func (l *localStreamUpdateEmitter) reAddUnprocessedBackfills(msgs []*backfillReq
 }
 
 func (l *localStreamUpdateEmitter) cleanup() {
-	l.backfillsQueue.Close()
+	remainingMsgs := l.backfillsQueue.CloseAndGetBatch()
 	l.stream.Unsub(l)
 
 	// Send a stream down message to all active syncs of the current syncer version via event bul.
@@ -182,8 +182,7 @@ func (l *localStreamUpdateEmitter) cleanup() {
 	}, l.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
-	msgs := l.backfillsQueue.GetBatch(nil)
-	for _, msg := range msgs {
+	for _, msg := range remainingMsgs {
 		l.subscriber.OnStreamEvent(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
 			StreamId:      l.stream.StreamId().Bytes(),

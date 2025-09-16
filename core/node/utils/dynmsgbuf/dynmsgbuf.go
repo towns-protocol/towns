@@ -172,6 +172,24 @@ func (db *DynamicBuffer[T]) Close() {
 	}
 }
 
+// CloseAndGetBatch closes the buffer and returns the remaining items.
+func (db *DynamicBuffer[T]) CloseAndGetBatch() []T {
+	var batch []T
+
+	db.mu.Lock()
+	batch = db.buffer
+	db.buffer = nil
+	db.mu.Unlock()
+
+	// Signal to any waiting goroutines that the buffer is closed
+	select {
+	case db.signalChan <- struct{}{}:
+	default:
+	}
+
+	return batch
+}
+
 // IsClosed returns true if the buffer is closed.
 func (db *DynamicBuffer[T]) IsClosed() bool {
 	db.mu.Lock()

@@ -241,14 +241,13 @@ func (r *remoteStreamUpdateEmitter) reAddUnprocessedBackfills(msgs []*backfillRe
 }
 
 func (r *remoteStreamUpdateEmitter) cleanup() {
-	r.backfillsQueue.Close()
+	remainingMsgs := r.backfillsQueue.CloseAndGetBatch()
 
 	// Send a stream down message to all active syncs of the current syncer version via event bus.
 	r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID.Bytes()}, r.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
-	msgs := r.backfillsQueue.GetBatch(nil)
-	for _, msg := range msgs {
+	for _, msg := range remainingMsgs {
 		r.subscriber.OnStreamEvent(&SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
 			StreamId:      r.streamID.Bytes(),
