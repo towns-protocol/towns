@@ -76,6 +76,7 @@ type Client_Base = {
         streamId: string,
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
+        ephemeral?: boolean,
     ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array }>
 }
 
@@ -176,6 +177,7 @@ export const createTownsClient = async (
         streamId: string,
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
+        ephemeral?: boolean,
     ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array }> => {
         const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
             await client.rpc.getLastMiniblockHash({
@@ -187,6 +189,7 @@ export const createTownsClient = async (
             prevMiniblockHash,
             prevMiniblockNum,
             tags,
+            ephemeral,
         )
         const eventId = bin_toHexString(event.hash)
         await client.rpc.addEvent({

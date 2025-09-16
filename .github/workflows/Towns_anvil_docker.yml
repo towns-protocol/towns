@@ -6,6 +6,12 @@ on:
     push:
         branches:
             - main
+        paths:
+            - '.github/workflows/Towns_anvil_docker.yml'
+            - 'packages/contracts/**'
+            - 'scripts/deploy-contracts.sh'
+            - 'scripts/start-local-*.sh'
+            - 'core/justfile'
 
     workflow_dispatch: # A build was manually requested
 
@@ -26,6 +32,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v4
+
+            - uses: taiki-e/install-action@just
 
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -53,27 +61,35 @@ jobs:
               run: |
                   COMMIT_HASH=$(git describe --tags --always --dirty)
                   BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                  TAGS=($COMMIT_HASH)
 
-                  # If this is a push to main, we also tag the image as dev,
-                  # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
+                  # Compute the hash of all files that affect the Docker build - this is the primary tag
+                  cd core
+                  BUILD_HASH=$(just _get-docker-build-hash)
+                  cd ..
+                  TAGS=($BUILD_HASH)
+
+                  # Also tag with commit hash for traceability
+                  TAGS+=($COMMIT_HASH)
+
+                  # If this is a push to main, we also tag the image as latest
                   if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
                     TAGS+=(latest)
                   fi
 
                   echo "Building image with the following tags: ${TAGS[@]}"
+                  echo "Build hash: $BUILD_HASH"
                   echo "Commit hash: $COMMIT_HASH"
                   echo "Branch: $BRANCH"
                   echo "Release version: $RELEASE_VERSION"
 
                   docker build \
-                    -t towns-anvil:local-latest \
+                    -t towns-anvil:local \
                     -f ./packages/contracts/docker/Dockerfile \
                     .
 
                   for tag in "${TAGS[@]}"; do
                     echo "Pushing image to $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag"
-                    docker tag towns-anvil:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                    docker tag towns-anvil:local $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
                     docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
                   done
             # If action failed, we send a slack notification

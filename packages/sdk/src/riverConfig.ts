@@ -87,8 +87,9 @@ function getRiverRpcUrlForChain(chainId: number): string {
 
 export function getNotificationServiceUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (typeof process === 'object' && process.env.NOTIFICATION_SERVICE_URL) {
-            return process.env.NOTIFICATION_SERVICE_URL
+        const url = safeEnv(['NOTIFICATION_SERVICE_URL'])
+        if (url) {
+            return url
         }
     }
     switch (environmentId) {
@@ -109,8 +110,9 @@ export function getNotificationServiceUrl(environmentId: string): string {
 
 export function getStreamMetadataUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (typeof process === 'object' && process.env.STREAM_METADATA_URL) {
-            return process.env.STREAM_METADATA_URL
+        const url = safeEnv(['STREAM_METADATA_URL'])
+        if (url) {
+            return url
         }
     }
     switch (environmentId) {
@@ -131,8 +133,9 @@ export function getStreamMetadataUrl(environmentId: string): string {
 
 export function getAppRegistryUrl(environmentId: string): string {
     if (RIVER_ENV === environmentId) {
-        if (typeof process === 'object' && process.env.APP_REGISTRY_URL) {
-            return process.env.APP_REGISTRY_URL
+        const url = safeEnv(['APP_REGISTRY_URL'])
+        if (url) {
+            return url
         }
     }
     switch (environmentId) {
@@ -168,7 +171,7 @@ export function makeBaseChainConfig(environmentId?: string): RiverConfig['base']
 }
 
 /**
- * @param inEnvironmentId - Environment id to use. If not provided, will use the environment id from the process.env.RIVER_ENV or VITE_RIVER_ENV.
+ * @param inEnvironmentId - Environment id to use. If not provided, will use the environment id from the process.env.RIVER_ENV or import.meta.env.VITE_RIVER_ENV.
  * @returns River config
  *
  * If RIVER_ENV is defined, you don't need to pass an enviromnetId here
