@@ -147,7 +147,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		if !s.emitter.EnqueueBackfill(br.cookie, br.syncIDs) {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
+				AllSubscribersVersion,
 			)
 		}
 	}
