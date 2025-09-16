@@ -84,6 +84,7 @@ type MessageOpts = {
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+    ephemeral?: boolean
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -808,10 +809,12 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         streamId,
         payload,
         tags,
+        ephemeral,
     }: {
         streamId: string
         payload: ChannelMessage
         tags?: PlainMessage<Tags>
+        ephemeral?: boolean
     }) => {
         const stream = await client.getStream(streamId)
         const eventTags = {
@@ -839,7 +842,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         } else {
             throw new Error(`Invalid stream ID type: ${streamId}`)
         }
-        return client.sendEvent(streamId, eventPayload, eventTags)
+        return client.sendEvent(streamId, eventPayload, eventTags, ephemeral)
     }
 
     const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
@@ -872,12 +875,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
     const sendMessage = async (
         streamId: string,
         message: string,
-        opts?: {
-            threadId?: string
-            replyId?: string
-            mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-            attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
-        },
+        opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
@@ -899,7 +897,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload, tags })
+        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
     }
 
     const editMessage = async (
