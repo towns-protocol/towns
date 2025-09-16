@@ -385,9 +385,9 @@ func (e *eventBusImpl) processSubscribeCommand(msg *eventBusMessageSub) {
 	// Adding the given subscriber to "0" version list of subscribers for the given stream ID which
 	// means that the given subscriber is waiting for the backfill message first.
 	currentSubscribers := e.getOrCreateStreamSubscribers(streamID)
-	currentSubscribers.addPendingUnique(msg.subscriber)
-
-	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
+	if currentSubscribers.addPendingUnique(msg.subscriber) {
+		e.registry.EnqueueSubscribeAndBackfill(msg.cookie, []string{msg.subscriber.SyncID()})
+	}
 }
 
 func (e *eventBusImpl) processUnsubscribeCommand(msg *eventBusMessageUnsub) {
@@ -416,6 +416,12 @@ func (e *eventBusImpl) processBackfillCommand(msg *eventBusMessageBackfill) {
 	e.registry.EnqueueSubscribeAndBackfill(msg.cookie, msg.syncIDs)
 }
 
+// processRemoveCommand walks the entire e.subscribers map and scans each version list to drop the departing sync ID.
+// On busy nodes this runs on the single event-bus goroutine and can dominate queue processing whenever
+// a sync shuts down (e.g., on client disconnects or node restarts).
+// TODO: Maintaining a reverse index (sync ID → streams) or at least tracking the streams a handler is subscribed
+//
+//	to would turn removals into near-O(1) operations and keep the event bus responsive under load.
 func (e *eventBusImpl) processRemoveCommand(msg *eventBusMessageRemove) {
 	if msg == nil {
 		return

@@ -11,14 +11,16 @@ import (
 // The implementation is not thread-safe.
 type streamSubscribers map[int][]StreamSubscriber
 
-func (ss streamSubscribers) addPendingUnique(subscriber StreamSubscriber) {
+func (ss streamSubscribers) addPendingUnique(subscriber StreamSubscriber) bool {
 	for _, subscribers := range ss {
 		if slices.Contains(subscribers, subscriber) {
-			return
+			return false
 		}
 	}
 
 	ss[syncer.PendingSubscribersVersion] = append(ss[syncer.PendingSubscribersVersion], subscriber)
+
+	return true
 }
 
 func (ss streamSubscribers) findBySyncID(syncID string) (StreamSubscriber, int) {
