@@ -195,8 +195,9 @@ just-deploy-contracts:
     if [ "${USE_DOCKER_CHAINS}" = "1" ]; then
         # Copy entire local_dev structure from container
         echo "Extracting contracts and configs from Docker container"
-        docker cp towns-base-chain:/app/configs/base ${CONTRACTS_DIR}/
-        docker cp towns-base-chain:/app/configs/river ${CONTRACTS_DIR}/
+        mkdir -p ${CONTRACTS_DIR}
+        docker cp towns-base-chain:/app/configs/base/. ${CONTRACTS_DIR}/base/
+        docker cp towns-base-chain:/app/configs/river/. ${CONTRACTS_DIR}/river/
         cd ${CONTRACTS_DIR}/../.. && yarn make-config
     else
         echo "Deploying contracts"
@@ -549,6 +550,8 @@ config-from-docker:
         echo "Docker chains not running. Please start them first with: just anvils"
         exit 1
     fi
+    # Copy contracts addresses
+    just just-deploy-contracts
     # Create run base directory
     mkdir -p ${RUN_BASE}
     # Extract from base container (both containers have same configs)
