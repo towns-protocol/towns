@@ -435,7 +435,7 @@ func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 		DO UPDATE SET upload_id = $2
 	`
 
-	_, err := tx.Exec(ctx, query, streamId.String(), uploadID)
+	_, err := tx.Exec(ctx, query, streamId, uploadID)
 	return err
 }
 
@@ -479,7 +479,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 
 	// Add the new etag to the JSONB array
 	etagJSON := fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag)
-	_, err := tx.Exec(ctx, updateUploadQuery, streamId.String(), etagJSON)
+	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
 	if err != nil {
 		return err
 	}
@@ -500,7 +500,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 			end_bytes = EXCLUDED.end_bytes
 	`
 	resolvedQuery := s.sqlForStream(query, streamId)
-	_, err = tx.Exec(ctx, resolvedQuery, streamId.String(), miniblock, length)
+	_, err = tx.Exec(ctx, resolvedQuery, streamId, miniblock, length)
 	return err
 }
 
@@ -604,7 +604,7 @@ func (s *PostgresStreamStore) getExternalMediaStreamRangeMarkersTx(
 		FROM {{external_media_markers}}
 		WHERE stream_id = $1 AND miniblock >= $2 AND miniblock < $3
 		ORDER BY miniblock`, streamId),
-		streamId.String(), fromInclusive, toExclusive)
+		streamId, fromInclusive, toExclusive)
 	if err != nil {
 		return nil, err
 	}
@@ -654,6 +654,6 @@ func (s *PostgresStreamStore) deleteExternalMediaStreamUploadEntryTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) error {
-	_, err := tx.Exec(ctx, "DELETE FROM external_media_uploads WHERE stream_id = $1", streamId.String())
+	_, err := tx.Exec(ctx, "DELETE FROM external_media_uploads WHERE stream_id = $1", streamId)
 	return err
 }
