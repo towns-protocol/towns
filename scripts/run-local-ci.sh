@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Script to run GitHub CI locally using act
 
@@ -49,7 +50,7 @@ yarn prettier --write event.json
 cleanup_anvil_containers() {
     echo "Stopping Anvil containers..."
     if command -v just >/dev/null 2>&1 && [ -d "core" ]; then
-        (cd core && USE_DOCKER_CHAINS=1 just anvils-stop) 2>/dev/null || true
+        (cd core && USE_DOCKER_CHAINS=1 just anvils-stop) >/dev/null 2>&1 || true
     fi
 }
 

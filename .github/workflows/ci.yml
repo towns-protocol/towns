@@ -60,12 +60,12 @@ jobs:
 
             - uses: taiki-e/install-action@just
 
-            - name: Get contracts hash
+            - name: Get docker build hash
               id: hash
               working-directory: core
               run: |
-                  CONTRACTS_HASH=$(just _get-contracts-hash)
-                  echo "hash=${CONTRACTS_HASH}" >> $GITHUB_OUTPUT
+                  BUILD_HASH=$(just _get-docker-build-hash)
+                  echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
 
             - name: Check AWS ECR for existing image
               id: check-remote
@@ -631,7 +631,7 @@ jobs:
               run: just config-and-start
               working-directory: core
               env:
-                  USE_DOCKER_CHAINS: ${{ steps.filter.outputs.contracts != 'true' && '1' || '0' }}
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
@@ -801,7 +801,7 @@ jobs:
               run: just config-and-start
               working-directory: core
               env:
-                  USE_DOCKER_CHAINS: ${{ steps.filter.outputs.contracts != 'true' && '1' || '0' }}
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
