@@ -80,23 +80,17 @@ func (s *sharedStreamUpdateEmitter) run(
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, sharedStreamUpdateEmitterTimeout)
 	defer ctxWithCancel()
 
-	var backfills []*backfillRequest
-
 	stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, s.streamID)
 	if err != nil {
 		s.log.With("error", err).Error("failed to get stream for further emitter initialization")
 
 		s.lock.Lock()
-		backfills = s.backfills
 		s.backfills = nil
 		s.lock.Unlock()
-
-		for _, br := range backfills {
-			subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
-			)
-		}
+		subscriber.OnStreamEvent(
+			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]},
+			AllSubscribersVersion,
+		)
 		return
 	}
 
@@ -124,31 +118,28 @@ func (s *sharedStreamUpdateEmitter) run(
 		s.log.With("error", err).Error("failed to create stream updates emitter")
 
 		s.lock.Lock()
-		backfills = s.backfills
 		s.backfills = nil
 		s.lock.Unlock()
-
-		for _, br := range backfills {
-			subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
-			)
-		}
+		subscriber.OnStreamEvent(
+			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]},
+			AllSubscribersVersion,
+		)
 		return
 	}
 
 	s.lock.Lock()
 	s.emitter = emitter
-	backfills = s.backfills
+	backfills := s.backfills
 	s.backfills = nil
 	s.lock.Unlock()
 
 	for _, br := range backfills {
 		if !s.emitter.EnqueueBackfill(br.cookie, br.syncIDs) {
 			subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
+				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]},
+				AllSubscribersVersion,
 			)
+			return
 		}
 	}
 }

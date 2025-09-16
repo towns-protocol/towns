@@ -333,40 +333,27 @@ func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsRespon
 		return
 	}
 
+	if msg.GetSyncOp() != SyncOp_SYNC_UPDATE {
+		e.log.Errorw("received unsupported targeted stream update message",
+			"streamID", streamID, "syncOp", msg.GetSyncOp())
+	}
+
 	subscribers, ok := e.subscribers[streamID]
 	if !ok {
 		return
 	}
 
+	// The following logic moves the given subscriber from the pending subscribers list into a list with the given
+	// version and sends an update the subscriber with an updated target sync IDs.
+
 	targetSyncID := msg.GetTargetSyncIds()[0]
-	msg.TargetSyncIds = msg.TargetSyncIds[1:]
-
-	if msg.GetSyncOp() == SyncOp_SYNC_DOWN {
-		// The following logic removes the subscriber with the given sync ID from the list of subscribers
-		// and sends the given stream down message to it.
-
-		subscriber := subscribers.removeBySyncID(targetSyncID)
-		if subscriber != nil {
-			if subscribers.isEmpty() {
-				delete(e.subscribers, streamID)
-			}
-
-			subscriber.OnUpdate(msg)
+	subscriber, ver := subscribers.findBySyncID(targetSyncID)
+	if subscriber != nil {
+		if ver == syncer.PendingSubscribersVersion {
+			subscribers.movePendingToVersion(targetSyncID, version)
 		}
-	} else if msg.GetSyncOp() == SyncOp_SYNC_UPDATE {
-		// The following logic moves the given subscriber from the pending subscribers list into a list with the given
-		// version and sends an update the subscriber with an updated target sync IDs.
-
-		subscriber, ver := subscribers.findBySyncID(targetSyncID)
-		if subscriber != nil {
-			if ver == syncer.PendingSubscribersVersion {
-				subscribers.movePendingToVersion(targetSyncID, version)
-			}
-			subscriber.OnUpdate(msg)
-		}
-	} else {
-		e.log.Errorw("received unsupported targeted stream update message",
-			"streamID", streamID, "syncOp", msg.GetSyncOp())
+		msg.TargetSyncIds = msg.TargetSyncIds[1:]
+		subscriber.OnUpdate(msg)
 	}
 }
 
