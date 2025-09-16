@@ -2,7 +2,6 @@ package syncer
 
 import (
 	"context"
-	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -29,9 +28,6 @@ type localStreamUpdateEmitter struct {
 	stream         *events.Stream
 	subscriber     StreamSubscriber
 	backfillsQueue *dynmsgbuf.DynamicBuffer[*backfillRequest] // TODO: Replace with slice and mutex?
-	// firstUpdateReceived indicates whether the first update has been received. The first update is ignored
-	// since it is sent immediately after subscribing to the stream and should not be forwarded to sync operations.
-	firstUpdateReceived atomic.Bool
 	// version is the version of the current emitter.
 	// It is used to indicate which version of the syncer the update is sent from to avoid sending
 	// sync down message for sync operations from another version of syncer.
@@ -64,10 +60,7 @@ func NewLocalStreamUpdateEmitter(
 	}
 
 	ctxWithTimeout, ctxWithCancel := context.WithTimeout(ctx, localStreamUpdateEmitterTimeout)
-	err := stream.Sub(ctxWithTimeout, &SyncCookie{
-		StreamId:    stream.StreamId().Bytes(),
-		NodeAddress: l.localAddr.Bytes(),
-	}, l)
+	err := stream.SubNoCookie(ctxWithTimeout, l)
 	ctxWithCancel()
 	if err != nil {
 		cancel(nil)
@@ -81,11 +74,6 @@ func NewLocalStreamUpdateEmitter(
 
 // OnUpdate implements events.SyncResultReceiver interface.
 func (l *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
-	// The first received update should be ignored since all sync ops are starting from their own cookie.
-	if l.firstUpdateReceived.CompareAndSwap(false, true) {
-		return
-	}
-
 	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, l.version)
 }
 

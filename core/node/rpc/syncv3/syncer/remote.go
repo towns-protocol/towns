@@ -128,36 +128,6 @@ func NewRemoteStreamUpdateEmitter(
 
 	syncID := responseStream.Msg().GetSyncId()
 
-	// Ensure that the second update is received within remoteStreamUpdateEmitterTimeout,
-	// if not, cancel the operation and return an unavailable error. The second update should be a SYNC_UPDATE message
-	// which should be ignored since each client has its own cookie.
-	var secondUpdateReceived atomic.Bool
-	go func() {
-		select {
-		case <-ctx.Done():
-		case <-time.After(remoteStreamUpdateEmitterTimeout):
-			if !secondUpdateReceived.Load() {
-				cancel(
-					RiverError(Err_UNAVAILABLE, "remote stream update emitter timed out when waiting for second update",
-						"addr", remoteAddr, "version", version, "syncID", syncID, "streamID", streamID),
-				)
-			}
-		}
-	}()
-
-	secondUpdateReceived.Store(responseStream.Receive())
-
-	if !secondUpdateReceived.Load() || ctx.Err() != nil {
-		cancel(nil)
-		return nil, RiverErrorWithBase(
-			Err_UNAVAILABLE,
-			"SyncStreams stream closed without receiving an initial update",
-			responseStream.Err(),
-		).
-			Tags("remote", remoteAddr).
-			Func("NewRemoteStreamUpdateEmitter")
-	}
-
 	r := &remoteStreamUpdateEmitter{
 		cancel: cancel,
 		log: logging.FromCtx(ctx).

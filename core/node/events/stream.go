@@ -933,6 +933,33 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	return nil
 }
 
+// SubNoCookie subscribes to the stream. Does not send initial cookie-based update.
+// This method is thread-safe.
+// Only local streams are allowed to subscribe.
+func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"s.streamId",
+			s.streamId,
+		)
+	}
+
+	_, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	if s.local.receivers == nil {
+		s.local.receivers = mapset.NewSet[SyncResultReceiver]()
+	}
+	s.local.receivers.Add(receiver)
+
+	return nil
+}
+
 // Unsub unsubscribes the receiver from sync. It's ok to unsub non-existing receiver.
 // Such situation arises during ForceFlush.
 // Unsub is thread-safe.
