@@ -50,7 +50,7 @@ on:
 
 jobs:
     Build_Anvil_Docker:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-x64-16core
         outputs:
             image_tag: ${{ steps.output.outputs.tag }}
             contracts_hash: ${{ steps.hash.outputs.hash }}
