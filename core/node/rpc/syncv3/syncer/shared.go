@@ -135,10 +135,7 @@ func (s *sharedStreamUpdateEmitter) run(
 
 	for _, br := range backfills {
 		if !s.emitter.EnqueueBackfill(br.cookie, br.syncIDs) {
-			subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:]},
-				AllSubscribersVersion,
-			)
+			emitter.Close()
 			return
 		}
 	}

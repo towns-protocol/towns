@@ -78,7 +78,7 @@ func NewRegistry(
 		nodeRegistry: nodeRegistry,
 		subscriber:   subscriber,
 		syncers:      make(map[StreamId]StreamUpdateEmitter),
-		queue:        dynmsgbuf.NewDynamicBuffer[*registryMsg](),
+		queue:        dynmsgbuf.NewUnboundedDynamicBuffer[*registryMsg](),
 		otelTracer:   otelTracer,
 	}
 
@@ -100,12 +100,9 @@ func (r *registryImpl) EnqueueSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 		&registryMsg{subAndBackfill: &registryMsgSubAndBackfill{cookie: cookie, syncIDs: syncIDs}},
 	)
 	if err != nil {
+		// This should never happen as the queue is unbounded. If it does, log the error with the stream ID for easier debugging.
 		streamID, _ := StreamIdFromBytes(cookie.GetStreamId())
 		r.log.Errorw("failed to enqueue subscribe-and-backfill request", "streamID", streamID, "error", err)
-		r.subscriber.OnStreamEvent(
-			&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: cookie.GetStreamId(), TargetSyncIds: syncIDs},
-			AllSubscribersVersion,
-		)
 	}
 }
 
@@ -163,10 +160,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 
 		if !emitter.EnqueueBackfill(cookie, syncIDs) {
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
-			r.subscriber.OnStreamEvent(
-				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]},
-				AllSubscribersVersion,
-			)
+			emitter.Close()
 		}
 	} else {
 		// Trying to backfill using the existing emitter.
@@ -187,7 +181,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 
 			if !emitter.EnqueueBackfill(cookie, syncIDs) {
 				r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
-				r.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}, AllSubscribersVersion)
+				emitter.Close()
 			}
 		}
 	}
