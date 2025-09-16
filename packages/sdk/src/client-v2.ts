@@ -52,7 +52,7 @@ type Client_Base = {
     /** The signer context of the Client. */
     signerContext: SignerContext
     /** The wallet of the Client. */
-    wallet: ethers.Wallet | undefined
+    wallet: ethers.Wallet
     /** RPC client that connects to the Towns network. */
     rpc: StreamRpcClient
     /** The environment of the Client. */
@@ -140,7 +140,7 @@ export const createTownsClient = async (
         signerContext = await makeSignerContext(wallet, delegateWallet)
     } else {
         signerContext = await makeSignerContextFromBearerToken(params.bearerToken)
-        wallet = undefined
+        wallet = new ethers.Wallet(signerContext.signerPrivateKey()).connect(baseProvider)
     }
 
     const riverProvider = makeRiverProvider(config)
