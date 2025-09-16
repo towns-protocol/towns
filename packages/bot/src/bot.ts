@@ -703,6 +703,26 @@ export class Bot<
     }
 
     /**
+     * Ban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     * @param userId - The userId of the user to ban
+     * @param spaceId - The spaceId of the space to ban the user in
+     */
+    async ban(userId: string, spaceId: string) {
+        return this.client.ban(userId, spaceId)
+    }
+
+    /**
+     * Unban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     * @param userId - The userId of the user to unban
+     * @param spaceId - The spaceId of the space to unban the user in
+     */
+    async unban(userId: string, spaceId: string) {
+        return this.client.unban(userId, spaceId)
+    }
+
+    /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
      */
@@ -1018,6 +1038,26 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         }
     }
 
+    /**
+     * Ban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     */
+    const ban = async (userId: string, spaceId: string) => {
+        const tx = await spaceDapp.banWalletAddress(spaceId, userId, client.wallet)
+        const receipt = await tx.wait()
+        return { txHash: receipt.transactionHash }
+    }
+
+    /**
+     * Unban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     */
+    const unban = async (userId: string, spaceId: string) => {
+        const tx = await spaceDapp.unbanWalletAddress(spaceId, userId, client.wallet)
+        const receipt = await tx.wait()
+        return { txHash: receipt.transactionHash }
+    }
+
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1049,6 +1089,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         decryptSessions,
         hasAdminPermission,
         checkPermission,
+        ban,
+        unban,
     }
 }
 

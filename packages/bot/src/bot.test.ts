@@ -61,6 +61,9 @@ describe('Bot', { sequential: true }, () => {
     const alice = new SyncAgentTest(undefined, riverConfig)
     let aliceClient: SyncAgent
 
+    const carol = new SyncAgentTest(undefined, riverConfig)
+    let carolClient: SyncAgent
+
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
@@ -97,10 +100,11 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldInitializeBotOwner = async () => {
-        await Promise.all([bob.fundWallet(), alice.fundWallet()])
+        await Promise.all([bob.fundWallet(), alice.fundWallet(), carol.fundWallet()])
         bobClient = await bob.makeSyncAgent()
         aliceClient = await alice.makeSyncAgent()
-        await Promise.all([bobClient.start(), aliceClient.start()])
+        carolClient = await carol.makeSyncAgent()
+        await Promise.all([bobClient.start(), aliceClient.start(), carolClient.start()])
         const { spaceId: spaceId_, defaultChannelId } = await bobClient.spaces.createSpace(
             { spaceName: 'bobs-space' },
             bob.signer,
@@ -613,6 +617,31 @@ describe('Bot', { sequential: true }, () => {
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
+    })
+
+    it('bot can ban and unban users', async () => {
+        const hasPermission = await bot.checkPermission(
+            spaceId,
+            bot.botId,
+            Permission.ModifyBanning,
+        )
+        expect(hasPermission).toBe(true)
+        // Carol joins the space first
+        await carolClient.spaces.joinSpace(spaceId, carol.signer)
+        // Carol should not be banned initially
+        let isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        expect(isBanned).toBe(false)
+        // Ban carol
+        const { txHash: banTxHash } = await bot.ban(carol.userId, spaceId)
+        expect(banTxHash).toBeTruthy()
+        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        expect(isBanned).toBe(true)
+        // Unban carol
+        const { txHash: unbanTxHash } = await bot.unban(carol.userId, spaceId)
+        expect(unbanTxHash).toBeTruthy()
+        // Verify carol is unbanned
+        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        expect(isBanned).toBe(false)
     })
 
     it('bot can redact other people messages', async () => {

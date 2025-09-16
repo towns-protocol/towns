@@ -49,8 +49,10 @@ import {
 type Client_Base = {
     /** The userId of the Client. */
     userId: string
-    /** The signer of the Client. */
-    signer: SignerContext
+    /** The signer context of the Client. */
+    signerContext: SignerContext
+    /** The wallet of the Client. */
+    wallet: ethers.Wallet
     /** RPC client that connects to the Towns network. */
     rpc: StreamRpcClient
     /** The environment of the Client. */
@@ -125,25 +127,26 @@ export const createTownsClient = async (
 ): Promise<ClientV2> => {
     const config = makeRiverConfig(params.env)
 
-    let signer: SignerContext
+    let signerContext: SignerContext
     if ('mnemonic' in params) {
         const wallet = ethers.Wallet.fromMnemonic(params.mnemonic)
         const delegateWallet = ethers.Wallet.createRandom()
-        signer = await makeSignerContext(wallet, delegateWallet)
+        signerContext = await makeSignerContext(wallet, delegateWallet)
     } else if ('privateKey' in params) {
         const wallet = new ethers.Wallet(params.privateKey)
         const delegateWallet = ethers.Wallet.createRandom()
-        signer = await makeSignerContext(wallet, delegateWallet)
+        signerContext = await makeSignerContext(wallet, delegateWallet)
     } else {
-        signer = await makeSignerContextFromBearerToken(params.bearerToken)
+        signerContext = await makeSignerContextFromBearerToken(params.bearerToken)
     }
 
+    const wallet = new ethers.Wallet(signerContext.signerPrivateKey())
     const riverProvider = makeRiverProvider(config)
     const riverRegistryDapp = new RiverRegistry(config.river.chainConfig, riverProvider)
     const urls = await riverRegistryDapp.getOperationalNodeUrls()
     const rpc = makeStreamRpcClient(urls, () => riverRegistryDapp.getOperationalNodeUrls())
 
-    const userId = userIdFromAddress(signer.creatorAddress)
+    const userId = userIdFromAddress(signerContext.creatorAddress)
 
     const cryptoStore = RiverDbManager.getCryptoDb(userId)
     await cryptoStore.initialize()
@@ -184,7 +187,7 @@ export const createTownsClient = async (
                 streamId: streamIdAsBytes(streamId),
             })
         const event = await makeEvent(
-            client.signer,
+            signerContext,
             eventPayload,
             prevMiniblockHash,
             prevMiniblockNum,
@@ -274,7 +277,7 @@ export const createTownsClient = async (
                             streamId: streamIdAsBytes(toStreamId),
                         })
                         const event = await makeEvent(
-                            signer,
+                            signerContext,
                             make_UserInboxPayload_GroupEncryptionSessions({
                                 streamId: streamIdAsBytes(toStreamId),
                                 senderKey: userDevice.deviceKey,
@@ -327,7 +330,8 @@ export const createTownsClient = async (
         keychain: cryptoStore,
         defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId.HybridGroupEncryption,
         rpc,
-        signer,
+        signerContext,
+        wallet,
         userId,
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
