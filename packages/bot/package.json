@@ -11,9 +11,9 @@
         "lint": "yarn eslint --format unix ./src --max-warnings=0",
         "lint:fix": "yarn lint --fix",
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env",
-        "test": "vitest",
+        "test": "yarn load-env -- vitest",
         "test:ci:multi:ent": "yarn load-env -- vitest run",
-        "test:watch": "vitest --watch",
+        "test:watch": "yarn load-env -- vitest --watch",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"
     },

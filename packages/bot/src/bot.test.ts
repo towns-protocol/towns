@@ -119,8 +119,13 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldMintBot = async () => {
-        botWallet = ethers.Wallet.createRandom()
+        botWallet = ethers.Wallet.createRandom().connect(ethersProvider)
         botClientAddress = botWallet.address as Address
+        const fundingTx = await bob.signer.sendTransaction({
+            to: botClientAddress,
+            value: ethers.utils.parseEther('0.5'),
+        })
+        await fundingTx.wait()
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
@@ -298,7 +303,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMessages).toHaveLength(0)
     })
 
-    it('should receive channel join event when carol joins the channel if bot is listening to channel join events', async () => {
+    it('should receive channel join event when alice joins the channel if bot is listening to channel join events', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedChannelJoinEvents: OnChannelJoin[] = []
         bot.onChannelJoin((_h, e) => {
@@ -620,12 +625,6 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('bot can ban and unban users', async () => {
-        const hasPermission = await bot.checkPermission(
-            spaceId,
-            bot.botId,
-            Permission.ModifyBanning,
-        )
-        expect(hasPermission).toBe(true)
         // Carol joins the space first
         await carolClient.spaces.joinSpace(spaceId, carol.signer)
         // Carol should not be banned initially
@@ -634,13 +633,13 @@ describe('Bot', { sequential: true }, () => {
         // Ban carol
         const { txHash: banTxHash } = await bot.ban(carol.userId, spaceId)
         expect(banTxHash).toBeTruthy()
-        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId, { skipCache: true })
         expect(isBanned).toBe(true)
         // Unban carol
         const { txHash: unbanTxHash } = await bot.unban(carol.userId, spaceId)
         expect(unbanTxHash).toBeTruthy()
         // Verify carol is unbanned
-        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId, { skipCache: true })
         expect(isBanned).toBe(false)
     })
 

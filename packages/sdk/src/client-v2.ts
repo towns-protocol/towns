@@ -17,7 +17,7 @@ import { makeRiverConfig } from './riverConfig'
 import { ethers } from 'ethers'
 import { RiverRegistry } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
-import { makeRiverProvider } from './sync-agent/utils/providers'
+import { makeBaseProvider, makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
 import {
     makeUserInboxStreamId,
@@ -52,7 +52,7 @@ type Client_Base = {
     /** The signer context of the Client. */
     signerContext: SignerContext
     /** The wallet of the Client. */
-    wallet: ethers.Wallet
+    wallet: ethers.Wallet | undefined
     /** RPC client that connects to the Towns network. */
     rpc: StreamRpcClient
     /** The environment of the Client. */
@@ -126,21 +126,23 @@ export const createTownsClient = async (
         CreateTownsClientParams,
 ): Promise<ClientV2> => {
     const config = makeRiverConfig(params.env)
+    const baseProvider = makeBaseProvider(config)
 
     let signerContext: SignerContext
+    let wallet: ethers.Wallet | undefined
     if ('mnemonic' in params) {
-        const wallet = ethers.Wallet.fromMnemonic(params.mnemonic)
+        wallet = ethers.Wallet.fromMnemonic(params.mnemonic).connect(baseProvider)
         const delegateWallet = ethers.Wallet.createRandom()
         signerContext = await makeSignerContext(wallet, delegateWallet)
     } else if ('privateKey' in params) {
-        const wallet = new ethers.Wallet(params.privateKey)
+        wallet = new ethers.Wallet(params.privateKey).connect(baseProvider)
         const delegateWallet = ethers.Wallet.createRandom()
         signerContext = await makeSignerContext(wallet, delegateWallet)
     } else {
         signerContext = await makeSignerContextFromBearerToken(params.bearerToken)
+        wallet = undefined
     }
 
-    const wallet = new ethers.Wallet(signerContext.signerPrivateKey())
     const riverProvider = makeRiverProvider(config)
     const riverRegistryDapp = new RiverRegistry(config.river.chainConfig, riverProvider)
     const urls = await riverRegistryDapp.getOperationalNodeUrls()
