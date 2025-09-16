@@ -435,7 +435,7 @@ func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 		DO UPDATE SET upload_id = $2
 	`
 
-	_, err := tx.Exec(ctx, query, streamId, uploadID)
+	_, err := tx.Exec(ctx, query, streamId.String(), uploadID)
 	return err
 }
 
@@ -478,8 +478,8 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	`
 
 	// Add the new etag to the JSONB array
-	etagJSON := RiverError(Err_INTERNAL, fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag))
-	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
+	etagJSON := fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag)
+	_, err := tx.Exec(ctx, updateUploadQuery, streamId.String(), etagJSON)
 	if err != nil {
 		return err
 	}
@@ -488,10 +488,10 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	query := `
 		WITH max_end_bytes AS (
 			SELECT COALESCE(MAX(end_bytes), 0) as max_end
-			FROM external_media_markers 
+			FROM {{external_media_markers}} 
 			WHERE stream_id = $1
 		)
-		INSERT INTO external_media_markers (stream_id, miniblock, start_bytes, end_bytes) 
+		INSERT INTO {{external_media_markers}} (stream_id, miniblock, start_bytes, end_bytes) 
 		SELECT $1, $2, max_end + 1, max_end + $3
 		FROM max_end_bytes
 		ON CONFLICT (stream_id, miniblock) 
@@ -499,7 +499,8 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 			start_bytes = EXCLUDED.start_bytes,
 			end_bytes = EXCLUDED.end_bytes
 	`
-	_, err = tx.Exec(ctx, query, streamId, miniblock, length)
+	resolvedQuery := s.sqlForStream(query, streamId)
+	_, err = tx.Exec(ctx, resolvedQuery, streamId.String(), miniblock, length)
 	return err
 }
 
@@ -598,12 +599,12 @@ func (s *PostgresStreamStore) getExternalMediaStreamRangeMarkersTx(
 	fromInclusive int64,
 	toExclusive int64,
 ) ([]MiniblockRange, error) {
-	rows, err := tx.Query(ctx, `
+	rows, err := tx.Query(ctx, s.sqlForStream(`
 		SELECT start_bytes, end_bytes 
-		FROM external_media_markers
+		FROM {{external_media_markers}}
 		WHERE stream_id = $1 AND miniblock >= $2 AND miniblock < $3
-		ORDER BY miniblock`,
-		streamId, fromInclusive, toExclusive)
+		ORDER BY miniblock`, streamId),
+		streamId.String(), fromInclusive, toExclusive)
 	if err != nil {
 		return nil, err
 	}
@@ -653,6 +654,6 @@ func (s *PostgresStreamStore) deleteExternalMediaStreamUploadEntryTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) error {
-	_, err := tx.Exec(ctx, "DELETE FROM external_media_uploads WHERE stream_id = $1", streamId)
+	_, err := tx.Exec(ctx, "DELETE FROM external_media_uploads WHERE stream_id = $1", streamId.String())
 	return err
 }
