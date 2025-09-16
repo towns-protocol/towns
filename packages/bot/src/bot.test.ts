@@ -33,7 +33,7 @@ import {
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'node:crypto'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -61,6 +61,7 @@ describe('Bot', { sequential: true }, () => {
     const alice = new SyncAgentTest(undefined, riverConfig)
     let aliceClient: SyncAgent
 
+    const BOT_USERNAME = `bot-witness-of-infinity-${randomUUID()}`
     const BOB_USERNAME = 'bob'
     const BOB_DISPLAY_NAME = 'im_bob'
 
