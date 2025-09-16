@@ -23,7 +23,9 @@ RUN apt-get update && \
     pkg-config \
     python3 \
     jq \
-    unzip && \
+    unzip \
+    openssl \
+    bc && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -40,12 +42,17 @@ RUN corepack enable && \
 # Install just from precompiled binary
 RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
 
+# Install Go (detect architecture)
+RUN ARCH=$(uname -m) && \
+    GO_ARCH=$([ "$ARCH" = "x86_64" ] && echo "amd64" || echo "arm64") && \
+    curl -fsSL https://golang.org/dl/go1.24.6.linux-${GO_ARCH}.tar.gz | tar -C /usr/local -xzf -
+
 # Install Foundry
 RUN curl -L https://foundry.paradigm.xyz | bash && \
     /root/.foundry/bin/foundryup
 
-# Add Foundry binaries to PATH
-ENV PATH="/root/.foundry/bin:${PATH}"
+# Add both Go and Foundry binaries to PATH
+ENV PATH="/usr/local/go/bin:/root/.foundry/bin:${PATH}"
 
 # Set working directory
 WORKDIR /app
@@ -71,15 +78,24 @@ RUN mkdir -p packages/generated/deployments
 # Install dependencies with Yarn (only for contracts workspace to speed up build)
 RUN yarn workspaces focus @towns-protocol/contracts && yarn cache clean
 
-# Copy rest of the project files
+# Copy minimal dependencies for Go build (exclude run_files for reliable caching)
+COPY ./core core
+RUN rm -rf core/run_files
+COPY ./packages/contracts/.env.localhost packages/contracts/.env.localhost
+
+# Build Go binary (cached unless core code or env changes)
+RUN cd ./core && just build
+
+# Copy remaining project files
 COPY ./packages/contracts packages/contracts
 COPY ./packages/prettier-config packages/prettier-config
 COPY ./scripts scripts
-COPY ./core/justfile core/justfile
-COPY ./core/env/local core/env/local
 
 # Setup anvils and deploy contracts
 RUN bash ./packages/contracts/docker/setup.sh && sleep 5
+
+# Remove Go binary to reduce image size (keep configs)
+RUN rm -rf core/run_files/local_dev/bin
 
 # ==========================================
 # Stage 2: Runtime - Minimal runtime image
@@ -108,16 +124,16 @@ COPY --from=builder /root/.foundry/bin/anvil /usr/local/bin/anvil
 COPY --from=builder /app/base-anvil-state.json base-anvil-state.json
 COPY --from=builder /app/river-anvil-state.json river-anvil-state.json
 
-# Copy contract addresses for extraction
-COPY --from=builder /app/local_dev local_dev
-
-# Create scripts directory structure
-RUN mkdir -p scripts
+# Create configs and scripts directory structure
+RUN mkdir -p configs scripts
 
 # Copy minimal scripts needed for runtime
 COPY --from=builder /app/packages/contracts/docker/run.sh run.sh
 COPY --from=builder /app/scripts/start-local-basechain.sh scripts/start-local-basechain.sh
 COPY --from=builder /app/scripts/start-local-riverchain.sh scripts/start-local-riverchain.sh
+
+# Copy generated configs for extraction (bin already removed in builder stage)
+COPY --from=builder /app/core/run_files/local_dev configs
 
 # Default command
 ENTRYPOINT ["/bin/bash", "./run.sh"]

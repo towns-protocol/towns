@@ -11,6 +11,9 @@ This module implements the backend River node server for Towns Protocol, a distr
 ### Development Environment Management
 
 - `just config-and-start` - Start full development environment WITH entitlement checks
+- `just config` - Configure nodes (extracts from Docker when USE_DOCKER_CHAINS=1) 
+- `just config-from-docker` - Extract pre-built configs from Docker containers
+- `just build-anvil-docker` - Build Docker image with chains and node configs
 - `just stop` - Stop all nodes in multi environment
 - `just restart` - Stop, rebuild, and restart nodes
 - `just tail-logs` - View live logs with pretty formatting

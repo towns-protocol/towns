@@ -27,7 +27,7 @@ Launch local environment via .vscode/tasks.json:
 - `CMD+P` + `task ~Start Local Dev~` - Uses pre-built Docker image (recommended)
 - `CMD+P` + `task ~Start Local Docker Dev~` - Uses locally built Docker image (for contract development)
 
-This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
+Both workflows use Docker containers with pre-deployed contracts and node registrations.
 
 Both workflows use Docker containers with pre-deployed contracts.
 

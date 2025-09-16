@@ -16,6 +16,7 @@ main() {
   wait_for_river_chain
   deploy_contracts
   create_contracts_env
+  configure_and_register_nodes
 }
 
 start_base_chain() {
@@ -130,7 +131,7 @@ create_contracts_env() {
     exit 1
   fi
 
-  output_dir="/app/local_dev"
+  output_dir="/app/core/run_files/local_dev"
   mkdir -p $output_dir
 
   # Copy entire contract deployments directory structure
@@ -141,10 +142,24 @@ create_contracts_env() {
 
   # Create contracts.env file using justfile recipe
   cd ./core
-  just RUN_BASE="${output_dir}" create-contracts-env
+  just create-contracts-env
   cd ..
 
   echo "Contract addresses and contracts.env created successfully"
+}
+
+configure_and_register_nodes() {
+  echo "Configuring and registering nodes..."
+  cd ./core
+
+  # Setup CA
+  ./scripts/register-ca.sh
+
+  # Run complete Docker configuration sequence
+  just config-docker
+
+  cd ..
+  echo "Node configuration and registration complete!"
 }
 
 # cd ./core && just config build

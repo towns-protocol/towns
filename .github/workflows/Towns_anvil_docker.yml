@@ -12,6 +12,8 @@ on:
             - 'scripts/deploy-contracts.sh'
             - 'scripts/start-local-*.sh'
             - 'core/justfile'
+            - 'core/env/local'
+            - 'core/scripts/register-ca.sh'
 
     workflow_dispatch: # A build was manually requested
 
