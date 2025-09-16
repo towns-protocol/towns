@@ -148,24 +148,6 @@ func TestLocalSyncer_OnUpdate_Error(t *testing.T) {
 	assert.True(t, unsubCalled)
 }
 
-// TestLocalSyncer_OnSyncError tests the OnSyncError method
-func TestLocalSyncer_OnSyncError(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x123")
-	streamCache := &mockStreamCache{}
-	messageDistributor := &mockMessageDistributor{}
-	unsubStream := func(streamID StreamId) {}
-
-	syncer := newLocalSyncer(ctx, localAddr, streamCache, messageDistributor, unsubStream, nil)
-
-	// Test OnSyncError with no active streams
-	streamID := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	syncer.OnSyncDown(streamID)
-
-	// Verify streams were cleared (should be empty already)
-	assert.Equal(t, 0, syncer.activeStreams.Size())
-}
-
 // TestLocalSyncer_OnStreamSyncDown tests the OnStreamSyncDown method
 func TestLocalSyncer_OnStreamSyncDown(t *testing.T) {
 	ctx := context.Background()
