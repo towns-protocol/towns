@@ -487,3 +487,11 @@ func (s *testSubscriber) OnUpdate(streamID StreamId, sac *StreamAndCookie) {
 func (s *testSubscriber) OnSyncDown(streamID StreamId) {
 	s.streamErrors = append(s.streamErrors, streamID)
 }
+
+func (sub *testSubscriber) eventsReceived() int {
+	count := 0
+	for _, sac := range sub.receivedUpdates {
+		count += len(sac.Events)
+	}
+	return count
+}
