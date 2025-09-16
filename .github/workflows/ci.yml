@@ -150,7 +150,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: golangci/golangci-lint-action@v7
               with:
-                  version: v2.0.2
+                  version: v2.4.0
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
