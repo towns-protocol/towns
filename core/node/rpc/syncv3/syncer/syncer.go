@@ -18,7 +18,6 @@ type backfillRequest struct {
 
 // StreamCache represents a behavior of the stream cache.
 type StreamCache interface {
-	GetStreamWaitForLocal(ctx context.Context, streamID StreamId) (*events.Stream, error)
 	GetStreamNoWait(ctx context.Context, streamID StreamId) (*events.Stream, error)
 }
 
