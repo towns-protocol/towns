@@ -56,9 +56,28 @@ func (s *syncStreamHandlerRegistryImpl) Get(syncID string) (SyncStreamHandler, b
 }
 
 func (s *syncStreamHandlerRegistryImpl) Remove(syncID string) {
+	var handler *syncStreamHandlerImpl
+
 	s.handlersLock.Lock()
-	delete(s.handlers, syncID)
+	handler = s.handlers[syncID]
+	if handler != nil {
+		delete(s.handlers, syncID)
+	}
 	s.handlersLock.Unlock()
+
+	if handler == nil {
+		return
+	}
+
+	// If the handler hasn’t started (ctx still live), force the teardown so we
+	// don’t leak a subscriber or a buffer nobody will ever drain.
+	if handler.ctx.Err() == nil {
+		handler.streamUpdates.Close()
+		if err := handler.eventBus.EnqueueRemoveSubscriber(syncID); err != nil {
+			handler.log.Errorw("failed to remove sync operation from the event bus", "error", err)
+		}
+		handler.cancel(nil)
+	}
 }
 
 func (s *syncStreamHandlerRegistryImpl) New(
