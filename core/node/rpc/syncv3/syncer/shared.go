@@ -94,7 +94,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		for _, br := range backfills {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
+				AllSubscribersVersion,
 			)
 		}
 		return
@@ -131,7 +131,7 @@ func (s *sharedStreamUpdateEmitter) run(
 		for _, br := range backfills {
 			subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: s.streamID[:], TargetSyncIds: br.syncIDs},
-				PendingSubscribersVersion,
+				AllSubscribersVersion,
 			)
 		}
 		return

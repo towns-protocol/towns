@@ -165,7 +165,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 			r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
 			r.subscriber.OnStreamEvent(
 				&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-				PendingSubscribersVersion,
+				AllSubscribersVersion,
 			)
 		}
 	} else {
@@ -189,7 +189,7 @@ func (r *registryImpl) processSubscribeAndBackfill(cookie *SyncCookie, syncIDs [
 				r.log.Errorw("failed to backfill after recreating stream emitter", "streamID", streamID)
 				r.subscriber.OnStreamEvent(
 					&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:], TargetSyncIds: syncIDs},
-					PendingSubscribersVersion,
+					AllSubscribersVersion,
 				)
 			}
 		}
