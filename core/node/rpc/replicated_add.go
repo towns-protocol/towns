@@ -208,6 +208,62 @@ func (s *Service) replicatedAddMediaEventImpl(
 			return err
 		}
 
+		// Get the location of the stream data
+		location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
+		initializedStream := !AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND)
+		if err != nil {
+			if initializedStream {
+				return err
+			} else {
+				location = s.config.ExternalMediaStreamDataBucket
+			}
+		}
+
+		if location != "" {
+			if !initializedStream {
+				// The stream is not initialized, so the multipart upload is initiated here.
+				uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
+				if err != nil {
+					return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+				}
+				if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+					_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
+					return RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+				}
+			}
+			if location != s.config.ExternalMediaStreamDataBucket {
+				return RiverError(
+					Err_INTERNAL,
+					"external media stream storage changed after this ephemeral media was created.",
+				)
+			}
+			uploadID, _, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
+			if err != nil {
+				return RiverError(Err_INTERNAL, "failed to get external media stream upload info", "error", err)
+			}
+
+			etag, err := s.externalMediaStorage.UploadPartToExternalMediaStream(
+				ctx,
+				streamId,
+				mbBytes,
+				uploadID,
+				cc.MiniblockNum,
+			)
+			if err != nil {
+				return RiverError(Err_INTERNAL, "failed to upload part to external media stream", "error", err)
+			}
+			if err = s.storage.WriteExternalMediaStreamPartUploadInfo(
+				ctx,
+				streamId,
+				cc.MiniblockNum,
+				etag,
+				len(mbBytes),
+			); err != nil {
+				return RiverError(Err_INTERNAL, "failed to write external media stream part info", "error", err)
+			}
+			mbBytes = []byte{}
+		}
+
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
@@ -231,6 +287,39 @@ func (s *Service) replicatedAddMediaEventImpl(
 		genesisMiniblockHash = hash
 		streamSuccessCount++
 		quorumCheckMu.Unlock()
+
+		if location != "" {
+			uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
+			if err != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return RiverError(
+						Err_INTERNAL,
+						"failed to get external media stream info",
+						"error",
+						err,
+						"abortErr",
+						abortErr,
+					)
+				}
+				return RiverError(Err_INTERNAL, "failed to get external media stream info", "error", err)
+			}
+			if err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, etags); err != nil {
+				if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+					return RiverError(
+						Err_INTERNAL,
+						"failed to complete multipart upload",
+						"error",
+						err,
+						"abortErr",
+						abortErr,
+					)
+				}
+				return RiverError(Err_INTERNAL, "failed to complete multipart upload", "error", err)
+			}
+			if err = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); err != nil {
+				return RiverError(Err_INTERNAL, "failed to delete external media stream upload entry", "error", err)
+			}
+		}
 
 		return nil
 	})

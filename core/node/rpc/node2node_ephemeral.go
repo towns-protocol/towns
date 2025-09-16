@@ -6,11 +6,13 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/log"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -58,7 +60,27 @@ func (s *Service) allocateEphemeralStream(
 		return nil, err
 	}
 
-	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
+	if s.config.MediaStreamDataStorage != storage.StreamStorageTypePostgres {
+		uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return nil, RiverError(
+					Err_INTERNAL,
+					"failed to write external media stream info",
+					"error",
+					err,
+					"abortErr",
+					abortErr,
+				)
+			}
+			_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
+			return nil, RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+		}
+	}
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, s.config.ExternalMediaStreamDataBucket); err != nil {
 		return nil, err
 	}
 
@@ -103,14 +125,60 @@ func (s *Service) saveEphemeralMiniblock(ctx context.Context, req *SaveEphemeral
 		return err
 	}
 
-	// Save the ephemeral miniblock.
-	// Here we are sure that the record of the stream exists in the storage.
-	err = s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
+	// Get the location of the stream data
+	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
+	initializedStream := !AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND)
 	if err != nil {
-		return err
+		if initializedStream {
+			return err
+		} else {
+			location = s.config.ExternalMediaStreamDataBucket
+		}
 	}
-
-	return nil
+	if location != "" {
+		if !initializedStream {
+			// The stream is not initialized, so the multipart upload is initiated here.
+			uploadID, err := s.externalMediaStorage.CreateExternalMediaStream(ctx, streamId)
+			if err != nil {
+				return RiverError(Err_INTERNAL, "failed to create external media stream", "error", err)
+			}
+			if err := s.storage.CreateExternalMediaStreamUploadEntry(ctx, streamId, uploadID); err != nil {
+				_ = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId)
+				return RiverError(Err_INTERNAL, "failed to create external media stream upload entry", "error", err)
+			}
+		}
+		if location != s.config.ExternalMediaStreamDataBucket {
+			return RiverError(
+				Err_INTERNAL,
+				"external media stream storage changed after this ephemeral media was created.",
+			)
+		}
+		uploadID, _, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
+		if err != nil {
+			return RiverError(Err_INTERNAL, "failed to get external media stream upload info", "error", err)
+		}
+		etag, err := s.externalMediaStorage.UploadPartToExternalMediaStream(
+			ctx,
+			streamId,
+			storageMb.Data,
+			uploadID,
+			storageMb.Number,
+		)
+		if err != nil {
+			return RiverError(Err_INTERNAL, "failed to upload part to external media stream", "error", err)
+		}
+		if err = s.storage.WriteExternalMediaStreamPartUploadInfo(
+			ctx,
+			streamId,
+			storageMb.Number,
+			etag,
+			len(storageMb.Data),
+		); err != nil {
+			return RiverError(Err_INTERNAL, "failed to write external media stream part info", "error", err)
+		}
+		storageMb.Data = []byte{}
+	}
+	return s.storage.WriteEphemeralMiniblock(ctx, streamId, storageMb)
 }
 
 func (s *Service) SealEphemeralStream(
@@ -145,5 +213,54 @@ func (s *Service) sealEphemeralStream(
 		return common.Hash{}, AsRiverError(err).Func("sealEphemeralStream")
 	}
 
+	location, err := s.storage.GetMediaStreamLocation(ctx, streamId)
+	if err != nil {
+		return common.Hash{}, RiverError(Err_INTERNAL, "failed to get media stream location", "error", err)
+	}
+	if location != s.config.ExternalMediaStreamDataBucket {
+		return common.Hash{}, RiverError(
+			Err_INTERNAL,
+			"external media stream storage changed after this ephemeral media was created.",
+		)
+	}
+	if location != "" {
+		uploadID, etags, err := s.storage.GetExternalMediaStreamUploadInfo(ctx, streamId)
+		if err != nil {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return common.Hash{}, RiverError(
+					Err_INTERNAL,
+					"failed to get external media stream info",
+					"error",
+					err,
+					"abortErr",
+					abortErr,
+				)
+			}
+			return common.Hash{}, RiverError(Err_INTERNAL, "failed to get external media stream info", "error", err)
+		}
+		err = s.externalMediaStorage.CompleteMediaStreamUpload(ctx, streamId, uploadID, etags)
+		if err != nil {
+			if abortErr := s.externalMediaStorage.AbortMediaStreamUpload(ctx, streamId, uploadID); abortErr != nil {
+				return common.Hash{}, RiverError(
+					Err_INTERNAL,
+					"failed to complete multipart upload",
+					"error",
+					err,
+					"abortErr",
+					abortErr,
+				)
+			}
+			return common.Hash{}, RiverError(Err_INTERNAL, "failed to complete multipart upload", "error", err)
+		}
+		if err = s.storage.DeleteExternalMediaStreamUploadEntry(ctx, streamId); err != nil {
+			log.Error(
+				"failed to delete external media stream upload entry, with error: %w",
+				"streamId",
+				streamId,
+				"error",
+				err,
+			)
+		}
+	}
 	return s.storage.NormalizeEphemeralStream(ctx, streamId)
 }

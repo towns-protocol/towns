@@ -10,7 +10,11 @@ import (
 
 const (
 	postgres                        = "postgres"
+	google                          = "gcs"
+	amazon                          = "s3"
 	StreamStorageTypePostgres       = postgres
+	StreamStorageTypeGCS            = google
+	StreamStorageTypeAWS            = amazon
 	NotificationStorageTypePostgres = postgres
 	AppRegistryStorageTypePostgres  = postgres
 )
@@ -83,6 +87,11 @@ type (
 		EndInclusive   int64
 	}
 
+	Etag struct {
+		Miniblock int    `json:"miniblock"`
+		Etag      string `json:"etag"`
+	}
+
 	StreamStorage interface {
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
@@ -117,6 +126,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			genesisMiniblock *MiniblockDescriptor,
+			location string,
 		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
@@ -139,6 +149,9 @@ type (
 
 		// IsStreamEphemeral returns true if the stream is ephemeral.
 		IsStreamEphemeral(ctx context.Context, streamId StreamId) (bool, error)
+
+		// GetMediaStreamLocation returns the location of the media stream.
+		GetMediaStreamLocation(ctx context.Context, streamId StreamId) (string, error)
 
 		// ReadMiniblocks returns miniblocks with miniblockNum or "generation" from fromInclusive, to toExlusive.
 		ReadMiniblocks(
@@ -168,6 +181,31 @@ type (
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
+
+		GetExternalMediaStreamUploadInfo(ctx context.Context, streamId StreamId) (string, []Etag, error)
+
+		CreateExternalMediaStreamUploadEntry(
+			ctx context.Context,
+			streamId StreamId,
+			uploadID string,
+		) error
+
+		DeleteExternalMediaStreamUploadEntry(ctx context.Context, streamId StreamId) error
+
+		WriteExternalMediaStreamPartUploadInfo(
+			ctx context.Context,
+			streamId StreamId,
+			miniblock int64,
+			etag string,
+			length int,
+		) error
+
+		GetExternalMediaStreamRangeMarkers(
+			ctx context.Context,
+			streamId StreamId,
+			fromInclusive int64,
+			toExclusive int64,
+		) ([]MiniblockRange, error)
 
 		// WriteMiniblockCandidate adds a proposal candidate for future miniblock.
 		WriteMiniblockCandidate(
@@ -287,5 +325,18 @@ type (
 
 		// Close closes the storage.
 		Close(ctx context.Context)
+	}
+
+	ExternalMediaStorage interface {
+		CreateExternalMediaStream(ctx context.Context, streamId StreamId) (string, error)
+		UploadPartToExternalMediaStream(
+			ctx context.Context,
+			streamId StreamId,
+			data []byte,
+			uploadID string,
+			miniblockNum int64,
+		) (string, error)
+		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []Etag) error
+		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 	}
 )

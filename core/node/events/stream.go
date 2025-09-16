@@ -671,6 +671,72 @@ func (s *Stream) GetMiniblocks(
 		return nil, false, err
 	}
 
+	// if stream is external, we need to read from external storage
+	location, err := s.params.Storage.GetMediaStreamLocation(ctx, s.streamId)
+	if err != nil {
+		return nil, false, err
+	}
+	if location != "" {
+		byteRanges, err := s.params.Storage.GetExternalMediaStreamRangeMarkers(
+			ctx,
+			s.streamId,
+			fromInclusive,
+			toExclusive,
+		)
+		if err != nil {
+			return nil, false, err
+		}
+		if len(byteRanges) != len(blocks) {
+			return nil, false, RiverError(
+				Err_INTERNAL,
+				"getMiniblocks: number of byte ranges does not match number of blocks",
+			)
+		}
+		var data []byte
+		switch s.params.Config.MediaStreamDataStorage {
+		case storage.StreamStorageTypeAWS:
+			client, err := storage.CreateS3Client(ctx)
+			if err != nil {
+				return nil, false, err
+			}
+			data, err = storage.DownloadRangeFromS3MediaStream(ctx, s.streamId, byteRanges, location, client)
+			if err != nil {
+				return nil, false, err
+			}
+		case storage.StreamStorageTypeGCS:
+			client, err := storage.CreateGCSClient()
+			if err != nil {
+				return nil, false, err
+			}
+			data, err = storage.DownloadRangeFromGCSMediaStream(
+				ctx,
+				s.streamId,
+				byteRanges,
+				location,
+				client,
+				s.params.Config.ExternalMediaStreamDataToken,
+			)
+			if err != nil {
+				return nil, false, err
+			}
+		default:
+			return nil, false, RiverError(
+				Err_INTERNAL,
+				"getMiniblocks: external media stream data storage not configured: "+s.params.Config.MediaStreamDataStorage,
+			)
+		}
+
+		for i, block := range blocks {
+			r := byteRanges[i]
+			if int(r.StartInclusive) > len(data) || int(r.EndInclusive) > len(data) ||
+				r.StartInclusive > r.EndInclusive {
+				return nil, false, RiverError(Err_INTERNAL, "getMiniblocks: invalid byte range for partitioning").
+					Tag("range", r)
+			}
+			block.Data = data[r.StartInclusive : r.EndInclusive+1]
+		}
+	}
+
 	miniblocks := make([]*MiniblockInfo, len(blocks))
 	for i, block := range blocks {
 		opts := NewParsedMiniblockInfoOpts()
