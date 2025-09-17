@@ -116,6 +116,7 @@ type (
 		Metadata         types.AppMetadata
 		WebhookUrl       string
 		EncryptionDevice EncryptionDevice
+		Active           bool
 	}
 
 	AppRegistryStore interface {
@@ -217,6 +218,14 @@ type (
 			ctx context.Context,
 			username string,
 		) (bool, error)
+
+		// SetAppActiveStatus updates the active status of an app.
+		// Only the app owner or app itself should be allowed to change this.
+		SetAppActiveStatus(
+			ctx context.Context,
+			app common.Address,
+			active bool,
+		) error
 	}
 )
 
@@ -562,7 +571,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		ctx,
 		`
 		    SELECT app_id, app_owner_id, encrypted_shared_secret, forward_setting, app_metadata, username,
-			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, '')
+			    COALESCE(webhook, ''), COALESCE(device_key, ''), COALESCE(fallback_key, ''), active
 		    FROM app_registry WHERE app_id = $1
 		`,
 		app,
@@ -576,6 +585,7 @@ func (s *PostgresAppRegistryStore) getAppInfo(
 		&appInfo.WebhookUrl,
 		&appInfo.EncryptionDevice.DeviceKey,
 		&appInfo.EncryptionDevice.FallbackKey,
+		&appInfo.Active,
 	); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
@@ -814,10 +824,10 @@ func (s *PostgresAppRegistryStore) getSendableApps(
 
 	rows, err := tx.Query(
 		ctx,
-		`   
+		`
 		    SELECT app_id, device_key, webhook, encrypted_shared_secret
 			FROM app_registry
-			WHERE app_id = ANY($1)
+			WHERE app_id = ANY($1) AND active = true
 		`,
 		addressesToStrings(apps),
 	)
@@ -903,7 +913,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
 	rows, err := tx.Query(
 		ctx,
-		`   
+		`
 		    SELECT DISTINCT on (app_registry.app_id)
 		      app_registry.app_id,
 			  app_registry.device_key,
@@ -914,6 +924,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 			INNER JOIN app_session_keys
 			  ON app_registry.device_key = app_session_keys.device_key
 			  AND app_registry.app_id = ANY($2)
+			  AND app_registry.active = true
 			  AND $1 = ANY(app_session_keys.session_ids)
 			ORDER BY app_registry.app_id, app_session_keys.session_ids
 		`,
@@ -960,7 +971,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 		ctx,
 		`   SELECT app_id, device_key, webhook, encrypted_shared_secret
 		    FROM app_registry
-		    WHERE app_id = ANY($1)
+		    WHERE app_id = ANY($1) AND active = true
 		`,
 		addressesToStrings(unsendableAppIds),
 	)
@@ -1306,4 +1317,46 @@ func (s *PostgresAppRegistryStore) IsUsernameAvailable(
 			Message("failed to check username availability")
 	}
 	return !exists, nil
+}
+
+func (s *PostgresAppRegistryStore) SetAppActiveStatus(
+	ctx context.Context,
+	app common.Address,
+	active bool,
+) error {
+	return s.txRunner(
+		ctx,
+		"SetAppActiveStatus",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			// Lock the app row to prevent concurrent modifications
+			if err := s.lockApp(ctx, tx, app); err != nil {
+				return err
+			}
+
+			// Update the active status and increment version for optimistic locking
+			tag, err := tx.Exec(
+				ctx,
+				`UPDATE app_registry
+				 SET active = $2, version = version + 1
+				 WHERE app_id = $1`,
+				PGAddress(app),
+				active,
+			)
+			if err != nil {
+				return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+					Message("failed to update app active status")
+			}
+
+			if tag.RowsAffected() == 0 {
+				return RiverError(protocol.Err_NOT_FOUND, "app not found in registry").
+					Tag("appId", app)
+			}
+
+			return nil
+		},
+		&isoLevelReadCommitted,
+		"appAddress", app,
+		"active", active,
+	)
 }

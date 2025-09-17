@@ -63,21 +63,25 @@ const (
 	// AppRegistryServiceValidateBotNameProcedure is the fully-qualified name of the
 	// AppRegistryService's ValidateBotName RPC.
 	AppRegistryServiceValidateBotNameProcedure = "/river.AppRegistryService/ValidateBotName"
+	// AppRegistryServiceSetAppActiveStatusProcedure is the fully-qualified name of the
+	// AppRegistryService's SetAppActiveStatus RPC.
+	AppRegistryServiceSetAppActiveStatusProcedure = "/river.AppRegistryService/SetAppActiveStatus"
 )
 
 // These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
 var (
-	appRegistryServiceServiceDescriptor                 = protocol.File_apps_proto.Services().ByName("AppRegistryService")
-	appRegistryServiceRegisterMethodDescriptor          = appRegistryServiceServiceDescriptor.Methods().ByName("Register")
-	appRegistryServiceRegisterWebhookMethodDescriptor   = appRegistryServiceServiceDescriptor.Methods().ByName("RegisterWebhook")
-	appRegistryServiceGetStatusMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
-	appRegistryServiceSetAppSettingsMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppSettings")
-	appRegistryServiceGetAppSettingsMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppSettings")
-	appRegistryServiceUpdateAppMetadataMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("UpdateAppMetadata")
-	appRegistryServiceGetAppMetadataMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppMetadata")
-	appRegistryServiceRotateSecretMethodDescriptor      = appRegistryServiceServiceDescriptor.Methods().ByName("RotateSecret")
-	appRegistryServiceGetSessionMethodDescriptor        = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
-	appRegistryServiceValidateBotNameMethodDescriptor   = appRegistryServiceServiceDescriptor.Methods().ByName("ValidateBotName")
+	appRegistryServiceServiceDescriptor                  = protocol.File_apps_proto.Services().ByName("AppRegistryService")
+	appRegistryServiceRegisterMethodDescriptor           = appRegistryServiceServiceDescriptor.Methods().ByName("Register")
+	appRegistryServiceRegisterWebhookMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("RegisterWebhook")
+	appRegistryServiceGetStatusMethodDescriptor          = appRegistryServiceServiceDescriptor.Methods().ByName("GetStatus")
+	appRegistryServiceSetAppSettingsMethodDescriptor     = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppSettings")
+	appRegistryServiceGetAppSettingsMethodDescriptor     = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppSettings")
+	appRegistryServiceUpdateAppMetadataMethodDescriptor  = appRegistryServiceServiceDescriptor.Methods().ByName("UpdateAppMetadata")
+	appRegistryServiceGetAppMetadataMethodDescriptor     = appRegistryServiceServiceDescriptor.Methods().ByName("GetAppMetadata")
+	appRegistryServiceRotateSecretMethodDescriptor       = appRegistryServiceServiceDescriptor.Methods().ByName("RotateSecret")
+	appRegistryServiceGetSessionMethodDescriptor         = appRegistryServiceServiceDescriptor.Methods().ByName("GetSession")
+	appRegistryServiceValidateBotNameMethodDescriptor    = appRegistryServiceServiceDescriptor.Methods().ByName("ValidateBotName")
+	appRegistryServiceSetAppActiveStatusMethodDescriptor = appRegistryServiceServiceDescriptor.Methods().ByName("SetAppActiveStatus")
 )
 
 // AppRegistryServiceClient is a client for the river.AppRegistryService service.
@@ -99,6 +103,9 @@ type AppRegistryServiceClient interface {
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
 	// ValidateBotName checks if a bot name is available for use.
 	ValidateBotName(context.Context, *connect.Request[protocol.ValidateBotNameRequest]) (*connect.Response[protocol.ValidateBotNameResponse], error)
+	// SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
+	// Deactivated apps won't receive forwarded messages but retain their configuration.
+	SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error)
 }
 
 // NewAppRegistryServiceClient constructs a client for the river.AppRegistryService service. By
@@ -171,21 +178,28 @@ func NewAppRegistryServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(appRegistryServiceValidateBotNameMethodDescriptor),
 			connect.WithClientOptions(opts...),
 		),
+		setAppActiveStatus: connect.NewClient[protocol.SetAppActiveStatusRequest, protocol.SetAppActiveStatusResponse](
+			httpClient,
+			baseURL+AppRegistryServiceSetAppActiveStatusProcedure,
+			connect.WithSchema(appRegistryServiceSetAppActiveStatusMethodDescriptor),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // appRegistryServiceClient implements AppRegistryServiceClient.
 type appRegistryServiceClient struct {
-	register          *connect.Client[protocol.RegisterRequest, protocol.RegisterResponse]
-	registerWebhook   *connect.Client[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse]
-	getStatus         *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
-	setAppSettings    *connect.Client[protocol.SetAppSettingsRequest, protocol.SetAppSettingsResponse]
-	getAppSettings    *connect.Client[protocol.GetAppSettingsRequest, protocol.GetAppSettingsResponse]
-	updateAppMetadata *connect.Client[protocol.UpdateAppMetadataRequest, protocol.UpdateAppMetadataResponse]
-	getAppMetadata    *connect.Client[protocol.GetAppMetadataRequest, protocol.GetAppMetadataResponse]
-	rotateSecret      *connect.Client[protocol.RotateSecretRequest, protocol.RotateSecretResponse]
-	getSession        *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
-	validateBotName   *connect.Client[protocol.ValidateBotNameRequest, protocol.ValidateBotNameResponse]
+	register           *connect.Client[protocol.RegisterRequest, protocol.RegisterResponse]
+	registerWebhook    *connect.Client[protocol.RegisterWebhookRequest, protocol.RegisterWebhookResponse]
+	getStatus          *connect.Client[protocol.GetStatusRequest, protocol.GetStatusResponse]
+	setAppSettings     *connect.Client[protocol.SetAppSettingsRequest, protocol.SetAppSettingsResponse]
+	getAppSettings     *connect.Client[protocol.GetAppSettingsRequest, protocol.GetAppSettingsResponse]
+	updateAppMetadata  *connect.Client[protocol.UpdateAppMetadataRequest, protocol.UpdateAppMetadataResponse]
+	getAppMetadata     *connect.Client[protocol.GetAppMetadataRequest, protocol.GetAppMetadataResponse]
+	rotateSecret       *connect.Client[protocol.RotateSecretRequest, protocol.RotateSecretResponse]
+	getSession         *connect.Client[protocol.GetSessionRequest, protocol.GetSessionResponse]
+	validateBotName    *connect.Client[protocol.ValidateBotNameRequest, protocol.ValidateBotNameResponse]
+	setAppActiveStatus *connect.Client[protocol.SetAppActiveStatusRequest, protocol.SetAppActiveStatusResponse]
 }
 
 // Register calls river.AppRegistryService.Register.
@@ -238,6 +252,11 @@ func (c *appRegistryServiceClient) ValidateBotName(ctx context.Context, req *con
 	return c.validateBotName.CallUnary(ctx, req)
 }
 
+// SetAppActiveStatus calls river.AppRegistryService.SetAppActiveStatus.
+func (c *appRegistryServiceClient) SetAppActiveStatus(ctx context.Context, req *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error) {
+	return c.setAppActiveStatus.CallUnary(ctx, req)
+}
+
 // AppRegistryServiceHandler is an implementation of the river.AppRegistryService service.
 type AppRegistryServiceHandler interface {
 	Register(context.Context, *connect.Request[protocol.RegisterRequest]) (*connect.Response[protocol.RegisterResponse], error)
@@ -257,6 +276,9 @@ type AppRegistryServiceHandler interface {
 	GetSession(context.Context, *connect.Request[protocol.GetSessionRequest]) (*connect.Response[protocol.GetSessionResponse], error)
 	// ValidateBotName checks if a bot name is available for use.
 	ValidateBotName(context.Context, *connect.Request[protocol.ValidateBotNameRequest]) (*connect.Response[protocol.ValidateBotNameResponse], error)
+	// SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
+	// Deactivated apps won't receive forwarded messages but retain their configuration.
+	SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error)
 }
 
 // NewAppRegistryServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -325,6 +347,12 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 		connect.WithSchema(appRegistryServiceValidateBotNameMethodDescriptor),
 		connect.WithHandlerOptions(opts...),
 	)
+	appRegistryServiceSetAppActiveStatusHandler := connect.NewUnaryHandler(
+		AppRegistryServiceSetAppActiveStatusProcedure,
+		svc.SetAppActiveStatus,
+		connect.WithSchema(appRegistryServiceSetAppActiveStatusMethodDescriptor),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/river.AppRegistryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AppRegistryServiceRegisterProcedure:
@@ -347,6 +375,8 @@ func NewAppRegistryServiceHandler(svc AppRegistryServiceHandler, opts ...connect
 			appRegistryServiceGetSessionHandler.ServeHTTP(w, r)
 		case AppRegistryServiceValidateBotNameProcedure:
 			appRegistryServiceValidateBotNameHandler.ServeHTTP(w, r)
+		case AppRegistryServiceSetAppActiveStatusProcedure:
+			appRegistryServiceSetAppActiveStatusHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -394,4 +424,8 @@ func (UnimplementedAppRegistryServiceHandler) GetSession(context.Context, *conne
 
 func (UnimplementedAppRegistryServiceHandler) ValidateBotName(context.Context, *connect.Request[protocol.ValidateBotNameRequest]) (*connect.Response[protocol.ValidateBotNameResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.ValidateBotName is not implemented"))
+}
+
+func (UnimplementedAppRegistryServiceHandler) SetAppActiveStatus(context.Context, *connect.Request[protocol.SetAppActiveStatusRequest]) (*connect.Response[protocol.SetAppActiveStatusResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("river.AppRegistryService.SetAppActiveStatus is not implemented"))
 }

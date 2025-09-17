@@ -49,7 +49,7 @@ type (
 		appClient                     *app_client.AppClient
 		riverRegistry                 *registries.RiverRegistryContract
 		nodeRegistry                  nodes.NodeRegistry
-		statusCache                   *ttlcache.Cache
+		webhookStatusCache            *ttlcache.Cache
 		// Base chain components for app validation
 		baseChain           *crypto.Blockchain
 		appRegistryContract *auth.AppRegistryContract
@@ -133,7 +133,7 @@ func NewService(
 		appClient:                     appClient,
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
-		statusCache:                   ttlcache.New(2*time.Second, 1*time.Minute),
+		webhookStatusCache:            ttlcache.New(2*time.Second, 1*time.Minute),
 	}
 
 	// Initialize app registry contract if base chain is provided and configured
@@ -716,7 +716,7 @@ func (s *Service) RegisterWebhook(
 
 	// Bust the status cache since the webhook may be changing. This method can be called
 	// many times to update the webhook.
-	s.statusCache.Delete(app.String())
+	s.webhookStatusCache.Delete(app.String())
 
 	// Store the app record in pg
 	if err := s.store.RegisterWebhook(ctx, app, webhook, defaultEncryptionDevice.DeviceKey, defaultEncryptionDevice.FallbackKey); err != nil {
@@ -747,14 +747,26 @@ func (s *Service) GetStatus(
 			Tag("app_id", req.Msg.AppId)
 	}
 
-	// Check for cached status response
-	if cached, ok := s.statusCache.Get(app.String()); ok {
-		if status, ok := cached.(*AppServiceResponse_StatusResponse); ok {
+	// Check for webhookStatusCached webhookStatus response
+	if webhookStatusCached, ok := s.webhookStatusCache.Get(app.String()); ok {
+		if webhookStatus, ok := webhookStatusCached.(*AppServiceResponse_StatusResponse); ok {
+			appInfo, err := s.store.GetAppInfo(ctx, app)
+			if err != nil {
+				// If we can't get app info, return webhookStatusCached without active field
+				return &connect.Response[GetStatusResponse]{
+					Msg: &GetStatusResponse{
+						IsRegistered:  true,
+						ValidResponse: true,
+						Status:        webhookStatus,
+					},
+				}, nil
+			}
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
 					IsRegistered:  true,
 					ValidResponse: true,
-					Status:        status,
+					Status:        webhookStatus,
+					Active:        appInfo.Active,
 				},
 			}, nil
 		}
@@ -784,13 +796,14 @@ func (s *Service) GetStatus(
 			Tag("appId", app)
 	}
 
-	status, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
+	webhookStatus, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
 	if err != nil {
 		if base.IsRiverErrorCode(err, Err_MALFORMED_WEBHOOK_RESPONSE) {
 			// App is registered but returned an invalid response
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
 					IsRegistered: true,
+					Active:       appInfo.Active,
 				},
 			}, nil
 		} else {
@@ -800,13 +813,14 @@ func (s *Service) GetStatus(
 		}
 	}
 
-	s.statusCache.Set(app.String(), status, 0)
+	s.webhookStatusCache.Set(app.String(), webhookStatus, 0)
 
 	return &connect.Response[GetStatusResponse]{
 		Msg: &GetStatusResponse{
 			IsRegistered:  true,
 			ValidResponse: true,
-			Status:        status,
+			Status:        webhookStatus,
+			Active:        appInfo.Active,
 		},
 	}, nil
 }
@@ -939,5 +953,66 @@ func (s *Service) ValidateBotName(
 		Msg: &ValidateBotNameResponse{
 			IsAvailable: true,
 		},
+	}, nil
+}
+
+func (s *Service) SetAppActiveStatus(
+	ctx context.Context,
+	req *connect.Request[SetAppActiveStatusRequest],
+) (
+	*connect.Response[SetAppActiveStatusResponse],
+	error,
+) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppActiveStatus"))
+
+	var app common.Address
+	var err error
+	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
+		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message("invalid app id").
+			Tag("appId", req.Msg.AppId).
+			Func("SetAppActiveStatus")
+	}
+
+	// Get app info to verify ownership
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, base.WrapRiverError(Err_INTERNAL, err).
+			Message("could not determine app owner").
+			Tag("appId", app).
+			Func("SetAppActiveStatus")
+	}
+
+	// Check permissions - only app owner or app itself can change status
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+	if app != userId && appInfo.Owner != userId {
+		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
+			Tag("appId", app).
+			Tag("userId", userId).
+			Tag("ownerId", appInfo.Owner).
+			Func("SetAppActiveStatus")
+	}
+
+	// Update the app active status
+	err = s.store.SetAppActiveStatus(ctx, app, req.Msg.Active)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("failed to update app active status").
+			Tag("appId", app).
+			Tag("active", req.Msg.Active).
+			Func("SetAppActiveStatus")
+	}
+
+	// Clear status cache so next GetStatus reflects the change
+	s.webhookStatusCache.Delete(app.String())
+
+	logging.FromCtx(ctx).Infow("Updated app active status",
+		"appId", app,
+		"active", req.Msg.Active,
+		"userId", userId,
+	)
+
+	return &connect.Response[SetAppActiveStatusResponse]{
+		Msg: &SetAppActiveStatusResponse{},
 	}, nil
 }

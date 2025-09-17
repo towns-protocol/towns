@@ -408,3 +408,15 @@ func (q *CachedEncryptedMessageQueue) IsUsernameAvailable(
 ) (bool, error) {
 	return q.store.IsUsernameAvailable(ctx, username)
 }
+
+func (q *CachedEncryptedMessageQueue) SetAppActiveStatus(
+	ctx context.Context,
+	app common.Address,
+	active bool,
+) error {
+	// Clear cached state when status changes
+	q.appIdCache.Delete(app)
+	q.metadataCache.Remove(app.String())
+
+	return q.store.SetAppActiveStatus(ctx, app, active)
+}
