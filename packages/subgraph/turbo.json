@@ -2,8 +2,12 @@
     "$schema": "https://turborepo.org/schema.json",
     "extends": ["//"],
     "tasks": {
+        "typings": {
+            "cache": true,
+            "outputs": []
+        },
         "test:unit": {
-            "dependsOn": ["@towns-protocol/contracts#typings", "@towns-protocol/web3#build"],
+            "dependsOn": ["typings"],
             "cache": false,
             "outputs": []
         }
