@@ -12,7 +12,6 @@ import (
 	"unsafe"
 
 	"connectrpc.com/connect"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -221,4 +220,38 @@ func newMockNodeRegistry(t *testing.T) *mocks.MockNodeRegistry {
 		registry.AssertExpectations(t)
 	})
 	return registry
+}
+
+func waitForMessage(t *testing.T, ch <-chan subscriberMsg) subscriberMsg {
+	select {
+	case msg := <-ch:
+		return msg
+	case <-time.After(3 * time.Second):
+		t.Fatalf("timed out waiting for subscriber message")
+		return subscriberMsg{}
+	}
+}
+
+type stubStreamCache struct {
+	stream *events.Stream
+	err    error
+}
+
+func (s *stubStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.stream, nil
+}
+
+type collectingSubscriber struct {
+	ch chan subscriberMsg
+}
+
+func newCollectingSubscriber() *collectingSubscriber {
+	return &collectingSubscriber{ch: make(chan subscriberMsg, 8)}
+}
+
+func (c *collectingSubscriber) OnStreamEvent(streamID shared.StreamId, update *protocol.SyncStreamsResponse, version int) {
+	c.ch <- subscriberMsg{resp: update, version: version}
 }
