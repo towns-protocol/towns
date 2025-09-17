@@ -899,13 +899,11 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
 
 ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const subscriptionId = `${event.args.account}_${event.args.entityId}`
 
     try {
         await context.db
             .insert(schema.subscription)
             .values({
-                id: subscriptionId,
                 account: event.args.account,
                 entityId: event.args.entityId,
                 space: event.args.space,
@@ -935,7 +933,6 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
 
 ponder.on('Space:SubscriptionPaused', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const subscriptionId = `${event.args.account}_${event.args.entityId}`
 
     try {
         const result = await context.db.sql
@@ -944,10 +941,17 @@ ponder.on('Space:SubscriptionPaused', async ({ event, context }) => {
                 active: false,
                 updatedAt: blockNumber,
             })
-            .where(eq(schema.subscription.id, subscriptionId))
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
 
         if (result.changes === 0) {
-            console.warn(`Subscription not found for pause: ${subscriptionId}`)
+            console.warn(
+                `Subscription not found for pause: ${event.args.account}_${event.args.entityId}`,
+            )
         }
     } catch (error) {
         console.error(
@@ -959,7 +963,6 @@ ponder.on('Space:SubscriptionPaused', async ({ event, context }) => {
 
 ponder.on('Space:SubscriptionRenewed', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const subscriptionId = `${event.args.account}_${event.args.entityId}`
 
     try {
         const result = await context.db.sql
@@ -969,10 +972,17 @@ ponder.on('Space:SubscriptionRenewed', async ({ event, context }) => {
                 lastRenewalTime: blockNumber,
                 updatedAt: blockNumber,
             })
-            .where(eq(schema.subscription.id, subscriptionId))
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
 
         if (result.changes === 0) {
-            console.warn(`Subscription not found for renewal: ${subscriptionId}`)
+            console.warn(
+                `Subscription not found for renewal: ${event.args.account}_${event.args.entityId}`,
+            )
         }
     } catch (error) {
         console.error(
@@ -984,7 +994,6 @@ ponder.on('Space:SubscriptionRenewed', async ({ event, context }) => {
 
 ponder.on('Space:SubscriptionDeactivated', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const subscriptionId = `${event.args.account}_${event.args.entityId}`
 
     try {
         const result = await context.db.sql
@@ -993,10 +1002,17 @@ ponder.on('Space:SubscriptionDeactivated', async ({ event, context }) => {
                 active: false,
                 updatedAt: blockNumber,
             })
-            .where(eq(schema.subscription.id, subscriptionId))
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
 
         if (result.changes === 0) {
-            console.warn(`Subscription not found for deactivation: ${subscriptionId}`)
+            console.warn(
+                `Subscription not found for deactivation: ${event.args.account}_${event.args.entityId}`,
+            )
         }
     } catch (error) {
         console.error(
@@ -1008,7 +1024,6 @@ ponder.on('Space:SubscriptionDeactivated', async ({ event, context }) => {
 
 ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const subscriptionId = `${event.args.account}_${event.args.entityId}`
 
     try {
         const result = await context.db.sql
@@ -1018,10 +1033,17 @@ ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
                 lastRenewalTime: blockNumber,
                 updatedAt: blockNumber,
             })
-            .where(eq(schema.subscription.id, subscriptionId))
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
 
         if (result.changes === 0) {
-            console.warn(`Subscription not found for spent update: ${subscriptionId}`)
+            console.warn(
+                `Subscription not found for spent update: ${event.args.account}_${event.args.entityId}`,
+            )
         }
     } catch (error) {
         console.error(
@@ -1033,15 +1055,13 @@ ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
 
 ponder.on('Space:BatchRenewalSkipped', async ({ event, context }) => {
     const blockNumber = event.block.number
-    const failureId = `${event.args.account}_${event.args.entityId}_${blockNumber}`
 
     try {
         await context.db.insert(schema.subscriptionFailure).values({
-            id: failureId,
             account: event.args.account,
             entityId: event.args.entityId,
-            reason: event.args.reason,
             timestamp: blockNumber,
+            reason: event.args.reason,
         })
     } catch (error) {
         console.error(
@@ -1060,9 +1080,14 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
     const newExpiration = event.args.expiration
 
     try {
+        console.log(
+            `SubscriptionUpdate: Space ${spaceId}, TokenId ${tokenId}, New Expiration ${newExpiration}`,
+        )
+
         await context.db.sql
             .update(schema.subscription)
             .set({
+                nextRenewalTime: newExpiration,
                 lastRenewalTime: blockNumber,
                 updatedAt: blockNumber,
             })

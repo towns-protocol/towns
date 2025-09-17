@@ -282,13 +282,12 @@ export const review = onchainTable(
 export const subscription = onchainTable(
     'subscriptions',
     (t) => ({
-        id: t.text().primaryKey(), // composite key: ${account}_${entityId}
         account: t.hex().notNull(),
         entityId: t.integer().notNull(),
         space: t.hex().notNull(),
         tokenId: t.bigint().notNull(),
         spent: t.bigint().default(0n),
-        lastRenewalTime: t.bigint(), // tracks lastRenewalTime from contract
+        lastRenewalTime: t.bigint(),
         nextRenewalTime: t.bigint().notNull(),
         active: t.boolean().default(true),
         renewalType: renewalType().notNull(),
@@ -296,9 +295,9 @@ export const subscription = onchainTable(
         updatedAt: t.bigint().notNull(),
     }),
     (table) => ({
-        accountIdx: index().on(table.account),
+        pk: primaryKey({ columns: [table.account, table.entityId] }),
         spaceIdx: index().on(table.space),
-        accountSpaceIdx: index().on(table.account, table.space),
+        spaceTokenIdx: index().on(table.space, table.tokenId),
         nextRenewalTimeIdx: index().on(table.nextRenewalTime),
         activeIdx: index().on(table.active),
     }),
@@ -308,14 +307,13 @@ export const subscription = onchainTable(
 export const subscriptionFailure = onchainTable(
     'subscription_failures',
     (t) => ({
-        id: t.text().primaryKey(), // composite key: ${account}_${entityId}_${timestamp}
         account: t.hex().notNull(),
         entityId: t.integer().notNull(),
-        reason: t.text().notNull(),
         timestamp: t.bigint().notNull(),
+        reason: t.text().notNull(),
     }),
     (table) => ({
-        accountIdx: index().on(table.account),
+        pk: primaryKey({ columns: [table.account, table.entityId, table.timestamp] }),
         timestampIdx: index().on(table.timestamp),
     }),
 )
