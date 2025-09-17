@@ -242,7 +242,11 @@ func (r *remoteStreamUpdateEmitter) cleanup() {
 	remainingMsgs := r.backfillsQueue.CloseAndGetBatch()
 
 	// Send a stream down message to all active syncs of the current syncer version via event bus.
-	r.subscriber.OnStreamEvent(r.streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID.Bytes()}, r.version)
+	r.subscriber.OnStreamEvent(
+		r.streamID,
+		&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: r.streamID.Bytes()},
+		r.version,
+	)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
 	for _, msg := range remainingMsgs {

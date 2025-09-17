@@ -1286,3 +1286,11 @@ func (s *Stream) IsLocalInQuorum() bool {
 
 	return s.nodesLocked.IsLocalInQuorum()
 }
+
+// TestOnlyHelper_SetView injects the provided view directly into the stream. This helper is intended
+// for unit tests so they can bypass storage initialization.
+func (s *Stream) TestOnlyHelper_SetView(view *StreamView) {
+	s.mu.Lock()
+	s.setViewLocked(view)
+	s.mu.Unlock()
+}
