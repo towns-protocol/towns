@@ -2,9 +2,16 @@ package syncer
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
+	"unsafe"
+
+	"connectrpc.com/connect"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -129,4 +136,89 @@ func waitForOp(t *testing.T, sub *fakeStreamSubscriber, op protocol.SyncOp) *pro
 			return msg
 		}
 	}
+}
+
+// fakeStreamingClientConn is a StreamingClientConn that delivers a predefined
+// sequence of responses to the consumer.
+type fakeStreamingClientConn struct {
+	mu       sync.Mutex
+	msgs     []*protocol.SyncStreamsResponse
+	idx      int
+	recvErr  error
+	closeErr error
+}
+
+func newFakeStreamingClientConn(msgs []*protocol.SyncStreamsResponse, terminalErr error) *fakeStreamingClientConn {
+	if terminalErr == nil {
+		terminalErr = io.EOF
+	}
+	return &fakeStreamingClientConn{msgs: msgs, recvErr: terminalErr}
+}
+
+func (f *fakeStreamingClientConn) Spec() connect.Spec { return connect.Spec{} }
+func (f *fakeStreamingClientConn) Peer() connect.Peer { return connect.Peer{} }
+func (f *fakeStreamingClientConn) Send(any) error     { return nil }
+func (f *fakeStreamingClientConn) RequestHeader() http.Header {
+	return http.Header{}
+}
+func (f *fakeStreamingClientConn) CloseRequest() error { return nil }
+func (f *fakeStreamingClientConn) Receive(msg any) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	dst, ok := msg.(*protocol.SyncStreamsResponse)
+	if !ok {
+		return fmt.Errorf("unexpected message type %T", msg)
+	}
+
+	if f.idx < len(f.msgs) {
+		clone := proto.Clone(f.msgs[f.idx]).(*protocol.SyncStreamsResponse)
+		*dst = *clone
+		f.idx++
+		return nil
+	}
+	return f.recvErr
+}
+
+func (f *fakeStreamingClientConn) ResponseHeader() http.Header {
+	return http.Header{}
+}
+
+func (f *fakeStreamingClientConn) ResponseTrailer() http.Header {
+	return http.Header{}
+}
+
+func (f *fakeStreamingClientConn) CloseResponse() error {
+	return f.closeErr
+}
+
+// newServerStreamForClient constructs a connect.ServerStreamForClient backed by the
+// provided fake connection.
+func newServerStreamForClient(t require.TestingT, conn connect.StreamingClientConn) *connect.ServerStreamForClient[protocol.SyncStreamsResponse] {
+	stream := &connect.ServerStreamForClient[protocol.SyncStreamsResponse]{}
+	setServerStreamField(t, stream, "conn", conn)
+	return stream
+}
+
+func setServerStreamField(t require.TestingT, stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse], field string, value any) {
+	v := reflect.ValueOf(stream).Elem()
+	f := v.FieldByName(field)
+	require.True(t, f.IsValid(), "field %s not found", field)
+	reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem().Set(reflect.ValueOf(value))
+}
+
+func newMockStreamServiceClient(t *testing.T) *mocks.MockStreamServiceClient {
+	client := &mocks.MockStreamServiceClient{}
+	t.Cleanup(func() {
+		client.AssertExpectations(t)
+	})
+	return client
+}
+
+func newMockNodeRegistry(t *testing.T) *mocks.MockNodeRegistry {
+	registry := &mocks.MockNodeRegistry{}
+	t.Cleanup(func() {
+		registry.AssertExpectations(t)
+	})
+	return registry
 }
