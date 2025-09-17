@@ -11,8 +11,9 @@ import (
 	"time"
 	"unsafe"
 
-	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+
+	"connectrpc.com/connect"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -138,6 +139,18 @@ func waitForOp(t *testing.T, sub *fakeStreamSubscriber, op protocol.SyncOp) *pro
 	}
 }
 
+type stubStreamCache struct {
+	stream *events.Stream
+	err    error
+}
+
+func (s *stubStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.stream, nil
+}
+
 // fakeStreamingClientConn is a StreamingClientConn that delivers a predefined
 // sequence of responses to the consumer.
 type fakeStreamingClientConn struct {
@@ -192,6 +205,27 @@ func (f *fakeStreamingClientConn) CloseResponse() error {
 	return f.closeErr
 }
 
+type stubEmitter struct {
+	enqueueResults []bool
+	enqueueCalls   int
+	closed         bool
+	version        int
+	node           common.Address
+}
+
+func (s *stubEmitter) StreamID() shared.StreamId { return shared.StreamId{} }
+func (s *stubEmitter) Node() common.Address      { return s.node }
+func (s *stubEmitter) Version() int              { return s.version }
+func (s *stubEmitter) Close()                    { s.closed = true }
+func (s *stubEmitter) EnqueueBackfill(*protocol.SyncCookie, []string) bool {
+	if s.enqueueCalls >= len(s.enqueueResults) {
+		return false
+	}
+	res := s.enqueueResults[s.enqueueCalls]
+	s.enqueueCalls++
+	return res
+}
+
 // newServerStreamForClient constructs a connect.ServerStreamForClient backed by the
 // provided fake connection.
 func newServerStreamForClient(
@@ -229,87 +263,4 @@ func newMockNodeRegistry(t *testing.T) *mocks.MockNodeRegistry {
 		registry.AssertExpectations(t)
 	})
 	return registry
-}
-
-func waitForMessage(t *testing.T, ch <-chan subscriberMsg) subscriberMsg {
-	select {
-	case msg := <-ch:
-		return msg
-	case <-time.After(3 * time.Second):
-		t.Fatalf("timed out waiting for subscriber message")
-		return subscriberMsg{}
-	}
-}
-
-type stubStreamCache struct {
-	stream *events.Stream
-	err    error
-}
-
-func (s *stubStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
-	if s.err != nil {
-		return nil, s.err
-	}
-	return s.stream, nil
-}
-
-type collectingSubscriber struct {
-	ch chan subscriberMsg
-}
-
-func newCollectingSubscriber() *collectingSubscriber {
-	return &collectingSubscriber{ch: make(chan subscriberMsg, 8)}
-}
-
-func (c *collectingSubscriber) OnStreamEvent(
-	streamID shared.StreamId,
-	update *protocol.SyncStreamsResponse,
-	version int,
-) {
-	c.ch <- subscriberMsg{resp: update, version: version}
-}
-
-type fakeStreamCache struct {
-	stream *events.Stream
-	err    error
-}
-
-func (f *fakeStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
-	if f.err != nil {
-		return nil, f.err
-	}
-	return f.stream, nil
-}
-
-type recordingSubscriber struct {
-	ch chan subscriberMsg
-}
-
-func newRecordingSubscriber() *recordingSubscriber {
-	return &recordingSubscriber{ch: make(chan subscriberMsg, 8)}
-}
-
-func (r *recordingSubscriber) OnStreamEvent(streamID shared.StreamId, update *protocol.SyncStreamsResponse, version int) {
-	r.ch <- subscriberMsg{resp: update, version: version}
-}
-
-type stubEmitter struct {
-	enqueueResults []bool
-	enqueueCalls   int
-	closed         bool
-	version        int
-	node           common.Address
-}
-
-func (s *stubEmitter) StreamID() shared.StreamId { return shared.StreamId{} }
-func (s *stubEmitter) Node() common.Address      { return s.node }
-func (s *stubEmitter) Version() int              { return s.version }
-func (s *stubEmitter) Close()                    { s.closed = true }
-func (s *stubEmitter) EnqueueBackfill(*protocol.SyncCookie, []string) bool {
-	if s.enqueueCalls >= len(s.enqueueResults) {
-		return false
-	}
-	res := s.enqueueResults[s.enqueueCalls]
-	s.enqueueCalls++
-	return res
 }

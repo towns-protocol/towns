@@ -22,7 +22,7 @@ func TestSharedStreamUpdateEmitter_ForwardsBufferedBackfills(t *testing.T) {
 	stream.Reset(1, []common.Address{wallet.Address}, wallet.Address)
 
 	cache := &stubStreamCache{stream: stream}
-	subscriber := newCollectingSubscriber()
+	subscriber := newFakeStreamSubscriber()
 	nodeRegistry := newMockNodeRegistry(t)
 
 	shared := newSharedStreamUpdateEmitter(
@@ -42,7 +42,7 @@ func TestSharedStreamUpdateEmitter_ForwardsBufferedBackfills(t *testing.T) {
 	cookie := &protocol.SyncCookie{StreamId: stream.StreamId().Bytes()}
 	require.True(t, shared.EnqueueBackfill(cookie, []string{"sync-a"}))
 
-	msg := waitForMessage(t, subscriber.ch)
+	msg := subscriber.waitForMessage(t)
 	require.Equal(t, protocol.SyncOp_SYNC_UPDATE, msg.resp.GetSyncOp())
 	require.Equal(t, []string{"sync-a"}, msg.resp.GetTargetSyncIds())
 	require.Equal(t, 7, msg.version)
@@ -56,14 +56,14 @@ func TestSharedStreamUpdateEmitter_StreamLookupFailure(t *testing.T) {
 
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	cache := &stubStreamCache{err: errors.New("boom")}
-	subscriber := newCollectingSubscriber()
+	subscriber := newFakeStreamSubscriber()
 	nodeRegistry := newMockNodeRegistry(t)
 
 	shared := newSharedStreamUpdateEmitter(ctx, common.Address{}, cache, nodeRegistry, subscriber, streamID, 3, nil)
 
 	require.True(t, shared.EnqueueBackfill(&protocol.SyncCookie{StreamId: streamID.Bytes()}, []string{"target"}))
 
-	msg := waitForMessage(t, subscriber.ch)
+	msg := subscriber.waitForMessage(t)
 	require.Equal(t, protocol.SyncOp_SYNC_DOWN, msg.resp.GetSyncOp())
 	require.Equal(t, []string{"target"}, msg.resp.GetTargetSyncIds())
 	require.Equal(t, AllSubscribersVersion, msg.version)

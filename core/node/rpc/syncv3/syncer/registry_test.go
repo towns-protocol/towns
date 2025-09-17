@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/mock"
@@ -23,8 +22,8 @@ func TestRegistry_ProcessSubscribe_NewEmitterSuccess(t *testing.T) {
 	stream, wallet, streamID, view := newTestStream(t, ctx)
 	stream.Reset(1, []common.Address{wallet.Address}, wallet.Address)
 
-	subscriber := newRecordingSubscriber()
-	cache := &fakeStreamCache{stream: stream}
+	subscriber := newFakeStreamSubscriber()
+	cache := &stubStreamCache{stream: stream}
 	nodeRegistry := newMockNodeRegistry(t)
 	nodeRegistry.On("GetStreamServiceClientForAddress", mock.Anything).Return(nil, errors.New("unused")).Maybe()
 
@@ -40,13 +39,9 @@ func TestRegistry_ProcessSubscribe_NewEmitterSuccess(t *testing.T) {
 
 	r.processSubscribeAndBackfill(view.SyncCookie(wallet.Address), []string{"initial"})
 
-	select {
-	case msg := <-subscriber.ch:
-		require.Equal(t, protocol.SyncOp_SYNC_UPDATE, msg.resp.GetSyncOp())
-		require.Equal(t, []string{"initial"}, msg.resp.GetTargetSyncIds())
-	case <-time.After(2 * time.Second):
-		t.Fatal("expected update from shared emitter")
-	}
+	msg := subscriber.waitForMessage(t)
+	require.Equal(t, protocol.SyncOp_SYNC_UPDATE, msg.resp.GetSyncOp())
+	require.Equal(t, []string{"initial"}, msg.resp.GetTargetSyncIds())
 
 	emitter, ok := r.syncers[streamID]
 	require.True(t, ok)
@@ -57,7 +52,7 @@ func TestRegistry_ProcessSubscribe_ExistingEmitterSuccess(t *testing.T) {
 	r := &registryImpl{
 		log:        logging.NoopLogger(),
 		syncers:    make(map[shared.StreamId]StreamUpdateEmitter),
-		subscriber: newRecordingSubscriber(),
+		subscriber: newFakeStreamSubscriber(),
 	}
 
 	emitter := &stubEmitter{enqueueResults: []bool{true}, version: 5}
@@ -76,8 +71,8 @@ func TestRegistry_ProcessSubscribe_RecreateEmitterOnFailure(t *testing.T) {
 	stream, wallet, streamID, view := newTestStream(t, ctx)
 	stream.Reset(1, []common.Address{wallet.Address}, wallet.Address)
 
-	subscriber := newRecordingSubscriber()
-	cache := &fakeStreamCache{stream: stream}
+	subscriber := newFakeStreamSubscriber()
+	cache := &stubStreamCache{stream: stream}
 	nodeRegistry := newMockNodeRegistry(t)
 	nodeRegistry.On("GetStreamServiceClientForAddress", mock.Anything).Return(nil, errors.New("unused")).Maybe()
 
@@ -95,12 +90,8 @@ func TestRegistry_ProcessSubscribe_RecreateEmitterOnFailure(t *testing.T) {
 
 	r.processSubscribeAndBackfill(view.SyncCookie(wallet.Address), []string{"resync"})
 
-	select {
-	case msg := <-subscriber.ch:
-		require.Equal(t, protocol.SyncOp_SYNC_UPDATE, msg.resp.GetSyncOp())
-	case <-time.After(2 * time.Second):
-		t.Fatal("expected update from recreated emitter")
-	}
+	msg := subscriber.waitForMessage(t)
+	require.Equal(t, protocol.SyncOp_SYNC_UPDATE, msg.resp.GetSyncOp())
 
 	recreated := r.syncers[streamID]
 	require.NotSame(t, emitter, recreated)
@@ -111,8 +102,8 @@ func TestRegistry_ProcessSubscribe_NewEmitterFailureSendsSyncDown(t *testing.T) 
 	ctx := context.Background()
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 
-	subscriber := newRecordingSubscriber()
-	cache := &fakeStreamCache{err: errors.New("boom")}
+	subscriber := newFakeStreamSubscriber()
+	cache := &stubStreamCache{err: errors.New("boom")}
 	nodeRegistry := newMockNodeRegistry(t)
 
 	r := &registryImpl{
@@ -127,7 +118,7 @@ func TestRegistry_ProcessSubscribe_NewEmitterFailureSendsSyncDown(t *testing.T) 
 	cookie := &protocol.SyncCookie{StreamId: streamID.Bytes()}
 	r.processSubscribeAndBackfill(cookie, []string{"pending"})
 
-	msg := waitForMessage(t, subscriber.ch)
+	msg := subscriber.waitForMessage(t)
 	require.Equal(t, protocol.SyncOp_SYNC_DOWN, msg.resp.GetSyncOp())
 	require.Equal(t, []string{"pending"}, msg.resp.GetTargetSyncIds())
 	require.Equal(t, AllSubscribersVersion, msg.version)
