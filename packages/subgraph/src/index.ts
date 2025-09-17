@@ -908,7 +908,7 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
                 entityId: event.args.entityId,
                 space: event.args.space,
                 tokenId: event.args.tokenId,
-                spent: 0n,
+                totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
                 active: true,
                 lastRenewalTime: null, // Will be set on first renewal
@@ -1028,7 +1028,7 @@ ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
-                spent: event.args.totalSpent,
+                totalSpent: event.args.totalSpent,
                 lastRenewalTime: blockNumber,
                 updatedAt: blockNumber,
             })

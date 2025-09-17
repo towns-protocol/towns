@@ -284,7 +284,7 @@ export const subscription = onchainTable(
         entityId: t.integer().notNull(),
         space: t.hex().notNull(),
         tokenId: t.bigint().notNull(),
-        spent: t.bigint().default(0n),
+        totalSpent: t.bigint().default(0n),
         lastRenewalTime: t.bigint(),
         nextRenewalTime: t.bigint().notNull(),
         active: t.boolean().default(true),
