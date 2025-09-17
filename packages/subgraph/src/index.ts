@@ -1029,7 +1029,6 @@ ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
             .update(schema.subscription)
             .set({
                 totalSpent: event.args.totalSpent,
-                lastRenewalTime: blockNumber,
                 updatedAt: blockNumber,
             })
             .where(
