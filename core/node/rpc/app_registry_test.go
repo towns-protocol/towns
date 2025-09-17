@@ -2688,7 +2688,13 @@ func TestAppRegistry_InactiveAppsDoNotReceiveMessages(t *testing.T) {
 		testSessionBytes2,
 		participantClient.deviceKey,
 	)
-	participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession2, 2*time.Second, 100*time.Millisecond)
+	participantClient.requireNoKeySolicitation(
+		channelId,
+		testBotEncryptionDevice(0).DeviceKey,
+		testSession2,
+		2*time.Second,
+		100*time.Millisecond,
+	)
 
 	// Reactivate the bot
 	req.Msg.Active = true

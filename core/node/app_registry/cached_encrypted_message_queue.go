@@ -297,7 +297,8 @@ func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.A
 		if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
 			return false, nil
 		}
-		return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
+		return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Could not determine if the id is an app")
 	}
 	return appInfo != nil, nil
 }
@@ -313,7 +314,8 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 		if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
 			return false, types.AppSettings{}, nil
 		}
-		return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app is forwardable")
+		return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).
+			Message("Could not determine if the app is forwardable")
 	}
 	if appInfo == nil {
 		return false, types.AppSettings{}, nil
