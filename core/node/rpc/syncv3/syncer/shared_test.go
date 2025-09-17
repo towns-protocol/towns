@@ -61,7 +61,7 @@ func TestSharedStreamUpdateEmitter_StreamLookupFailure(t *testing.T) {
 
 	shared := newSharedStreamUpdateEmitter(ctx, common.Address{}, cache, nodeRegistry, subscriber, streamID, 3, nil)
 
-	_ = shared.EnqueueBackfill(&protocol.SyncCookie{StreamId: streamID.Bytes()}, []string{"target"})
+	require.True(t, shared.EnqueueBackfill(&protocol.SyncCookie{StreamId: streamID.Bytes()}, []string{"target"}))
 
 	msg := subscriber.waitForMessage(t)
 	require.Equal(t, protocol.SyncOp_SYNC_DOWN, msg.resp.GetSyncOp())
