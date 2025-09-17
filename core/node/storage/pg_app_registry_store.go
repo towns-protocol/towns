@@ -824,7 +824,7 @@ func (s *PostgresAppRegistryStore) getSendableApps(
 
 	rows, err := tx.Query(
 		ctx,
-		`
+		`   
 		    SELECT app_id, device_key, webhook, encrypted_shared_secret
 			FROM app_registry
 			WHERE app_id = ANY($1) AND active = true
@@ -913,7 +913,7 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 ) (sendableApps []SendableApp, unsendableApps []UnsendableApp, err error) {
 	rows, err := tx.Query(
 		ctx,
-		`
+		`   
 		    SELECT DISTINCT on (app_registry.app_id)
 		      app_registry.app_id,
 			  app_registry.device_key,
@@ -1329,34 +1329,38 @@ func (s *PostgresAppRegistryStore) SetAppActiveStatus(
 		"SetAppActiveStatus",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			// Lock the app row to prevent concurrent modifications
-			if err := s.lockApp(ctx, tx, app); err != nil {
-				return err
-			}
-
-			// Update the active status and increment version for optimistic locking
-			tag, err := tx.Exec(
-				ctx,
-				`UPDATE app_registry
-				 SET active = $2, version = version + 1
-				 WHERE app_id = $1`,
-				PGAddress(app),
-				active,
-			)
-			if err != nil {
-				return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-					Message("failed to update app active status")
-			}
-
-			if tag.RowsAffected() == 0 {
-				return RiverError(protocol.Err_NOT_FOUND, "app not found in registry").
-					Tag("appId", app)
-			}
-
-			return nil
+			return s.setAppActiveStatus(ctx, app, active, tx)
 		},
-		&isoLevelReadCommitted,
+		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
 		"appAddress", app,
 		"active", active,
 	)
+}
+
+func (s *PostgresAppRegistryStore) setAppActiveStatus(
+	ctx context.Context,
+	app common.Address,
+	active bool,
+	tx pgx.Tx,
+) error {
+	// Update the active status and increment version for optimistic locking
+	tag, err := tx.Exec(
+		ctx,
+		`UPDATE app_registry
+		 SET active = $2, version = version + 1
+		 WHERE app_id = $1`,
+		PGAddress(app),
+		active,
+	)
+	if err != nil {
+		return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to update app active status")
+	}
+
+	if tag.RowsAffected() == 0 {
+		return RiverError(protocol.Err_NOT_FOUND, "app not found in registry").
+			Tag("appId", app)
+	}
+
+	return nil
 }

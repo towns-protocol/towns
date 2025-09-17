@@ -37,10 +37,10 @@ type SessionMessages struct {
 type CachedEncryptedMessageQueue struct {
 	store         storage.AppRegistryStore
 	appDispatcher *AppDispatcher
-	// the appIdCache stores forward settings for each app. These are used
+	// the forwardSettingsCache stores forward settings for each app. These are used
 	// to determine whether or not to forward to each app in a channel whenever
 	// a new message is received.
-	appIdCache sync.Map
+	forwardSettingsCache sync.Map
 
 	// metadataCache stores app metadata with TTL to reduce database queries.
 	metadataCache *arc.ARCCache[string, *metadataCacheEntry]
@@ -87,7 +87,7 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 ) error {
 	fs := &ForwardState{}
 	fs.Settings.Store(&settings)
-	q.appIdCache.Store(app, fs)
+	q.forwardSettingsCache.Store(app, fs)
 
 	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
 	if err != nil {
@@ -124,13 +124,13 @@ func (q *CachedEncryptedMessageQueue) UpdateSettings(
 	app common.Address,
 	settings types.AppSettings,
 ) error {
-	err := q.store.UpdateSettings(ctx, app, settings)
-	if err == nil {
-		if fs, exists := q.appIdCache.Load(app); exists {
-			fs.(*ForwardState).Settings.Store(&settings)
-		}
+	if err := q.store.UpdateSettings(ctx, app, settings); err != nil {
+		return err
 	}
-	return err
+	if fs, exists := q.forwardSettingsCache.Load(app); exists {
+		fs.(*ForwardState).Settings.Store(&settings)
+	}
+	return nil
 }
 
 func (q *CachedEncryptedMessageQueue) RegisterWebhook(
@@ -140,7 +140,7 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	deviceKey string,
 	fallbackKey string,
 ) error {
-	if fs, exists := q.appIdCache.Load(app); exists {
+	if fs, exists := q.forwardSettingsCache.Load(app); exists {
 		fs.(*ForwardState).HasWebhook = true
 	}
 	if err := q.store.RegisterWebhook(ctx, app, webhook, deviceKey, fallbackKey); err != nil {
@@ -351,7 +351,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 }
 
 func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.Address) (bool, error) {
-	_, exists := q.appIdCache.Load(userId)
+	_, exists := q.forwardSettingsCache.Load(userId)
 	if exists {
 		return true, nil
 	} else {
@@ -367,7 +367,7 @@ func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.A
 			HasWebhook: info.WebhookUrl != "",
 		}
 		fs.Settings.Store(&info.Settings)
-		_, _ = q.appIdCache.LoadOrStore(userId, fs)
+		_, _ = q.forwardSettingsCache.LoadOrStore(userId, fs)
 		return true, nil
 	}
 }
@@ -379,7 +379,7 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	ctx context.Context,
 	appId common.Address,
 ) (isForwardable bool, settings types.AppSettings, err error) {
-	fs, exists := q.appIdCache.Load(appId)
+	fs, exists := q.forwardSettingsCache.Load(appId)
 	if exists {
 		forwardState := fs.(*ForwardState)
 		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
@@ -395,7 +395,7 @@ func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 			HasWebhook: info.WebhookUrl != "",
 		}
 		forwardState.Settings.Store(&info.Settings)
-		fs, _ = q.appIdCache.LoadOrStore(appId, forwardState)
+		fs, _ = q.forwardSettingsCache.LoadOrStore(appId, forwardState)
 		forwardState = fs.(*ForwardState)
 		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
 	}
@@ -414,8 +414,7 @@ func (q *CachedEncryptedMessageQueue) SetAppActiveStatus(
 	app common.Address,
 	active bool,
 ) error {
-	// Clear cached state when status changes
-	q.appIdCache.Delete(app)
+	q.forwardSettingsCache.Delete(app)
 	q.metadataCache.Remove(app.String())
 
 	return q.store.SetAppActiveStatus(ctx, app, active)

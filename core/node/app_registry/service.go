@@ -748,18 +748,11 @@ func (s *Service) GetStatus(
 	}
 
 	// Check for webhookStatusCached webhookStatus response
-	if webhookStatusCached, ok := s.webhookStatusCache.Get(app.String()); ok {
-		if webhookStatus, ok := webhookStatusCached.(*AppServiceResponse_StatusResponse); ok {
+	if webhookStatusCached, exists := s.webhookStatusCache.Get(app.String()); exists {
+		if webhookStatus, exists := webhookStatusCached.(*AppServiceResponse_StatusResponse); exists {
 			appInfo, err := s.store.GetAppInfo(ctx, app)
 			if err != nil {
-				// If we can't get app info, return webhookStatusCached without active field
-				return &connect.Response[GetStatusResponse]{
-					Msg: &GetStatusResponse{
-						IsRegistered:  true,
-						ValidResponse: true,
-						Status:        webhookStatus,
-					},
-				}, nil
+				return nil, err
 			}
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
