@@ -161,15 +161,7 @@ func (db *DynamicBuffer[T]) Wait() <-chan struct{} {
 
 // Close closes the buffer.
 func (db *DynamicBuffer[T]) Close() {
-	db.mu.Lock()
-	db.buffer = nil
-	db.mu.Unlock()
-
-	// Signal to any waiting goroutines that the buffer is closed
-	select {
-	case db.signalChan <- struct{}{}:
-	default:
-	}
+	_ = db.CloseAndGetBatch()
 }
 
 // CloseAndGetBatch closes the buffer and returns the remaining items.
