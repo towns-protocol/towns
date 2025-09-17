@@ -1229,11 +1229,12 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 
 	// Reinitialize data is prepared.
 	// Take lock, drop view, apply data to the database.
-	// TODO: FIX: what are implications for sync?
+	// Since it's a reset "in the future", current subscribers can't be updated continuosly and are dropped.
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.setViewLocked(nil)
+	s.unsubAllLocked()
 
 	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num
 	err = s.params.Storage.ReinitializeStreamStorage(
