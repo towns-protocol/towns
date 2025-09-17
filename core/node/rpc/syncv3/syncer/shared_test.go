@@ -55,7 +55,7 @@ func TestSharedStreamUpdateEmitter_StreamLookupFailure(t *testing.T) {
 	defer cancel()
 
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	cache := &stubStreamCache{err: errors.New("boom")}
+	cache := &stubStreamCache{err: errors.New("boom"), timeout: time.Millisecond * 100}
 	subscriber := newFakeStreamSubscriber()
 	nodeRegistry := newMockNodeRegistry(t)
 

@@ -140,11 +140,15 @@ func waitForOp(t *testing.T, sub *fakeStreamSubscriber, op protocol.SyncOp) *pro
 }
 
 type stubStreamCache struct {
-	stream *events.Stream
-	err    error
+	timeout time.Duration
+	stream  *events.Stream
+	err     error
 }
 
 func (s *stubStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
+	if s.timeout > 0 {
+		time.Sleep(s.timeout)
+	}
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -186,7 +190,8 @@ func (f *fakeStreamingClientConn) Receive(msg any) error {
 
 	if f.idx < len(f.msgs) {
 		clone := proto.Clone(f.msgs[f.idx]).(*protocol.SyncStreamsResponse)
-		*dst = *clone
+		proto.Reset(dst)
+		proto.Merge(dst, clone)
 		f.idx++
 		return nil
 	}
