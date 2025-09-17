@@ -7,8 +7,6 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'review',
 ])
 
-export const renewalType = onchainEnum('renewal_type', ['automatic', 'manual'])
-
 // Type definitions for analytics event data
 export type SwapEventData = {
     type: 'swap'
@@ -290,7 +288,6 @@ export const subscription = onchainTable(
         lastRenewalTime: t.bigint(),
         nextRenewalTime: t.bigint().notNull(),
         active: t.boolean().default(true),
-        renewalType: renewalType().notNull(),
         createdAt: t.bigint().notNull(),
         updatedAt: t.bigint().notNull(),
     }),

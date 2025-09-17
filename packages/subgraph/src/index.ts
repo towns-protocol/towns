@@ -911,7 +911,6 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
                 spent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
                 active: true,
-                renewalType: 'automatic',
                 lastRenewalTime: null, // Will be set on first renewal
                 createdAt: blockNumber,
                 updatedAt: blockNumber,
