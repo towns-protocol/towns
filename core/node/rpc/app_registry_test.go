@@ -2636,3 +2636,74 @@ func TestAppRegistry_GetStatusWithActive(t *testing.T) {
 	tester.require.NoError(err)
 	tester.require.True(statusResp.Msg.Active)
 }
+
+func TestAppRegistry_InactiveAppsDoNotReceiveMessages(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+
+	tester.StartBotServices()
+
+	participantClient := tester.NodeClient(0, testClientOpts{
+		deviceKey:   "participantDeviceKey",
+		fallbackKey: "participantFallbackKey",
+	})
+	participantClient.createUserStreamsWithEncryptionDevice()
+
+	spaceId, _ := participantClient.createSpace()
+	channelId, _, _ := participantClient.createChannel(spaceId)
+
+	_, userStreamMbRef := tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	botClient := tester.BotNodeClient(0, testClientOpts{})
+	botClient.joinChannel(spaceId, channelId, userStreamMbRef)
+	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address, participantClient.wallet.Address})
+
+	// Send message while bot is active - should trigger key solicitation
+	testSessionBytes1, testSession1 := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message while active",
+		nil,
+		testSessionBytes1,
+		participantClient.deviceKey,
+	)
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession1)
+
+	// Deactivate the bot
+	botCreds := tester.botCredentials[0]
+	req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+		Msg: &protocol.SetAppActiveStatusRequest{
+			AppId:  botCreds.botWallet.Address[:],
+			Active: false,
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+	_, err := tester.appRegistryClient.SetAppActiveStatus(tester.ctx, req)
+	tester.require.NoError(err)
+
+	// Send message while bot is inactive - should NOT trigger key solicitation
+	testSessionBytes2, _ := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message while inactive",
+		nil,
+		testSessionBytes2,
+		participantClient.deviceKey,
+	)
+	participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, 2*time.Second, 100*time.Millisecond)
+
+	// Reactivate the bot
+	req.Msg.Active = true
+	authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+	_, err = tester.appRegistryClient.SetAppActiveStatus(tester.ctx, req)
+	tester.require.NoError(err)
+
+	// Send message after reactivation - should trigger key solicitation again
+	testSessionBytes3, testSession3 := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message after reactivation",
+		nil,
+		testSessionBytes3,
+		participantClient.deviceKey,
+	)
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession3)
+}

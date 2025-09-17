@@ -85,10 +85,6 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	metadata types.AppMetadata,
 	sharedSecret [32]byte,
 ) error {
-	fs := &ForwardState{}
-	fs.Settings.Store(&settings)
-	q.forwardSettingsCache.Store(app, fs)
-
 	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
 	if err != nil {
 		return err
