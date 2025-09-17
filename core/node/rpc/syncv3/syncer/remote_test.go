@@ -16,6 +16,8 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -428,4 +430,49 @@ func TestRemoteStreamUpdateEmitter_ConnectionAlivePings(t *testing.T) {
 
 	cancel()
 	<-done
+}
+
+func TestRemoteEmitterRun_BackfillFailureRequeuesAndSyncDown(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	subscriber := newFakeStreamSubscriber()
+	emitter := &remoteStreamUpdateEmitter{
+		log:            logging.NoopLogger(),
+		cancel:         func(error) { cancel() },
+		streamID:       testutils.FakeStreamId(shared.STREAM_SPACE_BIN),
+		remoteAddr:     common.HexToAddress("0xbeef"),
+		backfillsQueue: dynmsgbuf.NewDynamicBuffer[*backfillRequest](),
+		subscriber:     subscriber,
+		version:        9,
+		client: &scriptedStreamServiceClient{
+			modifySyncFn: func(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error) {
+				return nil, errors.New("modify failed")
+			},
+		},
+	}
+
+	require.True(t, emitter.EnqueueBackfill(&protocol.SyncCookie{}, []string{"s1"}))
+	require.True(t, emitter.EnqueueBackfill(&protocol.SyncCookie{}, []string{"s2"}))
+
+	stream, wallet, _, _ := newTestStream(t, ctx)
+	stream.Reset(1, []common.Address{wallet.Address}, wallet.Address)
+
+	messages := []*protocol.SyncStreamsResponse{{SyncOp: protocol.SyncOp_SYNC_NEW, SyncId: "remote"}}
+	serverStream := newServerStreamForClient(t, newFakeStreamingClientConn(messages, nil))
+	require.True(t, serverStream.Receive())
+
+	emitter.run(ctx, stream, serverStream)
+
+	down := subscriber.waitForMessage(t)
+	require.Equal(t, protocol.SyncOp_SYNC_DOWN, down.resp.GetSyncOp())
+	require.Empty(t, down.resp.GetTargetSyncIds())
+
+	target1 := subscriber.waitForMessage(t)
+	require.Equal(t, protocol.SyncOp_SYNC_DOWN, target1.resp.GetSyncOp())
+	require.Equal(t, []string{"s1"}, target1.resp.GetTargetSyncIds())
+
+	target2 := subscriber.waitForMessage(t)
+	require.Equal(t, protocol.SyncOp_SYNC_DOWN, target2.resp.GetSyncOp())
+	require.Equal(t, []string{"s2"}, target2.resp.GetTargetSyncIds())
 }

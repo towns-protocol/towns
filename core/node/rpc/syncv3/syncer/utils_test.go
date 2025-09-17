@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -224,6 +225,127 @@ func (s *stubEmitter) EnqueueBackfill(*protocol.SyncCookie, []string) bool {
 	res := s.enqueueResults[s.enqueueCalls]
 	s.enqueueCalls++
 	return res
+}
+
+type scriptedStreamServiceClient struct {
+	syncStreamsFn func(context.Context, *connect.Request[protocol.SyncStreamsRequest]) (*connect.ServerStreamForClient[protocol.SyncStreamsResponse], error)
+	modifySyncFn  func(context.Context, *connect.Request[protocol.ModifySyncRequest]) (*connect.Response[protocol.ModifySyncResponse], error)
+	pingSyncFn    func(context.Context, *connect.Request[protocol.PingSyncRequest]) (*connect.Response[protocol.PingSyncResponse], error)
+}
+
+func (s *scriptedStreamServiceClient) SyncStreams(
+	ctx context.Context,
+	req *connect.Request[protocol.SyncStreamsRequest],
+) (*connect.ServerStreamForClient[protocol.SyncStreamsResponse], error) {
+	if s.syncStreamsFn == nil {
+		return nil, errors.New("SyncStreams not configured")
+	}
+	return s.syncStreamsFn(ctx, req)
+}
+
+func (s *scriptedStreamServiceClient) ModifySync(
+	ctx context.Context,
+	req *connect.Request[protocol.ModifySyncRequest],
+) (*connect.Response[protocol.ModifySyncResponse], error) {
+	if s.modifySyncFn == nil {
+		return nil, errors.New("ModifySync not configured")
+	}
+	return s.modifySyncFn(ctx, req)
+}
+
+func (s *scriptedStreamServiceClient) PingSync(
+	ctx context.Context,
+	req *connect.Request[protocol.PingSyncRequest],
+) (*connect.Response[protocol.PingSyncResponse], error) {
+	if s.pingSyncFn == nil {
+		return connect.NewResponse(&protocol.PingSyncResponse{}), nil
+	}
+	return s.pingSyncFn(ctx, req)
+}
+
+// Panic for all other methods to catch unintended usage.
+func (s *scriptedStreamServiceClient) Info(
+	context.Context,
+	*connect.Request[protocol.InfoRequest],
+) (*connect.Response[protocol.InfoResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) CreateStream(
+	context.Context,
+	*connect.Request[protocol.CreateStreamRequest],
+) (*connect.Response[protocol.CreateStreamResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) CreateMediaStream(
+	context.Context,
+	*connect.Request[protocol.CreateMediaStreamRequest],
+) (*connect.Response[protocol.CreateMediaStreamResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) GetStream(
+	context.Context,
+	*connect.Request[protocol.GetStreamRequest],
+) (*connect.Response[protocol.GetStreamResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) GetStreamEx(
+	context.Context,
+	*connect.Request[protocol.GetStreamExRequest],
+) (*connect.ServerStreamForClient[protocol.GetStreamExResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) GetMiniblocks(
+	context.Context,
+	*connect.Request[protocol.GetMiniblocksRequest],
+) (*connect.Response[protocol.GetMiniblocksResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) GetLastMiniblockHash(
+	context.Context,
+	*connect.Request[protocol.GetLastMiniblockHashRequest],
+) (*connect.Response[protocol.GetLastMiniblockHashResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) AddEvent(
+	context.Context,
+	*connect.Request[protocol.AddEventRequest],
+) (*connect.Response[protocol.AddEventResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) AddMediaEvent(
+	context.Context,
+	*connect.Request[protocol.AddMediaEventRequest],
+) (*connect.Response[protocol.AddMediaEventResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) AddStreamToSync(
+	context.Context,
+	*connect.Request[protocol.AddStreamToSyncRequest],
+) (*connect.Response[protocol.AddStreamToSyncResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) CancelSync(
+	context.Context,
+	*connect.Request[protocol.CancelSyncRequest],
+) (*connect.Response[protocol.CancelSyncResponse], error) {
+	panic("not implemented")
+}
+
+func (s *scriptedStreamServiceClient) RemoveStreamFromSync(
+	context.Context,
+	*connect.Request[protocol.RemoveStreamFromSyncRequest],
+) (*connect.Response[protocol.RemoveStreamFromSyncResponse], error) {
+	panic("not implemented")
 }
 
 // newServerStreamForClient constructs a connect.ServerStreamForClient backed by the
