@@ -25,7 +25,11 @@ func TestProcessStreamUpdate_AllSubscribersVersion(t *testing.T) {
 	require.Equal(t, protocol.SyncOp_SYNC_UPDATE, sub.updates[0].GetSyncOp())
 
 	// SYNC_DOWN should remove the entire stream entry.
-	e.processStreamUpdateCommand(streamID, &protocol.SyncStreamsResponse{SyncOp: protocol.SyncOp_SYNC_DOWN}, syncer.AllSubscribersVersion)
+	e.processStreamUpdateCommand(
+		streamID,
+		&protocol.SyncStreamsResponse{SyncOp: protocol.SyncOp_SYNC_DOWN},
+		syncer.AllSubscribersVersion,
+	)
 	require.Empty(t, e.subscribers)
 }
 
