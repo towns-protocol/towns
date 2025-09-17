@@ -194,7 +194,6 @@ export function makeBaseChainConfig(
  */
 export function makeRiverConfig(inEnvironmentId?: string, opts?: SafeEnvOpts): RiverConfig {
     const environmentId = inEnvironmentId ?? getEnvironmentId(opts)
-    console.log('makeRiverConfig', { environmentId, opts })
     try {
         const config = {
             environmentId,
@@ -228,9 +227,7 @@ export function getEnvironmentIds(opts?: SafeEnvOpts): string[] {
  * @returns Available environments
  */
 export function getEnvironments(opts?: SafeEnvOpts): RiverConfig[] {
-    console.log('getEnvironments', { opts })
     return getWeb3Deployments(opts).map((id) => {
-        console.log('getEnvironments2', { id, opts })
         return makeRiverConfig(id, opts)
     })
 }
