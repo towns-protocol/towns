@@ -41,8 +41,12 @@ func TestNewRemoteStreamUpdateEmitter_Success(t *testing.T) {
 
 	client := newMockStreamServiceClient(t)
 	client.On("SyncStreams", mock.Anything, mock.Anything).Return(serverStream, nil).Once()
-	client.On("ModifySync", mock.Anything, mock.Anything).Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).Maybe()
-	client.On("PingSync", mock.Anything, mock.Anything).Return(connect.NewResponse(&protocol.PingSyncResponse{}), nil).Maybe()
+	client.On("ModifySync", mock.Anything, mock.Anything).
+		Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).
+		Maybe()
+	client.On("PingSync", mock.Anything, mock.Anything).
+		Return(connect.NewResponse(&protocol.PingSyncResponse{}), nil).
+		Maybe()
 
 	nodeRegistry := newMockNodeRegistry(t)
 	nodeRegistry.On("GetStreamServiceClientForAddress", remoteAddr).Return(client, nil).Once()
@@ -81,7 +85,9 @@ func TestNewRemoteStreamUpdateEmitter_Errors(t *testing.T) {
 			name: "syncStreamsError",
 			setup: func(t *testing.T, remote common.Address) *mocks.MockStreamServiceClient {
 				client := newMockStreamServiceClient(t)
-				client.On("SyncStreams", mock.Anything, mock.Anything).Return(nil, errors.New("sync call failed")).Once()
+				client.On("SyncStreams", mock.Anything, mock.Anything).
+					Return(nil, errors.New("sync call failed")).
+					Once()
 				return client
 			},
 		},
@@ -92,7 +98,9 @@ func TestNewRemoteStreamUpdateEmitter_Errors(t *testing.T) {
 				srv := newServerStreamForClient(t, conn)
 				client := newMockStreamServiceClient(t)
 				client.On("SyncStreams", mock.Anything, mock.Anything).Return(srv, nil).Once()
-				client.On("ModifySync", mock.Anything, mock.Anything).Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).Maybe()
+				client.On("ModifySync", mock.Anything, mock.Anything).
+					Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).
+					Maybe()
 				return client
 			},
 		},
@@ -104,7 +112,9 @@ func TestNewRemoteStreamUpdateEmitter_Errors(t *testing.T) {
 				srv := newServerStreamForClient(t, conn)
 				client := newMockStreamServiceClient(t)
 				client.On("SyncStreams", mock.Anything, mock.Anything).Return(srv, nil).Once()
-				client.On("ModifySync", mock.Anything, mock.Anything).Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).Maybe()
+				client.On("ModifySync", mock.Anything, mock.Anything).
+					Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).
+					Maybe()
 				return client
 			},
 		},
@@ -116,7 +126,9 @@ func TestNewRemoteStreamUpdateEmitter_Errors(t *testing.T) {
 				srv := newServerStreamForClient(t, conn)
 				client := newMockStreamServiceClient(t)
 				client.On("SyncStreams", mock.Anything, mock.Anything).Return(srv, nil).Once()
-				client.On("ModifySync", mock.Anything, mock.Anything).Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).Maybe()
+				client.On("ModifySync", mock.Anything, mock.Anything).
+					Return(connect.NewResponse(&protocol.ModifySyncResponse{}), nil).
+					Maybe()
 				return client
 			},
 		},

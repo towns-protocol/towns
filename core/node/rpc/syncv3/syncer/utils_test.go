@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -193,13 +194,21 @@ func (f *fakeStreamingClientConn) CloseResponse() error {
 
 // newServerStreamForClient constructs a connect.ServerStreamForClient backed by the
 // provided fake connection.
-func newServerStreamForClient(t require.TestingT, conn connect.StreamingClientConn) *connect.ServerStreamForClient[protocol.SyncStreamsResponse] {
+func newServerStreamForClient(
+	t require.TestingT,
+	conn connect.StreamingClientConn,
+) *connect.ServerStreamForClient[protocol.SyncStreamsResponse] {
 	stream := &connect.ServerStreamForClient[protocol.SyncStreamsResponse]{}
 	setServerStreamField(t, stream, "conn", conn)
 	return stream
 }
 
-func setServerStreamField(t require.TestingT, stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse], field string, value any) {
+func setServerStreamField(
+	t require.TestingT,
+	stream *connect.ServerStreamForClient[protocol.SyncStreamsResponse],
+	field string,
+	value any,
+) {
 	v := reflect.ValueOf(stream).Elem()
 	f := v.FieldByName(field)
 	require.True(t, f.IsValid(), "field %s not found", field)
@@ -252,6 +261,55 @@ func newCollectingSubscriber() *collectingSubscriber {
 	return &collectingSubscriber{ch: make(chan subscriberMsg, 8)}
 }
 
-func (c *collectingSubscriber) OnStreamEvent(streamID shared.StreamId, update *protocol.SyncStreamsResponse, version int) {
+func (c *collectingSubscriber) OnStreamEvent(
+	streamID shared.StreamId,
+	update *protocol.SyncStreamsResponse,
+	version int,
+) {
 	c.ch <- subscriberMsg{resp: update, version: version}
+}
+
+type fakeStreamCache struct {
+	stream *events.Stream
+	err    error
+}
+
+func (f *fakeStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId) (*events.Stream, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.stream, nil
+}
+
+type recordingSubscriber struct {
+	ch chan subscriberMsg
+}
+
+func newRecordingSubscriber() *recordingSubscriber {
+	return &recordingSubscriber{ch: make(chan subscriberMsg, 8)}
+}
+
+func (r *recordingSubscriber) OnStreamEvent(streamID shared.StreamId, update *protocol.SyncStreamsResponse, version int) {
+	r.ch <- subscriberMsg{resp: update, version: version}
+}
+
+type stubEmitter struct {
+	enqueueResults []bool
+	enqueueCalls   int
+	closed         bool
+	version        int
+	node           common.Address
+}
+
+func (s *stubEmitter) StreamID() shared.StreamId { return shared.StreamId{} }
+func (s *stubEmitter) Node() common.Address      { return s.node }
+func (s *stubEmitter) Version() int              { return s.version }
+func (s *stubEmitter) Close()                    { s.closed = true }
+func (s *stubEmitter) EnqueueBackfill(*protocol.SyncCookie, []string) bool {
+	if s.enqueueCalls >= len(s.enqueueResults) {
+		return false
+	}
+	res := s.enqueueResults[s.enqueueCalls]
+	s.enqueueCalls++
+	return res
 }

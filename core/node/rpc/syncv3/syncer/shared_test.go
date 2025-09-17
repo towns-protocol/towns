@@ -25,7 +25,16 @@ func TestSharedStreamUpdateEmitter_ForwardsBufferedBackfills(t *testing.T) {
 	subscriber := newCollectingSubscriber()
 	nodeRegistry := newMockNodeRegistry(t)
 
-	shared := newSharedStreamUpdateEmitter(ctx, wallet.Address, cache, nodeRegistry, subscriber, stream.StreamId(), 7, nil)
+	shared := newSharedStreamUpdateEmitter(
+		ctx,
+		wallet.Address,
+		cache,
+		nodeRegistry,
+		subscriber,
+		stream.StreamId(),
+		7,
+		nil,
+	)
 	t.Cleanup(shared.Close)
 
 	require.Equal(t, common.Address{}, shared.Node())
