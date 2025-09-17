@@ -138,33 +138,16 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
-	streamID, err := StreamIdFromBytes(r.GetNextSyncCookie().GetStreamId())
-	if err != nil {
-		logging.FromCtx(s.globalCtx).
-			Errorw("failed to get stream id", "stream", r.GetNextSyncCookie().GetStreamId(), "error", err)
-		return
-	}
-
-	if err = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
+func (s *localSyncer) OnUpdate(streamID StreamId, r *StreamAndCookie) {
+	if err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}); err != nil {
 		s.streamUnsub(streamID)
 	}
 }
 
-// OnSyncError is called when a sync subscription failed unrecoverable
-func (s *localSyncer) OnSyncError(error) {
-	s.activeStreams.Range(func(streamID StreamId, syncStream Stream) bool {
-		s.OnStreamSyncDown(streamID)
-		return true
-	})
-	s.activeStreams.Clear()
-}
-
-// OnStreamSyncDown is called when updates for a stream could not be given.
-func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
-	if err := s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}); err != nil {
-		s.streamUnsub(streamID)
-	}
+// OnSyncDown is called when updates for a stream could not be given.
+func (s *localSyncer) OnSyncDown(streamID StreamId) {
+	_ = s.sendResponse(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	s.streamUnsub(streamID)
 }
 
 func (s *localSyncer) backfillStream(ctx context.Context, cookie *SyncCookie, targetSyncIds []string) error {
@@ -221,7 +204,6 @@ func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
 	return err
 }
 
-// OnUpdate is called each time a new cookie is available for a stream
 func (s *localSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
 	select {
 	case <-s.globalCtx.Done():

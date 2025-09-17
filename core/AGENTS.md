@@ -19,6 +19,7 @@ This module implements the backend River node server for Towns Protocol, a distr
 ### Testing Commands
 
 - Use standard Go test commands
+- Do not set GOCACHE or GOMODCACHE, run go commands directly without setting extra environment variables
 
 ### Infrastructure Commands
 

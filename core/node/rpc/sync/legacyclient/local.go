@@ -100,23 +100,14 @@ func (s *localSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*
 }
 
 // OnUpdate is called each time a new cookie is available for a stream
-func (s *localSyncer) OnUpdate(r *StreamAndCookie) {
+func (s *localSyncer) OnUpdate(streamID StreamId, r *StreamAndCookie) {
 	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r})
 }
 
-// OnSyncError is called when a sync subscription failed unrecoverable
-func (s *localSyncer) OnSyncError(error) {
-	s.activeStreams.Range(func(streamID StreamId, syncStream *Stream) bool {
-		syncStream.Unsub(s)
-		s.OnStreamSyncDown(streamID)
-		return true
-	})
-	s.activeStreams.Clear()
-}
-
-// OnStreamSyncDown is called when updates for a stream could not be given.
-func (s *localSyncer) OnStreamSyncDown(streamID StreamId) {
+// OnSyncDown is called when updates for a stream could not be given.
+func (s *localSyncer) OnSyncDown(streamID StreamId) {
 	s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
+	s.activeStreams.Delete(streamID)
 }
 
 func (s *localSyncer) addStream(ctx context.Context, cookie *SyncCookie) error {
@@ -152,7 +143,7 @@ func (s *localSyncer) DebugDropStream(_ context.Context, streamID StreamId) (boo
 	syncStream, found := s.activeStreams.LoadAndDelete(streamID)
 	if found {
 		syncStream.Unsub(s)
-		s.OnStreamSyncDown(streamID)
+		s.sendResponse(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]})
 		return false, nil
 	}
 

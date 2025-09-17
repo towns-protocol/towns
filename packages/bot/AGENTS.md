@@ -123,6 +123,10 @@ Methods available on the `handler` parameter in event callbacks:
 - `hasAdminPermission(userId, spaceId)` - Check admin status
 - `checkPermission(streamId, userId, permission)` - Check specific permission
 
+**Moderation Operations:**
+- `ban(userId, spaceId)` - Ban a user from a space (requires `ModifyBanning` permission)
+- `unban(userId, spaceId)` - Unban a user from a space (requires `ModifyBanning` permission)
+
 **Web3 Operations:**
 - `writeContract(tx)` - Execute contract write
 - `readContract(parameters)` - Read contract state
@@ -251,12 +255,51 @@ bot.onSlashCommand("ai", async (handler, { channelId, args }) => {
 })
 ```
 
+### Moderation Operations
+```typescript
+// Ban/unban users (requires ModifyBanning permission)
+bot.onSlashCommand("ban", async (handler, { channelId, spaceId, args, userId }) => {
+  // Check if the command issuer has admin permission
+  if (!await handler.hasAdminPermission(userId, spaceId)) {
+    await handler.sendMessage(channelId, "Only admins can use this command")
+    return
+  }
+  
+  const userToBan = args[0] // Expecting user address as first argument
+  if (!userToBan) {
+    await handler.sendMessage(channelId, "Please specify a user address to ban")
+    return
+  }
+  
+  try {
+    // Ban the user - bot must have ModifyBanning permission
+    const result = await handler.ban(userToBan, spaceId)
+    await handler.sendMessage(channelId, `Successfully banned user ${userToBan}`)
+  } catch (error) {
+    await handler.sendMessage(channelId, `Failed to ban user: ${error.message}`)
+  }
+})
+
+bot.onSlashCommand("unban", async (handler, { channelId, spaceId, args }) => {
+  const userToUnban = args[0]
+  
+  try {
+    // Unban the user - bot must have ModifyBanning permission
+    const result = await handler.unban(userToUnban, spaceId)
+    await handler.sendMessage(channelId, `Successfully unbanned user ${userToUnban}`)
+  } catch (error) {
+    await handler.sendMessage(channelId, `Failed to unban user: ${error.message}`)
+  }
+})
+```
+
 ## Important Notes
 
 - All messages are end-to-end encrypted by default
 - The bot framework automatically handles encryption/decryption
 - Bot only supports channel messages (no DM/GDM support)
 - Bot needs appropriate permissions in spaces to send messages
+- **Ban/Unban operations require `ModifyBanning` permission**: The bot's app must be registered with `ModifyBanning` permission and properly installed on the space for ban/unban operations to work
 - JWT authentication is required for webhook security
 - Messages include both encrypted and decrypted forms in processing
 - Use environment variables for sensitive configuration
