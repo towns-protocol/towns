@@ -151,43 +151,6 @@ func (s *stubStreamCache) GetStreamNoWait(ctx context.Context, _ shared.StreamId
 	return s.stream, nil
 }
 
-type stubStreamSubscriber struct {
-	id      string
-	updates []*protocol.SyncStreamsResponse
-}
-
-func newStubStreamSubscriber(id string) *stubStreamSubscriber {
-	return &stubStreamSubscriber{id: id}
-}
-
-func (s *stubStreamSubscriber) SyncID() string { return s.id }
-
-func (s *stubStreamSubscriber) OnUpdate(update *protocol.SyncStreamsResponse) {
-	s.updates = append(s.updates, proto.Clone(update).(*protocol.SyncStreamsResponse))
-}
-
-type stubRegistry struct {
-	subscribeCalls []struct {
-		cookie  *protocol.SyncCookie
-		syncIDs []string
-	}
-	unsubscribeCalls []shared.StreamId
-}
-
-func (s *stubRegistry) EnqueueSubscribeAndBackfill(cookie *protocol.SyncCookie, syncIDs []string) {
-	s.subscribeCalls = append(s.subscribeCalls, struct {
-		cookie  *protocol.SyncCookie
-		syncIDs []string
-	}{
-		cookie:  proto.Clone(cookie).(*protocol.SyncCookie),
-		syncIDs: append([]string(nil), syncIDs...),
-	})
-}
-
-func (s *stubRegistry) EnqueueUnsubscribe(streamID shared.StreamId) {
-	s.unsubscribeCalls = append(s.unsubscribeCalls, streamID)
-}
-
 // fakeStreamingClientConn is a StreamingClientConn that delivers a predefined
 // sequence of responses to the consumer.
 type fakeStreamingClientConn struct {
