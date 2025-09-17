@@ -1574,7 +1574,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 					testCiphertexts,
 				)
 			} else {
-				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, 10*time.Second, 100*time.Millisecond)
+				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 10*time.Second, 100*time.Millisecond)
 			}
 
 			if expectForwarding {
@@ -2680,7 +2680,7 @@ func TestAppRegistry_InactiveAppsDoNotReceiveMessages(t *testing.T) {
 	tester.require.NoError(err)
 
 	// Send message while bot is inactive - should NOT trigger key solicitation
-	testSessionBytes2, _ := generateRandomSession(tester.require)
+	testSessionBytes2, testSession2 := generateRandomSession(tester.require)
 	participantClient.sayWithSessionAndTags(
 		channelId,
 		"message while inactive",
@@ -2688,7 +2688,7 @@ func TestAppRegistry_InactiveAppsDoNotReceiveMessages(t *testing.T) {
 		testSessionBytes2,
 		participantClient.deviceKey,
 	)
-	participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, 2*time.Second, 100*time.Millisecond)
+	participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession2, 2*time.Second, 100*time.Millisecond)
 
 	// Reactivate the bot
 	req.Msg.Active = true

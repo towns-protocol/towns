@@ -3,8 +3,6 @@ package app_registry
 import (
 	"context"
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -37,24 +35,15 @@ type SessionMessages struct {
 type CachedEncryptedMessageQueue struct {
 	store         storage.AppRegistryStore
 	appDispatcher *AppDispatcher
-	// the forwardSettingsCache stores forward settings for each app. These are used
-	// to determine whether or not to forward to each app in a channel whenever
-	// a new message is received.
-	forwardSettingsCache sync.Map
-
-	// metadataCache stores app metadata with TTL to reduce database queries.
-	metadataCache *arc.ARCCache[string, *metadataCacheEntry]
+	// appInfoCache stores complete AppInfo objects with TTL to reduce database queries.
+	// This includes settings, metadata, webhook status, and active status.
+	appInfoCache *arc.ARCCache[string, *appInfoCacheEntry]
 }
 
-// metadataCacheEntry holds cached metadata with a timestamp for TTL validation
-type metadataCacheEntry struct {
-	metadata  *types.AppMetadata
+// appInfoCacheEntry holds cached AppInfo with a timestamp for TTL validation
+type appInfoCacheEntry struct {
+	appInfo   *storage.AppInfo
 	timestamp time.Time
-}
-
-type ForwardState struct {
-	HasWebhook bool
-	Settings   atomic.Pointer[types.AppSettings]
 }
 
 func NewCachedEncryptedMessageQueue(
@@ -62,17 +51,17 @@ func NewCachedEncryptedMessageQueue(
 	store storage.AppRegistryStore,
 	appDispatcher *AppDispatcher,
 ) (*CachedEncryptedMessageQueue, error) {
-	// Initialize metadata cache with 50,000 max entries
-	metadataCache, err := arc.NewARC[string, *metadataCacheEntry](50000)
+	// Initialize app info cache with 50,000 max entries
+	appInfoCache, err := arc.NewARC[string, *appInfoCacheEntry](50000)
 	if err != nil {
 		return nil, base.AsRiverError(err, protocol.Err_INTERNAL).
-			Message("Unable to create metadata cache")
+			Message("Unable to create app info cache")
 	}
 
 	queue := &CachedEncryptedMessageQueue{
 		appDispatcher: appDispatcher,
 		store:         store,
-		metadataCache: metadataCache,
+		appInfoCache:  appInfoCache,
 	}
 	return queue, nil
 }
@@ -86,18 +75,7 @@ func (q *CachedEncryptedMessageQueue) CreateApp(
 	sharedSecret [32]byte,
 ) error {
 	err := q.store.CreateApp(ctx, owner, app, settings, metadata, sharedSecret)
-	if err != nil {
-		return err
-	}
-
-	// Pre-warm metadata cache for newly created app
-	cacheKey := app.String()
-	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
-		metadata:  &metadata,
-		timestamp: time.Now(),
-	})
-
-	return nil
+	return err
 }
 
 func (q *CachedEncryptedMessageQueue) RotateSharedSecret(
@@ -123,9 +101,7 @@ func (q *CachedEncryptedMessageQueue) UpdateSettings(
 	if err := q.store.UpdateSettings(ctx, app, settings); err != nil {
 		return err
 	}
-	if fs, exists := q.forwardSettingsCache.Load(app); exists {
-		fs.(*ForwardState).Settings.Store(&settings)
-	}
+	q.appInfoCache.Remove(app.String())
 	return nil
 }
 
@@ -136,13 +112,10 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	deviceKey string,
 	fallbackKey string,
 ) error {
-	if fs, exists := q.forwardSettingsCache.Load(app); exists {
-		fs.(*ForwardState).HasWebhook = true
-	}
 	if err := q.store.RegisterWebhook(ctx, app, webhook, deviceKey, fallbackKey); err != nil {
 		return err
 	}
-
+	q.appInfoCache.Remove(app.String())
 	return nil
 }
 
@@ -159,21 +132,11 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	app common.Address,
 	metadata types.AppMetadata,
 ) error {
-	err := q.store.SetAppMetadata(ctx, app, metadata)
-	if err != nil {
+	if err := q.store.SetAppMetadata(ctx, app, metadata); err != nil {
 		return err
 	}
 
-	// Invalidate cache on successful update
-	cacheKey := app.String()
-	q.metadataCache.Remove(cacheKey)
-
-	// Pre-populate with new value
-	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
-		metadata:  &metadata,
-		timestamp: time.Now(),
-	})
-
+	q.appInfoCache.Remove(app.String())
 	return nil
 }
 
@@ -197,11 +160,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 		return err
 	}
 
-	// Invalidate cache on successful update
-	// We don't re-populate the cache because we'd need to fetch the full metadata
-	// to do so, and the partial update doesn't return the complete updated metadata
-	cacheKey := app.String()
-	q.metadataCache.Remove(cacheKey)
+	q.appInfoCache.Remove(app.String())
 
 	return nil
 }
@@ -210,31 +169,17 @@ func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
 ) (*types.AppMetadata, error) {
-	cacheKey := app.String()
-
-	// Check cache with TTL validation (15 seconds)
-	if entry, exists := q.metadataCache.Get(cacheKey); exists {
-		if time.Since(entry.timestamp) < 15*time.Second {
-			// Cache hit with valid TTL
-			return entry.metadata, nil
-		}
-		// Expired entry, remove it
-		q.metadataCache.Remove(cacheKey)
-	}
-
-	// Cache miss or expired, fetch from store
-	metadata, err := q.store.GetAppMetadata(ctx, app)
+	// Try to get from cache first
+	appInfo, err := q.getCachedAppInfo(ctx, app)
 	if err != nil {
 		return nil, err
 	}
+	if appInfo != nil {
+		return &appInfo.Metadata, nil
+	}
 
-	// Cache the result
-	q.metadataCache.Add(cacheKey, &metadataCacheEntry{
-		metadata:  metadata,
-		timestamp: time.Now(),
-	})
-
-	return metadata, nil
+	// Not found in cache, shouldn't happen if app exists
+	return nil, base.RiverError(protocol.Err_NOT_FOUND, "App not found")
 }
 
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
@@ -347,54 +292,36 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 }
 
 func (q *CachedEncryptedMessageQueue) IsApp(ctx context.Context, userId common.Address) (bool, error) {
-	_, exists := q.forwardSettingsCache.Load(userId)
-	if exists {
-		return true, nil
-	} else {
-		info, err := q.store.GetAppInfo(ctx, userId)
-		if err != nil {
-			if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
-				return false, nil
-			} else {
-				return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
-			}
+	appInfo, err := q.getCachedAppInfo(ctx, userId)
+	if err != nil {
+		if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+			return false, nil
 		}
-		fs := &ForwardState{
-			HasWebhook: info.WebhookUrl != "",
-		}
-		fs.Settings.Store(&info.Settings)
-		_, _ = q.forwardSettingsCache.LoadOrStore(userId, fs)
-		return true, nil
+		return false, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the id is an app")
 	}
+	return appInfo != nil, nil
 }
 
-// IsForwardableApp returns whether or not an app exists in the registry and has a webhook
-// registered, and, if so, what forward setting should be used when filtering relevant
-// messages.
+// IsForwardableApp returns whether or not an app exists in the registry, is active,
+// has a webhook registered, and what forward setting should be used when filtering relevant messages.
 func (q *CachedEncryptedMessageQueue) IsForwardableApp(
 	ctx context.Context,
 	appId common.Address,
 ) (isForwardable bool, settings types.AppSettings, err error) {
-	fs, exists := q.forwardSettingsCache.Load(appId)
-	if exists {
-		forwardState := fs.(*ForwardState)
-		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
-	} else {
-		info, err := q.store.GetAppInfo(ctx, appId)
-		if err != nil {
-			if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
-				return false, types.AppSettings{}, nil
-			}
-			return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app has a registered webhook")
+	appInfo, err := q.getCachedAppInfo(ctx, appId)
+	if err != nil {
+		if base.AsRiverError(err).Code == protocol.Err_NOT_FOUND {
+			return false, types.AppSettings{}, nil
 		}
-		forwardState := &ForwardState{
-			HasWebhook: info.WebhookUrl != "",
-		}
-		forwardState.Settings.Store(&info.Settings)
-		fs, _ = q.forwardSettingsCache.LoadOrStore(appId, forwardState)
-		forwardState = fs.(*ForwardState)
-		return forwardState.HasWebhook, *forwardState.Settings.Load(), nil
+		return false, types.AppSettings{}, base.AsRiverError(err, protocol.Err_DB_OPERATION_FAILURE).Message("Could not determine if the app is forwardable")
 	}
+	if appInfo == nil {
+		return false, types.AppSettings{}, nil
+	}
+
+	// App must be active and have a webhook to be forwardable
+	isForwardable = appInfo.Active && appInfo.WebhookUrl != ""
+	return isForwardable, appInfo.Settings, nil
 }
 
 // IsUsernameAvailable checks if a username is available for use
@@ -410,8 +337,41 @@ func (q *CachedEncryptedMessageQueue) SetAppActiveStatus(
 	app common.Address,
 	active bool,
 ) error {
-	q.forwardSettingsCache.Delete(app)
-	q.metadataCache.Remove(app.String())
+	if err := q.store.SetAppActiveStatus(ctx, app, active); err != nil {
+		return err
+	}
+	q.appInfoCache.Remove(app.String())
+	return nil
+}
 
-	return q.store.SetAppActiveStatus(ctx, app, active)
+// getCachedAppInfo retrieves AppInfo from cache or fetches from store if not cached
+func (q *CachedEncryptedMessageQueue) getCachedAppInfo(
+	ctx context.Context,
+	app common.Address,
+) (*storage.AppInfo, error) {
+	cacheKey := app.String()
+
+	// Check cache with TTL validation (15 seconds)
+	if entry, exists := q.appInfoCache.Get(cacheKey); exists {
+		if time.Since(entry.timestamp) < 15*time.Second {
+			// Cache hit with valid TTL
+			return entry.appInfo, nil
+		}
+		// Expired entry, remove it
+		q.appInfoCache.Remove(cacheKey)
+	}
+
+	// Cache miss or expired, fetch from store
+	appInfo, err := q.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cache the result
+	q.appInfoCache.Add(cacheKey, &appInfoCacheEntry{
+		appInfo:   appInfo,
+		timestamp: time.Now(),
+	})
+
+	return appInfo, nil
 }
