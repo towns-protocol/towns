@@ -73,18 +73,12 @@ func NewLocalStreamUpdateEmitter(
 }
 
 // OnUpdate implements events.SyncResultReceiver interface.
-func (l *localStreamUpdateEmitter) OnUpdate(r *StreamAndCookie) {
+func (l *localStreamUpdateEmitter) OnUpdate(_ StreamId, r *StreamAndCookie) {
 	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, l.version)
 }
 
-// OnSyncError implements events.SyncResultReceiver interface.
-func (l *localStreamUpdateEmitter) OnSyncError(err error) {
-	l.log.Error("sync error for local stream", "error", err)
-	l.cancel(err)
-}
-
-// OnStreamSyncDown implements events.SyncResultReceiver interface.
-func (l *localStreamUpdateEmitter) OnStreamSyncDown(StreamId) {
+// OnSyncDown implements events.SyncResultReceiver interface.
+func (l *localStreamUpdateEmitter) OnSyncDown(StreamId) {
 	l.log.Warn("local stream sync down")
 	l.cancel(nil)
 }
