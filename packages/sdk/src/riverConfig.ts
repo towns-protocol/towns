@@ -224,7 +224,7 @@ export function getEnvironmentIds(opts?: SafeEnvOpts): string[] {
 }
 
 /**
- * @returns Available environments
+ * @returns Available environments DO NOT COMMIT THIS COMMENT
  */
 export function getEnvironments(opts?: SafeEnvOpts): RiverConfig[] {
     return getWeb3Deployments(opts).map((id) => {

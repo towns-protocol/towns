@@ -5,6 +5,7 @@ export interface SafeEnvOpts {
     keyPrefix?: string
 }
 
+// DO NOT COMMIT THIS COMMENT
 export function safeEnv(keys: string[], opts?: SafeEnvOpts): string | undefined {
     for (const keyRef of keys) {
         // check for key prefix
