@@ -500,10 +500,10 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	query := `
 		WITH max_end_bytes AS (
 			SELECT COALESCE(MAX(end_bytes), 0) as max_end
-			FROM external_media_markers
+			FROM {{external_media_markers}}
 			WHERE stream_id = $1
 		)
-		INSERT INTO external_media_markers (stream_id, miniblock, start_bytes, end_bytes) 
+		INSERT INTO {{external_media_markers}} (stream_id, miniblock, start_bytes, end_bytes) 
 		SELECT $1, $2, max_end + 1, max_end + $3
 		FROM max_end_bytes
 		ON CONFLICT (stream_id, miniblock) 

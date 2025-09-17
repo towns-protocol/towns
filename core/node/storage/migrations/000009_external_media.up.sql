@@ -22,14 +22,14 @@ DO $$
 			suffix = LPAD(TO_HEX(i), 2, '0');
 			
 			-- Create partitioned external_media_markers tables
-			EXECUTE 'CREATE TABLE IF NOT EXISTS external_media_markers_' || suffix || ' (
+			EXECUTE 'CREATE TABLE IF NOT EXISTS external_media_markers_m' || suffix || ' (
 				stream_id CHAR(64) NOT NULL,                     -- Stream ID (foreign key)
 				miniblock INT NOT NULL,                          -- Miniblock number
 				start_bytes BIGINT NOT NULL,                     -- Start byte position for this chunk
 				end_bytes BIGINT NOT NULL,                       -- End byte position for this chunk
 				PRIMARY KEY (stream_id, miniblock)
 			)';
-			EXECUTE 'ALTER TABLE external_media_markers_' || suffix || ' ALTER COLUMN stream_id SET STORAGE PLAIN;';
+			EXECUTE 'ALTER TABLE external_media_markers_m' || suffix || ' ALTER COLUMN stream_id SET STORAGE PLAIN;';
 		END LOOP;
 	END;
 $$;
