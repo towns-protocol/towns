@@ -45,6 +45,7 @@ type StreamSubscriptionManager interface {
 	// The processor executes the stream subscription request for the given cookie and subscriber.
 	// When the subscriber receives a SyncOp_SYNC_DOWN stream update the subscriber is automatically
 	// unsubscribed from the stream and won't receive further updates.
+	// It's guaranteed that there will be matching backfill or SyncOp_SYNC_DOWN dispatched.
 	EnqueueSubscribe(cookie *SyncCookie, subscriber StreamSubscriber) error
 
 	// EnqueueUnsubscribe adds the given stream unsubscribe request to the internal queue for further processing.
@@ -63,6 +64,7 @@ type StreamSubscriptionManager interface {
 	//
 	// The target syncer will request a stream update message by the given cookie and send it
 	// back to the target sync operation through the given chain of sync IDs.
+	// It's guaranteed that there will be matching backfill or SyncOp_SYNC_DOWN dispatched.
 	EnqueueBackfill(cookie *SyncCookie, syncIDs ...string) error
 
 	// EnqueueRemoveSubscriber removes the given subscriber from all streams it is subscribed to.
@@ -86,8 +88,9 @@ func (e *eventBusImpl) getOrCreateStreamSubscribers(streamID StreamId) streamSub
 }
 
 type eventBusMessageStreamUpdate struct {
-	msg     *SyncStreamsResponse
-	version int
+	streamID StreamId
+	msg      *SyncStreamsResponse
+	version  int
 }
 
 type eventBusMessageSub struct {
@@ -179,8 +182,12 @@ func New(
 // from the stream. A stream down message could be an indicator for a client to re-subscribe on a given stream.
 //
 // TODO: Add retry mechanism?
-func (e *eventBusImpl) OnStreamEvent(msg *SyncStreamsResponse, version int) {
-	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{msg: msg, version: version}})
+func (e *eventBusImpl) OnStreamEvent(streamID StreamId, msg *SyncStreamsResponse, version int) {
+	err := e.queue.AddMessage(&eventBusMessage{update: &eventBusMessageStreamUpdate{
+		streamID: streamID,
+		msg:      msg,
+		version:  version,
+	}})
 	if err != nil {
 		// The failure could happen only if the queue is closed which is theoretically impossible here.
 		e.log.Errorw("failed to add stream update message to the unbounded queue", "error", err)
@@ -242,9 +249,9 @@ func (e *eventBusImpl) run(ctx context.Context) error {
 		for _, msg := range msgs {
 			if msg.update != nil {
 				if len(msg.update.msg.GetTargetSyncIds()) == 0 {
-					e.processStreamUpdateCommand(msg.update.msg, msg.update.version)
+					e.processStreamUpdateCommand(msg.update.streamID, msg.update.msg, msg.update.version)
 				} else {
-					e.processTargetedStreamUpdateCommand(msg.update.msg, msg.update.version)
+					e.processTargetedStreamUpdateCommand(msg.update.streamID, msg.update.msg, msg.update.version)
 				}
 			} else if msg.sub != nil {
 				e.processSubscribeCommand(msg.sub)
@@ -263,21 +270,13 @@ func (e *eventBusImpl) run(ctx context.Context) error {
 //
 // version is the syncer version that the update is sent from. "0" version means that the update is sent
 // to all subscribers of the stream regardless of their sync ID.
-func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, version int) {
+func (e *eventBusImpl) processStreamUpdateCommand(streamID StreamId, msg *SyncStreamsResponse, version int) {
 	if msg == nil {
 		return
 	}
 
 	if len(msg.GetTargetSyncIds()) > 0 {
 		e.log.Error("received targeted stream update message in the common stream update processor")
-		return
-	}
-
-	// TODO: Consider adding ParsedStreamCookie
-	streamID, err := StreamIdFromBytes(msg.StreamID())
-	if err != nil {
-		e.log.Errorw("failed to parse stream id from the stream update message",
-			"streamID", msg.StreamID(), "error", err)
 		return
 	}
 
@@ -316,20 +315,13 @@ func (e *eventBusImpl) processStreamUpdateCommand(msg *SyncStreamsResponse, vers
 //     to the given version list so it can start receiving updates.
 //   - SyncOp_SYNC_DOWN message just removes subscribers with the given sync ID from the list of subscribers
 //     regardless of their version.
-func (e *eventBusImpl) processTargetedStreamUpdateCommand(msg *SyncStreamsResponse, version int) {
+func (e *eventBusImpl) processTargetedStreamUpdateCommand(streamID StreamId, msg *SyncStreamsResponse, version int) {
 	if msg == nil {
 		return
 	}
 
 	if len(msg.GetTargetSyncIds()) == 0 {
 		e.log.Error("received non-targeted stream update message in the targeted stream update processor")
-		return
-	}
-
-	streamID, err := StreamIdFromBytes(msg.StreamID())
-	if err != nil {
-		e.log.Errorw("failed to parse stream id from the stream update message",
-			"streamID", msg.StreamID(), "error", err)
 		return
 	}
 

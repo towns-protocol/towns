@@ -73,8 +73,8 @@ func NewLocalStreamUpdateEmitter(
 }
 
 // OnUpdate implements events.SyncResultReceiver interface.
-func (l *localStreamUpdateEmitter) OnUpdate(_ StreamId, r *StreamAndCookie) {
-	l.subscriber.OnStreamEvent(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, l.version)
+func (l *localStreamUpdateEmitter) OnUpdate(streamID StreamId, r *StreamAndCookie) {
+	l.subscriber.OnStreamEvent(streamID, &SyncStreamsResponse{SyncOp: SyncOp_SYNC_UPDATE, Stream: r}, l.version)
 }
 
 // OnSyncDown implements events.SyncResultReceiver interface.
@@ -168,14 +168,14 @@ func (l *localStreamUpdateEmitter) cleanup() {
 	l.stream.Unsub(l)
 
 	// Send a stream down message to all active syncs of the current syncer version via event bul.
-	l.subscriber.OnStreamEvent(&SyncStreamsResponse{
+	l.subscriber.OnStreamEvent(l.stream.StreamId(), &SyncStreamsResponse{
 		SyncOp:   SyncOp_SYNC_DOWN,
 		StreamId: l.stream.StreamId().Bytes(),
 	}, l.version)
 
 	// Send a stream down message to all pending syncs, i.e. those that are waiting for backfill.
 	for _, msg := range remainingMsgs {
-		l.subscriber.OnStreamEvent(&SyncStreamsResponse{
+		l.subscriber.OnStreamEvent(l.stream.StreamId(), &SyncStreamsResponse{
 			SyncOp:        SyncOp_SYNC_DOWN,
 			StreamId:      l.stream.StreamId().Bytes(),
 			TargetSyncIds: msg.syncIDs,
@@ -202,12 +202,12 @@ func (l *localStreamUpdateEmitter) processBackfillRequest(ctx context.Context, m
 		ctxWithTimeout,
 		&SyncCookie{
 			NodeAddress:       l.localAddr.Bytes(),
-			StreamId:          msg.cookie.GetStreamId(),
+			StreamId:          l.stream.StreamId().Bytes(),
 			MinipoolGen:       msg.cookie.GetMinipoolGen(),
 			PrevMiniblockHash: msg.cookie.GetPrevMiniblockHash(),
 		},
 		func(streamAndCookie *StreamAndCookie) error {
-			l.subscriber.OnStreamEvent(&SyncStreamsResponse{
+			l.subscriber.OnStreamEvent(l.stream.StreamId(), &SyncStreamsResponse{
 				SyncOp:        SyncOp_SYNC_UPDATE,
 				Stream:        streamAndCookie,
 				TargetSyncIds: msg.syncIDs,

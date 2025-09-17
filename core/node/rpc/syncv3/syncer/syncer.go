@@ -33,7 +33,7 @@ type StreamSubscriber interface {
 	//
 	// Version indicates which version of the syncer the update is sent from. If node A goes down
 	// and node B takes over the sync operation, the version will be incremented.
-	OnStreamEvent(update *SyncStreamsResponse, version int)
+	OnStreamEvent(streamID StreamId, update *SyncStreamsResponse, version int)
 }
 
 // StreamUpdateEmitter emit events related to a specific stream.
@@ -76,6 +76,8 @@ type Registry interface {
 	//
 	// If the given stream ID is not found, it sends the stream down message to the subscriber
 	// with the reason (message field in proto).
+	//
+	// It's guaranteed that there will be matching backfill or SyncOp_SYNC_DOWN dispatched.
 	EnqueueSubscribeAndBackfill(cookie *SyncCookie, syncIDs []string)
 
 	// EnqueueUnsubscribe adds a message to the queue to unsubscribe from the given stream updates.
