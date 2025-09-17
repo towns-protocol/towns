@@ -23,11 +23,11 @@ export type RiverConfig = {
 }
 
 function getEnvironmentId(opts: SafeEnvOpts | undefined): string {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (!RIVER_ENV) {
+    const riverEnv = getRiverEnv(opts)
+    if (!riverEnv) {
         throw new Error('either RIVER_ENV or VITE_RIVER_ENV is required to be set in process.env')
     }
-    return RIVER_ENV
+    return riverEnv
 }
 
 function getBaseRpcUrlForChain(chainId: number, opts: SafeEnvOpts | undefined): string {
@@ -91,8 +91,8 @@ function getRiverRpcUrlForChain(chainId: number, opts: SafeEnvOpts | undefined):
 }
 
 export function getNotificationServiceUrl(environmentId: string, opts?: SafeEnvOpts): string {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (RIVER_ENV === environmentId) {
+    const riverEnv = getRiverEnv(opts)
+    if (riverEnv === environmentId) {
         const url = safeEnv(['NOTIFICATION_SERVICE_URL'], opts)
         if (url) {
             return url
@@ -115,8 +115,8 @@ export function getNotificationServiceUrl(environmentId: string, opts?: SafeEnvO
 }
 
 export function getStreamMetadataUrl(environmentId: string, opts?: SafeEnvOpts): string {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (RIVER_ENV === environmentId) {
+    const riverEnv = getRiverEnv(opts)
+    if (riverEnv === environmentId) {
         const url = safeEnv(['STREAM_METADATA_URL'], opts)
         if (url) {
             return url
@@ -139,8 +139,8 @@ export function getStreamMetadataUrl(environmentId: string, opts?: SafeEnvOpts):
 }
 
 export function getAppRegistryUrl(environmentId: string, opts?: SafeEnvOpts): string {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (RIVER_ENV === environmentId) {
+    const riverEnv = getRiverEnv(opts)
+    if (riverEnv === environmentId) {
         const url = safeEnv(['APP_REGISTRY_URL'], opts)
         if (url) {
             return url
@@ -166,7 +166,7 @@ export function makeRiverChainConfig(
     environmentId?: string,
     opts?: SafeEnvOpts,
 ): RiverConfig['river'] {
-    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts))
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts), opts)
     return {
         rpcUrl: getRiverRpcUrlForChain(env.river.chainId, opts),
         chainConfig: env.river,
@@ -177,7 +177,7 @@ export function makeBaseChainConfig(
     environmentId?: string,
     opts?: SafeEnvOpts,
 ): RiverConfig['base'] {
-    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts))
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts), opts)
     return {
         rpcUrl: getBaseRpcUrlForChain(env.base.chainId, opts),
         chainConfig: env.base,
@@ -194,15 +194,16 @@ export function makeBaseChainConfig(
  */
 export function makeRiverConfig(inEnvironmentId?: string, opts?: SafeEnvOpts): RiverConfig {
     const environmentId = inEnvironmentId ?? getEnvironmentId(opts)
+    console.log('makeRiverConfig', { environmentId, opts })
     try {
         const config = {
             environmentId,
-            base: makeBaseChainConfig(environmentId),
-            river: makeRiverChainConfig(environmentId),
+            base: makeBaseChainConfig(environmentId, opts),
+            river: makeRiverChainConfig(environmentId, opts),
             services: [
-                { id: RiverService.Notifications, url: getNotificationServiceUrl(environmentId) },
-                { id: RiverService.AppRegistry, url: getAppRegistryUrl(environmentId) },
-                { id: RiverService.StreamMetadata, url: getStreamMetadataUrl(environmentId) },
+                { id: RiverService.Notifications, url: getNotificationServiceUrl(environmentId, opts) },
+                { id: RiverService.AppRegistry, url: getAppRegistryUrl(environmentId, opts) },
+                { id: RiverService.StreamMetadata, url: getStreamMetadataUrl(environmentId, opts) },
             ],
         } satisfies RiverConfig
         return config
@@ -224,5 +225,9 @@ export function getEnvironmentIds(opts?: SafeEnvOpts): string[] {
  * @returns Available environments
  */
 export function getEnvironments(opts?: SafeEnvOpts): RiverConfig[] {
-    return getWeb3Deployments(opts).map((id) => makeRiverConfig(id, opts))
+    console.log('getEnvironments', { opts })
+    return getWeb3Deployments(opts).map((id) => {
+        console.log('getEnvironments2', { id, opts })
+        return makeRiverConfig(id, opts)
+    })
 }

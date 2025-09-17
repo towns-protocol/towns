@@ -8,7 +8,7 @@ import {
 
 import { foundry } from 'viem/chains'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
-import { getEnvironments, makeRiverConfig } from '@towns-protocol/sdk'
+import { getEnvironments } from '@towns-protocol/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
 import { useState } from 'react'
@@ -32,7 +32,7 @@ import { Label } from '../ui/label'
 const environments = getEnvironments(SAFE_ENV_OPTIONS).map((env) => ({
     id: env.environmentId,
     name: env.environmentId,
-    chainId: env.base.chainConfig.chainId,
+    riverConfig: env,
 }))
 
 const privateNetworks =
@@ -116,13 +116,12 @@ export const RiverEnvSwitcherContent = (props: {
                         <span className="text-sm font-medium">Select an environment</span>
                         {environments
                             .filter(({ id }) => !privateNetworks.includes(id))
-                            .map(({ id, name, chainId }) => (
+                            .map(({ id, name, riverConfig }) => (
                                 <DialogClose asChild key={id}>
                                     <Button
                                         variant="outline"
                                         disabled={currentEnv === id && isAgentConnected}
                                         onClick={async () => {
-                                            const riverConfig = makeRiverConfig(id)
                                             if (props.allowBearerToken) {
                                                 if (bearerToken) {
                                                     await connectUsingBearerToken(bearerToken, {
@@ -137,7 +136,9 @@ export const RiverEnvSwitcherContent = (props: {
                                                     })
                                                 }
                                             } else {
-                                                switchChain?.({ chainId })
+                                                switchChain?.({
+                                                    chainId: riverConfig.base.chainConfig.chainId,
+                                                })
                                                 if (!signer) {
                                                     return
                                                 }

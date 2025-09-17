@@ -32,11 +32,15 @@ export interface Web3Deployment {
     base: BaseChainConfig
     river: RiverChainConfig
 }
-export function getWeb3Deployment(riverEnv: string, opts?: SafeEnvOpts): Web3Deployment {
+export function getWeb3Deployment(riverEnv?: string, opts?: SafeEnvOpts): Web3Deployment {
     // Cast to unknown first to avoid TypeScript error about property compatibility
+    riverEnv = riverEnv ?? getRiverEnv(opts)
+    if (!riverEnv) {
+        throw new Error('RIVER_ENV is not defined')
+    }
     const deployments = DeploymentsJson as unknown as Record<string, Web3Deployment | undefined>
     if (deployments[riverEnv]) {
-        return deployments[riverEnv]
+        return deployments[riverEnv] as Web3Deployment
     }
     return makeWeb3Deployment(riverEnv, opts)
 }
@@ -47,26 +51,18 @@ export function getWeb3Deployment(riverEnv: string, opts?: SafeEnvOpts): Web3Dep
  * @returns Environment ids
  */
 export function getWeb3Deployments(opts?: SafeEnvOpts) {
-    const RIVER_ENV = safeEnv(['RIVER_ENV'], opts)
-
+    const riverEnv = safeEnv(['RIVER_ENV'], opts)
+    console.log('getWeb3Deployments', { riverEnv, opts })
     const keys = Object.keys(DeploymentsJson)
-    if (RIVER_ENV && !keys.includes(RIVER_ENV)) {
-        return [RIVER_ENV, ...keys]
+    if (riverEnv && !keys.includes(riverEnv)) {
+        return [riverEnv, ...keys]
     }
     return keys
 }
 
 export function getRiverEnv(opts?: SafeEnvOpts) {
-    const RIVER_ENV = safeEnv(['RIVER_ENV'], opts)
-    return RIVER_ENV
-}
-
-export function getRiverEnvDeployment(opts?: SafeEnvOpts) {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (!RIVER_ENV) {
-        throw new Error('RIVER_ENV is not defined')
-    }
-    return getWeb3Deployment(RIVER_ENV)
+    const riverEnv = safeEnv(['RIVER_ENV'], opts)
+    return riverEnv
 }
 
 function optionalEnv({
@@ -78,8 +74,8 @@ function optionalEnv({
     keys: string[]
     opts: SafeEnvOpts | undefined
 }): string | undefined {
-    const RIVER_ENV = getRiverEnv(opts)
-    if (environmentId === RIVER_ENV) {
+    const riverEnv = getRiverEnv(opts)
+    if (environmentId === riverEnv) {
         const value = safeEnv(keys, opts)
         if (value) {
             return value
@@ -107,7 +103,7 @@ function requiredEnv({
     return value
 }
 
-function makeWeb3Deployment(environmentId: string, opts?: SafeEnvOpts): Web3Deployment {
+function makeWeb3Deployment(environmentId: string, opts: SafeEnvOpts | undefined): Web3Deployment {
     // check for environment variable overrides, if not use the deployment from the json file
     return {
         base: {
