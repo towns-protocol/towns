@@ -169,7 +169,6 @@ func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
 ) (*types.AppMetadata, error) {
-	// Try to get from cache first
 	appInfo, err := q.getCachedAppInfo(ctx, app)
 	if err != nil {
 		return nil, err
@@ -177,8 +176,6 @@ func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	if appInfo != nil {
 		return &appInfo.Metadata, nil
 	}
-
-	// Not found in cache, shouldn't happen if app exists
 	return nil, base.RiverError(protocol.Err_NOT_FOUND, "App not found")
 }
 
