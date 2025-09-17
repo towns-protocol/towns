@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -283,8 +284,7 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 func (sr *streamReconciler) backfillGaps() error {
 	sr.stats.backfillCalled = true
 
-	// TODO: DO NOT COMMIT: calculate localStartMbInclusive based on settings.
-	sr.localStartMbInclusive = 0
+	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 
 	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
 		sr.ctx,
@@ -317,6 +317,30 @@ func (sr *streamReconciler) backfillGaps() error {
 	}
 
 	return nil
+}
+
+func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
+	if sr.expectedLastMbInclusive <= 0 {
+		return 0
+	}
+
+	historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
+	if historyWindow == 0 {
+		return 0
+	}
+
+	var history int64
+	if historyWindow >= math.MaxInt64 {
+		history = math.MaxInt64
+	} else {
+		history = int64(historyWindow)
+	}
+
+	start := sr.expectedLastMbInclusive - history
+	if start < 0 {
+		return 0
+	}
+	return start
 }
 
 func (sr *streamReconciler) backfillRange(missingRange storage.MiniblockRange) error {

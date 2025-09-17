@@ -57,6 +57,8 @@ type testParams struct {
 	defaultMinEventsPerSnapshot      int
 	enableNewSnapshotFormat          int
 	backwardsReconciliationThreshold int
+	streamHistoryDefaultMiniblocks   *uint64
+	streamHistoryMiniblocks          map[byte]uint64
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -680,6 +682,38 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 			crypto.StreamBackwardsReconciliationThresholdConfigKey,
 			crypto.ABIEncodeUint64(uint64(p.backwardsReconciliationThreshold)),
 		)
+	}
+	if p.streamHistoryDefaultMiniblocks != nil {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamDefaultStreamHistoryMiniblocksConfigKey,
+			crypto.ABIEncodeUint64(*p.streamHistoryDefaultMiniblocks),
+		)
+	}
+	for streamType, value := range p.streamHistoryMiniblocks {
+		var key string
+		switch streamType {
+		case STREAM_CHANNEL_BIN:
+			key = crypto.StreamChannelStreamHistoryMiniblocksConfigKey
+		case STREAM_DM_CHANNEL_BIN:
+			key = crypto.StreamDMStreamHistoryMiniblocksConfigKey
+		case STREAM_GDM_CHANNEL_BIN:
+			key = crypto.StreamGDMStreamHistoryMiniblocksConfigKey
+		case STREAM_METADATA_BIN:
+			key = crypto.StreamMetadataStreamHistoryMiniblocksConfigKey
+		case STREAM_SPACE_BIN:
+			key = crypto.StreamSpaceStreamHistoryMiniblocksConfigKey
+		case STREAM_USER_BIN:
+			key = crypto.StreamUserStreamHistoryMiniblocksConfigKey
+		case STREAM_USER_METADATA_KEY_BIN:
+			key = crypto.StreamUserDeviceStreamHistoryMiniblocksConfigKey
+		case STREAM_USER_INBOX_BIN:
+			key = crypto.StreamUserInboxStreamHistoryMiniblocksConfigKey
+		case STREAM_USER_SETTINGS_BIN:
+			key = crypto.StreamUserSettingsStreamHistoryMiniblocksConfigKey
+		default:
+			t.Fatalf("unsupported stream type for history config: 0x%02x", streamType)
+		}
+		btc.SetConfigValue(t, ctx, key, crypto.ABIEncodeUint64(value))
 	}
 }
 
