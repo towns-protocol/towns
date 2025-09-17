@@ -196,7 +196,7 @@ type (
 			ctx context.Context,
 			streamId StreamId,
 			miniblock int64,
-			etag string,
+			etag Etag,
 			length int,
 		) error
 
@@ -335,7 +335,7 @@ type (
 			data []byte,
 			uploadID string,
 			miniblockNum int64,
-		) (string, error)
+		) (Etag, error)
 		CompleteMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string, etags []Etag) error
 		AbortMediaStreamUpload(ctx context.Context, streamId StreamId, uploadID string) error
 	}

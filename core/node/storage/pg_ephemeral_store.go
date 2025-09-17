@@ -442,7 +442,7 @@ func (s *PostgresStreamStore) WriteExternalMediaStreamPartUploadInfo(
 	ctx context.Context,
 	streamId StreamId,
 	miniblock int64,
-	etag string,
+	etag Etag,
 	length int,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -465,7 +465,7 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	miniblock int64,
-	etag string,
+	etag Etag,
 	length int,
 ) error {
 	// First, update the external_media_uploads table with the new etag
@@ -476,14 +476,8 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 		DO UPDATE SET etags = external_media_uploads.etags || $2
 	`
 
-	// Add the new etag to the JSONB array
-	etagObj := Etag{
-		Miniblock: int(miniblock),
-		Etag:      etag,
-	}
-
 	// Marshal the struct to JSON
-	etagJSONBytes, err := json.Marshal(etagObj)
+	etagJSONBytes, err := json.Marshal(etag)
 	if err != nil {
 		return err
 	}

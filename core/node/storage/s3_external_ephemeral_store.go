@@ -69,7 +69,7 @@ func (w *S3MediaStore) UploadPartToExternalMediaStream(
 	data []byte,
 	uploadID string,
 	miniblock int64,
-) (string, error) {
+) (Etag, error) {
 	// Generate S3 key: streams/{streamId}
 	key := fmt.Sprintf("streams/%x", streamId)
 
@@ -91,9 +91,12 @@ func (w *S3MediaStore) UploadPartToExternalMediaStream(
 		return nil
 	})
 	if err != nil {
-		return "", RiverError(Err_INTERNAL, "failed to upload part", "error", err)
+		return Etag{}, RiverError(Err_INTERNAL, "failed to upload part", "error", err)
 	}
-	return etag, nil
+	return Etag{
+		Miniblock: int(miniblock + 1),
+		Etag:      etag,
+	}, nil
 }
 
 func (w *S3MediaStore) CompleteMediaStreamUpload(
