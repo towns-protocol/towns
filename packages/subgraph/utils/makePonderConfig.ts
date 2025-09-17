@@ -1,5 +1,5 @@
 import { mergeAbis, factory, createConfig } from 'ponder'
-import { http, parseAbiItem, Transport } from 'viem'
+import { parseAbiItem, Transport } from 'viem'
 
 // import abis
 import {
@@ -19,6 +19,7 @@ import {
     membershipFacetAbi,
     reviewFacetAbi,
 } from '@towns-protocol/contracts/typings'
+import SubscriptionModuleFacetAbi from '@towns-protocol/generated/dev/abis/SubscriptionModuleFacet.abi'
 
 import { getContractAddress } from './contractAddresses'
 
@@ -107,6 +108,7 @@ export function makePonderConfig(
                     tippingFacetAbi,
                     membershipFacetAbi,
                     reviewFacetAbi,
+                    SubscriptionModuleFacetAbi,
                 ]),
                 address: factory({
                     address: spaceFactory,

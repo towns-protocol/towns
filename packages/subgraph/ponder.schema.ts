@@ -7,6 +7,8 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'review',
 ])
 
+export const renewalType = onchainEnum('renewal_type', ['automatic', 'manual'])
+
 // Type definitions for analytics event data
 export type SwapEventData = {
     type: 'swap'
@@ -273,6 +275,48 @@ export const review = onchainTable(
         pk: primaryKey({ columns: [table.spaceId, table.user] }),
         spaceIdx: index().on(table.spaceId),
         userIdx: index().on(table.user),
+    }),
+)
+
+// subscriptions
+export const subscription = onchainTable(
+    'subscriptions',
+    (t) => ({
+        id: t.text().primaryKey(), // composite key: ${account}_${entityId}
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        space: t.hex().notNull(),
+        tokenId: t.bigint().notNull(),
+        spent: t.bigint().default(0n),
+        lastRenewalTime: t.bigint(), // tracks lastRenewalTime from contract
+        nextRenewalTime: t.bigint().notNull(),
+        active: t.boolean().default(true),
+        renewalType: renewalType().notNull(),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        accountIdx: index().on(table.account),
+        spaceIdx: index().on(table.space),
+        accountSpaceIdx: index().on(table.account, table.space),
+        nextRenewalTimeIdx: index().on(table.nextRenewalTime),
+        activeIdx: index().on(table.active),
+    }),
+)
+
+// subscription failures
+export const subscriptionFailure = onchainTable(
+    'subscription_failures',
+    (t) => ({
+        id: t.text().primaryKey(), // composite key: ${account}_${entityId}_${timestamp}
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        reason: t.text().notNull(),
+        timestamp: t.bigint().notNull(),
+    }),
+    (table) => ({
+        accountIdx: index().on(table.account),
+        timestampIdx: index().on(table.timestamp),
     }),
 )
 
