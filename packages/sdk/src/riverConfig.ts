@@ -5,11 +5,9 @@ import {
     getWeb3Deployments,
     getRiverEnv,
 } from '@towns-protocol/web3'
-import { dlogger, safeEnv } from '@towns-protocol/dlog'
+import { dlogger, safeEnv, SafeEnvOpts } from '@towns-protocol/dlog'
 
 const logger = dlogger('csb:config')
-
-const RIVER_ENV = getRiverEnv()
 
 export enum RiverService {
     Notifications,
@@ -24,22 +22,26 @@ export type RiverConfig = {
     services: { id: RiverService; url: string | undefined }[]
 }
 
-function getEnvironmentId(): string {
+function getEnvironmentId(opts: SafeEnvOpts | undefined): string {
+    const RIVER_ENV = getRiverEnv(opts)
     if (!RIVER_ENV) {
         throw new Error('either RIVER_ENV or VITE_RIVER_ENV is required to be set in process.env')
     }
     return RIVER_ENV
 }
 
-function getBaseRpcUrlForChain(chainId: number): string {
+function getBaseRpcUrlForChain(chainId: number, opts: SafeEnvOpts | undefined): string {
     switch (chainId) {
         case 31337:
             return 'http://localhost:8545'
         case 84532: {
-            const url = safeEnv([
-                'BASE_SEPOLIA_RPC_URL',
-                'BASE_CHAIN_RPC_URL', // deprecated
-            ])
+            const url = safeEnv(
+                [
+                    'BASE_SEPOLIA_RPC_URL',
+                    'BASE_CHAIN_RPC_URL', // deprecated
+                ],
+                opts,
+            )
             if (url) {
                 return url
             }
@@ -49,10 +51,13 @@ function getBaseRpcUrlForChain(chainId: number): string {
             return 'https://sepolia.base.org'
         }
         case 8453: {
-            const url = safeEnv([
-                'BASE_MAINNET_RPC_URL',
-                'BASE_CHAIN_RPC_URL', // deprecated
-            ])
+            const url = safeEnv(
+                [
+                    'BASE_MAINNET_RPC_URL',
+                    'BASE_CHAIN_RPC_URL', // deprecated
+                ],
+                opts,
+            )
             if (url) {
                 return url
             }
@@ -66,18 +71,18 @@ function getBaseRpcUrlForChain(chainId: number): string {
     }
 }
 
-function getRiverRpcUrlForChain(chainId: number): string {
+function getRiverRpcUrlForChain(chainId: number, opts: SafeEnvOpts | undefined): string {
     switch (chainId) {
         case 31338:
             return 'http://localhost:8546'
         case 6524490:
             return (
-                safeEnv(['RIVER_DEVNET_RPC_URL', 'RIVER_CHAIN_RPC_URL']) ??
+                safeEnv(['RIVER_DEVNET_RPC_URL', 'RIVER_CHAIN_RPC_URL'], opts) ??
                 'https://devnet.rpc.river.build'
             )
         case 550:
             return (
-                safeEnv(['RIVER_MAINNET_RPC_URL', 'RIVER_CHAIN_RPC_URL']) ??
+                safeEnv(['RIVER_MAINNET_RPC_URL', 'RIVER_CHAIN_RPC_URL'], opts) ??
                 'https://mainnet.rpc.river.build'
             )
         default:
@@ -85,9 +90,10 @@ function getRiverRpcUrlForChain(chainId: number): string {
     }
 }
 
-export function getNotificationServiceUrl(environmentId: string): string {
+export function getNotificationServiceUrl(environmentId: string, opts?: SafeEnvOpts): string {
+    const RIVER_ENV = getRiverEnv(opts)
     if (RIVER_ENV === environmentId) {
-        const url = safeEnv(['NOTIFICATION_SERVICE_URL'])
+        const url = safeEnv(['NOTIFICATION_SERVICE_URL'], opts)
         if (url) {
             return url
         }
@@ -108,9 +114,10 @@ export function getNotificationServiceUrl(environmentId: string): string {
     }
 }
 
-export function getStreamMetadataUrl(environmentId: string): string {
+export function getStreamMetadataUrl(environmentId: string, opts?: SafeEnvOpts): string {
+    const RIVER_ENV = getRiverEnv(opts)
     if (RIVER_ENV === environmentId) {
-        const url = safeEnv(['STREAM_METADATA_URL'])
+        const url = safeEnv(['STREAM_METADATA_URL'], opts)
         if (url) {
             return url
         }
@@ -131,9 +138,10 @@ export function getStreamMetadataUrl(environmentId: string): string {
     }
 }
 
-export function getAppRegistryUrl(environmentId: string): string {
+export function getAppRegistryUrl(environmentId: string, opts?: SafeEnvOpts): string {
+    const RIVER_ENV = getRiverEnv(opts)
     if (RIVER_ENV === environmentId) {
-        const url = safeEnv(['APP_REGISTRY_URL'])
+        const url = safeEnv(['APP_REGISTRY_URL'], opts)
         if (url) {
             return url
         }
@@ -154,18 +162,24 @@ export function getAppRegistryUrl(environmentId: string): string {
     }
 }
 
-export function makeRiverChainConfig(environmentId?: string): RiverConfig['river'] {
-    const env = getWeb3Deployment(environmentId ?? getEnvironmentId())
+export function makeRiverChainConfig(
+    environmentId?: string,
+    opts?: SafeEnvOpts,
+): RiverConfig['river'] {
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts))
     return {
-        rpcUrl: getRiverRpcUrlForChain(env.river.chainId),
+        rpcUrl: getRiverRpcUrlForChain(env.river.chainId, opts),
         chainConfig: env.river,
     }
 }
 
-export function makeBaseChainConfig(environmentId?: string): RiverConfig['base'] {
-    const env = getWeb3Deployment(environmentId ?? getEnvironmentId())
+export function makeBaseChainConfig(
+    environmentId?: string,
+    opts?: SafeEnvOpts,
+): RiverConfig['base'] {
+    const env = getWeb3Deployment(environmentId ?? getEnvironmentId(opts))
     return {
-        rpcUrl: getBaseRpcUrlForChain(env.base.chainId),
+        rpcUrl: getBaseRpcUrlForChain(env.base.chainId, opts),
         chainConfig: env.base,
     }
 }
@@ -178,8 +192,8 @@ export function makeBaseChainConfig(environmentId?: string): RiverConfig['base']
  * If RIVER_ENV is one of the "deployments" in packages/generated/config/deployments.json,
  * you don't need to set any additional environment variables
  */
-export function makeRiverConfig(inEnvironmentId?: string): RiverConfig {
-    const environmentId = inEnvironmentId ?? getEnvironmentId()
+export function makeRiverConfig(inEnvironmentId?: string, opts?: SafeEnvOpts): RiverConfig {
+    const environmentId = inEnvironmentId ?? getEnvironmentId(opts)
     try {
         const config = {
             environmentId,
@@ -202,6 +216,13 @@ export function makeRiverConfig(inEnvironmentId?: string): RiverConfig {
 /**
  * @returns Available environment ids
  */
-export function getEnvironmentIds(): string[] {
-    return getWeb3Deployments()
+export function getEnvironmentIds(opts?: SafeEnvOpts): string[] {
+    return getWeb3Deployments(opts)
+}
+
+/**
+ * @returns Available environments
+ */
+export function getEnvironments(opts?: SafeEnvOpts): RiverConfig[] {
+    return getWeb3Deployments(opts).map((id) => makeRiverConfig(id, opts))
 }

@@ -9,6 +9,7 @@ import { type SyncAgent, makeRiverConfig } from '@towns-protocol/sdk'
 import { router } from './routes'
 import { wagmiConfig } from './config/wagmi'
 import { loadAuth } from './utils/persist-auth'
+import { SAFE_ENV_OPTIONS } from './utils/environment'
 
 function App() {
     const [queryClient] = useState(() => new QueryClient())
@@ -18,7 +19,7 @@ function App() {
         if (persistedAuth) {
             console.log('river_env', persistedAuth.riverEnvironmentId)
             connectTowns(persistedAuth.signerContext, {
-                riverConfig: makeRiverConfig(persistedAuth.riverEnvironmentId),
+                riverConfig: makeRiverConfig(persistedAuth.riverEnvironmentId, SAFE_ENV_OPTIONS),
             }).then((syncAgent) => setSyncAgent(syncAgent))
         }
     }, [persistedAuth])
