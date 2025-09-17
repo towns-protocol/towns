@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -109,7 +108,7 @@ func TestLocalSyncer_OnUpdate(t *testing.T) {
 		return msg.GetSyncOp() == SyncOp_SYNC_UPDATE && msg.GetStream() == streamAndCookie
 	})).Once()
 
-	syncer.OnUpdate(streamAndCookie)
+	syncer.OnUpdate(streamID, streamAndCookie)
 
 	// Verify message was distributed
 	messageDistributor.AssertExpectations(t)
@@ -143,27 +142,10 @@ func TestLocalSyncer_OnUpdate_Error(t *testing.T) {
 	// Add a real *Stream with minimal valid params to activeStreams so unsubStream can be called
 	syncer.activeStreams.Store(streamID, events.NewStream(streamID, 0, nil))
 
-	syncer.OnUpdate(streamAndCookie)
+	syncer.OnUpdate(streamID, streamAndCookie)
 
 	// Verify unsubStream was called due to error
 	assert.True(t, unsubCalled)
-}
-
-// TestLocalSyncer_OnSyncError tests the OnSyncError method
-func TestLocalSyncer_OnSyncError(t *testing.T) {
-	ctx := context.Background()
-	localAddr := common.HexToAddress("0x123")
-	streamCache := &mockStreamCache{}
-	messageDistributor := &mockMessageDistributor{}
-	unsubStream := func(streamID StreamId) {}
-
-	syncer := newLocalSyncer(ctx, localAddr, streamCache, messageDistributor, unsubStream, nil)
-
-	// Test OnSyncError with no active streams
-	syncer.OnSyncError(errors.New("test error"))
-
-	// Verify streams were cleared (should be empty already)
-	assert.Equal(t, 0, syncer.activeStreams.Size())
 }
 
 // TestLocalSyncer_OnStreamSyncDown tests the OnStreamSyncDown method
@@ -183,7 +165,7 @@ func TestLocalSyncer_OnStreamSyncDown(t *testing.T) {
 		return msg.GetSyncOp() == SyncOp_SYNC_DOWN && bytes.Equal(msg.GetStreamId(), streamID[:])
 	})).Once()
 
-	syncer.OnStreamSyncDown(streamID)
+	syncer.OnSyncDown(streamID)
 
 	// Verify message was distributed
 	messageDistributor.AssertExpectations(t)
@@ -214,7 +196,7 @@ func TestLocalSyncer_OnStreamSyncDown_Error(t *testing.T) {
 	// Add a real *Stream with minimal valid params to activeStreams so unsubStream can be called
 	syncer.activeStreams.Store(streamID, events.NewStream(streamID, 0, nil))
 
-	syncer.OnStreamSyncDown(streamID)
+	syncer.OnSyncDown(streamID)
 
 	// Verify unsubStream was called due to error
 	assert.True(t, unsubCalled)

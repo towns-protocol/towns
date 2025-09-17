@@ -57,7 +57,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.Equal(1, streamWithLoadedViewCount, "stream cache must have one loaded stream")
 
 	// views of inactive stream must be dropped, even if there are subscribers
-	receiver := &testStreamCacheViewEvictionSub{}
+	receiver := &testSubscriber{}
 	syncCookie := streamView.SyncCookie(node.Wallet.Address)
 
 	err = streamSync.Sub(ctx, syncCookie, receiver)
@@ -201,32 +201,6 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	cancelShort()
 	loadedStream, _ = streamCache.cache.Load(streamID)
 	require.Nil(loadedStream.getViewLocked(), "view loaded in cache")
-}
-
-type testStreamCacheViewEvictionSub struct {
-	receivedStreamAndCookies []*StreamAndCookie
-	receivedErrors           []error
-	streamErrors             []StreamId
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *StreamAndCookie) {
-	sub.receivedStreamAndCookies = append(sub.receivedStreamAndCookies, sac)
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnSyncError(err error) {
-	sub.receivedErrors = append(sub.receivedErrors, err)
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnStreamSyncDown(streamID StreamId) {
-	sub.streamErrors = append(sub.streamErrors, streamID)
-}
-
-func (sub *testStreamCacheViewEvictionSub) eventsReceived() int {
-	count := 0
-	for _, sac := range sub.receivedStreamAndCookies {
-		count += len(sac.Events)
-	}
-	return count
 }
 
 // TODO: it seems this test takes at least 60 seconds, why?
@@ -387,7 +361,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 		node                  = tc.getBC()
 		genesisBlocks         = tc.allocateStreams(streamsCount)
 		syncCookies           = make(map[StreamId]*SyncCookie)
-		subscriptionReceivers = make(map[StreamId]*testStreamCacheViewEvictionSub)
+		subscriptionReceivers = make(map[StreamId]*testSubscriber)
 	)
 
 	// obtain sync cookies for allocated streams
@@ -412,7 +386,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 		require.NoError(err, "get sync stream")
-		subscriptionReceivers[streamID] = new(testStreamCacheViewEvictionSub)
+		subscriptionReceivers[streamID] = new(testSubscriber)
 		err = streamSync.Sub(ctx, syncCookie, subscriptionReceivers[streamID])
 		require.NoError(err, "sub stream")
 	}
@@ -457,7 +431,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, expectedEventCount := range streamsWithEvents {
 		subscriber := subscriptionReceivers[streamID]
 		gotEventCount := subscriber.eventsReceived()
-		require.Nilf(subscriber.receivedErrors, "subscriber received error: %s", subscriber.receivedErrors)
+		require.Nilf(subscriber.streamErrors, "subscriber received error: %s", subscriber.streamErrors)
 		require.Equal(expectedEventCount, gotEventCount, "subscriber unexpected event count")
 	}
 

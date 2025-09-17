@@ -3,14 +3,13 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
-import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
-import {IValidationHookModule} from "@erc6900/reference-implementation/interfaces/IValidationHookModule.sol";
-import {ISubscriptionModule} from "./ISubscriptionModule.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IValidationHookModule} from "@erc6900/reference-implementation/interfaces/IValidationHookModule.sol";
+import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ISubscriptionModule} from "./ISubscriptionModule.sol";
 
 // libraries
-import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {LibCall} from "solady/utils/LibCall.sol";
@@ -18,6 +17,7 @@ import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLoca
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
+import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
 
 // contracts
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";

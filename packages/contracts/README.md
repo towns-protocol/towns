@@ -109,7 +109,7 @@ If you want to interact with anvil via a front end, you will need to add the loc
 **To start a local base blockchain and river blockchain:**
 
 ```shell
-cd ../../core && just anvils
+./scripts/bc-all-start.sh
 ```
 
 ## Deployment

@@ -1,8 +1,6 @@
 module github.com/towns-protocol/towns/core
 
-go 1.24.6
-
-//replace github.com/ethereum/go-ethereum => /Users/bas/dev/go-ethereum
+go 1.25.1
 
 require (
 	connectrpc.com/connect v1.18.1

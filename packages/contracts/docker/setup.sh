@@ -121,7 +121,7 @@ deploy_contracts() {
 # Copy contract addresses and create contracts.env file
 create_contracts_env() {
   echo "Copying contract addresses and creating contracts.env..."
-  contracts_dir="packages/generated/deployments/local_dev"
+  contracts_dir="packages/contracts/deployments/local_dev"
 
   # Fail if contract deployment directory doesn't exist
   if [ ! -d "$contracts_dir" ]; then
@@ -141,9 +141,18 @@ create_contracts_env() {
 
   # Create contracts.env file using justfile recipe
   cd ./core
-  just RUN_BASE="${output_dir}" create-contracts-env
+  just CONTRACTS_DIR="../${contracts_dir}" RUN_BASE="${output_dir}" create-contracts-env
   cd ..
-
+  
+  # Generate config using packages/generated
+  if [ -d "./packages/generated" ]; then
+    cd ./packages/generated
+    yarn make-config
+    # Copy generated .env to local_dev for extraction
+    cp "./deployments/local_dev/.env" "${output_dir}/.env"
+    cd ../..
+  fi
+  
   echo "Contract addresses and contracts.env created successfully"
 }
 

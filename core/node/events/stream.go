@@ -29,12 +29,12 @@ type ViewStream interface {
 }
 
 type SyncResultReceiver interface {
-	// OnUpdate is called each time a new cookie is available for a stream
-	OnUpdate(r *StreamAndCookie)
-	// OnSyncError is called when a sync subscription failed unrecoverable
-	OnSyncError(err error)
-	// OnStreamSyncDown is called when updates for a stream could not be given.
-	OnStreamSyncDown(StreamId)
+	// OnUpdate is called each time a new event is available for a stream.
+	OnUpdate(StreamId, *StreamAndCookie)
+
+	// OnSyncDown is called when updates for a stream could not be given.
+	// Subscriber is automatically unsubscribed from the stream and no further OnUpdate calls are made.
+	OnSyncDown(StreamId)
 }
 
 type localStreamState struct {
@@ -719,7 +719,7 @@ func (s *Stream) notifySubscribersLocked(
 			Snapshot:       snapshot,
 		}
 		for receiver := range s.local.receivers.Iter() {
-			receiver.OnUpdate(resp)
+			receiver.OnUpdate(s.streamId, resp)
 		}
 	}
 }
@@ -928,7 +928,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	}
 	s.local.receivers.Add(receiver)
 
-	receiver.OnUpdate(resp)
+	receiver.OnUpdate(s.streamId, resp)
 
 	return nil
 }
@@ -984,10 +984,14 @@ func (s *Stream) ForceFlush(ctx context.Context) {
 	}
 
 	s.setViewLocked(nil)
+	s.unsubAllLocked()
+}
+
+// unsubAllLocked sends SYNC_DOWN message to all receivers and unsubscribes all receivers from the stream.
+func (s *Stream) unsubAllLocked() {
 	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
-		err := RiverError(Err_INTERNAL, "Stream unloaded")
 		for r := range s.local.receivers.Iter() {
-			r.OnSyncError(err)
+			r.OnSyncDown(s.streamId)
 		}
 	}
 	s.local.receivers = nil

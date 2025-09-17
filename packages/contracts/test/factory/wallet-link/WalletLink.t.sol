@@ -13,9 +13,9 @@ import {WalletLib} from "src/factory/facets/wallet-link/libraries/WalletLib.sol"
 import {SolanaUtils} from "src/factory/facets/wallet-link/libraries/SolanaUtils.sol";
 
 // contracts
-import {BaseSetup} from "test/spaces/BaseSetup.sol";
+import {SimpleAccount} from "@eth-infinitism/account-abstraction/samples/SimpleAccount.sol";
 import {Nonces} from "@towns-protocol/diamond/src/utils/Nonces.sol";
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
+import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
 contract WalletLinkTest is IWalletLinkBase, BaseSetup {
     Vm.Wallet internal rootWallet;
