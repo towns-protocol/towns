@@ -577,13 +577,26 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     const post = create(ChannelMessage_PostSchema, {
                         threadId: channelMessageEvent.threadId,
                         threadPreview: channelMessageEvent.threadPreview,
-                        content: {
-                            case: 'text' as const,
-                            value: {
-                                ...channelMessageEvent,
-                                attachments: transformAttachments(channelMessageEvent.attachments),
-                            },
-                        },
+                        content:
+                            channelMessageEvent.content.msgType === MessageType.Text
+                                ? {
+                                      case: 'text' as const,
+                                      value: {
+                                          ...channelMessageEvent,
+                                          attachments: transformAttachments(
+                                              channelMessageEvent.attachments,
+                                          ),
+                                      },
+                                  }
+                                : channelMessageEvent.content.msgType === MessageType.Image
+                                  ? {
+                                        case: 'image' as const,
+                                        value: {
+                                            title: channelMessageEvent.body,
+                                            ...channelMessageEvent.content,
+                                        },
+                                    }
+                                  : undefined,
                     })
                     const value = create(ChannelMessage_Post_AttachmentSchema, {
                         content: {

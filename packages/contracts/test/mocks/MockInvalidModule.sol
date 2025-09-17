@@ -3,12 +3,11 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-
-// libraries
-import {ExecutionManifest, IERC6900ExecutionModule, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
-import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
+// libraries
 
 // contracts
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
@@ -91,9 +90,8 @@ contract MockInvalidModule is OwnableFacet, ITownsApp {
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
-            interfaceId == type(IERC6900ExecutionModule).interfaceId ||
-            interfaceId == type(IERC6900Module).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId ||
-            interfaceId == type(IERC173).interfaceId;
+            interfaceId == type(IExecutionModule).interfaceId ||
+            interfaceId == type(IModule).interfaceId ||
+            interfaceId == type(ITownsApp).interfaceId;
     }
 }

@@ -8,7 +8,7 @@ const startBlock = process.env.PONDER_START_BLOCK
     : 22890725
 
 // running locally we can change the environment in the .env file
-const environment = process.env.PONDER_ENVIRONMENT || 'local_multi'
+const environment = process.env.PONDER_ENVIRONMENT || 'local_dev'
 
 export default createConfig(
     makePonderConfig({

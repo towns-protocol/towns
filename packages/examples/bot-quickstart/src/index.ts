@@ -2,13 +2,19 @@ import { serve } from '@hono/node-server'
 import { makeTownsBot } from '@towns-protocol/bot'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
+import commands from './commands'
 
 async function main() {
-    const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA_BASE64!, process.env.JWT_SECRET!)
+    const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!, {
+        commands,
+    })
 
-    bot.onMessage(async (handler, { message, channelId, userId, eventId }) => {
-        if (userId === bot.botId) return
+    bot.onSlashCommand('time', async (handler, { channelId }) => {
+        const currentTime = new Date().toLocaleString()
+        await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
+    })
 
+    bot.onMessage(async (handler, { message, channelId, eventId, createdAt }) => {
         if (message.toLowerCase().includes('hello')) {
             await handler.sendMessage(channelId, 'Hello there! 👋')
         }
@@ -21,60 +27,27 @@ async function main() {
         }
 
         if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
-        }
-
-        if (message.toLowerCase().includes('react')) {
-            await handler.sendReaction(channelId, eventId, '👍')
-        }
-    })
-
-    bot.onReaction(async (handler, { reaction, channelId, userId }) => {
-        if (userId === bot.botId) return
-
-        if (reaction === '👋') {
-            await handler.sendMessage(channelId, 'Thanks for the wave! 👋')
-        }
-    })
-
-    bot.onMentioned(async (handler, { message, channelId, userId, eventId }) => {
-        if (userId === bot.botId) return
-
-        if (message.toLowerCase().includes('hello')) {
-            await handler.sendMessage(channelId, 'Hello there! 👋')
-        }
-
-        if (message.toLowerCase().includes('help')) {
+            const now = new Date()
             await handler.sendMessage(
                 channelId,
-                'I can respond to:\n• "hello" - I\'ll greet you back\n• "ping" - I\'ll respond with pong\n• "time" - I\'ll tell you the current time',
+                `Pong! 🏓 ${now.getTime() - createdAt.getTime()}ms`,
             )
         }
 
-        if (message.toLowerCase().includes('ping')) {
-            await handler.sendMessage(channelId, 'Pong! 🏓')
-        }
-
-        if (message.toLowerCase().includes('time')) {
-            const currentTime = new Date().toLocaleString()
-            await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
-        }
-
         if (message.toLowerCase().includes('react')) {
             await handler.sendReaction(channelId, eventId, '👍')
         }
     })
 
-    bot.onReaction(async (handler, { reaction, channelId, userId }) => {
-        if (userId === bot.botId) return
-
+    bot.onReaction(async (handler, { reaction, channelId }) => {
         if (reaction === '👋') {
             await handler.sendMessage(channelId, 'Thanks for the wave! 👋')
+        }
+    })
+
+    bot.onMessage(async (handler, { channelId, isMentioned }) => {
+        if (isMentioned) {
+            await handler.sendMessage(channelId, 'You mentioned me! 🤖')
         }
     })
 

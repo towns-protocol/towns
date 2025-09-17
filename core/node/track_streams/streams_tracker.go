@@ -53,7 +53,7 @@ type StreamsTracker interface {
 	AddStream(
 		streamId shared.StreamId,
 		applyHistoricalContent ApplyHistoricalContent,
-	) error
+	) (bool, error)
 }
 
 var _ StreamsTracker = (*StreamsTrackerImpl)(nil)
@@ -202,32 +202,31 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 func (tracker *StreamsTrackerImpl) forwardStreamEvents(
 	streamWithId *river.StreamWithId,
 	applyHistoricalContent ApplyHistoricalContent,
-) {
-	_, loaded := tracker.tracked.LoadOrStore(streamWithId.StreamId(), struct{}{})
-	if !loaded {
-		tracker.multiSyncRunner.AddStream(streamWithId, applyHistoricalContent)
+) bool {
+	if _, loaded := tracker.tracked.LoadOrStore(streamWithId.StreamId(), struct{}{}); loaded {
+		return false
 	}
+	tracker.multiSyncRunner.AddStream(streamWithId, applyHistoricalContent)
+	return true
 }
 
 func (tracker *StreamsTrackerImpl) AddStream(
 	streamId shared.StreamId,
 	applyHistoricalContent ApplyHistoricalContent,
-) error {
+) (bool, error) {
 	// Check if the stream is already tracked, so we won't call the expensice GetStream.
 	// actually adding this stream to the tracked steams map is done in forwardStreamEvents
 	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
-		return nil
+		return false, nil
 	}
 	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
 	if err != nil {
-		return base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
+		return false, base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
 	}
 
-	// Use tracker.ctx here so that the stream continues to be synced after
-	// the originating request expires
-	tracker.forwardStreamEvents(&river.StreamWithId{Id: streamId, Stream: stream}, applyHistoricalContent)
-	return nil
+	added := tracker.forwardStreamEvents(&river.StreamWithId{Id: streamId, Stream: stream}, applyHistoricalContent)
+	return added, nil
 }
 
 // OnStreamAllocated is called each time a stream is allocated in the river registry.
@@ -263,10 +262,15 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
 		return
 	}
-	if err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]}); err != nil {
+	added, err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]})
+	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
 			"streamId", event.GetStreamId(),
 			"error", err)
+		return
+	}
+	if added {
+		logging.FromCtx(ctx).Infow("Added stream on miniblock update", "streamId", event.GetStreamId())
 	}
 }
 

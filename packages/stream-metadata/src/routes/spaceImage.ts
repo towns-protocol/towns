@@ -64,13 +64,13 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 		return reply.code(404).header('Cache-Control', CACHE_CONTROL[404]).send('Stream not found')
 	}
 
-	// get the image metatdata from the stream
+	// get the image metadata from the stream
 	const spaceImage = await getSpaceImage(logger, stream)
 	if (!spaceImage) {
 		logger.info({ spaceAddress, streamId: stream.streamId }, 'spaceImage not found')
 		return reply
 			.code(404)
-			.header('Cache-Control', CACHE_CONTROL[400])
+			.header('Cache-Control', CACHE_CONTROL[404])
 			.send('spaceImage not found')
 	}
 
@@ -90,9 +90,13 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 				.header('Cache-Control', CACHE_CONTROL[422])
 				.send('Failed to get encryption key')
 		}
-		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${
-			spaceImage.streamId
-		}?key=${bin_toHexString(key)}&iv=${bin_toHexString(iv)}`
+
+		// Construct redirect URL with preserved query parameters
+		const queryParams = new URLSearchParams(request.query as Record<string, string>)
+		queryParams.set('key', bin_toHexString(key))
+		queryParams.set('iv', bin_toHexString(iv))
+
+		const redirectUrl = `${config.streamMetadataBaseUrl}/media/${spaceImage.streamId}?${queryParams.toString()}`
 
 		return reply.header('Cache-Control', CACHE_CONTROL[307]).redirect(redirectUrl, 307)
 	} catch (error) {
@@ -106,7 +110,7 @@ export async function fetchSpaceImage(request: FastifyRequest, reply: FastifyRep
 		)
 		return reply
 			.code(422)
-			.header('Cache-Control', CACHE_CONTROL['422'])
+			.header('Cache-Control', CACHE_CONTROL[422])
 			.send('Failed to get encryption key')
 	}
 }

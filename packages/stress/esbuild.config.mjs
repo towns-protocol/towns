@@ -26,6 +26,9 @@ build({
         '.ts': 'ts',
         '.wasm': 'file',
     },
+    logOverride: {
+        'empty-import-meta': 'silent', // Add this line to silence the warning
+    },
 }).catch((e) => {
     console.error(e)
     process.exit(1)

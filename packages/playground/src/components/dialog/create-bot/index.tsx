@@ -12,13 +12,12 @@ import {
     MockEntitlementsDelegate,
     RiverDbManager,
     getAppRegistryUrl,
+    makeAppPrivateData,
     makeBaseProvider,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
 } from '@towns-protocol/sdk'
-import { AppPrivateDataSchema } from '@towns-protocol/proto'
-import { create, toBinary } from '@bufbuild/protobuf'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -104,7 +103,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
     const [step, setStep] = useState(0)
     const [credentialsData, setCredentialsData] = useState<{
         botAddress: string
-        appPrivateDataBase64: string
+        appPrivateData: string
         jwtSecretBase64: string
     } | null>(null)
     const [showCredentials, setShowCredentials] = useState(false)
@@ -188,6 +187,8 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             } = formData
             console.log('mutate', formData)
 
+            const appRegistryUrl = getAppRegistryUrl(sync.config.riverConfig.environmentId)
+
             const baseProvider = makeBaseProvider(sync.config.riverConfig)
             if (!signer) {
                 throw new Error('Signer is not set')
@@ -245,21 +246,16 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             await botClient.uploadDeviceKeys()
 
             const exportedDevice = await botClient.cryptoBackend?.exportDevice()
-            const appPrivateDataBase64 = bin_toBase64(
-                toBinary(
-                    AppPrivateDataSchema,
-                    create(AppPrivateDataSchema, {
-                        privateKey: botWallet.privateKey,
-                        encryptionDevice: exportedDevice,
-                        env: riverConfig.environmentId,
-                    }),
-                ),
+            const appPrivateData = makeAppPrivateData(
+                botWallet.privateKey,
+                exportedDevice!,
+                riverConfig.environmentId,
             )
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 user.id,
                 signer,
-                getAppRegistryUrl(riverConfig.environmentId),
+                appRegistryUrl,
             )
             const { hs256SharedSecret } = await appRegistryRpcClient.register({
                 appId: bin_fromHexString(botWallet.address),
@@ -276,7 +272,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
 
             return {
                 botAddress: botWallet.address,
-                appPrivateDataBase64,
+                appPrivateData,
                 jwtSecretBase64,
             }
         },

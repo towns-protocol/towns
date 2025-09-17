@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
@@ -22,7 +22,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
@@ -389,8 +389,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (client == address(0)) InvalidAddressInput.selector.revertWith();
 
         if (
-            !IERC165(app).supportsInterface(type(IERC6900Module).interfaceId) ||
-            !IERC165(app).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
+            !IERC165(app).supportsInterface(type(IModule).interfaceId) ||
+            !IERC165(app).supportsInterface(type(IExecutionModule).interfaceId) ||
             !IERC165(app).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             AppDoesNotImplementInterface.selector.revertWith();

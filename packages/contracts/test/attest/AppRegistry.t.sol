@@ -8,8 +8,8 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
+import {IAppAccountBase} from "../../src/spaces/facets/account/IAppAccount.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
-import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 import {ISimpleApp} from "../../src/apps/helpers/ISimpleApp.sol";
@@ -20,7 +20,6 @@ import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
 
 //contracts
 import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
@@ -29,7 +28,7 @@ import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase {
+contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase, IAppAccountBase {
     AppRegistryFacet internal registry;
     AppAccount internal appAccount;
     MockModule internal mockModule;
@@ -293,7 +292,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(address(mockModule), appInfo.manifest);
+        emit ExecutionInstalled(address(mockModule), appInfo.manifest);
         registry.installApp{value: totalRequired}(mockModule, appAccount, "");
     }
 
@@ -327,10 +326,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 requiredAmount = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, requiredAmount);
         registry.installApp{value: requiredAmount}(mockModule, appAccount, "");
 
@@ -350,10 +346,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, totalPrice);
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");
 
@@ -373,10 +366,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
 
         hoax(founder, totalPrice);
         registry.installApp{value: totalPrice}(mockModule, appAccount, "");

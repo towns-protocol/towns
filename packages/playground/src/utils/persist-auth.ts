@@ -1,4 +1,4 @@
-import type { RiverConfig, SignerContext } from '@towns-protocol/sdk'
+import { type RiverConfig, type SignerContext, getEnvironmentIds } from '@towns-protocol/sdk'
 import superjson from 'superjson'
 
 export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {
@@ -7,27 +7,28 @@ export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig
         signerPrivateKey: signerContext.signerPrivateKey(),
     }
     const signerContextString = superjson.stringify(fixedContext)
-    const riverConfigString = superjson.stringify(riverConfig)
     window.localStorage.setItem('river-signer', signerContextString)
-    window.localStorage.setItem('river-last-config', riverConfigString)
+    window.localStorage.setItem('river-last-env', riverConfig.environmentId)
 }
 
 export const loadAuth = () => {
     const signerContextString = window.localStorage.getItem('river-signer')
-    const riverConfigString = window.localStorage.getItem('river-last-config')
+    const riverConfigString = window.localStorage.getItem('river-last-env')
     if (!signerContextString || !riverConfigString) {
-        return
+        return undefined
+    }
+    if (getEnvironmentIds().find((id) => id === riverConfigString) === undefined) {
+        return undefined
     }
     const signerContext = superjson.parse<Record<string, string>>(signerContextString)
-    const riverConfig = superjson.parse<RiverConfig>(riverConfigString)
     const fixedContext = {
         ...signerContext,
         signerPrivateKey: () => signerContext.signerPrivateKey,
     } as SignerContext
-    return { signerContext: fixedContext, riverConfig }
+    return { signerContext: fixedContext, riverEnvironmentId: riverConfigString }
 }
 
 export const deleteAuth = () => {
     window.localStorage.removeItem('river-signer')
-    window.localStorage.removeItem('river-last-config')
+    window.localStorage.removeItem('river-last-env')
 }

@@ -27,7 +27,7 @@
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "esbuild": "^0.21.5",
+        "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "prettier": "^3.5.3",
         "typescript": "^5.8.2"

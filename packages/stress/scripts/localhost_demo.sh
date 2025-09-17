@@ -17,14 +17,23 @@ ENV_FILES=(
 # Loop through each file in the list
 for file in "${ENV_FILES[@]}"; do
     if [ -f "$file" ]; then
+        set -a  # automatically export all variables
         source "$file"
+        set +a  # turn off automatic export
         echo "Sourced: $file"
     else
         echo "Skipped: $file file does not exist."
     fi
 done
 
-export RIVER_ENV="${RIVER_ENV:-local_multi}"
+export RIVER_ENV="${RIVER_ENV:-local_dev}"
+# if RIVER_ENV == local_dev, source the .env file
+if [ "$RIVER_ENV" == "local_dev" ]; then
+    # Export all variables from the .env file so they're available to child processes
+    set -a  # automatically export all variables
+    source ../generated/deployments/local_dev/.env
+    set +a  # turn off automatic export
+fi
 export STRESS_MODE="${STRESS_MODE:-test}"
 export SESSION_ID="${SESSION_ID:-$(uuidgen)}"
 

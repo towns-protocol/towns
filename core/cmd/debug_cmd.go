@@ -21,7 +21,7 @@ func runDebugCallstacksDownloadCmd(cmd *cobra.Command, args []string) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
 	dir := args[0]
-	err := os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0o755)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func runDebugCallstacksDownloadCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		filename := filepath.Join(dir, fmt.Sprintf("callstack.%s.txt", url.Host))
-		err = os.WriteFile(filename, body, 0644)
+		err = os.WriteFile(filename, body, 0o644)
 		if err != nil {
 			return err
 		}

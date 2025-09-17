@@ -72,8 +72,7 @@ function do_kill() {
 echo ""
 if prompt 'Stop Casbablanca?:y/n '
 then
-    (cd ./core && just RUN_ENV=multi stop)
-    (cd ./core && just RUN_ENV=multi_ne stop)
+    (cd ./core && just stop)
 
     # just in case
     do_kill './bin/river_node run'
@@ -81,8 +80,7 @@ fi
 
 if prompt 'Stop App registry?:y/n '
 then
-    (cd ./core && just RUN_ENV=multi stop-app-registry)
-    (cd ./core && just RUN_ENV=multi_ne stop-app-registry)
+    (cd ./core && just stop-app-registry)
 fi
 
 if prompt 'Stop Stress?:y/n '
@@ -97,6 +95,12 @@ do_kill anvil "$1"
 do_kill wrangler "$1"
 do_kill mitmweb "$1"
 
+echo ""
+if prompt 'Stop Anvil Docker Containers?:y/n '
+then
+    docker stop towns-base-chain towns-river-chain 2>/dev/null || true
+    docker rm towns-base-chain towns-river-chain 2>/dev/null || true
+fi
 
 echo ""
 if prompt 'Remove Casbablanca Docker Containers?:y/n '

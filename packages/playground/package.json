@@ -6,7 +6,9 @@
     "scripts": {
         "build": "tsc && vite build",
         "dev": "vite",
+        "dev:local": "yarn load-env -- vite",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite",
         "preview": "vite preview"
     },
     "dependencies": {
@@ -56,6 +58,7 @@
         "@typescript-eslint/parser": "^8.29.0",
         "@vitejs/plugin-react-oxc": "^0.2.3",
         "autoprefixer": "^10.4.19",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",

@@ -17,13 +17,15 @@
         "@connectrpc/connect-node": "^2.0.0",
         "@hono/node-server": "^1.14.0",
         "@towns-protocol/bot": "workspace:^",
+        "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/web3": "workspace:^",
         "hono": "^4.7.11"
     },
     "devDependencies": {
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
-        "esbuild": "^0.21.5",
+        "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",

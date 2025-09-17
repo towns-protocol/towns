@@ -1,7 +1,7 @@
 {
     "name": "towns-bot",
     "description": "CLI for creating and managing Towns Protocol bot projects",
-    "version": "0.0.321",
+    "version": "0.0.347",
     "author": "Towns Protocol",
     "scripts": {
         "build": "tsup",
@@ -12,11 +12,19 @@
     },
     "bin": "index.js",
     "dependencies": {
+        "@bufbuild/protobuf": "^2.2.2",
+        "@connectrpc/connect-node": "^2.0.0",
+        "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/sdk": "workspace:^",
         "cross-spawn": "^7.0.5",
+        "dotenv": "^16.4.7",
+        "ethers": "^5.7.2",
         "jsonc-parser": "^3.3.1",
         "minimist": "^1.2.8",
         "picocolors": "^1.1.1",
-        "prompts": "^2.4.2"
+        "prompts": "^2.4.2",
+        "tsx": "^4.7.1",
+        "zod": "^3.21.4"
     },
     "devDependencies": {
         "@types/cross-spawn": "^6.0.6",
@@ -29,7 +37,6 @@
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "tsup": "^8.3.5",
-        "tsx": "^4.7.1",
         "typescript": "^5.8.2"
     },
     "engines": {

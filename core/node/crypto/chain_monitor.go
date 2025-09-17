@@ -55,7 +55,7 @@ type (
 	// NodeRegistryChainMonitor monitors the River Registry contract for node events and calls
 	// registered callbacks for each event.
 	NodeRegistryChainMonitor interface {
-		// OnNodeStatusUpdated registers a callback that is called each time a node is added to the
+		// OnNodeAdded registers a callback that is called each time a node is added to the
 		// River Registry contract.
 		OnNodeAdded(from BlockNumber, cb OnNodeAddedCallback)
 
@@ -63,16 +63,16 @@ type (
 		// in the River Registry contract.
 		OnNodeStatusUpdated(from BlockNumber, cb OnNodeStatusUpdatedCallback)
 
-		// OnNodeStatusUpdated registers a callback that is called each time a node url is updated
+		// OnNodeUrlUpdated registers a callback that is called each time a node url is updated
 		// in the River Registry contract.
 		OnNodeUrlUpdated(from BlockNumber, cb OnNodeUrlUpdatedCallback)
 
-		// OnNodeStatusUpdated registers a callback that is called each time a node is removed from the
+		// OnNodeRemoved registers a callback that is called each time a node is removed from the
 		// River Registry contract.
 		OnNodeRemoved(from BlockNumber, cb OnNodeRemovedCallback)
 	}
 
-	// OnNodeRemovedCallback calles each time a node url is removed.
+	// OnNodeAddedCallback calles each time a node url is removed.
 	OnNodeAddedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeAdded)
 
 	// OnNodeStatusUpdatedCallback calles each time a node status is updated.

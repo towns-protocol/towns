@@ -19,12 +19,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import {
-    makeBaseChainConfig,
-    makeRiverChainConfig,
-    makeRiverConfig,
-    useLegacySpaces,
-} from '../riverConfig'
+import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from '../riverConfig'
 import {
     genId,
     makeSpaceStreamId,
@@ -90,6 +85,10 @@ import { isDefined } from '../check'
 import { MemberTokenTransfer } from '../streamStateView_Members'
 
 const log = dlog('csb:test:util')
+
+function useLegacySpaces(): boolean {
+    return process.env.USE_LEGACY_SPACES === 'true'
+}
 
 const initTestUrls = async (): Promise<{
     testUrls: string[]

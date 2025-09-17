@@ -477,18 +477,21 @@ func TestAddEventWithEphemeralEvents(t *testing.T) {
 // testSubscriber is a test implementation of SyncResultReceiver for testing notifications
 type testSubscriber struct {
 	receivedUpdates []*StreamAndCookie
-	receivedErrors  []error
 	streamErrors    []StreamId
 }
 
-func (s *testSubscriber) OnUpdate(sac *StreamAndCookie) {
+func (s *testSubscriber) OnUpdate(streamID StreamId, sac *StreamAndCookie) {
 	s.receivedUpdates = append(s.receivedUpdates, sac)
 }
 
-func (s *testSubscriber) OnSyncError(err error) {
-	s.receivedErrors = append(s.receivedErrors, err)
+func (s *testSubscriber) OnSyncDown(streamID StreamId) {
+	s.streamErrors = append(s.streamErrors, streamID)
 }
 
-func (s *testSubscriber) OnStreamSyncDown(streamID StreamId) {
-	s.streamErrors = append(s.streamErrors, streamID)
+func (s *testSubscriber) eventsReceived() int {
+	count := 0
+	for _, sac := range s.receivedUpdates {
+		count += len(sac.Events)
+	}
+	return count
 }

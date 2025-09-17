@@ -4,11 +4,11 @@ pragma solidity ^0.8.23;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
+import {SimpleAccount} from "@eth-infinitism/account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "@eth-infinitism/account-abstraction/samples/SimpleAccountFactory.sol";
 
 // interfaces
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
@@ -95,6 +95,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     address internal riverAirdrop;
     address internal appRegistry;
+
+    EntryPoint internal entryPoint;
     SimpleAccountFactory internal simpleAccountFactory;
 
     IEntitlementChecker internal entitlementChecker;
@@ -115,7 +117,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         operators = _createAccounts(10);
 
         // Simple Account Factory
-        simpleAccountFactory = new SimpleAccountFactory(IEntryPoint(_randomAddress()));
+        entryPoint = new EntryPoint();
+        simpleAccountFactory = new SimpleAccountFactory(entryPoint);
 
         deployBaseRegistry = new DeployBaseRegistry();
         deploySpaceFactory = new DeploySpaceFactory();

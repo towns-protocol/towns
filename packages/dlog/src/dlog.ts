@@ -2,6 +2,7 @@ import { bin_toHexString, isHexString, shortenHexString } from './binary'
 import debug, { Debugger } from 'debug'
 
 import { isTestEnv } from './utils'
+import { safeEnv } from './envUtils'
 
 // Works as debug.enabled, but falls back on options if not explicitly set in env instead of returning false.
 debug.enabled = (ns: string): boolean => {
@@ -142,12 +143,16 @@ export interface DLogOpts {
 
     // If true, binds to console.error so callstack is printed.
     printStack?: boolean
+
+    // If true, logs will be logged to console.warn instead of console.log
+    warn?: boolean
 }
 
 const allDlogs: Map<string, DLogger> = new Map()
 
 // Configurable error logger - evaluated at runtime to avoid order of operations issues
 let customErrorLogger: ((...args: unknown[]) => void) | undefined = undefined
+let customWarnLogger: ((...args: unknown[]) => void) | undefined = undefined
 
 /**
  * Set a custom error logger that will be used instead of console.error for dlog error output.
@@ -159,11 +164,26 @@ export const setDlogErrorLogger = (logger: ((...args: unknown[]) => void) | unde
     customErrorLogger = logger
 }
 
+/**
+ * Set a custom warning logger that will be used instead of console.warn for dlog warning output.
+ * This allows external libraries to capture and buffer warning logs for reporting.
+ *
+ * @param logger Custom logger function, or undefined to reset to console.warn
+ */
+export const setDlogWarnLogger = (logger: ((...args: unknown[]) => void) | undefined): void => {
+    customWarnLogger = logger
+}
+
 // github#722
-const isSingleLineLogsMode =
-    typeof process !== 'undefined' && process.env.SINGLE_LINE_LOGS === 'true'
+const isSingleLineLogsMode = safeEnv(['SINGLE_LINE_LOGS']) === 'true'
 
 const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
+    if (opts?.warn) {
+        d.log = (...args: unknown[]) => {
+            const warnLogger = customWarnLogger || console.warn
+            warnLogger(...args)
+        }
+    }
     if (opts?.printStack) {
         // Use a dynamic logger that checks for custom error logger at runtime
         d.log = (...args: unknown[]) => {
@@ -263,10 +283,22 @@ export const dlogError = (ns: string): DLogger => {
     return l
 }
 
+/**
+ * Same as dlog, but logger is bound to console.warn so clicking on it expands log site callstack.
+ * Also, logger is enabled by default, except if running in jest.
+ *
+ * @param ns Namespace for the logger.
+ * @returns New logger with namespace `ns`.
+ */
+export const dlogWarn = (ns: string): DLogger => {
+    return makeDlog(debug(ns), { defaultEnabled: true, allowJest: true, warn: true })
+}
+
 export interface ExtendedLogger {
     info: DLogger
     log: DLogger
     error: DLogger
+    warn: DLogger
     extend: (namespace: string) => ExtendedLogger
 }
 
@@ -280,6 +312,7 @@ export const dlogger = (ns: string): ExtendedLogger => {
         log: makeDlog(debug(ns + ':log')),
         info: makeDlog(debug(ns + ':info'), { defaultEnabled: true, allowJest: true }),
         error: dlogError(ns + ':error'),
+        warn: dlogWarn(ns + ':warn'),
         extend: (sub: string) => {
             return dlogger(ns + ':' + sub)
         },

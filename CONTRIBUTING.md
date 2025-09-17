@@ -22,11 +22,14 @@
 
 Open VScode in the root of this directory: `code .`
 
-Launch local server via .vscode/tasks.json:
+Launch local environment via .vscode/tasks.json:
 
-- Use the keystroke: `CMD+P` to bring up the switcher and type `task ~Start Local Dev~` (Once you type the word "task" you will see all the options from task.json in the dropdown)
+- `CMD+P` + `task ~Start Local Dev~` - Uses pre-built Docker image (recommended)
+- `CMD+P` + `task ~Start Local Docker Dev~` - Uses locally built Docker image (for contract development)
 
 This workflow runs the `.vscode/tasks.json` task labeled `~Start Local Dev~` and starts everything needed to work and run integration tests locally.
+
+Both workflows use Docker containers with pre-deployed contracts.
 
 ![Screen Shot 2022-09-02 at 2 58 02 PM](https://user-images.githubusercontent.com/950745/188241222-c71d65dc-cda4-41db-8272-f5bdb18e26bf.png)
 
@@ -43,6 +46,20 @@ If you want to restart just the server, `CMD+P` + `task RestartCasablanca` will 
 - Run all tests (both unit and e2e) via: `yarn test`
 
 CI will gate PR merges via unit tests. However, failing e2e tests won't gate merges. In fact, they won't even be run pre-merge. e2e tests will be run after merging to main. This allows us to keep merging our work to main, while also staying aware of failing e2e tests.
+
+### Testing CI Locally
+
+Test GitHub CI workflows locally using `./scripts/run-local-ci.sh` (requires Docker):
+
+```bash
+# Test Common_CI job (linting, formatting, unit tests)
+./scripts/run-local-ci.sh -j Common_CI
+
+# Test Multinode job
+./scripts/run-local-ci.sh -j Multinode
+```
+
+Use `--help` for all options. Useful when modifying CI workflows.
 
 ## Package.json Scripts
 
