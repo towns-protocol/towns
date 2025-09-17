@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -435,7 +434,7 @@ func (s *PostgresStreamStore) createExternalMediaStreamUploadEntryTx(
 		DO UPDATE SET upload_id = $2
 	`
 
-	_, err := tx.Exec(ctx, query, streamId, uploadID)
+	_, err := tx.Exec(ctx, query, streamId, []byte(uploadID))
 	return err
 }
 
@@ -478,8 +477,21 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	`
 
 	// Add the new etag to the JSONB array
-	etagJSON := fmt.Sprintf(`[{"miniblock": %d, "etag": "%s"}]`, miniblock, etag)
-	_, err := tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
+	etagObj := Etag{
+		Miniblock: int(miniblock),
+		Etag:      etag,
+	}
+
+	// Marshal the struct to JSON
+	etagJSONBytes, err := json.Marshal(etagObj)
+	if err != nil {
+		return err
+	}
+
+	// Convert to string for PostgreSQL
+	etagJSON := string(etagJSONBytes)
+
+	_, err = tx.Exec(ctx, updateUploadQuery, streamId, etagJSON)
 	if err != nil {
 		return err
 	}
@@ -488,10 +500,10 @@ func (s *PostgresStreamStore) writeExternalMediaStreamPartUploadInfoTx(
 	query := `
 		WITH max_end_bytes AS (
 			SELECT COALESCE(MAX(end_bytes), 0) as max_end
-			FROM {{external_media_markers}} 
+			FROM external_media_markers
 			WHERE stream_id = $1
 		)
-		INSERT INTO {{external_media_markers}} (stream_id, miniblock, start_bytes, end_bytes) 
+		INSERT INTO external_media_markers (stream_id, miniblock, start_bytes, end_bytes) 
 		SELECT $1, $2, max_end + 1, max_end + $3
 		FROM max_end_bytes
 		ON CONFLICT (stream_id, miniblock) 

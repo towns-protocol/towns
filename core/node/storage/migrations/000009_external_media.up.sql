@@ -4,6 +4,9 @@ CREATE TABLE external_media_uploads (
     upload_id TEXT NOT NULL DEFAULT '',              -- upload ID for multipart uploads
     etags JSONB NOT NULL DEFAULT '[]'                -- etags for each part in the multipart upload
 );
+ALTER TABLE external_media_uploads ALTER COLUMN stream_id SET STORAGE PLAIN;
+ALTER TABLE external_media_uploads ALTER COLUMN upload_id SET STORAGE PLAIN;
+ALTER TABLE external_media_uploads ALTER COLUMN etags SET STORAGE PLAIN;
 
 -- Create partitioned tables for external_media_markers
 -- This follows the same partitioning strategy as miniblocks/minipools

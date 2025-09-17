@@ -467,7 +467,11 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 		"{{miniblock_candidates}}",
 		"miniblock_candidates_"+suffix,
 	)
-
+	sql = strings.ReplaceAll(
+		sql,
+		"{{external_media_markers}}",
+		"external_media_markers_"+suffix,
+	)
 	return sql
 }
 
