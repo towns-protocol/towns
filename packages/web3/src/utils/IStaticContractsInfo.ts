@@ -52,7 +52,6 @@ export function getWeb3Deployment(riverEnv?: string, opts?: SafeEnvOpts): Web3De
  */
 export function getWeb3Deployments(opts?: SafeEnvOpts) {
     const riverEnv = safeEnv(['RIVER_ENV'], opts)
-    console.log('getWeb3Deployments', { riverEnv, opts })
     const keys = Object.keys(DeploymentsJson)
     if (riverEnv && !keys.includes(riverEnv)) {
         return [riverEnv, ...keys]

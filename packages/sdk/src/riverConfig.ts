@@ -201,7 +201,10 @@ export function makeRiverConfig(inEnvironmentId?: string, opts?: SafeEnvOpts): R
             base: makeBaseChainConfig(environmentId, opts),
             river: makeRiverChainConfig(environmentId, opts),
             services: [
-                { id: RiverService.Notifications, url: getNotificationServiceUrl(environmentId, opts) },
+                {
+                    id: RiverService.Notifications,
+                    url: getNotificationServiceUrl(environmentId, opts),
+                },
                 { id: RiverService.AppRegistry, url: getAppRegistryUrl(environmentId, opts) },
                 { id: RiverService.StreamMetadata, url: getStreamMetadataUrl(environmentId, opts) },
             ],
