@@ -1568,30 +1568,11 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 
 			// request latest miniblock hash from each node and compare them.
 			for _, nodeAddress := range stream.Nodes() {
-				nodeWorkerPools[nodeAddress].Submit(func() {
-					streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
-					if err != nil {
-						panic(err)
-					}
-
-					request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
-					request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
-					request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
-
-					var ns *nodeStatus
-					if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
-						ns = &nodeStatus{
-							NodeAddress:   nodeAddress,
-							MiniblockNum:  resp.Msg.MiniblockNum,
-							MiniblockHash: common.BytesToHash(resp.Msg.Hash),
-						}
-					} else {
-						ns = &nodeStatus{NodeAddress: nodeAddress, Error: err.Error()}
-					}
+				pool, poolOK := nodeWorkerPools[nodeAddress]
+				if !poolOK {
+					ns := &nodeStatus{NodeAddress: nodeAddress, Error: fmt.Sprintf("node %s not found", nodeAddress)}
 
 					mu.Lock()
-					defer mu.Unlock()
-
 					nodeStatuses = append(nodeStatuses, ns)
 					if len(nodeStatuses) == targetReplicationFactor {
 						if !inSync(stream.Id, nodeStatuses) {
@@ -1604,7 +1585,46 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 							inSyncStreams.Add(1)
 						}
 					}
-				})
+					mu.Unlock()
+				} else {
+					pool.Submit(func() {
+						streamServiceClient, err := nodeRegistry.GetStreamServiceClientForAddress(nodeAddress)
+						if err != nil {
+							panic(err)
+						}
+
+						request := connect.NewRequest(&protocol.GetLastMiniblockHashRequest{StreamId: stream.Id[:]})
+						request.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+						request.Header().Set(headers.RiverAllowNoQuorumHeader, headers.RiverHeaderTrueValue)
+
+						var ns *nodeStatus
+						if resp, err := streamServiceClient.GetLastMiniblockHash(ctx, request); err == nil {
+							ns = &nodeStatus{
+								NodeAddress:   nodeAddress,
+								MiniblockNum:  resp.Msg.MiniblockNum,
+								MiniblockHash: common.BytesToHash(resp.Msg.Hash),
+							}
+						} else {
+							ns = &nodeStatus{NodeAddress: nodeAddress, Error: err.Error()}
+						}
+
+						mu.Lock()
+						defer mu.Unlock()
+
+						nodeStatuses = append(nodeStatuses, ns)
+						if len(nodeStatuses) == targetReplicationFactor {
+							if !inSync(stream.Id, nodeStatuses) {
+								outOfSyncStreams.Add(1)
+								_ = output.Encode(&streamStatus{
+									StreamID:     stream.Id,
+									NodeStatuses: nodeStatuses,
+								})
+							} else {
+								inSyncStreams.Add(1)
+							}
+						}
+					})
+				}
 			}
 
 			return true
@@ -1617,7 +1637,6 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 
 	done := make(chan struct{})
 	go func() {
-		defer close(done)
 		for {
 			fmt.Printf("out-of-sync: %d in-sync: %d replicated-streams: %d total-streams: %d\n",
 				outOfSyncStreams.Load(), inSyncStreams.Load(), totalReplicatedStreams.Load(), totalStreams.Load())
