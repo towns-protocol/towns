@@ -89,13 +89,6 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 		},
 		func() float64 { return float64(h.activeSyncOperations.Size()) },
 	)
-	metrics.NewGaugeFunc(
-		prometheus.GaugeOpts{
-			Name: "stream_sync_shared_syncing_streams_counter",
-			Help: "Total number of streams currently being synced by the shared syncer",
-		},
-		func() float64 { return float64(h.subscriptionManager.GetStats().SyncingStreamsCount) },
-	)
 }
 
 func (sm *syncMetrics) actions(cmd *subCommand, useSharedSync bool) {
