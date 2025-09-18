@@ -100,9 +100,6 @@ jobs:
             architecture: amd64
             platform: linux/amd64
             runner: ubuntu-latest
-            ecr_registry: ${{ needs.generate-tags.outputs.ecr_registry }}
-            ecr_repository: towns-anvil
-            ecr_registry_alias: h5v6m2x1
             docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
             dockerfile: ./packages/contracts/docker/Dockerfile
             cache_scope_prefix: towns-anvil
@@ -117,9 +114,6 @@ jobs:
             architecture: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
-            ecr_registry: ${{ needs.generate-tags.outputs.ecr_registry }}
-            ecr_repository: towns-anvil
-            ecr_registry_alias: h5v6m2x1
             docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
             dockerfile: ./packages/contracts/docker/Dockerfile
             cache_scope_prefix: towns-anvil

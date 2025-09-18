@@ -16,18 +16,6 @@ on:
                 description: 'GitHub runner type'
                 required: true
                 type: string
-            ecr_registry:
-                description: 'ECR registry URL'
-                required: true
-                type: string
-            ecr_repository:
-                description: 'ECR repository name'
-                required: true
-                type: string
-            ecr_registry_alias:
-                description: 'ECR registry alias'
-                required: true
-                type: string
             docker_tags:
                 description: 'Comma-separated list of tags'
                 required: true
@@ -64,8 +52,7 @@ jobs:
         runs-on: ${{ inputs.runner }}
 
         permissions:
-            contents: read
-            packages: write
+            contents: write
 
         outputs:
             digest: ${{ steps.build-push.outputs.digest }}
