@@ -1,17 +1,9 @@
 package sync
 
 import (
-	"fmt"
-
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/towns-protocol/towns/core/node/infra"
-)
-
-const (
-	metricsActionAdd      = "add"
-	metricsActionRemove   = "remove"
-	metricsActionBackfill = "backfill"
 )
 
 // syncMetrics contains the Prometheus metrics for the sync handler.
@@ -89,27 +81,4 @@ func (h *handlerImpl) setupSyncMetrics(metrics infra.MetricsFactory) {
 		},
 		func() float64 { return float64(h.activeSyncOperations.Size()) },
 	)
-}
-
-func (sm *syncMetrics) actions(cmd *subCommand, useSharedSync bool) {
-	if sm == nil || cmd == nil || cmd.ModifySyncReq == nil {
-		return
-	}
-
-	var op string
-	var count int
-	if len(cmd.ModifySyncReq.ToAdd) > 0 {
-		op = metricsActionAdd
-		count = len(cmd.ModifySyncReq.ToAdd)
-	}
-	if len(cmd.ModifySyncReq.ToRemove) > 0 {
-		op = metricsActionRemove
-		count = len(cmd.ModifySyncReq.ToRemove)
-	}
-	if len(cmd.ModifySyncReq.ToBackfill) > 0 {
-		op = metricsActionBackfill
-		count = len(cmd.ModifySyncReq.ToBackfill)
-	}
-
-	sm.actionsCounter.WithLabelValues(fmt.Sprintf("%t", useSharedSync), op).Add(float64(count))
 }
