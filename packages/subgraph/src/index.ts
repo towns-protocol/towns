@@ -897,7 +897,7 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
+ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
@@ -910,7 +910,6 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
                 tokenId: event.args.tokenId,
                 totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
-                active: true,
                 lastRenewalTime: null, // Will be set on first renewal
                 createdAt: blockNumber,
                 updatedAt: blockNumber,
@@ -919,7 +918,6 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
                 space: event.args.space,
                 tokenId: event.args.tokenId,
                 nextRenewalTime: event.args.nextRenewalTime,
-                active: true,
                 updatedAt: blockNumber,
             })
     } catch (error) {
@@ -930,14 +928,13 @@ ponder.on('Space:SubscriptionConfigured', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:SubscriptionPaused', async ({ event, context }) => {
+ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
-                active: false,
                 updatedAt: blockNumber,
             })
             .where(
@@ -960,7 +957,7 @@ ponder.on('Space:SubscriptionPaused', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:SubscriptionRenewed', async ({ event, context }) => {
+ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
@@ -991,14 +988,14 @@ ponder.on('Space:SubscriptionRenewed', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:SubscriptionDeactivated', async ({ event, context }) => {
+ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
-                active: false,
+                nextRenewalTime: 0n,
                 updatedAt: blockNumber,
             })
             .where(
@@ -1021,7 +1018,7 @@ ponder.on('Space:SubscriptionDeactivated', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
+ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
@@ -1051,7 +1048,7 @@ ponder.on('Space:SubscriptionSpent', async ({ event, context }) => {
     }
 })
 
-ponder.on('Space:BatchRenewalSkipped', async ({ event, context }) => {
+ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {

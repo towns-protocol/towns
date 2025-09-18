@@ -70,6 +70,11 @@ export function makePonderConfig(
         throw new Error('App registry address not found')
     }
 
+    const subscriptionModule = getContractAddress('subscriptionModule', baseChainName, environment)
+    if (!subscriptionModule) {
+        throw new Error('App registry address not found')
+    }
+
     return {
         chains: {
             [baseChainName]: {
@@ -108,7 +113,6 @@ export function makePonderConfig(
                     tippingFacetAbi,
                     membershipFacetAbi,
                     reviewFacetAbi,
-                    SubscriptionModuleFacetAbi,
                 ]),
                 address: factory({
                     address: spaceFactory,
@@ -123,6 +127,12 @@ export function makePonderConfig(
             SpaceOwner: {
                 abi: spaceOwnerAbi,
                 address: spaceOwner,
+                startBlock: baseChainStartBlock,
+                chain: baseChainName,
+            },
+            SubscriptionModule: {
+                abi: SubscriptionModuleFacetAbi,
+                address: subscriptionModule,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
             },
