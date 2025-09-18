@@ -14,7 +14,7 @@
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "serve": "yarn typings && ponder serve",
         "start": "yarn typings && ponder start",
-        "test:unit": "yarn typings && tsc --noEmit",
+        "test:unit": "yarn typings && sh -c 'tsc --noEmit'",
         "transfer-ownership": "tsx interactions/transfer-ownership.ts",
         "typings": "turbo typings --filter @towns-protocol/contracts && turbo build --filter @towns-protocol/web3"
     },
