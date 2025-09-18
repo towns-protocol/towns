@@ -29,7 +29,7 @@ import {
     IGroupEncryptionClient,
     createCryptoStore,
 } from '@towns-protocol/encryption'
-import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toHexString, dlog, shortenHexString } from '@towns-protocol/utils'
 
 import EventEmitter from 'events'
 import { Permission } from '@towns-protocol/web3'

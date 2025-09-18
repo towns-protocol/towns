@@ -1,7 +1,7 @@
 import { EncryptedData, EncryptedDataSchema, EncryptedDataVersion } from '@towns-protocol/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { bin_toBase64, dlog } from '@towns-protocol/dlog'
+import { bin_toBase64, dlog } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:groupEncryption')

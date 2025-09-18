@@ -3,7 +3,7 @@ import { ReviewStorage } from '@towns-protocol/generated/dev/typings/IReview'
 import { ContractTransaction, ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { Address } from 'abitype'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { IReview__factory } from '@towns-protocol/generated/dev/typings/factories/IReview__factory'
 
 // solidity doesn't export enums, so we need to define them here, boooooo

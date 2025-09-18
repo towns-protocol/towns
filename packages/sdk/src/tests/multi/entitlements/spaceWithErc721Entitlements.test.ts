@@ -11,7 +11,7 @@ import {
     linkWallets,
     getNftRuleData,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { Address, TestERC721 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithErc721Entitlements')

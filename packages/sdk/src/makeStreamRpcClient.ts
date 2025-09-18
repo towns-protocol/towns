@@ -1,7 +1,7 @@
 import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { snakeCase } from 'lodash-es'
 import {

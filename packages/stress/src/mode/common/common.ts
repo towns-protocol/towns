@@ -1,4 +1,4 @@
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { isSet } from '../../utils/expect'
 import { ChatConfig } from './types'
 import { makeDefaultChannelStreamId } from '@towns-protocol/sdk'

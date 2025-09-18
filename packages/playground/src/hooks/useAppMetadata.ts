@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
 import { useSyncAgent } from '@towns-protocol/react-sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { loadAuth } from '@/utils/persist-auth'
 

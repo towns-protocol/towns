@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { makeRiverConfig } from '../../riverConfig'
 import { LocalhostWeb3Provider, RiverAirdropDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'

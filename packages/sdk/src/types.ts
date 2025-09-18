@@ -43,7 +43,7 @@ import {
     ContentCaseType,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'

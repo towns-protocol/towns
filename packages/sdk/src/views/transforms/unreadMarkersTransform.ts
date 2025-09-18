@@ -2,7 +2,7 @@ import { FullyReadMarker } from '@towns-protocol/proto'
 import { TimelinesViewModel } from '../streams/timelinesModel'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from '../../id'
 import { RiverTimelineEvent, TimelineEvent } from '../models/timelineTypes'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 
 const console = dlogger('csb:unreadMarkersTransform')
 

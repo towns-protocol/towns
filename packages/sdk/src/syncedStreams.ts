@@ -1,5 +1,5 @@
 import { SyncCookie } from '@towns-protocol/proto'
-import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
+import { DLogger, check, dlog, dlogError } from '@towns-protocol/utils'
 import { StreamRpcClient } from './makeStreamRpcClient'
 import { SyncedStreamEvents } from './streamEvents'
 import TypedEmitter from 'typed-emitter'

@@ -1,4 +1,4 @@
-import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
+import { bin_toHexString, dlogger } from '@towns-protocol/utils'
 import { Snapshot, SnapshotSchema } from '@towns-protocol/proto'
 import { SpaceIdFromSpaceAddress } from '@towns-protocol/web3'
 import { removeCommon } from '../utils'

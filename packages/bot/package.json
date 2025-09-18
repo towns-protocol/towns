@@ -20,11 +20,11 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
         "@connectrpc/connect-node": "^2.0.0",
-        "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
         "@towns-protocol/sdk-crypto": "workspace:^",
+        "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.7.2",
         "jsonwebtoken": "^9.0.2",

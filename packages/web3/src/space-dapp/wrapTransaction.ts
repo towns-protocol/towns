@@ -1,6 +1,6 @@
 import { ContractTransaction, ContractReceipt } from 'ethers'
 import { TransactionOpts } from '../types/ContractTypes'
-import { dlogger, isTestEnv } from '@towns-protocol/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:SpaceDapp:debug')
 

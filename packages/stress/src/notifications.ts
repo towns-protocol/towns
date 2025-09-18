@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import { makeRiverConfig, makeSignerContext, NotificationService } from '@towns-protocol/sdk'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import {
     DmChannelSettingValue,
     GdmChannelSettingValue,

@@ -2,7 +2,7 @@ import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { decodeUsers } from './ConvertersEntitlements'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { UserEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/UserEntitlement__factory'
 
 const logger = dlogger('csb:UserEntitlementShim:debug')

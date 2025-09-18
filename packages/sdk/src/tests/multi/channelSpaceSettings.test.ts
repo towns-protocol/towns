@@ -11,7 +11,7 @@ import {
     expectUserCanJoin,
     createRole,
 } from '../testUtils'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { Permission, NoopRuleData } from '@towns-protocol/web3'
 
 describe('channelSpaceSettingsTests', () => {

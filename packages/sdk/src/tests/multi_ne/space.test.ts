@@ -4,7 +4,7 @@
 
 import { isEncryptedData, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 import { makeUniqueChannelStreamId, makeUniqueMediaStreamId, streamIdToBytes } from '../../id'
 import {

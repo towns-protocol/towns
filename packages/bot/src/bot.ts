@@ -43,7 +43,7 @@ import {
     MessageInteractionType,
     type SlashCommand,
 } from '@towns-protocol/proto'
-import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,

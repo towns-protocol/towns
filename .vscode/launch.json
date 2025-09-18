@@ -14,12 +14,12 @@
       "processId": "river_node"
     },
     {
-      "name": "Vitest: current file in 'packages/dlog/'",
+      "name": "Vitest: current file in 'packages/utils/'",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development" },
       "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
-      "cwd": "${workspaceFolder}/packages/dlog",
+      "cwd": "${workspaceFolder}/packages/utils",
       "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
       "smartStep": true,

@@ -18,7 +18,7 @@ import {
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
 import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'

@@ -38,7 +38,7 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { IAppAccountShim } from './IAppAccountShim'
 const log = dlogger('csb:Space')
 

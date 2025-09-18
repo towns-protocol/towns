@@ -6,7 +6,7 @@ import {
     spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
 import { LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
-import { bin_fromBase64, bin_toBase64, shortenHexString } from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_toBase64, shortenHexString } from '@towns-protocol/utils'
 import { Wallet } from 'ethers'
 import {
     ChannelMessage_Post_Attachment,

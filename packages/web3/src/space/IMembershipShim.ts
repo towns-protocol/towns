@@ -1,6 +1,6 @@
 import { BigNumber, ContractTransaction, ethers, Signer } from 'ethers'
 import { BaseContractShim, OverrideExecution } from '../BaseContractShim'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { IMembershipMetadataShim } from './IMembershipMetadataShim'
 import { MembershipFacet__factory } from '@towns-protocol/generated/dev/typings/factories/MembershipFacet__factory'
 import { IERC721AShim } from '../erc-721/IERC721AShim'

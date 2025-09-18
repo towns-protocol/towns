@@ -10,7 +10,7 @@ import {
     expectUserCannotJoinChannel,
     linkWallets,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { Address, treeToRuleData, TestERC1155 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithErc1155Entitlements')

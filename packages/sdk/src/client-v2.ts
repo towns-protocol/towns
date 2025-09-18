@@ -36,7 +36,7 @@ import {
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
 } from './sign'
-import { bin_toHexString, check } from '@towns-protocol/dlog'
+import { bin_toHexString, check } from '@towns-protocol/utils'
 import { toJsonString } from '@bufbuild/protobuf'
 import {
     SessionKeysSchema,

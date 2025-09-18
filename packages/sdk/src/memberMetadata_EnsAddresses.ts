@@ -1,5 +1,5 @@
 import TypedEmitter from 'typed-emitter'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { StreamStateEvents } from './streamEvents'
 import { userIdFromAddress } from './id'
 

@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     makeUserContextFromWallet,
     makeTestClient,

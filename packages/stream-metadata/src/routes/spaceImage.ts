@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest, type FastifyBaseLogger } from 'fastify'
 import { ChunkedMedia } from '@towns-protocol/proto'
 import { StreamPrefix, StreamStateView, makeStreamId } from '@towns-protocol/sdk'
 import { z } from 'zod'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 
 import { config } from '../environment'
 import { getStream } from '../riverStreamRpcClient'

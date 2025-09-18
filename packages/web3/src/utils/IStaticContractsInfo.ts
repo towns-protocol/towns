@@ -1,7 +1,7 @@
 import DeploymentsJson from '@towns-protocol/generated/config/deployments.json' with { type: 'json' }
 
 import { Address } from '../types/ContractTypes'
-import { check, safeEnv, SafeEnvOpts } from '@towns-protocol/dlog'
+import { check, safeEnv, SafeEnvOpts } from '@towns-protocol/utils'
 
 export interface BaseChainConfig {
     chainId: number

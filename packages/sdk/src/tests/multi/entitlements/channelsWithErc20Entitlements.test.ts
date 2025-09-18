@@ -9,7 +9,7 @@ import {
     expectUserCanJoinChannel,
     expectUserCannotJoinChannel,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { Address, TestERC20, treeToRuleData } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithErc20Entitlements')

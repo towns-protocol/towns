@@ -19,7 +19,7 @@ import {
     createSpaceDapp,
 } from '@towns-protocol/web3'
 import { makeBaseChainConfig } from '../../riverConfig'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 
 const log = dlog('csb:test:mediaWithEntitlements')
 

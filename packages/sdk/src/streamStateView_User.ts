@@ -9,7 +9,7 @@ import {
 } from '@towns-protocol/proto'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { bin_toHexString, check } from '@towns-protocol/dlog'
+import { bin_toHexString, check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { streamIdFromBytes, userIdFromAddress } from './id'
 import { utils } from 'ethers'

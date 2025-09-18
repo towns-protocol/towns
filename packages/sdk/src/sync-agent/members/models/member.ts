@@ -1,4 +1,4 @@
-import { bin_toHexString, bin_toString, check } from '@towns-protocol/dlog'
+import { bin_toHexString, bin_toString, check } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import type { Store } from '../../../store/store'

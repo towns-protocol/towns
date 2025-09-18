@@ -31,7 +31,7 @@ import {
 import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '../decryptionExtensions'
-import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_fromHexString, check, dlog } from '@towns-protocol/utils'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'

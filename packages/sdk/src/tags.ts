@@ -8,7 +8,7 @@ import {
 } from '@towns-protocol/proto'
 import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
-import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
 import { TipEventObject } from '@towns-protocol/web3'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'

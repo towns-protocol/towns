@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { makeSpaceStreamId } from '../../id'
 import { makeBaseChainConfig, makeRiverConfig } from '../../riverConfig'
 import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'

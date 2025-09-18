@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { promises as fs } from 'node:fs'
 import {
     RiverConfig,

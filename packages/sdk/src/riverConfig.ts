@@ -5,7 +5,7 @@ import {
     getWeb3Deployments,
     getRiverEnv,
 } from '@towns-protocol/web3'
-import { dlogger, safeEnv, SafeEnvOpts } from '@towns-protocol/dlog'
+import { dlogger, safeEnv, SafeEnvOpts } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:config')
 

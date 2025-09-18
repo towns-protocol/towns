@@ -8,7 +8,7 @@ import { UserMemberships, UserMembershipsModel } from '../user/models/userMember
 import { MembershipOp } from '@towns-protocol/proto'
 import { isDMChannelStreamId, makeDMStreamId } from '../../id'
 import { RiverConnection } from '../river-connection/riverConnection'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import type { Client } from '../../client'
 import { Dm } from './models/dm'
 

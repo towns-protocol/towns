@@ -1,7 +1,7 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { LogDescription } from 'ethers/lib/utils'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { Architect__factory } from '@towns-protocol/generated/dev/typings/factories/Architect__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 

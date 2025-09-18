@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { Bot } from '../../../sync-agent/utils/bot'
 
 const logger = dlogger('csb:test:user')

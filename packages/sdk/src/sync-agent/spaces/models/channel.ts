@@ -7,7 +7,7 @@ import {
     PlainMessage,
 } from '@towns-protocol/proto'
 import { MessageTimeline } from '../../timeline/timeline'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
 import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'

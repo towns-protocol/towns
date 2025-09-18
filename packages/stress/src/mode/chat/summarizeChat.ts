@@ -1,4 +1,4 @@
-import { check, shortenHexString } from '@towns-protocol/dlog'
+import { check, shortenHexString } from '@towns-protocol/utils'
 import { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { getSystemInfo } from '../../utils/systemInfo'

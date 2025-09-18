@@ -18,7 +18,7 @@ import {
     makeRiverRpcClient,
     makeSignerContext,
 } from '@towns-protocol/sdk'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'

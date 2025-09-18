@@ -56,7 +56,7 @@ import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
 import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
-import { dlogger, isTestEnv } from '@towns-protocol/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/utils'
 
 import { PlatformRequirements } from '../platform-requirements/PlatformRequirements'
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
