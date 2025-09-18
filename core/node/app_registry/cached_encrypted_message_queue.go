@@ -37,7 +37,7 @@ type CachedEncryptedMessageQueue struct {
 	appDispatcher *AppDispatcher
 	// appInfoCache stores complete AppInfo objects with TTL to reduce database queries.
 	// This includes settings, metadata, webhook status, and active status.
-	appInfoCache *arc.ARCCache[string, *appInfoCacheEntry]
+	appInfoCache *arc.ARCCache[common.Address, *appInfoCacheEntry]
 }
 
 // appInfoCacheEntry holds cached AppInfo with a timestamp for TTL validation
@@ -52,7 +52,7 @@ func NewCachedEncryptedMessageQueue(
 	appDispatcher *AppDispatcher,
 ) (*CachedEncryptedMessageQueue, error) {
 	// Initialize app info cache with 50,000 max entries
-	appInfoCache, err := arc.NewARC[string, *appInfoCacheEntry](50000)
+	appInfoCache, err := arc.NewARC[common.Address, *appInfoCacheEntry](50000)
 	if err != nil {
 		return nil, base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create app info cache")
@@ -101,7 +101,7 @@ func (q *CachedEncryptedMessageQueue) UpdateSettings(
 	if err := q.store.UpdateSettings(ctx, app, settings); err != nil {
 		return err
 	}
-	q.appInfoCache.Remove(app.String())
+	q.appInfoCache.Remove(app)
 	return nil
 }
 
@@ -115,7 +115,7 @@ func (q *CachedEncryptedMessageQueue) RegisterWebhook(
 	if err := q.store.RegisterWebhook(ctx, app, webhook, deviceKey, fallbackKey); err != nil {
 		return err
 	}
-	q.appInfoCache.Remove(app.String())
+	q.appInfoCache.Remove(app)
 	return nil
 }
 
@@ -136,7 +136,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 		return err
 	}
 
-	q.appInfoCache.Remove(app.String())
+	q.appInfoCache.Remove(app)
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 		return err
 	}
 
-	q.appInfoCache.Remove(app.String())
+	q.appInfoCache.Remove(app)
 
 	return nil
 }
@@ -339,7 +339,7 @@ func (q *CachedEncryptedMessageQueue) SetAppActiveStatus(
 	if err := q.store.SetAppActiveStatus(ctx, app, active); err != nil {
 		return err
 	}
-	q.appInfoCache.Remove(app.String())
+	q.appInfoCache.Remove(app)
 	return nil
 }
 
@@ -348,16 +348,14 @@ func (q *CachedEncryptedMessageQueue) getCachedAppInfo(
 	ctx context.Context,
 	app common.Address,
 ) (*storage.AppInfo, error) {
-	cacheKey := app.String()
-
 	// Check cache with TTL validation (15 seconds)
-	if entry, exists := q.appInfoCache.Get(cacheKey); exists {
+	if entry, exists := q.appInfoCache.Get(app); exists {
 		if time.Since(entry.timestamp) < 15*time.Second {
 			// Cache hit with valid TTL
 			return entry.appInfo, nil
 		}
 		// Expired entry, remove it
-		q.appInfoCache.Remove(cacheKey)
+		q.appInfoCache.Remove(app)
 	}
 
 	// Cache miss or expired, fetch from store
@@ -367,7 +365,7 @@ func (q *CachedEncryptedMessageQueue) getCachedAppInfo(
 	}
 
 	// Cache the result
-	q.appInfoCache.Add(cacheKey, &appInfoCacheEntry{
+	q.appInfoCache.Add(app, &appInfoCacheEntry{
 		appInfo:   appInfo,
 		timestamp: time.Now(),
 	})
