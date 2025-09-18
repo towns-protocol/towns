@@ -4,7 +4,7 @@ import { StreamEncryptionEvents } from './streamEvents'
 import { StreamMember } from './streamStateView_Members'
 import { removeCommon } from './utils'
 import { EventSignatureBundle, KeySolicitationContent } from './decryptionExtensions'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { isDefined } from './check'
 
 export class StreamStateView_Members_Solicitations {

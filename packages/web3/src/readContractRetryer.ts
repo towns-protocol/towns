@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { Connect, ContractType } from './types/typechain'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 const logger = dlogger('csb:readContractRetryer')
 
 type RetryOptions = {

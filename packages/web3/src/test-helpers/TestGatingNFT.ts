@@ -7,7 +7,7 @@ import { MockERC721a } from './MockERC721A'
 import { isHexString, deployContract, Mutex } from './TestGatingUtils'
 import { Address } from '../types/ContractTypes'
 
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:TestGatingNFT')
 

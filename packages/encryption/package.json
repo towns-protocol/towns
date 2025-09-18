@@ -19,9 +19,9 @@
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
-        "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/olm": "3.2.28",
         "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",
         "dexie": "^4.0.7",

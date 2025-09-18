@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider, createRiverRegistry } from '@towns-protocol/web3'
 import { makeRiverChainConfig } from '../../riverConfig'

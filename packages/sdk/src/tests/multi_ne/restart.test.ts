@@ -3,7 +3,7 @@
 
 import { MembershipOp } from '@towns-protocol/proto'
 import { setTimeout } from 'timers/promises'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

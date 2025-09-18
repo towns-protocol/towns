@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { isValidStreamId } from '@towns-protocol/sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 
 import { getMediaStreamContent } from '../riverStreamRpcClient'
 import { parseSizeParam, processImage, shouldProcessImage } from '../imageProcessing'

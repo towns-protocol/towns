@@ -11,7 +11,7 @@ import {
     StreamEvent,
 } from '@towns-protocol/proto'
 import { ParsedEvent, ParsedMiniblock, ExclusionFilter } from './types'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 import { isDefined, logNever } from './check'
 import { snakeCase } from 'lodash-es'

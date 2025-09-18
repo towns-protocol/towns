@@ -22,7 +22,7 @@ import {
 import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, check, dlog } from '@towns-protocol/utils'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { KeySolicitationContent } from './decryptionExtensions'

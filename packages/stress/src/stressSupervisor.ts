@@ -20,7 +20,7 @@ import {
 import { ethers, Wallet } from 'ethers'
 import { makeRiverConfig } from '@towns-protocol/sdk'
 import { runShortChat } from './scenarioShortChat'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 
 export class StressDriver {
     readonly queueName: string

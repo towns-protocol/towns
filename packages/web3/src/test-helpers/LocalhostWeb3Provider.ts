@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { BaseChainConfig } from '../utils/IStaticContractsInfo'
 import { MockERC721AShim } from './MockERC721AShim'
 import { Address } from '../types/ContractTypes'

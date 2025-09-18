@@ -7,7 +7,7 @@ import type { Abi } from 'abitype'
 
 import { Address } from '../types/ContractTypes'
 
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:TestGatingUtils')
 

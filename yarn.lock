@@ -9163,11 +9163,11 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect-node": ^2.0.0
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/jsonwebtoken": ^9.0.9
     "@types/node": ^20.14.8
@@ -9236,26 +9236,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@towns-protocol/dlog@workspace:^, @towns-protocol/dlog@workspace:packages/dlog":
-  version: 0.0.0-use.local
-  resolution: "@towns-protocol/dlog@workspace:packages/dlog"
-  dependencies:
-    "@bufbuild/protobuf": ^2.2.2
-    "@towns-protocol/proto": "workspace:^"
-    "@types/debug": ^4.1.8
-    "@typescript-eslint/eslint-plugin": ^8.29.0
-    "@typescript-eslint/parser": ^8.29.0
-    debug: ^4.3.4
-    eslint: ^8.57.1
-    eslint-import-resolver-typescript: ^4.3.2
-    eslint-plugin-import-x: ^4.10.2
-    ethereum-cryptography: ^3.2.0
-    ts-node: ^10.9.1
-    typescript: ^5.8.2
-    vitest: ^3.2.3
-  languageName: unknown
-  linkType: soft
-
 "@towns-protocol/docs@workspace:packages/docs":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/docs@workspace:packages/docs"
@@ -9270,9 +9250,9 @@ __metadata:
   resolution: "@towns-protocol/encryption@workspace:packages/encryption"
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/olm": 3.2.28
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
@@ -9552,9 +9532,9 @@ __metadata:
   resolution: "@towns-protocol/sdk-crypto@workspace:packages/sdk-crypto"
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -9579,11 +9559,11 @@ __metadata:
     "@ethereumjs/util": ^10.0.0
     "@noble/curves": ^1.9.1
     "@noble/hashes": ^1.8.0
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
     "@types/lodash-es": ^4.17.12
@@ -9623,7 +9603,6 @@ __metadata:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect-node": ^2.0.0
     "@fastify/cors": ^11.0.1
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/eslint-config": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
@@ -9631,6 +9610,7 @@ __metadata:
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
     "@types/uuid": ^10.0.0
@@ -9669,10 +9649,10 @@ __metadata:
     "@babel/node": ^7.23.9
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect-node": ^2.0.0
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/debug": ^4.1.8
     "@types/node": ^20.14.8
@@ -9719,13 +9699,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@towns-protocol/utils@workspace:^, @towns-protocol/utils@workspace:packages/utils":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/utils@workspace:packages/utils"
+  dependencies:
+    "@bufbuild/protobuf": ^2.2.2
+    "@towns-protocol/proto": "workspace:^"
+    "@types/debug": ^4.1.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
+    debug: ^4.3.4
+    eslint: ^8.57.1
+    eslint-import-resolver-typescript: ^4.3.2
+    eslint-plugin-import-x: ^4.10.2
+    ethereum-cryptography: ^3.2.0
+    ts-node: ^10.9.1
+    typescript: ^5.8.2
+    vitest: ^3.2.3
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/web3@workspace:^, @towns-protocol/web3@workspace:packages/web3":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/web3@workspace:packages/web3"
   dependencies:
     "@isaacs/ttlcache": ^1.4.1
-    "@towns-protocol/dlog": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0

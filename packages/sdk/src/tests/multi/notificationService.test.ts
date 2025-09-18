@@ -1,5 +1,5 @@
 import { env } from 'process'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { NotificationService } from '../../notificationService'
 import { ethers } from 'ethers'
 import {

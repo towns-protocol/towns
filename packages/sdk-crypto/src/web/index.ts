@@ -1,4 +1,4 @@
-import { throwWithCode } from '@towns-protocol/dlog'
+import { throwWithCode } from '@towns-protocol/utils'
 import { EncryptedData, Err } from '@towns-protocol/proto'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 

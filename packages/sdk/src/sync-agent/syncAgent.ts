@@ -24,7 +24,7 @@ import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
-import { dlog, DLogger, shortenHexString } from '@towns-protocol/dlog'
+import { dlog, DLogger, shortenHexString } from '@towns-protocol/utils'
 
 export interface SyncAgentConfig {
     context: SignerContext

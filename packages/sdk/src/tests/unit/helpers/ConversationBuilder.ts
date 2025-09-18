@@ -17,7 +17,7 @@ import { ETH_ADDRESS } from '@towns-protocol/web3'
 import { BlockchainTransaction_Tip, PlainMessage } from '@towns-protocol/proto'
 import { hexToBytes } from 'ethereum-cryptography/utils'
 import { getFallbackContent } from '../../../views/models/timelineEvent'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { randomBytes } from '../../../utils'
 
 export class ConversationBuilder {

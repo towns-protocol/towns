@@ -3,7 +3,7 @@ import { IRuleEntitlementV2__factory } from '@towns-protocol/generated/dev/typin
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 const logger = dlogger('csb:SpaceDapp:debug')
 
 const { abi, connect } = IRuleEntitlementV2__factory

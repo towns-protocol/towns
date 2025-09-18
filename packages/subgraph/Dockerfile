@@ -55,7 +55,7 @@ COPY packages/tsconfig.base.json ./packages/
 COPY buf.yaml ./
 
 # Copy workspace package.json files for dependency resolution
-COPY packages/dlog/package.json ./packages/dlog/
+COPY packages/utils/package.json ./packages/utils/
 COPY packages/prettier-config/package.json ./packages/prettier-config/
 COPY packages/proto/package.json ./packages/proto/
 COPY packages/subgraph/package.json ./packages/subgraph/
@@ -74,7 +74,7 @@ RUN yarn install && yarn cache clean
 # ==========================================
 
 # Copy remaining source code
-COPY packages/dlog ./packages/dlog/
+COPY packages/utils ./packages/utils/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/proto ./packages/proto/
 COPY packages/subgraph ./packages/subgraph/
@@ -128,7 +128,7 @@ COPY --from=builder /river/package.json /river/yarn.lock /river/.yarnrc.yml /riv
 COPY --from=builder /river/packages/contracts/deployments ./packages/contracts/deployments
 COPY --from=builder /river/packages/contracts/typings ./packages/contracts/typings
 COPY --from=builder /river/packages/contracts/package.json ./packages/contracts/package.json
-COPY --from=builder /river/packages/dlog ./packages/dlog/
+COPY --from=builder /river/packages/utils ./packages/utils/
 COPY --from=builder /river/packages/generated ./packages/generated/
 COPY --from=builder /river/packages/proto ./packages/proto/
 COPY --from=builder /river/packages/subgraph ./packages/subgraph/

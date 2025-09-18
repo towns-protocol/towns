@@ -15,7 +15,7 @@ import {
     DLogger,
     check,
     bin_toHexString,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,

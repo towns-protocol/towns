@@ -3,7 +3,7 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./packages/dlog",
+    "./packages/utils",
     "./packages/encryption",
     "./packages/proto",
     "./packages/sdk",

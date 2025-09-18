@@ -12,7 +12,7 @@ import {
     createRole,
     createSpaceAndDefaultChannel,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { MembershipOp } from '@towns-protocol/proto'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
 

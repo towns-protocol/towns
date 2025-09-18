@@ -7,7 +7,7 @@ import { InboundGroupSessionData } from './encryptionDevice'
 import { UserDevice } from './olmLib'
 import { CryptoStoreIndexedDb } from './CryptoStoreIndexedDb'
 import { CryptoStoreInMemory } from './CryptoStoreInMemory'
-import { isBrowser } from '@towns-protocol/dlog'
+import { isBrowser } from '@towns-protocol/utils'
 
 const ONE_SECOND_MS = 1000
 const ONE_MINUTE_MS = 60 * ONE_SECOND_MS

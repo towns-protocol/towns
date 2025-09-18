@@ -1,7 +1,7 @@
 import { MembershipOp, UserPayload_UserMembership } from '@towns-protocol/proto'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { LoadPriority, Store } from '../../../store/store'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 import { RiverConnection } from '../../river-connection/riverConnection'
 import { Client } from '../../../client'
 import { makeUserStreamId, streamIdFromBytes, userIdFromAddress } from '../../../id'

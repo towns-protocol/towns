@@ -1,5 +1,5 @@
 import { Client } from '../client'
-import { DLogger, check, dlog } from '@towns-protocol/dlog'
+import { DLogger, check, dlog } from '@towns-protocol/utils'
 import { makeTestClient, makeUniqueSpaceStreamId } from './testUtils'
 import { makeUniqueChannelStreamId } from '../id'
 import { SnapshotCaseType } from '@towns-protocol/proto'

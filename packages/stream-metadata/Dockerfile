@@ -28,7 +28,7 @@ COPY ./packages/eslint-config /river/packages/eslint-config
 COPY ./packages/prettier-config /river/packages/prettier-config
 COPY ./packages/generated /river/packages/generated
 COPY ./packages/web3 /river/packages/web3
-COPY ./packages/dlog /river/packages/dlog
+COPY ./packages/utils /river/packages/utils
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/sdk /river/packages/sdk
 COPY ./packages/encryption /river/packages/encryption

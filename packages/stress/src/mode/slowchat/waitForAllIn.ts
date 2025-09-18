@@ -1,4 +1,4 @@
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import type { StressClient } from '../../utils/stressClient'
 import { ChatConfig } from '../common/types'
 import { isDefined, RiverTimelineEvent } from '@towns-protocol/sdk'

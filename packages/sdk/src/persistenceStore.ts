@@ -14,7 +14,7 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'

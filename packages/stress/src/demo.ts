@@ -6,7 +6,7 @@ import {
     RiverTimelineEvent,
     TimelineEvent,
 } from '@towns-protocol/sdk'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { InfoRequestSchema } from '@towns-protocol/proto'
 import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'

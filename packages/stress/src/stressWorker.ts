@@ -21,7 +21,7 @@ import {
     ExpectMessagesTask,
 } from './stressTypes'
 import { Wallet } from 'ethers'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 
 export class StressRunner {
     readonly index: number

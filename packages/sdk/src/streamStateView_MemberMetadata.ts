@@ -8,7 +8,7 @@ import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { MemberMetadata_Usernames } from './memberMetadata_Usernames'
 import { MemberMetadata_DisplayNames } from './memberMetadata_DisplayNames'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { MemberMetadata_EnsAddresses } from './memberMetadata_EnsAddresses'
 import { MemberMetadata_Nft } from './memberMetadata_Nft'
 

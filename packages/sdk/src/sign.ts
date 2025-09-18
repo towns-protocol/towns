@@ -4,7 +4,7 @@ import {
     bin_fromHexString,
     bin_toHexString,
     check,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,

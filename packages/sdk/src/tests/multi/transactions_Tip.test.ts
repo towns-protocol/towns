@@ -2,7 +2,7 @@
  * @group with-entitlements
  */
 
-import { bin_toHexString, dlog, dlogError } from '@towns-protocol/dlog'
+import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider, TipEventObject } from '@towns-protocol/web3'
 import { makeRiverConfig } from '../../riverConfig'

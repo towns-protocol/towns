@@ -24,7 +24,7 @@ COPY ./packages/contracts /river/packages/contracts
 COPY ./packages/eslint-config /river/packages/eslint-config
 COPY ./packages/prettier-config /river/packages/prettier-config
 COPY ./packages/generated /river/packages/generated
-COPY ./packages/dlog /river/packages/dlog
+COPY ./packages/utils /river/packages/utils
 COPY ./packages/proto /river/packages/proto
 COPY ./packages/web3 /river/packages/web3
 COPY ./packages/xchain-monitor /river/packages/xchain-monitor

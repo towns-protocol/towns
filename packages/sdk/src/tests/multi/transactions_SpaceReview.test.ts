@@ -1,4 +1,4 @@
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { makeRiverConfig } from '../../riverConfig'
 import { Bot } from '../../sync-agent/utils/bot'
 import { SyncAgent } from '../../sync-agent/syncAgent'

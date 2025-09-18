@@ -3,7 +3,7 @@ import { findMessageByText, waitFor } from '../../testUtils'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { makeDefaultMembershipInfo } from '../../../sync-agent/utils/spaceUtils'
 import { RiverTimelineEvent } from '../../../views/models/timelineTypes'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 
 const log = dlog('test:timeline.test.ts')
 

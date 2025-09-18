@@ -1,4 +1,4 @@
-import { dlog, dlogError, DLogger } from '@towns-protocol/dlog'
+import { dlog, dlogError, DLogger } from '@towns-protocol/utils'
 import { IPersistenceStore } from '../persistenceStore'
 import { ClientInitStatus } from '../types'
 import {

@@ -11,7 +11,7 @@ import {
     getAppRegistryUrl,
     parseAppPrivateData,
 } from '@towns-protocol/sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { SlashCommandSchema, type SlashCommand } from '@towns-protocol/proto'
 import type { UpdateCommandsArgs } from '../parser.js'
 import { create } from '@bufbuild/protobuf'

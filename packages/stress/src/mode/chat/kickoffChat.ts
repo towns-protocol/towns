@@ -2,7 +2,7 @@ import { StressClient } from '../../utils/stressClient'
 import { getSystemInfo } from '../../utils/systemInfo'
 import { BigNumber, Wallet } from 'ethers'
 import { ChatConfig } from '../common/types'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { makeCodeBlock } from '../../utils/messages'
 
 export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {

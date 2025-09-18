@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { Bot, makeRiverConfig, SyncAgent } from '@towns-protocol/sdk'
 
