@@ -1,29 +1,24 @@
-declare global {
-    interface ImportMeta {
-        readonly env: Record<string, string>
-    }
+export interface SafeEnvOpts {
+    // for looking up keys anywhere other than process.env, i.e. pass import.meta.env in a vite app
+    env?: Record<string, string>
+    // for looking up keys with a prefix, i.e. pass 'VITE_' for vite apps
+    keyPrefix?: string
 }
 
-export function safeEnv(keys: string[]): string | undefined {
-    for (const key of keys) {
+export function safeEnv(keys: string[], opts?: SafeEnvOpts): string | undefined {
+    for (const keyRef of keys) {
+        // check for key prefix
+        const key = opts?.keyPrefix ? `${opts.keyPrefix}${keyRef}` : keyRef
+        // check for key in env
+        if (opts?.env) {
+            if (opts.env[key]) {
+                return opts.env[key]
+            }
+        }
         // look for the key in process.env
         if (typeof process === 'object' && 'env' in process) {
             if (process.env[key]) {
                 return process.env[key]
-            }
-        }
-        // look for the key in process.env.VITE_ for vite apps
-        if (typeof import.meta === 'object' && 'env' in import.meta) {
-            // first check if the key is directly set in the import.meta.env
-            // for server side rendering it could be passed in,
-            // or perhaps somehow you specified the vite in the key alread for some reason
-            if (import.meta.env[key]) {
-                return import.meta.env[key]
-            }
-            // otherwise check for the vite prefix, this is the only way to pass env variables to the web client
-            const viteKey = `VITE_${key}`
-            if (import.meta.env[viteKey]) {
-                return import.meta.env[viteKey]
             }
         }
     }

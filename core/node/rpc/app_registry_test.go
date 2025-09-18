@@ -1574,7 +1574,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 					testCiphertexts,
 				)
 			} else {
-				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, 10*time.Second, 100*time.Millisecond)
+				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 10*time.Second, 100*time.Millisecond)
 			}
 
 			if expectForwarding {
@@ -1966,6 +1966,7 @@ func TestAppRegistry_Status(t *testing.T) {
 						DeviceKey:        tc.expectedDeviceKey,
 						FallbackKey:      tc.expectedFallbackKey,
 					},
+					Active: true,
 				},
 				status.Msg,
 			)
@@ -1994,6 +1995,7 @@ func TestAppRegistry_Status(t *testing.T) {
 						DeviceKey:        tc.expectedDeviceKey,
 						FallbackKey:      tc.expectedFallbackKey,
 					},
+					Active: true,
 				},
 				status.Msg,
 			)
@@ -2426,4 +2428,288 @@ func TestAppRegistry_Register(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAppRegistry_SetAppActiveStatus(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{
+		numBots: 1,
+	})
+
+	// Register and setup bot
+	tester.StartBotServices()
+	botCreds := tester.botCredentials[0]
+	tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+
+	t.Run("Owner can deactivate app", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: false,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppActiveStatus(
+			tester.ctx,
+			req,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		// Verify status
+		statusResp, err := tester.appRegistryClient.GetStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.False(t, statusResp.Msg.Active)
+		require.True(t, statusResp.Msg.IsRegistered)
+	})
+
+	t.Run("Owner can reactivate app", func(t *testing.T) {
+		req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: true,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppActiveStatus(
+			tester.ctx,
+			req,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		// Verify status
+		statusResp, err := tester.appRegistryClient.GetStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.True(t, statusResp.Msg.Active)
+	})
+
+	t.Run("App itself can change status", func(t *testing.T) {
+		// Create authenticated client for the bot
+		botAuthClient := protocolconnect.NewAuthenticationServiceClient(
+			tester.serviceTester.httpClient(),
+			"https://"+tester.appRegistryService.listener.Addr().String(),
+		)
+		botAppRegistryClient := protocolconnect.NewAppRegistryServiceClient(
+			tester.serviceTester.httpClient(),
+			"https://"+tester.appRegistryService.listener.Addr().String(),
+		)
+
+		req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: false,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, botAuthClient, botCreds.botWallet, req)
+
+		resp, err := botAppRegistryClient.SetAppActiveStatus(
+			tester.ctx,
+			req,
+		)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		// Verify status
+		statusResp, err := tester.appRegistryClient.GetStatus(
+			tester.ctx,
+			connect.NewRequest(&protocol.GetStatusRequest{
+				AppId: botCreds.botWallet.Address[:],
+			}),
+		)
+		require.NoError(t, err)
+		require.False(t, statusResp.Msg.Active)
+	})
+
+	t.Run("Non-owner cannot change status", func(t *testing.T) {
+		otherWallet := safeNewWallet(tester.ctx, tester.require)
+
+		otherAuthClient := protocolconnect.NewAuthenticationServiceClient(
+			tester.serviceTester.httpClient(),
+			"https://"+tester.appRegistryService.listener.Addr().String(),
+		)
+		otherAppRegistryClient := protocolconnect.NewAppRegistryServiceClient(
+			tester.serviceTester.httpClient(),
+			"https://"+tester.appRegistryService.listener.Addr().String(),
+		)
+
+		req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  botCreds.botWallet.Address[:],
+				Active: false,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, otherAuthClient, otherWallet, req)
+
+		resp, err := otherAppRegistryClient.SetAppActiveStatus(
+			tester.ctx,
+			req,
+		)
+		require.Error(t, err, "Should get an error when non-owner tries to change status")
+		require.Nil(t, resp)
+	})
+
+	t.Run("Cannot change status of non-existent app", func(t *testing.T) {
+		nonExistentApp := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+		req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+			Msg: &protocol.SetAppActiveStatusRequest{
+				AppId:  nonExistentApp[:],
+				Active: false,
+			},
+		}
+		authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+
+		resp, err := tester.appRegistryClient.SetAppActiveStatus(
+			tester.ctx,
+			req,
+		)
+		require.Error(t, err)
+		require.Nil(t, resp)
+	})
+}
+
+func TestAppRegistry_GetStatusWithActive(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, &appRegistryTesterOpts{
+		numBots: 2,
+	})
+
+	// Register both bots
+	tester.StartBotServices()
+	tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+	tester.RegisterBotService(1, protocol.ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
+
+	// Bot 0 should be active by default
+	statusResp, err := tester.appRegistryClient.GetStatus(
+		tester.ctx,
+		connect.NewRequest(&protocol.GetStatusRequest{
+			AppId: tester.botCredentials[0].botWallet.Address[:],
+		}),
+	)
+	tester.require.NoError(err)
+	tester.require.True(statusResp.Msg.Active)
+	tester.require.True(statusResp.Msg.IsRegistered)
+
+	// Deactivate bot 1
+	req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+		Msg: &protocol.SetAppActiveStatusRequest{
+			AppId:  tester.botCredentials[1].botWallet.Address[:],
+			Active: false,
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, tester.botCredentials[1].ownerWallet, req)
+
+	_, err = tester.appRegistryClient.SetAppActiveStatus(
+		tester.ctx,
+		req,
+	)
+	tester.require.NoError(err)
+
+	// Verify bot 1 is inactive
+	statusResp, err = tester.appRegistryClient.GetStatus(
+		tester.ctx,
+		connect.NewRequest(&protocol.GetStatusRequest{
+			AppId: tester.botCredentials[1].botWallet.Address[:],
+		}),
+	)
+	tester.require.NoError(err)
+	tester.require.False(statusResp.Msg.Active)
+
+	// Verify bot 0 is still active
+	statusResp, err = tester.appRegistryClient.GetStatus(
+		tester.ctx,
+		connect.NewRequest(&protocol.GetStatusRequest{
+			AppId: tester.botCredentials[0].botWallet.Address[:],
+		}),
+	)
+	tester.require.NoError(err)
+	tester.require.True(statusResp.Msg.Active)
+}
+
+func TestAppRegistry_InactiveAppsDoNotReceiveMessages(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+
+	tester.StartBotServices()
+
+	participantClient := tester.NodeClient(0, testClientOpts{
+		deviceKey:   "participantDeviceKey",
+		fallbackKey: "participantFallbackKey",
+	})
+	participantClient.createUserStreamsWithEncryptionDevice()
+
+	spaceId, _ := participantClient.createSpace()
+	channelId, _, _ := participantClient.createChannel(spaceId)
+
+	_, userStreamMbRef := tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	botClient := tester.BotNodeClient(0, testClientOpts{})
+	botClient.joinChannel(spaceId, channelId, userStreamMbRef)
+	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address, participantClient.wallet.Address})
+
+	// Send message while bot is active - should trigger key solicitation
+	testSessionBytes1, testSession1 := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message while active",
+		nil,
+		testSessionBytes1,
+		participantClient.deviceKey,
+	)
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession1)
+
+	// Deactivate the bot
+	botCreds := tester.botCredentials[0]
+	req := &connect.Request[protocol.SetAppActiveStatusRequest]{
+		Msg: &protocol.SetAppActiveStatusRequest{
+			AppId:  botCreds.botWallet.Address[:],
+			Active: false,
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+	_, err := tester.appRegistryClient.SetAppActiveStatus(tester.ctx, req)
+	tester.require.NoError(err)
+
+	// Send message while bot is inactive - should NOT trigger key solicitation
+	testSessionBytes2, testSession2 := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message while inactive",
+		nil,
+		testSessionBytes2,
+		participantClient.deviceKey,
+	)
+	participantClient.requireNoKeySolicitation(
+		channelId,
+		testBotEncryptionDevice(0).DeviceKey,
+		testSession2,
+		2*time.Second,
+		100*time.Millisecond,
+	)
+
+	// Reactivate the bot
+	req.Msg.Active = true
+	authenticateBS(tester.ctx, tester.require, tester.authClient, botCreds.ownerWallet, req)
+	_, err = tester.appRegistryClient.SetAppActiveStatus(tester.ctx, req)
+	tester.require.NoError(err)
+
+	// Send message after reactivation - should trigger key solicitation again
+	testSessionBytes3, testSession3 := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message after reactivation",
+		nil,
+		testSessionBytes3,
+		participantClient.deviceKey,
+	)
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession3)
 }

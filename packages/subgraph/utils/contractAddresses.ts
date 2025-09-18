@@ -1,7 +1,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { getAddress, Address } from 'viem'
-import { findRelativePath } from './pathUtils'
 import { fileURLToPath } from 'url'
 
 // Get __dirname in a way that works for both ESM and CJS
@@ -16,11 +15,8 @@ if (typeof import.meta?.url !== 'undefined') {
     __dirname = globalThis.__dirname || process.cwd()
 }
 
-// Try to find the contracts directory dynamically
-const contractsPath = findRelativePath('contracts')
-const defaultBaseDir = contractsPath
-    ? `${contractsPath}/deployments`
-    : '../../contracts/deployments'
+// Point directly to the correct generated deployments directory
+const defaultBaseDir = '../../generated/deployments'
 
 /**
  * Configuration options for address resolution

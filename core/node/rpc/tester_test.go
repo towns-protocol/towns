@@ -1492,12 +1492,13 @@ func (tc *testClient) requireKeySolicitation(channelId StreamId, deviceKey strin
 func (tc *testClient) requireNoKeySolicitation(
 	channelId StreamId,
 	deviceKey string,
+	sessionId string,
 	waitTime time.Duration,
 	tick time.Duration,
 ) {
 	tc.require.Never(func() bool {
 		channel := tc.getStream(channelId)
-		return containsKeySolicitation(tc.require, channel, deviceKey, "")
+		return containsKeySolicitation(tc.require, channel, deviceKey, sessionId)
 	}, waitTime, tick, "Expected no key solicitation for device in channel")
 }
 

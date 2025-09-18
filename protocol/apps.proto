@@ -36,6 +36,10 @@ service AppRegistryService {
 
     // ValidateBotName checks if a bot name is available for use.
     rpc ValidateBotName(ValidateBotNameRequest) returns (ValidateBotNameResponse);
+
+    // SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
+    // Deactivated apps won't receive forwarded messages but retain their configuration.
+    rpc SetAppActiveStatus(SetAppActiveStatusRequest) returns (SetAppActiveStatusResponse);
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -132,6 +136,9 @@ message GetStatusResponse {
 
     // Forward the status returned by the bot service.
     AppServiceResponse.StatusResponse status = 3;
+
+    // active indicates whether the app is currently active and receiving messages
+    bool active = 4;
 }
 
 message GetSessionRequest {
@@ -283,5 +290,13 @@ message ValidateBotNameResponse {
     bool is_available = 1;
     string error_message = 2;
 }
+
+// Set app active status
+message SetAppActiveStatusRequest {
+    bytes app_id = 1;
+    bool active = 2;
+}
+
+message SetAppActiveStatusResponse {}
 
 
