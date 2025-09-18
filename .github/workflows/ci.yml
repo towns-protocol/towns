@@ -376,7 +376,8 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_dev &
+                  mkdir -p core/run_files/stream-metadata
+                  yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/stream-metadata/dev.log 2>&1 &
                   yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
