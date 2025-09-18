@@ -898,7 +898,7 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
 })
 
 ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         await context.db
@@ -911,31 +911,31 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
                 lastRenewalTime: null, // Will be set on first renewal
-                createdAt: blockNumber,
-                updatedAt: blockNumber,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
             })
             .onConflictDoUpdate({
                 space: event.args.space,
                 tokenId: event.args.tokenId,
                 nextRenewalTime: event.args.nextRenewalTime,
-                updatedAt: blockNumber,
+                updatedAt: blockTimestamp,
             })
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionConfigured at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:SubscriptionConfigured tx ${event.transaction.hash}:`,
             error,
         )
     }
 })
 
 ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
-                updatedAt: blockNumber,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -951,22 +951,22 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
         }
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionPaused at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:SubscriptionPaused tx ${event.transaction.hash}:`,
             error,
         )
     }
 })
 
 ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
                 nextRenewalTime: event.args.nextRenewalTime,
-                lastRenewalTime: blockNumber,
-                updatedAt: blockNumber,
+                lastRenewalTime: blockTimestamp,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -982,21 +982,21 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
         }
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionRenewed at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:SubscriptionRenewed tx ${event.transaction.hash}:`,
             error,
         )
     }
 })
 
 ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
                 nextRenewalTime: 0n,
-                updatedAt: blockNumber,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -1012,21 +1012,21 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
         }
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionDeactivated at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:SubscriptionDeactivated tx ${event.transaction.hash}:`,
             error,
         )
     }
 })
 
 ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
                 totalSpent: event.args.totalSpent,
-                updatedAt: blockNumber,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -1042,25 +1042,25 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
         }
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionSpent at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:SubscriptionSpent tx ${event.transaction.hash}:`,
             error,
         )
     }
 })
 
 ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
 
     try {
         await context.db.insert(schema.subscriptionFailure).values({
             account: event.args.account,
             entityId: event.args.entityId,
-            timestamp: blockNumber,
+            timestamp: blockTimestamp,
             reason: event.args.reason,
         })
     } catch (error) {
         console.error(
-            `Error processing Space:BatchRenewalSkipped at blockNumber ${blockNumber}:`,
+            `Error processing SubscriptionModule:BatchRenewalSkipped tx ${event.transaction.hash}:`,
             error,
         )
     }
@@ -1069,7 +1069,7 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
 // ERC5643 SubscriptionUpdate, emitted whenever the expiration date of a subscription is changed
 // https://eips.ethereum.org/EIPS/eip-5643
 ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
-    const blockNumber = event.block.number
+    const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const tokenId = event.args.tokenId
     const newExpiration = event.args.expiration
@@ -1083,8 +1083,8 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
             .update(schema.subscription)
             .set({
                 nextRenewalTime: newExpiration,
-                lastRenewalTime: blockNumber,
-                updatedAt: blockNumber,
+                lastRenewalTime: blockTimestamp,
+                updatedAt: blockTimestamp,
             })
             .where(
                 and(
@@ -1094,7 +1094,7 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
             )
     } catch (error) {
         console.error(
-            `Error processing Space:SubscriptionUpdate at blockNumber ${blockNumber}:`,
+            `Error processing Space:SubscriptionUpdate tx ${event.transaction.hash}:`,
             error,
         )
     }
