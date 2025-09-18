@@ -358,6 +358,7 @@ func (ssr *syncSessionRunner) Run() {
 	var syncer RemoteStreamSyncer
 	if ssr.useSharedSyncer {
 		// TODO: Implement using sync v3 here.
+		logging.FromCtx(ssr.syncCtx).Panicw("Sync v3 is not supported")
 	} else {
 		syncer, err = client.NewRemoteSyncer(
 			ssr.syncCtx,
