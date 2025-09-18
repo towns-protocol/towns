@@ -72,7 +72,7 @@ export function makePonderConfig(
 
     const subscriptionModule = getContractAddress('subscriptionModule', baseChainName, environment)
     if (!subscriptionModule) {
-        throw new Error('App registry address not found')
+        throw new Error('Subscription module address not found')
     }
 
     return {

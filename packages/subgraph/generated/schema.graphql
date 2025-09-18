@@ -1011,6 +1011,7 @@ type subscription {
   totalSpent: BigInt
   lastRenewalTime: BigInt
   nextRenewalTime: BigInt!
+  active: Boolean
   createdAt: BigInt!
   updatedAt: BigInt!
 }
@@ -1084,6 +1085,10 @@ input subscriptionFilter {
   nextRenewalTime_lt: BigInt
   nextRenewalTime_gte: BigInt
   nextRenewalTime_lte: BigInt
+  active: Boolean
+  active_not: Boolean
+  active_in: [Boolean]
+  active_not_in: [Boolean]
   createdAt: BigInt
   createdAt_not: BigInt
   createdAt_in: [BigInt]

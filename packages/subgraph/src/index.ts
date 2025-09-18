@@ -901,6 +901,8 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
     const blockTimestamp = event.block.timestamp
 
     try {
+        // Note: If a user reconfigures a subscription with the same entityId,
+        // this will overwrite the previous subscription record (matches contract behavior)
         await context.db
             .insert(schema.subscription)
             .values({
@@ -911,6 +913,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
                 lastRenewalTime: null, // Will be set on first renewal
+                active: true,
                 createdAt: blockTimestamp,
                 updatedAt: blockTimestamp,
             })
@@ -918,6 +921,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 space: event.args.space,
                 tokenId: event.args.tokenId,
                 nextRenewalTime: event.args.nextRenewalTime,
+                active: true,
                 updatedAt: blockTimestamp,
             })
     } catch (error) {
@@ -935,6 +939,7 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
+                active: false,
                 updatedAt: blockTimestamp,
             })
             .where(
@@ -995,6 +1000,7 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
+                active: false,
                 nextRenewalTime: 0n,
                 updatedAt: blockTimestamp,
             })
