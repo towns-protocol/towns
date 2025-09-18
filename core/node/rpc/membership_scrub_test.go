@@ -372,8 +372,7 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 								assert.Equal(
 									!slices.Contains(tc.expectedBootedUsers, wallet),
 									isMember,
-									"Membership result mismatch",
-									"wallet: %v, isMember: %v, expectedBootedUsers: %v",
+									"Membership result mismatch, wallet: %v, isMember: %v, expectedBootedUsers: %v",
 									wallet.Address,
 									isMember,
 									tc.expectedBootedUsers,
