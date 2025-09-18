@@ -133,7 +133,8 @@ export function makePonderConfig(
             SubscriptionModule: {
                 abi: SubscriptionModuleFacetAbi,
                 address: subscriptionModule,
-                startBlock: baseChainStartBlock,
+                // this can be set to much later than the start block, let's figure this out for all newer contracts like swap etc
+                startBlock: baseChainStartBlock, 
                 chain: baseChainName,
             },
             SwapRouter: {
