@@ -1824,7 +1824,7 @@ func TestAppRegistry_RegisterWebhook(t *testing.T) {
 			appId:                appWallet.Address[:],
 			authenticatingWallet: unregisteredAppWallet,
 			webhookUrl:           "http://www.test.com/callme",
-			expectedErr:          "authenticated user must be either app or owner",
+			expectedErr:          "authenticated user must be app or owner",
 		},
 		"Failure: webhook returns incorrect encryption device": {
 			appId:                appWallet.Address[:],
