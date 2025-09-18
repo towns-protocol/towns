@@ -44,6 +44,7 @@
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development" },
+      "envFile": "${workspaceFolder}/packages/generated/deployments/local_dev/.env",
       "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
       "cwd": "${workspaceFolder}/packages/web3",
       "autoAttachChildProcesses": true,
