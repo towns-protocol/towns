@@ -210,24 +210,16 @@ func (s *Service) checkAppPermission(
 	userId := authentication.UserFromAuthenticatedContext(ctx)
 
 	// If owner is zero address, only check if user is the app
-	if owner == (common.Address{}) {
-		if app != userId {
-			return common.Address{}, base.RiverError(Err_PERMISSION_DENIED,
-				"authenticated user must be app").
-				Tag("app", app).
-				Tag("userId", userId).
-				Func(funcName)
+	if (owner == (common.Address{}) && app != userId) || (app != userId && owner != userId) {
+		msg := "authenticated user must be app or owner"
+		if owner == (common.Address{}) {
+			msg = "authenticated user must be app"
 		}
-	} else {
-		// Check if user is either app or owner
-		if app != userId && owner != userId {
-			return common.Address{}, base.RiverError(Err_PERMISSION_DENIED,
-				"authenticated user must be app or owner").
-				Tag("appId", app).
-				Tag("userId", userId).
-				Tag("ownerId", owner).
-				Func(funcName)
-		}
+		return common.Address{}, base.RiverError(Err_PERMISSION_DENIED, msg).
+			Tag("app", app).
+			Tag("userId", userId).
+			Tag("ownerId", owner).
+			Func(funcName)
 	}
 	return userId, nil
 }
