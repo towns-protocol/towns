@@ -14,7 +14,7 @@ import (
 
 func TestProcessStreamUpdate_AllSubscribersVersion(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	sub := newBusStubSubscriber("sub-1")
+	sub := newCloningSubscriber("sub-1")
 	subs := streamSubscribers{syncer.InitialEmitterVersion: {sub}}
 	e := &eventBusImpl{subscribers: map[shared.StreamId]streamSubscribers{streamID: subs}}
 
@@ -35,7 +35,7 @@ func TestProcessStreamUpdate_AllSubscribersVersion(t *testing.T) {
 
 func TestProcessStreamUpdate_SpecificVersion(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	sub := newBusStubSubscriber("sub-1")
+	sub := newCloningSubscriber("sub-1")
 	subs := streamSubscribers{2: {sub}}
 	e := &eventBusImpl{subscribers: map[shared.StreamId]streamSubscribers{streamID: subs}}
 
@@ -51,7 +51,7 @@ func TestProcessStreamUpdate_SpecificVersion(t *testing.T) {
 
 func TestProcessTargetedStreamUpdate_MovePendingToVersion(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	sub := newBusStubSubscriber("pending-sub")
+	sub := newCloningSubscriber("pending-sub")
 	subs := streamSubscribers{
 		syncer.PendingSubscribersVersion: {sub},
 	}
@@ -73,7 +73,7 @@ func TestProcessTargetedStreamUpdate_MovePendingToVersion(t *testing.T) {
 
 func TestProcessTargetedStreamUpdate_SyncDown(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	sub := newBusStubSubscriber("victim")
+	sub := newCloningSubscriber("victim")
 	subs := streamSubscribers{3: {sub}}
 	e := &eventBusImpl{subscribers: map[shared.StreamId]streamSubscribers{streamID: subs}}
 
@@ -90,7 +90,7 @@ func TestProcessTargetedStreamUpdate_SyncDown(t *testing.T) {
 
 func TestProcessSubscribeCommand_AddsPendingAndEnqueues(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	subscriber := newBusStubSubscriber("sub")
+	subscriber := newCloningSubscriber("sub")
 	registry := &busStubRegistry{}
 	e := &eventBusImpl{
 		registry:    registry,
@@ -109,8 +109,8 @@ func TestProcessSubscribeCommand_AddsPendingAndEnqueues(t *testing.T) {
 
 func TestProcessUnsubscribeCommand_RemovesSubscriberAndUnsubscribesWhenEmpty(t *testing.T) {
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
-	sub1 := newBusStubSubscriber("a")
-	sub2 := newBusStubSubscriber("b")
+	sub1 := newCloningSubscriber("a")
+	sub2 := newCloningSubscriber("b")
 	subs := streamSubscribers{2: {sub1, sub2}}
 	registry := &busStubRegistry{}
 	e := &eventBusImpl{
@@ -142,8 +142,8 @@ func TestProcessBackfillCommand(t *testing.T) {
 
 func TestProcessRemoveCommand_RemovesAcrossStreams(t *testing.T) {
 	syncID := "shared"
-	sub := newBusStubSubscriber(syncID)
-	other := newBusStubSubscriber("other")
+	sub := newCloningSubscriber(syncID)
+	other := newCloningSubscriber("other")
 
 	streamA := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamB := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
@@ -166,41 +166,4 @@ func TestProcessRemoveCommand_RemovesAcrossStreams(t *testing.T) {
 	require.Len(t, subscribers[streamA][2], 1)
 	require.Equal(t, other, subscribers[streamA][2][0])
 	require.NotContains(t, subscribers, streamB)
-}
-
-type busStubSubscriber struct {
-	id      string
-	updates []*protocol.SyncStreamsResponse
-}
-
-func newBusStubSubscriber(id string) *busStubSubscriber {
-	return &busStubSubscriber{id: id}
-}
-
-func (s *busStubSubscriber) SyncID() string { return s.id }
-
-func (s *busStubSubscriber) OnUpdate(update *protocol.SyncStreamsResponse) {
-	s.updates = append(s.updates, proto.Clone(update).(*protocol.SyncStreamsResponse))
-}
-
-type busStubRegistry struct {
-	subscribeCalls []struct {
-		cookie  *protocol.SyncCookie
-		syncIDs []string
-	}
-	unsubscribeCalls []shared.StreamId
-}
-
-func (b *busStubRegistry) EnqueueSubscribeAndBackfill(cookie *protocol.SyncCookie, syncIDs []string) {
-	b.subscribeCalls = append(b.subscribeCalls, struct {
-		cookie  *protocol.SyncCookie
-		syncIDs []string
-	}{
-		cookie:  proto.Clone(cookie).(*protocol.SyncCookie),
-		syncIDs: append([]string(nil), syncIDs...),
-	})
-}
-
-func (b *busStubRegistry) EnqueueUnsubscribe(streamID shared.StreamId) {
-	b.unsubscribeCalls = append(b.unsubscribeCalls, streamID)
 }

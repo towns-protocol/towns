@@ -784,7 +784,6 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 	}
 
 	s.syncSvc = sync.NewHandler(
-		s.serverCtx,
 		s.wallet.Address,
 		s.cache,
 		s.nodeRegistry,

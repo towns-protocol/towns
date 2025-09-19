@@ -1,4 +1,4 @@
-package legacyclient
+package client
 
 import (
 	"context"

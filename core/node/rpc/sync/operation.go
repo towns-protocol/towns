@@ -18,7 +18,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -50,8 +49,6 @@ type (
 		streamCache *StreamCache
 		// nodeRegistry is used to get the remote remoteNode endpoint from a thisNodeAddress address
 		nodeRegistry nodes.NodeRegistry
-		// subscriptionManager is used to manage subscriptions for the sync operation
-		subscriptionManager *subscription.Manager
 		// syncingStreamsCount is used to track the number of streams currently being synced
 		syncingStreamsCount atomic.Int64
 		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
@@ -91,7 +88,6 @@ func NewStreamsSyncOperation(
 	node common.Address,
 	streamCache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
-	subscriptionManager *subscription.Manager,
 	otelTracer trace.Tracer,
 	metrics *syncMetrics,
 ) (*StreamSyncOperation, error) {
@@ -100,19 +96,18 @@ func NewStreamsSyncOperation(
 	log := logging.FromCtx(syncOpCtx).With("syncId", syncId, "node", node)
 
 	return &StreamSyncOperation{
-		log:                 log,
-		rootCtx:             ctx,
-		ctx:                 syncOpCtx,
-		cancel:              cancel,
-		SyncID:              syncId,
-		thisNodeAddress:     node,
-		commands:            make(chan *subCommand, 64),
-		streamCache:         streamCache,
-		nodeRegistry:        nodeRegistry,
-		subscriptionManager: subscriptionManager,
-		messages:            dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
-		otelTracer:          otelTracer,
-		metrics:             metrics,
+		log:             log,
+		rootCtx:         ctx,
+		ctx:             syncOpCtx,
+		cancel:          cancel,
+		SyncID:          syncId,
+		thisNodeAddress: node,
+		commands:        make(chan *subCommand, 64),
+		streamCache:     streamCache,
+		nodeRegistry:    nodeRegistry,
+		messages:        dynmsgbuf.NewDynamicBuffer[*SyncStreamsResponse](),
+		otelTracer:      otelTracer,
+		metrics:         metrics,
 	}, nil
 }
 
@@ -123,14 +118,10 @@ func (syncOp *StreamSyncOperation) Run(
 ) error {
 	syncOp.log.Debugw("Stream sync operation start")
 
-	sub, err := syncOp.subscriptionManager.Subscribe(syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.messages)
-	if err != nil {
-		syncOp.log.Errorw("Failed to subscribe to stream sync operation", "err", err)
-		return err
-	}
-	defer sub.Close()
-
-	syncOp.usingSharedSyncer = true
+	syncers, messages := client.NewSyncers(
+		syncOp.ctx, syncOp.cancel, syncOp.SyncID, syncOp.streamCache,
+		syncOp.nodeRegistry, syncOp.thisNodeAddress, syncOp.messages, syncOp.otelTracer)
+	go syncers.Run()
 
 	// Adding the initial sync position to the syncer
 	if len(req.Msg.GetSyncPos()) > 0 {
@@ -144,7 +135,7 @@ func (syncOp *StreamSyncOperation) Run(
 						case <-syncOp.ctx.Done():
 							return
 						default:
-							sub.Send(&SyncStreamsResponse{
+							_ = messages.AddMessage(&SyncStreamsResponse{
 								SyncOp:   SyncOp_SYNC_DOWN,
 								StreamId: status.GetStreamId(),
 							})
@@ -163,13 +154,13 @@ func (syncOp *StreamSyncOperation) Run(
 	}
 
 	// Start separate goroutine to process sync stream commands
-	go syncOp.runCommandsProcessing(sub)
+	go syncOp.runCommandsProcessing(syncers)
 
 	var messagesSendToClient int
 	defer func() {
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 		if syncOp.metrics != nil {
-			syncOp.metrics.sentMessagesHistogram.WithLabelValues("true").Observe(float64(messagesSendToClient))
+			syncOp.metrics.sentMessagesHistogram.WithLabelValues("false").Observe(float64(messagesSendToClient))
 		}
 	}()
 
@@ -183,8 +174,8 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 			// otherwise syncOp is stopped internally.
 			return context.Cause(syncOp.ctx)
-		case _, open := <-sub.Messages.Wait():
-			msgs = sub.Messages.GetBatch(msgs)
+		case _, open := <-messages.Wait():
+			msgs = messages.GetBatch(msgs)
 
 			// nil msgs indicates the buffer is closed
 			if msgs == nil {
@@ -212,7 +203,7 @@ func (syncOp *StreamSyncOperation) Run(
 					}
 
 					messagesSendToClient++
-					syncOp.log.Debugw("Pending messages in sync operation", "count", sub.Messages.Len()+len(msgs)-i-1)
+					syncOp.log.Debugw("Pending messages in sync operation", "count", messages.Len()+len(msgs)-i-1)
 
 					if msg.GetSyncOp() == SyncOp_SYNC_CLOSE {
 						return nil
@@ -221,8 +212,7 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("true").
-					Observe(float64(sub.Messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -238,19 +228,19 @@ func (syncOp *StreamSyncOperation) Run(
 	}
 }
 
-func (syncOp *StreamSyncOperation) runCommandsProcessing(sub *subscription.Subscription) {
+func (syncOp *StreamSyncOperation) runCommandsProcessing(syncers *client.SyncerSet) {
 	for {
 		select {
 		case <-syncOp.ctx.Done():
 			return
 		case cmd := <-syncOp.commands:
-			syncOp.metrics.actions(cmd, syncOp.usingSharedSyncer)
 			if cmd.ModifySyncReq != nil {
-				cmd.Reply(sub.Modify(cmd.Ctx, *cmd.ModifySyncReq))
+				cmd.Reply(syncers.Modify(cmd.Ctx, *cmd.ModifySyncReq))
 			} else if cmd.DebugDropStream != (shared.StreamId{}) {
-				cmd.Reply(sub.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
+				cmd.Reply(syncers.DebugDropStream(cmd.Ctx, cmd.DebugDropStream))
 			} else if cmd.CancelReq != "" {
-				sub.Send(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				_ = syncOp.messages.AddMessage(&SyncStreamsResponse{SyncOp: SyncOp_SYNC_CLOSE})
+				syncOp.messages.Close()
 				cmd.Reply(nil)
 				return
 			}

@@ -30,7 +30,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -358,16 +357,10 @@ func (ssr *syncSessionRunner) Run() {
 
 	var syncer RemoteStreamSyncer
 	if ssr.useSharedSyncer {
-		syncer, err = client.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr,
-			ssr.otelTracer,
-		)
+		// TODO: Implement using sync v3 here.
+		logging.FromCtx(ssr.syncCtx).Panicw("Sync v3 is not supported")
 	} else {
-		syncer, err = legacyclient.NewRemoteSyncer(
+		syncer, err = client.NewRemoteSyncer(
 			ssr.syncCtx,
 			ssr.cancelSync,
 			"SyncSessionRunner",
