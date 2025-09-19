@@ -31,7 +31,7 @@ import { WagmiProvider } from "wagmi";
 import { useEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
-const riverConfig = townsEnv().makeTownsConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("gamma");
 
 const App = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -52,7 +52,7 @@ const ConnectTowns = () => {
           if (!signer) {
             return;
           }
-          connect(signer, { riverConfig });
+          connect(signer, { townsConfig });
         }}
       >
         {isConnecting ? "Disconnect" : "Connect"}

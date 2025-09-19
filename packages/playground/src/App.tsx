@@ -19,7 +19,7 @@ function App() {
         if (persistedAuth) {
             console.log('river_env', persistedAuth.riverEnvironmentId)
             connectTowns(persistedAuth.signerContext, {
-                riverConfig: townsEnv(VITE_ENV_OPTIONS).makeTownsConfig(
+                townsConfig: townsEnv(VITE_ENV_OPTIONS).makeTownsConfig(
                     persistedAuth.riverEnvironmentId,
                 ),
             }).then((syncAgent) => setSyncAgent(syncAgent))

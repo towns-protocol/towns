@@ -12,7 +12,7 @@ export const useAppMetadata = (appId: string | undefined) => {
     const signer = useEthersSigner()
     const sync = useSyncAgent()
     const appRegistryUrl = townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(
-        sync.config.riverConfig.environmentId,
+        sync.config.townsConfig.environmentId,
     )
 
     return useQuery({

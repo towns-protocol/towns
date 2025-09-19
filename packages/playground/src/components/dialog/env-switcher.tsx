@@ -34,7 +34,7 @@ const environments = townsEnv(VITE_ENV_OPTIONS)
     .map((env) => ({
         id: env.environmentId,
         name: env.environmentId,
-        riverConfig: env,
+        townsConfig: env,
     }))
 
 const privateNetworks =
@@ -118,7 +118,7 @@ export const RiverEnvSwitcherContent = (props: {
                         <span className="text-sm font-medium">Select an environment</span>
                         {environments
                             .filter(({ id }) => !privateNetworks.includes(id))
-                            .map(({ id, name, riverConfig }) => (
+                            .map(({ id, name, townsConfig }) => (
                                 <DialogClose asChild key={id}>
                                     <Button
                                         variant="outline"
@@ -127,28 +127,28 @@ export const RiverEnvSwitcherContent = (props: {
                                             if (props.allowBearerToken) {
                                                 if (bearerToken) {
                                                     await connectUsingBearerToken(bearerToken, {
-                                                        riverConfig,
+                                                        townsConfig,
                                                     }).then((sync) => {
                                                         if (sync?.config.context) {
                                                             storeAuth(
                                                                 sync?.config.context,
-                                                                riverConfig,
+                                                                townsConfig,
                                                             )
                                                         }
                                                     })
                                                 }
                                             } else {
                                                 switchChain?.({
-                                                    chainId: riverConfig.base.chainConfig.chainId,
+                                                    chainId: townsConfig.base.chainConfig.chainId,
                                                 })
                                                 if (!signer) {
                                                     return
                                                 }
                                                 await connect(signer, {
-                                                    riverConfig,
+                                                    townsConfig,
                                                 }).then((sync) => {
                                                     if (sync?.config.context) {
-                                                        storeAuth(sync?.config.context, riverConfig)
+                                                        storeAuth(sync?.config.context, townsConfig)
                                                     }
                                                 })
                                             }

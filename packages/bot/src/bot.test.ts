@@ -49,20 +49,20 @@ type OnMessageEditType = BotPayload<'messageEdit'>
 type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
-    const riverConfig = townsEnv().makeTownsConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
 
-    const bob = new SyncAgentTest(undefined, riverConfig)
+    const bob = new SyncAgentTest(undefined, townsConfig)
     const appRegistryDapp = new AppRegistryDapp(
-        riverConfig.base.chainConfig,
-        makeBaseProvider(riverConfig),
+        townsConfig.base.chainConfig,
+        makeBaseProvider(townsConfig),
     )
-    const spaceDapp = new SpaceDapp(riverConfig.base.chainConfig, makeBaseProvider(riverConfig))
+    const spaceDapp = new SpaceDapp(townsConfig.base.chainConfig, makeBaseProvider(townsConfig))
     let bobClient: SyncAgent
 
-    const alice = new SyncAgentTest(undefined, riverConfig)
+    const alice = new SyncAgentTest(undefined, townsConfig)
     let aliceClient: SyncAgent
 
-    const carol = new SyncAgentTest(undefined, riverConfig)
+    const carol = new SyncAgentTest(undefined, townsConfig)
     let carolClient: SyncAgent
 
     const BOB_USERNAME = 'bob'
@@ -90,7 +90,7 @@ describe('Bot', { sequential: true }, () => {
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
-        ethersProvider = makeBaseProvider(riverConfig)
+        ethersProvider = makeBaseProvider(townsConfig)
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -163,8 +163,8 @@ describe('Bot', { sequential: true }, () => {
         const delegateWallet = ethers.Wallet.createRandom()
         const signerContext = await makeSignerContext(botWallet, delegateWallet)
         const rpcClient = await makeRiverRpcClient(
-            makeRiverProvider(riverConfig),
-            riverConfig.river.chainConfig,
+            makeRiverProvider(townsConfig),
+            townsConfig.river.chainConfig,
         )
         const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
         const botClient = new Client(
@@ -669,7 +669,7 @@ describe('Bot', { sequential: true }, () => {
             {
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
-                chainId: riverConfig.base.chainConfig.chainId,
+                chainId: townsConfig.base.chainConfig.chainId,
                 receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
             bob.signer,

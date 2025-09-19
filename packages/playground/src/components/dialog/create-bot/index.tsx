@@ -189,17 +189,17 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             console.log('mutate', formData)
 
             const appRegistryUrl = townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(
-                sync.config.riverConfig.environmentId,
+                sync.config.townsConfig.environmentId,
             )
 
-            const baseProvider = makeBaseProvider(sync.config.riverConfig)
+            const baseProvider = makeBaseProvider(sync.config.townsConfig)
             if (!signer) {
                 throw new Error('Signer is not set')
             }
-            const riverConfig = sync.config.riverConfig
+            const townsConfig = sync.config.townsConfig
 
             const botWallet = ethers.Wallet.createRandom()
-            const appRegistryDapp = new AppRegistryDapp(riverConfig.base.chainConfig, baseProvider)
+            const appRegistryDapp = new AppRegistryDapp(townsConfig.base.chainConfig, baseProvider)
             let appAddress = ''
             if (botKind === 'simple') {
                 const tx = await appRegistryDapp.createApp(
@@ -235,8 +235,8 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             const delegateWallet = ethers.Wallet.createRandom()
             const signerContext = await makeSignerContext(botWallet, delegateWallet)
             const rpcClient = await makeRiverRpcClient(
-                makeRiverProvider(riverConfig),
-                riverConfig.river.chainConfig,
+                makeRiverProvider(townsConfig),
+                townsConfig.river.chainConfig,
             )
             const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
             const botClient = new Client(
@@ -252,7 +252,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             const appPrivateData = makeAppPrivateData(
                 botWallet.privateKey,
                 exportedDevice!,
-                riverConfig.environmentId,
+                townsConfig.environmentId,
             )
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(

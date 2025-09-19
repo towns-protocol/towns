@@ -18,9 +18,9 @@ describe('integration/stream-metadata/userSpaces', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	const riverConfig = townsEnv().makeTownsConfig()
-	const bobIdentity = new Bot(undefined, riverConfig)
-	const aliceIdentity = new Bot(undefined, riverConfig)
+	const townsConfig = townsEnv().makeTownsConfig()
+	const bobIdentity = new Bot(undefined, townsConfig)
+	const aliceIdentity = new Bot(undefined, townsConfig)
 	let bob: SyncAgent
 	let alice: SyncAgent
 

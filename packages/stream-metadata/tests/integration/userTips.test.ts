@@ -16,9 +16,9 @@ describe('integration/stream-metadata/userTips', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	const riverConfig = townsEnv().makeTownsConfig()
-	const bobIdentity = new Bot(undefined, riverConfig)
-	const aliceIdentity = new Bot(undefined, riverConfig)
+	const townsConfig = townsEnv().makeTownsConfig()
+	const bobIdentity = new Bot(undefined, townsConfig)
+	const aliceIdentity = new Bot(undefined, townsConfig)
 	let bob: SyncAgent
 	let alice: SyncAgent
 
@@ -88,7 +88,7 @@ describe('integration/stream-metadata/userTips', () => {
 		log('Receipt', receipt)
 		if (!tipEvent) throw new Error('no tip event found')
 		await bob.riverConnection.client!.addTransaction_Tip(
-			riverConfig.base.chainConfig.chainId,
+			townsConfig.base.chainConfig.chainId,
 			receipt,
 			tipEvent,
 			aliceIdentity.rootWallet.address,

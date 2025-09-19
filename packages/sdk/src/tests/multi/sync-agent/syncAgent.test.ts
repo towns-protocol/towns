@@ -13,8 +13,8 @@ import { townsEnv } from '../../../townsEnv'
 const logger = dlogger('csb:test:syncAgent')
 
 describe('syncAgent.test.ts', () => {
-    const riverConfig = townsEnv().makeTownsConfig()
-    const testUser = new Bot(undefined, riverConfig)
+    const townsConfig = townsEnv().makeTownsConfig()
+    const testUser = new Bot(undefined, townsConfig)
 
     beforeEach(async () => {
         await testUser.fundWallet()
@@ -68,7 +68,7 @@ describe('syncAgent.test.ts', () => {
         logger.log('bearerTokenStr', bearerToken)
         const signerContext = await makeSignerContextFromBearerToken(bearerToken)
         const syncAgent = new SyncAgent({
-            riverConfig: townsEnv().makeTownsConfig(),
+            townsConfig: townsEnv().makeTownsConfig(),
             context: signerContext,
         })
         await syncAgent.start()

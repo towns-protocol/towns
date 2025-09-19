@@ -28,7 +28,7 @@ import { dlog, DLogger, shortenHexString } from '@towns-protocol/utils'
 
 export interface SyncAgentConfig {
     context: SignerContext
-    riverConfig: RiverConfig
+    townsConfig: RiverConfig
     retryParams?: RetryParams
     highPriorityStreamIds?: string[]
     deviceId?: string
@@ -74,10 +74,10 @@ export class SyncAgent {
         const logId = config.logId ?? shortenHexString(this.userId)
         this.log = dlog('csb:syncAgent', { defaultEnabled: true }).extend(logId)
         this.config = config
-        const base = config.riverConfig.base
-        const river = config.riverConfig.river
-        const baseProvider = config.baseProvider ?? makeBaseProvider(config.riverConfig)
-        const riverProvider = config.riverProvider ?? makeRiverProvider(config.riverConfig)
+        const base = config.townsConfig.base
+        const river = config.townsConfig.river
+        const baseProvider = config.baseProvider ?? makeBaseProvider(config.townsConfig)
+        const riverProvider = config.riverProvider ?? makeRiverProvider(config.townsConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
         this.store.newTransactionGroup('SyncAgent::initialization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
@@ -85,7 +85,7 @@ export class SyncAgent {
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
             cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
-            entitlementsDelegate: new Entitlements(this.config.riverConfig, spaceDapp),
+            entitlementsDelegate: new Entitlements(this.config.townsConfig, spaceDapp),
             opts: {
                 persistenceStoreName:
                     config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
@@ -154,9 +154,9 @@ export class SyncAgent {
 
     dbName(db: string): string {
         const envSuffix =
-            this.config.riverConfig.environmentId === 'gamma'
+            this.config.townsConfig.environmentId === 'gamma'
                 ? ''
-                : `-${this.config.riverConfig.environmentId}`
+                : `-${this.config.townsConfig.environmentId}`
         const postfix = this.config.deviceId !== undefined ? `-${this.config.deviceId}` : ''
         const dbName = `${db}-${this.userId}${envSuffix}${postfix}`
         return dbName

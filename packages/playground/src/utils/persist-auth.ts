@@ -2,14 +2,14 @@ import { type RiverConfig, type SignerContext, townsEnv } from '@towns-protocol/
 import superjson from 'superjson'
 import { VITE_ENV_OPTIONS } from './environment'
 
-export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {
+export const storeAuth = (signerContext: SignerContext, townsConfig: RiverConfig) => {
     const fixedContext = {
         ...signerContext,
         signerPrivateKey: signerContext.signerPrivateKey(),
     }
     const signerContextString = superjson.stringify(fixedContext)
     window.localStorage.setItem('river-signer', signerContextString)
-    window.localStorage.setItem('river-last-env', riverConfig.environmentId)
+    window.localStorage.setItem('river-last-env', townsConfig.environmentId)
 }
 
 export const loadAuth = () => {

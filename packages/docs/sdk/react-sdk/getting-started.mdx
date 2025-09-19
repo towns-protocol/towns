@@ -114,7 +114,7 @@ import { townsEnv } from "@towns-protocol/sdk";
 import { getEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
-const riverConfig = townsEnv().makeTownsConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("gamma");
 
 function ConnectButton() {
   const { connect, isAgentConnecting, isAgentConnected } = useAgentConnection();
@@ -123,7 +123,7 @@ function ConnectButton() {
     <button
       onClick={async () => {
         const signer = await getEthersSigner(wagmiConfig);
-        connect(signer, { riverConfig });
+        connect(signer, { townsConfig });
       }}
     >
       {isAgentConnecting ? "Connecting..." : "Connect"}
@@ -153,7 +153,7 @@ If you have a Towns account, you can get your bearer token from there. Type `/be
 import { useAgentConnection } from "@towns-protocol/react-sdk";
 import { townsEnv } from "@towns-protocol/sdk";
 
-const riverConfig = townsEnv().makeTownsConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("gamma");
 
 function ConnectButton() {
   const { connectUsingBearerToken, isAgentConnecting, isAgentConnected } = useAgentConnection();
@@ -167,7 +167,7 @@ function ConnectButton() {
         placeholder="Enter bearer token" 
       />
       <button 
-        onClick={() => connectUsingBearerToken(bearerToken, { riverConfig })}
+        onClick={() => connectUsingBearerToken(bearerToken, { townsConfig })}
       >
         {isAgentConnecting ? "Connecting..." : "Connect"}
         {isAgentConnected && "Connected ✅"}

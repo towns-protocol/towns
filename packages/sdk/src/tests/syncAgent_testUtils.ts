@@ -9,9 +9,9 @@ import { SpaceDapp } from '@towns-protocol/web3'
 
 export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     const context = await makeRandomUserContext()
-    const riverConfig = townsEnv().makeTownsConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
     return {
-        riverConfig,
+        townsConfig,
         context,
     } satisfies SyncAgentConfig
 }
@@ -24,7 +24,7 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             userId,
             makeTestCryptoDbName(userId, config.deviceId),
         ),
-        entitlementsDelegate: new Entitlements(config.riverConfig, spaceDapp),
+        entitlementsDelegate: new Entitlements(config.townsConfig, spaceDapp),
         opts: {
             persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
             logNamespaceFilter: undefined,

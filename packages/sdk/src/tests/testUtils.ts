@@ -335,20 +335,20 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const riverConfig = townsEnv().makeTownsConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, carolSpaceDapp),
         }),
     ])
 

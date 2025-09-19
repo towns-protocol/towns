@@ -138,6 +138,6 @@ export const useAgentConnection = () => {
         /** Whether the agent is connected */
         isAgentConnected,
         /** The environment of the current connection (gamma, omega, alpha, local_dev, etc.) */
-        env: towns?.syncAgent?.config.riverConfig.environmentId,
+        env: towns?.syncAgent?.config.townsConfig.environmentId,
     }
 }

@@ -145,9 +145,9 @@ export class Supervisor {
     constructor(readonly opts: RunOpts) {
         this.logger = getLogger('stress:supervisor')
         this.drivers = []
-        const riverConfig = townsEnv().makeTownsConfig(this.opts.riverEnv)
+        const townsConfig = townsEnv().makeTownsConfig(this.opts.riverEnv)
         this.rootWallet = Wallet.fromMnemonic(opts.mnemonic).connect(
-            new ethers.providers.JsonRpcProvider(riverConfig.base.rpcUrl),
+            new ethers.providers.JsonRpcProvider(townsConfig.base.rpcUrl),
         )
     }
 
