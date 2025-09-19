@@ -355,22 +355,17 @@ func (ssr *syncSessionRunner) Run() {
 		return
 	}
 
-	var syncer RemoteStreamSyncer
-	if ssr.useSharedSyncer {
-		// TODO: Implement using sync v3 here.
-		logging.FromCtx(ssr.syncCtx).Panicw("Sync v3 is not supported")
-	} else {
-		syncer, err = client.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.cancelSync,
-			"SyncSessionRunner",
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr.messages,
-			ssr.otelTracer,
-		)
-	}
+	syncer, err := client.NewRemoteSyncer(
+		ssr.syncCtx,
+		ssr.cancelSync,
+		"SyncSessionRunner",
+		ssr.node,
+		streamClient,
+		ssr.relocateStream,
+		ssr.messages,
+		ssr.useSharedSyncer,
+		ssr.otelTracer,
+	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").

@@ -51,6 +51,7 @@ func TestRemoteSyncerTimeoutFirstUpdate(t *testing.T) {
 		client,
 		unsubStream,
 		messages,
+		false,
 		nil,
 	)
 
