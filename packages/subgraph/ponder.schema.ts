@@ -276,6 +276,45 @@ export const review = onchainTable(
     }),
 )
 
+// subscriptions
+export const subscription = onchainTable(
+    'subscriptions',
+    (t) => ({
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        space: t.hex().notNull(),
+        tokenId: t.bigint().notNull(),
+        totalSpent: t.bigint().default(0n),
+        lastRenewalTime: t.bigint(),
+        nextRenewalTime: t.bigint().notNull(),
+        active: t.boolean().default(true),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.account, table.entityId] }),
+        spaceIdx: index().on(table.space),
+        spaceTokenIdx: index().on(table.space, table.tokenId),
+        nextRenewalTimeIdx: index().on(table.nextRenewalTime),
+        activeIdx: index().on(table.active),
+    }),
+)
+
+// subscription failures
+export const subscriptionFailure = onchainTable(
+    'subscription_failures',
+    (t) => ({
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        timestamp: t.bigint().notNull(),
+        reason: t.text().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.account, table.entityId, table.timestamp] }),
+        timestampIdx: index().on(table.timestamp),
+    }),
+)
+
 // each space has many reviews
 export const spaceToReviews = relations(space, ({ many }) => ({
     reviews: many(review),
