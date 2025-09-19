@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/config"
-	"github.com/towns-protocol/towns/core/contracts/base"
+	base_app_registry "github.com/towns-protocol/towns/core/contracts/base/app_registry"
 	. "github.com/towns-protocol/towns/core/node/base"
 )
 
 type AppRegistryContract struct {
-	appRegistry *base.AppRegistry
+	appRegistry *base_app_registry.AppRegistry
 }
 
 func NewAppRegistryContract(
@@ -20,7 +20,7 @@ func NewAppRegistryContract(
 	appRegistryConfig *config.ContractConfig,
 	backend bind.ContractBackend,
 ) (*AppRegistryContract, error) {
-	appRegistry, err := base.NewAppRegistry(appRegistryConfig.Address, backend)
+	appRegistry, err := base_app_registry.NewAppRegistry(appRegistryConfig.Address, backend)
 	if err != nil {
 		return nil, err
 	}
