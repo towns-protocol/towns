@@ -69,12 +69,12 @@ export const BotInstallDialog = ({
                 throw new Error('No signer found')
             }
             const appRegistryDapp = new AppRegistryDapp(
-                sync.config.riverConfig.base.chainConfig,
-                makeBaseProvider(sync.config.riverConfig),
+                sync.config.townsConfig.base.chainConfig,
+                makeBaseProvider(sync.config.townsConfig),
             )
             const spaceDapp = new SpaceDapp(
-                sync.config.riverConfig.base.chainConfig,
-                makeBaseProvider(sync.config.riverConfig),
+                sync.config.townsConfig.base.chainConfig,
+                makeBaseProvider(sync.config.townsConfig),
             )
             const space = spaceDapp.getSpace(state.spaceId)
 

@@ -18,7 +18,7 @@ import {
     Permission,
     createSpaceDapp,
 } from '@towns-protocol/web3'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { dlog } from '@towns-protocol/utils'
 
 const log = dlog('csb:test:mediaWithEntitlements')
@@ -29,7 +29,7 @@ describe('mediaWithEntitlements', () => {
 
     let aliceClient: TestClient
 
-    const baseConfig = makeBaseChainConfig()
+    const baseConfig = townsEnv().makeBaseChainConfig()
 
     beforeEach(async () => {
         bobClient = await makeTestClient()

@@ -24,7 +24,7 @@ import {
     SpaceAddressFromSpaceId,
 } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 const log = dlog('csb:test:channelsWithEntitlements')
 
 describe('channelScrubbing', () => {
@@ -89,7 +89,7 @@ describe('channelScrubbing', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 

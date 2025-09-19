@@ -1,5 +1,4 @@
 import {
-    getStreamMetadataUrl,
     isChannelStreamId,
     isDMChannelStreamId,
     isGDMChannelStreamId,
@@ -10,6 +9,7 @@ import {
     isUserSettingsStreamId,
     isUserStreamId,
     isValidStreamId,
+    townsEnv,
 } from '@towns-protocol/sdk'
 import { useMemo, useState } from 'react'
 import { useAgentConnection, useSyncAgent } from '@towns-protocol/react-sdk'
@@ -18,6 +18,7 @@ import { SpaceAddressFromSpaceId } from '@towns-protocol/web3'
 import { Input } from '@/components/ui/input'
 import { GridSidePanel } from '@/components/layout/grid-side-panel'
 import { jsonStringify } from '@/utils/json-stringify'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 
 const checkId = (id: string) => {
     const checks = {
@@ -138,9 +139,9 @@ const SpaceInfo = ({ spaceId }: { spaceId: string }) => {
                 return
             }
             const spaceAddress = SpaceAddressFromSpaceId(spaceId)
-            return fetch(`${getStreamMetadataUrl(env)}/space/${spaceAddress}`).then((res) =>
-                res.json(),
-            )
+            return fetch(
+                `${townsEnv(VITE_ENV_OPTIONS).getStreamMetadataUrl(env)}/space/${spaceAddress}`,
+            ).then((res) => res.json())
         },
         enabled: !!spaceId,
         refetchOnWindowFocus: false,

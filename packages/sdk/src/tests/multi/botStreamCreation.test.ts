@@ -9,7 +9,7 @@ import {
     setupWalletsAndContexts,
     expectUserCanJoin,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 
@@ -26,7 +26,7 @@ describe('bot stream creation tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             ownerProvider,
         )
 
@@ -94,7 +94,7 @@ describe('bot stream creation tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             botProvider, // use bot as it's own owner for convenience
         )
 
