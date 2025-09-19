@@ -193,7 +193,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
-        const appRegistryUrl = townsEnv().getAppRegistryUrl(process.env.RIVER_ENV!)
+        const appRegistryUrl = townsEnv().getAppRegistryUrl(process.env.RIVER_ENV)
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,
