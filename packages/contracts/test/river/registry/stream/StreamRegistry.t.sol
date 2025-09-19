@@ -396,8 +396,8 @@ contract StreamRegistryTest is
         SetMiniblock[] memory miniblocks = new SetMiniblock[](1);
         miniblocks[0] = SetMiniblock({
             streamId: SAMPLE_STREAM.streamId,
-            prevMiniBlockHash: bytes32(0),
-            lastMiniblockHash: SAMPLE_STREAM.genesisMiniblockHash,
+            prevMiniBlockHash: SAMPLE_STREAM.genesisMiniblockHash,
+            lastMiniblockHash: bytes32(uint256(1_234_567_890)),
             lastMiniblockNum: 1,
             isSealed: false
         });
@@ -450,6 +450,7 @@ contract StreamRegistryTest is
         for (uint256 i; i < miniblocks.length; ++i) {
             _miniblocks[i] = miniblocks[i];
             _miniblocks[i].lastMiniblockNum = 1;
+            _miniblocks[i].prevMiniBlockHash = genesisMiniblockHash;
         }
 
         vm.prank(node.node);
@@ -529,6 +530,7 @@ contract StreamRegistryTest is
         miniblock.streamId = testStream.streamId;
         miniblock.lastMiniblockNum = 1;
         miniblock.lastMiniblockHash = bytes32(uint256(1_234_567_890));
+        miniblock.prevMiniBlockHash = testStream.genesisMiniblockHash;
         miniblocks[0] = miniblock;
 
         vm.prank(node.node);
