@@ -54,6 +54,12 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     }
 
     /// @inheritdoc IAppAccount
+    function onUpdateApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
+        _onUpdateApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
     function enableApp(address app) external onlyOwner {
         _enableApp(app);
     }
