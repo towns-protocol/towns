@@ -68,8 +68,8 @@ COPY ./packages/prettier-config/package.json packages/prettier-config/package.js
 # Create empty deployments directory to satisfy preinstall script
 RUN mkdir -p packages/generated/deployments
 
-# Install dependencies with Yarn
-RUN yarn install && yarn cache clean
+# Install dependencies with Yarn (only for contracts workspace to speed up build)
+RUN yarn workspaces focus @towns-protocol/contracts && yarn cache clean
 
 # Copy rest of the project files
 COPY ./packages/contracts packages/contracts
