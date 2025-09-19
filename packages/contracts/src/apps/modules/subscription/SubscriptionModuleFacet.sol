@@ -81,7 +81,9 @@ contract SubscriptionModuleFacet is
         sub.space = space;
         sub.active = true;
         sub.tokenId = tokenId;
-        sub.nextRenewalTime = uint40(expiresAt - RENEWAL_BUFFER);
+        // Calculate renewal time, ensuring it's not in the past
+        uint256 idealRenewalTime = expiresAt > RENEWAL_BUFFER ? expiresAt - RENEWAL_BUFFER : 0;
+        sub.nextRenewalTime = uint40(idealRenewalTime > block.timestamp ? idealRenewalTime : block.timestamp);
 
         $.entityIds[msg.sender].add(entityId);
 
@@ -322,7 +324,9 @@ contract SubscriptionModuleFacet is
         uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
 
         // Update subscription state after successful renewal
-        sub.nextRenewalTime = uint40(newExpiresAt - RENEWAL_BUFFER);
+        // Calculate renewal time, ensuring it's not in the past
+        uint256 newRenewalTime = newExpiresAt > RENEWAL_BUFFER ? newExpiresAt - RENEWAL_BUFFER : 0;
+        sub.nextRenewalTime = uint40(newRenewalTime > block.timestamp ? newRenewalTime : block.timestamp);
         sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
