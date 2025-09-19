@@ -1081,10 +1081,6 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
     const newExpiration = event.args.expiration
 
     try {
-        console.log(
-            `SubscriptionUpdate: Space ${spaceId}, TokenId ${tokenId}, New Expiration ${newExpiration}`,
-        )
-
         await context.db.sql
             .update(schema.subscription)
             .set({

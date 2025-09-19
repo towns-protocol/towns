@@ -70,9 +70,12 @@ export function makePonderConfig(
         throw new Error('App registry address not found')
     }
 
-    const subscriptionModule = getContractAddress('subscriptionModule', baseChainName, environment)
-    if (!subscriptionModule) {
-        throw new Error('Subscription module address not found')
+    // SubscriptionModule is optional - not deployed in all environments
+    const subscriptionModule = getContractAddress('subscriptionModule', baseChainName, environment, { throwOnError: false })
+        || '0x0000000000000000000000000000000000000001' // Dummy address for missing deployments
+
+    if (!subscriptionModule || subscriptionModule === '0x0000000000000000000000000000000000000001') {
+        console.warn(`⚠️  SubscriptionModule not deployed for ${environment} on '${baseChainName}', using dummy address`)
     }
 
     return {
