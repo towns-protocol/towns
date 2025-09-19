@@ -451,6 +451,7 @@ func (ss *SyncerSet) getOrCreateSyncerNoLock(nodeAddress common.Address) (Stream
 			client,
 			ss.rmStream,
 			ss.messages,
+			false,
 			ss.otelTracer,
 		)
 		if err != nil {
