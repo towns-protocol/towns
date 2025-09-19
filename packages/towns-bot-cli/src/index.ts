@@ -78,7 +78,7 @@ ${yellow('Global Options:')}
 ${yellow('Examples:')}
   ${cyan('# Create a new bot project')}
   towns-bot init my-bot
-  towns-bot init my-ai-bot --template thread-ai
+  towns-bot init my-ai-bot --template quickstart
 
   ${cyan('# Update dependencies')}
   towns-bot update
