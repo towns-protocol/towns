@@ -20,16 +20,6 @@ export const TEMPLATES = {
         description: 'Simple starter bot with basic commands',
         packagePath: 'bot-quickstart',
     },
-    'thread-ai': {
-        name: 'Thread AI Bot',
-        description: 'AI-powered conversational bot using OpenAI',
-        packagePath: 'bot-thread-ai',
-    },
-    poll: {
-        name: 'Poll Bot',
-        description: 'Interactive poll bot for creating votes',
-        packagePath: 'bot-ask-poll',
-    },
 } as const
 
 export async function init(argv: InitArgs) {

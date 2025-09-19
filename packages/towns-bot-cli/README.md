@@ -22,16 +22,14 @@ This will create a new bot project with the default quickstart template.
 
 Any template from the [examples](https://github.com/towns-protocol/towns/tree/main/packages/examples) directory can be used.
 
-Here's a few examples:
+We currently have the following:
 
 - `quickstart` (default) - Simple starter bot with basic commands
-- `thread-ai` - AI-powered conversational bot using OpenAI
-- `poll` - Interactive poll bot for creating votes
 
 To use a specific template:
 
 ```bash
-npx towns-bot init my-ai-bot --template thread-ai
+npx towns-bot init my-ai-bot --template quickstart
 ```
 
 ### Update dependencies
@@ -52,7 +50,7 @@ Create a new bot project.
 
 Options:
 
-- `-t, --template <name>` - Template to use (quickstart, thread-ai, poll)
+- `-t, --template <name>` - Name of template to use
 
 ### `towns-bot update`
 
