@@ -1,7 +1,7 @@
 import { makeSignerContext } from '../../signerContext'
 import { AppRegistryService } from '../../appRegistryService'
 import { ethers } from 'ethers'
-import { getAppRegistryUrl } from '../../riverConfig'
+import { getAppRegistryUrl } from '../../townsEnv'
 import { bin_fromHexString } from '@towns-protocol/utils'
 import {
     setupWalletsAndContexts,

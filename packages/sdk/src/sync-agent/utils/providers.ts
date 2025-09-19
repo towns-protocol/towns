@@ -1,5 +1,5 @@
 import { providers } from 'ethers'
-import { RiverConfig } from '../../riverConfig'
+import { RiverConfig } from '../../townsEnv'
 
 export function makeRiverProvider(config: RiverConfig) {
     const river = config.river

@@ -1,7 +1,7 @@
 import { SyncAgentConfig } from '../sync-agent/syncAgent'
 import { ClientParams } from '../sync-agent/river-connection/riverConnection'
 import { makeRandomUserContext } from './testUtils'
-import { makeRiverConfig } from '../riverConfig'
+import { makeRiverConfig } from '../townsEnv'
 import { RiverDbManager } from '../riverDbManager'
 import { userIdFromAddress } from '../id'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'

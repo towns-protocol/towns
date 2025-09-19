@@ -19,7 +19,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from '../riverConfig'
+import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from '../townsEnv'
 import {
     genId,
     makeSpaceStreamId,

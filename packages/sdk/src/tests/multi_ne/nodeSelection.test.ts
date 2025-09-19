@@ -5,7 +5,7 @@
 import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider, createRiverRegistry } from '@towns-protocol/web3'
-import { makeRiverChainConfig } from '../../riverConfig'
+import { makeRiverChainConfig } from '../../townsEnv'
 
 const log = dlog('csb:test')
 

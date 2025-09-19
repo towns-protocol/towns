@@ -1,6 +1,6 @@
 import { EntitlementsDelegate } from '../../decryptionExtensions'
 import { Permission, SpaceDapp } from '@towns-protocol/web3'
-import { RiverConfig } from '../../riverConfig'
+import { RiverConfig } from '../../townsEnv'
 
 export class Entitlements implements EntitlementsDelegate {
     constructor(

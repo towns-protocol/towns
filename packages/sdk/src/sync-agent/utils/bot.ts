@@ -1,4 +1,4 @@
-import { RiverConfig, makeRiverConfig } from '../../riverConfig'
+import { RiverConfig, makeRiverConfig } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeSignerContext } from '../../signerContext'

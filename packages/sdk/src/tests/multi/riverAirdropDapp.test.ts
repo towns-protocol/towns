@@ -3,7 +3,7 @@
  */
 
 import { dlog } from '@towns-protocol/utils'
-import { makeRiverConfig } from '../../riverConfig'
+import { makeRiverConfig } from '../../townsEnv'
 import { LocalhostWeb3Provider, RiverAirdropDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 

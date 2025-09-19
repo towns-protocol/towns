@@ -7,7 +7,7 @@ import { makeTestRpcClient } from '../testUtils'
 import { DEFAULT_RETRY_PARAMS, errorContains } from '../../rpcInterceptors'
 import { makeRiverRpcClient } from '../../makeRiverRpcClient'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
-import { makeRiverChainConfig } from '../../riverConfig'
+import { makeRiverChainConfig } from '../../townsEnv'
 import { create } from '@bufbuild/protobuf'
 
 describe('protocol 1', () => {

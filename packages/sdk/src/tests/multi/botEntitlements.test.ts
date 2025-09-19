@@ -10,7 +10,7 @@ import {
     waitFor,
     createChannel,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { makeBaseChainConfig } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 import { make_MemberPayload_KeySolicitation } from '../../types'

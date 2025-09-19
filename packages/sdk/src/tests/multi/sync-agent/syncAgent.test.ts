@@ -8,7 +8,7 @@ import { Bot } from '../../../sync-agent/utils/bot'
 import { AuthStatus } from '../../../sync-agent/river-connection/models/authStatus'
 import { makeBearerToken, makeSignerContextFromBearerToken } from '../../../signerContext'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
-import { makeRiverConfig } from '../../../riverConfig'
+import { makeRiverConfig } from '../../../townsEnv'
 
 const logger = dlogger('csb:test:syncAgent')
 

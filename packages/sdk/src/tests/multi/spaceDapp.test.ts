@@ -4,7 +4,7 @@
 
 import { dlog } from '@towns-protocol/utils'
 import { makeSpaceStreamId } from '../../id'
-import { makeBaseChainConfig, makeRiverConfig } from '../../riverConfig'
+import { makeBaseChainConfig, makeRiverConfig } from '../../townsEnv'
 import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'

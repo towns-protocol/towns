@@ -5,7 +5,7 @@
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider, TipEventObject } from '@towns-protocol/web3'
-import { makeRiverConfig } from '../../riverConfig'
+import { makeRiverConfig } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { waitFor, waitForValue } from '../testUtils'

@@ -2,7 +2,7 @@ import { BigNumber, ContractTransaction, ethers } from 'ethers'
 import { Address } from '../types/ContractTypes'
 import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../types/error-types'
 
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { IWalletLinkShim } from './WalletLinkShim'
 import { createEip712LinkedWalletdData } from '../eip-712/EIP-712'
 

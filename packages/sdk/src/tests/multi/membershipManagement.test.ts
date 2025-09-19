@@ -23,7 +23,7 @@ import {
     NoopRuleData,
     ETH_ADDRESS,
 } from '@towns-protocol/web3'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { makeBaseChainConfig } from '../../townsEnv'
 
 const log = dlog('csb:test:membershipManagement')
 

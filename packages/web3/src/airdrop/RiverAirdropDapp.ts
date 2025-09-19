@@ -1,5 +1,5 @@
 import { IDropFacetShim } from './IDropFacetShim'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { BigNumber, ethers } from 'ethers'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IRiverPointsShim } from './IRiverPointsShim'

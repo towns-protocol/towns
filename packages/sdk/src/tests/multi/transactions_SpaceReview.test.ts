@@ -1,5 +1,5 @@
 import { dlog } from '@towns-protocol/utils'
-import { makeRiverConfig } from '../../riverConfig'
+import { makeRiverConfig } from '../../townsEnv'
 import { Bot } from '../../sync-agent/utils/bot'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { ContractReceipt, ethers } from 'ethers'

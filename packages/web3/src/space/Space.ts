@@ -24,7 +24,7 @@ import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { UserEntitlementShim } from './entitlements/UserEntitlementShim'
 import { toPermissions, parseChannelMetadataJSON } from '../utils/ut'
 import { isRoleIdInArray } from '../utils/ContractHelpers'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'

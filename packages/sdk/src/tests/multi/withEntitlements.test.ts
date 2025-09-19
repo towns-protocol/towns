@@ -27,7 +27,7 @@ import {
     ETH_ADDRESS,
 } from '@towns-protocol/web3'
 import { MembershipOp } from '@towns-protocol/proto'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { makeBaseChainConfig } from '../../townsEnv'
 
 const base_log = dlog('csb:test:withEntitlements')
 

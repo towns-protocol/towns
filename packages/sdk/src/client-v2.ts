@@ -13,7 +13,7 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { makeRiverConfig } from './riverConfig'
+import { makeRiverConfig } from './townsEnv'
 import { ethers } from 'ethers'
 import { RiverRegistry } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'

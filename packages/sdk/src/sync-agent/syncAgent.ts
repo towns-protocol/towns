@@ -1,5 +1,5 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
-import { RiverConfig } from '../riverConfig'
+import { RiverConfig } from '../townsEnv'
 import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'

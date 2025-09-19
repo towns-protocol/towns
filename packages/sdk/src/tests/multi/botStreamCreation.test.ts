@@ -9,7 +9,7 @@ import {
     setupWalletsAndContexts,
     expectUserCanJoin,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { makeBaseChainConfig } from '../../townsEnv'
 import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 

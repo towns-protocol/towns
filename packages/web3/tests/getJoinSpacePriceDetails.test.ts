@@ -5,7 +5,7 @@ import { SpaceDapp } from '../src/space-dapp/SpaceDapp'
 import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
 import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
-import { getWeb3Deployment } from '../src/utils/IStaticContractsInfo'
+import { getWeb3Deployment } from '../src/utils/web3Env'
 
 describe('getJoinSpacePriceDetails', () => {
     const baseConfig = getWeb3Deployment().base

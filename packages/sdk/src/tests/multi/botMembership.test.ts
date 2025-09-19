@@ -18,7 +18,7 @@ import {
     createChannel,
     getXchainConfigForTesting,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { makeBaseChainConfig } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 
