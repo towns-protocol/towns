@@ -12,6 +12,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
+	base_app_account "github.com/towns-protocol/towns/core/contracts/base/app_account"
 	"github.com/towns-protocol/towns/core/contracts/types"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -29,7 +30,7 @@ type Space struct {
 	banning         Banning
 	pausable        *base.Pausable
 	channels        *base.Channels
-	appAccount      *base.AppAccount
+	appAccount      *base_app_account.AppAccount
 }
 
 type SpaceContractV3 struct {
@@ -57,7 +58,7 @@ func NewSpaceContractV3(
 
 	decoder, err := crypto.NewEVMErrorDecoder(
 		base.DiamondMetaData,
-		base.AppAccountMetaData,
+		base_app_account.AppAccountMetaData,
 		base.ArchitectMetaData,
 		base.BanningMetaData,
 		base.ChannelsMetaData,
@@ -648,7 +649,7 @@ func (sc *SpaceContractV3) getSpace(ctx context.Context, spaceId shared.StreamId
 		if err != nil {
 			return nil, err
 		}
-		appAccount, err := base.NewAppAccount(address, sc.backend)
+		appAccount, err := base_app_account.NewAppAccount(address, sc.backend)
 		if err != nil {
 			return nil, err
 		}
