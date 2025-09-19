@@ -9,6 +9,7 @@
     "./packages/sdk",
     "./packages/stream-metadata",
     "./packages/stress",
+    "./packages/subgraph",
     "./packages/web3",
   ],
   "[solidity]": {
