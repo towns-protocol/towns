@@ -1,7 +1,7 @@
 import { SyncAgentConfig } from '../sync-agent/syncAgent'
 import { ClientParams } from '../sync-agent/river-connection/riverConnection'
 import { makeRandomUserContext } from './testUtils'
-import { makeRiverConfig } from '../townsEnv'
+import { townsEnv } from '../townsEnv'
 import { RiverDbManager } from '../riverDbManager'
 import { userIdFromAddress } from '../id'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
@@ -9,7 +9,7 @@ import { SpaceDapp } from '@towns-protocol/web3'
 
 export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     const context = await makeRandomUserContext()
-    const riverConfig = makeRiverConfig()
+    const riverConfig = townsEnv().makeTownsConfig()
     return {
         riverConfig,
         context,

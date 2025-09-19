@@ -1,4 +1,4 @@
-import { RiverConfig, makeRiverConfig } from '../../townsEnv'
+import { RiverConfig, townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeSignerContext } from '../../signerContext'
@@ -11,7 +11,7 @@ export class Bot {
     web3Provider: LocalhostWeb3Provider
 
     constructor(rootWallet?: ethers.Wallet, riverConfig?: RiverConfig) {
-        this.riverConfig = riverConfig || makeRiverConfig()
+        this.riverConfig = riverConfig || townsEnv().makeTownsConfig()
         this.rootWallet = rootWallet || ethers.Wallet.createRandom()
         this.delegateWallet = ethers.Wallet.createRandom()
         this.web3Provider = new LocalhostWeb3Provider(this.riverConfig.base.rpcUrl, this.rootWallet)

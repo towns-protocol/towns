@@ -1,5 +1,5 @@
 import type { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
-import { RiverRegistry, getWeb3Deployment } from '@towns-protocol/web3'
+import { RiverRegistry, web3Env } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
 const NODE_STATUS = {
@@ -18,7 +18,7 @@ export class MetricsDiscovery {
     ) {}
 
     public static init(config: { riverRpcURL: string; env: string }) {
-        const deployment = getWeb3Deployment(config.env)
+        const deployment = web3Env().getDeployment(config.env)
         const provider = new ethers.providers.JsonRpcProvider(config.riverRpcURL)
         const riverRegistry = new RiverRegistry(deployment.river, provider)
         return new MetricsDiscovery(riverRegistry, config.env)

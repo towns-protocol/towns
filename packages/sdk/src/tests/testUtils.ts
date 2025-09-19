@@ -19,7 +19,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from '../townsEnv'
+import { townsEnv } from '../townsEnv'
 import {
     genId,
     makeSpaceStreamId,
@@ -94,7 +94,7 @@ const initTestUrls = async (): Promise<{
     testUrls: string[]
     refreshNodeUrl?: () => Promise<string>
 }> => {
-    const config = makeRiverChainConfig()
+    const config = townsEnv().makeRiverChainConfig()
     const provider = new LocalhostWeb3Provider(config.rpcUrl)
     const riverRegistry = createRiverRegistry(provider, config.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
@@ -306,7 +306,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
 }
 
 export async function setupWalletsAndContexts() {
-    const baseConfig = makeBaseChainConfig()
+    const baseConfig = townsEnv().makeBaseChainConfig()
 
     const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
         ethers.Wallet.createRandom(),
@@ -335,7 +335,7 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const riverConfig = makeRiverConfig()
+    const riverConfig = townsEnv().makeTownsConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,

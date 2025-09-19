@@ -11,18 +11,19 @@ import {
     Client,
     MockEntitlementsDelegate,
     RiverDbManager,
-    getAppRegistryUrl,
     makeAppPrivateData,
     makeBaseProvider,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    townsEnv,
 } from '@towns-protocol/sdk'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAllBotsQueryKey } from '@/hooks/useAllBots'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { InfoStep, infoSchema } from './steps/info'
 import { TypeStep } from './steps/type'
 import { ReviewStep } from './steps/review'
@@ -187,7 +188,9 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             } = formData
             console.log('mutate', formData)
 
-            const appRegistryUrl = getAppRegistryUrl(sync.config.riverConfig.environmentId)
+            const appRegistryUrl = townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(
+                sync.config.riverConfig.environmentId,
+            )
 
             const baseProvider = makeBaseProvider(sync.config.riverConfig)
             if (!signer) {

@@ -5,7 +5,7 @@
 import { bin_toHexString, dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
-import { makeRiverConfig } from '../../townsEnv'
+import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { cloneDeep } from 'lodash-es'
@@ -15,7 +15,7 @@ import { randomBytes } from '../../utils'
 const base_log = dlog('csb:test:transactions')
 
 describe('transactions', () => {
-    const riverConfig = makeRiverConfig()
+    const riverConfig = townsEnv().makeTownsConfig()
     const bobIdentity = new Bot(undefined, riverConfig)
     const aliceIdentity = new Bot(undefined, riverConfig)
     const bobsOtherWallet = ethers.Wallet.createRandom()

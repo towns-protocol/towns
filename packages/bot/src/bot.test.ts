@@ -2,11 +2,11 @@ import {
     Client,
     makeAppPrivateData,
     makeBaseProvider,
-    makeRiverConfig,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
     makeUserStreamId,
+    townsEnv,
     MockEntitlementsDelegate,
     RiverDbManager,
     RiverTimelineEvent,
@@ -14,10 +14,11 @@ import {
     type AppRegistryRpcClient,
     type Channel,
     type SyncAgent,
+    Bot as SyncAgentTest,
+    AppRegistryService,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
-import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
@@ -48,7 +49,7 @@ type OnMessageEditType = BotPayload<'messageEdit'>
 type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
-    const riverConfig = makeRiverConfig()
+    const riverConfig = townsEnv().makeTownsConfig()
 
     const bob = new SyncAgentTest(undefined, riverConfig)
     const appRegistryDapp = new AppRegistryDapp(
@@ -192,7 +193,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
-        const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
+        const appRegistryUrl = townsEnv().getAppRegistryUrl(process.env.RIVER_ENV!)
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,

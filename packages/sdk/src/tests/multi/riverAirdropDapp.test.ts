@@ -3,7 +3,7 @@
  */
 
 import { dlog } from '@towns-protocol/utils'
-import { makeRiverConfig } from '../../townsEnv'
+import { townsEnv } from '../../townsEnv'
 import { LocalhostWeb3Provider, RiverAirdropDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 
@@ -13,7 +13,7 @@ describe('riverAirdropDappTests', () => {
     test('riverAirdropDapp', async () => {
         log('riverAirdropDapp:start1')
         const wallet = ethers.Wallet.createRandom()
-        const config = makeRiverConfig()
+        const config = townsEnv().makeTownsConfig()
         const baseProvider = new LocalhostWeb3Provider(config.base.rpcUrl, wallet)
         await baseProvider.fundWallet()
         const riverAirdropDapp = new RiverAirdropDapp(config.base.chainConfig, baseProvider)

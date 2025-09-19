@@ -16,7 +16,7 @@ import {
     makeUserMetadataStreamId,
     type ParsedEvent,
     unsafe_makeTags,
-    makeBaseChainConfig,
+    townsEnv,
     spaceIdFromChannelId,
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
@@ -790,12 +790,12 @@ export const makeTownsBot = async <
     if (!env) {
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
-    const baseConfig = makeBaseChainConfig(env)
+    const baseConfig = townsEnv().makeBaseChainConfig(env)
     const viemClient = createViemClient({
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if makeBaseChainConfig returned a viem chain
+        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
         chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
     const spaceDapp = new SpaceDapp(

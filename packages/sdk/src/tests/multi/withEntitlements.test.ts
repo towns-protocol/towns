@@ -27,7 +27,7 @@ import {
     ETH_ADDRESS,
 } from '@towns-protocol/web3'
 import { MembershipOp } from '@towns-protocol/proto'
-import { makeBaseChainConfig } from '../../townsEnv'
+import { townsEnv } from '../../townsEnv'
 
 const base_log = dlog('csb:test:withEntitlements')
 
@@ -38,7 +38,7 @@ describe('withEntitlements', () => {
         log('start')
 
         // set up the web3 provider and spacedap
-        const baseConfig = makeBaseChainConfig()
+        const baseConfig = townsEnv().makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)

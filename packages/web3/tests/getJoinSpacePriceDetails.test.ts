@@ -5,10 +5,10 @@ import { SpaceDapp } from '../src/space-dapp/SpaceDapp'
 import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
 import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
-import { getWeb3Deployment } from '../src/utils/web3Env'
+import { web3Env } from '../src/utils/web3Env'
 
 describe('getJoinSpacePriceDetails', () => {
-    const baseConfig = getWeb3Deployment().base
+    const baseConfig = web3Env().getDeployment().base
     const baseRpcUrl = process.env.BASE_CHAIN_RPC_URL!
 
     test('getJoinSpacePriceDetails returns correct values for free space', async () => {

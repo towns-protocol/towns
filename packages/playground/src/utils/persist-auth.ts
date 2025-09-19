@@ -1,5 +1,6 @@
-import { type RiverConfig, type SignerContext, getEnvironmentIds } from '@towns-protocol/sdk'
+import { type RiverConfig, type SignerContext, townsEnv } from '@towns-protocol/sdk'
 import superjson from 'superjson'
+import { VITE_ENV_OPTIONS } from './environment'
 
 export const storeAuth = (signerContext: SignerContext, riverConfig: RiverConfig) => {
     const fixedContext = {
@@ -17,7 +18,11 @@ export const loadAuth = () => {
     if (!signerContextString || !riverConfigString) {
         return undefined
     }
-    if (getEnvironmentIds().find((id) => id === riverConfigString) === undefined) {
+    if (
+        townsEnv(VITE_ENV_OPTIONS)
+            .getEnvironmentIds()
+            .find((id) => id === riverConfigString) === undefined
+    ) {
         return undefined
     }
     const signerContext = superjson.parse<Record<string, string>>(signerContextString)

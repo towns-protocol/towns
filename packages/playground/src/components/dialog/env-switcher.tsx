@@ -8,14 +8,14 @@ import {
 
 import { foundry } from 'viem/chains'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
-import { getEnvironments } from '@towns-protocol/sdk'
+import { townsEnv } from '@towns-protocol/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
-import { SAFE_ENV_OPTIONS } from '@/utils/environment'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { Button } from '../ui/button'
 import {
     Dialog,
@@ -29,11 +29,13 @@ import {
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
-const environments = getEnvironments(SAFE_ENV_OPTIONS).map((env) => ({
-    id: env.environmentId,
-    name: env.environmentId,
-    riverConfig: env,
-}))
+const environments = townsEnv(VITE_ENV_OPTIONS)
+    .getEnvironments()
+    .map((env) => ({
+        id: env.environmentId,
+        name: env.environmentId,
+        riverConfig: env,
+    }))
 
 const privateNetworks =
     import.meta.env.VITE_ENABLE_PRIVATE_NETWORKS === 'true' ? [] : ['alpha', 'delta']

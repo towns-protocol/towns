@@ -4,7 +4,7 @@
 
 import { dlog } from '@towns-protocol/utils'
 import { makeSpaceStreamId } from '../../id'
-import { makeBaseChainConfig, makeRiverConfig } from '../../townsEnv'
+import { townsEnv } from '../../townsEnv'
 import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'
@@ -17,7 +17,7 @@ describe('spaceDappTests', () => {
         log('spaceDapp URI')
         const wallet = ethers.Wallet.createRandom()
         const wallet2 = ethers.Wallet.createRandom()
-        const config = makeRiverConfig()
+        const config = townsEnv().makeTownsConfig()
         const baseProvider = new LocalhostWeb3Provider(config.base.rpcUrl, wallet)
         await baseProvider.fundWallet()
         const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider)
@@ -51,7 +51,7 @@ describe('spaceDappTests', () => {
     })
 
     test('remove caller link', async () => {
-        const baseConfig = makeBaseChainConfig()
+        const baseConfig = townsEnv().makeBaseChainConfig()
 
         const rootProvider = new LocalhostWeb3Provider(
             baseConfig.rpcUrl,

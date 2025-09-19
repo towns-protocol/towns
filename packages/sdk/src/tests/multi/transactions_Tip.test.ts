@@ -5,7 +5,7 @@
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider, TipEventObject } from '@towns-protocol/web3'
-import { makeRiverConfig } from '../../townsEnv'
+import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { waitFor, waitForValue } from '../testUtils'
@@ -19,7 +19,7 @@ const base_log = dlog('csb:test:transactions_Tip')
 const logError = dlogError('csb:test:transactions_Tip_error')
 
 describe('transactions_Tip', () => {
-    const riverConfig = makeRiverConfig()
+    const riverConfig = townsEnv().makeTownsConfig()
     const bobIdentity = new Bot(undefined, riverConfig)
     const bobsOtherWallet = ethers.Wallet.createRandom()
     const bobsOtherWalletProvider = new LocalhostWeb3Provider(
