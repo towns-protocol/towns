@@ -515,34 +515,6 @@ func (ssr *syncSessionRunner) Close(err error) {
 	})
 }
 
-// DistributeMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeMessage",
-		)
-	}
-}
-
-// DistributeBackfillMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeBackfillMessage",
-		)
-	}
-}
-
 // startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.
 func (ssr *syncSessionRunner) startSpan(ctx context.Context, attrs ...attribute.KeyValue) (context.Context, func()) {
 	if ssr.otelTracer == nil {
