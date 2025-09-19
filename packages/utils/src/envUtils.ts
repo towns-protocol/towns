@@ -1,6 +1,4 @@
-import { dlogger } from './dlog'
-
-const logger = dlogger('csb:env')
+import { dlogWarn } from './dlog'
 
 export interface SafeEnvOpts {
     // for looking up keys anywhere other than process.env, i.e. pass import.meta.env in a vite app
@@ -41,7 +39,8 @@ export function safeEnvEx(args: {
         return url
     }
     if (warning) {
-        logger.warn(warning)
+        const logger = dlogWarn('csb:env')
+        logger(warning)
     }
     return defaultValue
 }
