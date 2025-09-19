@@ -7,7 +7,7 @@ import { makeTestRpcClient } from '../testUtils'
 import { DEFAULT_RETRY_PARAMS, errorContains } from '../../rpcInterceptors'
 import { makeRiverRpcClient } from '../../makeRiverRpcClient'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
-import { RiverConfig, townsEnv } from '../../townsEnv'
+import { TownsConfig, townsEnv } from '../../townsEnv'
 import { create } from '@bufbuild/protobuf'
 
 describe('protocol 1', () => {
@@ -57,7 +57,7 @@ describe('protocol 1', () => {
 
     describe('protocol 2', () => {
         let provider: LocalhostWeb3Provider
-        let riverConfig: RiverConfig['river']
+        let riverConfig: TownsConfig['river']
 
         beforeAll(async () => {
             riverConfig = townsEnv().makeRiverChainConfig()

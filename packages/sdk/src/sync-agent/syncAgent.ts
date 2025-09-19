@@ -1,5 +1,5 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
-import { RiverConfig } from '../townsEnv'
+import { TownsConfig } from '../townsEnv'
 import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
@@ -28,7 +28,7 @@ import { dlog, DLogger, shortenHexString } from '@towns-protocol/utils'
 
 export interface SyncAgentConfig {
     context: SignerContext
-    townsConfig: RiverConfig
+    townsConfig: TownsConfig
     retryParams?: RetryParams
     highPriorityStreamIds?: string[]
     deviceId?: string

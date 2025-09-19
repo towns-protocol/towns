@@ -1,6 +1,6 @@
 import {
     Client as StreamsClient,
-    RiverConfig,
+    TownsConfig,
     Bot,
     SyncAgent,
     spaceIdFromChannelId,
@@ -22,7 +22,7 @@ import { getLogger } from './logger'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
 export async function makeStressClient(
-    config: RiverConfig,
+    config: TownsConfig,
     clientIndex: number,
     inWallet: Wallet | undefined,
     globalPersistedStore: IStorage | undefined,
@@ -117,7 +117,7 @@ export class StressClient {
     logger: ReturnType<typeof getLogger>
 
     constructor(
-        public config: RiverConfig,
+        public config: TownsConfig,
         public clientIndex: number,
         public userId: string,
         public baseProvider: LocalhostWeb3Provider,

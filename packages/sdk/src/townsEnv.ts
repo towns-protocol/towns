@@ -1,17 +1,17 @@
 import { BaseChainConfig, RiverChainConfig, web3Env } from '@towns-protocol/web3'
 import { safeEnv, safeEnvEx, SafeEnvOpts } from '@towns-protocol/utils'
 
-export enum RiverService {
+export enum TownsService {
     Notifications,
     AppRegistry,
     StreamMetadata,
 }
 
-export type RiverConfig = {
+export type TownsConfig = {
     environmentId: string
     base: { rpcUrl: string; chainConfig: BaseChainConfig }
     river: { rpcUrl: string; chainConfig: RiverChainConfig }
-    services: { id: RiverService; url: string | undefined }[]
+    services: { id: TownsService; url: string | undefined }[]
 }
 
 // we have multiple keys for the same value for backwards compatibility, priority is left to right
@@ -161,7 +161,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
         }
     }
 
-    const makeRiverChainConfig = (environmentId?: string): RiverConfig['river'] => {
+    const makeRiverChainConfig = (environmentId?: string): TownsConfig['river'] => {
         const env = web3.getDeployment(environmentId ?? getEnvironmentId())
         return {
             rpcUrl: getRiverRpcUrlForChain(env.river.chainId, opts),
@@ -169,7 +169,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
         }
     }
 
-    const makeBaseChainConfig = (environmentId?: string): RiverConfig['base'] => {
+    const makeBaseChainConfig = (environmentId?: string): TownsConfig['base'] => {
         const env = web3.getDeployment(environmentId ?? getEnvironmentId())
         return {
             rpcUrl: getBaseRpcUrlForChain(env.base.chainId, opts),
@@ -185,7 +185,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
      * If RIVER_ENV is one of the "deployments" in packages/generated/config/deployments.json,
      * you don't need to set any additional environment variables
      */
-    const makeTownsConfig = (inEnvironmentId?: string): RiverConfig => {
+    const makeTownsConfig = (inEnvironmentId?: string): TownsConfig => {
         const environmentId = inEnvironmentId ?? getEnvironmentId()
         try {
             const config = {
@@ -194,19 +194,19 @@ export function townsEnv(opts?: SafeEnvOpts) {
                 river: makeRiverChainConfig(environmentId),
                 services: [
                     {
-                        id: RiverService.Notifications,
+                        id: TownsService.Notifications,
                         url: getNotificationServiceUrl(environmentId),
                     },
                     {
-                        id: RiverService.AppRegistry,
+                        id: TownsService.AppRegistry,
                         url: getAppRegistryUrl(environmentId),
                     },
                     {
-                        id: RiverService.StreamMetadata,
+                        id: TownsService.StreamMetadata,
                         url: getStreamMetadataUrl(environmentId),
                     },
                 ],
-            } satisfies RiverConfig
+            } satisfies TownsConfig
             return config
         } catch (error) {
             throw new Error(
@@ -224,7 +224,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
     /**
      * @returns Available environments
      */
-    const getEnvironments = (): RiverConfig[] => {
+    const getEnvironments = (): TownsConfig[] => {
         return web3.getDeploymentIds().map((id) => {
             return makeTownsConfig(id)
         })

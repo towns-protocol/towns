@@ -1,8 +1,8 @@
-import { type RiverConfig, type SignerContext, townsEnv } from '@towns-protocol/sdk'
+import { type SignerContext, type TownsConfig, townsEnv } from '@towns-protocol/sdk'
 import superjson from 'superjson'
 import { VITE_ENV_OPTIONS } from './environment'
 
-export const storeAuth = (signerContext: SignerContext, townsConfig: RiverConfig) => {
+export const storeAuth = (signerContext: SignerContext, townsConfig: TownsConfig) => {
     const fixedContext = {
         ...signerContext,
         signerPrivateKey: signerContext.signerPrivateKey(),

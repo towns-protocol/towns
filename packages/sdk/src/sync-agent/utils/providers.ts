@@ -1,7 +1,7 @@
 import { providers } from 'ethers'
-import { RiverConfig } from '../../townsEnv'
+import { TownsConfig } from '../../townsEnv'
 
-export function makeRiverProvider(config: RiverConfig) {
+export function makeRiverProvider(config: TownsConfig) {
     const river = config.river
     return new providers.StaticJsonRpcProvider(river.rpcUrl, {
         chainId: river.chainConfig.chainId,
@@ -9,7 +9,7 @@ export function makeRiverProvider(config: RiverConfig) {
     })
 }
 
-export function makeBaseProvider(config: RiverConfig) {
+export function makeBaseProvider(config: TownsConfig) {
     const base = config.base
     return new providers.StaticJsonRpcProvider(base.rpcUrl, {
         chainId: base.chainConfig.chainId,
