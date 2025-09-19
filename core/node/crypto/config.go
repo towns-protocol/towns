@@ -63,6 +63,17 @@ const (
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThresholdConfigKey = "stream.backwardsReconciliationThreshold"
 
+	StreamDefaultStreamHistoryMiniblocksConfigKey      = "stream.historyminiblocks.default"
+	StreamChannelStreamHistoryMiniblocksConfigKey      = "stream.historyminiblocks.20"
+	StreamDMStreamHistoryMiniblocksConfigKey           = "stream.historyminiblocks.88"
+	StreamGDMStreamHistoryMiniblocksConfigKey          = "stream.historyminiblocks.77"
+	StreamMetadataStreamHistoryMiniblocksConfigKey     = "stream.historyminiblocks.dd"
+	StreamSpaceStreamHistoryMiniblocksConfigKey        = "stream.historyminiblocks.10"
+	StreamUserStreamHistoryMiniblocksConfigKey         = "stream.historyminiblocks.a8"
+	StreamUserDeviceStreamHistoryMiniblocksConfigKey   = "stream.historyminiblocks.ad"
+	StreamUserInboxStreamHistoryMiniblocksConfigKey    = "stream.historyminiblocks.a1"
+	StreamUserSettingsStreamHistoryMiniblocksConfigKey = "stream.historyminiblocks.a5"
+
 	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
 	// replication factor must be picked as candidates to place a stream on. From these candidates
 	// the best replication factor nodes are picked.
@@ -120,12 +131,15 @@ type OnChainSettings struct {
 	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
+
 	// StreamEnableNewSnapshotFormat indicates whether the new snapshot format is enabled.
 	// 0 means the old snapshot format is used, 1 means the new snapshot format is used.
+	// TODO: remove this setting
 	StreamEnableNewSnapshotFormat uint64 `mapstructure:"stream.enableNewSnapshotFormat"`
 
 	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
 	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
+	// TODO: remove this setting
 	StreamMiniblockRegistrationFrequency uint64 `mapstructure:"stream.miniblockRegistrationFrequency"`
 
 	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
@@ -159,6 +173,52 @@ type OnChainSettings struct {
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
+
+	// Number of miniblocks to keep for each type of stream.
+	// 0 means keep all miniblocks.
+	StreamHistoryMiniblocks StreamHistoryMiniblocks `mapstructure:",squash"`
+}
+
+type StreamHistoryMiniblocks struct {
+	Default      uint64 `mapstructure:"stream.historyminiblocks.default"`
+	Channel      uint64 `mapstructure:"stream.historyminiblocks.20"`
+	DM           uint64 `mapstructure:"stream.historyminiblocks.88"`
+	GDM          uint64 `mapstructure:"stream.historyminiblocks.77"`
+	Metadata     uint64 `mapstructure:"stream.historyminiblocks.dd"`
+	Space        uint64 `mapstructure:"stream.historyminiblocks.10"`
+	User         uint64 `mapstructure:"stream.historyminiblocks.a8"`
+	UserDevice   uint64 `mapstructure:"stream.historyminiblocks.ad"`
+	UserInbox    uint64 `mapstructure:"stream.historyminiblocks.a1"`
+	UserSettings uint64 `mapstructure:"stream.historyminiblocks.a5"`
+}
+
+func (s StreamHistoryMiniblocks) ForType(streamType byte) uint64 {
+	var ret uint64
+	switch streamType {
+	case shared.STREAM_CHANNEL_BIN:
+		ret = s.Channel
+	case shared.STREAM_DM_CHANNEL_BIN:
+		ret = s.DM
+	case shared.STREAM_GDM_CHANNEL_BIN:
+		ret = s.GDM
+	case shared.STREAM_METADATA_BIN:
+		ret = s.Metadata
+	case shared.STREAM_SPACE_BIN:
+		ret = s.Space
+	case shared.STREAM_USER_BIN:
+		ret = s.User
+	case shared.STREAM_USER_METADATA_KEY_BIN:
+		ret = s.UserDevice
+	case shared.STREAM_USER_INBOX_BIN:
+		ret = s.UserInbox
+	case shared.STREAM_USER_SETTINGS_BIN:
+		ret = s.UserSettings
+	}
+	// If value for streamType is not explicitly set, fallback to the default for all streams.
+	if ret == 0 {
+		ret = s.Default
+	}
+	return ret
 }
 
 type XChainSettings struct {

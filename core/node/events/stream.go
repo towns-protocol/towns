@@ -253,17 +253,9 @@ func (s *Stream) importMiniblocksLocked(
 	ctx context.Context,
 	miniblocks []*MiniblockInfo,
 ) error {
-	firstMbNum := miniblocks[0].Ref.Num
-	blocksToWriteToStorage := make([]*storage.MiniblockDescriptor, len(miniblocks))
-	for i, miniblock := range miniblocks {
-		if miniblock.Ref.Num != firstMbNum+int64(i) {
-			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
-		}
-		mb, err := miniblock.AsStorageMb()
-		if err != nil {
-			return err
-		}
-		blocksToWriteToStorage[i] = mb
+	blocksToWriteToStorage, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
 	}
 
 	if s.getViewLocked() == nil {
@@ -296,7 +288,6 @@ func (s *Stream) importMiniblocksLocked(
 	}
 
 	currentView := originalView
-	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
 	var snapshot *Envelope
@@ -1207,6 +1198,96 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	if needsSyncTask {
 		s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 	}
+}
+
+// reinitialize replaces the stream's storage and view with data from a remote peer.
+// This is used during stream reconciliation when the local stream is significantly behind
+// or missing data. The function validates the incoming stream data and snapshot,
+// writes new miniblocks and snapshot to storage (creates or updates based on updateExisting),
+// and creates a new stream view from the provided data.
+//
+// If updateExisting is false, returns an error if the stream already exists in storage.
+// If updateExisting is true, allows updating an existing stream with new data.
+func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, updateExisting bool) error {
+	if stream == nil {
+		return RiverError(Err_INTERNAL, "stream is nil")
+	}
+
+	if stream.NextSyncCookie == nil {
+		return RiverError(Err_INTERNAL, "next sync cookie is nil")
+	}
+
+	if !s.streamId.EqualsBytes(stream.NextSyncCookie.StreamId) {
+		return RiverError(Err_INTERNAL, "stream id mismatch")
+	}
+
+	if len(stream.Miniblocks) == 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"no miniblocks in StreamAndCookie",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	if stream.Snapshot != nil &&
+		(stream.SnapshotMiniblockIndex < 0 || stream.SnapshotMiniblockIndex >= int64(len(stream.Miniblocks))) {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"invalid snapshot miniblock index",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	opts := NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true)
+	miniblocks, snapshot, snapshotMbIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, opts)
+	if err != nil {
+		return err
+	}
+	if snapshot == nil {
+		return RiverError(Err_INTERNAL, "snapshot is nil").Func("reinitialize")
+	}
+
+	storageMiniblocks, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
+	}
+
+	// Reinitialize data is prepared.
+	// Take lock, drop view, apply data to the database.
+	// Since it's a reset "in the future", current subscribers can't be updated continuosly and are dropped.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.setViewLocked(nil)
+	s.unsubAllLocked()
+
+	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num
+	err = s.params.Storage.ReinitializeStreamStorage(
+		ctx,
+		s.streamId,
+		storageMiniblocks,
+		lastSnapshotMiniblockNum,
+		updateExisting,
+	)
+	if err != nil {
+		return err
+	}
+
+	// If success, update the view.
+	// TODO: REFACTOR: introduce MakeStreamView from parsed data (to avoid re-parsing).
+	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
+		Miniblocks:              storageMiniblocks,
+		SnapshotMiniblockOffset: snapshotMbIndex,
+		MinipoolEnvelopes:       [][]byte{},
+	})
+	if err != nil {
+		return err
+	}
+	s.setViewLocked(view)
+
+	return nil
 }
 
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
