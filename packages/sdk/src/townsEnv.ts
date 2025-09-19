@@ -14,6 +14,18 @@ export type TownsConfig = {
     services: { id: TownsService; url: string | undefined }[]
 }
 
+export interface ITownsEnv {
+    getEnvironmentId: () => string
+    getEnvironmentIds: () => string[]
+    getEnvironments: () => TownsConfig[]
+    makeTownsConfig: (environmentId?: string) => TownsConfig
+    makeBaseChainConfig: (environmentId?: string) => TownsConfig['base']
+    makeRiverChainConfig: (environmentId?: string) => TownsConfig['river']
+    getNotificationServiceUrl: (environmentId?: string) => string
+    getAppRegistryUrl: (environmentId?: string) => string
+    getStreamMetadataUrl: (environmentId?: string) => string
+}
+
 // we have multiple keys for the same value for backwards compatibility, priority is left to right
 const envKey: Record<string, string[]> = {
     BASE_SEPOLIA_RPC_URL: ['BASE_SEPOLIA_RPC_URL', 'BASE_CHAIN_RPC_URL'],
@@ -73,7 +85,7 @@ function getRiverRpcUrlForChain(chainId: number, opts: SafeEnvOpts | undefined):
     }
 }
 
-export function townsEnv(opts?: SafeEnvOpts) {
+export function townsEnv(opts?: SafeEnvOpts): ITownsEnv {
     const web3 = web3Env(opts)
 
     const getEnvironmentId = (): string => {
@@ -86,7 +98,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
         return riverEnv
     }
 
-    const getNotificationServiceUrl = (inEnvironmentId: string): string => {
+    const getNotificationServiceUrl = (inEnvironmentId?: string): string => {
         const environmentId = inEnvironmentId ?? getEnvironmentId()
         // check for override
         if (environmentId === web3.riverEnv) {
@@ -111,7 +123,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
         }
     }
 
-    const getStreamMetadataUrl = (inEnvironmentId: string): string => {
+    const getStreamMetadataUrl = (inEnvironmentId?: string): string => {
         const environmentId = inEnvironmentId ?? getEnvironmentId()
         // check for override
         if (environmentId === web3.riverEnv) {
@@ -231,6 +243,7 @@ export function townsEnv(opts?: SafeEnvOpts) {
     }
 
     return {
+        getEnvironmentId,
         getEnvironmentIds,
         getEnvironments,
         makeTownsConfig,
