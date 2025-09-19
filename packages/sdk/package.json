@@ -38,8 +38,7 @@
         "ethers": "^5.7.2",
         "lodash-es": "^4.17.21",
         "nanoid": "^4.0.0",
-        "p-limit": "^6.1.0",
-        "vitest": "^3.2.3"
+        "p-limit": "^6.1.0"
     },
     "devDependencies": {
         "@connectrpc/connect-web": "^2.0.0",
@@ -60,6 +59,7 @@
         "typed-emitter": "^2.1.0",
         "typescript": "^5.8.2",
         "vite-plugin-wasm": "^3.4.1",
+        "vitest": "^3.2.3",
         "vitest-fetch-mock": "^0.4.3"
     },
     "files": [
