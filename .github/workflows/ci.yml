@@ -53,7 +53,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         outputs:
             image_tag: ${{ steps.output.outputs.tag }}
-            contracts_hash: ${{ steps.hash.outputs.hash }}
+            build_hash: ${{ steps.hash.outputs.hash }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -66,6 +66,20 @@ jobs:
               run: |
                   BUILD_HASH=$(just _get-docker-build-hash)
                   echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+
+            - name: Setup AWS Credentials
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
 
             - name: Check AWS ECR for existing image
               id: check-remote
@@ -90,29 +104,17 @@ jobs:
                     docker save towns-anvil:${{ steps.hash.outputs.hash }} > /tmp/anvil.tar
                   fi
 
-            # GitHub Actions path - use build-push-action
-            - name: Setup Docker Buildx
-              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
-              uses: docker/setup-buildx-action@v3
-
-            - name: Build and export Docker image (GitHub)
-              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+            # Build Docker image (unified approach for both GitHub Actions and act)
+            - name: Build Docker image
+              if: ${{ steps.check-remote.outputs.exists == 'false' }}
               uses: docker/build-push-action@v6
               with:
                   context: .
                   file: ./packages/contracts/docker/Dockerfile
                   tags: towns-anvil:${{ steps.hash.outputs.hash }}
-                  outputs: type=docker,dest=/tmp/anvil.tar
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            # Local act path - use regular docker build
-            - name: Build Docker image (Local)
-              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
-              run: |
-                  docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
-                    -f ./packages/contracts/docker/Dockerfile .
-                  # No need to save to tar in act since the image is already in local Docker
+                  outputs: ${{ env.ACT == 'true' && 'type=docker' || 'type=docker,dest=/tmp/anvil.tar' }}
+                  cache-from: ${{ env.ACT != 'true' && 'type=gha' || '' }}
+                  cache-to: ${{ env.ACT != 'true' && 'type=gha,mode=max' || '' }}
 
             # Upload artifact in GitHub Actions (for both built and pulled images)
             - name: Upload Docker artifact
@@ -192,7 +194,7 @@ jobs:
               if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
@@ -420,7 +422,7 @@ jobs:
               if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
@@ -584,7 +586,7 @@ jobs:
               if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
@@ -754,7 +756,7 @@ jobs:
               if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
@@ -908,7 +910,7 @@ jobs:
               if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
