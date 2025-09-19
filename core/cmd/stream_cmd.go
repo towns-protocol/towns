@@ -1472,7 +1472,7 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 
 	nodeWorkerPools := make(map[common.Address]*workerpool.WorkerPool)
 	for _, node := range allNodes {
-		nodeWorkerPools[node.NodeAddress] = workerpool.New(8)
+		nodeWorkerPools[node.NodeAddress] = workerpool.New(5)
 	}
 
 	onChainConfig, err := crypto.NewOnChainConfig(
