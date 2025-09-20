@@ -1,18 +1,12 @@
-FROM node:lts-alpine3.20 AS builder
+FROM oven/bun:1.2-alpine AS builder
 
 WORKDIR /river
 
 # Install build dependencies
-RUN apk add --no-cache git curl
-
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
+RUN apk add --no-cache git curl npm
 
 # Copy monorepo configuration for dependency resolution
-COPY buf.yaml package.json yarn.lock .yarnrc.yml turbo.json ./
-COPY .yarn/releases .yarn/releases
-COPY .yarn/plugins .yarn/plugins
+COPY buf.yaml package.json bunfig.toml bun.lock turbo.json ./
 COPY packages/tsconfig.base.json ./packages/
 
 # Copy workspace package.json files for dependency resolution
@@ -28,7 +22,7 @@ COPY packages/contracts ./packages/contracts/
 COPY packages/generated ./packages/generated/
 
 # Install dependencies
-RUN yarn install
+RUN bun install && bun pm cache rm
 
 # Copy remaining source code
 COPY packages/utils ./packages/utils/
@@ -39,10 +33,10 @@ COPY packages/web3 ./packages/web3/
 COPY protocol ./protocol/
 
 # Build the package
-RUN yarn run turbo build --filter @towns-protocol/metrics-discovery
+RUN bun run turbo build --filter @towns-protocol/metrics-discovery
 
 # Create runtime image
-FROM node:lts-alpine3.20 AS runtime
+FROM oven/bun:1.2-alpine AS runtime
 
 WORKDIR /river/packages/metrics-discovery
 
@@ -56,4 +50,4 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080 || exit 1
 
-CMD [ "node", "./dist/index.cjs"]
+CMD ["bun", "./dist/index.cjs"]
