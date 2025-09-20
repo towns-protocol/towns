@@ -6,7 +6,7 @@
     "scripts": {
         "build": "tsc && vite build",
         "dev": "vite",
-        "dev:local": "yarn load-env -- vite",
+        "dev:local": "bun run load-env -- vite",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite",
         "preview": "vite preview"
