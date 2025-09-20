@@ -10,13 +10,13 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 
 ### Root-level commands (from project root):
 
-- `yarn install && yarn prepare` - Install dependencies and setup hooks
-- `yarn build` - Build all packages using turbo
-- `yarn test` - Run all tests
-- `yarn test:unit` - Run unit tests only
-- `yarn lint` - Run linting across all packages
-- `yarn prettier:check` - Check code formatting
-- `yarn prettier:fix` - Fix code formatting
+- `bun install` - Install dependencies and setup hooks
+- `bun run build` - Build all packages using turbo
+- `bun run test` - Run all tests
+- `bun run test:unit` - Run unit tests only
+- `bun run lint` - Run linting across all packages
+- `bun run prettier:check` - Check code formatting
+- `bun run prettier:fix` - Fix code formatting
 
 ### Go backend commands (from /core directory):
 
@@ -24,8 +24,8 @@ Read instructions in `core/AGENTS.md` for more details.
 
 ### Contract commands (from root):
 
-- `yarn workspace @towns-protocol/contracts exec anvil` - Start Anvil
-- `yarn workspace @towns-protocol/contracts exec cast` - Use Cast CLI
+- `anvil` - Start Anvil
+- `cast` - Use Cast CLI
 
 ### CI testing commands (from root):
 
