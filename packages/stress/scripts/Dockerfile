@@ -1,21 +1,12 @@
-FROM node:20
+FROM oven/bun:1.3-alpine
 
 WORKDIR /app
 
 # Copy all files from the root of the repo
 COPY . .
 
-# Enable Corepack and install Yarn
-RUN corepack enable
-
-# Set the Yarn version
-ENV YARN_VERSION=3.8.0
-
-# Install Yarn globally
-RUN corepack prepare yarn@$YARN_VERSION --activate
-
-# Verify Yarn installation
-RUN yarn --version
+# Verify Bun installation
+RUN bun --version
 
 # Set the image name
 LABEL org.opencontainers.image.name="stress-local"
@@ -40,5 +31,5 @@ RUN /root/.foundry/bin/foundryup
 ENV PATH="/root/.foundry/bin:${PATH}"
 
 # Install dependencies
-RUN yarn install
-RUN yarn build
+RUN bun install --frozen-lockfile && bun pm cache rm
+RUN bun run build
