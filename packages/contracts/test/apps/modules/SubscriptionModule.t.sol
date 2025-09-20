@@ -149,6 +149,33 @@ contract SubscriptionModuleTest is ModulesBase {
         );
     }
 
+    function test_onInstall_ExpiringMembership() public {
+        // Test that nextRenewalTime is set to current timestamp when installing
+        // on a membership that's about to expire or already in renewal window
+        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
+        address space = _createSpace(0, 0);
+        uint256 tokenId = _joinSpace(address(userAccount), space);
+
+        // Warp to just before expiration (within RENEWAL_BUFFER)
+        uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
+        vm.warp(expiresAt - (subscriptionModule.RENEWAL_BUFFER() / 2));
+
+        SubscriptionParams memory params = _createSubscriptionParams(
+            address(userAccount),
+            space,
+            tokenId
+        );
+
+        // Install the subscription module
+        uint32 entityId = _installSubscriptionModule(userAccount, params);
+
+        // Get the subscription and verify nextRenewalTime is not in the past
+        Subscription memory sub = subscriptionModule.getSubscription(address(userAccount), entityId);
+        assertGe(sub.nextRenewalTime, block.timestamp, "nextRenewalTime should not be in the past");
+        assertEq(sub.nextRenewalTime, block.timestamp, "nextRenewalTime should be set to current timestamp");
+        assertTrue(sub.active, "Subscription should be active");
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       PROCESS RENEWAL                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
