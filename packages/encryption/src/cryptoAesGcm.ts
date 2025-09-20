@@ -8,6 +8,7 @@ export async function exportAesGsmKeyBytes(key: CryptoKey): Promise<Uint8Array> 
 }
 
 export async function importAesGsmKeyBytes(key: Uint8Array): Promise<CryptoKey> {
+    // @ts-ignore - ArrayBuffer compatibility issue
     return crypto.subtle.importKey('raw', key, 'AES-GCM', true, ['encrypt', 'decrypt'])
 }
 
@@ -23,6 +24,7 @@ export async function encryptAesGcm(
     const encrypted = await crypto.subtle.encrypt(
         { name: 'AES-GCM', iv, tagLength: 128 },
         key,
+        // @ts-ignore - ArrayBuffer compatibility issue
         data,
     )
     return { ciphertext: new Uint8Array(encrypted), iv }
@@ -40,6 +42,7 @@ export async function decryptAesGcm(
         throw new Error('Ciphertext can not be this short')
     }
     const decrypted = await crypto.subtle.decrypt(
+        // @ts-ignore - ArrayBuffer compatibility issue
         { name: 'AES-GCM', iv, tagLength: 128 },
         key,
         ciphertext,

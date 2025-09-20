@@ -15,7 +15,7 @@ const config = {
         '.ts': 'ts',
         '.wasm': 'file',
     },
-    external: ['@towns-protocol/olm'],
+    external: ['@towns-protocol/olm', '@connectrpc/connect-node'],
     outdir: 'dist',
     outExtension: { '.js': '.cjs' },
     platform: 'node',

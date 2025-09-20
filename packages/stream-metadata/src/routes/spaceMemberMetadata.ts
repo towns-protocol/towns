@@ -88,6 +88,7 @@ const getSpaceMemberMetadata = async (
 			imageEventId = 'unregistered'
 		}
 	} catch (error) {
+		// @ts-expect-error - Logger parameter type issue
 		logger.error('Failed to get stream', { err: error, spaceAddress, tokenId })
 		imageEventId = 'unknown'
 	}

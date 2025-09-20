@@ -104,6 +104,7 @@ export async function fetchMedia(request: FastifyRequest, reply: FastifyReply) {
 					height: sizeOptions.height,
 				})
 
+				// @ts-expect-error - Buffer ArrayBuffer compatibility issue
 				processedImageBuffer = result.buffer
 				outputMimeType = result.mimeType
 

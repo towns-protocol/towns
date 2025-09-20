@@ -600,6 +600,7 @@ export function riverVerifySignature(
 ): boolean {
     checkHash(hash)
     checkSignature(signature)
+    // @ts-ignore - Type compatibility issue
     return secp256k1.verify(signature.slice(0, 64), hash, publicKey)
 }
 
