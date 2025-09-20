@@ -27,25 +27,25 @@ VERSION_PREFIX="sdk-${COMMIT_HASH}-"
 git checkout -b "${BRANCH_NAME}"
 
 ./scripts/yarn-clean.sh
-yarn install --immutable
-exit_status_yarn=$?
+bun install --frozen-lockfile
+exit_status=$?
 
-if [ $exit_status_yarn -ne 0 ]; then
-    echo "yarn install failed."
+if [ $exit_status -ne 0 ]; then
+    echo "bun install failed."
     exit 1
 fi
 
-yarn build
-exit_status_yarn=$?
+bun run build
+exit_status=$?
 
-if [ $exit_status_yarn -ne 0 ]; then
-    echo "yarn build failed."
+if [ $exit_status -ne 0 ]; then
+    echo "bun build failed."
     exit 1
 fi
 
 # Generate contract types for publishing
 echo "Generating contract types for publishing..."
-yarn workspace @towns-protocol/generated build-types
+bun run --filter @towns-protocol/generated build-types
 exit_status_contracts=$?
 
 if [ $exit_status_contracts -ne 0 ]; then
@@ -54,11 +54,11 @@ if [ $exit_status_contracts -ne 0 ]; then
 fi
 
 # build docs
-yarn workspace @towns-protocol/react-sdk gen
+bun run --filter @towns-protocol/react-sdk gen
 exit_status_docgen=$?
 
 if [ $exit_status_docgen -ne 0 ]; then
-    echo "yarn workspace @towns-protocol/react-sdk gen failed."
+    echo "bun run --filter @towns-protocol/react-sdk gen failed."
     exit 1
 fi
 
