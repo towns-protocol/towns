@@ -25,7 +25,7 @@ reviews:
         - '!**/coverage/**'
         - '!**/.turbo/**'
         - '!package.json'
-        - '!yarn.lock'
+        - '!bun.lock'
         - '!go.work.sum'
         - '!go.sum'
     auto_review:

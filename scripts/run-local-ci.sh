@@ -101,7 +101,7 @@ mv .github/workflows/ci.expanded.yml .github/workflows/ci.yml
 
 # Format generated files with prettier
 echo "Formatting generated files..."
-yarn prettier --write event.json .github/workflows/ci.yml
+bun run prettier --write event.json .github/workflows/ci.yml
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
