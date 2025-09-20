@@ -50,7 +50,7 @@ export NODE_ENV=development
 # fund the root wallet
 cast rpc -r $BASE_CHAIN_RPC_URL anvil_setBalance $WALLET_ADDRESS 10000000000000000000 > /dev/null
 
-yarn build
-yarn demo
+bun run build
+bun run demo
 
 echo "stress/scripts/localhost_demo.sh done"
