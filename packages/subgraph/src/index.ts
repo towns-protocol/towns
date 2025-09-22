@@ -962,6 +962,36 @@ ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) =>
     }
 })
 
+ponder.on('SubscriptionModule:SubscriptionActivated', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                active: true,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for activation: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionActivated tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
 ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
@@ -988,6 +1018,36 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
     } catch (error) {
         console.error(
             `Error processing SubscriptionModule:SubscriptionRenewed tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionSynced', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                nextRenewalTime: event.args.newNextRenewalTime,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for sync: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionSynced tx ${event.transaction.hash}:`,
             error,
         )
     }
@@ -1058,15 +1118,49 @@ ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
+        // Record the failure
         await context.db.insert(schema.subscriptionFailure).values({
             account: event.args.account,
             entityId: event.args.entityId,
             timestamp: blockTimestamp,
             reason: event.args.reason,
         })
+
+        await context.db.sql
+            .update(schema.subscription)
+            .set({
+                active: false,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
     } catch (error) {
         console.error(
             `Error processing SubscriptionModule:BatchRenewalSkipped tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionNotDue', async ({ event }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        // Log the event for monitoring but don't update the subscription
+        // This event indicates the subscription renewal was attempted but not due yet
+        console.log(
+            `Subscription renewal not due for ${event.args.account}_${event.args.entityId} at ${blockTimestamp}`,
+        )
+
+        // Optionally, we could track these events in a separate table for analytics
+        // For now, just log them as they don't affect the subscription state
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionNotDue tx ${event.transaction.hash}:`,
             error,
         )
     }
