@@ -114,26 +114,15 @@ func (sr *streamReconciler) reconcile() error {
 		}
 	}
 
-	// If registry shows an older miniblock than local, optionally update registry and exit.
-	if sr.expectedLastMbInclusive < sr.localLastMbInclusive {
-		if sr.streamRecord.ReplicationFactor() > 1 && sr.streamRecord.Nodes()[0] == sr.cache.params.Wallet.Address {
-			// Before replicated streams nodes would only register miniblocks every N miniblocks.
-			// Therefore, it is possible that registry stream record for streams that haven't seen new miniblocks
-			// after the stream was migrated to a replicated stream is lagging behind. For those streams register
-			// the latest miniblock to bring the record up to date.
-			go sr.cache.writeLatestMbToBlockchain(sr.ctx, sr.stream)
-		}
-		return nil
-	}
-
-	if sr.expectedLastMbInclusive == sr.localLastMbInclusive {
-		// Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
-		if enableBackwardReconciliation {
-			return sr.backfillGaps()
-		}
-		return nil
-	}
-
+	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
+        // Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
+        if enableBackwardReconciliation {
+            return sr.backfillGaps()
+		} else {
+            return nil
+        }
+    }
+	
 	// Special-case: if stream is stuck at genesis (mb 0), try to import genesis from the stream registry.
 	if sr.expectedLastMbInclusive == 0 {
 		if err := sr.reconcileFromRegistryGenesisBlock(); err == nil {
