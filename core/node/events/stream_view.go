@@ -99,27 +99,34 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	}, nil
 }
 
-func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
-	if stream == nil {
-		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
-	}
-	if len(stream.Miniblocks) <= 0 {
-		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
+func ParseMiniblocksFromProto(
+	protos []*Miniblock,
+	snapshotEnvelope *Envelope,
+	opts *ParsedMiniblockInfoOpts,
+) ([]*MiniblockInfo, *Snapshot, int, error) {
+	if len(protos) <= 0 {
+		return nil, nil, 0, RiverError(Err_STREAM_EMPTY, "no blocks").Func("ParseMiniblocksFromProto")
 	}
 
-	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
+	if opts == nil {
+		opts = NewParsedMiniblockInfoOpts()
+	}
+	opts = opts.WithApplyOnlyMatchingSnapshot()
+
+	miniblocks := make([]*MiniblockInfo, len(protos))
 	var snapshot *Snapshot
 	var snapshotIndex int
-	opts := NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot()
-	for i, mbProto := range stream.Miniblocks {
-		// Make sure block numbers are consecutive.
+
+	for i, mbProto := range protos {
+		// Make sure block numbers are consecutive and prev hashes match.
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(miniblocks[0].Ref.Num + int64(i))
+			opts = opts.WithExpectedPrevMiniblockHash(miniblocks[i-1].Ref.Hash)
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(mbProto, stream.Snapshot, opts)
+		miniblock, err := NewMiniblockInfoFromProto(mbProto, snapshotEnvelope, opts)
 		if err != nil {
-			return nil, err
+			return nil, nil, 0, err
 		}
 
 		if miniblock.Snapshot != nil {
@@ -131,7 +138,20 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	}
 
 	if snapshot == nil {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
+		return nil, nil, 0, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("ParseMiniblocksFromProto")
+	}
+
+	return miniblocks, snapshot, snapshotIndex, nil
+}
+
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
+	if stream == nil {
+		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
+	}
+
+	miniblocks, snapshot, snapshotIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
