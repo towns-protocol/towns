@@ -1,5 +1,5 @@
 import { Err } from '@towns-protocol/proto'
-import { dlogError, throwWithCode } from '@towns-protocol/dlog'
+import { dlogError, throwWithCode } from '@towns-protocol/utils'
 
 const log = dlogError('csb:error')
 

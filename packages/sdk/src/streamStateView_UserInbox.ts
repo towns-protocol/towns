@@ -9,7 +9,7 @@ import {
     UserInboxPayload_Ack,
 } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { UserInboxStreamModel, UserInboxStreamsView } from './views/streams/userInboxStreams'

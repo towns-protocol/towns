@@ -4,7 +4,7 @@
 
 import { makeEvent, unpackStreamEnvelopes } from '../../sign'
 import { MembershipOp } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     lastEventFiltered,
     makeRandomUserContext,

@@ -1,5 +1,5 @@
 import debug from 'debug'
-import { DLogger, check, dlog, dlogError } from '@towns-protocol/dlog'
+import { DLogger, check, dlog, dlogError } from '@towns-protocol/utils'
 import { PayloadCaseType, ContentCaseType } from '@towns-protocol/proto'
 import { hasElements, isDefined } from './check'
 import { StreamRpcClient, getMiniblocks } from './makeStreamRpcClient'

@@ -13,7 +13,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { make_MemberPayload_Nft } from '../../types'
-import { bin_fromString, bin_toString } from '@towns-protocol/dlog'
+import { bin_fromString, bin_toString } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadataTests', () => {

@@ -1,6 +1,6 @@
 import { EncryptedData } from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 
 // this is a hack to prevent too much cpu usage from spamming the client with too many decrypted names

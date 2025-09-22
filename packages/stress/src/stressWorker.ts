@@ -1,10 +1,5 @@
 import { Worker } from 'bullmq'
-import {
-    isDefined,
-    makeRiverConfig,
-    RiverTimelineEvent,
-    spaceIdFromChannelId,
-} from '@towns-protocol/sdk'
+import { isDefined, townsEnv, RiverTimelineEvent, spaceIdFromChannelId } from '@towns-protocol/sdk'
 import { getLogger } from './utils/logger'
 import { makeStressClient, StressClient } from './utils/stressClient'
 import {
@@ -21,7 +16,7 @@ import {
     ExpectMessagesTask,
 } from './stressTypes'
 import { Wallet } from 'ethers'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 
 export class StressRunner {
     readonly index: number
@@ -88,7 +83,7 @@ export class StressRunner {
     }
 
     async create(_: StressJob): Promise<StressResult> {
-        const config = makeRiverConfig(this.runOpts.riverEnv)
+        const config = townsEnv().makeTownsConfig(this.runOpts.riverEnv)
         const wallet = Wallet.fromMnemonic(this.runOpts.mnemonic, walletPathForIndex(this.index))
         this.client = await makeStressClient(
             config,

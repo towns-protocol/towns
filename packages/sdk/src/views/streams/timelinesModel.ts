@@ -12,7 +12,7 @@ import {
     getRedactsId,
     getEditsId,
 } from '../models/timelineTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { getFallbackContent } from '../models/timelineEvent'
 
 const logger = dlogger('csb:timelineInterface')

@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { check } from '@towns-protocol/dlog'
-import { makeRiverConfig } from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/utils'
+import { townsEnv } from '@towns-protocol/sdk'
 import { exit } from 'process'
 import { Wallet } from 'ethers'
 import { isSet } from './utils/expect'
@@ -12,7 +12,7 @@ check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 check(isSet(process.env.PROCESS_INDEX), 'process.env.PROCESS_INDEX')
 const processIndex = parseInt(process.env.PROCESS_INDEX)
 
-const config = makeRiverConfig(process.env.RIVER_ENV)
+const config = townsEnv().makeTownsConfig(process.env.RIVER_ENV)
 const logger = getLogger(`stress:run`)
 logger.info('======================= run =======================')
 logger.error('test error')

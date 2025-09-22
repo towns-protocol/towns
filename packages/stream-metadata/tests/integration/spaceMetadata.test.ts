@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { makeTestClient, TestClient } from '@towns-protocol/sdk'
 

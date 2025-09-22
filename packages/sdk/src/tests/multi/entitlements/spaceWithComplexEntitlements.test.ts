@@ -11,7 +11,7 @@ import {
     linkWallets,
     twoNftRuleData,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     Address,
     CheckOperationType,

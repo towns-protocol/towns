@@ -4,7 +4,7 @@
 
 import { makeTestClient } from '../testUtils'
 import { Client } from '../../client'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 
 const log = dlog('csb:test:streamMembershipHardening')
 

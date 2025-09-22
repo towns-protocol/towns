@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/utils'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { randomBytes } from '@noble/hashes/utils'
 import { readFileSync, writeFileSync } from 'fs'

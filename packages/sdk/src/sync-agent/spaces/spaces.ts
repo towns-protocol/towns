@@ -12,7 +12,7 @@ import { RiverConnection } from '../river-connection/riverConnection'
 import { CreateSpaceParams, SpaceDapp } from '@towns-protocol/web3'
 import { makeDefaultMembershipInfo } from '../utils/spaceUtils'
 import { ethers } from 'ethers'
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:spaces')
 

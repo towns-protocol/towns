@@ -53,7 +53,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         outputs:
             image_tag: ${{ steps.output.outputs.tag }}
-            contracts_hash: ${{ steps.hash.outputs.hash }}
+            build_hash: ${{ steps.hash.outputs.hash }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -66,6 +66,20 @@ jobs:
               run: |
                   BUILD_HASH=$(just _get-docker-build-hash)
                   echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+
+            - name: Setup AWS Credentials
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
 
             - name: Check AWS ECR for existing image
               id: check-remote
@@ -90,33 +104,21 @@ jobs:
                     docker save towns-anvil:${{ steps.hash.outputs.hash }} > /tmp/anvil.tar
                   fi
 
-            # GitHub Actions path - use build-push-action
-            - name: Setup Docker Buildx
-              if: steps.check-remote.outputs.exists == 'false' && !env.ACT
-              uses: docker/setup-buildx-action@v3
-
-            - name: Build and export Docker image (GitHub)
-              if: steps.check-remote.outputs.exists == 'false' && !env.ACT
+            # Build Docker image (unified approach for both GitHub Actions and act)
+            - name: Build Docker image
+              if: ${{ steps.check-remote.outputs.exists == 'false' }}
               uses: docker/build-push-action@v6
               with:
                   context: .
                   file: ./packages/contracts/docker/Dockerfile
                   tags: towns-anvil:${{ steps.hash.outputs.hash }}
-                  outputs: type=docker,dest=/tmp/anvil.tar
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
-
-            # Local act path - use regular docker build
-            - name: Build Docker image (Local)
-              if: steps.check-remote.outputs.exists == 'false' && env.ACT
-              run: |
-                  docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
-                    -f ./packages/contracts/docker/Dockerfile .
-                  # No need to save to tar in act since the image is already in local Docker
+                  outputs: ${{ env.ACT == 'true' && 'type=docker' || 'type=docker,dest=/tmp/anvil.tar' }}
+                  cache-from: ${{ env.ACT != 'true' && 'type=gha' || '' }}
+                  cache-to: ${{ env.ACT != 'true' && 'type=gha,mode=max' || '' }}
 
             # Upload artifact in GitHub Actions (for both built and pulled images)
             - name: Upload Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/upload-artifact@v4
               with:
                   name: anvil-docker-${{ steps.hash.outputs.hash }}
@@ -189,14 +191,14 @@ jobs:
 
             # Download Docker artifact (skip in act)
             - name: Download Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               run: docker load -i /tmp/anvil.tar
 
             # In act, the image should already be available from Build_Anvil_Docker job
@@ -242,7 +244,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: golangci/golangci-lint-action@v7
               with:
-                  version: v2.0.2
+                  version: v2.4.0
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -417,14 +419,14 @@ jobs:
 
             # Download Docker artifact (skip in act)
             - name: Download Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               run: docker load -i /tmp/anvil.tar
 
             # In act, the image should already be available from Build_Anvil_Docker job
@@ -476,7 +478,8 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_dev &
+                  mkdir -p core/run_files/local_dev/stream-metadata # make a directory for logs so they get saved
+                  yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
                   yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
@@ -580,14 +583,14 @@ jobs:
 
             # Download Docker artifact (skip in act)
             - name: Download Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               run: docker load -i /tmp/anvil.tar
 
             # In act, the image should already be available from Build_Anvil_Docker job
@@ -750,14 +753,14 @@ jobs:
 
             # Download Docker artifact (skip in act)
             - name: Download Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               run: docker load -i /tmp/anvil.tar
 
             # In act, the image should already be available from Build_Anvil_Docker job
@@ -904,14 +907,14 @@ jobs:
 
             # Download Docker artifact (skip in act)
             - name: Download Docker artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               uses: actions/download-artifact@v4
               with:
-                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.contracts_hash }}
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
                   path: /tmp
 
             - name: Load Docker image from artifact
-              if: '!env.ACT'
+              if: ${{ env.ACT != 'true' }}
               run: docker load -i /tmp/anvil.tar
 
             # In act, the image should already be available from Build_Anvil_Docker job

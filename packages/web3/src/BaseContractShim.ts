@@ -1,5 +1,5 @@
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { Connect, ContractType } from './types/typechain'
 import { Abi } from 'abitype'
 import { TransactionOpts } from './types/ContractTypes'

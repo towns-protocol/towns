@@ -131,6 +131,10 @@ func (id StreamId) String() string {
 	return hex.EncodeToString(id[:])
 }
 
+func (id StreamId) Bytes() []byte {
+	return id[:]
+}
+
 func (id StreamId) GoString() string {
 	return id.String()
 }

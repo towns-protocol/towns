@@ -2,11 +2,11 @@ import {
     Client,
     makeAppPrivateData,
     makeBaseProvider,
-    makeRiverConfig,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
     makeUserStreamId,
+    townsEnv,
     MockEntitlementsDelegate,
     RiverDbManager,
     RiverTimelineEvent,
@@ -14,11 +14,12 @@ import {
     type AppRegistryRpcClient,
     type Channel,
     type SyncAgent,
+    Bot as SyncAgentTest,
+    AppRegistryService,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
-import { Bot as SyncAgentTest, AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
@@ -48,20 +49,20 @@ type OnMessageEditType = BotPayload<'messageEdit'>
 type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
-    const riverConfig = makeRiverConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
 
-    const bob = new SyncAgentTest(undefined, riverConfig)
+    const bob = new SyncAgentTest(undefined, townsConfig)
     const appRegistryDapp = new AppRegistryDapp(
-        riverConfig.base.chainConfig,
-        makeBaseProvider(riverConfig),
+        townsConfig.base.chainConfig,
+        makeBaseProvider(townsConfig),
     )
-    const spaceDapp = new SpaceDapp(riverConfig.base.chainConfig, makeBaseProvider(riverConfig))
+    const spaceDapp = new SpaceDapp(townsConfig.base.chainConfig, makeBaseProvider(townsConfig))
     let bobClient: SyncAgent
 
-    const alice = new SyncAgentTest(undefined, riverConfig)
+    const alice = new SyncAgentTest(undefined, townsConfig)
     let aliceClient: SyncAgent
 
-    const carol = new SyncAgentTest(undefined, riverConfig)
+    const carol = new SyncAgentTest(undefined, townsConfig)
     let carolClient: SyncAgent
 
     const BOB_USERNAME = 'bob'
@@ -89,7 +90,7 @@ describe('Bot', { sequential: true }, () => {
         await shouldInstallBotInSpace()
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
-        ethersProvider = makeBaseProvider(riverConfig)
+        ethersProvider = makeBaseProvider(townsConfig)
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -162,8 +163,8 @@ describe('Bot', { sequential: true }, () => {
         const delegateWallet = ethers.Wallet.createRandom()
         const signerContext = await makeSignerContext(botWallet, delegateWallet)
         const rpcClient = await makeRiverRpcClient(
-            makeRiverProvider(riverConfig),
-            riverConfig.river.chainConfig,
+            makeRiverProvider(townsConfig),
+            townsConfig.river.chainConfig,
         )
         const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
         const botClient = new Client(
@@ -192,7 +193,7 @@ describe('Bot', { sequential: true }, () => {
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
-        const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
+        const appRegistryUrl = townsEnv().getAppRegistryUrl(process.env.RIVER_ENV)
         const { appRegistryRpcClient: rpcClient } = await AppRegistryService.authenticateWithSigner(
             bob.userId,
             bob.signer,
@@ -248,6 +249,16 @@ describe('Bot', { sequential: true }, () => {
         const userStream = streamView.userContent.userStreamModel
         expect(userStream.appAddress).toBeDefined()
         expect(userStream.appAddress).toBe(appAddress)
+    })
+
+    it('should show bot in member list and apps set when installed', async () => {
+        const channelStreamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(channelId)
+        })
+        const { apps, joined } = channelStreamView.getMembers()
+        expect(apps.has(botClientAddress)).toBe(true)
+        expect(joined.has(botClientAddress)).toBe(true)
+        expect(joined.get(botClientAddress)?.appAddress).toBe(appAddress)
     })
 
     it('should receive a message forwarded', async () => {
@@ -668,7 +679,7 @@ describe('Bot', { sequential: true }, () => {
             {
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
-                chainId: riverConfig.base.chainConfig.chainId,
+                chainId: townsConfig.base.chainConfig.chainId,
                 receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
             },
             bob.signer,
@@ -740,5 +751,15 @@ describe('Bot', { sequential: true }, () => {
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
         expect(receivedMentionedEvents.find((x) => x.eventId === eventId)).toBeUndefined()
+    })
+
+    // TODO: figure out later - should scrubber be able to scrub uninstalled apps?
+    it.skip('should not show bot in member list and apps set after uninstallation', async () => {
+        const channelStreamView = await bobClient.riverConnection.call(async (client) => {
+            return await client.getStream(channelId)
+        })
+        const { apps, joined } = channelStreamView.getMembers()
+        expect(apps.has(botClientAddress)).toBe(false)
+        expect(joined.has(botClientAddress)).toBe(false)
     })
 })

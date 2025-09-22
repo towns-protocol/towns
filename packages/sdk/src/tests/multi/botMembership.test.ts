@@ -18,7 +18,7 @@ import {
     createChannel,
     getXchainConfigForTesting,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 
@@ -35,7 +35,7 @@ describe('bot membership tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             ownerProvider,
         )
 
@@ -132,7 +132,7 @@ describe('bot membership tests', () => {
         })
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -243,7 +243,7 @@ describe('bot membership tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             ownerProvider,
         )
 
@@ -309,7 +309,7 @@ describe('bot membership tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -442,7 +442,7 @@ describe('bot membership tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -551,7 +551,7 @@ describe('bot membership tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             aliceProvider,
         )
 

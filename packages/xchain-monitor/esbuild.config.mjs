@@ -33,9 +33,6 @@ build({
     target: 'es2022',
     minify: false, // No minification for easier debugging. Add minification in production later
     treeShaking: true, // Enable tree shaking to remove unused code
-    logOverride: {
-        'empty-import-meta': 'silent', // Add this line to silence the warning
-    },
 }).catch((e) => {
     console.error(e)
     process.exit(1)

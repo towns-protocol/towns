@@ -10,7 +10,7 @@ import {
 import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
-import { dlog, dlogError, check } from '@towns-protocol/dlog'
+import { dlog, dlogError, check } from '@towns-protocol/utils'
 import { cloneDeep } from 'lodash-es'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {

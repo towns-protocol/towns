@@ -8,7 +8,7 @@ import {
 } from './encryptionTypes'
 import { EncryptionDelegate } from './encryptionDelegate'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
-import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { bin_equal, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/utils'
 import type { HybridGroupSessionRecord } from './storeTypes'
 import {
     ExportedDevice,

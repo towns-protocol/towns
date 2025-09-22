@@ -5,16 +5,28 @@ set -euo pipefail
 
 # Default values
 JOB="Common_CI"
-ARCH="linux/amd64"
 EVENT_TYPE="schedule"
 EVENT_TIME="2023-01-01T00:00:00Z"
+
+# Auto-detect architecture - default to native on Apple Silicon
+if [[ $(uname -m) == "arm64" ]]; then
+    ARCH="${ARCH:-linux/arm64}"
+else
+    ARCH="${ARCH:-linux/amd64}"
+fi
 
 # Function to display usage info
 show_usage() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -j, --job JOB_NAME     Specify the job to run (default: Common_CI)"
+  echo "  -a, --arch ARCH        Specify container architecture (default: auto-detect)"
+  echo "                         Options: linux/arm64, linux/amd64"
   echo "  -h, --help             Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0 -j Common_CI                    # Uses native architecture ($(uname -m))"
+  echo "  $0 -j Common_CI -a linux/amd64     # Force AMD64 (for compatibility testing)"
   echo ""
   echo "Note: Uses 'schedule' event type (only type that works reliably with act)"
 }
@@ -23,6 +35,7 @@ show_usage() {
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -j|--job) JOB="$2"; shift ;;
+    -a|--arch) ARCH="$2"; shift ;;
     -h|--help) show_usage; exit 0 ;;
     *) echo "Unknown parameter: $1"; show_usage; exit 1 ;;
   esac
@@ -59,6 +72,7 @@ trap cleanup_anvil_containers EXIT INT TERM
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
+echo "Using architecture: $ARCH"
 TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file

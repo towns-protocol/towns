@@ -49,10 +49,10 @@
 		"zod": "^3.21.4"
 	},
 	"devDependencies": {
-		"@towns-protocol/dlog": "workspace:^",
 		"@towns-protocol/encryption": "workspace:^",
 		"@towns-protocol/eslint-config": "workspace:^",
 		"@towns-protocol/prettier-config": "workspace:^",
+		"@towns-protocol/utils": "workspace:^",
 		"@types/node": "^20.14.8",
 		"@types/uuid": "^10.0.0",
 		"@typescript-eslint/parser": "^8.29.0",

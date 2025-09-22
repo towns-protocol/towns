@@ -2,10 +2,10 @@
  * @group with-entitlements
  */
 
-import { bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
-import { makeRiverConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { cloneDeep } from 'lodash-es'
@@ -15,15 +15,15 @@ import { randomBytes } from '../../utils'
 const base_log = dlog('csb:test:transactions')
 
 describe('transactions', () => {
-    const riverConfig = makeRiverConfig()
-    const bobIdentity = new Bot(undefined, riverConfig)
-    const aliceIdentity = new Bot(undefined, riverConfig)
+    const townsConfig = townsEnv().makeTownsConfig()
+    const bobIdentity = new Bot(undefined, townsConfig)
+    const aliceIdentity = new Bot(undefined, townsConfig)
     const bobsOtherWallet = ethers.Wallet.createRandom()
     const bobsOtherWalletProvider = new LocalhostWeb3Provider(
-        riverConfig.base.rpcUrl,
+        townsConfig.base.rpcUrl,
         bobsOtherWallet,
     )
-    const chainId = riverConfig.base.chainConfig.chainId
+    const chainId = townsConfig.base.chainConfig.chainId
 
     // updated once and shared between tests
     let bob: SyncAgent
@@ -68,7 +68,7 @@ describe('transactions', () => {
         await alice.spaces.joinSpace(spaceId, aliceIdentity.signer)
         log('bob and alice joined space', spaceId, defaultChannelId)
 
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(townsConfig.base.chainConfig)
         dummyReceipt = await transaction.wait(2)
         dummyReceiptCopy = deepCopy(dummyReceipt)
         expect(dummyReceiptCopy).toEqual(dummyReceipt)
@@ -89,7 +89,7 @@ describe('transactions', () => {
         // is from their account or one of their linked accounts and
         // is valid on chain
         // add the transaction to the river chain
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(townsConfig.base.chainConfig)
         const receipt = await transaction.wait(2)
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, receipt),
@@ -97,7 +97,7 @@ describe('transactions', () => {
     })
 
     test('cantAddEventTwice', async () => {
-        const transaction = await bobIdentity.web3Provider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobIdentity.web3Provider.mintMockNFT(townsConfig.base.chainConfig)
         const receipt = await transaction.wait(2)
         await expect(
             bob.riverConnection.client!.addTransaction(chainId, receipt),
@@ -198,7 +198,7 @@ describe('transactions', () => {
     test('addEventFromLinkedWallet', async () => {
         // a user should be able to upload a transaction that
         // is from one of their linked accounts and is valid on chain
-        const transaction = await bobsOtherWalletProvider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobsOtherWalletProvider.mintMockNFT(townsConfig.base.chainConfig)
         const receipt = await transaction.wait()
 
         // add the transaction to the river
@@ -210,7 +210,7 @@ describe('transactions', () => {
     test('cantAddEventFromUnlinkedLinkedWallet', async () => {
         // a user should not be able to upload a transaction that
         // is from one of their linked accounts and is valid on chain
-        const transaction = await bobsOtherWalletProvider.mintMockNFT(riverConfig.base.chainConfig)
+        const transaction = await bobsOtherWalletProvider.mintMockNFT(townsConfig.base.chainConfig)
         const receipt = await transaction.wait()
 
         // add the transaction to the river

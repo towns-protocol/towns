@@ -1,5 +1,5 @@
-import { dlog } from '@towns-protocol/dlog'
-import { makeRiverConfig } from '../../riverConfig'
+import { dlog } from '@towns-protocol/utils'
+import { townsEnv } from '../../townsEnv'
 import { Bot } from '../../sync-agent/utils/bot'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { ContractReceipt, ethers } from 'ethers'
@@ -18,16 +18,16 @@ import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTy
 const base_log = dlog('csb:test:transaction_SpaceReview')
 
 describe('transaction_SpaceReview', () => {
-    const riverConfig = makeRiverConfig()
-    const bobIdentity = new Bot(undefined, riverConfig)
-    const aliceIdentity = new Bot(undefined, riverConfig)
+    const townsConfig = townsEnv().makeTownsConfig()
+    const bobIdentity = new Bot(undefined, townsConfig)
+    const aliceIdentity = new Bot(undefined, townsConfig)
     const alicesOtherWallet = ethers.Wallet.createRandom()
     let bob: SyncAgent
     let alice: SyncAgent
     let spaceIdWithAlice: string
     let spaceIdWithoutAlice: string
     let aliceTokenId: string
-    const chainId = riverConfig.base.chainConfig.chainId
+    const chainId = townsConfig.base.chainConfig.chainId
     let spaceReviewEventId: string | undefined
     let orphanReviewReceipt: ContractReceipt | undefined
 

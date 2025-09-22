@@ -1,5 +1,5 @@
 import { spaceIdFromChannelId, StreamPrefix } from './id'
-import { check, dlog, dlogError, DLogger } from '@towns-protocol/dlog'
+import { check, dlog, dlogError, DLogger } from '@towns-protocol/utils'
 import { ClientInitStatus } from './types'
 import pLimit from 'p-limit'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'

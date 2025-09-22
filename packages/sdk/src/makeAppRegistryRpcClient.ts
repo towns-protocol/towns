@@ -1,7 +1,7 @@
 import { Client, createClient } from '@connectrpc/connect'
 import { type ConnectTransportOptions } from '@connectrpc/connect-web'
 import { AppRegistryService } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
 import {
     DEFAULT_RETRY_PARAMS,

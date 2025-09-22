@@ -22,7 +22,7 @@ import {
 import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, check, dlog } from '@towns-protocol/utils'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { KeySolicitationContent } from './decryptionExtensions'
@@ -82,6 +82,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly pendingJoinedUsers = new Set<string>()
     readonly pendingInvitedUsers = new Set<string>()
     readonly pendingLeftUsers = new Set<string>()
+    readonly apps = new Set<string>()
     readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
@@ -145,6 +146,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 tipsReceivedCount: member.tipsReceivedCount,
                 appAddress: member.appAddress ? userIdFromAddress(member.appAddress) : undefined,
             })
+            if (member.appAddress) {
+                this.apps.add(userId)
+            }
             this.applyMembershipEvent(userId, MembershipOp.SO_JOIN, 'confirmed', undefined)
         }
         this.streamMemberIdsView.setMembers(this.streamId, memberIds)
@@ -307,12 +311,20 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                     ? userIdFromAddress(membership.appAddress)
                                     : undefined,
                             })
+                            if (membership.appAddress) {
+                                this.apps.add(userId)
+                            }
                             this.streamMemberIdsView.addMember(this.streamId, userId)
                             break
-                        case MembershipOp.SO_LEAVE:
+                        case MembershipOp.SO_LEAVE: {
+                            const leavingMember = this.joined.get(userId)
+                            if (leavingMember?.appAddress) {
+                                this.apps.delete(userId)
+                            }
                             this.joined.delete(userId)
                             this.streamMemberIdsView.removeMember(this.streamId, userId)
                             break
+                        }
                         default:
                             break
                     }

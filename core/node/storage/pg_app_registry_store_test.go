@@ -219,6 +219,7 @@ func TestUpdateSettings(t *testing.T) {
 			Owner:           owner,
 			EncryptedSecret: secret,
 			Metadata:        testAppMetadataWithName("app"),
+			Active:          true,
 		},
 		info,
 	)
@@ -239,6 +240,7 @@ func TestUpdateSettings(t *testing.T) {
 			EncryptedSecret: secret,
 			Metadata:        testAppMetadataWithName("app"),
 			Settings:        types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES},
+			Active:          true,
 		},
 		info,
 	)
@@ -286,6 +288,7 @@ func TestRegisterWebhook(t *testing.T) {
 			Owner:           owner,
 			EncryptedSecret: [32]byte(secretBytes),
 			Metadata:        testAppMetadataWithName("app"),
+			Active:          true,
 		},
 		info,
 	)
@@ -307,6 +310,7 @@ func TestRegisterWebhook(t *testing.T) {
 				DeviceKey:   deviceKey,
 				FallbackKey: fallbackKey,
 			},
+			Active: true,
 		},
 		info,
 	)
@@ -330,6 +334,7 @@ func TestRegisterWebhook(t *testing.T) {
 				DeviceKey:   deviceKey2,
 				FallbackKey: fallbackKey2,
 			},
+			Active: true,
 		},
 		info,
 	)
@@ -457,6 +462,7 @@ func TestCreateApp(t *testing.T) {
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
 			},
+			Active: true,
 		},
 		info,
 	)
@@ -472,6 +478,7 @@ func TestCreateApp(t *testing.T) {
 			Settings: types.AppSettings{
 				ForwardSetting: ForwardSettingValue_FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS,
 			},
+			Active: true,
 		},
 		info,
 	)
@@ -1723,9 +1730,101 @@ func TestAppMetadataInGetAppInfo(t *testing.T) {
 				DeviceKey:   deviceKey,
 				FallbackKey: fallbackKey,
 			},
+			Active: true,
 		},
 		appInfo,
 	)
+}
+
+func TestSetAppActiveStatus(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Create test app
+	owner := safeAddress(t)
+	app := safeAddress(t)
+	metadata := testAppMetadataWithName("TestStatusApp")
+	settings := types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES}
+	secret := [32]byte{1, 2, 3}
+
+	err := store.CreateApp(params.ctx, owner, app, settings, metadata, secret)
+	require.NoError(err)
+
+	// New app is active by default
+	info, err := store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.True(info.Active)
+
+	// Deactivate
+	err = store.SetAppActiveStatus(params.ctx, app, false)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.False(info.Active)
+
+	// Reactivate
+	err = store.SetAppActiveStatus(params.ctx, app, true)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.True(info.Active)
+
+	// Non-existent app
+	nonExistent := safeAddress(t)
+	err = store.SetAppActiveStatus(params.ctx, nonExistent, false)
+	require.Error(err)
+	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
+
+	// Verify other fields preserved after status change
+	err = store.SetAppActiveStatus(params.ctx, app, false)
+	require.NoError(err)
+
+	info, err = store.GetAppInfo(params.ctx, app)
+	require.NoError(err)
+	require.False(info.Active)
+	require.Equal(app, info.App)
+	require.Equal(owner, info.Owner)
+	require.Equal(settings, info.Settings)
+	require.Equal(metadata, info.Metadata)
+}
+
+func TestInactiveAppsFiltering(t *testing.T) {
+	params := setupAppRegistryStorageTest(t)
+	require := require.New(t)
+	store := params.pgAppRegistryStore
+
+	// Create multiple apps
+	owner := safeAddress(t)
+	apps := []common.Address{safeAddress(t), safeAddress(t), safeAddress(t)}
+
+	for i, app := range apps {
+		metadata := testAppMetadataWithName(fmt.Sprintf("app_%d", i))
+		settings := types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES}
+		err := store.CreateApp(params.ctx, owner, app, settings, metadata, [32]byte{byte(i)})
+		require.NoError(err)
+
+		err = store.RegisterWebhook(params.ctx, app, "http://example.com/webhook",
+			fmt.Sprintf("device_%d", i), fmt.Sprintf("fallback_%d", i))
+		require.NoError(err)
+	}
+
+	// Deactivate middle app
+	err := store.SetAppActiveStatus(params.ctx, apps[1], false)
+	require.NoError(err)
+
+	// Verify status of all apps
+	for i, app := range apps {
+		info, err := store.GetAppInfo(params.ctx, app)
+		require.NoError(err)
+		if i == 1 {
+			require.False(info.Active, "Middle app should be inactive")
+		} else {
+			require.True(info.Active, "Other apps should be active")
+		}
+	}
 }
 
 func TestIsUsernameAvailable(t *testing.T) {

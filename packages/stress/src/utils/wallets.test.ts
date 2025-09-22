@@ -1,4 +1,4 @@
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { generateWalletsFromSeed } from './wallets'
 
 const logger = dlogger('stress:wallets')

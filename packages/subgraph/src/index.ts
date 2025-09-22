@@ -896,3 +896,207 @@ ponder.on('Space:ReviewDeleted', async ({ event, context }) => {
         console.error(`Error processing Space:ReviewDeleted at blockNumber ${blockNumber}:`, error)
     }
 })
+
+ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        // Note: If a user reconfigures a subscription with the same entityId,
+        // this will overwrite the previous subscription record (matches contract behavior)
+        await context.db
+            .insert(schema.subscription)
+            .values({
+                account: event.args.account,
+                entityId: event.args.entityId,
+                space: event.args.space,
+                tokenId: event.args.tokenId,
+                totalSpent: 0n,
+                nextRenewalTime: event.args.nextRenewalTime,
+                lastRenewalTime: null, // Will be set on first renewal
+                active: true,
+                createdAt: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+            .onConflictDoUpdate({
+                space: event.args.space,
+                tokenId: event.args.tokenId,
+                nextRenewalTime: event.args.nextRenewalTime,
+                active: true,
+                updatedAt: blockTimestamp,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionConfigured tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionPaused', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                active: false,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for pause: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionPaused tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                nextRenewalTime: event.args.nextRenewalTime,
+                lastRenewalTime: blockTimestamp,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for renewal: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionRenewed tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                active: false,
+                nextRenewalTime: 0n,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for deactivation: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionDeactivated tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        const result = await context.db.sql
+            .update(schema.subscription)
+            .set({
+                totalSpent: event.args.totalSpent,
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.account, event.args.account),
+                    eq(schema.subscription.entityId, event.args.entityId),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(
+                `Subscription not found for spent update: ${event.args.account}_${event.args.entityId}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:SubscriptionSpent tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+
+    try {
+        await context.db.insert(schema.subscriptionFailure).values({
+            account: event.args.account,
+            entityId: event.args.entityId,
+            timestamp: blockTimestamp,
+            reason: event.args.reason,
+        })
+    } catch (error) {
+        console.error(
+            `Error processing SubscriptionModule:BatchRenewalSkipped tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})
+
+// ERC5643 SubscriptionUpdate, emitted whenever the expiration date of a subscription is changed
+// https://eips.ethereum.org/EIPS/eip-5643
+ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
+    const blockTimestamp = event.block.timestamp
+    const spaceId = event.log.address
+    const tokenId = event.args.tokenId
+
+    try {
+        // Only update the timestamp, not the renewal times
+        // The SubscriptionModule events handle nextRenewalTime and lastRenewalTime properly
+        await context.db.sql
+            .update(schema.subscription)
+            .set({
+                updatedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.subscription.space, spaceId),
+                    eq(schema.subscription.tokenId, tokenId),
+                ),
+            )
+    } catch (error) {
+        console.error(
+            `Error processing Space:SubscriptionUpdate tx ${event.transaction.hash}:`,
+            error,
+        )
+    }
+})

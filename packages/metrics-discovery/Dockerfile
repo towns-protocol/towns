@@ -16,7 +16,7 @@ COPY .yarn/plugins .yarn/plugins
 COPY packages/tsconfig.base.json ./packages/
 
 # Copy workspace package.json files for dependency resolution
-COPY packages/dlog/package.json ./packages/dlog/
+COPY packages/utils/package.json ./packages/utils/
 COPY packages/metrics-discovery/package.json ./packages/metrics-discovery/
 COPY packages/prettier-config/package.json ./packages/prettier-config/
 COPY packages/proto/package.json ./packages/proto/
@@ -31,7 +31,7 @@ COPY packages/generated ./packages/generated/
 RUN yarn install
 
 # Copy remaining source code
-COPY packages/dlog ./packages/dlog/
+COPY packages/utils ./packages/utils/
 COPY packages/metrics-discovery ./packages/metrics-discovery/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/proto ./packages/proto/

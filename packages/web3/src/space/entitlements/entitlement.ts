@@ -1,7 +1,7 @@
 import { type ExtractAbiFunction } from 'abitype'
 import { IRuleEntitlementBase, IRuleEntitlementAbi } from './RuleEntitlementShim'
 import { IRuleEntitlementV2Base, IRuleEntitlementV2Abi } from './RuleEntitlementV2Shim'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 
 import {
     encodeAbiParameters,

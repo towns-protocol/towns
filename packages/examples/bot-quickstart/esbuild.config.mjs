@@ -24,9 +24,6 @@ const config = {
     target: 'es2022',
     minify: false,
     treeShaking: true,
-    logOverride: {
-        'empty-import-meta': 'silent', // Add this line to silence the warning
-    },
 }
 
 if (isWatch) {

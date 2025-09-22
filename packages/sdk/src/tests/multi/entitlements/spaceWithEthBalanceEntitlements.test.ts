@@ -15,7 +15,7 @@ import {
     threeEth,
     twoEth,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { Address, TestEthBalance, treeToRuleData } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithEthBalanceEntitlements')

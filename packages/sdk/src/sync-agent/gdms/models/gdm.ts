@@ -1,4 +1,4 @@
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'

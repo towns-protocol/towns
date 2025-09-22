@@ -3,7 +3,7 @@ import { snapshotMigration0001 } from '../../migrations/snapshotMigration0001'
 import { ethers } from 'ethers'
 import { makeUniqueSpaceStreamId } from '../testUtils'
 import { addressFromUserId, makeUniqueChannelStreamId, streamIdAsBytes } from '../../id'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 
 // a no-op migration test for the initial snapshot, use as a template for new migrations

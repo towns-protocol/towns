@@ -1,5 +1,5 @@
 import { SnapshotSchema } from '@towns-protocol/proto'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 import { snapshotMigration0004 } from '../../migrations/snapshotMigration0004'
 import { streamIdToBytes } from '../../id'

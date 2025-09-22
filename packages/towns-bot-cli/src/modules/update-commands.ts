@@ -8,10 +8,10 @@ import { green, red, yellow, cyan } from 'picocolors'
 import {
     makeSignerContextFromBearerToken,
     AppRegistryService,
-    getAppRegistryUrl,
     parseAppPrivateData,
+    townsEnv,
 } from '@towns-protocol/sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { SlashCommandSchema, type SlashCommand } from '@towns-protocol/proto'
 import type { UpdateCommandsArgs } from '../parser.js'
 import { create } from '@bufbuild/protobuf'
@@ -151,7 +151,7 @@ export async function updateCommands(argv: UpdateCommandsArgs) {
 
         try {
             const signerContext = await makeSignerContextFromBearerToken(bearerToken)
-            const appRegistryUrl = getAppRegistryUrl(env)
+            const appRegistryUrl = townsEnv().getAppRegistryUrl(env)
             const { appRegistryRpcClient } = await AppRegistryService.authenticate(
                 signerContext,
                 appRegistryUrl,

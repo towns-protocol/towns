@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.347",
+    "version": "0.0.352",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -20,8 +20,8 @@
     },
     "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
-        "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/utils": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",

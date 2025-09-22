@@ -68,7 +68,7 @@ import {
     StreamTimelineEvent,
 } from '../../types'
 import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
-import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
+import { bin_toHexString, dlogger } from '@towns-protocol/utils'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '../../decryptionExtensions'

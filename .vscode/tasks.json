@@ -82,7 +82,7 @@
     {
       "label": "Start Watches",
       "dependsOn": [
-        "WatchDlog",
+        "WatchUtils",
         "WatchEncryption",
         "WatchProto",
         "WatchWeb3",
@@ -398,9 +398,9 @@
       }
     },
     {
-      "label": "WatchDlog",
+      "label": "WatchUtils",
       "type": "shell",
-      "command": "cd packages/dlog && yarn watch",
+      "command": "cd packages/utils && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {

@@ -10,7 +10,7 @@ import {
     waitFor,
     createChannel,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 import { make_MemberPayload_KeySolicitation } from '../../types'
@@ -27,7 +27,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -155,7 +155,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -295,7 +295,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
