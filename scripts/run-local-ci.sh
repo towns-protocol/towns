@@ -60,15 +60,23 @@ echo "Formatting event.json..."
 yarn prettier --write event.json
 
 # Cleanup function to stop Anvil containers
-cleanup_anvil_containers() {
+cleanup() {
     echo "Stopping Anvil containers..."
     if command -v just >/dev/null 2>&1 && [ -d "core" ]; then
         (cd core && USE_DOCKER_CHAINS=1 just anvils-stop) >/dev/null 2>&1 || true
     fi
+
+    # Clean up temp files
+    if [[ -f "event.json" ]]; then
+        rm event.json
+    fi
+    if [[ -n "${TEMP_LOG:-}" && -f "$TEMP_LOG" ]]; then
+        rm "$TEMP_LOG"
+    fi
 }
 
 # Set up trap to cleanup on exit
-trap cleanup_anvil_containers EXIT INT TERM
+trap cleanup EXIT INT TERM
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
@@ -76,8 +84,11 @@ echo "Using architecture: $ARCH"
 TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file
-act "$EVENT_TYPE" -j "$JOB" --secret-file .env -P ubuntu-x64-16core=ghcr.io/catthehacker/ubuntu:act-latest \
-  --container-architecture "$ARCH" --eventpath event.json \
+act "$EVENT_TYPE" -j "$JOB" --secret-file .env \
+  -P ubuntu-x64-16core=ghcr.io/catthehacker/ubuntu:act-latest \
+  --container-architecture "$ARCH" \
+  --eventpath event.json \
+  --rm \
   2>&1 | tee "$TEMP_LOG"
 EXIT_CODE=${PIPESTATUS[0]}
 
@@ -94,10 +105,6 @@ if [ $EXIT_CODE -ne 0 ]; then
   grep -i -E '(error|failed|failure)' "$TEMP_LOG" | grep -v -E '(Cached|::group)' | sort | uniq
 fi
 
-# Cleanup
-echo "Cleaning up..."
-rm event.json
-rm "$TEMP_LOG"
-
+# Exit with the status code from act
 echo "Done! Exit code: $EXIT_CODE"
 exit $EXIT_CODE
