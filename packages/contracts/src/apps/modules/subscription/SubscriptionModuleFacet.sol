@@ -86,7 +86,8 @@ contract SubscriptionModuleFacet is
         sub.space = space;
         sub.active = true;
         sub.tokenId = tokenId;
-        sub.nextRenewalTime = uint40(expiresAt - _getRenewalBuffer(expiresAt));
+        sub.installTime = uint40(block.timestamp);
+        sub.nextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
 
         $.entityIds[msg.sender].add(entityId);
 
@@ -186,33 +187,42 @@ contract SubscriptionModuleFacet is
         for (uint256 i; i < paramsLen; ++i) {
             Subscription storage sub = $.subscriptions[params[i].account][params[i].entityId];
 
+            // Skip if renewal not due (check original nextRenewalTime first)
+            if (sub.nextRenewalTime > block.timestamp) {
+                emit SubscriptionNotDue(params[i].account, params[i].entityId);
+                continue;
+            }
+
             // Skip inactive subscriptions
             if (!sub.active) {
                 emit BatchRenewalSkipped(params[i].account, params[i].entityId, "INACTIVE");
                 continue;
             }
 
-            // Skip if renewal not due
-            if (block.timestamp < sub.nextRenewalTime) {
-                emit BatchRenewalSkipped(params[i].account, params[i].entityId, "NOT_DUE");
-                continue;
-            }
-
-            // Skip if past grace period (will be handled by individual call)
-            if (block.timestamp > sub.nextRenewalTime + GRACE_PERIOD) {
-                sub.active = false;
-                emit SubscriptionPaused(params[i].account, params[i].entityId);
+            // Skip if past grace period
+            if (sub.nextRenewalTime + GRACE_PERIOD < block.timestamp) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
                 emit BatchRenewalSkipped(params[i].account, params[i].entityId, "PAST_GRACE");
                 continue;
             }
 
-            // Skip if account isn't owner anymore
+            // Skip if account isn't owner anymore (for safety)
             if (IERC721(sub.space).ownerOf(sub.tokenId) != params[i].account) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
                 emit BatchRenewalSkipped(params[i].account, params[i].entityId, "NOT_OWNER");
                 continue;
             }
 
             MembershipFacet membershipFacet = MembershipFacet(sub.space);
+            uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
+
+            // Sync next renewal time from on-chain expiration if user called renewMembership directly
+            uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+            if (sub.nextRenewalTime != correctNextRenewalTime) {
+                sub.nextRenewalTime = correctNextRenewalTime;
+                emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
+            }
+
             uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
             if (params[i].account.balance < actualRenewalPrice) {
@@ -267,8 +277,7 @@ contract SubscriptionModuleFacet is
         address owner = IERC721(sub.space).ownerOf(sub.tokenId);
         if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
 
-        sub.active = false;
-        emit SubscriptionPaused(msg.sender, entityId);
+        _pauseSubscription(sub, msg.sender, entityId);
     }
 
     /// @inheritdoc ISubscriptionModule
@@ -343,38 +352,72 @@ contract SubscriptionModuleFacet is
 
         // Get the actual new expiration time after successful renewal
         uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
-
-        // Update subscription state after successful renewal
-        sub.nextRenewalTime = uint40(newExpiresAt - _getRenewalBuffer(newExpiresAt));
+        sub.nextRenewalTime = _calculateNextRenewalTime(newExpiresAt, sub.installTime);
         sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
         emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime);
     }
 
-    /// @dev Determines the appropriate renewal buffer time based on expiration proximity
+    /// @dev Determines the appropriate renewal buffer time based on original membership duration
     /// @param expirationTime The expiration timestamp of the membership
+    /// @param installTime The time when the subscription was installed
     /// @return The appropriate buffer time in seconds before expiration
-    function _getRenewalBuffer(uint256 expirationTime) internal view returns (uint256) {
-        uint256 timeUntilExpiration = expirationTime - block.timestamp;
+    function _getRenewalBuffer(
+        uint256 expirationTime,
+        uint256 installTime
+    ) internal pure returns (uint256) {
+        uint256 originalDuration = expirationTime >= installTime ? expirationTime - installTime : 0;
 
-        // If expiration is within 1 hour, use immediate buffer (2 minutes before expiration)
-        if (timeUntilExpiration <= 1 hours) {
+        // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
+        if (originalDuration <= 1 hours) {
             return BUFFER_IMMEDIATE;
         }
 
-        // If expiration is within 6 hours, use short buffer (1 hour before expiration)
-        if (timeUntilExpiration <= 6 hours) {
+        // For memberships shorter than 6 hours, use short buffer (1 hour)
+        if (originalDuration <= 6 hours) {
             return BUFFER_SHORT;
         }
 
-        // If expiration is within 24 hours, use medium buffer (6 hours before expiration)
-        if (timeUntilExpiration <= 24 hours) {
+        // For memberships shorter than 24 hours, use medium buffer (6 hours)
+        if (originalDuration <= 24 hours) {
             return BUFFER_MEDIUM;
         }
 
-        // For expirations more than 24 hours away, use long buffer (12 hours before expiration)
+        // For memberships longer than 24 hours, use long buffer (12 hours)
         return BUFFER_LONG;
+    }
+
+    /// @dev Legacy function for backward compatibility - uses current time as install time
+    /// @param expirationTime The expiration timestamp of the membership
+    /// @return The appropriate buffer time in seconds before expiration
+    function _getRenewalBuffer(uint256 expirationTime) internal view returns (uint256) {
+        return _getRenewalBuffer(expirationTime, block.timestamp);
+    }
+
+    /// @dev Calculates the correct next renewal time for a given expiration using install time
+    /// @param expirationTime The expiration timestamp of the membership
+    /// @param installTime The time when the subscription was installed
+    /// @return The next renewal time as uint40
+    function _calculateNextRenewalTime(
+        uint256 expirationTime,
+        uint256 installTime
+    ) internal view returns (uint40) {
+        if (expirationTime <= block.timestamp) return uint40(block.timestamp);
+
+        uint256 buffer = _getRenewalBuffer(expirationTime, installTime);
+        uint256 timeUntilExpiration = expirationTime - block.timestamp;
+
+        if (buffer >= timeUntilExpiration) return uint40(block.timestamp);
+
+        return uint40(expirationTime - buffer);
+    }
+
+    /// @dev Legacy function for backward compatibility - uses current time as install time
+    /// @param expirationTime The expiration timestamp of the membership
+    /// @return The next renewal time as uint40
+    function _calculateNextRenewalTime(uint256 expirationTime) internal view returns (uint40) {
+        return _calculateNextRenewalTime(expirationTime, block.timestamp);
     }
 
     /// @dev Creates the runtime final data for the renewal
@@ -391,5 +434,14 @@ contract SubscriptionModuleFacet is
                 false, // selector-based
                 bytes.concat(hex"ff", finalData)
             );
+    }
+
+    function _pauseSubscription(
+        Subscription storage sub,
+        address account,
+        uint32 entityId
+    ) internal {
+        sub.active = false;
+        emit SubscriptionPaused(account, entityId);
     }
 }

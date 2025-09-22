@@ -69,7 +69,15 @@ interface ISubscriptionModuleBase {
         uint256 nextRenewalTime
     );
 
+    /// @notice Emitted when a subscription's next renewal time is synced to on-chain expiration
+    event SubscriptionSynced(
+        address indexed account,
+        uint32 indexed entityId,
+        uint256 newNextRenewalTime
+    );
+
     event SubscriptionPaused(address indexed account, uint32 indexed entityId);
+    event SubscriptionNotDue(address indexed account, uint32 indexed entityId);
 
     event BatchRenewalSkipped(address indexed account, uint32 indexed entityId, string reason);
 

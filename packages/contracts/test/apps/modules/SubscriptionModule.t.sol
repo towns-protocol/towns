@@ -254,7 +254,7 @@ contract SubscriptionModuleTest is ModulesBase {
         (ModularAccount account, , uint32 entityId, ) = _createSubscription(user);
 
         vm.expectEmit(address(subscriptionModule));
-        emit BatchRenewalSkipped(address(account), entityId, "NOT_DUE");
+        emit SubscriptionNotDue(address(account), entityId);
         _processRenewalAs(processor, address(account), entityId);
     }
 
@@ -391,7 +391,7 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.deal(address(account), params.renewalPrice);
 
         vm.expectEmit(address(subscriptionModule));
-        emit BatchRenewalSkipped(address(account), entityId, "NOT_DUE");
+        emit SubscriptionNotDue(address(account), entityId);
         _processRenewalAs(processor, address(account), entityId);
     }
 
