@@ -31,7 +31,7 @@ func TestReconciler(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -124,7 +124,7 @@ func TestReconciler_SmallGapForward(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20, // enable backward logic, but keep gap small
+			backwardsReconciliationThreshold: ptrUint64(20), // enable backward logic, but keep gap small
 		},
 	)
 	require := tc.require
@@ -193,7 +193,7 @@ func TestReconciler_BackfillOnly(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -280,7 +280,7 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -395,7 +395,7 @@ func TestReconciler_ForwardOnly(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 0, // disable backward reconciliation
+			backwardsReconciliationThreshold: ptrUint64(0), // disable backward reconciliation
 		},
 	)
 	require := tc.require
@@ -460,7 +460,7 @@ func TestReconciler_NoRemotes(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -497,7 +497,7 @@ func TestReconciler_ImportGenesisFromRegistry(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -556,7 +556,7 @@ func TestReconciler_RegistryOlderThanLocal(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 		},
 	)
 	require := tc.require
@@ -614,7 +614,7 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 			disableStreamCacheCallbacks:      true,
 			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: 20,
+			backwardsReconciliationThreshold: ptrUint64(20),
 			streamHistoryMiniblocks: map[byte]uint64{
 				STREAM_USER_SETTINGS_BIN: historyWindow,
 			},
