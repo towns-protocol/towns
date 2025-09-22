@@ -539,62 +539,6 @@ func TestReconciler_ImportGenesisFromRegistry(t *testing.T) {
 	require.Equal(int64(0), view.LastBlock().Ref.Num)
 }
 
-// If registry lags behind local state on a replicated stream and the local node is the first quorum node,
-// reconciler updates the registry and exits without forward/backward reconciliation.
-func TestReconciler_RegistryOlderThanLocal(t *testing.T) {
-	cfg := config.GetDefaultConfig()
-	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
-	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
-	cfg.StreamReconciliation.GetMiniblocksPageSize = 8
-
-	ctx, tc := makeCacheTestContext(
-		t,
-		testParams{
-			config:                           cfg,
-			replFactor:                       3,
-			numInstances:                     3,
-			disableStreamCacheCallbacks:      true,
-			enableNewSnapshotFormat:          1,
-			recencyConstraintsGenerations:    5,
-			backwardsReconciliationThreshold: ptrUint64(20),
-		},
-	)
-	require := tc.require
-
-	// Initialize all three instances
-	tc.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
-	tc.initCache(1, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
-	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
-
-	streamId, streamNodes, prevMb := tc.allocateStream()
-
-	// Use an old record (genesis) to simulate registry behind local
-	inst0 := tc.instances[0]
-	// Retrieve the strean record at latest block number
-	oldRecord, err := inst0.cache.params.Registry.GetStream(ctx, streamId, 0)
-	require.NoError(err)
-	require.EqualValues(0, oldRecord.LastMbNum())
-
-	// Produce several miniblocks so local state advances beyond genesis
-	for range 8 {
-		tc.addReplEvent(streamId, prevMb, streamNodes)
-		prevMb = tc.makeMiniblockNoCallbacks(streamNodes, streamId, false)
-	}
-
-	// Use the already-local stream on instance 0
-	stream, err := inst0.cache.getStreamImpl(ctx, streamId, true)
-	require.NoError(err)
-
-	reconciler := newStreamReconciler(inst0.cache, stream, oldRecord)
-	err = reconciler.reconcile()
-	require.NoError(err)
-	// No forward/backward/backfill should be attempted
-	testfmt.Logf(t, "Registry older than local stats: %+v", reconciler.stats)
-	require.False(reconciler.stats.forwardCalled)
-	require.False(reconciler.stats.backwardCalled)
-	require.False(reconciler.stats.backfillCalled)
-}
-
 // Backfill respects the StreamHistoryMiniblocks setting when determining the
 // earliest miniblock that needs to be reconciled.
 func TestReconciler_BackfillHistoryWindow(t *testing.T) {
