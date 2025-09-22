@@ -568,18 +568,18 @@ func TestReconciler_RegistryOlderThanLocal(t *testing.T) {
 
 	streamId, streamNodes, prevMb := tc.allocateStream()
 
+	// Use an old record (genesis) to simulate registry behind local
+	inst0 := tc.instances[0]
+	// Retrieve the strean record at latest block number
+	oldRecord, err := inst0.cache.params.Registry.GetStream(ctx, streamId, 0)
+	require.NoError(err)
+	require.EqualValues(0, oldRecord.LastMbNum())
+
 	// Produce several miniblocks so local state advances beyond genesis
 	for range 8 {
 		tc.addReplEvent(streamId, prevMb, streamNodes)
 		prevMb = tc.makeMiniblockNoCallbacks(streamNodes, streamId, false)
 	}
-
-	// Use an old record (genesis) to simulate registry behind local
-	inst0 := tc.instances[0]
-	// Retrieve the genesis record at block 0
-	oldRecord, err := inst0.cache.params.Registry.GetStream(ctx, streamId, 0)
-	require.NoError(err)
-	require.EqualValues(0, oldRecord.LastMbNum())
 
 	// Use the already-local stream on instance 0
 	stream, err := inst0.cache.getStreamImpl(ctx, streamId, true)
