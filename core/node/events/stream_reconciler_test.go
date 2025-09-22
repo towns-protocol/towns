@@ -104,7 +104,7 @@ func TestReconciler(t *testing.T) {
 	}
 	tc.addReplEvent(streamId, prevMb, streamNodes)
 
-	tc.compareStreamStorage(streamNodes, streamId, 0)
+	tc.compareStreamStorage(streamNodes, streamId, 0, true)
 }
 
 // When the gap to the expected last miniblock is small (<= threshold),
@@ -259,7 +259,7 @@ func TestReconciler_BackfillOnly(t *testing.T) {
 	require.Equal(reconciler.stats.backfillPagesAttempted, reconciler.stats.backfillPagesSucceeded)
 
 	// After backfill, storage on all nodes should be consistent
-	tc.compareStreamStorage(streamNodes, streamId, 0)
+	tc.compareStreamStorage(streamNodes, streamId, 0, false)
 }
 
 // Sealed stream handling: when the registry marks a stream as sealed (ephemeral),
@@ -376,7 +376,7 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 	require.Equal(mbRef.Num, v.LastBlock().Ref.Num)
 
 	// Storage should match across nodes
-	tc.compareStreamStorage(addrs, streamId, 0)
+	tc.compareStreamStorage(addrs, streamId, 0, true)
 }
 
 // Forward-only reconciliation when backward reconciliation is disabled.

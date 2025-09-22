@@ -586,6 +586,7 @@ func (ctc *cacheTestContext) compareStreamStorage(
 	nodes []common.Address,
 	streamId StreamId,
 	fromInclusive int64,
+	compareMinipools bool,
 ) {
 	ctc.t.Helper()
 
@@ -599,6 +600,9 @@ func (ctc *cacheTestContext) compareStreamStorage(
 		result, err := inst.cache.params.Storage.ReadStreamFromLastSnapshot(ctc.ctx, streamId, 0)
 		ctc.require.NoError(err, "failed to read stream from last snapshot for node %d %s", i, nodes[i])
 		testfmt.Logf(ctc.t, "Stream %s on node %d %s:\n%#v\n", streamId, i, nodes[i], result)
+		if !compareMinipools {
+			result.MinipoolEnvelopes = nil
+		}
 		if i == 0 {
 			first = result
 		} else {
