@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
 import { z } from 'zod'
-import { getWeb3Deployment } from '@towns-protocol/web3'
+import { web3Env } from '@towns-protocol/web3'
 import { v4 } from 'uuid'
 
 dotenv.config({
@@ -27,7 +27,7 @@ const envMainSchema = z.object({
 
 function makeConfig() {
     const envMain = envMainSchema.parse(process.env)
-    const web3Config = getWeb3Deployment(envMain.RIVER_ENV)
+    const web3Config = web3Env().getDeployment(envMain.RIVER_ENV)
     const initialBlockNum = envMain.INITIAL_BLOCK_NUM
     const transactionValidBlocks = envMain.TRANSACTION_VALID_BLOCKS
     const baseProviderUrl = envMain.BASE_PROVIDER_URL

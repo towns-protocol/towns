@@ -1,7 +1,7 @@
 import { makeSignerContext } from '../../signerContext'
 import { AppRegistryService } from '../../appRegistryService'
 import { ethers } from 'ethers'
-import { getAppRegistryUrl } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { bin_fromHexString } from '@towns-protocol/utils'
 import {
     setupWalletsAndContexts,
@@ -9,7 +9,7 @@ import {
     everyoneMembershipStruct,
 } from '../testUtils'
 
-const appRegistryUrl = getAppRegistryUrl(process.env.RIVER_ENV!)
+const appRegistryUrl = townsEnv().getAppRegistryUrl(process.env.RIVER_ENV)
 
 describe('appRegistryService test', () => {
     test('authenticate with primary key', async () => {

@@ -5,7 +5,7 @@
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
 import { ETH_ADDRESS, LocalhostWeb3Provider, TipEventObject } from '@towns-protocol/web3'
-import { makeRiverConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
 import { waitFor, waitForValue } from '../testUtils'
@@ -19,16 +19,16 @@ const base_log = dlog('csb:test:transactions_Tip')
 const logError = dlogError('csb:test:transactions_Tip_error')
 
 describe('transactions_Tip', () => {
-    const riverConfig = makeRiverConfig()
-    const bobIdentity = new Bot(undefined, riverConfig)
+    const townsConfig = townsEnv().makeTownsConfig()
+    const bobIdentity = new Bot(undefined, townsConfig)
     const bobsOtherWallet = ethers.Wallet.createRandom()
     const bobsOtherWalletProvider = new LocalhostWeb3Provider(
-        riverConfig.base.rpcUrl,
+        townsConfig.base.rpcUrl,
         bobsOtherWallet,
     )
-    const aliceIdentity = new Bot(undefined, riverConfig)
+    const aliceIdentity = new Bot(undefined, townsConfig)
     const alicesOtherWallet = ethers.Wallet.createRandom()
-    const chainId = riverConfig.base.chainConfig.chainId
+    const chainId = townsConfig.base.chainConfig.chainId
 
     // updated once and shared between tests
     let bob: SyncAgent

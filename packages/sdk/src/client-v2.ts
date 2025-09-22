@@ -13,7 +13,7 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { makeRiverConfig } from './riverConfig'
+import { townsEnv } from './townsEnv'
 import { ethers } from 'ethers'
 import { RiverRegistry } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
@@ -104,7 +104,7 @@ export type Prettify<T> = {
 } & {}
 
 export type CreateTownsClientParams = {
-    env: Parameters<typeof makeRiverConfig>[0]
+    env: string
     encryptionDevice?: EncryptionDeviceInitOpts
     /** Toggle hash validation of Envelopes. Defaults to `false`. */
     hashValidation?: boolean
@@ -125,7 +125,7 @@ export const createTownsClient = async (
     ) &
         CreateTownsClientParams,
 ): Promise<ClientV2> => {
-    const config = makeRiverConfig(params.env)
+    const config = townsEnv().makeTownsConfig(params.env)
     const baseProvider = makeBaseProvider(config)
 
     let signerContext: SignerContext

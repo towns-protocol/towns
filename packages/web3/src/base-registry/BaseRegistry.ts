@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { INodeOperatorShim } from './INodeOperatorShim'
 import { IEntitlementCheckerShim } from './IEntitlementCheckerShim'
 import { ISpaceDelegationShim } from './ISpaceDelegationShim'

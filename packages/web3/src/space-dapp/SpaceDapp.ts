@@ -52,7 +52,7 @@ import {
 import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
 import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'

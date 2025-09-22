@@ -16,9 +16,9 @@ export const useAllBots = () => {
                 return []
             }
 
-            const baseProvider = makeBaseProvider(sync.config.riverConfig)
-            const riverConfig = sync.config.riverConfig
-            const appRegistryDapp = new AppRegistryDapp(riverConfig.base.chainConfig, baseProvider)
+            const baseProvider = makeBaseProvider(sync.config.townsConfig)
+            const townsConfig = sync.config.townsConfig
+            const appRegistryDapp = new AppRegistryDapp(townsConfig.base.chainConfig, baseProvider)
             return appRegistryDapp.getAllAppsByOwner(user.id as Address)
         },
         enabled: !!sync.userId,

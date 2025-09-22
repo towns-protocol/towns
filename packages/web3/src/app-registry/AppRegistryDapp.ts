@@ -1,5 +1,5 @@
 import { ethers, type BigNumber, type ContractReceipt, type ContractTransaction } from 'ethers'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
 import { SimpleAppShim } from './SimpleAppShim'

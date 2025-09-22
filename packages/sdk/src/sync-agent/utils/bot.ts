@@ -1,20 +1,20 @@
-import { RiverConfig, makeRiverConfig } from '../../riverConfig'
+import { TownsConfig, townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { makeSignerContext } from '../../signerContext'
 import { SyncAgent, type SyncAgentConfig } from '../syncAgent'
 
 export class Bot {
-    riverConfig: RiverConfig
+    townsConfig: TownsConfig
     rootWallet: ethers.Wallet
     delegateWallet: ethers.Wallet
     web3Provider: LocalhostWeb3Provider
 
-    constructor(rootWallet?: ethers.Wallet, riverConfig?: RiverConfig) {
-        this.riverConfig = riverConfig || makeRiverConfig()
+    constructor(rootWallet?: ethers.Wallet, townsConfig?: TownsConfig) {
+        this.townsConfig = townsConfig || townsEnv().makeTownsConfig()
         this.rootWallet = rootWallet || ethers.Wallet.createRandom()
         this.delegateWallet = ethers.Wallet.createRandom()
-        this.web3Provider = new LocalhostWeb3Provider(this.riverConfig.base.rpcUrl, this.rootWallet)
+        this.web3Provider = new LocalhostWeb3Provider(this.townsConfig.base.rpcUrl, this.rootWallet)
     }
 
     get userId() {
@@ -35,7 +35,7 @@ export class Bot {
         })
         const syncAgent = new SyncAgent({
             context: signerContext,
-            riverConfig: this.riverConfig,
+            townsConfig: this.townsConfig,
             baseProvider: this.web3Provider,
             ...opts,
         })

@@ -1,4 +1,4 @@
-import { RiverConfig } from '@towns-protocol/sdk'
+import { TownsConfig } from '@towns-protocol/sdk'
 import { Wallet } from 'ethers'
 import { getChatConfig } from '../common/common'
 import { makeStressClient } from '../../utils/stressClient'
@@ -14,7 +14,7 @@ import { getLogger } from '../../utils/logger'
  * loop over wallets one by one
  */
 export async function startStressSlowChat(opts: {
-    config: RiverConfig
+    config: TownsConfig
     processIndex: number
     rootWallet: Wallet
 }) {

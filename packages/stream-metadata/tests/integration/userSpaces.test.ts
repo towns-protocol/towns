@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
-import { Bot, makeRiverConfig, SyncAgent } from '@towns-protocol/sdk'
+import { Bot, townsEnv, SyncAgent } from '@towns-protocol/sdk'
 
 import { getTestServerUrl } from '../testUtils'
 
@@ -18,9 +18,9 @@ describe('integration/stream-metadata/userSpaces', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	const riverConfig = makeRiverConfig()
-	const bobIdentity = new Bot(undefined, riverConfig)
-	const aliceIdentity = new Bot(undefined, riverConfig)
+	const townsConfig = townsEnv().makeTownsConfig()
+	const bobIdentity = new Bot(undefined, townsConfig)
+	const aliceIdentity = new Bot(undefined, townsConfig)
 	let bob: SyncAgent
 	let alice: SyncAgent
 

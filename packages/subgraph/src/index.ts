@@ -1078,14 +1078,13 @@ ponder.on('Space:SubscriptionUpdate', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
     const spaceId = event.log.address
     const tokenId = event.args.tokenId
-    const newExpiration = event.args.expiration
 
     try {
+        // Only update the timestamp, not the renewal times
+        // The SubscriptionModule events handle nextRenewalTime and lastRenewalTime properly
         await context.db.sql
             .update(schema.subscription)
             .set({
-                nextRenewalTime: newExpiration,
-                lastRenewalTime: blockTimestamp,
                 updatedAt: blockTimestamp,
             })
             .where(

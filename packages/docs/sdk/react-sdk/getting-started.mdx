@@ -110,11 +110,11 @@ You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com
 
 ```tsx
 import { useAgentConnection } from "@towns-protocol/react-sdk";
-import { makeRiverConfig } from "@towns-protocol/sdk";
+import { townsEnv } from "@towns-protocol/sdk";
 import { getEthersSigner } from "./utils/viem-to-ethers";
 import { wagmiConfig } from "./config/wagmi";
 
-const riverConfig = makeRiverConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("gamma");
 
 function ConnectButton() {
   const { connect, isAgentConnecting, isAgentConnected } = useAgentConnection();
@@ -123,7 +123,7 @@ function ConnectButton() {
     <button
       onClick={async () => {
         const signer = await getEthersSigner(wagmiConfig);
-        connect(signer, { riverConfig });
+        connect(signer, { townsConfig });
       }}
     >
       {isAgentConnecting ? "Connecting..." : "Connect"}
@@ -151,9 +151,9 @@ If you have a Towns account, you can get your bearer token from there. Type `/be
 
 ```tsx
 import { useAgentConnection } from "@towns-protocol/react-sdk";
-import { makeRiverConfig } from "@towns-protocol/sdk";
+import { townsEnv } from "@towns-protocol/sdk";
 
-const riverConfig = makeRiverConfig("gamma");
+const townsConfig = townsEnv().makeTownsConfig("gamma");
 
 function ConnectButton() {
   const { connectUsingBearerToken, isAgentConnecting, isAgentConnected } = useAgentConnection();
@@ -167,7 +167,7 @@ function ConnectButton() {
         placeholder="Enter bearer token" 
       />
       <button 
-        onClick={() => connectUsingBearerToken(bearerToken, { riverConfig })}
+        onClick={() => connectUsingBearerToken(bearerToken, { townsConfig })}
       >
         {isAgentConnecting ? "Connecting..." : "Connect"}
         {isAgentConnected && "Connected ✅"}

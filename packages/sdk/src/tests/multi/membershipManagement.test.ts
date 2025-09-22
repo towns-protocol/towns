@@ -23,7 +23,7 @@ import {
     NoopRuleData,
     ETH_ADDRESS,
 } from '@towns-protocol/web3'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 
 const log = dlog('csb:test:membershipManagement')
 
@@ -32,7 +32,7 @@ describe('membershipManagement', () => {
         // make a space and mint some memberships for friends
 
         log('start')
-        const baseConfig = makeBaseChainConfig()
+        const baseConfig = townsEnv().makeBaseChainConfig()
         const bobsWallet = ethers.Wallet.createRandom()
         const bobsContext = await makeUserContextFromWallet(bobsWallet)
         const bobProvider = new LocalhostWeb3Provider(baseConfig.rpcUrl, bobsWallet)

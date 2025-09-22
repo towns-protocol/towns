@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { SpaceDapp } from './SpaceDapp'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 
 export function createSpaceDapp(
     provider: ethers.providers.Provider,

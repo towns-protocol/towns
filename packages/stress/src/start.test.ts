@@ -1,6 +1,6 @@
 import { getSystemInfo } from './utils/systemInfo'
 import { setupChat, startStressChat } from './mode/chat/root_chat'
-import { genShortId, makeRiverConfig } from '@towns-protocol/sdk'
+import { genShortId, townsEnv } from '@towns-protocol/sdk'
 import { LocalhostWeb3Provider } from '@towns-protocol/web3'
 import { getLogger } from './utils/logger'
 
@@ -14,7 +14,7 @@ describe('start.test.ts', () => {
 
     // run a very short test
     it('setup and run test', async () => {
-        const config = makeRiverConfig()
+        const config = townsEnv().makeTownsConfig()
         const rootProvider = new LocalhostWeb3Provider(config.base.rpcUrl)
         await rootProvider.fundWallet()
 
