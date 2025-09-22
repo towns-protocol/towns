@@ -115,14 +115,14 @@ func (sr *streamReconciler) reconcile() error {
 	}
 
 	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
-        // Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
-        if enableBackwardReconciliation {
-            return sr.backfillGaps()
+		// Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
+		if enableBackwardReconciliation {
+			return sr.backfillGaps()
 		} else {
-            return nil
-        }
-    }
-	
+			return nil
+		}
+	}
+
 	// Special-case: if stream is stuck at genesis (mb 0), try to import genesis from the stream registry.
 	if sr.expectedLastMbInclusive == 0 {
 		if err := sr.reconcileFromRegistryGenesisBlock(); err == nil {
