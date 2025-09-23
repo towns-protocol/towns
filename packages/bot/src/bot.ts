@@ -271,7 +271,6 @@ export class Bot<
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
-        console.log('request', JSON.stringify(request, null, 2))
 
         const statusResponse = create(AppServiceResponseSchema, {
             payload: {
