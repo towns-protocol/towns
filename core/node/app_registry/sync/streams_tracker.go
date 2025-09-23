@@ -82,7 +82,7 @@ func NewAppRegistryStreamsTracker(
 func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
-	return streamType == shared.STREAM_CHANNEL_BIN
+	return streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_USER_INBOX_BIN
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
@@ -98,5 +98,6 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		stream,
 		tracker.StreamsTrackerImpl.Listener(),
 		tracker.queue,
+		tracker,
 	)
 }
