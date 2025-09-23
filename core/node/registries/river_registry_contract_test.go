@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
@@ -281,7 +282,11 @@ func TestStreamEvents(t *testing.T) {
 	// Update stream placement
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return tc.StreamRegistry.PlaceStreamOnNode(opts, streamId, nodeAddr2)
+			return bind2.Transact(
+				tc.StreamRegistryInstance,
+				opts,
+				tc.StreamRegistry.PackPlaceStreamOnNode(streamId, nodeAddr2),
+			)
 		},
 	)
 	require.NoError(err)

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -44,10 +45,22 @@ type (
 
 	// TransactionPool represents an in-memory transaction pool to which transaction can be submitted.
 	TransactionPool interface {
-		// Submit calls createTx and sends the resulting transaction to the blockchain. It returns a pending transaction
+		// Submit calls createTx and sends the resulting transaction to the blockchain.
+		// It returns a pending transaction
 		// for which the caller can wait for the transaction receipt to arrive. The pool will resubmit transactions
 		// when necessary.
 		Submit(ctx context.Context, name string, createTx CreateTransaction) (TransactionPoolPendingTransaction, error)
+
+		// Submit2 sends transaction created with abigen v2/bind v2 to the blockchain.
+		// It returns a pending transaction
+		// for which the caller can wait for the transaction receipt to arrive. The pool will resubmit transactions
+		// when necessary.
+		Submit2(
+			ctx context.Context,
+			name string,
+			contract *bind2.BoundContract,
+			data []byte,
+		) (TransactionPoolPendingTransaction, error)
 
 		// EstimateGas estimates the gas usage of the transaction that would be created by createTx.
 		EstimateGas(ctx context.Context, createTx CreateTransaction) (uint64, error)
@@ -723,6 +736,26 @@ func (r *transactionPool) Submit(
 	defer r.mu.Unlock()
 
 	return r.submitLocked(ctx, name, createTx, true)
+}
+
+func (r *transactionPool) Submit2(
+	ctx context.Context,
+	name string,
+	contract *bind2.BoundContract,
+	data []byte,
+) (TransactionPoolPendingTransaction, error) {
+	// lock to prevent tx.Nonce collisions
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return r.submitLocked(
+		ctx,
+		name,
+		func(opts *bind.TransactOpts) (*types.Transaction, error) {
+			return bind2.Transact(contract, opts, data)
+		},
+		true,
+	)
 }
 
 func (r *transactionPool) submitLocked(

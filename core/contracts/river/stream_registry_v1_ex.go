@@ -2,13 +2,16 @@ package river
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+func (r *StreamRegistryV1) ABI() *abi.ABI {
+	return &r.abi
+}
 
 func (s *Stream) ReplicationFactor() int {
 	return max(1, int(s.Reserved0&0xFF))
@@ -150,10 +153,6 @@ var (
 		{Name: "isSealed", Type: "bool", InternalType: "bool"},
 	})
 )
-
-func (_StreamRegistryV1 *StreamRegistryV1Caller) BoundContract() *bind.BoundContract {
-	return _StreamRegistryV1.contract
-}
 
 // GetStreamId implements the EventWithStreamId interface.
 func (ss *StreamState) GetStreamId() StreamId {
