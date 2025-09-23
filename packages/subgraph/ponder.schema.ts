@@ -324,3 +324,26 @@ export const spaceToReviews = relations(space, ({ many }) => ({
 export const reviewToSpace = relations(review, ({ one }) => ({
     space: one(space, { fields: [review.spaceId], references: [space.id] }),
 }))
+
+// each space has many subscriptions
+export const spaceToSubscriptions = relations(space, ({ many }) => ({
+    subscriptions: many(subscription),
+}))
+
+// each subscription belongs to a space
+export const subscriptionToSpace = relations(subscription, ({ one }) => ({
+    space: one(space, { fields: [subscription.space], references: [space.id] }),
+}))
+
+// each subscription can have many failures
+export const subscriptionToFailures = relations(subscription, ({ many }) => ({
+    failures: many(subscriptionFailure),
+}))
+
+// each failure belongs to a subscription
+export const failureToSubscription = relations(subscriptionFailure, ({ one }) => ({
+    subscription: one(subscription, {
+        fields: [subscriptionFailure.account, subscriptionFailure.entityId],
+        references: [subscription.account, subscription.entityId],
+    }),
+}))
