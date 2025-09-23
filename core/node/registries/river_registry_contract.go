@@ -190,29 +190,11 @@ func (c *RiverRegistryContract) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	log := logging.FromCtx(ctx)
-
-	pendingTx, err := c.Blockchain.TxPool.Submit(
+	pendingTx, err := c.Blockchain.TxPool.Submit2(
 		ctx,
 		"AllocateStream",
-		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
-			tx, err := bind2.Transact(
-				c.StreamRegistryInstance,
-				opts,
-				c.StreamRegistry.PackAllocateStream(streamId, addresses, genesisMiniblockHash, genesisMiniblock),
-			)
-			if err == nil {
-				log.Debugw(
-					"RiverRegistryContract: prepared transaction",
-					"name", "AllocateStream",
-					"streamId", streamId,
-					"addresses", addresses,
-					"genesisMiniblockHash", genesisMiniblockHash,
-					"txHash", tx.Hash(),
-				)
-			}
-			return tx, err
-		},
+		c.StreamRegistryInstance,
+		c.StreamRegistry.PackAllocateStream(streamId, addresses, genesisMiniblockHash, genesisMiniblock),
 	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
@@ -248,46 +230,26 @@ func (c *RiverRegistryContract) AddStream(
 	lastMiniblockNum int64,
 	isSealed bool,
 ) error {
-	log := logging.FromCtx(ctx)
-
 	var flags StreamFlag
 	if isSealed {
 		flags |= StreamFlagSealed
 	}
 
-	pendingTx, err := c.Blockchain.TxPool.Submit(
+	pendingTx, err := c.Blockchain.TxPool.Submit2(
 		ctx,
 		"AddStream",
-		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
-			tx, err := bind2.Transact(
-				c.StreamRegistryInstance,
-				opts,
-				c.StreamRegistry.PackAddStream(
-					streamId,
-					genesisMiniblockHash,
-					river.Stream{
-						LastMiniblockHash: lastMiniblockHash,
-						LastMiniblockNum:  uint64(lastMiniblockNum),
-						Reserved0:         uint64(len(addresses)),
-						Flags:             uint64(flags),
-						Nodes:             addresses,
-					}),
-			)
-			if err == nil {
-				log.Debugw(
-					"RiverRegistryContract: prepared transaction",
-					"name", "AddStream",
-					"streamId", streamId,
-					"addresses", addresses,
-					"genesisMiniblockHash", genesisMiniblockHash,
-					"lastMiniblockHash", lastMiniblockHash,
-					"lastMiniblockNum", lastMiniblockNum,
-					"isSealed", isSealed,
-					"txHash", tx.Hash(),
-				)
-			}
-			return tx, err
-		},
+		c.StreamRegistryInstance,
+		c.StreamRegistry.PackAddStream(
+			streamId,
+			genesisMiniblockHash,
+			river.Stream{
+				LastMiniblockHash: lastMiniblockHash,
+				LastMiniblockNum:  uint64(lastMiniblockNum),
+				Reserved0:         uint64(len(addresses)),
+				Flags:             uint64(flags),
+				Nodes:             addresses,
+			},
+		),
 	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).

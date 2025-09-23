@@ -121,11 +121,6 @@ func (t StreamUpdatedEventType) String() string {
 }
 
 const (
-	// Event_StreamUpdated is emitted by the streams registry when a stream is added or modified
-	Event_StreamUpdated = "StreamUpdated"
-	// Event_StreamLastMiniblockUpdateFailed is emitted when setting a new miniblock for a stream failed
-	Event_StreamLastMiniblockUpdateFailed = "StreamLastMiniblockUpdateFailed"
-
 	StreamUpdatedEventTypeAllocate                  StreamUpdatedEventType = 0
 	StreamUpdatedEventTypeCreate                    StreamUpdatedEventType = 1
 	StreamUpdatedEventTypePlacementUpdated          StreamUpdatedEventType = 2
