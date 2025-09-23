@@ -118,7 +118,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         bytes calldata data
     ) external nonReentrant {
         _onlyAllowed(address(space));
-        return _uninstallApp(address(app), address(space), data);
+        _uninstallApp(address(app), address(space), data);
     }
 
     /// @notice Update an app to the latest version
@@ -126,7 +126,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @param space The space to update the app to
     function updateApp(ITownsApp app, IAppAccount space) external nonReentrant {
         _onlyAllowed(address(space));
-        return _updateApp(address(app), address(space));
+        _updateApp(address(app), address(space));
     }
 
     /// @notice Renew an app

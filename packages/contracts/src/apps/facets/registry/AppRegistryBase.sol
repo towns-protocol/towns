@@ -149,6 +149,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         address client,
         bytes32 versionId
     ) internal returns (bytes32 newVersionId) {
+        if (versionId == EMPTY_UID) InvalidAppId.selector.revertWith();
+
         (
             address owner,
             bytes32[] memory permissions,
@@ -157,16 +159,15 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         ) = _validateApp(app, client);
 
         if (msg.sender != owner) NotAllowed.selector.revertWith();
-        if (versionId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
         address appAddress = address(app);
 
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
         AppInfo storage appInfo = $.apps[appAddress];
-        ClientInfo storage clientInfo = $.client[client];
-
         if (appInfo.isBanned) BannedApp.selector.revertWith();
         if (appInfo.latestVersion != versionId) InvalidAppId.selector.revertWith();
+
+        ClientInfo storage clientInfo = $.client[client];
         if (clientInfo.app == address(0)) ClientNotRegistered.selector.revertWith();
 
         App memory appData = App({
@@ -295,7 +296,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
         IAppAccount(space).onUpdateApp(appId, abi.encode(app));
-        emit AppUpdated(app, address(space), appId);
+        emit AppUpdated(app, space, appId);
     }
 
     function _renewApp(address app, address account, bytes calldata data) internal {

@@ -132,7 +132,10 @@ abstract contract AppAccountBase is
     }
 
     function _onUpdateApp(bytes32 appId, bytes calldata data) internal {
+        if (data.length < 32) InvalidAppAddress.selector.revertWith();
+
         address module = abi.decode(data, (address));
+        if (module == address(0)) InvalidAppAddress.selector.revertWith();
 
         bytes32 currentAppId = _getInstalledAppId(module);
         if (currentAppId == EMPTY_UID) AppNotInstalled.selector.revertWith();
