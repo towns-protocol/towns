@@ -18,57 +18,35 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
-	_ = errors.New
-	_ = big.NewInt
-	_ = strings.NewReader
-	_ = ethereum.NotFound
-	_ = bind.Bind
-	_ = common.Big1
-	_ = types.BloomLookup
-	_ = event.NewSubscription
-	_ = abi.ConvertType
+	_	= errors.New
+	_	= big.NewInt
+	_	= strings.NewReader
+	_	= ethereum.NotFound
+	_	= bind.Bind
+	_	= common.Big1
+	_	= types.BloomLookup
+	_	= event.NewSubscription
+	_	= abi.ConvertType
 )
-
-// ExecutionManifest is an auto generated low-level Go binding around an user-defined struct.
-type ExecutionManifest struct {
-	ExecutionFunctions []ManifestExecutionFunction
-	ExecutionHooks     []ManifestExecutionHook
-	InterfaceIds       [][4]byte
-}
 
 // IAppRegistryBaseApp is an auto generated low-level Go binding around an user-defined struct.
 type IAppRegistryBaseApp struct {
-	AppId       [32]byte
-	Module      common.Address
-	Owner       common.Address
-	Client      common.Address
-	Permissions [][32]byte
-	Manifest    ExecutionManifest
-	Duration    *big.Int
+	AppId		[32]byte
+	Module		common.Address
+	Owner		common.Address
+	Client		common.Address
+	Permissions	[][32]byte
+	Manifest	ExecutionManifest
+	Duration	*big.Int
 }
 
 // IAppRegistryBaseAppParams is an auto generated low-level Go binding around an user-defined struct.
 type IAppRegistryBaseAppParams struct {
-	Name           string
-	Permissions    [][32]byte
-	Client         common.Address
-	InstallPrice   *big.Int
-	AccessDuration *big.Int
-}
-
-// ManifestExecutionFunction is an auto generated low-level Go binding around an user-defined struct.
-type ManifestExecutionFunction struct {
-	ExecutionSelector     [4]byte
-	SkipRuntimeValidation bool
-	AllowGlobalValidation bool
-}
-
-// ManifestExecutionHook is an auto generated low-level Go binding around an user-defined struct.
-type ManifestExecutionHook struct {
-	ExecutionSelector [4]byte
-	EntityId          uint32
-	IsPreHook         bool
-	IsPostHook        bool
+	Name		string
+	Permissions	[][32]byte
+	Client		common.Address
+	InstallPrice	*big.Int
+	AccessDuration	*big.Int
 }
 
 // AppRegistryMetaData contains all meta data concerning the AppRegistry contract.
@@ -82,61 +60,61 @@ var AppRegistryABI = AppRegistryMetaData.ABI
 
 // AppRegistry is an auto generated Go binding around an Ethereum contract.
 type AppRegistry struct {
-	AppRegistryCaller     // Read-only binding to the contract
-	AppRegistryTransactor // Write-only binding to the contract
-	AppRegistryFilterer   // Log filterer for contract events
+	AppRegistryCaller	// Read-only binding to the contract
+	AppRegistryTransactor	// Write-only binding to the contract
+	AppRegistryFilterer	// Log filterer for contract events
 }
 
 // AppRegistryCaller is an auto generated read-only Go binding around an Ethereum contract.
 type AppRegistryCaller struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // AppRegistryTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type AppRegistryTransactor struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // AppRegistryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type AppRegistryFilterer struct {
-	contract *bind.BoundContract // Generic contract wrapper for the low level calls
+	contract *bind.BoundContract	// Generic contract wrapper for the low level calls
 }
 
 // AppRegistrySession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
 type AppRegistrySession struct {
-	Contract     *AppRegistry      // Generic contract binding to set the session for
-	CallOpts     bind.CallOpts     // Call options to use throughout this session
-	TransactOpts bind.TransactOpts // Transaction auth options to use throughout this session
+	Contract	*AppRegistry		// Generic contract binding to set the session for
+	CallOpts	bind.CallOpts		// Call options to use throughout this session
+	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
 // AppRegistryCallerSession is an auto generated read-only Go binding around an Ethereum contract,
 // with pre-set call options.
 type AppRegistryCallerSession struct {
-	Contract *AppRegistryCaller // Generic contract caller binding to set the session for
-	CallOpts bind.CallOpts      // Call options to use throughout this session
+	Contract	*AppRegistryCaller	// Generic contract caller binding to set the session for
+	CallOpts	bind.CallOpts		// Call options to use throughout this session
 }
 
 // AppRegistryTransactorSession is an auto generated write-only Go binding around an Ethereum contract,
 // with pre-set transact options.
 type AppRegistryTransactorSession struct {
-	Contract     *AppRegistryTransactor // Generic contract transactor binding to set the session for
-	TransactOpts bind.TransactOpts      // Transaction auth options to use throughout this session
+	Contract	*AppRegistryTransactor	// Generic contract transactor binding to set the session for
+	TransactOpts	bind.TransactOpts	// Transaction auth options to use throughout this session
 }
 
 // AppRegistryRaw is an auto generated low-level Go binding around an Ethereum contract.
 type AppRegistryRaw struct {
-	Contract *AppRegistry // Generic contract binding to access the raw methods on
+	Contract *AppRegistry	// Generic contract binding to access the raw methods on
 }
 
 // AppRegistryCallerRaw is an auto generated low-level read-only Go binding around an Ethereum contract.
 type AppRegistryCallerRaw struct {
-	Contract *AppRegistryCaller // Generic read-only contract binding to access the raw methods on
+	Contract *AppRegistryCaller	// Generic read-only contract binding to access the raw methods on
 }
 
 // AppRegistryTransactorRaw is an auto generated low-level write-only Go binding around an Ethereum contract.
 type AppRegistryTransactorRaw struct {
-	Contract *AppRegistryTransactor // Generic write-only contract binding to access the raw methods on
+	Contract *AppRegistryTransactor	// Generic write-only contract binding to access the raw methods on
 }
 
 // NewAppRegistry creates a new instance of AppRegistry, bound to a specific deployed contract.
@@ -640,15 +618,15 @@ func (_AppRegistry *AppRegistryTransactorSession) UninstallApp(app common.Addres
 
 // AppRegistryAppBannedIterator is returned from FilterAppBanned and is used to iterate over the raw logs and unpacked data for AppBanned events raised by the AppRegistry contract.
 type AppRegistryAppBannedIterator struct {
-	Event *AppRegistryAppBanned // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppBanned	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -707,9 +685,9 @@ func (it *AppRegistryAppBannedIterator) Close() error {
 
 // AppRegistryAppBanned represents a AppBanned event raised by the AppRegistry contract.
 type AppRegistryAppBanned struct {
-	App common.Address
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppBanned is a free log retrieval operation binding the contract event 0xdd3476c5c02a5b7abb7375531dc9b1bf8dcdf5ab9ee67b1baa2c0964183a9426.
@@ -785,15 +763,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppBanned(log types.Log) (*AppRegi
 
 // AppRegistryAppCreatedIterator is returned from FilterAppCreated and is used to iterate over the raw logs and unpacked data for AppCreated events raised by the AppRegistry contract.
 type AppRegistryAppCreatedIterator struct {
-	Event *AppRegistryAppCreated // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppCreated	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -852,9 +830,9 @@ func (it *AppRegistryAppCreatedIterator) Close() error {
 
 // AppRegistryAppCreated represents a AppCreated event raised by the AppRegistry contract.
 type AppRegistryAppCreated struct {
-	App common.Address
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppCreated is a free log retrieval operation binding the contract event 0x4ef1c746ec01bf724b6101c8e9a6852a9e175232ed3b66e06c221514213661dc.
@@ -930,15 +908,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppCreated(log types.Log) (*AppReg
 
 // AppRegistryAppInstalledIterator is returned from FilterAppInstalled and is used to iterate over the raw logs and unpacked data for AppInstalled events raised by the AppRegistry contract.
 type AppRegistryAppInstalledIterator struct {
-	Event *AppRegistryAppInstalled // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppInstalled	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -997,10 +975,10 @@ func (it *AppRegistryAppInstalledIterator) Close() error {
 
 // AppRegistryAppInstalled represents a AppInstalled event raised by the AppRegistry contract.
 type AppRegistryAppInstalled struct {
-	App     common.Address
-	Account common.Address
-	AppId   [32]byte
-	Raw     types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Account	common.Address
+	AppId	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppInstalled is a free log retrieval operation binding the contract event 0x964f2b980b9892debcc394f32662d711d5b6417bf23117f145240a8a0ba4b8c3.
@@ -1092,15 +1070,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppInstalled(log types.Log) (*AppR
 
 // AppRegistryAppRegisteredIterator is returned from FilterAppRegistered and is used to iterate over the raw logs and unpacked data for AppRegistered events raised by the AppRegistry contract.
 type AppRegistryAppRegisteredIterator struct {
-	Event *AppRegistryAppRegistered // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppRegistered	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1159,9 +1137,9 @@ func (it *AppRegistryAppRegisteredIterator) Close() error {
 
 // AppRegistryAppRegistered represents a AppRegistered event raised by the AppRegistry contract.
 type AppRegistryAppRegistered struct {
-	App common.Address
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppRegistered is a free log retrieval operation binding the contract event 0xb29dff3e705ef0b6c125758b5859218021c5b462839d71e83b0b6be86ed0802a.
@@ -1237,15 +1215,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppRegistered(log types.Log) (*App
 
 // AppRegistryAppRenewedIterator is returned from FilterAppRenewed and is used to iterate over the raw logs and unpacked data for AppRenewed events raised by the AppRegistry contract.
 type AppRegistryAppRenewedIterator struct {
-	Event *AppRegistryAppRenewed // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppRenewed	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1304,10 +1282,10 @@ func (it *AppRegistryAppRenewedIterator) Close() error {
 
 // AppRegistryAppRenewed represents a AppRenewed event raised by the AppRegistry contract.
 type AppRegistryAppRenewed struct {
-	App     common.Address
-	Account common.Address
-	AppId   [32]byte
-	Raw     types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Account	common.Address
+	AppId	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppRenewed is a free log retrieval operation binding the contract event 0xcd92821b6ef75242495e80ef40036955c209df02d7319bff0345ad60a5855a28.
@@ -1399,15 +1377,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppRenewed(log types.Log) (*AppReg
 
 // AppRegistryAppSchemaSetIterator is returned from FilterAppSchemaSet and is used to iterate over the raw logs and unpacked data for AppSchemaSet events raised by the AppRegistry contract.
 type AppRegistryAppSchemaSetIterator struct {
-	Event *AppRegistryAppSchemaSet // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppSchemaSet	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1466,8 +1444,8 @@ func (it *AppRegistryAppSchemaSetIterator) Close() error {
 
 // AppRegistryAppSchemaSet represents a AppSchemaSet event raised by the AppRegistry contract.
 type AppRegistryAppSchemaSet struct {
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppSchemaSet is a free log retrieval operation binding the contract event 0x723aec47bbea8010c7ccf9c1bc9b775634332ea88ed1fc27b93f3469b24264ec.
@@ -1533,15 +1511,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppSchemaSet(log types.Log) (*AppR
 
 // AppRegistryAppUninstalledIterator is returned from FilterAppUninstalled and is used to iterate over the raw logs and unpacked data for AppUninstalled events raised by the AppRegistry contract.
 type AppRegistryAppUninstalledIterator struct {
-	Event *AppRegistryAppUninstalled // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppUninstalled	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1600,10 +1578,10 @@ func (it *AppRegistryAppUninstalledIterator) Close() error {
 
 // AppRegistryAppUninstalled represents a AppUninstalled event raised by the AppRegistry contract.
 type AppRegistryAppUninstalled struct {
-	App     common.Address
-	Account common.Address
-	AppId   [32]byte
-	Raw     types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Account	common.Address
+	AppId	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppUninstalled is a free log retrieval operation binding the contract event 0xe0b9e78734e068100cc19d3fdf3d1cb8adbe68b9321eb3e1490a6e5a1ab628f4.
@@ -1695,15 +1673,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppUninstalled(log types.Log) (*Ap
 
 // AppRegistryAppUnregisteredIterator is returned from FilterAppUnregistered and is used to iterate over the raw logs and unpacked data for AppUnregistered events raised by the AppRegistry contract.
 type AppRegistryAppUnregisteredIterator struct {
-	Event *AppRegistryAppUnregistered // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppUnregistered	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1762,9 +1740,9 @@ func (it *AppRegistryAppUnregisteredIterator) Close() error {
 
 // AppRegistryAppUnregistered represents a AppUnregistered event raised by the AppRegistry contract.
 type AppRegistryAppUnregistered struct {
-	App common.Address
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppUnregistered is a free log retrieval operation binding the contract event 0x185eab63c3a863ff7848fe5c971d33894bc08bdc9982e6daac76a80298854a2e.
@@ -1840,15 +1818,15 @@ func (_AppRegistry *AppRegistryFilterer) ParseAppUnregistered(log types.Log) (*A
 
 // AppRegistryAppUpdatedIterator is returned from FilterAppUpdated and is used to iterate over the raw logs and unpacked data for AppUpdated events raised by the AppRegistry contract.
 type AppRegistryAppUpdatedIterator struct {
-	Event *AppRegistryAppUpdated // Event containing the contract specifics and raw log
+	Event	*AppRegistryAppUpdated	// Event containing the contract specifics and raw log
 
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
+	contract	*bind.BoundContract	// Generic contract to use for unpacking event data
+	event		string			// Event name to use for unpacking event data
 
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
+	logs	chan types.Log		// Log channel receiving the found contract events
+	sub	ethereum.Subscription	// Subscription for errors, completion and termination
+	done	bool			// Whether the subscription completed delivering logs
+	fail	error			// Occurred error to stop iteration
 }
 
 // Next advances the iterator to the subsequent event, returning whether there
@@ -1907,9 +1885,9 @@ func (it *AppRegistryAppUpdatedIterator) Close() error {
 
 // AppRegistryAppUpdated represents a AppUpdated event raised by the AppRegistry contract.
 type AppRegistryAppUpdated struct {
-	App common.Address
-	Uid [32]byte
-	Raw types.Log // Blockchain specific contextual infos
+	App	common.Address
+	Uid	[32]byte
+	Raw	types.Log	// Blockchain specific contextual infos
 }
 
 // FilterAppUpdated is a free log retrieval operation binding the contract event 0x8e71058c6e054309a6daad6ddd1268b7eb2fb947aa5160443a5056837a0ba6cc.
