@@ -153,21 +153,6 @@ contract SubscriptionModuleTest is ModulesBase {
     /*                       PROCESS RENEWAL                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_processRenewal_OnlyAccountOwner() public {
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(makeAddr("user"));
-        vm.deal(address(account), params.renewalPrice);
-        _warpToRenewalTime(params.space, params.tokenId);
-
-        // Account owner should be able to process renewal
-        _processRenewalAs(address(account), address(account), entityId);
-        assertSubscriptionActive(address(account), entityId);
-    }
-
     function test_processRenewal_OnlyAuthorizedOperator() public {
         (
             ModularAccount account,
@@ -183,7 +168,22 @@ contract SubscriptionModuleTest is ModulesBase {
         assertSubscriptionActive(address(account), entityId);
     }
 
-    function test_processRenewal_revertWhen_UnauthorizedCaller() public {
+    function test_processRenewal_revertWhen_AccountOwner() public {
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"));
+        vm.deal(address(account), params.renewalPrice);
+        _warpToRenewalTime(params.space, params.tokenId);
+
+        // Account owner should be able to process renewal
+        vm.expectRevert(SubscriptionModule__InvalidCaller.selector);
+        _processRenewalAs(address(account), address(account), entityId);
+    }
+
+    function test_processRenewal_revertWhen_InvalidCaller() public {
         (
             ModularAccount account,
             ,
@@ -233,7 +233,66 @@ contract SubscriptionModuleTest is ModulesBase {
         assertNativeDistribution(beforeSnap, afterSnap);
     }
 
-    function test_processRenewal_revertWhen_InsufficientBalance(address user) public {
+    function test_processRenewal_skipWhen_InactiveSubscription(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        _warpPastGracePeriod(params.space, tokenId);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "INACTIVE");
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    function test_processRenewal_skipWhen_NotDue(address user) public {
+        (ModularAccount account, , uint32 entityId, ) = _createSubscription(user);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit SubscriptionNotDue(address(account), entityId);
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    function test_processRenewal_skipWhen_PastGracePeriod(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        _warpPastGracePeriod(params.space, tokenId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "PAST_GRACE");
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    function test_processRenewal_skipWhen_NotOwner(address user) public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(user);
+
+        address newAccount = makeAddr("new_account");
+
+        _transferMembership(params.space, address(account), newAccount, tokenId);
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "NOT_OWNER");
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    function test_processRenewal_skipWhen_InsufficientBalance(address user) public {
         (
             ModularAccount account,
             uint256 tokenId,
@@ -243,7 +302,8 @@ contract SubscriptionModuleTest is ModulesBase {
 
         _warpToRenewalTime(params.space, tokenId);
 
-        vm.expectRevert(SubscriptionModule__InsufficientBalance.selector);
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "INSUFFICIENT_BALANCE");
         _processRenewalAs(processor, address(account), entityId);
     }
 
@@ -321,19 +381,6 @@ contract SubscriptionModuleTest is ModulesBase {
         assertTrue(sub.active, "Subscription should still be active");
     }
 
-    function test_processRenewal_revertWhen_InvalidCaller(address user) external {
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(user);
-        vm.deal(address(account), params.renewalPrice);
-
-        vm.expectRevert(SubscriptionModule__InvalidCaller.selector);
-        _processRenewalAs(makeAddr("not_processor"), address(account), entityId);
-    }
-
     function test_revertWhen_processRenewal_RenewalNotDue(address user) external {
         (
             ModularAccount account,
@@ -343,7 +390,8 @@ contract SubscriptionModuleTest is ModulesBase {
         ) = _createSubscription(user);
         vm.deal(address(account), params.renewalPrice);
 
-        vm.expectRevert(SubscriptionModule__RenewalNotDue.selector);
+        vm.expectEmit(address(subscriptionModule));
+        emit SubscriptionNotDue(address(account), entityId);
         _processRenewalAs(processor, address(account), entityId);
     }
 
@@ -387,87 +435,6 @@ contract SubscriptionModuleTest is ModulesBase {
 
         assertSubscriptionActive(address(account), entityId);
         assertTrue(_getMembership(params.space).expiresAt(tokenId) > block.timestamp);
-    }
-
-    /*´:°•.°+.*•´.*:•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                        OPERATOR MANAGEMENT                   */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function test_grantOperator() public {
-        address newOperator = makeAddr("newOperator");
-
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(newOperator);
-
-        assertTrue(subscriptionModule.isOperator(newOperator));
-
-        // Test that the operator can now process renewals
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(makeAddr("user"));
-        vm.deal(address(account), params.renewalPrice);
-        _warpToRenewalTime(params.space, params.tokenId);
-
-        _processRenewalAs(newOperator, address(account), entityId);
-        assertSubscriptionActive(address(account), entityId);
-    }
-
-    function test_revokeOperator() public {
-        address operatorToRevoke = makeAddr("operatorToRevoke");
-
-        // First grant the operator
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(operatorToRevoke);
-
-        // Then revoke it
-        vm.prank(deployer);
-        subscriptionModule.revokeOperator(operatorToRevoke);
-
-        // Test that the operator can no longer process renewals
-        (
-            ModularAccount account,
-            ,
-            uint32 entityId,
-            SubscriptionParams memory params
-        ) = _createSubscription(makeAddr("user"));
-        vm.deal(address(account), params.renewalPrice);
-        _warpToRenewalTime(params.space, params.tokenId);
-
-        vm.expectRevert(SubscriptionModule__InvalidCaller.selector);
-        _processRenewalAs(operatorToRevoke, address(account), entityId);
-    }
-
-    function test_grantOperator_revertWhen_NotOwner() public {
-        address newOperator = makeAddr("newOperator");
-        address nonOwner = makeAddr("nonOwner");
-
-        vm.expectRevert();
-        vm.prank(nonOwner);
-        subscriptionModule.grantOperator(newOperator);
-    }
-
-    function test_revokeOperator_revertWhen_NotOwner() public {
-        address operatorToRevoke = makeAddr("operatorToRevoke");
-        address nonOwner = makeAddr("nonOwner");
-
-        vm.expectRevert();
-        vm.prank(nonOwner);
-        subscriptionModule.revokeOperator(operatorToRevoke);
-    }
-
-    function test_grantOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(Validator.InvalidAddress.selector);
-        vm.prank(deployer);
-        subscriptionModule.grantOperator(address(0));
-    }
-
-    function test_revokeOperator_revertWhen_ZeroAddress() public {
-        vm.expectRevert(Validator.InvalidAddress.selector);
-        vm.prank(deployer);
-        subscriptionModule.revokeOperator(address(0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -599,7 +566,7 @@ contract SubscriptionModuleTest is ModulesBase {
 
         // account 2 is past grace period
         sub = subscriptionModule.getSubscription(address(account2), entityId2);
-        assertTrue(sub.active && sub.lastRenewalTime == 0, "account2 should not be renewed");
+        assertTrue(!sub.active && sub.lastRenewalTime == 0, "account2 should not be renewed");
 
         // account 3 is not due
         sub = subscriptionModule.getSubscription(address(account3), entityId3);
@@ -675,5 +642,86 @@ contract SubscriptionModuleTest is ModulesBase {
         Subscription memory sub3 = subscriptionModule.getSubscription(address(account3), entityId3);
         assertTrue(sub3.active, "account3 should remain active");
         assertEq(sub3.lastRenewalTime, 0, "account3 should not be renewed");
+    }
+
+    /*´:°•.°+.*•´.*:•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        OPERATOR MANAGEMENT                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_grantOperator() public {
+        address newOperator = makeAddr("newOperator");
+
+        vm.prank(deployer);
+        subscriptionModule.grantOperator(newOperator);
+
+        assertTrue(subscriptionModule.isOperator(newOperator));
+
+        // Test that the operator can now process renewals
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"));
+        vm.deal(address(account), params.renewalPrice);
+        _warpToRenewalTime(params.space, params.tokenId);
+
+        _processRenewalAs(newOperator, address(account), entityId);
+        assertSubscriptionActive(address(account), entityId);
+    }
+
+    function test_revokeOperator() public {
+        address operatorToRevoke = makeAddr("operatorToRevoke");
+
+        // First grant the operator
+        vm.prank(deployer);
+        subscriptionModule.grantOperator(operatorToRevoke);
+
+        // Then revoke it
+        vm.prank(deployer);
+        subscriptionModule.revokeOperator(operatorToRevoke);
+
+        // Test that the operator can no longer process renewals
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"));
+        vm.deal(address(account), params.renewalPrice);
+        _warpToRenewalTime(params.space, params.tokenId);
+
+        vm.expectRevert(SubscriptionModule__InvalidCaller.selector);
+        _processRenewalAs(operatorToRevoke, address(account), entityId);
+    }
+
+    function test_grantOperator_revertWhen_NotOwner() public {
+        address newOperator = makeAddr("newOperator");
+        address nonOwner = makeAddr("nonOwner");
+
+        vm.expectRevert();
+        vm.prank(nonOwner);
+        subscriptionModule.grantOperator(newOperator);
+    }
+
+    function test_revokeOperator_revertWhen_NotOwner() public {
+        address operatorToRevoke = makeAddr("operatorToRevoke");
+        address nonOwner = makeAddr("nonOwner");
+
+        vm.expectRevert();
+        vm.prank(nonOwner);
+        subscriptionModule.revokeOperator(operatorToRevoke);
+    }
+
+    function test_grantOperator_revertWhen_ZeroAddress() public {
+        vm.expectRevert(Validator.InvalidAddress.selector);
+        vm.prank(deployer);
+        subscriptionModule.grantOperator(address(0));
+    }
+
+    function test_revokeOperator_revertWhen_ZeroAddress() public {
+        vm.expectRevert(Validator.InvalidAddress.selector);
+        vm.prank(deployer);
+        subscriptionModule.revokeOperator(address(0));
     }
 }

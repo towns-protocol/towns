@@ -104,17 +104,29 @@ jobs:
                     docker save towns-anvil:${{ steps.hash.outputs.hash }} > /tmp/anvil.tar
                   fi
 
-            # Build Docker image (unified approach for both GitHub Actions and act)
-            - name: Build Docker image
-              if: ${{ steps.check-remote.outputs.exists == 'false' }}
+            # GitHub Actions path - use build-push-action
+            - name: Setup Docker Buildx
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build and export Docker image (GitHub)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
               uses: docker/build-push-action@v6
               with:
                   context: .
                   file: ./packages/contracts/docker/Dockerfile
                   tags: towns-anvil:${{ steps.hash.outputs.hash }}
-                  outputs: ${{ env.ACT == 'true' && 'type=docker' || 'type=docker,dest=/tmp/anvil.tar' }}
-                  cache-from: ${{ env.ACT != 'true' && 'type=gha' || '' }}
-                  cache-to: ${{ env.ACT != 'true' && 'type=gha,mode=max' || '' }}
+                  outputs: type=docker,dest=/tmp/anvil.tar
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            # Local act path - use regular docker build
+            - name: Build Docker image (Local)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
+              run: |
+                  docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
+                    -f ./packages/contracts/docker/Dockerfile .
+                  # No need to save to tar in act since the image is already in local Docker
 
             # Upload artifact in GitHub Actions (for both built and pulled images)
             - name: Upload Docker artifact

@@ -29,9 +29,31 @@ var (
 	_ = abi.ConvertType
 )
 
+// ExecutionManifest is an auto generated low-level Go binding around an user-defined struct.
+type ExecutionManifest struct {
+	ExecutionFunctions []ManifestExecutionFunction
+	ExecutionHooks     []ManifestExecutionHook
+	InterfaceIds       [][4]byte
+}
+
+// ManifestExecutionFunction is an auto generated low-level Go binding around an user-defined struct.
+type ManifestExecutionFunction struct {
+	ExecutionSelector     [4]byte
+	SkipRuntimeValidation bool
+	AllowGlobalValidation bool
+}
+
+// ManifestExecutionHook is an auto generated low-level Go binding around an user-defined struct.
+type ManifestExecutionHook struct {
+	ExecutionSelector [4]byte
+	EntityId          uint32
+	IsPreHook         bool
+	IsPostHook        bool
+}
+
 // AppAccountMetaData contains all meta data concerning the AppAccount contract.
 var AppAccountMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getAppExpiration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRenewApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"disableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"enableApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"execute\",\"inputs\":[{\"name\":\"target\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"value\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"getAppExpiration\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint48\",\"internalType\":\"uint48\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getAppId\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getInstalledApps\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppEntitled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"publicKey\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"permission\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppExecuting\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isAppInstalled\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"onInstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onRenewApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"onUninstallApp\",\"inputs\":[{\"name\":\"appId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"ExecutionInstalled\",\"inputs\":[{\"name\":\"module\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"manifest\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structExecutionManifest\",\"components\":[{\"name\":\"executionFunctions\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionFunction[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"skipRuntimeValidation\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowGlobalValidation\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"executionHooks\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionHook[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"entityId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"isPreHook\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"isPostHook\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"interfaceIds\",\"type\":\"bytes4[]\",\"internalType\":\"bytes4[]\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"ExecutionUninstalled\",\"inputs\":[{\"name\":\"module\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"success\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"},{\"name\":\"manifest\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structExecutionManifest\",\"components\":[{\"name\":\"executionFunctions\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionFunction[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"skipRuntimeValidation\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"allowGlobalValidation\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"executionHooks\",\"type\":\"tuple[]\",\"internalType\":\"structManifestExecutionHook[]\",\"components\":[{\"name\":\"executionSelector\",\"type\":\"bytes4\",\"internalType\":\"bytes4\"},{\"name\":\"entityId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"isPreHook\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"isPostHook\",\"type\":\"bool\",\"internalType\":\"bool\"}]},{\"name\":\"interfaceIds\",\"type\":\"bytes4[]\",\"internalType\":\"bytes4[]\"}]}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AppAlreadyInstalled\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidAppAddress\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"InvalidCaller\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidManifest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NotEnoughEth\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnauthorizedApp\",\"inputs\":[{\"name\":\"app\",\"type\":\"address\",\"internalType\":\"address\"}]},{\"type\":\"error\",\"name\":\"UnauthorizedSelector\",\"inputs\":[]}]",
 }
 
 // AppAccountABI is the input ABI used to generate the binding from.
@@ -304,6 +326,37 @@ func (_AppAccount *AppAccountCallerSession) IsAppEntitled(app common.Address, pu
 	return _AppAccount.Contract.IsAppEntitled(&_AppAccount.CallOpts, app, publicKey, permission)
 }
 
+// IsAppExecuting is a free data retrieval call binding the contract method 0xb4a53e27.
+//
+// Solidity: function isAppExecuting(address app) view returns(bool)
+func (_AppAccount *AppAccountCaller) IsAppExecuting(opts *bind.CallOpts, app common.Address) (bool, error) {
+	var out []interface{}
+	err := _AppAccount.contract.Call(opts, &out, "isAppExecuting", app)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsAppExecuting is a free data retrieval call binding the contract method 0xb4a53e27.
+//
+// Solidity: function isAppExecuting(address app) view returns(bool)
+func (_AppAccount *AppAccountSession) IsAppExecuting(app common.Address) (bool, error) {
+	return _AppAccount.Contract.IsAppExecuting(&_AppAccount.CallOpts, app)
+}
+
+// IsAppExecuting is a free data retrieval call binding the contract method 0xb4a53e27.
+//
+// Solidity: function isAppExecuting(address app) view returns(bool)
+func (_AppAccount *AppAccountCallerSession) IsAppExecuting(app common.Address) (bool, error) {
+	return _AppAccount.Contract.IsAppExecuting(&_AppAccount.CallOpts, app)
+}
+
 // IsAppInstalled is a free data retrieval call binding the contract method 0xe92df000.
 //
 // Solidity: function isAppInstalled(address app) view returns(bool)
@@ -377,6 +430,27 @@ func (_AppAccount *AppAccountTransactorSession) EnableApp(app common.Address) (*
 	return _AppAccount.Contract.EnableApp(&_AppAccount.TransactOpts, app)
 }
 
+// Execute is a paid mutator transaction binding the contract method 0xb61d27f6.
+//
+// Solidity: function execute(address target, uint256 value, bytes data) payable returns(bytes)
+func (_AppAccount *AppAccountTransactor) Execute(opts *bind.TransactOpts, target common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
+	return _AppAccount.contract.Transact(opts, "execute", target, value, data)
+}
+
+// Execute is a paid mutator transaction binding the contract method 0xb61d27f6.
+//
+// Solidity: function execute(address target, uint256 value, bytes data) payable returns(bytes)
+func (_AppAccount *AppAccountSession) Execute(target common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
+	return _AppAccount.Contract.Execute(&_AppAccount.TransactOpts, target, value, data)
+}
+
+// Execute is a paid mutator transaction binding the contract method 0xb61d27f6.
+//
+// Solidity: function execute(address target, uint256 value, bytes data) payable returns(bytes)
+func (_AppAccount *AppAccountTransactorSession) Execute(target common.Address, value *big.Int, data []byte) (*types.Transaction, error) {
+	return _AppAccount.Contract.Execute(&_AppAccount.TransactOpts, target, value, data)
+}
+
 // OnInstallApp is a paid mutator transaction binding the contract method 0x3406a093.
 //
 // Solidity: function onInstallApp(bytes32 appId, bytes data) returns()
@@ -438,4 +512,295 @@ func (_AppAccount *AppAccountSession) OnUninstallApp(appId [32]byte, data []byte
 // Solidity: function onUninstallApp(bytes32 appId, bytes data) returns()
 func (_AppAccount *AppAccountTransactorSession) OnUninstallApp(appId [32]byte, data []byte) (*types.Transaction, error) {
 	return _AppAccount.Contract.OnUninstallApp(&_AppAccount.TransactOpts, appId, data)
+}
+
+// AppAccountExecutionInstalledIterator is returned from FilterExecutionInstalled and is used to iterate over the raw logs and unpacked data for ExecutionInstalled events raised by the AppAccount contract.
+type AppAccountExecutionInstalledIterator struct {
+	Event *AppAccountExecutionInstalled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AppAccountExecutionInstalledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AppAccountExecutionInstalled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AppAccountExecutionInstalled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AppAccountExecutionInstalledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AppAccountExecutionInstalledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AppAccountExecutionInstalled represents a ExecutionInstalled event raised by the AppAccount contract.
+type AppAccountExecutionInstalled struct {
+	Module   common.Address
+	Manifest ExecutionManifest
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterExecutionInstalled is a free log retrieval operation binding the contract event 0xfaa447b433b10d3cedff587bf1c996e5c2d62c8bda30ca3956de7ebb207206c2.
+//
+// Solidity: event ExecutionInstalled(address indexed module, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) FilterExecutionInstalled(opts *bind.FilterOpts, module []common.Address) (*AppAccountExecutionInstalledIterator, error) {
+
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AppAccount.contract.FilterLogs(opts, "ExecutionInstalled", moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AppAccountExecutionInstalledIterator{contract: _AppAccount.contract, event: "ExecutionInstalled", logs: logs, sub: sub}, nil
+}
+
+// WatchExecutionInstalled is a free log subscription operation binding the contract event 0xfaa447b433b10d3cedff587bf1c996e5c2d62c8bda30ca3956de7ebb207206c2.
+//
+// Solidity: event ExecutionInstalled(address indexed module, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) WatchExecutionInstalled(opts *bind.WatchOpts, sink chan<- *AppAccountExecutionInstalled, module []common.Address) (event.Subscription, error) {
+
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AppAccount.contract.WatchLogs(opts, "ExecutionInstalled", moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AppAccountExecutionInstalled)
+				if err := _AppAccount.contract.UnpackLog(event, "ExecutionInstalled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseExecutionInstalled is a log parse operation binding the contract event 0xfaa447b433b10d3cedff587bf1c996e5c2d62c8bda30ca3956de7ebb207206c2.
+//
+// Solidity: event ExecutionInstalled(address indexed module, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) ParseExecutionInstalled(log types.Log) (*AppAccountExecutionInstalled, error) {
+	event := new(AppAccountExecutionInstalled)
+	if err := _AppAccount.contract.UnpackLog(event, "ExecutionInstalled", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// AppAccountExecutionUninstalledIterator is returned from FilterExecutionUninstalled and is used to iterate over the raw logs and unpacked data for ExecutionUninstalled events raised by the AppAccount contract.
+type AppAccountExecutionUninstalledIterator struct {
+	Event *AppAccountExecutionUninstalled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *AppAccountExecutionUninstalledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(AppAccountExecutionUninstalled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(AppAccountExecutionUninstalled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *AppAccountExecutionUninstalledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *AppAccountExecutionUninstalledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// AppAccountExecutionUninstalled represents a ExecutionUninstalled event raised by the AppAccount contract.
+type AppAccountExecutionUninstalled struct {
+	Module   common.Address
+	Success  bool
+	Manifest ExecutionManifest
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterExecutionUninstalled is a free log retrieval operation binding the contract event 0x333064fd0a538a0f9c35864ea1c585e562fb83b5b4649ba362ac250e8178aa63.
+//
+// Solidity: event ExecutionUninstalled(address indexed module, bool success, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) FilterExecutionUninstalled(opts *bind.FilterOpts, module []common.Address) (*AppAccountExecutionUninstalledIterator, error) {
+
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AppAccount.contract.FilterLogs(opts, "ExecutionUninstalled", moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return &AppAccountExecutionUninstalledIterator{contract: _AppAccount.contract, event: "ExecutionUninstalled", logs: logs, sub: sub}, nil
+}
+
+// WatchExecutionUninstalled is a free log subscription operation binding the contract event 0x333064fd0a538a0f9c35864ea1c585e562fb83b5b4649ba362ac250e8178aa63.
+//
+// Solidity: event ExecutionUninstalled(address indexed module, bool success, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) WatchExecutionUninstalled(opts *bind.WatchOpts, sink chan<- *AppAccountExecutionUninstalled, module []common.Address) (event.Subscription, error) {
+
+	var moduleRule []interface{}
+	for _, moduleItem := range module {
+		moduleRule = append(moduleRule, moduleItem)
+	}
+
+	logs, sub, err := _AppAccount.contract.WatchLogs(opts, "ExecutionUninstalled", moduleRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(AppAccountExecutionUninstalled)
+				if err := _AppAccount.contract.UnpackLog(event, "ExecutionUninstalled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseExecutionUninstalled is a log parse operation binding the contract event 0x333064fd0a538a0f9c35864ea1c585e562fb83b5b4649ba362ac250e8178aa63.
+//
+// Solidity: event ExecutionUninstalled(address indexed module, bool success, ((bytes4,bool,bool)[],(bytes4,uint32,bool,bool)[],bytes4[]) manifest)
+func (_AppAccount *AppAccountFilterer) ParseExecutionUninstalled(log types.Log) (*AppAccountExecutionUninstalled, error) {
+	event := new(AppAccountExecutionUninstalled)
+	if err := _AppAccount.contract.UnpackLog(event, "ExecutionUninstalled", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
 }

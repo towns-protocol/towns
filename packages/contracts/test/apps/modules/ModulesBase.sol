@@ -13,6 +13,7 @@ import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IER
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
 import {ISubscriptionModuleBase} from "../../../src/apps/modules/subscription/ISubscriptionModule.sol";
 import {IPlatformRequirements} from "../../../src/factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // types
 import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
@@ -130,6 +131,16 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         return IMembership(space);
     }
 
+    function _transferMembership(
+        address space,
+        address account,
+        address newAccount,
+        uint256 tokenId
+    ) internal {
+        vm.prank(address(account));
+        IERC721(space).transferFrom(account, newAccount, tokenId);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                 SUBSCRIPTION HELPERS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -152,7 +163,7 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         IMembership membershipFacet = IMembership(space);
 
         uint256 expirationTime = membershipFacet.expiresAt(tokenId);
-        uint256 buf = subscriptionModule.RENEWAL_BUFFER();
+        uint256 buf = subscriptionModule.getRenewalBuffer(expirationTime);
         uint64 nextRenewalTime;
 
         if (expirationTime > buf) {
@@ -260,10 +271,12 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _processRenewalAs(address caller, address account, uint32 entityId) internal {
-        RenewalParams memory renewalParams = RenewalParams({account: account, entityId: entityId});
+        RenewalParams[] memory renewalParams = new RenewalParams[](1);
+        renewalParams[0] = RenewalParams({account: account, entityId: entityId});
 
         vm.prank(caller);
-        subscriptionModule.processRenewal(renewalParams);
+        subscriptionModule.batchProcessRenewals(renewalParams);
+        delete renewalParams;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -272,18 +285,18 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
     function _warpToRenewalTime(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        vm.warp(expiresAt - subscriptionModule.RENEWAL_BUFFER());
+        vm.warp(expiresAt - subscriptionModule.getRenewalBuffer(expiresAt));
     }
 
     function _warpToGracePeriod(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        uint256 renewalTime = expiresAt - subscriptionModule.RENEWAL_BUFFER();
+        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(expiresAt);
         vm.warp(renewalTime + subscriptionModule.GRACE_PERIOD() - 1);
     }
 
     function _warpPastGracePeriod(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        uint256 renewalTime = expiresAt - subscriptionModule.RENEWAL_BUFFER();
+        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(expiresAt);
         vm.warp(renewalTime + subscriptionModule.GRACE_PERIOD() + 1);
     }
 
