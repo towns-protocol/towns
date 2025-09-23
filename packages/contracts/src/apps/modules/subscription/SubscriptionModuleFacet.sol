@@ -226,6 +226,7 @@ contract SubscriptionModuleFacet is
             uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
             if (params[i].account.balance < actualRenewalPrice) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
                 emit BatchRenewalSkipped(
                     params[i].account,
                     params[i].entityId,
@@ -252,32 +253,33 @@ contract SubscriptionModuleFacet is
     }
 
     /// @inheritdoc ISubscriptionModule
-    function activateSubscription(uint32 entityId) external {
+    function activateSubscription(uint32 entityId) external nonReentrant {
         Subscription storage sub = SubscriptionModuleStorage.getLayout().subscriptions[msg.sender][
             entityId
         ];
 
         if (sub.active) SubscriptionModule__ActiveSubscription.selector.revertWith();
 
+        sub.active = true;
+
         address owner = IERC721(sub.space).ownerOf(sub.tokenId);
         if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
 
-        sub.active = true;
         emit SubscriptionActivated(msg.sender, entityId);
     }
 
     /// @inheritdoc ISubscriptionModule
-    function pauseSubscription(uint32 entityId) external {
+    function pauseSubscription(uint32 entityId) external nonReentrant {
         Subscription storage sub = SubscriptionModuleStorage.getLayout().subscriptions[msg.sender][
             entityId
         ];
 
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
 
+        _pauseSubscription(sub, msg.sender, entityId);
+
         address owner = IERC721(sub.space).ownerOf(sub.tokenId);
         if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
-
-        _pauseSubscription(sub, msg.sender, entityId);
     }
 
     /// @inheritdoc ISubscriptionModule
@@ -370,19 +372,13 @@ contract SubscriptionModuleFacet is
         uint256 originalDuration = expirationTime >= installTime ? expirationTime - installTime : 0;
 
         // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
-        if (originalDuration <= 1 hours) {
-            return BUFFER_IMMEDIATE;
-        }
+        if (originalDuration <= 1 hours) return BUFFER_IMMEDIATE;
 
         // For memberships shorter than 6 hours, use short buffer (1 hour)
-        if (originalDuration <= 6 hours) {
-            return BUFFER_SHORT;
-        }
+        if (originalDuration <= 6 hours) return BUFFER_SHORT;
 
         // For memberships shorter than 24 hours, use medium buffer (6 hours)
-        if (originalDuration <= 24 hours) {
-            return BUFFER_MEDIUM;
-        }
+        if (originalDuration <= 24 hours) return BUFFER_MEDIUM;
 
         // For memberships longer than 24 hours, use long buffer (12 hours)
         return BUFFER_LONG;

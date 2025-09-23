@@ -248,6 +248,8 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.expectEmit(address(subscriptionModule));
         emit BatchRenewalSkipped(address(account), entityId, "INACTIVE");
         _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
     }
 
     function test_processRenewal_skipWhen_NotDue(address user) public {
@@ -271,6 +273,8 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.expectEmit(address(subscriptionModule));
         emit BatchRenewalSkipped(address(account), entityId, "PAST_GRACE");
         _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
     }
 
     function test_processRenewal_skipWhen_NotOwner(address user) public {
@@ -290,6 +294,8 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.expectEmit(address(subscriptionModule));
         emit BatchRenewalSkipped(address(account), entityId, "NOT_OWNER");
         _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
     }
 
     function test_processRenewal_skipWhen_InsufficientBalance(address user) public {
@@ -305,6 +311,8 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.expectEmit(address(subscriptionModule));
         emit BatchRenewalSkipped(address(account), entityId, "INSUFFICIENT_BALANCE");
         _processRenewalAs(processor, address(account), entityId);
+
+        assertFalse(subscriptionModule.getSubscription(address(account), entityId).active);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
