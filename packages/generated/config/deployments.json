@@ -9,7 +9,7 @@
         "space": "0x8DdfAD0259803FA140e076C636E726573df77905",
         "spaceFactory": "0xC09Ac0FFeecAaE5100158247512DC177AeacA3e3",
         "spaceOwner": "0x0443258849016da8Af08e2984Bce8C0ef6Cfc9A0",
-        "subscriptionModule": "0x709b0da64962b03559D5e7084a23B1a8c73C76a0",
+        "subscriptionModule": "0x07dd39b955F974186daFB2EDC6B4E03632E9AC75",
         "swapRouter": "0xE2CE9e11BF480a5b88ad4008915D97d35C5087d5",
         "utils": {
           "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
@@ -57,7 +57,7 @@
         "space": "0x99a177F81902fddc4785c6fc108C8F21BDB2aFe9",
         "spaceFactory": "0x968696BC59431Ef085441641f550C8e2Eaca8BEd",
         "spaceOwner": "0x9dEdb330A126C6dF2893a33018bb81aFE8573805",
-        "subscriptionModule": "0xC4ef979B45414Ec66Cf39e220781F96B8f3EeD93",
+        "subscriptionModule": "0x55751fE93F4B9C5fB9E9B9328a26A6c56e4eDd41",
         "swapRouter": "0x4997CC907512275b8D7E1c682a46f17d676F4913",
         "utils": {
           "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
