@@ -12,7 +12,7 @@ import {
     createTownWithRequirements,
     expectUserCannotJoinSpace,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { TestERC1155, Address, treeToRuleData } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithErc1155Entitlements')

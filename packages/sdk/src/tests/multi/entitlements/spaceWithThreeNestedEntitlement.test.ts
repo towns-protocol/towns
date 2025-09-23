@@ -10,7 +10,7 @@ import {
     expectUserCanJoin,
     setupWalletsAndContexts,
 } from '../../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { Address, TestERC721, createExternalNFTStruct } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:spaceWithThreeNestedEntitlement')

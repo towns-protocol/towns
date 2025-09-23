@@ -6,7 +6,7 @@ import {
     bin_toBase64,
     bin_toHexString,
     check,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 import {
     ethereumAddressAsBytes,
     ethereumAddressAsString,

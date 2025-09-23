@@ -39,6 +39,7 @@ interface ISubscriptionModuleBase {
     error SubscriptionModule__EmptyBatch();
     error SubscriptionModule__InvalidTokenOwner();
     error SubscriptionModule__InsufficientBalance();
+    error SubscriptionModule__ActiveSubscription();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -53,6 +54,8 @@ interface ISubscriptionModuleBase {
 
     event SubscriptionDeactivated(address indexed account, uint32 indexed entityId);
 
+    event SubscriptionActivated(address indexed account, uint32 indexed entityId);
+
     event SubscriptionSpent(
         address indexed account,
         uint32 indexed entityId,
@@ -66,7 +69,15 @@ interface ISubscriptionModuleBase {
         uint256 nextRenewalTime
     );
 
+    /// @notice Emitted when a subscription's next renewal time is synced to on-chain expiration
+    event SubscriptionSynced(
+        address indexed account,
+        uint32 indexed entityId,
+        uint256 newNextRenewalTime
+    );
+
     event SubscriptionPaused(address indexed account, uint32 indexed entityId);
+    event SubscriptionNotDue(address indexed account, uint32 indexed entityId);
 
     event BatchRenewalSkipped(address indexed account, uint32 indexed entityId, string reason);
 
@@ -83,10 +94,6 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
     /// @param params The parameters for the renewals
     function batchProcessRenewals(RenewalParams[] calldata params) external;
 
-    /// @notice Processes a single Towns membership renewal
-    /// @param params The parameters for the renewal
-    function processRenewal(RenewalParams calldata params) external;
-
     /// @notice Gets the subscription for an account and entity ID
     /// @param account The address of the account to get the subscription for
     /// @param entityId The entity ID of the subscription to get
@@ -95,6 +102,15 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
         address account,
         uint32 entityId
     ) external view returns (Subscription memory);
+
+    /// @notice Gets the renewal buffer for an expiration time
+    /// @param expirationTime The expiration time to get the renewal buffer for
+    /// @return The renewal buffer for the expiration time
+    function getRenewalBuffer(uint256 expirationTime) external view returns (uint256);
+
+    /// @notice Activates a subscription
+    /// @param entityId The entity ID of the subscription to activate
+    function activateSubscription(uint32 entityId) external;
 
     /// @notice Pauses a subscription
     /// @param entityId The entity ID of the subscription to pause

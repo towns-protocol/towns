@@ -5,7 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { MockERC1155 } from './MockERC1155'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from '../types/ContractTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:TestGatingERC1155')
 

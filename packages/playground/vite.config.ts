@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react-oxc'
-import { defineConfig, loadEnv, searchForWorkspaceRoot } from 'vite'
+import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import { default as checker } from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import wasm from 'vite-plugin-wasm'
@@ -12,11 +12,8 @@ const allow = [searchForWorkspaceRoot(process.cwd()), 'node_modules/@towns-proto
 
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
-    const env = loadEnv(mode, process.cwd(), '')
-
     return defineConfig({
         define: {
-            'process.env': env,
             'process.browser': true,
         },
         plugins: [

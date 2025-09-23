@@ -7,7 +7,7 @@ import { makeTestClient, waitFor } from '../testUtils'
 import { genShortId } from '../../id'
 import { getFallbackContent } from '../../views/models/timelineEvent'
 import { StreamStateView } from '../../streamStateView'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 
 const log = dlog('test:syncedStream')
 

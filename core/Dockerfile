@@ -1,5 +1,5 @@
 # Start with an Alpine image that includes Go.
-FROM golang:1.24.6-alpine AS builder
+FROM golang:1.25.1-alpine AS builder
 
 # Install build-base for GCC (C compiler and related tools), git, and other dependencies.
 # Install libsecp256k1-dev if available or compile it from source.

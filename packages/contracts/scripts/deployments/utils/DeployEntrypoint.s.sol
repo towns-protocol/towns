@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 //libraries
 
 //contracts
-import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
+import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
 import {Deployer} from "scripts/common/Deployer.s.sol";
 
 contract DeployEntrypoint is Deployer {

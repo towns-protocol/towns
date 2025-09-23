@@ -19,7 +19,7 @@ import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation }
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@towns-protocol/web3'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'

@@ -1,5 +1,7 @@
-# Use Node.js 20 as the base image
-FROM node:20-slim
+# ==========================================
+# Stage 1: Builder - Full build environment
+# ==========================================
+FROM ubuntu:24.04 AS builder
 
 # Set working directory
 WORKDIR /river
@@ -9,63 +11,128 @@ ARG VER_BRANCH=branch_unset
 ARG VER_COMMIT=commit_unset
 ARG GIT_SHA
 
-# Install curl and other required packages for Foundry installation
+# Install build dependencies (cached layer - rarely changes)
 RUN apt-get update && \
-    apt-get install -y curl build-essential git make && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    unzip \
+    netcat-openbsd \
+    build-essential \
+    git \
+    make \
+    ca-certificates \
+    lsb-release \
+    python3 && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Enable Corepack and install Yarn
+RUN corepack enable && \
+    corepack prepare yarn@3.8.0 --activate
+
 # Install Foundry
-# Note: Foundryup is not working, but the latest nightly version is working
 RUN curl -L https://foundry.paradigm.xyz | bash && \
-    ~/.foundry/bin/foundryup -i nightly
+    ~/.foundry/bin/foundryup
 
 # Add Foundry binaries to PATH
 ENV PATH="/root/.foundry/bin:${PATH}"
 
-# Enable Corepack for Yarn 3.x support
-RUN corepack enable
+# ==========================================
+# Dependency Installation (Cached Layers)
+# ==========================================
 
-# Copy monorepo configuration from root
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn ./.yarn
+# Copy monorepo configuration for dependency resolution
+COPY package.json yarn.lock .yarnrc.yml turbo.json ./
+COPY .yarn/releases .yarn/releases
+COPY .yarn/plugins .yarn/plugins
 COPY packages/tsconfig.base.json ./packages/
 COPY buf.yaml ./
 
-# Copy the required packages
-COPY packages/subgraph ./packages/subgraph/
-COPY packages/prettier-config ./packages/prettier-config/
+# Copy workspace package.json files for dependency resolution
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/prettier-config/package.json ./packages/prettier-config/
+COPY packages/proto/package.json ./packages/proto/
+COPY packages/subgraph/package.json ./packages/subgraph/
+COPY packages/web3/package.json ./packages/web3/
+COPY protocol/package.json ./protocol/
+
+# Copy packages needed for yarn install (preinstall scripts)
 COPY packages/contracts ./packages/contracts/
-COPY packages/web3 ./packages/web3/
 COPY packages/generated ./packages/generated/
-COPY packages/dlog ./packages/dlog/
+
+# Install all dependencies (cached unless package.json files change)
+RUN yarn install && yarn cache clean
+
+# ==========================================
+# Source Code and Build
+# ==========================================
+
+# Copy remaining source code
+COPY packages/utils ./packages/utils/
+COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/proto ./packages/proto/
+COPY packages/subgraph ./packages/subgraph/
+COPY packages/web3 ./packages/web3/
 COPY protocol ./protocol/
 
-# Add entrypoint script
+# Build all packages using turbo
+RUN yarn turbo build --filter=@towns-protocol/subgraph...
+RUN yarn turbo typings --filter=@towns-protocol/contracts
+
+# Prepare subgraph for runtime
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 
-# Install dependencies
-RUN yarn install
+# ==========================================
+# Stage 2: Runtime - Minimal runtime image
+# ==========================================
+FROM ubuntu:24.04 AS runtime
 
-# Build contracts
-WORKDIR /river/packages/contracts
-RUN make build
+# Set working directory
 WORKDIR /river
 
-# Generate contract typings (needed for Ponder to import ABIs)
-RUN yarn workspace @towns-protocol/contracts typings
+# Install only runtime dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    netcat-openbsd \
+    ca-certificates \
+    lsb-release && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Build the generated contracts typings package
-RUN yarn workspace @towns-protocol/generated build
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Build proto package (dependency of dlog)
-RUN yarn workspace @towns-protocol/proto build
+# Enable Corepack and install Yarn
+RUN corepack enable && \
+    corepack prepare yarn@3.8.0 --activate
 
-# Build dlog package (dependency of web3)
-RUN yarn workspace @towns-protocol/dlog build
+# Copy built node_modules from builder
+COPY --from=builder /river/node_modules ./node_modules
+COPY --from=builder /river/.yarn/releases ./.yarn/releases
+COPY --from=builder /river/.yarn/plugins ./.yarn/plugins
 
-# Build web3 package
-RUN yarn workspace @towns-protocol/web3 build
+# Copy monorepo configuration
+COPY --from=builder /river/package.json /river/yarn.lock /river/.yarnrc.yml /river/turbo.json ./
+
+# Copy only runtime-required packages
+COPY --from=builder /river/packages/contracts/deployments ./packages/contracts/deployments
+COPY --from=builder /river/packages/contracts/typings ./packages/contracts/typings
+COPY --from=builder /river/packages/contracts/package.json ./packages/contracts/package.json
+COPY --from=builder /river/packages/utils ./packages/utils/
+COPY --from=builder /river/packages/generated ./packages/generated/
+COPY --from=builder /river/packages/proto ./packages/proto/
+COPY --from=builder /river/packages/subgraph ./packages/subgraph/
+COPY --from=builder /river/packages/web3 ./packages/web3/
 
 # Set working directory to subgraph package
 WORKDIR /river/packages/subgraph

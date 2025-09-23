@@ -4,14 +4,15 @@ import { useForm } from 'react-hook-form'
 import { useEffect } from 'react'
 import { type Address } from 'viem'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { AppRegistryService, townsEnv } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAppMetadataQueryKey, useAppMetadata } from '@/hooks/useAppMetadata'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import {
     Form,
@@ -110,7 +111,9 @@ export const BotSettingsDialog = ({
     const signer = useEthersSigner()
     const { address: signerAddress } = useAccount()
     const { env: currentEnv } = useAgentConnection()
-    const appRegistryUrl = currentEnv ? getAppRegistryUrl(currentEnv) : ''
+    const appRegistryUrl = currentEnv
+        ? townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(currentEnv)
+        : ''
 
     const registerWebhookMutation = useMutation({
         mutationFn: async ({ webhookUrl }: WebhookFormSchema) => {

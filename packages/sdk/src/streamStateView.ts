@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check, throwWithCode } from '@towns-protocol/dlog'
+import { dlog, dlogError, bin_toHexString, check, throwWithCode } from '@towns-protocol/utils'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,

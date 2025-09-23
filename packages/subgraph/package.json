@@ -4,18 +4,19 @@
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
-        "codegen": "ponder codegen",
+        "codegen": "yarn typings && ponder codegen",
         "db": "ponder db",
-        "dev": "ponder dev",
+        "dev": "yarn typings && ponder dev",
         "dev:fork": "./scripts/setup-subgraph.sh",
-        "dev:no-ui": "ponder dev --disable-ui",
+        "dev:no-ui": "yarn typings && ponder dev --disable-ui",
         "find-paths": "tsx utils/findContractsPath.ts",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
-        "serve": "ponder serve",
-        "start": "ponder start",
-        "test:unit": "sh -c 'tsc --noEmit'",
-        "transfer-ownership": "tsx interactions/transfer-ownership.ts"
+        "serve": "yarn typings && ponder serve",
+        "start": "yarn typings && ponder start",
+        "test:unit": "yarn typings && sh -c 'tsc --noEmit'",
+        "transfer-ownership": "tsx interactions/transfer-ownership.ts",
+        "typings": "turbo typings --filter @towns-protocol/contracts && turbo build --filter @towns-protocol/web3"
     },
     "dependencies": {
         "@towns-protocol/web3": "workspace:^",

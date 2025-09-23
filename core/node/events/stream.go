@@ -29,12 +29,12 @@ type ViewStream interface {
 }
 
 type SyncResultReceiver interface {
-	// OnUpdate is called each time a new cookie is available for a stream
-	OnUpdate(r *StreamAndCookie)
-	// OnSyncError is called when a sync subscription failed unrecoverable
-	OnSyncError(err error)
-	// OnStreamSyncDown is called when updates for a stream could not be given.
-	OnStreamSyncDown(StreamId)
+	// OnUpdate is called each time a new event is available for a stream.
+	OnUpdate(StreamId, *StreamAndCookie)
+
+	// OnSyncDown is called when updates for a stream could not be given.
+	// Subscriber is automatically unsubscribed from the stream and no further OnUpdate calls are made.
+	OnSyncDown(StreamId)
 }
 
 type localStreamState struct {
@@ -253,17 +253,9 @@ func (s *Stream) importMiniblocksLocked(
 	ctx context.Context,
 	miniblocks []*MiniblockInfo,
 ) error {
-	firstMbNum := miniblocks[0].Ref.Num
-	blocksToWriteToStorage := make([]*storage.MiniblockDescriptor, len(miniblocks))
-	for i, miniblock := range miniblocks {
-		if miniblock.Ref.Num != firstMbNum+int64(i) {
-			return RiverError(Err_INTERNAL, "miniblock numbers are not sequential").Func("importMiniblocks")
-		}
-		mb, err := miniblock.AsStorageMb()
-		if err != nil {
-			return err
-		}
-		blocksToWriteToStorage[i] = mb
+	blocksToWriteToStorage, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
 	}
 
 	if s.getViewLocked() == nil {
@@ -296,7 +288,6 @@ func (s *Stream) importMiniblocksLocked(
 	}
 
 	currentView := originalView
-	var err error
 	var newEvents []*Envelope
 	allNewEvents := []*Envelope{}
 	var snapshot *Envelope
@@ -719,7 +710,7 @@ func (s *Stream) notifySubscribersLocked(
 			Snapshot:       snapshot,
 		}
 		for receiver := range s.local.receivers.Iter() {
-			receiver.OnUpdate(resp)
+			receiver.OnUpdate(s.streamId, resp)
 		}
 	}
 }
@@ -928,7 +919,34 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	}
 	s.local.receivers.Add(receiver)
 
-	receiver.OnUpdate(resp)
+	receiver.OnUpdate(s.streamId, resp)
+
+	return nil
+}
+
+// SubNoCookie subscribes to the stream. Does not send initial cookie-based update.
+// This method is thread-safe.
+// Only local streams are allowed to subscribe.
+func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) error {
+	if !s.IsLocal() {
+		return RiverError(
+			Err_NOT_FOUND,
+			"stream not found",
+			"s.streamId",
+			s.streamId,
+		)
+	}
+
+	_, err := s.lockMuAndLoadView(ctx)
+	defer s.mu.Unlock()
+	if err != nil {
+		return err
+	}
+
+	if s.local.receivers == nil {
+		s.local.receivers = mapset.NewSet[SyncResultReceiver]()
+	}
+	s.local.receivers.Add(receiver)
 
 	return nil
 }
@@ -957,10 +975,14 @@ func (s *Stream) ForceFlush(ctx context.Context) {
 	}
 
 	s.setViewLocked(nil)
+	s.unsubAllLocked()
+}
+
+// unsubAllLocked sends SYNC_DOWN message to all receivers and unsubscribes all receivers from the stream.
+func (s *Stream) unsubAllLocked() {
 	if s.local.receivers != nil && s.local.receivers.Cardinality() > 0 {
-		err := RiverError(Err_INTERNAL, "Stream unloaded")
 		for r := range s.local.receivers.Iter() {
-			r.OnSyncError(err)
+			r.OnSyncDown(s.streamId)
 		}
 	}
 	s.local.receivers = nil
@@ -1178,6 +1200,96 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 }
 
+// reinitialize replaces the stream's storage and view with data from a remote peer.
+// This is used during stream reconciliation when the local stream is significantly behind
+// or missing data. The function validates the incoming stream data and snapshot,
+// writes new miniblocks and snapshot to storage (creates or updates based on updateExisting),
+// and creates a new stream view from the provided data.
+//
+// If updateExisting is false, returns an error if the stream already exists in storage.
+// If updateExisting is true, allows updating an existing stream with new data.
+func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, updateExisting bool) error {
+	if stream == nil {
+		return RiverError(Err_INTERNAL, "stream is nil")
+	}
+
+	if stream.NextSyncCookie == nil {
+		return RiverError(Err_INTERNAL, "next sync cookie is nil")
+	}
+
+	if !s.streamId.EqualsBytes(stream.NextSyncCookie.StreamId) {
+		return RiverError(Err_INTERNAL, "stream id mismatch")
+	}
+
+	if len(stream.Miniblocks) == 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"no miniblocks in StreamAndCookie",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	if stream.Snapshot != nil &&
+		(stream.SnapshotMiniblockIndex < 0 || stream.SnapshotMiniblockIndex >= int64(len(stream.Miniblocks))) {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"invalid snapshot miniblock index",
+			"streamId",
+			s.streamId,
+		).Func("reinitialize")
+	}
+
+	opts := NewParsedMiniblockInfoOpts().WithDoNotParseEvents(true)
+	miniblocks, snapshot, snapshotMbIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, opts)
+	if err != nil {
+		return err
+	}
+	if snapshot == nil {
+		return RiverError(Err_INTERNAL, "snapshot is nil").Func("reinitialize")
+	}
+
+	storageMiniblocks, err := MiniblockInfosToStorageMbs(miniblocks)
+	if err != nil {
+		return err
+	}
+
+	// Reinitialize data is prepared.
+	// Take lock, drop view, apply data to the database.
+	// Since it's a reset "in the future", current subscribers can't be updated continuosly and are dropped.
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.setViewLocked(nil)
+	s.unsubAllLocked()
+
+	lastSnapshotMiniblockNum := miniblocks[snapshotMbIndex].Ref.Num
+	err = s.params.Storage.ReinitializeStreamStorage(
+		ctx,
+		s.streamId,
+		storageMiniblocks,
+		lastSnapshotMiniblockNum,
+		updateExisting,
+	)
+	if err != nil {
+		return err
+	}
+
+	// If success, update the view.
+	// TODO: REFACTOR: introduce MakeStreamView from parsed data (to avoid re-parsing).
+	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
+		Miniblocks:              storageMiniblocks,
+		SnapshotMiniblockOffset: snapshotMbIndex,
+		MinipoolEnvelopes:       [][]byte{},
+	})
+	if err != nil {
+		return err
+	}
+	s.setViewLocked(view)
+
+	return nil
+}
+
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
 // registry. GetQuorumNodes is thread-safe.
 func (s *Stream) GetQuorumNodes() []common.Address {
@@ -1254,4 +1366,12 @@ func (s *Stream) IsLocalInQuorum() bool {
 	defer s.mu.Unlock()
 
 	return s.nodesLocked.IsLocalInQuorum()
+}
+
+// TestOnlyHelper_SetView injects the provided view directly into the stream. This helper is intended
+// for unit tests so they can bypass storage initialization.
+func (s *Stream) TestOnlyHelper_SetView(view *StreamView) {
+	s.mu.Lock()
+	s.setViewLocked(view)
+	s.mu.Unlock()
 }

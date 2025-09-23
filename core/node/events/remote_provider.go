@@ -54,4 +54,11 @@ type RemoteProvider interface {
 		node common.Address,
 		streamId StreamId,
 	) (*MiniblockRef, error)
+
+	// GetStream returns the stream from the given node.
+	GetStream(
+		ctx context.Context,
+		node common.Address,
+		request *GetStreamRequest,
+	) (*GetStreamResponse, error)
 }

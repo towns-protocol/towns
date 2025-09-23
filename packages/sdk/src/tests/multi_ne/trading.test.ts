@@ -10,7 +10,7 @@ import {
     waitFor,
 } from '../testUtils'
 import { ContractReceipt } from '../../types'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
 
 import { TestERC20 } from '@towns-protocol/web3'

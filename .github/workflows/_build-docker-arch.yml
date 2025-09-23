@@ -1,0 +1,127 @@
+# Reusable workflow for building single-architecture Docker images
+name: 'Build Docker Image for Specific Architecture'
+
+on:
+    workflow_call:
+        inputs:
+            architecture:
+                description: 'Target architecture (amd64, arm64)'
+                required: true
+                type: string
+            platform:
+                description: 'Docker platform (linux/amd64, linux/arm64)'
+                required: true
+                type: string
+            runner:
+                description: 'GitHub runner type'
+                required: true
+                type: string
+            docker_tags:
+                description: 'Comma-separated list of tags'
+                required: true
+                type: string
+            dockerfile:
+                description: 'Path to Dockerfile'
+                required: true
+                type: string
+            context:
+                description: 'Docker build context path'
+                required: false
+                type: string
+                default: '.'
+            cache_scope_prefix:
+                description: 'Cache scope prefix to avoid conflicts'
+                required: false
+                type: string
+                default: 'default'
+            build_args:
+                description: 'Docker build arguments (key=value, one per line)'
+                required: false
+                type: string
+        outputs:
+            image_digest:
+                description: 'Digest of the built image'
+                value: ${{ jobs.build.outputs.digest }}
+            arch_tags:
+                description: 'Architecture-specific tags'
+                value: ${{ jobs.build.outputs.arch_tags }}
+
+jobs:
+    build:
+        name: Build ${{ inputs.architecture }} image
+        runs-on: ${{ inputs.runner }}
+
+        permissions:
+            contents: write
+
+        outputs:
+            digest: ${{ steps.build-push.outputs.digest }}
+            arch_tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
+
+            - name: Generate architecture-specific tags
+              id: generate-arch-tags
+              run: |
+                  # Convert comma-separated tags to architecture-specific tags
+                  ARCH_TAGS=""
+                  IFS=',' read -ra TAGS_ARRAY <<< "${{ inputs.docker_tags }}"
+
+                  for tag in "${TAGS_ARRAY[@]}"; do
+                    # Extract the tag part after the last colon
+                    TAG_NAME="${tag##*:}"
+                    # Rebuild with arch suffix
+                    REPO_PART="${tag%:*}"
+                    ARCH_TAG="$REPO_PART:$TAG_NAME-${{ inputs.architecture }}"
+
+                    if [ -n "$ARCH_TAGS" ]; then
+                      ARCH_TAGS="$ARCH_TAGS,$ARCH_TAG"
+                    else
+                      ARCH_TAGS="$ARCH_TAG"
+                    fi
+                  done
+
+                  echo "Architecture-specific tags: $ARCH_TAGS"
+                  echo "arch_tags=$ARCH_TAGS" >> $GITHUB_OUTPUT
+
+            - name: Build and push ${{ inputs.architecture }} image
+              id: build-push
+              uses: docker/build-push-action@v6
+              with:
+                  context: ${{ inputs.context }}
+                  file: ${{ inputs.dockerfile }}
+                  platforms: ${{ inputs.platform }}
+                  push: true
+                  tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}
+                  build-args: ${{ inputs.build_args }}
+                  labels: |
+                      org.opencontainers.image.source=https://github.com/${{ github.repository }}
+                      org.opencontainers.image.revision=${{ github.sha }}
+                      org.opencontainers.image.created=${{ github.run_started_at }}
+                      org.opencontainers.image.architecture=${{ inputs.architecture }}
+                  cache-from: type=gha,scope=${{ inputs.cache_scope_prefix }}-${{ inputs.architecture }}
+                  cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope_prefix }}-${{ inputs.architecture }}
+                  provenance: false
+
+            - name: Output image info
+              run: |
+                  echo "Built ${{ inputs.architecture }} image with digest: ${{ steps.build-push.outputs.digest }}"
+                  echo "Tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}"

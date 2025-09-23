@@ -5,7 +5,7 @@
 import { MemberPayload_NftSchema } from '@towns-protocol/proto'
 import { MemberMetadata_Nft } from '../../memberMetadata_Nft'
 import { makeRandomUserAddress } from '../testUtils'
-import { bin_fromString } from '@towns-protocol/dlog'
+import { bin_fromString } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 
 describe('memberMetadata_NftTests', () => {

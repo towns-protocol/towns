@@ -18,9 +18,9 @@ import {
     CreateTownResult,
 } from './stressTypes'
 import { ethers, Wallet } from 'ethers'
-import { makeRiverConfig } from '@towns-protocol/sdk'
+import { townsEnv } from '@towns-protocol/sdk'
 import { runShortChat } from './scenarioShortChat'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 
 export class StressDriver {
     readonly queueName: string
@@ -145,9 +145,9 @@ export class Supervisor {
     constructor(readonly opts: RunOpts) {
         this.logger = getLogger('stress:supervisor')
         this.drivers = []
-        const riverConfig = makeRiverConfig(this.opts.riverEnv)
+        const townsConfig = townsEnv().makeTownsConfig(this.opts.riverEnv)
         this.rootWallet = Wallet.fromMnemonic(opts.mnemonic).connect(
-            new ethers.providers.JsonRpcProvider(riverConfig.base.rpcUrl),
+            new ethers.providers.JsonRpcProvider(townsConfig.base.rpcUrl),
         )
     }
 

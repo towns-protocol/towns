@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { NodeStructOutput } from '@towns-protocol/generated/dev/typings/INodeRegistry'
-import { RiverChainConfig } from '../utils/IStaticContractsInfo'
+import { RiverChainConfig } from '../utils/web3Env'
 import { INodeRegistryShim } from './INodeRegistryShim'
 import { IStreamRegistryShim } from './IStreamRegistryShim'
 import { IOperatorRegistryShim } from './IOperatorRegistryShim'

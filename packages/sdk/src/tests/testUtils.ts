@@ -19,7 +19,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import { makeBaseChainConfig, makeRiverChainConfig, makeRiverConfig } from '../riverConfig'
+import { townsEnv } from '../townsEnv'
 import {
     genId,
     makeSpaceStreamId,
@@ -31,7 +31,7 @@ import {
 import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '../decryptionExtensions'
-import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_fromHexString, check, dlog } from '@towns-protocol/utils'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -87,17 +87,14 @@ import { MemberTokenTransfer } from '../streamStateView_Members'
 const log = dlog('csb:test:util')
 
 function useLegacySpaces(): boolean {
-    if (typeof process === 'object') {
-        return process.env.USE_LEGACY_SPACES === 'true'
-    }
-    return false
+    return process.env.USE_LEGACY_SPACES === 'true'
 }
 
 const initTestUrls = async (): Promise<{
     testUrls: string[]
     refreshNodeUrl?: () => Promise<string>
 }> => {
-    const config = makeRiverChainConfig()
+    const config = townsEnv().makeRiverChainConfig()
     const provider = new LocalhostWeb3Provider(config.rpcUrl)
     const riverRegistry = createRiverRegistry(provider, config.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
@@ -300,7 +297,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
         ...opts,
         persistenceStoreName: persistenceDbName,
         streamOpts: {
-            useSharedSyncer: false,
+            useSharedSyncer: true,
         },
     }) as TestClient
     client.wallet = context.wallet
@@ -309,7 +306,7 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
 }
 
 export async function setupWalletsAndContexts() {
-    const baseConfig = makeBaseChainConfig()
+    const baseConfig = townsEnv().makeBaseChainConfig()
 
     const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
         ethers.Wallet.createRandom(),
@@ -338,20 +335,20 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const riverConfig = makeRiverConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, carolSpaceDapp),
         }),
     ])
 

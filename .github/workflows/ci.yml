@@ -49,15 +49,116 @@ on:
                 type: boolean
 
 jobs:
+    Build_Anvil_Docker:
+        runs-on: ubuntu-x64-16core
+        outputs:
+            image_tag: ${{ steps.output.outputs.tag }}
+            build_hash: ${{ steps.hash.outputs.hash }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - uses: taiki-e/install-action@just
+
+            - name: Get docker build hash
+              id: hash
+              working-directory: core
+              run: |
+                  BUILD_HASH=$(just _get-docker-build-hash)
+                  echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+
+            - name: Setup AWS Credentials
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
+
+            - name: Check AWS ECR for existing image
+              id: check-remote
+              run: |
+                  IMAGE_TAG="public.ecr.aws/h5v6m2x1/towns-anvil:${{ steps.hash.outputs.hash }}"
+                  if docker manifest inspect ${IMAGE_TAG} >/dev/null 2>&1; then
+                    echo "exists=true" >> $GITHUB_OUTPUT
+                    echo "remote_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+                    echo "Found existing image: ${IMAGE_TAG}"
+                  else
+                    echo "exists=false" >> $GITHUB_OUTPUT
+                    echo "Image not found, will build locally: ${IMAGE_TAG}"
+                  fi
+
+            - name: Pull existing image from ECR
+              if: steps.check-remote.outputs.exists == 'true'
+              run: |
+                  docker pull ${{ steps.check-remote.outputs.remote_tag }}
+                  docker tag ${{ steps.check-remote.outputs.remote_tag }} towns-anvil:${{ steps.hash.outputs.hash }}
+                  # Only save to tar for GitHub Actions (not needed in act)
+                  if [ "$ACT" != "true" ]; then
+                    docker save towns-anvil:${{ steps.hash.outputs.hash }} > /tmp/anvil.tar
+                  fi
+
+            # GitHub Actions path - use build-push-action
+            - name: Setup Docker Buildx
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build and export Docker image (GitHub)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  file: ./packages/contracts/docker/Dockerfile
+                  tags: towns-anvil:${{ steps.hash.outputs.hash }}
+                  outputs: type=docker,dest=/tmp/anvil.tar
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            # Local act path - use regular docker build
+            - name: Build Docker image (Local)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
+              run: |
+                  docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
+                    -f ./packages/contracts/docker/Dockerfile .
+                  # No need to save to tar in act since the image is already in local Docker
+
+            # Upload artifact in GitHub Actions (for both built and pulled images)
+            - name: Upload Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: anvil-docker-${{ steps.hash.outputs.hash }}
+                  path: /tmp/anvil.tar
+                  retention-days: 1
+
+            - name: Set outputs
+              id: output
+              run: |
+                  echo "tag=towns-anvil:${{ steps.hash.outputs.hash }}" >> $GITHUB_OUTPUT
+                  if [ "$ACT" = "true" ]; then
+                    echo "Using local image (act): towns-anvil:${{ steps.hash.outputs.hash }}"
+                  else
+                    echo "Will use artifact: towns-anvil:${{ steps.hash.outputs.hash }}"
+                  fi
+
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
         runs-on: ubuntu-x64-16core
         timeout-minutes: 30
+        needs: [Build_Anvil_Docker]
 
         steps:
             - name: Print bash environment
               run: env
+
+            - uses: taiki-e/install-action@just
 
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
@@ -100,8 +201,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -137,7 +256,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: golangci/golangci-lint-action@v7
               with:
-                  version: v2.0.2
+                  version: v2.4.0
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -220,6 +339,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
         runs-on: ubuntu-x64-16core
         timeout-minutes: 30
+        needs: [Build_Anvil_Docker]
         services:
             postgres-core:
                 image: postgres:latest
@@ -309,13 +429,31 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
             # Start an ssh session with tmate if the PR has the 'ssh' label
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -338,6 +476,8 @@ jobs:
             - name: Run multiple nodes
               working-directory: core
               run: just config-and-start
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
@@ -350,7 +490,8 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_dev &
+                  mkdir -p core/run_files/local_dev/stream-metadata # make a directory for logs so they get saved
+                  yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
                   yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             - name: Run Stream Metadata Tests (without entitlements)
@@ -370,6 +511,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
         runs-on: ubuntu-x64-16core
         timeout-minutes: 40
+        needs: [Build_Anvil_Docker]
         services:
             postgres-core:
                 image: postgres:latest
@@ -451,8 +593,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -485,6 +645,8 @@ jobs:
             - name: Run multiple nodes
               run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
@@ -519,6 +681,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
         runs-on: ubuntu-x64-16core
         timeout-minutes: 40
+        needs: [Build_Anvil_Docker]
         services:
             postgres-core:
                 image: postgres:latest
@@ -600,8 +763,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -634,6 +815,8 @@ jobs:
             - name: Run multiple nodes
               run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
@@ -659,6 +842,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
         runs-on: ubuntu-x64-16core
         timeout-minutes: 30
+        needs: [Build_Anvil_Docker]
         services:
             postgres-core:
                 image: postgres:latest
@@ -733,8 +917,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
@@ -807,6 +1009,7 @@ jobs:
         # NOTE: We should make sure that new jobs get added here
         needs:
             [
+                Build_Anvil_Docker,
                 Common_CI,
                 Multinode,
                 Multinode_Ent,

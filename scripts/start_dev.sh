@@ -124,7 +124,7 @@ yarn csb:build
 commands=(
     "watch_sdk:cd packages/sdk && yarn watch"
     "watch_encryption:cd packages/encryption && yarn watch"
-    "watch_dlog:cd packages/dlog && yarn watch"
+    "watch_utils:cd packages/utils && yarn watch"
     "watch_proto:cd packages/proto && yarn watch"
     "watch_web3:cd packages/web3 && yarn watch"
     "watch_go:cd protocol && yarn watch:go"

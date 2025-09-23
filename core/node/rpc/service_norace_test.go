@@ -26,7 +26,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -150,7 +149,6 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		node1.address,
 		node1.service.cache,
 		node1.service.nodeRegistry,
-		subscription.NewManager(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil),
 		nil, nil,
 	)
 	req.NoError(err, "NewStreamsSyncOperation")
@@ -312,7 +310,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 
 	// TODO: Remove after removing the legacy syncer
 	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
-	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "false")
+	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
 
 	syncRes, err := client1.SyncStreams(ctx, connReq)
 	req.NoError(err, "sync streams")

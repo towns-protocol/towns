@@ -1,14 +1,11 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
-import { utils } from 'ethers'
+import { utils, ethers } from 'ethers'
+import { SpaceDapp, Permission } from '@towns-protocol/web3'
 
 import {
     getRefEventIdFromChannelMessage,
     isChannelStreamId,
-    isDMChannelStreamId,
-    isGDMChannelStreamId,
     make_ChannelPayload_Message,
-    make_DMChannelPayload_Message,
-    make_GDMChannelPayload_Message,
     createTownsClient,
     type ClientV2,
     streamIdAsString,
@@ -19,8 +16,7 @@ import {
     makeUserMetadataStreamId,
     type ParsedEvent,
     unsafe_makeTags,
-    getStreamMetadataUrl,
-    makeBaseChainConfig,
+    townsEnv,
     spaceIdFromChannelId,
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
@@ -44,17 +40,10 @@ import {
     MembershipOp,
     type PlainMessage,
     Tags,
-    type StreamEvent,
     MessageInteractionType,
     type SlashCommand,
 } from '@towns-protocol/proto'
-import {
-    bin_fromBase64,
-    bin_fromHexString,
-    bin_toHexString,
-    bin_toString,
-    check,
-} from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
@@ -90,27 +79,7 @@ type MessageOpts = {
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
-}
-
-export type UserData = {
-    /** The user ID of the user */
-    userId: string
-    /** The username of the user */
-    username: string | null
-    /** The display name of the user */
-    displayName: string | null
-    /** The ENS address of the user */
-    ensAddress?: string
-    /** The bio of the user */
-    bio: string | null
-    /** The NFT that the user is currently showcasing */
-    nft?: {
-        tokenId: string
-        contractAddress: string
-        chainId: number
-    }
-    /** URL that points to the profile picture of the user */
-    profilePictureUrl: string
+    ephemeral?: boolean
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -119,10 +88,14 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The decrypted message content */
             message: string
-            /** You can use this to check if the message is a direct message */
-            isDm: boolean
-            /** You can use this to check if the message is a group message */
-            isGdm: boolean
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     redaction: (
@@ -139,20 +112,14 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
             /** New message */
             message: string
-        },
-    ) => void | Promise<void>
-    mentioned: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-        },
-    ) => void | Promise<void>
-    reply: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
+            /** In case of a reply, that's  the eventId of the message that got replied */
+            replyId: string | undefined
+            /** In case of a thread, that's the thread id where the message belongs to */
+            threadId: string | undefined
+            /** Users mentioned in the message */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** Convenience flag to check if the bot was mentioned */
+            isMentioned: boolean
         },
     ) => void | Promise<void>
     reaction: (
@@ -173,7 +140,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             refEventId: string
         },
     ) => Promise<void> | void
-    // TODO:
     tip: (
         handler: BotActions,
         event: BasePayload & {
@@ -195,25 +161,6 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & { event: ParsedEvent },
     ) => Promise<void> | void
-    threadMessage: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-        },
-    ) => Promise<void> | void
-    mentionedInThread: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The thread id where the message belongs to */
-            threadId: string
-            /** The decrypted message content */
-            message: string
-        },
-    ) => Promise<void> | void
-
     slashCommand: (
         handler: BotActions,
         event: BasePayload & {
@@ -231,6 +178,12 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
              * ```
              */
             args: string[]
+            /** Users mentioned in the command */
+            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
+            /** The eventId of the message that got replied */
+            replyId: string | undefined
+            /** The thread id where the message belongs to */
+            threadId: string | undefined
         },
     ) => Promise<void> | void
 }
@@ -551,21 +504,22 @@ export class Bot<
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    const hasBotMention = payload.value.content.value.mentions.some(
-                        (m) => m.userId === this.botId,
-                    )
                     const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
+                    const mentions = parseMentions(payload.value.content.value.mentions)
+                    const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
                         userId,
                         eventId: parsed.hashStr,
                         spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
                         message: payload.value.content.value.body,
-                        isDm: isDMChannelStreamId(streamId),
-                        isGdm: isGDMChannelStreamId(streamId),
                         createdAt,
+                        mentions,
+                        isMentioned,
+                        replyId,
+                        threadId,
                     }
 
                     if (
@@ -581,24 +535,10 @@ export class Bot<
                                 ...forwardPayload,
                                 command: command as Commands[number]['name'],
                                 args,
+                                replyId,
+                                threadId,
                             })
                         }
-                    }
-
-                    if (replyId) {
-                        this.emitter.emit('reply', this.client, forwardPayload)
-                    } else if (threadId && hasBotMention) {
-                        this.emitter.emit('mentionedInThread', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (threadId) {
-                        this.emitter.emit('threadMessage', this.client, {
-                            ...forwardPayload,
-                            threadId,
-                        })
-                    } else if (hasBotMention) {
-                        this.emitter.emit('mentioned', this.client, forwardPayload)
                     } else {
                         this.emitter.emit('message', this.client, forwardPayload)
                     }
@@ -620,6 +560,8 @@ export class Bot<
             case 'edit': {
                 // TODO: framework doesnt handle non-text edits
                 if (payload.value.post?.content.case !== 'text') break
+                const mentions = parseMentions(payload.value.post?.content.value.mentions)
+                const isMentioned = mentions.some((m) => m.userId === this.botId)
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -627,7 +569,11 @@ export class Bot<
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
+                    mentions,
+                    isMentioned,
                     createdAt,
+                    replyId: payload.value.post?.replyId,
+                    threadId: payload.value.post?.threadId,
                 })
                 break
             }
@@ -737,6 +683,34 @@ export class Bot<
         return readContract(this.viemClient, parameters)
     }
 
+    async hasAdminPermission(userId: string, spaceId: string) {
+        return this.client.hasAdminPermission(userId, spaceId)
+    }
+
+    async checkPermission(streamId: string, userId: string, permission: Permission) {
+        return this.client.checkPermission(streamId, userId, permission)
+    }
+
+    /**
+     * Ban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     * @param userId - The userId of the user to ban
+     * @param spaceId - The spaceId of the space to ban the user in
+     */
+    async ban(userId: string, spaceId: string) {
+        return this.client.ban(userId, spaceId)
+    }
+
+    /**
+     * Unban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     * @param userId - The userId of the user to unban
+     * @param spaceId - The spaceId of the space to unban the user in
+     */
+    async unban(userId: string, spaceId: string) {
+        return this.client.unban(userId, spaceId)
+    }
+
     /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
@@ -754,20 +728,6 @@ export class Bot<
      */
     onMessageEdit(fn: BotEvents['messageEdit']) {
         this.emitter.on('messageEdit', fn)
-    }
-
-    /**
-     * Triggered when someone mentions the bot in a message
-     */
-    onMentioned(fn: BotEvents['mentioned']) {
-        this.emitter.on('mentioned', fn)
-    }
-
-    /**
-     * Triggered when someone replies to a message
-     */
-    onReply(fn: BotEvents['reply']) {
-        this.emitter.on('reply', fn)
     }
 
     /**
@@ -809,17 +769,6 @@ export class Bot<
         this.emitter.on('streamEvent', fn)
     }
 
-    onThreadMessage(fn: BotEvents['threadMessage']) {
-        this.emitter.on('threadMessage', fn)
-    }
-
-    /**
-     * Triggered when someone mentions the bot in a thread message
-     */
-    onMentionedInThread(fn: BotEvents['mentionedInThread']) {
-        this.emitter.on('mentionedInThread', fn)
-    }
-
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
         this.slashCommandHandlers.set(command, fn)
     }
@@ -841,14 +790,18 @@ export const makeTownsBot = async <
     if (!env) {
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
-    const baseConfig = makeBaseChainConfig(env)
+    const baseConfig = townsEnv().makeBaseChainConfig(env)
     const viemClient = createViemClient({
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if makeBaseChainConfig returned a viem chain
+        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
         chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
+    const spaceDapp = new SpaceDapp(
+        baseConfig.chainConfig,
+        new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
+    )
     const client = await createTownsClient({
         privateKey,
         env,
@@ -856,19 +809,21 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient)))
+    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
     return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
-const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
+const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
     const sendMessageEvent = async ({
         streamId,
         payload,
         tags,
+        ephemeral,
     }: {
         streamId: string
         payload: ChannelMessage
         tags?: PlainMessage<Tags>
+        ephemeral?: boolean
     }) => {
         const stream = await client.getStream(streamId)
         const eventTags = {
@@ -886,17 +841,13 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 
-        let eventPayload: PlainMessage<StreamEvent>['payload']
-        if (isChannelStreamId(streamId)) {
-            eventPayload = make_ChannelPayload_Message(message)
-        } else if (isDMChannelStreamId(streamId)) {
-            eventPayload = make_DMChannelPayload_Message(message)
-        } else if (isGDMChannelStreamId(streamId)) {
-            eventPayload = make_GDMChannelPayload_Message(message)
-        } else {
-            throw new Error(`Invalid stream ID type: ${streamId}`)
+        if (!isChannelStreamId(streamId)) {
+            throw new Error(
+                `Invalid stream ID type: ${streamId} - only channel streams are supported`,
+            )
         }
-        return client.sendEvent(streamId, eventPayload, eventTags)
+        const eventPayload = make_ChannelPayload_Message(message)
+        return client.sendEvent(streamId, eventPayload, eventTags, ephemeral)
     }
 
     const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
@@ -929,12 +880,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
     const sendMessage = async (
         streamId: string,
         message: string,
-        opts?: {
-            threadId?: string
-            replyId?: string
-            mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-            attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
-        },
+        opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
@@ -956,7 +902,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload, tags })
+        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
     }
 
     const editMessage = async (
@@ -978,17 +924,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         })
         return sendMessageEvent({ streamId, payload, tags })
     }
-
-    const sendDm = (
-        userId: string,
-        message: string,
-        opts?: {
-            threadId?: string
-            replyId?: string
-            mentions?: ChannelMessage_Post_Mention[]
-            attachments?: ChannelMessage_Post_Attachment[]
-        },
-    ) => sendMessage(userId, message, opts)
 
     const sendReaction = async (
         streamId: string,
@@ -1053,80 +988,48 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         }))
     }
 
-    /**
-     * Fetches and attempts to decrypt member-specific data (username, display name, nft, ensAddress)
-     * for a given user within a specific stream (channel/space).
-     * It requires the data to be in the stream snapshot.
-     *
-     * NOTE: Decryption relies on the bot having the necessary group session keys for the
-     * specified stream. If somehow the keys are missing, decryption will fail, and null values will be returned for username/displayName.
-     *
-     * @deprecated Not planned for now
-     * @param streamId - The ID of the channel or space stream.
-     * @param userId -  The ID of the member whose data is being requested.
-     */
-    const getUserData = async (streamId: string, userId: string): Promise<UserData | null> => {
-        try {
-            const stream = await client.getStream(streamId)
-            const members = stream.snapshot.members?.joined
-            if (!members) {
-                return null
-            }
-            const member = members.find((m) => userIdFromAddress(m.userAddress) === userId)
-            if (!member) {
-                return null
-            }
-            let displayName: string | null = null
-            let username: string | null = null
-            const [usernameDecrypted, displayNameDecrypted] = await Promise.all([
-                member.username?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.username.data)
-                    : null,
-                member.displayName?.data
-                    ? client.crypto.decryptGroupEvent(streamId, member.displayName.data)
-                    : null,
-            ])
-            if (usernameDecrypted) {
-                username =
-                    typeof usernameDecrypted === 'string'
-                        ? usernameDecrypted
-                        : bin_toString(usernameDecrypted)
-            }
-            if (displayNameDecrypted) {
-                displayName =
-                    typeof displayNameDecrypted === 'string'
-                        ? displayNameDecrypted
-                        : bin_toString(displayNameDecrypted)
-            }
-            let ensAddress = undefined
-            if (member.ensAddress) {
-                ensAddress = `0x${bin_toHexString(member.ensAddress)}`
-            }
-            let nft = undefined
-            if (member.nft) {
-                nft = {
-                    tokenId: bin_toString(member.nft.tokenId),
-                    contractAddress: `0x${bin_toHexString(member.nft.contractAddress)}`,
-                    chainId: member.nft.chainId,
-                }
-            }
-            const bio = await fetch(`${getStreamMetadataUrl(client.env)}/user/${userId}/bio`)
-                .then((res) => res.json())
-                .then((data: { bio: string }) => data.bio)
-                .catch(() => null)
-            const profilePictureUrl = `${getStreamMetadataUrl(client.env)}/user/${userId}/image`
-            return {
-                userId,
-                username,
-                displayName,
-                ensAddress,
-                nft,
-                bio,
-                profilePictureUrl,
-            }
-        } catch {
-            return null
+    const hasAdminPermission = async (userId: string, spaceId: string): Promise<boolean> => {
+        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
+        // If you can ban, you're probably an "admin"
+        return spaceDapp
+            .isEntitledToSpace(spaceId, userAddress, Permission.ModifyBanning)
+            .catch(() => false)
+    }
+
+    const checkPermission = async (
+        streamId: string,
+        userId: string,
+        permission: Permission,
+    ): Promise<boolean> => {
+        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
+        if (isChannelStreamId(streamId)) {
+            const spaceId = spaceIdFromChannelId(streamId)
+            return spaceDapp
+                .isEntitledToChannel(spaceId, streamId, userAddress, permission)
+                .catch(() => false)
+        } else {
+            return spaceDapp.isEntitledToSpace(streamId, userAddress, permission).catch(() => false)
         }
+    }
+
+    /**
+     * Ban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     */
+    const ban = async (userId: string, spaceId: string) => {
+        const tx = await spaceDapp.banWalletAddress(spaceId, userId, client.wallet)
+        const receipt = await tx.wait()
+        return { txHash: receipt.transactionHash }
+    }
+
+    /**
+     * Unban a user from a space
+     * Requires Permission.ModifyBanning to execute this action
+     */
+    const unban = async (userId: string, spaceId: string) => {
+        const tx = await spaceDapp.unbanWalletAddress(spaceId, userId, client.wallet)
+        const receipt = await tx.wait()
+        return { txHash: receipt.transactionHash }
     }
 
     return {
@@ -1151,15 +1054,16 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient) => {
         ) => readContract(viemClient, parameters),
         sendMessage,
         editMessage,
-        sendDm,
         sendReaction,
         removeEvent,
         adminRemoveEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
         decryptSessions,
-        /** @deprecated Not planned for now */
-        getUserData,
+        hasAdminPermission,
+        checkPermission,
+        ban,
+        unban,
     }
 }
 
@@ -1182,3 +1086,13 @@ const parseSlashCommand = (message: string): { command: string; args: string[] }
     const args = parts.slice(1)
     return { command, args }
 }
+
+const parseMentions = (
+    mentions: PlainMessage<ChannelMessage_Post_Mention>[],
+): Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[] =>
+    // Bots doesn't care about @channel or @role mentions
+    mentions.flatMap((m) =>
+        m.mentionBehavior.case === undefined
+            ? [{ userId: m.userId, displayName: m.displayName }]
+            : [],
+    )

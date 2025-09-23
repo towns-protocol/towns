@@ -1,5 +1,5 @@
 import { SnapshotSchema } from '@towns-protocol/proto'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 import { snapshotMigration0003 } from '../../migrations/snapshotMigration0003'
 

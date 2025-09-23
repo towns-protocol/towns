@@ -65,7 +65,7 @@ import {
     dlog,
     dlogError,
     bin_fromString,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,

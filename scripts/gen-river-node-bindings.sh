@@ -95,4 +95,5 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/contracts/base/xchain.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_entitlement_checker.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_wallet_link.go IWalletLinkBaseLinkedWallet
+./bin/gen-bindings-remove-struct core/contracts/base/app_registry.go ExecutionManifest,ManifestExecutionFunction,ManifestExecutionHook
 

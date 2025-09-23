@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { promises as fs } from 'node:fs'
 import {
-    RiverConfig,
+    TownsConfig,
     contractAddressFromSpaceId,
     makeDefaultChannelStreamId,
 } from '@towns-protocol/sdk'
@@ -23,7 +23,7 @@ import { getLogger } from '../../utils/logger'
  * loop over wallets one by one
  */
 export async function startStressChat(opts: {
-    config: RiverConfig
+    config: TownsConfig
     processIndex: number
     rootWallet: Wallet
 }) {
@@ -205,7 +205,7 @@ export async function startStressChat(opts: {
 }
 
 export async function setupChat(opts: {
-    config: RiverConfig
+    config: TownsConfig
     rootWallet: Wallet
     makeAnnounceChannel?: boolean
     numChannels?: number

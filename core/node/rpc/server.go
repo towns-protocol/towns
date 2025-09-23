@@ -14,6 +14,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/puzpuzpuz/xsync/v4"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
 	"golang.org/x/net/http2"
@@ -38,6 +39,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/sync"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/scrub"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -781,7 +783,14 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		return err
 	}
 
-	s.syncHandler = sync.NewHandler(
+	s.syncSvc = sync.NewHandler(
+		s.wallet.Address,
+		s.cache,
+		s.nodeRegistry,
+		s.metrics,
+		s.otelTracer,
+	)
+	s.syncv3Svc = syncv3.NewService(
 		s.serverCtx,
 		s.wallet.Address,
 		s.cache,
@@ -789,6 +798,7 @@ func (s *Service) initCacheAndSync(opts *ServerStartOpts) error {
 		s.metrics,
 		s.otelTracer,
 	)
+	s.syncv3OpIDs = xsync.NewMap[string, struct{}]()
 
 	return nil
 }

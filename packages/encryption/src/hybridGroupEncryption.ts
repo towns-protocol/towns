@@ -6,7 +6,7 @@ import {
 } from '@towns-protocol/proto'
 import { EncryptionAlgorithm, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { encryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 import { create } from '@bufbuild/protobuf'
 

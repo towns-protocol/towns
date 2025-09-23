@@ -1,12 +1,12 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
-    makeRiverConfig,
+    townsEnv,
     makeStreamRpcClient,
     randomUrlSelector,
     RiverTimelineEvent,
     TimelineEvent,
 } from '@towns-protocol/sdk'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { InfoRequestSchema } from '@towns-protocol/proto'
 import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'
@@ -22,7 +22,7 @@ import { create } from '@bufbuild/protobuf'
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
 const logger = getLogger('stress:index')
-const config = makeRiverConfig(process.env.RIVER_ENV)
+const config = townsEnv().makeTownsConfig(process.env.RIVER_ENV)
 logger.info(config, 'config')
 
 function getRootWallet() {

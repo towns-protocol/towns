@@ -8,7 +8,7 @@ import { SyncState, stateConstraints } from '../../syncedStreamsLoop'
 import { makeDonePromise, makeRandomUserContext, makeTestRpcClient, waitFor } from '../testUtils'
 import { makeUserInboxStreamId, streamIdToBytes, userIdFromAddress } from '../../id'
 import { make_UserInboxPayload_Ack, make_UserInboxPayload_Inception } from '../../types'
-import { dlog, shortenHexString } from '@towns-protocol/dlog'
+import { dlog, shortenHexString } from '@towns-protocol/utils'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
 import { StreamEvents } from '../../streamEvents'
@@ -67,7 +67,7 @@ describe('syncStreams', () => {
             mockClientEmitter,
             undefined,
             shortenHexString(alicesUserId),
-            { useSharedSyncer: false },
+            { useSharedSyncer: true },
         )
 
         // some helper functions

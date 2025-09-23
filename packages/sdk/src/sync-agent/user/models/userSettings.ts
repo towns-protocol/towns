@@ -1,4 +1,4 @@
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import { RiverConnection } from '../../river-connection/riverConnection'

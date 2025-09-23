@@ -156,6 +156,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 	if len(missingMbs) > 0 {
 		remotes, _ := stream.GetRemotesAndIsLocal()
 		currentStickyPeer := stream.GetStickyPeer()
+	peersLoop:
 		for range len(remotes) {
 			resp, err := s.params.RemoteMiniblockProvider.GetMiniblocksByIds(
 				ctx,
@@ -175,6 +176,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			// Start processing miniblocks from the stream.
 			// If the processing breaks in the middle, the rest of missing miniblocks will be fetched from the next sticky peer.
 			var toNextPeer bool
+			var allFetched bool
 			for resp.Receive() {
 				msg := resp.Msg()
 				if msg == nil || msg.GetMiniblock() == nil {
@@ -226,8 +228,12 @@ func (s *StreamCache) normalizeEphemeralStream(
 				// No missing miniblocks left, just return.
 				if len(missingMbs) == 0 {
 					_ = resp.Close()
-					return nil
+					allFetched = true
+					break
 				}
+			}
+			if allFetched {
+				break peersLoop
 			}
 
 			if toNextPeer {

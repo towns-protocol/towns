@@ -3,12 +3,13 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.workingDirectories": [
-    "./packages/dlog",
+    "./packages/utils",
     "./packages/encryption",
     "./packages/proto",
     "./packages/sdk",
     "./packages/stream-metadata",
     "./packages/stress",
+    "./packages/subgraph",
     "./packages/web3",
   ],
   "[solidity]": {

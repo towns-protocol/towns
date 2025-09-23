@@ -21,7 +21,7 @@ import { makeUniqueSpaceStreamId } from '../testUtils'
 import { makeSignerContext, SignerContext } from '../../signerContext'
 import { makeParsedEvent } from '../../sign'
 import { makeRemoteTimelineEvent, StreamTimelineEvent } from '../../types'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 import { StreamsView } from '../../views/streamsView'
 

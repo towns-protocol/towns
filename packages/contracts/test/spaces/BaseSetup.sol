@@ -4,9 +4,9 @@ pragma solidity ^0.8.23;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
-import {EntryPoint} from "account-abstraction/core/EntryPoint.sol";
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
+import {SimpleAccount} from "@eth-infinitism/account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "@eth-infinitism/account-abstraction/samples/SimpleAccountFactory.sol";
 
 // interfaces
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";

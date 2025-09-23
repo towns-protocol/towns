@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -17,8 +16,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/subscription"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -79,8 +76,6 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// activeSyncOperations keeps a mapping from SyncID -> *StreamSyncOperation
 		activeSyncOperations *xsync.Map[string, *StreamSyncOperation]
-		// subscriptionManager is used to manage subscriptions to streams
-		subscriptionManager *subscription.Manager
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
 		otelTracer trace.Tracer
 		// metrics is the set of metrics used to track sync operations
@@ -97,7 +92,6 @@ var (
 // It keeps internally a map of in progress stream sync operations and forwards add stream, remove sream, cancel sync
 // requests to the associated stream sync operation.
 func NewHandler(
-	ctx context.Context,
 	nodeAddr common.Address,
 	cache *StreamCache,
 	nodeRegistry nodes.NodeRegistry,
@@ -109,7 +103,6 @@ func NewHandler(
 		streamCache:          cache,
 		nodeRegistry:         nodeRegistry,
 		activeSyncOperations: xsync.NewMap[string, *StreamSyncOperation](),
-		subscriptionManager:  subscription.NewManager(ctx, nodeAddr, cache, nodeRegistry, otelTracer),
 		otelTracer:           otelTracer,
 	}
 	h.setupSyncMetrics(metrics)
@@ -128,7 +121,6 @@ func (h *handlerImpl) SyncStreams(
 		h.nodeAddr,
 		h.streamCache,
 		h.nodeRegistry,
-		h.subscriptionManager,
 		h.otelTracer,
 		h.metrics,
 	)
@@ -158,10 +150,7 @@ func (h *handlerImpl) SyncStreams(
 		errCode = AsRiverError(err).Code.String()
 	}
 
-	h.metrics.completedSyncOpsCounter.WithLabelValues(
-		fmt.Sprintf("%t", req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true"),
-		errCode,
-	).Inc()
+	h.metrics.completedSyncOpsCounter.WithLabelValues(errCode).Inc()
 
 	return err
 }
@@ -220,13 +209,7 @@ func (h *handlerImpl) runSyncStreams(
 	}
 
 	// run until sub.ctx expires or until the client calls CancelSync
-	if req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true" {
-		// Run sync operation using shared syncer.
-		doneChan <- op.Run(req, res)
-	} else {
-		// Run sync operation using legacy syncer.
-		doneChan <- op.RunLegacy(req, res)
-	}
+	doneChan <- op.Run(req, res)
 }
 
 func (h *handlerImpl) AddStreamToSync(

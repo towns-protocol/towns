@@ -15,7 +15,7 @@ import {
     SpaceChannelSettingSchema,
 } from '@towns-protocol/proto'
 import { create, DescMessage, fromBinary, MessageShape, toBinary, toJson } from '@bufbuild/protobuf'
-import { bin_fromBase64, bin_toBase64, dlogger } from '@towns-protocol/dlog'
+import { bin_fromBase64, bin_toBase64, dlogger } from '@towns-protocol/utils'
 import { cloneDeep } from 'lodash-es'
 import { makeNotificationRpcClient, NotificationRpcClient } from './makeNotificationRpcClient'
 import { SignerContext } from './signerContext'

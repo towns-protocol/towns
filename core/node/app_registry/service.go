@@ -3,6 +3,7 @@ package app_registry
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -49,7 +50,7 @@ type (
 		appClient                     *app_client.AppClient
 		riverRegistry                 *registries.RiverRegistryContract
 		nodeRegistry                  nodes.NodeRegistry
-		statusCache                   *ttlcache.Cache
+		webhookStatusCache            *ttlcache.Cache
 		// Base chain components for app validation
 		baseChain           *crypto.Blockchain
 		appRegistryContract *auth.AppRegistryContract
@@ -133,7 +134,7 @@ func NewService(
 		appClient:                     appClient,
 		riverRegistry:                 riverRegistry,
 		nodeRegistry:                  nodes[0],
-		statusCache:                   ttlcache.New(2*time.Second, 1*time.Minute),
+		webhookStatusCache:            ttlcache.New(2*time.Second, 1*time.Minute),
 	}
 
 	// Initialize app registry contract if base chain is provided and configured
@@ -163,6 +164,122 @@ func NewService(
 	return s, nil
 }
 
+// validateAddress validates any address field and returns appropriate error
+func validateAddress(addrBytes []byte, fieldName string, funcName string) (common.Address, error) {
+	addr, err := base.BytesToAddress(addrBytes)
+	if err != nil {
+		return common.Address{}, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
+			Message(fmt.Sprintf("invalid %s", fieldName)).
+			Tag(fieldName, addrBytes).
+			Func(funcName)
+	}
+	return addr, nil
+}
+
+// validateAppAndGetInfo validates app ID and retrieves app info
+func (s *Service) validateAppAndGetInfo(
+	ctx context.Context,
+	appIdBytes []byte,
+	funcName string,
+) (common.Address, *storage.AppInfo, error) {
+	app, err := validateAddress(appIdBytes, "app id", funcName)
+	if err != nil {
+		return common.Address{}, nil, err
+	}
+
+	appInfo, err := s.store.GetAppInfo(ctx, app)
+	if err != nil {
+		return common.Address{}, nil, base.WrapRiverError(Err_INTERNAL, err).
+			Message("could not determine app owner").
+			Tag("appId", app).
+			Func(funcName)
+	}
+
+	return app, appInfo, nil
+}
+
+// checkAppPermission checks if authenticated user has permission to act as app.
+// If owner is zero address, only checks if user is the app itself.
+// If owner is provided, checks if user is either the app or the owner.
+func (s *Service) checkAppPermission(
+	ctx context.Context,
+	app common.Address,
+	owner common.Address,
+	funcName string,
+) (common.Address, error) {
+	userId := authentication.UserFromAuthenticatedContext(ctx)
+
+	// If owner is zero address, only check if user is the app
+	if (owner == (common.Address{}) && app != userId) || (app != userId && owner != userId) {
+		msg := "authenticated user must be app or owner"
+		if owner == (common.Address{}) {
+			msg = "authenticated user must be app"
+		}
+		return common.Address{}, base.RiverError(Err_PERMISSION_DENIED, msg).
+			Tag("app", app).
+			Tag("userId", userId).
+			Tag("ownerId", owner).
+			Func(funcName)
+	}
+	return userId, nil
+}
+
+// generateAndEncryptSecret generates a new shared secret and encrypts it
+func (s *Service) generateAndEncryptSecret(funcName string) ([32]byte, [32]byte, error) {
+	appSecret, err := genHS256SharedSecret()
+	if err != nil {
+		return [32]byte{}, [32]byte{}, base.AsRiverError(err, Err_INTERNAL).
+			Message("error generating shared secret for app").
+			Func(funcName)
+	}
+
+	encrypted, err := encryptSharedSecret(appSecret, s.sharedSecretDataEncryptionKey)
+	if err != nil {
+		return [32]byte{}, [32]byte{}, base.AsRiverError(err, Err_INTERNAL).
+			Message("error encrypting shared secret for app").
+			Func(funcName)
+	}
+
+	return appSecret, encrypted, nil
+}
+
+// decryptAppSecret decrypts the app's shared secret
+func (s *Service) decryptAppSecret(
+	encryptedSecret [32]byte,
+	app common.Address,
+	funcName string,
+) ([32]byte, error) {
+	decryptedSecret, err := decryptSharedSecret(encryptedSecret, s.sharedSecretDataEncryptionKey)
+	if err != nil {
+		return [32]byte{}, base.WrapRiverError(Err_INTERNAL, err).
+			Message("Unable to decrypt app shared secret from db").
+			Tag("appId", app).
+			Func(funcName)
+	}
+	return decryptedSecret, nil
+}
+
+// validateAppWithOwnerPermission validates app ID, retrieves app info, and checks if the
+// authenticated user is either the app itself or the app owner.
+// This is a convenience function that combines validateAppAndGetInfo and checkAppPermission.
+func (s *Service) validateAppWithOwnerPermission(
+	ctx context.Context,
+	appIdBytes []byte,
+	funcName string,
+) (app common.Address, appInfo *storage.AppInfo, userId common.Address, err error) {
+	app, appInfo, err = s.validateAppAndGetInfo(ctx, appIdBytes, funcName)
+	if err != nil {
+		return common.Address{}, nil, common.Address{}, err
+	}
+
+	userId, err = s.checkAppPermission(ctx, app, appInfo.Owner, funcName)
+	if err != nil {
+		return common.Address{}, nil, common.Address{}, err
+	}
+
+	return app, appInfo, userId, nil
+}
+
 func (s *Service) SetAppSettings(
 	ctx context.Context,
 	req *connect.Request[SetAppSettingsRequest],
@@ -172,30 +289,16 @@ func (s *Service) SetAppSettings(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppSettings"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetSettings")
-	}
-
-	appInfo, err := s.store.GetAppInfo(ctx, app)
+	app, _, userId, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "SetAppSettings")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("appId", app).Func("SetSettings")
-	}
-
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId && appInfo.Owner != userId {
-		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
-			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetSettings")
+		return nil, err
 	}
 
 	if err := s.store.UpdateSettings(ctx, app, types.ProtocolToStorageAppSettings(req.Msg.GetSettings())); err != nil {
 		return nil, base.RiverError(Err_DB_OPERATION_FAILURE, "Unable to update app forward setting").
 			Tag("appId", app).
 			Tag("userId", userId).
-			Func("SetSettings")
+			Func("SetAppSettings")
 	}
 
 	return &connect.Response[SetAppSettingsResponse]{
@@ -212,23 +315,9 @@ func (s *Service) GetAppSettings(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetAppSettings"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("SetSettings")
-	}
-
-	appInfo, err := s.store.GetAppInfo(ctx, app)
+	_, appInfo, _, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "GetAppSettings")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("appId", app).Func("SetSettings")
-	}
-
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId && appInfo.Owner != userId {
-		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
-			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("SetSettings")
+		return nil, err
 	}
 
 	return &connect.Response[GetAppSettingsResponse]{
@@ -268,42 +357,22 @@ func (s *Service) RotateSecret(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "RotateSecret"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetSession")
-	}
-
-	appInfo, err := s.store.GetAppInfo(ctx, app)
+	app, _, _, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "RotateSecret")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("appId", app).Func("GetSession")
-	}
-
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId && appInfo.Owner != userId {
-		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
-			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("GetSession")
+		return nil, err
 	}
 
 	// Generate a secret, encrypt it, and store the app record in pg.
-	appSecret, err := genHS256SharedSecret()
+	appSecret, encrypted, err := s.generateAndEncryptSecret("RotateSecret")
 	if err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error generating shared secret for app").
-			Tag("appId", app).Func("GetSession")
-	}
-
-	encrypted, err := encryptSharedSecret(appSecret, s.sharedSecretDataEncryptionKey)
-	if err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app").
-			Tag("appId", app).Func("GetSession")
+		return nil, err
 	}
 
 	if err := s.store.RotateSharedSecret(ctx, app, encrypted); err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
 			Message("Error storing encrypted shared secret for app").
-			Tag("appId", app).Func("GetSession")
+			Tag("appId", app).
+			Func("RotateSecret")
 	}
 
 	return &connect.Response[RotateSecretResponse]{
@@ -322,17 +391,15 @@ func (s *Service) GetSession(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetSession"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetSession")
+	app, err := validateAddress(req.Msg.AppId, "app id", "GetSession")
+	if err != nil {
+		return nil, err
 	}
 
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId {
-		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app").
-			Tag("app", app).Tag("userId", userId).Func("GetSession")
+	// Pass zero address for owner to check app-only permission
+	_, err = s.checkAppPermission(ctx, app, common.Address{}, "GetSession")
+	if err != nil {
+		return nil, err
 	}
 
 	if req.Msg.SessionId == "" {
@@ -369,30 +436,24 @@ func (s *Service) Register(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "Register"))
 
-	var app, owner common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").
-			Tag("appId", req.Msg.AppId)
+	app, err := validateAddress(req.Msg.AppId, "app id", "Register")
+	if err != nil {
+		return nil, err
 	}
 
-	if owner, err = base.BytesToAddress(req.Msg.AppOwnerId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid owner id").
-			Tag("ownerId", req.Msg.AppOwnerId)
+	owner, err := validateAddress(req.Msg.AppOwnerId, "owner id", "Register")
+	if err != nil {
+		return nil, err
 	}
 
+	// Check if authenticated user is the owner
 	userId := authentication.UserFromAuthenticatedContext(ctx)
 	if owner != userId {
-		return nil, base.RiverError(
-			Err_PERMISSION_DENIED,
-			"authenticated user must be app owner",
-			"owner",
-			owner,
-			"userId",
-			userId,
-		)
+		return nil, base.RiverError(Err_PERMISSION_DENIED,
+			"authenticated user must be app owner").
+			Tag("owner", owner).
+			Tag("userId", userId).
+			Func("Register")
 	}
 
 	// Validate metadata
@@ -403,14 +464,9 @@ func (s *Service) Register(
 	}
 
 	// Generate a secret, encrypt it, and store the app record in pg.
-	appSecret, err := genHS256SharedSecret()
+	appSecret, encrypted, err := s.generateAndEncryptSecret("Register")
 	if err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error generating shared secret for app")
-	}
-
-	encrypted, err := encryptSharedSecret(appSecret, s.sharedSecretDataEncryptionKey)
-	if err != nil {
-		return nil, base.AsRiverError(err, Err_INTERNAL).Message("error encrypting shared secret for app")
+		return nil, err
 	}
 
 	if err := s.validateAppContractAddress(ctx, app); err != nil {
@@ -421,7 +477,7 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
-	if err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
+	if _, err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys").
 			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
@@ -648,32 +704,9 @@ func (s *Service) RegisterWebhook(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "RegisterWebhook"))
 
-	// Validate input
-	var app common.Address
-	var appInfo *storage.AppInfo
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Func("RegisterWebhook").
-			Tag("app_id", req.Msg.AppId)
-	}
-	if appInfo, err = s.store.GetAppInfo(ctx, app); err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("app_id", app).Func("RegisterWebhook")
-	}
-
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId && appInfo.Owner != userId {
-		return nil, base.RiverError(
-			Err_PERMISSION_DENIED,
-			"authenticated user must be either app or owner",
-			"owner",
-			appInfo.Owner,
-			"app",
-			app,
-			"userId",
-			userId,
-		)
+	app, appInfo, _, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "RegisterWebhook")
+	if err != nil {
+		return nil, err
 	}
 
 	defaultEncryptionDevice, err := s.waitForAppEncryptionDevice(ctx, app)
@@ -681,11 +714,9 @@ func (s *Service) RegisterWebhook(
 		return nil, err
 	}
 
-	decryptedSecret, err := decryptSharedSecret(appInfo.EncryptedSecret, s.sharedSecretDataEncryptionKey)
+	decryptedSecret, err := s.decryptAppSecret(appInfo.EncryptedSecret, app, "RegisterWebhook")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).
-			Message("Unable to decrypt app shared secret from db").
-			Tag("appId", app).Func("RegisterWebhook")
+		return nil, err
 	}
 
 	webhook := req.Msg.WebhookUrl
@@ -716,7 +747,7 @@ func (s *Service) RegisterWebhook(
 
 	// Bust the status cache since the webhook may be changing. This method can be called
 	// many times to update the webhook.
-	s.statusCache.Delete(app.String())
+	s.webhookStatusCache.Delete(app.String())
 
 	// Store the app record in pg
 	if err := s.store.RegisterWebhook(ctx, app, webhook, defaultEncryptionDevice.DeviceKey, defaultEncryptionDevice.FallbackKey); err != nil {
@@ -740,21 +771,25 @@ func (s *Service) GetStatus(
 			err = base.AsRiverError(err, Err_INTERNAL).Func("GetStatus")
 		}
 	}()
-	app, err := base.BytesToAddress(req.Msg.AppId)
+
+	app, err := validateAddress(req.Msg.AppId, "app id", "GetStatus")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").
-			Tag("app_id", req.Msg.AppId)
+		return nil, err
 	}
 
-	// Check for cached status response
-	if cached, ok := s.statusCache.Get(app.String()); ok {
-		if status, ok := cached.(*AppServiceResponse_StatusResponse); ok {
+	// Check for webhookStatusCached webhookStatus response
+	if webhookStatusCached, exists := s.webhookStatusCache.Get(app.String()); exists {
+		if webhookStatus, exists := webhookStatusCached.(*AppServiceResponse_StatusResponse); exists {
+			appInfo, err := s.store.GetAppInfo(ctx, app)
+			if err != nil {
+				return nil, err
+			}
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
 					IsRegistered:  true,
 					ValidResponse: true,
-					Status:        status,
+					Status:        webhookStatus,
+					Active:        appInfo.Active,
 				},
 			}, nil
 		}
@@ -777,20 +812,19 @@ func (s *Service) GetStatus(
 		}
 	}
 
-	decryptedSecret, err := decryptSharedSecret(appInfo.EncryptedSecret, s.sharedSecretDataEncryptionKey)
+	decryptedSecret, err := s.decryptAppSecret(appInfo.EncryptedSecret, app, "GetStatus")
 	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).
-			Message("Unable to decrypt app shared secret from db").
-			Tag("appId", app)
+		return nil, err
 	}
 
-	status, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
+	webhookStatus, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
 	if err != nil {
 		if base.IsRiverErrorCode(err, Err_MALFORMED_WEBHOOK_RESPONSE) {
 			// App is registered but returned an invalid response
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
 					IsRegistered: true,
+					Active:       appInfo.Active,
 				},
 			}, nil
 		} else {
@@ -800,13 +834,14 @@ func (s *Service) GetStatus(
 		}
 	}
 
-	s.statusCache.Set(app.String(), status, 0)
+	s.webhookStatusCache.Set(app.String(), webhookStatus, 0)
 
 	return &connect.Response[GetStatusResponse]{
 		Msg: &GetStatusResponse{
 			IsRegistered:  true,
 			ValidResponse: true,
-			Status:        status,
+			Status:        webhookStatus,
+			Active:        appInfo.Active,
 		},
 	}, nil
 }
@@ -820,33 +855,20 @@ func (s *Service) UpdateAppMetadata(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "UpdateAppMetadata"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("UpdateAppMetadata")
-	}
-
-	// Validate partial metadata update
+	// Validate partial metadata update first
 	metadata := req.Msg.GetMetadata()
 	updateMask := req.Msg.GetUpdateMask()
+
+	app, _, userId, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "UpdateAppMetadata")
+	if err != nil {
+		return nil, err
+	}
+
 	if err := types.ValidateAppMetadataUpdate(metadata, updateMask); err != nil {
 		return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
 			Tag("appId", app).Func("UpdateAppMetadata").Message("invalid app metadata update")
 	}
 	logging.FromCtx(ctx).Infow("meta", "metadata", metadata, "updateMask", updateMask)
-
-	appInfo, err := s.store.GetAppInfo(ctx, app)
-	if err != nil {
-		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not determine app owner").
-			Tag("appId", app).Func("UpdateAppMetadata")
-	}
-
-	userId := authentication.UserFromAuthenticatedContext(ctx)
-	if app != userId && appInfo.Owner != userId {
-		return nil, base.RiverError(Err_PERMISSION_DENIED, "authenticated user must be app or owner").
-			Tag("appId", app).Tag("userId", userId).Tag("ownerId", appInfo.Owner).Func("UpdateAppMetadata")
-	}
 
 	// Perform partial update (conversion to storage format happens inside)
 	err = s.store.SetAppMetadataPartial(ctx, app, metadata, updateMask)
@@ -877,11 +899,9 @@ func (s *Service) GetAppMetadata(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "GetAppMetadata"))
 
-	var app common.Address
-	var err error
-	if app, err = base.BytesToAddress(req.Msg.AppId); err != nil {
-		return nil, base.WrapRiverError(Err_INVALID_ARGUMENT, err).
-			Message("invalid app id").Tag("appId", req.Msg.AppId).Func("GetAppMetadata")
+	app, err := validateAddress(req.Msg.AppId, "app id", "GetAppMetadata")
+	if err != nil {
+		return nil, err
 	}
 
 	metadata, err := s.store.GetAppMetadata(ctx, app)
@@ -939,5 +959,43 @@ func (s *Service) ValidateBotName(
 		Msg: &ValidateBotNameResponse{
 			IsAvailable: true,
 		},
+	}, nil
+}
+
+func (s *Service) SetAppActiveStatus(
+	ctx context.Context,
+	req *connect.Request[SetAppActiveStatusRequest],
+) (
+	*connect.Response[SetAppActiveStatusResponse],
+	error,
+) {
+	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "SetAppActiveStatus"))
+
+	app, _, userId, err := s.validateAppWithOwnerPermission(ctx, req.Msg.AppId, "SetAppActiveStatus")
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the app active status
+	err = s.store.SetAppActiveStatus(ctx, app, req.Msg.Active)
+	if err != nil {
+		return nil, base.AsRiverError(err, Err_INTERNAL).
+			Message("failed to update app active status").
+			Tag("appId", app).
+			Tag("active", req.Msg.Active).
+			Func("SetAppActiveStatus")
+	}
+
+	// Clear status cache so next GetStatus reflects the change
+	s.webhookStatusCache.Delete(app.String())
+
+	logging.FromCtx(ctx).Infow("Updated app active status",
+		"appId", app,
+		"active", req.Msg.Active,
+		"userId", userId,
+	)
+
+	return &connect.Response[SetAppActiveStatusResponse]{
+		Msg: &SetAppActiveStatusResponse{},
 	}, nil
 }

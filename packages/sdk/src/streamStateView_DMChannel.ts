@@ -9,7 +9,7 @@ import {
 } from './types'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
 import { DmStreamModel, DmStreamsView } from './views/streams/dmStreams'

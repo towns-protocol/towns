@@ -21,21 +21,23 @@ const openai = new OpenAI({
 
 const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!)
 
-bot.onMessage(async (h, { message, userId, eventId, channelId }) => {
-    console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)
-    const newThreadId = eventId
-    const context = newThread(newThreadId, userId, message)
-    const a = await ai(context)
-    updateContext(newThreadId, bot.botId, a)
-    await h.sendMessage(channelId, a, { threadId: newThreadId })
-})
-
-bot.onThreadMessage(async (h, { channelId, threadId, userId, message }) => {
-    console.log(`🧵 thread message: user ${shortId(userId)} sent message:`, message)
-    const context = updateContext(threadId, userId, message)
-    const a = await ai(context)
-    updateContext(threadId, bot.botId, a)
-    await h.sendMessage(channelId, a, { threadId })
+bot.onMessage(async (h, { message, userId, eventId, channelId, threadId }) => {
+    if (threadId) {
+        // Thread reply
+        console.log(`🧵 thread message: user ${shortId(userId)} sent message:`, message)
+        const context = updateContext(threadId, userId, message)
+        const a = await ai(context)
+        updateContext(threadId, bot.botId, a)
+        await h.sendMessage(channelId, a, { threadId })
+    } else {
+        // New thread
+        console.log(`🧵 new thread: user ${shortId(userId)} sent message:`, message)
+        const newThreadId = eventId
+        const context = newThread(newThreadId, userId, message)
+        const a = await ai(context)
+        updateContext(newThreadId, bot.botId, a)
+        await h.sendMessage(channelId, a, { threadId: newThreadId })
+    }
 })
 
 const newThread = (messageId: string, userId: string, initialPrompt: string) => {

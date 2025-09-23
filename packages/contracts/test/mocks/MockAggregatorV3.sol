@@ -51,6 +51,6 @@ contract MockAggregatorV3 is AggregatorV3Interface {
         override
         returns (uint80, int256, uint256, uint256, uint80)
     {
-        return (roundId, answer, startedAt, updatedAt, answeredInRound);
+        return (roundId, answer, startedAt, block.timestamp, answeredInRound);
     }
 }

@@ -7,7 +7,7 @@ import {
     isNodeEnv,
     isBrowser,
     bin_fromHexString,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 
 export function unsafeProp<K extends keyof any | undefined>(prop: K): boolean {
     return prop === '__proto__' || prop === 'prototype' || prop === 'constructor'

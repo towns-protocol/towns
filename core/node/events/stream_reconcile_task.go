@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -15,7 +14,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 type reconcileTask struct {
@@ -123,9 +121,7 @@ func (s *StreamCache) submitReconciliationTask(
 	}
 }
 
-func (s *StreamCache) reconciliationTask(
-	streamId StreamId,
-) {
+func (s *StreamCache) reconciliationTask(streamId StreamId) {
 	corrupt := false
 	var streamRecord *river.StreamWithId
 	var stream *Stream
@@ -154,7 +150,7 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.reconcileStreamFromPeers(stream, streamRecord)
+	err := newStreamReconciler(s, stream, streamRecord).reconcile()
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
@@ -213,6 +209,7 @@ func (s *StreamCache) reconciliationTask(
 	}
 }
 
+/*
 // reconcileStreamFromPeers reconciles the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
 func (s *StreamCache) reconcileStreamFromPeers(
@@ -394,6 +391,7 @@ func (s *StreamCache) reconcileStreamFromSinglePeer(
 		currentFromInclusive += int64(len(mbs))
 	}
 }
+*/
 
 // retryableReconciliationTasks holds a set of reconciliation tasks that failed and need
 // to be retried periodically until success.

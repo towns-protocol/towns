@@ -1,5 +1,5 @@
 import { SpaceAddressFromSpaceId } from '../utils/ut'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { ISpaceArchitectShim } from './ISpaceArchitectShim'
 import { ILegacySpaceArchitectShim } from './ILegacySpaceArchitectShim'
 import { ICreateSpaceShim } from './ICreateSpaceShim'

@@ -1,5 +1,5 @@
 import { mergeAbis, factory, createConfig } from 'ponder'
-import { http, parseAbiItem, Transport } from 'viem'
+import { parseAbiItem, Transport } from 'viem'
 
 // import abis
 import {
@@ -19,6 +19,7 @@ import {
     membershipFacetAbi,
     reviewFacetAbi,
 } from '@towns-protocol/contracts/typings'
+import SubscriptionModuleFacetAbi from '@towns-protocol/generated/dev/abis/SubscriptionModuleFacet.abi'
 
 import { getContractAddress } from './contractAddresses'
 
@@ -67,6 +68,21 @@ export function makePonderConfig(
     const appRegistry = getContractAddress('appRegistry', baseChainName, environment)
     if (!appRegistry) {
         throw new Error('App registry address not found')
+    }
+
+    // SubscriptionModule is optional - not deployed in all environments
+    const subscriptionModule =
+        getContractAddress('subscriptionModule', baseChainName, environment, {
+            throwOnError: false,
+        }) || '0x0000000000000000000000000000000000000001' // Dummy address for missing deployments
+
+    if (
+        !subscriptionModule ||
+        subscriptionModule === '0x0000000000000000000000000000000000000001'
+    ) {
+        console.warn(
+            `⚠️  SubscriptionModule not deployed for ${environment} on '${baseChainName}', using dummy address`,
+        )
     }
 
     return {
@@ -121,6 +137,13 @@ export function makePonderConfig(
             SpaceOwner: {
                 abi: spaceOwnerAbi,
                 address: spaceOwner,
+                startBlock: baseChainStartBlock,
+                chain: baseChainName,
+            },
+            SubscriptionModule: {
+                abi: SubscriptionModuleFacetAbi,
+                address: subscriptionModule,
+                // this can be set to much later than the start block, let's figure this out for all newer contracts like swap etc
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
             },

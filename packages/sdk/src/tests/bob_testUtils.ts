@@ -1,6 +1,6 @@
 import { makeEvent, unpackStreamEnvelopes } from '../sign'
 import { MembershipOp, SyncStreamsResponse, Envelope, SyncOp } from '@towns-protocol/proto'
-import { DLogger } from '@towns-protocol/dlog'
+import { DLogger } from '@towns-protocol/utils'
 import {
     lastEventFiltered,
     makeEvent_test,

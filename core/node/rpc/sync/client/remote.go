@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
@@ -17,17 +18,19 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
 
 type remoteSyncer struct {
+	cancelGlobalSyncOp context.CancelCauseFunc
 	syncStreamCtx      context.Context
 	syncStreamCancel   context.CancelFunc
 	syncID             string
+	forwarderSyncID    string
 	remoteAddr         common.Address
 	client             protocolconnect.StreamServiceClient
-	messageDistributor MessageDistributor
+	messages           *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 	streams            *xsync.Map[StreamId, struct{}]
 	responseStream     *connect.ServerStreamForClient[SyncStreamsResponse]
 	unsubStream        func(streamID StreamId)
@@ -36,67 +39,80 @@ type remoteSyncer struct {
 }
 
 func NewRemoteSyncer(
-	globalCtx context.Context,
+	ctx context.Context,
+	cancelGlobalSyncOp context.CancelCauseFunc,
+	forwarderSyncID string,
 	remoteAddr common.Address,
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
-	messageDistributor MessageDistributor,
+	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
-	syncStreamCtx, syncStreamCancel := context.WithCancel(globalCtx)
+	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
 
-	// TODO: Remove after removing the legacy syncer
-	req := connect.NewRequest(&SyncStreamsRequest{})
-	req.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
-
-	responseStream, err := client.SyncStreams(syncStreamCtx, req)
-	if err != nil {
-		syncStreamCancel()
-		return nil, err
-	}
-
-	// Create a timer for the first Receive
-	timer := time.NewTimer(5 * time.Second)
-	defer timer.Stop()
-
-	firstMsgChan := make(chan bool, 1)
+	// ensure that the first valid update is received within 15 seconds,
+	// if not, cancel the operation and return an unavailable error
+	var firstUpdateReceived atomic.Bool
 	go func() {
-		firstMsgChan <- responseStream.Receive()
-		close(firstMsgChan)
+		select {
+		case <-syncStreamCtx.Done():
+		case <-time.After(15 * time.Second):
+			if !firstUpdateReceived.Load() {
+				syncStreamCancel()
+			}
+		}
 	}()
 
-	select {
-	case received := <-firstMsgChan:
-		if !received {
-			syncStreamCancel()
-			if err = responseStream.Err(); err != nil {
-				return nil, err
-			}
-			return nil, RiverError(Err_UNAVAILABLE, "SyncStreams stream closed without receiving any messages")
-		}
-		// First message received successfully, continue with the stream
-	case <-timer.C:
+	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
+	if err != nil {
 		syncStreamCancel()
-		return nil, RiverError(Err_UNAVAILABLE, "Timeout waiting for first message from SyncStreams")
+
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams failed",
+			err).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteSyncer")
 	}
 
+	// store indication if the first update was received
+	firstUpdateReceived.Store(responseStream.Receive())
+
+	// if the sync operation was canceled, return an unavailable error
+	if !firstUpdateReceived.Load() || syncStreamCtx.Err() != nil {
+		syncStreamCancel()
+
+		return nil, RiverErrorWithBase(
+			Err_UNAVAILABLE,
+			"SyncStreams stream closed without receiving any messages",
+			responseStream.Err()).
+			Tags("remote", remoteAddr).
+			Func("NewRemoteSyncer")
+	}
+
+	// test that the first update is a SYNC_NEW message with a valid syncID set
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
-		logging.FromCtx(globalCtx).Errorw("Received unexpected sync stream message",
+		syncStreamCancel()
+
+		logging.FromCtx(ctx).Errorw("Received unexpected sync stream message",
 			"syncOp", responseStream.Msg().SyncOp,
 			"syncId", responseStream.Msg().SyncId)
-		syncStreamCancel()
+
 		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
 			Tags("syncOp", responseStream.Msg().SyncOp,
 				"syncId", responseStream.Msg().SyncId,
-				"remote", remoteAddr)
+				"remote", remoteAddr).
+			Func("NewRemoteSyncer")
 	}
 
 	return &remoteSyncer{
 		syncID:             responseStream.Msg().GetSyncId(),
+		forwarderSyncID:    forwarderSyncID,
+		cancelGlobalSyncOp: cancelGlobalSyncOp,
 		syncStreamCtx:      syncStreamCtx,
 		syncStreamCancel:   syncStreamCancel,
 		client:             client,
-		messageDistributor: messageDistributor,
+		messages:           messages,
 		streams:            xsync.NewMap[StreamId, struct{}](),
 		responseStream:     responseStream,
 		remoteAddr:         remoteAddr,
@@ -130,28 +146,24 @@ func (s *remoteSyncer) Run() {
 		res := s.responseStream.Msg()
 
 		if res.GetSyncOp() == SyncOp_SYNC_UPDATE {
-			streamID, err := StreamIdFromBytes(res.GetStream().GetNextSyncCookie().GetStreamId())
-			if err != nil {
-				log.Errorw("Received invalid stream ID in sync update", "remote", s.remoteAddr, "error", err)
-				continue
-			}
-
-			if err = s.sendResponse(streamID, res); err != nil {
+			if err := s.sendSyncStreamResponseToClient(res); err != nil {
 				if !errors.Is(err, context.Canceled) {
 					log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
+					s.cancelGlobalSyncOp(err)
 				}
 				return
 			}
 		} else if res.GetSyncOp() == SyncOp_SYNC_DOWN {
 			if streamID, err := StreamIdFromBytes(res.GetStreamId()); err == nil {
-				if err = s.sendResponse(streamID, res); err != nil {
+				s.unsubStream(streamID)
+				if err := s.sendSyncStreamResponseToClient(res); err != nil {
 					if !errors.Is(err, context.Canceled) {
 						log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
+						s.cancelGlobalSyncOp(err)
 					}
 					return
 				}
-				// This must happen only after sending the message to the client.
-				s.unsubStream(streamID)
+
 				s.streams.Delete(streamID)
 			}
 		}
@@ -162,43 +174,42 @@ func (s *remoteSyncer) Run() {
 		log.Infow("remote node disconnected", "remote", s.remoteAddr)
 
 		s.streams.Range(func(streamID StreamId, _ struct{}) bool {
-			log.Debugw("stream down", "remote", s.remoteAddr, "stream", streamID)
+			log.Debugw("stream down", "syncId", s.forwarderSyncID, "remote", s.remoteAddr, "stream", streamID)
+
 			msg := &SyncStreamsResponse{SyncOp: SyncOp_SYNC_DOWN, StreamId: streamID[:]}
-			if err := s.sendResponse(streamID, msg); err != nil {
+
+			// TODO: slow down a bit to give client time to read stream down updates
+			if err := s.sendSyncStreamResponseToClient(msg); err != nil {
 				log.Errorw("Cancel remote sync with client", "remote", s.remoteAddr, "error", err)
+				s.cancelGlobalSyncOp(err)
 				return false
 			}
-			// This must happen only after sending the message to the client.
+
+			// unsubStream is called to remove the stream from the local cache of the syncer set so
+			// the given stream could be re-added.
 			s.unsubStream(streamID)
+
 			return true
 		})
-
-		s.streams.Clear()
 	}
 }
 
-// sendResponse tries to write msg to the client send message channel.
+// sendSyncStreamResponseToClient tries to write msg to the client send message channel.
 // If the channel is full or the sync operation is cancelled, the function returns an error.
-func (s *remoteSyncer) sendResponse(streamID StreamId, msg *SyncStreamsResponse) error {
+func (s *remoteSyncer) sendSyncStreamResponseToClient(msg *SyncStreamsResponse) error {
 	select {
 	case <-s.syncStreamCtx.Done():
-		if err := s.syncStreamCtx.Err(); err != nil {
-			rvrErr := AsRiverError(err, Err_CANCELED).
-				Func("localSyncer.sendResponse")
-			_ = rvrErr.LogError(logging.FromCtx(s.syncStreamCtx))
-			return rvrErr
-		}
-		return nil
+		return s.syncStreamCtx.Err()
 	default:
-	}
+		if err := s.messages.AddMessage(msg); err != nil {
+			return AsRiverError(err).
+				Tag("syncId", s.syncID).
+				Tag("op", msg.GetSyncOp()).
+				Func("sendSyncStreamResponseToClient")
+		}
 
-	if len(msg.GetTargetSyncIds()) > 0 {
-		s.messageDistributor.DistributeBackfillMessage(streamID, msg)
-	} else {
-		s.messageDistributor.DistributeMessage(streamID, msg)
+		return nil
 	}
-
-	return nil
 }
 
 // connectionAlive periodically pings remote to check if the connection is still alive.
@@ -263,6 +274,11 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 
 	resp, err := s.client.ModifySync(ctx, connect.NewRequest(request))
 	if err != nil {
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			return nil, false, RiverErrorWithBase(Err_UNAVAILABLE, "Remote node is not reachable", err).
+				Tags("remote", s.remoteAddr).
+				Func("Modify")
+		}
 		return nil, false, err
 	}
 
@@ -282,8 +298,11 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		}
 	}
 
-	// TODO: Remove the second argument after the legacy client is removed
-	return resp.Msg, false, nil
+	noMoreStreams := s.streams.Size() == 0
+	if noMoreStreams {
+		s.syncStreamCancel()
+	}
+	return resp.Msg, noMoreStreams, nil
 }
 
 func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {

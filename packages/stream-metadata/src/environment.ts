@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv'
-import { getWeb3Deployment } from '@towns-protocol/web3'
+import { web3Env } from '@towns-protocol/web3'
 import { z } from 'zod'
 import { v4 } from 'uuid'
 
@@ -33,7 +33,7 @@ const envMainSchema = z.object({
 function makeConfig() {
 	// eslint-disable-next-line no-process-env -- this is the only line where we're allowed to use process.env
 	const envMain = envMainSchema.parse(process.env)
-	const web3Config = getWeb3Deployment(envMain.RIVER_ENV)
+	const web3Config = web3Env().getDeployment(envMain.RIVER_ENV)
 	const baseUrl = new URL(envMain.RIVER_STREAM_METADATA_BASE_URL)
 	const cloudfront = envMain.CLOUDFRONT_DISTRIBUTION_ID
 		? {

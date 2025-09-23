@@ -1,16 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
+import { AppRegistryService, townsEnv } from '@towns-protocol/sdk'
 import { useSyncAgent } from '@towns-protocol/react-sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { loadAuth } from '@/utils/persist-auth'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 
 export const getAppMetadataQueryKey = (appId: string) => ['appMetadata', appId]
 
 export const useAppMetadata = (appId: string | undefined) => {
     const signer = useEthersSigner()
     const sync = useSyncAgent()
-    const appRegistryUrl = getAppRegistryUrl(sync.config.riverConfig.environmentId)
+    const appRegistryUrl = townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(
+        sync.config.townsConfig.environmentId,
+    )
 
     return useQuery({
         queryKey: getAppMetadataQueryKey(appId || ''),

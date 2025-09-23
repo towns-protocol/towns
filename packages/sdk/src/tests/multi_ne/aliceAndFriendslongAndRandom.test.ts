@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import seedrandom from 'seedrandom'
 import { converse } from '../testDriver_testUtils'
 

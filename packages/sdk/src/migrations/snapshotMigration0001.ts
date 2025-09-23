@@ -1,5 +1,5 @@
 import { Snapshot } from '@towns-protocol/proto'
-import { bin_equal } from '@towns-protocol/dlog'
+import { bin_equal } from '@towns-protocol/utils'
 
 // Generic compactFunc function
 function compactFunc<T>(elements: T[], keyFn: (element: T) => Uint8Array): T[] {

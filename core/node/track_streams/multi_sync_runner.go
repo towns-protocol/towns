@@ -30,7 +30,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -358,16 +357,10 @@ func (ssr *syncSessionRunner) Run() {
 
 	var syncer RemoteStreamSyncer
 	if ssr.useSharedSyncer {
-		syncer, err = client.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr,
-			ssr.otelTracer,
-		)
+		// TODO: Implement using sync v3 here.
+		logging.FromCtx(ssr.syncCtx).Panicw("Sync v3 is not supported")
 	} else {
-		syncer, err = legacyclient.NewRemoteSyncer(
+		syncer, err = client.NewRemoteSyncer(
 			ssr.syncCtx,
 			ssr.cancelSync,
 			"SyncSessionRunner",
@@ -520,34 +513,6 @@ func (ssr *syncSessionRunner) Close(err error) {
 		ssr.relocateStream(streamId)
 		return true
 	})
-}
-
-// DistributeMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeMessage",
-		)
-	}
-}
-
-// DistributeBackfillMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeBackfillMessage",
-		)
-	}
 }
 
 // startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.

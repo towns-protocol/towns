@@ -1,0 +1,139 @@
+{
+  "alpha": {
+    "base": {
+      "chainId": 84532,
+      "addresses": {
+        "appRegistry": "0x23a9f5AbBcC82d1E2B5C0781b1F05F2B623E2c69",
+        "baseRegistry": "0x0230a9d28bc48a90d6f5e5112b24319ec1b14c52",
+        "riverAirdrop": "0x5cb1B2a6d413879a7A4A89f46e0621db04aa6430",
+        "space": "0x8DdfAD0259803FA140e076C636E726573df77905",
+        "spaceFactory": "0xC09Ac0FFeecAaE5100158247512DC177AeacA3e3",
+        "spaceOwner": "0x0443258849016da8Af08e2984Bce8C0ef6Cfc9A0",
+        "subscriptionModule": "0x07dd39b955F974186daFB2EDC6B4E03632E9AC75",
+        "swapRouter": "0xE2CE9e11BF480a5b88ad4008915D97d35C5087d5",
+        "utils": {
+          "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
+        }
+      }
+    },
+    "river": {
+      "chainId": 6524490,
+      "addresses": {
+        "riverRegistry": "0x44354786EacBEBf981453A05728E1653Bc3c5def"
+      }
+    }
+  },
+  "delta": {
+    "base": {
+      "chainId": 84532,
+      "addresses": {
+        "appRegistry": "0x9fCd4F3F98b170C7A1AfB9d20E76C6f5ca9Cbe71",
+        "baseRegistry": "0xa7932228e6dAfb7A74dc8085F8bADAa993d4c592",
+        "riverAirdrop": "0xa9aAA53E49d20fd727AB5a6ED697332bb24f3A20",
+        "space": "0xa489C4162a39CCE441Ee23c064E6dE6fF0822269",
+        "spaceFactory": "0x4e652CdB4715861dDCc4dF159af32223B40c8187",
+        "spaceOwner": "0xf3a2E75d7da3c7a7F953b63342f0709972e5002b",
+        "subscriptionModule": "0xbdc123dcE5F0a1D9783d7224900D11000E67Fe29",
+        "swapRouter": "0xE2CE9e11BF480a5b88ad4008915D97d35C5087d5",
+        "utils": {
+          "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
+        }
+      }
+    },
+    "river": {
+      "chainId": 6524490,
+      "addresses": {
+        "riverRegistry": "0x9Db19dB285cEd37099D40d27D51B75C4dFa05652"
+      }
+    }
+  },
+  "gamma": {
+    "base": {
+      "chainId": 84532,
+      "addresses": {
+        "appRegistry": "0xec3081A4b07678C12Fc6B56f69F894EE9e732c42",
+        "baseRegistry": "0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F",
+        "riverAirdrop": "0x4cBE6e47819cfE720d2ac83aE094B3a1307207A9",
+        "space": "0x99a177F81902fddc4785c6fc108C8F21BDB2aFe9",
+        "spaceFactory": "0x968696BC59431Ef085441641f550C8e2Eaca8BEd",
+        "spaceOwner": "0x9dEdb330A126C6dF2893a33018bb81aFE8573805",
+        "subscriptionModule": "0x55751fE93F4B9C5fB9E9B9328a26A6c56e4eDd41",
+        "swapRouter": "0x4997CC907512275b8D7E1c682a46f17d676F4913",
+        "utils": {
+          "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
+        }
+      }
+    },
+    "bnb": {
+      "chainId": 97,
+      "addresses": {
+        "utils": {
+          "towns": "0xA70F5aE0D1c993eDa24FfEB4B10416770a1BfA2B"
+        }
+      }
+    },
+    "river": {
+      "chainId": 6524490,
+      "addresses": {
+        "riverRegistry": "0xf18E98D36A6bd1aDb52F776aCc191E69B491c070"
+      }
+    },
+    "sepolia": {
+      "chainId": 11155111,
+      "addresses": {
+        "townsMainnet": "0x000000Fa00b200406de700041CFc6b19BbFB4d13",
+        "utils": {
+          "proxyBatchDelegation": "0x2898F12411782AfB413ce711660f06FCDAa92339",
+          "wrappedTowns": "0x7cA146A8f7329B4D44b253986D2DF27B98C3B36C"
+        }
+      }
+    }
+  },
+  "omega": {
+    "base": {
+      "chainId": 8453,
+      "addresses": {
+        "appRegistry": "0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE",
+        "baseRegistry": "0x7c0422b31401C936172C897802CF0373B35B7698",
+        "riverAirdrop": "0xe55fEE191604cdBeb874F87A28Ca89aED401C303",
+        "space": "0x34f35E1ECA9C00791bF8121A01c20977d8bEB11C",
+        "spaceFactory": "0x9978c826d93883701522d2CA645d5436e5654252",
+        "spaceOwner": "0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42",
+        "subscriptionModule": "0x1ba9e22f0D412afB8AD9483719afC2C1fFE1F864",
+        "swapRouter": "0x95A2a333D30c8686dE8D01AC464d6034b9aA7b24",
+        "utils": {
+          "towns": "0x00000000A22C618fd6b4D7E9A335C4B96B189a38"
+        }
+      }
+    },
+    "bnb": {
+      "chainId": 56,
+      "addresses": {
+        "townsBnb": "0x00000000bcA93b25a6694ca3d2109d545988b13B"
+      }
+    },
+    "gnosis": {
+      "chainId": 100,
+      "addresses": {
+        "poapEntitlement": "0xEd142Ee3F6B445B70f063A30A3F61e5d7855F6Fd"
+      }
+    },
+    "mainnet": {
+      "chainId": 1,
+      "river": "0x53319181e003E7f86fB79f794649a2aB680Db244",
+      "addresses": {
+        "townsMainnet": "0x000000Fa00b200406de700041CFc6b19BbFB4d13",
+        "wTowns": "0x00000000Bc5Ff0261B97004a79c6D361002Ba2db",
+        "utils": {
+          "proxyBatchDelegation": "0x4ea3DA9d916473A285970B4318DE038A78fFd5f6"
+        }
+      }
+    },
+    "river": {
+      "chainId": 550,
+      "addresses": {
+        "riverRegistry": "0x1298c03Fde548dc433a452573E36A713b38A0404"
+      }
+    }
+  }
+}

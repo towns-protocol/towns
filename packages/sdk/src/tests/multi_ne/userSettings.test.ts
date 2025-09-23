@@ -4,7 +4,7 @@
 
 import { makeTestClient, waitFor } from '../testUtils'
 import { Client } from '../../client'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
 
 describe('userSettingsTests', () => {

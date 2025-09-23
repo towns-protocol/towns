@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.337",
+    "version": "0.0.353",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "./dist/web/index.cjs",
@@ -16,9 +16,9 @@
         "watch": "tsdown --watch"
     },
     "dependencies": {
-        "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/encryption": "workspace:^",
-        "@towns-protocol/proto": "workspace:^"
+        "@towns-protocol/proto": "workspace:^",
+        "@towns-protocol/utils": "workspace:^"
     },
     "devDependencies": {
         "@bufbuild/protobuf": "^2.2.2",
