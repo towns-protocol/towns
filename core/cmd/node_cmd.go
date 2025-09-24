@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -68,7 +67,6 @@ func runNodeGetStreams(cmd *cobra.Command, args []string) error {
 		nodeAddress,
 		offset,
 		offset+chunkSize,
-		big.NewInt(offset+chunkSize),
 	)
 	if err != nil {
 		return fmt.Errorf("error reading stream registry: %w", err)
