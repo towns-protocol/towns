@@ -11,6 +11,8 @@ import {Validator} from "../../../src/utils/libraries/Validator.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
+// debuggging
+import {console} from "forge-std/console.sol";
 
 contract SubscriptionModuleTest is ModulesBase {
     function test_onInstall(address user) public {
@@ -91,13 +93,34 @@ contract SubscriptionModuleTest is ModulesBase {
             tokenId: 0,
             renewalPrice: 0,
             expirationTime: 0,
-            entityId: 0,
+            entityId: 2,
             nextRenewalTime: 0
         });
 
         expectInstallFailed(
             address(subscriptionModule),
             SubscriptionModule__InvalidTokenOwner.selector
+        );
+        _installSubscriptionModule(userAccount, params);
+    }
+
+    function test_onInstall_revertWhen_InvalidEntityId(address user) public {
+        ModularAccount userAccount = _createAccount(user, 0);
+        address space = _createSpace(0, 0);
+
+        SubscriptionParams memory params = SubscriptionParams({
+            account: address(userAccount),
+            space: space,
+            tokenId: 0,
+            renewalPrice: 0,
+            expirationTime: 0,
+            entityId: 0,
+            nextRenewalTime: 0
+        });
+
+        expectInstallFailed(
+            address(subscriptionModule),
+            SubscriptionModule__InvalidEntityId.selector
         );
         _installSubscriptionModule(userAccount, params);
     }
