@@ -223,7 +223,7 @@ export class SyncedStreamsLoop {
                 this.log('stopSync syncId', syncId)
                 const result = await Promise.allSettled([
                     syncId
-                        ? await this.rpcClient.cancelSync(
+                        ? this.rpcClient.cancelSync(
                               { syncId },
                               { signal: cancelSyncAbortController.signal },
                           )

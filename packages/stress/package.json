@@ -26,6 +26,7 @@
         "@bufbuild/protobuf": "^2.2.2",
         "@connectrpc/connect-node": "^2.0.0",
         "@towns-protocol/encryption": "workspace:^",
+        "@towns-protocol/olm": "3.2.28",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/rpc-connector": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
