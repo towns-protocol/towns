@@ -52,31 +52,48 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /*                           App Functions                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Register a new app with permissions
-    /// @param app The app address to register
-    /// @param client The client address that will make calls from this app
-    /// @return versionId The version ID of the registered app
-    function registerApp(
-        ITownsApp app,
-        address client
-    ) external payable nonReentrant returns (bytes32 versionId) {
-        return _registerApp(address(app), client);
-    }
-
-    /// @notice Remove a app from the registry
-    /// @param versionId The app ID to remove
-    /// @dev Only the owner of the app can remove it
-    function removeApp(bytes32 versionId) external nonReentrant {
-        _removeApp(msg.sender, versionId);
-    }
-
     /// @notice Create an upgradeable simple app contract
     /// @param params The parameters of the app
     function createApp(
         AppParams calldata params
-    ) external payable nonReentrant returns (address app, bytes32 versionId) {
+    ) external payable nonReentrant returns (address app, bytes32 appId) {
         return _createApp(params);
     }
+
+    /// @notice Register a new app with permissions
+    /// @param app The app address to register
+    /// @param client The client address that will make calls from this app
+    /// @return appId The app ID of the registered app
+    function registerApp(
+        ITownsApp app,
+        address client
+    ) external payable nonReentrant returns (bytes32) {
+        return _registerApp(app, client);
+    }
+
+    /// @notice Upgrade an app
+    /// @param app The app address to update
+    /// @param client The client address part of the app's identity
+    /// @param appId The app ID to upgrade
+    /// @return appId The new app ID of the updated app
+    function upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 appId
+    ) external payable nonReentrant returns (bytes32) {
+        return _upgradeApp(app, client, appId);
+    }
+
+    /// @notice Remove an app from the registry
+    /// @param appId The app ID to remove
+    /// @dev Only the owner of the app can remove it
+    function removeApp(bytes32 appId) external nonReentrant {
+        _removeApp(appId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Space Functions                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Install an app
     /// @param app The app address to install
@@ -93,15 +110,23 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
 
     /// @notice Uninstall an app
     /// @param app The app address to uninstall
-    /// @param account The account to uninstall the app from
+    /// @param space The space to uninstall the app from
     /// @param data The data to pass to the app's onUninstall function
     function uninstallApp(
         ITownsApp app,
-        IAppAccount account,
+        IAppAccount space,
         bytes calldata data
     ) external nonReentrant {
-        _onlyAllowed(address(account));
-        return _uninstallApp(address(app), address(account), data);
+        _onlyAllowed(address(space));
+        _uninstallApp(address(app), address(space), data);
+    }
+
+    /// @notice Update an app to the latest version
+    /// @param app The app address to update
+    /// @param space The space to update the app to
+    function updateApp(ITownsApp app, IAppAccount space) external nonReentrant {
+        _onlyAllowed(address(space));
+        _updateApp(address(app), address(space));
     }
 
     /// @notice Renew an app

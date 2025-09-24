@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/contracts/types"
@@ -331,9 +332,9 @@ type MockOnChainCfg struct {
 	settings *crypto.OnChainSettings
 }
 
-func (m *MockOnChainCfg) ActiveBlock() crypto.BlockNumber { return 0 }
-func (m *MockOnChainCfg) Get() *crypto.OnChainSettings    { return m.settings }
-func (m *MockOnChainCfg) GetOnBlock(block crypto.BlockNumber) *crypto.OnChainSettings {
+func (m *MockOnChainCfg) ActiveBlock() blockchain.BlockNumber { return 0 }
+func (m *MockOnChainCfg) Get() *crypto.OnChainSettings        { return m.settings }
+func (m *MockOnChainCfg) GetOnBlock(block blockchain.BlockNumber) *crypto.OnChainSettings {
 	return m.settings
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -57,7 +58,7 @@ type Blockchain struct {
 	ClientCloser    Closable
 	TxPool          TransactionPool
 	Config          *config.ChainConfig
-	InitialBlockNum BlockNumber
+	InitialBlockNum blockchain.BlockNumber
 	ChainMonitor    ChainMonitor
 	Metrics         infra.MetricsFactory
 }
@@ -120,7 +121,7 @@ func NewBlockchainWithClient(
 		).Message("Cannot retrieve block number").
 			Func("NewBlockchainWithClient")
 	}
-	initialBlockNum := BlockNumber(blockNum)
+	initialBlockNum := blockchain.BlockNumber(blockNum)
 
 	monitor := NewChainMonitor()
 
@@ -161,10 +162,10 @@ func (b *Blockchain) Close() {
 	}
 }
 
-func (b *Blockchain) GetBlockNumber(ctx context.Context) (BlockNumber, error) {
+func (b *Blockchain) GetBlockNumber(ctx context.Context) (blockchain.BlockNumber, error) {
 	n, err := b.Client.BlockNumber(ctx)
 	if err != nil {
 		return 0, AsRiverError(err, Err_CANNOT_CONNECT).Message("Cannot retrieve block number").Func("GetBlockNumber")
 	}
-	return BlockNumber(n), nil
+	return blockchain.BlockNumber(n), nil
 }

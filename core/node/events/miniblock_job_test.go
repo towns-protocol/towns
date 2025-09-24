@@ -5,14 +5,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/blockchain"
 )
 
 func TestSkipCandidate(t *testing.T) {
 	require := require.New(t)
 	cases := []struct {
 		candidateCount int
-		blockNum       crypto.BlockNumber
+		blockNum       blockchain.BlockNumber
 		expected       bool
 	}{
 		{0, 0, false},

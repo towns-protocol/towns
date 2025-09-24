@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/linkdata/deadlock"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -70,7 +70,7 @@ type Stream struct {
 	// of view is created, and copy is modified and stored.
 	mu deadlock.RWMutex
 
-	lastAppliedBlockNum crypto.BlockNumber
+	lastAppliedBlockNum blockchain.BlockNumber
 
 	// lastAccessedTime keeps track of when the stream was last used by a client
 	lastAccessedTime time.Time
@@ -84,7 +84,7 @@ type Stream struct {
 // NewStream creates a new stream with the given streamId and lastAppliedBlockNum.
 func NewStream(
 	streamId StreamId,
-	lastAppliedBlockNum crypto.BlockNumber,
+	lastAppliedBlockNum blockchain.BlockNumber,
 	params *StreamCacheParams,
 ) *Stream {
 	return &Stream{
@@ -1142,7 +1142,7 @@ func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error)
 func (s *Stream) applyStreamMiniblockUpdates(
 	ctx context.Context,
 	events []river.StreamUpdatedEvent,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	if len(events) == 0 {
 		return

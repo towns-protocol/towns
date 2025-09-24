@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -193,7 +194,7 @@ func TestReplacementTxOnBoot(t *testing.T) {
 	blockNum, err := bc.Client.BlockNumber(ctx)
 	require.NoError(err, "unable to get block number")
 	monitor.Start(
-		ctx, bc.Client, crypto.BlockNumber(blockNum), 100*time.Millisecond,
+		ctx, bc.Client, blockchain.BlockNumber(blockNum), 100*time.Millisecond,
 		infra.NewMetricsFactory(nil, "", ""))
 
 	resubmitPolicy := crypto.NewTransactionPoolDeadlinePolicy(250 * time.Millisecond)

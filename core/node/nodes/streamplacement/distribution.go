@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sync/atomic"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -108,7 +109,7 @@ var (
 func NewDistributor(
 	ctx context.Context,
 	cfg crypto.OnChainConfiguration,
-	blockNumber crypto.BlockNumber,
+	blockNumber blockchain.BlockNumber,
 	chainMonitor crypto.ChainMonitor,
 	riverRegistry *registries.RiverRegistryContract,
 ) (Distributor, error) {
@@ -253,7 +254,7 @@ func (d *streamsDistributor) onHeader(ctx context.Context, header *types.Header)
 	impl, err := newImpl(
 		ctx,
 		d.riverRegistry,
-		crypto.BlockNumber(header.Number.Uint64()),
+		blockchain.BlockNumber(header.Number.Uint64()),
 	)
 	if err != nil {
 		d.nodeRegistryUpdated.Store(true) // reload next time this callback is called
@@ -295,7 +296,7 @@ func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log types.Log) 
 			newStream := event.(*river.StreamState)
 			// load old stream record and decrease the node stream counters for all previous
 			// nodes and increase the stream records counters for nodes in the new set.
-			blockNumber := crypto.BlockNumber(log.BlockNumber - 1)
+			blockNumber := blockchain.BlockNumber(log.BlockNumber - 1)
 			if oldStream, err := rr.GetStream(ctx, newStream.GetStreamId(), blockNumber); err == nil {
 				for _, nodeAddr := range oldStream.Nodes() {
 					if node, found := impl.nodesMap[nodeAddr]; found {
@@ -380,7 +381,7 @@ func (d *streamsDistributor) SetNodeStreamLoad(load map[common.Address]uint64) {
 func newImpl(
 	ctx context.Context,
 	riverRegistry *registries.RiverRegistryContract,
-	atBlockNumber crypto.BlockNumber,
+	atBlockNumber blockchain.BlockNumber,
 ) (*distributorImpl, error) {
 	// add all operational nodes to the distributor and map to streamNode records
 	nodes, err := riverRegistry.GetAllNodes(ctx, atBlockNumber)

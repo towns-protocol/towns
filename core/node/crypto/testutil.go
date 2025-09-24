@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/contracts/river/deploy"
@@ -623,12 +624,12 @@ func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	}
 }
 
-func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
+func (c *BlockchainTestContext) BlockNum(ctx context.Context) blockchain.BlockNumber {
 	blockNum, err := c.Client().BlockNumber(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return BlockNumber(blockNum)
+	return blockchain.BlockNumber(blockNum)
 }
 
 func (c *BlockchainTestContext) SetStreamReplicationFactor(
@@ -707,25 +708,32 @@ var _ ChainMonitor = NoopChainMonitor{}
 func (NoopChainMonitor) Start(
 	context.Context,
 	BlockchainClient,
-	BlockNumber,
+	blockchain.BlockNumber,
 	time.Duration,
 	infra.MetricsFactory,
 ) {
 }
 
-func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                         {}
-func (NoopChainMonitor) OnBlock(OnChainNewBlock)                                           {}
-func (NoopChainMonitor) OnBlockWithLogs(BlockNumber, OnChainNewBlockWithLogs)              {}
-func (NoopChainMonitor) OnAllEvents(BlockNumber, OnChainEventCallback)                     {}
-func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEventCallback) {}
-func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {
+func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                       {}
+func (NoopChainMonitor) OnBlock(OnChainNewBlock)                                         {}
+func (NoopChainMonitor) OnBlockWithLogs(blockchain.BlockNumber, OnChainNewBlockWithLogs) {}
+func (NoopChainMonitor) OnAllEvents(blockchain.BlockNumber, OnChainEventCallback)        {}
+func (NoopChainMonitor) OnContractEvent(blockchain.BlockNumber, common.Address, OnChainEventCallback) {
 }
-func (NoopChainMonitor) OnNodeAdded(BlockNumber, OnNodeAddedCallback)                 {}
-func (NoopChainMonitor) OnNodeStatusUpdated(BlockNumber, OnNodeStatusUpdatedCallback) {}
-func (NoopChainMonitor) OnNodeUrlUpdated(BlockNumber, OnNodeUrlUpdatedCallback)       {}
-func (NoopChainMonitor) OnNodeRemoved(BlockNumber, OnNodeRemovedCallback)             {}
-func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                      {}
-func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                  {}
+
+func (NoopChainMonitor) OnContractWithTopicsEvent(
+	blockchain.BlockNumber,
+	common.Address,
+	[][]common.Hash,
+	OnChainEventCallback,
+) {
+}
+func (NoopChainMonitor) OnNodeAdded(blockchain.BlockNumber, OnNodeAddedCallback)                 {}
+func (NoopChainMonitor) OnNodeStatusUpdated(blockchain.BlockNumber, OnNodeStatusUpdatedCallback) {}
+func (NoopChainMonitor) OnNodeUrlUpdated(blockchain.BlockNumber, OnNodeUrlUpdatedCallback)       {}
+func (NoopChainMonitor) OnNodeRemoved(blockchain.BlockNumber, OnNodeRemovedCallback)             {}
+func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                                 {}
+func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                             {}
 
 // TestMainForLeaksIgnoreGeth is a helper function to check if there are goroutine leaks.
 // It ignores goroutines created by Geth's simulated backend.

@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -51,8 +50,6 @@ type (
 		nodeRegistry nodes.NodeRegistry
 		// syncingStreamsCount is used to track the number of streams currently being synced
 		syncingStreamsCount atomic.Int64
-		// usingSharedSyncer indicates whether this sync operation is using the shared syncer
-		usingSharedSyncer bool
 		// messages is the dynamic buffer used to store messages for the sync operation
 		messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
 		// otelTracer is used to trace individual sync Send operations, tracing is disabled if nil
@@ -160,7 +157,7 @@ func (syncOp *StreamSyncOperation) Run(
 	defer func() {
 		syncOp.log.Debugw("Stream sync operation stopped", "send", messagesSendToClient)
 		if syncOp.metrics != nil {
-			syncOp.metrics.sentMessagesHistogram.WithLabelValues("false").Observe(float64(messagesSendToClient))
+			syncOp.metrics.sentMessagesHistogram.Observe(float64(messagesSendToClient))
 		}
 	}()
 
@@ -212,7 +209,7 @@ func (syncOp *StreamSyncOperation) Run(
 			}
 
 			if syncOp.metrics != nil {
-				syncOp.metrics.messageBufferSizePerOpHistogram.WithLabelValues("false").Observe(float64(messages.Len()))
+				syncOp.metrics.messageBufferSizePerOpHistogram.Observe(float64(messages.Len()))
 			}
 
 			// If the client sent a close message, stop sending messages to client from the buffer.
@@ -289,7 +286,6 @@ func (syncOp *StreamSyncOperation) AddStreamToSync(
 
 	if syncOp.metrics != nil {
 		syncOp.metrics.syncingStreamsPerOpHistogram.
-			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
 			Observe(float64(syncOp.syncingStreamsCount.Add(1)))
 	}
 
@@ -337,7 +333,6 @@ func (syncOp *StreamSyncOperation) RemoveStreamFromSync(
 
 	if syncOp.metrics != nil {
 		syncOp.metrics.syncingStreamsPerOpHistogram.
-			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
 			Observe(float64(syncOp.syncingStreamsCount.Add(-1)))
 	}
 
@@ -399,7 +394,6 @@ func (syncOp *StreamSyncOperation) ModifySync(
 
 	if syncOp.metrics != nil {
 		syncOp.metrics.syncingStreamsPerOpHistogram.
-			WithLabelValues(fmt.Sprintf("%t", syncOp.usingSharedSyncer)).
 			Observe(float64(syncOp.syncingStreamsCount.Add(
 				int64(
 					len(

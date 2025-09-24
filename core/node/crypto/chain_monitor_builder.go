@@ -8,6 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+
+	"github.com/towns-protocol/towns/core/blockchain"
 )
 
 // chainMonitorBuilder builds a chain monitor.
@@ -59,7 +61,7 @@ func (lfb *chainMonitorBuilder) OnBlock(cb OnChainNewBlock) {
 	lfb.dirty = true
 }
 
-func (lfb *chainMonitorBuilder) OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs) {
+func (lfb *chainMonitorBuilder) OnBlockWithLogs(from blockchain.BlockNumber, cb OnChainNewBlockWithLogs) {
 	lfb.blockWithLogsCallbacks = append(
 		lfb.blockWithLogsCallbacks,
 		&chainBlockWithLogsCallback{handler: cb, nextBlock: from},
@@ -67,7 +69,7 @@ func (lfb *chainMonitorBuilder) OnBlockWithLogs(from BlockNumber, cb OnChainNewB
 	lfb.dirty = true
 }
 
-func (lfb *chainMonitorBuilder) OnAllEvents(from BlockNumber, cb OnChainEventCallback) {
+func (lfb *chainMonitorBuilder) OnAllEvents(from blockchain.BlockNumber, cb OnChainEventCallback) {
 	lfb.eventCallbacks = append(
 		lfb.eventCallbacks,
 		&chainEventCallback{handler: cb, logProcessed: false, fromBlock: from},
@@ -75,7 +77,11 @@ func (lfb *chainMonitorBuilder) OnAllEvents(from BlockNumber, cb OnChainEventCal
 	lfb.dirty = true
 }
 
-func (lfb *chainMonitorBuilder) OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback) {
+func (lfb *chainMonitorBuilder) OnContractEvent(
+	from blockchain.BlockNumber,
+	addr common.Address,
+	cb OnChainEventCallback,
+) {
 	lfb.eventCallbacks = append(
 		lfb.eventCallbacks,
 		&chainEventCallback{handler: cb, address: &addr, logProcessed: false, fromBlock: from},
@@ -84,7 +90,7 @@ func (lfb *chainMonitorBuilder) OnContractEvent(from BlockNumber, addr common.Ad
 }
 
 func (lfb *chainMonitorBuilder) OnContractWithTopicsEvent(
-	from BlockNumber,
+	from blockchain.BlockNumber,
 	addr common.Address,
 	topics [][]common.Hash,
 	cb OnChainEventCallback,
@@ -112,7 +118,7 @@ type chainEventCallback struct {
 	lastProcessedBlock    uint64
 	lastProcessedTxIndex  uint
 	lastProcessedLogIndex uint
-	fromBlock             BlockNumber
+	fromBlock             blockchain.BlockNumber
 }
 
 // alreadyProcessed returns an indication if cb already processed the given log.
@@ -142,13 +148,13 @@ func (ecb chainEventCallbacks) onLogReceived(ctx context.Context, log types.Log)
 
 type chainHeaderCallback struct {
 	handler   OnChainNewHeader
-	fromBlock BlockNumber
+	fromBlock blockchain.BlockNumber
 }
 
 type chainHeaderCallbacks []*chainHeaderCallback
 
 func (hcb chainHeaderCallbacks) onHeadReceived(ctx context.Context, header *types.Header) {
-	headNumber := BlockNumber(header.Number.Uint64())
+	headNumber := blockchain.BlockNumber(header.Number.Uint64())
 	for _, cb := range hcb {
 		if cb.fromBlock < headNumber {
 			cb.handler(ctx, header)
@@ -159,12 +165,12 @@ func (hcb chainHeaderCallbacks) onHeadReceived(ctx context.Context, header *type
 
 type chainBlockCallback struct {
 	handler   OnChainNewBlock
-	fromBlock BlockNumber
+	fromBlock blockchain.BlockNumber
 }
 
 type chainBlockCallbacks []*chainBlockCallback
 
-func (ebc chainBlockCallbacks) onBlockReceived(ctx context.Context, blockNumber BlockNumber) {
+func (ebc chainBlockCallbacks) onBlockReceived(ctx context.Context, blockNumber blockchain.BlockNumber) {
 	for _, cb := range ebc {
 		if cb.fromBlock < blockNumber {
 			cb.handler(ctx, blockNumber)
@@ -175,14 +181,14 @@ func (ebc chainBlockCallbacks) onBlockReceived(ctx context.Context, blockNumber 
 
 type chainBlockWithLogsCallback struct {
 	handler   OnChainNewBlockWithLogs
-	nextBlock BlockNumber
+	nextBlock blockchain.BlockNumber
 }
 
 type chainBlockWithLogsCallbacks []*chainBlockWithLogsCallback
 
 func (ebc chainBlockWithLogsCallbacks) onBlockReceived(
 	ctx context.Context,
-	toBlock BlockNumber,
+	toBlock blockchain.BlockNumber,
 	logs []types.Log,
 	wg *sync.WaitGroup,
 ) {

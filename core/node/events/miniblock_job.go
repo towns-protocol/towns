@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -36,7 +36,7 @@ type mbJob struct {
 	skipPromotion bool
 }
 
-func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
+func skipCandidate(candidateCount int, blockNum blockchain.BlockNumber) bool {
 	if blockNum == 0 {
 		return false
 	}
@@ -63,7 +63,7 @@ func skipCandidate(candidateCount int, blockNum crypto.BlockNumber) bool {
 	return uint64(blockNum)%uint64(slowDownFactor) != 0
 }
 
-func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber) error {
+func (j *mbJob) shouldContinue(ctx context.Context, blockNum blockchain.BlockNumber) error {
 	if blockNum == 0 {
 		return nil
 	}
@@ -100,7 +100,7 @@ func (j *mbJob) shouldContinue(ctx context.Context, blockNum crypto.BlockNumber)
 	return nil
 }
 
-func (j *mbJob) produceCandidate(ctx context.Context, blockNum crypto.BlockNumber) error {
+func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockNumber) error {
 	err := j.shouldContinue(ctx, blockNum)
 	if err != nil {
 		return err

@@ -18,6 +18,7 @@ interface IAppAccountBase {
 
     event ExecutionInstalled(address indexed module, ExecutionManifest manifest);
     event ExecutionUninstalled(address indexed module, bool success, ExecutionManifest manifest);
+    event ExecutionUpdated(address indexed module, ExecutionManifest manifest);
 }
 
 interface IAppAccount is IAppAccountBase {
@@ -35,6 +36,11 @@ interface IAppAccount is IAppAccountBase {
     /// @param appId The ID of the app to renew
     /// @param data The data required for app renewal
     function onRenewApp(bytes32 appId, bytes calldata data) external;
+
+    /// @notice Updates an app
+    /// @param appId The ID of the app to update
+    /// @param data The data required for app update
+    function onUpdateApp(bytes32 appId, bytes calldata data) external;
 
     /// @notice Enables an app
     /// @param app The address of the app to enable

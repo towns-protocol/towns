@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"connectrpc.com/connect"
@@ -17,7 +16,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -152,10 +150,7 @@ func (h *handlerImpl) SyncStreams(
 		errCode = AsRiverError(err).Code.String()
 	}
 
-	h.metrics.completedSyncOpsCounter.WithLabelValues(
-		fmt.Sprintf("%t", req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true"),
-		errCode,
-	).Inc()
+	h.metrics.completedSyncOpsCounter.WithLabelValues(errCode).Inc()
 
 	return err
 }
