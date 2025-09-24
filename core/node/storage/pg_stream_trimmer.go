@@ -7,8 +7,10 @@ import (
 
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -45,6 +47,8 @@ type streamTrimmer struct {
 
 	stopOnce sync.Once
 	stop     chan struct{}
+
+	taskDuration prometheus.Histogram
 }
 
 // newStreamTrimmer creates a new stream trimmer
@@ -54,6 +58,7 @@ func newStreamTrimmer(
 	config crypto.OnChainConfiguration,
 	workerPool *workerpool.WorkerPool,
 	trimmingBatchSize int64,
+	metrics infra.MetricsFactory,
 ) *streamTrimmer {
 	st := &streamTrimmer{
 		ctx:               ctx,
@@ -64,6 +69,11 @@ func newStreamTrimmer(
 		workerPool:        workerPool,
 		pendingTasks:      make(map[StreamId]struct{}),
 		stop:              make(chan struct{}),
+		taskDuration: metrics.NewHistogramEx(
+			"stream_trimmer_task_duration_seconds",
+			"Stream trimmer task duration in seconds",
+			[]float64{.05, .1, .5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
+		),
 	}
 
 	// Start the worker pool
@@ -131,7 +141,11 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep, re
 	}
 
 	t.workerPool.Submit(func() {
-		if err := t.processTrimTask(task); err != nil {
+		timer := prometheus.NewTimer(t.taskDuration)
+		err := t.processTrimTask(task)
+		timer.ObserveDuration()
+
+		if err != nil {
 			t.log.Errorw("Failed to process stream trimming task",
 				"stream", task.streamId,
 				"miniblocksToKeep", task.miniblocksToKeep,

@@ -176,6 +176,7 @@ func NewPostgresStreamStore(
 		config,
 		workerPool,
 		trimmingBatchSize,
+		metrics,
 	)
 
 	return store, nil
