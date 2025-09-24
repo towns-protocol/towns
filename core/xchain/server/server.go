@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
 	contract_types "github.com/towns-protocol/towns/core/contracts/types"
@@ -35,7 +36,7 @@ type (
 		checkerABI          *abi.ABI
 		checkerContract     *bind.BoundContract
 		baseChain           *crypto.Blockchain
-		baseChainStartBlock crypto.BlockNumber
+		baseChainStartBlock blockchain.BlockNumber
 		evmErrDecoder       *crypto.EvmErrorDecoder
 		config              *config.Config
 		cancel              context.CancelFunc
@@ -80,7 +81,7 @@ type XChain interface {
 }
 
 // MaxHistoricalBlockOffset is the maximum number of blocks to go back when searching for a start block.
-const MaxHistoricalBlockOffset crypto.BlockNumber = 100
+const MaxHistoricalBlockOffset blockchain.BlockNumber = 100
 
 // New creates a new xchain instance that reads entitlement requests from Base,
 // processes the requests and writes the results back to Base.
@@ -184,7 +185,7 @@ func New(
 	if cfg.History > 0 {
 		history := min(cfg.History, time.Minute)
 		blockTime := time.Duration(baseChain.Config.BlockTimeMs) * time.Millisecond
-		numBlocksToSubtract := crypto.BlockNumber(history/blockTime + 1)
+		numBlocksToSubtract := blockchain.BlockNumber(history/blockTime + 1)
 		numBlocksToSubtract = min(numBlocksToSubtract, MaxHistoricalBlockOffset)
 		if baseChainStartBlock > numBlocksToSubtract {
 			baseChainStartBlock = baseChainStartBlock - numBlocksToSubtract

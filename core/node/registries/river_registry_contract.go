@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -315,7 +316,7 @@ func (c *RiverRegistryContract) AddStream(
 func (c *RiverRegistryContract) GetStream(
 	ctx context.Context,
 	streamId StreamId,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) (*river.StreamWithId, error) {
 	stream, err := c.StreamRegistry.GetStream(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
@@ -339,7 +340,7 @@ func (c *RiverRegistryContract) GetStreamOnLatestBlock(
 func (c *RiverRegistryContract) GetStreamWithGenesis(
 	ctx context.Context,
 	streamId StreamId,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) (*river.StreamWithId, common.Hash, []byte, error) {
 	stream, mbHash, mb, err := c.StreamRegistry.GetStreamWithGenesis(c.callOptsWithBlockNum(ctx, blockNum), streamId)
 	if err != nil {
@@ -353,7 +354,7 @@ func (c *RiverRegistryContract) GetStreamWithGenesis(
 	return river.NewStreamWithId(streamId, &stream), mbHash, mb, nil
 }
 
-func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum crypto.BlockNumber) (int64, error) {
+func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum blockchain.BlockNumber) (int64, error) {
 	num, err := c.StreamRegistry.GetStreamCount(c.callOptsWithBlockNum(ctx, blockNum))
 	if err != nil {
 		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
@@ -366,7 +367,7 @@ func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum cry
 
 func (c *RiverRegistryContract) GetStreamCountOnNode(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node common.Address,
 ) (int64, error) {
 	num, err := c.StreamRegistry.GetStreamCountOnNode(c.callOptsWithBlockNum(ctx, blockNum), node)
@@ -383,7 +384,7 @@ var ZeroBytes32 = [32]byte{}
 
 func (c *RiverRegistryContract) callGetPaginatedStreams(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node *common.Address,
 	start int64,
 	end int64,
@@ -414,7 +415,7 @@ func (c *RiverRegistryContract) callGetPaginatedStreams(
 
 func (c *RiverRegistryContract) callGetPaginatedStreamsWithBackoff(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node *common.Address,
 	start int64,
 	end int64,
@@ -463,7 +464,7 @@ func waitForBackoff(ctx context.Context, bo backoff.BackOff) bool {
 // num and on the given node. If cb returns false ForAllStreamsOnNode returns.
 func (c *RiverRegistryContract) ForAllStreamsOnNode(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node common.Address,
 	cb func(*river.StreamWithId) bool,
 ) error {
@@ -478,7 +479,7 @@ func (c *RiverRegistryContract) ForAllStreamsOnNode(
 // If cb returns false ForAllStreams returns.
 func (c *RiverRegistryContract) ForAllStreams(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	cb func(*river.StreamWithId) bool,
 ) error {
 	if c.Settings.ParallelReaders > 1 {
@@ -490,7 +491,7 @@ func (c *RiverRegistryContract) ForAllStreams(
 
 func (c *RiverRegistryContract) forAllStreamsSingle(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node *common.Address,
 	cb func(*river.StreamWithId) bool,
 ) error {
@@ -589,7 +590,7 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 
 func (c *RiverRegistryContract) forAllStreamsParallel(
 	ctx context.Context,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	node *common.Address,
 	cb func(*river.StreamWithId) bool,
 ) error {
@@ -847,7 +848,10 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 
 type NodeRecord = river.Node
 
-func (c *RiverRegistryContract) GetAllNodes(ctx context.Context, blockNum crypto.BlockNumber) ([]NodeRecord, error) {
+func (c *RiverRegistryContract) GetAllNodes(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+) ([]NodeRecord, error) {
 	nodes, err := c.NodeRegistry.GetAllNodes(c.callOptsWithBlockNum(ctx, blockNum))
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetAllNodes").Message("Call failed")
@@ -861,7 +865,10 @@ func (c *RiverRegistryContract) callOpts(ctx context.Context) *bind.CallOpts {
 	}
 }
 
-func (c *RiverRegistryContract) callOptsWithBlockNum(ctx context.Context, blockNum crypto.BlockNumber) *bind.CallOpts {
+func (c *RiverRegistryContract) callOptsWithBlockNum(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+) *bind.CallOpts {
 	if blockNum == 0 {
 		return c.callOpts(ctx)
 	} else {
@@ -879,7 +886,10 @@ type NodeEvents interface {
 		river.NodeRegistryV1NodeUrlUpdated
 }
 
-func (c *RiverRegistryContract) GetNodeEventsForBlock(ctx context.Context, blockNum crypto.BlockNumber) ([]any, error) {
+func (c *RiverRegistryContract) GetNodeEventsForBlock(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+) ([]any, error) {
 	num := blockNum.AsBigInt()
 	logs, err := c.Blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
 		FromBlock: num,
@@ -932,7 +942,7 @@ func (c *RiverRegistryContract) ParseEvent(
 
 func (c *RiverRegistryContract) OnStreamEvent(
 	ctx context.Context,
-	startBlockNumInclusive crypto.BlockNumber,
+	startBlockNumInclusive blockchain.BlockNumber,
 	allocated func(ctx context.Context, event *river.StreamState),
 	added func(ctx context.Context, event *river.StreamState),
 	lastMiniblockUpdated func(ctx context.Context, event *river.StreamMiniblockUpdate),

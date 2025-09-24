@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/base/test"
@@ -728,7 +729,7 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 func (i *cacheTestInstance) makeAndSaveMbCandidate(
 	ctx context.Context,
 	stream *Stream,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) (*MiniblockInfo, error) {
 	j := &mbJob{
 		stream: stream,

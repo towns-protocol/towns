@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -120,7 +121,7 @@ func AllKnownOnChainSettingKeys() map[string]string {
 // OnChainSettings holds the configuration settings that are stored on-chain.
 // This data structure is immutable, so it is safe to access it concurrently.
 type OnChainSettings struct {
-	FromBlockNumber BlockNumber `mapstructure:"-"`
+	FromBlockNumber blockchain.BlockNumber `mapstructure:"-"`
 
 	MediaMaxChunkCount uint64 `mapstructure:"stream.media.maxChunkCount"`
 	MediaMaxChunkSize  uint64 `mapstructure:"stream.media.maxChunkSize"`
@@ -340,10 +341,10 @@ func DefaultOnChainSettings() *OnChainSettings {
 }
 
 type OnChainConfiguration interface {
-	ActiveBlock() BlockNumber
+	ActiveBlock() blockchain.BlockNumber
 
 	Get() *OnChainSettings
-	GetOnBlock(block BlockNumber) *OnChainSettings
+	GetOnBlock(block blockchain.BlockNumber) *OnChainSettings
 
 	All() []*OnChainSettings
 
@@ -359,7 +360,7 @@ type configEntry struct {
 
 // This datastructure mimics the on-chain configuration storage so updates
 // from events can be applied consistently.
-type rawSettingsMap map[string]map[BlockNumber][]byte
+type rawSettingsMap map[string]map[blockchain.BlockNumber][]byte
 
 func (r rawSettingsMap) init(
 	ctx context.Context,
@@ -380,10 +381,10 @@ func (r rawSettingsMap) init(
 		}
 		blockMap, ok := r[name]
 		if !ok {
-			blockMap = make(map[BlockNumber][]byte)
+			blockMap = make(map[blockchain.BlockNumber][]byte)
 			r[name] = blockMap
 		}
-		blockNum := BlockNumber(setting.BlockNumber)
+		blockNum := blockchain.BlockNumber(setting.BlockNumber)
 		oldVal, ok := blockMap[blockNum]
 		if ok {
 			logging.FromCtx(ctx).
@@ -411,7 +412,7 @@ func (r rawSettingsMap) apply(
 			if event.Block == math.MaxUint64 {
 				delete(r, name)
 			} else {
-				blockNum := BlockNumber(event.Block)
+				blockNum := blockchain.BlockNumber(event.Block)
 				if _, ok := blockMap[blockNum]; ok {
 					delete(blockMap, blockNum)
 					if len(blockMap) == 0 {
@@ -428,14 +429,14 @@ func (r rawSettingsMap) apply(
 		}
 	} else {
 		if _, ok := r[name]; !ok {
-			r[name] = make(map[BlockNumber][]byte)
+			r[name] = make(map[blockchain.BlockNumber][]byte)
 		}
-		r[name][BlockNumber(event.Block)] = event.Value
+		r[name][blockchain.BlockNumber(event.Block)] = event.Value
 	}
 }
 
-func (r rawSettingsMap) transform() (map[BlockNumber][]*configEntry, []BlockNumber) {
-	result := make(map[BlockNumber][]*configEntry)
+func (r rawSettingsMap) transform() (map[blockchain.BlockNumber][]*configEntry, []blockchain.BlockNumber) {
+	result := make(map[blockchain.BlockNumber][]*configEntry)
 	for name, blockMap := range r {
 		for block, value := range blockMap {
 			result[block] = append(result[block], &configEntry{
@@ -445,7 +446,7 @@ func (r rawSettingsMap) transform() (map[BlockNumber][]*configEntry, []BlockNumb
 		}
 	}
 
-	var blockNums []BlockNumber
+	var blockNums []blockchain.BlockNumber
 	for key := range result {
 		blockNums = append(blockNums, key)
 	}
@@ -471,15 +472,15 @@ type onChainConfiguration struct {
 
 var _ OnChainConfiguration = (*onChainConfiguration)(nil)
 
-func (occ *onChainConfiguration) ActiveBlock() BlockNumber {
-	return BlockNumber(occ.activeBlock.Load())
+func (occ *onChainConfiguration) ActiveBlock() blockchain.BlockNumber {
+	return blockchain.BlockNumber(occ.activeBlock.Load())
 }
 
 func (occ *onChainConfiguration) Get() *OnChainSettings {
 	return occ.GetOnBlock(occ.ActiveBlock())
 }
 
-func (occ *onChainConfiguration) GetOnBlock(block BlockNumber) *OnChainSettings {
+func (occ *onChainConfiguration) GetOnBlock(block blockchain.BlockNumber) *OnChainSettings {
 	settings := *occ.cfg.Load()
 	// Go in reverse order to find the most recent settings
 	for i := len(settings) - 1; i >= 0; i-- {
@@ -505,7 +506,7 @@ func HashSettingName(name string) common.Hash {
 
 func (occ *onChainConfiguration) processRawSettings(
 	ctx context.Context,
-	blockNum BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	log := logging.FromCtx(ctx)
 
@@ -552,7 +553,7 @@ func NewOnChainConfig(
 	ctx context.Context,
 	riverClient BlockchainClient,
 	riverRegistry common.Address,
-	appliedBlockNum BlockNumber,
+	appliedBlockNum blockchain.BlockNumber,
 	chainMonitor ChainMonitor,
 ) (*onChainConfiguration, error) {
 	caller, err := river.NewRiverConfigV1Caller(riverRegistry, riverClient)
@@ -599,7 +600,7 @@ func makeOnChainConfig(
 	ctx context.Context,
 	retrievedSettings []river.Setting,
 	contract *river.RiverConfigV1Caller,
-	appliedBlockNum BlockNumber,
+	appliedBlockNum blockchain.BlockNumber,
 ) (*onChainConfiguration, error) {
 	log := logging.FromCtx(ctx)
 
@@ -635,7 +636,7 @@ func makeOnChainConfig(
 	return cfg, nil
 }
 
-func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber BlockNumber) {
+func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber blockchain.BlockNumber) {
 	occ.activeBlock.Store(blockNumber.AsUint64())
 }
 
@@ -653,7 +654,7 @@ func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.Ri
 	occ.mu.Lock()
 	defer occ.mu.Unlock()
 	occ.loadedSettingMap.apply(ctx, occ.keyHashToName, event)
-	occ.processRawSettings(ctx, BlockNumber(event.Block))
+	occ.processRawSettings(ctx, blockchain.BlockNumber(event.Block))
 }
 
 var (

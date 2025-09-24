@@ -26,6 +26,7 @@ import (
 
 	"github.com/gammazero/workerpool"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/http_client"
@@ -1126,7 +1127,7 @@ type (
 	}
 	streamState struct {
 		StreamID                  StreamId                            `json:"streamId"`
-		RiverBlock                crypto.BlockNumber                  `json:"riverBlock"`
+		RiverBlock                blockchain.BlockNumber              `json:"riverBlock"`
 		RegistryLastMiniblockNum  int64                               `json:"registryLastMiniblockNum"`
 		RegistryLastMiniblockHash common.Hash                         `json:"registryLastMiniblockHash"`
 		When                      time.Time                           `json:"when"`
