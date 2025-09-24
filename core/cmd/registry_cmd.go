@@ -1318,7 +1318,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 			})
 
 			var genesisBlock []byte
-			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, chain.BlockNumber(log.BlockNumber)); err == nil {
+			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
 				genesisBlock = gb
 			}
 
