@@ -199,15 +199,15 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return err
 	}
 
-	// Get the miniblock number to start from
-	startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
-	if err != nil {
-		return err
-	}
-
 	needSnapshotTrim := task.retentionInterval > 0
 
 	if task.miniblocksToKeep > 0 {
+		// Get the miniblock number to start from
+		startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
+		if err != nil {
+			return err
+		}
+
 		// Miniblock deletion is enabled only when the keep threshold is positive.
 		// Streams that rely solely on snapshot retention skip this branch.
 		// Calculate the highest miniblock number to keep
