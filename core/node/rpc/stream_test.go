@@ -120,13 +120,13 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 
 		// get all logs and make sure that at least 3 miniblocks are registered
 		logs, err := bind2.FilterEvents(
-			tt.btc.StreamRegistryInstance.BoundContract,
+			tt.btc.StreamRegistry.BoundContract,
 			&bind2.FilterOpts{
 				Start:   0,
 				End:     nil,
 				Context: tt.ctx,
 			},
-			tt.btc.StreamRegistry.UnpackStreamUpdatedEvent,
+			tt.btc.StreamRegistryContract.UnpackStreamUpdatedEvent,
 			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
 		)
 		tt.require.NoError(err)
@@ -209,13 +209,13 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 
 		// get all logs and make sure that at least 3 miniblocks are registered
 		logs, err := bind2.FilterEvents(
-			tt.btc.StreamRegistryInstance.BoundContract,
+			tt.btc.StreamRegistry.BoundContract,
 			&bind2.FilterOpts{
 				Start:   0,
 				End:     nil,
 				Context: tt.ctx,
 			},
-			tt.btc.StreamRegistry.UnpackStreamUpdatedEvent,
+			tt.btc.StreamRegistryContract.UnpackStreamUpdatedEvent,
 			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
 		)
 		tt.require.NoError(err)

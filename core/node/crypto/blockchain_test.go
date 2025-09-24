@@ -126,9 +126,9 @@ func TestBlockchain(t *testing.T) {
 		"AllocateStream",
 		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				tc.StreamRegistryInstance.BoundContract,
+				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
+				tc.StreamRegistryContract.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
 		},
 	)
@@ -141,10 +141,10 @@ func TestBlockchain(t *testing.T) {
 	require.Equal(uint64(1), receipt.Status)
 
 	result, err := bind2.Call(
-		tc.StreamRegistryInstance.BoundContract,
+		tc.StreamRegistry.BoundContract,
 		nil,
-		tc.StreamRegistry.PackGetStreamWithGenesis(streamId),
-		tc.StreamRegistry.UnpackGetStreamWithGenesis,
+		tc.StreamRegistryContract.PackGetStreamWithGenesis(streamId),
+		tc.StreamRegistryContract.UnpackGetStreamWithGenesis,
 	)
 	require.NoError(err)
 	stream, mbHash, mb := result.Arg0, result.Arg1, result.Arg2
@@ -160,9 +160,9 @@ func TestBlockchain(t *testing.T) {
 		"AllocateStream",
 		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				tc.StreamRegistryInstance.BoundContract,
+				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
+				tc.StreamRegistryContract.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
 		},
 	)
@@ -176,9 +176,9 @@ func TestBlockchain(t *testing.T) {
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
 			return bind2.Transact(
-				tc.StreamRegistryInstance.BoundContract,
+				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistry.PackAllocateStream(
+				tc.StreamRegistryContract.PackAllocateStream(
 					streamId,
 					[]common.Address{common.HexToAddress("0x123")},
 					genesisHash,
@@ -200,9 +200,9 @@ func TestBlockchain(t *testing.T) {
 			"AllocateStream",
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
 				return bind2.Transact(
-					tc.StreamRegistryInstance.BoundContract,
+					tc.StreamRegistry.BoundContract,
 					opts,
-					tc.StreamRegistry.PackAllocateStream(
+					tc.StreamRegistryContract.PackAllocateStream(
 						streamId,
 						addrs,
 						genesisHash,
@@ -227,10 +227,10 @@ func TestBlockchain(t *testing.T) {
 	seenIds := make(map[StreamId]bool)
 	for i := int64(0); i < 30; i += pageSize {
 		result, err := bind2.Call(
-			tc.StreamRegistryInstance.BoundContract,
+			tc.StreamRegistry.BoundContract,
 			nil,
-			tc.StreamRegistry.PackGetPaginatedStreams(big.NewInt(i), big.NewInt(i+pageSize)),
-			tc.StreamRegistry.UnpackGetPaginatedStreams,
+			tc.StreamRegistryContract.PackGetPaginatedStreams(big.NewInt(i), big.NewInt(i+pageSize)),
+			tc.StreamRegistryContract.UnpackGetPaginatedStreams,
 		)
 		streams, lastPage := result.Arg0, result.Arg1
 		require.NoError(err)

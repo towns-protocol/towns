@@ -283,9 +283,9 @@ func TestStreamEvents(t *testing.T) {
 	tx, err := bc1.TxPool.Submit(ctx, "UpdateStreamPlacement",
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				tc.StreamRegistryInstance.BoundContract,
+				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistry.PackPlaceStreamOnNode(streamId, nodeAddr2),
+				tc.StreamRegistryContract.PackPlaceStreamOnNode(streamId, nodeAddr2),
 			)
 		},
 	)
