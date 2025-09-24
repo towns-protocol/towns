@@ -76,9 +76,8 @@ generate_go river river INodeRegistry node_registry_v1
 go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
         --v2 \
         --abi packages/contracts/out/IStreamRegistry.sol/IStreamRegistry.abi.json \
-        --bin packages/contracts/out/IStreamRegistry.sol/IStreamRegistry.bin \
         --pkg "river" \
-        --type "stream_registry_v1" \
+        --type "StreamRegistryV1" \
         --out "core/contracts/river/stream_registry_v1.go"
 
 generate_go river river IOperatorRegistry operator_registry_v1
