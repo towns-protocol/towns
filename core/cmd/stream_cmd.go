@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/hex"
@@ -1426,10 +1427,50 @@ func fetchStreamStateSummaryOnNodes(
 }
 
 func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	type nodeStatus struct {
+		NodeAddress   common.Address `json:"nodeAddress"`
+		MiniblockNum  int64          `json:"miniblockNum"`
+		MiniblockHash common.Hash    `json:"miniblockHash"`
+		Error         string         `json:"err,omitempty"`
+	}
+
+	type streamStatus struct {
+		StreamID                      StreamId      `json:"streamId"`
+		NodeStatuses                  []*nodeStatus `json:"nodeStatuses"`
+		Status                        string        `json:"status"`
+		RegistryMiniblock             common.Hash   `json:"miniblock"`
+		RegistryMiniblockMiniblockNum int64         `json:"miniblockNum"`
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	outputFile, err := os.Create(args[0])
+	var processedStreamsMu sync.Mutex
+	processedStreams := make(map[StreamId]struct{})
+
+	outputFile, err := os.OpenFile(args[0], os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err == nil {
+		scanner := bufio.NewReader(outputFile)
+		for {
+			line, err := scanner.ReadSlice('\n')
+			if err == nil {
+				var rec streamStatus
+				if err := json.Unmarshal(line, &rec); err != nil {
+					return err
+				}
+				processedStreams[rec.StreamID] = struct{}{}
+			} else if errors.Is(err, io.EOF) {
+				break
+			} else {
+				return err
+			}
+		}
+
+		fmt.Printf("loaded %d processed streams\n", len(processedStreams))
+	} else if os.IsNotExist(err) {
+		outputFile, err = os.Create(args[0])
+	}
+
 	if err != nil {
 		return err
 	}
@@ -1472,7 +1513,7 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 
 	nodeWorkerPools := make(map[common.Address]*workerpool.WorkerPool)
 	for _, node := range allNodes {
-		nodeWorkerPools[node.NodeAddress] = workerpool.New(5)
+		nodeWorkerPools[node.NodeAddress] = workerpool.New(3)
 	}
 
 	onChainConfig, err := crypto.NewOnChainConfig(
@@ -1505,35 +1546,21 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 		return err
 	}
 
-	type nodeStatus struct {
-		NodeAddress   common.Address `json:"nodeAddress"`
-		MiniblockNum  int64          `json:"miniblockNum"`
-		MiniblockHash common.Hash    `json:"miniblockHash"`
-		Error         string         `json:"err,omitempty"`
-	}
-
-	type streamStatus struct {
-		StreamID     StreamId
-		NodeStatuses []*nodeStatus
-	}
-
-	inSync := func(streamID StreamId, nodeStatuses []*nodeStatus) bool {
+	inSync := func(stream *river.StreamWithId, nodeStatuses []*nodeStatus) bool {
 		if len(nodeStatuses) != targetReplicationFactor {
 			return false
 		}
 
-		var miniblockNums []int64
-		hashes := make(map[common.Hash]common.Address)
+		miniblockNums := map[int64]struct{}{stream.LastMbNum(): {}}
+		hashes := map[common.Hash]common.Address{stream.LastMbHash(): {}}
 
 		for _, nodeStatus := range nodeStatuses {
-			miniblockNums = append(miniblockNums, nodeStatus.MiniblockNum)
+			miniblockNums[nodeStatus.MiniblockNum] = struct{}{}
 			hashes[nodeStatus.MiniblockHash] = nodeStatus.NodeAddress
 		}
-		slices.Sort(miniblockNums)
 
-		// allow max 1 block difference between the highest and lowest miniblock number
-		diff := miniblockNums[targetReplicationFactor-1] - miniblockNums[0]
-		return (diff == 0 && len(hashes) == 1) || diff == 1
+		// ensure all nodes are on the exact same miniblock height
+		return len(miniblockNums) == 1 && len(hashes) == 1
 	}
 
 	var (
@@ -1575,15 +1602,28 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 					mu.Lock()
 					nodeStatuses = append(nodeStatuses, ns)
 					if len(nodeStatuses) == targetReplicationFactor {
-						if !inSync(stream.Id, nodeStatuses) {
+						if !inSync(stream, nodeStatuses) {
 							outOfSyncStreams.Add(1)
 							_ = output.Encode(&streamStatus{
-								StreamID:     stream.Id,
-								NodeStatuses: nodeStatuses,
+								StreamID:                      stream.Id,
+								NodeStatuses:                  nodeStatuses,
+								Status:                        "OUT_OF_SYNC",
+								RegistryMiniblock:             stream.LastMbHash(),
+								RegistryMiniblockMiniblockNum: stream.LastMbNum(),
 							})
 						} else {
 							inSyncStreams.Add(1)
+							_ = output.Encode(&streamStatus{
+								StreamID:                      stream.Id,
+								NodeStatuses:                  nodeStatuses,
+								RegistryMiniblock:             stream.LastMbHash(),
+								RegistryMiniblockMiniblockNum: stream.LastMbNum(),
+								Status:                        "OK",
+							})
 						}
+						processedStreamsMu.Lock()
+						processedStreams[stream.Id] = struct{}{}
+						processedStreamsMu.Unlock()
 					}
 					mu.Unlock()
 				} else {
@@ -1613,15 +1653,28 @@ func runStreamOutOfSyncCmd(cfg *config.Config, args []string) error {
 
 						nodeStatuses = append(nodeStatuses, ns)
 						if len(nodeStatuses) == targetReplicationFactor {
-							if !inSync(stream.Id, nodeStatuses) {
+							if !inSync(stream, nodeStatuses) {
 								outOfSyncStreams.Add(1)
 								_ = output.Encode(&streamStatus{
-									StreamID:     stream.Id,
-									NodeStatuses: nodeStatuses,
+									StreamID:                      stream.Id,
+									NodeStatuses:                  nodeStatuses,
+									RegistryMiniblock:             stream.LastMbHash(),
+									RegistryMiniblockMiniblockNum: stream.LastMbNum(),
+									Status:                        "OUT_OF_SYNC",
 								})
 							} else {
 								inSyncStreams.Add(1)
+								_ = output.Encode(&streamStatus{
+									StreamID:                      stream.Id,
+									NodeStatuses:                  nodeStatuses,
+									RegistryMiniblock:             stream.LastMbHash(),
+									RegistryMiniblockMiniblockNum: stream.LastMbNum(),
+									Status:                        "OK",
+								})
 							}
+							processedStreamsMu.Lock()
+							processedStreams[stream.Id] = struct{}{}
+							processedStreamsMu.Unlock()
 						}
 					})
 				}
