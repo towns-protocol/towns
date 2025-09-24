@@ -43,7 +43,13 @@ import {
     MessageInteractionType,
     type SlashCommand,
 } from '@towns-protocol/proto'
-import { bin_fromBase64, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
+import {
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_toHexString,
+    check,
+    dlog,
+} from '@towns-protocol/utils'
 import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
@@ -68,6 +74,8 @@ import { base, baseSepolia } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 
 type BotActions = ReturnType<typeof buildBotActions>
+
+const debug = dlog('csb:bot')
 
 export type BotPayload<
     T extends keyof BotEvents<Commands>,
@@ -271,7 +279,7 @@ export class Bot<
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
-
+        debug('webhook', request)
         const statusResponse = create(AppServiceResponseSchema, {
             payload: {
                 case: 'status',
