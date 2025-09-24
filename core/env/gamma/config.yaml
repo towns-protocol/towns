@@ -5,7 +5,7 @@ baseChain:
     blockTimeMs: 2000
 riverChain:
     chainId: 6524490
-    networkUrl: 'https://devnet.rpc.river.build'
+    networkUrl: 'https://testnet.rpc.towns.com'
     blockTimeMs: 2000
 
 # Base contracts
