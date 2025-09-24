@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -158,6 +160,16 @@ func NewPostgresStreamStore(
 		<-ctx.Done()
 		workerPool.Stop()
 	}()
+
+	metrics.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stream_store_worker_pool_waiting_queue_size",
+			Help: "Number of tasks waiting in the stream store worker pool queue",
+		},
+		func() float64 {
+			return float64(workerPool.WaitingQueueSize())
+		},
+	)
 
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(
