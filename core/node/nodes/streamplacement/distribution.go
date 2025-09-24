@@ -267,14 +267,9 @@ func (d *streamsDistributor) onHeader(ctx context.Context, header *types.Header)
 // onStreamUpdate updates the node load figures each time stream is allocated or created.
 func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log types.Log) {
 	rr := d.riverRegistry
-	parsed, err := rr.ParseEvent(ctx, rr.StreamRegistry.BoundContract(), rr.StreamEventInfo, &log)
+	event, err := rr.StreamRegistryContract.UnpackStreamUpdatedEvent(&log)
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "err", err, "log", log)
-		return
-	}
-
-	event, ok := parsed.(*river.StreamUpdated)
-	if !ok {
+		logging.FromCtx(ctx).Errorw("Failed to unpack stream updated event", "err", err, "log", log)
 		return
 	}
 

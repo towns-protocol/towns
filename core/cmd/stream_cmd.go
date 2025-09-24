@@ -123,7 +123,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
 	if err != nil {
 		return err
 	}
@@ -481,7 +481,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
 	if err != nil {
 		return err
 	}
@@ -555,7 +555,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
 	if err != nil {
 		return err
 	}
@@ -729,7 +729,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	streamRecord, err := registryContract.StreamRegistry.GetStream(nil, streamID)
+	streamRecord, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
 	if err != nil {
 		return err
 	}

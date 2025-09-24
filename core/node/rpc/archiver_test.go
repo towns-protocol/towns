@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/stretchr/testify/assert"
@@ -330,20 +329,16 @@ func TestArchiveOneStream(t *testing.T) {
 
 	arch := NewArchiver(&archiveCfg.Archive, registryContract, nodeRegistry, streamStorage)
 
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-
-	streamRecord, err := registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err := registryContract.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.Zero(streamRecord.LastMiniblockNum) // Only genesis miniblock is created
+	require.Zero(streamRecord.Stream.LastMiniblockNum) // Only genesis miniblock is created
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Nodes,
-			streamRecord.LastMiniblockNum,
+			streamRecord.Stream.Nodes,
+			streamRecord.Stream.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -354,22 +349,28 @@ func TestArchiveOneStream(t *testing.T) {
 	require.Zero(num) // Only genesis miniblock is created
 
 	// Add event to the stream, create miniblock, and archive it
-	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, river.MiniblockRefFromContractRecord(&streamRecord))
+	err = addUserBlockedFillerEvent(
+		ctx,
+		wallet,
+		client,
+		streamId,
+		river.MiniblockRefFromContractRecord(&streamRecord.Stream),
+	)
 	require.NoError(err)
 
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err = registryContract.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
+	require.Equal(uint64(1), streamRecord.Stream.LastMiniblockNum)
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Nodes,
-			streamRecord.LastMiniblockNum,
+			streamRecord.Stream.Nodes,
+			streamRecord.Stream.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -383,16 +384,16 @@ func TestArchiveOneStream(t *testing.T) {
 	_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, mbRef)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err = registryContract.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.GreaterOrEqual(streamRecord.LastMiniblockNum, uint64(10))
+	require.GreaterOrEqual(streamRecord.Stream.LastMiniblockNum, uint64(10))
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Nodes,
-			streamRecord.LastMiniblockNum,
+			streamRecord.Stream.Nodes,
+			streamRecord.Stream.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -400,7 +401,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	num, err = streamStorage.GetMaxArchivedMiniblockNumber(ctx, streamId)
 	require.NoError(err)
-	require.Equal(int64(streamRecord.LastMiniblockNum), num)
+	require.Equal(int64(streamRecord.Stream.LastMiniblockNum), num)
 
 	require.NoError(compareStreamMiniblocks(t, ctx, streamId, streamStorage, client))
 }

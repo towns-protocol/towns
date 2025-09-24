@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 
@@ -109,11 +109,6 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
 
-	// retrieve set last miniblock events and make sure that only 1 out of miniblockRegistrationFrequency
-	// miniblocks is registered
-	filterer, err := river.NewStreamRegistryV1Filterer(tt.btc.RiverRegistryAddress, tt.btc.Client())
-	tt.require.NoError(err)
-
 	i := -1
 	var conversation [][]string
 	tt.require.Eventually(func() bool {
@@ -124,16 +119,21 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
-			Start:   0,
-			End:     nil,
-			Context: tt.ctx,
-		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
+		logs, err := bind2.FilterEvents(
+			tt.btc.StreamRegistryInstance,
+			&bind2.FilterOpts{
+				Start:   0,
+				End:     nil,
+				Context: tt.ctx,
+			},
+			tt.btc.StreamRegistry.UnpackStreamUpdatedEvent,
+			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
+		)
 		tt.require.NoError(err)
 
 		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Value())
 			tt.require.NoError(err)
 
 			for _, parsedLog := range parsedLogs {
@@ -208,16 +208,21 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
-			Start:   0,
-			End:     nil,
-			Context: tt.ctx,
-		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
+		logs, err := bind2.FilterEvents(
+			tt.btc.StreamRegistryInstance,
+			&bind2.FilterOpts{
+				Start:   0,
+				End:     nil,
+				Context: tt.ctx,
+			},
+			tt.btc.StreamRegistry.UnpackStreamUpdatedEvent,
+			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
+		)
 		tt.require.NoError(err)
 
 		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Value())
 			tt.require.NoError(err)
 
 			for _, parsedLog := range parsedLogs {

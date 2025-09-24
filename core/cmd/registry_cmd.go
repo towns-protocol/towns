@@ -737,7 +737,7 @@ func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
 
 			parsed, err := cc.registryContract.ParseEvent(
 				ctx,
-				cc.registryContract.StreamRegistry.BoundContract(),
+				cc.registryContract.StreamRegistryContract.BoundContract(),
 				cc.registryContract.StreamEventInfo,
 				&log,
 			)
@@ -773,7 +773,7 @@ func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
 
 			fmt.Println("STREAM EVENT:", log.Topics[0])
 
-			parsed, err := cc.registryContract.ParseEvent(ctx, cc.registryContract.StreamRegistry.BoundContract(), cc.registryContract.StreamEventInfo, &log)
+			parsed, err := cc.registryContract.ParseEvent(ctx, cc.registryContract.StreamRegistryContract.BoundContract(), cc.registryContract.StreamEventInfo, &log)
 			if err != nil {
 				fmt.Printf("Error parsing event: %d %d %s\n", log.BlockNumber, log.Index, err)
 				continue
@@ -1078,7 +1078,7 @@ func runRegistryUpdateStream(args []string, cfg *config.Config) error {
 
 	pendingTx, err := blockchain.TxPool.Submit(ctx,
 		"StreamRegistry::SetStreamReplicationFactor", func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return registryContract.StreamRegistry.SetStreamReplicationFactor(opts, []river.SetStreamReplicationFactor{
+			return registryContract.StreamRegistryContract.SetStreamReplicationFactor(opts, []river.SetStreamReplicationFactor{
 				{
 					StreamId:          streamID,
 					ReplicationFactor: uint8(replFactor),

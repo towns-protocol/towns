@@ -147,7 +147,7 @@ func TestStreamReconciliationFromGenesis(t *testing.T) {
 
 	// wait till the mini-block is set in the streams registry before booting up last node
 	require.Eventuallyf(func() bool {
-		stream, err := tt.btc.StreamRegistry.GetStream(nil, streamId)
+		stream, err := tt.btc.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 		require.NoError(err)
 		return stream.LastMiniblockNum == uint64(latestMbNum)
 	}, 10*time.Second, 100*time.Millisecond, "expected to receive latest miniblock")

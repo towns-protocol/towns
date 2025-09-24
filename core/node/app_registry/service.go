@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	ttlcache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/trace"
@@ -521,11 +520,11 @@ waitLoop:
 			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for user stream availability")
 			break waitLoop
 		case <-time.After(delay):
-			stream, err := s.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: ctx}, userStreamId)
+			stream, err := s.riverRegistry.GetStreamOnLatestBlock(ctx, userStreamId)
 			if err != nil {
 				continue
 			}
-			nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+			nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes(), common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,
@@ -641,11 +640,11 @@ waitLoop:
 			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for stream availability")
 			break waitLoop
 		case <-time.After(delay):
-			stream, err := s.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: ctx}, userMetadataStreamId)
+			stream, err := s.riverRegistry.GetStreamOnLatestBlock(ctx, userMetadataStreamId)
 			if err != nil {
 				continue
 			}
-			nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+			nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes(), common.Address{})
 			streamResponse, err := utils.PeerNodeRequestWithRetries(
 				ctx,
 				nodes,

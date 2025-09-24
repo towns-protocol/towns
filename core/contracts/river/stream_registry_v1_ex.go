@@ -1,19 +1,158 @@
 package river
 
 import (
+	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+type StreamRegistryInstance struct {
+	*bind2.BoundContract
+	contract *StreamRegistryV1
+}
 
 func (r *StreamRegistryV1) ABI() *abi.ABI {
 	return &r.abi
 }
 
+func (r *StreamRegistryV1) NewInstance(
+	backend bind2.ContractBackend,
+	addr common.Address,
+) *StreamRegistryInstance {
+	return &StreamRegistryInstance{
+		BoundContract: bind2.NewBoundContract(addr, r.abi, backend, backend, backend),
+		contract:      r,
+	}
+}
+
+func CallValueRaw[T any](
+	contract *bind2.BoundContract,
+	ctx context.Context,
+	funcName string,
+	blockNum uint64,
+	calldata []byte,
+	unpack func([]byte) (T, error),
+) (T, error) {
+	var opt bind2.CallOpts
+	opt.Context = ctx
+	if blockNum > 0 {
+		opt.BlockNumber = big.NewInt(int64(blockNum))
+	}
+	ret, err := bind2.Call(contract, &opt, calldata, unpack)
+	if err != nil {
+		return ret, AsRiverError(
+			err,
+			Err_CANNOT_CALL_CONTRACT,
+		).Func(funcName).
+			Message("Contract call failed").
+			Tag("blockNum", blockNum)
+	}
+	return ret, nil
+}
+
+func CallValue[T any](
+	contract *bind2.BoundContract,
+	ctx context.Context,
+	funcName string,
+	blockNum uint64,
+	pack func() ([]byte, error),
+	unpack func([]byte) (T, error),
+) (T, error) {
+	var zero T
+	calldata, err := pack()
+	if err != nil {
+		return zero, AsRiverError(
+			err,
+			Err_CANNOT_CALL_CONTRACT,
+		).Func(funcName).
+			Message("Failed to pack calldata").
+			Tag("blockNum", blockNum)
+	}
+	return CallValueRaw(contract, ctx, funcName, blockNum, calldata, unpack)
+}
+
+func CallPtrRaw[T any](
+	contract *bind2.BoundContract,
+	ctx context.Context,
+	funcName string,
+	blockNum uint64,
+	calldata []byte,
+	unpack func([]byte) (T, error),
+) (*T, error) {
+	var opt bind2.CallOpts
+	opt.Context = ctx
+	if blockNum > 0 {
+		opt.BlockNumber = big.NewInt(int64(blockNum))
+	}
+	ret, err := bind2.Call(contract, &opt, calldata, unpack)
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+			Err_CANNOT_CALL_CONTRACT,
+		).Func(funcName).
+			Message("Contract call failed").
+			Tag("blockNum", blockNum)
+	}
+	return &ret, nil
+}
+
+func CallPtr[T any](
+	contract *bind2.BoundContract,
+	ctx context.Context,
+	funcName string,
+	blockNum uint64,
+	pack func() ([]byte, error),
+	unpack func([]byte) (T, error),
+) (*T, error) {
+	calldata, err := pack()
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+			Err_CANNOT_CALL_CONTRACT,
+		).Func(funcName).
+			Message("Failed to pack calldata").
+			Tag("blockNum", blockNum)
+	}
+	return CallPtrRaw(contract, ctx, funcName, blockNum, calldata, unpack)
+}
+
+func (c *StreamRegistryInstance) GetStreamOnBlock(
+	ctx context.Context,
+	streamId StreamId,
+	blockNum uint64,
+) (*Stream, error) {
+	return CallPtr(
+		c.BoundContract,
+		ctx,
+		"GetStream",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStream(streamId) },
+		c.contract.UnpackGetStream,
+	)
+}
+
+func (c *StreamRegistryInstance) GetStreamOnLatestBlock(
+	ctx context.Context,
+	streamId StreamId,
+) (*Stream, error) {
+	return c.GetStreamOnBlock(ctx, streamId, 0)
+}
+
+const StreamFlagSealed uint64 = 0x1
+
+// ReplicationFactor returns on how many nodes the stream is replicated.
+// TODO: rename Reserved0 in the contract.
 func (s *Stream) ReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
 	return max(1, int(s.Reserved0&0xFF))
 }
 
@@ -33,7 +172,7 @@ func (s *Stream) LastMb() *MiniblockRef {
 }
 
 func (s *Stream) IsSealed() bool {
-	return s.Flags&0x1 != 0
+	return s.Flags&StreamFlagSealed != 0
 }
 
 func NewStreamWithId(streamId StreamId, stream *Stream) *StreamWithId {
@@ -67,7 +206,7 @@ func (s *StreamWithId) LastMb() *MiniblockRef {
 }
 
 func (s *StreamWithId) IsSealed() bool {
-	return s.Stream.Flags&0x1 != 0
+	return s.Stream.Flags&StreamFlagSealed != 0
 }
 
 func (s *StreamWithId) Nodes() []common.Address {
@@ -200,7 +339,7 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 	case StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 		return parseSetMiniblocksFromSolABIEncoded(event)
 	default:
-		return nil, AsRiverError(nil, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(nil, Err_BAD_EVENT).
 			Message("Unsupported StreamUpdated event type").
 			Tags("type", reason, "tx", event.Raw.TxHash, "eventIndex", event.Raw.Index)
 	}
@@ -210,7 +349,7 @@ func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (*StreamWithId, error)
 	values := abi.Arguments{{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}}, {Type: streamABIType}}
 	unpacked, err := values.Unpack(data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseStreamIDAndStreamFromSolABIEncoded")
 	}
@@ -225,7 +364,7 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	values := abi.Arguments{{Type: abi.Type{T: abi.SliceTy, Elem: &setMiniblockABIType}}}
 	unpacked, err := values.Unpack(event.Data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseSetMiniblocksFromSolcABIEncoded")
 	}
@@ -241,12 +380,4 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	}
 
 	return results, nil
-}
-
-// StreamReplicationFactor returns on how many nodes the stream is replicated.
-func (s *Stream) StreamReplicationFactor() int {
-	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
-	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
-	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
-	return max(1, int(s.Reserved0&0xFF))
 }
