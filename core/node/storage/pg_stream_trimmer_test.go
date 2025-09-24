@@ -160,10 +160,15 @@ func TestStreamTrimmer(t *testing.T) {
 
 		expectedSnapshots := []int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}
 
-		require.Eventually(func() bool {
-			seqs, withSnapshot := collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal(expectedSeqs, seqs) && slices.Equal(expectedSnapshots, withSnapshot)
-		}, time.Second*5, 100*time.Millisecond)
+		var gotSeqs, gotSnapshots []int64
+		assert.Eventually(t, func() bool {
+			gotSeqs, gotSnapshots = collectStreamState(t, pgStreamStore, ctx, streamId)
+			return slices.Equal(expectedSeqs, gotSeqs) && slices.Equal(expectedSnapshots, gotSnapshots)
+		}, time.Second*5, 100*time.Millisecond, "snapshot retention did not converge in time")
+		t.Logf("snapshot run sequences: %v", gotSeqs)
+		t.Logf("snapshot run snapshots: %v", gotSnapshots)
+		require.Equal(expectedSeqs, gotSeqs)
+		require.Equal(expectedSnapshots, gotSnapshots)
 	})
 
 	t.Run("no trimming occurs when both policies are disabled", func(t *testing.T) {
@@ -314,7 +319,7 @@ func collectStreamState(
 	err := store.ReadMiniblocksByStream(
 		ctx,
 		streamId,
-		true,
+		false,
 		func(blockdata []byte, seqNum int64, snapshot []byte) error {
 			seqs = append(seqs, seqNum)
 			if len(snapshot) > 0 {
