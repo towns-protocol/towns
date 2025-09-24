@@ -8,6 +8,7 @@ import (
 	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -32,103 +33,12 @@ func (r *StreamRegistryV1) NewInstance(
 	}
 }
 
-func CallValueRaw[T any](
-	contract *bind2.BoundContract,
-	ctx context.Context,
-	funcName string,
-	blockNum uint64,
-	calldata []byte,
-	unpack func([]byte) (T, error),
-) (T, error) {
-	var opt bind2.CallOpts
-	opt.Context = ctx
-	if blockNum > 0 {
-		opt.BlockNumber = big.NewInt(int64(blockNum))
-	}
-	ret, err := bind2.Call(contract, &opt, calldata, unpack)
-	if err != nil {
-		return ret, AsRiverError(
-			err,
-			Err_CANNOT_CALL_CONTRACT,
-		).Func(funcName).
-			Message("Contract call failed").
-			Tag("blockNum", blockNum)
-	}
-	return ret, nil
-}
-
-func CallValue[T any](
-	contract *bind2.BoundContract,
-	ctx context.Context,
-	funcName string,
-	blockNum uint64,
-	pack func() ([]byte, error),
-	unpack func([]byte) (T, error),
-) (T, error) {
-	var zero T
-	calldata, err := pack()
-	if err != nil {
-		return zero, AsRiverError(
-			err,
-			Err_CANNOT_CALL_CONTRACT,
-		).Func(funcName).
-			Message("Failed to pack calldata").
-			Tag("blockNum", blockNum)
-	}
-	return CallValueRaw(contract, ctx, funcName, blockNum, calldata, unpack)
-}
-
-func CallPtrRaw[T any](
-	contract *bind2.BoundContract,
-	ctx context.Context,
-	funcName string,
-	blockNum uint64,
-	calldata []byte,
-	unpack func([]byte) (T, error),
-) (*T, error) {
-	var opt bind2.CallOpts
-	opt.Context = ctx
-	if blockNum > 0 {
-		opt.BlockNumber = big.NewInt(int64(blockNum))
-	}
-	ret, err := bind2.Call(contract, &opt, calldata, unpack)
-	if err != nil {
-		return nil, AsRiverError(
-			err,
-			Err_CANNOT_CALL_CONTRACT,
-		).Func(funcName).
-			Message("Contract call failed").
-			Tag("blockNum", blockNum)
-	}
-	return &ret, nil
-}
-
-func CallPtr[T any](
-	contract *bind2.BoundContract,
-	ctx context.Context,
-	funcName string,
-	blockNum uint64,
-	pack func() ([]byte, error),
-	unpack func([]byte) (T, error),
-) (*T, error) {
-	calldata, err := pack()
-	if err != nil {
-		return nil, AsRiverError(
-			err,
-			Err_CANNOT_CALL_CONTRACT,
-		).Func(funcName).
-			Message("Failed to pack calldata").
-			Tag("blockNum", blockNum)
-	}
-	return CallPtrRaw(contract, ctx, funcName, blockNum, calldata, unpack)
-}
-
 func (c *StreamRegistryInstance) GetStreamOnBlock(
 	ctx context.Context,
 	streamId StreamId,
-	blockNum uint64,
+	blockNum blockchain.BlockNumber,
 ) (*Stream, error) {
-	return CallPtr(
+	return blockchain.CallPtr(
 		c.BoundContract,
 		ctx,
 		"GetStream",
@@ -143,6 +53,93 @@ func (c *StreamRegistryInstance) GetStreamOnLatestBlock(
 	streamId StreamId,
 ) (*Stream, error) {
 	return c.GetStreamOnBlock(ctx, streamId, 0)
+}
+
+// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
+func (c *StreamRegistryInstance) GetStreamWithGenesis(
+	ctx context.Context,
+	streamId StreamId,
+	blockNum blockchain.BlockNumber,
+) (*Stream, common.Hash, []byte, error) {
+	result, err := blockchain.CallPtr(
+		c.BoundContract,
+		ctx,
+		"GetStreamWithGenesis",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStreamWithGenesis(streamId) },
+		c.contract.UnpackGetStreamWithGenesis,
+	)
+	if err != nil {
+		return nil, common.Hash{}, nil, err
+	}
+	return &result.Arg0, result.Arg1, result.Arg2, nil
+}
+
+func (c *StreamRegistryInstance) GetStreamCount(ctx context.Context, blockNum blockchain.BlockNumber) (int64, error) {
+	return blockchain.CallInt64Raw(
+		c.BoundContract,
+		ctx,
+		"GetStreamCount",
+		blockNum,
+		c.contract.PackGetStreamCount(),
+		c.contract.UnpackGetStreamCount,
+	)
+}
+
+func (c *StreamRegistryInstance) GetStreamCountOnNode(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	node common.Address,
+) (int64, error) {
+	return blockchain.CallInt64(
+		c.BoundContract,
+		ctx,
+		"GetStreamCountOnNode",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStreamCountOnNode(node) },
+		c.contract.UnpackGetStreamCountOnNode,
+	)
+}
+
+func (c *StreamRegistryInstance) GetPaginatedStreamsOnNode(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	node common.Address,
+	start int64,
+	end int64,
+) ([]StreamWithId, error) {
+	return blockchain.CallValue(
+		c.BoundContract,
+		ctx,
+		"GetPaginatedStreamsOnNode",
+		blockNum,
+		func() ([]byte, error) {
+			return c.contract.TryPackGetPaginatedStreamsOnNode(node, big.NewInt(start), big.NewInt(end))
+		},
+		c.contract.UnpackGetPaginatedStreamsOnNode,
+	)
+}
+
+func (c *StreamRegistryInstance) GetPaginatedStreams(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	start int64,
+	end int64,
+) ([]StreamWithId, bool, error) {
+	ret, err := blockchain.CallValue(
+		c.BoundContract,
+		ctx,
+		"GetPaginatedStreams",
+		blockNum,
+		func() ([]byte, error) {
+			return c.contract.TryPackGetPaginatedStreams(big.NewInt(start), big.NewInt(end))
+		},
+		c.contract.UnpackGetPaginatedStreams,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return ret.Arg0, ret.Arg1, nil
 }
 
 const StreamFlagSealed uint64 = 0x1

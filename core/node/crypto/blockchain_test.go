@@ -126,7 +126,7 @@ func TestBlockchain(t *testing.T) {
 		"AllocateStream",
 		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				tc.StreamRegistryInstance,
+				tc.StreamRegistryInstance.BoundContract,
 				opts,
 				tc.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
@@ -141,7 +141,7 @@ func TestBlockchain(t *testing.T) {
 	require.Equal(uint64(1), receipt.Status)
 
 	result, err := bind2.Call(
-		tc.StreamRegistryInstance,
+		tc.StreamRegistryInstance.BoundContract,
 		nil,
 		tc.StreamRegistry.PackGetStreamWithGenesis(streamId),
 		tc.StreamRegistry.UnpackGetStreamWithGenesis,
@@ -160,7 +160,7 @@ func TestBlockchain(t *testing.T) {
 		"AllocateStream",
 		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				tc.StreamRegistryInstance,
+				tc.StreamRegistryInstance.BoundContract,
 				opts,
 				tc.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
@@ -176,7 +176,7 @@ func TestBlockchain(t *testing.T) {
 		func(opts *bind.TransactOpts) (*types.Transaction, error) {
 			streamId := testutils.StreamIdFromBytes([]byte{0x10, 0x22, 0x33})
 			return bind2.Transact(
-				tc.StreamRegistryInstance,
+				tc.StreamRegistryInstance.BoundContract,
 				opts,
 				tc.StreamRegistry.PackAllocateStream(
 					streamId,
@@ -200,7 +200,7 @@ func TestBlockchain(t *testing.T) {
 			"AllocateStream",
 			func(opts *bind.TransactOpts) (*types.Transaction, error) {
 				return bind2.Transact(
-					tc.StreamRegistryInstance,
+					tc.StreamRegistryInstance.BoundContract,
 					opts,
 					tc.StreamRegistry.PackAllocateStream(
 						streamId,
@@ -227,7 +227,7 @@ func TestBlockchain(t *testing.T) {
 	seenIds := make(map[StreamId]bool)
 	for i := int64(0); i < 30; i += pageSize {
 		result, err := bind2.Call(
-			tc.StreamRegistryInstance,
+			tc.StreamRegistryInstance.BoundContract,
 			nil,
 			tc.StreamRegistry.PackGetPaginatedStreams(big.NewInt(i), big.NewInt(i+pageSize)),
 			tc.StreamRegistry.UnpackGetPaginatedStreams,

@@ -46,20 +46,28 @@ type (
 	// TransactionPool represents an in-memory transaction pool to which transaction can be submitted.
 	TransactionPool interface {
 		// Submit calls createTx and sends the resulting transaction to the blockchain.
-		// It returns a pending transaction
-		// for which the caller can wait for the transaction receipt to arrive. The pool will resubmit transactions
-		// when necessary.
+		// It returns a pending transaction for which the caller can wait for the transaction receipt to arrive.
+		// The pool will resubmit transactions when necessary.
 		Submit(ctx context.Context, name string, createTx CreateTransaction) (TransactionPoolPendingTransaction, error)
 
-		// Submit2 sends transaction created with abigen v2/bind v2 to the blockchain.
-		// It returns a pending transaction
-		// for which the caller can wait for the transaction receipt to arrive. The pool will resubmit transactions
-		// when necessary.
-		Submit2(
+		// SubmitRaw sends transaction created with abigen v2/bind v2 to the blockchain.
+		// It returns a pending transaction for which the caller can wait for the transaction receipt to arrive.
+		// The pool will resubmit transactions when necessary.
+		SubmitRaw(
 			ctx context.Context,
 			name string,
 			contract *bind2.BoundContract,
 			data []byte,
+		) (TransactionPoolPendingTransaction, error)
+
+		// SubmitTx calls pack and sends the resulting transaction to the blockchain.
+		// It returns a pending transaction for which the caller can wait for the transaction receipt to arrive.
+		// The pool will resubmit transactions when necessary.
+		SubmitTx(
+			ctx context.Context,
+			name string,
+			contract *bind2.BoundContract,
+			pack func() ([]byte, error),
 		) (TransactionPoolPendingTransaction, error)
 
 		// EstimateGas estimates the gas usage of the transaction that would be created by createTx.
@@ -738,7 +746,7 @@ func (r *transactionPool) Submit(
 	return r.submitLocked(ctx, name, createTx, true)
 }
 
-func (r *transactionPool) Submit2(
+func (r *transactionPool) SubmitRaw(
 	ctx context.Context,
 	name string,
 	contract *bind2.BoundContract,
@@ -756,6 +764,25 @@ func (r *transactionPool) Submit2(
 		},
 		true,
 	)
+}
+
+func (r *transactionPool) SubmitTx(
+	ctx context.Context,
+	name string,
+	contract *bind2.BoundContract,
+	pack func() ([]byte, error),
+) (TransactionPoolPendingTransaction, error) {
+	calldata, err := pack()
+	if err != nil {
+		return nil, AsRiverError(
+			err,
+			Err_CANNOT_CALL_CONTRACT,
+		).Func("SubmitTx").
+			Message("Failed to pack transaction").
+			Tag("name", name)
+	}
+
+	return r.SubmitRaw(ctx, name, contract, calldata)
 }
 
 func (r *transactionPool) submitLocked(

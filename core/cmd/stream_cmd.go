@@ -124,12 +124,12 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
 	if err != nil {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -264,12 +264,12 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
 	if err != nil {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -482,12 +482,12 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
 	if err != nil {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	remote, err := registryContract.NodeRegistry.GetNode(nil, remoteNodeAddress)
@@ -556,12 +556,12 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
+	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
 	if err != nil {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(stream.StreamReplicationFactor(), stream.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(stream.ReplicationFactor(), stream.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	if len(args) >= 3 {
@@ -730,12 +730,12 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	streamRecord, err := registryContract.StreamRegistryContract.GetStream(nil, streamID)
+	streamRecord, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
 	if err != nil {
 		return err
 	}
 
-	nodes := nodes.NewStreamNodesWithLock(streamRecord.StreamReplicationFactor(), streamRecord.Nodes, common.Address{})
+	nodes := nodes.NewStreamNodesWithLock(streamRecord.ReplicationFactor(), streamRecord.Nodes, common.Address{})
 	remoteNodeAddress := nodes.GetStickyPeer()
 
 	return getStreamFromNode(ctx, *registryContract, remoteNodeAddress, streamID)
@@ -877,10 +877,11 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 		return err
 	}
 
-	stream, err := registryContract.GetStream(ctx, streamId, blockchain.InitialBlockNum)
+	streamNoId, err := registryContract.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockchain.InitialBlockNum)
 	if err != nil {
 		return err
 	}
+	stream := river.NewStreamWithId(streamId, streamNoId)
 
 	// find latest mb num on each node
 	allNodes, err := registryContract.GetAllNodes(ctx, blockchain.InitialBlockNum)
@@ -1261,7 +1262,7 @@ func runStreamCheckStateCmd(cmd *cobra.Command, cfg *config.Config, args []strin
 
 	wp := workerpool.New(len(clients) * maxConcurrentRequestPerNode)
 
-	expStreamCount, err := riverRegistry.GetStreamCount(ctx, riverChain.InitialBlockNum)
+	expStreamCount, err := riverRegistry.StreamRegistry.GetStreamCount(ctx, riverChain.InitialBlockNum)
 	if err != nil {
 		return err
 	}

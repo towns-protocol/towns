@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -70,9 +71,10 @@ func TestReconciler(t *testing.T) {
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
 
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
-	require.NotNil(record)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	stream = inst.cache.insertEmptyLocalStream(record, blockNum, false)
 
@@ -150,9 +152,10 @@ func TestReconciler_SmallGapForward(t *testing.T) {
 
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
-	require.NotNil(record)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	// Insert as empty local stream and reconcile — should pick forward path and then backfill
 	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
@@ -219,8 +222,10 @@ func TestReconciler_BackfillOnly(t *testing.T) {
 	// Obtain the latest registry record
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	// Insert as empty local stream on the third node
 	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
@@ -347,10 +352,11 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 	// Create empty local stream on target and run reconciler
 	blockNum, err := target.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := target.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := target.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
-	require.True(record.IsSealed())
-	require.EqualValues(chunks, record.LastMbNum())
+	require.True(recordNoId.IsSealed())
+	require.EqualValues(chunks, recordNoId.LastMbNum())
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	stream := target.cache.insertEmptyLocalStream(record, blockNum, false)
 
@@ -421,9 +427,10 @@ func TestReconciler_ForwardOnly(t *testing.T) {
 
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
-	require.NotNil(record)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	// Insert as empty local stream and reconcile forward-only
 	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
@@ -471,8 +478,10 @@ func TestReconciler_NoRemotes(t *testing.T) {
 	inst := tc.instances[0]
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 
 	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
 	reconciler := newStreamReconciler(inst.cache, stream, record)
@@ -515,8 +524,10 @@ func TestReconciler_ImportGenesisFromRegistry(t *testing.T) {
 	// Read the genesis record (LastMbNum == 0)
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 	require.EqualValues(0, record.LastMbNum())
 
 	// Insert as empty local stream and reconcile
@@ -589,7 +600,10 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
 
-	record, err := inst.cache.params.Registry.GetStream(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
 	require.NoError(err)
 
 	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)

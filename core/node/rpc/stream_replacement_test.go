@@ -56,10 +56,10 @@ func testMigrateStreamToExtraNodes(t *testing.T) {
 
 	// tests that the stream channelId eventually is replicated over the nodes consistently
 	eventuallyStreamReplicatedOverNodes := func(expectedReplFactor int, expectedNodes int) {
-		stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+		stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		require.NoError(t, err)
 
-		streamReplFactor := stream.StreamReplicationFactor()
+		streamReplFactor := stream.ReplicationFactor()
 		require.EqualValues(t, expectedReplFactor, streamReplFactor, "stream replication factor mismatch")
 		require.Len(t, stream.Nodes, expectedNodes, "stream nodes length mismatch")
 
@@ -202,7 +202,7 @@ func testColdStreamPlacementUpdate(t *testing.T) {
 	channelId, _, _ := alice.createChannel(spaceId)
 
 	// get the node on which the stream is placed
-	stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	require.NoError(t, err)
 
 	var initialNonReplNode *testNodeRecord
@@ -215,20 +215,20 @@ func testColdStreamPlacementUpdate(t *testing.T) {
 	// create several miniblocks
 	tt.require.Eventually(func() bool {
 		alice.say(channelId, "hello from Alice")
-		stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+		stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		tt.require.NoError(err)
 		return stream.LastMiniblockNum > 5
 	}, time.Second*10, time.Millisecond*100)
 
 	// make sure stream becomes cold
-	stream, err = tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err = tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	require.NoError(t, err)
 
 	lastMiniblockNumUpdate := time.Now()
 	lastMiniblockNum := stream.LastMiniblockNum
 
 	tt.require.Eventually(func() bool {
-		stream, err = tt.btc.StreamRegistry.GetStream(nil, channelId)
+		stream, err = tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		tt.require.NoError(err)
 		if stream.LastMiniblockNum > lastMiniblockNum {
 			lastMiniblockNum = stream.LastMiniblockNum
@@ -304,7 +304,7 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
 
-	stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	tt.require.NoError(err)
 	tt.require.Equal(1, len(stream.Nodes))
 
@@ -346,7 +346,7 @@ func testHotStreamPlacementUpdate(t *testing.T) {
 
 	// make sure that the new nodes participating in the stream sync the stream into their local storage and cache
 	eventuallyForAllNodesWithT(tt, func(c *assert.CollectT, node *testNodeRecord) {
-		registryStream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+		registryStream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		require.NoError(c, err)
 		require.EqualValues(c, len(replicatedNodesAddrs), len(registryStream.Nodes))
 
@@ -440,7 +440,7 @@ func testNodesEnterQuorum(t *testing.T) {
 	channelId, _, _ := alice.createChannel(spaceId)
 
 	// get the node on which the stream is placed
-	stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	require.NoError(t, err)
 
 	var initialNonReplNode *testNodeRecord
@@ -453,7 +453,7 @@ func testNodesEnterQuorum(t *testing.T) {
 	// create several miniblocks
 	tt.require.Eventually(func() bool {
 		alice.say(channelId, "hello from Alice")
-		stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+		stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		tt.require.NoError(err)
 		return stream.LastMiniblockNum > 5
 	}, time.Second*10, time.Millisecond*100)
@@ -472,7 +472,7 @@ func testNodesEnterQuorum(t *testing.T) {
 		},
 	)
 
-	stream, err = tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err = tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	require.NoError(t, err)
 	require.EqualValues(t, len(replicatedNodesAddrs), len(stream.Nodes))
 
@@ -482,7 +482,7 @@ func testNodesEnterQuorum(t *testing.T) {
 	// create several miniblocks and ensure that the stream progresses
 	tt.require.Eventually(func() bool {
 		alice.say(channelId, "hello from Alice")
-		stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+		stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 		tt.require.NoError(err)
 		return stream.LastMiniblockNum > wantedLastMiniblockNum
 	}, time.Second*10, time.Millisecond*50)
@@ -510,7 +510,7 @@ func randomPlacementNodes(
 	initialReplFactor int,
 	newReplicationFactor int,
 ) []common.Address {
-	stream, err := tt.btc.StreamRegistry.GetStream(nil, channelId)
+	stream, err := tt.btc.StreamRegistryInstance.GetStreamOnLatestBlock(tt.ctx, channelId)
 	require.NoError(t, err)
 	nodeList := slices.Clone(stream.Nodes[:initialReplFactor])
 

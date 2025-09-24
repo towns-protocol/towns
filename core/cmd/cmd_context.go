@@ -188,7 +188,7 @@ func (cc *cmdContext) getStubForStream(
 	ctx, cancel := context.WithTimeout(cc.ctx, 30*time.Second)
 	defer cancel()
 
-	record, err := cc.registryContract.GetStream(ctx, streamID, cc.blockchain.InitialBlockNum)
+	record, err := cc.registryContract.StreamRegistry.GetStreamOnBlock(ctx, streamID, cc.blockchain.InitialBlockNum)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -197,7 +197,7 @@ func (cc *cmdContext) getStubForStream(
 	if preferredNode != (common.Address{}) {
 		node = preferredNode
 	} else {
-		node = record.Stream.Nodes[0]
+		node = record.Nodes[0]
 	}
 
 	nodeRecord, err := cc.registryContract.NodeRegistry.GetNode(&bind.CallOpts{
@@ -213,7 +213,7 @@ func (cc *cmdContext) getStubForStream(
 	}
 
 	streamServiceClient := NewStreamServiceClient(httpClient, nodeRecord.Url, connect.WithGRPC())
-	return streamServiceClient, record, &nodeRecord, nil
+	return streamServiceClient, river.NewStreamWithId(streamID, record), &nodeRecord, nil
 }
 
 func (cc *cmdContext) getStream(streamId StreamId, stub StreamServiceClient) (*StreamAndCookie, error) {

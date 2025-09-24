@@ -2,14 +2,12 @@ package registries
 
 import (
 	"context"
-	"math/big"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/gammazero/workerpool"
@@ -191,11 +189,18 @@ func (c *RiverRegistryContract) AllocateStream(
 	genesisMiniblockHash common.Hash,
 	genesisMiniblock []byte,
 ) error {
-	pendingTx, err := c.Blockchain.TxPool.Submit2(
+	pendingTx, err := c.Blockchain.TxPool.SubmitTx(
 		ctx,
 		"AllocateStream",
 		c.StreamRegistry.BoundContract,
-		c.StreamRegistryContract.PackAllocateStream(streamId, addresses, genesisMiniblockHash, genesisMiniblock),
+		func() ([]byte, error) {
+			return c.StreamRegistryContract.TryPackAllocateStream(
+				streamId,
+				addresses,
+				genesisMiniblockHash,
+				genesisMiniblock,
+			)
+		},
 	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
@@ -236,21 +241,23 @@ func (c *RiverRegistryContract) AddStream(
 		flags |= river.StreamFlagSealed
 	}
 
-	pendingTx, err := c.Blockchain.TxPool.Submit2(
+	pendingTx, err := c.Blockchain.TxPool.SubmitTx(
 		ctx,
 		"AddStream",
 		c.StreamRegistry.BoundContract,
-		c.StreamRegistryContract.PackAddStream(
-			streamId,
-			genesisMiniblockHash,
-			river.Stream{
-				LastMiniblockHash: lastMiniblockHash,
-				LastMiniblockNum:  uint64(lastMiniblockNum),
-				Reserved0:         uint64(len(addresses)),
-				Flags:             flags,
-				Nodes:             addresses,
-			},
-		),
+		func() ([]byte, error) {
+			return c.StreamRegistryContract.TryPackAddStream(
+				streamId,
+				genesisMiniblockHash,
+				river.Stream{
+					LastMiniblockHash: lastMiniblockHash,
+					LastMiniblockNum:  uint64(lastMiniblockNum),
+					Reserved0:         uint64(len(addresses)),
+					Flags:             flags,
+					Nodes:             addresses,
+				},
+			)
+		},
 	)
 	if err != nil {
 		return AsRiverError(err, Err_CANNOT_CALL_CONTRACT).
@@ -275,65 +282,6 @@ func (c *RiverRegistryContract) AddStream(
 	return RiverError(Err_ERR_UNSPECIFIED, "AddStream transaction result unknown")
 }
 
-// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
-func (c *RiverRegistryContract) GetStreamWithGenesis(
-	ctx context.Context,
-	streamId StreamId,
-	blockNum blockchain.BlockNumber,
-) (*river.StreamWithId, common.Hash, []byte, error) {
-	result, err := bind2.Call(
-		c.StreamRegistry,
-		c.callOptsWithBlockNum(ctx, blockNum),
-		c.StreamRegistryContract.PackGetStreamWithGenesis(streamId),
-		c.StreamRegistryContract.UnpackGetStreamWithGenesis,
-	)
-	if err != nil {
-		return nil, common.Hash{}, nil, WrapRiverError(
-			Err_CANNOT_CALL_CONTRACT,
-			err,
-		).Func("GetStream").
-			Message("Call failed").
-			Tag("blockNum", blockNum)
-	}
-	return river.NewStreamWithId(streamId, &result.Arg0), result.Arg1, result.Arg2, nil
-}
-
-func (c *RiverRegistryContract) GetStreamCount(ctx context.Context, blockNum blockchain.BlockNumber) (int64, error) {
-	num, err := bind2.Call(
-		c.StreamRegistry,
-		c.callOptsWithBlockNum(ctx, blockNum),
-		c.StreamRegistryContract.PackGetStreamCount(),
-		c.StreamRegistryContract.UnpackGetStreamCount,
-	)
-	if err != nil {
-		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamNum").Message("Call failed")
-	}
-	if !num.IsInt64() {
-		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamNum")
-	}
-	return num.Int64(), nil
-}
-
-func (c *RiverRegistryContract) GetStreamCountOnNode(
-	ctx context.Context,
-	blockNum blockchain.BlockNumber,
-	node common.Address,
-) (int64, error) {
-	num, err := bind2.Call(
-		c.StreamRegistry,
-		c.callOptsWithBlockNum(ctx, blockNum),
-		c.StreamRegistryContract.PackGetStreamCountOnNode(node),
-		c.StreamRegistryContract.UnpackGetStreamCountOnNode,
-	)
-	if err != nil {
-		return 0, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("GetStreamCountOnNode").Message("Call failed")
-	}
-	if !num.IsInt64() {
-		return 0, RiverError(Err_INTERNAL, "Stream number is too big", "num", num).Func("GetStreamCountOnNode")
-	}
-	return num.Int64(), nil
-}
-
 var ZeroBytes32 = [32]byte{}
 
 func (c *RiverRegistryContract) callGetPaginatedStreams(
@@ -349,30 +297,13 @@ func (c *RiverRegistryContract) callGetPaginatedStreams(
 		defer cancel()
 	}
 
-	var (
-		callOpts = c.callOptsWithBlockNum(ctx, blockNum)
-		streams  []river.StreamWithId
-		err      error
-	)
-
+	var streams []river.StreamWithId
+	var err error
 	if node != nil {
-		streams, err = bind2.Call(
-			c.StreamRegistry,
-			callOpts,
-			c.StreamRegistryContract.PackGetPaginatedStreamsOnNode(*node, big.NewInt(start), big.NewInt(end)),
-			c.StreamRegistryContract.UnpackGetPaginatedStreamsOnNode,
-		)
+		streams, err = c.StreamRegistry.GetPaginatedStreamsOnNode(ctx, blockNum, *node, start, end)
 	} else {
-		var result river.GetPaginatedStreamsOutput
-		result, err = bind2.Call(
-			c.StreamRegistry,
-			callOpts,
-			c.StreamRegistryContract.PackGetPaginatedStreams(big.NewInt(start), big.NewInt(end)),
-			c.StreamRegistryContract.UnpackGetPaginatedStreams,
-		)
-		streams = result.Arg0
+		streams, _, err = c.StreamRegistry.GetPaginatedStreams(ctx, blockNum, start, end)
 	}
-
 	if err != nil {
 		return nil, WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreams")
 	}
@@ -484,31 +415,21 @@ func (c *RiverRegistryContract) forAllStreamsSingle(
 		lastReport                 = time.Now()
 		totalStreams               = int64(0)
 		streamsWithZeroStreamID    = int64(0)
-		nodeStreamsCountInRegistry *big.Int
+		nodeStreamsCountInRegistry int64
 		err                        error
 	)
 
 	if node != nil {
-		nodeStreamsCountInRegistry, err = bind2.Call(
-			c.StreamRegistry,
-			c.callOptsWithBlockNum(ctx, blockNum),
-			c.StreamRegistryContract.PackGetStreamCountOnNode(*node),
-			c.StreamRegistryContract.UnpackGetStreamCountOnNode,
-		)
+		nodeStreamsCountInRegistry, err = c.StreamRegistry.GetStreamCountOnNode(ctx, blockNum, *node)
 	} else {
-		nodeStreamsCountInRegistry, err = bind2.Call(
-			c.StreamRegistry,
-			c.callOptsWithBlockNum(ctx, blockNum),
-			c.StreamRegistryContract.PackGetStreamCount(),
-			c.StreamRegistryContract.UnpackGetStreamCount,
-		)
+		nodeStreamsCountInRegistry, err = c.StreamRegistry.GetStreamCount(ctx, blockNum)
 	}
 
 	if err != nil {
 		return WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreams")
 	}
 
-	for i := int64(0); totalStreams+streamsWithZeroStreamID < nodeStreamsCountInRegistry.Int64(); i += pageSize {
+	for i := int64(0); totalStreams+streamsWithZeroStreamID < nodeStreamsCountInRegistry; i += pageSize {
 		bo.Reset()
 		for {
 			now := time.Now()
@@ -590,32 +511,18 @@ func (c *RiverRegistryContract) forAllStreamsParallel(
 	}
 
 	var (
-		numStreamsBigInt *big.Int
-		err              error
+		numStreams int64
+		err        error
 	)
 
 	if node != nil {
-		numStreamsBigInt, err = bind2.Call(
-			c.StreamRegistry,
-			c.callOptsWithBlockNum(ctx, blockNum),
-			c.StreamRegistryContract.PackGetStreamCountOnNode(*node),
-			c.StreamRegistryContract.UnpackGetStreamCountOnNode,
-		)
+		numStreams, err = c.StreamRegistry.GetStreamCountOnNode(ctx, blockNum, *node)
 	} else {
-		numStreamsBigInt, err = bind2.Call(
-			c.StreamRegistry,
-			c.callOptsWithBlockNum(ctx, blockNum),
-			c.StreamRegistryContract.PackGetStreamCount(),
-			c.StreamRegistryContract.UnpackGetStreamCount,
-		)
+		numStreams, err = c.StreamRegistry.GetStreamCount(ctx, blockNum)
 	}
-
 	if err != nil {
 		return WrapRiverError(Err_CANNOT_CALL_CONTRACT, err).Func("ForAllStreams")
 	}
-
-	numStreams := numStreamsBigInt.Int64()
-
 	if numStreams <= 0 {
 		log.Infow("RiverRegistryContract: GetPaginatedStreams no streams found", "blockNum", blockNum)
 		return nil
@@ -731,11 +638,13 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 ) (success []StreamId, invalidMiniblock []StreamId, failed []StreamId, err error) {
 	log := logging.FromCtx(ctx)
 
-	tx, err := c.Blockchain.TxPool.Submit2(
+	tx, err := c.Blockchain.TxPool.SubmitTx(
 		ctx,
 		"SetStreamLastMiniblockBatch",
-		c.StreamRegistry,
-		c.StreamRegistryContract.PackSetStreamLastMiniblockBatch(mbs),
+		c.StreamRegistry.BoundContract,
+		func() ([]byte, error) {
+			return c.StreamRegistryContract.TryPackSetStreamLastMiniblockBatch(mbs)
+		},
 	)
 	if err != nil {
 		ce, se, err := c.errDecoder.DecodeEVMError(err)

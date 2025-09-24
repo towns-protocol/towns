@@ -297,8 +297,8 @@ func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log types.Log) 
 			// load old stream record and decrease the node stream counters for all previous
 			// nodes and increase the stream records counters for nodes in the new set.
 			blockNumber := blockchain.BlockNumber(log.BlockNumber - 1)
-			if oldStream, err := rr.GetStream(ctx, newStream.GetStreamId(), blockNumber); err == nil {
-				for _, nodeAddr := range oldStream.Nodes() {
+			if oldStream, err := rr.StreamRegistry.GetStreamOnBlock(ctx, newStream.GetStreamId(), blockNumber); err == nil {
+				for _, nodeAddr := range oldStream.Nodes {
 					if node, found := impl.nodesMap[nodeAddr]; found {
 						node.streamCount.Add(-1)
 					}
@@ -401,7 +401,7 @@ func newImpl(
 	}
 
 	for _, node := range nodes {
-		streamCount, err := riverRegistry.GetStreamCountOnNode(ctx, atBlockNumber, node.NodeAddress)
+		streamCount, err := riverRegistry.StreamRegistry.GetStreamCountOnNode(ctx, atBlockNumber, node.NodeAddress)
 		if err != nil {
 			return nil, AsRiverError(err, Err_CANNOT_CALL_CONTRACT).Message("Failed to get node stream count")
 		}

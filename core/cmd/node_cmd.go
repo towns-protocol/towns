@@ -62,10 +62,12 @@ func runNodeGetStreams(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	streamsWithIds, err := registryContract.StreamRegistryContract.GetPaginatedStreamsOnNode(
-		nil,
+	streamsWithIds, err := registryContract.StreamRegistry.GetPaginatedStreamsOnNode(
+		ctx,
+		0,
 		nodeAddress,
-		big.NewInt(offset),
+		offset,
+		offset+chunkSize,
 		big.NewInt(offset+chunkSize),
 	)
 	if err != nil {

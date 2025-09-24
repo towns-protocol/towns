@@ -82,7 +82,7 @@ type BlockchainTestContext struct {
 	RiverRegistryAddress   common.Address
 	NodeRegistry           *river.NodeRegistryV1
 	StreamRegistry         *river.StreamRegistryV1
-	StreamRegistryInstance *bind2.BoundContract
+	StreamRegistryInstance *river.StreamRegistryInstance
 	Configuration          *river.RiverConfigV1
 	ChainId                *big.Int
 
@@ -322,7 +322,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 	}
 
 	btc.StreamRegistry = river.NewStreamRegistryV1()
-	btc.StreamRegistryInstance = btc.StreamRegistry.Instance(client, btc.RiverRegistryAddress)
+	btc.StreamRegistryInstance = btc.StreamRegistry.NewInstance(client, btc.RiverRegistryAddress)
 
 	btc.Configuration, err = river.NewRiverConfigV1(btc.RiverRegistryAddress, client)
 	if err != nil {
@@ -642,7 +642,7 @@ func (c *BlockchainTestContext) SetStreamReplicationFactor(
 		"SetStreamReplicationFactor",
 		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
 			return bind2.Transact(
-				c.StreamRegistryInstance,
+				c.StreamRegistryInstance.BoundContract,
 				opts,
 				c.StreamRegistry.PackSetStreamReplicationFactor(requests),
 			)

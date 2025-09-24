@@ -73,6 +73,10 @@ func (s *StreamNodesWithoutLock) ResetFromStreamWithId(stream *river.StreamWithI
 	s.Reset(stream.ReplicationFactor(), stream.Nodes(), localNode)
 }
 
+func (s *StreamNodesWithoutLock) ResetFromStream(stream *river.Stream, localNode common.Address) {
+	s.Reset(stream.ReplicationFactor(), stream.Nodes, localNode)
+}
+
 func (s *StreamNodesWithoutLock) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	var lastStickyAddr common.Address
 	if s.stickyPeerIndex < len(s.remotes) {

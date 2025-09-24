@@ -329,16 +329,16 @@ func TestArchiveOneStream(t *testing.T) {
 
 	arch := NewArchiver(&archiveCfg.Archive, registryContract, nodeRegistry, streamStorage)
 
-	streamRecord, err := registryContract.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.Zero(streamRecord.Stream.LastMiniblockNum) // Only genesis miniblock is created
+	require.Zero(streamRecord.LastMiniblockNum) // Only genesis miniblock is created
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Stream.Nodes,
-			streamRecord.Stream.LastMiniblockNum,
+			streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -354,23 +354,23 @@ func TestArchiveOneStream(t *testing.T) {
 		wallet,
 		client,
 		streamId,
-		river.MiniblockRefFromContractRecord(&streamRecord.Stream),
+		river.MiniblockRefFromContractRecord(streamRecord),
 	)
 	require.NoError(err)
 
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.Equal(uint64(1), streamRecord.Stream.LastMiniblockNum)
+	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Stream.Nodes,
-			streamRecord.Stream.LastMiniblockNum,
+			streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -384,16 +384,16 @@ func TestArchiveOneStream(t *testing.T) {
 	_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, mbRef)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
-	require.GreaterOrEqual(streamRecord.Stream.LastMiniblockNum, uint64(10))
+	require.GreaterOrEqual(streamRecord.LastMiniblockNum, uint64(10))
 
 	err = arch.ArchiveStream(
 		ctx,
 		NewArchiveStream(
 			streamId,
-			streamRecord.Stream.Nodes,
-			streamRecord.Stream.LastMiniblockNum,
+			streamRecord.Nodes,
+			streamRecord.LastMiniblockNum,
 			arch.config.GetMaxConsecutiveFailedUpdates(),
 		),
 	)
@@ -401,7 +401,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	num, err = streamStorage.GetMaxArchivedMiniblockNumber(ctx, streamId)
 	require.NoError(err)
-	require.Equal(int64(streamRecord.Stream.LastMiniblockNum), num)
+	require.Equal(int64(streamRecord.LastMiniblockNum), num)
 
 	require.NoError(compareStreamMiniblocks(t, ctx, streamId, streamStorage, client))
 }
