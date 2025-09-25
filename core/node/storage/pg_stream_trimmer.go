@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -239,11 +240,14 @@ func (t *streamTrimmer) processTrimTaskTx(
 				return err
 			}
 
-			var lastDeletedMiniblock int64 = -1
-			if _, err = pgx.ForEachRow(rows, []any{&lastDeletedMiniblock}, func() error {
-				return nil
-			}); err != nil {
+			deletedMbs, err := pgx.CollectRows(rows, pgx.RowTo[int64])
+			if err != nil {
 				return err
+			}
+
+			var lastDeletedMiniblock int64 = -1
+			if len(deletedMbs) > 0 {
+				lastDeletedMiniblock = slices.Max(deletedMbs)
 			}
 
 			if lastDeletedMiniblock >= 0 && lastDeletedMiniblock+1 < lastMiniblockToKeep {
