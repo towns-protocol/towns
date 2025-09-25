@@ -55,29 +55,29 @@ type StreamWithId struct {
 	Stream Stream
 }
 
-// StreamRegistryV1MetaData contains all meta data concerning the StreamRegistryV1 contract.
-var StreamRegistryV1MetaData = bind.MetaData{
+// StreamRegistryContractMetaData contains all meta data concerning the StreamRegistryContract contract.
+var StreamRegistryContractMetaData = bind.MetaData{
 	ABI: "[{\"type\":\"function\",\"name\":\"addStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"allocateStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"genesisMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"genesisMiniblock\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getPaginatedStreams\",\"inputs\":[{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"stop\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]},{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getPaginatedStreamsOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"stop\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"streams\",\"type\":\"tuple[]\",\"internalType\":\"structStreamWithId[]\",\"components\":[{\"name\":\"id\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"stream\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCount\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamCountOnNode\",\"inputs\":[{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStreamWithGenesis\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structStream\",\"components\":[{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"reserved0\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"flags\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isStream\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"placeStreamOnNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStreamFromNode\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodeAddress\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamLastMiniblockBatch\",\"inputs\":[{\"name\":\"miniblocks\",\"type\":\"tuple[]\",\"internalType\":\"structSetMiniblock[]\",\"components\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"prevMiniBlockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"internalType\":\"uint64\"},{\"name\":\"isSealed\",\"type\":\"bool\",\"internalType\":\"bool\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"setStreamReplicationFactor\",\"inputs\":[{\"name\":\"requests\",\"type\":\"tuple[]\",\"internalType\":\"structSetStreamReplicationFactor[]\",\"components\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"nodes\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"replicationFactor\",\"type\":\"uint8\",\"internalType\":\"uint8\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"syncNodesOnStreams\",\"inputs\":[{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"stop\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"StreamLastMiniblockUpdateFailed\",\"inputs\":[{\"name\":\"streamId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockHash\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"lastMiniblockNum\",\"type\":\"uint64\",\"indexed\":false,\"internalType\":\"uint64\"},{\"name\":\"reason\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StreamUpdated\",\"inputs\":[{\"name\":\"eventType\",\"type\":\"uint8\",\"indexed\":true,\"internalType\":\"enumIStreamRegistryBase.StreamEventType\"},{\"name\":\"data\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false}]",
-	ID:  "StreamRegistryV1",
+	ID:  "StreamRegistryContract",
 }
 
-// StreamRegistryV1 is an auto generated Go binding around an Ethereum contract.
-type StreamRegistryV1 struct {
+// StreamRegistryContract is an auto generated Go binding around an Ethereum contract.
+type StreamRegistryContract struct {
 	abi abi.ABI
 }
 
-// NewStreamRegistryV1 creates a new instance of StreamRegistryV1.
-func NewStreamRegistryV1() *StreamRegistryV1 {
-	parsed, err := StreamRegistryV1MetaData.ParseABI()
+// NewStreamRegistryContract creates a new instance of StreamRegistryContract.
+func NewStreamRegistryContract() *StreamRegistryContract {
+	parsed, err := StreamRegistryContractMetaData.ParseABI()
 	if err != nil {
 		panic(errors.New("invalid ABI: " + err.Error()))
 	}
-	return &StreamRegistryV1{abi: *parsed}
+	return &StreamRegistryContract{abi: *parsed}
 }
 
 // Instance creates a wrapper for a deployed contract instance at the given address.
 // Use this to create the instance object passed to abigen v2 library functions Call, Transact, etc.
-func (c *StreamRegistryV1) Instance(backend bind.ContractBackend, addr common.Address) *bind.BoundContract {
+func (c *StreamRegistryContract) Instance(backend bind.ContractBackend, addr common.Address) *bind.BoundContract {
 	return bind.NewBoundContract(addr, c.abi, backend, backend, backend)
 }
 
@@ -86,8 +86,8 @@ func (c *StreamRegistryV1) Instance(backend bind.ContractBackend, addr common.Ad
 // invalid/nil inputs are passed.
 //
 // Solidity: function addStream(bytes32 streamId, bytes32 genesisMiniblockHash, (bytes32,uint64,uint64,uint64,address[]) stream) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackAddStream(streamId [32]byte, genesisMiniblockHash [32]byte, stream Stream) []byte {
-	enc, err := streamRegistryV1.abi.Pack("addStream", streamId, genesisMiniblockHash, stream)
+func (streamRegistryContract *StreamRegistryContract) PackAddStream(streamId [32]byte, genesisMiniblockHash [32]byte, stream Stream) []byte {
+	enc, err := streamRegistryContract.abi.Pack("addStream", streamId, genesisMiniblockHash, stream)
 	if err != nil {
 		panic(err)
 	}
@@ -99,8 +99,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackAddStream(streamId [32]byte, genes
 // if any inputs are invalid/nil.
 //
 // Solidity: function addStream(bytes32 streamId, bytes32 genesisMiniblockHash, (bytes32,uint64,uint64,uint64,address[]) stream) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackAddStream(streamId [32]byte, genesisMiniblockHash [32]byte, stream Stream) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("addStream", streamId, genesisMiniblockHash, stream)
+func (streamRegistryContract *StreamRegistryContract) TryPackAddStream(streamId [32]byte, genesisMiniblockHash [32]byte, stream Stream) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("addStream", streamId, genesisMiniblockHash, stream)
 }
 
 // PackAllocateStream is the Go binding used to pack the parameters required for calling
@@ -108,8 +108,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackAddStream(streamId [32]byte, ge
 // invalid/nil inputs are passed.
 //
 // Solidity: function allocateStream(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackAllocateStream(streamId [32]byte, nodes []common.Address, genesisMiniblockHash [32]byte, genesisMiniblock []byte) []byte {
-	enc, err := streamRegistryV1.abi.Pack("allocateStream", streamId, nodes, genesisMiniblockHash, genesisMiniblock)
+func (streamRegistryContract *StreamRegistryContract) PackAllocateStream(streamId [32]byte, nodes []common.Address, genesisMiniblockHash [32]byte, genesisMiniblock []byte) []byte {
+	enc, err := streamRegistryContract.abi.Pack("allocateStream", streamId, nodes, genesisMiniblockHash, genesisMiniblock)
 	if err != nil {
 		panic(err)
 	}
@@ -121,8 +121,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackAllocateStream(streamId [32]byte, 
 // if any inputs are invalid/nil.
 //
 // Solidity: function allocateStream(bytes32 streamId, address[] nodes, bytes32 genesisMiniblockHash, bytes genesisMiniblock) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackAllocateStream(streamId [32]byte, nodes []common.Address, genesisMiniblockHash [32]byte, genesisMiniblock []byte) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("allocateStream", streamId, nodes, genesisMiniblockHash, genesisMiniblock)
+func (streamRegistryContract *StreamRegistryContract) TryPackAllocateStream(streamId [32]byte, nodes []common.Address, genesisMiniblockHash [32]byte, genesisMiniblock []byte) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("allocateStream", streamId, nodes, genesisMiniblockHash, genesisMiniblock)
 }
 
 // PackGetPaginatedStreams is the Go binding used to pack the parameters required for calling
@@ -130,8 +130,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackAllocateStream(streamId [32]byt
 // invalid/nil inputs are passed.
 //
 // Solidity: function getPaginatedStreams(uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[], bool)
-func (streamRegistryV1 *StreamRegistryV1) PackGetPaginatedStreams(start *big.Int, stop *big.Int) []byte {
-	enc, err := streamRegistryV1.abi.Pack("getPaginatedStreams", start, stop)
+func (streamRegistryContract *StreamRegistryContract) PackGetPaginatedStreams(start *big.Int, stop *big.Int) []byte {
+	enc, err := streamRegistryContract.abi.Pack("getPaginatedStreams", start, stop)
 	if err != nil {
 		panic(err)
 	}
@@ -143,8 +143,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetPaginatedStreams(start *big.Int
 // if any inputs are invalid/nil.
 //
 // Solidity: function getPaginatedStreams(uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[], bool)
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetPaginatedStreams(start *big.Int, stop *big.Int) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getPaginatedStreams", start, stop)
+func (streamRegistryContract *StreamRegistryContract) TryPackGetPaginatedStreams(start *big.Int, stop *big.Int) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getPaginatedStreams", start, stop)
 }
 
 // GetPaginatedStreamsOutput serves as a container for the return parameters of contract
@@ -158,8 +158,8 @@ type GetPaginatedStreamsOutput struct {
 // from invoking the contract method with ID 0xca78c41a.
 //
 // Solidity: function getPaginatedStreams(uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[], bool)
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetPaginatedStreams(data []byte) (GetPaginatedStreamsOutput, error) {
-	out, err := streamRegistryV1.abi.Unpack("getPaginatedStreams", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetPaginatedStreams(data []byte) (GetPaginatedStreamsOutput, error) {
+	out, err := streamRegistryContract.abi.Unpack("getPaginatedStreams", data)
 	outstruct := new(GetPaginatedStreamsOutput)
 	if err != nil {
 		return *outstruct, err
@@ -174,8 +174,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetPaginatedStreams(data []byte)
 // invalid/nil inputs are passed.
 //
 // Solidity: function getPaginatedStreamsOnNode(address nodeAddress, uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[] streams)
-func (streamRegistryV1 *StreamRegistryV1) PackGetPaginatedStreamsOnNode(nodeAddress common.Address, start *big.Int, stop *big.Int) []byte {
-	enc, err := streamRegistryV1.abi.Pack("getPaginatedStreamsOnNode", nodeAddress, start, stop)
+func (streamRegistryContract *StreamRegistryContract) PackGetPaginatedStreamsOnNode(nodeAddress common.Address, start *big.Int, stop *big.Int) []byte {
+	enc, err := streamRegistryContract.abi.Pack("getPaginatedStreamsOnNode", nodeAddress, start, stop)
 	if err != nil {
 		panic(err)
 	}
@@ -187,16 +187,16 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetPaginatedStreamsOnNode(nodeAddr
 // if any inputs are invalid/nil.
 //
 // Solidity: function getPaginatedStreamsOnNode(address nodeAddress, uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[] streams)
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetPaginatedStreamsOnNode(nodeAddress common.Address, start *big.Int, stop *big.Int) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getPaginatedStreamsOnNode", nodeAddress, start, stop)
+func (streamRegistryContract *StreamRegistryContract) TryPackGetPaginatedStreamsOnNode(nodeAddress common.Address, start *big.Int, stop *big.Int) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getPaginatedStreamsOnNode", nodeAddress, start, stop)
 }
 
 // UnpackGetPaginatedStreamsOnNode is the Go binding that unpacks the parameters returned
 // from invoking the contract method with ID 0x22bbda64.
 //
 // Solidity: function getPaginatedStreamsOnNode(address nodeAddress, uint256 start, uint256 stop) view returns((bytes32,(bytes32,uint64,uint64,uint64,address[]))[] streams)
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetPaginatedStreamsOnNode(data []byte) ([]StreamWithId, error) {
-	out, err := streamRegistryV1.abi.Unpack("getPaginatedStreamsOnNode", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetPaginatedStreamsOnNode(data []byte) ([]StreamWithId, error) {
+	out, err := streamRegistryContract.abi.Unpack("getPaginatedStreamsOnNode", data)
 	if err != nil {
 		return *new([]StreamWithId), err
 	}
@@ -209,8 +209,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetPaginatedStreamsOnNode(data [
 // invalid/nil inputs are passed.
 //
 // Solidity: function getStream(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]))
-func (streamRegistryV1 *StreamRegistryV1) PackGetStream(streamId [32]byte) []byte {
-	enc, err := streamRegistryV1.abi.Pack("getStream", streamId)
+func (streamRegistryContract *StreamRegistryContract) PackGetStream(streamId [32]byte) []byte {
+	enc, err := streamRegistryContract.abi.Pack("getStream", streamId)
 	if err != nil {
 		panic(err)
 	}
@@ -222,16 +222,16 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetStream(streamId [32]byte) []byt
 // if any inputs are invalid/nil.
 //
 // Solidity: function getStream(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]))
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetStream(streamId [32]byte) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getStream", streamId)
+func (streamRegistryContract *StreamRegistryContract) TryPackGetStream(streamId [32]byte) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getStream", streamId)
 }
 
 // UnpackGetStream is the Go binding that unpacks the parameters returned
 // from invoking the contract method with ID 0x1290abe8.
 //
 // Solidity: function getStream(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]))
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetStream(data []byte) (Stream, error) {
-	out, err := streamRegistryV1.abi.Unpack("getStream", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetStream(data []byte) (Stream, error) {
+	out, err := streamRegistryContract.abi.Unpack("getStream", data)
 	if err != nil {
 		return *new(Stream), err
 	}
@@ -244,8 +244,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetStream(data []byte) (Stream, 
 // invalid/nil inputs are passed.
 //
 // Solidity: function getStreamCount() view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) PackGetStreamCount() []byte {
-	enc, err := streamRegistryV1.abi.Pack("getStreamCount")
+func (streamRegistryContract *StreamRegistryContract) PackGetStreamCount() []byte {
+	enc, err := streamRegistryContract.abi.Pack("getStreamCount")
 	if err != nil {
 		panic(err)
 	}
@@ -257,16 +257,16 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetStreamCount() []byte {
 // if any inputs are invalid/nil.
 //
 // Solidity: function getStreamCount() view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetStreamCount() ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getStreamCount")
+func (streamRegistryContract *StreamRegistryContract) TryPackGetStreamCount() ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getStreamCount")
 }
 
 // UnpackGetStreamCount is the Go binding that unpacks the parameters returned
 // from invoking the contract method with ID 0xc0f22084.
 //
 // Solidity: function getStreamCount() view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamCount(data []byte) (*big.Int, error) {
-	out, err := streamRegistryV1.abi.Unpack("getStreamCount", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetStreamCount(data []byte) (*big.Int, error) {
+	out, err := streamRegistryContract.abi.Unpack("getStreamCount", data)
 	if err != nil {
 		return new(big.Int), err
 	}
@@ -279,8 +279,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamCount(data []byte) (*bi
 // invalid/nil inputs are passed.
 //
 // Solidity: function getStreamCountOnNode(address nodeAddress) view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) PackGetStreamCountOnNode(nodeAddress common.Address) []byte {
-	enc, err := streamRegistryV1.abi.Pack("getStreamCountOnNode", nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) PackGetStreamCountOnNode(nodeAddress common.Address) []byte {
+	enc, err := streamRegistryContract.abi.Pack("getStreamCountOnNode", nodeAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -292,16 +292,16 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetStreamCountOnNode(nodeAddress c
 // if any inputs are invalid/nil.
 //
 // Solidity: function getStreamCountOnNode(address nodeAddress) view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetStreamCountOnNode(nodeAddress common.Address) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getStreamCountOnNode", nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) TryPackGetStreamCountOnNode(nodeAddress common.Address) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getStreamCountOnNode", nodeAddress)
 }
 
 // UnpackGetStreamCountOnNode is the Go binding that unpacks the parameters returned
 // from invoking the contract method with ID 0xc87d1324.
 //
 // Solidity: function getStreamCountOnNode(address nodeAddress) view returns(uint256)
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamCountOnNode(data []byte) (*big.Int, error) {
-	out, err := streamRegistryV1.abi.Unpack("getStreamCountOnNode", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetStreamCountOnNode(data []byte) (*big.Int, error) {
+	out, err := streamRegistryContract.abi.Unpack("getStreamCountOnNode", data)
 	if err != nil {
 		return new(big.Int), err
 	}
@@ -314,8 +314,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamCountOnNode(data []byte
 // invalid/nil inputs are passed.
 //
 // Solidity: function getStreamWithGenesis(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]), bytes32, bytes)
-func (streamRegistryV1 *StreamRegistryV1) PackGetStreamWithGenesis(streamId [32]byte) []byte {
-	enc, err := streamRegistryV1.abi.Pack("getStreamWithGenesis", streamId)
+func (streamRegistryContract *StreamRegistryContract) PackGetStreamWithGenesis(streamId [32]byte) []byte {
+	enc, err := streamRegistryContract.abi.Pack("getStreamWithGenesis", streamId)
 	if err != nil {
 		panic(err)
 	}
@@ -327,8 +327,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackGetStreamWithGenesis(streamId [32]
 // if any inputs are invalid/nil.
 //
 // Solidity: function getStreamWithGenesis(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]), bytes32, bytes)
-func (streamRegistryV1 *StreamRegistryV1) TryPackGetStreamWithGenesis(streamId [32]byte) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("getStreamWithGenesis", streamId)
+func (streamRegistryContract *StreamRegistryContract) TryPackGetStreamWithGenesis(streamId [32]byte) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("getStreamWithGenesis", streamId)
 }
 
 // GetStreamWithGenesisOutput serves as a container for the return parameters of contract
@@ -343,8 +343,8 @@ type GetStreamWithGenesisOutput struct {
 // from invoking the contract method with ID 0x3c2544d1.
 //
 // Solidity: function getStreamWithGenesis(bytes32 streamId) view returns((bytes32,uint64,uint64,uint64,address[]), bytes32, bytes)
-func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamWithGenesis(data []byte) (GetStreamWithGenesisOutput, error) {
-	out, err := streamRegistryV1.abi.Unpack("getStreamWithGenesis", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackGetStreamWithGenesis(data []byte) (GetStreamWithGenesisOutput, error) {
+	out, err := streamRegistryContract.abi.Unpack("getStreamWithGenesis", data)
 	outstruct := new(GetStreamWithGenesisOutput)
 	if err != nil {
 		return *outstruct, err
@@ -360,8 +360,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackGetStreamWithGenesis(data []byte
 // invalid/nil inputs are passed.
 //
 // Solidity: function isStream(bytes32 streamId) view returns(bool)
-func (streamRegistryV1 *StreamRegistryV1) PackIsStream(streamId [32]byte) []byte {
-	enc, err := streamRegistryV1.abi.Pack("isStream", streamId)
+func (streamRegistryContract *StreamRegistryContract) PackIsStream(streamId [32]byte) []byte {
+	enc, err := streamRegistryContract.abi.Pack("isStream", streamId)
 	if err != nil {
 		panic(err)
 	}
@@ -373,16 +373,16 @@ func (streamRegistryV1 *StreamRegistryV1) PackIsStream(streamId [32]byte) []byte
 // if any inputs are invalid/nil.
 //
 // Solidity: function isStream(bytes32 streamId) view returns(bool)
-func (streamRegistryV1 *StreamRegistryV1) TryPackIsStream(streamId [32]byte) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("isStream", streamId)
+func (streamRegistryContract *StreamRegistryContract) TryPackIsStream(streamId [32]byte) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("isStream", streamId)
 }
 
 // UnpackIsStream is the Go binding that unpacks the parameters returned
 // from invoking the contract method with ID 0xd0c27c4f.
 //
 // Solidity: function isStream(bytes32 streamId) view returns(bool)
-func (streamRegistryV1 *StreamRegistryV1) UnpackIsStream(data []byte) (bool, error) {
-	out, err := streamRegistryV1.abi.Unpack("isStream", data)
+func (streamRegistryContract *StreamRegistryContract) UnpackIsStream(data []byte) (bool, error) {
+	out, err := streamRegistryContract.abi.Unpack("isStream", data)
 	if err != nil {
 		return *new(bool), err
 	}
@@ -395,8 +395,8 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackIsStream(data []byte) (bool, err
 // invalid/nil inputs are passed.
 //
 // Solidity: function placeStreamOnNode(bytes32 streamId, address nodeAddress) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackPlaceStreamOnNode(streamId [32]byte, nodeAddress common.Address) []byte {
-	enc, err := streamRegistryV1.abi.Pack("placeStreamOnNode", streamId, nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) PackPlaceStreamOnNode(streamId [32]byte, nodeAddress common.Address) []byte {
+	enc, err := streamRegistryContract.abi.Pack("placeStreamOnNode", streamId, nodeAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -408,8 +408,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackPlaceStreamOnNode(streamId [32]byt
 // if any inputs are invalid/nil.
 //
 // Solidity: function placeStreamOnNode(bytes32 streamId, address nodeAddress) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackPlaceStreamOnNode(streamId [32]byte, nodeAddress common.Address) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("placeStreamOnNode", streamId, nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) TryPackPlaceStreamOnNode(streamId [32]byte, nodeAddress common.Address) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("placeStreamOnNode", streamId, nodeAddress)
 }
 
 // PackRemoveStreamFromNode is the Go binding used to pack the parameters required for calling
@@ -417,8 +417,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackPlaceStreamOnNode(streamId [32]
 // invalid/nil inputs are passed.
 //
 // Solidity: function removeStreamFromNode(bytes32 streamId, address nodeAddress) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackRemoveStreamFromNode(streamId [32]byte, nodeAddress common.Address) []byte {
-	enc, err := streamRegistryV1.abi.Pack("removeStreamFromNode", streamId, nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) PackRemoveStreamFromNode(streamId [32]byte, nodeAddress common.Address) []byte {
+	enc, err := streamRegistryContract.abi.Pack("removeStreamFromNode", streamId, nodeAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -430,8 +430,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackRemoveStreamFromNode(streamId [32]
 // if any inputs are invalid/nil.
 //
 // Solidity: function removeStreamFromNode(bytes32 streamId, address nodeAddress) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackRemoveStreamFromNode(streamId [32]byte, nodeAddress common.Address) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("removeStreamFromNode", streamId, nodeAddress)
+func (streamRegistryContract *StreamRegistryContract) TryPackRemoveStreamFromNode(streamId [32]byte, nodeAddress common.Address) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("removeStreamFromNode", streamId, nodeAddress)
 }
 
 // PackSetStreamLastMiniblockBatch is the Go binding used to pack the parameters required for calling
@@ -439,8 +439,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackRemoveStreamFromNode(streamId [
 // invalid/nil inputs are passed.
 //
 // Solidity: function setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[] miniblocks) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackSetStreamLastMiniblockBatch(miniblocks []SetMiniblock) []byte {
-	enc, err := streamRegistryV1.abi.Pack("setStreamLastMiniblockBatch", miniblocks)
+func (streamRegistryContract *StreamRegistryContract) PackSetStreamLastMiniblockBatch(miniblocks []SetMiniblock) []byte {
+	enc, err := streamRegistryContract.abi.Pack("setStreamLastMiniblockBatch", miniblocks)
 	if err != nil {
 		panic(err)
 	}
@@ -452,8 +452,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackSetStreamLastMiniblockBatch(minibl
 // if any inputs are invalid/nil.
 //
 // Solidity: function setStreamLastMiniblockBatch((bytes32,bytes32,bytes32,uint64,bool)[] miniblocks) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackSetStreamLastMiniblockBatch(miniblocks []SetMiniblock) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("setStreamLastMiniblockBatch", miniblocks)
+func (streamRegistryContract *StreamRegistryContract) TryPackSetStreamLastMiniblockBatch(miniblocks []SetMiniblock) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("setStreamLastMiniblockBatch", miniblocks)
 }
 
 // PackSetStreamReplicationFactor is the Go binding used to pack the parameters required for calling
@@ -461,8 +461,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackSetStreamLastMiniblockBatch(min
 // invalid/nil inputs are passed.
 //
 // Solidity: function setStreamReplicationFactor((bytes32,address[],uint8)[] requests) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackSetStreamReplicationFactor(requests []SetStreamReplicationFactor) []byte {
-	enc, err := streamRegistryV1.abi.Pack("setStreamReplicationFactor", requests)
+func (streamRegistryContract *StreamRegistryContract) PackSetStreamReplicationFactor(requests []SetStreamReplicationFactor) []byte {
+	enc, err := streamRegistryContract.abi.Pack("setStreamReplicationFactor", requests)
 	if err != nil {
 		panic(err)
 	}
@@ -474,8 +474,8 @@ func (streamRegistryV1 *StreamRegistryV1) PackSetStreamReplicationFactor(request
 // if any inputs are invalid/nil.
 //
 // Solidity: function setStreamReplicationFactor((bytes32,address[],uint8)[] requests) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackSetStreamReplicationFactor(requests []SetStreamReplicationFactor) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("setStreamReplicationFactor", requests)
+func (streamRegistryContract *StreamRegistryContract) TryPackSetStreamReplicationFactor(requests []SetStreamReplicationFactor) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("setStreamReplicationFactor", requests)
 }
 
 // PackSyncNodesOnStreams is the Go binding used to pack the parameters required for calling
@@ -483,8 +483,8 @@ func (streamRegistryV1 *StreamRegistryV1) TryPackSetStreamReplicationFactor(requ
 // invalid/nil inputs are passed.
 //
 // Solidity: function syncNodesOnStreams(uint256 start, uint256 stop) returns()
-func (streamRegistryV1 *StreamRegistryV1) PackSyncNodesOnStreams(start *big.Int, stop *big.Int) []byte {
-	enc, err := streamRegistryV1.abi.Pack("syncNodesOnStreams", start, stop)
+func (streamRegistryContract *StreamRegistryContract) PackSyncNodesOnStreams(start *big.Int, stop *big.Int) []byte {
+	enc, err := streamRegistryContract.abi.Pack("syncNodesOnStreams", start, stop)
 	if err != nil {
 		panic(err)
 	}
@@ -496,12 +496,12 @@ func (streamRegistryV1 *StreamRegistryV1) PackSyncNodesOnStreams(start *big.Int,
 // if any inputs are invalid/nil.
 //
 // Solidity: function syncNodesOnStreams(uint256 start, uint256 stop) returns()
-func (streamRegistryV1 *StreamRegistryV1) TryPackSyncNodesOnStreams(start *big.Int, stop *big.Int) ([]byte, error) {
-	return streamRegistryV1.abi.Pack("syncNodesOnStreams", start, stop)
+func (streamRegistryContract *StreamRegistryContract) TryPackSyncNodesOnStreams(start *big.Int, stop *big.Int) ([]byte, error) {
+	return streamRegistryContract.abi.Pack("syncNodesOnStreams", start, stop)
 }
 
-// StreamRegistryV1StreamLastMiniblockUpdateFailed represents a StreamLastMiniblockUpdateFailed event raised by the StreamRegistryV1 contract.
-type StreamRegistryV1StreamLastMiniblockUpdateFailed struct {
+// StreamRegistryContractStreamLastMiniblockUpdateFailed represents a StreamLastMiniblockUpdateFailed event raised by the StreamRegistryContract contract.
+type StreamRegistryContractStreamLastMiniblockUpdateFailed struct {
 	StreamId          [32]byte
 	LastMiniblockHash [32]byte
 	LastMiniblockNum  uint64
@@ -509,30 +509,30 @@ type StreamRegistryV1StreamLastMiniblockUpdateFailed struct {
 	Raw               *types.Log // Blockchain specific contextual infos
 }
 
-const StreamRegistryV1StreamLastMiniblockUpdateFailedEventName = "StreamLastMiniblockUpdateFailed"
+const StreamRegistryContractStreamLastMiniblockUpdateFailedEventName = "StreamLastMiniblockUpdateFailed"
 
 // ContractEventName returns the user-defined event name.
-func (StreamRegistryV1StreamLastMiniblockUpdateFailed) ContractEventName() string {
-	return StreamRegistryV1StreamLastMiniblockUpdateFailedEventName
+func (StreamRegistryContractStreamLastMiniblockUpdateFailed) ContractEventName() string {
+	return StreamRegistryContractStreamLastMiniblockUpdateFailedEventName
 }
 
 // UnpackStreamLastMiniblockUpdateFailedEvent is the Go binding that unpacks the event data emitted
 // by contract.
 //
 // Solidity: event StreamLastMiniblockUpdateFailed(bytes32 streamId, bytes32 lastMiniblockHash, uint64 lastMiniblockNum, string reason)
-func (streamRegistryV1 *StreamRegistryV1) UnpackStreamLastMiniblockUpdateFailedEvent(log *types.Log) (*StreamRegistryV1StreamLastMiniblockUpdateFailed, error) {
+func (streamRegistryContract *StreamRegistryContract) UnpackStreamLastMiniblockUpdateFailedEvent(log *types.Log) (*StreamRegistryContractStreamLastMiniblockUpdateFailed, error) {
 	event := "StreamLastMiniblockUpdateFailed"
-	if log.Topics[0] != streamRegistryV1.abi.Events[event].ID {
+	if log.Topics[0] != streamRegistryContract.abi.Events[event].ID {
 		return nil, errors.New("event signature mismatch")
 	}
-	out := new(StreamRegistryV1StreamLastMiniblockUpdateFailed)
+	out := new(StreamRegistryContractStreamLastMiniblockUpdateFailed)
 	if len(log.Data) > 0 {
-		if err := streamRegistryV1.abi.UnpackIntoInterface(out, event, log.Data); err != nil {
+		if err := streamRegistryContract.abi.UnpackIntoInterface(out, event, log.Data); err != nil {
 			return nil, err
 		}
 	}
 	var indexed abi.Arguments
-	for _, arg := range streamRegistryV1.abi.Events[event].Inputs {
+	for _, arg := range streamRegistryContract.abi.Events[event].Inputs {
 		if arg.Indexed {
 			indexed = append(indexed, arg)
 		}
@@ -544,37 +544,37 @@ func (streamRegistryV1 *StreamRegistryV1) UnpackStreamLastMiniblockUpdateFailedE
 	return out, nil
 }
 
-// StreamRegistryV1StreamUpdated represents a StreamUpdated event raised by the StreamRegistryV1 contract.
-type StreamRegistryV1StreamUpdated struct {
+// StreamRegistryContractStreamUpdated represents a StreamUpdated event raised by the StreamRegistryContract contract.
+type StreamRegistryContractStreamUpdated struct {
 	EventType uint8
 	Data      []byte
 	Raw       *types.Log // Blockchain specific contextual infos
 }
 
-const StreamRegistryV1StreamUpdatedEventName = "StreamUpdated"
+const StreamRegistryContractStreamUpdatedEventName = "StreamUpdated"
 
 // ContractEventName returns the user-defined event name.
-func (StreamRegistryV1StreamUpdated) ContractEventName() string {
-	return StreamRegistryV1StreamUpdatedEventName
+func (StreamRegistryContractStreamUpdated) ContractEventName() string {
+	return StreamRegistryContractStreamUpdatedEventName
 }
 
 // UnpackStreamUpdatedEvent is the Go binding that unpacks the event data emitted
 // by contract.
 //
 // Solidity: event StreamUpdated(uint8 indexed eventType, bytes data)
-func (streamRegistryV1 *StreamRegistryV1) UnpackStreamUpdatedEvent(log *types.Log) (*StreamRegistryV1StreamUpdated, error) {
+func (streamRegistryContract *StreamRegistryContract) UnpackStreamUpdatedEvent(log *types.Log) (*StreamRegistryContractStreamUpdated, error) {
 	event := "StreamUpdated"
-	if log.Topics[0] != streamRegistryV1.abi.Events[event].ID {
+	if log.Topics[0] != streamRegistryContract.abi.Events[event].ID {
 		return nil, errors.New("event signature mismatch")
 	}
-	out := new(StreamRegistryV1StreamUpdated)
+	out := new(StreamRegistryContractStreamUpdated)
 	if len(log.Data) > 0 {
-		if err := streamRegistryV1.abi.UnpackIntoInterface(out, event, log.Data); err != nil {
+		if err := streamRegistryContract.abi.UnpackIntoInterface(out, event, log.Data); err != nil {
 			return nil, err
 		}
 	}
 	var indexed abi.Arguments
-	for _, arg := range streamRegistryV1.abi.Events[event].Inputs {
+	for _, arg := range streamRegistryContract.abi.Events[event].Inputs {
 		if arg.Indexed {
 			indexed = append(indexed, arg)
 		}
