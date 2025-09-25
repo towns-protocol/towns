@@ -759,7 +759,7 @@ func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
 
 			switch log.Topics[0] {
 			case cc.registryContract.StreamUpdatedEventTopic:
-				streamUpdate, err := cc.registryContract.StreamRegistryContract.UnpackStreamUpdatedEvent(&log)
+				streamUpdate, err := river.StreamRegistry.UnpackStreamUpdatedEvent(&log)
 				if err != nil {
 					fmt.Printf("Error unpacking stream updated event: %d %d %s\n", log.BlockNumber, log.Index, err)
 					continue
@@ -775,7 +775,7 @@ func eventsDump(cmd *cobra.Command, cfg *config.Config) error {
 					fmt.Println(log.BlockNumber, log.Index, e.Reason(), e.GetStreamId())
 				}
 			case cc.registryContract.StreamLastMiniblockUpdateFailedEventTopic:
-				f, err := cc.registryContract.StreamRegistryContract.UnpackStreamLastMiniblockUpdateFailedEvent(&log)
+				f, err := river.StreamRegistry.UnpackStreamLastMiniblockUpdateFailedEvent(&log)
 				if err != nil {
 					fmt.Printf("Error unpacking stream last miniblock update failed event: %d %d %s\n", log.BlockNumber, log.Index, err)
 					continue
@@ -1066,7 +1066,7 @@ func runRegistryUpdateStream(args []string, cfg *config.Config) error {
 		"StreamRegistry::SetStreamReplicationFactor",
 		registryContract.StreamRegistry.BoundContract,
 		func() ([]byte, error) {
-			return registryContract.StreamRegistryContract.TryPackSetStreamReplicationFactor(
+			return river.StreamRegistry.TryPackSetStreamReplicationFactor(
 				[]river.SetStreamReplicationFactor{
 					{
 						StreamId:          streamID,

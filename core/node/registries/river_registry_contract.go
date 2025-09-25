@@ -32,7 +32,6 @@ type RiverRegistryContract struct {
 	NodeEventInfo   map[common.Hash]*EventInfo
 
 	StreamRegistry                            *river.StreamRegistryInstance
-	StreamRegistryAbi                         *abi.ABI
 	StreamUpdatedEventTopic                   common.Hash
 	StreamLastMiniblockUpdateFailedEventTopic common.Hash
 
@@ -161,22 +160,20 @@ func NewRiverRegistryContract(
 		return nil, err
 	}
 
-	c.StreamRegistryContract = river.NewStreamRegistryV1()
-	c.StreamRegistry = c.StreamRegistryContract.NewInstance(blockchain.Client, cfg.Address)
-	c.StreamRegistryAbi = c.StreamRegistryContract.ABI()
+	c.StreamRegistry = river.StreamRegistry.NewInstance(blockchain.Client, cfg.Address)
 
-	if e, ok := c.StreamRegistryAbi.Events[river.StreamRegistryV1StreamUpdatedEventName]; ok {
+	if e, ok := river.StreamRegistry.ABI().Events[river.StreamRegistryContractStreamUpdatedEventName]; ok {
 		c.StreamUpdatedEventTopic = e.ID
 	} else {
 		return nil, RiverError(Err_INTERNAL, "StreamUpdated event not found in ABI").Func("NewRiverRegistryContract")
 	}
-	if e, ok := c.StreamRegistryAbi.Events[river.StreamRegistryV1StreamLastMiniblockUpdateFailedEventName]; ok {
+	if e, ok := river.StreamRegistry.ABI().Events[river.StreamRegistryContractStreamLastMiniblockUpdateFailedEventName]; ok {
 		c.StreamLastMiniblockUpdateFailedEventTopic = e.ID
 	} else {
 		return nil, RiverError(Err_INTERNAL, "StreamLastMiniblockUpdateFailed event not found in ABI").Func("NewRiverRegistryContract")
 	}
 
-	c.errDecoder = crypto.NewEVMErrorDecoderFromABI(c.StreamRegistryAbi)
+	c.errDecoder = crypto.NewEVMErrorDecoderFromABI(river.StreamRegistry.ABI())
 
 	return c, nil
 }
@@ -193,7 +190,7 @@ func (c *RiverRegistryContract) AllocateStream(
 		"AllocateStream",
 		c.StreamRegistry.BoundContract,
 		func() ([]byte, error) {
-			return c.StreamRegistryContract.TryPackAllocateStream(
+			return river.StreamRegistry.TryPackAllocateStream(
 				streamId,
 				addresses,
 				genesisMiniblockHash,
@@ -245,7 +242,7 @@ func (c *RiverRegistryContract) AddStream(
 		"AddStream",
 		c.StreamRegistry.BoundContract,
 		func() ([]byte, error) {
-			return c.StreamRegistryContract.TryPackAddStream(
+			return river.StreamRegistry.TryPackAddStream(
 				streamId,
 				genesisMiniblockHash,
 				river.Stream{
@@ -642,7 +639,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 		"SetStreamLastMiniblockBatch",
 		c.StreamRegistry.BoundContract,
 		func() ([]byte, error) {
-			return c.StreamRegistryContract.TryPackSetStreamLastMiniblockBatch(mbs)
+			return river.StreamRegistry.TryPackSetStreamLastMiniblockBatch(mbs)
 		},
 	)
 	if err != nil {
@@ -669,7 +666,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 			}
 			switch l.Topics[0] {
 			case c.StreamUpdatedEventTopic:
-				p, err := c.StreamRegistryContract.UnpackStreamUpdatedEvent(l)
+				p, err := river.StreamRegistry.UnpackStreamUpdatedEvent(l)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -683,7 +680,7 @@ func (c *RiverRegistryContract) SetStreamLastMiniblockBatch(
 					}
 				}
 			case c.StreamLastMiniblockUpdateFailedEventTopic:
-				p, err := c.StreamRegistryContract.UnpackStreamLastMiniblockUpdateFailedEvent(l)
+				p, err := river.StreamRegistry.UnpackStreamLastMiniblockUpdateFailedEvent(l)
 				if err != nil {
 					return nil, nil, nil, err
 				}
@@ -836,7 +833,7 @@ func (c *RiverRegistryContract) OnStreamEvent(
 		[][]common.Hash{{c.StreamUpdatedEventTopic}},
 		func(ctx context.Context, log types.Log) {
 			if len(log.Topics) > 0 && log.Topics[0] == c.StreamUpdatedEventTopic {
-				event, err := c.StreamRegistryContract.UnpackStreamUpdatedEvent(&log)
+				event, err := river.StreamRegistry.UnpackStreamUpdatedEvent(&log)
 				if err != nil {
 					logging.FromCtx(ctx).Errorw("Failed to parse stream update event", "error", err, "log", log)
 					return
@@ -877,7 +874,7 @@ func (c *RiverRegistryContract) FilterStreamUpdatedEvents(
 			continue
 		}
 
-		streamUpdate, err := c.StreamRegistryContract.UnpackStreamUpdatedEvent(log)
+		streamUpdate, err := river.StreamRegistry.UnpackStreamUpdatedEvent(log)
 		if err != nil {
 			finalErrs = append(finalErrs, err)
 			continue
