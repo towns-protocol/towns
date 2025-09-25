@@ -108,7 +108,7 @@ func init() {
 	nameMap.RegisterABI("OperatorRegistry", abi)
 	abi, _ = river.RiverConfigV1MetaData.GetAbi()
 	nameMap.RegisterABI("RiverConfig", abi)
-	abi, _ = river.StreamRegistryV1MetaData.GetAbi()
+	abi, _ = river.StreamRegistryV1MetaData.ParseABI()
 	nameMap.RegisterABI("StreamRegistry", abi)
 }
 

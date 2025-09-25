@@ -1,16 +1,155 @@
 package river
 
 import (
+	"context"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+type StreamRegistryInstance struct {
+	*bind2.BoundContract
+	contract *StreamRegistryV1
+}
+
+func (r *StreamRegistryV1) ABI() *abi.ABI {
+	return &r.abi
+}
+
+func (r *StreamRegistryV1) NewInstance(
+	backend bind2.ContractBackend,
+	addr common.Address,
+) *StreamRegistryInstance {
+	return &StreamRegistryInstance{
+		BoundContract: bind2.NewBoundContract(addr, r.abi, backend, backend, backend),
+		contract:      r,
+	}
+}
+
+func (c *StreamRegistryInstance) GetStreamOnBlock(
+	ctx context.Context,
+	streamId StreamId,
+	blockNum blockchain.BlockNumber,
+) (*Stream, error) {
+	return blockchain.CallPtr(
+		c.BoundContract,
+		ctx,
+		"GetStream",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStream(streamId) },
+		c.contract.UnpackGetStream,
+	)
+}
+
+func (c *StreamRegistryInstance) GetStreamOnLatestBlock(
+	ctx context.Context,
+	streamId StreamId,
+) (*Stream, error) {
+	return c.GetStreamOnBlock(ctx, streamId, 0)
+}
+
+// GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
+func (c *StreamRegistryInstance) GetStreamWithGenesis(
+	ctx context.Context,
+	streamId StreamId,
+	blockNum blockchain.BlockNumber,
+) (*Stream, common.Hash, []byte, error) {
+	result, err := blockchain.CallPtr(
+		c.BoundContract,
+		ctx,
+		"GetStreamWithGenesis",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStreamWithGenesis(streamId) },
+		c.contract.UnpackGetStreamWithGenesis,
+	)
+	if err != nil {
+		return nil, common.Hash{}, nil, err
+	}
+	return &result.Arg0, result.Arg1, result.Arg2, nil
+}
+
+func (c *StreamRegistryInstance) GetStreamCount(ctx context.Context, blockNum blockchain.BlockNumber) (int64, error) {
+	return blockchain.CallInt64Raw(
+		c.BoundContract,
+		ctx,
+		"GetStreamCount",
+		blockNum,
+		c.contract.PackGetStreamCount(),
+		c.contract.UnpackGetStreamCount,
+	)
+}
+
+func (c *StreamRegistryInstance) GetStreamCountOnNode(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	node common.Address,
+) (int64, error) {
+	return blockchain.CallInt64(
+		c.BoundContract,
+		ctx,
+		"GetStreamCountOnNode",
+		blockNum,
+		func() ([]byte, error) { return c.contract.TryPackGetStreamCountOnNode(node) },
+		c.contract.UnpackGetStreamCountOnNode,
+	)
+}
+
+func (c *StreamRegistryInstance) GetPaginatedStreamsOnNode(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	node common.Address,
+	start int64,
+	end int64,
+) ([]StreamWithId, error) {
+	return blockchain.CallValue(
+		c.BoundContract,
+		ctx,
+		"GetPaginatedStreamsOnNode",
+		blockNum,
+		func() ([]byte, error) {
+			return c.contract.TryPackGetPaginatedStreamsOnNode(node, big.NewInt(start), big.NewInt(end))
+		},
+		c.contract.UnpackGetPaginatedStreamsOnNode,
+	)
+}
+
+func (c *StreamRegistryInstance) GetPaginatedStreams(
+	ctx context.Context,
+	blockNum blockchain.BlockNumber,
+	start int64,
+	end int64,
+) ([]StreamWithId, bool, error) {
+	ret, err := blockchain.CallValue(
+		c.BoundContract,
+		ctx,
+		"GetPaginatedStreams",
+		blockNum,
+		func() ([]byte, error) {
+			return c.contract.TryPackGetPaginatedStreams(big.NewInt(start), big.NewInt(end))
+		},
+		c.contract.UnpackGetPaginatedStreams,
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return ret.Arg0, ret.Arg1, nil
+}
+
+const StreamFlagSealed uint64 = 0x1
+
+// ReplicationFactor returns on how many nodes the stream is replicated.
+// TODO: rename Reserved0 in the contract.
 func (s *Stream) ReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
 	return max(1, int(s.Reserved0&0xFF))
 }
 
@@ -30,7 +169,7 @@ func (s *Stream) LastMb() *MiniblockRef {
 }
 
 func (s *Stream) IsSealed() bool {
-	return s.Flags&0x1 != 0
+	return s.Flags&StreamFlagSealed != 0
 }
 
 func NewStreamWithId(streamId StreamId, stream *Stream) *StreamWithId {
@@ -64,7 +203,7 @@ func (s *StreamWithId) LastMb() *MiniblockRef {
 }
 
 func (s *StreamWithId) IsSealed() bool {
-	return s.Stream.Flags&0x1 != 0
+	return s.Stream.Flags&StreamFlagSealed != 0
 }
 
 func (s *StreamWithId) Nodes() []common.Address {
@@ -118,11 +257,6 @@ func (t StreamUpdatedEventType) String() string {
 }
 
 const (
-	// Event_StreamUpdated is emitted by the streams registry when a stream is added or modified
-	Event_StreamUpdated = "StreamUpdated"
-	// Event_StreamLastMiniblockUpdateFailed is emitted when setting a new miniblock for a stream failed
-	Event_StreamLastMiniblockUpdateFailed = "StreamLastMiniblockUpdateFailed"
-
 	StreamUpdatedEventTypeAllocate                  StreamUpdatedEventType = 0
 	StreamUpdatedEventTypeCreate                    StreamUpdatedEventType = 1
 	StreamUpdatedEventTypePlacementUpdated          StreamUpdatedEventType = 2
@@ -150,10 +284,6 @@ var (
 		{Name: "isSealed", Type: "bool", InternalType: "bool"},
 	})
 )
-
-func (_StreamRegistryV1 *StreamRegistryV1Caller) BoundContract() *bind.BoundContract {
-	return _StreamRegistryV1.contract
-}
 
 // GetStreamId implements the EventWithStreamId interface.
 func (ss *StreamState) GetStreamId() StreamId {
@@ -206,7 +336,7 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 	case StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 		return parseSetMiniblocksFromSolABIEncoded(event)
 	default:
-		return nil, AsRiverError(nil, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(nil, Err_BAD_EVENT).
 			Message("Unsupported StreamUpdated event type").
 			Tags("type", reason, "tx", event.Raw.TxHash, "eventIndex", event.Raw.Index)
 	}
@@ -216,7 +346,7 @@ func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (*StreamWithId, error)
 	values := abi.Arguments{{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}}, {Type: streamABIType}}
 	unpacked, err := values.Unpack(data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseStreamIDAndStreamFromSolABIEncoded")
 	}
@@ -231,7 +361,7 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	values := abi.Arguments{{Type: abi.Type{T: abi.SliceTy, Elem: &setMiniblockABIType}}}
 	unpacked, err := values.Unpack(event.Data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseSetMiniblocksFromSolcABIEncoded")
 	}
@@ -247,12 +377,4 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	}
 
 	return results, nil
-}
-
-// StreamReplicationFactor returns on how many nodes the stream is replicated.
-func (s *Stream) StreamReplicationFactor() int {
-	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
-	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
-	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
-	return max(1, int(s.Reserved0&0xFF))
 }

@@ -921,7 +921,7 @@ func (a *Archiver) startImpl(ctx context.Context, once bool, metrics infra.Metri
 	}
 
 	blockNum := a.contract.Blockchain.InitialBlockNum
-	totalCount, err := a.contract.GetStreamCount(ctx, blockNum)
+	totalCount, err := a.contract.StreamRegistry.GetStreamCount(ctx, blockNum)
 	if err != nil {
 		return err
 	}

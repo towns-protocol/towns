@@ -5,7 +5,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
@@ -219,13 +218,14 @@ func (tracker *StreamsTrackerImpl) AddStream(
 	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
 		return false, nil
 	}
-	stream, err := tracker.riverRegistry.StreamRegistry.GetStream(&bind.CallOpts{Context: tracker.ctx}, streamId)
+	streamNoId, err := tracker.riverRegistry.StreamRegistry.GetStreamOnLatestBlock(tracker.ctx, streamId)
 	if err != nil {
 		return false, base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
 	}
+	stream := river.NewStreamWithId(streamId, streamNoId)
 
-	added := tracker.forwardStreamEvents(&river.StreamWithId{Id: streamId, Stream: stream}, applyHistoricalContent)
+	added := tracker.forwardStreamEvents(stream, applyHistoricalContent)
 	return added, nil
 }
 

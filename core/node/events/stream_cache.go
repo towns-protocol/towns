@@ -431,11 +431,11 @@ func (s *StreamCache) loadStreamRecordImpl(
 	}
 
 	var blockNum blockchain.BlockNumber
-	var record *river.StreamWithId
+	var record *river.Stream
 	for {
 		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
 		if err == nil {
-			record, err = s.params.Registry.GetStream(ctx, streamId, blockNum)
+			record, err = s.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 			if err == nil {
 				break
 			}
@@ -449,7 +449,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 		}
 	}
 
-	local := slices.Contains(record.Nodes(), s.params.Wallet.Address)
+	local := slices.Contains(record.Nodes, s.params.Wallet.Address)
 	if !local {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
@@ -460,7 +460,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAppliedBlockNum: blockNum,
 					lastAccessedTime:    time.Now(),
 				}
-				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
+				ret.nodesLocked.ResetFromStream(record, s.params.Wallet.Address)
 				return ret, false
 			},
 		)
@@ -469,7 +469,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 
 	// If record is beyond genesis, return stream with empty local state and schedule reconciliation.
 	if record.LastMbNum() > 0 {
-		return s.insertEmptyLocalStream(record, blockNum, true), nil
+		return s.insertEmptyLocalStream(river.NewStreamWithId(streamId, record), blockNum, true), nil
 	}
 
 	return s.readGenesisAndCreateLocalStream(ctx, streamId, blockNum)
@@ -486,12 +486,13 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
-	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId, blockNum)
+	recordNoId, _, mb, err := s.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, streamId, blockNum)
 	if err != nil {
 		return nil, err
 	}
+	record := river.NewStreamWithId(streamId, recordNoId)
 
-	if record.StreamId() != streamId || !slices.Contains(record.Nodes(), s.params.Wallet.Address) {
+	if !slices.Contains(record.Nodes(), s.params.Wallet.Address) {
 		return nil, RiverError(Err_INTERNAL, "unexpected genesis record",
 			"streamId", streamId, "blockNum", blockNum, "record", record).Func("readGenesisAndCreateStream")
 	}

@@ -15,6 +15,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -77,12 +78,13 @@ type BlockchainTestContext struct {
 	RemoteNode   bool
 	BcClient     BlockchainClient
 
-	OnChainConfig        OnChainConfiguration
-	RiverRegistryAddress common.Address
-	NodeRegistry         *river.NodeRegistryV1
-	StreamRegistry       *river.StreamRegistryV1
-	Configuration        *river.RiverConfigV1
-	ChainId              *big.Int
+	OnChainConfig          OnChainConfiguration
+	RiverRegistryAddress   common.Address
+	NodeRegistry           *river.NodeRegistryV1
+	StreamRegistryContract *river.StreamRegistryV1
+	StreamRegistry         *river.StreamRegistryInstance
+	Configuration          *river.RiverConfigV1
+	ChainId                *big.Int
 
 	DeployerBlockchain  *Blockchain
 	NodeWallets         []*Wallet
@@ -319,10 +321,8 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		return nil, err
 	}
 
-	btc.StreamRegistry, err = river.NewStreamRegistryV1(btc.RiverRegistryAddress, client)
-	if err != nil {
-		return nil, err
-	}
+	btc.StreamRegistryContract = river.NewStreamRegistryV1()
+	btc.StreamRegistry = btc.StreamRegistryContract.NewInstance(client, btc.RiverRegistryAddress)
 
 	btc.Configuration, err = river.NewRiverConfigV1(btc.RiverRegistryAddress, client)
 	if err != nil {
@@ -640,8 +640,12 @@ func (c *BlockchainTestContext) SetStreamReplicationFactor(
 	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
 		ctx,
 		"SetStreamReplicationFactor",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
+			return bind2.Transact(
+				c.StreamRegistry.BoundContract,
+				opts,
+				c.StreamRegistryContract.PackSetStreamReplicationFactor(requests),
+			)
 		},
 	)
 
