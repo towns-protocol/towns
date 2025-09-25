@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -45,9 +47,8 @@ type PostgresStreamStore struct {
 	numPartitions int
 
 	// workers
-	esm             *ephemeralStreamMonitor
-	streamTrimmer   *streamTrimmer
-	snapshotTrimmer *snapshotTrimmer
+	esm           *ephemeralStreamMonitor
+	streamTrimmer *streamTrimmer
 }
 
 var _ StreamStorage = (*PostgresStreamStore)(nil)
@@ -160,6 +161,16 @@ func NewPostgresStreamStore(
 		workerPool.Stop()
 	}()
 
+	metrics.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "stream_store_worker_pool_waiting_queue_size",
+			Help: "Number of tasks waiting in the stream store worker pool queue",
+		},
+		func() float64 {
+			return float64(workerPool.WaitingQueueSize())
+		},
+	)
+
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(
 		ctx,
@@ -174,17 +185,10 @@ func NewPostgresStreamStore(
 	store.streamTrimmer = newStreamTrimmer(
 		ctx,
 		store,
-		workerPool,
-		config.Get().StreamTrimmingMiniblocksToKeep,
-		trimmingBatchSize,
-	)
-
-	// Start the snapshot trimmer
-	store.snapshotTrimmer = newSnapshotTrimmer(
-		ctx,
-		store,
-		workerPool,
 		config,
+		workerPool,
+		trimmingBatchSize,
+		metrics,
 	)
 
 	return store, nil
@@ -1868,10 +1872,6 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		if s.streamTrimmer != nil {
 			s.streamTrimmer.tryScheduleTrimming(streamId)
 		}
-		// Let the snapshot trimmer know that a new snapshot miniblock was created.
-		if s.snapshotTrimmer != nil {
-			s.snapshotTrimmer.tryScheduleTrimming(streamId)
-		}
 	}
 
 	// Delete miniblock candidates up to the last miniblock number.
@@ -1934,9 +1934,6 @@ func (s *PostgresStreamStore) Close(ctx context.Context) {
 	}
 	if s.streamTrimmer != nil {
 		s.streamTrimmer.close()
-	}
-	if s.snapshotTrimmer != nil {
-		s.snapshotTrimmer.close()
 	}
 	s.PostgresEventStore.Close(ctx)
 }

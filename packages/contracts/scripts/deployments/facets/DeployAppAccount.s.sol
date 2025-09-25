@@ -15,11 +15,12 @@ library DeployAppAccount {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(12);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(13);
         arr.p(AppAccount.execute.selector);
         arr.p(AppAccount.onInstallApp.selector);
         arr.p(AppAccount.onUninstallApp.selector);
         arr.p(AppAccount.onRenewApp.selector);
+        arr.p(AppAccount.onUpdateApp.selector);
         arr.p(AppAccount.isAppExecuting.selector);
         arr.p(AppAccount.isAppEntitled.selector);
         arr.p(AppAccount.disableApp.selector);

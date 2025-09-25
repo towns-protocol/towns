@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {IDiamondCut} from "@towns-protocol/diamond/src/facets/cut/IDiamondCut.sol";
 
 // libraries
@@ -12,16 +11,19 @@ import {console} from "forge-std/console.sol";
 import {Interaction} from "../common/Interaction.s.sol";
 import {AlphaHelper} from "./helpers/AlphaHelper.sol";
 
-// facet
-import {DeploySpaceOwnerFacet} from "scripts/deployments/facets/DeploySpaceOwnerFacet.s.sol";
+// fetch facet deployer contract
+import {DeploySubscriptionModuleFacet} from "scripts/deployments/facets/DeploySubscriptionModuleFacet.s.sol";
 
 contract InteractDiamondCut is Interaction, AlphaHelper {
     function __interact(address deployer) internal override {
-        address diamond = getDeployment("spaceOwner");
-        address spaceOwnerFacet = 0x09FCbC926F9Ec236fa3f825bF65b62776a9413aD;
+        // update with the diamond to cut
+        address diamond = getDeployment("subscriptionModule");
+
+        // update with the facet to remove
+        address facetToRemove = 0xf86be0b52aABa39C3fAAa2a78e340a658B90d9DB;
 
         address[] memory facetAddresses = new address[](1);
-        facetAddresses[0] = spaceOwnerFacet;
+        facetAddresses[0] = facetToRemove;
 
         // add the diamond cut to remove the facet
         addCutsToRemove(diamond, facetAddresses);
@@ -29,19 +31,15 @@ contract InteractDiamondCut is Interaction, AlphaHelper {
         // deploy the new facet
         console.log("deployer", deployer);
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
+
+        // update with a call to the deploy function from your facet deployer contract
+        address facetAddress = DeploySubscriptionModuleFacet.deploy();
+
+        // update with a call to the makeCut function from your facet deployer contract
+        addCut(DeploySubscriptionModuleFacet.makeCut(facetAddress, FacetCutAction.Add));
+
+        // execute the diamond cut
         vm.broadcast(deployer);
-        spaceOwnerFacet = DeploySpaceOwnerFacet.deploy();
-
-        // add the new facet to the diamond
-        addCut(DeploySpaceOwnerFacet.makeCut(spaceOwnerFacet, FacetCutAction.Add));
-
-        bytes memory initData = "";
-
-        vm.broadcast(deployer);
-        IDiamondCut(diamond).diamondCut(
-            baseFacets(),
-            initData.length > 0 ? spaceOwnerFacet : address(0),
-            initData
-        );
+        IDiamondCut(diamond).diamondCut(baseFacets(), address(0), "");
     }
 }
