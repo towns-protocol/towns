@@ -24,14 +24,16 @@ const (
 	minKeepMiniblocks = 100
 )
 
-// trimTask represents a task to trim miniblocks from a stream
+// trimTask represents a task to trim miniblocks from a stream.
 type trimTask struct {
 	streamId             StreamId
 	keepMbs              int64
 	retentionIntervalMbs int64
 }
 
-// streamTrimmer handles periodic trimming of streams
+// streamTrimmer handles periodic trimming of streams.
+// It ensures that the number of miniblocks in a stream does not exceed a certain threshold and
+// that snapshots are retained according to the configured retention interval.
 type streamTrimmer struct {
 	ctx               context.Context
 	log               *logging.Log
