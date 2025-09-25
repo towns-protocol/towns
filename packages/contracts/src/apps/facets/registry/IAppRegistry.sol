@@ -158,6 +158,11 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param data The data to pass to the app's onUninstall function
     function uninstallApp(ITownsApp app, IAppAccount account, bytes calldata data) external;
 
+    /// @notice Update an app to the latest version
+    /// @param app The app address to update
+    /// @param account The account to update the app to
+    function updateApp(ITownsApp app, IAppAccount account) external;
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Admin                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
