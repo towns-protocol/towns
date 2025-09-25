@@ -125,6 +125,17 @@ interface IAppRegistry is IAppRegistryBase {
     /// @return appId The attestation UID of the registered app
     function registerApp(ITownsApp app, address client) external payable returns (bytes32 appId);
 
+    /// @notice Upgrade an app
+    /// @param app The app address to update
+    /// @param client The client address part of the app's identity
+    /// @param appId The app ID to upgrade
+    /// @return appId The new app ID of the updated app
+    function upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 appId
+    ) external payable returns (bytes32);
+
     /// @notice Remove a app from the registry
     /// @param appId The app ID to remove
     function removeApp(bytes32 appId) external;
@@ -146,6 +157,11 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param account The account to uninstall the app from
     /// @param data The data to pass to the app's onUninstall function
     function uninstallApp(ITownsApp app, IAppAccount account, bytes calldata data) external;
+
+    /// @notice Update an app to the latest version
+    /// @param app The app address to update
+    /// @param account The account to update the app to
+    function updateApp(ITownsApp app, IAppAccount account) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Admin                            */
