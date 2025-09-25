@@ -32,8 +32,8 @@ type cmdContext struct {
 	httpClient       *http.Client
 
 	// Below are parsed values for optional common flags
-	// Value are parsed only if flag is present in the flagset
-	// If if command does not define a flag, value is not parsed
+	// Values are parsed only if flag is present in the flagset
+	// If command does not define a flag, value is not parsed
 	streamID    StreamId           // "stream"
 	nodeAddress common.Address     // "node"
 	verbose     bool               // "verbose"
