@@ -240,13 +240,11 @@ func (t *streamTrimmer) processTrimTaskTx(
 			}
 
 			var lastDeletedMiniblock int64 = -1
-			for rows.Next() {
-				if err = rows.Scan(&lastDeletedMiniblock); err != nil {
-					rows.Close()
-					return err
-				}
+			if _, err = pgx.ForEachRow(rows, []any{&lastDeletedMiniblock}, func() error {
+				return nil
+			}); err != nil {
+				return err
 			}
-			rows.Close()
 
 			if lastDeletedMiniblock >= 0 && lastDeletedMiniblock+1 < lastMiniblockToKeep {
 				// Schedule the next trim task if there are more miniblocks to delete.
@@ -280,14 +278,9 @@ func (t *streamTrimmer) processTrimTaskTx(
 		if err != nil {
 			return err
 		}
-		defer snapshotRows.Close()
 
-		var mbs []int64
-		var mbNum int64
-		if _, err = pgx.ForEachRow(snapshotRows, []any{&mbNum}, func() error {
-			mbs = append(mbs, mbNum)
-			return nil
-		}); err != nil {
+		mbs, err := pgx.CollectRows(snapshotRows, pgx.RowTo[int64])
+		if err != nil {
 			return err
 		}
 
