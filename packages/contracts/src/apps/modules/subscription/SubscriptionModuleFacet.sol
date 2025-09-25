@@ -8,6 +8,7 @@ import {IValidationHookModule} from "@erc6900/reference-implementation/interface
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ISubscriptionModule} from "./ISubscriptionModule.sol";
+import {IMembership} from "../../../spaces/facets/membership/IMembership.sol";
 
 // libraries
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
@@ -22,7 +23,6 @@ import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStora
 // contracts
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {MembershipFacet} from "../../../spaces/facets/membership/MembershipFacet.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /// @title Subscription Module
@@ -75,21 +75,25 @@ contract SubscriptionModuleFacet is
 
         Validator.checkAddress(space);
 
+        if (entityId == 0) SubscriptionModule__InvalidEntityId.selector.revertWith();
+
         if (IERC721(space).ownerOf(tokenId) != msg.sender)
             SubscriptionModule__InvalidTokenOwner.selector.revertWith();
 
-        MembershipFacet membershipFacet = MembershipFacet(space);
+        IMembership membershipFacet = IMembership(space);
         uint256 expiresAt = membershipFacet.expiresAt(tokenId);
 
         SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
+
+        if (!$.entityIds[msg.sender].add(entityId))
+            SubscriptionModule__InvalidEntityId.selector.revertWith();
+
         Subscription storage sub = $.subscriptions[msg.sender][entityId];
         sub.space = space;
         sub.active = true;
         sub.tokenId = tokenId;
         sub.installTime = uint40(block.timestamp);
         sub.nextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
-
-        $.entityIds[msg.sender].add(entityId);
 
         emit SubscriptionConfigured(msg.sender, entityId, space, tokenId, sub.nextRenewalTime);
     }
@@ -102,6 +106,7 @@ contract SubscriptionModuleFacet is
 
         if (!$.entityIds[msg.sender].remove(entityId))
             SubscriptionModule__InvalidEntityId.selector.revertWith();
+
         delete $.subscriptions[msg.sender][entityId];
 
         emit SubscriptionDeactivated(msg.sender, entityId);
@@ -184,6 +189,8 @@ contract SubscriptionModuleFacet is
         if (!$.operators.contains(msg.sender))
             SubscriptionModule__InvalidCaller.selector.revertWith();
 
+        IMembership membershipFacet;
+
         for (uint256 i; i < paramsLen; ++i) {
             Subscription storage sub = $.subscriptions[params[i].account][params[i].entityId];
 
@@ -213,15 +220,7 @@ contract SubscriptionModuleFacet is
                 continue;
             }
 
-            MembershipFacet membershipFacet = MembershipFacet(sub.space);
-            uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
-
-            // Sync next renewal time from on-chain expiration if user called renewMembership directly
-            uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
-            if (sub.nextRenewalTime != correctNextRenewalTime) {
-                sub.nextRenewalTime = correctNextRenewalTime;
-                emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
-            }
+            membershipFacet = IMembership(sub.space);
 
             uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
@@ -233,6 +232,14 @@ contract SubscriptionModuleFacet is
                     "INSUFFICIENT_BALANCE"
                 );
                 continue;
+            }
+
+            uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
+            uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+
+            if (sub.nextRenewalTime != correctNextRenewalTime) {
+                sub.nextRenewalTime = correctNextRenewalTime;
+                emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
             }
 
             _processRenewal(sub, params[i], membershipFacet, actualRenewalPrice);
@@ -254,17 +261,29 @@ contract SubscriptionModuleFacet is
 
     /// @inheritdoc ISubscriptionModule
     function activateSubscription(uint32 entityId) external nonReentrant {
-        Subscription storage sub = SubscriptionModuleStorage.getLayout().subscriptions[msg.sender][
-            entityId
-        ];
+        SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
+
+        if (!_hasEntityId($, msg.sender, entityId))
+            SubscriptionModule__InvalidEntityId.selector.revertWith();
+
+        Subscription storage sub = $.subscriptions[msg.sender][entityId];
 
         if (sub.active) SubscriptionModule__ActiveSubscription.selector.revertWith();
-
-        sub.active = true;
 
         address owner = IERC721(sub.space).ownerOf(sub.tokenId);
         if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
 
+        IMembership membershipFacet = IMembership(sub.space);
+        uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
+
+        // 6. Always sync renewal time to current membership state
+        uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+        if (sub.nextRenewalTime != correctNextRenewalTime) {
+            sub.nextRenewalTime = correctNextRenewalTime;
+            emit SubscriptionSynced(msg.sender, entityId, sub.nextRenewalTime);
+        }
+
+        sub.active = true;
         emit SubscriptionActivated(msg.sender, entityId);
     }
 
@@ -276,10 +295,10 @@ contract SubscriptionModuleFacet is
 
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
 
-        _pauseSubscription(sub, msg.sender, entityId);
-
         address owner = IERC721(sub.space).ownerOf(sub.tokenId);
         if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
+
+        _pauseSubscription(sub, msg.sender, entityId);
     }
 
     /// @inheritdoc ISubscriptionModule
@@ -310,17 +329,25 @@ contract SubscriptionModuleFacet is
     /*                           Internal                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    function _hasEntityId(
+        SubscriptionModuleStorage.Layout storage $,
+        address account,
+        uint32 entityId
+    ) internal view returns (bool) {
+        return $.entityIds[account].contains(entityId);
+    }
+
     /// @dev Processes a single subscription renewal
     /// @param sub The subscription to renew
     /// @param params The parameters for the renewal
     function _processRenewal(
         Subscription storage sub,
         RenewalParams calldata params,
-        MembershipFacet membershipFacet,
+        IMembership membershipFacet,
         uint256 actualRenewalPrice
     ) internal {
         // Construct the renewal call to space contract
-        bytes memory renewalCall = abi.encodeCall(MembershipFacet.renewMembership, (sub.tokenId));
+        bytes memory renewalCall = abi.encodeCall(IMembership.renewMembership, (sub.tokenId));
 
         // Create the data parameter for executeWithRuntimeValidation
         // This should be an execute() call to the space contract
