@@ -265,7 +265,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 	if needSnapshotTrim {
 		// Perform snapshot trimming if there are no more miniblocks to delete and trimming is enabled.
 
-		snapshotRows, err := tx.Query(
+		rows, err := tx.Query(
 			ctx,
 			t.store.sqlForStream(
 				`SELECT seq_num 
@@ -279,7 +279,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 			return err
 		}
 
-		mbs, err := pgx.CollectRows(snapshotRows, pgx.RowTo[int64])
+		mbs, err := pgx.CollectRows(rows, pgx.RowTo[int64])
 		if err != nil {
 			return err
 		}
