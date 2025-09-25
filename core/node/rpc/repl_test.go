@@ -471,7 +471,7 @@ func TestStreamReconciliationTaskRescheduling(t *testing.T) {
 		tt.btc.StreamRegistry.BoundContract,
 		func() ([]byte, error) {
 			nodeNodeSet := append(stream.Nodes, newlyAssignedNodeRecord.NodeAddress)
-			return tt.btc.StreamRegistryContract.TryPackSetStreamReplicationFactor([]river.SetStreamReplicationFactor{
+			return river.StreamRegistry.TryPackSetStreamReplicationFactor([]river.SetStreamReplicationFactor{
 				{
 					StreamId:          streamId,
 					Nodes:             nodeNodeSet,

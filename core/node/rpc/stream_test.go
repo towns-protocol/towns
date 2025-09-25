@@ -126,7 +126,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 				End:     nil,
 				Context: tt.ctx,
 			},
-			tt.btc.StreamRegistryContract.UnpackStreamUpdatedEvent,
+			river.StreamRegistry.UnpackStreamUpdatedEvent,
 			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
 		)
 		tt.require.NoError(err)
@@ -215,7 +215,7 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 				End:     nil,
 				Context: tt.ctx,
 			},
-			tt.btc.StreamRegistryContract.UnpackStreamUpdatedEvent,
+			river.StreamRegistry.UnpackStreamUpdatedEvent,
 			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
 		)
 		tt.require.NoError(err)

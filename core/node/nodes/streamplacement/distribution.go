@@ -152,7 +152,7 @@ func NewDistributor(
 
 	// update internal statistic for stream node selection
 	chainMonitor.OnContractWithTopicsEvent(blockNumber+1, riverRegistry.Address,
-		[][]common.Hash{{riverRegistry.StreamRegistryAbi.Events["StreamUpdated"].ID}}, d.onStreamUpdate)
+		[][]common.Hash{{river.StreamRegistry.ABI().Events["StreamUpdated"].ID}}, d.onStreamUpdate)
 
 	return d, nil
 }
@@ -268,7 +268,7 @@ func (d *streamsDistributor) onHeader(ctx context.Context, header *types.Header)
 // onStreamUpdate updates the node load figures each time stream is allocated or created.
 func (d *streamsDistributor) onStreamUpdate(ctx context.Context, log types.Log) {
 	rr := d.riverRegistry
-	event, err := rr.StreamRegistryContract.UnpackStreamUpdatedEvent(&log)
+	event, err := river.StreamRegistry.UnpackStreamUpdatedEvent(&log)
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to unpack stream updated event", "err", err, "log", log)
 		return

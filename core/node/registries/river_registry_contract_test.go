@@ -285,7 +285,7 @@ func TestStreamEvents(t *testing.T) {
 			return bind2.Transact(
 				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistryContract.PackPlaceStreamOnNode(streamId, nodeAddr2),
+				river.StreamRegistry.PackPlaceStreamOnNode(streamId, nodeAddr2),
 			)
 		},
 	)

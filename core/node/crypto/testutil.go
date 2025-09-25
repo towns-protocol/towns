@@ -15,7 +15,6 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -78,13 +77,12 @@ type BlockchainTestContext struct {
 	RemoteNode   bool
 	BcClient     BlockchainClient
 
-	OnChainConfig          OnChainConfiguration
-	RiverRegistryAddress   common.Address
-	NodeRegistry           *river.NodeRegistryV1
-	StreamRegistryContract *river.StreamRegistryV1
-	StreamRegistry         *river.StreamRegistryInstance
-	Configuration          *river.RiverConfigV1
-	ChainId                *big.Int
+	OnChainConfig        OnChainConfiguration
+	RiverRegistryAddress common.Address
+	NodeRegistry         *river.NodeRegistryV1
+	StreamRegistry       *river.StreamRegistryInstance
+	Configuration        *river.RiverConfigV1
+	ChainId              *big.Int
 
 	DeployerBlockchain  *Blockchain
 	NodeWallets         []*Wallet
@@ -321,8 +319,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		return nil, err
 	}
 
-	btc.StreamRegistryContract = river.NewStreamRegistryV1()
-	btc.StreamRegistry = btc.StreamRegistryContract.NewInstance(client, btc.RiverRegistryAddress)
+	btc.StreamRegistry = river.StreamRegistry.NewInstance(client, btc.RiverRegistryAddress)
 
 	btc.Configuration, err = river.NewRiverConfigV1(btc.RiverRegistryAddress, client)
 	if err != nil {
@@ -637,15 +634,12 @@ func (c *BlockchainTestContext) SetStreamReplicationFactor(
 	ctx context.Context,
 	requests []river.SetStreamReplicationFactor,
 ) {
-	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+	pendingTx, err := c.DeployerBlockchain.TxPool.SubmitTx(
 		ctx,
 		"SetStreamReplicationFactor",
-		func(opts *bind2.TransactOpts) (*types.Transaction, error) {
-			return bind2.Transact(
-				c.StreamRegistry.BoundContract,
-				opts,
-				c.StreamRegistryContract.PackSetStreamReplicationFactor(requests),
-			)
+		c.StreamRegistry.BoundContract,
+		func() ([]byte, error) {
+			return river.StreamRegistry.TryPackSetStreamReplicationFactor(requests)
 		},
 	)
 

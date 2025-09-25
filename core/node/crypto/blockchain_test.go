@@ -128,7 +128,7 @@ func TestBlockchain(t *testing.T) {
 			return bind2.Transact(
 				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistryContract.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
+				river.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
 		},
 	)
@@ -143,8 +143,8 @@ func TestBlockchain(t *testing.T) {
 	result, err := bind2.Call(
 		tc.StreamRegistry.BoundContract,
 		nil,
-		tc.StreamRegistryContract.PackGetStreamWithGenesis(streamId),
-		tc.StreamRegistryContract.UnpackGetStreamWithGenesis,
+		river.StreamRegistry.PackGetStreamWithGenesis(streamId),
+		river.StreamRegistry.UnpackGetStreamWithGenesis,
 	)
 	require.NoError(err)
 	stream, mbHash, mb := result.Arg0, result.Arg1, result.Arg2
@@ -162,7 +162,7 @@ func TestBlockchain(t *testing.T) {
 			return bind2.Transact(
 				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistryContract.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
+				river.StreamRegistry.PackAllocateStream(streamId, addrs, genesisHash, genesisMiniblock),
 			)
 		},
 	)
@@ -178,7 +178,7 @@ func TestBlockchain(t *testing.T) {
 			return bind2.Transact(
 				tc.StreamRegistry.BoundContract,
 				opts,
-				tc.StreamRegistryContract.PackAllocateStream(
+				river.StreamRegistry.PackAllocateStream(
 					streamId,
 					[]common.Address{common.HexToAddress("0x123")},
 					genesisHash,
@@ -202,7 +202,7 @@ func TestBlockchain(t *testing.T) {
 				return bind2.Transact(
 					tc.StreamRegistry.BoundContract,
 					opts,
-					tc.StreamRegistryContract.PackAllocateStream(
+					river.StreamRegistry.PackAllocateStream(
 						streamId,
 						addrs,
 						genesisHash,
@@ -229,8 +229,8 @@ func TestBlockchain(t *testing.T) {
 		result, err := bind2.Call(
 			tc.StreamRegistry.BoundContract,
 			nil,
-			tc.StreamRegistryContract.PackGetPaginatedStreams(big.NewInt(i), big.NewInt(i+pageSize)),
-			tc.StreamRegistryContract.UnpackGetPaginatedStreams,
+			river.StreamRegistry.PackGetPaginatedStreams(big.NewInt(i), big.NewInt(i+pageSize)),
+			river.StreamRegistry.UnpackGetPaginatedStreams,
 		)
 		streams, lastPage := result.Arg0, result.Arg1
 		require.NoError(err)
