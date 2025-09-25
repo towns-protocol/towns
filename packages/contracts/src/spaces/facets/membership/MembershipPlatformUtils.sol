@@ -6,22 +6,35 @@ import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {IMembershipPricing} from "src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
-
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
+// debuggging
+import {console} from "forge-std/console.sol";
 
 library MembershipPlatformUtils {
     using CustomRevert for bytes4;
 
-    // Free Allocation
+    /// @notice Validates and returns the free allocation amount for memberships
+    /// @dev Checks if the requested allocation is within platform limits
+    /// @param platform The platform requirements contract to check against
+    /// @param allocation The requested free allocation amount
+    /// @param totalSupply The current total supply of memberships
+    /// @return The validated free allocation amount
+    /// @custom:throws Membership__InvalidFreeAllocation if allocation exceeds platform limits
     function checkFreeAllocation(
         IPlatformRequirements platform,
-        uint256 allocation
+        uint256 allocation,
+        uint256 totalSupply
     ) internal view returns (uint256) {
         if (allocation == 0) return allocation;
-        if (allocation > platform.getMembershipMintLimit())
+
+        uint256 maxAllocation = platform.getMembershipMintLimit();
+        if (totalSupply > 0) maxAllocation = maxAllocation - totalSupply;
+
+        if (allocation > maxAllocation)
             IMembershipBase.Membership__InvalidFreeAllocation.selector.revertWith();
         return allocation;
     }
