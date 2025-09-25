@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cobra"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -34,15 +35,15 @@ type cmdContext struct {
 	// Below are parsed values for optional common flags
 	// Value are parsed only if flag is present in the flagset
 	// If if command does not define a flag, value is not parsed
-	streamID    StreamId           // "stream"
-	nodeAddress common.Address     // "node"
-	verbose     bool               // "verbose"
-	csv         bool               // "csv"
-	json        bool               // "json"
-	pageSize    int                // "page-size"
-	timeout     time.Duration      // "timeout" (if not set, default is 30 seconds) // TODO: move timeout to top-level cmd? What to do with long-running commands then?
-	blockNum    crypto.BlockNumber // "block" (if not set, default is latest block)
-	number      int                // "number", i.e. "n" (if not set, default is 1)
+	streamID    StreamId               // "stream"
+	nodeAddress common.Address         // "node"
+	verbose     bool                   // "verbose"
+	csv         bool                   // "csv"
+	json        bool                   // "json"
+	pageSize    int                    // "page-size"
+	timeout     time.Duration          // "timeout" (if not set, default is 30 seconds) // TODO: move timeout to top-level cmd? What to do with long-running commands then?
+	blockNum    blockchain.BlockNumber // "block" (if not set, default is latest block)
+	number      int                    // "number", i.e. "n" (if not set, default is 1)
 }
 
 func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context.CancelFunc, error) {
@@ -132,7 +133,7 @@ func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context
 		}
 	}
 
-	blockchain, err := crypto.NewBlockchain(
+	chain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.RiverChain,
 		nil,
@@ -142,19 +143,19 @@ func newCmdContext(cmd *cobra.Command, cfg *config.Config) (*cmdContext, context
 	if err != nil {
 		return nil, nil, err
 	}
-	cc.blockchain = blockchain
+	cc.blockchain = chain
 
 	if cmdBlockNum > 0 {
-		cc.blockNum = crypto.BlockNumber(cmdBlockNum)
+		cc.blockNum = blockchain.BlockNumber(cmdBlockNum)
 	} else if cmdBlockNum == 0 {
-		cc.blockNum = blockchain.InitialBlockNum
+		cc.blockNum = chain.InitialBlockNum
 	} else {
-		cc.blockNum = crypto.BlockNumber(int64(blockchain.InitialBlockNum) + cmdBlockNum)
+		cc.blockNum = blockchain.BlockNumber(int64(chain.InitialBlockNum) + cmdBlockNum)
 	}
 
 	registryContract, err := registries.NewRiverRegistryContract(
 		ctx,
-		blockchain,
+		chain,
 		&cfg.RegistryContract,
 		&cfg.RiverRegistry,
 	)

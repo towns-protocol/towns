@@ -26,6 +26,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/spf13/cobra"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -49,7 +50,7 @@ type streamDumpOpts struct {
 	dump      bool
 	csv       bool
 	node      common.Address
-	blockNum  crypto.BlockNumber
+	blockNum  blockchain.BlockNumber
 }
 
 func printStats(opts *streamDumpOpts, humanName, csvName, value string) {
@@ -517,7 +518,7 @@ func srStream(
 func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 	ctx := context.Background() // lint:ignore context.Background() is fine here
 
-	blockchain, err := crypto.NewBlockchain(
+	chain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.RiverChain,
 		nil,
@@ -530,7 +531,7 @@ func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 
 	registryContract, err := registries.NewRiverRegistryContract(
 		ctx,
-		blockchain,
+		chain,
 		&cfg.RegistryContract,
 		&cfg.RiverRegistry,
 	)
@@ -538,9 +539,9 @@ func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 		return err
 	}
 
-	blockNum := blockchain.InitialBlockNum
+	blockNum := chain.InitialBlockNum
 	if atBlock >= 0 {
-		blockNum = crypto.BlockNumber(atBlock)
+		blockNum = blockchain.BlockNumber(atBlock)
 	}
 
 	nodes, err := registryContract.GetAllNodes(ctx, blockNum)
@@ -571,7 +572,7 @@ func nodesDump(cfg *config.Config, atBlock int64, csv bool) error {
 	}
 	fmt.Printf("%s\n", strings.Repeat("=", 140))
 
-	if header, err := blockchain.Client.HeaderByNumber(ctx, blockNum.AsBigInt()); err == nil {
+	if header, err := chain.Client.HeaderByNumber(ctx, blockNum.AsBigInt()); err == nil {
 		fmt.Printf("At river block %d (%s)\n", blockNum, time.Unix(int64(header.Time), 0))
 	} else {
 		fmt.Printf("At river block %d\n", blockNum)
@@ -852,7 +853,7 @@ func init() {
 			if err != nil {
 				return err
 			}
-			opts.blockNum = crypto.BlockNumber(blockNum)
+			opts.blockNum = blockchain.BlockNumber(blockNum)
 
 			return srStreamDump(cmdConfig, opts)
 		},
@@ -1119,7 +1120,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 		outputInJSON = false
 	}
 
-	blockchain, err := crypto.NewBlockchain(
+	chain, err := crypto.NewBlockchain(
 		ctx,
 		&cfg.RiverChain,
 		nil,
@@ -1132,7 +1133,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 
 	registryContract, err := registries.NewRiverRegistryContract(
 		ctx,
-		blockchain,
+		chain,
 		&cfg.RegistryContract,
 		&cfg.RiverRegistry,
 	)
@@ -1142,8 +1143,8 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 
 	// do a binary search for the River block that contains the transaction
 	// that allocated/created the stream.
-	low := crypto.BlockNumber(0)
-	high := blockchain.InitialBlockNum
+	low := blockchain.BlockNumber(0)
+	high := chain.InitialBlockNum
 	for {
 		if low >= high {
 			break
@@ -1161,7 +1162,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 		}
 	}
 
-	logs, err := blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
+	logs, err := chain.Client.FilterLogs(ctx, ethereum.FilterQuery{
 		FromBlock: low.AsBigInt(),
 		ToBlock:   low.AsBigInt(),
 		Addresses: []common.Address{cfg.RegistryContract.Address},
@@ -1225,7 +1226,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 						streamState := events[0].(*river.StreamState)
 
 						var genesisBlock []byte
-						if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+						if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
 							genesisBlock = gb
 						}
 
@@ -1266,7 +1267,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 			genesisBlockHash := common.Hash(v[2].([32]byte))
 
 			var genesisBlock []byte
-			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
 				genesisBlock = gb
 			}
 
@@ -1317,7 +1318,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 			})
 
 			var genesisBlock []byte
-			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, crypto.BlockNumber(log.BlockNumber)); err == nil {
+			if _, _, gb, err := registryContract.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
 				genesisBlock = gb
 			}
 
