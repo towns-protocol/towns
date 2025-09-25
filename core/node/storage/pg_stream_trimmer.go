@@ -16,18 +16,19 @@ import (
 )
 
 const (
-	// minRetentionInterval is the min retention interval for snapshots.
-	minRetentionInterval = 100 // 100 miniblocks
+	// minRetentionIntervalMiniblocks is the minimum retention interval in miniblocks.
+	// This ensures that even if the on-chain setting is very low, we still retain some snapshots.
+	minRetentionIntervalMiniblocks = 100
 
-	// minKeep is the number of most recent miniblocks to protect (no nullification)
-	minKeep = 100 // 100 miniblocks
+	// minKeepMiniblocks is the number of most recent miniblocks to protect (no snapshot nullification).
+	minKeepMiniblocks = 100
 )
 
 // trimTask represents a task to trim miniblocks from a stream
 type trimTask struct {
-	streamId          StreamId
-	miniblocksToKeep  int64
-	retentionInterval int64
+	streamId             StreamId
+	keepMbs              int64
+	retentionIntervalMbs int64
 }
 
 // streamTrimmer handles periodic trimming of streams
@@ -72,7 +73,7 @@ func newStreamTrimmer(
 		taskDuration: metrics.NewHistogramEx(
 			"stream_trimmer_task_duration_seconds",
 			"Stream trimmer task duration in seconds",
-			[]float64{.05, .1, .5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
+			[]float64{0.1, 0.5, 1, 2, 4, 6, 8},
 		),
 	}
 
@@ -110,22 +111,22 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	}
 
 	cfg := t.config.Get()
-	mbsToKeep := int64(cfg.StreamTrimmingMiniblocksToKeep.ForType(streamId.Type()))
+	keepMbs := int64(cfg.StreamTrimmingMiniblocksToKeep.ForType(streamId.Type()))
 
-	var retentionInterval int64
+	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
-		retentionInterval = max(interval, minRetentionInterval)
+		retentionIntervalMbs = max(interval, minRetentionIntervalMiniblocks)
 	}
 
-	if mbsToKeep <= 0 && retentionInterval <= 0 {
+	if keepMbs <= 0 && retentionIntervalMbs <= 0 {
 		return
 	}
 
-	t.scheduleTrimTask(streamId, mbsToKeep, retentionInterval)
+	t.scheduleTrimTask(streamId, keepMbs, retentionIntervalMbs)
 }
 
 // scheduleTrimTask schedules a new trim task for the given stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep, retentionInterval int64) {
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, keepMbs, retentionIntervalMbs int64) {
 	t.pendingTasksLock.Lock()
 	if _, exists := t.pendingTasks[streamId]; exists {
 		t.pendingTasksLock.Unlock()
@@ -135,9 +136,9 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep, re
 	t.pendingTasksLock.Unlock()
 
 	task := trimTask{
-		streamId:          streamId,
-		miniblocksToKeep:  miniblocksToKeep,
-		retentionInterval: retentionInterval,
+		streamId:             streamId,
+		keepMbs:              keepMbs,
+		retentionIntervalMbs: retentionIntervalMbs,
 	}
 
 	t.workerPool.Submit(func() {
@@ -148,8 +149,8 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep, re
 		if err != nil {
 			t.log.Errorw("Failed to process stream trimming task",
 				"stream", task.streamId,
-				"miniblocksToKeep", task.miniblocksToKeep,
-				"retentionInterval", task.retentionInterval,
+				"keepMbs", task.keepMbs,
+				"retentionIntervalMbs", task.retentionIntervalMbs,
 				"error", err,
 			)
 		}
@@ -170,8 +171,8 @@ func (t *streamTrimmer) processTrimTask(task trimTask) error {
 		},
 		nil,
 		"streamId", task.streamId,
-		"miniblocksToKeep", task.miniblocksToKeep,
-		"retentionInterval", task.retentionInterval,
+		"keepMbs", task.keepMbs,
+		"retentionIntervalMbs", task.retentionIntervalMbs,
 	)
 }
 
@@ -199,9 +200,9 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return err
 	}
 
-	needSnapshotTrim := task.retentionInterval > 0
+	needSnapshotTrim := task.retentionIntervalMbs > 0
 
-	if task.miniblocksToKeep > 0 {
+	if task.keepMbs > 0 {
 		// Get the miniblock number to start from
 		startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
 		if err != nil {
@@ -211,7 +212,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 		// Miniblock deletion is enabled only when the keep threshold is positive.
 		// Streams that rely solely on snapshot retention skip this branch.
 		// Calculate the highest miniblock number to keep
-		lastMiniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
+		lastMiniblockToKeep := lastSnapshotMiniblock - task.keepMbs
 		if lastMiniblockToKeep > 0 && lastMiniblockToKeep > startMiniblockNum {
 			// Calculate the end sequence number for deletion.
 			// The given miniblock number will not be deleted.
@@ -253,7 +254,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 				t.pendingTasksLock.Unlock()
 				scheduledNext = true
 
-				t.scheduleTrimTask(task.streamId, task.miniblocksToKeep, task.retentionInterval)
+				t.scheduleTrimTask(task.streamId, task.keepMbs, task.retentionIntervalMbs)
 				return nil
 			}
 		}
@@ -288,7 +289,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 			return err
 		}
 
-		toNullify := determineSnapshotsToNullify(mbs, task.retentionInterval, minKeep)
+		toNullify := determineSnapshotsToNullify(mbs, task.retentionIntervalMbs, minKeepMiniblocks)
 		if len(toNullify) > 0 {
 			if _, err = tx.Exec(
 				ctx,
