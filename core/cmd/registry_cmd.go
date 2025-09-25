@@ -394,7 +394,7 @@ func srStream(
 		return err
 	}
 
-	streamNoId, err := registryContract.StreamRegistry.GetStreamOnBlock(ctx, id, blockchain.InitialBlockNum)
+	streamNoId, err := registryContract.StreamRegistry.GetStream(ctx, blockchain.InitialBlockNum, id)
 	if err != nil {
 		return err
 	}
@@ -1141,7 +1141,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 
 		mid := (low + high) / 2
 
-		_, err := registryContract.StreamRegistry.GetStreamOnBlock(ctx, streamID, mid)
+		_, err := registryContract.StreamRegistry.GetStream(ctx, mid, streamID)
 		if err == nil {
 			high = mid
 		} else if IsRiverErrorCode(err, Err_NOT_FOUND) {
@@ -1215,7 +1215,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 						streamState := events[0].(*river.StreamState)
 
 						var genesisBlock []byte
-						if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
+						if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, blockchain.BlockNumber(log.BlockNumber), streamID); err == nil {
 							genesisBlock = gb
 						}
 
@@ -1256,7 +1256,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 			genesisBlockHash := common.Hash(v[2].([32]byte))
 
 			var genesisBlock []byte
-			if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
+			if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, blockchain.BlockNumber(log.BlockNumber), streamID); err == nil {
 				genesisBlock = gb
 			}
 
@@ -1307,7 +1307,7 @@ func runStreamInception(cmd *cobra.Command, cfg *config.Config, args []string) e
 			})
 
 			var genesisBlock []byte
-			if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, streamID, blockchain.BlockNumber(log.BlockNumber)); err == nil {
+			if _, _, gb, err := registryContract.StreamRegistry.GetStreamWithGenesis(ctx, blockchain.BlockNumber(log.BlockNumber), streamID); err == nil {
 				genesisBlock = gb
 			}
 
