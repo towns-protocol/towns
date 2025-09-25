@@ -30,6 +30,7 @@ import {DeployTipping} from "../facets/DeployTipping.s.sol";
 import {DeployTreasury} from "../facets/DeployTreasury.s.sol";
 import {DeployAppAccount} from "../facets/DeployAppAccount.s.sol";
 import {DeploySignerFacet} from "../facets/DeploySignerFacet.s.sol";
+import {DeployMembershipTiers} from "../facets/DeployMembershipTiers.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -123,8 +124,12 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("SwapFacet");
         facetHelper.add("TippingFacet");
         facetHelper.add("Treasury");
+
+        facetHelper.deployBatch(deployer);
+
         facetHelper.add("AppAccount");
         facetHelper.add("SignerFacet");
+        facetHelper.add("MembershipTiersFacet");
 
         if (isAnvil()) {
             facetHelper.add("MockLegacyMembership");
@@ -190,6 +195,9 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
 
         facet = facetHelper.getDeployedAddress("SignerFacet");
         addCut(makeCut(facet, FacetCutAction.Add, DeploySignerFacet.selectors()));
+
+        facet = facetHelper.getDeployedAddress("MembershipTiersFacet");
+        addCut(makeCut(facet, FacetCutAction.Add, DeployMembershipTiers.selectors()));
 
         if (isAnvil()) {
             facet = facetHelper.getDeployedAddress("MockLegacyMembership");
@@ -265,6 +273,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppAccount.selectors()));
             } else if (facetName.eq("SignerFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeploySignerFacet.selectors()));
+            } else if (facetName.eq("MembershipTiersFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployMembershipTiers.selectors()));
             }
         }
     }

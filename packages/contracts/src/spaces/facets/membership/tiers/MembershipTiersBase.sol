@@ -26,6 +26,8 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     ) internal returns (MembershipTier memory tier) {
         tier = _checkTier(params);
         tier.active = true;
+        tier.maxSupply = params.maxSupply;
+        tier.metadata = params.metadata;
 
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
 
@@ -66,7 +68,6 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     function _mintTier(uint32 tierId, address to, uint256 quantity, uint256 tokenId) internal {
         if (tierId == 0) return;
         MembershipTiersStorage.Layout storage $ = MembershipTiersStorage.getLayout();
-        MembershipTier storage tier = $.tiers[tierId];
 
         _verifyTierSupplyAvailable(tierId);
         $.totalSupplyByTierId[tierId] += quantity;
@@ -136,8 +137,6 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
     function _checkTier(
         MembershipTier calldata params
     ) internal view returns (MembershipTier memory tier) {
-        tier.maxSupply = _checkMaxSupply(params.maxSupply, _totalSupply());
-
         address spaceFactory = MembershipStorage.layout().spaceFactory;
         IPricingModules pricingModules = IPricingModules(spaceFactory);
         tier.pricingModule = _checkPricingModule(pricingModules, params.pricingModule);
@@ -145,7 +144,7 @@ abstract contract MembershipTiersBase is MembershipBase, IMembershipTiersBase, E
         IPlatformRequirements platform = IPlatformRequirements(spaceFactory);
         (tier.basePrice, tier.freeSupply, tier.duration) = (
             platform.checkPrice(params.basePrice),
-            platform.checkFreeAllocation(params.freeSupply),
+            platform.checkFreeAllocation(params.freeSupply, _totalSupply()),
             platform.checkDuration(params.duration)
         );
     }
