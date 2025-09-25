@@ -385,7 +385,7 @@ contract SubscriptionModuleFacet is
         sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
-        emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime);
+        emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime, actualRenewalPrice);
     }
 
     /// @dev Determines the appropriate renewal buffer time based on original membership duration
