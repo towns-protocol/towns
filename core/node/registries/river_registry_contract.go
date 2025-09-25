@@ -31,7 +31,6 @@ type RiverRegistryContract struct {
 	NodeEventTopics [][]common.Hash
 	NodeEventInfo   map[common.Hash]*EventInfo
 
-	StreamRegistryContract                    *river.StreamRegistryV1
 	StreamRegistry                            *river.StreamRegistryInstance
 	StreamRegistryAbi                         *abi.ABI
 	StreamUpdatedEventTopic                   common.Hash
