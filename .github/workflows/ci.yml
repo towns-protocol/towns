@@ -9,6 +9,7 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
+    DOCKERFILE_PATH: ./packages/anvil-docker/Dockerfile
 on:
     schedule:
         # Run every hour
@@ -114,7 +115,7 @@ jobs:
               uses: docker/build-push-action@v6
               with:
                   context: .
-                  file: ./packages/contracts/docker/Dockerfile
+                  file: ${{ env.DOCKERFILE_PATH }}
                   tags: towns-anvil:${{ steps.hash.outputs.hash }}
                   outputs: type=docker,dest=/tmp/anvil.tar
                   cache-from: type=gha
@@ -125,7 +126,7 @@ jobs:
               if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
               run: |
                   docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
-                    -f ./packages/contracts/docker/Dockerfile .
+                    -f ${{ env.DOCKERFILE_PATH }} .
                   # No need to save to tar in act since the image is already in local Docker
 
             # Upload artifact in GitHub Actions (for both built and pulled images)
