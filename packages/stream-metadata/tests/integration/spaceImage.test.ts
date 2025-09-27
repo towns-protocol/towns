@@ -114,6 +114,9 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 		// make a snapshot
 		await bobsClient.debugForceMakeMiniblock(spaceId, { forceSnapshot: true })
 
+		// Wait for snapshot to propagate to stream-metadata service
+		await new Promise((resolve) => setTimeout(resolve, 2000))
+
 		/*
 		 * 3. fetch the space image from the stream-metadata server.
 		 */
