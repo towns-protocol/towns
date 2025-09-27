@@ -19,6 +19,7 @@ type AppRegistryTrackedStreamView struct {
 	TrackedStreamViewImpl
 	listener track_streams.StreamEventListener
 	queue    EncryptedMessageQueue
+	tracker  track_streams.StreamsTracker
 }
 
 func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
@@ -64,6 +65,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 		return err
 	}
 	apps := mapset.NewSet[string]()
+	appAddresses := make([]common.Address, 0)
 	members.Each(func(member string) bool {
 		// Trim 0x prefix
 		if len(member) > 2 && member[:2] == "0x" {
@@ -89,9 +91,33 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 			)
 		} else if isForwardable {
 			apps.Add(member)
+			appAddresses = append(appAddresses, memberAddress)
 		}
 		return false
 	})
+
+	// For each bot detected in the channel, ensure its inbox stream is being tracked
+	// so we can receive encryption keys when the bot sends them
+	for _, appAddress := range appAddresses {
+		inboxStreamId := shared.UserInboxStreamIdFromAddress(appAddress)
+		// Try to add the bot's inbox stream to tracking
+		// This allows us to receive encryption keys when the bot sends them
+		added, err := b.tracker.AddStream(inboxStreamId, track_streams.ApplyHistoricalContent{Enabled: true})
+		if err != nil {
+			log.Warnw(
+				"Failed to add bot inbox stream to tracking",
+				"appAddress", appAddress,
+				"inboxStreamId", inboxStreamId,
+				"error", err,
+			)
+		} else if added {
+			log.Infow(
+				"Successfully added bot inbox stream to tracking",
+				"appAddress", appAddress,
+				"inboxStreamId", inboxStreamId,
+			)
+		}
+	}
 
 	if apps.Cardinality() > 0 {
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
@@ -111,10 +137,12 @@ func NewTrackedStreamForAppRegistryService(
 	stream *StreamAndCookie,
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
+	tracker track_streams.StreamsTracker,
 ) (TrackedStreamView, error) {
 	trackedView := &AppRegistryTrackedStreamView{
 		listener: listener,
 		queue:    store,
+		tracker:  tracker,
 	}
 	view, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, trackedView.onNewEvent)
 	if err != nil {

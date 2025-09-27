@@ -313,7 +313,6 @@ export class Bot<
         return c.body(toBinary(AppServiceResponseSchema, response), 200)
     }
 
-    // TODO: onTip
     private async handleEvent(appEvent: EventPayload) {
         if (!appEvent.payload.case || !appEvent.payload.value) return
         const streamId = streamIdAsString(appEvent.payload.value.streamId)
@@ -333,7 +332,9 @@ export class Bot<
                     }),
                 )
             const events = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
-            const zip = events.map((m, i) => [m, groupEncryptionSessionsMessages[i]] as const)
+            const zip = events.map(
+                (m, i) => [m, groupEncryptionSessionsMessages[i] || undefined] as const,
+            )
             for (const [parsed, groupEncryptionSession] of zip) {
                 if (parsed.creatorUserId === this.client.userId) {
                     continue
@@ -357,11 +358,16 @@ export class Bot<
                     case 'gdmChannelPayload': {
                         if (!parsed.event.payload.value.content.case) return
                         if (parsed.event.payload.value.content.case === 'message') {
-                            const decryptedSessions = await this.client.decryptSessions(
-                                streamId,
-                                groupEncryptionSession,
-                            )
-                            await this.client.crypto.importSessionKeys(streamId, decryptedSessions)
+                            if (groupEncryptionSession) {
+                                const decryptedSessions = await this.client.decryptSessions(
+                                    streamId,
+                                    groupEncryptionSession,
+                                )
+                                await this.client.crypto.importSessionKeys(
+                                    streamId,
+                                    decryptedSessions,
+                                )
+                            }
                             const eventCleartext = await this.client.crypto.decryptGroupEvent(
                                 streamId,
                                 parsed.event.payload.value.content.value,
