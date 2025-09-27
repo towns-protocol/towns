@@ -56,17 +56,11 @@ interface ISubscriptionModuleBase {
 
     event SubscriptionActivated(address indexed account, uint32 indexed entityId);
 
-    event SubscriptionSpent(
-        address indexed account,
-        uint32 indexed entityId,
-        uint256 amount,
-        uint256 totalSpent
-    );
-
     event SubscriptionRenewed(
         address indexed account,
         uint32 indexed entityId,
-        uint256 nextRenewalTime
+        uint256 nextRenewalTime,
+        uint256 amount
     );
 
     /// @notice Emitted when a subscription's next renewal time is synced to on-chain expiration

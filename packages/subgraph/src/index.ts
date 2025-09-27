@@ -1084,36 +1084,6 @@ ponder.on('SubscriptionModule:SubscriptionDeactivated', async ({ event, context 
     }
 })
 
-ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => {
-    const blockTimestamp = event.block.timestamp
-
-    try {
-        const result = await context.db.sql
-            .update(schema.subscription)
-            .set({
-                totalSpent: event.args.totalSpent,
-                updatedAt: blockTimestamp,
-            })
-            .where(
-                and(
-                    eq(schema.subscription.account, event.args.account),
-                    eq(schema.subscription.entityId, event.args.entityId),
-                ),
-            )
-
-        if (result.changes === 0) {
-            console.warn(
-                `Subscription not found for spent update: ${event.args.account}_${event.args.entityId}`,
-            )
-        }
-    } catch (error) {
-        console.error(
-            `Error processing SubscriptionModule:SubscriptionSpent tx ${event.transaction.hash}:`,
-            error,
-        )
-    }
-})
-
 ponder.on('SubscriptionModule:BatchRenewalSkipped', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
