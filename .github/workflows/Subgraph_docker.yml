@@ -6,6 +6,11 @@ on:
     push:
         branches:
             - main
+        paths:
+            - '.github/workflows/Subgraph_docker.yml'
+            - '.github/workflows/_build-docker-arch.yml'
+            - 'packages/contracts/**'
+            - 'packages/subgraph/**'
     workflow_dispatch: # A build was manually requested
         inputs:
             release_version:
@@ -16,24 +21,129 @@ on:
                 required: false
 
 env:
-    DOCKER_NAMESPACE: herenotthere
-    GHCR_NAMESPACE: herenotthere
-    PLATFORMS: linux/amd64,linux/arm64
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
-    build:
-        name: Build docker image
+    # Generate complex tags for subgraph (beyond standard commit+latest)
+    generate-tags:
+        name: Generate Docker tags
         runs-on: ubuntu-latest
-        outputs:
-            release_image_tag: ${{ steps.build-image.outputs.release_image_tag }}
         permissions:
-            contents: write
-            packages: write
+            contents: read
+        outputs:
+            extra_tags: ${{ steps.generate-tags.outputs.EXTRA_TAGS }}
+            release_image_tag: ${{ steps.generate-tags.outputs.RELEASE_IMAGE_TAG }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
+            - name: Generate extra tags for subgraph
+              id: generate-tags
+              env:
+                  RELEASE_VERSION: ${{ inputs.release_version }}
+                  ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
+              run: |
+                  COMMIT_HASH=$(git describe --tags --always --dirty)
+                  echo "RELEASE_IMAGE_TAG=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
+                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+                  EXTRA_TAGS_ARRAY=()
+
+                  # if release version is provided, add it as tag
+                  if [ -n "$RELEASE_VERSION" ] && [ "$RELEASE_VERSION" != "subgraph" ]; then
+                    EXTRA_TAGS_ARRAY+=($RELEASE_VERSION)
+                  fi
+
+                  # If this is a push to main, we also tag the image as dev
+                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then
+                    EXTRA_TAGS_ARRAY+=(dev)
+                  fi
+
+                  # Add additional tags if provided
+                  if [ -n "$ADDITIONAL_TAGS" ]; then
+                    IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
+                    for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
+                      # Trim whitespace
+                      tag=$(echo "$tag" | xargs)
+                      if [ -n "$tag" ]; then
+                        EXTRA_TAGS_ARRAY+=($tag)
+                      fi
+                    done
+                  fi
+
+                  echo "Extra tags beyond commit hash: ${EXTRA_TAGS_ARRAY[@]}"
+                  echo "Commit hash: $COMMIT_HASH"
+                  echo "Branch: $BRANCH"
+                  echo "Release version: ${RELEASE_VERSION:-subgraph}"
+
+                  # Convert to comma-separated string
+                  EXTRA_TAGS=""
+                  for tag in "${EXTRA_TAGS_ARRAY[@]}"; do
+                    if [ -n "$EXTRA_TAGS" ]; then
+                      EXTRA_TAGS="$EXTRA_TAGS,$tag"
+                    else
+                      EXTRA_TAGS="$tag"
+                    fi
+                  done
+
+                  echo "EXTRA_TAGS=$EXTRA_TAGS" >> $GITHUB_OUTPUT
+
+    # Build AMD64 image on native runner
+    build-amd64:
+        name: Build AMD64 image
+        needs: generate-tags
+        uses: ./.github/workflows/_build-docker-arch.yml
+        with:
+            architecture: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: subgraph
+            dockerfile: ./packages/subgraph/Dockerfile
+            cache_scope_prefix: subgraph
+            append_arch_suffix: true
+            tag_latest_on_main: false
+            extra_tags: ${{ needs.generate-tags.outputs.extra_tags }}
+            build_args: |
+                GIT_SHA=${{ github.sha }}
+                VER_VERSION=${{ inputs.release_version || 'subgraph' }}
+                VER_BRANCH=${{ github.ref_name }}
+                VER_COMMIT=${{ github.sha }}
+        secrets: inherit
+
+    # Build ARM64 image on native runner
+    build-arm64:
+        name: Build ARM64 image
+        needs: generate-tags
+        uses: ./.github/workflows/_build-docker-arch.yml
+        with:
+            architecture: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: subgraph
+            dockerfile: ./packages/subgraph/Dockerfile
+            cache_scope_prefix: subgraph
+            append_arch_suffix: true
+            tag_latest_on_main: false
+            extra_tags: ${{ needs.generate-tags.outputs.extra_tags }}
+            build_args: |
+                GIT_SHA=${{ github.sha }}
+                VER_VERSION=${{ inputs.release_version || 'subgraph' }}
+                VER_BRANCH=${{ github.ref_name }}
+                VER_COMMIT=${{ github.sha }}
+        secrets: inherit
+
+    # Merge architecture-specific images into multi-arch manifest
+    merge-manifest:
+        name: Create multi-arch manifest
+        needs: [generate-tags, build-amd64, build-arm64]
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        outputs:
+            release_image_tag: ${{ needs.generate-tags.outputs.release_image_tag }}
+        steps:
             - name: Setup AWS Credentials
               uses: aws-actions/configure-aws-credentials@v4
               with:
@@ -42,81 +152,83 @@ jobs:
                   aws-region: us-east-1
 
             - name: Login to Amazon ECR
-              id: login-aws-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
                   registry-type: 'public'
 
-            - name: Build and push image to Amazon ECR
-              id: build-image
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Create and push multi-arch manifest
               env:
-                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-                  #This can be custom alias once requested to aws and approved for public repo
-                  REGISTRY_ALIAS: h5v6m2x1
-                  ECR_REPOSITORY: subgraph
-                  RELEASE_VERSION: ${{ inputs.release_version }}
-                  ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
+                  AMD64_TAGS: ${{ needs.build-amd64.outputs.arch_tags }}
+                  ARM64_TAGS: ${{ needs.build-arm64.outputs.arch_tags }}
               run: |
-                  COMMIT_HASH=$(git describe --tags --always --dirty)
-                  echo "release_image_tag=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
-                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                  TAGS=($COMMIT_HASH)
+                  echo "Creating multi-arch manifest from:"
+                  echo "AMD64 tags: $AMD64_TAGS"
+                  echo "ARM64 tags: $ARM64_TAGS"
 
-                  # if release version is not provided, we set it to "subgraph"
-                  if [ -z "$RELEASE_VERSION" ]; then
-                    RELEASE_VERSION="subgraph"
-                  else
-                    # If this is a release, we also tag the image with the release version.
-                    TAGS+=($RELEASE_VERSION)
-                  fi
+                  # Convert comma-separated tags to arrays
+                  IFS=',' read -ra AMD64_ARRAY <<< "$AMD64_TAGS"
+                  IFS=',' read -ra ARM64_ARRAY <<< "$ARM64_TAGS"
 
-                  # If this is a push to main, we also tag the image as dev,
-                  # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
-                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then
-                    TAGS+=(dev)
-                  fi
+                  # For each arch tag pair, create a manifest
+                  for i in "${!AMD64_ARRAY[@]}"; do
+                    AMD64_TAG="${AMD64_ARRAY[$i]}"
+                    ARM64_TAG="${ARM64_ARRAY[$i]}"
 
-                  # Add additional tags if provided
-                  if [ -n "$ADDITIONAL_TAGS" ]; then
-                    IFS=',' read -ra ADDITIONAL_TAGS_ARRAY <<< "$ADDITIONAL_TAGS"
-                    for tag in "${ADDITIONAL_TAGS_ARRAY[@]}"; do
-                      TAGS+=($tag)
-                    done
-                  fi
+                    # Extract the target tag by removing the architecture suffix
+                    TARGET_TAG="${AMD64_TAG%-amd64}"
 
-                  echo "Building image with the following tags: ${TAGS[@]}"
-                  echo "Commit hash: $COMMIT_HASH"
-                  echo "Branch: $BRANCH"
-                  echo "Release version: $RELEASE_VERSION"
+                    echo "Creating manifest for $TARGET_TAG from $AMD64_TAG and $ARM64_TAG"
 
-                  docker build \
-                    --build-arg GIT_SHA=${{ github.sha }} \
-                    --build-arg VER_VERSION=$RELEASE_VERSION \
-                    --build-arg VER_BRANCH=$BRANCH \
-                    --build-arg VER_COMMIT=$COMMIT_HASH \
-                    -t subgraph:local-latest \
-                    -f packages/subgraph/Dockerfile \
-                    .
-
-                  echo "::set-output name=tag_valid::false"
-                  for tag in "${TAGS[@]}"; do
-                    if [ "$tag" == "mainnet" ] || [ "$tag" == "testnet" ]; then
-                      echo "::set-output name=tag_valid::true"
-                      echo "::set-output name=tag_value::$tag"
-                    fi
-                    docker tag subgraph:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
-                    docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
+                    docker buildx imagetools create \
+                      --tag "$TARGET_TAG" \
+                      "$AMD64_TAG" \
+                      "$ARM64_TAG"
                   done
 
-            # If action failed, we send a slack notification
+            - name: Validate multi-arch manifest
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  RELEASE_IMAGE_TAG: ${{ needs.generate-tags.outputs.release_image_tag }}
+              run: |
+                  echo "Validating multi-arch manifest for release tag: $RELEASE_IMAGE_TAG"
+
+                  IMAGE_URL="$ECR_REGISTRY/h5v6m2x1/subgraph:$RELEASE_IMAGE_TAG"
+
+                  # Inspect the manifest to verify both architectures are present
+                  MANIFEST_PLATFORMS=$(docker buildx imagetools inspect --format '{{range .Manifest.Manifests}}{{printf "%s/%s\n" .Platform.OS .Platform.Architecture}}{{end}}' "$IMAGE_URL")
+                  echo "Manifest platforms:"
+                  echo "$MANIFEST_PLATFORMS"
+
+                  # Check for both required platforms
+                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/amd64$'; then
+                    echo "❌ ERROR: linux/amd64 platform not found in manifest"
+                    exit 1
+                  fi
+
+                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/arm64$'; then
+                    echo "❌ ERROR: linux/arm64 platform not found in manifest"
+                    exit 1
+                  fi
+
+                  echo "✅ SUCCESS: Multi-arch manifest contains both linux/amd64 and linux/arm64"
+
+    # Slack notification on failure
+    notify-failure:
+        name: Notify on failure
+        if: failure()
+        needs: [generate-tags, build-amd64, build-arm64, merge-manifest]
+        runs-on: ubuntu-latest
+        steps:
             - name: Slack notification
-              if: failure()
               uses: slackapi/slack-github-action@v1.24.0
               with:
                   payload: |
                       {
-                          "step": "Build Subgraph Docker Image",
-                          "environment": "N/",
+                          "step": "Build Subgraph Docker Image (Multi-arch)",
+                          "environment": "N/A",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",
@@ -125,11 +237,11 @@ jobs:
 
     deploy:
         if: success() && github.event_name != 'workflow_dispatch'
-        needs: build
+        needs: merge-manifest
         uses: ./.github/workflows/Subgraph_service_continuous_deployment.yml
         with:
             environment_name: gamma
-            docker_image_tag: ${{ needs.build.outputs.release_image_tag }}
+            docker_image_tag: ${{ needs.merge-manifest.outputs.release_image_tag }}
         secrets:
             SLACK_CD_WORKFLOW_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
             ARGOCD_GITHUB_PAT: ${{ secrets.ARGOCD_GITHUB_PAT }}
