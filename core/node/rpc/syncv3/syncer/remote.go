@@ -74,6 +74,7 @@ func NewRemoteStreamUpdateEmitter(
 	client, err := nodeRegistry.GetStreamServiceClientForAddress(remoteAddr)
 	if err != nil {
 		cancel(nil)
+		stream.AdvanceStickyPeer(remoteAddr)
 		return nil, err
 	}
 
@@ -101,6 +102,7 @@ func NewRemoteStreamUpdateEmitter(
 	responseStream, err := client.SyncStreams(ctx, req)
 	if err != nil {
 		cancel(err)
+		stream.AdvanceStickyPeer(remoteAddr)
 		return nil, RiverErrorWithBase(Err_UNAVAILABLE, "SyncStreams failed", err).
 			Tags("remote", remoteAddr).
 			Func("NewRemoteStreamUpdateEmitter")
@@ -110,6 +112,7 @@ func NewRemoteStreamUpdateEmitter(
 
 	if !firstUpdateReceived.Load() || ctx.Err() != nil {
 		cancel(nil)
+		stream.AdvanceStickyPeer(remoteAddr)
 		return nil, RiverErrorWithBase(
 			Err_UNAVAILABLE,
 			"SyncStreams stream closed without receiving any messages",
@@ -121,6 +124,7 @@ func NewRemoteStreamUpdateEmitter(
 
 	if responseStream.Msg().GetSyncOp() != SyncOp_SYNC_NEW || responseStream.Msg().GetSyncId() == "" {
 		cancel(nil)
+		stream.AdvanceStickyPeer(remoteAddr)
 		return nil, RiverError(Err_UNAVAILABLE, "Received unexpected sync stream message").
 			Tags("syncOp", responseStream.Msg().SyncOp, "syncId", responseStream.Msg().SyncId, "remote", remoteAddr).
 			Func("NewRemoteStreamUpdateEmitter")

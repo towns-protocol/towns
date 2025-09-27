@@ -108,8 +108,7 @@ func init() {
 	nameMap.RegisterABI("OperatorRegistry", abi)
 	abi, _ = river.RiverConfigV1MetaData.GetAbi()
 	nameMap.RegisterABI("RiverConfig", abi)
-	abi, _ = river.StreamRegistryV1MetaData.GetAbi()
-	nameMap.RegisterABI("StreamRegistry", abi)
+	nameMap.RegisterABI("StreamRegistry", river.StreamRegistry.ABI())
 }
 
 func GetSelectorMethodName(selector uint32) (string, bool) {

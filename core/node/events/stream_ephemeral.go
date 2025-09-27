@@ -5,9 +5,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -16,7 +16,7 @@ import (
 func (s *StreamCache) onStreamCreated(
 	ctx context.Context,
 	event *river.StreamState,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
@@ -51,7 +51,7 @@ func (s *StreamCache) onStreamCreated(
 func (s *StreamCache) onStreamPlacementUpdated(
 	ctx context.Context,
 	event *river.StreamState,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	participatingInStream := slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address)
 	if !participatingInStream {

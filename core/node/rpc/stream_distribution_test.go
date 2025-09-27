@@ -135,7 +135,11 @@ func testDistributionWithStateFromEnv(
 	initialStreamCount := 0
 	initialNodeStreamCount := make(map[common.Address]uint64)
 	for _, node := range allNodes {
-		count, err := riverRegistry.GetStreamCountOnNode(ctx, blockchain.InitialBlockNum, node.NodeAddress)
+		count, err := riverRegistry.StreamRegistry.GetStreamCountOnNode(
+			ctx,
+			blockchain.InitialBlockNum,
+			node.NodeAddress,
+		)
 		require.NoError(err)
 		initialNodeStreamCount[node.NodeAddress] = uint64(count)
 		initialStreamCount += int(count)

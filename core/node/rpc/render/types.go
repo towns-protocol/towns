@@ -1,7 +1,7 @@
 package render
 
 import (
-	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/node/rpc/statusinfo"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
@@ -145,7 +145,7 @@ func (s StorageData) TemplateName() string {
 }
 
 type OnChainConfigData struct {
-	CurrentBlockNumber crypto.BlockNumber
+	CurrentBlockNumber blockchain.BlockNumber
 	Config             string
 }
 

@@ -2,15 +2,21 @@ package river
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/protocol"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const StreamFlagSealed uint64 = 0x1
+
+// ReplicationFactor returns on how many nodes the stream is replicated.
+// TODO: rename Reserved0 in the contract.
 func (s *Stream) ReplicationFactor() int {
+	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
+	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
+	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
 	return max(1, int(s.Reserved0&0xFF))
 }
 
@@ -30,7 +36,7 @@ func (s *Stream) LastMb() *MiniblockRef {
 }
 
 func (s *Stream) IsSealed() bool {
-	return s.Flags&0x1 != 0
+	return s.Flags&StreamFlagSealed != 0
 }
 
 func NewStreamWithId(streamId StreamId, stream *Stream) *StreamWithId {
@@ -64,7 +70,7 @@ func (s *StreamWithId) LastMb() *MiniblockRef {
 }
 
 func (s *StreamWithId) IsSealed() bool {
-	return s.Stream.Flags&0x1 != 0
+	return s.Stream.Flags&StreamFlagSealed != 0
 }
 
 func (s *StreamWithId) Nodes() []common.Address {
@@ -74,8 +80,8 @@ func (s *StreamWithId) Nodes() []common.Address {
 type (
 	// StreamUpdated is the unified event emitted by the stream registry when a stream mutation occurs.
 	// Either when its created or modified.
-	StreamUpdated                   = StreamRegistryV1StreamUpdated
-	StreamLastMiniblockUpdateFailed = StreamRegistryV1StreamLastMiniblockUpdateFailed
+	StreamUpdated                   = StreamRegistryContractStreamUpdated
+	StreamLastMiniblockUpdateFailed = StreamRegistryContractStreamLastMiniblockUpdateFailed
 
 	// StreamUpdatedEventType defines Solidity IStreamRegistryBase.StreamEventType enum type.
 	StreamUpdatedEventType uint8
@@ -118,11 +124,6 @@ func (t StreamUpdatedEventType) String() string {
 }
 
 const (
-	// Event_StreamUpdated is emitted by the streams registry when a stream is added or modified
-	Event_StreamUpdated = "StreamUpdated"
-	// Event_StreamLastMiniblockUpdateFailed is emitted when setting a new miniblock for a stream failed
-	Event_StreamLastMiniblockUpdateFailed = "StreamLastMiniblockUpdateFailed"
-
 	StreamUpdatedEventTypeAllocate                  StreamUpdatedEventType = 0
 	StreamUpdatedEventTypeCreate                    StreamUpdatedEventType = 1
 	StreamUpdatedEventTypePlacementUpdated          StreamUpdatedEventType = 2
@@ -151,10 +152,6 @@ var (
 	})
 )
 
-func (_StreamRegistryV1 *StreamRegistryV1Caller) BoundContract() *bind.BoundContract {
-	return _StreamRegistryV1.contract
-}
-
 // GetStreamId implements the EventWithStreamId interface.
 func (ss *StreamState) GetStreamId() StreamId {
 	return ss.Stream.Id
@@ -182,7 +179,7 @@ func MiniblockRefFromContractRecord(stream *Stream) *MiniblockRef {
 
 // ParseStreamUpdatedEvent parses the given stream update into the stream registry state after the update.
 // The returned slice contains one or more *StreamState or *StreamMiniblockUpdate instances.
-func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpdatedEvent, error) {
+func ParseStreamUpdatedEvent(event *StreamRegistryContractStreamUpdated) ([]StreamUpdatedEvent, error) {
 	reason := StreamUpdatedEventType(event.EventType)
 	switch reason {
 	case StreamUpdatedEventTypeAllocate:
@@ -206,7 +203,7 @@ func ParseStreamUpdatedEvent(event *StreamRegistryV1StreamUpdated) ([]StreamUpda
 	case StreamUpdatedEventTypeLastMiniblockBatchUpdated:
 		return parseSetMiniblocksFromSolABIEncoded(event)
 	default:
-		return nil, AsRiverError(nil, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(nil, Err_BAD_EVENT).
 			Message("Unsupported StreamUpdated event type").
 			Tags("type", reason, "tx", event.Raw.TxHash, "eventIndex", event.Raw.Index)
 	}
@@ -216,7 +213,7 @@ func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (*StreamWithId, error)
 	values := abi.Arguments{{Type: abi.Type{Size: 32, T: abi.FixedBytesTy}}, {Type: streamABIType}}
 	unpacked, err := values.Unpack(data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseStreamIDAndStreamFromSolABIEncoded")
 	}
@@ -227,11 +224,11 @@ func parseStreamIDAndStreamFromSolABIEncoded(data []byte) (*StreamWithId, error)
 	return ret, nil
 }
 
-func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) ([]StreamUpdatedEvent, error) {
+func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryContractStreamUpdated) ([]StreamUpdatedEvent, error) {
 	values := abi.Arguments{{Type: abi.Type{T: abi.SliceTy, Elem: &setMiniblockABIType}}}
 	unpacked, err := values.Unpack(event.Data)
 	if err != nil {
-		return nil, AsRiverError(err, protocol.Err_BAD_EVENT).
+		return nil, AsRiverError(err, Err_BAD_EVENT).
 			Message("Unable to decode stream updated event").
 			Func("parseSetMiniblocksFromSolcABIEncoded")
 	}
@@ -247,12 +244,4 @@ func parseSetMiniblocksFromSolABIEncoded(event *StreamRegistryV1StreamUpdated) (
 	}
 
 	return results, nil
-}
-
-// StreamReplicationFactor returns on how many nodes the stream is replicated.
-func (s *Stream) StreamReplicationFactor() int {
-	// if s.Reserved0 & 0xFF is 0 it indicates this is an old stream that was created before the replication factor was
-	// added and the migration to replicated stream hasn't started. Use a replication factor of 1. This ensures that
-	// the first node in the streams node list is used as primary and ensures both backwards and forwards compatability.
-	return max(1, int(s.Reserved0&0xFF))
 }

@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -40,7 +41,7 @@ type StreamCacheParams struct {
 	Registry                *registries.RiverRegistryContract
 	ChainConfig             crypto.OnChainConfiguration
 	Config                  *config.Config
-	AppliedBlockNum         crypto.BlockNumber
+	AppliedBlockNum         blockchain.BlockNumber
 	ChainMonitor            crypto.ChainMonitor // TODO: delete and use RiverChain.ChainMonitor
 	Metrics                 infra.MetricsFactory
 	RemoteMiniblockProvider RemoteProvider
@@ -212,7 +213,7 @@ func (s *StreamCache) Start(ctx context.Context, opts *MiniblockProducerOpts) er
 	return nil
 }
 
-func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.BlockNumber, logs []*types.Log) {
+func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum blockchain.BlockNumber, logs []*types.Log) {
 	s.scheduledGetRecordTasksGauge.Set(float64(s.scheduledGetRecordTasks.Size()))
 	s.scheduledReconciliationTasksGauge.Set(float64(s.scheduledReconciliationTasks.Size()))
 	s.retryableReconciliationTasksGauge.Set(float64(s.retryableReconciliationTasks.Len()))
@@ -280,7 +281,7 @@ func (s *StreamCache) onBlockWithLogs(ctx context.Context, blockNum crypto.Block
 func (s *StreamCache) onStreamAllocated(
 	ctx context.Context,
 	event *river.StreamState,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
@@ -382,7 +383,7 @@ func (s *StreamCache) loadStreamRecord(
 
 func (s *StreamCache) insertEmptyLocalStream(
 	record *river.StreamWithId,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 	reconcile bool,
 ) *Stream {
 	stream, loaded := s.cache.LoadOrCompute(
@@ -429,12 +430,12 @@ func (s *StreamCache) loadStreamRecordImpl(
 		Divisor:     2,
 	}
 
-	var blockNum crypto.BlockNumber
-	var record *river.StreamWithId
+	var blockNum blockchain.BlockNumber
+	var record *river.Stream
 	for {
 		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
 		if err == nil {
-			record, err = s.params.Registry.GetStream(ctx, streamId, blockNum)
+			record, err = s.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
 			if err == nil {
 				break
 			}
@@ -448,7 +449,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 		}
 	}
 
-	local := slices.Contains(record.Nodes(), s.params.Wallet.Address)
+	local := slices.Contains(record.Nodes, s.params.Wallet.Address)
 	if !local {
 		stream, _ := s.cache.LoadOrCompute(
 			streamId,
@@ -459,7 +460,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 					lastAppliedBlockNum: blockNum,
 					lastAccessedTime:    time.Now(),
 				}
-				ret.nodesLocked.ResetFromStreamWithId(record, s.params.Wallet.Address)
+				ret.nodesLocked.ResetFromStream(record, s.params.Wallet.Address)
 				return ret, false
 			},
 		)
@@ -468,7 +469,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 
 	// If record is beyond genesis, return stream with empty local state and schedule reconciliation.
 	if record.LastMbNum() > 0 {
-		return s.insertEmptyLocalStream(record, blockNum, true), nil
+		return s.insertEmptyLocalStream(river.NewStreamWithId(streamId, record), blockNum, true), nil
 	}
 
 	return s.readGenesisAndCreateLocalStream(ctx, streamId, blockNum)
@@ -477,7 +478,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 func (s *StreamCache) readGenesisAndCreateLocalStream(
 	ctx context.Context,
 	streamId StreamId,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) (*Stream, error) {
 	// Bug out if stream was created meanwhile.
 	stream, exists := s.cache.Load(streamId)
@@ -485,12 +486,13 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
-	record, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamId, blockNum)
+	recordNoId, _, mb, err := s.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, streamId, blockNum)
 	if err != nil {
 		return nil, err
 	}
+	record := river.NewStreamWithId(streamId, recordNoId)
 
-	if record.StreamId() != streamId || !slices.Contains(record.Nodes(), s.params.Wallet.Address) {
+	if !slices.Contains(record.Nodes(), s.params.Wallet.Address) {
 		return nil, RiverError(Err_INTERNAL, "unexpected genesis record",
 			"streamId", streamId, "blockNum", blockNum, "record", record).Func("readGenesisAndCreateStream")
 	}

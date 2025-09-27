@@ -430,7 +430,7 @@ func setupTestChannelAndAddToSyncer(
 	}
 	tt.require.Equal(int64(0), b0ref.Num, "miniblock number should be 0 for %s", channelId.String())
 
-	streamOnChain, err := tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(
+	streamOnChain, err := tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
 		ctx,
 		channelId,
 	)
@@ -442,7 +442,7 @@ func setupTestChannelAndAddToSyncer(
 		&river.StreamWithId{
 			Id: channelId,
 			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
+				Nodes:     streamOnChain.Nodes,
 				Reserved0: uint64(replFactor),
 			},
 		},
@@ -673,13 +673,16 @@ type coldStreamsTestContext struct {
 
 // addStreamToSyncerNoHistory adds a stream to the syncer without historical content
 func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
+		tc.ctx,
+		streamId,
+	)
 	tc.require.NoError(err)
 	tc.msr.AddStream(
 		&river.StreamWithId{
 			Id: streamId,
 			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
+				Nodes:     streamOnChain.Nodes,
 				Reserved0: uint64(tc.tt.opts.replicationFactor),
 			},
 		},

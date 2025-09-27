@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -463,7 +464,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	// through disableCallback the test can control if the stream cache witnesses river chain events.
 	var disableCallbacks atomic.Bool
 	instance.params.ChainMonitor.OnBlockWithLogs(instance.params.AppliedBlockNum+1,
-		func(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
+		func(ctx context.Context, blockNumber blockchain.BlockNumber, logs []*types.Log) {
 			if !disableCallbacks.Load() {
 				mbProducer.onNewBlock(ctx, blockNumber)
 				instance.cache.onBlockWithLogs(ctx, blockNumber, logs)
@@ -561,7 +562,11 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	// because the candidate was not promoted because the node never witnessed the set stream event.
 	riverChainBlockNum, err := instance.params.RiverChain.Client.BlockNumber(ctx)
 	require.NoError(err)
-	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
+	getStream, err := instance.params.Registry.StreamRegistry.GetStreamOnBlock(
+		ctx,
+		spaceStreamId,
+		blockchain.BlockNumber(riverChainBlockNum),
+	)
 	require.NoError(err)
 
 	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)

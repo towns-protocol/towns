@@ -342,7 +342,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: postgres:latest
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -514,7 +514,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: postgres:latest
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -684,7 +684,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: postgres:latest
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -845,7 +845,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: postgres:latest
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres

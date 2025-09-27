@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -32,7 +33,7 @@ func TestChainMonitorBlocks(t *testing.T) {
 
 	var (
 		collectedBlocks = make(chan uint64, 10)
-		onBlockCallback = func(ctx context.Context, bn crypto.BlockNumber) {
+		onBlockCallback = func(ctx context.Context, bn blockchain.BlockNumber) {
 			collectedBlocks <- bn.AsUint64()
 		}
 	)
@@ -154,8 +155,8 @@ func TestChainMonitorEvents(t *testing.T) {
 		owner = tc.DeployerBlockchain
 
 		collectedBlocksCount atomic.Int64
-		collectedBlocks      []crypto.BlockNumber
-		onBlockCallback      = func(ctx context.Context, blockNumber crypto.BlockNumber) {
+		collectedBlocks      []blockchain.BlockNumber
+		onBlockCallback      = func(ctx context.Context, blockNumber blockchain.BlockNumber) {
 			collectedBlocks = append(collectedBlocks, blockNumber)
 			collectedBlocksCount.Store(int64(len(collectedBlocks)))
 		}
@@ -227,7 +228,7 @@ func TestChainMonitorEvents(t *testing.T) {
 
 	firstBlock := collectedBlocks[0]
 	for i := range collectedBlocks {
-		require.Exactly(firstBlock+crypto.BlockNumber(i), collectedBlocks[i])
+		require.Exactly(firstBlock+blockchain.BlockNumber(i), collectedBlocks[i])
 	}
 
 	require.GreaterOrEqual(len(allEventCallbackCapturedEvents), 1)
@@ -488,12 +489,12 @@ func TestContractAllEventsFromPast(t *testing.T) {
 	// Ensure that historicalContractAllEventsCallback and historicalContractEventsCallback receive all node added
 	// events from the past.
 	chainMonitor.OnAllEvents(
-		crypto.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
+		blockchain.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
 		historicalContractAllEventsCallback,
 	)
 
 	chainMonitor.OnContractEvent(
-		crypto.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
+		blockchain.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
 		tc.RiverRegistryAddress,
 		historicalContractEventsCallback,
 	)
@@ -596,7 +597,7 @@ func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 
 	// register a callback from block 0, which is before starting block for the new monitor
 	chainMonitor.OnContractWithTopicsEvent(
-		crypto.BlockNumber(0),
+		blockchain.BlockNumber(0),
 		tc.RiverRegistryAddress,
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
 		func(ctx context.Context, event types.Log) {
@@ -625,19 +626,19 @@ func TestContracEventsWithTopicsBeforeStart(t *testing.T) {
 }
 
 type onBlockCollector struct {
-	lastBlockNumber crypto.BlockNumber
+	lastBlockNumber blockchain.BlockNumber
 	allLogs         []*types.Log
 	mu              sync.Mutex
 }
 
-func (c *onBlockCollector) onBlock(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
+func (c *onBlockCollector) onBlock(ctx context.Context, blockNumber blockchain.BlockNumber, logs []*types.Log) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.lastBlockNumber = blockNumber
 	c.allLogs = append(c.allLogs, logs...)
 }
 
-func (c *onBlockCollector) lastBlock() crypto.BlockNumber {
+func (c *onBlockCollector) lastBlock() blockchain.BlockNumber {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return c.lastBlockNumber
@@ -1179,7 +1180,7 @@ func TestContractEventsWithTopicsFromPast(t *testing.T) {
 	// register a callback for the NodeAdded event on an old block.
 	// Ensure that historicalContractWithTopicsEventCallback receives all node added events from the past.
 	chainMonitor.OnContractWithTopicsEvent(
-		crypto.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
+		blockchain.BlockNumber(firstRegisteredNodeEvent.BlockNumber),
 		tc.RiverRegistryAddress,
 		[][]common.Hash{{nodeRegistryABI.Events["NodeAdded"].ID}},
 		historicalContractWithTopicsEventCallback,

@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -124,7 +125,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
@@ -149,7 +150,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
@@ -174,7 +175,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
