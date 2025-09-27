@@ -124,7 +124,7 @@ func runStreamGetEventCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
+	stream, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func runStreamGetMiniblockCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
+	stream, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
@@ -482,7 +482,7 @@ func runStreamGetMiniblockNumCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
+	stream, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
@@ -556,7 +556,7 @@ func runStreamDumpCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	stream, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
+	stream, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
@@ -730,7 +730,7 @@ func runStreamGetCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	streamRecord, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamID)
+	streamRecord, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
@@ -877,7 +877,7 @@ func runStreamCompareMiniblockChainCmd(cfg *config.Config, args []string) error 
 		return err
 	}
 
-	streamNoId, err := registryContract.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockchain.InitialBlockNum)
+	streamNoId, err := registryContract.StreamRegistry.GetStream(ctx, blockchain.InitialBlockNum, streamId)
 	if err != nil {
 		return err
 	}
