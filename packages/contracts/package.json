@@ -1,32 +1,32 @@
 {
   "name": "@towns-protocol/contracts",
   "version": "0.0.356",
-  "packageManager": "yarn@3.8.0",
+  "packageManager": "bun@1.2.22",
   "scripts": {
     "build-types": "bash scripts/build-contract-types.sh",
     "clean": "forge clean",
     "compile": "forge build",
-    "format": "yarn prettier:write",
-    "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "format": "bun run prettier:write",
+    "lint": "bun run solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
     "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
-    "test:unit": "yarn test",
+    "test:unit": "bun run test",
     "typings": "wagmi generate"
   },
   "dependencies": {
-    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz",
+    "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
     "@layerzerolabs/oft-evm": "^3.1.4",
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@prb/math": "^4.1.0",
     "@towns-protocol/diamond": "^0.6.3",
-    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
-    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
-    "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
-    "modular-account": "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz",
+    "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#v0.7.0",
+    "crypto-lib": "github:towns-protocol/crypto-lib#v1.0.1",
+    "modular-account": "github:towns-protocol/modular-account#v1.0.0",
     "solady": "^0.1.24"
   },
   "devDependencies": {
@@ -51,9 +51,6 @@
     "scripts/**/*.sol",
     "README.md"
   ],
-  "installConfig": {
-    "hoistingLimits": "dependencies"
-  },
   "publishConfig": {
     "access": "public"
   }

@@ -25,16 +25,15 @@ build({
 		'graphql/language/visitor',
 		'graphql/language/printer',
 		'graphql/utilities',
+
+		// Connect node module should be external
+		'@connectrpc/connect-node',
 	],
 	outdir: 'dist',
 	outExtension: { '.js': '.cjs' }, // Ensure the output file has .cjs extension
 	platform: 'node',
 	plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
 	assetNames: '[name]',
-	loader: {
-		'.ts': 'ts',
-		'.wasm': 'file',
-	},
 	sourcemap: true,
 	target: 'es2022',
 	minify: false, // No minification for easier debugging. Add minification in production later

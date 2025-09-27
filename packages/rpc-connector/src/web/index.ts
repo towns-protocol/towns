@@ -5,3 +5,6 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 export function createHttp2ConnectTransport(options: ConnectTransportOptions): Transport {
     return createConnectTransport(options)
 }
+
+// Re-export for compatibility
+export { createConnectTransport }

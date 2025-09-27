@@ -308,11 +308,11 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
 export async function setupWalletsAndContexts() {
     const baseConfig = townsEnv().makeBaseChainConfig()
 
-    const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
+    const [alicesWallet, bobsWallet, carolsWallet] = [
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
-    ])
+    ]
 
     const [alicesContext, bobsContext, carolsContext] = await Promise.all([
         makeUserContextFromWallet(alicesWallet),

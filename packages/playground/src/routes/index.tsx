@@ -3,7 +3,7 @@ import { RootLayout } from './layout'
 import { IndexRoute } from './root'
 import { AuthRoute } from './auth'
 
-export const router = createBrowserRouter([
+export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
     {
         path: '/auth',
         element: <RootLayout center noHeader />,

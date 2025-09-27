@@ -16,6 +16,7 @@
         "@connectrpc/connect-node": "^2.0.0",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
+        "@towns-protocol/utils": "workspace:^",
         "cross-spawn": "^7.0.5",
         "dotenv": "^16.4.7",
         "ethers": "^5.7.2",

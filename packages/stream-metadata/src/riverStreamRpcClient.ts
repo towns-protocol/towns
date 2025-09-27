@@ -174,6 +174,7 @@ async function mediaContentFromStreamView(
 
 	// Return decrypted data and MIME type
 	return {
+		// @ts-expect-error - ArrayBuffer compatibility issue
 		data: decrypted,
 		mimeType: mimeType[0] ?? 'application/octet-stream',
 	}

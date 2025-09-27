@@ -19,7 +19,7 @@ build({
     outdir: 'dist',
     outExtension: { '.js': '.cjs' },
     plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
-    external: ['@towns-protocol/olm'],
+    external: ['@towns-protocol/olm', '@connectrpc/connect-node'],
     ignoreAnnotations: true,
     assetNames: '[name]',
     loader: {
