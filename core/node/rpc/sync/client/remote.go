@@ -18,6 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -46,6 +47,7 @@ func NewRemoteSyncer(
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
+	useSharedSyncer bool,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
@@ -63,7 +65,12 @@ func NewRemoteSyncer(
 		}
 	}()
 
-	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
+	req := connect.NewRequest(&SyncStreamsRequest{})
+	if useSharedSyncer {
+		req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
+	}
+
+	responseStream, err := client.SyncStreams(syncStreamCtx, req)
 	if err != nil {
 		syncStreamCancel()
 
