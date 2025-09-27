@@ -103,7 +103,7 @@ jobs:
               run: |
                   echo "Generating tags from ECR inputs"
                   COMMIT_HASH=$(git describe --tags --always --dirty)
-                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                  BRANCH="${{ github.ref_name }}"
 
                   # Start with commit hash
                   TAGS=($COMMIT_HASH)

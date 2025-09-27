@@ -45,7 +45,7 @@ jobs:
               run: |
                   COMMIT_HASH=$(git describe --tags --always --dirty)
                   echo "RELEASE_IMAGE_TAG=$COMMIT_HASH" >> "$GITHUB_OUTPUT"
-                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
+                  BRANCH="${{ github.ref_name }}"
 
                   EXTRA_TAGS_ARRAY=()
 
@@ -152,6 +152,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Login to Amazon ECR
+              id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
                   registry-type: 'public'
