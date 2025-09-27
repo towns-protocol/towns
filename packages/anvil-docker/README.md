@@ -1,6 +1,23 @@
-# Towns Anvil Docker Environment
+# @towns-protocol/anvil-docker
 
-This directory contains Docker configuration for running local blockchain networks with pre-deployed smart contracts for Towns Protocol development.
+This package contains Docker configuration for running local blockchain networks with pre-deployed smart contracts for Towns Protocol development.
+
+## Quick Start
+
+From this package directory:
+
+```bash
+yarn docker:start    # Start both chain containers (Base + River)
+yarn docker:logs     # View logs from both containers
+yarn docker:stop     # Stop and remove both containers
+```
+
+Or use the traditional justfile commands:
+
+```bash
+cd ../../core
+USE_DOCKER_CHAINS=1 just anvils
+```
 
 ## Overview
 
@@ -13,7 +30,7 @@ The Docker environment provides:
 
 All just targets support both Docker and native modes - Docker is used when `USE_DOCKER_CHAINS=1`, native Anvil otherwise.
 
-**Hash-based Versioning**: Docker images are automatically tagged with the git hash of contract source code. The system pulls from AWS ECR if available, or builds locally if the specific version doesn't exist remotely.
+**Hash-based Versioning**: Docker images are automatically tagged with the git hash of Docker-related files (anvil-docker package, contract source, deployment scripts). The system pulls from AWS ECR if available, or builds locally if the specific version doesn't exist remotely.
 
 ## Getting Started
 
@@ -50,17 +67,13 @@ VSCode tasks automatically use Docker chains by default:
 
 Multi-stage build: installs dependencies, builds contracts, deploys via `setup.sh`, creates optimized runtime image.
 
-### `setup.sh`
+### `scripts/setup.sh`
 
 Build-time script: starts chains, deploys contracts, saves state files, copies addresses to `/app/local_dev/`.
 
-### `run.sh`
+### `scripts/run.sh`
 
 Runtime script: starts chains with pre-loaded state. Supports `CHAIN=base` or `CHAIN=river`.
-
-### `test.sh`
-
-Test runner for validating deployed contracts.
 
 ## Contract Address Extraction
 
@@ -73,6 +86,24 @@ USE_DOCKER_CHAINS=1 just config
 
 which runs `just-deploy-contracts`. Contract addresses are extracted to `packages/generated/deployments/local_dev/`.
 
+## Package Scripts
+
+This package provides convenient npm scripts for Docker operations:
+
+```bash
+yarn docker:build      # Build Docker image locally (via just)
+yarn docker:start      # Start both chain containers (via just)
+yarn docker:stop       # Stop and remove both containers (via just)
+yarn docker:restart    # Restart both containers
+yarn docker:logs       # View logs from both containers
+yarn docker:logs:base  # View Base chain container logs
+yarn docker:logs:river # View River chain container logs
+yarn docker:shell      # Start fresh container for inspection
+yarn anvil:status      # Check if anvil processes are running in containers
+yarn chain:base        # Get Base chain block number
+yarn chain:river       # Get River chain block number
+```
+
 ## Available Just Targets
 
 ### Unified targets (Docker or native):
@@ -81,8 +112,8 @@ which runs `just-deploy-contracts`. Contract addresses are extracted to `package
 - `anvil-base` - Start Base chain
 - `anvil-river` - Start River chain
 - `anvils-stop` - Stop both chains
-- `deploy-contracts` - Deploy contracts and create configs (calls `just-deploy-contracts` + creates `contracts.env`)
-- `just-deploy-contracts` - Deploy contracts only (used internally by Docker, no config creation)
+- `deploy-contracts` - Deploy contracts and create configs
+- `just-deploy-contracts` - Deploy contracts only (used internally)
 
 ### Docker-specific targets:
 
@@ -93,17 +124,6 @@ which runs `just-deploy-contracts`. Contract addresses are extracted to `package
 - `USE_DOCKER_CHAINS` - Set to `1` to use Docker chains instead of native Anvil
 - `RIVER_BLOCK_TIME` - Block time in seconds for Anvil chains (defaults to `1`)
 - `RUN_ENV` - Environment (defaults to `local_dev`)
-
-## CI/CD Integration
-
-The Docker image is automatically built when changes are made to:
-
-- `packages/contracts/**`
-- `scripts/deploy-*.sh`
-- `scripts/start-local-*.sh`
-- `.github/workflows/Towns_anvil_docker.yml`
-
-This prevents unnecessary rebuilds when only Go/TypeScript code changes.
 
 ## Network Configuration
 

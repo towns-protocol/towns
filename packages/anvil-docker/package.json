@@ -1,0 +1,26 @@
+{
+    "name": "@towns-protocol/anvil-docker",
+    "version": "0.0.0",
+    "private": true,
+    "description": "Pre-configured Anvil chains with deployed Towns Protocol contracts",
+    "packageManager": "yarn@3.8.0",
+    "scripts": {
+        "docker:build": "cd ../../core && just build-anvil-docker local",
+        "docker:start": "cd ../../core && USE_DOCKER_CHAINS=1 just anvils",
+        "docker:stop": "cd ../../core && USE_DOCKER_CHAINS=1 just anvils-stop",
+        "docker:restart": "yarn docker:stop && yarn docker:start",
+        "docker:logs": "docker logs -f towns-base-chain & docker logs -f towns-river-chain",
+        "docker:logs:base": "docker logs -f towns-base-chain",
+        "docker:logs:river": "docker logs -f towns-river-chain",
+        "docker:shell": "docker run -it --rm towns-anvil:local bash",
+        "anvil:status": "docker exec towns-base-chain ps aux | grep anvil && docker exec towns-river-chain ps aux | grep anvil",
+        "chain:base": "cast block-number --rpc-url http://localhost:8545",
+        "chain:river": "cast block-number --rpc-url http://localhost:8546"
+    },
+    "devDependencies": {
+        "@towns-protocol/contracts": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/prettier-config": "workspace:^",
+        "@towns-protocol/proto-source": "workspace:^"
+    }
+}

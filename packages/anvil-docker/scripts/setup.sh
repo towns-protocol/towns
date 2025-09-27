@@ -147,5 +147,4 @@ create_contracts_env() {
   echo "Contract addresses and contracts.env created successfully"
 }
 
-# cd ./core && just config build
 main

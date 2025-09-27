@@ -54,7 +54,7 @@ _get-docker-build-hash:
     # IMPORTANT: This uses git tree hash, so uncommitted changes won't affect the hash.
     # You must commit changes to Docker-related files to get a new image built.
     {
-        git ls-tree HEAD ../packages/contracts/docker 2>/dev/null
+        git ls-tree HEAD ../packages/anvil-docker 2>/dev/null
         git ls-tree HEAD ../packages/contracts/scripts 2>/dev/null
         git ls-tree HEAD ../packages/contracts/src 2>/dev/null
         git ls-tree HEAD ../scripts/deploy-contracts.sh 2>/dev/null
@@ -96,7 +96,7 @@ _get-docker-image:
 build-anvil-docker $TAG="local":
     #!/usr/bin/env -S bash {{BASH_OPTS}}
     cd ../
-    docker build -t towns-anvil:${TAG} -f ./packages/contracts/docker/Dockerfile .
+    docker build -t towns-anvil:${TAG} -f ./packages/anvil-docker/Dockerfile .
     echo "Built local image: towns-anvil:${TAG}" >&2
 
 _anvil-start $NAME $PORT $CHAIN_ID:
