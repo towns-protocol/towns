@@ -9,7 +9,6 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
-    POSTGRES_DOCKER_IMAGE: 'postgres:17'
 on:
     schedule:
         # Run every hour
@@ -343,7 +342,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: ${{ env.POSTGRES_DOCKER_IMAGE }}
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -515,7 +514,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: ${{ env.POSTGRES_DOCKER_IMAGE }}
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -685,7 +684,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: ${{ env.POSTGRES_DOCKER_IMAGE }}
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
@@ -846,7 +845,7 @@ jobs:
         needs: [Build_Anvil_Docker]
         services:
             postgres-core:
-                image: ${{ env.POSTGRES_DOCKER_IMAGE }}
+                image: postgres:17
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
