@@ -84,7 +84,7 @@ should be reconciled with which method.
 - [PR #3621](https://github.com/towns-protocol/towns/pull/3621): **feat: update GetMiniblocks API for potential gaps in miniblock sequence**
   - Implements backwards reconciliation for GetMiniblocks API to handle missing miniblocks
   - Adds new error code `Err_MINIBLOCKS_NOT_FOUND` to distinguish between storage failures and missing miniblocks
-  - Handles three scenarios: non-forwarded requests (retry from remote), forwarded requests (return error), and non-local streams (forward with error handling)
+  - Handles three scenarios: non-forwarded requests (retry from remote), forwarded requests (return error), and non-local streams (forwarded with error handling)
   - Includes comprehensive test coverage for gap handling across multiple replicas
 
 - [PR #3630](https://github.com/towns-protocol/towns/pull/3630): **feat: add StreamBackwardsReconciliationThreshold on-chain setting**
