@@ -11,6 +11,8 @@ import {
     TimelineEventConfirmation,
     getRedactsId,
     getEditsId,
+    isReactionInteraction,
+    isPostInteraction,
 } from '../models/timelineTypes'
 import { dlogger } from '@towns-protocol/utils'
 import { getFallbackContent } from '../models/timelineEvent'
@@ -348,6 +350,36 @@ export function makeTimelinesViewInterface(
         streamId: string,
         updatingEventId?: string,
     ) {
+        const isEncrypted =
+            event.content?.kind === RiverTimelineEvent.ChannelMessageEncrypted ||
+            event.content?.kind === RiverTimelineEvent.ChannelMessageEncryptedWithRef
+
+        if (!isEncrypted && event.tags) {
+            if (event.content?.kind === RiverTimelineEvent.ChannelMessage) {
+                const hasReplyParent = event.replyParentId !== undefined
+                const hasThreadParent = event.threadParentId !== undefined
+
+                // if it's a top-level post it should be tagged as POST
+                if (!hasReplyParent && !hasThreadParent && !isPostInteraction(event.tags)) {
+                    if (updatingEventId) {
+                        return removeEvent(state, streamId, updatingEventId)
+                    }
+                    return state
+                }
+            }
+
+            // check if something tagged as a reaction actually has reaction content
+            if (
+                isReactionInteraction(event.tags) &&
+                event.content?.kind !== RiverTimelineEvent.Reaction
+            ) {
+                if (updatingEventId) {
+                    return removeEvent(state, streamId, updatingEventId)
+                }
+                return state
+            }
+        }
+
         const editsEventId = getEditsId(event.content)
         const redactsEventId = getRedactsId(event.content)
 
