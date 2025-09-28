@@ -99,9 +99,18 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |DATABASE__PORT|Postgres DB port|Yes|5432|-|
 |DATABASE__USER|Postgres DB username|Yes|-|-|
 |DD_TAGS|Used by Datadog for metrics collection|No|env: (gamma), node_url:(your complete node url)|No|
+|DEBUGENDPOINTS__CACHE|Enable cache debug endpoints|No|false|-|
+|DEBUGENDPOINTS__CORRUPTSTREAMS|Enable corrupt streams debug endpoints|No|false|-|
+|DEBUGENDPOINTS__ENABLESTORAGEENDPOINT|Enable storage statistics endpoints|No|false|-|
+|DEBUGENDPOINTS__MEMORY|Enable memory debug endpoints|No|false|-|
+|DEBUGENDPOINTS__MEMPROFILEDIR|Directory for memory profile files|No|./mem_profile|-|
+|DEBUGENDPOINTS__MEMPROFILEINTERVAL|Memory profile write interval|No|5m|-|
 |DEBUGENDPOINTS__PPROF|Enable pprof endpoints|No|false|-|
 |DEBUGENDPOINTS__PRIVATEDEBUGSERVERADDRESS|Private debug server address|No|:8080|-|
-|DEBUGENDPOINTS__MEMPROFILEDIR|Directory for memory profile files|No|./mem_profile|-|
+|DEBUGENDPOINTS__STACKS|Enable stack debug endpoints|No|false|-|
+|DEBUGENDPOINTS__STACKSMAXSIZEKB|Maximum stack size in KB|No|1024|-|
+|DEBUGENDPOINTS__STREAM|Enable stream debug endpoints|No|false|-|
+|DEBUGENDPOINTS__TXPOOL|Enable transaction pool debug endpoints|No|false|-|
 |ENTITLEMENT_CONTRACT__ADDRESS|Entitlement contract address in Base Network|Yes|0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F|-|
 |LOG__FORMAT|Log format option|No|text|-|
 |LOG__LEVEL|Default log level|No|info|-|

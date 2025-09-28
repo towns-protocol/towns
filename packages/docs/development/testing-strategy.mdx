@@ -1,0 +1,198 @@
+---
+title: Testing Strategy
+description: "Comprehensive overview of Towns Protocol's three-tier testing approach"
+---
+
+## Testing Strategy Overview
+
+Towns Protocol employs a sophisticated three-tier testing strategy designed to ensure reliability and performance across the distributed messaging infrastructure. Our testing approach balances thoroughness with development velocity, enabling rapid iteration while maintaining production quality.
+
+### Three-Tier Testing Architecture
+
+#### 1. Unit Tests
+**Purpose**: Individual component validation  
+**Speed**: Fast (< 10 seconds)  
+**Frequency**: Run on every commit  
+**Scope**: Single functions, methods, and isolated components
+
+**Coverage Areas:**
+- **Go Backend**: Core business logic, storage operations, blockchain interactions
+- **TypeScript SDK**: Client libraries, type validation, utility functions
+- **Smart Contracts**: Contract logic, state transitions, access controls
+
+**Execution:**
+```bash
+# Run all unit tests
+yarn test:unit
+
+# Go unit tests only
+cd core && just test-all
+
+# Contract unit tests
+yarn workspace @towns-protocol/contracts test
+```
+
+#### 2. Integration Tests
+**Purpose**: Cross-component interaction validation  
+**Speed**: Medium (30-60 seconds)  
+**Frequency**: Run on PR and merge  
+**Scope**: Service interactions, API endpoints, database operations
+
+**Key Test Categories:**
+- **API Integration**: gRPC/HTTP endpoint testing
+- **Database Integration**: PostgreSQL operations and migrations
+- **Blockchain Integration**: Smart contract interactions
+- **Cross-Chain Testing**: Base ↔ Towns Chain communication
+
+#### 3. End-to-End (E2E) Tests
+**Purpose**: Full system validation  
+**Speed**: Slow (5-15 minutes)  
+**Frequency**: Post-merge, scheduled runs  
+**Scope**: Complete user workflows and system behaviors
+
+**Multi-Node E2E Testing:**
+- **Distributed Messaging**: Multi-node stream synchronization
+- **Cross-Chain Entitlements**: Permission validation across chains
+- **Load Testing**: Performance under realistic loads
+- **Fault Tolerance**: Node failure and recovery scenarios
+
+### Testing Environment Philosophy
+
+#### Development Velocity vs. Coverage
+Towns Protocol's testing strategy optimizes for **developer productivity** while maintaining **production reliability**:
+
+- **Fast Feedback Loop**: Unit tests provide immediate validation
+- **Confidence Building**: Integration tests catch service boundary issues
+- **Production Simulation**: E2E tests validate real-world scenarios
+
+#### Conditional Testing
+Our CI pipeline supports **selective test execution** to reduce unnecessary compute:
+
+```yaml
+# Manual trigger options
+workflow_dispatch:
+  inputs:
+    skip_common_ci: boolean
+    skip_multinode: boolean
+    skip_multinode_ent: boolean
+    skip_go: boolean
+    skip_xchain_integration: boolean
+```
+
+### Test Categories by Component
+
+#### River Node Testing (Go)
+**Test Types:**
+- **Storage Tests**: PostgreSQL operations, miniblock handling
+- **Stream Tests**: Event processing, synchronization logic
+- **Auth Tests**: Entitlement validation, permission checks
+- **Network Tests**: Node-to-node communication
+
+**Key Testing Patterns:**
+```go
+// Example Go test structure
+func TestStreamSynchronization(t *testing.T) {
+    // Setup test nodes
+    nodes := setupMultiNodeEnvironment(t)
+    
+    // Test cross-node stream sync
+    testCrossNodeStreamSync(t, nodes)
+    
+    // Cleanup
+    teardownNodes(t, nodes)
+}
+```
+
+#### SDK Testing (TypeScript)
+**Test Types:**
+- **Unit Tests**: Pure function validation
+- **Integration Tests**: API client testing
+- **Type Tests**: TypeScript type validation
+- **Browser Tests**: Client-side functionality
+
+**Framework Usage:**
+- **Jest**: Unit testing framework
+- **Vitest**: Fast unit testing
+- **Testify**: Go test assertions
+
+#### Smart Contract Testing
+**Test Types:**
+- **Unit Tests**: Individual contract functions
+- **Integration Tests**: Cross-contract interactions
+- **Fork Tests**: Mainnet fork testing
+- **Gas Optimization Tests**: Gas usage validation
+
+**Testing Tools:**
+- **Foundry**: Contract testing framework
+- **Forge**: Solidity test runner
+- **Anvil**: Local blockchain simulation
+
+### Environment-Specific Testing
+
+#### RUN_ENV Configuration
+Towns Protocol supports multiple testing environments optimized for different scenarios:
+
+| Environment | Purpose | Entitlements | Speed | Use Case |
+|------------|---------|-------------|-------|----------|
+| `multi` | Full feature testing | ✅ Enabled | Slower | Complete SDK testing |
+| `multi_ne` | Fast development | ❌ Disabled | Faster | SDK development |
+
+**Usage Examples:**
+```bash
+# Full environment with entitlements (required for some SDK tests)
+RUN_ENV=multi just config-and-start
+
+# Fast environment without entitlements (SDK development)
+RUN_ENV=multi_ne just config-and-start
+```
+
+### Testing Best Practices
+
+#### Test Isolation
+- **Database Cleanup**: Each test uses fresh database state
+- **Node Separation**: Multi-node tests use isolated instances
+- **Chain State**: Fresh blockchain state per test suite
+
+#### Performance Testing
+- **Load Testing**: Concurrent user simulation
+- **Stress Testing**: Resource exhaustion scenarios
+- **Latency Testing**: Message delivery timing validation
+
+#### Security Testing
+- **Access Control**: Permission boundary validation
+- **Entitlement Testing**: Cross-chain authorization checks
+- **Input Validation**: Malicious input handling
+
+### Debugging Failed Tests
+
+#### Local Reproduction
+```bash
+# Reproduce CI environment locally
+RUN_ENV=multi just config-and-start
+
+# Run specific test suite
+yarn test packages/sdk/src/streams.test.ts
+
+# Debug with logging
+RUN_ENV=multi just t-debug
+```
+
+#### CI Debugging Tools
+- **SSH Access**: Add `ssh` label to PR for tmate session
+- **Log Analysis**: Structured logging with OpenTelemetry
+- **Performance Profiling**: Built-in Go profiling tools
+
+### Continuous Integration Integration
+
+Our testing strategy integrates seamlessly with the CI pipeline:
+
+1. **Parallel Execution**: Different test types run simultaneously
+2. **Selective Execution**: Skip unnecessary tests for faster feedback
+3. **Environment Simulation**: Mirror production configurations
+4. **Failure Analysis**: Detailed reporting and debugging tools
+
+### Next Steps
+
+- **CI Pipeline Architecture**: See [CI Pipeline Guide](/development/ci-pipeline)
+- **Multi-Node Testing**: See [Multi-Node Testing](/development/multi-node-testing)
+- **Local Development**: See [Local Development Setup](/development/local-development) 
