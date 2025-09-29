@@ -61,6 +61,14 @@ jobs:
                   IFS=',' read -ra AMD64_ARRAY <<< "$AMD64_TAGS"
                   IFS=',' read -ra ARM64_ARRAY <<< "$ARM64_TAGS"
 
+                  # Validate arrays have matching lengths
+                  if [ "${#AMD64_ARRAY[@]}" -ne "${#ARM64_ARRAY[@]}" ]; then
+                    echo "ERROR: AMD64 and ARM64 tag counts don't match"
+                    echo "AMD64 tags (${#AMD64_ARRAY[@]}): ${AMD64_ARRAY[@]}"
+                    echo "ARM64 tags (${#ARM64_ARRAY[@]}): ${ARM64_ARRAY[@]}"
+                    exit 1
+                  fi
+
                   # For each arch tag pair, create a manifest
                   for i in "${!AMD64_ARRAY[@]}"; do
                     AMD64_TAG="${AMD64_ARRAY[$i]}"
