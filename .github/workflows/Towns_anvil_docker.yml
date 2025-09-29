@@ -20,77 +20,32 @@ on:
     workflow_dispatch: # A build was manually requested
 
 env:
-    ECR_REGISTRY_ALIAS: h5v6m2x1
-    ECR_REPOSITORY: towns-anvil
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
-    # Generate tags once for all architectures
+    # Generate BUILD_HASH for Towns Anvil
     generate-tags:
-        name: Generate Docker tags
+        name: Generate build hash
         runs-on: ubuntu-latest
         permissions:
             contents: read
         outputs:
-            docker_tags: ${{ steps.generate-tags.outputs.DOCKER_TAGS }}
             build_hash: ${{ steps.generate-tags.outputs.BUILD_HASH }}
-            ecr_registry: ${{ steps.login-aws-ecr.outputs.registry }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
             - uses: taiki-e/install-action@just
 
-            - name: Setup AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
-
-            - name: Login to Amazon ECR
-              id: login-aws-ecr
-              uses: aws-actions/amazon-ecr-login@v2
-              with:
-                  registry-type: 'public'
-
-            - name: Generate tags for multi-arch build
+            - name: Generate build hash for Towns Anvil
               id: generate-tags
-              env:
-                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
               run: |
-                  COMMIT_HASH=$(git describe --tags --always --dirty)
-                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-                  # Compute the hash of all files that affect the Docker build - this is the primary tag
+                  # Compute the hash of all files that affect the Docker build
                   cd core
                   BUILD_HASH=$(just _get-docker-build-hash)
                   cd ..
-                  TAGS=($BUILD_HASH)
 
-                  # Also tag with commit hash for traceability
-                  TAGS+=($COMMIT_HASH)
-
-                  # If this is a push to main, we also tag the image as latest
-                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
-                    TAGS+=(latest)
-                  fi
-
-                  echo "Building image with the following tags: ${TAGS[@]}"
                   echo "Build hash: $BUILD_HASH"
-                  echo "Commit hash: $COMMIT_HASH"
-                  echo "Branch: $BRANCH"
-
-                  # Create comma-separated tags for build-push-action
-                  DOCKER_TAGS=""
-                  for tag in "${TAGS[@]}"; do
-                    if [ -n "$DOCKER_TAGS" ]; then
-                      DOCKER_TAGS="$DOCKER_TAGS,"
-                    fi
-                    DOCKER_TAGS="$DOCKER_TAGS$ECR_REGISTRY/${{ env.ECR_REGISTRY_ALIAS }}/${{ env.ECR_REPOSITORY }}:$tag"
-                  done
-
-                  echo "DOCKER_TAGS=$DOCKER_TAGS" >> $GITHUB_OUTPUT
                   echo "BUILD_HASH=$BUILD_HASH" >> $GITHUB_OUTPUT
 
     # Build AMD64 image on native runner
@@ -102,9 +57,12 @@ jobs:
             architecture: amd64
             platform: linux/amd64
             runner: ubuntu-latest
-            docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
             dockerfile: ./packages/anvil-docker/Dockerfile
             cache_scope_prefix: towns-anvil
+            append_arch_suffix: true
+            extra_tags: ${{ needs.generate-tags.outputs.build_hash }}
         secrets: inherit
 
     # Build ARM64 image on native runner
@@ -116,90 +74,25 @@ jobs:
             architecture: arm64
             platform: linux/arm64
             runner: ubuntu-24.04-arm
-            docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
             dockerfile: ./packages/anvil-docker/Dockerfile
             cache_scope_prefix: towns-anvil
+            append_arch_suffix: true
+            extra_tags: ${{ needs.generate-tags.outputs.build_hash }}
         secrets: inherit
 
     # Merge architecture-specific images into multi-arch manifest
     merge-manifest:
-        name: Create multi-arch manifest
         needs: [generate-tags, build-amd64, build-arm64]
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-        steps:
-            - name: Setup AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
-
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
-
-            - name: Login to Amazon ECR
-              uses: aws-actions/amazon-ecr-login@v2
-              with:
-                  registry-type: 'public'
-
-            - name: Create and push multi-arch manifest
-              env:
-                  ECR_REGISTRY: ${{ needs.generate-tags.outputs.ecr_registry }}
-                  AMD64_TAGS: ${{ needs.build-amd64.outputs.arch_tags }}
-                  ARM64_TAGS: ${{ needs.build-arm64.outputs.arch_tags }}
-                  DOCKER_TAGS: ${{ needs.generate-tags.outputs.docker_tags }}
-              run: |
-                  echo "Creating multi-arch manifest from:"
-                  echo "AMD64 tags: $AMD64_TAGS"
-                  echo "ARM64 tags: $ARM64_TAGS"
-                  echo "Target tags: $DOCKER_TAGS"
-
-                  # Convert comma-separated tags to arrays
-                  IFS=',' read -ra AMD64_ARRAY <<< "$AMD64_TAGS"
-                  IFS=',' read -ra ARM64_ARRAY <<< "$ARM64_TAGS"
-                  IFS=',' read -ra TARGET_ARRAY <<< "$DOCKER_TAGS"
-
-                  # For each target tag, create a manifest from the corresponding arch-specific tags
-                  for i in "${!TARGET_ARRAY[@]}"; do
-                    TARGET_TAG="${TARGET_ARRAY[$i]}"
-                    AMD64_TAG="${AMD64_ARRAY[$i]}"
-                    ARM64_TAG="${ARM64_ARRAY[$i]}"
-
-                    echo "Creating manifest for $TARGET_TAG from $AMD64_TAG and $ARM64_TAG"
-
-                    docker buildx imagetools create \
-                      --tag "$TARGET_TAG" \
-                      "$AMD64_TAG" \
-                      "$ARM64_TAG"
-                  done
-
-            - name: Validate multi-arch manifest
-              env:
-                  ECR_REGISTRY: ${{ needs.generate-tags.outputs.ecr_registry }}
-                  BUILD_HASH: ${{ needs.generate-tags.outputs.build_hash }}
-              run: |
-                  echo "Validating multi-arch manifest for build hash: $BUILD_HASH"
-                  IMAGE_URL="$ECR_REGISTRY/${{ env.ECR_REGISTRY_ALIAS }}/${{ env.ECR_REPOSITORY }}:$BUILD_HASH"
-
-                  # Inspect the manifest to verify both architectures are present
-                  MANIFEST_PLATFORMS=$(docker buildx imagetools inspect --format '{{range .Manifest.Manifests}}{{printf "%s/%s\n" .Platform.OS .Platform.Architecture}}{{end}}' "$IMAGE_URL")
-                  echo "Manifest platforms:"
-                  echo "$MANIFEST_PLATFORMS"
-
-                  # Check for both required platforms
-                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/amd64$'; then
-                    echo "❌ ERROR: linux/amd64 platform not found in manifest"
-                    exit 1
-                  fi
-
-                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/arm64$'; then
-                    echo "❌ ERROR: linux/arm64 platform not found in manifest"
-                    exit 1
-                  fi
-
-                  echo "✅ SUCCESS: Multi-arch manifest contains both linux/amd64 and linux/arm64"
+        uses: ./.github/workflows/_create-docker-manifest.yml
+        with:
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
+            amd64_tags: ${{ needs.build-amd64.outputs.arch_tags }}
+            arm64_tags: ${{ needs.build-arm64.outputs.arch_tags }}
+            validation_tag: ${{ needs.generate-tags.outputs.build_hash }}
+        secrets: inherit
 
     # Slack notification on failure
     notify-failure:

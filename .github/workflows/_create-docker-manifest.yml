@@ -1,0 +1,104 @@
+# Reusable workflow for creating and validating multi-architecture Docker manifests
+name: 'Create Docker Multi-Arch Manifest'
+
+on:
+    workflow_call:
+        inputs:
+            ecr_registry_alias:
+                description: 'ECR registry alias'
+                required: true
+                type: string
+            ecr_repository:
+                description: 'ECR repository name'
+                required: true
+                type: string
+            amd64_tags:
+                description: 'Comma-separated AMD64 tags from build'
+                required: true
+                type: string
+            arm64_tags:
+                description: 'Comma-separated ARM64 tags from build'
+                required: true
+                type: string
+            validation_tag:
+                description: 'Specific tag to validate (e.g., commit hash)'
+                required: true
+                type: string
+
+jobs:
+    merge-manifest:
+        name: Create multi-arch manifest
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - name: Setup AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Create and push multi-arch manifest
+              env:
+                  AMD64_TAGS: ${{ inputs.amd64_tags }}
+                  ARM64_TAGS: ${{ inputs.arm64_tags }}
+              run: |
+                  echo "Creating multi-arch manifest from:"
+                  echo "AMD64 tags: $AMD64_TAGS"
+                  echo "ARM64 tags: $ARM64_TAGS"
+
+                  # Convert comma-separated tags to arrays
+                  IFS=',' read -ra AMD64_ARRAY <<< "$AMD64_TAGS"
+                  IFS=',' read -ra ARM64_ARRAY <<< "$ARM64_TAGS"
+
+                  # For each arch tag pair, create a manifest
+                  for i in "${!AMD64_ARRAY[@]}"; do
+                    AMD64_TAG="${AMD64_ARRAY[$i]}"
+                    ARM64_TAG="${ARM64_ARRAY[$i]}"
+
+                    # Extract the target tag by removing the architecture suffix
+                    TARGET_TAG="${AMD64_TAG%-amd64}"
+
+                    echo "Creating manifest for $TARGET_TAG from $AMD64_TAG and $ARM64_TAG"
+
+                    docker buildx imagetools create \
+                      --tag "$TARGET_TAG" \
+                      "$AMD64_TAG" \
+                      "$ARM64_TAG"
+                  done
+
+            - name: Validate multi-arch manifest
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  VALIDATION_TAG: ${{ inputs.validation_tag }}
+              run: |
+                  echo "Validating multi-arch manifest for tag: $VALIDATION_TAG"
+                  IMAGE_URL="$ECR_REGISTRY/${{ inputs.ecr_registry_alias }}/${{ inputs.ecr_repository }}:$VALIDATION_TAG"
+
+                  # Inspect the manifest to verify both architectures are present
+                  MANIFEST_PLATFORMS=$(docker buildx imagetools inspect --format '{{range .Manifest.Manifests}}{{printf "%s/%s\n" .Platform.OS .Platform.Architecture}}{{end}}' "$IMAGE_URL")
+                  echo "Manifest platforms:"
+                  echo "$MANIFEST_PLATFORMS"
+
+                  # Check for both required platforms
+                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/amd64$'; then
+                    echo "❌ ERROR: linux/amd64 platform not found in manifest"
+                    exit 1
+                  fi
+
+                  if ! echo "$MANIFEST_PLATFORMS" | grep -q '^linux/arm64$'; then
+                    echo "❌ ERROR: linux/arm64 platform not found in manifest"
+                    exit 1
+                  fi
+
+                  echo "✅ SUCCESS: Multi-arch manifest contains both linux/amd64 and linux/arm64"
