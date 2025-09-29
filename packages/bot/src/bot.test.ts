@@ -718,7 +718,7 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
     })
 
-    it.only('should be able to get channel inception event', async () => {
+    it('should be able to get channel inception event', async () => {
         const inception = await bot.snapshot.getChannelInception(channelId)
         expect(inception?.spaceId).toBeDefined()
     })
