@@ -62,6 +62,7 @@ jobs:
                 env:
                     POSTGRES_USER: postgres
                     POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: river
                     POSTGRES_INITDB_ARGS: >-
                         -c shared_buffers=2GB
                         -c effective_cache_size=6GB
@@ -87,8 +88,6 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
                     --name river_postgres_container
-                volumes:
-                    - ./core/scripts/sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql:ro
         steps:
             - &archive_river_node_logs_and_settings
               name: Archive River Node Logs and Settings
