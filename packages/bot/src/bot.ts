@@ -42,6 +42,8 @@ import {
     Tags,
     MessageInteractionType,
     type SlashCommand,
+    type SnapshotCaseType,
+    type Snapshot,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -54,6 +56,7 @@ import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
+
 import {
     createClient as createViemClient,
     http,
@@ -63,6 +66,7 @@ import {
     type Client as ViemClient,
     type ContractFunctionArgs,
     type ContractFunctionName,
+    type Prettify,
 } from 'viem'
 import {
     readContract,
@@ -72,6 +76,7 @@ import {
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
+import { SnapshotGetter } from './snapshot-getter'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -216,6 +221,7 @@ export class Bot<
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
+    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
@@ -235,6 +241,7 @@ export class Bot<
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
         this.commands = commands
+        this.snapshot = clientV2.snapshot
     }
 
     async start() {
@@ -1040,6 +1047,26 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         return { txHash: receipt.transactionHash }
     }
 
+    const getChannelSettings = async (channelId: string) =>
+        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
+
+    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
+        Snapshot['content'],
+        { case: TCase }
+    >['value']
+
+    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
+        streamId: string,
+        snapshotCase: TCase,
+        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
+    ): Promise<TResult | undefined> => {
+        const stream = await client.getStream(streamId)
+        if (stream.snapshot.content.case === snapshotCase) {
+            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
+        }
+        return undefined
+    }
+
     return {
         // Is it those enough?
         // TODO: think about a web3 use case..
@@ -1072,6 +1099,9 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         checkPermission,
         ban,
         unban,
+        getChannelSettings,
+        getFromSnapshot,
+        snapshot: SnapshotGetter(client.getStream),
     }
 }
 

@@ -131,6 +131,13 @@ Methods available on the `handler` parameter in event callbacks:
 - `writeContract(tx)` - Execute contract write
 - `readContract(parameters)` - Read contract state
 
+**Snapshot Data Access:**
+- `bot.snapshot.getChannelInception(streamId)` - Get channel settings and inception data
+- `bot.snapshot.getUserMemberships(streamId)` - Get user's space memberships
+- `bot.snapshot.getSpaceMemberships(streamId)` - Get space membership list
+- Note: Snapshot data may be outdated - it's a point-in-time view
+- Uses dynamic Proxy-based getters for type-safe access
+
 ### Encryption & Decryption
 
 The bot framework handles E2E encryption automatically:

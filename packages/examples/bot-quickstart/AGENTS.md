@@ -692,6 +692,23 @@ const tx = await handler.writeContract({
 })
 ```
 
+### Snapshot Data Access
+
+The bot provides type-safe access to stream snapshot data through `bot.snapshot`:
+
+```typescript
+// Get channel settings and inception data
+const inception = await bot.snapshot.getChannelInception(channelId)
+const settings = inception?.channelSettings
+
+// Get user memberships
+const memberships = await bot.snapshot.getUserMemberships(userId)
+
+// Get space membership list
+const members = await bot.snapshot.getSpaceMemberships(spaceId)
+```
+Note: Snapshot data may be outdated - it's a point-in-time view
+
 ## Storage Strategy Decision Matrix
 
 | Hosting Type | Can Use In-Memory? | Recommended Storage | Why |

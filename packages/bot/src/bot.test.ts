@@ -91,6 +91,12 @@ describe('Bot', { sequential: true }, () => {
         await shouldRegisterBotInAppRegistry()
         await shouldRunBotServerAndRegisterWebhook()
         ethersProvider = makeBaseProvider(townsConfig)
+        await bobClient.riverConnection.call((client) =>
+            Promise.all([
+                client.debugForceMakeMiniblock(spaceId, { forceSnapshot: true }),
+                client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
+            ]),
+        )
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -710,6 +716,11 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
+    })
+
+    it('should be able to get channel inception event', async () => {
+        const inception = await bot.snapshot.getChannelInception(channelId)
+        expect(inception?.spaceId).toBeDefined()
     })
 
     it.fails(
