@@ -1,4 +1,5 @@
 name: Continuous Integration
+
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
@@ -9,6 +10,7 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
+
 on:
     schedule:
         # Run every hour
@@ -49,6 +51,42 @@ on:
                 type: boolean
 
 jobs:
+    _common_settings_0:
+        runs-on: ubuntu-latest
+        # never runs, only hosts anchors
+        if: ${{ false }}
+        services: &common_services
+            postgres-core:
+                image: postgres:17
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_INITDB_ARGS: >-
+                        -c shared_buffers=2GB
+                        -c effective_cache_size=6GB
+                        -c maintenance_work_mem=512MB
+                        -c work_mem=32MB
+                        -c wal_buffers=16MB
+                        -c max_connections=1000
+                        -c max_worker_processes=4
+                        -c max_parallel_workers=4
+                        -c max_parallel_workers_per_gather=2
+                        -c min_wal_size=1GB
+                        -c max_wal_size=4GB
+                        -c checkpoint_completion_target=0.9
+                        -c default_statistics_target=200
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --cpus 3
+                    --memory 8G
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+
     Build_Anvil_Docker:
         runs-on: ubuntu-x64-16core
         outputs:
@@ -340,22 +378,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -512,22 +535,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -682,22 +690,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -843,37 +836,7 @@ jobs:
         runs-on: ubuntu-x64-16core
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                    POSTGRES_INITDB_ARGS: >-
-                        -c shared_buffers=2GB
-                        -c effective_cache_size=6GB
-                        -c maintenance_work_mem=512MB
-                        -c work_mem=32MB
-                        -c wal_buffers=16MB
-                        -c max_connections=1000
-                        -c max_worker_processes=4
-                        -c max_parallel_workers=4
-                        -c max_parallel_workers_per_gather=2
-                        -c min_wal_size=1GB
-                        -c max_wal_size=4GB
-                        -c checkpoint_completion_target=0.9
-                        -c default_statistics_target=200
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --cpus 3
-                    --memory 8G
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 

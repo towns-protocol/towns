@@ -1,5 +1,13 @@
 #!/bin/bash
 set -euo pipefail
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ..
+
+if ! which act >/dev/null 2>&1; then
+  echo "Error: 'act' is not installed. Please install it with:"
+  echo "  brew install act"
+  exit 1
+fi
 
 # Script to run GitHub CI locally using act
 
