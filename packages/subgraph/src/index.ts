@@ -901,6 +901,9 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
     const blockTimestamp = event.block.timestamp
 
     try {
+        // Calculate duration: expiresAt - NOW()
+        const duration = event.args.expiresAt - blockTimestamp
+
         // Note: If a user reconfigures a subscription with the same entityId,
         // this will overwrite the previous subscription record (matches contract behavior)
         await context.db
@@ -911,7 +914,9 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 space: event.args.space,
                 tokenId: event.args.tokenId,
                 totalSpent: 0n,
+                duration: duration,
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 lastRenewalTime: null, // Will be set on first renewal
                 active: true,
                 createdAt: blockTimestamp,
@@ -920,7 +925,9 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
             .onConflictDoUpdate({
                 space: event.args.space,
                 tokenId: event.args.tokenId,
+                duration: duration,
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 active: true,
                 updatedAt: blockTimestamp,
             })
@@ -996,10 +1003,15 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
     const blockTimestamp = event.block.timestamp
 
     try {
+        // Calculate duration: expiresAt - NOW()
+        const duration = event.args.expiresAt - blockTimestamp
+
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
+                duration: duration,
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 lastRenewalTime: blockTimestamp,
                 updatedAt: blockTimestamp,
             })
@@ -1091,6 +1103,7 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
+                renewalAmount: event.args.amount,
                 totalSpent: event.args.totalSpent,
                 updatedAt: blockTimestamp,
             })
