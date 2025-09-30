@@ -6,13 +6,10 @@ import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
 import {IMembershipPricing} from "src/spaces/facets/membership/pricing/IMembershipPricing.sol";
 
 // libraries
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 
 // contracts
-// debuggging
-import {console} from "forge-std/console.sol";
 
 library MembershipPlatformUtils {
     using CustomRevert for bytes4;
