@@ -43,6 +43,7 @@ RUN adduser -D riveruser
 COPY docker/run.sh /etc/run.sh
 COPY --from=builder /bin/river_node /usr/bin/river_node
 COPY --from=builder /bin/river_node_race /usr/bin/river_node_race
+COPY --from=builder /build/env /riveruser/river_node/env
 
 # Use setcap to allow the web server binary to bind to privileged ports
 RUN setcap 'cap_net_bind_service=+ep' /usr/bin/river_node
