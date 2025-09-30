@@ -37,7 +37,7 @@ jobs:
             ecr_registry: ${{ steps.login-aws-ecr.outputs.registry }}
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - uses: taiki-e/install-action@just
 
