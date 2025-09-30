@@ -16,8 +16,12 @@ on:
                 description: 'GitHub runner type'
                 required: true
                 type: string
-            docker_tags:
-                description: 'Comma-separated list of tags'
+            ecr_registry_alias:
+                description: 'ECR registry alias'
+                required: true
+                type: string
+            ecr_repository:
+                description: 'ECR repository name'
                 required: true
                 type: string
             dockerfile:
@@ -38,12 +42,26 @@ on:
                 description: 'Docker build arguments (key=value, one per line)'
                 required: false
                 type: string
+            tag_latest_on_main:
+                description: 'Whether to tag as latest on main push'
+                required: false
+                type: boolean
+                default: true
+            extra_tags:
+                description: 'Additional tags beyond commit hash (comma-separated)'
+                required: false
+                type: string
+            append_arch_suffix:
+                description: 'Whether to append architecture suffix to tags'
+                required: false
+                type: boolean
+                default: false
         outputs:
             image_digest:
                 description: 'Digest of the built image'
                 value: ${{ jobs.build.outputs.digest }}
             arch_tags:
-                description: 'Architecture-specific tags'
+                description: 'Final tags used for the image'
                 value: ${{ jobs.build.outputs.arch_tags }}
 
 jobs:
@@ -56,7 +74,7 @@ jobs:
 
         outputs:
             digest: ${{ steps.build-push.outputs.digest }}
-            arch_tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}
+            arch_tags: ${{ steps.generate-tags.outputs.arch_tags }}
 
         steps:
             - name: Checkout
@@ -69,38 +87,70 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
-
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2
               with:
                   registry-type: 'public'
 
-            - name: Generate architecture-specific tags
-              id: generate-arch-tags
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Generate tags
+              id: generate-tags
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
               run: |
-                  # Convert comma-separated tags to architecture-specific tags
-                  ARCH_TAGS=""
-                  IFS=',' read -ra TAGS_ARRAY <<< "${{ inputs.docker_tags }}"
+                  echo "Generating tags from ECR inputs"
+                  COMMIT_HASH=$(git rev-parse --short HEAD)
+                  BRANCH="${{ github.ref_name }}"
 
-                  for tag in "${TAGS_ARRAY[@]}"; do
-                    # Extract the tag part after the last colon
-                    TAG_NAME="${tag##*:}"
-                    # Rebuild with arch suffix
-                    REPO_PART="${tag%:*}"
-                    ARCH_TAG="$REPO_PART:$TAG_NAME-${{ inputs.architecture }}"
+                  # Start with commit hash
+                  TAGS=($COMMIT_HASH)
 
-                    if [ -n "$ARCH_TAGS" ]; then
-                      ARCH_TAGS="$ARCH_TAGS,$ARCH_TAG"
+                  # Add latest tag if on main push and enabled
+                  if [ "${{ inputs.tag_latest_on_main }}" == "true" ] && [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then
+                    TAGS+=(latest)
+                  fi
+
+                  # Add extra tags if provided
+                  if [ -n "${{ inputs.extra_tags }}" ]; then
+                    IFS=',' read -ra EXTRA_TAGS_ARRAY <<< "${{ inputs.extra_tags }}"
+                    for extra_tag in "${EXTRA_TAGS_ARRAY[@]}"; do
+                      # Trim whitespace
+                      extra_tag=$(echo "$extra_tag" | xargs)
+                      if [ -n "$extra_tag" ]; then
+                        TAGS+=($extra_tag)
+                      fi
+                    done
+                  fi
+
+                  echo "Building image with base tags: ${TAGS[@]}"
+                  echo "Commit hash: $COMMIT_HASH"
+                  echo "Branch: $BRANCH"
+
+                  # Generate final tags with ECR paths
+                  FINAL_TAGS=""
+
+                  for tag in "${TAGS[@]}"; do
+                    # Create base ECR tag
+                    ECR_TAG="$ECR_REGISTRY/${{ inputs.ecr_registry_alias }}/${{ inputs.ecr_repository }}:$tag"
+
+                    # Append architecture suffix if needed
+                    if [ "${{ inputs.append_arch_suffix }}" == "true" ]; then
+                      ECR_TAG="$ECR_TAG-${{ inputs.architecture }}"
+                    fi
+
+                    # Add to final tags
+                    if [ -n "$FINAL_TAGS" ]; then
+                      FINAL_TAGS="$FINAL_TAGS,$ECR_TAG"
                     else
-                      ARCH_TAGS="$ARCH_TAG"
+                      FINAL_TAGS="$ECR_TAG"
                     fi
                   done
 
-                  echo "Architecture-specific tags: $ARCH_TAGS"
-                  echo "arch_tags=$ARCH_TAGS" >> $GITHUB_OUTPUT
+                  echo "Final tags for build: $FINAL_TAGS"
+                  echo "arch_tags=$FINAL_TAGS" >> $GITHUB_OUTPUT
 
             - name: Build and push ${{ inputs.architecture }} image
               id: build-push
@@ -110,7 +160,7 @@ jobs:
                   file: ${{ inputs.dockerfile }}
                   platforms: ${{ inputs.platform }}
                   push: true
-                  tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}
+                  tags: ${{ steps.generate-tags.outputs.arch_tags }}
                   build-args: ${{ inputs.build_args }}
                   labels: |
                       org.opencontainers.image.source=https://github.com/${{ github.repository }}
@@ -124,4 +174,4 @@ jobs:
             - name: Output image info
               run: |
                   echo "Built ${{ inputs.architecture }} image with digest: ${{ steps.build-push.outputs.digest }}"
-                  echo "Tags: ${{ steps.generate-arch-tags.outputs.arch_tags }}"
+                  echo "Tags: ${{ steps.generate-tags.outputs.arch_tags }}"
