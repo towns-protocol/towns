@@ -9290,25 +9290,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll":
-  version: 0.0.0-use.local
-  resolution: "@towns-protocol/example-bot-ask-poll@workspace:packages/examples/bot-ask-poll"
-  dependencies:
-    "@connectrpc/connect-node": ^2.0.0
-    "@hono/node-server": ^1.14.0
-    "@towns-protocol/bot": "workspace:^"
-    "@types/node": ^20.14.8
-    "@typescript-eslint/eslint-plugin": ^8.29.0
-    "@typescript-eslint/parser": ^8.29.0
-    eslint: ^8.57.1
-    eslint-import-resolver-typescript: ^4.3.2
-    eslint-plugin-import-x: ^4.10.2
-    hono: ^4.7.11
-    tsx: ^4.7.1
-    typescript: ^5.8.2
-  languageName: unknown
-  linkType: soft
-
 "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart"
@@ -9326,26 +9307,6 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
     hono: ^4.7.11
-    typescript: ^5.8.2
-  languageName: unknown
-  linkType: soft
-
-"@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai":
-  version: 0.0.0-use.local
-  resolution: "@towns-protocol/example-bot-thread-ai@workspace:packages/examples/bot-thread-ai"
-  dependencies:
-    "@connectrpc/connect-node": ^2.0.0
-    "@hono/node-server": ^1.14.0
-    "@towns-protocol/bot": "workspace:^"
-    "@types/node": ^20.14.8
-    "@typescript-eslint/eslint-plugin": ^8.29.0
-    "@typescript-eslint/parser": ^8.29.0
-    eslint: ^8.57.1
-    eslint-import-resolver-typescript: ^4.3.2
-    eslint-plugin-import-x: ^4.10.2
-    hono: ^4.7.11
-    openai: ^5.7.0
-    tsx: ^4.7.1
     typescript: ^5.8.2
   languageName: unknown
   linkType: soft
@@ -24757,23 +24718,6 @@ __metadata:
     is-docker: ^2.1.1
     is-wsl: ^2.2.0
   checksum: 6388bfff21b40cb9bd8f913f9130d107f2ed4724ea81a8fd29798ee322b361ca31fa2cdfb491a5c31e43a3996cfe9566741238c7a741ada8d7af1cb78d85cf26
-  languageName: node
-  linkType: hard
-
-"openai@npm:^5.7.0":
-  version: 5.7.0
-  resolution: "openai@npm:5.7.0"
-  peerDependencies:
-    ws: ^8.18.0
-    zod: ^3.23.8
-  peerDependenciesMeta:
-    ws:
-      optional: true
-    zod:
-      optional: true
-  bin:
-    openai: bin/cli
-  checksum: 3f175ce520cc277fe14f9b0c6cd523e91e972b309db6d8457fb1d5d4b992c309312367eaacf0ab3ade4fbeeb97c39cdcdea3d7689f8c8f888ca57cef0c9fe547
   languageName: node
   linkType: hard
 
