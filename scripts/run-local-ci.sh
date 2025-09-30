@@ -93,7 +93,7 @@ TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file
 act "$EVENT_TYPE" -j "$JOB" --secret-file .env \
-  -P ubuntu-x64-16core=ghcr.io/catthehacker/ubuntu:act-latest \
+  -P blacksmith-16vcpu-ubuntu-2404=ghcr.io/catthehacker/ubuntu:act-latest \
   --container-architecture "$ARCH" \
   --eventpath event.json \
   --rm \

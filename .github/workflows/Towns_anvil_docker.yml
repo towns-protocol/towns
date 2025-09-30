@@ -9,9 +9,12 @@ on:
         paths:
             - '.github/workflows/Towns_anvil_docker.yml'
             - '.github/workflows/_build-docker-arch.yml'
-            - 'packages/contracts/**'
-            - 'scripts/deploy-contracts.sh'
-            - 'scripts/start-local-*.sh'
+            - 'packages/anvil-docker/**'
+            - 'packages/contracts/scripts/**'
+            - 'packages/contracts/src/**'
+            - 'scripts/deploy*contracts.sh'
+            - 'scripts/start-local-basechain.sh'
+            - 'scripts/start-local-riverchain.sh'
             - 'core/justfile'
 
     workflow_dispatch: # A build was manually requested
@@ -19,7 +22,6 @@ on:
 env:
     ECR_REGISTRY_ALIAS: h5v6m2x1
     ECR_REPOSITORY: towns-anvil
-    DOCKERFILE_PATH: ./packages/contracts/docker/Dockerfile
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
@@ -101,7 +103,7 @@ jobs:
             platform: linux/amd64
             runner: ubuntu-latest
             docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
-            dockerfile: ./packages/contracts/docker/Dockerfile
+            dockerfile: ./packages/anvil-docker/Dockerfile
             cache_scope_prefix: towns-anvil
         secrets: inherit
 
@@ -115,7 +117,7 @@ jobs:
             platform: linux/arm64
             runner: ubuntu-24.04-arm
             docker_tags: ${{ needs.generate-tags.outputs.docker_tags }}
-            dockerfile: ./packages/contracts/docker/Dockerfile
+            dockerfile: ./packages/anvil-docker/Dockerfile
             cache_scope_prefix: towns-anvil
         secrets: inherit
 

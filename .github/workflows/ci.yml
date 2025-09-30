@@ -88,7 +88,7 @@ jobs:
                     --name river_postgres_container
 
     Build_Anvil_Docker:
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         outputs:
             image_tag: ${{ steps.output.outputs.tag }}
             build_hash: ${{ steps.hash.outputs.hash }}
@@ -152,7 +152,7 @@ jobs:
               uses: docker/build-push-action@v6
               with:
                   context: .
-                  file: ./packages/contracts/docker/Dockerfile
+                  file: ./packages/anvil-docker/Dockerfile
                   tags: towns-anvil:${{ steps.hash.outputs.hash }}
                   outputs: type=docker,dest=/tmp/anvil.tar
                   cache-from: type=gha
@@ -163,7 +163,7 @@ jobs:
               if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
               run: |
                   docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
-                    -f ./packages/contracts/docker/Dockerfile .
+                    -f ./packages/anvil-docker/Dockerfile .
                   # No need to save to tar in act since the image is already in local Docker
 
             # Upload artifact in GitHub Actions (for both built and pulled images)
@@ -188,7 +188,7 @@ jobs:
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
 
@@ -375,7 +375,7 @@ jobs:
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
         services: *common_services
@@ -532,7 +532,7 @@ jobs:
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
         services: *common_services
@@ -687,7 +687,7 @@ jobs:
     Multinode_Ent_Legacy:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
         services: *common_services
@@ -833,7 +833,7 @@ jobs:
     Go_Tests:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
         services: *common_services
@@ -931,7 +931,7 @@ jobs:
     XChain_Integration:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_integration
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
 
         steps:
@@ -981,7 +981,7 @@ jobs:
                 XChain_Integration,
             ]
         if: failure()
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         steps:
             - name: Slack notification
               if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')

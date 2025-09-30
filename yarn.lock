@@ -9157,6 +9157,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@towns-protocol/anvil-docker@workspace:packages/anvil-docker":
+  version: 0.0.0-use.local
+  resolution: "@towns-protocol/anvil-docker@workspace:packages/anvil-docker"
+  dependencies:
+    "@towns-protocol/contracts": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/prettier-config": "workspace:^"
+    "@towns-protocol/proto-source": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@towns-protocol/bot@workspace:^, @towns-protocol/bot@workspace:packages/bot":
   version: 0.0.0-use.local
   resolution: "@towns-protocol/bot@workspace:packages/bot"

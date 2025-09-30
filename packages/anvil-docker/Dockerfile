@@ -72,6 +72,7 @@ RUN mkdir -p packages/generated/deployments
 RUN yarn workspaces focus @towns-protocol/contracts && yarn cache clean
 
 # Copy rest of the project files
+COPY ./packages/anvil-docker/scripts packages/anvil-docker/scripts
 COPY ./packages/contracts packages/contracts
 COPY ./packages/prettier-config packages/prettier-config
 COPY ./scripts scripts
@@ -79,7 +80,7 @@ COPY ./core/justfile core/justfile
 COPY ./core/env/local core/env/local
 
 # Setup anvils and deploy contracts
-RUN bash ./packages/contracts/docker/setup.sh && sleep 5
+RUN bash ./packages/anvil-docker/scripts/setup.sh && sleep 5
 
 # ==========================================
 # Stage 2: Runtime - Minimal runtime image
@@ -115,7 +116,7 @@ COPY --from=builder /app/local_dev local_dev
 RUN mkdir -p scripts
 
 # Copy minimal scripts needed for runtime
-COPY --from=builder /app/packages/contracts/docker/run.sh run.sh
+COPY --from=builder /app/packages/anvil-docker/scripts/run.sh run.sh
 COPY --from=builder /app/scripts/start-local-basechain.sh scripts/start-local-basechain.sh
 COPY --from=builder /app/scripts/start-local-riverchain.sh scripts/start-local-riverchain.sh
 
