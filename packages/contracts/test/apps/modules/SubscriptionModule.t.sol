@@ -31,7 +31,8 @@ contract SubscriptionModuleTest is ModulesBase {
             params.entityId,
             params.space,
             params.tokenId,
-            params.nextRenewalTime
+            params.nextRenewalTime,
+            123 // g please replace with something sensible
         );
 
         uint32 entityId = _installSubscriptionModule(userAccount, params);
