@@ -88,7 +88,15 @@ jobs:
                     --health-retries 5
                     --name river_postgres_container
         steps:
-            - run: echo "Nothing to do"
+            - &archive_river_node_logs_and_settings
+              name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/run_files/
+                      !./core/**/bin/**
 
     Build_Anvil_Docker:
         runs-on: blacksmith-16vcpu-ubuntu-2404
@@ -508,14 +516,7 @@ jobs:
             - name: Run Stream Metadata Tests (without entitlements)
               run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent:
         permissions: write-all
@@ -648,14 +649,7 @@ jobs:
             - name: Run Bot Uber Test (with entitlements)
               run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent_Legacy:
         permissions: write-all
@@ -779,14 +773,7 @@ jobs:
             - name: Run River Tests Against Legacy Spaces (with entitlements)
               run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Go_Tests:
         permissions: write-all
@@ -878,13 +865,7 @@ jobs:
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'go-test-logs-${{ github.job }}'
-                  path: |
-                      ./core/run_files/test_logs/
+            - *archive_river_node_logs_and_settings
 
     XChain_Integration:
         permissions: write-all
