@@ -24,7 +24,7 @@ This is done to save space on the node.
 
 Snapshots are trimmed according to on-chain settings.
 
-Since Stream Trimming requires snapshot to be present, not all historical snapshots 
+Since Stream Trimming requires snapshot to be present, not all historical snapshots
 are deleted, some are kept so stream trimming can be performed.
 
 ## Forward Reconciliation
@@ -59,45 +59,12 @@ Streams that are slightly behind should be reconciled with forward reconciliatio
 backwards reconciliation should be used. There should be on-chain settings to control which stream
 should be reconciled with which method.
 
-## Already Implemented Features
+## Implementation References
 
-- [PR #3550](https://github.com/towns-protocol/towns/pull/3550): **feat: implement ReinitializeStreamStorage for PostgreSQL storage**
-  - Adds `ReinitializeStreamStorage` method to create or update stream storage with miniblocks
-  - Enables storage layer to handle non-contiguous miniblock sequences
-  - Foundation for backward reconciliation support
-
-- [PR #3568](https://github.com/towns-protocol/towns/pull/3568): **feat: add WritePrecedingMiniblocks for backfilling gaps in storage**
-  - Implements `WritePrecedingMiniblocks` to backfill miniblock gaps during reconciliation
-  - Allows insertion of historical miniblocks before existing ones
-  - Essential for backward reconciliation gap filling
-
-- [PR #3571](https://github.com/towns-protocol/towns/pull/3571): **feat: extend GetStream RPC for backward stream reconciliation**
-  - Extends `GetStream` RPC with `GetResetStreamAndCookieWithPrecedingMiniblocks`
-  - Returns current stream state with configurable number of preceding miniblocks
-  - Enables streams to become operational quickly during backward reconciliation
-
-- [PR #3584](https://github.com/towns-protocol/towns/pull/3584): **refactor: simplify snapshot handling in miniblocks**
-  - Refactors snapshot handling logic in the miniblocks system
-  - Improves code clarity and maintainability for snapshot-related operations
-  - Prepares codebase for backward reconciliation implementation
-
-- [PR #3621](https://github.com/towns-protocol/towns/pull/3621): **feat: update GetMiniblocks API for potential gaps in miniblock sequence**
-  - Implements backwards reconciliation for GetMiniblocks API to handle missing miniblocks
-  - Adds new error code `Err_MINIBLOCKS_NOT_FOUND` to distinguish between storage failures and missing miniblocks
-  - Handles three scenarios: non-forwarded requests (retry from remote), forwarded requests (return error), and non-local streams (forward with error handling)
-  - Includes comprehensive test coverage for gap handling across multiple replicas
-
-- [PR #3630](https://github.com/towns-protocol/towns/pull/3630): **feat: add StreamBackwardsReconciliationThreshold on-chain setting**
-  - Adds on-chain configuration setting to control stream synchronization strategies
-  - Default threshold set to 50 miniblocks
-  - Determines reconciliation method: backwards reconciliation if stream is behind > threshold, forward reconciliation if ≤ threshold
-  - Preparatory work for future stream reconciliation logic implementation
-
-## Remaining TODOs
-
-- [ ] Implement backward reconciliation logic in @core/node/events
-
-
-
-
-
+- **Reconciler orchestration**: `core/node/events/stream_reconciler.go:103` switches between forward and backward modes using the on-chain threshold, then invokes backwards reinitialization (`core/node/events/stream_reconciler.go:192`) and the gap backfill pass (`core/node/events/stream_reconciler.go:273`).
+- **Remote reinitialization and backfill**: `core/node/events/stream_reconciler.go:241` pulls the latest stream state from a peer via `RemoteMiniblockProvider.GetStream`, while page-wise backfill uses `backfillPageFromSinglePeer` to stream miniblocks and persist them locally (`core/node/events/stream_reconciler.go:380`). Stream reinitialization ultimately calls `Stream.reinitialize` to reset cache state (`core/node/events/stream.go:1203`) and `PostgresStreamStore.ReinitializeStreamStorage` / `reinitializeStreamStorageTx` to replace persisted history (`core/node/storage/pg_stream_store.go:2680`, `core/node/storage/pg_stream_store.go:2721`).
+- **Gap detection helper**: `core/node/events/range_utils.go:14` computes missing miniblock ranges that backwards reconciliation needs to request from remotes.
+- **Storage support**: `core/node/storage/pg_stream_store.go:1048` defines `WritePrecedingMiniblocks`, validating continuity before bulk inserting older miniblocks uncovered during backfill.
+- **Configuration knobs**: The backwards reconciliation threshold is exposed through `StreamBackwardsReconciliationThreshold` (`core/node/crypto/config.go:103`) with a default of 50 miniblocks (`core/node/crypto/config.go:339`); the effective history window used for backfills comes from `StreamHistoryMiniblocks.ForType` (`core/node/crypto/config.go:311`).
+- **RPC fallback for trimmed history**: `core/node/rpc/forwarder.go:300` retries `GetMiniblocks` on remote replicas when local storage reports `MINIBLOCKS_STORAGE_FAILURE`, enabling clients to read gaps that were trimmed or not yet backfilled (`core/node/rpc/get_miniblocks_test.go:613`).
+- **Test coverage**: Behavioural tests in `core/node/events/stream_reconciler_test.go:20` exercise forward vs backward selection and gap backfill flows, while storage edge cases for backfilling are covered in `core/node/storage/pg_stream_store_preceding_test.go:15`.
