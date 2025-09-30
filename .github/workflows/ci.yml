@@ -1,4 +1,5 @@
 name: Continuous Integration
+
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
@@ -9,6 +10,7 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
+
 on:
     schedule:
         # Run every hour
@@ -49,6 +51,54 @@ on:
                 type: boolean
 
 jobs:
+    # This job is never run and is used as template for yaml anchors.
+    Settings_Template:
+        runs-on: blacksmith-ubuntu-latest
+        # never runs, only hosts anchors
+        if: ${{ false }}
+        services: &common_services
+            postgres-core:
+                image: postgres:17
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: river
+                    POSTGRES_INITDB_ARGS: >-
+                        -c shared_buffers=2GB
+                        -c effective_cache_size=6GB
+                        -c maintenance_work_mem=512MB
+                        -c work_mem=32MB
+                        -c wal_buffers=16MB
+                        -c max_connections=1000
+                        -c max_worker_processes=4
+                        -c max_parallel_workers=4
+                        -c max_parallel_workers_per_gather=2
+                        -c min_wal_size=1GB
+                        -c max_wal_size=4GB
+                        -c checkpoint_completion_target=0.9
+                        -c default_statistics_target=200
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --cpus 3
+                    --memory 8G
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+        steps:
+            - &archive_river_node_logs_and_settings
+              name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/run_files/
+                      !./core/**/bin/**
+
     Build_Anvil_Docker:
         runs-on: blacksmith-16vcpu-ubuntu-2404
         outputs:
@@ -340,22 +390,7 @@ jobs:
         runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -367,21 +402,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -458,13 +478,6 @@ jobs:
             - name: Print Yarn package versions
               run: yarn info --name-only --all
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -497,14 +510,7 @@ jobs:
             - name: Run Stream Metadata Tests (without entitlements)
               run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent:
         permissions: write-all
@@ -512,22 +518,7 @@ jobs:
         runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -539,21 +530,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -627,13 +603,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -667,14 +636,7 @@ jobs:
             - name: Run Bot Uber Test (with entitlements)
               run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent_Legacy:
         permissions: write-all
@@ -682,22 +644,7 @@ jobs:
         runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -709,21 +656,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -797,13 +729,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -828,14 +753,7 @@ jobs:
             - name: Run River Tests Against Legacy Spaces (with entitlements)
               run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Go_Tests:
         permissions: write-all
@@ -843,37 +761,7 @@ jobs:
         runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
-        services:
-            postgres-core:
-                image: postgres:17
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                    POSTGRES_INITDB_ARGS: >-
-                        -c shared_buffers=2GB
-                        -c effective_cache_size=6GB
-                        -c maintenance_work_mem=512MB
-                        -c work_mem=32MB
-                        -c wal_buffers=16MB
-                        -c max_connections=1000
-                        -c max_worker_processes=4
-                        -c max_parallel_workers=4
-                        -c max_parallel_workers_per_gather=2
-                        -c min_wal_size=1GB
-                        -c max_wal_size=4GB
-                        -c checkpoint_completion_target=0.9
-                        -c default_statistics_target=200
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --cpus 3
-                    --memory 8G
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -938,13 +826,6 @@ jobs:
               env:
                   USE_DOCKER_CHAINS: '1'
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -957,13 +838,7 @@ jobs:
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'go-test-logs-${{ github.job }}'
-                  path: |
-                      ./core/run_files/test_logs/
+            - *archive_river_node_logs_and_settings
 
     XChain_Integration:
         permissions: write-all
