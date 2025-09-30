@@ -52,7 +52,7 @@ on:
 
 jobs:
     # This job is never run and is used as template for yaml anchors.
-    _common_settings_0:
+    Settings_Template:
         runs-on: blacksmith-ubuntu-latest
         # never runs, only hosts anchors
         if: ${{ false }}
