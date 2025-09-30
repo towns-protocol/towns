@@ -464,7 +464,6 @@ type subscription {
   tokenId: BigInt!
   totalSpent: BigInt
   renewalAmount: BigInt
-  duration: BigInt
   lastRenewalTime: BigInt
   nextRenewalTime: BigInt!
   expiresAt: BigInt
@@ -584,14 +583,6 @@ input subscriptionFilter {
   renewalAmount_lt: BigInt
   renewalAmount_gte: BigInt
   renewalAmount_lte: BigInt
-  duration: BigInt
-  duration_not: BigInt
-  duration_in: [BigInt]
-  duration_not_in: [BigInt]
-  duration_gt: BigInt
-  duration_lt: BigInt
-  duration_gte: BigInt
-  duration_lte: BigInt
   lastRenewalTime: BigInt
   lastRenewalTime_not: BigInt
   lastRenewalTime_in: [BigInt]
