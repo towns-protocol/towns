@@ -87,6 +87,8 @@ jobs:
                     --health-timeout 5s
                     --health-retries 5
                     --name river_postgres_container
+                volumes:
+                    - ./core/scripts/sql/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql:ro
         steps:
             - &archive_river_node_logs_and_settings
               name: Archive River Node Logs and Settings
@@ -477,13 +479,6 @@ jobs:
             - name: Print Yarn package versions
               run: yarn info --name-only --all
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -608,13 +603,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-${{ github.ref_name}}
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
-
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
@@ -742,13 +730,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -845,13 +826,6 @@ jobs:
               run: just anvils
               env:
                   USE_DOCKER_CHAINS: '1'
-
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
