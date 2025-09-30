@@ -12,6 +12,9 @@ riverChain:
 architectContract:
     address: '0x9978c826d93883701522d2CA645d5436e5654252'
 
+appRegistryContract:
+    address: '0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE'
+
 # River contracts
 registryContract:
     address: '0x1298c03Fde548dc433a452573E36A713b38A0404'
