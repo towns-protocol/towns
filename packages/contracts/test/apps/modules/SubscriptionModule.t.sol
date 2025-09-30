@@ -11,8 +11,6 @@ import {Validator} from "../../../src/utils/libraries/Validator.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
-// debuggging
-import {console} from "forge-std/console.sol";
 
 contract SubscriptionModuleTest is ModulesBase {
     function test_onInstall(address user) public {
@@ -32,7 +30,7 @@ contract SubscriptionModuleTest is ModulesBase {
             params.space,
             params.tokenId,
             params.nextRenewalTime,
-            123 // g please replace with something sensible
+            params.expirationTime
         );
 
         uint32 entityId = _installSubscriptionModule(userAccount, params);
