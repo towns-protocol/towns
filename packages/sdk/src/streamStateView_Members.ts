@@ -335,7 +335,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'keySolicitation':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'key solicitation from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
+                    check(isDefined(stateMember), 'key solicitation from non-member')
                     this.solicitHelper.applySolicitation(
                         stateMember,
                         event.hashStr,
@@ -349,7 +352,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const userId = userIdFromAddress(payload.content.value.userAddress)
                     const stateMember = this.joined.get(userId)
-                    check(isDefined(stateMember), 'key fulfillment from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
+                    check(isDefined(stateMember), 'key fulfillment from non-member')
                     this.solicitHelper.applyFulfillment(
                         stateMember,
                         payload.content.value,
@@ -360,7 +366,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'displayName':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'displayName from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
+                    check(isDefined(stateMember), 'displayName from non-member')
                     stateMember.encryptedDisplayName = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
@@ -377,7 +386,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'username':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
-                    check(isDefined(stateMember), 'username from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
+                    check(isDefined(stateMember), 'username from non-member')
                     stateMember.encryptedUsername = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
                     })
@@ -393,7 +405,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             case 'ensAddress': {
                 const stateMember = this.joined.get(event.creatorUserId)
-                check(isDefined(stateMember), 'ensAddress from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                    break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                }
+                check(isDefined(stateMember), 'ensAddress from non-member')
                 this.memberMetadata.appendEnsAddress(
                     event.hashStr,
                     payload.content.value,
@@ -404,7 +419,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             }
             case 'nft': {
                 const stateMember = this.joined.get(event.creatorUserId)
-                check(isDefined(stateMember), 'nft from non-member') // note if you see this in an old stream it was fixed https://github.com/towns-protocol/towns/pull/3150
+                if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                    break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                }
+                check(isDefined(stateMember), 'nft from non-member')
                 this.memberMetadata.appendNft(
                     event.hashStr,
                     payload.content.value,
