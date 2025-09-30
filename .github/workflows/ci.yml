@@ -51,8 +51,9 @@ on:
                 type: boolean
 
 jobs:
+    # This job is never run and is used as template for yaml anchors.
     _common_settings_0:
-        runs-on: ubuntu-latest
+        runs-on: blacksmith-ubuntu-latest
         # never runs, only hosts anchors
         if: ${{ false }}
         services: &common_services
@@ -399,21 +400,6 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -556,21 +542,6 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Checkout code
               uses: actions/checkout@v4
 
@@ -704,21 +675,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
