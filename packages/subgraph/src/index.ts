@@ -912,6 +912,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 tokenId: event.args.tokenId,
                 totalSpent: 0n,
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 lastRenewalTime: null, // Will be set on first renewal
                 active: true,
                 createdAt: blockTimestamp,
@@ -921,6 +922,7 @@ ponder.on('SubscriptionModule:SubscriptionConfigured', async ({ event, context }
                 space: event.args.space,
                 tokenId: event.args.tokenId,
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 active: true,
                 updatedAt: blockTimestamp,
             })
@@ -1000,6 +1002,7 @@ ponder.on('SubscriptionModule:SubscriptionRenewed', async ({ event, context }) =
             .update(schema.subscription)
             .set({
                 nextRenewalTime: event.args.nextRenewalTime,
+                expiresAt: event.args.expiresAt,
                 lastRenewalTime: blockTimestamp,
                 updatedAt: blockTimestamp,
             })
@@ -1091,6 +1094,7 @@ ponder.on('SubscriptionModule:SubscriptionSpent', async ({ event, context }) => 
         const result = await context.db.sql
             .update(schema.subscription)
             .set({
+                renewalAmount: event.args.amount,
                 totalSpent: event.args.totalSpent,
                 updatedAt: blockTimestamp,
             })
