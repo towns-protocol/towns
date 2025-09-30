@@ -29,8 +29,9 @@
 # precedence.
 
 /*.* @texuf
-/.github/ @mechanical-turk
+/.github/ @Tee-S
 /.github/CODEOWNERS @sergekh2 @texuf
+/.github/workflows/*docker*.yml @shuhuiluo @Tee-S
 /.vscode/ @texuf
 /assets/ @texuf
 /core/ @sergekh2
@@ -40,13 +41,11 @@
 /core/node/protocol_extensions/ @sergekh2 @texuf
 /core/node/rules/ @sergekh2 @texuf
 /core/xchain/ @sergekh2 @bas-vk @clemire
-/infra/ @mechanical-turk
+/infra/ @Tee-S
 /packages/ @sergekh2 @texuf
 /packages/contracts/ @pfives @giuseppecrj @jterzis @shuhuiluo
 /packages/generated/ @sergekh2 @giuseppecrj
-/packages/generated/addresses/ @sergekh2 @texuf @giuseppecrj
 /packages/generated/deployments/ @sergekh2 @texuf @giuseppecrj
-/packages/generated/dev/ @sergekh2 @giuseppecrj
 /packages/react-sdk/ @texuf @miguel-nascimento
 /packages/playground/ @texuf @miguel-nascimento
 /packages/sdk/ @sergekh2 @texuf
@@ -55,4 +54,5 @@
 /packages/web3/ @salzbrenner
 /protocol/ @sergekh2 @texuf
 /scripts/ @texuf
-turbo.json @mechanical-turk
+turbo.json @Tee-S
+**/Dockerfile @shuhuiluo @Tee-S
