@@ -18,6 +18,7 @@ import {IReferrals} from "src/spaces/facets/referrals/IReferrals.sol";
 import {IRoles, IRolesBase} from "src/spaces/facets/roles/IRoles.sol";
 import {ITreasury} from "src/spaces/facets/treasury/ITreasury.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
+import {IMembershipTiers, IMembershipTiersBase} from "src/spaces/facets/membership/tiers/IMembershipTiers.sol";
 
 // libraries
 import {Permissions} from "src/spaces/facets/Permissions.sol";
@@ -34,6 +35,7 @@ contract MembershipBaseSetup is
     IERC721ABase,
     IOwnableBase,
     IWalletLinkBase,
+    IMembershipTiersBase,
     BaseSetup
 {
     int256 internal constant EXCHANGE_RATE = 222_616_000_000;
@@ -50,6 +52,8 @@ contract MembershipBaseSetup is
     IPrepay prepayFacet;
     IReferrals internal referrals;
     ITreasury internal treasury;
+    IMembershipTiers internal membershipTiers;
+
     // entitled user
     Vm.Wallet aliceWallet;
     Vm.Wallet charlieWallet;
@@ -115,6 +119,7 @@ contract MembershipBaseSetup is
         prepayFacet = IPrepay(userSpace);
         referrals = IReferrals(userSpace);
         treasury = ITreasury(userSpace);
+        membershipTiers = IMembershipTiers(userSpace);
         platformReqs = IPlatformRequirements(spaceFactory);
         partnerRegistry = IPartnerRegistry(spaceFactory);
         _registerOperators();
