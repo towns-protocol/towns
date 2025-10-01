@@ -23,10 +23,10 @@
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@prb/math": "^4.1.0",
     "@towns-protocol/diamond": "^0.6.3",
-    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
-    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
-    "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
-    "modular-account": "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz",
+    "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#v0.7.0",
+    "crypto-lib": "github:towns-protocol/crypto-lib#v1.0.1",
+    "modular-account": "github:towns-protocol/modular-account#v1.0.0",
     "solady": "^0.1.24"
   },
   "devDependencies": {
@@ -36,14 +36,14 @@
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
-    "@typechain/ethers-v5": "^10.1.1",
+    "@typechain/ethers-v5": "^11.1.2",
     "@wagmi/cli": "^2.2.0",
     "forge-std": "github:foundry-rs/forge-std#v1.10.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
     "solhint": "^5.0.5",
     "solidity-bytes-utils": "^0.8.4",
-    "typechain": "^8.1.1"
+    "typechain": "^8.3.2"
   },
   "files": [
     "docs/**/*",

@@ -5,8 +5,12 @@
     "type": "module",
     "scripts": {
         "build": "node ./scripts/prepare.js",
-        "make-config": "node ./scripts/make-config.js",
-        "prepare": "node ./scripts/prepare.js"
+        "make-config": "node ./scripts/make-config.js"
+    },
+    "dependencies": {
+        "@ethersproject/abi": "^5.8.0",
+        "@ethersproject/providers": "^5.8.0",
+        "ethers": "^5.8.0"
     },
     "devDependencies": {
         "@towns-protocol/contracts": "workspace:^"
