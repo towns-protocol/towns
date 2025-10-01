@@ -21,7 +21,25 @@ type AppRegistryTrackedStreamView struct {
 	queue    EncryptedMessageQueue
 }
 
-func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, event *ParsedEvent) error {
+func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Context, streamId shared.StreamId, event *ParsedEvent) error {
+	// Only process inbox messages for registered bots/apps
+	// Extract the user address from the inbox stream ID
+	userAddress, err := shared.GetUserAddressFromStreamId(streamId)
+	if err != nil {
+		return err
+	}
+
+	// Check if this user is a registered bot/app
+	isForwardable, _, err := b.queue.IsForwardableApp(ctx, userAddress)
+	if err != nil {
+		return err
+	}
+
+	// If not a bot, skip processing
+	if !isForwardable {
+		return nil
+	}
+
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption for this session, and
 	// can now immediately forward incoming messages with the same session id.
@@ -52,7 +70,7 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.onNewEvent", "streamId", view.StreamId())
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
-		if err := b.processUserInboxMessage(ctx, event); err != nil {
+		if err := b.processUserInboxMessage(ctx, *streamId, event); err != nil {
 			log.Errorw("Error processing user inbox message", "error", err)
 			return err
 		}
@@ -123,7 +141,7 @@ func NewTrackedStreamForAppRegistryService(
 
 	if streamId.Type() == shared.STREAM_USER_INBOX_BIN {
 		for event := range view.AllEvents() {
-			if err := trackedView.processUserInboxMessage(ctx, event); err != nil {
+			if err := trackedView.processUserInboxMessage(ctx, streamId, event); err != nil {
 				return nil, err
 			}
 		}
