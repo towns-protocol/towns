@@ -9223,7 +9223,7 @@ __metadata:
     "@typechain/ethers-v5": ^11.1.2
     "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0"
     "@wagmi/cli": ^2.2.0
-    account-abstraction: "github:eth-infinitism/account-abstraction#v0.7.0"
+    account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
     crypto-lib: "github:towns-protocol/crypto-lib#v1.0.1"
     forge-std: "github:foundry-rs/forge-std#v1.10.0"
     modular-account: "github:towns-protocol/modular-account#v1.0.0"
@@ -11513,29 +11513,6 @@ __metadata:
     mime-types: ~2.1.34
     negotiator: 0.6.3
   checksum: 50c43d32e7b50285ebe84b613ee4a3aa426715a7d131b65b786e2ead0fd76b6b60091b9916d3478a75f11f162628a2139991b6c03ab3f1d9ab7c86075dc8eab4
-  languageName: node
-  linkType: hard
-
-"account-abstraction@github:eth-infinitism/account-abstraction#v0.7.0":
-  version: 0.7.0
-  resolution: "account-abstraction@https://github.com/eth-infinitism/account-abstraction.git#commit=d99245ddb2d7bde4d2132757c4394818f1d11da0"
-  dependencies:
-    "@nomiclabs/hardhat-etherscan": ^2.1.6
-    "@openzeppelin/contracts": ^5.0.0
-    "@thehubbleproject/bls": ^0.5.1
-    "@typechain/hardhat": ^2.3.0
-    "@types/debug": ^4.1.12
-    "@types/mocha": ^9.0.0
-    debug: ^4.3.4
-    ethereumjs-util: ^7.1.0
-    ethereumjs-wallet: ^1.0.1
-    hardhat-deploy: ^0.11.23
-    hardhat-deploy-ethers: ^0.3.0-beta.11
-    solidity-coverage: ^0.8.4
-    source-map-support: ^0.5.19
-    table: ^6.8.0
-    typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
   languageName: node
   linkType: hard
 

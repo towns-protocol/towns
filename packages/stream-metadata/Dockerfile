@@ -39,7 +39,9 @@ COPY ./packages/stream-metadata /river/packages/stream-metadata
 # install dependencies and build
 RUN corepack enable && \
     corepack prepare yarn@3.8.0 --activate
-RUN yarn install
+
+RUN yarn install && yarn cache clean
+
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
