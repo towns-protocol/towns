@@ -818,12 +818,14 @@ func (s *Service) GetStatus(
 
 	webhookStatus, err := s.appClient.GetWebhookStatus(ctx, appInfo.WebhookUrl, app, decryptedSecret)
 	if err != nil {
-		if base.IsRiverErrorCode(err, Err_MALFORMED_WEBHOOK_RESPONSE) {
-			// App is registered but returned an invalid response
+		if base.IsRiverErrorCode(err, Err_MALFORMED_WEBHOOK_RESPONSE) ||
+			base.IsRiverErrorCode(err, Err_CANNOT_CALL_WEBHOOK) {
+			// App is registered but webhook is unavailable or returned an invalid response
 			return &connect.Response[GetStatusResponse]{
 				Msg: &GetStatusResponse{
-					IsRegistered: true,
-					Active:       appInfo.Active,
+					IsRegistered:  true,
+					ValidResponse: false,
+					Active:        appInfo.Active,
 				},
 			}, nil
 		} else {
