@@ -82,7 +82,9 @@ func NewAppRegistryStreamsTracker(
 func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
-	return streamType == shared.STREAM_CHANNEL_BIN
+	// Track both channel streams (for message forwarding) and user inbox streams (for key fulfillments)
+	// Inbox streams are needed to detect when encryption keys arrive for queued messages
+	return streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_USER_INBOX_BIN
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(

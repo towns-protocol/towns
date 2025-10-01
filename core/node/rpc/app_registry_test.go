@@ -483,6 +483,141 @@ func TestAppRegistry_ForwardsChannelEvents(t *testing.T) {
 	)
 }
 
+// TestAppRegistry_KeySolicitationAfterRestart tests that key solicitation continues to work
+// after the app registry service is restarted. This ensures that inbox streams are properly
+// re-tracked on service initialization, fixing a bug where inbox streams were not tracked
+// after restart, causing key solicitations to fail.
+func TestAppRegistry_KeySolicitationAfterRestart(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+
+	// Step 1: Start bot services and setup initial environment
+	tester.StartBotServices()
+
+	participantClient := tester.NodeClient(0, testClientOpts{
+		deviceKey:   "participantDeviceKey",
+		fallbackKey: "participantFallbackKey",
+	})
+	participantClient.createUserStreamsWithEncryptionDevice()
+
+	// Create a space and channel
+	spaceId, _ := participantClient.createSpace()
+	channelId, _, _ := participantClient.createChannel(spaceId)
+
+	// Register bot and add to channel
+	_, userStreamMbRef := tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	botClient := tester.BotNodeClient(0, testClientOpts{})
+	membership := botClient.joinChannel(spaceId, channelId, userStreamMbRef)
+	botClient.requireMembership(channelId, []common.Address{botClient.wallet.Address, participantClient.wallet.Address})
+
+	// Send an initial message to verify the bot is working
+	initialSessionBytes, initialSession := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message before restart",
+		nil,
+		initialSessionBytes,
+		participantClient.deviceKey,
+	)
+
+	// Verify key solicitation works before restart
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, initialSession)
+
+	// Send keys to bot
+	initialCiphertexts := generateSessionKeys(testBotEncryptionDevice(0).DeviceKey, []string{initialSession})
+	botWallet, _ := tester.BotWallets(0)
+	participantClient.sendSolicitationResponse(
+		botWallet.Address,
+		channelId,
+		testBotEncryptionDevice(0).DeviceKey,
+		[]string{initialSession},
+		initialCiphertexts,
+	)
+
+	// Wait for the bot to process and respond to the first message
+	// Once the key material is sent, expect the bot's reply
+	initialReplyText := app_registry.FormatTestAppMessageReply(
+		initialSession,
+		"message before restart",
+		initialCiphertexts,
+	)
+
+	// Step 2: Simulate service restart
+	// Store the current service configuration and listener
+	oldService := tester.appRegistryService
+	oldConfig := oldService.config
+	oldListener := oldService.listener
+
+	// Close the current service (simulating shutdown)
+	oldService.Close()
+
+	// Create a new blockchain instance for the restarted service
+	bc := tester.serviceTester.btc.NewWalletAndBlockchain(tester.ctx)
+
+	// Create a new service instance with the same configuration (simulating restart)
+	// This will trigger the TrackStream function during initialization
+	newService, err := StartServerInAppRegistryMode(
+		tester.ctx,
+		oldConfig,
+		&ServerStartOpts{
+			RiverChain:      bc,
+			Listener:        oldListener,
+			HttpClientMaker: testcert.GetHttp2LocalhostTLSClient,
+		},
+	)
+	tester.require.NoError(err, "Failed to restart app registry service")
+
+	// Replace the service reference
+	tester.appRegistryService = newService
+
+	// Give the service time to initialize and track streams
+	time.Sleep(500 * time.Millisecond)
+
+	// Step 3: Send a new message with a different session after restart
+	testSessionBytes, testSession := generateRandomSession(tester.require)
+	participantClient.sayWithSessionAndTags(
+		channelId,
+		"message after restart",
+		nil,
+		testSessionBytes,
+		participantClient.deviceKey,
+	)
+
+	// Step 4: Verify key solicitation still works after restart
+	// This is the critical test - if inbox streams are not tracked after restart,
+	// this key solicitation will never happen
+	participantClient.requireKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, testSession)
+
+	// Step 5: Send keys and verify message delivery works
+	testCiphertexts := generateSessionKeys(testBotEncryptionDevice(0).DeviceKey, []string{testSession})
+	participantClient.sendSolicitationResponse(
+		botWallet.Address,
+		channelId,
+		testBotEncryptionDevice(0).DeviceKey,
+		[]string{testSession},
+		testCiphertexts,
+	)
+
+	// Wait for the bot to process and respond to the second message
+	replyText := app_registry.FormatTestAppMessageReply(
+		testSession,
+		"message after restart",
+		testCiphertexts,
+	)
+
+	// Verify the channel has all the expected messages
+	participantClient.listen(
+		channelId,
+		[]common.Address{participantClient.userId, botClient.userId},
+		[][]string{
+			{"message before restart", ""},
+			{"", app_registry.FormatMembershipReply(membership)},
+			{"", initialReplyText},
+			{"message after restart", ""},
+			{"", replyText},
+		},
+	)
+}
+
 // invalidAddressBytes is a slice of bytes that cannot be parsed into an address, because
 // it is too long. Valid addresses are 20 bytes.
 var invalidAddressBytes = bytes.Repeat([]byte("a"), 21)
