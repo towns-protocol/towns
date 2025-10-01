@@ -26,7 +26,7 @@
         "@towns-protocol/sdk-crypto": "workspace:^",
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
-        "ethers": "^5.7.2",
+        "ethers": "^5.8.0",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
         "viem": "^2.29.3"

@@ -24,7 +24,7 @@
         "@towns-protocol/utils": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
-        "ethers": "^5.7.2",
+        "ethers": "^5.8.0",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "viem": "^2.29.3",

@@ -35,7 +35,7 @@
         "@towns-protocol/web3": "workspace:^",
         "class-variance-authority": "^0.7.0",
         "clsx": "^2.1.1",
-        "ethers": "^5.7.2",
+        "ethers": "^5.8.0",
         "lucide-react": "^0.460.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
