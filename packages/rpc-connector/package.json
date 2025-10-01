@@ -59,6 +59,14 @@
         "@connectrpc/connect-node": ">=2.0.0",
         "@connectrpc/connect-web": ">=2.0.0"
     },
+    "peerDependenciesMeta": {
+        "@connectrpc/connect-node": {
+            "optional": true
+        },
+        "@connectrpc/connect-web": {
+            "optional": true
+        }
+    },
     "publishConfig": {
         "access": "public"
     },

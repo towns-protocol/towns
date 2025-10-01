@@ -308,11 +308,11 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
 export async function setupWalletsAndContexts() {
     const baseConfig = townsEnv().makeBaseChainConfig()
 
-    const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
+    const [alicesWallet, bobsWallet, carolsWallet] = [
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
-    ])
+    ]
 
     const [alicesContext, bobsContext, carolsContext] = await Promise.all([
         makeUserContextFromWallet(alicesWallet),
@@ -812,7 +812,7 @@ export async function dynamicMembershipStruct(
             currency: ETH_ADDRESS,
             feeRecipient: client.userId,
             freeAllocation: 0,
-            pricingModule: await dynamicPricingModule.module,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write],
         requirements: {
@@ -866,7 +866,7 @@ export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
     expect(fixedPricingModule).toBeDefined()
     return {
         price: 0,
-        fixedPricingModuleAddress: await fixedPricingModule.module,
+        fixedPricingModuleAddress: fixedPricingModule.module,
         freeAllocation: DefaultFreeAllocation,
     }
 }
