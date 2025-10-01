@@ -463,8 +463,10 @@ type subscription {
   space: space
   tokenId: BigInt!
   totalSpent: BigInt
+  renewalAmount: BigInt
   lastRenewalTime: BigInt
   nextRenewalTime: BigInt!
+  expiresAt: BigInt
   active: Boolean
   createdAt: BigInt!
   updatedAt: BigInt!
@@ -573,6 +575,14 @@ input subscriptionFilter {
   totalSpent_lt: BigInt
   totalSpent_gte: BigInt
   totalSpent_lte: BigInt
+  renewalAmount: BigInt
+  renewalAmount_not: BigInt
+  renewalAmount_in: [BigInt]
+  renewalAmount_not_in: [BigInt]
+  renewalAmount_gt: BigInt
+  renewalAmount_lt: BigInt
+  renewalAmount_gte: BigInt
+  renewalAmount_lte: BigInt
   lastRenewalTime: BigInt
   lastRenewalTime_not: BigInt
   lastRenewalTime_in: [BigInt]
@@ -589,6 +599,14 @@ input subscriptionFilter {
   nextRenewalTime_lt: BigInt
   nextRenewalTime_gte: BigInt
   nextRenewalTime_lte: BigInt
+  expiresAt: BigInt
+  expiresAt_not: BigInt
+  expiresAt_in: [BigInt]
+  expiresAt_not_in: [BigInt]
+  expiresAt_gt: BigInt
+  expiresAt_lt: BigInt
+  expiresAt_gte: BigInt
+  expiresAt_lte: BigInt
   active: Boolean
   active_not: Boolean
   active_in: [Boolean]

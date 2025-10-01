@@ -95,7 +95,14 @@ contract SubscriptionModuleFacet is
         sub.installTime = uint40(block.timestamp);
         sub.nextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
 
-        emit SubscriptionConfigured(msg.sender, entityId, space, tokenId, sub.nextRenewalTime);
+        emit SubscriptionConfigured(
+            msg.sender,
+            entityId,
+            space,
+            tokenId,
+            sub.nextRenewalTime,
+            expiresAt
+        );
     }
 
     /// @inheritdoc IModule
@@ -385,7 +392,15 @@ contract SubscriptionModuleFacet is
         sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
-        emit SubscriptionRenewed(params.account, params.entityId, sub.nextRenewalTime);
+        emit SubscriptionRenewed(
+            params.account,
+            params.entityId,
+            sub.space,
+            sub.tokenId,
+            sub.nextRenewalTime,
+            newExpiresAt
+        );
+        emit SubscriptionSpent(params.account, params.entityId, actualRenewalPrice, sub.spent);
     }
 
     /// @dev Determines the appropriate renewal buffer time based on original membership duration
