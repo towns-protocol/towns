@@ -192,6 +192,7 @@ type Config struct {
 	// ====================
 	// EntitlementContract denotes the address of the contract that receives entitlement check
 	// requests.
+	// TODO: is there elegant way to rename this to BaseRegistryContract and keep old name as an alias?
 	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
