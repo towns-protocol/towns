@@ -79,10 +79,27 @@ func NewAppRegistryStreamsTracker(
 	return tracker, nil
 }
 
-func (tracker *AppRegistryStreamsTracker) TrackStream(streamId shared.StreamId, _ bool) bool {
+func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
-	return streamType == shared.STREAM_CHANNEL_BIN
+	if streamType == shared.STREAM_CHANNEL_BIN {
+		return true
+	}
+	if streamType != shared.STREAM_USER_INBOX_BIN {
+		return false
+	}
+	userAddress, err := shared.GetUserAddressFromStreamId(streamId)
+	if err != nil {
+		return false
+	}
+
+	// Check if this user is a registered bot/app
+	isForwardable, _, err := tracker.queue.IsForwardableApp(ctx, userAddress)
+	if err != nil {
+		return false
+	}
+
+	return isForwardable
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
