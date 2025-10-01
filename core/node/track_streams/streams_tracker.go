@@ -29,7 +29,7 @@ import (
 type StreamFilter interface {
 	// TrackStream
 	// inInit is true when the stream_tracker is initialized (usually when the process starts), otherwise it's false
-	TrackStream(streamID shared.StreamId, isInit bool) bool
+	TrackStream(ctx context.Context, streamID shared.StreamId, isInit bool) bool
 
 	NewTrackedStream(
 		ctx context.Context,
@@ -146,7 +146,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 
 			totalStreams++
 
-			if !tracker.filter.TrackStream(stream.StreamId(), true) {
+			if !tracker.filter.TrackStream(ctx, stream.StreamId(), true) {
 				return true
 			}
 
@@ -233,10 +233,10 @@ func (tracker *StreamsTrackerImpl) AddStream(
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAllocated(
-	_ context.Context,
+	ctx context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
 	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
@@ -246,10 +246,10 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 // If the stream must be tracked for the service, then add it to the worker that is
 // responsible for it.
 func (tracker *StreamsTrackerImpl) OnStreamAdded(
-	_ context.Context,
+	ctx context.Context,
 	event *river.StreamState,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
 	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
@@ -259,7 +259,7 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	ctx context.Context,
 	event *river.StreamMiniblockUpdate,
 ) {
-	if !tracker.filter.TrackStream(event.GetStreamId(), false) {
+	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
 	added, err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]})
