@@ -353,10 +353,16 @@ message ChannelPayload {
         bytes event_id = 1;
     }
 
+    message Custom {
+        string type_url = 1;      // e.g., "type.googleapis.com/game.PlayerMove"
+        optional bytes value = 2;  // serialized protobuf data
+    }
+
     oneof content {
         Inception inception = 1;
         EncryptedData message = 2;
         Redaction redaction = 3;
+        Custom custom = 4;  // unencrypted third-party app messages
     }
 }
 
