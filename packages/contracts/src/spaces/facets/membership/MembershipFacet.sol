@@ -24,13 +24,13 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function joinSpace(JoinType action, bytes calldata data) external payable nonReentrant {
         if (action == JoinType.Basic) {
             address receiver = abi.decode(data, (address));
-            _joinSpace(receiver);
+            _joinSpace(receiver, 0);
         } else if (action == JoinType.WithReferral) {
             (address receiver, ReferralTypes memory referral) = abi.decode(
                 data,
                 (address, ReferralTypes)
             );
-            _joinSpaceWithReferral(receiver, referral);
+            _joinSpaceWithReferral(receiver, 0, referral);
         } else {
             Membership__InvalidAction.selector.revertWith();
         }
@@ -38,7 +38,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function joinSpace(address receiver) external payable nonReentrant {
-        _joinSpace(receiver);
+        _joinSpace(receiver, 0);
     }
 
     /// @inheritdoc IMembership
@@ -46,7 +46,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         address receiver,
         ReferralTypes memory referral
     ) external payable nonReentrant {
-        _joinSpaceWithReferral(receiver, referral);
+        _joinSpaceWithReferral(receiver, 0, referral);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

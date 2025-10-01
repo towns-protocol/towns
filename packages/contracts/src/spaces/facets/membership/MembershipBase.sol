@@ -84,8 +84,7 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 membershipPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
-        if (membershipPrice == 0) return (protocolFee, protocolFee);
-        return (membershipPrice + protocolFee, protocolFee);
+        totalRequired = membershipPrice + protocolFee;
     }
 
     function _transferIn(address from, uint256 amount) internal returns (uint256) {

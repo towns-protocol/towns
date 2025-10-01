@@ -26,6 +26,7 @@ import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
 import {MembershipBase} from "../MembershipBase.sol";
+import {MembershipTiersBase} from "../tiers/MembershipTiersBase.sol";
 
 /// @title MembershipJoin
 /// @notice Handles the logic for joining a space, including entitlement checks and payment
@@ -43,7 +44,8 @@ abstract contract MembershipJoin is
     Entitled,
     PrepayBase,
     PointsBase,
-    ERC721ABase
+    ERC721ABase,
+    MembershipTiersBase
 {
     using CustomRevert for bytes4;
 
@@ -63,21 +65,22 @@ abstract contract MembershipJoin is
         bytes4 selector,
         address sender,
         address receiver,
+        uint16 tierId,
         bytes memory referralData
     ) internal pure returns (bytes memory) {
-        return abi.encode(selector, sender, receiver, referralData);
+        return abi.encode(selector, sender, receiver, referralData, tierId);
     }
 
-    /// @notice Calculates all pricing details for joining a space
-    /// @return joinDetails Struct containing all pricing information
-    function _getPricingDetails() internal view returns (PricingDetails memory joinDetails) {
-        uint256 totalSupply = _totalSupply();
-        uint256 membershipPrice = _getMembershipPrice(totalSupply);
+    function _getPricingDetails(
+        uint16 tierId
+    ) internal view returns (PricingDetails memory joinDetails) {
         uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 totalSupply = _totalSupply();
+        uint256 tierPrice = _getTierPrice(tierId);
 
-        if (membershipPrice == 0) return joinDetails;
+        if (tierPrice == 0) return joinDetails;
 
-        joinDetails.basePrice = membershipPrice;
+        joinDetails.basePrice = tierPrice;
         if (freeAllocation > totalSupply) {
             return joinDetails;
         }
@@ -89,16 +92,16 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(tierPrice);
         (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
     /// @notice Handles the process of joining a space
     /// @param receiver The address that will receive the membership token
-    function _joinSpace(address receiver) internal {
+    function _joinSpace(address receiver, uint16 tierId) internal {
         _validateJoinSpace(receiver);
 
-        PricingDetails memory joinDetails = _getPricingDetails();
+        PricingDetails memory joinDetails = _getPricingDetails(tierId);
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -110,7 +113,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, tierId, "")
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -124,7 +127,7 @@ abstract contract MembershipJoin is
             if (isEntitled) {
                 if (joinDetails.shouldCharge) _chargeForJoinSpace(transactionId, joinDetails);
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, tierId);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -134,10 +137,14 @@ abstract contract MembershipJoin is
     /// @notice Handles the process of joining a space with a referral
     /// @param receiver The address that will receive the membership token
     /// @param referral The referral information
-    function _joinSpaceWithReferral(address receiver, ReferralTypes memory referral) internal {
+    function _joinSpaceWithReferral(
+        address receiver,
+        uint16 tierId,
+        ReferralTypes memory referral
+    ) internal {
         _validateJoinSpace(receiver);
 
-        PricingDetails memory joinDetails = _getPricingDetails();
+        PricingDetails memory joinDetails = _getPricingDetails(tierId);
 
         // Validate payment if required
         if (joinDetails.shouldCharge && msg.value < joinDetails.amountDue) {
@@ -155,7 +162,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData)
+            _encodeJoinSpaceData(selector, msg.sender, receiver, tierId, referralData)
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -171,7 +178,7 @@ abstract contract MembershipJoin is
                     _chargeForJoinSpaceWithReferral(transactionId, joinDetails);
 
                 _refundBalance(transactionId, receiver);
-                _issueToken(receiver);
+                _issueToken(receiver, tierId);
             } else {
                 _rejectMembership(transactionId, receiver);
             }
@@ -328,10 +335,8 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         PricingDetails memory joinDetails
     ) internal {
-        (bytes4 selector, address sender, address receiver, bytes memory referralData) = abi.decode(
-            _getCapturedData(transactionId),
-            (bytes4, address, address, bytes)
-        );
+        (bytes4 selector, address sender, address receiver, , bytes memory referralData) = abi
+            .decode(_getCapturedData(transactionId), (bytes4, address, address, uint16, bytes));
 
         if (selector != IMembership.joinSpaceWithReferral.selector) {
             Membership__InvalidTransactionType.selector.revertWith();
@@ -386,18 +391,21 @@ abstract contract MembershipJoin is
 
     /// @notice Issues a membership token to the receiver
     /// @param receiver The address that will receive the membership token
-    function _issueToken(address receiver) internal {
+    function _issueToken(address receiver, uint16 tierId) internal {
         // get token id
         uint256 tokenId = _nextTokenId();
 
         // set renewal price for token
-        _setMembershipRenewalPrice(tokenId, _getMembershipPrice(_totalSupply()));
+        _setMembershipRenewalPrice(tokenId, _getTierPrice(tierId));
 
         // mint membership
         _safeMint(receiver, 1);
 
         // set expiration of membership
-        _renewSubscription(tokenId, _getMembershipDuration());
+        _renewSubscription(tokenId, _getTierDuration(tierId));
+
+        // associate token id with tier id
+        _mintTier(tokenId, tierId);
 
         // emit event
         emit MembershipTokenIssued(receiver, tokenId);
@@ -408,6 +416,7 @@ abstract contract MembershipJoin is
     function _validateJoinSpace(address receiver) internal view {
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
         uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
+
         if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
             Membership__MaxSupplyReached.selector.revertWith();
         }
@@ -497,14 +506,16 @@ abstract contract MembershipJoin is
         address receiver = _ownerOf(tokenId);
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
-        uint256 duration = _getMembershipDuration();
-        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
+        uint16 tierId = _getTierOfTokenId(tokenId);
+        uint256 duration = _getTierDuration(tierId);
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
 
         if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
         // Collect protocol fee (transfers from payer)
-        uint256 protocolFee = _collectProtocolFee(payer, basePrice);
+        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
 
         // Calculate owner proceeds (what goes to space owner)
         uint256 ownerProceeds = totalRequired - protocolFee;
