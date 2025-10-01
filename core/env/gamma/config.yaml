@@ -15,6 +15,9 @@ architectContract:
 appRegistryContract:
     address: '0xec3081A4b07678C12Fc6B56f69F894EE9e732c42'
 
+entitlement_contract:
+    address: '0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F'
+
 # River contracts
 registryContract:
     address: '0xf18E98D36A6bd1aDb52F776aCc191E69B491c070'
