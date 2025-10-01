@@ -3384,7 +3384,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ethersproject/providers@npm:5.8.0":
+"@ethersproject/providers@npm:5.8.0, @ethersproject/providers@npm:^5.8.0":
   version: 5.8.0
   resolution: "@ethersproject/providers@npm:5.8.0"
   dependencies:
@@ -9174,6 +9174,7 @@ __metadata:
   dependencies:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect-node": ^2.0.0
+    "@hono/node-server": ^1.14.0
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
@@ -9194,7 +9195,7 @@ __metadata:
     hono: ^4.7.11
     jsonwebtoken: ^9.0.2
     nanoevents: ^9.1.0
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     viem: ^2.29.3
     vitest: ^3.2.3
   peerDependencies:
@@ -9220,12 +9221,12 @@ __metadata:
     "@towns-protocol/diamond": ^0.6.3
     "@towns-protocol/prettier-config": "workspace:^"
     "@typechain/ethers-v5": ^10.1.1
-    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
+    "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0"
     "@wagmi/cli": ^2.2.0
-    account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
-    crypto-lib: "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
+    account-abstraction: "github:eth-infinitism/account-abstraction#v0.7.0"
+    crypto-lib: "github:towns-protocol/crypto-lib#v1.0.1"
     forge-std: "github:foundry-rs/forge-std#v1.10.0"
-    modular-account: "https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz"
+    modular-account: "github:towns-protocol/modular-account#v1.0.0"
     prettier: ^3.5.3
     prettier-plugin-solidity: ^1.4.2
     solady: ^0.1.24
@@ -9265,6 +9266,7 @@ __metadata:
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
+    "@types/debug": ^4.1.8
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -9279,7 +9281,7 @@ __metadata:
     nanoid: ^4.0.0
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9306,8 +9308,9 @@ __metadata:
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
+    eslint-plugin-tsdoc: ^0.3.0
     hono: ^4.7.11
-    typescript: ^5.8.2
+    typescript: ~5.8.3
   languageName: unknown
   linkType: soft
 
@@ -9315,7 +9318,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns-protocol/generated@workspace:packages/generated"
   dependencies:
+    "@ethersproject/abi": ^5.8.0
+    "@ethersproject/providers": ^5.8.0
     "@towns-protocol/contracts": "workspace:^"
+    ethers: ^5.7.2
   languageName: unknown
   linkType: soft
 
@@ -9325,15 +9331,18 @@ __metadata:
   dependencies:
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
     esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
     eslint: ^8.57.1
+    eslint-plugin-import-x: ^4.10.2
     ethers: ^5.7.2
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
-    typescript: ^5.8.2
-    zod: ^3.21.4
+    typescript: ~5.8.3
+    zod: ^3.25.76
   languageName: unknown
   linkType: soft
 
@@ -9364,14 +9373,16 @@ __metadata:
     "@radix-ui/react-tooltip": ^1.1.4
     "@tanstack/react-query": ^5.51.15
     "@towns-protocol/eslint-config": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/react-sdk": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
-    "@types/react": ^19.1.8
-    "@types/react-dom": ^19.1.6
+    "@types/react": ^19.1.16
+    "@types/react-dom": ^19.1.7
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     "@vitejs/plugin-react-oxc": ^0.2.3
@@ -9398,7 +9409,7 @@ __metadata:
     tailwind-merge: ^2.3.0
     tailwindcss: ^3.4.4
     tailwindcss-animate: ^1.0.7
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     use-stick-to-bottom: ^1.1.0
     viem: ^2.29.3
     vite: "npm:rolldown-vite@6.3.21"
@@ -9406,7 +9417,7 @@ __metadata:
     vite-plugin-wasm: ^3.4.1
     vite-tsconfig-paths: ^5.1.3
     wagmi: ^2.15.3
-    zod: ^3.21.4
+    zod: ^3.25.76
   languageName: unknown
   linkType: soft
 
@@ -9437,7 +9448,7 @@ __metadata:
     "@types/node": ^20.14.8
     lodash.debounce: ^4.0.8
     ts-node: ^10.9.1
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9450,10 +9461,12 @@ __metadata:
     "@microsoft/api-extractor-model": ^7.30.5
     "@microsoft/tsdoc": ^0.15.0
     "@microsoft/tsdoc-config": ^0.17.0
+    "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
-    "@types/react": ^19.1.8
-    "@types/react-dom": ^19.1.6
+    "@types/react": ^19.1.16
+    "@types/react-dom": ^19.1.7
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     eslint: ^8.57.1
@@ -9466,7 +9479,7 @@ __metadata:
     react-dom: ^19.1.0
     ts-morph: ^24.0.0
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ~5.8.3
   peerDependencies:
     react: ^18.2 || ^19.0
     typescript: ^5
@@ -9478,6 +9491,8 @@ __metadata:
   resolution: "@towns-protocol/rpc-connector@workspace:packages/rpc-connector"
   dependencies:
     "@connectrpc/connect": ^2.0.0
+    "@connectrpc/connect-node": ^2.0.0
+    "@connectrpc/connect-web": ^2.0.0
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
@@ -9486,16 +9501,11 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     eslint-plugin-tsdoc: ^0.3.0
     tsdown: ^0.12.3
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   peerDependencies:
     "@connectrpc/connect-node": ">=2.0.0"
     "@connectrpc/connect-web": ">=2.0.0"
-  peerDependenciesMeta:
-    "@connectrpc/connect-node":
-      optional: true
-    "@connectrpc/connect-web":
-      optional: true
   languageName: unknown
   linkType: soft
 
@@ -9514,9 +9524,9 @@ __metadata:
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
     eslint-plugin-tsdoc: ^0.3.0
-    happy-dom: ^15.11.7
+    happy-dom: ^19.0.2
     tsdown: ^0.12.3
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9532,6 +9542,7 @@ __metadata:
     "@noble/curves": ^1.9.1
     "@noble/hashes": ^1.8.0
     "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk-crypto": "workspace:^"
@@ -9553,13 +9564,13 @@ __metadata:
     ethereum-cryptography: ^3.2.0
     ethers: ^5.7.2
     fake-indexeddb: ^6.0.1
-    happy-dom: ^15.11.7
+    happy-dom: ^19.0.2
     lodash-es: ^4.17.21
     nanoid: ^4.0.0
     p-limit: ^6.1.0
     seedrandom: ^3.0.5
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vite-plugin-wasm: ^3.4.1
     vitest: ^3.2.3
     vitest-fetch-mock: ^0.4.3
@@ -9578,6 +9589,7 @@ __metadata:
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/eslint-config": "workspace:^"
     "@towns-protocol/generated": "workspace:^"
+    "@towns-protocol/olm": 3.2.28
     "@towns-protocol/prettier-config": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
@@ -9586,6 +9598,7 @@ __metadata:
     "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
     "@types/uuid": ^10.0.0
+    "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     axios: ^1.9.0
     dd-trace: ^5.19.0
@@ -9607,10 +9620,10 @@ __metadata:
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
     sharp: 0.34.3
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     uuid: ^8.3.2
     vitest: ^3.2.3
-    zod: ^3.21.4
+    zod: ^3.25.76
   languageName: unknown
   linkType: soft
 
@@ -9622,7 +9635,9 @@ __metadata:
     "@bufbuild/protobuf": ^2.2.2
     "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/encryption": "workspace:^"
+    "@towns-protocol/olm": 3.2.28
     "@towns-protocol/proto": "workspace:^"
+    "@towns-protocol/rpc-connector": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
     "@towns-protocol/utils": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
@@ -9645,7 +9660,7 @@ __metadata:
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9655,18 +9670,22 @@ __metadata:
   resolution: "@towns-protocol/subgraph@workspace:packages/subgraph"
   dependencies:
     "@towns-protocol/contracts": "workspace:^"
+    "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/prettier-config": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/node": ^20.14.8
+    "@typescript-eslint/eslint-plugin": ^8.29.0
+    "@typescript-eslint/parser": ^8.29.0
     eslint: ^8.57.1
     eslint-config-ponder: ^0.9.27
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-prettier: ^5.2.6
+    eslint-plugin-tsdoc: ^0.3.0
     hono: ^4.7.11
     ponder: ^0.12.21
     prettier: ^3.5.3
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     viem: ^2.29.3
   languageName: unknown
   linkType: soft
@@ -9686,7 +9705,7 @@ __metadata:
     eslint-plugin-import-x: ^4.10.2
     ethereum-cryptography: ^3.2.0
     ts-node: ^10.9.1
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     vitest: ^3.2.3
   languageName: unknown
   linkType: soft
@@ -9711,10 +9730,10 @@ __metadata:
     lru-cache: ^11.0.1
     nanoid: ^4.0.0
     typed-emitter: ^2.1.0
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     viem: ^2.29.3
     vitest: ^3.2.3
-    zod: ^3.21.4
+    zod: ^3.25.76
   languageName: unknown
   linkType: soft
 
@@ -9726,14 +9745,15 @@ __metadata:
     "@towns-protocol/web3": "workspace:^"
     "@types/uuid": ^10.0.0
     dotenv: ^16.4.7
+    esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
     pino: ^8.17.1
     pino-pretty: ^13.0.0
     tsx: ^4.7.1
-    typescript: ^5.8.2
+    typescript: ~5.8.3
     uuid: ^8.3.2
     viem: ^2.29.3
-    zod: ^3.21.4
+    zod: ^3.25.76
   languageName: unknown
   linkType: soft
 
@@ -10162,6 +10182,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20.0.0":
+  version: 20.19.19
+  resolution: "@types/node@npm:20.19.19"
+  dependencies:
+    undici-types: ~6.21.0
+  checksum: 0019bd44153ef4590a7d8c15b04004572df9b63ca2196ba4f6799196b9ce04b699d7315a94b8029e2f716a530e4683f83b9f0cc03d2d88f9969a0c22ac972665
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^20.14.8":
   version: 20.17.30
   resolution: "@types/node@npm:20.17.30"
@@ -10241,12 +10270,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19.1.6":
-  version: 19.1.6
-  resolution: "@types/react-dom@npm:19.1.6"
+"@types/react-dom@npm:^19.1.7":
+  version: 19.1.11
+  resolution: "@types/react-dom@npm:19.1.11"
   peerDependencies:
     "@types/react": ^19.0.0
-  checksum: b5b20b7f0797f34c5a11915b74dcf8b3b7a9da9fea90279975ce6f150ca5d31bb069dbb0838638a5e9e168098aa4bb4a6f61d078efa1bbb55d7f0bdfe47bb142
+  checksum: 37253fe56fbf3c75af76a891e8ef921304f78b12078ed708ff964db39f55f43bb6358c6635470a760b3563a6e90ac3ad60d2bf0c19445011b7c5bea891a09466
   languageName: node
   linkType: hard
 
@@ -10260,12 +10289,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.1.8":
-  version: 19.1.8
-  resolution: "@types/react@npm:19.1.8"
+"@types/react@npm:^19.1.16":
+  version: 19.1.17
+  resolution: "@types/react@npm:19.1.17"
   dependencies:
     csstype: ^3.0.2
-  checksum: 17e0c74d9c01214938fa805aaa8b97925bf3c5514e88fdf94bec42c0a6d4abbc63d4e30255db176f46fd7f0aa89f8085b9b2b2fa5abaffbbf7e5009386ada892
+  checksum: 4d73b79a73b1dbe873a459de4faca4ba50963a8e244ba5f665208cf05d682766c7ddc2c10f1aba3bebd876cb89e81104bdb09fee2bed0fc8482fc087bffa11e3
   languageName: node
   linkType: hard
 
@@ -10317,6 +10346,13 @@ __metadata:
   version: 10.0.0
   resolution: "@types/uuid@npm:10.0.0"
   checksum: e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
+  languageName: node
+  linkType: hard
+
+"@types/whatwg-mimetype@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@types/whatwg-mimetype@npm:3.0.2"
+  checksum: 30e2599ae02c539a6dd08b58de255aad24a41cdabeebc0293814884f1301f1328443b9915f2e990e4f484fa7f226ca8718991b63d2d387287f898c36390ef856
   languageName: node
   linkType: hard
 
@@ -10582,10 +10618,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uniswap/permit2@https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz":
+"@uniswap/permit2@github:towns-protocol/permit2#v1.0.0":
   version: 1.0.0
-  resolution: "@uniswap/permit2@https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz"
-  checksum: 3495dde36da77f18e7909f2b095c944811f128d3d147f6ab197651f99a9c46319cfb7551e6e24de6758da11a5486421e51a30fac247d8e5df5d278dacaee8fef
+  resolution: "@uniswap/permit2@https://github.com/towns-protocol/permit2.git#commit=cc56ad0f3439c502c246fc5cfcc3db92bb8b7219"
+  checksum: 7d2ce54b797cec8ff7805abb1178ca0a1c5e75666d1b59e0e4d6acebcc61f1f36f34a572fabd5e3d237579e5b7bdf37a8b33325af57aa35a552ebc8b25135dce
   languageName: node
   linkType: hard
 
@@ -11473,6 +11509,29 @@ __metadata:
     mime-types: ~2.1.34
     negotiator: 0.6.3
   checksum: 50c43d32e7b50285ebe84b613ee4a3aa426715a7d131b65b786e2ead0fd76b6b60091b9916d3478a75f11f162628a2139991b6c03ab3f1d9ab7c86075dc8eab4
+  languageName: node
+  linkType: hard
+
+"account-abstraction@github:eth-infinitism/account-abstraction#v0.7.0":
+  version: 0.7.0
+  resolution: "account-abstraction@https://github.com/eth-infinitism/account-abstraction.git#commit=d99245ddb2d7bde4d2132757c4394818f1d11da0"
+  dependencies:
+    "@nomiclabs/hardhat-etherscan": ^2.1.6
+    "@openzeppelin/contracts": ^5.0.0
+    "@thehubbleproject/bls": ^0.5.1
+    "@typechain/hardhat": ^2.3.0
+    "@types/debug": ^4.1.12
+    "@types/mocha": ^9.0.0
+    debug: ^4.3.4
+    ethereumjs-util: ^7.1.0
+    ethereumjs-wallet: ^1.0.1
+    hardhat-deploy: ^0.11.23
+    hardhat-deploy-ethers: ^0.3.0-beta.11
+    solidity-coverage: ^0.8.4
+    source-map-support: ^0.5.19
+    table: ^6.8.0
+    typescript: ^4.3.5
+  checksum: 8be8f2e1f8dbdb9c35edddf1f919f6c09fe764e45ad5733c0d449869e6c9241de6eac9710576d025bb3934f3bb97d017198a7c5f31b88a68aee0dbc898e1de97
   languageName: node
   linkType: hard
 
@@ -14008,7 +14067,7 @@ __metadata:
     picocolors: ^1.1.1
     prompts: ^2.4.2
     tsup: ^8.3.5
-    typescript: ^5.8.2
+    typescript: ~5.8.3
   bin:
     create-towns-protocol-app: index.js
   languageName: unknown
@@ -14095,12 +14154,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"crypto-lib@https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz":
-  version: 1.0.0
-  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz"
-  dependencies:
-    forge-std: "github:foundry-rs/forge-std#v1.9.5"
-  checksum: 3d03d36e77a4665ff17eecc4fb905cb8f7edbef18fe06b77fb08cae6231fdbea935d493eaedd519de985f39535c4dbfa970b0872c5d7481126d5d5f446c4d332
+"crypto-lib@github:towns-protocol/crypto-lib#v1.0.1":
+  version: 1.0.1
+  resolution: "crypto-lib@https://github.com/towns-protocol/crypto-lib.git#commit=d25b673c61091a16c0ab51481fa70fe8a3ab6bc8"
+  checksum: 331274bea899909b7a5a05f0c89adb1cbd4cc06c2dc474c5cf50b68835a3d3eddcc711d8f2dc2ff7bfd63e2e404003d382db53f67b416818bc949fb44af330fd
   languageName: node
   linkType: hard
 
@@ -15324,7 +15381,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"entities@npm:^4.4.0, entities@npm:^4.5.0":
+"entities@npm:^4.4.0":
   version: 4.5.0
   resolution: "entities@npm:4.5.0"
   checksum: 853f8ebd5b425d350bffa97dd6958143179a5938352ccae092c62d1267c4e392a039be1bae7d51b6e4ffad25f51f9617531fedf5237f15df302ccfb452cbf2d7
@@ -17616,13 +17673,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"forge-std@github:foundry-rs/forge-std#v1.9.5":
-  version: 1.9.5
-  resolution: "forge-std@https://github.com/foundry-rs/forge-std.git#commit=b93cf4bc34ff214c099dc970b153f85ade8c9f66"
-  checksum: 71aead7ca70cc51b46f0336074a9721aa765ba85030080577460c76f2a824abfb26bd1f4a77811c8ffbbce2cb9788f95dc0340926b041a3e2477c9a624f3503b
-  languageName: node
-  linkType: hard
-
 "form-data-encoder@npm:^2.1.2":
   version: 2.1.4
   resolution: "form-data-encoder@npm:2.1.4"
@@ -18438,14 +18488,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"happy-dom@npm:^15.11.7":
-  version: 15.11.7
-  resolution: "happy-dom@npm:15.11.7"
+"happy-dom@npm:^19.0.2":
+  version: 19.0.2
+  resolution: "happy-dom@npm:19.0.2"
   dependencies:
-    entities: ^4.5.0
-    webidl-conversions: ^7.0.0
+    "@types/node": ^20.0.0
+    "@types/whatwg-mimetype": ^3.0.2
     whatwg-mimetype: ^3.0.0
-  checksum: 8651ea68e6fd3ae1d0cd5076f6b172ae30a51b48503ccd139fa1d556678e918679dd4b000050f2b7a3091f706d85c514aa08a6208c0ddb113dba351653456429
+  checksum: 5e6389a21e618b28a12da1e049c8ba6adc4db09cf87d760872abbf567cca2ed9ee5a047cd7747a5490326e0c7b0042b8eb05ecab570f6ad0e266a83528b5f374
   languageName: node
   linkType: hard
 
@@ -23624,14 +23674,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"modular-account@https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz":
+"modular-account@github:towns-protocol/modular-account#v1.0.0":
   version: v1.0.1
-  resolution: "modular-account@https://github.com/towns-protocol/modular-account/archive/refs/tags/v1.0.0.tar.gz"
+  resolution: "modular-account@https://github.com/towns-protocol/modular-account.git#commit=785f6e477886589bdb542d110bbabb4dfbf279a1"
   dependencies:
     "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz"
     account-abstraction: "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz"
     solady: ^0.1.24
-  checksum: b061dd31941eb3e0139129789be97e0911428208368f2cfb0d5e15fb42779507e3c0650c4b34d087e52f43a6857eb3a8aecb503b240f90619ddd91dc20c951d1
+  checksum: 52869d8b5b09685f2c96e4850f6f2653093cea0c46c90d64e18af67daf390d092956e1a24e3813c4d7f261e656e7b8ddc8a0ae4790f8320b05af569bf79386af
   languageName: node
   linkType: hard
 
@@ -29874,6 +29924,7 @@ __metadata:
     "@connectrpc/connect-node": ^2.0.0
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
+    "@towns-protocol/utils": "workspace:^"
     "@types/cross-spawn": ^6.0.6
     "@types/minimist": ^1.2.5
     "@types/node": ^20.14.8
@@ -29892,8 +29943,8 @@ __metadata:
     prompts: ^2.4.2
     tsup: ^8.3.5
     tsx: ^4.7.1
-    typescript: ^5.8.2
-    zod: ^3.21.4
+    typescript: ~5.8.3
+    zod: ^3.25.76
   bin:
     towns-bot: index.js
   languageName: unknown
@@ -29913,11 +29964,14 @@ __metadata:
     lint-staged: ^13.1.2
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
+    prettier-plugin-solidity: ^1.4.2
+    prettier-plugin-tailwindcss: ^0.4.1
     publint: ^0.2.8
     syncpack: ^10.7.3
     ts-node: ^10.9.1
     turbo: ^2.5.4
-    typescript: ^5.8.2
+    typescript: ~5.8.3
+    vite-plugin-wasm: ^3.4.1
     vitest: ^3.2.3
     wait-on: ^7.0.1
   languageName: unknown
@@ -30603,7 +30657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:5.8.2, typescript@npm:^5.8.2":
+"typescript@npm:5.8.2":
   version: 5.8.2
   resolution: "typescript@npm:5.8.2"
   bin:
@@ -30633,6 +30687,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:~5.8.3":
+  version: 5.8.3
+  resolution: "typescript@npm:5.8.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: cb1d081c889a288b962d3c8ae18d337ad6ee88a8e81ae0103fa1fecbe923737f3ba1dbdb3e6d8b776c72bc73bfa6d8d850c0306eed1a51377d2fccdfd75d92c4
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@5.3.3#~builtin<compat/typescript>":
   version: 5.3.3
   resolution: "typescript@patch:typescript@npm%3A5.3.3#~builtin<compat/typescript>::version=5.3.3&hash=e012d7"
@@ -30653,7 +30717,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@5.8.2#~builtin<compat/typescript>, typescript@patch:typescript@^5.8.2#~builtin<compat/typescript>":
+"typescript@patch:typescript@5.8.2#~builtin<compat/typescript>":
   version: 5.8.2
   resolution: "typescript@patch:typescript@npm%3A5.8.2#~builtin<compat/typescript>::version=5.8.2&hash=d69c25"
   bin:
@@ -30680,6 +30744,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 1f8f3b6aaea19f0f67cba79057674ba580438a7db55057eb89cc06950483c5d632115c14077f6663ea76fd09fce3c190e6414bb98582ec80aa5a4eaf345d5b68
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@~5.8.3#~builtin<compat/typescript>":
+  version: 5.8.3
+  resolution: "typescript@patch:typescript@npm%3A5.8.3#~builtin<compat/typescript>::version=5.8.3&hash=d69c25"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 1b503525a88ff0ff5952e95870971c4fb2118c17364d60302c21935dedcd6c37e6a0a692f350892bafcef6f4a16d09073fe461158547978d2f16fbe4cb18581c
   languageName: node
   linkType: hard
 
@@ -30790,6 +30864,13 @@ __metadata:
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: de51f1b447d22571cf155dfe14ff6d12c5bdaec237c765085b439c38ca8518fc360e88c70f99469162bf2e14188a7b0bcb06e1ed2dc031042b984b0bb9544017
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 46331c7d6016bf85b3e8f20c159d62f5ae471aba1eb3dc52fff35a0259d58dcc7d592d4cc4f00c5f9243fa738a11cfa48bd20203040d4a9e6bc25e807fab7ab3
   languageName: node
   linkType: hard
 
@@ -32231,13 +32312,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webidl-conversions@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "webidl-conversions@npm:7.0.0"
-  checksum: f05588567a2a76428515333eff87200fae6c83c3948a7482ebb109562971e77ef6dc49749afa58abb993391227c5697b3ecca52018793e0cb4620a48f10bd21b
-  languageName: node
-  linkType: hard
-
 "whatwg-mimetype@npm:^3.0.0":
   version: 3.0.0
   resolution: "whatwg-mimetype@npm:3.0.0"
@@ -32855,7 +32929,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:3.22.4, zod@npm:^3.21.4":
+"zod@npm:3.22.4":
   version: 3.22.4
   resolution: "zod@npm:3.22.4"
   checksum: 80bfd7f8039b24fddeb0718a2ec7c02aa9856e4838d6aa4864335a047b6b37a3273b191ef335bf0b2002e5c514ef261ffcda5a589fb084a48c336ffc4cdbab7f
@@ -32873,6 +32947,13 @@ __metadata:
   version: 3.24.2
   resolution: "zod@npm:3.24.2"
   checksum: c02455c09678c5055c636d64f9fcda2424fea0aa46ac7d9681e7f41990bc55f488bcd84b9d7cfef0f6e906f51f55b245239d92a9f726248aa74c5b84edf00c2d
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.25.76":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: c9a403a62b329188a5f6bd24d5d935d2bba345f7ab8151d1baa1505b5da9f227fb139354b043711490c798e91f3df75991395e40142e6510a4b16409f302b849
   languageName: node
   linkType: hard
 

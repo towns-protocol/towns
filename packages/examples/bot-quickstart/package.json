@@ -29,7 +29,8 @@
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
-        "typescript": "^5.8.2"
+        "eslint-plugin-tsdoc": "^0.3.0",
+        "typescript": "~5.8.3"
     },
     "files": [
         "/dist"

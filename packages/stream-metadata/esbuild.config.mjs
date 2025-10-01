@@ -31,10 +31,6 @@ build({
 	platform: 'node',
 	plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
 	assetNames: '[name]',
-	loader: {
-		'.ts': 'ts',
-		'.wasm': 'file',
-	},
 	sourcemap: true,
 	target: 'es2022',
 	minify: false, // No minification for easier debugging. Add minification in production later

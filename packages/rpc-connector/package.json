@@ -19,6 +19,8 @@
         "@connectrpc/connect": "^2.0.0"
     },
     "devDependencies": {
+        "@connectrpc/connect-node": "^2.0.0",
+        "@connectrpc/connect-web": "^2.0.0",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
@@ -27,7 +29,7 @@
         "eslint-plugin-import-x": "^4.10.2",
         "eslint-plugin-tsdoc": "^0.3.0",
         "tsdown": "^0.12.3",
-        "typescript": "^5.8.2",
+        "typescript": "~5.8.3",
         "vitest": "^3.2.3"
     },
     "exports": {
@@ -56,14 +58,6 @@
     "peerDependencies": {
         "@connectrpc/connect-node": ">=2.0.0",
         "@connectrpc/connect-web": ">=2.0.0"
-    },
-    "peerDependenciesMeta": {
-        "@connectrpc/connect-node": {
-            "optional": true
-        },
-        "@connectrpc/connect-web": {
-            "optional": true
-        }
     },
     "publishConfig": {
         "access": "public"
