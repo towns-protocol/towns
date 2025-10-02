@@ -51,6 +51,8 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case 'redaction':
                 break
+            case 'custom':
+                break
             case undefined:
                 break
             default:
@@ -79,6 +81,8 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 )
                 break
             case 'redaction':
+                break
+            case 'custom':
                 break
             case undefined:
                 break

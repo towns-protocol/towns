@@ -75,6 +75,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
             case 'channelProperties':
                 // nothing to do, conveyed in the snapshot
                 break
+            case 'custom':
+                break
             case undefined:
                 break
             default:
@@ -106,6 +108,8 @@ export class StreamStateView_GDMChannel extends StreamStateView_AbstractContent 
                 break
             case 'channelProperties':
                 this.channelMetadata.appendEvent(event, cleartext, encryptionEmitter)
+                break
+            case 'custom':
                 break
             case undefined:
                 break
