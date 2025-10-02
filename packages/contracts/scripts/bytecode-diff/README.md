@@ -40,7 +40,7 @@ ChannelBase: 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
 
 ### Run pairwise remote bytecode diff on facets deployed to two networks
 
-Runs bytecode diff from deployed facets for diamonds in alpha, gamma, and omega environments as per source coordinates of diamonds for each environment.
+Runs bytecode diff from deployed facets for diamonds in alpha, beta, gamma, and omega environments as per source coordinates of diamonds for each environment.
 
 ```bash
 # compare omega against gamma facets and facet selectors

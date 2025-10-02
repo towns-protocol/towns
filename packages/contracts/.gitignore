@@ -11,5 +11,6 @@ scripts/accumulator-cli
 tsconfig.tsbuildinfo
 deployments/*/*/addresses/facets/
 out/
+.env.beta
 .env.gamma
 .env.omega
