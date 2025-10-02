@@ -13,7 +13,7 @@
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.2",
-        "@connectrpc/connect-web": "^2.0.0",
+        "@connectrpc/connect-web": "~2.0.0",
         "@emoji-mart/data": "^1.1.2",
         "@hookform/resolvers": "^3.6.0",
         "@radix-ui/react-checkbox": "^1.3.2",
@@ -53,6 +53,7 @@
     "devDependencies": {
         "@towns-protocol/eslint-config": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
+        "@types/bun": "^1.2.23",
         "@types/node": "^20.14.8",
         "@types/react": "^19.1.16",
         "@types/react-dom": "^19.1.7",
