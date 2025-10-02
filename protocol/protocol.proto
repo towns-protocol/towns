@@ -2,9 +2,9 @@ syntax = "proto3";
 package river;
 option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
-import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
-
+import "google/protobuf/timestamp.proto";
 
 /** 
 * Miniblock contains a list of events and the header event.
@@ -357,6 +357,7 @@ message ChannelPayload {
         Inception inception = 1;
         EncryptedData message = 2;
         Redaction redaction = 3;
+        google.protobuf.Any custom = 4;
     }
 }
 
@@ -378,6 +379,7 @@ message DmChannelPayload {
     oneof content {
         Inception inception = 1;
         EncryptedData message = 3;
+        google.protobuf.Any custom = 4;
     }
 }
 
@@ -400,6 +402,7 @@ message GdmChannelPayload {
         Inception inception = 1;
         EncryptedData message = 2;
         EncryptedData channel_properties = 3;
+        google.protobuf.Any custom = 4;
     }
 }
 
