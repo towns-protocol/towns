@@ -12,7 +12,6 @@ log:
 
 debugEndpoints:
     pprof: true
-    privateDebugServerAddress: ':8080'
 
 # Notifications setting when node is run in notification mode
 notifications:
