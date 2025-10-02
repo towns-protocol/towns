@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+// interfaces
+import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
+
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
 import {DeployDiamondLoupe} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondLoupe.sol";
@@ -19,7 +22,7 @@ import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/Diam
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 
-contract DeploySubscriptionModule is DiamondHelper, Deployer {
+contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper {
     using LibString for string;
 
     DeployFacet private facetHelper = new DeployFacet();
@@ -28,6 +31,32 @@ contract DeploySubscriptionModule is DiamondHelper, Deployer {
 
     function versionName() public pure override returns (string memory) {
         return "subscriptionModule";
+    }
+
+    function diamondInitHelper(
+        address deployer,
+        string[] memory facetNames
+    ) external override returns (FacetCut[] memory) {
+        // Queue up all requested facets for batch deployment
+        for (uint256 i; i < facetNames.length; ++i) {
+            facetHelper.add(facetNames[i]);
+        }
+
+        // Deploy all requested facets in a single batch transaction
+        facetHelper.deployBatch(deployer);
+
+        for (uint256 i; i < facetNames.length; ++i) {
+            string memory facetName = facetNames[i];
+            address facet = facetHelper.getDeployedAddress(facetName);
+
+            if (facetName.eq("SubscriptionModuleFacet")) {
+                addCut(
+                    makeCut(facet, FacetCutAction.Add, DeploySubscriptionModuleFacet.selectors())
+                );
+            }
+        }
+
+        return baseFacets();
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
