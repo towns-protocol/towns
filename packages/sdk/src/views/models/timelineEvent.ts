@@ -594,6 +594,8 @@ function toTownsContent_ChannelPayload(
                     adminRedaction: true,
                 } satisfies RedactionActionEvent,
             }
+        case 'custom':
+            return { error: `Custom payload not supported: ${description}` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

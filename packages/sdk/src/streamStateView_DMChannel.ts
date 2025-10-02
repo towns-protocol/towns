@@ -76,6 +76,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
 
+            case 'custom':
+                break
             case undefined:
                 break
             default:
@@ -104,6 +106,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     encryptionEmitter,
                 )
                 this.updateLastEvent(event.remoteEvent, undefined)
+                break
+            case 'custom':
                 break
             case undefined:
                 break

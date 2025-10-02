@@ -400,6 +400,8 @@ export class Bot<
                             // TODO: currently, no support for channel properties (update name, topic)
                         } else if (parsed.event.payload.value.content.case === 'inception') {
                             // TODO: is there any use case for this?
+                        } else if (parsed.event.payload.value.content.case === 'custom') {
+                            // TODO: what to do with custom payload for bot?
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
