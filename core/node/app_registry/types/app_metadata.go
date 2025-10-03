@@ -2,8 +2,9 @@ package types
 
 import (
 	"net/url"
+	"regexp"
 
-	"github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -11,6 +12,21 @@ import (
 const MAX_RESOURCE_URL_LENGTH = 8192
 
 const MAX_SLASH_COMMANDS = 25
+
+// usernameRegex validates bot usernames:
+// - Must start with a letter or number
+// - Can contain letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-)
+// - Must be between 1 and 256 characters
+// - No spaces allowed
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,255}$`)
+
+// ValidateBotUsername validates a bot username according to the rules
+func ValidateBotUsername(username string) error {
+	if !usernameRegex.MatchString(username) {
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "invalid username")
+	}
+	return nil
+}
 
 type SlashCommand struct {
 	Name        string `json:"name"`
@@ -106,24 +122,24 @@ var validExternalUrlSchemes = map[string]struct{}{
 
 func ValidateImageFileUrl(urlStr string) error {
 	if urlStr == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "URL cannot be empty")
 	}
 
 	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
 			Tag("url_length", len(urlStr)).
 			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
 	}
 
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
+		return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
 			Tag("url", urlStr)
 	}
 
 	// Check if scheme is valid
 	if _, schemeOk := validFileUrlSchemes[parsedUrl.Scheme]; !schemeOk {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid scheme (https, http, or ipfs)").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid scheme (https, http, or ipfs)").
 			Tag("url", urlStr).
 			Tag("scheme", parsedUrl.Scheme)
 	}
@@ -133,20 +149,20 @@ func ValidateImageFileUrl(urlStr string) error {
 
 func ValidateExternalUrl(urlStr string) error {
 	if len(urlStr) > MAX_RESOURCE_URL_LENGTH {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "URL exceeds maximum length").
 			Tag("url_length", len(urlStr)).
 			Tag("max_length", MAX_RESOURCE_URL_LENGTH)
 	}
 
 	parsedUrl, err := url.Parse(urlStr)
 	if err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
+		return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "invalid URL format", err).
 			Tag("url", urlStr)
 	}
 
 	// Check if scheme is valid
 	if _, schemeOk := validExternalUrlSchemes[parsedUrl.Scheme]; !schemeOk {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid external URL scheme").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "URL must have a valid external URL scheme").
 			Tag("url", urlStr).
 			Tag("scheme", parsedUrl.Scheme)
 	}
@@ -157,36 +173,38 @@ func ValidateExternalUrl(urlStr string) error {
 // ValidateAppMetadata validates app metadata and returns an error if validation fails
 func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	if metadata == nil {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
 
-	if metadata.GetUsername() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata username is required")
+	// Validate username format
+	if err := ValidateBotUsername(metadata.GetUsername()); err != nil {
+		return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata username validation failed", err).
+			Tag("username", metadata.GetUsername())
 	}
 
 	if metadata.GetDisplayName() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata display_name is required")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "metadata display_name is required")
 	}
 
 	if metadata.GetDescription() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "metadata description is required")
 	}
 
 	imageUrl := metadata.GetImageUrl()
 	if err := ValidateImageFileUrl(imageUrl); err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
+		return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata image_url validation failed", err).
 			Tag("image_url", imageUrl)
 	}
 
 	avatarUrl := metadata.GetAvatarUrl()
 	if err := ValidateImageFileUrl(avatarUrl); err != nil {
-		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
+		return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata avatar_url validation failed", err).
 			Tag("avatar_url", avatarUrl)
 	}
 
 	if externalUrl := metadata.GetExternalUrl(); externalUrl != "" {
 		if err := ValidateExternalUrl(externalUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
+			return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata external_url must be a valid URL", err).
 				Tag("external_url", metadata.GetExternalUrl())
 		}
 	}
@@ -194,7 +212,7 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 	// Validate slash commands
 	slashCommands := metadata.GetSlashCommands()
 	if len(slashCommands) > MAX_SLASH_COMMANDS {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT,
+		return RiverError(protocol.Err_INVALID_ARGUMENT,
 			"app metadata slash command count exceeds maximum").
 			Tag("commandCount", len(slashCommands)).
 			Tag("maximum", MAX_SLASH_COMMANDS)
@@ -209,7 +227,7 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 
 		cmdName := cmd.GetName()
 		if commandNames[cmdName] {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
 				Tag("commandName", cmdName)
 		}
 		commandNames[cmdName] = true
@@ -221,25 +239,28 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 // validateSlashCommandName validates a slash command name
 func validateSlashCommandName(name string) error {
 	if name == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name is required")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "command name is required")
 	}
 
 	if len(name) > 32 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must not exceed 32 characters").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "command name must not exceed 32 characters").
 			Tag("name", name).
 			Tag("length", len(name))
 	}
 
 	// Check if name starts with a letter
 	if len(name) > 0 && !((name[0] >= 'a' && name[0] <= 'z') || (name[0] >= 'A' && name[0] <= 'Z')) {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must start with a letter").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "command name must start with a letter").
 			Tag("name", name)
 	}
 
 	// Check if name contains only letters, numbers, and underscores
 	for i, ch := range name {
 		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command name must contain only letters, numbers, and underscores").
+			return RiverError(
+				protocol.Err_INVALID_ARGUMENT,
+				"command name must contain only letters, numbers, and underscores",
+			).
 				Tag("name", name).
 				Tag("invalidCharAt", i)
 		}
@@ -251,7 +272,7 @@ func validateSlashCommandName(name string) error {
 // validateSlashCommand validates a single slash command
 func validateSlashCommand(cmd *protocol.SlashCommand) error {
 	if cmd == nil {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "slash command cannot be nil")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "slash command cannot be nil")
 	}
 
 	// Validate name
@@ -262,12 +283,12 @@ func validateSlashCommand(cmd *protocol.SlashCommand) error {
 	// Validate description
 	description := cmd.GetDescription()
 	if description == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description is required").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "command description is required").
 			Tag("commandName", cmd.GetName())
 	}
 
 	if len(description) > 256 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "command description must not exceed 256 characters").
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "command description must not exceed 256 characters").
 			Tag("commandName", cmd.GetName()).
 			Tag("descriptionLength", len(description))
 	}
@@ -340,11 +361,11 @@ func AppMetadataUpdateToMap(update *protocol.AppMetadataUpdate, updateMask []str
 // ValidateAppMetadataUpdate validates partial app metadata updates and returns an error if validation fails
 func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []string) error {
 	if update == nil {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata update is required")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "metadata update is required")
 	}
 
 	if len(updateMask) == 0 {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "update_mask is required and cannot be empty")
+		return RiverError(protocol.Err_INVALID_ARGUMENT, "update_mask is required and cannot be empty")
 	}
 
 	// Create mask set for efficient lookup
@@ -358,31 +379,31 @@ func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []
 	// Validate username if being updated (MANDATORY)
 	if maskSet["username"] {
 		if update.Username == nil || *update.Username == "" {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "username cannot be empty")
 		}
 	}
 
 	// Validate display_name if being updated (MANDATORY)
 	if maskSet["display_name"] {
 		if update.DisplayName == nil || *update.DisplayName == "" {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "display_name cannot be empty")
 		}
 	}
 
 	// Validate description if being updated (MANDATORY)
 	if maskSet["description"] {
 		if update.Description == nil || *update.Description == "" {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "description cannot be empty")
 		}
 	}
 
 	// Validate image_url if being updated (MANDATORY)
 	if maskSet["image_url"] {
 		if update.ImageUrl == nil || *update.ImageUrl == "" {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "image_url cannot be empty")
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "image_url cannot be empty")
 		}
 		if err := ValidateImageFileUrl(*update.ImageUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "image_url validation failed", err).
+			return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "image_url validation failed", err).
 				Tag("image_url", *update.ImageUrl)
 		}
 	}
@@ -390,10 +411,10 @@ func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []
 	// Validate avatar_url if being updated (MANDATORY)
 	if maskSet["avatar_url"] {
 		if update.AvatarUrl == nil || *update.AvatarUrl == "" {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT, "avatar_url cannot be empty")
+			return RiverError(protocol.Err_INVALID_ARGUMENT, "avatar_url cannot be empty")
 		}
 		if err := ValidateImageFileUrl(*update.AvatarUrl); err != nil {
-			return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "avatar_url validation failed", err).
+			return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "avatar_url validation failed", err).
 				Tag("avatar_url", *update.AvatarUrl)
 		}
 	}
@@ -402,7 +423,7 @@ func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []
 	if maskSet["external_url"] && update.ExternalUrl != nil {
 		if *update.ExternalUrl != "" {
 			if err := ValidateExternalUrl(*update.ExternalUrl); err != nil {
-				return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "external_url validation failed", err).
+				return RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "external_url validation failed", err).
 					Tag("external_url", *update.ExternalUrl)
 			}
 		}
@@ -411,7 +432,7 @@ func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []
 	// Validate slash_commands if being updated
 	if maskSet["slash_commands"] && update.SlashCommands != nil {
 		if len(update.SlashCommands) > MAX_SLASH_COMMANDS {
-			return base.RiverError(protocol.Err_INVALID_ARGUMENT,
+			return RiverError(protocol.Err_INVALID_ARGUMENT,
 				"slash command count exceeds maximum").
 				Tag("commandCount", len(update.SlashCommands)).
 				Tag("maximum", MAX_SLASH_COMMANDS)
@@ -426,7 +447,7 @@ func ValidateAppMetadataUpdate(update *protocol.AppMetadataUpdate, updateMask []
 
 			cmdName := cmd.GetName()
 			if commandNames[cmdName] {
-				return base.RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
+				return RiverError(protocol.Err_INVALID_ARGUMENT, "duplicate command name").
 					Tag("commandName", cmdName)
 			}
 			commandNames[cmdName] = true
