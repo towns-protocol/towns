@@ -2,6 +2,7 @@ package types
 
 import (
 	"net/url"
+	"regexp"
 
 	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -11,6 +12,21 @@ import (
 const MAX_RESOURCE_URL_LENGTH = 8192
 
 const MAX_SLASH_COMMANDS = 25
+
+// usernameRegex validates bot usernames:
+// - Must start with a letter or number
+// - Can contain letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-)
+// - Must be between 1 and 64 characters
+// - No spaces allowed
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$`)
+
+// ValidateBotUsername validates a bot username according to the rules
+func ValidateBotUsername(username string) error {
+	if !usernameRegex.MatchString(username) {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "invalid username")
+	}
+	return nil
+}
 
 type SlashCommand struct {
 	Name        string `json:"name"`
@@ -160,8 +176,10 @@ func ValidateAppMetadata(metadata *protocol.AppMetadata) error {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata is required")
 	}
 
-	if metadata.GetUsername() == "" {
-		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "metadata username is required")
+	// Validate username format
+	if err := ValidateBotUsername(metadata.GetUsername()); err != nil {
+		return base.RiverErrorWithBase(protocol.Err_INVALID_ARGUMENT, "metadata username validation failed", err).
+			Tag("username", metadata.GetUsername())
 	}
 
 	if metadata.GetDisplayName() == "" {

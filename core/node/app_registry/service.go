@@ -928,12 +928,12 @@ func (s *Service) ValidateBotName(
 ) {
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "ValidateBotName"))
 
-	// Validate input
-	if req.Msg.Username == "" {
+	// Validate username format
+	if err := types.ValidateBotUsername(req.Msg.Username); err != nil {
 		return &connect.Response[ValidateBotNameResponse]{
 			Msg: &ValidateBotNameResponse{
 				IsAvailable:  false,
-				ErrorMessage: "username cannot be empty",
+				ErrorMessage: err.Error(),
 			},
 		}, nil
 	}
