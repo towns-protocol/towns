@@ -2111,15 +2111,16 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 		"Empty name": {
 			name:             "",
 			expectAvailable:  false,
-			expectErrMessage: "username cannot be empty",
+			expectErrMessage: "(3:INVALID_ARGUMENT) invalid username",
 		},
 		"Different case of existing username": {
 			name:            strings.ToUpper(existingBotUsername),
 			expectAvailable: true, // Expect case-sensitive username uniqueness
 		},
 		"Name with spaces": {
-			name:            "Bot With Spaces",
-			expectAvailable: true,
+			name:             "Bot With Spaces",
+			expectAvailable:  false,
+			expectErrMessage: "(3:INVALID_ARGUMENT) invalid username",
 		},
 		"Very long name": {
 			name:            strings.Repeat("a", 200),
@@ -2241,7 +2242,7 @@ func TestAppRegistry_Register(t *testing.T) {
 				AvatarUrl:   "https://example.com/avatar.png",
 			},
 			authenticatingWallet: ownerWallet,
-			expectedErr:          "metadata username is required",
+			expectedErr:          "metadata username validation failed",
 		},
 		"Invalid metadata - missing description": {
 			appId:   appWallet.Address[:],

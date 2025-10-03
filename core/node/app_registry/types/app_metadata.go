@@ -16,9 +16,9 @@ const MAX_SLASH_COMMANDS = 25
 // usernameRegex validates bot usernames:
 // - Must start with a letter or number
 // - Can contain letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-)
-// - Must be between 1 and 64 characters
+// - Must be between 1 and 255 characters
 // - No spaces allowed
-var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$`)
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,255}$`)
 
 // ValidateBotUsername validates a bot username according to the rules
 func ValidateBotUsername(username string) error {
