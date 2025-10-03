@@ -2122,9 +2122,14 @@ func TestAppRegistry_ValidateBotName(t *testing.T) {
 			expectAvailable:  false,
 			expectErrMessage: "(3:INVALID_ARGUMENT) invalid username",
 		},
-		"Very long name": {
-			name:            strings.Repeat("a", 200),
+		"256 character username": {
+			name:            strings.Repeat("a", 256),
 			expectAvailable: true,
+		},
+		"257 character username (too long)": {
+			name:             strings.Repeat("a", 257),
+			expectAvailable:  false,
+			expectErrMessage: "(3:INVALID_ARGUMENT) invalid username",
 		},
 	}
 

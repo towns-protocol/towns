@@ -929,7 +929,7 @@ func (s *Service) ValidateBotName(
 	ctx = logging.CtxWithLog(ctx, logging.FromCtx(ctx).With("method", "ValidateBotName"))
 
 	// Validate username format
-	if err := types.ValidateBotUsername(req.Msg.Username); err != nil {
+	if err := types.ValidateBotUsername(req.Msg.GetUsername()); err != nil {
 		return &connect.Response[ValidateBotNameResponse]{
 			Msg: &ValidateBotNameResponse{
 				IsAvailable:  false,
