@@ -51,24 +51,21 @@ func (b *AppClient) marshalAndPostProto(
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error marshalling payload").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", webhookUrl, bytes.NewReader(marshalledProto))
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error constructing http request").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	// Add authorization header based on the shared secret for this app.
 	if err := signRequest(req, hs256SharedSecret[:], appId); err != nil {
 		return nil, base.WrapRiverError(protocol.Err_INTERNAL, err).
 			Message("Error signing request").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	// Set headers to indicate that the request body is in protobuf format.
@@ -80,21 +77,18 @@ func (b *AppClient) marshalAndPostProto(
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
 			Message("Unable to send request to webhook").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, base.RiverError(protocol.Err_CANNOT_CALL_WEBHOOK, "webhook response non-OK status").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	// Sanity check
 	if resp == nil {
 		return nil, base.RiverError(protocol.Err_INTERNAL, "unexpected error: http library returned an empty error and response").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	return resp, nil
@@ -127,16 +121,14 @@ func sendRequestAndParseResponse(
 	if err != nil {
 		return nil, base.WrapRiverError(protocol.Err_CANNOT_CALL_WEBHOOK, err).
 			Message("Webhook response was unreadable").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	var response protocol.AppServiceResponse
 	if err = proto.Unmarshal(body, &response); err != nil {
 		return nil, base.WrapRiverError(protocol.Err_MALFORMED_WEBHOOK_RESPONSE, err).
 			Message("Webhook response could not be marshalled").
-			Tag("appId", appId).
-			Tag("webhookUrl", webhookUrl)
+			Tag("appId", appId)
 	}
 
 	return &response, nil
@@ -281,9 +273,8 @@ func (b *AppClient) GetWebhookStatus(
 	defer func() {
 		if err != nil {
 			err = base.AsRiverError(err, protocol.Err_INTERNAL).
-				Func("AppClient.InitializeWebhook").
-				Tag("appId", appId).
-				Tag("webhookUrl", webhookUrl)
+				Func("AppClient.GetWebhookStatus").
+				Tag("appId", appId)
 		}
 	}()
 
