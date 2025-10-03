@@ -58,19 +58,22 @@ contract MembershipJoinSpaceWithReferralTest is
             referralCode: ""
         });
 
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
+        membership.joinSpaceWithReferral{value: totalPrice}(alice, referral);
 
         uint256 protocolFee = BasisPoints.calculate(
             MEMBERSHIP_PRICE,
             platformReqs.getMembershipBps()
         );
+        uint256 minFee = platformReqs.getMembershipFee();
+        protocolFee = protocolFee > minFee ? protocolFee : minFee;
 
         address protocol = platformReqs.getFeeRecipient();
 
         assertEq(protocol.balance, protocolFee);
-        assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee);
+        assertEq(address(membership).balance, MEMBERSHIP_PRICE); // Space gets base price
     }
 
     function test_revertWhen_joinSpaceWithReferral_partnerReferral(
@@ -90,9 +93,10 @@ contract MembershipJoinSpaceWithReferralTest is
             referralCode: ""
         });
 
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
+        membership.joinSpaceWithReferral{value: totalPrice}(alice, referral);
 
         uint256 protocolFee = BasisPoints.calculate(
             MEMBERSHIP_PRICE,
@@ -101,9 +105,13 @@ contract MembershipJoinSpaceWithReferralTest is
 
         uint256 partnerFee = BasisPoints.calculate(MEMBERSHIP_PRICE, partner.fee);
 
+        uint256 minFee = platformReqs.getMembershipFee();
+        protocolFee = protocolFee > minFee ? protocolFee : minFee;
+        
         assertEq(partner.account.balance, partnerFee, "partner fee");
         assertEq(platformReqs.getFeeRecipient().balance, protocolFee);
-        assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee - partnerFee);
+        // With fee-added model, space gets base price minus partner fee only
+        assertEq(address(membership).balance, MEMBERSHIP_PRICE - partnerFee);
     }
 
     function test_revertWhen_joinSpaceWithReferral_referralCodeRegistered()
@@ -128,14 +136,17 @@ contract MembershipJoinSpaceWithReferralTest is
             referralCode: referral.referralCode
         });
 
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, membershipReferral);
+        membership.joinSpaceWithReferral{value: totalPrice}(alice, membershipReferral);
 
         uint256 protocolFee = BasisPoints.calculate(
             MEMBERSHIP_PRICE,
             platformReqs.getMembershipBps()
         );
+        uint256 minFee = platformReqs.getMembershipFee();
+        protocolFee = protocolFee > minFee ? protocolFee : minFee;
 
         uint256 referralFee = BasisPoints.calculate(
             MEMBERSHIP_PRICE,
@@ -144,7 +155,8 @@ contract MembershipJoinSpaceWithReferralTest is
 
         assertEq(platformReqs.getFeeRecipient().balance, protocolFee);
         assertEq(referralRecipient.balance, referralFee);
-        assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee - referralFee);
+        // With fee-added model, space gets base price minus referral fee only
+        assertEq(address(membership).balance, MEMBERSHIP_PRICE - referralFee);
         assertEq(alice.balance, 0);
         assertEq(membershipToken.balanceOf(alice), 1);
     }
@@ -159,19 +171,23 @@ contract MembershipJoinSpaceWithReferralTest is
             referralCode: ""
         });
 
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        uint256 totalPrice = membership.getMembershipPrice();
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpaceWithReferral{value: MEMBERSHIP_PRICE}(alice, referral);
+        membership.joinSpaceWithReferral{value: totalPrice}(alice, referral);
 
         uint256 protocolFee = BasisPoints.calculate(
             MEMBERSHIP_PRICE,
             platformReqs.getMembershipBps()
         );
+        uint256 minFee = platformReqs.getMembershipFee();
+        protocolFee = protocolFee > minFee ? protocolFee : minFee;
 
         uint256 referralFee = BasisPoints.calculate(MEMBERSHIP_PRICE, referrals.defaultBpsFee());
 
         assertEq(bob.balance, referralFee);
-        assertEq(address(membership).balance, MEMBERSHIP_PRICE - protocolFee - referralFee);
+        // With fee-added model, space gets base price minus referral fee only
+        assertEq(address(membership).balance, MEMBERSHIP_PRICE - referralFee);
         assertEq(membershipToken.balanceOf(alice), 1);
     }
 

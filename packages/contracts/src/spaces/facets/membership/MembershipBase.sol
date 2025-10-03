@@ -64,14 +64,20 @@ abstract contract MembershipBase is IMembershipBase {
         );
     }
 
+    function _getTotalMembershipPayment(
+        uint256 membershipPrice
+    ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
+        protocolFee = _getProtocolFee(membershipPrice);
+        if (membershipPrice == 0) return (protocolFee, protocolFee);
+        return (membershipPrice + protocolFee, protocolFee);
+    }
+
     function _getProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
         IPlatformRequirements platform = _getPlatformRequirements();
-
-        uint256 minPrice = platform.getMembershipMinPrice();
-
-        if (membershipPrice < minPrice) return platform.getMembershipFee();
-
-        return BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
+        uint256 baseFee = platform.getMembershipFee();
+        if (membershipPrice == 0) return baseFee;
+        uint256 bpsFee = BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
+        return FixedPointMathLib.max(bpsFee, baseFee);
     }
 
     function _transferIn(address from, uint256 amount) internal returns (uint256) {
@@ -153,9 +159,9 @@ abstract contract MembershipBase is IMembershipBase {
     /*                           PRICING                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _verifyPrice(uint256 newPrice) internal view {
-        uint256 minFee = _getPlatformRequirements().getMembershipFee();
-        if (newPrice < minFee) Membership__PriceTooLow.selector.revertWith();
+    function _verifyPrice(uint256 newPrice) internal pure {
+        // Price can be 0 since protocol fee will be added on top
+        // No minimum price validation needed with fee-added model
     }
 
     /// @dev Makes it virtual to allow other pricing strategies
@@ -163,14 +169,12 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view virtual returns (uint256 membershipPrice) {
         address pricingModule = _getPricingModule();
-        IPlatformRequirements platform = _getPlatformRequirements();
-        if (pricingModule == address(0)) return platform.getMembershipFee();
+
+        if (pricingModule == address(0)) return 0; // Base price is 0 if no pricing module
 
         // get free allocation
         uint256 freeAllocation = _getMembershipFreeAllocation();
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
-        uint256 minPrice = platform.getMembershipMinPrice();
-        if (membershipPrice < minPrice) return platform.getMembershipFee();
     }
 
     function _setMembershipRenewalPrice(uint256 tokenId, uint256 pricePaid) internal {
@@ -182,15 +186,9 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        IPlatformRequirements platform = _getPlatformRequirements();
-
-        uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
-
-        if (renewalPrice != 0) return FixedPointMathLib.max(renewalPrice, minFee);
-
-        uint256 price = _getMembershipPrice(totalSupply);
-        return FixedPointMathLib.max(price, minFee);
+        if (renewalPrice != 0) return renewalPrice;
+        return _getMembershipPrice(totalSupply);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

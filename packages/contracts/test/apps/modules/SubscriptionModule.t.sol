@@ -8,6 +8,7 @@ import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IMod
 import {ModulesBase} from "./ModulesBase.sol";
 import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
 import {Validator} from "../../../src/utils/libraries/Validator.sol";
+import {BasisPoints} from "../../../src/utils/libraries/BasisPoints.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
@@ -229,11 +230,14 @@ contract SubscriptionModuleTest is ModulesBase {
             SubscriptionParams memory params
         ) = _createSubscription(user);
 
-        uint256 newPrice = (params.renewalPrice * 110) / 100;
+        // Increase the base membership price by 10%
+        uint256 originalBasePrice = DEFAULT_MEMBERSHIP_PRICE;
+        uint256 newBasePrice = (originalBasePrice * 110) / 100;
 
-        _setMembershipPrice(params.space, newPrice);
+        _setMembershipPrice(params.space, newBasePrice);
         _warpToRenewalTime(params.space, tokenId);
 
+        // Fund with original renewal price (should still work due to stored renewal price)
         vm.deal(address(account), params.renewalPrice);
 
         address feeRecipient = platformRequirements.getFeeRecipient();
@@ -243,7 +247,7 @@ contract SubscriptionModuleTest is ModulesBase {
             feeRecipient
         );
 
-        // Should respect the original price and succeed even with 10% increase
+        // Should respect the original renewal price and succeed even with 10% increase
         _processRenewalAs(processor, address(account), entityId);
 
         BalanceSnapshot memory afterSnap = snapshotBalances(
@@ -252,7 +256,19 @@ contract SubscriptionModuleTest is ModulesBase {
             feeRecipient
         );
 
-        assertNativeDistribution(beforeSnap, afterSnap);
+        // Verify payment distribution: account paid original renewal price
+        uint256 paidAmount = beforeSnap.account - afterSnap.account;
+        assertEq(paidAmount, params.renewalPrice, "Should pay original renewal price");
+        
+        // Calculate expected distribution based on original base price
+        uint256 protocolFee = platformRequirements.getMembershipFee(); // Min fee for 1 ether
+        uint256 basePrice = originalBasePrice;
+        if (BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps()) > protocolFee) {
+            protocolFee = BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps());
+        }
+        
+        assertEq(afterSnap.feeRecipient - beforeSnap.feeRecipient, protocolFee, "Protocol fee should match");
+        assertEq(afterSnap.space - beforeSnap.space, basePrice, "Space should get base price");
     }
 
     function test_processRenewal_skipWhen_InactiveSubscription(address user) public {
@@ -386,14 +402,17 @@ contract SubscriptionModuleTest is ModulesBase {
             uint32 entityId,
             SubscriptionParams memory params
         ) = _createSubscription(user, 7 days, expectedRenewalPrice);
-        vm.deal(address(account), expectedRenewalPrice * 2);
+        
+        // Get actual renewal price (base + protocol fee)
+        uint256 actualRenewalPrice = params.renewalPrice;
+        vm.deal(address(account), actualRenewalPrice * 2);
 
         uint256 totalSpent;
 
         _warpToRenewalTime(params.space, tokenId);
         _processRenewalAs(processor, address(account), entityId);
 
-        totalSpent += expectedRenewalPrice;
+        totalSpent += actualRenewalPrice;
 
         Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
         assertEq(sub.spent, totalSpent, "Spent should be equal to the total spent");
@@ -403,7 +422,7 @@ contract SubscriptionModuleTest is ModulesBase {
         _warpToRenewalTime(params.space, tokenId);
         _processRenewalAs(processor, address(account), entityId);
 
-        totalSpent += expectedRenewalPrice;
+        totalSpent += actualRenewalPrice;
         sub = subscriptionModule.getSubscription(address(account), entityId);
 
         assertEq(sub.spent, totalSpent, "Spent should be equal to the total spent");
@@ -541,35 +560,36 @@ contract SubscriptionModuleTest is ModulesBase {
     }
 
     function test_batchProcessRenewals_MixedResults() public {
-        uint256 renewalPrice = 1 ether;
+        uint256 basePrice = 1 ether;
         // Create subscriptions with different states
         (
             ModularAccount account1,
             uint256 tokenId1,
             uint32 entityId1,
             SubscriptionParams memory params1
-        ) = _createSubscription(makeAddr("user1"), 30 days, renewalPrice);
+        ) = _createSubscription(makeAddr("user1"), 30 days, basePrice);
+        
         (ModularAccount account2, , uint32 entityId2, ) = _createSubscription(
             makeAddr("user2"),
             20 days,
-            renewalPrice
+            basePrice
         );
         (ModularAccount account3, , uint32 entityId3, ) = _createSubscription(
             makeAddr("user3"),
             365 days,
-            renewalPrice
+            basePrice
         );
         (ModularAccount account4, , uint32 entityId4, ) = _createSubscription(
             makeAddr("user4"),
             365 days,
-            renewalPrice
+            basePrice
         );
 
-        // Fund accounts
-        vm.deal(address(account1), renewalPrice);
-        vm.deal(address(account2), renewalPrice);
-        vm.deal(address(account3), renewalPrice);
-        vm.deal(address(account4), renewalPrice);
+        // Fund accounts with actual renewal prices (base + protocol fee)
+        vm.deal(address(account1), params1.renewalPrice);
+        vm.deal(address(account2), params1.renewalPrice); // Same renewal price for all since same base price
+        vm.deal(address(account3), params1.renewalPrice);
+        vm.deal(address(account4), params1.renewalPrice);
 
         vm.prank(address(account4));
         subscriptionModule.pauseSubscription(entityId4);

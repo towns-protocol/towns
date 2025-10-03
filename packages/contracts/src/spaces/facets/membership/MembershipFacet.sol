@@ -104,17 +104,22 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function getMembershipPrice() external view returns (uint256) {
-        return _getMembershipPrice(_totalSupply());
+        uint256 basePrice = _getMembershipPrice(_totalSupply());
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
+        return totalRequired;
     }
 
     /// @inheritdoc IMembership
     function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256) {
-        return _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
+        return totalRequired;
     }
 
     /// @inheritdoc IMembership
     function getProtocolFee() external view returns (uint256) {
-        return _getProtocolFee(_getMembershipPrice(_totalSupply()));
+        uint256 basePrice = _getMembershipPrice(_totalSupply());
+        return _getProtocolFee(basePrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

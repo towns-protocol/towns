@@ -87,8 +87,9 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        // Regular paid join
-        (joinDetails.amountDue, joinDetails.shouldCharge) = (membershipPrice, true);
+        // Regular paid join - calculate total with protocol fee added
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
+        (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
     /// @notice Handles the process of joining a space
@@ -307,8 +308,8 @@ abstract contract MembershipJoin is
             Membership__InvalidTransactionType.selector.revertWith();
         }
 
-        uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
-        uint256 ownerProceeds = joinDetails.amountDue - protocolFee;
+        _collectProtocolFee(sender, joinDetails.basePrice);
+        uint256 ownerProceeds = joinDetails.basePrice;
 
         _afterChargeForJoinSpace(
             transactionId,
@@ -340,7 +341,7 @@ abstract contract MembershipJoin is
 
         uint256 ownerProceeds;
         {
-            uint256 protocolFee = _collectProtocolFee(sender, joinDetails.basePrice);
+            _collectProtocolFee(sender, joinDetails.basePrice);
 
             uint256 partnerFee = _collectPartnerFee(
                 sender,
@@ -355,7 +356,10 @@ abstract contract MembershipJoin is
                 joinDetails.basePrice
             );
 
-            ownerProceeds = joinDetails.amountDue - protocolFee - partnerFee - referralFee;
+            // Owner gets the base price minus partner and referral fees
+            ownerProceeds = joinDetails.basePrice > (partnerFee + referralFee)
+                ? joinDetails.basePrice - partnerFee - referralFee
+                : 0;
         }
 
         _afterChargeForJoinSpace(
@@ -500,18 +504,19 @@ abstract contract MembershipJoin is
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
         uint256 duration = _getMembershipDuration();
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
-        if (membershipPrice > msg.value) Membership__InvalidPayment.selector.revertWith();
+        if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-        _mintMembershipPoints(receiver, membershipPrice);
+        _mintMembershipPoints(receiver, basePrice);
 
-        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
+        _collectProtocolFee(payer, basePrice);
 
-        uint256 remainingDue = membershipPrice - protocolFee;
-        if (remainingDue > 0) _transferIn(payer, remainingDue);
+        // Owner receives the base price
+        if (basePrice > 0) _transferIn(payer, basePrice);
 
-        uint256 excess = msg.value - membershipPrice;
+        uint256 excess = msg.value - totalRequired;
         if (excess > 0) {
             CurrencyTransfer.transferCurrency(
                 _getMembershipCurrency(),
