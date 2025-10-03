@@ -34,7 +34,7 @@
         <tr>
             <td>{{$name}}</td>
             <td>
-                {{if eq $.environment "gamma"}}
+                {{if eq $.environment "gamma" || eq $.environment "beta"}}
                     <a href="https://sepolia.basescan.org/address/{{$deployment.address}}" target="_blank">{{$deployment.address}}</a>
                 {{else if eq $.environment "omega"}}
                     <a href="https://basescan.org/address/{{$deployment.address}}" target="_blank">{{$deployment.address}}</a>
@@ -72,7 +72,7 @@
                     <tr>
                         <td>{{$facet.sourceContractName}}</td>
                         <td>
-                            {{if eq $.environment "gamma"}}
+                            {{if eq $.environment "gamma" || eq $.environment "beta"}}
                                 <a href="https://sepolia.basescan.org/address/{{$facet.sourceFacetAddress}}" target="_blank">{{$facet.sourceFacetAddress}}</a>
                             {{else if eq $.environment "omega"}}
                                 <a href="https://basescan.org/address/{{$facet.sourceFacetAddress}}" target="_blank">{{$facet.sourceFacetAddress}}</a>
@@ -83,7 +83,7 @@
                         <td>{{$facet.sourceBytecodeHash}}</td>
                         <td>
                             {{range $addr := $facet.targetContractAddresses}}
-                                {{if eq $.environment "gamma"}}
+                                {{if eq $.environment "gamma" || eq $.environment "beta"}}
                                     <a href="https://sepolia.basescan.org/address/{{$addr}}" target="_blank">{{$addr}}</a><br>
                                 {{else if eq $.environment "omega"}}
                                     <a href="https://basescan.org/address/{{$addr}}" target="_blank">{{$addr}}</a><br>

@@ -2,7 +2,7 @@ name: Bytecode Diff Report
 env:
     FOUNDRY_VERSION: stable
     OMEGA_PRIVATE_KEY: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
-    TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+    # TESTNET_PRIVATE_KEY will be set dynamically based on target environment
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
     FACET_SOURCE_PATH: ../../packages/contracts/src
@@ -28,6 +28,7 @@ on:
                 type: choice
                 options:
                     - 'alpha'
+                    - 'beta'
                     - 'gamma'
                     - 'omega'
                 default: 'alpha'
@@ -37,6 +38,7 @@ on:
                 type: choice
                 options:
                     - 'alpha'
+                    - 'beta'
                     - 'gamma'
                     - 'omega'
                 default: 'gamma'
@@ -62,6 +64,8 @@ on:
                 required: true
             BLOCKSCOUT_BASE_API_KEY:
                 required: true
+            BETA_BASE_SEPOLIA_DEPLOYER_PK:
+                required: false
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
             OMEGA_BASE_DEPLOYER_PK:
@@ -78,6 +82,18 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Set environment-specific private key
+              run: |
+                  if [ "${{ inputs.target_environment }}" = "beta" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.BETA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  elif [ "${{ inputs.target_environment }}" = "gamma" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  elif [ "${{ inputs.target_environment }}" = "omega" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.OMEGA_BASE_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  else
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  fi
+
             - name: Checkout code
               uses: actions/checkout@v4
               with:

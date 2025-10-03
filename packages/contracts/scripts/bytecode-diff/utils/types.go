@@ -3,7 +3,7 @@ package utils
 type BaseConfig struct {
 	BaseRpcUrl        string
 	BaseSepoliaRpcUrl string
-	BasescanAPIKey    string
+	EtherscanAPIKey   string
 }
 
 type RiverChainConfig struct {
