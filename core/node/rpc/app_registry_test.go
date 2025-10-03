@@ -1377,6 +1377,56 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 	}
 }
 
+func TestAppRegistry_GetSettingsWithWebhookUrl(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+	tester.StartBotServices()
+
+	// Register bot without webhook initially
+	_, _ = tester.RegisterBotService(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	appWallet, ownerWallet := tester.BotWallets(0)
+
+	// Get settings before webhook registration - should not have webhook URL
+	getReq := &connect.Request[protocol.GetAppSettingsRequest]{
+		Msg: &protocol.GetAppSettingsRequest{
+			AppId: appWallet.Address[:],
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, ownerWallet, getReq)
+
+	getResp, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq)
+	tester.require.NoError(err)
+	tester.require.NotNil(getResp)
+	tester.require.Equal(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, getResp.Msg.GetSettings().GetForwardSetting())
+	tester.require.Nil(getResp.Msg.WebhookUrl, "webhook URL should be nil before registration")
+
+	// Register webhook
+	webhookUrl := "https://example.com/webhook"
+	regWebhookReq := &connect.Request[protocol.RegisterWebhookRequest]{
+		Msg: &protocol.RegisterWebhookRequest{
+			AppId:      appWallet.Address[:],
+			WebhookUrl: webhookUrl,
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, ownerWallet, regWebhookReq)
+
+	_, err = tester.appRegistryClient.RegisterWebhook(tester.ctx, regWebhookReq)
+	tester.require.NoError(err)
+
+	// Get settings after webhook registration - should include webhook URL
+	getReq2 := &connect.Request[protocol.GetAppSettingsRequest]{
+		Msg: &protocol.GetAppSettingsRequest{
+			AppId: appWallet.Address[:],
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, getReq2)
+
+	getResp2, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq2)
+	tester.require.NoError(err)
+	tester.require.NotNil(getResp2)
+	tester.require.NotNil(getResp2.Msg.WebhookUrl, "webhook URL should be present after registration")
+	tester.require.Equal(webhookUrl, *getResp2.Msg.WebhookUrl)
+}
+
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 	ctx := test.NewTestContext(t)
 	require := require.New(t)
