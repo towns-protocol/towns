@@ -257,7 +257,10 @@ func validateSlashCommandName(name string) error {
 	// Check if name contains only letters, numbers, and underscores
 	for i, ch := range name {
 		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch == '_') {
-			return RiverError(protocol.Err_INVALID_ARGUMENT, "command name must contain only letters, numbers, and underscores").
+			return RiverError(
+				protocol.Err_INVALID_ARGUMENT,
+				"command name must contain only letters, numbers, and underscores",
+			).
 				Tag("name", name).
 				Tag("invalidCharAt", i)
 		}
