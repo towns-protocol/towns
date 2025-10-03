@@ -27,12 +27,9 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
 
     function test_withdraw() external givenMembershipHasPrice givenAliceHasPaidMembership {
         address multisig = _randomAddress();
-        uint256 protocolFee = BasisPoints.calculate(
-            MEMBERSHIP_PRICE,
-            IPlatformRequirements(spaceFactory).getMembershipBps()
-        );
-
-        uint256 expectedRevenue = MEMBERSHIP_PRICE - protocolFee;
+        
+        // With fee-added model, the space receives the full base price
+        uint256 expectedRevenue = MEMBERSHIP_PRICE;
 
         uint256 revenue = membership.revenue();
         assertEq(revenue, expectedRevenue);
@@ -40,7 +37,7 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         vm.prank(founder);
         treasury.withdraw(multisig);
 
-        assertEq(multisig.balance, MEMBERSHIP_PRICE - protocolFee);
+        assertEq(multisig.balance, MEMBERSHIP_PRICE);
     }
 
     function test_revertWhen_withdrawNotOwner() external {
@@ -68,18 +65,17 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         vm.prank(founder);
         treasury.withdraw(founder);
 
-        uint256 protocolFee = BasisPoints.calculate(
-            MEMBERSHIP_PRICE,
-            IPlatformRequirements(spaceFactory).getMembershipBps()
-        );
-
-        uint256 expectedBalance = MEMBERSHIP_PRICE - protocolFee;
+        // With fee-added model, founder receives full base price
+        uint256 expectedBalance = MEMBERSHIP_PRICE;
 
         assertEq(founder.balance, expectedBalance);
 
+        // For the second join, charlie needs to pay base price + protocol fee
+        uint256 totalPrice = membership.getMembershipPrice();
+        
         vm.startPrank(charlie);
-        vm.deal(charlie, MEMBERSHIP_PRICE);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(charlie);
+        vm.deal(charlie, totalPrice);
+        membership.joinSpace{value: totalPrice}(charlie);
         assertEq(membershipToken.balanceOf(charlie), 1);
         vm.stopPrank();
 

@@ -99,7 +99,8 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
         assertEq(membershipToken.balanceOf(alice), 1);
 
         // Check referral fee calculation with fuzzed basis points
-        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, basisPoints);
+        // Referral fee is calculated on base price (MEMBERSHIP_PRICE), not total fee
+        uint256 expectedReferralFee = BasisPoints.calculate(MEMBERSHIP_PRICE, basisPoints);
         assertEq(charlie.balance, expectedReferralFee);
     }
 
@@ -133,7 +134,8 @@ contract MembershipUnifiedJoinSpaceTest is MembershipBaseSetup {
         assertEq(membershipToken.balanceOf(alice), 1);
 
         // Check user referral fee was paid to the referral address
-        uint256 expectedReferralFee = BasisPoints.calculate(membershipFee, defaultBpsFee);
+        // Referral fee is calculated on base price (MEMBERSHIP_PRICE), not total fee
+        uint256 expectedReferralFee = BasisPoints.calculate(MEMBERSHIP_PRICE, defaultBpsFee);
         assertEq(userReferral.balance, expectedReferralFee);
     }
 
