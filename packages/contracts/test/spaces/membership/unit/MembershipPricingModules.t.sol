@@ -44,13 +44,21 @@ contract MembershipPricingModulesTest is MembershipBaseSetup {
     }
 
     function test_setMembershipPrice() public givenMembershipHasPrice {
-        assertEq(membership.getMembershipPrice(), MEMBERSHIP_PRICE);
+        // With fee-added model, getMembershipPrice() returns base + protocol fee
+        uint256 expectedTotalPrice = MEMBERSHIP_PRICE + membership.getProtocolFee();
+        assertEq(membership.getMembershipPrice(), expectedTotalPrice);
 
-        uint256 newPrice = 2 ether;
+        uint256 newBasePrice = 2 ether;
 
         vm.prank(founder);
-        membership.setMembershipPrice(newPrice);
+        membership.setMembershipPrice(newBasePrice);
 
-        assertEq(membership.getMembershipPrice(), newPrice);
+        // Calculate expected total with new base price
+        uint256 protocolFee = platformReqs.getMembershipBps() * newBasePrice / 10000;
+        uint256 minFee = platformReqs.getMembershipFee();
+        protocolFee = protocolFee > minFee ? protocolFee : minFee;
+        uint256 expectedNewTotal = newBasePrice + protocolFee;
+        
+        assertEq(membership.getMembershipPrice(), expectedNewTotal);
     }
 }
