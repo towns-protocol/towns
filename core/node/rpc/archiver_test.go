@@ -329,7 +329,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	arch := NewArchiver(&archiveCfg.Archive, registryContract, nodeRegistry, streamStorage)
 
-	streamRecord, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err := registryContract.StreamRegistry.GetStream(ctx, 0, streamId)
 	require.NoError(err)
 	require.Zero(streamRecord.LastMiniblockNum) // Only genesis miniblock is created
 
@@ -361,7 +361,7 @@ func TestArchiveOneStream(t *testing.T) {
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStream(ctx, 0, streamId)
 	require.NoError(err)
 	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
 
@@ -384,7 +384,7 @@ func TestArchiveOneStream(t *testing.T) {
 	_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, mbRef)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStream(ctx, 0, streamId)
 	require.NoError(err)
 	require.GreaterOrEqual(streamRecord.LastMiniblockNum, uint64(10))
 

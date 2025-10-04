@@ -447,11 +447,7 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	}
 
 	for _, job := range jobs {
-		stream, err := registry.StreamRegistry.GetStreamOnBlock(
-			ctx,
-			job.stream.streamId,
-			blockchain.BlockNumber(headNum),
-		)
+		stream, err := registry.StreamRegistry.GetStream(ctx, blockchain.BlockNumber(headNum), job.stream.streamId)
 		if err != nil {
 			log.Errorw("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "error", err)
