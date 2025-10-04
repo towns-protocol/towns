@@ -76,6 +76,7 @@ async function publicMint(tokenName: string, toAddress: Address, amount: number)
         abi: MockERC20.abi,
         address: contractAddress,
         eventName: 'Transfer',
+        // @ts-ignore
         args: {
             to: toAddress,
         },
