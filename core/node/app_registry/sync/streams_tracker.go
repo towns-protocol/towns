@@ -115,5 +115,6 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		stream,
 		tracker.StreamsTrackerImpl.Listener(),
 		tracker.queue,
+		tracker,
 	)
 }
