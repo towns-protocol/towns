@@ -77,7 +77,7 @@ func createUserInboxStream(
 	client protocolconnect.StreamServiceClient,
 	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
-	userInboxStreamId := UserInboxStreamIdFromAddress(wallet.Address)
+	userInboxStreamId := UserInboxStreamIdFromAddr(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserInboxPayload_Inception(userInboxStreamId, streamSettings),
@@ -102,7 +102,7 @@ func createUserMetadataStream(
 	client protocolconnect.StreamServiceClient,
 	streamSettings *protocol.StreamSettings,
 ) (*protocol.SyncCookie, []byte, error) {
-	userMetadataStreamId := UserMetadataStreamIdFromAddress(wallet.Address)
+	userMetadataStreamId := UserMetadataStreamIdFromAddr(wallet.Address)
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserMetadataPayload_Inception(userMetadataStreamId, streamSettings),

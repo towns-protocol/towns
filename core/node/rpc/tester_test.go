@@ -1528,7 +1528,7 @@ func (tc *testClient) sendSolicitationResponse(
 	sessionIds []string,
 	ciphertexts string,
 ) {
-	userInboxStreamId := UserInboxStreamIdFromAddress(user)
+	userInboxStreamId := UserInboxStreamIdFromAddr(user)
 	lastMb := tc.getLastMiniblockHash(userInboxStreamId)
 
 	event, err := MakeEnvelopeWithPayload(
