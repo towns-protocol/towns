@@ -143,13 +143,11 @@ abstract contract MembershipJoin is
             Membership__InsufficientPayment.selector.revertWith();
         }
 
-        // Consume prepaid membership if applicable
         if (joinDetails.isPrepaid) _reducePrepay(1);
 
         _validateUserReferral(receiver, referral);
 
         bytes memory referralData = abi.encode(referral);
-
         bytes4 selector = IMembership.joinSpaceWithReferral.selector;
 
         bytes32 transactionId = _registerTransaction(

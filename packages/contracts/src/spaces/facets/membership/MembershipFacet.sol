@@ -98,28 +98,26 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function setMembershipPrice(uint256 newPrice) external onlyOwner {
-        _verifyPrice(newPrice);
         IMembershipPricing(_getPricingModule()).setPrice(newPrice);
     }
 
     /// @inheritdoc IMembership
-    function getMembershipPrice() external view returns (uint256) {
-        uint256 basePrice = _getMembershipPrice(_totalSupply());
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
-        return totalRequired;
+    function getMembershipPrice() external view returns (uint256 totalRequired) {
+        (totalRequired, ) = _getTotalMembershipPayment(_getMembershipPrice(_totalSupply()));
     }
 
     /// @inheritdoc IMembership
-    function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256) {
-        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
-        return totalRequired;
+    function getMembershipRenewalPrice(
+        uint256 tokenId
+    ) external view returns (uint256 totalRequired) {
+        (totalRequired, ) = _getTotalMembershipPayment(
+            _getMembershipRenewalPrice(tokenId, _totalSupply())
+        );
     }
 
     /// @inheritdoc IMembership
-    function getProtocolFee() external view returns (uint256) {
-        uint256 basePrice = _getMembershipPrice(_totalSupply());
-        return _getProtocolFee(basePrice);
+    function getProtocolFee() external view returns (uint256 protocolFee) {
+        (, protocolFee) = _getTotalMembershipPayment(_getMembershipPrice(_totalSupply()));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -136,7 +134,6 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
             Membership__InvalidFreeAllocation.selector.revertWith();
         }
 
-        // verify newLimit is not more than the allowed platform limit
         _verifyFreeAllocation(newAllocation);
         _setMembershipFreeAllocation(newAllocation);
     }

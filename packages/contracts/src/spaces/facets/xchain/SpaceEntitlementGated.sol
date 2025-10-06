@@ -37,7 +37,6 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
             if (joinDetails.shouldCharge) {
                 uint256 payment = _getCapturedValue(transactionId);
 
-                // With fee-added model, amountDue includes both base price and protocol fee
                 if (payment < joinDetails.amountDue) {
                     _rejectMembership(transactionId, receiver);
                     return;
