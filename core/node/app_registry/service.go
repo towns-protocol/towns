@@ -323,7 +323,6 @@ func (s *Service) GetAppSettings(
 		Settings: types.StorageToProtocolAppSettings(appInfo.Settings),
 	}
 
-	// Include webhook URL if it exists
 	if appInfo.WebhookUrl != "" {
 		response.WebhookUrl = &appInfo.WebhookUrl
 	}
