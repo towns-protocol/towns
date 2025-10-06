@@ -12,6 +12,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 //libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
 
@@ -56,8 +57,10 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         protocolBalance = protocolAddr.balance;
     }
 
-    function _calculateProtocolFee(uint256 renewalPrice) private view returns (uint256) {
-        return BasisPoints.calculate(renewalPrice, platformReqs.getMembershipBps());
+    function _calculateProtocolFee(uint256 basePrice) private view returns (uint256) {
+        uint256 bpsFee = BasisPoints.calculate(basePrice, platformReqs.getMembershipBps());
+        uint256 minFee = platformReqs.getMembershipFee();
+        return FixedPointMathLib.max(bpsFee, minFee);
     }
 
     function test_renewMembership()
@@ -85,7 +88,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertEq(IERC20(riverAirdrop).balanceOf(alice), points);
     }
 
-    function test_renewPaidMembership()
+    function test_renewSinglePaidMembership()
         external
         givenMembershipHasPrice
         givenAliceHasPaidMembership
@@ -93,19 +96,19 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     {
         (address protocol, uint256 protocolBalance) = _getProtocolFeeData();
         uint256 spaceBalance = address(membership).balance;
-
         uint256 tokenId = _getAliceTokenId();
         uint256 renewalPrice = _getRenewalPrice(tokenId);
         uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
         uint256 currentPointsOwner = IERC20(riverAirdrop).balanceOf(founder);
-
         _renewMembershipWithValue(alice, tokenId, renewalPrice);
-
-        uint256 protocolFee = _calculateProtocolFee(renewalPrice);
-        uint256 points = _getPoints(renewalPrice);
-
+        // With fee-added model: renewalPrice = basePrice + protocolFee
+        // Base price is MEMBERSHIP_PRICE
+        uint256 protocolFee = _calculateProtocolFee(MEMBERSHIP_PRICE);
         assertEq(protocol.balance, protocolBalance + protocolFee);
-        assertEq(address(membership).balance, spaceBalance + renewalPrice - protocolFee);
+
+        assertEq(address(membership).balance, spaceBalance + MEMBERSHIP_PRICE); // Space gets base price only
+
+        uint256 points = _getPoints(renewalPrice);
         assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
         assertEq(IERC20(riverAirdrop).balanceOf(founder), currentPointsOwner + points);
     }
@@ -362,10 +365,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
 
     function test_renewMembershipPaidTown() external {
         _setupMembershipPricing(1, MEMBERSHIP_PRICE);
+        uint256 membershipPrice = membership.getMembershipPrice();
 
-        vm.deal(alice, MEMBERSHIP_PRICE);
+        vm.deal(alice, membershipPrice);
         vm.prank(alice);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        membership.joinSpace{value: membershipPrice}(alice);
 
         uint256 tokenId = _getAliceTokenId();
         uint256 renewalPrice = _getRenewalPrice(tokenId);

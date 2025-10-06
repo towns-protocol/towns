@@ -131,8 +131,9 @@ contract MembershipBaseSetup is
     }
 
     modifier givenAliceHasPaidMembership() {
-        hoax(alice, MEMBERSHIP_PRICE);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        uint256 membershipPrice = membership.getMembershipPrice();
+        hoax(alice, membershipPrice);
+        membership.joinSpace{value: membershipPrice}(alice);
         assertEq(membershipToken.balanceOf(alice), 1);
         _;
     }
