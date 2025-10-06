@@ -758,6 +758,8 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
     try {
         const spaceId = event.log.address // The space contract that emitted the event
+        const sender = event.args.sender
+        const receiver = event.args.receiver
 
         let ethAmount = 0n
         if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
@@ -796,6 +798,40 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
             })
             .where(eq(schema.space.id, spaceId))
+
+        // Update tip leaderboard for sender
+        await context.db
+            .insert(schema.tipLeaderboard)
+            .values({
+                user: sender,
+                totalSent: ethAmount,
+                totalReceived: 0n,
+                tipsSentCount: 1,
+                tipsReceivedCount: 0,
+                lastActivity: blockTimestamp,
+            })
+            .onConflictDoUpdate({
+                totalSent: sql`COALESCE(${schema.tipLeaderboard.totalSent}, 0) + ${ethAmount}`,
+                tipsSentCount: sql`COALESCE(${schema.tipLeaderboard.tipsSentCount}, 0) + 1`,
+                lastActivity: blockTimestamp,
+            })
+
+        // Update tip leaderboard for receiver
+        await context.db
+            .insert(schema.tipLeaderboard)
+            .values({
+                user: receiver,
+                totalSent: 0n,
+                totalReceived: ethAmount,
+                tipsSentCount: 0,
+                tipsReceivedCount: 1,
+                lastActivity: blockTimestamp,
+            })
+            .onConflictDoUpdate({
+                totalReceived: sql`COALESCE(${schema.tipLeaderboard.totalReceived}, 0) + ${ethAmount}`,
+                tipsReceivedCount: sql`COALESCE(${schema.tipLeaderboard.tipsReceivedCount}, 0) + 1`,
+                lastActivity: blockTimestamp,
+            })
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
