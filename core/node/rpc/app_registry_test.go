@@ -154,7 +154,6 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	botIndex int,
 	forwardSetting protocol.ForwardSettingValue,
 ) (sharedSecret []byte, mbRef *MiniblockRef) {
-
 	sharedSecret, mbRef = ar.RegisterBotServiceNoWebHook(botIndex, forwardSetting)
 	appWallet := ar.botCredentials[botIndex].botWallet
 
@@ -1406,7 +1405,10 @@ func TestAppRegistry_GetSettingsWithWebhookUrl(t *testing.T) {
 	getResp, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq)
 	tester.require.NoError(err)
 	tester.require.NotNil(getResp)
-	tester.require.Equal(protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES, getResp.Msg.GetSettings().GetForwardSetting())
+	tester.require.Equal(
+		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		getResp.Msg.GetSettings().GetForwardSetting(),
+	)
 	tester.require.Nil(getResp.Msg.WebhookUrl, "webhook URL should be nil before registration")
 
 	// Register webhook
