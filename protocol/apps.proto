@@ -107,6 +107,7 @@ message GetAppSettingsRequest {
 
 message GetAppSettingsResponse {
     AppSettings settings = 1;
+    optional string webhook_url = 2;
 }
 
 

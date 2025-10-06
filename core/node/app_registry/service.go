@@ -319,10 +319,16 @@ func (s *Service) GetAppSettings(
 		return nil, err
 	}
 
+	response := &GetAppSettingsResponse{
+		Settings: types.StorageToProtocolAppSettings(appInfo.Settings),
+	}
+
+	if appInfo.WebhookUrl != "" {
+		response.WebhookUrl = &appInfo.WebhookUrl
+	}
+
 	return &connect.Response[GetAppSettingsResponse]{
-		Msg: &GetAppSettingsResponse{
-			Settings: types.StorageToProtocolAppSettings(appInfo.Settings),
-		},
+		Msg: response,
 	}, nil
 }
 

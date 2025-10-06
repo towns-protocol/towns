@@ -154,18 +154,8 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	botIndex int,
 	forwardSetting protocol.ForwardSettingValue,
 ) (sharedSecret []byte, mbRef *MiniblockRef) {
-	ar.botIndexCheck(botIndex)
-	botClient := ar.BotNodeClient(botIndex, testClientOpts{})
-	mbRef = botClient.createUserStreamsWithEncryptionDevice()
+	sharedSecret, mbRef = ar.RegisterBotServiceNoWebHook(botIndex, forwardSetting)
 	appWallet := ar.botCredentials[botIndex].botWallet
-	sharedSecret = ar.RegisterApp(
-		appWallet,
-		ar.botCredentials[botIndex].ownerWallet,
-		forwardSetting,
-	)
-
-	ar.appServer.SetHS256SecretKey(botIndex, sharedSecret)
-	ar.appServer.SetEncryptionDevice(botIndex, botClient.DefaultEncryptionDevice())
 
 	req := &connect.Request[protocol.RegisterWebhookRequest]{
 		Msg: &protocol.RegisterWebhookRequest{
@@ -183,6 +173,26 @@ func (ar *appRegistryServiceTester) RegisterBotService(
 	)
 	ar.require.NoError(err)
 	ar.require.NotNil(resp)
+
+	return sharedSecret, mbRef
+}
+
+func (ar *appRegistryServiceTester) RegisterBotServiceNoWebHook(
+	botIndex int,
+	forwardSetting protocol.ForwardSettingValue,
+) (sharedSecret []byte, mbRef *MiniblockRef) {
+	ar.botIndexCheck(botIndex)
+	botClient := ar.BotNodeClient(botIndex, testClientOpts{})
+	mbRef = botClient.createUserStreamsWithEncryptionDevice()
+	appWallet := ar.botCredentials[botIndex].botWallet
+	sharedSecret = ar.RegisterApp(
+		appWallet,
+		ar.botCredentials[botIndex].ownerWallet,
+		forwardSetting,
+	)
+
+	ar.appServer.SetHS256SecretKey(botIndex, sharedSecret)
+	ar.appServer.SetEncryptionDevice(botIndex, botClient.DefaultEncryptionDevice())
 
 	return sharedSecret, mbRef
 }
@@ -1375,6 +1385,57 @@ func TestAppRegistry_SetGetSettings(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAppRegistry_GetSettingsWithWebhookUrl(t *testing.T) {
+	tester := NewAppRegistryServiceTester(t, nil)
+	tester.StartBotServices()
+
+	_, _ = tester.RegisterBotServiceNoWebHook(0, protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES)
+	appWallet, ownerWallet := tester.BotWallets(0)
+
+	// Get settings before webhook registration - should not have webhook URL
+	getReq := &connect.Request[protocol.GetAppSettingsRequest]{
+		Msg: &protocol.GetAppSettingsRequest{
+			AppId: appWallet.Address[:],
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, ownerWallet, getReq)
+
+	getResp, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq)
+	tester.require.NoError(err)
+	tester.require.NotNil(getResp)
+	tester.require.Equal(
+		protocol.ForwardSettingValue_FORWARD_SETTING_ALL_MESSAGES,
+		getResp.Msg.GetSettings().GetForwardSetting(),
+	)
+	tester.require.Nil(getResp.Msg.WebhookUrl, "webhook URL should be nil before registration")
+
+	// Register webhook
+	regWebhookReq := &connect.Request[protocol.RegisterWebhookRequest]{
+		Msg: &protocol.RegisterWebhookRequest{
+			AppId:      appWallet.Address[:],
+			WebhookUrl: tester.appServer.Url(0),
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, ownerWallet, regWebhookReq)
+
+	_, err = tester.appRegistryClient.RegisterWebhook(tester.ctx, regWebhookReq)
+	tester.require.NoError(err)
+
+	// Get settings after webhook registration - should include webhook URL
+	getReq2 := &connect.Request[protocol.GetAppSettingsRequest]{
+		Msg: &protocol.GetAppSettingsRequest{
+			AppId: appWallet.Address[:],
+		},
+	}
+	authenticateBS(tester.ctx, tester.require, tester.authClient, appWallet, getReq2)
+
+	getResp2, err := tester.appRegistryClient.GetAppSettings(tester.ctx, getReq2)
+	tester.require.NoError(err)
+	tester.require.NotNil(getResp2)
+	tester.require.NotNil(getResp2.Msg.WebhookUrl, "webhook URL should be present after registration")
+	tester.require.Equal(tester.appServer.Url(0), *getResp2.Msg.WebhookUrl)
 }
 
 func TestAppRegistry_MessageForwardSettings(t *testing.T) {
