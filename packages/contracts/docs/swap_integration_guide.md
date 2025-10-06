@@ -22,6 +22,7 @@ The Towns Protocol swap system provides two integration options for executing to
 ## Architecture Options
 
 ### Direct SwapRouter Usage (Permissionless)
+
 ```
 User → SwapRouter → Whitelisted DEX Aggregator
          ↓
@@ -29,6 +30,7 @@ User → SwapRouter → Whitelisted DEX Aggregator
 ```
 
 ### SwapFacet Usage (Space Members)
+
 ```
 User → SwapFacet → SwapRouter → Whitelisted DEX Aggregator
          ↓            ↓
@@ -41,10 +43,12 @@ User → SwapFacet → SwapRouter → Whitelisted DEX Aggregator
 ### Token Transfer Hops
 
 **executeSwap Method:**
+
 - Direct SwapRouter: 1 hop (User → SwapRouter)
 - Via SwapFacet: 2 hops (User → SwapFacet → SwapRouter)
 
 **executeSwapWithPermit Method:**
+
 - Both contracts: 1 hop (User → SwapRouter via Permit2)
 
 ## Prerequisites
@@ -62,9 +66,11 @@ const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
 ### 2. Router Whitelisting
 
 Only whitelisted routers can be used. Currently whitelisted routers:
+
 - LiFi
 
 Check if a router is whitelisted:
+
 ```solidity
 IPlatformRequirements(SPACE_FACTORY_ADDRESS).isRouterWhitelisted(routerAddress)
 ```
@@ -86,17 +92,17 @@ Space membership is **only required for SwapFacet** usage. SwapRouter can be use
 ```solidity
 // SwapRouter standard swap
 function executeSwap(
-    ExactInputParams calldata params,
-    RouterParams calldata routerParams,
-    address poster
+  ExactInputParams calldata params,
+  RouterParams calldata routerParams,
+  address poster
 ) external payable returns (uint256 amountOut, uint256 protocolFee);
 
-// SwapRouter Permit2 swap  
+// SwapRouter Permit2 swap
 function executeSwapWithPermit(
-    ExactInputParams calldata params,
-    RouterParams calldata routerParams,
-    FeeConfig calldata posterFee,
-    Permit2Params calldata permit
+  ExactInputParams calldata params,
+  RouterParams calldata routerParams,
+  FeeConfig calldata posterFee,
+  Permit2Params calldata permit
 ) external payable returns (uint256 amountOut, uint256 protocolFee);
 ```
 
@@ -105,17 +111,17 @@ function executeSwapWithPermit(
 ```solidity
 // SwapFacet standard swap (2 hops)
 function executeSwap(
-    ExactInputParams calldata params,
-    RouterParams calldata routerParams,
-    address poster
+  ExactInputParams calldata params,
+  RouterParams calldata routerParams,
+  address poster
 ) external payable returns (uint256 amountOut);
 
 // SwapFacet Permit2 swap (1 hop)
 function executeSwapWithPermit(
-    ExactInputParams calldata params,
-    RouterParams calldata routerParams,
-    FeeConfig calldata posterFee,
-    Permit2Params calldata permit
+  ExactInputParams calldata params,
+  RouterParams calldata routerParams,
+  FeeConfig calldata posterFee,
+  Permit2Params calldata permit
 ) external payable returns (uint256 amountOut);
 ```
 
@@ -123,29 +129,29 @@ function executeSwapWithPermit(
 
 ```solidity
 struct ExactInputParams {
-    address tokenIn;
-    address tokenOut;
-    uint256 amountIn;
-    uint256 minAmountOut;
-    address recipient;
+  address tokenIn;
+  address tokenOut;
+  uint256 amountIn;
+  uint256 minAmountOut;
+  address recipient;
 }
 
 struct RouterParams {
-    address router;      // Whitelisted router address
-    address approveTarget; // Address to approve tokens to
-    bytes swapData;      // Encoded swap data for router
+  address router; // Whitelisted router address
+  address approveTarget; // Address to approve tokens to
+  bytes swapData; // Encoded swap data for router
 }
 
 struct FeeConfig {
-    address recipient;  // Poster address
-    uint16 feeBps;     // Poster fee in basis points
+  address recipient; // Poster address
+  uint16 feeBps; // Poster fee in basis points
 }
 
 struct Permit2Params {
-    address owner;
-    uint256 nonce;
-    uint256 deadline;
-    bytes signature;
+  address owner;
+  uint256 nonce;
+  uint256 deadline;
+  bytes signature;
 }
 ```
 
@@ -154,6 +160,7 @@ struct Permit2Params {
 ### When to Use SwapRouter Directly
 
 ✅ **Use SwapRouter when:**
+
 - User is not a space member
 - You want maximum gas efficiency
 - Working with fee-on-transfer tokens (avoid 2-hop penalty)
@@ -163,6 +170,7 @@ struct Permit2Params {
 ### When to Use SwapFacet
 
 ✅ **Use SwapFacet when:**
+
 - User is a space member
 - You want poster fee rebates for the space
 - You want automatic points distribution
@@ -175,15 +183,15 @@ For tokens with transfer fees (like SAFEMOON, SHIB variants):
 
 ```typescript
 // BAD: 2 transfer taxes
-SwapFacet.executeSwap() 
+SwapFacet.executeSwap();
 // User → SwapFacet (tax 1) → SwapRouter (tax 2) → DEX
 
 // GOOD: 1 transfer tax
-SwapRouter.executeSwap() 
+SwapRouter.executeSwap();
 // User → SwapRouter (tax 1) → DEX
 
 // BEST: 1 transfer tax + space benefits
-SwapFacet.executeSwapWithPermit()
+SwapFacet.executeSwapWithPermit();
 // User → SwapRouter (tax 1, via Permit2) → DEX
 ```
 
@@ -192,58 +200,60 @@ SwapFacet.executeSwapWithPermit()
 ### 1. SwapRouter ETH to Token (Permissionless)
 
 ```typescript
-import { Address, createWalletClient } from 'viem';
+import { Address, createWalletClient } from "viem";
 
 async function swapETHToTokenDirect(
-  amountIn: bigint,  // ETH amount in WEI
-  tokenOut: Address,  // Output token address
+  amountIn: bigint, // ETH amount in WEI
+  tokenOut: Address, // Output token address
   slippage: number = 0.003, // 0.3% slippage tolerance
-  poster: Address = '0x0000000000000000000000000000000000000000' // No poster
+  poster: Address = "0x0000000000000000000000000000000000000000", // No poster
 ) {
   // Step 1: Calculate fees for ETH input
-  const { amountInAfterFees, protocolFee, posterFee } = await publicClient.readContract({
-    address: SWAP_ROUTER_ADDRESS,
-    abi: swapRouterAbi,
-    functionName: 'getETHInputFees',
-    args: [amountIn, walletClient.account.address, poster]
-  });
+  const { amountInAfterFees, protocolFee, posterFee } =
+    await publicClient.readContract({
+      address: SWAP_ROUTER_ADDRESS,
+      abi: swapRouterAbi,
+      functionName: "getETHInputFees",
+      args: [amountIn, walletClient.account.address, poster],
+    });
 
   // Step 2: Get quote from aggregator using amountInAfterFees
   const quote = await fetchLiFiQuote({
-    fromToken: '0x0000000000000000000000000000000000000000',
+    fromToken: "0x0000000000000000000000000000000000000000",
     toToken: tokenOut,
     amount: amountInAfterFees, // Use amount after fees!
-    slippage: 0.15 // 15% slippage
+    slippage: 0.15, // 15% slippage
   });
 
   // Step 3: Prepare parameters for simulation
   const params = {
-    tokenIn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeeeEeeeeeeeEEeE', // ETH address
+    tokenIn: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeeeEeeeeeeeEEeE", // ETH address
     tokenOut,
     amountIn, // Original amount
     minAmountOut: 0n, // Will be set after simulation
-    recipient: walletClient.account.address
+    recipient: walletClient.account.address,
   };
 
   const routerParams = {
     router: LIFI_ROUTER,
     approveTarget: LIFI_ROUTER,
-    swapData: quote.transactionRequest.data
+    swapData: quote.transactionRequest.data,
   };
 
   // Step 4: Simulate swap to get expected output
   const simulationResult = await publicClient.simulateContract({
     address: SWAP_ROUTER_ADDRESS,
     abi: swapRouterAbi,
-    functionName: 'executeSwap',
+    functionName: "executeSwap",
     args: [params, routerParams, poster],
-    value: amountIn
+    value: amountIn,
   });
 
   const expectedAmountOut = simulationResult.result[0]; // First return value is amountOut
 
   // Step 5: Calculate minAmountOut with slippage protection
-  const minAmountOut = expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000)) / 10000n;
+  const minAmountOut =
+    (expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000))) / 10000n;
 
   // Step 6: Update params with calculated minAmountOut
   params.minAmountOut = minAmountOut;
@@ -252,9 +262,9 @@ async function swapETHToTokenDirect(
   const hash = await walletClient.writeContract({
     address: SWAP_ROUTER_ADDRESS,
     abi: swapRouterAbi,
-    functionName: 'executeSwap',
+    functionName: "executeSwap",
     args: [params, routerParams, poster],
-    value: amountIn // Send ETH
+    value: amountIn, // Send ETH
   });
 
   return hash;
@@ -265,56 +275,57 @@ async function swapETHToTokenDirect(
 
 ```typescript
 async function swapETHToTokenViaSpace(
-  amountIn: bigint,  // ETH amount in WEI
+  amountIn: bigint, // ETH amount in WEI
   tokenOut: Address,
   slippage: number = 0.003, // 0.3% slippage tolerance
   spaceAddress: Address,
-  poster: Address = spaceAddress // Default poster is space itself
+  poster: Address = spaceAddress, // Default poster is space itself
 ) {
   // Step 1: Calculate fees (same as direct)
   const { amountInAfterFees } = await publicClient.readContract({
     address: SWAP_ROUTER_ADDRESS,
     abi: swapRouterAbi,
-    functionName: 'getETHInputFees',
-    args: [amountIn, spaceAddress, poster]
+    functionName: "getETHInputFees",
+    args: [amountIn, spaceAddress, poster],
   });
 
   // Step 2: Get quote using amountInAfterFees
   const quote = await fetchLiFiQuote({
-    fromToken: '0x0000000000000000000000000000000000000000',
+    fromToken: "0x0000000000000000000000000000000000000000",
     toToken: tokenOut,
     amount: amountInAfterFees, // Use amount after fees!
-    slippage: 0.15 // 15% slippage
+    slippage: 0.15, // 15% slippage
   });
 
   // Step 3: Prepare parameters for simulation
   const params = {
-    tokenIn: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    tokenIn: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     tokenOut,
     amountIn,
     minAmountOut: 0n, // Will be set after simulation
-    recipient: walletClient.account.address
+    recipient: walletClient.account.address,
   };
 
   const routerParams = {
     router: LIFI_ROUTER,
     approveTarget: LIFI_ROUTER,
-    swapData: quote.transactionRequest.data
+    swapData: quote.transactionRequest.data,
   };
 
   // Step 4: Simulate swap to get expected output
   const simulationResult = await publicClient.simulateContract({
     address: spaceAddress,
     abi: swapFacetAbi,
-    functionName: 'executeSwap',
+    functionName: "executeSwap",
     args: [params, routerParams, poster],
-    value: amountIn
+    value: amountIn,
   });
 
   const expectedAmountOut = simulationResult.result[0]; // First return value is amountOut
 
   // Step 5: Calculate minAmountOut with slippage protection
-  const minAmountOut = expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000)) / 10000n;
+  const minAmountOut =
+    (expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000))) / 10000n;
 
   // Step 6: Update params with calculated minAmountOut
   params.minAmountOut = minAmountOut;
@@ -323,9 +334,9 @@ async function swapETHToTokenViaSpace(
   const hash = await walletClient.writeContract({
     address: spaceAddress,
     abi: swapFacetAbi,
-    functionName: 'executeSwap',
+    functionName: "executeSwap",
     args: [params, routerParams, poster],
-    value: amountIn
+    value: amountIn,
   });
 
   return hash;
@@ -335,8 +346,8 @@ async function swapETHToTokenViaSpace(
 ### 3. Token Swaps with Permit2 (Token-to-Token or Token-to-ETH)
 
 ```typescript
-import { SignatureTransfer } from '@uniswap/permit2-sdk';
-import { Address } from 'viem';
+import { SignatureTransfer } from "@uniswap/permit2-sdk";
+import { Address } from "viem";
 
 async function swapTokenWithPermit2(
   tokenIn: Address,
@@ -344,7 +355,7 @@ async function swapTokenWithPermit2(
   amountIn: bigint,
   slippage: number = 0.015, // 1.5% slippage tolerance
   spaceAddress: Address,
-  posterFee: { recipient: Address, feeBps: number }
+  posterFee: { recipient: Address; feeBps: number },
 ) {
   // Step 1: Ensure token is approved to Permit2
   await approveToken(tokenIn, PERMIT2_ADDRESS, MAX_UINT256);
@@ -354,7 +365,7 @@ async function swapTokenWithPermit2(
     fromToken: tokenIn,
     toToken: tokenOut,
     amount: amountIn,
-    slippage: 0.15 // 15% slippage
+    slippage: 0.15, // 15% slippage
   });
 
   // Step 3: Prepare parameters for simulation
@@ -363,27 +374,38 @@ async function swapTokenWithPermit2(
     tokenOut,
     amountIn,
     minAmountOut: 0n, // Will be set after simulation
-    recipient: walletClient.account.address
+    recipient: walletClient.account.address,
   };
 
   const routerParams = {
     router: LIFI_ROUTER,
     approveTarget: LIFI_ROUTER,
-    swapData: quote.transactionRequest.data
+    swapData: quote.transactionRequest.data,
   };
 
   // Step 4: Simulate swap to get expected output
   const simulationResult = await publicClient.simulateContract({
     address: spaceAddress,
     abi: swapFacetAbi,
-    functionName: 'executeSwapWithPermit',
-    args: [params, routerParams, posterFee, { owner: walletClient.account.address, nonce: 0n, deadline: 0n, signature: '0x' }]
+    functionName: "executeSwapWithPermit",
+    args: [
+      params,
+      routerParams,
+      posterFee,
+      {
+        owner: walletClient.account.address,
+        nonce: 0n,
+        deadline: 0n,
+        signature: "0x",
+      },
+    ],
   });
 
   const expectedAmountOut = simulationResult.result[0]; // First return value is amountOut
 
   // Step 5: Calculate minAmountOut with slippage protection
-  const minAmountOut = expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000)) / 10000n;
+  const minAmountOut =
+    (expectedAmountOut * BigInt(Math.floor((1 - slippage) * 10000))) / 10000n;
 
   // Step 6: Update params with calculated minAmountOut
   params.minAmountOut = minAmountOut;
@@ -392,25 +414,25 @@ async function swapTokenWithPermit2(
   const witness = {
     params,
     routerParams,
-    posterFee
+    posterFee,
   };
 
   // Step 8: Generate permit signature
   const permit = {
     permitted: {
       token: tokenIn,
-      amount: amountIn
+      amount: amountIn,
     },
     spender: SWAP_ROUTER_ADDRESS,
     nonce: BigInt(Date.now()),
-    deadline: BigInt(Math.floor(Date.now() / 1000) + 600)
+    deadline: BigInt(Math.floor(Date.now() / 1000) + 600),
   };
 
   // Step 9: Sign permit with witness
   const { domain, types, values } = SignatureTransfer.getPermitData(
     permit,
     PERMIT2_ADDRESS,
-    chainId
+    chainId,
   );
 
   const signature = await walletClient.signTypedData({
@@ -419,16 +441,16 @@ async function swapTokenWithPermit2(
     types: {
       ...types,
       SwapWitness: [
-        { name: 'params', type: 'ExactInputParams' },
-        { name: 'routerParams', type: 'RouterParams' },
-        { name: 'posterFee', type: 'FeeConfig' }
-      ]
+        { name: "params", type: "ExactInputParams" },
+        { name: "routerParams", type: "RouterParams" },
+        { name: "posterFee", type: "FeeConfig" },
+      ],
     },
-    primaryType: 'PermitWitnessTransferFrom',
+    primaryType: "PermitWitnessTransferFrom",
     message: {
       ...values,
-      witness
-    }
+      witness,
+    },
   });
 
   // Step 10: Execute swap with permit
@@ -436,14 +458,14 @@ async function swapTokenWithPermit2(
     owner: walletClient.account.address,
     nonce: permit.nonce,
     deadline: permit.deadline,
-    signature
+    signature,
   };
 
   const hash = await walletClient.writeContract({
     address: spaceAddress,
     abi: swapFacetAbi,
-    functionName: 'executeSwapWithPermit',
-    args: [params, routerParams, posterFee, permitParams]
+    functionName: "executeSwapWithPermit",
+    args: [params, routerParams, posterFee, permitParams],
   });
 
   return hash;
@@ -452,14 +474,14 @@ async function swapTokenWithPermit2(
 
 ### 4. Decision Matrix Summary
 
-| Scenario | Best Option | Reasoning |
-|----------|-------------|-----------|
-| Non-space member | SwapRouter.executeSwap | Only option available |
-| Standard ERC20 + want efficiency | SwapRouter.executeSwap | 1 hop, lower gas |
-| Standard ERC20 + want space benefits | SwapFacet.executeSwap | 2 hops, but gets points/fees |
-| Fee-on-transfer token + no space benefits | SwapRouter.executeSwap | 1 hop, avoid double tax |
+| Scenario                                    | Best Option                     | Reasoning                    |
+| ------------------------------------------- | ------------------------------- | ---------------------------- |
+| Non-space member                            | SwapRouter.executeSwap          | Only option available        |
+| Standard ERC20 + want efficiency            | SwapRouter.executeSwap          | 1 hop, lower gas             |
+| Standard ERC20 + want space benefits        | SwapFacet.executeSwap           | 2 hops, but gets points/fees |
+| Fee-on-transfer token + no space benefits   | SwapRouter.executeSwap          | 1 hop, avoid double tax      |
 | Fee-on-transfer token + want space benefits | SwapFacet.executeSwapWithPermit | 1 hop via Permit2 + benefits |
-| Maximum security + space benefits | SwapFacet.executeSwapWithPermit | Permit2 + witness binding |
+| Maximum security + space benefits           | SwapFacet.executeSwapWithPermit | Permit2 + witness binding    |
 
 ## Fee Management
 
@@ -479,35 +501,35 @@ Space owners can configure poster fees:
 await spaceOwner.writeContract({
   address: SPACE_ADDRESS,
   abi: swapFacetAbi,
-  functionName: 'setSwapFeeConfig',
+  functionName: "setSwapFeeConfig",
   args: [
     50, // 0.5% poster fee (50 basis points)
-    false // forwardPosterFee: false = fees go to space
-  ]
+    false, // forwardPosterFee: false = fees go to space
+  ],
 });
 ```
 
 ### ETH Swap Fee Calculation Example
 
 ```typescript
-import { parseEther, formatEther, Address } from 'viem';
+import { parseEther, formatEther, Address } from "viem";
 
 // Example: Swapping 1 ETH
-const amountIn = parseEther('1');  // ETH amount in WEI
+const amountIn = parseEther("1"); // ETH amount in WEI
 
 // Get fee breakdown
 const fees = await publicClient.readContract({
   address: SWAP_ROUTER_ADDRESS,
   abi: swapRouterAbi,
-  functionName: 'getETHInputFees',
-  args: [amountIn, SPACE_ADDRESS, SPACE_ADDRESS]
+  functionName: "getETHInputFees",
+  args: [amountIn, SPACE_ADDRESS, SPACE_ADDRESS],
 });
 
 console.log({
   originalAmount: formatEther(amountIn),
   amountAfterFees: formatEther(fees.amountInAfterFees),
   protocolFee: formatEther(fees.protocolFee),
-  posterFee: formatEther(fees.posterFee)
+  posterFee: formatEther(fees.posterFee),
 });
 
 // Output example:
@@ -524,14 +546,14 @@ console.log({
 Always verify routers are whitelisted before use:
 
 ```typescript
-import { Address } from 'viem';
+import { Address } from "viem";
 
 async function isRouterValid(router: Address): Promise<boolean> {
   return await publicClient.readContract({
     address: SPACE_FACTORY_ADDRESS as Address,
     abi: platformRequirementsAbi,
-    functionName: 'isRouterWhitelisted',
-    args: [router]
+    functionName: "isRouterWhitelisted",
+    args: [router],
   });
 }
 ```
@@ -564,6 +586,7 @@ When using Permit2, the poster fee is validated against the space configuration,
 ### 3. Monitoring
 
 Track important metrics:
+
 - Swap volume by token pairs
 - Fee collection (protocol + poster)
 - Points distribution
@@ -575,6 +598,7 @@ Track important metrics:
 The Towns Protocol swap system provides flexible integration options for different use cases. Key implementation guidelines:
 
 ### Development Best Practices
+
 - **Always simulate swaps** before execution to calculate proper slippage protection
 - **Use the Decision Matrix** (Section 5) to choose the right approach for your use case
 - **Calculate ETH fees first** when swapping from ETH using `getETHInputFees`
@@ -582,6 +606,7 @@ The Towns Protocol swap system provides flexible integration options for differe
 - **Test thoroughly** with different token types (standard, fee-on-transfer, rebasing)
 
 ### Integration Checklist
+
 1. Choose integration approach based on user membership and requirements
 2. Implement proper error handling for common failure scenarios
 3. Set reasonable deadlines for Permit2 transactions (5-10 minutes)

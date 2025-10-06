@@ -54,11 +54,11 @@ contract MembershipPricingModulesTest is MembershipBaseSetup {
         membership.setMembershipPrice(newBasePrice);
 
         // Calculate expected total with new base price
-        uint256 protocolFee = platformReqs.getMembershipBps() * newBasePrice / 10000;
+        uint256 protocolFee = (platformReqs.getMembershipBps() * newBasePrice) / 10000;
         uint256 minFee = platformReqs.getMembershipFee();
         protocolFee = protocolFee > minFee ? protocolFee : minFee;
         uint256 expectedNewTotal = newBasePrice + protocolFee;
-        
+
         assertEq(membership.getMembershipPrice(), expectedNewTotal);
     }
 }

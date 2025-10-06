@@ -34,12 +34,12 @@ contract MembershipJoinSpaceTest is
     function test_joinDynamicSpace() external {
         // Dynamic space uses tiered log pricing - price is calculated automatically
         uint256 totalPrice = MembershipFacet(dynamicSpace).getMembershipPrice();
-        
+
         // The tiered pricing oracle calculates base price dynamically
         // We need to extract the base price from the total for points calculation
         uint256 protocolFee = MembershipFacet(dynamicSpace).getProtocolFee();
         uint256 basePrice = totalPrice - protocolFee;
-        
+
         vm.deal(alice, totalPrice);
         vm.prank(alice);
         MembershipFacet(dynamicSpace).joinSpace{value: totalPrice}(alice);
@@ -213,7 +213,7 @@ contract MembershipJoinSpaceTest is
 
         uint256 protocolFee = membership.getProtocolFee();
         uint256 expectedFee = BasisPoints.calculate(basePrice, platformReqs.getMembershipBps());
-        
+
         // Protocol fee should be the max of basis points calculation or minimum fee
         uint256 minFee = platformReqs.getMembershipFee();
         assertEq(protocolFee, expectedFee > minFee ? expectedFee : minFee);

@@ -27,7 +27,7 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
 
     function test_withdraw() external givenMembershipHasPrice givenAliceHasPaidMembership {
         address multisig = _randomAddress();
-        
+
         // With fee-added model, the space receives the full base price
         uint256 expectedRevenue = MEMBERSHIP_PRICE;
 
@@ -72,7 +72,7 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
 
         // For the second join, charlie needs to pay base price + protocol fee
         uint256 totalPrice = membership.getMembershipPrice();
-        
+
         vm.startPrank(charlie);
         vm.deal(charlie, totalPrice);
         membership.joinSpace{value: totalPrice}(charlie);

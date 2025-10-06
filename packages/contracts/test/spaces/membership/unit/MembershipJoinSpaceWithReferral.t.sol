@@ -107,7 +107,7 @@ contract MembershipJoinSpaceWithReferralTest is
 
         uint256 minFee = platformReqs.getMembershipFee();
         protocolFee = protocolFee > minFee ? protocolFee : minFee;
-        
+
         assertEq(partner.account.balance, partnerFee, "partner fee");
         assertEq(platformReqs.getFeeRecipient().balance, protocolFee);
         // With fee-added model, space gets base price minus partner fee only

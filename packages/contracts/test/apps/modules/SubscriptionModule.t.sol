@@ -259,15 +259,21 @@ contract SubscriptionModuleTest is ModulesBase {
         // Verify payment distribution: account paid original renewal price
         uint256 paidAmount = beforeSnap.account - afterSnap.account;
         assertEq(paidAmount, params.renewalPrice, "Should pay original renewal price");
-        
+
         // Calculate expected distribution based on original base price
         uint256 protocolFee = platformRequirements.getMembershipFee(); // Min fee for 1 ether
         uint256 basePrice = originalBasePrice;
-        if (BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps()) > protocolFee) {
+        if (
+            BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps()) > protocolFee
+        ) {
             protocolFee = BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps());
         }
-        
-        assertEq(afterSnap.feeRecipient - beforeSnap.feeRecipient, protocolFee, "Protocol fee should match");
+
+        assertEq(
+            afterSnap.feeRecipient - beforeSnap.feeRecipient,
+            protocolFee,
+            "Protocol fee should match"
+        );
         assertEq(afterSnap.space - beforeSnap.space, basePrice, "Space should get base price");
     }
 
@@ -402,7 +408,7 @@ contract SubscriptionModuleTest is ModulesBase {
             uint32 entityId,
             SubscriptionParams memory params
         ) = _createSubscription(user, 7 days, expectedRenewalPrice);
-        
+
         // Get actual renewal price (base + protocol fee)
         uint256 actualRenewalPrice = params.renewalPrice;
         vm.deal(address(account), actualRenewalPrice * 2);
@@ -568,7 +574,7 @@ contract SubscriptionModuleTest is ModulesBase {
             uint32 entityId1,
             SubscriptionParams memory params1
         ) = _createSubscription(makeAddr("user1"), 30 days, basePrice);
-        
+
         (ModularAccount account2, , uint32 entityId2, ) = _createSubscription(
             makeAddr("user2"),
             20 days,
