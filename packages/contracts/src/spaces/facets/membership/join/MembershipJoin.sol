@@ -87,8 +87,8 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        // Regular paid join
-        (joinDetails.amountDue, joinDetails.shouldCharge) = (membershipPrice, true);
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
+        (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
     /// @notice Handles the process of joining a space
@@ -496,22 +496,25 @@ abstract contract MembershipJoin is
 
     function _renewMembership(address payer, uint256 tokenId) internal {
         address receiver = _ownerOf(tokenId);
-
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
         uint256 duration = _getMembershipDuration();
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
-        if (membershipPrice > msg.value) Membership__InvalidPayment.selector.revertWith();
+        if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();
 
-        _mintMembershipPoints(receiver, membershipPrice);
+        // Collect protocol fee (transfers from payer)
+        uint256 protocolFee = _collectProtocolFee(payer, basePrice);
 
-        uint256 protocolFee = _collectProtocolFee(payer, membershipPrice);
+        // Calculate owner proceeds (what goes to space owner)
+        uint256 ownerProceeds = totalRequired - protocolFee;
 
-        uint256 remainingDue = membershipPrice - protocolFee;
-        if (remainingDue > 0) _transferIn(payer, remainingDue);
+        // Transfer owner proceeds to contract
+        if (ownerProceeds > 0) _transferIn(payer, ownerProceeds);
 
-        uint256 excess = msg.value - membershipPrice;
+        // Handle excess payment
+        uint256 excess = msg.value - totalRequired;
         if (excess > 0) {
             CurrencyTransfer.transferCurrency(
                 _getMembershipCurrency(),
@@ -521,6 +524,7 @@ abstract contract MembershipJoin is
             );
         }
 
+        _mintMembershipPoints(receiver, basePrice);
         _renewSubscription(tokenId, uint64(duration));
     }
 
