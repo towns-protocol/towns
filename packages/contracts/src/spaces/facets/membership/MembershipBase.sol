@@ -18,21 +18,22 @@ import {MembershipStorage} from "./MembershipStorage.sol";
 abstract contract MembershipBase is IMembershipBase {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
+    using MembershipStorage for MembershipStorage.Layout;
 
     function __MembershipBase_init(Membership memory info, address spaceFactory) internal {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
-        ds.spaceFactory = spaceFactory;
-        ds.pricingModule = info.pricingModule;
-        ds.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
-        ds.membershipMaxSupply = info.maxSupply;
+        $.spaceFactory = spaceFactory;
+        $.pricingModule = info.pricingModule;
+        $.membershipCurrency = CurrencyTransfer.NATIVE_TOKEN;
+        $.membershipMaxSupply = info.maxSupply;
 
         if (info.freeAllocation > 0) {
             _verifyFreeAllocation(info.freeAllocation);
-            ds.freeAllocation = info.freeAllocation;
+            $.freeAllocation = info.freeAllocation;
         }
 
-        ds.freeAllocationEnabled = true;
+        $.freeAllocationEnabled = true;
 
         if (info.price > 0) {
             _verifyPrice(info.price);
@@ -41,7 +42,7 @@ abstract contract MembershipBase is IMembershipBase {
 
         if (info.duration > 0) {
             _verifyDuration(info.duration);
-            ds.membershipDuration = info.duration;
+            $.membershipDuration = info.duration;
         }
     }
 
@@ -75,13 +76,13 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     function _transferIn(address from, uint256 amount) internal returns (uint256) {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
         // get the currency being used for membership
         address currency = _getMembershipCurrency();
 
         if (currency == CurrencyTransfer.NATIVE_TOKEN) {
-            ds.tokenBalance += amount;
+            $.tokenBalance += amount;
             return amount;
         }
 
@@ -94,7 +95,7 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 finalAmount = balanceAfter - balanceBefore;
         if (finalAmount != amount) Membership__InsufficientPayment.selector.revertWith();
 
-        ds.tokenBalance += finalAmount;
+        $.tokenBalance += finalAmount;
         return finalAmount;
     }
 
@@ -162,14 +163,12 @@ abstract contract MembershipBase is IMembershipBase {
     function _getMembershipPrice(
         uint256 totalSupply
     ) internal view virtual returns (uint256 membershipPrice) {
-        // get free allocation
-        uint256 freeAllocation = _getMembershipFreeAllocation();
         address pricingModule = _getPricingModule();
-
         IPlatformRequirements platform = _getPlatformRequirements();
-
         if (pricingModule == address(0)) return platform.getMembershipFee();
 
+        // get free allocation
+        uint256 freeAllocation = _getMembershipFreeAllocation();
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
         uint256 minPrice = platform.getMembershipMinPrice();
         if (membershipPrice < minPrice) return platform.getMembershipFee();
@@ -183,11 +182,11 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 tokenId,
         uint256 totalSupply
     ) internal view returns (uint256) {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
         IPlatformRequirements platform = _getPlatformRequirements();
 
         uint256 minFee = platform.getMembershipFee();
-        uint256 renewalPrice = ds.renewalPriceByTokenId[tokenId];
+        uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
 
         if (renewalPrice != 0) return FixedPointMathLib.max(renewalPrice, minFee);
 
@@ -207,16 +206,15 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     function _setMembershipFreeAllocation(uint256 newAllocation) internal {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
-        ds.freeAllocation = newAllocation;
-        ds.freeAllocationEnabled = true;
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
+        ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
         emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
     function _getMembershipFreeAllocation() internal view returns (uint256) {
-        MembershipStorage.Layout storage ds = MembershipStorage.layout();
+        MembershipStorage.Layout storage $ = MembershipStorage.layout();
 
-        if (ds.freeAllocationEnabled) return ds.freeAllocation;
+        if ($.freeAllocationEnabled) return $.freeAllocation;
 
         return _getPlatformRequirements().getMembershipMintLimit();
     }

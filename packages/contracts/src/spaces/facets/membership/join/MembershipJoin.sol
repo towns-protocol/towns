@@ -74,7 +74,6 @@ abstract contract MembershipJoin is
         uint256 totalSupply = _totalSupply();
         uint256 membershipPrice = _getMembershipPrice(totalSupply);
         uint256 freeAllocation = _getMembershipFreeAllocation();
-        uint256 prepaidSupply = _getPrepaidSupply();
 
         joinDetails.basePrice = membershipPrice;
         if (freeAllocation > totalSupply) {
@@ -82,14 +81,14 @@ abstract contract MembershipJoin is
         }
 
         // Check if this is a free join due to prepaid supply
+        uint256 prepaidSupply = _getPrepaidSupply();
         if (prepaidSupply > 0) {
             joinDetails.isPrepaid = true;
             return joinDetails;
         }
 
         // Regular paid join
-        joinDetails.amountDue = membershipPrice;
-        joinDetails.shouldCharge = true;
+        (joinDetails.amountDue, joinDetails.shouldCharge) = (membershipPrice, true);
     }
 
     /// @notice Handles the process of joining a space
@@ -144,9 +143,7 @@ abstract contract MembershipJoin is
         }
 
         // Consume prepaid membership if applicable
-        if (joinDetails.isPrepaid) {
-            _reducePrepay(1);
-        }
+        if (joinDetails.isPrepaid) _reducePrepay(1);
 
         _validateUserReferral(receiver, referral);
 
@@ -186,10 +183,11 @@ abstract contract MembershipJoin is
     }
 
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
-        if (referral.userReferral != address(0)) {
-            if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
-                Membership__InvalidAddress.selector.revertWith();
-            }
+        if (
+            referral.userReferral != address(0) &&
+            (referral.userReferral == receiver || referral.userReferral == msg.sender)
+        ) {
+            Membership__InvalidAddress.selector.revertWith();
         }
     }
 
