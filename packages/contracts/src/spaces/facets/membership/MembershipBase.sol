@@ -18,7 +18,6 @@ import {MembershipStorage} from "./MembershipStorage.sol";
 abstract contract MembershipBase is IMembershipBase {
     using CustomRevert for bytes4;
     using SafeTransferLib for address;
-    using MembershipStorage for MembershipStorage.Layout;
 
     function __MembershipBase_init(Membership memory info, address spaceFactory) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
