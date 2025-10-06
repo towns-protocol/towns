@@ -63,7 +63,6 @@ interface IMembershipBase {
     error Membership__InvalidPricingModule();
     error Membership__AlreadyMember();
     error Membership__InsufficientPayment();
-    error Membership__PriceTooLow();
     error Membership__MaxSupplyReached();
     error Membership__InvalidTokenId();
     error Membership__NotExpired();
