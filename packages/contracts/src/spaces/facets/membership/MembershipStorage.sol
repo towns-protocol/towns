@@ -31,10 +31,9 @@ library MembershipStorage {
         bool freeAllocationEnabled;
     }
 
-    function layout() internal pure returns (Layout storage l) {
-        bytes32 slot = STORAGE_SLOT;
+    function layout() internal pure returns (Layout storage $) {
         assembly {
-            l.slot := slot
+            $.slot := STORAGE_SLOT
         }
     }
 }
