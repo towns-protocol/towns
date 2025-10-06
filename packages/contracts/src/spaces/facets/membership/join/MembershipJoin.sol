@@ -183,10 +183,7 @@ abstract contract MembershipJoin is
     }
 
     function _validateUserReferral(address receiver, ReferralTypes memory referral) internal view {
-        if (
-            referral.userReferral != address(0) &&
-            (referral.userReferral == receiver || referral.userReferral == msg.sender)
-        ) {
+        if (referral.userReferral == receiver || referral.userReferral == msg.sender) {
             Membership__InvalidAddress.selector.revertWith();
         }
     }
