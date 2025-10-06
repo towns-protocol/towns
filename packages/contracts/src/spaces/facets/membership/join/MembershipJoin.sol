@@ -315,8 +315,7 @@ abstract contract MembershipJoin is
             sender,
             receiver,
             joinDetails.amountDue,
-            ownerProceeds,
-            joinDetails.basePrice
+            ownerProceeds
         );
     }
 
@@ -363,8 +362,7 @@ abstract contract MembershipJoin is
             sender,
             receiver,
             joinDetails.amountDue,
-            ownerProceeds,
-            joinDetails.basePrice
+            ownerProceeds
         );
     }
 
@@ -373,8 +371,7 @@ abstract contract MembershipJoin is
         address payer,
         address receiver,
         uint256 paymentRequired,
-        uint256 ownerProceeds,
-        uint256 membershipPrice
+        uint256 ownerProceeds
     ) internal {
         // account for owner's proceeds
         if (ownerProceeds != 0) _transferIn(payer, ownerProceeds);
@@ -382,7 +379,7 @@ abstract contract MembershipJoin is
         _releaseCapturedValue(transactionId, paymentRequired);
         _deleteCapturedData(transactionId);
 
-        _mintMembershipPoints(receiver, membershipPrice);
+        _mintMembershipPoints(receiver, paymentRequired);
     }
 
     /// @notice Issues a membership token to the receiver
@@ -524,7 +521,7 @@ abstract contract MembershipJoin is
             );
         }
 
-        _mintMembershipPoints(receiver, basePrice);
+        _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
     }
 
