@@ -27,20 +27,15 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
 
     function test_withdraw() external givenMembershipHasPrice givenAliceHasPaidMembership {
         address multisig = _randomAddress();
-        uint256 protocolFee = BasisPoints.calculate(
-            MEMBERSHIP_PRICE,
-            IPlatformRequirements(spaceFactory).getMembershipBps()
-        );
 
-        uint256 expectedRevenue = MEMBERSHIP_PRICE - protocolFee;
-
+        // With fee-added model, the space receives the full asking price
         uint256 revenue = membership.revenue();
-        assertEq(revenue, expectedRevenue);
+        assertEq(revenue, MEMBERSHIP_PRICE);
 
         vm.prank(founder);
         treasury.withdraw(multisig);
 
-        assertEq(multisig.balance, MEMBERSHIP_PRICE - protocolFee);
+        assertEq(multisig.balance, MEMBERSHIP_PRICE);
     }
 
     function test_revertWhen_withdrawNotOwner() external {
@@ -68,25 +63,22 @@ contract MembershipTreasuryTest is MembershipBaseSetup {
         vm.prank(founder);
         treasury.withdraw(founder);
 
-        uint256 protocolFee = BasisPoints.calculate(
-            MEMBERSHIP_PRICE,
-            IPlatformRequirements(spaceFactory).getMembershipBps()
-        );
+        // With fee-added model, founder receives full base price
+        assertEq(founder.balance, MEMBERSHIP_PRICE);
 
-        uint256 expectedBalance = MEMBERSHIP_PRICE - protocolFee;
-
-        assertEq(founder.balance, expectedBalance);
+        // For the second join, charlie needs to pay base price + protocol fee
+        uint256 totalPrice = membership.getMembershipPrice();
 
         vm.startPrank(charlie);
-        vm.deal(charlie, MEMBERSHIP_PRICE);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(charlie);
+        vm.deal(charlie, totalPrice);
+        membership.joinSpace{value: totalPrice}(charlie);
         assertEq(membershipToken.balanceOf(charlie), 1);
         vm.stopPrank();
 
         vm.prank(founder);
         treasury.withdraw(founder);
 
-        assertEq(founder.balance, expectedBalance * 2);
+        assertEq(founder.balance, MEMBERSHIP_PRICE * 2);
     }
 
     // ERC721
