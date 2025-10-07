@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/require"
+
 	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -279,19 +280,31 @@ func testS3writeMultiPartMediaMiniblock(t *testing.T, client *s3.Client, bucket 
 
 	miniblocks := []*MiniblockDescriptor{
 		{
-			Number:      int64(1),
-			Data:        generateRandomBytes(t, uint64(chunkSize)),
-			MediaStream: &MediaStreamMiniblockDescriptor{ChunkIndex: int32(0), ChunkCount: 3, ChunkSize: uint64(chunkSize)},
+			Number: int64(1),
+			Data:   generateRandomBytes(t, uint64(chunkSize)),
+			MediaStream: &MediaStreamMiniblockDescriptor{
+				ChunkIndex: int32(0),
+				ChunkCount: 3,
+				ChunkSize:  uint64(chunkSize),
+			},
 		},
 		{
-			Number:      int64(2),
-			Data:        generateRandomBytes(t, uint64(chunkSize)),
-			MediaStream: &MediaStreamMiniblockDescriptor{ChunkIndex: int32(1), ChunkCount: 3, ChunkSize: uint64(chunkSize)},
+			Number: int64(2),
+			Data:   generateRandomBytes(t, uint64(chunkSize)),
+			MediaStream: &MediaStreamMiniblockDescriptor{
+				ChunkIndex: int32(1),
+				ChunkCount: 3,
+				ChunkSize:  uint64(chunkSize),
+			},
 		},
 		{
-			Number:      int64(3),
-			Data:        generateRandomBytes(t, 373),
-			MediaStream: &MediaStreamMiniblockDescriptor{ChunkIndex: int32(2), ChunkCount: 3, ChunkSize: uint64(chunkSize)},
+			Number: int64(3),
+			Data:   generateRandomBytes(t, 373),
+			MediaStream: &MediaStreamMiniblockDescriptor{
+				ChunkIndex: int32(2),
+				ChunkCount: 3,
+				ChunkSize:  uint64(chunkSize),
+			},
 		},
 	}
 

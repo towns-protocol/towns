@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -103,7 +104,6 @@ func S3DeleteMediaMiniblock(
 		Bucket: bucket,
 		Key:    &objectKey,
 	})
-
 	if err != nil {
 		t.Fatalf("Unable to delete S3 object %s from bucket %s: %v", objectKey, *bucket, err)
 	}
@@ -149,7 +149,6 @@ func S3WriteMediaMiniblock(
 			Key:    &objectKey,
 			Body:   bytes.NewReader(miniblock.Data),
 		})
-
 		if err != nil {
 			return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to write media miniblock to S3", err).
 				Tags("stream", objectKey).
@@ -181,9 +180,12 @@ func S3WriteMediaMiniblock(
 			Bucket: bucket,
 			Key:    &objectKey,
 		})
-
 		if err != nil {
-			return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to initiate multipart upload to S3", err).
+			return nil, RiverErrorWithBase(
+				Err_DOWNSTREAM_NETWORK_ERROR,
+				"Unable to initiate multipart upload to S3",
+				err,
+			).
 				Tags("stream", streamID).
 				Func("storeMiniblockInS3AsPartOfMultiPartUpload")
 		}
@@ -200,7 +202,6 @@ func S3WriteMediaMiniblock(
 		UploadId:   streamMD.S3MultiPartUploadID,
 		Body:       bytes.NewReader(miniblock.Data),
 	})
-
 	if err != nil {
 		return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to write media miniblock to S3", err).
 			Tags("stream", streamID).
@@ -231,9 +232,12 @@ func S3WriteMediaMiniblock(
 				Parts: streamMD.MultiUploadParts(),
 			},
 		})
-
 		if err != nil {
-			return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to complete multipart upload to S3", err).
+			return nil, RiverErrorWithBase(
+				Err_DOWNSTREAM_NETWORK_ERROR,
+				"Unable to complete multipart upload to S3",
+				err,
+			).
 				Tags("stream", streamID).
 				Func("storeMiniblockInS3AsPartOfMultiPartUpload/CompleteMultipartUpload")
 		}
@@ -278,7 +282,6 @@ func S3ReadMediaMiniblocks(
 		Bucket: bucket,
 		Key:    &objectKey,
 	})
-
 	if err != nil {
 		return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to read S3 object", err).
 			Tags("stream", streamID).
