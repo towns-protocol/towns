@@ -70,8 +70,6 @@ func (md StreamMetaData) Value() (driver.Value, error) {
 		return nil, err
 	}
 
-	//panic(string(b))
-
 	return json.RawMessage(b), nil
 }
 
@@ -147,13 +145,13 @@ func (s *PostgresStreamStore) lockEphemeralStream(
 	if write {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR UPDATE",
+			"SELECT latest_snapshot_miniblock, metadata from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR UPDATE",
 			streamId,
 		).Scan(&lastSnapshotMiniblock, &md)
 	} else {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR SHARE",
+			"SELECT latest_snapshot_miniblock, metadata from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR SHARE",
 			streamId,
 		).Scan(&lastSnapshotMiniblock, &md)
 	}
