@@ -22,6 +22,10 @@ import (
 )
 
 type (
+	S3CompletedPart struct {
+		ETag       *string `json:"etag,omitempty"`
+		PartNumber *int32  `json:"partnum,omitempty"`
+	}
 	// StreamMetaDataS3Part holds information about individual miniblocks that are part of an S3 object.
 	// This information is used to decode miniblocks from a s3 object and to complete a s3 multipart upload.
 	StreamMetaDataS3Part struct {
@@ -31,7 +35,7 @@ type (
 		ByteSize uint64 `json:"size,omitempty"`
 		// S3CompletionPart holds the required information to complete a S3 multipart upload.
 		// All completion parts must be given to S3 when completing a multipart upload.
-		S3CompletionPart *s3types.CompletedPart `json:"s3cmpprt,omitempty"`
+		S3CompletionPart *S3CompletedPart `json:"s3cmpprt,omitempty"`
 	}
 
 	// StreamMetaData holds metadata for streams.
@@ -65,6 +69,9 @@ func (md StreamMetaData) Value() (driver.Value, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//panic(string(b))
+
 	return json.RawMessage(b), nil
 }
 
@@ -113,7 +120,10 @@ func (md *StreamMetaData) MultiUploadParts() []s3types.CompletedPart {
 
 	results := make([]s3types.CompletedPart, 0, md.S3PartsCount)
 	for _, part := range md.S3Parts {
-		results = append(results, *part.S3CompletionPart)
+		results = append(results, s3types.CompletedPart{
+			PartNumber: part.S3CompletionPart.PartNumber,
+			ETag:       part.S3CompletionPart.ETag,
+		})
 	}
 
 	// ensure that the S3Parts are sorted by PartIndex
@@ -131,6 +141,7 @@ func (s *PostgresStreamStore) lockEphemeralStream(
 	write bool,
 ) (
 	lastSnapshotMiniblock int64,
+	md *StreamMetaData,
 	err error,
 ) {
 	if write {
@@ -138,23 +149,27 @@ func (s *PostgresStreamStore) lockEphemeralStream(
 			ctx,
 			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR UPDATE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&lastSnapshotMiniblock, &md)
 	} else {
 		err = tx.QueryRow(
 			ctx,
 			"SELECT latest_snapshot_miniblock from es WHERE stream_id = $1 AND ephemeral IS TRUE FOR SHARE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&lastSnapshotMiniblock, &md)
 	}
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, RiverError(Err_NOT_FOUND, "Ephemeral stream not found", "streamId", streamId)
+			return 0, nil, RiverError(Err_NOT_FOUND, "Ephemeral stream not found", "streamId", streamId)
 		}
-		return 0, err
+		return 0, nil, err
 	}
 
-	return lastSnapshotMiniblock, nil
+	if md == nil {
+		md = &StreamMetaData{}
+	}
+
+	return lastSnapshotMiniblock, md, nil
 }
 
 // CreateEphemeralStreamStorage creates a new ephemeral stream storage with the given stream ID and genesis miniblock.
@@ -228,7 +243,7 @@ func (s *PostgresStreamStore) readEphemeralMiniblockNumsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) ([]int, error) {
-	if _, err := s.lockEphemeralStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockEphemeralStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
@@ -292,7 +307,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	)
 
 	// Lock the ephemeral stream to ensure that the stream exists and is ephemeral.
-	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// If the given ephemeral stream does not exist, create one by adding an extra query.
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			query += `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);`
@@ -342,7 +357,7 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (common.Hash, error) {
-	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// The given stream might be already normalized. In this case, return the genesis miniblock hash.
 		return common.Hash{}, err
 	}

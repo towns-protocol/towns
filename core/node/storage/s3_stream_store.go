@@ -163,7 +163,7 @@ func S3WriteMediaMiniblock(
 		partNumber := int32(1) // single part upload always has part number 1
 		part := &StreamMetaDataS3Part{
 			ByteSize: uint64(len(miniblock.Data)),
-			S3CompletionPart: &s3types.CompletedPart{
+			S3CompletionPart: &S3CompletedPart{
 				ETag:       putObjectResult.ETag,
 				PartNumber: &partNumber,
 			},
@@ -216,7 +216,7 @@ func S3WriteMediaMiniblock(
 
 	streamMD.S3Parts = append(streamMD.S3Parts, &StreamMetaDataS3Part{
 		ByteSize: uint64(len(miniblock.Data)),
-		S3CompletionPart: &s3types.CompletedPart{
+		S3CompletionPart: &S3CompletedPart{
 			ETag:       uploadPartResult.ETag,
 			PartNumber: &s3PartNumber,
 		},

@@ -113,7 +113,7 @@ func (m *ephemeralStreamMonitor) handleStream(ctx context.Context, streamId Stre
 		"ephemeralStreamMonitor.handleStream",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			if _, err := m.storage.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
+			if _, _, err := m.storage.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 				return err
 			}
 
