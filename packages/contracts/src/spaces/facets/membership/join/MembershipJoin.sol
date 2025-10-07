@@ -76,14 +76,12 @@ abstract contract MembershipJoin is
     ) internal view returns (PricingDetails memory joinDetails) {
         uint256 freeAllocation = _getMembershipFreeAllocation();
         uint256 totalSupply = _totalSupply();
-        uint256 tierPrice = _getTierPrice(tierId);
+        uint256 basePrice = _getTierPrice(tierId);
 
-        if (tierPrice == 0) return joinDetails;
+        if (basePrice == 0) return joinDetails;
+        if (freeAllocation > totalSupply) return joinDetails;
 
-        joinDetails.basePrice = tierPrice;
-        if (freeAllocation > totalSupply) {
-            return joinDetails;
-        }
+        joinDetails.basePrice = basePrice;
 
         // Check if this is a free join due to prepaid supply
         uint256 prepaidSupply = _getPrepaidSupply();
@@ -92,7 +90,7 @@ abstract contract MembershipJoin is
             return joinDetails;
         }
 
-        (uint256 totalRequired, ) = _getTotalMembershipPayment(tierPrice);
+        (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
         (joinDetails.amountDue, joinDetails.shouldCharge) = (totalRequired, true);
     }
 
@@ -255,7 +253,7 @@ abstract contract MembershipJoin is
     /// @return isEntitled Whether user is entitled (always false for crosschain)
     /// @return isCrosschainPending Whether crosschain checks are pending
     function _checkCrosschainEntitlements(
-        IRolesBase.Role[] memory roles,
+        Role[] memory roles,
         address receiver,
         address sender,
         bytes32 transactionId,

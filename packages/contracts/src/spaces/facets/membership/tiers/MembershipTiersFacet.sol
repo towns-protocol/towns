@@ -46,7 +46,7 @@ contract MembershipTiersFacet is
         return _getTier(tierId);
     }
 
-    function getTierOfTokenId(uint256 tokenId) external view returns (uint16) {
+    function getTierOf(uint256 tokenId) external view returns (uint16) {
         return _getTierOfTokenId(tokenId);
     }
 
