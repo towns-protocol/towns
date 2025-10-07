@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {IMembershipTiersBase} from "./IMembershipTiers.sol";
 
 // libraries
-import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {CurrencyTransfer} from "../../../../utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 

@@ -98,11 +98,7 @@ abstract contract MembershipTiersBase is IMembershipTiersBase, MembershipBase, E
 
     function _getTierPrice(uint16 tierId) internal view returns (uint256 tierPrice) {
         if (tierId == 0) return _getMembershipPrice(_totalSupply());
-        tierPrice = _getTier(tierId).price;
-        IPlatformRequirements platformReqs = _getPlatformRequirements();
-        uint256 minPrice = platformReqs.getMembershipMinPrice();
-        if (tierPrice < minPrice) return platformReqs.getMembershipFee();
-        return tierPrice;
+        _getTier(tierId).price;
     }
 
     function _validatePrice(uint256 price) internal view {

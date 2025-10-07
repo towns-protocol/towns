@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 //interfaces
 import {IDiamond} from "@towns-protocol/diamond/src/Diamond.sol";
-import {IMembershipTiers} from "src/spaces/facets/membership/tiers/IMembershipTiers.sol";
+import {IMembershipTiers} from "../../../src/spaces/facets/membership/tiers/IMembershipTiers.sol";
 
 //libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
