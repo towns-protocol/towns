@@ -631,6 +631,26 @@ message MediaPayload {
         bytes data = 1;
         int32 chunk_index = 2;
         optional bytes iv = 3;
+        // chunk_count is the total number of chunks that will be uploaded for this media.
+        // It is the same as the media stream inception event's chunk_count field.
+        int32 chunk_count = 4;
+        // chunk_size chosen by the client and indicates in how big chunks the media that is uploaded is split in.
+        // All (apart from the last chunk) chunks must be of this size. The last chunk must have:
+        // a chunk_size that is <= chunk_size.
+        // If the total size of the data to upload is >=5MiB clients are recommended to pick a chunk_size of >=5MiB.
+        //
+        // Example(1), data to upload is 12.5MiB.
+        // The client chooses a chunk_size of 5MiB.
+        // Chunk 0: 5MiB
+        // Chunk 1: 5MiB
+        // Chunk 2: 2.5MiB
+        // The client must set for all chunks chunk_size = 5MiB
+        //
+        // Example(2): data to upload is 2.5MiB.
+        // Client can choose a chunk_size of 2.5MiB and upload the data in a single chunk with chunk_size=2.5MiB.
+        // Or it can choose a chunk_size of 1MiB and upload 2 chunks of 1MiB each and the last chunk of 0.5MiB.
+        // The client must set for all chunks chunk_size = 1MiB
+        uint64 chunk_size = 5;
     }
 
     oneof content {

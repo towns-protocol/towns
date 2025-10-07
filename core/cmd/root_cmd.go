@@ -92,6 +92,11 @@ func initConfigAndLog() {
 		os.Exit(1)
 	}
 
+	if err := cmdConfig.ExternalMediaStreamStorage.Check(); err != nil {
+		fmt.Println("Failed to initialize config, error=", err)
+		os.Exit(1)
+	}
+
 	logging.Init(
 		cmdConfig.Log.Level,
 		cmdConfig.Log.Console,
