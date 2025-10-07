@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -272,6 +273,72 @@ func (c DatabaseConfig) GetUrl() string {
 	}
 
 	return c.Url
+}
+
+// S3Config specifies the configuration for storing media miniblock data in S3 compatible storage.
+type S3Config struct {
+	// Region is the region where the bucket is located.
+	Region string
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	AccessKeyID string
+	// SecretAccessKey is the AWS secret access key that has read/write access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	SecretAccessKey string
+	// ObjectKeyPrefix is an optional prefix to use for all S3 object keys.
+	// This is useful for separating data from different nodes when running multiple nodes
+	// on the same bucket as in tests.
+	ObjectKeyPrefix string
+}
+
+// S3TestAWSConfigFromEnv returns an S3Config from environment variables.
+// It expects the following environment variables to be set:
+// AWS_S3_ACCESS_KEY_ID, AWS_S3_SECRET_ACCESS_KEY, AWS_S3_REGION, AWS_S3_BUCKET
+// If any of these variables are not set, nil is returned.
+func S3TestAWSConfigFromEnv() *S3Config {
+	var (
+		accessKeyID     = os.Getenv("AWS_S3_ACCESS_KEY_ID")
+		secretAccessKey = os.Getenv("AWS_S3_SECRET_ACCESS_KEY")
+		region          = os.Getenv("AWS_S3_REGION")
+		bucket          = os.Getenv("AWS_S3_BUCKET")
+	)
+
+	if accessKeyID != "" && secretAccessKey != "" && region != "" && bucket != "" {
+		return &S3Config{
+			Region:          region,
+			Bucket:          bucket,
+			AccessKeyID:     accessKeyID,
+			SecretAccessKey: secretAccessKey,
+		}
+	}
+
+	return nil
+}
+
+// S3TestGCPConfigFromEnv returns an S3Config from environment variables.
+// It expects the following environment variables to be set:
+// GCP_STORAGE_ACCESS_KEY_ID, GCP_STORAGE_SECRET_ACCESS_KEY, GCP_STORAGE_REGION, GCP_STORAGE_BUCKET
+// If any of these variables are not set, nil is returned.
+func S3TestGCPConfigFromEnv() *S3Config {
+	var (
+		accessKeyID     = os.Getenv("GCP_STORAGE_ACCESS_KEY_ID")
+		secretAccessKey = os.Getenv("GCP_STORAGE_SECRET_ACCESS_KEY")
+		region          = os.Getenv("GCP_STORAGE_REGION")
+		bucket          = os.Getenv("GCP_STORAGE_BUCKET")
+	)
+
+	if accessKeyID != "" && secretAccessKey != "" && region != "" && bucket != "" {
+		return &S3Config{
+			Region:          region,
+			Bucket:          bucket,
+			AccessKeyID:     accessKeyID,
+			SecretAccessKey: secretAccessKey,
+		}
+	}
+
+	return nil
 }
 
 // TransactionPoolConfig specifies when it is time for a replacement transaction and its gas fee costs.

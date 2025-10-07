@@ -2,9 +2,14 @@ package storage
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
 	"time"
 
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -15,6 +20,109 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+type (
+	// StreamMetaDataS3Part holds information about individual miniblocks that are part of an S3 object.
+	// This information is used to decode miniblocks from a s3 object and to complete a s3 multipart upload.
+	StreamMetaDataS3Part struct {
+		// ByteSize in the byte size of the protobuf serialized miniblock.
+		// It can be used to decode the S3 object back into miniblocks in the case of a multipart upload that
+		// concatenates parts.
+		ByteSize uint64 `json:"size,omitempty"`
+		// S3CompletionPart holds the required information to complete a S3 multipart upload.
+		// All completion parts must be given to S3 when completing a multipart upload.
+		S3CompletionPart *s3types.CompletedPart `json:"s3cmpprt,omitempty"`
+	}
+
+	// StreamMetaData holds metadata for streams.
+	StreamMetaData struct {
+		// S3PartsCount holds the number of expected parts for a S3 upload.
+		// It matches ChunkCount as provided in the protobuf media miniblocks chunks by the client.
+		// A multipart upload can be completed when len(S3CompletionParts) == S3PartsCount.
+		// If a S3 single Put operation was used (media stream consists of a single chunk), this field is set to 1.
+		S3PartsCount int32 `json:"s3prtcnt,omitempty"`
+		// S3PartsSize holds the size of each part in a multipart S3 upload.
+		// It was specified by the client during media stream creation and in each chunk.
+		S3PartsSize uint64 `json:"s3prtsize,omitempty"`
+		// S3MultiPartUploadID holds the upload ID of a multipart S3 upload.
+		// If a S3 single Put operation was used, this field is empty and S3PartsCount is set to 1.
+		S3MultiPartUploadID *string `json:"s3mprtupldid,omitempty"`
+		// S3Parts holds the information required to decode miniblocks from a S3 object.
+		S3Parts []*StreamMetaDataS3Part `json:"s3cmpprt,omitempty"`
+		// S3MultiPartCompletedEtag holds the ETag of a completed multipart S3 upload.
+		S3MultiPartCompletedEtag *string `json:"s3mprtcmptdtag,omitempty"`
+	}
+)
+
+// Value implements the driver.Valuer interface, making it writable to the database.
+func (md StreamMetaData) Value() (driver.Value, error) {
+	// ensure that the S3Parts are sorted by PartIndex
+	slices.SortFunc(md.S3Parts, func(a, b *StreamMetaDataS3Part) int {
+		return int(*a.S3CompletionPart.PartNumber - *b.S3CompletionPart.PartNumber)
+	})
+
+	b, err := json.Marshal(md)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(b), nil
+}
+
+// Scan implements the sql.Scanner interface, making it readable from the database.
+func (md *StreamMetaData) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+
+	var (
+		cpy StreamMetaData
+		err error
+	)
+
+	switch srcT := src.(type) {
+	case string:
+		err = json.Unmarshal([]byte(srcT), &cpy)
+	case []byte:
+		err = json.Unmarshal(srcT, &cpy)
+	case json.RawMessage:
+		err = json.Unmarshal(srcT, &cpy)
+	default:
+		return RiverError(Err_INTERNAL, fmt.Sprintf("cannot scan MiniblockMetaData from unknown type %T", src))
+	}
+
+	if err == nil {
+		*md = cpy
+	}
+	return err
+}
+
+// UploadedToS3 returns true when all expected parts are uploaded to S3.
+// For a media stream consisting of a single chunk this is true when the chunk is uploaded to S3.
+// For a media stream consisting of multiple chunks this is true when all chunks are uploaded to S3 and
+// the upload can be completed.
+func (md *StreamMetaData) UploadedToS3() bool {
+	return md != nil && len(md.S3Parts) == int(md.S3PartsCount)
+}
+
+// MultiUploadParts returns information of uploaded s3 parts as S3 returned when uploading a part as
+// part of a multipart upload. This can be used to complete the multipart upload.
+func (md *StreamMetaData) MultiUploadParts() []s3types.CompletedPart {
+	if md == nil {
+		return nil
+	}
+
+	results := make([]s3types.CompletedPart, 0, md.S3PartsCount)
+	for _, part := range md.S3Parts {
+		results = append(results, *part.S3CompletionPart)
+	}
+
+	// ensure that the S3Parts are sorted by PartIndex
+	slices.SortFunc(results, func(a, b s3types.CompletedPart) int {
+		return int(*a.PartNumber - *b.PartNumber)
+	})
+
+	return results
+}
 
 func (s *PostgresStreamStore) lockEphemeralStream(
 	ctx context.Context,
