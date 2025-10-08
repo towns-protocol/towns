@@ -40,6 +40,7 @@ interface ISubscriptionModuleBase {
     error SubscriptionModule__InvalidTokenOwner();
     error SubscriptionModule__InsufficientBalance();
     error SubscriptionModule__ActiveSubscription();
+    error SubscriptionModule__MembershipBanned();
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
