@@ -339,13 +339,8 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
     function _calculateProtocolFee(uint256 basePrice) internal view returns (uint256) {
         uint256 protocolFee = platformRequirements.getMembershipFee(); // Min fee for 1 ether
-
-        if (
-            BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps()) > protocolFee
-        ) {
-            protocolFee = BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps());
-        }
-
+        uint256 bpsFee = BasisPoints.calculate(basePrice, platformRequirements.getMembershipBps());
+        if (bpsFee > protocolFee) return bpsFee;
         return protocolFee;
     }
 
