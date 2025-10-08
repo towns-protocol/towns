@@ -905,11 +905,12 @@ contract SubscriptionModuleTest is ModulesBase {
         uint256 duration = 1 hours;
         uint256 renewalPrice = 0.001 ether;
 
-        (ModularAccount account, , uint32 entityId, ) = _createSubscription(
-            makeAddr("user"),
-            uint64(duration),
-            renewalPrice
-        );
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), uint64(duration), renewalPrice);
 
         vm.deal(address(account), renewalPrice * 10);
 
@@ -933,7 +934,7 @@ contract SubscriptionModuleTest is ModulesBase {
 
         assertEq(
             afterRenewal.spent,
-            renewalPrice,
+            params.renewalPrice,
             "Should only charge once despite missed intervals"
         );
     }
@@ -964,7 +965,7 @@ contract SubscriptionModuleTest is ModulesBase {
 
         assertEq(
             balanceBefore - address(account).balance,
-            price,
+            params.renewalPrice,
             "Should only charge once, not twice"
         );
 
