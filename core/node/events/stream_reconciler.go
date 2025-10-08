@@ -80,6 +80,7 @@ func (sr *streamReconciler) reconcile() error {
 	}
 
 	sr.expectedLastMbInclusive = sr.streamRecord.LastMbNum()
+	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 
 	sr.stream.mu.RLock()
 	nonReplicatedStream := len(sr.stream.nodesLocked.GetQuorumNodes()) == 1
@@ -98,6 +99,7 @@ func (sr *streamReconciler) reconcile() error {
 	// for non-replicated streams. In that case fetch the latest block number from the remote.
 	if nonReplicatedStream {
 		_ = sr.remotes.execute(sr.setExpectedLastMbFromRemote)
+		sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 	}
 
 	backwardThreshold := sr.cache.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
@@ -235,7 +237,7 @@ func (sr *streamReconciler) reconcileBackward() error {
 		return nil
 	}
 
-	return sr.backfillGaps()
+	return sr.backfillGapsByRanges(presentRanges)
 }
 
 func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Address) error {
@@ -273,8 +275,6 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 func (sr *streamReconciler) backfillGaps() error {
 	sr.stats.backfillCalled = true
 
-	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
-
 	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
 		sr.ctx,
 		sr.stream.streamId,
@@ -283,6 +283,13 @@ func (sr *streamReconciler) backfillGaps() error {
 	if err != nil {
 		return err
 	}
+
+	return sr.backfillGapsByRanges(presentRanges)
+}
+
+func (sr *streamReconciler) backfillGapsByRanges(presentRanges []storage.MiniblockRange) error {
+	sr.stats.backfillCalled = true
+
 	if len(presentRanges) == 0 {
 		return RiverError(Err_INTERNAL, "backfillGaps: no present ranges")
 	}
@@ -299,7 +306,7 @@ func (sr *streamReconciler) backfillGaps() error {
 
 	// Reconcile missing ranges one by one backwards.
 	for i := len(missingRanges) - 1; i >= 0; i-- {
-		err = sr.backfillRange(missingRanges[i])
+		err := sr.backfillRange(missingRanges[i])
 		if err != nil {
 			return err
 		}
