@@ -155,9 +155,12 @@ describe('spaceWithVariousPriceConfigurations', () => {
             membershipRequirements,
         )
 
-        const { price: joinPrice } = await bobSpaceDapp.getJoinSpacePriceDetails(spaceId)
+        const { price: joinPrice, protocolFee } =
+            await bobSpaceDapp.getJoinSpacePriceDetails(spaceId)
 
-        expect(joinPrice.toBigInt()).toBe(ethers.utils.parseEther('1').toBigInt())
+        expect(joinPrice.toBigInt()).toBe(
+            ethers.utils.parseEther('1').toBigInt() + protocolFee.toBigInt(),
+        )
 
         log('Alice should be able to join space')
 
