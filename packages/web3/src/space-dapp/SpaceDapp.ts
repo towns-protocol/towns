@@ -1519,6 +1519,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         price: ethers.BigNumber
         prepaidSupply: ethers.BigNumber
         remainingFreeSupply: ethers.BigNumber
+        protocolFee: ethers.BigNumber
     }> {
         const space = this.getSpace(spaceId)
         if (!space) {
@@ -1542,16 +1543,20 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         const prepaidSupplyEncoded =
             space.Prepay.interface.encodeFunctionData('prepaidMembershipSupply')
 
+        const protocolFeeEncoded = space.Membership.interface.encodeFunctionData('getProtocolFee')
+
         const [
             membershipPriceResult,
             totalSupplyResult,
             freeAllocationResult,
             prepaidSupplyResult,
+            protocolFeeResult,
         ] = await space.Multicall.read.callStatic.multicall([
             membershipPriceEncoded,
             totalSupplyEncoded,
             freeAllocationEncoded,
             prepaidSupplyEncoded,
+            protocolFeeEncoded,
         ])
 
         try {
@@ -1571,7 +1576,10 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 'prepaidMembershipSupply',
                 prepaidSupplyResult,
             )[0] as BigNumber
-
+            const protocolFee = space.Membership.interface.decodeFunctionResult(
+                'getProtocolFee',
+                protocolFeeResult,
+            )[0] as BigNumber
             // remainingFreeSupply
             // if totalSupply < freeAllocation, freeAllocation + prepaid - minted memberships
             // else the remaining prepaidSupply if any
@@ -1583,6 +1591,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 price: remainingFreeSupply.gt(0) ? ethers.BigNumber.from(0) : membershipPrice,
                 prepaidSupply,
                 remainingFreeSupply,
+                protocolFee,
             }
         } catch (error) {
             logger.error('getJoinSpacePriceDetails: Error decoding membership price', error)
