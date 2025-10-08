@@ -18,7 +18,7 @@ import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLoca
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
-import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
+import {Subscription, OperatorConfig, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
@@ -46,8 +46,6 @@ contract SubscriptionModuleFacet is
 
     uint256 public constant MAX_BATCH_SIZE = 50;
     uint256 public constant GRACE_PERIOD = 3 days;
-    uint256 public constant KEEPER_INTERVAL = 5 minutes;
-    uint256 public constant MIN_RENEWAL_BUFFER = KEEPER_INTERVAL + 1 minutes; // Minimum buffer to prevent double renewals
 
     // Dynamic buffer times based on expiration proximity
     uint256 public constant BUFFER_IMMEDIATE = 2 minutes; // For expirations within 1 hour
@@ -434,25 +432,6 @@ contract SubscriptionModuleFacet is
         return BUFFER_LONG;
     }
 
-    /// @dev Calculates the next renewal time for a given expiration using membership duration
-    /// @param expirationTime The expiration timestamp of the membership
-    /// @param duration The membership duration in seconds
-    /// @param enforceMinBuffer Whether to enforce minimum future buffer (prevents double renewals)
-    /// @return The next renewal time as uint40
-    function _calculateNextRenewalTime(
-        uint256 expirationTime,
-        uint256 duration,
-        bool enforceMinBuffer
-    ) internal view returns (uint40) {
-        uint40 baseRenewalTime = _calculateBaseRenewalTime(expirationTime, duration);
-
-        if (enforceMinBuffer) {
-            return _enforceMinimumBuffer(baseRenewalTime, expirationTime, duration);
-        }
-
-        return baseRenewalTime;
-    }
-
     /// @dev Calculates the base renewal time without minimum buffer enforcement
     /// @param expirationTime The expiration timestamp of the membership
     /// @param duration The membership duration in seconds
@@ -488,14 +467,16 @@ contract SubscriptionModuleFacet is
         uint256 expirationTime,
         uint256 duration
     ) internal view returns (uint40) {
+        uint256 operatorBuffer = SubscriptionModuleStorage.getOperatorBuffer(msg.sender);
+
         // If base time is far enough in the future, use it
-        if (baseTime > block.timestamp + MIN_RENEWAL_BUFFER) {
+        if (baseTime > block.timestamp + operatorBuffer) {
             return baseTime;
         }
 
         // For very short durations, schedule close to expiration with minimum buffer
         if (duration <= 1 hours) {
-            return (expirationTime - MIN_RENEWAL_BUFFER).toUint40();
+            return (expirationTime - operatorBuffer).toUint40();
         }
 
         // For longer durations, use standard calculation with minimum buffer

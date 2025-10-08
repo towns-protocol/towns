@@ -791,11 +791,6 @@ contract SubscriptionModuleTest is ModulesBase {
             "Next renewal time must be strictly in the future after renewal"
         );
 
-        assertTrue(
-            afterFirstRenewal.nextRenewalTime > block.timestamp + 1 minutes,
-            "Next renewal should be at least 1 minute in the future"
-        );
-
         vm.warp(block.timestamp + 5 minutes);
 
         vm.expectEmit(address(subscriptionModule));
