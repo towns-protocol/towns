@@ -9,9 +9,11 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/config/builder"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
@@ -24,83 +26,61 @@ func TestS3Integration(t *testing.T) {
 
 	// These tests can always be run locally
 	t.Run("Write non media stream miniblock", func(t *testing.T) {
-		testS3WriteNonMediaMiniblock(t, nil, nil)
+		testS3WriteNonMediaMiniblock(t, nil, "")
 	})
 	t.Run("Write media stream miniblock without media stream descriptor", func(t *testing.T) {
-		testS3WriteMediaMiniblockWithoutDescriptor(t, nil, nil)
+		testS3WriteMediaMiniblockWithoutDescriptor(t, nil, "")
 	})
 	t.Run("Miniblock writable to S3 upload", func(t *testing.T) {
 		testS3CanWriteMiniblock(t)
 	})
 
+	cfg := config.GetDefaultConfig()
+	bld, err := builder.NewConfigBuilder(cfg, "RIVER")
+	require.NoError(t, err)
+
+	cfg, err = bld.Build()
+	require.NoError(t, err)
+
 	t.Run("AWS", func(t *testing.T) {
-		// The following tests require S3 credentials to be set in the environment
-		s3cfg := config.S3TestAWSConfigFromEnv()
-		if s3cfg == nil {
-			t.Skip("Missing S3 credentials - skipping AWS S3 integration tests.")
+		if !cfg.ExternalMediaStreamStorage.AwsS3.Enabled() {
+			t.Skipf("AWS S3 integration tests disabled - missing configuration")
 		}
 
 		ctx := t.Context()
-		require := require.New(t)
-
+		awsS3 := cfg.ExternalMediaStreamStorage.AwsS3
 		cfg, err := awsconfig.LoadDefaultConfig(ctx,
 			awsconfig.WithCredentialsProvider(
-				credentials.NewStaticCredentialsProvider(s3cfg.AccessKeyID, s3cfg.SecretAccessKey, "")),
-			awsconfig.WithRegion(s3cfg.Region),
+				credentials.NewStaticCredentialsProvider(awsS3.AccessKeyID, awsS3.SecretAccessKey, "")),
+			awsconfig.WithRegion(awsS3.Region),
 			awsconfig.WithHTTPClient(awshttp.NewBuildableClient().WithTransportOptions(func(transport *http.Transport) {
 				transport.DisableKeepAlives = true // http connections remain open and goleak detects leaks
 			})))
 
-		require.NoError(err, "Failed to load AWS S3 config")
+		require.NoError(t, err, "Failed to load AWS S3 config")
 
 		client := s3.NewFromConfig(cfg)
 
 		t.Run("Write media stream miniblock in single PUT", func(t *testing.T) {
-			testS3writeMediaMiniblock(t, client, &s3cfg.Bucket)
+			testS3writeMediaMiniblock(t, client, awsS3.Bucket)
 		})
 		t.Run("Write media stream miniblock in multipart upload", func(t *testing.T) {
-			testS3writeMultiPartMediaMiniblock(t, client, &s3cfg.Bucket)
+			testS3writeMultiPartMediaMiniblock(t, client, awsS3.Bucket)
 		})
 	})
 
 	t.Run("GCP", func(t *testing.T) {
-		// The following tests require S3 credentials to be set in the environment
-		s3cfg := config.S3TestGCPConfigFromEnv()
-		if s3cfg == nil {
-			t.Skip("Missing S3 credentials - skipping GCP S3 integration tests.")
-		}
-
-		ctx := t.Context()
-		require := require.New(t)
-
-		cfg, err := awsconfig.LoadDefaultConfig(ctx,
-			awsconfig.WithCredentialsProvider(
-				credentials.NewStaticCredentialsProvider(s3cfg.AccessKeyID, s3cfg.SecretAccessKey, "")),
-			awsconfig.WithRegion(s3cfg.Region),
-			awsconfig.WithHTTPClient(awshttp.NewBuildableClient().WithTransportOptions(func(transport *http.Transport) {
-				transport.DisableKeepAlives = true // http connections remain open and goleak detects leaks
-			})))
-
-		require.NoError(err, "Failed to load GCP S3 config")
-
-		client := s3.NewFromConfig(cfg)
-
-		t.Run("Write media stream miniblock in single PUT", func(t *testing.T) {
-			testS3writeMediaMiniblock(t, client, &s3cfg.Bucket)
-		})
-		t.Run("Write media stream miniblock in multipart upload", func(t *testing.T) {
-			testS3writeMultiPartMediaMiniblock(t, client, &s3cfg.Bucket)
-		})
+		t.Skip("GCP not implemented")
 	})
 }
 
-func testS3WriteNonMediaMiniblock(t *testing.T, client *s3.Client, bucket *string) {
+func testS3WriteNonMediaMiniblock(t *testing.T, client *s3.Client, bucket string) {
 	var (
 		ctx     = t.Context()
 		require = require.New(t)
 	)
 
-	_, err := S3WriteMediaMiniblock(ctx, client, bucket, "1_", testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN), nil, nil)
+	_, err := S3WriteMediaMiniblock(ctx, client, bucket, common.Address{}, testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN), nil, nil)
 	require.True(IsRiverErrorCode(err, Err_BAD_STREAM_ID))
 }
 
@@ -225,18 +205,18 @@ func testS3CanWriteMiniblock(t *testing.T) {
 	}
 }
 
-func testS3WriteMediaMiniblockWithoutDescriptor(t *testing.T, client *s3.Client, bucket *string) {
+func testS3WriteMediaMiniblockWithoutDescriptor(t *testing.T, client *s3.Client, bucket string) {
 	var (
 		ctx     = t.Context()
 		require = require.New(t)
 	)
 
 	mb := MiniblockDescriptor{}
-	_, err := S3WriteMediaMiniblock(ctx, client, bucket, "1_", testutils.FakeStreamId(STREAM_MEDIA_BIN), nil, &mb)
+	_, err := S3WriteMediaMiniblock(ctx, client, bucket, common.Address{}, testutils.FakeStreamId(STREAM_MEDIA_BIN), nil, &mb)
 	require.True(IsRiverErrorCode(err, Err_BAD_BLOCK))
 }
 
-func testS3writeMediaMiniblock(t *testing.T, client *s3.Client, bucket *string) {
+func testS3writeMediaMiniblock(t *testing.T, client *s3.Client, bucket string) {
 	var (
 		ctx       = t.Context()
 		require   = require.New(t)
@@ -254,22 +234,22 @@ func testS3writeMediaMiniblock(t *testing.T, client *s3.Client, bucket *string) 
 		}
 	)
 
-	streamMD, err := S3WriteMediaMiniblock(ctx, client, bucket, "", streamID, streamMD, miniblock)
+	streamMD, err := S3WriteMediaMiniblock(ctx, client, bucket, common.Address{}, streamID, streamMD, miniblock)
 	require.NoError(err)
 	require.NotNil(streamMD)
 	require.Nil(streamMD.S3MultiPartUploadID)
 	require.EqualValues(1, len(streamMD.S3Parts))
 	require.EqualValues(1, streamMD.S3PartsCount)
 
-	readMiniblocks, err := S3ReadMediaMiniblocks(ctx, client, bucket, streamID, "", streamMD)
+	readMiniblocks, err := S3ReadMediaMiniblocks(ctx, client, bucket, streamID, common.Address{}, streamMD)
 	require.NoError(err)
 	require.Equal(1, len(readMiniblocks))
 	require.EqualValues(*miniblock, *readMiniblocks[0])
 
-	S3DeleteMediaMiniblock(t, client, bucket, "", streamID)
+	S3DeleteMediaMiniblock(t, client, bucket, common.Address{}, streamID)
 }
 
-func testS3writeMultiPartMediaMiniblock(t *testing.T, client *s3.Client, bucket *string) {
+func testS3writeMultiPartMediaMiniblock(t *testing.T, client *s3.Client, bucket string) {
 	var (
 		ctx       = t.Context()
 		chunkSize = S3MultiPartMinimumPartSize
@@ -309,7 +289,7 @@ func testS3writeMultiPartMediaMiniblock(t *testing.T, client *s3.Client, bucket 
 	}
 
 	for i, mb := range miniblocks {
-		streamMD, err = S3WriteMediaMiniblock(ctx, client, bucket, "", streamID, streamMD, mb)
+		streamMD, err = S3WriteMediaMiniblock(ctx, client, bucket, common.Address{}, streamID, streamMD, mb)
 		require.NoError(t, err)
 		require.NotNil(t, streamMD)
 		require.NotNil(t, streamMD.S3MultiPartUploadID)
@@ -318,14 +298,14 @@ func testS3writeMultiPartMediaMiniblock(t *testing.T, client *s3.Client, bucket 
 	}
 
 	// ensure that miniblocks can be read
-	readMiniblocks, err := S3ReadMediaMiniblocks(ctx, client, bucket, streamID, "", streamMD)
+	readMiniblocks, err := S3ReadMediaMiniblocks(ctx, client, bucket, streamID, common.Address{}, streamMD)
 	require.NoError(t, err)
 	require.EqualValues(t, len(miniblocks), len(readMiniblocks))
 	require.EqualValues(t, *miniblocks[0], *readMiniblocks[0])
 	require.EqualValues(t, *miniblocks[1], *readMiniblocks[1])
 	require.EqualValues(t, *miniblocks[2], *readMiniblocks[2])
 
-	S3DeleteMediaMiniblock(t, client, bucket, "", streamID)
+	S3DeleteMediaMiniblock(t, client, bucket, common.Address{}, streamID)
 }
 
 func generateRandomBytes(t *testing.T, size uint64) []byte {

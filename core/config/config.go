@@ -3,7 +3,6 @@ package config
 import (
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -205,6 +204,9 @@ type Config struct {
 	// TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
 	// The value is a shared secret expected in the X-River-Test-Bypass header.
 	TestEntitlementsBypassSecret string
+
+	// ExternalMediaStreamStorage if configured, defines where media stream miniblocks are stored.
+	ExternalMediaStreamStorage ExternalMediaStreamStorageConfig `mapstructure:"external_media_stream_storage"`
 }
 
 type TLSConfig struct {
@@ -275,70 +277,78 @@ func (c DatabaseConfig) GetUrl() string {
 	return c.Url
 }
 
-// S3Config specifies the configuration for storing media miniblock data in S3 compatible storage.
-type S3Config struct {
+// ExternalMediaStreamStorageAWSS3Config defines configuration to store media stream miniblocks
+// in AWS S3.
+type ExternalMediaStreamStorageAWSS3Config struct {
 	// Region is the region where the bucket is located.
 	Region string
 	// Bucket name where to store media miniblock data in.
 	Bucket string
-	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write access to the bucket.
+	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write
+	// access to the bucket.
 	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
-	AccessKeyID string
+	AccessKeyID string `mapstructure:"access_key_id"`
 	// SecretAccessKey is the AWS secret access key that has read/write access to the bucket.
 	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
-	SecretAccessKey string
-	// ObjectKeyPrefix is an optional prefix to use for all S3 object keys.
-	// This is useful for separating data from different nodes when running multiple nodes
-	// on the same bucket as in tests.
-	ObjectKeyPrefix string
+	SecretAccessKey string `mapstructure:"secret_access_key" json:"-" yaml:"-"`
 }
 
-// S3TestAWSConfigFromEnv returns an S3Config from environment variables.
-// It expects the following environment variables to be set:
-// AWS_S3_ACCESS_KEY_ID, AWS_S3_SECRET_ACCESS_KEY, AWS_S3_REGION, AWS_S3_BUCKET
-// If any of these variables are not set, nil is returned.
-func S3TestAWSConfigFromEnv() *S3Config {
-	var (
-		accessKeyID     = os.Getenv("AWS_S3_ACCESS_KEY_ID")
-		secretAccessKey = os.Getenv("AWS_S3_SECRET_ACCESS_KEY")
-		region          = os.Getenv("AWS_S3_REGION")
-		bucket          = os.Getenv("AWS_S3_BUCKET")
-	)
-
-	if accessKeyID != "" && secretAccessKey != "" && region != "" && bucket != "" {
-		return &S3Config{
-			Region:          region,
-			Bucket:          bucket,
-			AccessKeyID:     accessKeyID,
-			SecretAccessKey: secretAccessKey,
-		}
+func (cfg ExternalMediaStreamStorageAWSS3Config) fieldsSet() int {
+	fieldsSet := 0
+	if cfg.Region != "" {
+		fieldsSet++
 	}
+	if cfg.Bucket != "" {
+		fieldsSet++
+	}
+	if cfg.AccessKeyID != "" {
+		fieldsSet++
+	}
+	if cfg.SecretAccessKey != "" {
+		fieldsSet++
+	}
+	return fieldsSet
+}
 
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageAWSS3Config) Enabled() bool {
+	return cfg.fieldsSet() == 4
+}
+
+// Check returns an error if the configuration is incorrectly configured.
+// Note that providing no AWS S3 config is valid and won't return an error.
+func (cfg ExternalMediaStreamStorageAWSS3Config) Check() error {
+	if set := cfg.fieldsSet(); set == 0 || set == 4 {
+		return nil
+	}
+	return RiverError(Err_BAD_CONFIG, "Not all required fields are set")
+}
+
+// ExternalMediaStreamStorageGCPStorageConfig defines configuration to store media stream miniblocks
+// in GCP Storage.
+type ExternalMediaStreamStorageGCPStorageConfig struct{}
+
+func (cfg ExternalMediaStreamStorageGCPStorageConfig) Check() error {
 	return nil
 }
 
-// S3TestGCPConfigFromEnv returns an S3Config from environment variables.
-// It expects the following environment variables to be set:
-// GCP_STORAGE_ACCESS_KEY_ID, GCP_STORAGE_SECRET_ACCESS_KEY, GCP_STORAGE_REGION, GCP_STORAGE_BUCKET
-// If any of these variables are not set, nil is returned.
-func S3TestGCPConfigFromEnv() *S3Config {
-	var (
-		accessKeyID     = os.Getenv("GCP_STORAGE_ACCESS_KEY_ID")
-		secretAccessKey = os.Getenv("GCP_STORAGE_SECRET_ACCESS_KEY")
-		region          = os.Getenv("GCP_STORAGE_REGION")
-		bucket          = os.Getenv("GCP_STORAGE_BUCKET")
-	)
+// ExternalMediaStreamStorageConfig specifies the configuration for storing media miniblock data
+// in external storage. For production only one of the storage backends should be configured. For
+// unittests all backends are supported.
+type ExternalMediaStreamStorageConfig struct {
+	// AwsS3 if configured, will be used to store media stream miniblocks in AWS S3.
+	AwsS3 ExternalMediaStreamStorageAWSS3Config `mapstructure:"aws_s3"`
+	// GcpStorage if configured, will be used to store media stream miniblocks in GCP Storage.
+	GcpStorage ExternalMediaStreamStorageGCPStorageConfig `mapstructure:"gcp_storage"`
+}
 
-	if accessKeyID != "" && secretAccessKey != "" && region != "" && bucket != "" {
-		return &S3Config{
-			Region:          region,
-			Bucket:          bucket,
-			AccessKeyID:     accessKeyID,
-			SecretAccessKey: secretAccessKey,
-		}
+// Check returns an error describing the problem if the media stream storage backend is incorrectly
+// configured.
+func (cfg ExternalMediaStreamStorageConfig) Check() error {
+	if err := cfg.AwsS3.Check(); err != nil {
+		return err
 	}
-
-	return nil
+	return cfg.GcpStorage.Check()
 }
 
 // TransactionPoolConfig specifies when it is time for a replacement transaction and its gas fee costs.

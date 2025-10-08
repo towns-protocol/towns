@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -25,15 +26,9 @@ const (
 	S3MinimumUploadSize = 100 * 1024
 )
 
-// streamIDToS3ObjectKey helper function that derives an S3 object key from the given stream ID.
-// objectKeyPrefix must be empty for production use. For test code it allows for multiple service
-// instances to share the same S3 bucket to upload data using their unique prefix.
-func streamIDToS3ObjectKey(streamID StreamId, objectKeyPrefix string) string {
-	if objectKeyPrefix == "" {
-		return strings.ToLower(streamID.String())
-	}
-
-	return objectKeyPrefix + strings.ToLower(streamID.String())
+// externalStorageObjectKey helper function that derives an object key from the given node address and stream ID.
+func externalStorageObjectKey(nodeID common.Address, streamID StreamId) string {
+	return strings.ToLower(nodeID.String() + "/" + streamID.String())
 }
 
 // S3CanWriteMiniblock returns an indication if the given miniblock can be written to S3.
@@ -44,7 +39,7 @@ func S3CanWriteMiniblock(
 	isMediaStreamMiniblock := miniblock.MediaStream != nil
 	isGenesis := miniblock.Number == 0
 
-	// only media stream non-genesis miniblocks that include a chunk can be upload to S3
+	// only media stream non-genesis miniblocks that include a chunk can be uploaded to S3.
 	if !isMediaStreamMiniblock || isGenesis || miniblock.MediaStream.ChunkCount == 0 {
 		return false, nil
 	}
@@ -90,22 +85,22 @@ func S3CanWriteMiniblock(
 func S3DeleteMediaMiniblock(
 	t *testing.T,
 	client *s3.Client,
-	bucket *string,
-	objectKeyPrefix string,
+	bucket string,
+	node common.Address,
 	streamID StreamId,
 ) {
 	if t == nil {
 		panic("S3DeleteMediaMiniblock must be used during tests")
 	}
 
-	objectKey := streamIDToS3ObjectKey(streamID, objectKeyPrefix)
+	objectKey := externalStorageObjectKey(node, streamID)
 
 	_, err := client.DeleteObject(t.Context(), &s3.DeleteObjectInput{
-		Bucket: bucket,
+		Bucket: &bucket,
 		Key:    &objectKey,
 	})
 	if err != nil {
-		t.Fatalf("Unable to delete S3 object %s from bucket %s: %v", objectKey, *bucket, err)
+		t.Fatalf("Unable to delete S3 object %s from bucket %s: %v", objectKey, bucket, err)
 	}
 }
 
@@ -116,8 +111,8 @@ func S3DeleteMediaMiniblock(
 func S3WriteMediaMiniblock(
 	ctx context.Context,
 	client *s3.Client,
-	bucket *string,
-	objectKeyPrefix string,
+	bucket string,
+	node common.Address,
 	streamID StreamId,
 	streamMD *StreamMetaData,
 	miniblock *MiniblockDescriptor,
@@ -141,11 +136,11 @@ func S3WriteMediaMiniblock(
 		}
 	}
 
-	objectKey := streamIDToS3ObjectKey(streamID, objectKeyPrefix)
+	objectKey := externalStorageObjectKey(node, streamID)
 
 	if singlePutOperation := miniblock.MediaStream.ChunkCount == 1; singlePutOperation {
 		putObjectResult, err := client.PutObject(ctx, &s3.PutObjectInput{
-			Bucket: bucket,
+			Bucket: &bucket,
 			Key:    &objectKey,
 			Body:   bytes.NewReader(miniblock.Data),
 		})
@@ -177,7 +172,7 @@ func S3WriteMediaMiniblock(
 	// write as part of a S3 multipart upload
 	if streamMD.S3MultiPartUploadID == nil { // initiate a new multipart upload
 		createMultipartUploadResult, err := client.CreateMultipartUpload(ctx, &s3.CreateMultipartUploadInput{
-			Bucket: bucket,
+			Bucket: &bucket,
 			Key:    &objectKey,
 		})
 		if err != nil {
@@ -196,7 +191,7 @@ func S3WriteMediaMiniblock(
 	s3PartNumber := miniblock.MediaStream.ChunkIndex + 1 // s3 parts start on 1, chunk index at 0
 
 	uploadPartResult, err := client.UploadPart(ctx, &s3.UploadPartInput{
-		Bucket:     bucket,
+		Bucket:     &bucket,
 		Key:        &objectKey,
 		PartNumber: &s3PartNumber,
 		UploadId:   streamMD.S3MultiPartUploadID,
@@ -225,7 +220,7 @@ func S3WriteMediaMiniblock(
 	// if all parts are uploaded complete the multipart upload
 	if allPartsUploaded := len(streamMD.S3Parts) == int(streamMD.S3PartsCount); allPartsUploaded {
 		completeMultipartUploadResult, err := client.CompleteMultipartUpload(ctx, &s3.CompleteMultipartUploadInput{
-			Bucket:   bucket,
+			Bucket:   &bucket,
 			Key:      &objectKey,
 			UploadId: streamMD.S3MultiPartUploadID,
 			MultipartUpload: &s3types.CompletedMultipartUpload{
@@ -254,9 +249,9 @@ func S3WriteMediaMiniblock(
 func S3ReadMediaMiniblocks(
 	ctx context.Context,
 	client *s3.Client,
-	bucket *string,
+	bucket string,
 	streamID StreamId,
-	objectKeyPrefix string,
+	node common.Address,
 	streamMD *StreamMetaData,
 ) ([]*MiniblockDescriptor, error) {
 	if streamID.Type() != STREAM_MEDIA_BIN {
@@ -277,9 +272,9 @@ func S3ReadMediaMiniblocks(
 			Func("ReadMiniblocksFromS3Object")
 	}
 
-	objectKey := streamIDToS3ObjectKey(streamID, objectKeyPrefix)
+	objectKey := externalStorageObjectKey(node, streamID)
 	getObjectResult, err := client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: bucket,
+		Bucket: &bucket,
 		Key:    &objectKey,
 	})
 	if err != nil {
