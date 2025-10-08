@@ -754,4 +754,46 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.prank(deployer);
         subscriptionModule.revokeOperator(address(0));
     }
+
+    function test_firstRenewal_noDoubleCharge() public {
+        // Create subscription with 60-minute period
+        uint64 shortDuration = 60 minutes;
+        uint256 price = 0.01 ether;
+
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), shortDuration, price);
+
+
+        vm.deal(address(account), price * 10);
+
+        uint256 balanceBefore = address(account).balance;
+
+        // Warp to first renewal time + 3 minutes
+        _warpToRenewalTime(params.space, tokenId);
+        vm.warp(block.timestamp + 3 minutes);
+
+        // First renewal - should succeed
+        _processRenewalAs(processor, address(account), entityId);
+
+        // Warp forward 5 minutes
+        vm.warp(block.timestamp + 5 minutes);
+
+        // Try to process again - should NOT process (bug would cause it to process)
+        _processRenewalAs(processor, address(account), entityId);
+
+        // Assert only charged once, not twice
+        assertEq(
+            balanceBefore - address(account).balance,
+            price,
+            "Should only charge once, not twice"
+        );
+
+        // Assert next renewal is still in the future
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertGt(sub.nextRenewalTime, block.timestamp, "Next renewal should be in future");
+    }
 }

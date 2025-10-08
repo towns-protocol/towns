@@ -410,8 +410,8 @@ contract SubscriptionModuleFacet is
     function _getRenewalBuffer(
         uint256 expirationTime,
         uint256 installTime
-    ) internal pure returns (uint256) {
-        uint256 originalDuration = expirationTime >= installTime ? expirationTime - installTime : 0;
+    ) internal view returns (uint256) {
+        uint256 originalDuration = expirationTime >= block.timestamp ? expirationTime - block.timestamp : 0;
 
         // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
         if (originalDuration <= 1 hours) return BUFFER_IMMEDIATE;
