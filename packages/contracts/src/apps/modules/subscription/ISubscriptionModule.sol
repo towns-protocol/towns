@@ -107,10 +107,10 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
         uint32 entityId
     ) external view returns (Subscription memory);
 
-    /// @notice Gets the renewal buffer for an expiration time
-    /// @param expirationTime The expiration time to get the renewal buffer for
-    /// @return The renewal buffer for the expiration time
-    function getRenewalBuffer(uint256 expirationTime) external view returns (uint256);
+    /// @notice Gets the renewal buffer for a space
+    /// @param space The space contract address
+    /// @return The renewal buffer based on the space's membership duration
+    function getRenewalBuffer(address space) external view returns (uint256);
 
     /// @notice Activates a subscription
     /// @param entityId The entity ID of the subscription to activate
