@@ -767,7 +767,6 @@ contract SubscriptionModuleTest is ModulesBase {
             SubscriptionParams memory params
         ) = _createSubscription(makeAddr("user"), shortDuration, price);
 
-
         vm.deal(address(account), price * 10);
 
         uint256 balanceBefore = address(account).balance;
