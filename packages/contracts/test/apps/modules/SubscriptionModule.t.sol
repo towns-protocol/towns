@@ -3,11 +3,13 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IBanning} from "../../../src/spaces/facets/banning/IBanning.sol";
 
 // utils
 import {ModulesBase} from "./ModulesBase.sol";
 import {Subscription} from "../../../src/apps/modules/subscription/SubscriptionModuleStorage.sol";
 import {Validator} from "../../../src/utils/libraries/Validator.sol";
+import {ValidationConfig} from "@erc6900/reference-implementation/libraries/ValidationConfigLib.sol";
 
 //contracts
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
@@ -120,6 +122,27 @@ contract SubscriptionModuleTest is ModulesBase {
         expectInstallFailed(
             address(subscriptionModule),
             SubscriptionModule__InvalidEntityId.selector
+        );
+        _installSubscriptionModule(userAccount, params);
+    }
+
+    function test_onInstall_revertWhen_BannedMembership() public {
+        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
+        address space = _createSpace(0, 0);
+        uint256 tokenId = _joinSpace(address(userAccount), space);
+
+        vm.prank(owner);
+        IBanning(space).ban(tokenId);
+
+        SubscriptionParams memory params = _createSubscriptionParams(
+            address(userAccount),
+            space,
+            tokenId
+        );
+
+        expectInstallFailed(
+            address(subscriptionModule),
+            SubscriptionModule__MembershipBanned.selector
         );
         _installSubscriptionModule(userAccount, params);
     }
@@ -755,8 +778,35 @@ contract SubscriptionModuleTest is ModulesBase {
         subscriptionModule.revokeOperator(address(0));
     }
 
-    /*´:°•.°+.*•´.*:•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                    DOUBLE RENEWAL BUG FIX TEST               */
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      BANNED MEMBERSHIP                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_bannedMembership() public {
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"));
+
+        vm.prank(owner);
+        IBanning(params.space).ban(tokenId);
+
+        _warpToRenewalTime(params.space, tokenId);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit SubscriptionPaused(address(account), entityId);
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "MEMBERSHIP_BANNED");
+        _processRenewalAs(processor, address(account), entityId);
+
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertFalse(sub.active, "Subscription should be paused");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    PREVENT DOUBLE RENEWAL                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_preventDoubleRenewalBug() public {

@@ -9,6 +9,7 @@ import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IV
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ISubscriptionModule} from "./ISubscriptionModule.sol";
 import {IMembership} from "../../../spaces/facets/membership/IMembership.sol";
+import {IBanning} from "../../../spaces/facets/banning/IBanning.sol";
 
 // libraries
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
@@ -18,7 +19,7 @@ import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLoca
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
-import {Subscription, OperatorConfig, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
+import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
 import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
@@ -78,6 +79,9 @@ contract SubscriptionModuleFacet is
         Validator.checkAddress(space);
 
         if (entityId == 0) SubscriptionModule__InvalidEntityId.selector.revertWith();
+
+        if (IBanning(space).isBanned(tokenId))
+            SubscriptionModule__MembershipBanned.selector.revertWith();
 
         if (IERC721(space).ownerOf(tokenId) != msg.sender)
             SubscriptionModule__InvalidTokenOwner.selector.revertWith();
@@ -220,6 +224,16 @@ contract SubscriptionModuleFacet is
             if (sub.nextRenewalTime + GRACE_PERIOD < block.timestamp) {
                 _pauseSubscription(sub, params[i].account, params[i].entityId);
                 emit BatchRenewalSkipped(params[i].account, params[i].entityId, "PAST_GRACE");
+                continue;
+            }
+
+            if (IBanning(sub.space).isBanned(sub.tokenId)) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
+                emit BatchRenewalSkipped(
+                    params[i].account,
+                    params[i].entityId,
+                    "MEMBERSHIP_BANNED"
+                );
                 continue;
             }
 
