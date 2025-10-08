@@ -11,17 +11,27 @@ struct Subscription {
     uint40 lastRenewalTime; // 5 bytes
     uint40 nextRenewalTime; // 5 bytes
     bool active; // 1 byte
+    uint64 duration;
+}
+
+struct OperatorConfig {
+    uint256 interval;
+    uint256 buffer;
 }
 
 library SubscriptionModuleStorage {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
+    uint256 public constant KEEPER_INTERVAL = 5 minutes;
+    uint256 public constant MIN_RENEWAL_BUFFER = KEEPER_INTERVAL + 1 minutes; // Minimum buffer to prevent double renewals
+
     /// @custom:storage-location erc7201:towns.subscription.validation.module.storage
     struct Layout {
         EnumerableSetLib.AddressSet operators;
         mapping(address account => mapping(uint32 entityId => Subscription)) subscriptions;
         mapping(address account => EnumerableSetLib.Uint256Set entityIds) entityIds;
+        mapping(address operator => OperatorConfig) operatorConfig;
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
@@ -32,5 +42,11 @@ library SubscriptionModuleStorage {
         assembly {
             $.slot := STORAGE_SLOT
         }
+    }
+
+    function getOperatorBuffer(address operator) internal view returns (uint256) {
+        OperatorConfig storage config = getLayout().operatorConfig[operator];
+        if (config.interval == 0) return MIN_RENEWAL_BUFFER;
+        return config.buffer;
     }
 }
