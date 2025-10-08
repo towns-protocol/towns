@@ -754,4 +754,171 @@ contract SubscriptionModuleTest is ModulesBase {
         vm.prank(deployer);
         subscriptionModule.revokeOperator(address(0));
     }
+
+    /*´:°•.°+.*•´.*:•.°•.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    DOUBLE RENEWAL BUG FIX TEST               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_preventDoubleRenewalBug() public {
+        uint256 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (ModularAccount account, , uint32 entityId, ) = _createSubscription(
+            makeAddr("user"),
+            uint64(duration),
+            renewalPrice
+        );
+
+        vm.deal(address(account), renewalPrice * 10);
+
+        Subscription memory initialSub = subscriptionModule.getSubscription(
+            address(account),
+            entityId
+        );
+        uint256 initialNextRenewal = initialSub.nextRenewalTime;
+
+        vm.warp(initialNextRenewal);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        Subscription memory afterFirstRenewal = subscriptionModule.getSubscription(
+            address(account),
+            entityId
+        );
+
+        assertTrue(
+            afterFirstRenewal.nextRenewalTime > block.timestamp,
+            "Next renewal time must be strictly in the future after renewal"
+        );
+
+        assertTrue(
+            afterFirstRenewal.nextRenewalTime > block.timestamp + 1 minutes,
+            "Next renewal should be at least 1 minute in the future"
+        );
+
+        vm.warp(block.timestamp + 5 minutes);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit SubscriptionNotDue(address(account), entityId);
+        _processRenewalAs(processor, address(account), entityId);
+
+        Subscription memory afterSecondAttempt = subscriptionModule.getSubscription(
+            address(account),
+            entityId
+        );
+        assertEq(
+            afterSecondAttempt.spent,
+            afterFirstRenewal.spent,
+            "No additional charge should occur"
+        );
+        assertEq(
+            afterSecondAttempt.lastRenewalTime,
+            afterFirstRenewal.lastRenewalTime,
+            "Last renewal time should not change"
+        );
+    }
+
+    function test_multipleConsecutiveRenewalAttempts() public {
+        uint256 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), uint64(duration), renewalPrice);
+
+        vm.deal(address(account), renewalPrice * 10);
+
+        _warpToRenewalTime(params.space, params.tokenId);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        uint256 spentAfterFirst = subscriptionModule
+            .getSubscription(address(account), entityId)
+            .spent;
+
+        for (uint i; i < 5; ++i) {
+            vm.warp(block.timestamp + 1 minutes);
+
+            vm.expectEmit(address(subscriptionModule));
+            emit SubscriptionNotDue(address(account), entityId);
+            _processRenewalAs(processor, address(account), entityId);
+        }
+
+        uint256 finalSpent = subscriptionModule.getSubscription(address(account), entityId).spent;
+        assertEq(finalSpent, spentAfterFirst, "Only one renewal charge should occur");
+    }
+
+    function test_renewalSchedulingWithCatchUp() public {
+        uint256 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (ModularAccount account, , uint32 entityId, ) = _createSubscription(
+            makeAddr("user"),
+            uint64(duration),
+            renewalPrice
+        );
+
+        vm.deal(address(account), renewalPrice * 10);
+
+        uint256 initialNextRenewal = subscriptionModule
+            .getSubscription(address(account), entityId)
+            .nextRenewalTime;
+
+        vm.warp(initialNextRenewal + 3 hours + 30 minutes);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        Subscription memory afterRenewal = subscriptionModule.getSubscription(
+            address(account),
+            entityId
+        );
+
+        assertTrue(
+            afterRenewal.nextRenewalTime > block.timestamp,
+            "Next renewal must be in the future even after catch-up"
+        );
+
+        assertEq(
+            afterRenewal.spent,
+            renewalPrice,
+            "Should only charge once despite missed intervals"
+        );
+    }
+
+    function test_firstRenewal_noDoubleCharge() public {
+        uint64 shortDuration = 60 minutes;
+        uint256 price = 0.01 ether;
+
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), shortDuration, price);
+
+        vm.deal(address(account), price * 10);
+
+        uint256 balanceBefore = address(account).balance;
+
+        _warpToRenewalTime(params.space, tokenId);
+        vm.warp(block.timestamp + 3 minutes);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        vm.warp(block.timestamp + 5 minutes);
+
+        _processRenewalAs(processor, address(account), entityId);
+
+        assertEq(
+            balanceBefore - address(account).balance,
+            price,
+            "Should only charge once, not twice"
+        );
+
+        Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
+        assertGt(sub.nextRenewalTime, block.timestamp, "Next renewal should be in future");
+    }
 }

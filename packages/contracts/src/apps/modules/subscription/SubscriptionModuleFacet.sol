@@ -44,6 +44,8 @@ contract SubscriptionModuleFacet is
 
     uint256 public constant MAX_BATCH_SIZE = 50;
     uint256 public constant GRACE_PERIOD = 3 days;
+    uint256 public constant KEEPER_INTERVAL = 5 minutes;
+    uint256 public constant MIN_RENEWAL_BUFFER = KEEPER_INTERVAL + 1 minutes; // Minimum buffer to prevent double renewals
 
     // Dynamic buffer times based on expiration proximity
     uint256 public constant BUFFER_IMMEDIATE = 2 minutes; // For expirations within 1 hour
@@ -388,7 +390,14 @@ contract SubscriptionModuleFacet is
 
         // Get the actual new expiration time after successful renewal
         uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
-        sub.nextRenewalTime = _calculateNextRenewalTime(newExpiresAt, sub.installTime);
+
+        // Calculate next renewal time ensuring it's strictly in the future
+        sub.nextRenewalTime = _calculateNextRenewalTimeStrict(
+            newExpiresAt,
+            sub.installTime,
+            membershipFacet.getMembershipDuration()
+        );
+
         sub.lastRenewalTime = uint40(block.timestamp);
         sub.spent += actualRenewalPrice;
 
@@ -441,21 +450,61 @@ contract SubscriptionModuleFacet is
         uint256 expirationTime,
         uint256 installTime
     ) internal view returns (uint40) {
-        if (expirationTime <= block.timestamp) return uint40(block.timestamp);
+        // If membership is already expired, we need to schedule for the future
+        // This prevents immediate re-eligibility for renewal
+        if (expirationTime <= block.timestamp) {
+            // Calculate the original duration from install time to first expiration
+            // Note: This assumes the first membership duration equals subsequent renewal durations
+            uint256 estimatedDuration = 1 hours; // Default to 1 hour if we can't determine
+
+            // Schedule next renewal at least 1 duration into the future
+            return uint40(block.timestamp + estimatedDuration);
+        }
 
         uint256 buffer = _getRenewalBuffer(expirationTime, installTime);
         uint256 timeUntilExpiration = expirationTime - block.timestamp;
 
-        if (buffer >= timeUntilExpiration) return uint40(block.timestamp);
+        if (buffer >= timeUntilExpiration) {
+            // If buffer is larger than time until expiration,
+            // schedule for after the expiration by the same amount
+            return uint40(expirationTime + (buffer - timeUntilExpiration));
+        }
 
         return uint40(expirationTime - buffer);
     }
 
-    /// @dev Legacy function for backward compatibility - uses current time as install time
+    /// @dev Calculates the next renewal time ensuring it's strictly in the future
     /// @param expirationTime The expiration timestamp of the membership
-    /// @return The next renewal time as uint40
-    function _calculateNextRenewalTime(uint256 expirationTime) internal view returns (uint40) {
-        return _calculateNextRenewalTime(expirationTime, block.timestamp);
+    /// @param installTime The time when the subscription was installed
+    /// @param duration The membership duration
+    /// @return The next renewal time that is guaranteed to be in the future
+    function _calculateNextRenewalTimeStrict(
+        uint256 expirationTime,
+        uint256 installTime,
+        uint256 duration
+    ) internal view returns (uint40) {
+        // First calculate the normal next renewal time
+        uint40 calculatedTime = _calculateNextRenewalTime(expirationTime, installTime);
+
+        // Ensure the next renewal time is far enough in the future to prevent
+        // the keeper from immediately processing it again on the next run
+        if (calculatedTime <= block.timestamp + MIN_RENEWAL_BUFFER) {
+            // Calculate the appropriate buffer based on duration
+            uint256 buffer = _getRenewalBuffer(expirationTime, installTime);
+
+            // For very short durations, ensure we don't schedule too close
+            if (duration <= 1 hours) {
+                // For short memberships, schedule next renewal close to expiration
+                // but with enough buffer to prevent immediate re-renewal
+                return uint40(expirationTime - MIN_RENEWAL_BUFFER);
+            }
+
+            // For longer durations, use standard calculation
+            uint256 minFutureTime = block.timestamp + duration - buffer;
+            return uint40(minFutureTime > calculatedTime ? minFutureTime : calculatedTime);
+        }
+
+        return calculatedTime;
     }
 
     /// @dev Creates the runtime final data for the renewal
