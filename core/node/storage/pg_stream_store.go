@@ -475,38 +475,43 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 	return sql
 }
 
+// lockStream locks the stream for reading or exclusively for writing.
 func (s *PostgresStreamStore) lockStream(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
-) (int64, error) {
-	var lastSnapshotMiniblock int64
-	var err error
+) (int64, *StreamMetaData, error) {
+	var (
+		lastSnapshotMiniblock int64
+		err                   error
+		md                    *StreamMetaData
+	)
+
 	if write {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR UPDATE",
+			"SELECT latest_snapshot_miniblock, metadata FROM es WHERE stream_id = $1 FOR UPDATE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&lastSnapshotMiniblock, &md)
 	} else {
 		err = tx.QueryRow(
 			ctx,
-			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR SHARE",
+			"SELECT latest_snapshot_miniblock, metadata FROM es WHERE stream_id = $1 FOR SHARE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&lastSnapshotMiniblock, &md)
 	}
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, RiverError(
+			return 0, nil, RiverError(
 				Err_NOT_FOUND,
 				"Stream not found",
 				"streamId",
 				streamId,
 			).Func("PostgresStreamStore.lockStream")
 		}
-		return 0, err
+		return 0, nil, err
 	}
 
 	// There is a data corruption in prod when lastSnapshotMiniblock is -1.
@@ -519,7 +524,11 @@ func (s *PostgresStreamStore) lockStream(
 		)
 	}
 
-	return lastSnapshotMiniblock, nil
+	if md == nil {
+		md = &StreamMetaData{}
+	}
+
+	return lastSnapshotMiniblock, md, nil
 }
 
 func (s *PostgresStreamStore) CreateStreamStorage(
@@ -593,7 +602,7 @@ func (s *PostgresStreamStore) maybeOverwriteCorruptGenesisMiniblockTx(
 	genesisMiniblock *MiniblockDescriptor,
 ) error {
 	okErr := RiverError(Err_ALREADY_EXISTS, "OK: Stream not corrupt")
-	snapshotMiniblock, err := s.lockStream(ctx, tx, streamId, true)
+	snapshotMiniblock, _, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
 	}
@@ -685,7 +694,7 @@ func (s *PostgresStreamStore) getMaxArchivedMiniblockNumberTx(
 	streamId StreamId,
 	maxArchivedMiniblockNumber *int64,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
 	}
 
@@ -743,7 +752,7 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 	startMiniblockNum int64,
 	miniblocks []*MiniblockDescriptor,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
 
@@ -809,7 +818,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	snapshotMiniblockIndex, err := s.lockStream(ctx, tx, streamId, false)
+	snapshotMiniblockIndex, _, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -973,7 +982,7 @@ func (s *PostgresStreamStore) writeEventTx(
 	minipoolSlot int,
 	envelope []byte,
 ) error {
-	_, err := s.lockStream(ctx, tx, streamId, true)
+	_, _, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
 	}
@@ -1092,7 +1101,7 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 	miniblocks []*MiniblockDescriptor,
 ) error {
 	// Lock the stream for update
-	_, err := s.lockStream(ctx, tx, streamId, true)
+	_, _, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
 	}
@@ -1227,7 +1236,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
@@ -1327,7 +1336,7 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
 	}
 
@@ -1399,7 +1408,7 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 	omitSnapshot bool,
 	onEachMb MiniblockHandlerFunc,
 ) error {
-	_, err := s.lockStream(ctx, tx, streamId, false)
+	_, _, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return err
 	}
@@ -1478,7 +1487,7 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 	streamId StreamId,
 	miniblock *MiniblockDescriptor,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
 
@@ -1559,7 +1568,7 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 	blockHash common.Hash,
 	blockNumber int64,
 ) (*MiniblockDescriptor, error) {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
@@ -1616,7 +1625,7 @@ func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
 	streamId StreamId,
 	miniblockNumber int64,
 ) (int, error) {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return 0, err
 	}
 
@@ -1708,7 +1717,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 	prevMinipoolGeneration int64,
 	prevMinipoolSize int,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
 
@@ -2010,7 +2019,7 @@ func (s *PostgresStreamStore) DeleteStream(ctx context.Context, streamId StreamI
 }
 
 func (s *PostgresStreamStore) deleteStreamTx(ctx context.Context, tx pgx.Tx, streamId StreamId) error {
-	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
 
@@ -2248,7 +2257,7 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamDataResult, error) {
-	lastSnapshotMiniblock, err := s.lockStream(ctx, tx, streamId, false)
+	lastSnapshotMiniblock, _, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -2360,7 +2369,7 @@ func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
 	toExclusive int64,
 ) error {
 	// Lock the stream to ensure consistency
-	_, err := s.lockStream(ctx, tx, streamId, true)
+	_, _, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
 	}
@@ -2418,7 +2427,7 @@ func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamStatisticsResult, error) {
-	lastSnapshotMiniblock, err := s.lockStream(ctx, tx, streamId, false)
+	lastSnapshotMiniblock, _, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -2501,7 +2510,7 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	tx pgx.Tx,
 	streamID StreamId,
 ) (int64, error) {
-	if _, err := s.lockStream(ctx, tx, streamID, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamID, false); err != nil {
 		return 0, err
 	}
 
@@ -2600,7 +2609,7 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	streamId StreamId,
 	startMiniblockNumberInclusive int64,
 ) ([]MiniblockRange, error) {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	if _, _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
@@ -2752,7 +2761,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 		}
 
 		// Stream already exists, lock it for update
-		existingLastSnapshotMiniblockNum, err := s.lockStream(ctx, tx, streamId, true)
+		existingLastSnapshotMiniblockNum, _, err := s.lockStream(ctx, tx, streamId, true)
 		if err != nil {
 			return err
 		}
