@@ -11,17 +11,24 @@ struct Subscription {
     uint40 lastRenewalTime; // 5 bytes
     uint40 nextRenewalTime; // 5 bytes
     bool active; // 1 byte
+    uint64 duration;
 }
 
 library SubscriptionModuleStorage {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
+    struct OperatorConfig {
+        uint256 interval;
+        uint256 buffer;
+    }
+
     /// @custom:storage-location erc7201:towns.subscription.validation.module.storage
     struct Layout {
         EnumerableSetLib.AddressSet operators;
         mapping(address account => mapping(uint32 entityId => Subscription)) subscriptions;
         mapping(address account => EnumerableSetLib.Uint256Set entityIds) entityIds;
+        mapping(address operator => OperatorConfig) operatorConfig;
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))

@@ -285,18 +285,21 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
     function _warpToRenewalTime(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        vm.warp(expiresAt - subscriptionModule.getRenewalBuffer(expiresAt));
+        uint256 duration = _getMembership(space).getMembershipDuration();
+        vm.warp(expiresAt - subscriptionModule.getRenewalBuffer(duration));
     }
 
     function _warpToGracePeriod(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(expiresAt);
+        uint256 duration = _getMembership(space).getMembershipDuration();
+        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(duration);
         vm.warp(renewalTime + subscriptionModule.GRACE_PERIOD() - 1);
     }
 
     function _warpPastGracePeriod(address space, uint256 tokenId) internal {
         uint256 expiresAt = _getMembership(space).expiresAt(tokenId);
-        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(expiresAt);
+        uint256 duration = _getMembership(space).getMembershipDuration();
+        uint256 renewalTime = expiresAt - subscriptionModule.getRenewalBuffer(duration);
         vm.warp(renewalTime + subscriptionModule.GRACE_PERIOD() + 1);
     }
 
