@@ -110,9 +110,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function getMembershipRenewalPrice(
         uint256 tokenId
     ) external view returns (uint256 totalRequired) {
-        (totalRequired, ) = _getTotalMembershipPayment(
-            _getMembershipRenewalPrice(tokenId, _totalSupply())
-        );
+        (totalRequired, ) = _getTotalMembershipPayment(_getMembershipRenewalPrice(tokenId));
     }
 
     /// @inheritdoc IMembership
