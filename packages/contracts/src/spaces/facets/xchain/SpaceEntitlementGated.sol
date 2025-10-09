@@ -26,10 +26,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
 
         if (data.length == 0) return;
 
-        (bytes4 transactionType, , address receiver, uint16 tierId, ) = abi.decode(
-            data,
-            (bytes4, address, address, uint16, bytes)
-        );
+        (bytes4 transactionType, , address receiver, uint16 tierId, ) = _decodeJoinSpaceData(data);
 
         if (result == NodeVoteStatus.PASSED) {
             PricingDetails memory joinDetails = _getPricingDetails(tierId);

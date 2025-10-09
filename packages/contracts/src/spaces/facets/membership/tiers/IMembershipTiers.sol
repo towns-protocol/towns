@@ -11,16 +11,17 @@ interface IMembershipTiersBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           STRUCTS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    struct CreateTier {
+    struct TierRequest {
         string metadata;
         uint256 price;
         uint64 duration;
         address currency;
     }
 
-    struct Tier {
+    struct TierResponse {
         string metadata;
         uint256 price;
+        uint256 amountDue;
         uint64 duration;
         address currency;
         uint256 totalSupply;
@@ -31,10 +32,10 @@ interface IMembershipTiersBase {
 
     error MembershipTiers__TierNotFound();
     error MembershipTiers__InvalidPrice();
-    error MembershipTiers__InvalidDuration();
     error MembershipTiers__InvalidCurrency();
     error MembershipTiers__InvalidMetadata();
     error MembershipTiers__TierDisabled();
+    error MembershipTiers__InvalidTierId();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -49,12 +50,13 @@ interface IMembershipTiersBase {
         address currency
     );
     event TierStatusUpdated(uint16 indexed tierId, bool disabled);
+    event TierAssignedToTokenId(uint256 indexed tokenId, uint16 indexed tierId);
 }
 
 interface IMembershipTiers is IMembershipTiersBase {
     function nextTierId() external view returns (uint16);
 
-    function createTier(CreateTier calldata tier) external returns (uint16);
+    function createTier(TierRequest calldata tier) external returns (uint16);
 
-    function getTier(uint16 tierId) external view returns (Tier memory);
+    function getTier(uint16 tierId) external view returns (TierResponse memory);
 }

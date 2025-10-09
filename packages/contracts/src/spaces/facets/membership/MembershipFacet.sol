@@ -127,7 +127,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function setMembershipFreeAllocation(uint256 newAllocation) external onlyOwner {
         // get current supply limit
-        uint256 currentSupplyLimit = _getMembershipSupplyLimit();
+        uint256 currentSupplyLimit = _getSpaceSupplyLimit();
 
         // verify newLimit is not more than the max supply limit
         if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit) {
@@ -135,12 +135,12 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         }
 
         _verifyFreeAllocation(newAllocation);
-        _setMembershipFreeAllocation(newAllocation);
+        _setSpaceFreeAllocation(newAllocation);
     }
 
     /// @inheritdoc IMembership
     function getMembershipFreeAllocation() external view returns (uint256) {
-        return _getMembershipFreeAllocation();
+        return _getSpaceFreeAllocation();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -155,7 +155,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function getMembershipLimit() external view returns (uint256) {
-        return _getMembershipSupplyLimit();
+        return _getSpaceSupplyLimit();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
