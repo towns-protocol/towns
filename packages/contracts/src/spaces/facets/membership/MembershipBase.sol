@@ -167,14 +167,9 @@ abstract contract MembershipBase is IMembershipBase {
         MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
     }
 
-    function _getMembershipRenewalPrice(
-        uint256 tokenId,
-        uint256 totalSupply
-    ) internal view returns (uint256) {
+    function _getMembershipRenewalPrice(uint256 tokenId) internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
-        if (renewalPrice != 0) return renewalPrice;
-        return _getMembershipPrice(totalSupply);
+        return $.renewalPriceByTokenId[tokenId];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

@@ -520,9 +520,7 @@ abstract contract MembershipJoin is
         address receiver = _ownerOf(tokenId);
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
 
-        uint16 tierId = _getTierOfTokenId(tokenId);
-        uint256 duration = _getTierDuration(tierId);
-        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+        uint256 membershipPrice = _getMembershipRenewalPrice(tokenId);
 
         (uint256 totalRequired, ) = _getTotalMembershipPayment(membershipPrice);
 
@@ -547,6 +545,9 @@ abstract contract MembershipJoin is
                 excess
             );
         }
+
+        uint16 tierId = _getTierOfTokenId(tokenId);
+        uint256 duration = _getTierDuration(tierId);
 
         _mintMembershipPoints(receiver, totalRequired);
         _renewSubscription(tokenId, uint64(duration));
