@@ -9,6 +9,7 @@ import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IV
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ISubscriptionModule} from "./ISubscriptionModule.sol";
 import {IMembership} from "../../../spaces/facets/membership/IMembership.sol";
+import {IBanning} from "../../../spaces/facets/banning/IBanning.sol";
 
 // libraries
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
@@ -19,6 +20,7 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 import {Subscription, SubscriptionModuleStorage} from "./SubscriptionModuleStorage.sol";
+import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 
 // contracts
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";
@@ -38,6 +40,7 @@ contract SubscriptionModuleFacet is
 {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
+    using SafeCastLib for uint256;
     using CustomRevert for bytes4;
 
     uint256 internal constant _SIG_VALIDATION_FAILED = 1;
@@ -77,23 +80,27 @@ contract SubscriptionModuleFacet is
 
         if (entityId == 0) SubscriptionModule__InvalidEntityId.selector.revertWith();
 
+        if (IBanning(space).isBanned(tokenId))
+            SubscriptionModule__MembershipBanned.selector.revertWith();
+
         if (IERC721(space).ownerOf(tokenId) != msg.sender)
             SubscriptionModule__InvalidTokenOwner.selector.revertWith();
-
-        IMembership membershipFacet = IMembership(space);
-        uint256 expiresAt = membershipFacet.expiresAt(tokenId);
 
         SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
 
         if (!$.entityIds[msg.sender].add(entityId))
             SubscriptionModule__InvalidEntityId.selector.revertWith();
 
+        IMembership membershipFacet = IMembership(space);
+        uint256 expiresAt = membershipFacet.expiresAt(tokenId);
+        uint256 duration = membershipFacet.getMembershipDuration();
+
         Subscription storage sub = $.subscriptions[msg.sender][entityId];
         sub.space = space;
         sub.active = true;
         sub.tokenId = tokenId;
-        sub.installTime = uint40(block.timestamp);
-        sub.nextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+        sub.installTime = block.timestamp.toUint40();
+        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
 
         emit SubscriptionConfigured(
             msg.sender,
@@ -220,6 +227,16 @@ contract SubscriptionModuleFacet is
                 continue;
             }
 
+            if (IBanning(sub.space).isBanned(sub.tokenId)) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
+                emit BatchRenewalSkipped(
+                    params[i].account,
+                    params[i].entityId,
+                    "MEMBERSHIP_BANNED"
+                );
+                continue;
+            }
+
             // Skip if account isn't owner anymore (for safety)
             if (IERC721(sub.space).ownerOf(sub.tokenId) != params[i].account) {
                 _pauseSubscription(sub, params[i].account, params[i].entityId);
@@ -242,10 +259,11 @@ contract SubscriptionModuleFacet is
             }
 
             uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
-            uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+            uint256 duration = membershipFacet.getMembershipDuration();
+            uint40 nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
 
-            if (sub.nextRenewalTime != correctNextRenewalTime) {
-                sub.nextRenewalTime = correctNextRenewalTime;
+            if (sub.nextRenewalTime != nextRenewalTime) {
+                sub.nextRenewalTime = nextRenewalTime;
                 emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
             }
 
@@ -262,8 +280,8 @@ contract SubscriptionModuleFacet is
     }
 
     /// @inheritdoc ISubscriptionModule
-    function getRenewalBuffer(uint256 expirationTime) external view returns (uint256) {
-        return _getRenewalBuffer(expirationTime);
+    function getRenewalBuffer(uint256 duration) external pure returns (uint256) {
+        return _getRenewalBuffer(duration);
     }
 
     /// @inheritdoc ISubscriptionModule
@@ -282,9 +300,10 @@ contract SubscriptionModuleFacet is
 
         IMembership membershipFacet = IMembership(sub.space);
         uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
+        uint256 duration = membershipFacet.getMembershipDuration();
 
         // 6. Always sync renewal time to current membership state
-        uint40 correctNextRenewalTime = _calculateNextRenewalTime(expiresAt, sub.installTime);
+        uint40 correctNextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
         if (sub.nextRenewalTime != correctNextRenewalTime) {
             sub.nextRenewalTime = correctNextRenewalTime;
             emit SubscriptionSynced(msg.sender, entityId, sub.nextRenewalTime);
@@ -388,8 +407,15 @@ contract SubscriptionModuleFacet is
 
         // Get the actual new expiration time after successful renewal
         uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
-        sub.nextRenewalTime = _calculateNextRenewalTime(newExpiresAt, sub.installTime);
-        sub.lastRenewalTime = uint40(block.timestamp);
+
+        // Calculate next renewal time ensuring it's strictly in the future
+        uint256 duration = membershipFacet.getMembershipDuration();
+        sub.nextRenewalTime = _enforceMinimumBuffer(
+            _calculateBaseRenewalTime(newExpiresAt, duration),
+            newExpiresAt,
+            duration
+        );
+        sub.lastRenewalTime = block.timestamp.toUint40();
         sub.spent += actualRenewalPrice;
 
         emit SubscriptionRenewed(
@@ -403,59 +429,75 @@ contract SubscriptionModuleFacet is
         emit SubscriptionSpent(params.account, params.entityId, actualRenewalPrice, sub.spent);
     }
 
-    /// @dev Determines the appropriate renewal buffer time based on original membership duration
-    /// @param expirationTime The expiration timestamp of the membership
-    /// @param installTime The time when the subscription was installed
+    /// @dev Determines the appropriate renewal buffer time based on membership duration
+    /// @param duration The membership duration in seconds
     /// @return The appropriate buffer time in seconds before expiration
-    function _getRenewalBuffer(
-        uint256 expirationTime,
-        uint256 installTime
-    ) internal pure returns (uint256) {
-        uint256 originalDuration = expirationTime >= installTime ? expirationTime - installTime : 0;
-
+    function _getRenewalBuffer(uint256 duration) internal pure returns (uint256) {
         // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
-        if (originalDuration <= 1 hours) return BUFFER_IMMEDIATE;
+        if (duration <= 1 hours) return BUFFER_IMMEDIATE;
 
         // For memberships shorter than 6 hours, use short buffer (1 hour)
-        if (originalDuration <= 6 hours) return BUFFER_SHORT;
+        if (duration <= 6 hours) return BUFFER_SHORT;
 
         // For memberships shorter than 24 hours, use medium buffer (6 hours)
-        if (originalDuration <= 24 hours) return BUFFER_MEDIUM;
+        if (duration <= 24 hours) return BUFFER_MEDIUM;
 
         // For memberships longer than 24 hours, use long buffer (12 hours)
         return BUFFER_LONG;
     }
 
-    /// @dev Legacy function for backward compatibility - uses current time as install time
+    /// @dev Calculates the base renewal time without minimum buffer enforcement
     /// @param expirationTime The expiration timestamp of the membership
-    /// @return The appropriate buffer time in seconds before expiration
-    function _getRenewalBuffer(uint256 expirationTime) internal view returns (uint256) {
-        return _getRenewalBuffer(expirationTime, block.timestamp);
-    }
-
-    /// @dev Calculates the correct next renewal time for a given expiration using install time
-    /// @param expirationTime The expiration timestamp of the membership
-    /// @param installTime The time when the subscription was installed
-    /// @return The next renewal time as uint40
-    function _calculateNextRenewalTime(
+    /// @param duration The membership duration in seconds
+    /// @return The base renewal time as uint40
+    function _calculateBaseRenewalTime(
         uint256 expirationTime,
-        uint256 installTime
+        uint256 duration
     ) internal view returns (uint40) {
-        if (expirationTime <= block.timestamp) return uint40(block.timestamp);
+        // If membership is already expired, schedule for the future
+        if (expirationTime <= block.timestamp) {
+            return (block.timestamp + duration).toUint40();
+        }
 
-        uint256 buffer = _getRenewalBuffer(expirationTime, installTime);
+        uint256 buffer = _getRenewalBuffer(duration);
         uint256 timeUntilExpiration = expirationTime - block.timestamp;
 
-        if (buffer >= timeUntilExpiration) return uint40(block.timestamp);
+        if (buffer >= timeUntilExpiration) {
+            // If buffer is larger than time until expiration,
+            // schedule for after the expiration by the same amount
+            return (expirationTime + (buffer - timeUntilExpiration)).toUint40();
+        }
 
-        return uint40(expirationTime - buffer);
+        return (expirationTime - buffer).toUint40();
     }
 
-    /// @dev Legacy function for backward compatibility - uses current time as install time
+    /// @dev Enforces minimum buffer to prevent double renewals
+    /// @param baseTime The base calculated renewal time
     /// @param expirationTime The expiration timestamp of the membership
-    /// @return The next renewal time as uint40
-    function _calculateNextRenewalTime(uint256 expirationTime) internal view returns (uint40) {
-        return _calculateNextRenewalTime(expirationTime, block.timestamp);
+    /// @param duration The membership duration in seconds
+    /// @return The adjusted renewal time with minimum buffer enforced
+    function _enforceMinimumBuffer(
+        uint40 baseTime,
+        uint256 expirationTime,
+        uint256 duration
+    ) internal view returns (uint40) {
+        uint256 operatorBuffer = SubscriptionModuleStorage.getOperatorBuffer(msg.sender);
+
+        // If base time is far enough in the future, use it
+        if (baseTime > block.timestamp + operatorBuffer) {
+            return baseTime;
+        }
+
+        // For very short durations, schedule close to expiration with minimum buffer
+        if (duration <= 1 hours) {
+            return (expirationTime - operatorBuffer).toUint40();
+        }
+
+        // For longer durations, use standard calculation with minimum buffer
+        uint256 buffer = _getRenewalBuffer(duration);
+        uint256 minFutureTime = block.timestamp + duration - buffer;
+
+        return (minFutureTime > baseTime ? minFutureTime : baseTime).toUint40();
     }
 
     /// @dev Creates the runtime final data for the renewal
