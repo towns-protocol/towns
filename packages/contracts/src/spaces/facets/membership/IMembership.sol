@@ -13,10 +13,16 @@ interface IMembershipBase {
     ///       data = abi.encode(address receiver);
     ///     case JoinType.WithReferral:
     ///       data = abi.encode(address receiver, ReferralTypes memory referral);
+    ///     case JoinType.WithTier:
+    ///       data = abi.encode(address receiver, uint16 tierId);
+    ///     case JoinType.WithReferralAndTier:
+    ///       data = abi.encode(address receiver, ReferralTypes memory referral, uint16 tierId);
     ///   }
     enum JoinType {
         Basic, // Basic join with just receiver address
-        WithReferral // Join with referral information
+        WithReferral, // Join with referral information
+        WithTier, // Join with tier information
+        WithReferralAndTier // Join with referral and tier information
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

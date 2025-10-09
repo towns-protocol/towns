@@ -204,7 +204,7 @@ abstract contract MembershipBase is IMembershipBase {
         if (newLimit < totalSupply) Membership__InvalidMaxSupply.selector.revertWith();
     }
 
-    function _setMembershipSupplyLimit(uint256 newLimit) internal {
+    function _setSpaceSupplyLimit(uint256 newLimit) internal {
         MembershipStorage.layout().membershipMaxSupply = newLimit;
     }
 
