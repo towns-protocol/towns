@@ -350,20 +350,18 @@ export const failureToSubscription = relations(subscriptionFailure, ({ one }) =>
     }),
 }))
 
-// tip leaderboard - global tip stats per user across all spaces
+// tip leaderboard - per-space tip stats per user (senders only)
 export const tipLeaderboard = onchainTable(
     'tip_leaderboard',
     (t) => ({
-        user: t.hex().primaryKey(),
+        user: t.hex().notNull(),
+        spaceId: t.hex().notNull(),
         totalSent: t.bigint().default(0n),
-        totalReceived: t.bigint().default(0n),
         tipsSentCount: t.integer().default(0),
-        tipsReceivedCount: t.integer().default(0),
         lastActivity: t.bigint().notNull(),
     }),
     (table) => ({
-        sentIdx: index().on(table.totalSent),
-        receivedIdx: index().on(table.totalReceived),
-        lastActivityIdx: index().on(table.lastActivity),
+        pk: primaryKey({ columns: [table.user, table.spaceId] }),
+        spaceSentIdx: index().on(table.spaceId, table.totalSent),
     }),
 )
