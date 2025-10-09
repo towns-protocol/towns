@@ -20,6 +20,12 @@ interface ISimpleAppBase {
     /// @notice Thrown when the amount is zero
     error InvalidAmount();
 
+    /// @notice Thrown when the caller is not allowed
+    error InvalidCaller();
+
+    /// @notice Thrown when the currency is invalid
+    error InvalidCurrency();
+
     /// @notice Emitted when the app is withdrawn
     /// @param recipient The address that received the withdrawal
     /// @param amount The amount of tokens withdrawn

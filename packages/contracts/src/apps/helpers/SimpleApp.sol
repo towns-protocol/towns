@@ -57,6 +57,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
 
         if (recipient == address(0)) ZeroAddress.selector.revertWith();
         if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
+        else if (currency.code.length == 0) InvalidCurrency.selector.revertWith();
         if (amount == 0) InvalidAmount.selector.revertWith();
 
         CurrencyTransfer.transferCurrency(currency, address(this), recipient, amount);
@@ -117,6 +118,6 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     function _checkAllowed() internal view {
         if (msg.sender == owner()) return;
         if (msg.sender == SimpleAppStorage.getLayout().client) return;
-        Unauthorized.selector.revertWith();
+        InvalidCaller.selector.revertWith();
     }
 }
