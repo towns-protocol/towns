@@ -70,8 +70,10 @@ describe('getJoinSpacePriceDetails', () => {
         const spaceId = SpaceIdFromSpaceAddress(spaceAddress)
 
         const priceDetails = await spaceDapp.getJoinSpacePriceDetails(spaceAddress)
+        const protocolFee = priceDetails.protocolFee
+        const totalPrice = price.add(protocolFee)
 
-        expect(priceDetails.price.toBigInt()).toBe(price.toBigInt())
+        expect(priceDetails.price.toBigInt()).toBe(totalPrice.toBigInt())
         expect(priceDetails.prepaidSupply.toBigInt()).toBe(0n)
         expect(priceDetails.remainingFreeSupply.toBigInt()).toBe(0n)
 
