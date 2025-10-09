@@ -31,6 +31,15 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
                 (address, ReferralTypes)
             );
             _joinSpaceWithReferral(receiver, 0, referral);
+        } else if (action == JoinType.WithTier) {
+            (address receiver, uint16 tierId) = abi.decode(data, (address, uint16));
+            _joinSpace(receiver, tierId);
+        } else if (action == JoinType.WithReferralAndTier) {
+            (address receiver, ReferralTypes memory referral, uint16 tierId) = abi.decode(
+                data,
+                (address, ReferralTypes, uint16)
+            );
+            _joinSpaceWithReferral(receiver, tierId, referral);
         } else {
             Membership__InvalidAction.selector.revertWith();
         }
@@ -148,7 +157,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function setMembershipLimit(uint256 newLimit) external onlyOwner {
         _verifyMaxSupply(newLimit, _totalSupply());
-        _setMembershipSupplyLimit(newLimit);
+        _setSpaceSupplyLimit(newLimit);
     }
 
     /// @inheritdoc IMembership
