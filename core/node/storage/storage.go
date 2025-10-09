@@ -259,15 +259,11 @@ type (
 			miniblocks []*MiniblockDescriptor,
 		) error
 
-		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
-		// present in storage for the given stream, starting from the specific miniblock number N.
-		//
-		// N is calculated based on the provided latest miniblock number from the registry, the history window.
-		// and the closest lower miniblock with snapshot. For example:
-		//  expectedLatestMiniblock = 10, historyWindow = 5, closest lower miniblock with snapshot = 3
-		//  N will be 3 in this case since 10 - 5 = 5, and the closest lower miniblock with snapshot is 3.
-		//
-		// Each range contains StartInclusive, EndInclusive miniblock numbers, and a list of miniblocks with snapshots.
+		// GetMiniblockNumberRanges enumerates contiguous miniblock spans in storage, anchoring at
+		// the nearest snapshot on or before (expectedLatestMiniblock - historyWindow). For example,
+		// if expectedLatestMiniblock = 10, historyWindow = 5, and the closest snapshot at or below 5 is 3,
+		// the scan begins at miniblock 3. Each span reports inclusive bounds plus the miniblock numbers
+		// whose snapshot column is still populated.
 		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
 		//
 		// Example of ranges: If the stream has miniblocks [0,1,2,5,6,7,10] and expectedLatestMiniblock=10
