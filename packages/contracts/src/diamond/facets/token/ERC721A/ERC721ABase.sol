@@ -66,6 +66,14 @@ abstract contract ERC721ABase is IERC721ABase {
     // =============================================================
     //                           EXTERNAL
     // =============================================================
+    function _name() internal view returns (string memory) {
+        return ERC721AStorage.layout()._name;
+    }
+
+    function _symbol() internal view returns (string memory) {
+        return ERC721AStorage.layout()._symbol;
+    }
+
     function _totalSupply() internal view returns (uint256) {
         // Counter underflow is impossible as _burnCounter cannot be incremented
         // more than `_currentIndex - _startTokenId()` times.

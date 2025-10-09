@@ -24,13 +24,15 @@ contract MembershipTiersFacet is
         _addInterface(type(IMembershipTiers).interfaceId);
     }
 
-    function createTier(CreateTier calldata request) external nonReentrant returns (uint16 tierId) {
+    function createTier(
+        TierRequest calldata request
+    ) external nonReentrant returns (uint16 tierId) {
         _validatePermission(Permissions.ModifyTier);
         tierId = _createTier(request);
         emit TierCreated(tierId);
     }
 
-    function updateTier(uint16 tierId, CreateTier calldata request) external nonReentrant {
+    function updateTier(uint16 tierId, TierRequest calldata request) external nonReentrant {
         _validatePermission(Permissions.ModifyTier);
         _updateTier(tierId, request);
         emit TierUpdated(tierId);
@@ -42,7 +44,7 @@ contract MembershipTiersFacet is
         emit TierStatusUpdated(tierId, disabled);
     }
 
-    function getTier(uint16 tierId) external view returns (Tier memory) {
+    function getTier(uint16 tierId) external view returns (TierResponse memory) {
         return _getTier(tierId);
     }
 

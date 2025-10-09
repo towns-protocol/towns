@@ -17,7 +17,6 @@ import {Permissions} from "../../Permissions.sol";
 
 // contracts
 import {ERC5643Base} from "../../../../diamond/facets/token/ERC5643/ERC5643Base.sol";
-import {ERC721ABase} from "../../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {DispatcherBase} from "../../dispatcher/DispatcherBase.sol";
 import {Entitled} from "../../Entitled.sol";
 import {EntitlementGatedBase} from "../../gated/EntitlementGatedBase.sol";
@@ -25,7 +24,6 @@ import {PointsBase} from "../../points/PointsBase.sol";
 import {PrepayBase} from "../../prepay/PrepayBase.sol";
 import {ReferralsBase} from "../../referrals/ReferralsBase.sol";
 import {RolesBase} from "../../roles/RolesBase.sol";
-import {MembershipBase} from "../MembershipBase.sol";
 import {MembershipTiersBase} from "../tiers/MembershipTiersBase.sol";
 
 /// @title MembershipJoin
@@ -36,7 +34,6 @@ abstract contract MembershipJoin is
     IRolesBase,
     IPartnerRegistryBase,
     ERC5643Base,
-    MembershipBase,
     ReferralsBase,
     DispatcherBase,
     RolesBase,
@@ -44,7 +41,6 @@ abstract contract MembershipJoin is
     Entitled,
     PrepayBase,
     PointsBase,
-    ERC721ABase,
     MembershipTiersBase
 {
     using CustomRevert for bytes4;
@@ -65,16 +61,35 @@ abstract contract MembershipJoin is
         bytes4 selector,
         address sender,
         address receiver,
-        uint16 tierId,
-        bytes memory referralData
+        bytes memory referralData,
+        uint16 tierId
     ) internal pure returns (bytes memory) {
         return abi.encode(selector, sender, receiver, referralData, tierId);
+    }
+
+    function _decodeJoinSpaceData(
+        bytes memory data
+    )
+        internal
+        pure
+        returns (
+            bytes4 transactionType,
+            address sender,
+            address receiver,
+            uint16 tierId,
+            bytes memory referralData
+        )
+    {
+        (transactionType, sender, receiver, referralData, tierId) = abi.decode(
+            data,
+            (bytes4, address, address, bytes, uint16)
+        );
     }
 
     function _getPricingDetails(
         uint16 tierId
     ) internal view returns (PricingDetails memory joinDetails) {
-        uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 freeAllocation = _getSpaceFreeAllocation();
         uint256 totalSupply = _totalSupply();
         uint256 basePrice = _getTierPrice(tierId);
 
@@ -111,7 +126,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, tierId, "")
+            _encodeJoinSpaceData(JOIN_SPACE_SELECTOR, msg.sender, receiver, "", tierId)
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -160,7 +175,7 @@ abstract contract MembershipJoin is
 
         bytes32 transactionId = _registerTransaction(
             receiver,
-            _encodeJoinSpaceData(selector, msg.sender, receiver, tierId, referralData)
+            _encodeJoinSpaceData(selector, msg.sender, receiver, referralData, tierId)
         );
 
         (bool isEntitled, bool isCrosschainPending) = _checkEntitlement(
@@ -231,15 +246,8 @@ abstract contract MembershipJoin is
 
             for (uint256 j; j < roles[i].entitlements.length; ++j) {
                 IEntitlement entitlement = IEntitlement(roles[i].entitlements[j]);
-
-                // Check local entitlements first
-                if (
-                    !entitlement.isCrosschain() &&
-                    entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE)
-                ) {
-                    // Local entitlement passed - return true (payment handled by existing flow)
-                    return true;
-                }
+                if (entitlement.isCrosschain()) continue;
+                return entitlement.isEntitled(IN_TOWN, linkedWallets, JOIN_SPACE);
             }
         }
         return false;
@@ -305,9 +313,8 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         PricingDetails memory joinDetails
     ) internal {
-        (bytes4 selector, address sender, address receiver, ) = abi.decode(
-            _getCapturedData(transactionId),
-            (bytes4, address, address, bytes)
+        (bytes4 selector, address sender, address receiver, , ) = _decodeJoinSpaceData(
+            _getCapturedData(transactionId)
         );
 
         if (selector != JOIN_SPACE_SELECTOR) {
@@ -333,8 +340,13 @@ abstract contract MembershipJoin is
         bytes32 transactionId,
         PricingDetails memory joinDetails
     ) internal {
-        (bytes4 selector, address sender, address receiver, , bytes memory referralData) = abi
-            .decode(_getCapturedData(transactionId), (bytes4, address, address, uint16, bytes));
+        (
+            bytes4 selector,
+            address sender,
+            address receiver,
+            ,
+            bytes memory referralData
+        ) = _decodeJoinSpaceData(_getCapturedData(transactionId));
 
         if (selector != IMembership.joinSpaceWithReferral.selector) {
             Membership__InvalidTransactionType.selector.revertWith();
@@ -393,17 +405,21 @@ abstract contract MembershipJoin is
         // get token id
         uint256 tokenId = _nextTokenId();
 
+        // get tier
+        TierResponse memory tier = _getTier(tierId);
+
         // set renewal price for token
-        _setMembershipRenewalPrice(tokenId, _getTierPrice(tierId));
+        _setMembershipRenewalPrice(tokenId, tier.price);
 
         // mint membership
         _safeMint(receiver, 1);
 
         // set expiration of membership
-        _renewSubscription(tokenId, _getTierDuration(tierId));
+        _renewSubscription(tokenId, tier.duration);
 
         // associate token id with tier id
-        _mintTier(tokenId, tierId);
+        _setTierOfTokenId(tokenId, tierId);
+        emit TierAssignedToTokenId(tokenId, tierId);
 
         // emit event
         emit MembershipTokenIssued(receiver, tokenId);
@@ -413,9 +429,9 @@ abstract contract MembershipJoin is
     /// @param receiver The address that will receive the membership token
     function _validateJoinSpace(address receiver) internal view {
         if (receiver == address(0)) Membership__InvalidAddress.selector.revertWith();
-        uint256 membershipSupplyLimit = _getMembershipSupplyLimit();
+        uint256 totalSupplyLimit = _getSpaceSupplyLimit();
 
-        if (membershipSupplyLimit != 0 && _totalSupply() >= membershipSupplyLimit) {
+        if (totalSupplyLimit != 0 && _totalSupply() >= totalSupplyLimit) {
             Membership__MaxSupplyReached.selector.revertWith();
         }
     }

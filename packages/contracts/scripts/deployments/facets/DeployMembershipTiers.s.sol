@@ -15,9 +15,10 @@ library DeployMembershipTiers {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(1);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(3);
         arr.p(IMembershipTiers.createTier.selector);
         arr.p(IMembershipTiers.nextTierId.selector);
+        arr.p(IMembershipTiers.getTier.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
