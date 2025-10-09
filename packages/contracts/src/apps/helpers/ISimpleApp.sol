@@ -14,6 +14,12 @@ interface ISimpleAppBase {
     /// @notice Thrown when there is no balance to withdraw
     error NoBalanceToWithdraw();
 
+    /// @notice Thrown when the currency address is the zero address
+    error InvalidAddressInput();
+
+    /// @notice Thrown when the amount is zero
+    error InvalidAmount();
+
     /// @notice Emitted when the app is withdrawn
     /// @param recipient The address that received the withdrawal
     /// @param amount The amount of tokens withdrawn
@@ -27,12 +33,24 @@ interface ISimpleAppBase {
     /// @notice Emitted when permissions are updated
     /// @param permissions The new permissions
     event PermissionsUpdated(bytes32[] permissions);
+
+    /// @notice Emitted when the currency is sent
+    /// @param recipient The address that received the currency
+    /// @param currency The currency that was sent
+    /// @param amount The amount of currency that was sent
+    event SendCurrency(address indexed recipient, address indexed currency, uint256 amount);
 }
 
 interface ISimpleApp is ISimpleAppBase {
     /// @notice Withdraws the ETH balance of the app to the recipient
     /// @param recipient The address to withdraw the ETH to
     function withdrawETH(address recipient) external;
+
+    /// @notice Sends the currency balance of the app to the recipient
+    /// @param recipient The address to send the currency to
+    /// @param currency The currency to send
+    /// @param amount The amount of currency to send
+    function sendCurrency(address recipient, address currency, uint256 amount) external;
 
     /// @notice Updates the pricing of the app
     /// @param installPrice The new install price
@@ -54,6 +72,7 @@ interface ISimpleApp is ISimpleAppBase {
         string calldata appId,
         bytes32[] calldata permissions,
         uint256 installPrice,
-        uint48 accessDuration
+        uint48 accessDuration,
+        address client
     ) external;
 }

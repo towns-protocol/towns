@@ -245,6 +245,38 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(address(DEFAULT_DEV).balance, DEFAULT_INSTALL_PRICE);
     }
 
+    function test_createApp_sendCurrency() external {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        vm.prank(DEFAULT_DEV);
+        (address app, ) = registry.createApp(appData);
+
+        uint256 totalRequired = registry.getAppPrice(app);
+
+        vm.deal(founder, totalRequired);
+
+        vm.prank(founder);
+        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+
+        assertEq(address(app).balance, DEFAULT_INSTALL_PRICE);
+
+        address recipient = _randomAddress();
+
+        vm.prank(DEFAULT_DEV);
+        SimpleApp(payable(app)).sendCurrency(recipient, address(0), DEFAULT_INSTALL_PRICE);
+
+        assertEq(address(recipient).balance, DEFAULT_INSTALL_PRICE);
+        assertEq(address(app).balance, 0);
+    }
+
     function test_createApp_updatePricing() external {
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");

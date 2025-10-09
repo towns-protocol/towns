@@ -28,7 +28,8 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         string calldata appId,
         bytes32[] calldata permissions,
         uint256 installPrice,
-        uint48 accessDuration
+        uint48 accessDuration,
+        address client
     ) external initializer {
         _setOwner(owner);
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
@@ -36,6 +37,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         $.permissions = permissions;
         $.installPrice = installPrice;
         $.accessDuration = accessDuration;
+        $.client = client;
     }
 
     /// @inheritdoc ISimpleApp
@@ -48,6 +50,18 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
         CurrencyTransfer.safeTransferNativeToken(recipient, balance);
 
         emit Withdrawal(recipient, balance);
+    }
+
+    function sendCurrency(address recipient, address currency, uint256 amount) external {
+        _checkAllowed();
+
+        if (recipient == address(0)) ZeroAddress.selector.revertWith();
+        if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
+        if (amount == 0) InvalidAmount.selector.revertWith();
+
+        CurrencyTransfer.transferCurrency(currency, address(this), recipient, amount);
+
+        emit SendCurrency(recipient, currency, amount);
     }
 
     /// @inheritdoc ISimpleApp
@@ -98,5 +112,11 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
 
     function _moduleOwner() internal view override returns (address) {
         return owner();
+    }
+
+    function _checkAllowed() internal view {
+        if (msg.sender == owner()) return;
+        if (msg.sender == SimpleAppStorage.getLayout().client) return;
+        Unauthorized.selector.revertWith();
     }
 }
