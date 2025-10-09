@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/utils",
-    "version": "0.0.364",
+    "version": "0.0.365",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
