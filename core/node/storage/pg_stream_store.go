@@ -2568,11 +2568,13 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 }
 
 // GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
-// for the given stream, starting from the specified miniblock number.
+// for the given stream, starting from the closet to N (expectedLatestMiniblock-historyWindow)
+// lower miniblock number with a snapshot. Each range contains a list of miniblocks with snapshots.
 func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 	ctx context.Context,
 	streamId StreamId,
-	startMiniblockNumberInclusive int64,
+	expectedLatestMiniblock int64,
+	historyWindow uint64,
 ) ([]MiniblockRange, error) {
 	var ranges []MiniblockRange
 	err := s.txRunner(
@@ -2581,12 +2583,13 @@ func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, startMiniblockNumberInclusive)
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, expectedLatestMiniblock, historyWindow)
 			return err
 		},
 		nil,
 		"streamId", streamId,
-		"startMiniblockNumberInclusive", startMiniblockNumberInclusive,
+		"expectedLatestMiniblock", expectedLatestMiniblock,
+		"historyWindow", historyWindow,
 	)
 	if err != nil {
 		return nil, err
@@ -2598,35 +2601,55 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	startMiniblockNumberInclusive int64,
+	expectedLatestMiniblock int64,
+	historyWindow uint64,
 ) ([]MiniblockRange, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
-	// Use window function to identify continuous ranges efficiently
-	query := s.sqlForStream(`
-		SELECT 
-			MIN(seq_num) AS start_range,
-			MAX(seq_num) AS end_range
-		FROM (
-			SELECT 
-				seq_num,
-				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
-			FROM {{miniblocks}}
-			WHERE stream_id = $1 AND seq_num >= $2
-		) AS subquery
-		GROUP BY grp
-		ORDER BY start_range
-	`, streamId)
+	startMiniblock := expectedLatestMiniblock - int64(historyWindow)
+	if startMiniblock < 0 {
+		startMiniblock = 0
+	}
 
-	rows, err := tx.Query(ctx, query, streamId, startMiniblockNumberInclusive)
+	query := s.sqlForStream(`
+		WITH anchor AS (
+			SELECT COALESCE(
+			    (
+					SELECT seq_num
+					FROM {{miniblocks}}
+					WHERE stream_id = $1
+				    	AND snapshot IS NOT NULL
+				  		AND seq_num <= $2
+					ORDER BY seq_num DESC
+					LIMIT 1
+				), (
+					SELECT MIN(seq_num)
+					FROM {{miniblocks}}
+					WHERE stream_id = $1
+				)
+		    ) AS start_seq
+		),
+		numbered AS (
+			SELECT m.seq_num,
+				   (m.snapshot IS NOT NULL) AS has_snapshot,
+				   m.seq_num - ROW_NUMBER() OVER (ORDER BY m.seq_num) AS grp
+			FROM {{miniblocks}} m, anchor
+			WHERE m.stream_id = $1 AND m.seq_num >= anchor.start_seq
+		)
+		SELECT MIN(seq_num) AS start_inclusive,
+			   MAX(seq_num) AS end_inclusive,
+			   ARRAY_AGG(seq_num ORDER BY seq_num) FILTER (WHERE has_snapshot) AS snapshot_seq_nums
+		FROM numbered
+		GROUP BY grp
+		ORDER BY start_inclusive`, streamId)
+
+	rows, err := tx.Query(ctx, query, streamId, startMiniblock)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	// Use pgx.CollectRows to scan all results at once
 	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[MiniblockRange])
 	if err != nil {
 		return nil, err

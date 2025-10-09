@@ -79,8 +79,9 @@ type (
 	}
 
 	MiniblockRange struct {
-		StartInclusive int64
-		EndInclusive   int64
+		StartInclusive  int64
+		EndInclusive    int64
+		SnapshotSeqNums []int64
 	}
 
 	StreamStorage interface {
@@ -259,18 +260,26 @@ type (
 		) error
 
 		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
-		// present in storage for the given stream, starting from the specified miniblock number.
-		// Each range contains StartInclusive and EndInclusive miniblock numbers.
+		// present in storage for the given stream, starting from the specific miniblock number N.
+		//
+		// N is calculated based on the provided latest miniblock number from the registry, the history window.
+		// and the closest lower miniblock with snapshot. For example:
+		//  expectedLatestMiniblock = 10, historyWindow = 5, closest lower miniblock with snapshot = 3
+		//  N will be 3 in this case since 10 - 5 = 5, and the closest lower miniblock with snapshot is 3.
+		//
+		// Each range contains StartInclusive, EndInclusive miniblock numbers, and a list of miniblocks with snapshots.
 		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
 		//
-		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
-		// the result would be: [{0,2}, {5,7}, {10,10}]
+		// Example of ranges: If the stream has miniblocks [0,1,2,5,6,7,10] and expectedLatestMiniblock=10
+		// and historyWindow = 0 (ignore history), the result would be: [{0,2}, {5,7}, {10,10}].
+		// Additionally, it contains a list of miniblocks with snapshots.
 		//
 		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
 		GetMiniblockNumberRanges(
 			ctx context.Context,
 			streamId StreamId,
-			startMiniblockNumberInclusive int64,
+			expectedLatestMiniblock int64,
+			historyWindow uint64,
 		) ([]MiniblockRange, error)
 
 		// DebugReadStreamData returns details for debugging about the stream.

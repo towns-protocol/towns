@@ -103,6 +103,30 @@ func (sr *streamReconciler) reconcile() error {
 	backwardThreshold := sr.cache.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
 	enableBackwardReconciliation := backwardThreshold > 0
 
+	{
+		historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
+
+		presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
+			sr.ctx,
+			sr.stream.streamId,
+			sr.expectedLastMbInclusive,
+			historyWindow,
+		)
+
+		if presentRanges[len(presentRanges)-1].EndInclusive >= sr.expectedLastMbInclusive {
+			// No reconciliation required, just fill gaps if relevant
+			return nil
+		}
+
+		// Reconciliation here stars.
+		// ...
+
+		// Delete miniblocks if needed - history trimming.
+
+		// During the gaps filling, we will update a list of miniblocks with snapshots for further trimming.
+		// Send the given range of miniblocks to the function that determines which miniblocks should be snapshot-trimmed.
+	}
+
 	var err error
 	sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(sr.ctx)
 	if err != nil {
