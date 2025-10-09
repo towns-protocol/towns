@@ -26,13 +26,10 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
 
         if (data.length == 0) return;
 
-        (bytes4 transactionType, , address receiver, ) = abi.decode(
-            data,
-            (bytes4, address, address, bytes)
-        );
+        (bytes4 transactionType, , address receiver, uint16 tierId, ) = _decodeJoinSpaceData(data);
 
         if (result == NodeVoteStatus.PASSED) {
-            PricingDetails memory joinDetails = _getPricingDetails();
+            PricingDetails memory joinDetails = _getPricingDetails(tierId);
 
             if (joinDetails.shouldCharge) {
                 uint256 payment = _getCapturedValue(transactionId);
@@ -53,7 +50,7 @@ contract SpaceEntitlementGated is MembershipJoin, EntitlementGated {
             }
 
             _refundBalance(transactionId, receiver);
-            _issueToken(receiver);
+            _issueToken(receiver, tierId);
             return;
         }
 

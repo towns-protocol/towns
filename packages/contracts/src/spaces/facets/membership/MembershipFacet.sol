@@ -24,13 +24,22 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function joinSpace(JoinType action, bytes calldata data) external payable nonReentrant {
         if (action == JoinType.Basic) {
             address receiver = abi.decode(data, (address));
-            _joinSpace(receiver);
+            _joinSpace(receiver, 0);
         } else if (action == JoinType.WithReferral) {
             (address receiver, ReferralTypes memory referral) = abi.decode(
                 data,
                 (address, ReferralTypes)
             );
-            _joinSpaceWithReferral(receiver, referral);
+            _joinSpaceWithReferral(receiver, 0, referral);
+        } else if (action == JoinType.WithTier) {
+            (address receiver, uint16 tierId) = abi.decode(data, (address, uint16));
+            _joinSpace(receiver, tierId);
+        } else if (action == JoinType.WithReferralAndTier) {
+            (address receiver, ReferralTypes memory referral, uint16 tierId) = abi.decode(
+                data,
+                (address, ReferralTypes, uint16)
+            );
+            _joinSpaceWithReferral(receiver, tierId, referral);
         } else {
             Membership__InvalidAction.selector.revertWith();
         }
@@ -38,7 +47,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function joinSpace(address receiver) external payable nonReentrant {
-        _joinSpace(receiver);
+        _joinSpace(receiver, 0);
     }
 
     /// @inheritdoc IMembership
@@ -46,7 +55,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         address receiver,
         ReferralTypes memory referral
     ) external payable nonReentrant {
-        _joinSpaceWithReferral(receiver, referral);
+        _joinSpaceWithReferral(receiver, 0, referral);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -110,9 +119,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     function getMembershipRenewalPrice(
         uint256 tokenId
     ) external view returns (uint256 totalRequired) {
-        (totalRequired, ) = _getTotalMembershipPayment(
-            _getMembershipRenewalPrice(tokenId, _totalSupply())
-        );
+        (totalRequired, ) = _getTotalMembershipPayment(_getMembershipRenewalPrice(tokenId));
     }
 
     /// @inheritdoc IMembership
@@ -127,7 +134,7 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function setMembershipFreeAllocation(uint256 newAllocation) external onlyOwner {
         // get current supply limit
-        uint256 currentSupplyLimit = _getMembershipSupplyLimit();
+        uint256 currentSupplyLimit = _getSpaceSupplyLimit();
 
         // verify newLimit is not more than the max supply limit
         if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit) {
@@ -135,12 +142,12 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         }
 
         _verifyFreeAllocation(newAllocation);
-        _setMembershipFreeAllocation(newAllocation);
+        _setSpaceFreeAllocation(newAllocation);
     }
 
     /// @inheritdoc IMembership
     function getMembershipFreeAllocation() external view returns (uint256) {
-        return _getMembershipFreeAllocation();
+        return _getSpaceFreeAllocation();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -150,12 +157,12 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function setMembershipLimit(uint256 newLimit) external onlyOwner {
         _verifyMaxSupply(newLimit, _totalSupply());
-        _setMembershipSupplyLimit(newLimit);
+        _setSpaceSupplyLimit(newLimit);
     }
 
     /// @inheritdoc IMembership
     function getMembershipLimit() external view returns (uint256) {
-        return _getMembershipSupplyLimit();
+        return _getSpaceSupplyLimit();
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

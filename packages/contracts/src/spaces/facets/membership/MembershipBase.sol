@@ -68,7 +68,7 @@ abstract contract MembershipBase is IMembershipBase {
     ) internal view virtual returns (uint256 membershipPrice) {
         address pricingModule = _getPricingModule();
         if (pricingModule == address(0)) return 0;
-        uint256 freeAllocation = _getMembershipFreeAllocation();
+        uint256 freeAllocation = _getSpaceFreeAllocation();
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
     }
 
@@ -84,8 +84,7 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 membershipPrice
     ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
         protocolFee = _getProtocolFee(membershipPrice);
-        if (membershipPrice == 0) return (protocolFee, protocolFee);
-        return (membershipPrice + protocolFee, protocolFee);
+        totalRequired = membershipPrice + protocolFee;
     }
 
     function _transferIn(address from, uint256 amount) internal returns (uint256) {
@@ -126,15 +125,12 @@ abstract contract MembershipBase is IMembershipBase {
 
     function _verifyDuration(uint64 duration) internal view {
         uint256 maxDuration = _getPlatformRequirements().getMembershipDuration();
-
         if (duration == 0) Membership__InvalidDuration.selector.revertWith();
-
         if (duration > maxDuration) Membership__InvalidDuration.selector.revertWith();
     }
 
     function _getMembershipDuration() internal view returns (uint64 duration) {
         duration = MembershipStorage.layout().membershipDuration;
-
         if (duration == 0) duration = _getPlatformRequirements().getMembershipDuration();
     }
 
@@ -171,14 +167,9 @@ abstract contract MembershipBase is IMembershipBase {
         MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
     }
 
-    function _getMembershipRenewalPrice(
-        uint256 tokenId,
-        uint256 totalSupply
-    ) internal view returns (uint256) {
+    function _getMembershipRenewalPrice(uint256 tokenId) internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
-        if (renewalPrice != 0) return renewalPrice;
-        return _getMembershipPrice(totalSupply);
+        return $.renewalPriceByTokenId[tokenId];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -192,17 +183,15 @@ abstract contract MembershipBase is IMembershipBase {
         }
     }
 
-    function _setMembershipFreeAllocation(uint256 newAllocation) internal {
+    function _setSpaceFreeAllocation(uint256 newAllocation) internal {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
         ($.freeAllocation, $.freeAllocationEnabled) = (newAllocation, true);
         emit MembershipFreeAllocationUpdated(newAllocation);
     }
 
-    function _getMembershipFreeAllocation() internal view returns (uint256) {
+    function _getSpaceFreeAllocation() internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-
         if ($.freeAllocationEnabled) return $.freeAllocation;
-
         return _getPlatformRequirements().getMembershipMintLimit();
     }
 
@@ -215,11 +204,11 @@ abstract contract MembershipBase is IMembershipBase {
         if (newLimit < totalSupply) Membership__InvalidMaxSupply.selector.revertWith();
     }
 
-    function _setMembershipSupplyLimit(uint256 newLimit) internal {
+    function _setSpaceSupplyLimit(uint256 newLimit) internal {
         MembershipStorage.layout().membershipMaxSupply = newLimit;
     }
 
-    function _getMembershipSupplyLimit() internal view returns (uint256) {
+    function _getSpaceSupplyLimit() internal view returns (uint256) {
         return MembershipStorage.layout().membershipMaxSupply;
     }
 
