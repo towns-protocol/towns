@@ -288,7 +288,12 @@ func (t *streamTrimmer) processTrimTaskTx(
 			return err
 		}
 
-		toNullify := determineSnapshotsToNullify(mbs, task.retentionIntervalMbs, minKeepMiniblocks)
+		var rangeStart int64
+		if len(mbs) > 0 {
+			rangeStart = mbs[0]
+		}
+		rangeEnd := lastSnapshotMiniblock - 1
+		toNullify := determineSnapshotsToNullify(rangeStart, rangeEnd, mbs, task.retentionIntervalMbs, minKeepMiniblocks)
 		if len(toNullify) > 0 {
 			if _, err = tx.Exec(
 				ctx,
@@ -311,12 +316,16 @@ func (t *streamTrimmer) processTrimTaskTx(
 // determineSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.
 // It scans snapshotSeqs (ascending), groups by bucket = seq_num/retentionInterval,
 // keeps the very first seq in each bucket, and nullifies the rest—except anything
-// newer than maxSeq-minKeep, which stays protected.
+// newer than rangeEndInclusive-minKeep, which stays protected.
 //
-//	snapshotSeqs:      sorted ascending slice of seq_nums where snapshot != NULL
-//	retentionInterval: onchain setting, e.g. 1000 miniblocks
-//	minKeep:           number of most recent miniblocks to protect
+//	rangeStartInclusive: inclusive start of the miniblock range being processed
+//	rangeEndInclusive:   inclusive end of the miniblock range being processed
+//	snapshotSeqs:        sorted ascending slice of seq_nums within the range where snapshot != NULL
+//	retentionInterval:   onchain setting, e.g. 1000 miniblocks
+//	minKeep:             number of most recent miniblocks to protect
 func determineSnapshotsToNullify(
+	rangeStartInclusive int64,
+	rangeEndInclusive int64,
 	snapshotSeqs []int64,
 	retentionInterval int64,
 	minKeep int64,
@@ -330,13 +339,19 @@ func determineSnapshotsToNullify(
 		return nil
 	}
 
-	maxSeq := snapshotSeqs[n-1]
-	cutoff := maxSeq - minKeep
+	if rangeStartInclusive > rangeEndInclusive {
+		return nil
+	}
+
+	cutoff := rangeEndInclusive - minKeep
 
 	var toNullify []int64
 	var lastBucket int64 = -1
 
 	for _, seq := range snapshotSeqs {
+		if seq < rangeStartInclusive {
+			continue
+		}
 		// skip anything in the protected tail
 		if seq > cutoff {
 			break
