@@ -9690,6 +9690,7 @@ __metadata:
     ponder: ^0.12.21
     prettier: ^3.5.3
     tsx: ^4.7.1
+    turbo: ^2.5.4
     typescript: ~5.8.3
     viem: ^2.29.3
   languageName: unknown
