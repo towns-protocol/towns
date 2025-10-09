@@ -292,8 +292,14 @@ func (t *streamTrimmer) processTrimTaskTx(
 		if len(mbs) > 0 {
 			rangeStart = mbs[0]
 		}
-		rangeEnd := lastSnapshotMiniblock - 1
-		toNullify := determineSnapshotsToNullify(rangeStart, rangeEnd, mbs, task.retentionIntervalMbs, minKeepMiniblocks)
+
+		toNullify := determineSnapshotsToNullify(
+			rangeStart,
+			lastSnapshotMiniblock-1,
+			mbs,
+			task.retentionIntervalMbs,
+			minKeepMiniblocks,
+		)
 		if len(toNullify) > 0 {
 			if _, err = tx.Exec(
 				ctx,

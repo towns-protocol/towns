@@ -521,7 +521,13 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := determineSnapshotsToNullify(tt.rangeStart, tt.rangeEnd, tt.snapshotSeqs, tt.retentionInterval, tt.minKeep)
+			actual := determineSnapshotsToNullify(
+				tt.rangeStart,
+				tt.rangeEnd,
+				tt.snapshotSeqs,
+				tt.retentionInterval,
+				tt.minKeep,
+			)
 			sort.Slice(actual, func(i, j int) bool { return actual[i] < actual[j] }) // ensure consistent order
 			assert.Equal(t, tt.expected, actual)
 		})
