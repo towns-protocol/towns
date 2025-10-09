@@ -57,3 +57,12 @@ node dist/bot.cjs
 ```bash
 bun run src/index.ts
 ```
+
+## Debug Logging
+
+Bot framework uses `debug` package for logging.
+You can enable by setting the `DEBUG` environment variable to `csb:bot`.
+
+```bash
+DEBUG=csb:bot node dist/bot.cjs
+```

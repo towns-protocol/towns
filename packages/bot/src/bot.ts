@@ -247,6 +247,7 @@ export class Bot<
     async start() {
         await this.client.uploadDeviceKeys()
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+        debug('start')
 
         return {
             jwtMiddleware,
@@ -350,6 +351,11 @@ export class Bot<
                 }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
+                debug('emit:streamEvent', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    eventId: parsed.hashStr,
+                })
                 this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     spaceId: spaceIdFromChannelId(streamId),
@@ -384,13 +390,19 @@ export class Bot<
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            const refEventId = bin_toHexString(
+                                parsed.event.payload.value.content.value.eventId,
+                            )
+                            debug('emit:eventRevoke', {
+                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                channelId: streamId,
+                                refEventId,
+                            })
                             this.emitter.emit('eventRevoke', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
-                                refEventId: bin_toHexString(
-                                    parsed.event.payload.value.content.value.eventId,
-                                ),
+                                refEventId,
                                 eventId: parsed.hashStr,
                                 createdAt,
                             })
@@ -416,6 +428,11 @@ export class Bot<
                                     // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                                     if (!isChannel) continue
                                     if (membership.op === MembershipOp.SO_JOIN) {
+                                        debug('emit:channelJoin', {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
                                         this.emitter.emit('channelJoin', this.client, {
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
@@ -425,6 +442,11 @@ export class Bot<
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
+                                        debug('emit:channelLeave', {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
                                         this.emitter.emit('channelLeave', this.client, {
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
@@ -461,6 +483,16 @@ export class Bot<
                                                         .fromUserAddress
                                                 const senderAddress =
                                                     userIdFromAddress(senderAddressBytes)
+                                                const receiverAddress = userIdFromAddress(
+                                                    transactionContent.value.toUserAddress,
+                                                )
+                                                debug('emit:tip', {
+                                                    senderAddress,
+                                                    receiverAddress,
+                                                    amount: tipEvent.amount.toString(),
+                                                    currency,
+                                                    messageId: bin_toHexString(tipEvent.messageId),
+                                                })
                                                 this.emitter.emit('tip', this.client, {
                                                     userId: senderAddress,
                                                     spaceId: spaceIdFromChannelId(streamId),
@@ -470,9 +502,7 @@ export class Bot<
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress: senderAddress,
-                                                    receiverAddress: userIdFromAddress(
-                                                        transactionContent.value.toUserAddress,
-                                                    ),
+                                                    receiverAddress,
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                             }
@@ -557,12 +587,19 @@ export class Bot<
                             })
                         }
                     } else {
+                        debug('emit:message', forwardPayload)
                         this.emitter.emit('message', this.client, forwardPayload)
                     }
                 }
                 break
             }
             case 'reaction': {
+                debug('emit:reaction', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    reaction: payload.value.reaction,
+                    messageId: payload.value.refEventId,
+                })
                 this.emitter.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -579,6 +616,13 @@ export class Bot<
                 if (payload.value.post?.content.case !== 'text') break
                 const mentions = parseMentions(payload.value.post?.content.value.mentions)
                 const isMentioned = mentions.some((m) => m.userId === this.botId)
+                debug('emit:messageEdit', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                    messagePreview: payload.value.post?.content.value.body.substring(0, 50),
+                    isMentioned,
+                })
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -595,6 +639,11 @@ export class Bot<
                 break
             }
             case 'redaction': {
+                debug('emit:redaction', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                })
                 this.emitter.emit('redaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
