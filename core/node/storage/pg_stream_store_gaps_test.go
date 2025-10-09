@@ -43,6 +43,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.Nil(ranges)
 	})
 
+	// Baseline: fully populated stream with a single continuous range and one snapshot.
 	t.Run("ContinuousSequence", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -208,6 +209,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.Equal([]MiniblockRange{rangeWithSnapshots(4, 6, 4)}, ranges)
 	})
 
+	// Mixed history: two ranges separated by gaps, including multiple snapshots in the tail.
 	t.Run("SequenceWithGaps", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
@@ -297,6 +299,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		}, ranges)
 	})
 
+	// Stream that starts at a non-zero miniblock index; ensures anchoring works above zero.
 	t.Run("NonZeroStartingSequence", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_DM_CHANNEL_BIN)
 
@@ -341,6 +344,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		}, ranges)
 	})
 
+	// Widely separated ranges with snapshots sprinkled throughout the history.
 	t.Run("LargeGapsSequence", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_GDM_CHANNEL_BIN)
 
