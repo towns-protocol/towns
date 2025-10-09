@@ -24,7 +24,7 @@
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",
-        "dexie": "^4.0.7",
+        "dexie": "^4.2.1",
         "ethers": "^5.8.0",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
