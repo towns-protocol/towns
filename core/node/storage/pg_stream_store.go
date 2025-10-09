@@ -2567,9 +2567,10 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	return lowestMiniblock, err
 }
 
-// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
-// for the given stream, starting from the closet to N (expectedLatestMiniblock-historyWindow)
-// lower miniblock number with a snapshot. Each range contains a list of miniblocks with snapshots.
+// GetMiniblockNumberRanges returns every contiguous span of stored miniblocks for the stream,
+// anchoring the scan at the nearest snapshot at or below (expectedLatestMiniblock - historyWindow).
+// Each span also lists the miniblock numbers whose snapshot column is non-null so callers can
+// make trimming or backfill decisions with the snapshot context baked in.
 func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 	ctx context.Context,
 	streamId StreamId,

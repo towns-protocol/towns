@@ -431,6 +431,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	store := params.pgStreamStore
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
+	// Seed the stream with a contiguous tail (10-15) and a single snapshot at 10.
 	err := store.ReinitializeStreamStorage(
 		ctx,
 		streamId,
@@ -457,6 +458,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 		rangeWithSnapshots(10, 15, 10),
 	}, ranges)
 
+	// Backfill earlier miniblocks (5-7) to create a leading gap ahead of the original range.
 	err = store.WritePrecedingMiniblocks(
 		ctx,
 		streamId,
@@ -478,6 +480,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 		rangeWithSnapshots(10, 15, 10),
 	}, ranges)
 
+	// Add genesis miniblocks (0-2) to introduce a second gap and ensure ordering is preserved.
 	err = store.WritePrecedingMiniblocks(
 		ctx,
 		streamId,
