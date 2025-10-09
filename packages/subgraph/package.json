@@ -38,6 +38,7 @@
         "eslint-plugin-tsdoc": "^0.3.0",
         "prettier": "^3.5.3",
         "tsx": "^4.7.1",
+        "turbo": "^2.5.4",
         "typescript": "~5.8.3"
     },
     "engines": {
