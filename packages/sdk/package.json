@@ -21,8 +21,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
-        "@connectrpc/connect": "^2.0.0",
+        "@bufbuild/protobuf": "^2.9.0",
+        "@connectrpc/connect": "^2.1.0",
         "@ethereumjs/util": "^10.0.0",
         "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
@@ -42,7 +42,7 @@
         "p-limit": "^6.1.0"
     },
     "devDependencies": {
-        "@connectrpc/connect-web": "^2.0.0",
+        "@connectrpc/connect-web": "^2.1.0",
         "@types/debug": "^4.1.8",
         "@types/lodash-es": "^4.17.12",
         "@types/node": "^20.14.8",
