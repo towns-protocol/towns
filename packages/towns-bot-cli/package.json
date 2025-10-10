@@ -12,8 +12,8 @@
     },
     "bin": "index.js",
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
-        "@connectrpc/connect-node": "^2.0.0",
+        "@bufbuild/protobuf": "^2.9.0",
+        "@connectrpc/connect-node": "^2.1.0",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
         "@towns-protocol/utils": "workspace:^",

@@ -19,11 +19,11 @@
         "watch:go": "node scripts/watch_proto_files_go.cjs"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2"
+        "@bufbuild/protobuf": "^2.9.0"
     },
     "devDependencies": {
-        "@bufbuild/buf": "^1.32.0",
-        "@bufbuild/protoc-gen-es": "^2.2.2",
+        "@bufbuild/buf": "^1.57.2",
+        "@bufbuild/protoc-gen-es": "^2.9.0",
         "@towns-protocol/proto-source": "workspace:^",
         "@types/node": "^20.14.8",
         "lodash.debounce": "^4.0.8",

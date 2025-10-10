@@ -16,11 +16,11 @@
         "watch": "tsdown --watch"
     },
     "dependencies": {
-        "@connectrpc/connect": "^2.0.0"
+        "@connectrpc/connect": "^2.1.0"
     },
     "devDependencies": {
-        "@connectrpc/connect-node": "^2.0.0",
-        "@connectrpc/connect-web": "^2.0.0",
+        "@connectrpc/connect-node": "^2.1.0",
+        "@connectrpc/connect-web": "^2.1.0",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
