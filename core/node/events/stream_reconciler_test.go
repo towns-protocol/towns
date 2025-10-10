@@ -1,7 +1,9 @@
 package events
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,6 +18,23 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
+
+type recordingStreamStorage struct {
+	storage.StreamStorage
+	mu       sync.Mutex
+	recorded []int64
+}
+
+func (r *recordingStreamStorage) GetMiniblockNumberRanges(
+	ctx context.Context,
+	streamId StreamId,
+	fromInclusive int64,
+) ([]storage.MiniblockRange, error) {
+	r.mu.Lock()
+	r.recorded = append(r.recorded, fromInclusive)
+	r.mu.Unlock()
+	return r.StreamStorage.GetMiniblockNumberRanges(ctx, streamId, fromInclusive)
+}
 
 func TestReconciler(t *testing.T) {
 	cfg := config.GetDefaultConfig()
@@ -635,4 +654,84 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 
 	require.True(reconciler.stats.backfillCalled)
 	require.Equal(expectedStart, reconciler.localStartMbInclusive)
+}
+
+func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
+	cfg := config.GetDefaultConfig()
+	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+	cfg.StreamReconciliation.GetMiniblocksPageSize = 8
+
+	const (
+		historyWindow        uint64 = 12
+		backwardThreshold    uint64 = 5
+		reconciledMiniblocks        = 30
+	)
+
+	ctx, tc := makeCacheTestContext(
+		t,
+		testParams{
+			config:                           cfg,
+			replFactor:                       3,
+			numInstances:                     3,
+			disableStreamCacheCallbacks:      true,
+			enableNewSnapshotFormat:          1,
+			recencyConstraintsGenerations:    5,
+			backwardsReconciliationThreshold: ptrUint64(backwardThreshold),
+			streamHistoryMiniblocks: map[byte]uint64{
+				STREAM_USER_SETTINGS_BIN: historyWindow,
+			},
+		},
+	)
+	require := tc.require
+
+	require.Equal(
+		historyWindow,
+		tc.instances[0].params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(STREAM_USER_SETTINGS_BIN),
+	)
+
+	tc.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	tc.initCache(1, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+
+	streamId, streamNodes, prevMb := tc.allocateStream()
+	nodesWithStream := streamNodes[0:2]
+
+	for range reconciledMiniblocks {
+		tc.addReplEvent(streamId, prevMb, nodesWithStream)
+		prevMb = tc.makeMiniblockNoCallbacks(nodesWithStream, streamId, false)
+	}
+	tc.addReplEvent(streamId, prevMb, nodesWithStream)
+
+	recStorage := &recordingStreamStorage{StreamStorage: tc.instances[2].params.Storage}
+	tc.instances[2].params.Storage = recStorage
+
+	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	inst := tc.instances[2]
+
+	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
+	require.NoError(err)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	require.NoError(err)
+	require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamId, recordNoId)
+
+	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
+
+	reconciler := newStreamReconciler(inst.cache, stream, record)
+	err = reconciler.reconcile()
+	require.NoError(err)
+
+	require.True(reconciler.stats.backwardCalled)
+
+	expectedStart := record.LastMbNum() - int64(historyWindow)
+	if expectedStart < 0 {
+		expectedStart = 0
+	}
+
+	recStorage.mu.Lock()
+	recorded := append([]int64(nil), recStorage.recorded...)
+	recStorage.mu.Unlock()
+
+	require.NotEmpty(recorded)
+	require.Equal(expectedStart, recorded[0])
 }

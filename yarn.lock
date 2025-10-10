@@ -9193,6 +9193,7 @@ __metadata:
     ethers: ^5.8.0
     fake-indexeddb: ^6.0.1
     hono: ^4.7.11
+    image-size: ^2.0.2
     jsonwebtoken: ^9.0.2
     nanoevents: ^9.1.0
     typescript: ~5.8.3
@@ -9271,7 +9272,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     debug: ^4.3.4
-    dexie: ^4.0.7
+    dexie: ^4.2.1
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -9560,7 +9561,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     debug: ^4.3.4
-    dexie: ^4.0.7
+    dexie: ^4.2.1
     dotenv-cli: ^10.0.0
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
@@ -9690,6 +9691,7 @@ __metadata:
     ponder: ^0.12.21
     prettier: ^3.5.3
     tsx: ^4.7.1
+    turbo: ^2.5.4
     typescript: ~5.8.3
     viem: ^2.29.3
   languageName: unknown
@@ -14840,10 +14842,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dexie@npm:^4.0.7":
-  version: 4.0.7
-  resolution: "dexie@npm:4.0.7"
-  checksum: 4cc0bf7b86c1a50b6502b04d7fee4a79eaa69e6f6c6dc1b91b56fb6827fc51c04b9c11ba87c582d94df2387d1a8d1775139a27b259c02746d754ddb1baa86f5f
+"dexie@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "dexie@npm:4.2.1"
+  checksum: 171e42113832239e84bd2ebf3ab993a2b0106f370b23eadb1967a118a74a8370ce244c3b90b066cb9bab813d71d9b2bef7f9e00be6c3cab1920d486bbf33fdd8
   languageName: node
   linkType: hard
 
@@ -19430,6 +19432,15 @@ __metadata:
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
   checksum: 2acfd32a573260ea522ea0bfeff880af426d68f6831f973129e2ba7363f422923cf53aab62f8369cbf4667c7b25b6f8a3761b34ecdb284ea18e87a5262a865be
+  languageName: node
+  linkType: hard
+
+"image-size@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "image-size@npm:2.0.2"
+  bin:
+    image-size: bin/image-size.js
+  checksum: 33c3fafdd8af6bb2727bca51c4bae6e6dac16e9715337a6685a1af29fcbf7a2f9ec75eeaaa61e82d20f74d6f1fa748110936e32b1dbea4521217133eb159a29d
   languageName: node
   linkType: hard
 

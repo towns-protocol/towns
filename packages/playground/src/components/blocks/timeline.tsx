@@ -8,6 +8,7 @@ import {
     useSyncAgent,
 } from '@towns-protocol/react-sdk'
 import {
+    type ImageAttachment,
     type MessageReactions,
     RiverTimelineEvent,
     type TimelineEvent,
@@ -15,7 +16,7 @@ import {
     spaceIdFromChannelId,
 } from '@towns-protocol/sdk'
 import { StickToBottom, useStickToBottomContext } from 'use-stick-to-bottom'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -258,6 +259,17 @@ const Message = ({
             ? event.content.replyId
             : undefined
 
+    const image = useMemo(() => {
+        const content =
+            event.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? event.content.attachments?.find((a) => a.type === 'image')
+                : undefined
+        if (!content) {
+            return undefined
+        }
+        return content
+    }, [event.content])
+
     return (
         <div className="flex w-full gap-3.5">
             <Avatar className="size-9 shadow" userId={event.sender.id} isBot={isBot} />
@@ -282,6 +294,7 @@ const Message = ({
                             ? event.content.body
                             : ''}
                     </span>
+                    {image && <ImageAttachment image={image} />}
                 </div>
                 <div className="flex items-center gap-1">
                     {reactions && <ReactionRow reactions={reactions} onReact={onReact} />}
@@ -503,5 +516,17 @@ const BotInfo = ({ userId }: { userId: string }) => {
                 <span className="text-xs font-medium text-white">BOT</span>
             </div>
         </div>
+    )
+}
+
+const ImageAttachment = ({ image }: { image: ImageAttachment }) => {
+    return (
+        <img
+            src={image.info.url}
+            className="max-w-md rounded-lg"
+            width={image.info.width}
+            height={image.info.height}
+            loading="lazy"
+        />
     )
 }

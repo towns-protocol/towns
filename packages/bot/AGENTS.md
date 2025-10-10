@@ -108,7 +108,10 @@ Methods available on the `handler` parameter in event callbacks:
   - `opts.threadId`: Send message in a thread
   - `opts.replyId`: Reply to a specific message
   - `opts.mentions`: Array of user mentions
-  - `opts.attachments`: Array of attachments
+  - `opts.attachments`: Array of attachments (see "Sending Attachments" section)
+    - Image from URL: `{ type: 'image', url: string, alt?: string }`
+    - Embedded Blob: `{ type: 'embedded', data: Blob, filename: string, width?: number, height?: number }`
+    - Embedded Uint8Array: `{ type: 'embedded', data: Uint8Array, filename: string, mimetype: string, width?: number, height?: number }`
 - `editMessage(streamId, messageId, message, tags?)` - Edit message
 - `sendReaction(streamId, messageId, reaction, tags?)` - Add reaction
 - `removeEvent(streamId, messageId, tags?)` - Remove event
@@ -249,18 +252,105 @@ bot.onMessage(async (handler, { userId, spaceId, channelId, eventId }) => {
 bot.onSlashCommand("ai", async (handler, { channelId, args }) => {
   // Send temporary status message that won't persist after refresh
   await handler.sendMessage(
-    channelId, 
-    "I'll think about it. This may take a while...", 
+    channelId,
+    "I'll think about it. This may take a while...",
     { ephemeral: true }
   )
-  
+
   // Process the complex task
   const result = await processComplexTask(args)
-  
+
   // Send the actual persistent result
   await handler.sendMessage(channelId, result)
 })
 ```
+
+### Sending Attachments
+
+The bot supports two types of attachments:
+
+#### Image Attachments from URLs
+
+Use `type: 'image'` to send images from URLs. The framework automatically:
+- Fetches and validates the URL
+- Checks Content-Type is `image/*` (non-images are skipped with console warning)
+- Extracts image dimensions using `image-size` library
+- Gracefully handles failures (404, network errors)
+
+```typescript
+bot.onSlashCommand("show", async (handler, { channelId, args }) => {
+  const imageUrl = args[0]
+
+  await handler.sendMessage(channelId, "Here's your image!", {
+    attachments: [
+      {
+        type: 'image',
+        url: imageUrl,
+        alt: 'Description for accessibility' // Optional
+      }
+    ]
+  })
+})
+```
+
+#### Embedded Media Attachments
+
+Use `type: 'embedded'` to send binary data (Blob or Uint8Array):
+
+```typescript
+// With Blob
+bot.onSlashCommand("generate", async (handler, { channelId }) => {
+  const imageBlob = await generateImage()
+
+  await handler.sendMessage(channelId, "Generated image:", {
+    attachments: [{
+      type: 'embedded',
+      data: imageBlob,
+      filename: 'generated.png',
+      width: 512,
+      height: 512
+    }]
+  })
+})
+
+// With Uint8Array
+bot.onSlashCommand("upload", async (handler, { channelId }) => {
+  const imageData = new Uint8Array([...]) // Your image bytes
+
+  await handler.sendMessage(channelId, "Uploaded file:", {
+    attachments: [{
+      type: 'embedded',
+      data: imageData,
+      filename: 'upload.jpg',
+      mimetype: 'image/jpeg', // Required for Uint8Array
+      width: 1024,
+      height: 768
+    }]
+  })
+})
+```
+
+#### Multiple Attachments
+
+Send multiple attachments of mixed types:
+
+```typescript
+bot.onSlashCommand("gallery", async (handler, { channelId }) => {
+  await handler.sendMessage(channelId, "Image gallery:", {
+    attachments: [
+      { type: 'image', url: 'https://example.com/photo1.jpg' },
+      { type: 'image', url: 'https://example.com/photo2.png', alt: 'Sunset' },
+      { type: 'embedded', data: localImageBlob, filename: 'local.jpg' }
+    ]
+  })
+})
+```
+
+**Important Notes:**
+- Invalid/non-image URLs are skipped gracefully (message still sends)
+- Non-image Content-Types trigger console warning and are skipped
+- Image dimensions are auto-detected for URL-based images
+- All attachments are end-to-end encrypted automatically
 
 ### Moderation Operations
 ```typescript

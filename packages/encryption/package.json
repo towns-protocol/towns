@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/encryption",
-    "version": "0.0.365",
+    "version": "0.0.366",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -24,7 +24,7 @@
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",
-        "dexie": "^4.0.7",
+        "dexie": "^4.2.1",
         "ethers": "^5.8.0",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",

@@ -26,6 +26,7 @@ import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
 import { createNanoEvents, type Emitter } from 'nanoevents'
+import imageSize from 'image-size'
 import {
     type ChannelMessage_Post_Attachment,
     type ChannelMessage_Post_Mention,
@@ -44,6 +45,10 @@ import {
     type SlashCommand,
     type SnapshotCaseType,
     type Snapshot,
+    MediaInfoSchema,
+    EmbeddedMediaSchema,
+    ChannelMessage_Post_Content_ImageSchema,
+    ChannelMessage_Post_Content_Image_InfoSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -87,11 +92,35 @@ export type BotPayload<
     Commands extends PlainMessage<SlashCommand>[] = [],
 > = Parameters<BotEvents<Commands>[T]>[1]
 
+type ImageAttachment = {
+    type: 'image'
+    alt?: string
+    url: string
+}
+
+type EmbeddedAttachment =
+    | {
+          type: 'embedded'
+          data: Blob
+          width?: number
+          height?: number
+          filename: string
+      }
+    | {
+          type: 'embedded'
+          data: Uint8Array
+          width?: number
+          height?: number
+          filename: string
+          mimetype: string
+      }
+
 type MessageOpts = {
     threadId?: string
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: PlainMessage<ChannelMessage_Post_Attachment>[]
+    // TODO: chunked attachment
+    attachments?: Array<ImageAttachment | EmbeddedAttachment>
     ephemeral?: boolean
 }
 
@@ -247,6 +276,7 @@ export class Bot<
     async start() {
         await this.client.uploadDeviceKeys()
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+        debug('start')
 
         return {
             jwtMiddleware,
@@ -350,6 +380,11 @@ export class Bot<
                 }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
+                debug('emit:streamEvent', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    eventId: parsed.hashStr,
+                })
                 this.emitter.emit('streamEvent', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     spaceId: spaceIdFromChannelId(streamId),
@@ -384,13 +419,19 @@ export class Bot<
                             }
                             await this.handleChannelMessage(streamId, parsed, channelMessage)
                         } else if (parsed.event.payload.value.content.case === 'redaction') {
+                            const refEventId = bin_toHexString(
+                                parsed.event.payload.value.content.value.eventId,
+                            )
+                            debug('emit:eventRevoke', {
+                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                channelId: streamId,
+                                refEventId,
+                            })
                             this.emitter.emit('eventRevoke', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
-                                refEventId: bin_toHexString(
-                                    parsed.event.payload.value.content.value.eventId,
-                                ),
+                                refEventId,
                                 eventId: parsed.hashStr,
                                 createdAt,
                             })
@@ -416,6 +457,11 @@ export class Bot<
                                     // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                                     if (!isChannel) continue
                                     if (membership.op === MembershipOp.SO_JOIN) {
+                                        debug('emit:channelJoin', {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
                                         this.emitter.emit('channelJoin', this.client, {
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
@@ -425,6 +471,11 @@ export class Bot<
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
+                                        debug('emit:channelLeave', {
+                                            userId: userIdFromAddress(membership.userAddress),
+                                            channelId: streamId,
+                                            eventId: parsed.hashStr,
+                                        })
                                         this.emitter.emit('channelLeave', this.client, {
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
@@ -461,6 +512,16 @@ export class Bot<
                                                         .fromUserAddress
                                                 const senderAddress =
                                                     userIdFromAddress(senderAddressBytes)
+                                                const receiverAddress = userIdFromAddress(
+                                                    transactionContent.value.toUserAddress,
+                                                )
+                                                debug('emit:tip', {
+                                                    senderAddress,
+                                                    receiverAddress,
+                                                    amount: tipEvent.amount.toString(),
+                                                    currency,
+                                                    messageId: bin_toHexString(tipEvent.messageId),
+                                                })
                                                 this.emitter.emit('tip', this.client, {
                                                     userId: senderAddress,
                                                     spaceId: spaceIdFromChannelId(streamId),
@@ -470,9 +531,7 @@ export class Bot<
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress: senderAddress,
-                                                    receiverAddress: userIdFromAddress(
-                                                        transactionContent.value.toUserAddress,
-                                                    ),
+                                                    receiverAddress,
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                             }
@@ -557,12 +616,19 @@ export class Bot<
                             })
                         }
                     } else {
+                        debug('emit:message', forwardPayload)
                         this.emitter.emit('message', this.client, forwardPayload)
                     }
                 }
                 break
             }
             case 'reaction': {
+                debug('emit:reaction', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    reaction: payload.value.reaction,
+                    messageId: payload.value.refEventId,
+                })
                 this.emitter.emit('reaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -579,6 +645,13 @@ export class Bot<
                 if (payload.value.post?.content.case !== 'text') break
                 const mentions = parseMentions(payload.value.post?.content.value.mentions)
                 const isMentioned = mentions.some((m) => m.userId === this.botId)
+                debug('emit:messageEdit', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                    messagePreview: payload.value.post?.content.value.body.substring(0, 50),
+                    isMentioned,
+                })
                 this.emitter.emit('messageEdit', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -595,6 +668,11 @@ export class Bot<
                 break
             }
             case 'redaction': {
+                debug('emit:redaction', {
+                    userId: userIdFromAddress(parsed.event.creatorAddress),
+                    channelId: streamId,
+                    refEventId: payload.value.refEventId,
+                })
                 this.emitter.emit('redaction', this.client, {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
@@ -831,6 +909,89 @@ export const makeTownsBot = async <
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
+    const createEmbeddedMediaAttachment = async (
+        attachment: EmbeddedAttachment,
+    ): Promise<PlainMessage<ChannelMessage_Post_Attachment>> => {
+        let data: Uint8Array = new Uint8Array()
+        let mimetype: string = 'application/octet-stream'
+        let filename: string = 'file'
+        if (
+            attachment.data instanceof Uint8Array &&
+            'mimetype' in attachment &&
+            'filename' in attachment
+        ) {
+            data = attachment.data
+            mimetype = attachment.mimetype
+            filename = attachment.filename
+        } else if (attachment.data instanceof Blob && 'filename' in attachment) {
+            data = new Uint8Array(await attachment.data.arrayBuffer())
+            mimetype = attachment.data.type
+            filename = attachment.filename
+        }
+
+        const width = attachment.width || 0
+        const height = attachment.height || 0
+        const embeddedMedia = create(EmbeddedMediaSchema, {
+            info: create(MediaInfoSchema, {
+                filename,
+                mimetype,
+                widthPixels: width,
+                heightPixels: height,
+                sizeBytes: BigInt(data.length),
+            }),
+            content: data,
+        })
+
+        return {
+            content: {
+                case: 'embeddedMedia',
+                value: embeddedMedia,
+            },
+        }
+    }
+
+    const createImageAttachmentFromURL = async (
+        attachment: ImageAttachment,
+    ): Promise<PlainMessage<ChannelMessage_Post_Attachment> | null> => {
+        try {
+            const response = await fetch(attachment.url)
+            if (!response.ok) {
+                return null
+            }
+            const contentType = response.headers.get('content-type')
+            if (!contentType || !contentType.startsWith('image/')) {
+                // eslint-disable-next-line no-console
+                console.warn(
+                    `A non-image URL attachment was provided. ${attachment.url} (Content-Type: ${contentType || 'unknown'})`,
+                )
+                return null
+            }
+            const arrayBuffer = await response.arrayBuffer()
+            const buffer = Buffer.from(arrayBuffer)
+            const dimensions = imageSize(buffer)
+            const width = dimensions.width || 0
+            const height = dimensions.height || 0
+            const image = create(ChannelMessage_Post_Content_ImageSchema, {
+                title: attachment.alt || '',
+                info: create(ChannelMessage_Post_Content_Image_InfoSchema, {
+                    url: attachment.url,
+                    mimetype: contentType,
+                    width,
+                    height,
+                }),
+            })
+
+            return {
+                content: {
+                    case: 'image',
+                    value: image,
+                },
+            }
+        } catch {
+            return null
+        }
+    }
+
     const sendMessageEvent = async ({
         streamId,
         payload,
@@ -900,6 +1061,26 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
+        const processedAttachments: Array<PlainMessage<ChannelMessage_Post_Attachment> | null> = []
+        if (opts?.attachments && opts.attachments.length > 0) {
+            for (const attachment of opts.attachments) {
+                switch (attachment.type) {
+                    case 'image': {
+                        const result = await createImageAttachmentFromURL(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'embedded': {
+                        const result = await createEmbeddedMediaAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    default:
+                        logNever(attachment)
+                }
+            }
+        }
+
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'post',
@@ -912,7 +1093,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                         case: 'text',
                         value: {
                             body: message,
-                            attachments: opts?.attachments || [],
+                            attachments: processedAttachments.filter((x) => x !== null),
                             mentions: opts?.mentions || [],
                         },
                     },
