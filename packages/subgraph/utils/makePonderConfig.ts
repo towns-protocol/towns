@@ -92,6 +92,7 @@ export function makePonderConfig(
                 rpc: baseChain.rpc,
                 disableCache: baseChain.disableCache,
                 pollingInterval: baseChain.pollingInterval,
+                maxBlockRange: 5000,
                 ws: baseChain.ws,
             },
         },
@@ -108,12 +109,14 @@ export function makePonderConfig(
                 address: baseRegistry,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             SpaceFactory: {
                 abi: mergeAbis([createSpaceFacetAbi, tokenPausableFacetAbi, swapFacetAbi]),
                 address: spaceFactory,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             Space: {
                 abi: mergeAbis([
@@ -133,12 +136,14 @@ export function makePonderConfig(
                 }),
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             SpaceOwner: {
                 abi: spaceOwnerAbi,
                 address: spaceOwner,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             SubscriptionModule: {
                 abi: SubscriptionModuleFacetAbi,
@@ -146,24 +151,28 @@ export function makePonderConfig(
                 // this can be set to much later than the start block, let's figure this out for all newer contracts like swap etc
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             SwapRouter: {
                 abi: swapRouterAbi,
                 address: swapRouter,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             RiverAirdrop: {
                 abi: mergeAbis([rewardsDistributionV2Abi]),
                 address: riverAirdrop,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
             AppRegistry: {
                 abi: iAppRegistryAbi,
                 address: appRegistry,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
+                maxBlockRange: 5000,
             },
         },
     } satisfies Parameters<typeof createConfig>[0]

@@ -43,7 +43,7 @@ type Query {
   subscriptions(where: subscriptionFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): subscriptionPage!
   subscriptionFailure(account: String!, entityId: Float!, timestamp: BigInt!): subscriptionFailure
   subscriptionFailures(where: subscriptionFailureFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): subscriptionFailurePage!
-  tipLeaderboard(user: String!): tipLeaderboard
+  tipLeaderboard(user: String!, spaceId: String!): tipLeaderboard
   tipLeaderboards(where: tipLeaderboardFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): tipLeaderboardPage!
   _meta: Meta
 }
@@ -1186,6 +1186,7 @@ input appFilter {
 
 type tipLeaderboard {
   user: String!
+  spaceId: String!
   totalSent: BigInt
   tipsSentCount: Int
   lastActivity: BigInt!
@@ -1210,6 +1211,16 @@ input tipLeaderboardFilter {
   user_ends_with: String
   user_not_starts_with: String
   user_not_ends_with: String
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
   totalSent: BigInt
   totalSent_not: BigInt
   totalSent_in: [BigInt]
