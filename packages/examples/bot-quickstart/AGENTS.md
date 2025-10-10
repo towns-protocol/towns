@@ -494,11 +494,11 @@ await handler.sendMessage(
       userId: string,
       displayName: string
     }>,
-    attachments?: Array<{   // Add attachments
-      name: string,
-      mimeType: string,
-      data: Uint8Array
-    }>
+    attachments?: Array<    // Add attachments (see Sending Attachments section)
+      | { type: 'image', url: string, alt?: string }
+      | { type: 'embedded', data: Blob, filename: string, width?: number, height?: number }
+      | { type: 'embedded', data: Uint8Array, filename: string, mimetype: string, width?: number, height?: number }
+    >
   }
 )
 
@@ -515,6 +515,134 @@ await handler.sendReaction(
   messageId: string,       // Message to react to
   reaction: string         // Emoji
 )
+```
+
+## Sending Attachments
+
+The bot framework supports two types of attachments with automatic validation and encryption.
+
+### Image Attachments from URLs
+
+Send images by URL with automatic validation and dimension detection:
+
+```typescript
+bot.onSlashCommand("showcase", async (handler, event) => {
+  await handler.sendMessage(event.channelId, "Product showcase:", {
+    attachments: [{
+      type: 'image',
+      url: 'https://example.com/product.jpg',
+      alt: 'Our flagship product in vibrant colors'
+    }]
+  })
+})
+```
+
+### Embedded Media Attachments
+
+Send binary data directly (Blob or Uint8Array):
+
+```typescript
+// AI Image Generator Bot
+bot.onSlashCommand("generate", async (handler, event) => {
+  const prompt = event.args.join(" ")
+
+  // Send loading message
+  await handler.sendMessage(event.channelId, "Generating image...", {
+    ephemeral: true
+  })
+
+  // Generate image (returns Blob)
+  const imageBlob = await generateImageFromPrompt(prompt)
+
+  // Send generated image
+  await handler.sendMessage(event.channelId, `Generated: "${prompt}"`, {
+    attachments: [{
+      type: 'embedded',
+      data: imageBlob,
+      filename: 'generated.png',
+      width: 512,
+      height: 512
+    }]
+  })
+})
+
+// File Upload Bot (with Uint8Array)
+bot.onSlashCommand("upload", async (handler, event) => {
+  const fileData = await fetchFileAsUint8Array(event.args[0])
+
+  await handler.sendMessage(event.channelId, "Uploaded file:", {
+    attachments: [{
+      type: 'embedded',
+      data: fileData,
+      filename: 'document.pdf',
+      mimetype: 'application/pdf',  // Required for Uint8Array
+      width: 0,
+      height: 0
+    }]
+  })
+})
+```
+
+### Multiple Attachments
+
+Send multiple attachments of mixed types:
+
+```typescript
+// GIF Search Bot
+bot.onSlashCommand("gif", async (handler, event) => {
+  const query = event.args.join(" ")
+  const gifUrls = await searchGifs(query)
+
+  await handler.sendMessage(event.channelId, `Results for "${query}":`, {
+    attachments: gifUrls.slice(0, 5).map(url => ({
+      type: 'image',
+      url,
+      alt: `GIF result for ${query}`
+    }))
+  })
+})
+
+// Mixed Media Bot
+bot.onSlashCommand("gallery", async (handler, event) => {
+  const localImage = await generateThumbnail()
+
+  await handler.sendMessage(event.channelId, "Gallery:", {
+    attachments: [
+      { type: 'image', url: 'https://example.com/photo1.jpg' },
+      { type: 'image', url: 'https://example.com/photo2.png', alt: 'Sunset' },
+      { type: 'embedded', data: localImage, filename: 'thumbnail.jpg' }
+    ]
+  })
+})
+```
+
+### Real-World Examples
+
+**Weather Bot with Maps:**
+```typescript
+bot.onSlashCommand("weather", async (handler, event) => {
+  const location = event.args.join(" ")
+  const weatherData = await getWeatherData(location)
+
+  await handler.sendMessage(
+    event.channelId,
+    `Weather in ${location}: ${weatherData.temp}°F, ${weatherData.conditions}`,
+    {
+      attachments: [{
+        type: 'image',
+        url: weatherData.radarMapUrl,
+        alt: `Radar map for ${location}`
+      }]
+    }
+  )
+})
+```
+
+### Important Notes
+
+- Invalid URLs (404, network errors) are gracefully skipped - message still sends
+- URL images are fetched synchronously during `sendMessage`
+- Multiple URL attachments are processed sequentially
 ```
 
 ### Message Deletion (Redaction)

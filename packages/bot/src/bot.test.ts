@@ -773,4 +773,178 @@ describe('Bot', { sequential: true }, () => {
         expect(apps.has(botClientAddress)).toBe(false)
         expect(joined.has(botClientAddress)).toBe(false)
     })
+
+    it('should send message with image attachment from URL with alt text', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const imageUrl = 'https://placehold.co/800x600.png'
+        const altText = 'A beautiful placeholder image'
+
+        const { eventId } = await bot.sendMessage(channelId, 'Image with alt text', {
+            attachments: [{ type: 'image', url: imageUrl, alt: altText }],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+        expect(attachments).toHaveLength(1)
+        expect(attachments?.[0].type).toBe('image')
+        const image = attachments?.[0].type === 'image' ? attachments?.[0] : undefined
+        expect(image).toBeDefined()
+        expect(image?.info.url).toBe(imageUrl)
+    })
+
+    it('should gracefully handle non-image URL (skip with warning)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        // Use a URL that returns non-image content type
+        const nonImageUrl = 'https://httpbin.org/json'
+        const { eventId } = await bot.sendMessage(channelId, 'This should skip the attachment', {
+            attachments: [{ type: 'image', url: nonImageUrl }],
+        })
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        // Message should still be sent, just without the attachment
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+        expect(attachments).toHaveLength(0)
+    })
+
+    it('should gracefully handle invalid URL (404)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        // Use a URL that returns 404
+        const invalidUrl = 'https://httpbin.org/status/404'
+
+        const { eventId } = await bot.sendMessage(channelId, 'This should handle 404 gracefully', {
+            attachments: [{ type: 'image', url: invalidUrl }],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        // Message should still be sent, just without the attachment
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+    })
+
+    it('should send message with embedded media using Blob', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const blob = new Blob(['test data'], { type: 'image/png' })
+        const { eventId } = await bot.sendMessage(channelId, 'Message with blob attachment', {
+            attachments: [
+                {
+                    type: 'embedded',
+                    data: blob,
+                    filename: 'test.png',
+                    width: 100,
+                    height: 100,
+                },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+        const attachment = attachments?.[0].type === 'embedded_media' ? attachments?.[0] : undefined
+        expect(attachment).toBeDefined()
+        expect(attachment?.info.mimetype).toBe('image/png')
+        expect(attachment?.content).toEqual(new Uint8Array([137, 80, 78, 71]))
+        expect(attachment?.info.widthPixels).toBe(100)
+        expect(attachment?.info.heightPixels).toBe(100)
+        expect(attachment?.info.filename).toBe('test.png')
+    })
+
+    it('should send message with embedded media using Uint8Array', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const data = new Uint8Array([137, 80, 78, 71])
+        const { eventId } = await bot.sendMessage(channelId, 'Message with Uint8Array attachment', {
+            attachments: [
+                {
+                    type: 'embedded',
+                    data,
+                    filename: 'image.png',
+                    mimetype: 'image/png',
+                    width: 200,
+                    height: 200,
+                },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+        const attachment = attachments?.[0].type === 'embedded_media' ? attachments?.[0] : undefined
+        expect(attachment).toBeDefined()
+        expect(attachment?.info.mimetype).toBe('image/png')
+        expect(attachment?.content).toEqual(data)
+        expect(attachment?.info.widthPixels).toBe(200)
+        expect(attachment?.info.heightPixels).toBe(200)
+        expect(attachment?.info.filename).toBe('image.png')
+    })
+
+    it('should send message with multiple mixed attachments', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const imageUrl = 'https://placehold.co/300x200.png'
+        const blob = new Blob(['test'], { type: 'image/jpeg' })
+
+        const { eventId } = await bot.sendMessage(channelId, 'Multiple attachments test', {
+            attachments: [
+                { type: 'image', url: imageUrl },
+                { type: 'embedded', data: blob, filename: 'test.jpg', width: 50, height: 50 },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+        expect(attachments?.[0].type).toBe('image')
+        expect(attachments?.[1].type).toBe('embedded')
+        expect(attachments).toHaveLength(2)
+    })
 })
