@@ -1,7 +1,6 @@
 package events
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -684,9 +683,6 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 	}
 	tc.addReplEvent(streamId, prevMb, nodesWithStream)
 
-	recStorage := &recordingStreamStorage{StreamStorage: tc.instances[2].params.Storage}
-	tc.instances[2].params.Storage = recStorage
-
 	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	inst := tc.instances[2]
 
@@ -705,15 +701,12 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 
 	require.True(reconciler.stats.backwardCalled)
 
-	expectedStart := record.LastMbNum() - int64(historyWindow)
-	if expectedStart < 0 {
-		expectedStart = 0
+	desiredStart := int64(record.LastMbNum()) - int64(historyWindow)
+	if desiredStart < 0 {
+		desiredStart = 0
 	}
 
-	recStorage.mu.Lock()
-	recorded := append([]int64(nil), recStorage.recorded...)
-	recStorage.mu.Unlock()
-
-	require.NotEmpty(recorded)
-	require.Equal(expectedStart, recorded[0])
+	require.NotEmpty(reconciler.presentRanges)
+	expectedStart := findClosestSnapshotMiniblock(reconciler.presentRanges, desiredStart)
+	require.Equal(expectedStart, reconciler.localStartMbInclusive)
 }
