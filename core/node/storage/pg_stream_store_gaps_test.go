@@ -37,7 +37,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 
 	t.Run("EmptyStream", func(t *testing.T) {
 		nonExistentStreamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		ranges, err := store.GetMiniblockNumberRanges(ctx, nonExistentStreamId, 0, 0)
+		ranges, err := store.GetMiniblockNumberRanges(ctx, nonExistentStreamId)
 		require.Error(err)
 		require.True(IsRiverErrorCode(err, Err_NOT_FOUND))
 		require.Nil(ranges)
@@ -77,20 +77,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 			require.NoError(err)
 		}
 
-		latest, err := store.GetLastMiniblockNumber(ctx, streamId)
-		require.NoError(err)
-		require.EqualValues(5, latest)
-
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{rangeWithSnapshots(0, 5, 0)}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(1))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{rangeWithSnapshots(0, 5, 0)}, ranges)
-
-		futureLatest := latest + 5
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, futureLatest, 0)
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{rangeWithSnapshots(0, 5, 0)}, ranges)
 	})
@@ -150,20 +137,15 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		)
 		require.NoError(err)
 
-		latest, err := store.GetLastMiniblockNumber(ctx, streamId)
-		require.NoError(err)
-		require.EqualValues(4, latest)
-
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{rangeWithSnapshots(0, 4)}, ranges)
 		require.Nil(ranges[0].SnapshotSeqNums)
 	})
 
-	// History window reaches back before the first snapshot, so the anchor should fall
-	// back to the earliest miniblock in the stream (seq_num = MIN) even though none of
-	// the leading miniblocks have snapshot payloads.
-	t.Run("HistoryWindowAnchorsAtMinWithoutSnapshots", func(t *testing.T) {
+	// Leading miniblocks without snapshots should still appear in the first range, with only
+	// the later snapshot-bearing miniblocks listed in SnapshotSeqNums.
+	t.Run("LeadingMiniblocksWithoutSnapshots", func(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		err := store.ReinitializeStreamStorage(
@@ -196,17 +178,9 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		)
 		require.NoError(err)
 
-		latest, err := store.GetLastMiniblockNumber(ctx, streamId)
-		require.NoError(err)
-		require.EqualValues(6, latest)
-
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(20))
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{rangeWithSnapshots(0, 6, 4)}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(1))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{rangeWithSnapshots(4, 6, 4)}, ranges)
 	})
 
 	// Mixed history: two ranges separated by gaps, including multiple snapshots in the tail.
@@ -220,7 +194,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 				{Number: 5, Hash: common.HexToHash("0x05"), Data: []byte("miniblock5"), Snapshot: nil},
 				{Number: 6, Hash: common.HexToHash("0x06"), Data: []byte("miniblock6"), Snapshot: nil},
 				{Number: 7, Hash: common.HexToHash("0x07"), Data: []byte("miniblock7"), Snapshot: []byte("snapshot7")},
-				{Number: 8, Hash: common.HexToHash("0x08"), Data: []byte("miniblock8"), Snapshot: []byte("snapshot8")},
+				{Number: 8, Hash: common.HexToHash("0x08"), Data: []byte("miniblock8"), Snapshot: nil},
 				{Number: 9, Hash: common.HexToHash("0x09"), Data: []byte("miniblock9"), Snapshot: nil},
 				{Number: 10, Hash: common.HexToHash("0x10"), Data: []byte("miniblock10"), Snapshot: nil},
 			},
@@ -244,24 +218,11 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.NoError(err)
 		require.EqualValues(10, latest)
 
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{
 			rangeWithSnapshots(0, 2, 0),
-			rangeWithSnapshots(5, 10, 7, 8),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(3))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
-			rangeWithSnapshots(7, 10, 7, 8),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(6))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
-			rangeWithSnapshots(0, 2, 0),
-			rangeWithSnapshots(5, 10, 7, 8),
+			rangeWithSnapshots(5, 10, 7),
 		}, ranges)
 
 		err = store.ReinitializeStreamStorage(
@@ -284,17 +245,11 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.NoError(err)
 		require.EqualValues(15, latest)
 
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{
 			rangeWithSnapshots(0, 2, 0),
-			rangeWithSnapshots(5, 10, 7, 8),
-			rangeWithSnapshots(15, 15, 15),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, 0)
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
+			rangeWithSnapshots(5, 10, 7),
 			rangeWithSnapshots(15, 15, 15),
 		}, ranges)
 	})
@@ -325,19 +280,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.NoError(err)
 		require.EqualValues(102, latest)
 
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(2))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
-			rangeWithSnapshots(100, 102, 100),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, 0)
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
-			rangeWithSnapshots(100, 102, 100),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, 50, 0)
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{
 			rangeWithSnapshots(100, 102, 100),
@@ -400,24 +343,11 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 		require.NoError(err)
 		require.EqualValues(2000, latest)
 
-		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(err)
 		require.Equal([]MiniblockRange{
 			rangeWithSnapshots(0, 0, 0),
 			rangeWithSnapshots(1000, 1002, 1000, 1002),
-			rangeWithSnapshots(2000, 2000, 2000),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(500))
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
-			rangeWithSnapshots(1002, 1002, 1002),
-			rangeWithSnapshots(2000, 2000, 2000),
-		}, ranges)
-
-		ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, 0)
-		require.NoError(err)
-		require.Equal([]MiniblockRange{
 			rangeWithSnapshots(2000, 2000, 2000),
 		}, ranges)
 	})
@@ -452,7 +382,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	require.NoError(err)
 	require.EqualValues(15, latest)
 
-	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(5))
+	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 	require.NoError(err)
 	require.Equal([]MiniblockRange{
 		rangeWithSnapshots(10, 15, 10),
@@ -473,7 +403,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	latest, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
 
-	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId)
 	require.NoError(err)
 	require.Equal([]MiniblockRange{
 		rangeWithSnapshots(5, 7),
@@ -495,25 +425,6 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 	latest, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
 
-	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
-	require.NoError(err)
-	require.Equal([]MiniblockRange{
-		rangeWithSnapshots(0, 2, 0),
-		rangeWithSnapshots(5, 7),
-		rangeWithSnapshots(10, 15, 10),
-	}, ranges)
-
-	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(5))
-	require.NoError(err)
-	require.Equal([]MiniblockRange{
-		rangeWithSnapshots(10, 15, 10),
-	}, ranges)
-
-	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(1))
-	require.NoError(err)
-	require.Equal([]MiniblockRange{
-		rangeWithSnapshots(10, 15, 10),
-	}, ranges)
 }
 
 func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
@@ -576,7 +487,7 @@ func TestGetMiniblockNumberRangesPerformance(t *testing.T) {
 	require.EqualValues(8999, latest)
 
 	start := time.Now()
-	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId, latest, uint64(latest))
+	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 	elapsed := time.Since(start)
 
 	require.NoError(err)

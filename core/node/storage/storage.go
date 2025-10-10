@@ -259,24 +259,16 @@ type (
 			miniblocks []*MiniblockDescriptor,
 		) error
 
-		// GetMiniblockNumberRanges enumerates contiguous miniblock spans in storage, anchoring at
-		// the nearest snapshot on or before (expectedLatestMiniblock - historyWindow). For example,
-		// if expectedLatestMiniblock = 10, historyWindow = 5, and the closest snapshot at or below 5 is 3,
-		// the scan begins at miniblock 3. Each span reports inclusive bounds plus the miniblock numbers
-		// whose snapshot column is still populated.
-		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		// GetMiniblockNumberRanges enumerates every contiguous span of stored miniblock numbers for the
+		// stream. Each span reports its inclusive bounds and the miniblock numbers whose snapshot column
+		// is currently populated.
 		//
-		// Example of ranges: If the stream has miniblocks [0,1,2,5,6,7,10] and expectedLatestMiniblock=10
-		// and historyWindow = 0 (ignore history), the result would be: [{0,2}, {5,7}, {10,10}].
-		// Additionally, it contains a list of miniblocks with snapshots.
-		//
-		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
-		GetMiniblockNumberRanges(
-			ctx context.Context,
-			streamId StreamId,
-			expectedLatestMiniblock int64,
-			historyWindow uint64,
-		) ([]MiniblockRange, error)
+		// For example, if the stream holds miniblocks {0,1,2,5,6,7,10} with snapshots
+		// at 0 and 7, the result is [{StartInclusive:0, EndInclusive:2, SnapshotSeqNums:[0]},
+		// {StartInclusive:5, EndInclusive:7, SnapshotSeqNums:[7]}, {StartInclusive:10, EndInclusive:10}].
+		// The helper returns an empty slice when no miniblocks exist, and callers can use the spans to detect
+		// gaps or plan trimming work.
+		GetMiniblockNumberRanges(ctx context.Context, streamId StreamId) ([]MiniblockRange, error)
 
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)

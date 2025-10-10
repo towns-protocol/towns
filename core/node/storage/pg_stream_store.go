@@ -2566,15 +2566,12 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	return lowestMiniblock, err
 }
 
-// GetMiniblockNumberRanges returns every contiguous span of stored miniblocks for the stream,
-// anchoring the scan at the nearest snapshot at or below (expectedLatestMiniblock - historyWindow).
+// GetMiniblockNumberRanges returns every contiguous span of stored miniblocks for the stream.
 // Each span also lists the miniblock numbers whose snapshot column is non-null so callers can
 // make trimming or backfill decisions with the snapshot context baked in.
 func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 	ctx context.Context,
 	streamId StreamId,
-	expectedLatestMiniblock int64,
-	historyWindow uint64,
 ) ([]MiniblockRange, error) {
 	var ranges []MiniblockRange
 	err := s.txRunner(
@@ -2583,13 +2580,11 @@ func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, expectedLatestMiniblock, historyWindow)
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
-		"expectedLatestMiniblock", expectedLatestMiniblock,
-		"historyWindow", historyWindow,
 	)
 	if err != nil {
 		return nil, err
@@ -2601,51 +2596,28 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	expectedLatestMiniblock int64,
-	historyWindow uint64,
 ) ([]MiniblockRange, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
-	startMiniblock := expectedLatestMiniblock - int64(historyWindow)
-	if startMiniblock < 0 {
-		startMiniblock = 0
-	}
-
 	query := s.sqlForStream(`
-		WITH anchor AS (
-			SELECT COALESCE(
-			    (
-					SELECT seq_num
-					FROM {{miniblocks}}
-					WHERE stream_id = $1
-				    	AND snapshot IS NOT NULL
-				  		AND seq_num <= $2
-					ORDER BY seq_num DESC
-					LIMIT 1
-				), (
-					SELECT MIN(seq_num)
-					FROM {{miniblocks}}
-					WHERE stream_id = $1
-				)
-		    ) AS start_seq
-		),
-		numbered AS (
-			SELECT m.seq_num,
-				   (m.snapshot IS NOT NULL) AS has_snapshot,
-				   m.seq_num - ROW_NUMBER() OVER (ORDER BY m.seq_num) AS grp
-			FROM {{miniblocks}} m, anchor
-			WHERE m.stream_id = $1 AND m.seq_num >= anchor.start_seq
-		)
-		SELECT MIN(seq_num) AS start_inclusive,
-			   MAX(seq_num) AS end_inclusive,
-			   ARRAY_AGG(seq_num ORDER BY seq_num) FILTER (WHERE has_snapshot) AS snapshot_seq_nums
-		FROM numbered
+		SELECT
+			MIN(seq_num) AS start_range,
+			MAX(seq_num) AS end_range,
+			ARRAY_AGG(seq_num ORDER BY seq_num) FILTER (WHERE has_snapshot) AS snapshot_seq_nums
+		FROM (
+			SELECT
+				seq_num,
+				(snapshot IS NOT NULL) AS has_snapshot,
+				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
+			FROM {{miniblocks}}
+			WHERE stream_id = $1
+		) AS sub
 		GROUP BY grp
-		ORDER BY start_inclusive`, streamId)
+		ORDER BY start_range`, streamId)
 
-	rows, err := tx.Query(ctx, query, streamId, startMiniblock)
+	rows, err := tx.Query(ctx, query, streamId)
 	if err != nil {
 		return nil, err
 	}

@@ -15,32 +15,6 @@ import (
 
 const defaultGetMiniblocksPageSize = 128
 
-// streamReconciler tracks state for a single stream reconciliation attempt.
-type streamReconciler struct {
-	ctx          context.Context
-	cache        *StreamCache
-	stream       *Stream
-	streamRecord *river.StreamWithId
-
-	// expectedLastMbInclusive is last expected miniblock number to be reconciled.
-	expectedLastMbInclusive int64
-
-	// remotes is the list of remotes to use for reconciliation.
-	remotes remoteTracker
-
-	// localLastMbNumInclusive is the last miniblock number in the local database. -1 if not found.
-	localLastMbInclusive int64
-
-	// localStartMbInclusive is the start miniblock number to reconcile. Computed from trim settings based on the stream type.
-	localStartMbInclusive int64
-
-	// notFound is true if local storage returned Err_NOT_FOUND for the stream.
-	notFound bool
-
-	// stats to inspect by tests
-	stats streamReconcilerStats
-}
-
 type streamReconcilerStats struct {
 	forwardCalled            bool
 	backwardCalled           bool
@@ -54,6 +28,34 @@ type streamReconcilerStats struct {
 	reinitializeAttempted    int
 	reinitializeSucceeded    int
 	reinitializeMbsSucceeded int
+}
+
+// streamReconciler tracks state for a single stream reconciliation attempt.
+type streamReconciler struct {
+	ctx          context.Context
+	cache        *StreamCache
+	stream       *Stream
+	streamRecord *river.StreamWithId
+
+	// remotes is the list of remotes to use for reconciliation.
+	remotes remoteTracker
+
+	// expectedLastMbInclusive is last expected miniblock number to be reconciled.
+	expectedLastMbInclusive int64
+
+	// localLastMbNumInclusive is the last miniblock number in the local database. -1 if not found.
+	localLastMbInclusive int64
+
+	// localStartMbInclusive is the start miniblock number to reconcile.
+	// Computed from trim settings based on the stream type.
+	// The given miniblock must contain a snapshot.
+	localStartMbInclusive int64
+
+	// notFound is true if the given stream is not found in the local database.
+	notFound bool
+
+	// stats to inspect by tests
+	stats streamReconcilerStats
 }
 
 func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river.StreamWithId) *streamReconciler {
@@ -107,26 +109,27 @@ func (sr *streamReconciler) reconcile() error {
 	{
 		historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
 
-		presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
-			sr.ctx,
-			sr.stream.streamId,
-			sr.expectedLastMbInclusive,
-			historyWindow,
-		)
+		miniblockRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(sr.ctx, sr.stream.streamId)
 		if err != nil {
 			return err
 		}
 
+		if len(miniblockRanges) == 0 {
+			// TODO: stream is not present or has 0 miniblocks -> import from genesis
+			sr.notFound = true
+			sr.localLastMbInclusive = -1
+		}
+
+		if miniblockRanges[len(miniblockRanges)-1].EndInclusive >= sr.expectedLastMbInclusive {
+			// TODO: Stream is up to date with the expected last miniblock, but it's possible that there are gaps in the middle.
+		}
+
 		// TODO:
+		//  0. Calculate the lowest miniblock number to reconcile based on the history window and given set of ranges.
 		//  1. if len(presentRanges) > 1, there are gaps -> fill gaps
 		//  2. if presentRanges[len(presentRanges)-1].EndInclusive >= sr.expectedLastMbInclusive -> no reconciliation required, just fill gaps if relevant
 		//  3. if presentRanges[0].StartInclusive > 0 -> delete all miniblocks with number < presentRanges[0].StartInclusive
 		//  4. After backfilling gaps, reconciliation, and trimming history check if snapshot trimming is required by using utils.DetermineStreamSnapshotsToNullify function.
-
-		if presentRanges[len(presentRanges)-1].EndInclusive >= sr.expectedLastMbInclusive {
-			// No reconciliation required, just fill gaps if relevant
-			return nil
-		}
 
 		// Reconciliation here stars.
 		// ...
