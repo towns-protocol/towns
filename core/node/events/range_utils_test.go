@@ -206,6 +206,73 @@ func TestCalculateMissingRanges(t *testing.T) {
 	}
 }
 
+func TestFindClosestSnapshotMiniblock(t *testing.T) {
+	tests := []struct {
+		name          string
+		presentRanges []storage.MiniblockRange
+		start         int64
+		expected      int64
+	}{
+		{
+			name: "exact snapshot match",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{3, 7, 10}},
+			},
+			start:    10,
+			expected: 10,
+		},
+		{
+			name: "nearest lower snapshot across ranges",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 5, SnapshotSeqNums: []int64{0, 2, 5}},
+				{StartInclusive: 10, EndInclusive: 20, SnapshotSeqNums: []int64{12, 16, 20}},
+			},
+			start:    18,
+			expected: 16,
+		},
+		{
+			name: "start before any snapshot",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 5, EndInclusive: 10, SnapshotSeqNums: []int64{5, 8}},
+			},
+			start:    3,
+			expected: 3,
+		},
+		{
+			name: "no snapshots available",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 5},
+				{StartInclusive: 10, EndInclusive: 15},
+			},
+			start:    12,
+			expected: 12,
+		},
+		{
+			name: "snapshots outside range are ignored",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 10, EndInclusive: 20, SnapshotSeqNums: []int64{25, 30}},
+			},
+			start:    15,
+			expected: 15,
+		},
+		{
+			name: "duplicate snapshot values",
+			presentRanges: []storage.MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{4, 4, 1}},
+			},
+			start:    9,
+			expected: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := findClosestSnapshotMiniblock(tt.presentRanges, tt.start)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestCalculateMissingRangesEdgeCases(t *testing.T) {
 	t.Run("empty present ranges with large range", func(t *testing.T) {
 		result := calculateMissingRanges([]storage.MiniblockRange{}, 0, 1000000)

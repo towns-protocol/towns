@@ -1,6 +1,7 @@
 package events
 
 import (
+	"math"
 	"slices"
 
 	"github.com/towns-protocol/towns/core/node/storage"
@@ -111,4 +112,36 @@ func calculateMissingRanges(
 	}
 
 	return missingRanges
+}
+
+// findClosestSnapshotMiniblock returns the closest snapshot miniblock value that is
+// <= startMbInclusive. If no such snapshot exists, it returns startMbInclusive itself.
+func findClosestSnapshotMiniblock(
+	presentRanges []storage.MiniblockRange,
+	startMbInclusive int64,
+) int64 {
+	best := startMbInclusive
+	bestDiff := int64(math.MaxInt64)
+	found := false
+
+	for _, r := range presentRanges {
+		for _, n := range r.SnapshotSeqNums {
+			// Defensive bounds check
+			if n < r.StartInclusive || n > r.EndInclusive {
+				continue
+			}
+			// Only consider snapshots <= target
+			if n <= startMbInclusive {
+				diff := startMbInclusive - n
+				// Prefer smallest positive diff, and if tied, larger n
+				if !found || diff < bestDiff || (diff == bestDiff && n > best) {
+					best = n
+					bestDiff = diff
+					found = true
+				}
+			}
+		}
+	}
+
+	return best
 }

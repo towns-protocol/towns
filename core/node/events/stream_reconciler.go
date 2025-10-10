@@ -63,15 +63,52 @@ type streamReconciler struct {
 	stats streamReconcilerStats
 }
 
-func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river.StreamWithId) *streamReconciler {
+func newStreamReconciler(
+	cache *StreamCache,
+	stream *Stream,
+	streamRecord *river.StreamWithId,
+) *streamReconciler {
 	return &streamReconciler{
-		cache:        cache,
-		stream:       stream,
-		streamRecord: streamRecord,
+		cache:                   cache,
+		stream:                  stream,
+		streamRecord:            streamRecord,
+		expectedLastMbInclusive: streamRecord.LastMbNum(),
 	}
 }
 
+func (sr *streamReconciler) reconcileAndTrim() error {
+	err := sr.reconcile()
+	if err != nil {
+		return err
+	}
+
+	return sr.trim()
+}
+
+func (sr *streamReconciler) trim() error {
+	var cancel context.CancelFunc
+	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
+	defer cancel()
+
+	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
+	// such as backward/forwards reconciliation, gaps filling.
+	err := sr.loadRanges()
+	if err != nil {
+		return err
+	}
+
+	// History trimming
+	if sr.localStartMbInclusive > 0 {
+		// TODO: Delete miniblocks with numbers < localStartMbInclusive.
+	}
+
+	// TODO: Snapshot trimming
+
+	return nil
+}
+
 // reconcile runs single stream reconciliation attempt.
+// TODO: instead of re-loading ranges in the end, modify them during reconciliation process without querying DB.
 func (sr *streamReconciler) reconcile() error {
 	var cancel context.CancelFunc
 	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
@@ -85,9 +122,6 @@ func (sr *streamReconciler) reconcile() error {
 			sr.streamRecord.IsSealed(),
 		)
 	}
-
-	sr.expectedLastMbInclusive = sr.streamRecord.LastMbNum()
-	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 
 	sr.stream.mu.RLock()
 	nonReplicatedStream := len(sr.stream.nodesLocked.GetQuorumNodes()) == 1
@@ -106,35 +140,16 @@ func (sr *streamReconciler) reconcile() error {
 	// for non-replicated streams. In that case fetch the latest block number from the remote.
 	if nonReplicatedStream {
 		_ = sr.remotes.execute(sr.setExpectedLastMbFromRemote)
-		sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 	}
 
 	backwardThreshold := sr.cache.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
 	enableBackwardReconciliation := backwardThreshold > 0
 
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
-	// such as backward/forwards reconciliation, gaps filling, history trimming, snapshot trimming.
+	// such as backward/forwards reconciliation, gaps filling.
 	err := sr.loadRanges()
 	if err != nil {
 		return err
-	}
-
-	// TODO: Implement below
-	{
-		// TODO:
-		//  0. Calculate the lowest miniblock number to reconcile based on the history window and given set of ranges.
-		//  1. if len(presentRanges) > 1, there are gaps -> fill gaps
-		//  2. if presentRanges[len(presentRanges)-1].EndInclusive >= sr.expectedLastMbInclusive -> no reconciliation required, just fill gaps if relevant
-		//  3. if presentRanges[0].StartInclusive > 0 -> delete all miniblocks with number < presentRanges[0].StartInclusive
-		//  4. After backfilling gaps, reconciliation, and trimming history check if snapshot trimming is required by using utils.DetermineStreamSnapshotsToNullify function.
-
-		// Reconciliation here stars.
-		// ...
-
-		// Delete miniblocks if needed - history trimming.
-
-		// During the gaps filling, we will update a list of miniblocks with snapshots for further trimming.
-		// Send the given range of miniblocks to the function that determines which miniblocks should be snapshot-trimmed.
 	}
 
 	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
@@ -148,7 +163,7 @@ func (sr *streamReconciler) reconcile() error {
 
 	// Special-case: if stream is stuck at genesis (mb 0), try to import genesis from the stream registry.
 	if sr.expectedLastMbInclusive == 0 {
-		if err = sr.reconcileFromRegistryGenesisBlock(); err == nil {
+		if err := sr.reconcileFromRegistryGenesisBlock(); err == nil {
 			return nil
 		}
 	}
@@ -163,7 +178,7 @@ func (sr *streamReconciler) reconcile() error {
 		err = sr.reconcileBackward()
 	}
 
-	// Recalculate missing ranges from db.
+	// Recalculate missing ranges from db and backfill gaps if there are some.
 	if err = sr.loadRanges(); err != nil {
 		return err
 	}
@@ -207,7 +222,9 @@ func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) e
 	if err != nil {
 		return err
 	}
+
 	sr.expectedLastMbInclusive = max(sr.expectedLastMbInclusive, lastMb.Num)
+
 	return nil
 }
 
@@ -515,5 +532,6 @@ func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
 	if start < 0 {
 		return 0
 	}
-	return start
+
+	return findClosestSnapshotMiniblock(sr.presentRanges, start)
 }

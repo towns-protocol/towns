@@ -3,7 +3,6 @@ package events
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,23 +17,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
-
-type recordingStreamStorage struct {
-	storage.StreamStorage
-	mu       sync.Mutex
-	recorded []int64
-}
-
-func (r *recordingStreamStorage) GetMiniblockNumberRanges(
-	ctx context.Context,
-	streamId StreamId,
-	fromInclusive int64,
-) ([]storage.MiniblockRange, error) {
-	r.mu.Lock()
-	r.recorded = append(r.recorded, fromInclusive)
-	r.mu.Unlock()
-	return r.StreamStorage.GetMiniblockNumberRanges(ctx, streamId, fromInclusive)
-}
 
 func TestReconciler(t *testing.T) {
 	cfg := config.GetDefaultConfig()
