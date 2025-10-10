@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.365",
+    "version": "0.0.366",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -27,6 +27,7 @@
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.8.0",
+        "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
         "viem": "^2.29.3"
