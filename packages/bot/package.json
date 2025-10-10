@@ -27,6 +27,7 @@
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "ethers": "^5.8.0",
+        "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
         "viem": "^2.29.3"
