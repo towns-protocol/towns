@@ -140,14 +140,14 @@ func UserSettingStreamIdFromAddr(addr common.Address) StreamId {
 	return b
 }
 
-func UserMetadataStreamIdFromAddress(addr common.Address) StreamId {
+func UserMetadataStreamIdFromAddr(addr common.Address) StreamId {
 	var b StreamId
 	b[0] = STREAM_USER_METADATA_KEY_BIN
 	copy(b[1:], addr.Bytes())
 	return b
 }
 
-func UserInboxStreamIdFromAddress(addr common.Address) StreamId {
+func UserInboxStreamIdFromAddr(addr common.Address) StreamId {
 	var b StreamId
 	b[0] = STREAM_USER_INBOX_BIN
 	copy(b[1:], addr.Bytes())
