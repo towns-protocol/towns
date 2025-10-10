@@ -848,7 +848,8 @@ describe('Bot', { sequential: true }, () => {
 
     it('should send message with embedded media using Blob', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const blob = new Blob(['test data'], { type: 'image/png' })
+        const TEST_DATA = new Uint8Array([0, 1, 2, 3])
+        const blob = new Blob([TEST_DATA], { type: 'image/png' })
         const { eventId } = await bot.sendMessage(channelId, 'Message with blob attachment', {
             attachments: [
                 {
@@ -876,7 +877,7 @@ describe('Bot', { sequential: true }, () => {
         const attachment = attachments?.[0].type === 'embedded_media' ? attachments?.[0] : undefined
         expect(attachment).toBeDefined()
         expect(attachment?.info.mimetype).toBe('image/png')
-        expect(attachment?.content).toEqual(new Uint8Array([137, 80, 78, 71]))
+        expect(attachment?.content).toEqual(TEST_DATA)
         expect(attachment?.info.widthPixels).toBe(100)
         expect(attachment?.info.heightPixels).toBe(100)
         expect(attachment?.info.filename).toBe('test.png')
@@ -884,12 +885,12 @@ describe('Bot', { sequential: true }, () => {
 
     it('should send message with embedded media using Uint8Array', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const data = new Uint8Array([137, 80, 78, 71])
+        const TEST_DATA = new Uint8Array([0, 1, 2, 3])
         const { eventId } = await bot.sendMessage(channelId, 'Message with Uint8Array attachment', {
             attachments: [
                 {
                     type: 'embedded',
-                    data,
+                    data: TEST_DATA,
                     filename: 'image.png',
                     mimetype: 'image/png',
                     width: 200,
@@ -912,7 +913,7 @@ describe('Bot', { sequential: true }, () => {
         const attachment = attachments?.[0].type === 'embedded_media' ? attachments?.[0] : undefined
         expect(attachment).toBeDefined()
         expect(attachment?.info.mimetype).toBe('image/png')
-        expect(attachment?.content).toEqual(data)
+        expect(attachment?.content).toEqual(TEST_DATA)
         expect(attachment?.info.widthPixels).toBe(200)
         expect(attachment?.info.heightPixels).toBe(200)
         expect(attachment?.info.filename).toBe('image.png')
@@ -944,7 +945,7 @@ describe('Bot', { sequential: true }, () => {
                 ? message?.content?.attachments
                 : undefined
         expect(attachments?.[0].type).toBe('image')
-        expect(attachments?.[1].type).toBe('embedded')
+        expect(attachments?.[1].type).toBe('embedded_media')
         expect(attachments).toHaveLength(2)
     })
 })
