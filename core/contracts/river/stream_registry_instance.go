@@ -36,10 +36,10 @@ type StreamRegistryInstance struct {
 	*bind2.BoundContract
 }
 
-func (c *StreamRegistryInstance) GetStreamOnBlock(
+func (c *StreamRegistryInstance) GetStream(
 	ctx context.Context,
-	streamId StreamId,
 	blockNum blockchain.BlockNumber,
+	streamId StreamId,
 ) (*Stream, error) {
 	return blockchain.CallPtr(
 		c.BoundContract,
@@ -51,18 +51,11 @@ func (c *StreamRegistryInstance) GetStreamOnBlock(
 	)
 }
 
-func (c *StreamRegistryInstance) GetStreamOnLatestBlock(
-	ctx context.Context,
-	streamId StreamId,
-) (*Stream, error) {
-	return c.GetStreamOnBlock(ctx, streamId, 0)
-}
-
 // GetStreamWithGenesis returns stream, genesis miniblock hash, genesis miniblock, error
 func (c *StreamRegistryInstance) GetStreamWithGenesis(
 	ctx context.Context,
-	streamId StreamId,
 	blockNum blockchain.BlockNumber,
+	streamId StreamId,
 ) (*Stream, common.Hash, []byte, error) {
 	result, err := blockchain.CallPtr(
 		c.BoundContract,

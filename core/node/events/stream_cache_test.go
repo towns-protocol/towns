@@ -562,10 +562,10 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	// because the candidate was not promoted because the node never witnessed the set stream event.
 	riverChainBlockNum, err := instance.params.RiverChain.Client.BlockNumber(ctx)
 	require.NoError(err)
-	getStream, err := instance.params.Registry.StreamRegistry.GetStreamOnBlock(
+	getStream, err := instance.params.Registry.StreamRegistry.GetStream(
 		ctx,
-		spaceStreamId,
 		blockchain.BlockNumber(riverChainBlockNum),
+		spaceStreamId,
 	)
 	require.NoError(err)
 
