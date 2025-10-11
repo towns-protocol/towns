@@ -137,7 +137,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             params.name,
             params.permissions,
             params.installPrice,
-            duration
+            duration,
+            params.client
         );
 
         version = _registerApp(ITownsApp(app), params.client);

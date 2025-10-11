@@ -13,6 +13,7 @@ import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegis
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 import {SimpleApp} from "../../src/apps/helpers/SimpleApp.sol";
+import {ISimpleAppBase} from "../../src/apps/helpers/ISimpleApp.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -215,81 +216,6 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(module, app);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), app);
         assertEq(registry.getAppDuration(app), DEFAULT_ACCESS_DURATION);
-    }
-
-    function test_createApp_withdrawETH() external {
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            client: DEFAULT_CLIENT,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-
-        vm.prank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
-
-        uint256 totalRequired = registry.getAppPrice(app);
-
-        vm.deal(founder, totalRequired);
-
-        vm.prank(founder);
-        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
-
-        vm.prank(DEFAULT_DEV);
-        SimpleApp(payable(app)).withdrawETH(DEFAULT_DEV);
-
-        assertEq(address(DEFAULT_DEV).balance, DEFAULT_INSTALL_PRICE);
-    }
-
-    function test_createApp_updatePricing() external {
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            client: DEFAULT_CLIENT,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-
-        uint256 newInstallPrice = DEFAULT_INSTALL_PRICE + 1;
-        uint48 newAccessDuration = DEFAULT_ACCESS_DURATION + 1;
-
-        vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
-        SimpleApp(payable(app)).updatePricing(newInstallPrice, newAccessDuration);
-        vm.stopPrank();
-
-        assertEq(ITownsApp(app).installPrice(), newInstallPrice);
-        assertEq(ITownsApp(app).accessDuration(), newAccessDuration);
-    }
-
-    function test_createApp_updatePermissions() external {
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            client: DEFAULT_CLIENT,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-
-        bytes32[] memory newPermissions = new bytes32[](2);
-        newPermissions[0] = bytes32("Read");
-        newPermissions[1] = bytes32("Write");
-
-        vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
-        SimpleApp(payable(app)).updatePermissions(newPermissions);
-        vm.stopPrank();
-
-        assertEq(ITownsApp(app).requiredPermissions(), newPermissions);
     }
 
     function test_revertWhen_createApp_EmptyName() external {
@@ -867,8 +793,166 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      SIMPLE APP TESTS                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function test_simpleApp_withdrawETH() external {
+        address app = _createSimpleApp();
+
+        uint256 totalRequired = registry.getAppPrice(app);
+
+        vm.deal(founder, totalRequired);
+
+        vm.prank(founder);
+        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+
+        vm.prank(DEFAULT_DEV);
+        SimpleApp(payable(app)).withdrawETH(DEFAULT_DEV);
+
+        assertEq(address(DEFAULT_DEV).balance, DEFAULT_INSTALL_PRICE);
+    }
+
+    function test_simpleApp_sendCurrency_onlyClient() external {
+        address app = _createSimpleApp();
+
+        uint256 totalRequired = registry.getAppPrice(app);
+
+        vm.deal(founder, totalRequired);
+
+        vm.prank(founder);
+        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+
+        assertEq(address(app).balance, DEFAULT_INSTALL_PRICE);
+
+        address recipient = _randomAddress();
+
+        vm.prank(DEFAULT_CLIENT);
+        SimpleApp(payable(app)).sendCurrency(recipient, address(0), DEFAULT_INSTALL_PRICE);
+
+        assertEq(address(recipient).balance, DEFAULT_INSTALL_PRICE);
+        assertEq(address(app).balance, 0);
+    }
+
+    function test_simpleApp_sendCurrency_onlyOwner() external {
+        address app = _createSimpleApp();
+        uint256 totalRequired = registry.getAppPrice(app);
+
+        vm.deal(founder, totalRequired);
+
+        vm.prank(founder);
+        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+
+        assertEq(address(app).balance, DEFAULT_INSTALL_PRICE);
+
+        address recipient = _randomAddress();
+
+        vm.prank(DEFAULT_DEV);
+        SimpleApp(payable(app)).sendCurrency(recipient, address(0), DEFAULT_INSTALL_PRICE);
+
+        assertEq(address(recipient).balance, DEFAULT_INSTALL_PRICE);
+        assertEq(address(app).balance, 0);
+    }
+
+    function test_revertWhen_simpleApp_sendCurrency_invalidCaller() external {
+        address simple = _createSimpleApp();
+
+        vm.prank(_randomAddress());
+        vm.expectRevert(ISimpleAppBase.InvalidCaller.selector);
+        SimpleApp(payable(simple)).sendCurrency(DEFAULT_DEV, address(0), DEFAULT_INSTALL_PRICE);
+    }
+
+    function test_revertWhen_simpleApp_sendCurrency_invalidRecipient() external {
+        address simpleApp = _createSimpleApp();
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(ISimpleAppBase.ZeroAddress.selector);
+        SimpleApp(payable(simpleApp)).sendCurrency(address(0), address(0), DEFAULT_INSTALL_PRICE);
+    }
+
+    function test_revertWhen_simpleApp_sendCurrency_invalidAmount() external {
+        address simpleApp = _createSimpleApp();
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(ISimpleAppBase.InvalidAmount.selector);
+        SimpleApp(payable(simpleApp)).sendCurrency(DEFAULT_DEV, address(0), 0);
+    }
+
+    function test_revertWhen_simpleApp_sendCurrency_invalidCurrency() external {
+        address simpleApp = _createSimpleApp();
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(ISimpleAppBase.InvalidCurrency.selector);
+        SimpleApp(payable(simpleApp)).sendCurrency(
+            DEFAULT_DEV,
+            _randomAddress(),
+            DEFAULT_INSTALL_PRICE
+        );
+    }
+
+    function test_simpleApp_updatePricing() external {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        uint256 newInstallPrice = DEFAULT_INSTALL_PRICE + 1;
+        uint48 newAccessDuration = DEFAULT_ACCESS_DURATION + 1;
+
+        vm.startPrank(DEFAULT_DEV);
+        (address app, ) = registry.createApp(appData);
+        SimpleApp(payable(app)).updatePricing(newInstallPrice, newAccessDuration);
+        vm.stopPrank();
+
+        assertEq(ITownsApp(app).installPrice(), newInstallPrice);
+        assertEq(ITownsApp(app).accessDuration(), newAccessDuration);
+    }
+
+    function test_simpleApp_updatePermissions() external {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        bytes32[] memory newPermissions = new bytes32[](2);
+        newPermissions[0] = bytes32("Read");
+        newPermissions[1] = bytes32("Write");
+
+        vm.startPrank(DEFAULT_DEV);
+        (address app, ) = registry.createApp(appData);
+        SimpleApp(payable(app)).updatePermissions(newPermissions);
+        vm.stopPrank();
+
+        assertEq(ITownsApp(app).requiredPermissions(), newPermissions);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Utils                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function _createSimpleApp() internal returns (address simpleApp) {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        vm.prank(DEFAULT_DEV);
+        (simpleApp, ) = registry.createApp(appData);
+    }
+
     function _setupAppWithPrice(uint256 price) internal {
         vm.prank(DEFAULT_DEV);
         mockModule.setPrice(price);
