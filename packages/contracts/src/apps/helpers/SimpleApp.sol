@@ -83,7 +83,7 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     }
 
     /// @inheritdoc IExecutionModule
-    function executionManifest() external pure returns (ExecutionManifest memory) {
+    function executionManifest() external pure virtual returns (ExecutionManifest memory) {
         // solhint-disable no-empty-blocks
     }
 
