@@ -36,7 +36,6 @@ message ChannelMessage {
         message Attachment {
             oneof content {
                 Content.Image image = 101;
-                EmbeddedMedia embeddedMedia = 102;
                 ChunkedMedia chunkedMedia = 103;
                 Content.EmbeddedMessage embeddedMessage = 104;
                 Content.UnfurledURL unfurledUrl = 105;
