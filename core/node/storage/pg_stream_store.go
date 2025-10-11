@@ -12,14 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/cespare/xxhash/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -2567,12 +2566,12 @@ func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
 	return lowestMiniblock, err
 }
 
-// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers present in storage
-// for the given stream, starting from the specified miniblock number.
+// GetMiniblockNumberRanges returns every contiguous span of stored miniblocks for the stream.
+// Each span also lists the miniblock numbers whose snapshot column is non-null so callers can
+// make trimming or backfill decisions with the snapshot context baked in.
 func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 	ctx context.Context,
 	streamId StreamId,
-	startMiniblockNumberInclusive int64,
 ) ([]MiniblockRange, error) {
 	var ranges []MiniblockRange
 	err := s.txRunner(
@@ -2581,12 +2580,11 @@ func (s *PostgresStreamStore) GetMiniblockNumberRanges(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId, startMiniblockNumberInclusive)
+			ranges, err = s.getMiniblockNumberRangesTx(ctx, tx, streamId)
 			return err
 		},
 		nil,
 		"streamId", streamId,
-		"startMiniblockNumberInclusive", startMiniblockNumberInclusive,
 	)
 	if err != nil {
 		return nil, err
@@ -2598,35 +2596,32 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	startMiniblockNumberInclusive int64,
 ) ([]MiniblockRange, error) {
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
 
-	// Use window function to identify continuous ranges efficiently
 	query := s.sqlForStream(`
-		SELECT 
+		SELECT
 			MIN(seq_num) AS start_range,
-			MAX(seq_num) AS end_range
+			MAX(seq_num) AS end_range,
+			ARRAY_AGG(seq_num ORDER BY seq_num) FILTER (WHERE has_snapshot) AS snapshot_seq_nums
 		FROM (
-			SELECT 
+			SELECT
 				seq_num,
+				(snapshot IS NOT NULL) AS has_snapshot,
 				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
 			FROM {{miniblocks}}
-			WHERE stream_id = $1 AND seq_num >= $2
-		) AS subquery
+			WHERE stream_id = $1
+		) AS sub
 		GROUP BY grp
-		ORDER BY start_range
-	`, streamId)
+		ORDER BY start_range`, streamId)
 
-	rows, err := tx.Query(ctx, query, streamId, startMiniblockNumberInclusive)
+	rows, err := tx.Query(ctx, query, streamId)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	// Use pgx.CollectRows to scan all results at once
 	ranges, err := pgx.CollectRows(rows, pgx.RowToStructByPos[MiniblockRange])
 	if err != nil {
 		return nil, err

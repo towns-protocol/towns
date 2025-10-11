@@ -15,32 +15,6 @@ import (
 
 const defaultGetMiniblocksPageSize = 128
 
-// streamReconciler tracks state for a single stream reconciliation attempt.
-type streamReconciler struct {
-	ctx          context.Context
-	cache        *StreamCache
-	stream       *Stream
-	streamRecord *river.StreamWithId
-
-	// expectedLastMbInclusive is last expected miniblock number to be reconciled.
-	expectedLastMbInclusive int64
-
-	// remotes is the list of remotes to use for reconciliation.
-	remotes remoteTracker
-
-	// localLastMbNumInclusive is the last miniblock number in the local database. -1 if not found.
-	localLastMbInclusive int64
-
-	// localStartMbInclusive is the start miniblock number to reconcile. Computed from trim settings based on the stream type.
-	localStartMbInclusive int64
-
-	// notFound is true if local storage returned Err_NOT_FOUND for the stream.
-	notFound bool
-
-	// stats to inspect by tests
-	stats streamReconcilerStats
-}
-
 type streamReconcilerStats struct {
 	forwardCalled            bool
 	backwardCalled           bool
@@ -56,15 +30,85 @@ type streamReconcilerStats struct {
 	reinitializeMbsSucceeded int
 }
 
-func newStreamReconciler(cache *StreamCache, stream *Stream, streamRecord *river.StreamWithId) *streamReconciler {
+// streamReconciler tracks state for a single stream reconciliation attempt.
+type streamReconciler struct {
+	ctx          context.Context
+	cache        *StreamCache
+	stream       *Stream
+	streamRecord *river.StreamWithId
+
+	// presentRanges is the list of miniblock ranges that are present in the local database.
+	// Each range contains the start and end miniblock numbers (inclusive) and list of miniblocks
+	// with snapshots.
+	presentRanges []storage.MiniblockRange
+
+	// remotes is the list of remotes to use for reconciliation.
+	remotes remoteTracker
+
+	// expectedLastMbInclusive is last expected miniblock number to be reconciled.
+	expectedLastMbInclusive int64
+
+	// localLastMbNumInclusive is the last miniblock number in the local database. -1 if not found.
+	localLastMbInclusive int64
+
+	// localStartMbInclusive is the start miniblock number to reconcile.
+	// Computed from trim settings based on the stream type.
+	// The given miniblock must contain a snapshot.
+	localStartMbInclusive int64
+
+	// notFound is true if the given stream is not found in the local database.
+	notFound bool
+
+	// stats to inspect by tests
+	stats streamReconcilerStats
+}
+
+func newStreamReconciler(
+	cache *StreamCache,
+	stream *Stream,
+	streamRecord *river.StreamWithId,
+) *streamReconciler {
 	return &streamReconciler{
-		cache:        cache,
-		stream:       stream,
-		streamRecord: streamRecord,
+		cache:                   cache,
+		stream:                  stream,
+		streamRecord:            streamRecord,
+		expectedLastMbInclusive: streamRecord.LastMbNum(),
 	}
 }
 
+func (sr *streamReconciler) reconcileAndTrim() error {
+	err := sr.reconcile()
+	if err != nil {
+		return err
+	}
+
+	return sr.trim()
+}
+
+func (sr *streamReconciler) trim() error {
+	var cancel context.CancelFunc
+	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
+	defer cancel()
+
+	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
+	// such as backward/forwards reconciliation, gaps filling.
+	err := sr.loadRanges()
+	if err != nil {
+		return err
+	}
+
+	// History trimming
+	if sr.localStartMbInclusive > 0 {
+		// TODO: Delete miniblocks with numbers < localStartMbInclusive.
+	}
+
+	// TODO: Snapshot trimming
+
+	return nil
+}
+
 // reconcile runs single stream reconciliation attempt.
+// TODO: instead of re-loading ranges in the end, modify them during reconciliation process without querying DB.
 func (sr *streamReconciler) reconcile() error {
 	var cancel context.CancelFunc
 	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
@@ -78,9 +122,6 @@ func (sr *streamReconciler) reconcile() error {
 			sr.streamRecord.IsSealed(),
 		)
 	}
-
-	sr.expectedLastMbInclusive = sr.streamRecord.LastMbNum()
-	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 
 	sr.stream.mu.RLock()
 	nonReplicatedStream := len(sr.stream.nodesLocked.GetQuorumNodes()) == 1
@@ -99,21 +140,16 @@ func (sr *streamReconciler) reconcile() error {
 	// for non-replicated streams. In that case fetch the latest block number from the remote.
 	if nonReplicatedStream {
 		_ = sr.remotes.execute(sr.setExpectedLastMbFromRemote)
-		sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
 	}
 
 	backwardThreshold := sr.cache.params.ChainConfig.Get().StreamBackwardsReconciliationThreshold
 	enableBackwardReconciliation := backwardThreshold > 0
 
-	var err error
-	sr.localLastMbInclusive, err = sr.stream.getLastMiniblockNumSkipLoad(sr.ctx)
+	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
+	// such as backward/forwards reconciliation, gaps filling.
+	err := sr.loadRanges()
 	if err != nil {
-		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			sr.notFound = true
-			sr.localLastMbInclusive = -1
-		} else {
-			return err
-		}
+		return err
 	}
 
 	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
@@ -142,7 +178,8 @@ func (sr *streamReconciler) reconcile() error {
 		err = sr.reconcileBackward()
 	}
 
-	if err != nil {
+	// Recalculate missing ranges from db and backfill gaps if there are some.
+	if err = sr.loadRanges(); err != nil {
 		return err
 	}
 
@@ -177,26 +214,25 @@ func (sr *streamReconciler) reconcileFromRegistryGenesisBlock() error {
 }
 
 func (sr *streamReconciler) setExpectedLastMbFromRemote(remote common.Address) error {
-	ctx, cancel := context.WithTimeout(
-		sr.ctx,
-		time.Minute,
-	) // TODO: configurable timeouts through this file
+	// TODO: configurable timeouts through this file
+	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
 	defer cancel()
 
 	lastMb, err := sr.cache.params.RemoteMiniblockProvider.GetLastMiniblockHash(ctx, remote, sr.stream.streamId)
 	if err != nil {
 		return err
 	}
+
 	sr.expectedLastMbInclusive = max(sr.expectedLastMbInclusive, lastMb.Num)
+
 	return nil
 }
 
+// reconcileBackward reconciles the stream backwards from the last expected miniblock.
+// First reinitialize the stream.
+// If after that stream doesn't have miniblocks to that last expected, run forward reconciliation from this point.
 func (sr *streamReconciler) reconcileBackward() error {
 	sr.stats.backwardCalled = true
-
-	// First reinitialize the stream.
-	// If after that stream doesn't have miniblocks to that last expected, run forward reconciliation from this point.
-	// Backfill gaps.
 
 	err := sr.remotes.execute(sr.reinitializeStreamFromSinglePeer)
 	if err != nil {
@@ -211,42 +247,19 @@ func (sr *streamReconciler) reconcileBackward() error {
 
 	sr.localLastMbInclusive = view.LastBlock().Ref.Num
 	if sr.localLastMbInclusive < sr.expectedLastMbInclusive {
-		err = sr.reconcileForward()
-		if err != nil {
+		if err = sr.reconcileForward(); err != nil {
 			return err
 		}
 	}
 
-	// Recalculate missing ranges from db.
-	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
-		sr.ctx,
-		sr.stream.streamId,
-		sr.localStartMbInclusive,
-	)
-	if err != nil {
-		return err
-	}
-
-	if len(presentRanges) == 0 {
-		return RiverError(Err_INTERNAL, "reconcileBackward: no present ranges after reinitialization")
-	}
-
-	sr.localLastMbInclusive = presentRanges[len(presentRanges)-1].EndInclusive
-	missingRanges := calculateMissingRanges(presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
-	if len(missingRanges) == 0 {
-		return nil
-	}
-
-	return sr.backfillGapsByRanges(presentRanges)
+	return nil
 }
 
 func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Address) error {
 	sr.stats.reinitializeAttempted++
 
-	ctx, cancel := context.WithTimeout(
-		sr.ctx,
-		time.Minute,
-	) // TODO: configurable timeouts through this file
+	// TODO: configurable timeouts through this file
+	ctx, cancel := context.WithTimeout(sr.ctx, time.Minute)
 	defer cancel()
 
 	numberOfPrecedingMiniblocks := sr.cache.params.ChainConfig.Get().RecencyConstraintsGen
@@ -273,28 +286,11 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 }
 
 func (sr *streamReconciler) backfillGaps() error {
-	sr.stats.backfillCalled = true
-
-	presentRanges, err := sr.cache.params.Storage.GetMiniblockNumberRanges(
-		sr.ctx,
-		sr.stream.streamId,
-		sr.localStartMbInclusive,
-	)
-	if err != nil {
-		return err
-	}
-
-	return sr.backfillGapsByRanges(presentRanges)
-}
-
-func (sr *streamReconciler) backfillGapsByRanges(presentRanges []storage.MiniblockRange) error {
-	sr.stats.backfillCalled = true
-
-	if len(presentRanges) == 0 {
+	if len(sr.presentRanges) == 0 {
 		return RiverError(Err_INTERNAL, "backfillGaps: no present ranges")
 	}
 
-	missingRanges := calculateMissingRanges(presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
+	missingRanges := calculateMissingRanges(sr.presentRanges, sr.localStartMbInclusive, sr.expectedLastMbInclusive)
 	if len(missingRanges) == 0 {
 		return nil
 	}
@@ -312,31 +308,9 @@ func (sr *streamReconciler) backfillGapsByRanges(presentRanges []storage.Miniblo
 		}
 	}
 
+	sr.stats.backfillCalled = true
+
 	return nil
-}
-
-func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
-	if sr.expectedLastMbInclusive <= 0 {
-		return 0
-	}
-
-	historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
-	if historyWindow == 0 {
-		return 0
-	}
-
-	var history int64
-	if historyWindow >= math.MaxInt64 {
-		history = math.MaxInt64
-	} else {
-		history = int64(historyWindow)
-	}
-
-	start := sr.expectedLastMbInclusive - history
-	if start < 0 {
-		return 0
-	}
-	return start
 }
 
 func (sr *streamReconciler) backfillRange(missingRange storage.MiniblockRange) error {
@@ -516,4 +490,48 @@ func (sr *streamReconciler) reconcilePageForwardFromSinglePeer(
 	sr.stats.forwardMbsSucceeded += len(mbs)
 
 	return fromInclusive + int64(len(mbs)), nil
+}
+
+func (sr *streamReconciler) loadRanges() error {
+	var err error
+	sr.presentRanges, err = sr.cache.params.Storage.GetMiniblockNumberRanges(sr.ctx, sr.stream.streamId)
+	if err != nil {
+		return err
+	}
+
+	if len(sr.presentRanges) == 0 {
+		sr.notFound = true
+		sr.localLastMbInclusive = -1
+	} else {
+		sr.localLastMbInclusive = sr.presentRanges[len(sr.presentRanges)-1].EndInclusive
+	}
+
+	sr.localStartMbInclusive = sr.calculateLocalStartMbInclusive()
+
+	return nil
+}
+
+func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
+	if sr.expectedLastMbInclusive <= 0 {
+		return 0
+	}
+
+	historyWindow := sr.cache.params.ChainConfig.Get().StreamHistoryMiniblocks.ForType(sr.stream.streamId.Type())
+	if historyWindow == 0 {
+		return 0
+	}
+
+	var history int64
+	if historyWindow >= math.MaxInt64 {
+		history = math.MaxInt64
+	} else {
+		history = int64(historyWindow)
+	}
+
+	start := sr.expectedLastMbInclusive - history
+	if start < 0 {
+		return 0
+	}
+
+	return findClosestSnapshotMiniblock(sr.presentRanges, start)
 }

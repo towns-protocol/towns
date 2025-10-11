@@ -14,6 +14,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 const (
@@ -288,7 +289,18 @@ func (t *streamTrimmer) processTrimTaskTx(
 			return err
 		}
 
-		toNullify := determineSnapshotsToNullify(mbs, task.retentionIntervalMbs, minKeepMiniblocks)
+		var rangeStart int64
+		if len(mbs) > 0 {
+			rangeStart = mbs[0]
+		}
+
+		toNullify := utils.DetermineStreamSnapshotsToNullify(
+			rangeStart,
+			lastSnapshotMiniblock-1,
+			mbs,
+			task.retentionIntervalMbs,
+			minKeepMiniblocks,
+		)
 		if len(toNullify) > 0 {
 			if _, err = tx.Exec(
 				ctx,
@@ -306,49 +318,4 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	return nil
-}
-
-// determineSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.
-// It scans snapshotSeqs (ascending), groups by bucket = seq_num/retentionInterval,
-// keeps the very first seq in each bucket, and nullifies the rest—except anything
-// newer than maxSeq-minKeep, which stays protected.
-//
-//	snapshotSeqs:      sorted ascending slice of seq_nums where snapshot != NULL
-//	retentionInterval: onchain setting, e.g. 1000 miniblocks
-//	minKeep:           number of most recent miniblocks to protect
-func determineSnapshotsToNullify(
-	snapshotSeqs []int64,
-	retentionInterval int64,
-	minKeep int64,
-) []int64 {
-	if retentionInterval <= 0 {
-		return nil
-	}
-
-	n := len(snapshotSeqs)
-	if n == 0 {
-		return nil
-	}
-
-	maxSeq := snapshotSeqs[n-1]
-	cutoff := maxSeq - minKeep
-
-	var toNullify []int64
-	var lastBucket int64 = -1
-
-	for _, seq := range snapshotSeqs {
-		// skip anything in the protected tail
-		if seq > cutoff {
-			break
-		}
-		bucket := seq / retentionInterval
-		if bucket != lastBucket {
-			// first snapshot in this bucket → keep it, advance bucket marker
-			lastBucket = bucket
-		} else {
-			// subsequent snapshot in same bucket → nullify
-			toNullify = append(toNullify, seq)
-		}
-	}
-	return toNullify
 }
