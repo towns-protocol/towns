@@ -28,7 +28,6 @@ function useSendMessage(
         replyId?: string;
         mentions?: PlainMessage<ChannelMessage.Post.Mention>[];
         attachments?: PlainMessage<ChannelMessage.Post.Attachment>[];
-        appClientAddress?: string;
     } | undefined) => Promise<{
         eventId: string;
     }>;
@@ -70,7 +69,6 @@ The sendMessage action and the status of the action.
         replyId?: string;
         mentions?: PlainMessage<ChannelMessage.Post.Mention>[];
         attachments?: PlainMessage<ChannelMessage.Post.Attachment>[];
-        appClientAddress?: string;
     } | undefined) => Promise<{
         eventId: string;
     }>;

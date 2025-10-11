@@ -24,6 +24,21 @@ type (
 		MinipoolEnvelopes       [][]byte
 	}
 
+	// MediaStreamMiniblockDescriptor gives additional information if a miniblock is part of a media stream.
+	// This information is needed to determine where media stream chunks are stored.
+	MediaStreamMiniblockDescriptor struct {
+		// ChunkIndex is the index of the current chunk in the media stream.
+		// ChunkIndex is 0-based, e.g. the first chunk has index 0.
+		ChunkIndex int32
+		// ChunkCount is the number of data chunks in the media stream.
+		// ChunkIndex < ChunkCount must be true for every chunk.
+		ChunkCount int32
+		// ChunkSize is the size of each data chunk (apart from the last one) in the media stream as chosen by
+		// the client. This information is used to decode chunks from a multipart S3 object that concatenates all
+		// chunks of the media stream.
+		ChunkSize uint64
+	}
+
 	MiniblockDescriptor struct {
 		// Number is the miniblock number within the stream.
 		Number int64
@@ -49,6 +64,9 @@ type (
 		// This field is used on write to correctly set last snapshot index in es table.
 		// NOTE:This field is not set on read.
 		HasLegacySnapshot bool
+
+		// MediaStream if set, it provides additional information about the (media stream) miniblock.
+		MediaStream *MediaStreamMiniblockDescriptor
 	}
 
 	EventDescriptor struct {

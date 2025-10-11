@@ -2,9 +2,14 @@ package storage
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
 	"time"
 
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -15,6 +20,122 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
+
+type (
+	// MediaStreamExternalDataPartDescriptor describes an individual part of a media stream
+	// that is stored in an external data source.
+	MediaStreamExternalDataPartDescriptor struct {
+		// PartNumber holds the part number of the miniblock.
+		// It corresponds with the ChunkIndex of the protobuf media miniblocks chunks by the client.
+		PartNumber int32
+		// S3Etag holds the ETag of the uploaded part if uploaded to S3.
+		// Otherwise, it is empty.
+		S3Etag string
+		// ByteSize is the actualy size (in bytes) of the part as uploaded to external storage.
+		// It is used to decode miniblocks from an external stored object that consists of multiple
+		// concatenated parts.
+		ByteSize uint64
+	}
+
+	// MediaStreamExternalDataDescriptor describes where data is stored if media stream data is store
+	// in an external data source.
+	MediaStreamExternalDataDescriptor struct {
+		// ExternalBackend holds the name of the external backend that is used to store the stream.
+		// Either s3 or gcp, or empty when stored in the database.
+		ExternalBackend string
+		// Bucket holds the S3 or GCP bucket name where the stream is stored in.
+		Bucket string
+		// ChunkCount holds the number of expected chunks.
+		// It is the same as the ChunkCount that is provided in the protobuf media miniblocks chunks by the client.
+		// All parts are received when len(Parts) == ChunkCount.
+		ChunkCount int32
+		// ChunkSize holds the size of each part as specified by the client in the protobuf message.
+		ChunkSize uint64
+		// S3MultiPartUploadID holds the upload ID of a multipart S3 upload.
+		// If a S3 single Put operation was used, this field is empty and ChunkCount is set to 1.
+		// If this stream is stored on GCP, this field is empty.
+		S3MultiPartUploadID string
+		// S3MultiPartCompletedEtag holds the ETag of a completed multipart S3 upload.
+		// For objects that are uploaded to GCP or stored in the database, this is empty.
+		S3MultiPartCompletedEtag string
+		// Parts hold the information required to decode miniblocks from an externally stored object
+		// that consists of multiple parts.
+		Parts []*MediaStreamExternalDataPartDescriptor
+	}
+)
+
+// Value implements the driver.Valuer interface, making it writable to the database.
+func (md MediaStreamExternalDataDescriptor) Value() (driver.Value, error) {
+	// ensure that the Parts are sorted by PartIndex
+	slices.SortFunc(md.Parts, func(a, b *MediaStreamExternalDataPartDescriptor) int {
+		return int(a.PartNumber - b.PartNumber)
+	})
+
+	b, err := json.Marshal(md)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(b), nil
+}
+
+// Scan implements the sql.Scanner interface, making it readable from the database.
+func (md *MediaStreamExternalDataDescriptor) Scan(src interface{}) error {
+	if src == nil {
+		return nil
+	}
+
+	var (
+		cpy MediaStreamExternalDataDescriptor
+		err error
+	)
+
+	switch srcT := src.(type) {
+	case string:
+		err = json.Unmarshal([]byte(srcT), &cpy)
+	case []byte:
+		err = json.Unmarshal(srcT, &cpy)
+	case json.RawMessage:
+		err = json.Unmarshal(srcT, &cpy)
+	default:
+		return RiverError(Err_INTERNAL, fmt.Sprintf("cannot scan MiniblockMetaData from unknown type %T", src))
+	}
+
+	if err == nil {
+		*md = cpy
+	}
+	return err
+}
+
+// UploadedToS3 returns true when all expected parts are uploaded to S3.
+// For a media stream consisting of a single chunk this is true when the chunk is uploaded to S3.
+// For a media stream consisting of multiple chunks this is true when all chunks are uploaded to S3 and
+// the upload can be completed.
+func (md *MediaStreamExternalDataDescriptor) UploadedToS3() bool {
+	return md != nil && len(md.Parts) == int(md.ChunkCount)
+}
+
+// MultiUploadParts returns information of uploaded s3 parts as S3 returned when uploading a part as
+// part of a multipart upload. This can be used to complete the multipart upload.
+func (md *MediaStreamExternalDataDescriptor) MultiUploadParts() []s3types.CompletedPart {
+	if md == nil {
+		return nil
+	}
+
+	results := make([]s3types.CompletedPart, 0, md.ChunkCount)
+	for _, part := range md.Parts {
+		results = append(results, s3types.CompletedPart{
+			PartNumber: &part.PartNumber,
+			ETag:       &part.S3Etag,
+		})
+	}
+
+	// ensure that the Parts are sorted by PartIndex
+	slices.SortFunc(results, func(a, b s3types.CompletedPart) int {
+		return int(*a.PartNumber - *b.PartNumber)
+	})
+
+	return results
+}
 
 func (s *PostgresStreamStore) lockEphemeralStream(
 	ctx context.Context,

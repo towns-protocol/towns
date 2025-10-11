@@ -1012,6 +1012,8 @@ export class Client
                         data: firstChunk,
                         chunkIndex: 0,
                         iv: firstChunkIv,
+                        chunkCount: 0, // TODO
+                        chunkSize: BigInt(0), // TODO
                     }),
                 ),
             )
@@ -2027,6 +2029,8 @@ export class Client
             data: data,
             chunkIndex: chunkIndex,
             iv: iv,
+            chunkCount: 0, // TODO
+            chunkSize: BigInt(0), // TODO
         })
         return this.makeMediaEventWithHashAndAddToMediaStream(creationCookie, last, payload)
     }
