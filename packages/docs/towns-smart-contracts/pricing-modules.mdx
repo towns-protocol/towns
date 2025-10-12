@@ -31,6 +31,35 @@ Every newly deployed Space in the Towns ecosystem is equipped with two default p
    - **Minimum Price**: Sets a minimum price of $10 USD for a membership.
    - **Payment Method**: Also accepts ETH as payment.
 
+### Protocol Fee Structure
+
+When users purchase memberships, the Towns protocol collects a fee from the membership payment to support ecosystem infrastructure and development.
+
+#### Current Fee Configuration
+- **Protocol Fee Rate**: 10% of membership payment
+- **Minimum Protocol Fee**: 0.0005 ETH
+- **Price Threshold**: 0.001 ETH
+- **Free Membership Allocation**: 1,000 memberships per Space
+
+#### Fee Collection Logic
+
+The protocol fee is deducted from the membership payment using a two-tier system:
+
+1. **Below Threshold**: If membership price < 0.001 ETH → Protocol takes 0.0005 ETH
+2. **Above Threshold**: If membership price ≥ 0.001 ETH → Protocol takes 10% of the payment
+
+#### Revenue Distribution Examples
+
+| Membership Price | Protocol Fee | Space Owner Receives |
+|------------------|--------------|---------------------|
+| 0 ETH (Free) | 0 ETH | 0 ETH |
+| 0.0005 ETH | 0.0005 ETH | 0 ETH |
+| 0.001 ETH | 0.0001 ETH (10%) | 0.0009 ETH |
+| 0.01 ETH | 0.001 ETH (10%) | 0.009 ETH |
+| 0.1 ETH | 0.01 ETH (10%) | 0.09 ETH |
+
+**Note**: The protocol fee is automatically deducted from membership payments. Space owners receive the remainder after the protocol fee is collected.
+
 ### Transaction Fee Distribution
 
 An essential aspect of the pricing modules is the distribution of fees from transactions. These fees are split among key stakeholders:
