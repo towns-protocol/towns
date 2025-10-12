@@ -9,9 +9,9 @@
         "plugin:prettier/recommended"
     ],
     "parser": "@typescript-eslint/parser",
-    "parserOptions": { "project": ["./tsconfig.eslint.json"] },
+    "parserOptions": { "project": ["./tsconfig.json"] },
     "plugins": ["@typescript-eslint", "import-x"],
-    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "vitest.config.ts"],
+    "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**"],
     "rules": {
         "no-console": "error",
         "import-x/no-extraneous-dependencies": [

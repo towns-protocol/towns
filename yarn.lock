@@ -9746,6 +9746,7 @@ __metadata:
     ethers: ^5.8.0
     lru-cache: ^11.0.1
     nanoid: ^4.0.0
+    tsdown: ^0.12.3
     typed-emitter: ^2.1.0
     typescript: ~5.8.3
     viem: ^2.29.3
