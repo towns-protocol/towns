@@ -226,10 +226,10 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
-        const { jwtMiddleware, handler } = await bot.start()
         const app = new Hono()
-        app.use(jwtMiddleware)
-        app.post('/webhook', handler)
+        app.post('/webhook', async (c) => {
+            return await bot.fetch(c.req.raw)
+        })
         serve({
             port: Number(process.env.BOT_PORT!),
             fetch: app.fetch,

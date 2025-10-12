@@ -22,8 +22,6 @@ import {
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
 } from '@towns-protocol/sdk'
-import { type Context, type Env, type Next } from 'hono'
-import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
 import { createNanoEvents, type Emitter } from 'nanoevents'
 import imageSize from 'image-size'
@@ -78,7 +76,6 @@ import {
     type WriteContractParameters,
 } from 'viem/actions'
 import { base, baseSepolia } from 'viem/chains'
-import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
 
 type BotActions = ReturnType<typeof buildBotActions>
@@ -224,10 +221,7 @@ type BasePayload = {
     createdAt: Date
 }
 
-export class Bot<
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
-> {
+export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
     private readonly client: ClientV2<BotActions>
     botId: string
     viemClient: ViemClient
@@ -254,22 +248,12 @@ export class Bot<
         this.snapshot = clientV2.snapshot
     }
 
-    async start() {
-        await this.client.uploadDeviceKeys()
-        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
-        debug('start')
-
-        return {
-            jwtMiddleware,
-            handler: this.webhookHandler.bind(this),
-        }
-    }
-
-    private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
-        const authHeader = c.req.header('Authorization')
+    public fetch = async (request: Request): Promise<Response> => {
+        // 1. JWT validation
+        const authHeader = request.headers.get('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return c.text('Unauthorized: Missing or malformed token', 401)
+            return new Response('Unauthorized: Missing or malformed token', { status: 401 })
         }
 
         const tokenString = authHeader.substring(7)
@@ -287,17 +271,14 @@ export class Bot<
             } else if (err instanceof jwt.JsonWebTokenError) {
                 errorMessage = `Unauthorized: Invalid token (${err.message})`
             }
-            return c.text(errorMessage, 401)
+            return new Response(errorMessage, { status: 401 })
         }
 
-        await next()
-    }
-
-    private async webhookHandler(c: Context<HonoEnv>) {
-        const body = await c.req.arrayBuffer()
+        // 2. Process webhook
+        const body = await request.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
-        const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
-        debug('webhook', request)
+        const appRequest = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
+        debug('webhook', appRequest)
         const statusResponse = create(AppServiceResponseSchema, {
             payload: {
                 case: 'status',
@@ -309,7 +290,7 @@ export class Bot<
             },
         })
         let response: AppServiceResponse = statusResponse
-        if (request.payload.case === 'initialize') {
+        if (appRequest.payload.case === 'initialize') {
             response = create(AppServiceResponseSchema, {
                 payload: {
                     case: 'initialize',
@@ -318,17 +299,19 @@ export class Bot<
                     },
                 },
             })
-        } else if (request.payload.case === 'events') {
-            for (const event of request.payload.value.events) {
+        } else if (appRequest.payload.case === 'events') {
+            for (const event of appRequest.payload.value.events) {
                 await this.handleEvent(event)
             }
             response = statusResponse
-        } else if (request.payload.case === 'status') {
+        } else if (appRequest.payload.case === 'status') {
             response = statusResponse
         }
 
-        c.header('Content-Type', 'application/x-protobuf')
-        return c.body(toBinary(AppServiceResponseSchema, response), 200)
+        return new Response(toBinary(AppServiceResponseSchema, response), {
+            status: 200,
+            headers: { 'Content-Type': 'application/x-protobuf' },
+        })
     }
 
     // TODO: onTip
@@ -850,10 +833,7 @@ export class Bot<
     }
 }
 
-export const makeTownsBot = async <
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
->(
+export const makeTownsBot = async <Commands extends PlainMessage<SlashCommand>[] = []>(
     appPrivateData: string,
     jwtSecretBase64: string,
     opts: {
@@ -886,7 +866,8 @@ export const makeTownsBot = async <
         },
         ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
+    await client.uploadDeviceKeys()
+    return new Bot<Commands>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
