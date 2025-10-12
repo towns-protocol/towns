@@ -1,0 +1,317 @@
+---
+title: CI Pipeline Architecture
+description: "Deep dive into Towns Protocol's sophisticated continuous integration pipeline"
+---
+
+## CI Pipeline Architecture
+
+Towns Protocol employs a sophisticated CI pipeline designed for **maximum parallel execution** and **conditional testing** to optimize developer productivity while maintaining comprehensive quality assurance. The pipeline consists of six distinct job types that run simultaneously, each optimized for specific testing scenarios.
+
+### Pipeline Overview
+
+#### Execution Strategy
+- **Parallel Jobs**: All jobs run simultaneously for maximum speed
+- **Conditional Execution**: Jobs can be selectively skipped via workflow dispatch
+- **Resource Optimization**: Each job uses optimized runner configurations
+- **Failure Isolation**: Jobs fail independently without blocking others
+
+#### Trigger Conditions
+```yaml
+on:
+  schedule:
+    - cron: '0 * * * *'  # Hourly scheduled runs
+  pull_request:           # All PR events
+  merge_group:           # Merge queue validation
+  workflow_dispatch:     # Manual trigger with selective execution
+```
+
+### Six-Job Architecture
+
+## 1. Common_CI Job
+
+**Purpose**: Core quality assurance and foundational checks  
+**Runtime**: ~30 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Key Responsibilities:**
+- **Code Quality**: Linting, formatting, and syncpack validation
+- **Build Validation**: Full TypeScript/JavaScript build process
+- **Documentation**: Link checking and spell checking
+- **Unit Testing**: Fast unit test execution
+- **Contract Generation**: Type generation and validation
+
+**Execution Flow:**
+```bash
+# Environment Setup
+./scripts/print-versions.sh
+./scripts/bc-all-start.sh
+
+# Quality Checks
+yarn syncpack:check
+yarn prettier:check
+yarn build
+yarn lint
+
+# Go Quality Checks
+golangci-lint run --timeout=10m
+staticcheck ./...
+
+# Documentation Validation
+yarn docs:broken-links
+yarn spellcheck
+
+# Testing
+yarn test:unit
+```
+
+**Skip Condition**: `inputs.skip_common_ci`
+
+## 2. Multinode Job
+
+**Purpose**: Multi-node testing without entitlements  
+**Runtime**: ~30 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Infrastructure:**
+- **PostgreSQL Container**: High-performance configuration
+- **Multiple River Nodes**: Distributed testing environment
+- **Local Blockchain**: Anvil-based chains for testing
+
+**Database Optimization:**
+```sql
+-- Optimized PostgreSQL configuration
+max_connections = 1000
+shared_buffers = 2GB
+```
+
+**Key Features:**
+- **Distributed Messaging**: Multi-node stream synchronization
+- **Performance Testing**: Concurrent node operations
+- **Network Resilience**: Node communication validation
+- **Storage Consistency**: Cross-node data consistency
+
+**Skip Condition**: `inputs.skip_multinode`
+
+## 3. Multinode_Ent Job
+
+**Purpose**: Multi-node testing WITH entitlements  
+**Runtime**: ~45 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Enhanced Testing:**
+- **Cross-Chain Entitlements**: Base ↔ Towns Chain permission validation
+- **Complex Authorization**: Multi-layer permission testing
+- **Real-World Scenarios**: Production-like entitlement flows
+- **Performance Under Load**: Entitlement system stress testing
+
+**Entitlement Test Scenarios:**
+- Token-based permissions (ERC-20, ERC-721, ERC-1155)
+- Custom rule entitlements
+- Cross-chain permission propagation
+- Permission caching and invalidation
+
+**Skip Condition**: `inputs.skip_multinode_ent`
+
+## 4. Multinode_Ent_Legacy Job
+
+**Purpose**: Legacy entitlement system compatibility  
+**Runtime**: ~30 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Compatibility Testing:**
+- **Backward Compatibility**: Legacy entitlement rule support
+- **Migration Testing**: Legacy-to-new entitlement transitions
+- **Regression Prevention**: Ensure legacy systems continue working
+- **Data Migration**: Validate entitlement data migrations
+
+**Skip Condition**: `inputs.skip_multinode_ent_legacy`
+
+## 5. Go_Tests Job
+
+**Purpose**: Comprehensive Go backend testing  
+**Runtime**: ~20 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Go-Specific Testing:**
+- **Unit Tests**: Core business logic validation
+- **Integration Tests**: Service boundary testing
+- **Performance Tests**: Benchmarking and profiling
+- **Race Condition Testing**: Concurrent execution validation
+
+**Test Categories:**
+```go
+// Example Go test execution
+func TestConcurrentStreamProcessing(t *testing.T) {
+    // Test concurrent stream event processing
+    testConcurrentStreamEvents(t)
+}
+
+func BenchmarkMessageThroughput(b *testing.B) {
+    // Benchmark message processing performance
+    benchmarkMessageProcessing(b)
+}
+```
+
+**Skip Condition**: `inputs.skip_go`
+
+## 6. XChain_Integration Job
+
+**Purpose**: Cross-chain functionality validation  
+**Runtime**: ~25 minutes  
+**Runner**: `ubuntu-latest-8-cores`  
+
+**Cross-Chain Testing:**
+- **Base ↔ Towns Chain**: Bi-directional communication
+- **Entitlement Synchronization**: Permission state consistency
+- **Bridge Operations**: Cross-chain asset transfers
+- **Event Propagation**: Cross-chain event handling
+
+**Integration Scenarios:**
+- Space creation on Base → Towns Chain registration
+- Membership changes → Entitlement updates
+- Cross-chain message authorization
+- Multi-chain transaction coordination
+
+**Skip Condition**: `inputs.skip_xchain_integration`
+
+### Conditional Execution
+
+#### Workflow Dispatch Inputs
+The CI pipeline supports selective job execution for faster development cycles:
+
+```yaml
+workflow_dispatch:
+  inputs:
+    skip_common_ci:
+      description: "Skip Common CI checks"
+      type: boolean
+      default: false
+    skip_multinode:
+      description: "Skip Multi-node Tests"  
+      type: boolean
+      default: false
+    skip_multinode_ent:
+      description: "Skip Multi-node Ent Tests"
+      type: boolean  
+      default: false
+    skip_multinode_ent_legacy:
+      description: "Skip Multi-node Ent Legacy Tests"
+      type: boolean
+      default: false
+    skip_go:
+      description: "Skip Go Tests"
+      type: boolean
+      default: false
+    skip_xchain_integration:
+      description: "Skip XChain Integration Tests"
+      type: boolean
+      default: false
+```
+
+#### Usage Scenarios
+- **Quick PR Validation**: Skip expensive multi-node tests for minor changes
+- **Focused Testing**: Run only relevant job types for specific changes
+- **Emergency Fixes**: Fast-track critical fixes by skipping non-essential tests
+- **Resource Management**: Reduce CI compute usage during peak times
+
+### Infrastructure Optimization
+
+#### PostgreSQL Performance
+Multi-node jobs use optimized PostgreSQL configurations:
+
+```bash
+# Performance tuning for CI environment
+echo 'max_connections = 1000' >> postgresql.conf
+echo 'shared_buffers = 2GB' >> postgresql.conf
+echo 'effective_cache_size = 4GB' >> postgresql.conf
+echo 'work_mem = 256MB' >> postgresql.conf
+```
+
+#### Resource Management
+- **8-Core Runners**: High-performance GitHub runners
+- **Turbo Caching**: Intelligent build caching across jobs
+- **Docker Optimization**: Efficient container management
+- **Parallel Execution**: Maximum resource utilization
+
+### Debugging and Monitoring
+
+#### SSH Access for Debugging
+Developers can access CI environments for debugging:
+
+```yaml
+# Add 'ssh' label to PR for tmate session
+- name: Setup tmate session
+  uses: mxschmitt/action-tmate@v3
+  if: contains(github.event.pull_request.labels.*.name, 'ssh')
+```
+
+#### Observability
+- **Structured Logging**: Consistent log formatting across jobs
+- **Performance Metrics**: Job execution timing and resource usage
+- **Failure Analysis**: Detailed error reporting and stack traces
+- **Artifact Collection**: Test results and logs for post-mortem analysis
+
+### Best Practices
+
+#### Job Dependencies
+- **Independent Execution**: Jobs run independently for fault isolation
+- **Shared Setup**: Common setup steps optimized for parallel execution
+- **Resource Sharing**: Efficient use of runners and containers
+
+#### Failure Handling
+- **Graceful Degradation**: Non-critical job failures don't block deployment
+- **Retry Logic**: Automatic retry for transient failures
+- **Fast Failure**: Quick detection and reporting of critical issues
+
+#### Performance Optimization
+- **Incremental Builds**: Only rebuild changed components
+- **Test Parallelization**: Distribute tests across multiple processes
+- **Cache Optimization**: Intelligent caching strategies
+
+### Local CI Reproduction
+
+#### Environment Simulation
+```bash
+# Reproduce CI environment locally
+./scripts/bc-all-start.sh
+RUN_ENV=multi just config-and-start
+
+# Run CI-equivalent tests
+yarn build
+yarn lint  
+yarn test:unit
+
+# Multi-node testing
+RUN_ENV=multi just test-all
+```
+
+#### Debugging Failed CI
+```bash
+# Debug specific test failures
+just t-debug specific_test.go
+
+# Monitor resource usage
+docker stats
+
+# Check database performance
+psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
+```
+
+### Integration with Development Workflow
+
+#### PR Validation
+1. **Fast Feedback**: Common_CI provides immediate validation
+2. **Comprehensive Testing**: Multi-node jobs validate distributed scenarios
+3. **Conditional Execution**: Skip expensive tests for documentation changes
+4. **Merge Confidence**: All jobs must pass for merge approval
+
+#### Scheduled Testing
+- **Hourly Runs**: Detect environment drift and flaky tests
+- **Nightly Deep Testing**: Extended test suites and performance benchmarks
+- **Weekly Integration**: Full cross-chain integration validation
+
+### Next Steps
+
+- **Multi-Node Testing Details**: See [Multi-Node Testing](/development/multi-node-testing)
+- **Local Development Setup**: See [Local Development](/development/local-development)
+- **Testing Strategy**: See [Testing Strategy](/development/testing-strategy) 

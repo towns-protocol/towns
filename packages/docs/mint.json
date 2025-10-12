@@ -34,7 +34,7 @@
     },
     {
       "name": "Github",
-      "url": "https://github.com/river-build"
+      "url": "https://github.com/towns-protocol"
     }
   ],
   "tabs": [],
@@ -52,7 +52,8 @@
             "towns-smart-contracts/pricing-modules",
             "towns-smart-contracts/roles-entitlements",
             "towns-smart-contracts/upgradeability",
-            "towns-smart-contracts/contracts"
+            "towns-smart-contracts/contracts",
+            "towns-smart-contracts/subgraph"
           ]
         },
         {
@@ -158,6 +159,15 @@
       ]
     },
     {
+      "group": "Development & Testing",
+      "pages": [
+        "development/testing-strategy",
+        "development/ci-pipeline",
+        "development/multi-node-testing",
+        "development/local-development"
+      ]
+    },
+    {
       "group": "React SDK",
       "pages": [
         "sdk/react-sdk/getting-started",
@@ -216,7 +226,7 @@
   ],
   "footerSocials": {
     "twitter": "https://x.com/TownsProtocol",
-    "github": "https://github.com/river-build",
+    "github": "https://github.com/towns-protocol/towns",
     "website": "https://towns.com"
   }
 }

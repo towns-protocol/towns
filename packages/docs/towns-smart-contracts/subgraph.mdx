@@ -1,0 +1,398 @@
+---
+title: Subgraph & Indexing
+description: "GraphQL indexing and querying infrastructure for Towns Protocol smart contracts"
+---
+
+## Subgraph Overview
+
+Towns Protocol includes a comprehensive subgraph indexing system built with [Ponder](https://ponder.sh/) to provide efficient GraphQL querying of smart contract events and state. This infrastructure enables real-time and historical data access for applications built on Towns Protocol.
+
+### Package Location
+- **Directory**: `packages/subgraph/`
+- **Framework**: Ponder (TypeScript-based indexing framework)
+- **Purpose**: Index and query Towns smart contract events
+
+## Architecture
+
+### Indexing Engine
+The subgraph uses Ponder to:
+- **Index Smart Contract Events**: Real-time processing of on-chain events
+- **Historical Data Processing**: Backfill historical contract state  
+- **GraphQL API Generation**: Automatic API creation from schema definitions
+- **Multi-Network Support**: Index across Base and Towns Chain
+
+### Environment Configurations
+
+The subgraph supports multiple deployment environments:
+
+| Environment | Config File | Purpose |
+|-------------|-------------|---------|
+| **Development** | `ponder.config.ts` | Local development indexing |
+| **Alpha** | `ponder.config.alpha.ts` | Alpha network deployment |
+| **Gamma** | `ponder.config.gamma.ts` | Gamma network deployment |
+| **Omega** | `ponder.config.omega.ts` | Omega network deployment |
+
+## Schema Definition
+
+### Core Entities
+The subgraph schema is defined in `ponder.schema.ts` and includes:
+
+- **Spaces**: Town spaces with metadata and DeFi configuration
+- **Swaps**: Token swap transactions within spaces
+- **Stakers**: Staking deposits and delegation relationships
+- **Operators**: Node operator registrations and status
+- **Swap Fees**: Fee configuration for space-based swaps
+- **Fee Distribution**: Tracking of fee payments to treasuries and posters
+
+### Entity Relationships
+```typescript
+// Actual schema structure
+Space {
+  id: hex (primary key)
+  owner: hex
+  tokenId: bigint
+  name: text
+  uri: text
+  shortDescription: text
+  longDescription: text
+  createdAt: bigint
+  paused: boolean
+  swaps: Swap[]
+  stakers: Staker[]
+}
+
+Swap {
+  txHash: hex (primary key)
+  spaceId: hex
+  recipient: hex
+  tokenIn: hex
+  tokenOut: hex
+  amountIn: bigint
+  amountOut: bigint
+  poster: hex
+  blockTimestamp: bigint
+  space: Space
+}
+
+Staker {
+  depositId: bigint (primary key)
+  owner: hex
+  delegatee: hex
+  beneficiary: hex
+  amount: bigint
+  createdAt: bigint
+  space?: Space
+  operator?: Operator
+}
+```
+
+## Event Processing
+
+### Smart Contract Integration
+The subgraph processes events from key Towns Protocol contracts:
+
+- **SpaceFactory**: Space creation and metadata management
+- **SwapRouter**: Token swap execution and routing
+- **Staking Contracts**: Deposit, delegation, and reward distribution
+- **Operator Registry**: Node operator registration and status updates
+- **Fee Distribution**: Swap fee collection and distribution to treasuries/posters
+
+### Real-Time Updates
+- **Event Streaming**: Live processing of blockchain events
+- **State Synchronization**: Maintain consistent contract state
+- **Block Reorganization Handling**: Automatic reorg detection and recovery
+
+## Deployment & Operations
+
+### Local Development
+```bash
+# Navigate to subgraph package
+cd packages/subgraph
+
+# Install dependencies
+npm install
+
+# Start local indexing
+npm run dev
+
+# Access GraphQL playground
+open http://localhost:42069
+```
+
+### Docker Deployment
+```bash
+# Build subgraph image
+docker build -t towns-subgraph .
+
+# Run with environment configuration
+docker run -e PONDER_ENV=gamma towns-subgraph
+
+# Docker Compose deployment
+docker-compose up -d
+```
+
+### Environment Variables
+Required environment variables for deployment:
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `RPC_URL_BASE` | Base chain RPC endpoint | Yes |
+| `RPC_URL_TOWNS` | Towns chain RPC endpoint | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
+| `PONDER_LOG_LEVEL` | Logging level (debug, info, warn, error) | No |
+| `PORT` | GraphQL server port | No |
+
+## GraphQL API
+
+### Query Examples
+
+**Get Space Information:**
+```graphql
+query GetSpace($spaceId: String!) {
+  space(id: $spaceId) {
+    id
+    owner
+    tokenId
+    name
+    uri
+    shortDescription
+    longDescription
+    createdAt
+    paused
+    swaps {
+      txHash
+      tokenIn
+      tokenOut
+      amountIn
+      amountOut
+      poster
+      blockTimestamp
+    }
+    stakers {
+      depositId
+      owner
+      amount
+      createdAt
+    }
+  }
+}
+```
+
+**List Recent Spaces:**
+```graphql
+query RecentSpaces($limit: Int = 10) {
+  spaces(
+    orderBy: createdAt
+    orderDirection: desc
+    first: $limit
+  ) {
+    id
+    name
+    owner
+    tokenId
+    shortDescription
+    createdAt
+    paused
+  }
+}
+```
+
+**Swap Activity for Space:**
+```graphql
+query SpaceSwaps($spaceId: String!, $limit: Int = 20) {
+  swaps(
+    where: { spaceId: $spaceId }
+    orderBy: blockTimestamp
+    orderDirection: desc
+    first: $limit
+  ) {
+    txHash
+    tokenIn
+    tokenOut
+    amountIn
+    amountOut
+    poster
+    recipient
+    blockTimestamp
+  }
+}
+```
+
+**Staking Information:**
+```graphql
+query StakingInfo($address: String!) {
+  stakers(where: { owner: $address }) {
+    depositId
+    delegatee
+    beneficiary
+    amount
+    createdAt
+    space {
+      id
+      name
+    }
+    operator {
+      address
+      status
+    }
+  }
+}
+```
+
+### Subscription Support
+Real-time updates via GraphQL subscriptions:
+
+```graphql
+subscription SpaceUpdates($spaceId: String!) {
+  spaceUpdated(id: $spaceId) {
+    id
+    name
+    paused
+    swaps {
+      txHash
+      blockTimestamp
+    }
+  }
+}
+
+subscription NewSwaps($spaceId: String!) {
+  swapCreated(where: { spaceId: $spaceId }) {
+    txHash
+    tokenIn
+    tokenOut
+    amountIn
+    amountOut
+    poster
+    blockTimestamp
+  }
+}
+```
+
+## Performance & Monitoring
+
+### Indexing Performance
+- **Block Processing**: Optimized batch processing of blocks
+- **Cache Strategy**: Intelligent caching of frequently queried data
+- **Connection Pooling**: Efficient database connection management
+
+### Monitoring Endpoints
+- **Health Check**: `/health` - Indexing status and database connectivity
+- **Metrics**: `/metrics` - Prometheus-compatible metrics
+- **Status**: `/status` - Current indexing progress and block height
+
+## Integration with Applications
+
+### SDK Integration
+The subgraph integrates with Towns Protocol SDKs:
+
+```typescript
+import { createTownsClient } from '@towns-protocol/sdk'
+
+const client = createTownsClient({
+  subgraphUrl: 'https://subgraph.towns.com/graphql'
+})
+
+// Query spaces
+const spaces = await client.spaces.list({
+  orderBy: 'createdAt',
+  limit: 20
+})
+```
+
+### Direct GraphQL Usage
+```typescript
+import { ApolloClient } from '@apollo/client'
+
+const client = new ApolloClient({
+  uri: 'https://subgraph.towns.com/graphql'
+})
+
+const { data } = await client.query({
+  query: GET_SPACES_QUERY,
+  variables: { limit: 10 }
+})
+```
+
+## Development Guidelines
+
+### Schema Updates
+When updating the schema:
+1. **Update** `ponder.schema.ts` with new entities or fields
+2. **Generate** TypeScript types: `npm run codegen`
+3. **Update** event handlers in `src/` directory
+4. **Test** with local deployment
+
+### Event Handler Patterns
+```typescript
+// Actual event handler examples
+import { ponder } from '@/generated'
+
+ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
+  const { space } = context.db
+
+  await space.create({
+    id: event.args.spaceId,
+    data: {
+      owner: event.args.owner,
+      tokenId: event.args.tokenId,
+      name: event.args.name || '',
+      uri: event.args.uri || '',
+      shortDescription: '',
+      longDescription: '',
+      createdAt: event.block.timestamp,
+      paused: false,
+    }
+  })
+})
+
+ponder.on('SwapRouter:Swap', async ({ event, context }) => {
+  const { swap } = context.db
+
+  await swap.create({
+    id: event.transaction.hash,
+    data: {
+      spaceId: event.args.spaceId,
+      recipient: event.args.recipient,
+      tokenIn: event.args.tokenIn,
+      tokenOut: event.args.tokenOut,
+      amountIn: event.args.amountIn,
+      amountOut: event.args.amountOut,
+      poster: event.args.poster,
+      blockTimestamp: event.block.timestamp,
+      createdAt: event.block.timestamp,
+    }
+  })
+})
+```
+
+### Testing
+```bash
+# Run subgraph tests
+npm run test
+
+# Test specific event handlers
+npm run test:handlers
+
+# Integration tests with local chain
+npm run test:integration
+```
+
+## Future Enhancements
+
+### Planned Features
+- **Advanced Analytics**: Usage metrics and space analytics
+- **Cross-Chain Indexing**: Enhanced multi-chain event correlation
+- **Real-Time Notifications**: WebSocket-based event notifications
+- **Query Optimization**: Advanced caching and query performance improvements
+
+### Contribution Guidelines
+- **Schema Changes**: Require review for backward compatibility
+- **Performance**: Monitor query performance impact
+- **Testing**: Comprehensive test coverage for new features
+
+## Resources
+
+- **Ponder Documentation**: [https://ponder.sh/docs](https://ponder.sh/docs)
+- **GraphQL Best Practices**: Query optimization and schema design
+- **Towns Protocol Contracts**: See [Smart Contracts Documentation](/towns-smart-contracts/contracts)
+- **Deployment Configurations**: Environment-specific setup and monitoring 

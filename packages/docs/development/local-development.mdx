@@ -1,0 +1,546 @@
+---
+title: Local Development Environment
+description: "Complete guide to setting up and using Towns Protocol's local development environment"
+---
+
+## Local Development Environment
+
+Towns Protocol's local development environment is designed to mirror the sophisticated CI pipeline while providing fast iteration cycles for developers. This guide explains how to set up and use the various development environments, each optimized for different development scenarios.
+
+### Development Environment Philosophy
+
+#### CI-Local Parity
+Towns Protocol maintains **strong parity** between CI and local environments to ensure:
+
+- **Predictable Testing**: Local test results match CI behavior
+- **Debugging Capability**: Developers can reproduce CI failures locally
+- **Fast Feedback**: Local environments provide quick validation
+- **Production Simulation**: Realistic testing scenarios during development
+
+#### Environment Variants
+Towns Protocol provides multiple development environments optimized for different workflows:
+
+| Environment | Full Name | Entitlements | Performance | Best For |
+|------------|-----------|-------------|-------------|----------|
+| `multi` | Multi-node with entitlements | ✅ Enabled | Slower, comprehensive | Full SDK testing, integration work |
+| `multi_ne` | Multi-node no entitlements | ❌ Disabled | Faster | SDK development, messaging tests |
+| `local` | Single-node development | ❓ Optional | Fastest | Component development, debugging |
+
+### Prerequisites
+
+#### System Requirements
+- **Go**: 1.21+ (specified in `go.work`)
+- **Node.js**: v20.x LTS
+- **Docker**: For PostgreSQL and local chains
+- **Just**: Command runner for Go workflows
+- **jq**: JSON processing utility
+
+#### Platform-Specific Setup
+
+**macOS:**
+```bash
+# Install prerequisites via Homebrew
+brew install go node docker just jq
+
+# Install Foundry for smart contract development
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+**Ubuntu/Debian:**
+```bash
+# Install prerequisites
+sudo apt update
+sudo apt install -y golang-go nodejs npm docker.io jq
+
+# Install Just
+curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | sudo bash -s -- --to /usr/local/bin
+
+# Install Foundry
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+#### Initial Setup
+```bash
+# Clone repository
+git clone https://github.com/towns-protocol/towns.git
+cd towns
+
+# Install dependencies and setup hooks
+yarn install && yarn prepare
+
+# Setup Certificate Authority (required for HTTPS)
+./core/scripts/register-ca.sh
+```
+
+### RUN_ENV Configuration Guide
+
+#### Understanding RUN_ENV
+The `RUN_ENV` environment variable controls which development environment configuration to use. Each environment is optimized for specific development scenarios and testing requirements.
+
+#### Environment Configuration Location
+Environment configurations are stored in `/core/env/`:
+
+```
+core/env/
+├── multi/           # Full multi-node with entitlements
+│   └── config.yaml
+├── multi_ne/        # Multi-node without entitlements  
+│   └── config.yaml
+├── local/           # Single-node development
+│   └── config.yaml
+└── common/          # Shared configuration
+    └── config.yaml
+```
+
+### Environment-Specific Workflows
+
+## 1. Multi-Node Environment (`RUN_ENV=multi`)
+
+**Use Cases:**
+- Full SDK integration testing
+- Cross-chain entitlement validation
+- Multi-node communication testing
+- Production-like scenario validation
+
+**Setup:**
+```bash
+cd core
+
+# Start full multi-node environment
+RUN_ENV=multi just config-and-start
+
+# Verify all nodes are running
+RUN_ENV=multi just status
+
+# View aggregated logs
+RUN_ENV=multi just tail-logs
+```
+
+**Node Configuration:**
+```yaml
+# core/env/multi/config.yaml (simplified)
+nodes:
+  - name: "node1"
+    port: 8080
+    grpc_port: 8090
+    entitlements_enabled: true
+  - name: "node2"
+    port: 8081
+    grpc_port: 8091
+    entitlements_enabled: true
+  - name: "node3"
+    port: 8082
+    grpc_port: 8092
+    entitlements_enabled: true
+
+database:
+  host: "localhost:5433"
+  max_connections: 100
+
+blockchain:
+  base_chain_url: "http://localhost:8545"
+  river_chain_url: "http://localhost:8546"
+```
+
+**Testing Workflow:**
+```bash
+# Run multi-node specific tests
+RUN_ENV=multi just test-multinode
+
+# Run tests with debug logging
+RUN_ENV=multi just t-debug
+
+# Run specific test file
+RUN_ENV=multi just t ./node/test/multinode_test.go
+```
+
+**Cleanup:**
+```bash
+# Stop all nodes gracefully
+RUN_ENV=multi just stop
+
+# Force cleanup if needed
+RUN_ENV=multi just clean
+```
+
+## 2. Multi-Node No-Entitlements (`RUN_ENV=multi_ne`)
+
+**Use Cases:**
+- Fast SDK development iteration
+- Core messaging functionality testing
+- Stream synchronization validation
+- Performance testing without entitlement overhead
+
+**Setup:**
+```bash
+cd core
+
+# Start fast multi-node environment
+RUN_ENV=multi_ne just config-and-start
+
+# Verify startup
+RUN_ENV=multi_ne just status
+```
+
+**Performance Benefits:**
+- **50-70% faster startup**: No entitlement system initialization
+- **Reduced memory usage**: Simplified permission checking
+- **Faster test execution**: No cross-chain entitlement validation
+- **Simplified debugging**: Fewer moving parts to troubleshoot
+
+**Configuration Differences:**
+```yaml
+# core/env/multi_ne/config.yaml
+entitlements:
+  enabled: false           # Key difference
+  bypass_checks: true     # Skip all permission validation
+
+# Identical node setup but faster execution
+nodes:
+  - name: "node1"
+    port: 8080
+    entitlements_enabled: false
+  # ... more nodes
+```
+
+**Testing Workflow:**
+```bash
+# Fast test execution
+RUN_ENV=multi_ne just test-multinode
+
+# SDK development workflow
+RUN_ENV=multi_ne just test-sdk
+
+# Cleanup
+RUN_ENV=multi_ne just stop
+```
+
+## 3. Local Single-Node (`RUN_ENV=local`)
+
+**Use Cases:**
+- Component development and debugging
+- Unit test development
+- API endpoint testing
+- Rapid prototyping
+
+**Setup:**
+```bash
+cd core
+
+# Start single node
+RUN_ENV=local just config-and-start
+
+# Or start minimal services
+just storage-start  # PostgreSQL only
+just anvils         # Local chains only
+```
+
+**Simplified Configuration:**
+```yaml
+# core/env/local/config.yaml
+node:
+  port: 8080
+  grpc_port: 8090
+  log_level: "debug"
+
+database:
+  host: "localhost:5433"
+  name: "river_local"
+
+entitlements:
+  enabled: true
+  simplified: true  # Reduced complexity for local dev
+```
+
+### Infrastructure Management
+
+#### Database Management
+```bash
+# Start PostgreSQL
+just storage-start
+
+# Check database status
+just storage-status
+
+# View database logs
+just storage-logs
+
+# Stop PostgreSQL
+just storage-stop
+
+# Reset database (careful!)
+just storage-reset
+```
+
+#### Blockchain Management
+```bash
+# Start local Anvil chains (Base + River)
+just anvils
+
+# Check chain status
+curl http://localhost:8545 -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+# Stop chains
+just anvils-stop
+
+# Reset chain state
+just anvils-reset
+```
+
+#### Service Health Monitoring
+```bash
+# Check all services
+just health-check
+
+# Individual service status
+curl http://localhost:8080/health      # Node health
+curl http://localhost:8080/metrics     # Prometheus metrics
+curl http://localhost:8080/debug/vars  # Runtime variables
+```
+
+### Development Workflows
+
+#### SDK Development Workflow
+```bash
+# Setup fast environment for SDK work
+cd core
+RUN_ENV=multi_ne just config-and-start
+
+# Navigate to SDK workspace
+cd ../packages/sdk
+
+# Run SDK tests in watch mode
+yarn test --watch
+
+# Make changes and test
+yarn build && yarn test
+```
+
+#### Contract Development Workflow
+```bash
+# Start foundry environment
+cd packages/contracts
+yarn anvil  # Start local chain
+
+# Deploy contracts
+yarn deploy:local
+
+# Run contract tests
+yarn test
+
+# Deploy to local environment
+yarn deploy:dev
+```
+
+#### Full Integration Workflow
+```bash
+# Start complete environment
+cd core
+RUN_ENV=multi just config-and-start
+
+# Build all packages
+cd .. && yarn build
+
+# Run comprehensive test suite
+yarn test
+
+# Test specific integration
+yarn test packages/sdk/src/integration.test.ts
+```
+
+### Environment Debugging
+
+#### Log Analysis
+```bash
+# Tail logs from specific environment
+RUN_ENV=multi just tail-logs
+
+# Filter logs by level
+RUN_ENV=multi just tail-logs | grep ERROR
+
+# Search for specific patterns
+RUN_ENV=multi just grep-logs "entitlement"
+
+# Export logs for analysis
+RUN_ENV=multi just export-logs > debug.log
+```
+
+#### Performance Monitoring
+```bash
+# Monitor resource usage
+docker stats
+
+# Database performance
+psql -h localhost -p 5433 -U postgres -c "
+  SELECT 
+    pid,
+    usename,
+    application_name,
+    client_addr,
+    state,
+    query_start,
+    query
+  FROM pg_stat_activity 
+  WHERE state != 'idle'
+  ORDER BY query_start;
+"
+
+# Memory usage by service
+ps aux | grep -E "(river_node|postgres|anvil)"
+```
+
+#### Network Debugging
+```bash
+# Check port availability
+lsof -i :8080  # Node port
+lsof -i :5433  # PostgreSQL port
+lsof -i :8545  # Base chain port
+
+# Test API connectivity
+curl -v http://localhost:8080/health
+
+# gRPC connectivity test
+grpc_cli call localhost:8090 river.api.v1.RiverService.GetStream "{}"
+```
+
+### CI Environment Reproduction
+
+#### Reproducing CI Failures Locally
+```bash
+# Use exact CI environment setup
+cd core
+RUN_ENV=multi just config-and-start
+
+# Run CI-equivalent tests
+yarn build
+yarn lint
+yarn test:unit
+just test-multinode
+
+# Debug with same PostgreSQL configuration as CI
+docker run -d \
+  --name river_postgres_ci \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5433:5432 \
+  postgres:latest
+
+# Apply CI performance tuning
+docker exec river_postgres_ci bash -c "
+  echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+  echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+"
+docker restart river_postgres_ci
+```
+
+#### Environment Parity Validation
+```bash
+# Compare local vs CI configurations
+diff core/env/multi/config.yaml .github/workflows/ci.yml
+
+# Validate dependency versions match
+./scripts/print-versions.sh
+
+# Check for environment-specific test failures
+RUN_ENV=multi just test-all --verbose
+```
+
+### Troubleshooting Common Issues
+
+#### Port Conflicts
+```bash
+# Find processes using required ports
+lsof -i :8080 :8081 :8082 :5433 :8545 :8546
+
+# Kill conflicting processes
+sudo pkill -f "process_name"
+
+# Use alternative ports if needed
+PORT_OFFSET=100 RUN_ENV=multi just config-and-start
+```
+
+#### Certificate Issues
+```bash
+# Regenerate certificates
+./core/scripts/register-ca.sh --force
+
+# Clear certificate cache
+rm -rf ~/.config/river/certs
+./core/scripts/generate-certs.sh
+```
+
+#### Database Connection Issues
+```bash
+# Reset database connections
+just storage-stop
+just storage-start
+
+# Check connection limits
+psql -h localhost -p 5433 -U postgres -c "SHOW max_connections;"
+
+# Monitor active connections
+watch -n 1 "psql -h localhost -p 5433 -U postgres -c 'SELECT count(*) FROM pg_stat_activity;'"
+```
+
+### Performance Optimization
+
+#### Local Development Optimization
+```bash
+# Enable performance mode
+export RIVER_PERF_MODE=true
+export GOGC=200  # Reduce GC pressure
+
+# Use SSD-optimized settings
+export RIVER_DB_FSYNC=false  # Only for local dev!
+
+# Parallel test execution
+export GOMAXPROCS=$(nproc)
+just test-parallel
+```
+
+#### Resource Management
+```bash
+# Monitor and limit resource usage
+docker update --memory=4g --cpus=2 river_postgres_container
+
+# Optimize for laptop development
+export RIVER_RESOURCE_LIMIT=low
+RUN_ENV=multi_ne just config-and-start  # Use faster environment
+```
+
+### Integration with IDE
+
+#### VS Code Configuration
+```json
+// .vscode/settings.json
+{
+  "go.testEnvVars": {
+    "RUN_ENV": "multi_ne"
+  },
+  "go.buildTags": "integration",
+  "typescript.preferences.includePackageJsonAutoImports": "on"
+}
+```
+
+#### Debugging Configuration
+```json
+// .vscode/launch.json
+{
+  "name": "Debug River Node",
+  "type": "go",
+  "request": "launch",
+  "program": "./core/river_node",
+  "env": {
+    "RUN_ENV": "local",
+    "LOG_LEVEL": "debug"
+  }
+}
+```
+
+### Next Steps
+
+- **Testing Strategy**: See [Testing Strategy](/development/testing-strategy)
+- **CI Pipeline**: See [CI Pipeline](/development/ci-pipeline)  
+- **Multi-Node Testing**: See [Multi-Node Testing](/development/multi-node-testing) 
