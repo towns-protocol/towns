@@ -16,10 +16,12 @@ import {
     type BlockchainTransaction_SpaceReview_Action,
     type BlockchainTransaction_TokenTransfer,
     type PlainMessage,
+    type Tags,
     ChannelMessage_Post_AttachmentSchema,
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
+    MessageInteractionType,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
 import { isDefined, logNever } from '../../check'
@@ -68,6 +70,7 @@ export interface TimelineEvent {
         id: string
     }
     sessionId?: string
+    tags?: PlainMessage<Tags>
 }
 
 /// a timeline event should have one or none of the following fields set
@@ -635,6 +638,14 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
     return content?.kind === RiverTimelineEvent.RedactionActionEvent
         ? content.refEventId
         : undefined
+}
+
+export function isReactionInteraction(tags: PlainMessage<Tags> | undefined): boolean {
+    return tags?.messageInteractionType === MessageInteractionType.REACTION
+}
+
+export function isPostInteraction(tags: PlainMessage<Tags> | undefined): boolean {
+    return tags?.messageInteractionType === MessageInteractionType.POST
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
