@@ -496,6 +496,9 @@ jobs:
               working-directory: core
               run: just start-and-wait-app-registry
 
+            # Wait for RPC handlers to be fully registered. Health endpoints respond immediately
+            # but RPC handlers for replicated stream operations need additional time to initialize
+            # quorum pools and establish inter-node connections.
             - name: Wait for nodes to be ready
               run: sleep 10
 
@@ -510,6 +513,8 @@ jobs:
                   yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
                   yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
+            # Wait for data replication to complete. Similar to River nodes, the health endpoint
+            # responds before data propagation across nodes is finished.
             - name: Wait for stream metadata service to be ready
               run: sleep 10
 
@@ -627,6 +632,9 @@ jobs:
               working-directory: core
               run: just start-and-wait-app-registry
 
+            # Wait for RPC handlers to be fully registered. Health endpoints respond immediately
+            # but RPC handlers for replicated stream operations need additional time to initialize
+            # quorum pools and establish inter-node connections.
             - name: Wait for nodes to be ready
               run: sleep 10
 
