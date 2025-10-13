@@ -424,7 +424,6 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 
 	latest, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
-
 }
 
 func TestGetMiniblockNumberRangesPerformance(t *testing.T) {

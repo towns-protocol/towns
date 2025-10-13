@@ -258,7 +258,7 @@ func TestFindClosestSnapshotMiniblock(t *testing.T) {
 		{
 			name: "duplicate snapshot values",
 			presentRanges: []storage.MiniblockRange{
-				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{4, 4, 1}},
+				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{1, 4, 4}},
 			},
 			start:    9,
 			expected: 4,

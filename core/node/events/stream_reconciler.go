@@ -76,6 +76,7 @@ func newStreamReconciler(
 	}
 }
 
+// reconcileAndTrim runs stream reconciliation and trimming processes.
 func (sr *streamReconciler) reconcileAndTrim() error {
 	err := sr.reconcile()
 	if err != nil {
@@ -85,6 +86,7 @@ func (sr *streamReconciler) reconcileAndTrim() error {
 	return sr.trim()
 }
 
+// trim runs stream history and snapshot trimming process.
 func (sr *streamReconciler) trim() error {
 	var cancel context.CancelFunc
 	sr.ctx, cancel = context.WithTimeout(sr.cache.params.ServerCtx, 5*time.Minute)
@@ -92,6 +94,7 @@ func (sr *streamReconciler) trim() error {
 
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
 	// such as backward/forwards reconciliation, gaps filling.
+	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO below.
 	err := sr.loadRanges()
 	if err != nil {
 		return err
@@ -103,6 +106,9 @@ func (sr *streamReconciler) trim() error {
 	}
 
 	// TODO: Snapshot trimming
+	// There should be a single range from localStartMbInclusive to the last miniblock.
+	// Split the given range into buckets using retentionInterval value.
+	// Keep the first miniblock with snapshot in each bucket, and nullify the rest.
 
 	return nil
 }

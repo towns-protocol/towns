@@ -270,6 +270,15 @@ type (
 		// gaps or plan trimming work.
 		GetMiniblockNumberRanges(ctx context.Context, streamId StreamId) ([]MiniblockRange, error)
 
+		// TrimStream trims the stream by removing miniblocks and nullifying snapshots.
+		// It removes miniblocks starting from 1 inclusively to startMb exclusively and nullifies snapshots in the range.
+		TrimStream(
+			ctx context.Context,
+			streamId StreamId,
+			startMbExclusively int64,
+			nullifySnapshotMbs []int64,
+		) error
+
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)
 
