@@ -17,6 +17,7 @@ import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol"
 import {MockLegacyMembership} from "test/mocks/legacy/membership/MockLegacyMembership.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
+import {Factory} from "src/utils/libraries/Factory.sol";
 
 contract MembershipJoinSpaceTest is
     IEntitlementGatedBase,
@@ -493,7 +494,7 @@ contract MembershipJoinSpaceTest is
     /*                     SPECIAL CASES                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_joinSpaceWithInitialFreeAllocation() external {
+    function test_createSpaceWithFreeAllocationOnPaidSpace() external {
         address[] memory allowedUsers = new address[](2);
         allowedUsers[0] = alice;
         allowedUsers[1] = bob;
@@ -503,16 +504,33 @@ contract MembershipJoinSpaceTest is
             allowedUsers
         );
         freeAllocationInfo.membership.settings.pricingModule = fixedPricingModule;
-        freeAllocationInfo.membership.settings.freeAllocation = 1;
+        freeAllocationInfo.membership.settings.price = 1 ether;
+        freeAllocationInfo.membership.settings.freeAllocation = 100;
 
         vm.prank(founder);
-        address freeAllocationSpace = ICreateSpace(spaceFactory).createSpace(freeAllocationInfo);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Factory.Factory__FailedDeployment.selector,
+                abi.encodeWithSelector(Membership__CannotSetFreeAllocationOnPaidSpace.selector)
+            )
+        );
+        ICreateSpace(spaceFactory).createSpace(freeAllocationInfo);
+    }
 
-        MembershipFacet freeAllocationMembership = MembershipFacet(freeAllocationSpace);
+    function test_joinSpace_freeTownsDontPayFees() external {
+        IArchitectBase.SpaceInfo memory freeSpaceInfo = _createEveryoneSpaceInfo("FreeSpace");
+        freeSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+        freeSpaceInfo.membership.settings.price = 0;
+        freeSpaceInfo.membership.settings.freeAllocation = 1;
+
+        vm.prank(founder);
+        ICreateSpace(spaceFactory).createSpace(freeSpaceInfo);
 
         vm.prank(bob);
-        vm.expectRevert(Membership__InsufficientPayment.selector);
-        freeAllocationMembership.joinSpace(bob);
+        membership.joinSpace(bob);
+
+        vm.prank(alice);
+        membership.joinSpace(alice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

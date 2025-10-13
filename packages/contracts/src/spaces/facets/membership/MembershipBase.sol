@@ -36,6 +36,8 @@ abstract contract MembershipBase is IMembershipBase {
 
         if (info.price > 0) {
             _verifyPrice(info.price);
+            if (info.freeAllocation > 0)
+                Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
             IMembershipPricing(info.pricingModule).setPrice(info.price);
         }
 
@@ -171,6 +173,8 @@ abstract contract MembershipBase is IMembershipBase {
         if (pricingModule == address(0)) return platform.getMembershipFee();
 
         membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
+        if (membershipPrice == 0) return 0;
+
         uint256 minPrice = platform.getMembershipMinPrice();
         if (membershipPrice < minPrice) return platform.getMembershipFee();
     }
