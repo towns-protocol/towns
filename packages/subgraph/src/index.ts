@@ -762,7 +762,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 
     try {
-        console.log("=== Space:Tip Event ===")
         const spaceId = event.log.address // The space contract that emitted the event
         const sender = event.args.sender
 
@@ -770,7 +769,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
             ethAmount = event.args.amount
         }
-
 
         // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
         // This leverages the existing primary key constraint (txHash, logIndex)
@@ -805,8 +803,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             })
             .where(eq(schema.space.id, spaceId))
 
-        console.log("=== Space:Tip - Update tipLeaderboard ==")
-        console.log("Event args:", event.args)
         // Update tip leaderboard for sender
         await context.db
             .insert(schema.tipLeaderboard)
@@ -822,7 +818,6 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 lastActivity: blockTimestamp,
             })
-        console.log("=== Space:Tip - Update completed ==")
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
