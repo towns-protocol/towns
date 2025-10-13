@@ -402,6 +402,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 
 	latest, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
+	require.EqualValues(15, latest)
 
 	ranges, err = store.GetMiniblockNumberRanges(ctx, streamId)
 	require.NoError(err)
@@ -424,6 +425,7 @@ func TestGetMiniblockNumberRangesWithPrecedingMiniblocks(t *testing.T) {
 
 	latest, err = store.GetLastMiniblockNumber(ctx, streamId)
 	require.NoError(err)
+	require.EqualValues(15, latest)
 }
 
 func TestGetMiniblockNumberRangesPerformance(t *testing.T) {

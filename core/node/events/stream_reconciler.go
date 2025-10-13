@@ -205,6 +205,9 @@ func (sr *streamReconciler) reconcile() error {
 	} else {
 		err = sr.reconcileBackward()
 	}
+	if err != nil {
+		return err
+	}
 
 	// Recalculate missing ranges from db and backfill gaps if there are some.
 	if err = sr.loadRanges(); err != nil {
