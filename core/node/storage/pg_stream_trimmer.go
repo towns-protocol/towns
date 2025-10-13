@@ -106,7 +106,7 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	}
 
 	cfg := t.config.Get()
-	keepMbs := int64(cfg.StreamTrimmingMiniblocksToKeep.ForType(streamId.Type()))
+	keepMbs := int64(cfg.StreamHistoryMiniblocks.ForType(streamId.Type()))
 
 	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {

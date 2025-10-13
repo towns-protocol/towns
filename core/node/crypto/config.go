@@ -52,13 +52,8 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
-	// StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey is the key for how many miniblocks to keep before the last
-	// snapshot for streams.
-	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
-	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
-	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
-	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
-	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
+	StreamEnableNewSnapshotFormatConfigKey          = "stream.enableNewSnapshotFormat"
+	ServerEnableNode2NodeAuthConfigKey              = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
@@ -158,10 +153,6 @@ type OnChainSettings struct {
 
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
-
-	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
-	// Defined with the default value and per stream type.
-	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
@@ -265,23 +256,6 @@ func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
 	}
 }
 
-type StreamTrimmingMiniblocksToKeepSettings struct {
-	Default     uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
-	Space       uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
-	UserSetting uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.a5"`
-}
-
-func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 {
-	switch streamType {
-	case shared.STREAM_SPACE_BIN:
-		return m.Space
-	case shared.STREAM_USER_SETTINGS_BIN:
-		return m.UserSetting
-	default:
-		return m.Default
-	}
-}
-
 // StreamDistribution holds settings for the stream distribution algorithm.
 type StreamDistribution struct {
 	// ExtraCandidatesCount is the number of extra candidate nodes to select when determining the
@@ -307,13 +281,6 @@ func DefaultOnChainSettings() *OnChainSettings {
 			UserDevice:   10,
 		},
 		StreamEnableNewSnapshotFormat: 0,
-
-		// 0 means space stream trimming is disabled
-		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{
-			Default:     0,
-			Space:       0,
-			UserSetting: 0,
-		},
 
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,

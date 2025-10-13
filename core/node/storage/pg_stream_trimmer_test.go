@@ -175,8 +175,8 @@ func TestStreamTrimmer(t *testing.T) {
 		require := require.New(t)
 
 		cfg := pgStreamStore.streamTrimmer.config.Get()
-		cfg.StreamSnapshotIntervalInMiniblocks = 50                                          // below minRetentionInterval
-		cfg.StreamTrimmingMiniblocksToKeep = crypto.StreamTrimmingMiniblocksToKeepSettings{} // disable miniblock deletion
+		cfg.StreamSnapshotIntervalInMiniblocks = 50                    // below minRetentionInterval
+		cfg.StreamHistoryMiniblocks = crypto.StreamHistoryMiniblocks{} // disable miniblock deletion
 
 		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
@@ -231,7 +231,7 @@ func TestStreamTrimmer(t *testing.T) {
 		require := require.New(t)
 
 		cfg := pgStreamStore.streamTrimmer.config.Get()
-		cfg.StreamTrimmingMiniblocksToKeep = crypto.StreamTrimmingMiniblocksToKeepSettings{}
+		cfg.StreamHistoryMiniblocks = crypto.StreamHistoryMiniblocks{}
 		cfg.StreamSnapshotIntervalInMiniblocks = 0
 
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -289,7 +289,7 @@ func TestStreamTrimmer(t *testing.T) {
 		require := require.New(t)
 
 		cfg := pgStreamStore.streamTrimmer.config.Get()
-		cfg.StreamTrimmingMiniblocksToKeep.Space = 1000
+		cfg.StreamHistoryMiniblocks.Space = 1000
 		cfg.StreamSnapshotIntervalInMiniblocks = 0
 
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
@@ -350,7 +350,7 @@ func TestStreamTrimmer(t *testing.T) {
 		require := require.New(t)
 
 		cfg := pgStreamStore.streamTrimmer.config.Get()
-		cfg.StreamTrimmingMiniblocksToKeep.Space = 5
+		cfg.StreamHistoryMiniblocks.Space = 5
 		cfg.StreamSnapshotIntervalInMiniblocks = 0
 
 		pgStreamStore.streamTrimmer.trimmingBatchSize = 2
