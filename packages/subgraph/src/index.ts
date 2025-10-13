@@ -805,13 +805,13 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
         // Update tip leaderboard for sender using raw SQL
         await context.db.sql.execute(sql`
-            INSERT INTO tip_leaderboard ("user", "spaceId", "totalSent", "tipsSentCount", "lastActivity")
+            INSERT INTO tip_leaderboard ("user", space_id, total_sent, tips_sent_count, last_activity)
             VALUES (${sender}, ${spaceId}, ${ethAmount}, 1, ${blockTimestamp})
-            ON CONFLICT ("user", "spaceId")
+            ON CONFLICT ("user", space_id)
             DO UPDATE SET
-                "totalSent" = tip_leaderboard."totalSent" + ${ethAmount},
-                "tipsSentCount" = tip_leaderboard."tipsSentCount" + 1,
-                "lastActivity" = ${blockTimestamp}
+                total_sent = tip_leaderboard.total_sent + ${ethAmount},
+                tips_sent_count = tip_leaderboard.tips_sent_count + 1,
+                last_activity = ${blockTimestamp}
         `)
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
