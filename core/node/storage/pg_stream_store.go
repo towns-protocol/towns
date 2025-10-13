@@ -2657,9 +2657,50 @@ func (s *PostgresStreamStore) trimStreamTx(
 	startMbExclusively int64,
 	nullifySnapshotMbs []int64,
 ) error {
-	// TODO: Implement the logic to:
-	//  1. Delete miniblocks starting from 1 inclusively to startMbExclusively.
-	//  2. Nullify the snapshot column for the specified miniblocks.
+	if startMbExclusively < 0 {
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"startMbExclusively must be non-negative",
+			"streamId", streamId,
+			"startMbExclusively", startMbExclusively,
+		).Func("PostgresStreamStore.trimStreamTx")
+	}
+
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	if startMbExclusively > 1 {
+		query := s.sqlForStream(
+			`DELETE FROM {{miniblocks}}
+		WHERE stream_id = $1 AND seq_num >= 1 AND seq_num < $2`,
+			streamId,
+		)
+		if _, err := tx.Exec(ctx, query, streamId, startMbExclusively); err != nil {
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+				Message("failed to delete miniblocks during trimming").
+				Tag("streamId", streamId).
+				Tag("startMbExclusively", startMbExclusively)
+		}
+	}
+
+	if len(nullifySnapshotMbs) > 0 {
+		query := s.sqlForStream(
+			`UPDATE {{miniblocks}}
+		SET snapshot = NULL
+		WHERE stream_id = $1 AND seq_num = ANY($2)`,
+			streamId,
+		)
+		if _, err := tx.Exec(ctx, query, streamId, nullifySnapshotMbs); err != nil {
+			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+				Message("failed to nullify snapshots during trimming").
+				Tag("streamId", streamId).
+				Tag("nullifySnapshotMbs", nullifySnapshotMbs)
+		}
+	}
+
+	return nil
 }
 
 func parseAndCheckHasLegacySnapshot(data []byte) bool {

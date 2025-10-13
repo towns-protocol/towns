@@ -100,15 +100,21 @@ func (sr *streamReconciler) trim() error {
 		return err
 	}
 
-	// History trimming
-	if sr.localStartMbInclusive > 0 {
-		// TODO: Delete miniblocks with numbers < localStartMbInclusive.
+	if len(sr.presentRanges) > 1 {
+		return RiverError(Err_INTERNAL, "Stream has gaps after reconciliation").
+			Tags("streamId", sr.stream.streamId, "ranges", sr.presentRanges)
 	}
 
-	// TODO: Snapshot trimming
-	// There should be a single range from localStartMbInclusive to the last miniblock.
-	// Split the given range into buckets using retentionInterval value.
-	// Keep the first miniblock with snapshot in each bucket, and nullify the rest.
+	nullifySnapshotMbs := determineRangeSnapshotsToNullify(
+		sr.presentRanges[0],
+		int64(sr.cache.params.ChainConfig.Get().StreamSnapshotIntervalInMiniblocks),
+	)
+
+	err = sr.cache.params.Storage.TrimStream(sr.ctx, sr.stream.StreamId(), sr.localStartMbInclusive, nullifySnapshotMbs)
+	if err != nil {
+		return RiverError(Err_INTERNAL, "Failed to trim stream").
+			Tags("streamId", sr.stream.streamId, "localStartMbInclusive", sr.localStartMbInclusive, "error", err)
+	}
 
 	return nil
 }
