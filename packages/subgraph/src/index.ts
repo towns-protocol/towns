@@ -15,11 +15,6 @@ ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
     const { SpaceOwner } = context.contracts
 
-    console.log("=== SpaceCreated Event ===")
-    console.log("Event args:", event.args)
-    console.log("Block:", event.block.number)
-    console.log("Transaction:", event.transaction.hash)
-
     try {
         // Fetch space info from contract
         const space = await context.client.readContract({
@@ -783,7 +778,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 ethAmount: ethAmount,
                 eventData: {
                     type: 'tip',
-                    sender: event.args.sender,
+                    sender: sender,
                     receiver: event.args.receiver,
                     currency: event.args.currency,
                     amount: event.args.amount.toString(),
