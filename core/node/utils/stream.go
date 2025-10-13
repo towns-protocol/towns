@@ -21,8 +21,9 @@ func DetermineStreamSnapshotsToNullify(
 		return nil
 	}
 
+	// If the range is empty or has a single snapshot, nothing to nullify.
 	n := len(snapshotSeqs)
-	if n == 0 {
+	if n <= 1 {
 		return nil
 	}
 

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 func TestCalculateMissingRanges(t *testing.T) {
@@ -336,94 +337,84 @@ func TestCalculateMissingRangesStability(t *testing.T) {
 	})
 }
 
-func TestDetermineRangeSnapshotsToNullify(t *testing.T) {
+func TestDetermineStreamSnapshotsToNullify(t *testing.T) {
 	tests := []struct {
 		name              string
-		rng               storage.MiniblockRange
+		start             int64
+		end               int64
+		snapshots         []int64
 		retentionInterval int64
 		expected          []int64
 	}{
 		{
-			name: "multi bucket keeps first snapshot",
-			rng: storage.MiniblockRange{
-				StartInclusive: 0,
-				EndInclusive:   3000,
-				SnapshotSeqNums: []int64{
-					0, 200, 500,
-					1000, 1100,
-					2000, 2100, 2500,
-				},
-			},
+			name:              "multi bucket keeps first snapshot",
+			start:             0,
+			end:               3000,
+			snapshots:         []int64{0, 200, 500, 1000, 1100, 2000, 2100, 2500},
 			retentionInterval: 1000,
 			expected:          []int64{200, 500, 1100, 2100, 2500},
 		},
 		{
-			name: "offset range adjusts bucket boundaries",
-			rng: storage.MiniblockRange{
-				StartInclusive:  25,
-				EndInclusive:    550,
-				SnapshotSeqNums: []int64{25, 120, 130, 220, 330, 335, 430, 431, 520},
-			},
+			name:              "offset range adjusts bucket boundaries",
+			start:             25,
+			end:               550,
+			snapshots:         []int64{25, 120, 130, 220, 330, 335, 430, 431, 520},
 			retentionInterval: 100,
 			expected:          []int64{120, 220, 335, 431, 520},
 		},
 		{
-			name: "single snapshot per bucket no nullification",
-			rng: storage.MiniblockRange{
-				StartInclusive:  100,
-				EndInclusive:    1199,
-				SnapshotSeqNums: []int64{100, 450, 750, 1050},
-			},
+			name:              "single snapshot per bucket no nullification",
+			start:             100,
+			end:               1199,
+			snapshots:         []int64{100, 450, 750, 1050},
 			retentionInterval: 300,
 			expected:          nil,
 		},
 		{
-			name: "duplicate values collapse to keep-first",
-			rng: storage.MiniblockRange{
-				StartInclusive:  0,
-				EndInclusive:    10,
-				SnapshotSeqNums: []int64{0, 0, 0},
-			},
+			name:              "duplicate values collapse to keep-first",
+			start:             0,
+			end:               10,
+			snapshots:         []int64{0, 0, 0},
 			retentionInterval: 5,
 			expected:          []int64{0, 0},
 		},
 		{
-			name: "non positive retention disables trimming",
-			rng: storage.MiniblockRange{
-				StartInclusive:  0,
-				EndInclusive:    100,
-				SnapshotSeqNums: []int64{0, 50, 100},
-			},
+			name:              "non positive retention disables trimming",
+			start:             0,
+			end:               100,
+			snapshots:         []int64{0, 50, 100},
 			retentionInterval: 0,
 			expected:          nil,
 		},
 		{
-			name: "ignore snapshots outside the range",
-			rng: storage.MiniblockRange{
-				StartInclusive:  100,
-				EndInclusive:    300,
-				SnapshotSeqNums: []int64{50, 150, 175, 400},
-			},
+			name:              "ignore snapshots outside the range",
+			start:             100,
+			end:               300,
+			snapshots:         []int64{50, 150, 175, 400},
 			retentionInterval: 100,
 			expected:          []int64{175},
 		},
 		{
-			name: "no snapshots returns nothing",
-			rng: storage.MiniblockRange{
-				StartInclusive:  0,
-				EndInclusive:    100,
-				SnapshotSeqNums: nil,
-			},
+			name:              "no snapshots returns nothing",
+			start:             0,
+			end:               100,
+			snapshots:         nil,
 			retentionInterval: 50,
 			expected:          nil,
 		},
 		{
-			name: "single snapshot stays intact",
-			rng: storage.MiniblockRange{
-				StartInclusive:  0,
-				EndInclusive:    10,
-				SnapshotSeqNums: []int64{4},
-			},
+			name:              "null retention interval skips trimming",
+			start:             0,
+			end:               50,
+			snapshots:         []int64{5, 15, 25},
+			retentionInterval: -1,
+			expected:          nil,
+		},
+		{
+			name:              "single snapshot stays intact",
+			start:             0,
+			end:               10,
+			snapshots:         []int64{4},
 			retentionInterval: 5,
 			expected:          nil,
 		},
@@ -432,7 +423,7 @@ func TestDetermineRangeSnapshotsToNullify(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			result := determineRangeSnapshotsToNullify(tt.rng, tt.retentionInterval)
+			result := utils.DetermineStreamSnapshotsToNullify(tt.start, tt.end, tt.snapshots, tt.retentionInterval, 0)
 			require.Equal(t, tt.expected, result)
 		})
 	}
