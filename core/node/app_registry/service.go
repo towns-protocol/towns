@@ -482,10 +482,10 @@ func (s *Service) Register(
 		return nil, base.AsRiverError(err, Err_INTERNAL).Message("Error creating app in database")
 	}
 
-	if _, err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddress(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
+	if _, err := s.streamsTracker.AddStream(shared.UserInboxStreamIdFromAddr(app), track_streams.ApplyHistoricalContent{Enabled: true}); err != nil {
 		return nil, base.AsRiverError(err, Err_INTERNAL).
 			Message("Error subscribing to app's user inbox stream to watch for keys").
-			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddress(app))
+			Tag("UserInboxStreamId", shared.UserInboxStreamIdFromAddr(app))
 	}
 
 	return &connect.Response[RegisterResponse]{
@@ -628,7 +628,7 @@ func (s *Service) waitForAppEncryptionDevice(
 ) (*storage.EncryptionDevice, error) {
 	log := logging.FromCtx(ctx)
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	userMetadataStreamId := shared.UserMetadataStreamIdFromAddress(appId)
+	userMetadataStreamId := shared.UserMetadataStreamIdFromAddr(appId)
 	defer cancel()
 
 	var delay time.Duration
