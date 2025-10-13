@@ -43,6 +43,8 @@ type Query {
   subscriptions(where: subscriptionFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): subscriptionPage!
   subscriptionFailure(account: String!, entityId: Float!, timestamp: BigInt!): subscriptionFailure
   subscriptionFailures(where: subscriptionFailureFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): subscriptionFailurePage!
+  tipLeaderboard(user: String!, spaceId: String!): tipLeaderboard
+  tipLeaderboards(where: tipLeaderboardFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): tipLeaderboardPage!
   _meta: Meta
 }
 
@@ -1180,4 +1182,67 @@ input appFilter {
   installedIn_not: [String]
   installedIn_has: String
   installedIn_not_has: String
+}
+
+type tipLeaderboard {
+  user: String!
+  spaceId: String!
+  totalSent: BigInt
+  tipsSentCount: Int
+  lastActivity: BigInt!
+}
+
+type tipLeaderboardPage {
+  items: [tipLeaderboard!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input tipLeaderboardFilter {
+  AND: [tipLeaderboardFilter]
+  OR: [tipLeaderboardFilter]
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  spaceId: String
+  spaceId_not: String
+  spaceId_in: [String]
+  spaceId_not_in: [String]
+  spaceId_contains: String
+  spaceId_not_contains: String
+  spaceId_starts_with: String
+  spaceId_ends_with: String
+  spaceId_not_starts_with: String
+  spaceId_not_ends_with: String
+  totalSent: BigInt
+  totalSent_not: BigInt
+  totalSent_in: [BigInt]
+  totalSent_not_in: [BigInt]
+  totalSent_gt: BigInt
+  totalSent_lt: BigInt
+  totalSent_gte: BigInt
+  totalSent_lte: BigInt
+  tipsSentCount: Int
+  tipsSentCount_not: Int
+  tipsSentCount_in: [Int]
+  tipsSentCount_not_in: [Int]
+  tipsSentCount_gt: Int
+  tipsSentCount_lt: Int
+  tipsSentCount_gte: Int
+  tipsSentCount_lte: Int
+  lastActivity: BigInt
+  lastActivity_not: BigInt
+  lastActivity_in: [BigInt]
+  lastActivity_not_in: [BigInt]
+  lastActivity_gt: BigInt
+  lastActivity_lt: BigInt
+  lastActivity_gte: BigInt
+  lastActivity_lte: BigInt
 }
