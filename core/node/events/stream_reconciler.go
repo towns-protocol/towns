@@ -122,6 +122,7 @@ func (sr *streamReconciler) trim() error {
 		return nil
 	}
 
+	// TODO: Replace sr.presentRanges[0].EndInclusive with the last snapshot miniblock.
 	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
 		sr.presentRanges[0].StartInclusive, sr.presentRanges[0].EndInclusive, sr.presentRanges[0].SnapshotSeqNums,
 		retentionIntervalMbs, utils.MinKeepMiniblocks,
