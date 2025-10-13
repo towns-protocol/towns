@@ -5,21 +5,17 @@ import (
 	"math"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/utils"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 const (
 	defaultGetMiniblocksPageSize = 128
-
-	// minKeepMiniblocks is the number of most recent miniblocks to protect (no snapshot nullification).
-	minKeepMiniblocks = 100
 )
 
 type streamReconcilerStats struct {
@@ -117,11 +113,17 @@ func (sr *streamReconciler) trim() error {
 			Tags("streamId", sr.stream.streamId, "ranges", sr.presentRanges)
 	}
 
+	var retentionIntervalMbs int64
+	if interval := int64(sr.cache.params.ChainConfig.Get().StreamSnapshotIntervalInMiniblocks); interval > 0 {
+		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
+	}
+	if retentionIntervalMbs <= 0 {
+		return nil
+	}
+
 	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
-		sr.presentRanges[0].StartInclusive, sr.presentRanges[0].EndInclusive,
-		sr.presentRanges[0].SnapshotSeqNums,
-		int64(sr.cache.params.ChainConfig.Get().StreamSnapshotIntervalInMiniblocks),
-		minKeepMiniblocks,
+		sr.presentRanges[0].StartInclusive, sr.presentRanges[0].EndInclusive, sr.presentRanges[0].SnapshotSeqNums,
+		retentionIntervalMbs, utils.MinKeepMiniblocks,
 	)
 
 	err = sr.cache.params.Storage.TrimStream(sr.ctx, sr.stream.StreamId(), sr.localStartMbInclusive, nullifySnapshotMbs)

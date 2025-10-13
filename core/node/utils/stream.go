@@ -1,5 +1,14 @@
 package utils
 
+const (
+	// MinRetentionIntervalMiniblocks is the minimum retention interval in miniblocks.
+	// This ensures that even if the on-chain setting is very low, we still retain some snapshots.
+	MinRetentionIntervalMiniblocks = 100
+
+	// MinKeepMiniblocks is the number of most recent miniblocks to protect (no snapshot nullification).
+	MinKeepMiniblocks = 100
+)
+
 // DetermineStreamSnapshotsToNullify returns the seq_nums whose snapshot field should be set to NULL.
 // It scans snapshotSeqs (ascending), groups by bucket = seq_num/retentionInterval,
 // keeps the very first seq in each bucket, and nullifies the rest—except anything

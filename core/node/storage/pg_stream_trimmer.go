@@ -17,15 +17,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
-const (
-	// minRetentionIntervalMiniblocks is the minimum retention interval in miniblocks.
-	// This ensures that even if the on-chain setting is very low, we still retain some snapshots.
-	minRetentionIntervalMiniblocks = 100
-
-	// minKeepMiniblocks is the number of most recent miniblocks to protect (no snapshot nullification).
-	minKeepMiniblocks = 100
-)
-
 // trimTask represents a task to trim miniblocks from a stream.
 type trimTask struct {
 	streamId             StreamId
@@ -119,7 +110,7 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 
 	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
-		retentionIntervalMbs = max(interval, minRetentionIntervalMiniblocks)
+		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
 	}
 
 	if keepMbs <= 0 && retentionIntervalMbs <= 0 {
@@ -299,7 +290,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 			lastSnapshotMiniblock-1,
 			mbs,
 			task.retentionIntervalMbs,
-			minKeepMiniblocks,
+			utils.MinKeepMiniblocks,
 		)
 		if len(toNullify) > 0 {
 			if _, err = tx.Exec(

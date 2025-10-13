@@ -8,7 +8,7 @@ import (
 )
 
 func TestDetermineSnapshotsToNullify(t *testing.T) {
-	var testTable = []struct {
+	testTable := []struct {
 		name              string
 		rangeStart        int64
 		rangeEnd          int64
