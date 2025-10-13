@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.366",
+    "version": "0.0.367",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -11,18 +11,18 @@
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "yarn lint --fix",
-        "load-env": "dotenv -e ../generated/deployments/local_dev/.env",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
         "test:ci": "yarn test:ci:multi:ne",
-        "test:ci:multi:ent": "yarn load-env -- vitest run --config vitest.config.ts",
-        "test:ci:multi:ent:legacy": "yarn load-env -- vitest run --config vitest.config.multi_legacy.ts",
-        "test:ci:multi:ne": "yarn load-env -- vitest run --config vitest.config.multi_ne.ts",
-        "test:ci:with-entitlements": "yarn load-env -- yarn test:ci:multi:ent",
+        "test:ci:multi:ent": "yarn load-env vitest run --config vitest.config.ts",
+        "test:ci:multi:ent:legacy": "yarn load-env vitest run --config vitest.config.multi_legacy.ts",
+        "test:ci:multi:ne": "yarn load-env vitest run --config vitest.config.multi_ne.ts",
+        "test:ci:with-entitlements": "yarn load-env yarn test:ci:multi:ent",
         "test:unit": "vitest run --config vitest.config.unit.ts",
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
-        "@connectrpc/connect": "^2.0.0",
+        "@bufbuild/protobuf": "^2.9.0",
+        "@connectrpc/connect": "^2.1.0",
         "@ethereumjs/util": "^10.0.0",
         "@noble/curves": "^1.9.1",
         "@noble/hashes": "^1.8.0",
@@ -42,7 +42,7 @@
         "p-limit": "^6.1.0"
     },
     "devDependencies": {
-        "@connectrpc/connect-web": "^2.0.0",
+        "@connectrpc/connect-web": "^2.1.0",
         "@types/debug": "^4.1.8",
         "@types/lodash-es": "^4.17.12",
         "@types/node": "^20.14.8",

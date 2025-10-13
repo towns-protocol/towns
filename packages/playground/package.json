@@ -6,14 +6,14 @@
     "scripts": {
         "build": "tsc && vite build",
         "dev": "vite",
-        "dev:local": "yarn load-env -- vite",
+        "dev:local": "yarn load-env vite",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-        "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite --",
         "preview": "vite preview"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
-        "@connectrpc/connect-web": "^2.0.0",
+        "@bufbuild/protobuf": "^2.9.0",
+        "@connectrpc/connect-web": "^2.1.0",
         "@emoji-mart/data": "^1.1.2",
         "@hookform/resolvers": "^3.6.0",
         "@radix-ui/react-checkbox": "^1.3.2",

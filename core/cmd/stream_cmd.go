@@ -762,8 +762,8 @@ func runStreamUserCmd(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("%s\n", UserStreamIdFromAddr(address))
 	fmt.Printf("%s\n", UserSettingStreamIdFromAddr(address))
-	fmt.Printf("%s\n", UserMetadataStreamIdFromAddress(address))
-	fmt.Printf("%s\n", UserInboxStreamIdFromAddress(address))
+	fmt.Printf("%s\n", UserMetadataStreamIdFromAddr(address))
+	fmt.Printf("%s\n", UserInboxStreamIdFromAddr(address))
 
 	return nil
 }
