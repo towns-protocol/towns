@@ -806,10 +806,12 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
                 lastActivity: blockTimestamp,
             })
-            .where(and(
-                eq(schema.tipLeaderboard.user, sender),
-                eq(schema.tipLeaderboard.spaceId, spaceId)
-            ))
+            .where(
+                and(
+                    eq(schema.tipLeaderboard.user, sender),
+                    eq(schema.tipLeaderboard.spaceId, spaceId),
+                ),
+            )
             .returning()
 
         if (result.length === 0) {
