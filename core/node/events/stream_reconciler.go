@@ -527,7 +527,12 @@ func (sr *streamReconciler) loadRanges() error {
 	var err error
 	sr.presentRanges, err = sr.cache.params.Storage.GetMiniblockNumberRanges(sr.ctx, sr.stream.streamId)
 	if err != nil {
-		return err
+		if IsRiverErrorCode(err, Err_NOT_FOUND) {
+			sr.notFound = true
+			sr.localLastMbInclusive = -1
+		} else {
+			return err
+		}
 	}
 
 	if len(sr.presentRanges) == 0 {
