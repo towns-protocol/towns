@@ -108,6 +108,7 @@ func (sr *streamReconciler) trim() error {
 		return nil
 	}
 
+	// TODO: There could be 2 ranges: [0] and [N...]
 	if len(sr.presentRanges) > 1 {
 		return RiverError(Err_INTERNAL, "Stream has gaps after reconciliation").
 			Tags("streamId", sr.stream.streamId, "ranges", sr.presentRanges)
