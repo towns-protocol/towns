@@ -45,8 +45,6 @@ import {
     type SlashCommand,
     type SnapshotCaseType,
     type Snapshot,
-    MediaInfoSchema,
-    EmbeddedMediaSchema,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
 } from '@towns-protocol/proto'
@@ -98,29 +96,12 @@ type ImageAttachment = {
     url: string
 }
 
-type EmbeddedAttachment =
-    | {
-          type: 'embedded'
-          data: Blob
-          width?: number
-          height?: number
-          filename: string
-      }
-    | {
-          type: 'embedded'
-          data: Uint8Array
-          width?: number
-          height?: number
-          filename: string
-          mimetype: string
-      }
-
 type MessageOpts = {
     threadId?: string
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     // TODO: chunked attachment
-    attachments?: Array<ImageAttachment | EmbeddedAttachment>
+    attachments?: Array<ImageAttachment>
     ephemeral?: boolean
 }
 
@@ -909,47 +890,6 @@ export const makeTownsBot = async <
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
-    const createEmbeddedMediaAttachment = async (
-        attachment: EmbeddedAttachment,
-    ): Promise<PlainMessage<ChannelMessage_Post_Attachment>> => {
-        let data: Uint8Array = new Uint8Array()
-        let mimetype: string = 'application/octet-stream'
-        let filename: string = 'file'
-        if (
-            attachment.data instanceof Uint8Array &&
-            'mimetype' in attachment &&
-            'filename' in attachment
-        ) {
-            data = attachment.data
-            mimetype = attachment.mimetype
-            filename = attachment.filename
-        } else if (attachment.data instanceof Blob && 'filename' in attachment) {
-            data = new Uint8Array(await attachment.data.arrayBuffer())
-            mimetype = attachment.data.type
-            filename = attachment.filename
-        }
-
-        const width = attachment.width || 0
-        const height = attachment.height || 0
-        const embeddedMedia = create(EmbeddedMediaSchema, {
-            info: create(MediaInfoSchema, {
-                filename,
-                mimetype,
-                widthPixels: width,
-                heightPixels: height,
-                sizeBytes: BigInt(data.length),
-            }),
-            content: data,
-        })
-
-        return {
-            content: {
-                case: 'embeddedMedia',
-                value: embeddedMedia,
-            },
-        }
-    }
-
     const createImageAttachmentFromURL = async (
         attachment: ImageAttachment,
     ): Promise<PlainMessage<ChannelMessage_Post_Attachment> | null> => {
@@ -1070,13 +1010,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                         processedAttachments.push(result)
                         break
                     }
-                    case 'embedded': {
-                        const result = await createEmbeddedMediaAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
                     default:
-                        logNever(attachment)
+                        logNever(attachment.type)
                 }
             }
         }

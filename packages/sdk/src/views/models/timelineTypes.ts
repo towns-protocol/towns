@@ -468,13 +468,6 @@ export type ChunkedMediaAttachment = {
     thumbnail?: { content: Uint8Array; info: MediaInfo }
 }
 
-export type EmbeddedMediaAttachment = {
-    type: 'embedded_media'
-    info: MediaInfo
-    content: Uint8Array
-    id: string
-}
-
 export type EmbeddedMessageAttachment = {
     type: 'embedded_message'
     url: string
@@ -505,7 +498,6 @@ export type TickerAttachment = {
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
-    | EmbeddedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
@@ -550,16 +542,6 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         },
                     })
 
-                case 'embedded_media':
-                    return create(ChannelMessage_Post_AttachmentSchema, {
-                        content: {
-                            case: 'embeddedMedia',
-                            value: {
-                                info: attachment.info,
-                                content: attachment.content,
-                            },
-                        },
-                    })
                 case 'image':
                     return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {

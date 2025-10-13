@@ -110,8 +110,6 @@ Methods available on the `handler` parameter in event callbacks:
   - `opts.mentions`: Array of user mentions
   - `opts.attachments`: Array of attachments (see "Sending Attachments" section)
     - Image from URL: `{ type: 'image', url: string, alt?: string }`
-    - Embedded Blob: `{ type: 'embedded', data: Blob, filename: string, width?: number, height?: number }`
-    - Embedded Uint8Array: `{ type: 'embedded', data: Uint8Array, filename: string, mimetype: string, width?: number, height?: number }`
 - `editMessage(streamId, messageId, message, tags?)` - Edit message
 - `sendReaction(streamId, messageId, reaction, tags?)` - Add reaction
 - `removeEvent(streamId, messageId, tags?)` - Remove event
@@ -288,59 +286,6 @@ bot.onSlashCommand("show", async (handler, { channelId, args }) => {
         url: imageUrl,
         alt: 'Description for accessibility' // Optional
       }
-    ]
-  })
-})
-```
-
-#### Embedded Media Attachments
-
-Use `type: 'embedded'` to send binary data (Blob or Uint8Array):
-
-```typescript
-// With Blob
-bot.onSlashCommand("generate", async (handler, { channelId }) => {
-  const imageBlob = await generateImage()
-
-  await handler.sendMessage(channelId, "Generated image:", {
-    attachments: [{
-      type: 'embedded',
-      data: imageBlob,
-      filename: 'generated.png',
-      width: 512,
-      height: 512
-    }]
-  })
-})
-
-// With Uint8Array
-bot.onSlashCommand("upload", async (handler, { channelId }) => {
-  const imageData = new Uint8Array([...]) // Your image bytes
-
-  await handler.sendMessage(channelId, "Uploaded file:", {
-    attachments: [{
-      type: 'embedded',
-      data: imageData,
-      filename: 'upload.jpg',
-      mimetype: 'image/jpeg', // Required for Uint8Array
-      width: 1024,
-      height: 768
-    }]
-  })
-})
-```
-
-#### Multiple Attachments
-
-Send multiple attachments of mixed types:
-
-```typescript
-bot.onSlashCommand("gallery", async (handler, { channelId }) => {
-  await handler.sendMessage(channelId, "Image gallery:", {
-    attachments: [
-      { type: 'image', url: 'https://example.com/photo1.jpg' },
-      { type: 'image', url: 'https://example.com/photo2.png', alt: 'Sunset' },
-      { type: 'embedded', data: localImageBlob, filename: 'local.jpg' }
     ]
   })
 })

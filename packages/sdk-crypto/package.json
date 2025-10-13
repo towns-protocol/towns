@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.366",
+    "version": "0.0.367",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "./dist/web/index.cjs",
@@ -21,7 +21,7 @@
         "@towns-protocol/utils": "workspace:^"
     },
     "devDependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
+        "@bufbuild/protobuf": "^2.9.0",
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",

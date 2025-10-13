@@ -48,7 +48,6 @@ import {
     ChannelPropertiesEvent,
     MessageType,
     ChannelMessageEvent,
-    EmbeddedMediaAttachment,
     ImageAttachment,
     EmbeddedMessageAttachment,
     TickerAttachment,
@@ -914,18 +913,6 @@ function toAttachment(
                 id,
                 thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment
-        }
-        case 'embeddedMedia': {
-            const info = attachment.content.value.info
-            if (!info) {
-                return undefined
-            }
-            return {
-                type: 'embedded_media',
-                info,
-                content: attachment.content.value.content,
-                id,
-            } satisfies EmbeddedMediaAttachment
         }
         case 'image': {
             const info = attachment.content.value.info

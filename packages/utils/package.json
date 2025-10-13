@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/utils",
-    "version": "0.0.366",
+    "version": "0.0.367",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -18,7 +18,7 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/protobuf": "^2.2.2",
+        "@bufbuild/protobuf": "^2.9.0",
         "@towns-protocol/proto": "workspace:^",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^3.2.0"

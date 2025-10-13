@@ -26,9 +26,9 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-cloudfront": "^3.645.0",
-		"@bufbuild/buf": "^1.32.0",
-		"@bufbuild/protobuf": "^2.2.2",
-		"@connectrpc/connect-node": "^2.0.0",
+		"@bufbuild/buf": "^1.57.2",
+		"@bufbuild/protobuf": "^2.9.0",
+		"@connectrpc/connect-node": "^2.1.0",
 		"@fastify/cors": "^11.0.1",
 		"@towns-protocol/generated": "workspace:^",
 		"@towns-protocol/olm": "3.2.28",
