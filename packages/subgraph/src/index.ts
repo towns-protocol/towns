@@ -758,6 +758,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
 
     try {
         const spaceId = event.log.address // The space contract that emitted the event
+        const sender = event.args.sender
 
         let ethAmount = 0n
         if ((event.args.currency as string).toLowerCase() === ETH_ADDRESS) {
@@ -777,7 +778,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 ethAmount: ethAmount,
                 eventData: {
                     type: 'tip',
-                    sender: event.args.sender,
+                    sender: sender,
                     receiver: event.args.receiver,
                     currency: event.args.currency,
                     amount: event.args.amount.toString(),
@@ -796,6 +797,17 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 tipVolume: sql`COALESCE(${schema.space.tipVolume}, 0) + ${ethAmount}`,
             })
             .where(eq(schema.space.id, spaceId))
+
+        // Update tip leaderboard for sender using raw SQL
+        await context.db.sql.execute(sql`
+            INSERT INTO tip_leaderboard ("user", space_id, total_sent, tips_sent_count, last_activity)
+            VALUES (${sender}, ${spaceId}, ${ethAmount}, 1, ${blockTimestamp})
+            ON CONFLICT ("user", space_id)
+            DO UPDATE SET
+                total_sent = tip_leaderboard.total_sent + ${ethAmount},
+                tips_sent_count = tip_leaderboard.tips_sent_count + 1,
+                last_activity = ${blockTimestamp}
+        `)
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
     }
