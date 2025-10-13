@@ -317,6 +317,8 @@ func (sr *streamReconciler) reinitializeStreamFromSinglePeer(remote common.Addre
 }
 
 func (sr *streamReconciler) backfillGaps() error {
+	sr.stats.backfillCalled = true
+
 	if len(sr.presentRanges) == 0 {
 		return RiverError(Err_INTERNAL, "backfillGaps: no present ranges")
 	}
@@ -338,8 +340,6 @@ func (sr *streamReconciler) backfillGaps() error {
 			return err
 		}
 	}
-
-	sr.stats.backfillCalled = true
 
 	return nil
 }
