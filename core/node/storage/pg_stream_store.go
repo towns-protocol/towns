@@ -2630,6 +2630,38 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	return ranges, nil
 }
 
+func (s *PostgresStreamStore) TrimStream(
+	ctx context.Context,
+	streamId StreamId,
+	startMbExclusively int64,
+	nullifySnapshotMbs []int64,
+) error {
+	return s.txRunner(
+		ctx,
+		"TrimStream",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			return s.trimStreamTx(ctx, tx, streamId, startMbExclusively, nullifySnapshotMbs)
+		},
+		nil,
+		"streamId", streamId,
+		"startMbExclusively", startMbExclusively,
+		"nullifySnapshotMbs", nullifySnapshotMbs,
+	)
+}
+
+func (s *PostgresStreamStore) trimStreamTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMbExclusively int64,
+	nullifySnapshotMbs []int64,
+) error {
+	// TODO: Implement the logic to:
+	//  1. Delete miniblocks starting from 1 inclusively to startMbExclusively.
+	//  2. Nullify the snapshot column for the specified miniblocks.
+}
+
 func parseAndCheckHasLegacySnapshot(data []byte) bool {
 	mb := &Miniblock{}
 	if err := proto.Unmarshal(data, mb); err != nil {

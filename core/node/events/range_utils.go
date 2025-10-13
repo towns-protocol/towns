@@ -181,3 +181,49 @@ func floorInSnapshots(snaps []int64, target int64) (int64, bool) {
 
 	return snaps[idx-1], true
 }
+
+// determineRangeSnapshotsToNullify walks the snapshot-bearing miniblocks inside rng and
+// returns those that should have their snapshot field cleared based on the retention interval.
+//
+// The range is partitioned into buckets of width retentionInterval starting from
+// rng.StartInclusive. For each bucket, the earliest snapshot miniblock is kept and
+// subsequent snapshots in the same bucket are scheduled for nullification. The
+// caller guarantees that the range has not been snapshot trimmed, so every bucket
+// retains at least the first snapshot it encounters.
+func determineRangeSnapshotsToNullify(
+	rng storage.MiniblockRange,
+	retentionInterval int64,
+) []int64 {
+	if retentionInterval <= 0 {
+		return nil
+	}
+
+	// If the range is empty or has a single snapshot, nothing to nullify.
+	snaps := rng.SnapshotSeqNums
+	if len(snaps) <= 1 {
+		return nil
+	}
+
+	var (
+		currentBucket int64
+		haveBucket    bool
+		toNullify     []int64
+	)
+
+	for _, seq := range snaps {
+		if seq < rng.StartInclusive || seq > rng.EndInclusive {
+			continue
+		}
+
+		bucket := (seq - rng.StartInclusive) / retentionInterval
+		if !haveBucket || bucket != currentBucket {
+			currentBucket = bucket
+			haveBucket = true
+			continue
+		}
+
+		toNullify = append(toNullify, seq)
+	}
+
+	return toNullify
+}
