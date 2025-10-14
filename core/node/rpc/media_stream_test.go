@@ -65,7 +65,7 @@ func TestCreateMediaStream(t *testing.T) {
 		return csResp.Msg.GetNextCreationCookie()
 	}
 
-	t.Run("Duplicated CreateMediaStream event", func(t *testing.T) {
+	t.Run("Duplicated events", func(t *testing.T) {
 		mediaStreamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 
 		// Create inception event
@@ -107,8 +107,8 @@ func TestCreateMediaStream(t *testing.T) {
 		}))
 		tt.require.NoError(err)
 		tt.require.Equal(firstCc.StreamId, csResp.Msg.NextCreationCookie.StreamId)
-		tt.require.Equal(firstCc.PrevMiniblockHash, csResp.Msg.NextCreationCookie.PrevMiniblockHash)
 		tt.require.Equal(firstCc.MiniblockNum, csResp.Msg.NextCreationCookie.MiniblockNum)
+		tt.require.Equal(firstCc.PrevMiniblockHash, csResp.Msg.NextCreationCookie.PrevMiniblockHash)
 		tt.require.Equal(firstCc.Nodes, csResp.Msg.NextCreationCookie.Nodes)
 
 		// Add the rest of the media chunks
@@ -124,8 +124,16 @@ func TestCreateMediaStream(t *testing.T) {
 			envelope, err := events.MakeEnvelopeWithPayload(alice.wallet, mp, mb)
 			tt.require.NoError(err)
 
-			// Add media chunk event
+			// Add media chunk event attempt 1: success
 			aeResp, err := alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
+				Event:          envelope,
+				CreationCookie: cc,
+				Last:           i == chunks-1,
+			}))
+			tt.require.NoError(err, i)
+
+			// Add media chunk event attempt 2: success
+			aeResp, err = alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
 				Event:          envelope,
 				CreationCookie: cc,
 				Last:           i == chunks-1,

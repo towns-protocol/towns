@@ -155,7 +155,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 ) ([]byte, error) {
 	streamId, err := StreamIdFromBytes(cc.StreamId)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
 	header, err := MakeEnvelopeWithPayload(s.wallet, Make_MiniblockHeader(&MiniblockHeader{
@@ -166,7 +166,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		EventNumOffset:    cc.MiniblockNum + 1, // for media streams, each miniblock has only one event
 	}), event.MiniblockRef)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 	mbHash := header.Hash
 
@@ -205,15 +205,15 @@ func (s *Service) replicatedAddMediaEventImpl(
 	quorum.AddTask(func(ctx context.Context) error {
 		mbBytes, err := proto.Marshal(ephemeralMb)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
-		}); err != nil {
-			return err
+		}); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		// Return here if there are more chunks to upload.
@@ -224,7 +224,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		// Normalize stream locally
 		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		quorumCheckMu.Lock()
@@ -239,7 +239,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 	quorum.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		if _, err = stub.SaveEphemeralMiniblock(
@@ -250,8 +250,8 @@ func (s *Service) replicatedAddMediaEventImpl(
 					Miniblock: ephemeralMb,
 				},
 			),
-		); err != nil {
-			return err
+		); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		// Return here if there are more chunks to upload.
@@ -269,29 +269,59 @@ func (s *Service) replicatedAddMediaEventImpl(
 			),
 		)
 		if err != nil {
-			return err
+			// It could be the second attempt to seal the stream which is already sealed.
+			// Make sure this is the case: re-fetch the genesis miniblock hash.
+			if AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND) {
+				client, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
+				if err != nil {
+					return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+				}
+
+				gmResp, err := client.GetMiniblocks(
+					ctx,
+					connect.NewRequest(
+						&GetMiniblocksRequest{
+							StreamId:      streamId[:],
+							FromInclusive: 0,
+							ToExclusive:   1,
+						},
+					),
+				)
+				if err != nil {
+					return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+				}
+
+				if len(gmResp.Msg.GetMiniblocks()) != 1 {
+					return RiverError(
+						Err_NOT_FOUND,
+						"Genesis miniblock not found in remote",
+					).Func("replicatedAddMediaEventImpl")
+				}
+
+				genesisMiniblockHash = common.BytesToHash(gmResp.Msg.GetMiniblocks()[0].GetHeader().GetHash())
+			} else {
+				return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+			}
+		} else {
+			if len(resp.Msg.GetGenesisMiniblockHash()) == 32 {
+				genesisMiniblockHash = common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
+			}
 		}
 
 		quorumCheckMu.Lock()
 		streamSuccessCount++
-		if len(resp.Msg.GetGenesisMiniblockHash()) == 32 {
-			genesisMiniblockHash = common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
-		}
 		quorumCheckMu.Unlock()
 
 		return nil
 	})
 
 	if err = quorum.Wait(); err != nil {
-		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
-			return nil, err
-		}
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
+	}
 
-		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
-		if err != nil {
-			return nil, err
-		}
+	mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
+	if err != nil {
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
 	if !seal {
@@ -303,7 +333,12 @@ func (s *Service) replicatedAddMediaEventImpl(
 	quorumCheckMu.Unlock()
 
 	if genesisMbHash == (common.Hash{}) {
-		return nil, RiverError(Err_QUORUM_FAILED, "replicatedAddMediaEvent: quorum not reached", "stream", streamId)
+		return nil, RiverError(
+			Err_QUORUM_FAILED,
+			"quorum not reached",
+			"stream",
+			streamId,
+		).Func("replicatedAddMediaEvent")
 	}
 
 	if seal {
@@ -317,7 +352,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 			cc.MiniblockNum,
 			true,
 		); err != nil {
-			return nil, err
+			return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 	}
 
