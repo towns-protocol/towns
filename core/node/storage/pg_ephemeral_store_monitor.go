@@ -20,6 +20,10 @@ type ephemeralStreamMonitor struct {
 	// streams is a map of ephemeral stream IDs to the creation time.
 	// This is used by the monitor to detect "dead" ephemeral streams and delete them.
 	streams *xsync.Map[StreamId, time.Time]
+	// streamsToMigrateToExternalStorage keeps a collection of ephemeral streams that
+	// need their miniblocks to be migrated to external storage.
+	streamsToMigrateToExternalStorage *xsync.Map[StreamId, int]
+
 	// ttl is the duration of time an ephemeral stream can exist
 	// before either being sealed/normalized or deleted.
 	ttl      time.Duration
@@ -28,7 +32,9 @@ type ephemeralStreamMonitor struct {
 	stop     chan struct{}
 }
 
-// newEphemeralStreamMonitor creates and starts a dead ephemeral stream monitor.
+// newEphemeralStreamMonitor creates and starts a ephemeral stream monitor.
+// It purges ephemeral streams that have not been sealed/normalized for the given TTL
+// and migrates miniblocks of normalized ephemeral streams to external storage if configured.
 func newEphemeralStreamMonitor(
 	ctx context.Context,
 	ttl time.Duration,
@@ -39,10 +45,11 @@ func newEphemeralStreamMonitor(
 	}
 
 	m := &ephemeralStreamMonitor{
-		streams: xsync.NewMap[StreamId, time.Time](),
-		storage: storage,
-		ttl:     ttl,
-		stop:    make(chan struct{}),
+		streams:                           xsync.NewMap[StreamId, time.Time](),
+		streamsToMigrateToExternalStorage: xsync.NewMap[StreamId, int](),
+		storage:                           storage,
+		ttl:                               ttl,
+		stop:                              make(chan struct{}),
 	}
 
 	// Load all ephemeral streams from the database.
@@ -52,6 +59,11 @@ func newEphemeralStreamMonitor(
 
 	// Start the dead stream monitor.
 	go m.monitor(ctx)
+
+	// migrate media streams to external storage if configured
+	if m.storage.ExternalStorageEnabled() {
+		go m.runStreamMigrationToExternalStorage(ctx)
+	}
 
 	return m, nil
 }
@@ -68,9 +80,65 @@ func (m *ephemeralStreamMonitor) onCreated(streamId StreamId) {
 	m.streams.Store(streamId, time.Now())
 }
 
-// onSealed is called when an ephemeral stream get sealed.
+// onSealed is called when an ephemeral stream gets sealed.
 func (m *ephemeralStreamMonitor) onSealed(streamId StreamId) {
 	m.streams.Delete(streamId)
+	if m.storage.ExternalStorageEnabled() && streamId.Type() == STREAM_MEDIA_BIN {
+		// if external store is enabled queue task to migrate media stream
+		// miniblock data to external storage
+		m.streamsToMigrateToExternalStorage.Store(streamId, 0)
+	}
+}
+
+// runStreamMigrationToExternalStorage migrates the miniblocks of
+// ephemeral stream to external storage if configured.
+func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context.Context) {
+	for {
+		select {
+		case <-m.stop:
+			logging.FromCtx(ctx).Info("dead ephemeral stream monitor stopped")
+			return
+		case <-time.After(5 * time.Second):
+			failuredStreams := make(map[StreamId]int)
+			m.streamsToMigrateToExternalStorage.Range(func(streamID StreamId, retryCounter int) bool {
+				if mustRetry := m.migrateNormalizedEphemeralStream(ctx, streamID); mustRetry {
+					if retryCounter < 5 {
+						failuredStreams[streamID] = retryCounter + 1
+					}
+					return true
+				} else {
+					m.streamsToMigrateToExternalStorage.Delete(streamID)
+				}
+				return true
+			})
+
+			// reschedule migration for streams that failed
+			for streamId, retryCounter := range failuredStreams {
+				m.streamsToMigrateToExternalStorage.Store(streamId, retryCounter)
+			}
+		case <-ctx.Done():
+			m.close()
+			return
+		}
+	}
+}
+
+func (m *ephemeralStreamMonitor) migrateNormalizedEphemeralStream(
+	ctx context.Context,
+	streamID StreamId,
+) bool {
+	log := logging.FromCtx(ctx)
+	retry, err := m.storage.MigrateMiniblocksToExternalStorage(ctx, streamID)
+	if err != nil {
+		log.Error("failed to migrate ephemeral stream miniblocks to external storage",
+			"error", err, "streamId", streamID)
+		return retry
+	}
+
+	logging.FromCtx(ctx).Info("migrated ephemeral stream miniblocks to external storage",
+		"streamId", streamID)
+
+	return false
 }
 
 // monitor is the main loop of the dead ephemeral stream clean up procedure.

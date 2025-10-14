@@ -323,6 +323,7 @@ func TestArchiveOneStream(t *testing.T) {
 				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{Default: 0, Space: 5},
 			},
 		},
+		nil,
 		100,
 	)
 	require.NoError(err)
