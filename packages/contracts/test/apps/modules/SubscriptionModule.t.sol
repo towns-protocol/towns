@@ -15,7 +15,7 @@ import {ValidationConfig} from "@erc6900/reference-implementation/libraries/Vali
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
 
 contract SubscriptionModuleTest is ModulesBase {
-    function test_onInstall(address user) public {
+    function test_onInstall_basic(address user) public {
         ModularAccount userAccount = _createAccount(user, 0);
         address space = _createSpace(0, 0);
         uint256 tokenId = _joinSpace(address(userAccount), space);
@@ -809,7 +809,7 @@ contract SubscriptionModuleTest is ModulesBase {
     /*                    PREVENT DOUBLE RENEWAL                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_preventDoubleRenewalBug() public {
+    function test_preventDoubleRenewal() public {
         uint256 duration = 1 hours;
         uint256 renewalPrice = 0.001 ether;
 
@@ -965,5 +965,110 @@ contract SubscriptionModuleTest is ModulesBase {
 
         Subscription memory sub = subscriptionModule.getSubscription(address(account), entityId);
         assertGt(sub.nextRenewalTime, block.timestamp, "Next renewal should be in future");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    DURATION CHANGED                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_membershipDurationChanged() public {
+        uint64 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (
+            ModularAccount account,
+            ,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), duration, renewalPrice);
+        vm.deal(address(account), renewalPrice);
+
+        _warpToRenewalTime(params.space, params.tokenId);
+        _setMembershipDuration(params.space, duration * 2);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit BatchRenewalSkipped(address(account), entityId, "DURATION_CHANGED");
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     MANUAL RENEWAL SYNC                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_manualRenewalSync() public {
+        uint64 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (
+            ModularAccount account,
+            uint256 tokenId,
+            uint32 entityId,
+            SubscriptionParams memory params
+        ) = _createSubscription(makeAddr("user"), duration, renewalPrice);
+
+        _warpToRenewalTime(params.space, tokenId);
+        _renewMembership(params.space, address(account), tokenId);
+
+        vm.deal(address(account), 1 ether);
+
+        vm.expectEmit(address(subscriptionModule));
+        emit SubscriptionSynced(address(account), entityId, block.timestamp + duration);
+        _processRenewalAs(processor, address(account), entityId);
+    }
+
+    function test_installSubscriptionModule_revertWhen_SubscriptionAlreadyInstalled() public {
+        uint64 duration = 1 hours;
+        uint256 renewalPrice = 0.001 ether;
+
+        (ModularAccount account, , , SubscriptionParams memory params) = _createSubscription(
+            makeAddr("user"),
+            duration,
+            renewalPrice
+        );
+        params.entityId = params.entityId + 1;
+
+        expectInstallFailed(
+            address(subscriptionModule),
+            SubscriptionModule__SubscriptionAlreadyInstalled.selector
+        );
+        _installSubscriptionModule(account, params);
+    }
+
+    function test_installSubscriptionModule_revertWhen_InvalidSpace() public {
+        ModularAccount userAccount = _createAccount(makeAddr("user"), 0);
+        address space = address(new FakeSpace(address(userAccount)));
+
+        SubscriptionParams memory params = _createSubscriptionParams(
+            address(userAccount),
+            space,
+            1
+        );
+
+        expectInstallFailed(address(subscriptionModule), SubscriptionModule__InvalidSpace.selector);
+        _installSubscriptionModule(userAccount, params);
+    }
+}
+
+contract FakeSpace {
+    address private _owner;
+
+    constructor(address owner) {
+        _owner = owner;
+    }
+
+    function isBanned(uint256) external pure returns (bool) {
+        return false;
+    }
+
+    function ownerOf(uint256) external view returns (address) {
+        return _owner;
+    }
+
+    function expiresAt(uint256) external view returns (uint256) {
+        return block.timestamp + 100 days;
+    }
+
+    function getMembershipRenewalPrice(uint256) external pure returns (uint256) {
+        return 0.001 ether;
     }
 }

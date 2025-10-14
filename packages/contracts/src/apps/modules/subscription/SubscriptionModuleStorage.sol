@@ -32,6 +32,8 @@ library SubscriptionModuleStorage {
         mapping(address account => mapping(uint32 entityId => Subscription)) subscriptions;
         mapping(address account => EnumerableSetLib.Uint256Set entityIds) entityIds;
         mapping(address operator => OperatorConfig) operatorConfig;
+        mapping(address account => mapping(address space => uint256 tokenId)) tokenIdByAccountBySpace;
+        address spaceFactory;
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
