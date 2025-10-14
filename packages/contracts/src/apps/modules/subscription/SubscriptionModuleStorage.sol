@@ -46,7 +46,7 @@ library SubscriptionModuleStorage {
 
     function getOperatorBuffer(address operator) internal view returns (uint256) {
         OperatorConfig storage config = getLayout().operatorConfig[operator];
-        if (config.interval == 0) return MIN_RENEWAL_BUFFER;
+        if (config.interval == 0 || config.buffer == 0) return MIN_RENEWAL_BUFFER;
         return config.buffer;
     }
 }
