@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/towns-protocol/towns/core/config"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
@@ -17,7 +18,7 @@ type TestStreamStore struct {
 	Close       func()
 }
 
-func NewTestStreamStore(ctx context.Context) *TestStreamStore {
+func NewTestStreamStore(ctx context.Context, extStorageCfg *config.ExternalMediaStreamStorageConfig) *TestStreamStore {
 	dbCfg, schema, schemaDeleter, err := dbtestutils.ConfigureDB(ctx)
 	if err != nil {
 		panic(err)
@@ -41,6 +42,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{},
 			},
 		},
+		extStorageCfg,
 		100,
 	)
 	if err != nil {
