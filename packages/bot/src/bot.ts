@@ -89,7 +89,7 @@ import {
     waitForTransactionReceipt,
     simulateContract,
 } from 'viem/actions'
-import { base, baseSepolia } from 'viem/chains'
+import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
 import { privateKeyToAccount } from 'viem/accounts'
@@ -897,12 +897,17 @@ export const makeTownsBot = async <
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
     const baseConfig = townsEnv().makeBaseChainConfig(env)
+    const getChain = (chainId: number) => {
+        if (chainId === base.id) return base
+        if (chainId === foundry.id) return foundry
+        return baseSepolia
+    }
     const viemClient = createViemClient({
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
         account: privateKeyToAccount(privateKey as Hex),
-        chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
+        chain: getChain(baseConfig.chainConfig.chainId),
     })
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
