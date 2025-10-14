@@ -297,19 +297,21 @@ func (s *Service) replicatedAddMediaEventImpl(
 					).Func("replicatedAddMediaEventImpl")
 				}
 
+				quorumCheckMu.Lock()
 				genesisMiniblockHash = common.BytesToHash(gmResp.Msg.GetMiniblocks()[0].GetHeader().GetHash())
+				streamSuccessCount++
+				quorumCheckMu.Unlock()
 			} else {
 				return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 			}
 		} else {
+			quorumCheckMu.Lock()
 			if len(resp.Msg.GetGenesisMiniblockHash()) == 32 {
 				genesisMiniblockHash = common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
 			}
+			streamSuccessCount++
+			quorumCheckMu.Unlock()
 		}
-
-		quorumCheckMu.Lock()
-		streamSuccessCount++
-		quorumCheckMu.Unlock()
 
 		return nil
 	})
