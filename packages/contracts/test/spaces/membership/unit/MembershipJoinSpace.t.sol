@@ -104,7 +104,6 @@ contract MembershipJoinSpaceTest is
         uint256 overPayment
     ) external givenMembershipHasPrice {
         overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
-
         _joinSpaceWithCrosschainValidation(bob, overPayment, NodeVoteStatus.PASSED, true);
     }
 
@@ -524,13 +523,19 @@ contract MembershipJoinSpaceTest is
         freeSpaceInfo.membership.settings.freeAllocation = 1;
 
         vm.prank(founder);
-        ICreateSpace(spaceFactory).createSpace(freeSpaceInfo);
+        address freeSpace = ICreateSpace(spaceFactory).createSpace(freeSpaceInfo);
+
+        MembershipFacet freeMembership = MembershipFacet(freeSpace);
 
         vm.prank(bob);
-        membership.joinSpace(bob);
+        freeMembership.joinSpace(bob);
 
         vm.prank(alice);
-        membership.joinSpace(alice);
+        freeMembership.joinSpace(alice);
+
+        assertEq(IERC721A(freeSpace).balanceOf(bob), 1);
+        assertEq(IERC721A(freeSpace).balanceOf(alice), 1);
+        assertEq(freeMembership.revenue(), 0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

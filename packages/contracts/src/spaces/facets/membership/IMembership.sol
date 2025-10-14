@@ -73,6 +73,7 @@ interface IMembershipBase {
     error Membership__Banned();
     error Membership__InvalidAction();
     error Membership__CannotSetFreeAllocationOnPaidSpace();
+    error Membership__CannotSetPriceOnFreeSpace();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

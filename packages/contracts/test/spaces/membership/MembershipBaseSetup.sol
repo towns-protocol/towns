@@ -43,6 +43,7 @@ contract MembershipBaseSetup is
     uint256 constant MEMBERSHIP_PRICE = 1 ether;
 
     IMembership internal membership;
+    IMembership internal freeMembership;
     IERC721A internal membershipToken;
     IERC721AQueryable internal membershipTokenQueryable;
     IPlatformRequirements internal platformReqs;
@@ -89,7 +90,6 @@ contract MembershipBaseSetup is
             allowedUsers
         );
         userSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
-        userSpaceInfo.membership.settings.freeAllocation = FREE_ALLOCATION;
 
         IArchitectBase.SpaceInfo memory dynamicSpaceInfo = _createUserSpaceInfo(
             "DynamicSpace",
@@ -112,6 +112,7 @@ contract MembershipBaseSetup is
         membership = IMembership(userSpace);
         membershipToken = IERC721A(userSpace);
         membershipTokenQueryable = IERC721AQueryable(userSpace);
+        freeMembership = IMembership(freeSpace);
         prepayFacet = IPrepay(userSpace);
         referrals = IReferrals(userSpace);
         treasury = ITreasury(userSpace);
@@ -123,7 +124,7 @@ contract MembershipBaseSetup is
 
     modifier givenMembershipHasPrice() {
         vm.startPrank(founder);
-        membership.setMembershipFreeAllocation(1);
+        // membership.setMembershipFreeAllocation(1);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
         vm.stopPrank();
         _;
