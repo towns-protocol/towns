@@ -2,7 +2,6 @@ package events
 
 import (
 	"slices"
-	"sort"
 
 	"github.com/towns-protocol/towns/core/node/storage"
 )
@@ -112,72 +111,4 @@ func calculateMissingRanges(
 	}
 
 	return missingRanges
-}
-
-// findClosestSnapshotMiniblock returns the closest snapshot miniblock value that is
-// <= startMbInclusive. If no such snapshot exists, it returns startMbInclusive itself.
-func findClosestSnapshotMiniblock(
-	presentRanges []storage.MiniblockRange,
-	startMbInclusive int64,
-) int64 {
-	if len(presentRanges) == 0 {
-		return startMbInclusive
-	}
-
-	// Find the rightmost range whose StartInclusive <= target.
-	// i is the first index with StartInclusive > target; candidate is i-1.
-	i := sort.Search(len(presentRanges), func(i int) bool {
-		return presentRanges[i].StartInclusive > startMbInclusive
-	})
-	rIdx := i - 1
-	if rIdx < 0 {
-		// All ranges start after target => no snapshot <= target.
-		return startMbInclusive
-	}
-
-	// Try the candidate range at rIdx first.
-	if v, ok := floorInSnapshots(presentRanges[rIdx].SnapshotSeqNums, startMbInclusive); ok {
-		return v
-	}
-
-	// If not found in that range (e.g., all snapshots there > target or empty),
-	// walk left to find the nearest earlier range that has any snapshot,
-	// in which case the best candidate is simply its last (largest) snapshot.
-	for j := rIdx - 1; j >= 0; j-- {
-		snaps := presentRanges[j].SnapshotSeqNums
-		if len(snaps) > 0 {
-			return snaps[len(snaps)-1]
-		}
-	}
-
-	// Nothing <= target anywhere.
-	return startMbInclusive
-}
-
-// floorInSnapshots returns the largest element <= target from a sorted []int64.
-// Uses slices.BinarySearchFunc. If none, returns (0, false).
-func floorInSnapshots(snaps []int64, target int64) (int64, bool) {
-	if len(snaps) == 0 {
-		return 0, false
-	}
-
-	idx, found := slices.BinarySearchFunc(snaps, target, func(e int64, t int64) int {
-		switch {
-		case e < t:
-			return -1
-		case e > t:
-			return 1
-		default:
-			return 0
-		}
-	})
-	if found {
-		return target, true
-	}
-
-	if idx == 0 {
-		return 0, false
-	}
-
-	return snaps[idx-1], true
 }

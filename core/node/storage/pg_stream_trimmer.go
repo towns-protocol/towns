@@ -13,7 +13,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/shared"
-	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 // trimTask represents a task to trim miniblocks from a stream.
@@ -109,7 +108,7 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 
 	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
-		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
+		retentionIntervalMbs = max(interval, MinRetentionIntervalMiniblocks)
 	}
 
 	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 {
@@ -214,9 +213,9 @@ func (t *streamTrimmer) processTrimTaskTx(
 	}
 
 	// TODO: Replace ranges[0].EndInclusive with the last snapshot miniblock: slices.Max(ranges[0].SnapshotSeqNums).
-	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
+	nullifySnapshotMbs := DetermineStreamSnapshotsToNullify(
 		ranges[0].StartInclusive, ranges[0].EndInclusive, ranges[0].SnapshotSeqNums,
-		task.retentionIntervalMbs, utils.MinKeepMiniblocks,
+		task.retentionIntervalMbs, MinKeepMiniblocks,
 	)
 
 	lastMbToKeep := lastSnapshotMiniblock - task.streamHistoryMbs
@@ -224,7 +223,8 @@ func (t *streamTrimmer) processTrimTaskTx(
 		lastMbToKeep = 0
 	}
 
-	// TODO: Find the closest snapshot miniblock <= lastMbToKeep
+	// Deleting all miniblocks below the calculated miniblock with a snapshot
+	localStartMbInclusive := FindClosestSnapshotMiniblock(ranges, lastMbToKeep)
 
-	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, lastMbToKeep, nullifySnapshotMbs)
+	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, localStartMbInclusive, nullifySnapshotMbs)
 }

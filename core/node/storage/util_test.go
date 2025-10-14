@@ -1,10 +1,11 @@
-package utils
+package storage
 
 import (
 	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDetermineSnapshotsToNullify(t *testing.T) {
@@ -157,6 +158,73 @@ func TestDetermineSnapshotsToNullify(t *testing.T) {
 			)
 			sort.Slice(actual, func(i, j int) bool { return actual[i] < actual[j] })
 			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestFindClosestSnapshotMiniblock(t *testing.T) {
+	tests := []struct {
+		name          string
+		presentRanges []MiniblockRange
+		start         int64
+		expected      int64
+	}{
+		{
+			name: "exact snapshot match",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{3, 7, 10}},
+			},
+			start:    10,
+			expected: 10,
+		},
+		{
+			name: "nearest lower snapshot across ranges",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 5, SnapshotSeqNums: []int64{0, 2, 5}},
+				{StartInclusive: 10, EndInclusive: 20, SnapshotSeqNums: []int64{12, 16, 20}},
+			},
+			start:    18,
+			expected: 16,
+		},
+		{
+			name: "start before any snapshot",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 5, EndInclusive: 10, SnapshotSeqNums: []int64{5, 8}},
+			},
+			start:    3,
+			expected: 3,
+		},
+		{
+			name: "no snapshots available",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 5},
+				{StartInclusive: 10, EndInclusive: 15},
+			},
+			start:    12,
+			expected: 12,
+		},
+		{
+			name: "snapshots outside range are ignored",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 10, EndInclusive: 20, SnapshotSeqNums: []int64{25, 30}},
+			},
+			start:    15,
+			expected: 15,
+		},
+		{
+			name: "duplicate snapshot values",
+			presentRanges: []MiniblockRange{
+				{StartInclusive: 0, EndInclusive: 10, SnapshotSeqNums: []int64{1, 4, 4}},
+			},
+			start:    9,
+			expected: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := FindClosestSnapshotMiniblock(tt.presentRanges, tt.start)
+			require.Equal(t, tt.expected, result)
 		})
 	}
 }

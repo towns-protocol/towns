@@ -11,7 +11,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/storage"
-	"github.com/towns-protocol/towns/core/node/utils"
 )
 
 const (
@@ -116,13 +115,13 @@ func (sr *streamReconciler) trim() error {
 
 	var retentionIntervalMbs int64
 	if interval := int64(sr.cache.params.ChainConfig.Get().StreamSnapshotIntervalInMiniblocks); interval > 0 {
-		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
+		retentionIntervalMbs = max(interval, storage.MinRetentionIntervalMiniblocks)
 	}
 
 	// TODO: Replace sr.presentRanges[0].EndInclusive with the last snapshot miniblock: slices.Max(sr.presentRanges[0].SnapshotSeqNums).
-	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
+	nullifySnapshotMbs := storage.DetermineStreamSnapshotsToNullify(
 		sr.presentRanges[0].StartInclusive, sr.presentRanges[0].EndInclusive, sr.presentRanges[0].SnapshotSeqNums,
-		retentionIntervalMbs, utils.MinKeepMiniblocks,
+		retentionIntervalMbs, storage.MinKeepMiniblocks,
 	)
 
 	err = sr.cache.params.Storage.TrimStream(sr.ctx, sr.stream.StreamId(), sr.localStartMbInclusive, nullifySnapshotMbs)
@@ -568,5 +567,5 @@ func (sr *streamReconciler) calculateLocalStartMbInclusive() int64 {
 		return 0
 	}
 
-	return findClosestSnapshotMiniblock(sr.presentRanges, start)
+	return storage.FindClosestSnapshotMiniblock(sr.presentRanges, start)
 }

@@ -707,6 +707,6 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 	}
 
 	require.NotEmpty(reconciler.presentRanges)
-	expectedStart := findClosestSnapshotMiniblock(reconciler.presentRanges, desiredStart)
+	expectedStart := storage.FindClosestSnapshotMiniblock(reconciler.presentRanges, desiredStart)
 	require.Equal(expectedStart, reconciler.localStartMbInclusive)
 }
