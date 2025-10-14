@@ -6416,16 +6416,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ponder/utils@npm:0.2.12":
-  version: 0.2.12
-  resolution: "@ponder/utils@npm:0.2.12"
+"@ponder/utils@npm:0.2.14":
+  version: 0.2.14
+  resolution: "@ponder/utils@npm:0.2.14"
   peerDependencies:
     typescript: ">=5.0.4"
     viem: ">=2"
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: 0bb0c705415bf4387c2b9df7978c8e1396f54d70b94d5f2698aa8751cc5e9b32c5893f417a0c86cd40dda1e5fffe203e573b0a98f5297fff57d5c78994be1734
+  checksum: a32d39963b47ee7bd0f94f573feb4a7ec0652da50897b0d500b20b676c6e8bab815274d7d008d2546a9660e0c90c7e57c9262a58bf5be86ece424720281ef3b3
   languageName: node
   linkType: hard
 
@@ -9698,7 +9698,7 @@ __metadata:
     eslint-plugin-prettier: ^5.2.6
     eslint-plugin-tsdoc: ^0.3.0
     hono: ^4.7.11
-    ponder: ^0.12.21
+    ponder: ^0.13.14
     prettier: ^3.5.3
     tsx: ^4.7.1
     turbo: ^2.5.4
@@ -25833,9 +25833,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ponder@npm:^0.12.21":
-  version: 0.12.21
-  resolution: "ponder@npm:0.12.21"
+"ponder@npm:^0.13.14":
+  version: 0.13.14
+  resolution: "ponder@npm:0.13.14"
   dependencies:
     "@babel/code-frame": ^7.23.4
     "@commander-js/extra-typings": ^12.0.1
@@ -25844,7 +25844,7 @@ __metadata:
     "@escape.tech/graphql-armor-max-depth": ^2.2.0
     "@escape.tech/graphql-armor-max-tokens": ^2.3.0
     "@hono/node-server": 1.13.3
-    "@ponder/utils": 0.2.12
+    "@ponder/utils": 0.2.14
     abitype: ^0.10.2
     ansi-escapes: ^7.0.0
     commander: ^12.0.0
@@ -25882,7 +25882,7 @@ __metadata:
       optional: true
   bin:
     ponder: dist/esm/bin/ponder.js
-  checksum: 7201beefacc52b566519195af1ba65b755cd4fbf21c0851ce62093b2cdd9b897efcd74593ddd6ba9b33a1cb3c1f512f442a715f38e623f8d1aafbcfd22527115
+  checksum: d7bf2ed1179e11debf092478522a4db46fc723d5aea0eef1dfae6ae836f80694e2592281b0f5afc24e8d6d2e8f8359de9c2e4e3e5b09c8ce392257292436c63b
   languageName: node
   linkType: hard
 
