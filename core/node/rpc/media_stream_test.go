@@ -125,7 +125,7 @@ func TestCreateMediaStream(t *testing.T) {
 			tt.require.NoError(err)
 
 			// Add media chunk event attempt 1: success
-			aeResp, err := alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
+			aeResp1, err := alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
 				Event:          envelope,
 				CreationCookie: cc,
 				Last:           i == chunks-1,
@@ -133,16 +133,17 @@ func TestCreateMediaStream(t *testing.T) {
 			tt.require.NoError(err, i)
 
 			// Add media chunk event attempt 2: success
-			aeResp, err = alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
+			aeResp2, err := alice.client.AddMediaEvent(alice.ctx, connect.NewRequest(&protocol.AddMediaEventRequest{
 				Event:          envelope,
 				CreationCookie: cc,
 				Last:           i == chunks-1,
 			}))
 			tt.require.NoError(err, i)
+			tt.require.Equal(aeResp1.Msg.GetCreationCookie(), aeResp2.Msg.GetCreationCookie(), i)
 
-			mb.Hash = common.BytesToHash(aeResp.Msg.CreationCookie.PrevMiniblockHash)
+			mb.Hash = common.BytesToHash(aeResp2.Msg.CreationCookie.PrevMiniblockHash)
 			mb.Num++
-			cc = aeResp.Msg.CreationCookie
+			cc = aeResp2.Msg.CreationCookie
 		}
 	})
 

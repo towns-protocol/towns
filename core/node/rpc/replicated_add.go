@@ -168,7 +168,6 @@ func (s *Service) replicatedAddMediaEventImpl(
 	if err != nil {
 		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
-	mbHash := header.Hash
 
 	ephemeralMb := &Miniblock{
 		Events: []*Envelope{event.Envelope},
@@ -319,7 +318,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
-	mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
+	mbHash, err := s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
 	if err != nil {
 		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
@@ -341,19 +340,17 @@ func (s *Service) replicatedAddMediaEventImpl(
 		).Func("replicatedAddMediaEvent")
 	}
 
-	if seal {
-		// Register the given stream onchain with sealed flag
-		if err = s.registryContract.AddStream(
-			ctx,
-			streamId,
-			cc.NodeAddresses(),
-			genesisMbHash,
-			common.BytesToHash(ephemeralMb.Header.Hash),
-			cc.MiniblockNum,
-			true,
-		); err != nil {
-			return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
-		}
+	// Register the given stream onchain with sealed flag
+	if err = s.registryContract.AddStream(
+		ctx,
+		streamId,
+		cc.NodeAddresses(),
+		genesisMbHash,
+		common.BytesToHash(ephemeralMb.Header.Hash),
+		cc.MiniblockNum,
+		true,
+	); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
 	return mbHash, nil
