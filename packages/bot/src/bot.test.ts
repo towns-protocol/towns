@@ -158,7 +158,7 @@ describe('Bot', { sequential: true }, () => {
         const tx = await appRegistryDapp.installApp(
             bob.signer,
             appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
         )
         const receipt = await tx.wait()
@@ -774,11 +774,7 @@ describe('Bot', { sequential: true }, () => {
 
     // TODO: waiting for disable bot feature
     it.skip('never receive message from a uninstalled app', async () => {
-        await appRegistryDapp.uninstallApp(
-            bob.signer,
-            appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
-        )
+        await appRegistryDapp.uninstallApp(bob.signer, appAddress, SpaceAddressFromSpaceId(spaceId))
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
         bot.onMessage((_h, e) => {

@@ -62,7 +62,7 @@ describe('bot entitlements tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
@@ -209,7 +209,7 @@ describe('bot entitlements tests', () => {
         const installTx1 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             readOnlyBotAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt1 = await installTx1.wait()
@@ -218,7 +218,7 @@ describe('bot entitlements tests', () => {
         const installTx2 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             readWriteBotAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt2 = await installTx2.wait()
@@ -330,7 +330,7 @@ describe('bot entitlements tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
