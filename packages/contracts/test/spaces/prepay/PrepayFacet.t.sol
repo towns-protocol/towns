@@ -59,7 +59,6 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
     function test_integration_prepayMembership() external givenFounderHasPrepaid(1) {
         vm.startPrank(founder);
         membership.setMembershipPrice(MEMBERSHIP_PRICE);
-        membership.setMembershipFreeAllocation(0);
         vm.stopPrank();
 
         // Alice mints a membership

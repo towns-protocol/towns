@@ -75,6 +75,8 @@ abstract contract MembershipJoin is
         uint256 membershipPrice = _getMembershipPrice(totalSupply);
         uint256 freeAllocation = _getMembershipFreeAllocation();
 
+        if (membershipPrice == 0) return joinDetails;
+
         joinDetails.basePrice = membershipPrice;
         if (freeAllocation > totalSupply) {
             return joinDetails;
