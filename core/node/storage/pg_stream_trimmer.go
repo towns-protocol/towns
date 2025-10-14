@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"slices"
 	"sync"
 	"time"
 
@@ -20,7 +19,7 @@ import (
 // trimTask represents a task to trim miniblocks from a stream.
 type trimTask struct {
 	streamId             StreamId
-	keepMbs              int64
+	streamHistoryMbs     int64
 	retentionIntervalMbs int64
 }
 
@@ -106,22 +105,22 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	}
 
 	cfg := t.config.Get()
-	keepMbs := int64(cfg.StreamHistoryMiniblocks.ForType(streamId.Type()))
+	streamHistoryMbs := int64(cfg.StreamHistoryMiniblocks.ForType(streamId.Type()))
 
 	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
 		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
 	}
 
-	if keepMbs <= 0 && retentionIntervalMbs <= 0 {
+	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 {
 		return
 	}
 
-	t.scheduleTrimTask(streamId, keepMbs, retentionIntervalMbs)
+	t.scheduleTrimTask(streamId, streamHistoryMbs, retentionIntervalMbs)
 }
 
 // scheduleTrimTask schedules a new trim task for the given stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, keepMbs, retentionIntervalMbs int64) {
+func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, streamHistoryMbs, retentionIntervalMbs int64) {
 	t.pendingTasksLock.Lock()
 	if _, exists := t.pendingTasks[streamId]; exists {
 		t.pendingTasksLock.Unlock()
@@ -132,7 +131,7 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, keepMbs, retentionIn
 
 	task := trimTask{
 		streamId:             streamId,
-		keepMbs:              keepMbs,
+		streamHistoryMbs:     streamHistoryMbs,
 		retentionIntervalMbs: retentionIntervalMbs,
 	}
 
@@ -144,7 +143,7 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, keepMbs, retentionIn
 		if err != nil {
 			t.log.Errorw("Failed to process stream trimming task",
 				"stream", task.streamId,
-				"keepMbs", task.keepMbs,
+				"streamHistoryMbs", task.streamHistoryMbs,
 				"retentionIntervalMbs", task.retentionIntervalMbs,
 				"error", err,
 			)
@@ -166,7 +165,7 @@ func (t *streamTrimmer) processTrimTask(task trimTask) error {
 		},
 		nil,
 		"streamId", task.streamId,
-		"keepMbs", task.keepMbs,
+		"streamHistoryMbs", task.streamHistoryMbs,
 		"retentionIntervalMbs", task.retentionIntervalMbs,
 	)
 }
@@ -177,13 +176,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 	tx pgx.Tx,
 	task trimTask,
 ) error {
-	var scheduledNext bool
 	defer func() {
-		if scheduledNext {
-			return
-		}
-
-		// Delete the pending task mark
 		t.pendingTasksLock.Lock()
 		delete(t.pendingTasks, task.streamId)
 		t.pendingTasksLock.Unlock()
@@ -195,118 +188,43 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return err
 	}
 
-	needSnapshotTrim := task.retentionIntervalMbs > 0
-
-	if task.keepMbs > 0 {
-		// Get the miniblock number to start from
-		startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
-		if err != nil {
-			return err
-		}
-
-		// Miniblock deletion is enabled only when the keep threshold is positive.
-		// Streams that rely solely on snapshot retention skip this branch.
-		// Calculate the highest miniblock number to keep
-		lastMiniblockToKeep := lastSnapshotMiniblock - task.keepMbs
-		if lastMiniblockToKeep > 0 && lastMiniblockToKeep > startMiniblockNum {
-			// Calculate the end sequence number for deletion.
-			// The given miniblock number will not be deleted.
-			exclusiveEndSeq := startMiniblockNum + t.trimmingBatchSize
-			if exclusiveEndSeq >= lastMiniblockToKeep {
-				exclusiveEndSeq = lastMiniblockToKeep
-			}
-
-			rows, err := tx.Query(
-				ctx,
-				t.store.sqlForStream(
-					`DELETE FROM {{miniblocks}}
-				WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3
-				RETURNING seq_num`,
-					task.streamId,
-				),
-				task.streamId,
-				startMiniblockNum,
-				exclusiveEndSeq,
-			)
-			if err != nil {
-				return err
-			}
-
-			deletedMbs, err := pgx.CollectRows(rows, pgx.RowTo[int64])
-			if err != nil {
-				return err
-			}
-
-			var lastDeletedMiniblock int64 = -1
-			if len(deletedMbs) > 0 {
-				lastDeletedMiniblock = slices.Max(deletedMbs)
-			}
-
-			if lastDeletedMiniblock >= 0 && lastDeletedMiniblock+1 < lastMiniblockToKeep {
-				// Schedule the next trim task if there are more miniblocks to delete.
-
-				t.pendingTasksLock.Lock()
-				delete(t.pendingTasks, task.streamId)
-				t.pendingTasksLock.Unlock()
-				scheduledNext = true
-
-				t.scheduleTrimTask(task.streamId, task.keepMbs, task.retentionIntervalMbs)
-				return nil
-			}
-		}
-	} else if !needSnapshotTrim {
-		return nil // Nothing to trim
+	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId)
+	if err != nil {
+		return err
 	}
 
-	if needSnapshotTrim {
-		// Perform snapshot trimming if there are no more miniblocks to delete and trimming is enabled.
-
-		rows, err := tx.Query(
-			ctx,
-			t.store.sqlForStream(
-				`SELECT seq_num 
-				FROM {{miniblocks}} 
-				WHERE stream_id = $1 AND seq_num < $2 AND snapshot IS NOT NULL`,
-				task.streamId,
-			),
-			task.streamId, lastSnapshotMiniblock,
+	if len(ranges) == 0 {
+		t.log.Errorw("No miniblocks found for stream, skipping trimming",
+			"streamId", task.streamId,
+			"lastSnapshotMiniblock", lastSnapshotMiniblock,
 		)
-		if err != nil {
-			return err
-		}
-
-		mbs, err := pgx.CollectRows(rows, pgx.RowTo[int64])
-		if err != nil {
-			return err
-		}
-
-		var rangeStart int64
-		if len(mbs) > 0 {
-			rangeStart = mbs[0]
-		}
-
-		toNullify := utils.DetermineStreamSnapshotsToNullify(
-			rangeStart,
-			lastSnapshotMiniblock-1,
-			mbs,
-			task.retentionIntervalMbs,
-			utils.MinKeepMiniblocks,
-		)
-		if len(toNullify) > 0 {
-			if _, err = tx.Exec(
-				ctx,
-				t.store.sqlForStream(
-					`UPDATE {{miniblocks}}
-				SET snapshot = NULL
-				WHERE stream_id = $1 AND seq_num = ANY($2)`,
-					task.streamId,
-				),
-				task.streamId, toNullify,
-			); err != nil {
-				return err
-			}
-		}
+		return nil
 	}
 
-	return nil
+	// TODO:
+	//  1. The stream might have 0 miniblock as the first range, and the rest as the second range
+	//  2. The stream might have gaps. In this case, check the len of the last range, use config to decide if the history could be trimmed.
+	if len(ranges) > 1 {
+		t.log.Errorw("Stream has gaps, skipping trimming",
+			"streamId", task.streamId,
+			"ranges", ranges,
+			"lastSnapshotMiniblock", lastSnapshotMiniblock,
+		)
+		return nil
+	}
+
+	// TODO: Replace ranges[0].EndInclusive with the last snapshot miniblock: slices.Max(ranges[0].SnapshotSeqNums).
+	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
+		ranges[0].StartInclusive, ranges[0].EndInclusive, ranges[0].SnapshotSeqNums,
+		task.retentionIntervalMbs, utils.MinKeepMiniblocks,
+	)
+
+	lastMbToKeep := lastSnapshotMiniblock - task.streamHistoryMbs
+	if lastMbToKeep < 0 {
+		lastMbToKeep = 0
+	}
+
+	// TODO: Find the closest snapshot miniblock <= lastMbToKeep
+
+	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, lastMbToKeep, nullifySnapshotMbs)
 }

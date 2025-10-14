@@ -2601,6 +2601,14 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 		return nil, err
 	}
 
+	return s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId)
+}
+
+func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+) ([]MiniblockRange, error) {
 	query := s.sqlForStream(`
 		SELECT
 			MIN(seq_num) AS start_range,
@@ -2657,6 +2665,21 @@ func (s *PostgresStreamStore) trimStreamTx(
 	startMbExclusively int64,
 	nullifySnapshotMbs []int64,
 ) error {
+	_, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
+		return err
+	}
+
+	return s.trimStreamTxNoLock(ctx, tx, streamId, startMbExclusively, nullifySnapshotMbs)
+}
+
+func (s *PostgresStreamStore) trimStreamTxNoLock(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	startMbExclusively int64,
+	nullifySnapshotMbs []int64,
+) error {
 	if startMbExclusively < 0 {
 		return RiverError(
 			Err_INVALID_ARGUMENT,
@@ -2664,11 +2687,6 @@ func (s *PostgresStreamStore) trimStreamTx(
 			"streamId", streamId,
 			"startMbExclusively", startMbExclusively,
 		).Func("PostgresStreamStore.trimStreamTx")
-	}
-
-	_, err := s.lockStream(ctx, tx, streamId, true)
-	if err != nil {
-		return err
 	}
 
 	if startMbExclusively > 1 {

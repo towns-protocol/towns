@@ -118,9 +118,6 @@ func (sr *streamReconciler) trim() error {
 	if interval := int64(sr.cache.params.ChainConfig.Get().StreamSnapshotIntervalInMiniblocks); interval > 0 {
 		retentionIntervalMbs = max(interval, utils.MinRetentionIntervalMiniblocks)
 	}
-	if retentionIntervalMbs <= 0 {
-		return nil
-	}
 
 	// TODO: Replace sr.presentRanges[0].EndInclusive with the last snapshot miniblock: slices.Max(sr.presentRanges[0].SnapshotSeqNums).
 	nullifySnapshotMbs := utils.DetermineStreamSnapshotsToNullify(
