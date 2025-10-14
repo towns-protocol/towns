@@ -759,6 +759,32 @@ describe('Bot', { sequential: true }, () => {
         expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
+    it('bot can use sendTip() to send tips', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnMessageType[] = []
+
+        // Bot tips bob's message using its own account
+        bot.onMessage(async (handler, event) => {
+            const result = await handler.sendTip({
+                to: bob.userId,
+                amount: ethers.utils.parseUnits('0.005').toBigInt(),
+                messageId: event.eventId,
+                channelId: event.channelId,
+            })
+            expect(result.txHash).toBeDefined()
+            expect(result.eventId).toBeDefined()
+            receivedMessages.push(event)
+        })
+
+        const bobBalanceBefore = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        // Bob sends a message asking for a tip
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me please!')
+        await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
+        // Verify bob's balance increased
+        const bobBalanceAfter = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore)
+    })
+
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
