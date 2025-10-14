@@ -328,6 +328,176 @@ bot.onTip(async (handler, event) => {
 })
 ```
 
+### Sending Tips (`handler.tip`)
+
+**IMPORTANT:** Bots can send cryptocurrency tips to users' messages using the `tip` method available in event handlers.
+
+**Method Signature:**
+```typescript
+await handler.tip({
+  account?: Account,        // Optional: Viem account. Defaults to bot's account
+  to: Address,             // Recipient's address (0x...)
+  amount: bigint,          // Amount in wei (use parseEther for ETH amounts)
+  messageId: string,       // Event ID of the message to tip
+  channelId: string,       // Channel where message was sent
+  currency?: string        // Optional: Token address. Defaults to ETH
+})
+
+// Returns: Promise<{ txHash: string, eventId: string }>
+```
+
+**Real-World Example - Reward Bot:**
+```typescript
+import { parseEther } from 'viem'
+import { ETH_ADDRESS } from '@towns-protocol/web3'
+
+// Bot that tips helpful messages
+bot.onMessage(async (handler, event) => {
+  // Skip bot's own messages
+  if (event.userId === bot.botId) return
+
+  // Tip messages containing helpful keywords
+  const helpfulKeywords = ['thanks', 'helpful', 'great answer', 'solved']
+  const isHelpful = helpfulKeywords.some(keyword =>
+    event.message.toLowerCase().includes(keyword)
+  )
+
+  if (isHelpful) {
+    try {
+      // Tip 0.001 ETH for helpful messages
+      const { txHash, eventId } = await handler.sendTip({
+        to: event.userId,              // Tip the message author
+        amount: parseEther('0.001'),   // 0.001 ETH in wei
+        messageId: event.eventId,       // The helpful message
+        channelId: event.channelId,
+        currency: ETH_ADDRESS,          // Optional, defaults to ETH
+      })
+
+      // Notify the user (optional)
+      await handler.sendMessage(
+        event.channelId,
+        `Sent you a tip for being helpful! TX: ${txHash.slice(0, 10)}...`
+      )
+    } catch (error) {
+      console.error('Failed to send tip:', error)
+      // Optionally notify about the error
+      await handler.sendMessage(
+        event.channelId,
+        'Sorry, failed to send tip. Please try again later.'
+      )
+    }
+  }
+})
+```
+
+**Advanced Example - Custom Account:**
+```typescript
+import { privateKeyToAccount } from 'viem/accounts'
+
+// Use a different wallet for tipping (e.g., treasury wallet)
+const treasuryAccount = privateKeyToAccount('0x...')
+
+bot.onSlashCommand("reward", async (handler, event) => {
+  // Requires replying to a message to reward it
+  if (!event.replyId) {
+    await handler.sendMessage(
+      event.channelId,
+      "Reply to a message to reward it with /reward [amount]"
+    )
+    return
+  }
+
+  // Parse amount from args (defaults to 0.01 ETH)
+  const amountString = event.args[0] || '0.01'
+  const amount = parseEther(amountString)
+
+  try {
+    // Get the original message author (would need to be stored)
+    // In production, you'd look this up from your message cache
+    const recipientAddress = '0x...' // Look up from storage
+
+    const { txHash, eventId } = await handler.sendTip({
+      account: treasuryAccount,      // Use treasury account
+      to: recipientAddress,
+      amount,
+      messageId: event.replyId,
+      channelId: event.channelId,
+    })
+
+    await handler.sendMessage(
+      event.channelId,
+      `Reward of ${amountString} ETH sent! Transaction: ${txHash}`
+    )
+  } catch (error) {
+    await handler.sendMessage(
+      event.channelId,
+      `Failed to send reward: ${error.message}`
+    )
+  }
+})
+```
+
+**Tracking Tips with Context:**
+```typescript
+// Store message context to enable tipping by message content
+const messageCache = new Map()
+
+bot.onMessage(async (handler, event) => {
+  // Cache all messages with author info
+  messageCache.set(event.eventId, {
+    userId: event.userId,
+    message: event.message,
+    channelId: event.channelId,
+  })
+
+  // Bot admin commands: tip a specific message
+  if (event.message.startsWith('!tip ')) {
+    const match = event.message.match(/!tip (\S+) ([\d.]+)/)
+    if (!match) {
+      await handler.sendMessage(
+        event.channelId,
+        'Usage: !tip <messageId> <amount>'
+      )
+      return
+    }
+
+    const [, targetMessageId, amountStr] = match
+    const targetMessage = messageCache.get(targetMessageId)
+
+    if (!targetMessage) {
+      await handler.sendMessage(event.channelId, 'Message not found')
+      return
+    }
+
+    try {
+      const { txHash } = await handler.tip({
+        to: targetMessage.userId,
+        amount: parseEther(amountStr),
+        messageId: targetMessageId,
+        channelId: targetMessage.channelId,
+      })
+
+      await handler.sendMessage(
+        event.channelId,
+        `Tipped ${amountStr} ETH to <@${targetMessage.userId}>! TX: ${txHash.slice(0, 10)}...`
+      )
+    } catch (error) {
+      await handler.sendMessage(
+        event.channelId,
+        `Tip failed: ${error.message}`
+      )
+    }
+  }
+})
+```
+
+**Important Notes:**
+- Bot must have sufficient funds in its account to send tips
+- Requires valid recipient with membership token in the space
+- All tips are on-chain transactions with gas fees
+- Failed tips throw errors - always use try/catch
+- Returns both transaction hash and stream event ID
+
 ### `onChannelJoin` / `onChannelLeave` - Membership Handlers
 
 **When it fires:** User joins or leaves channel

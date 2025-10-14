@@ -128,6 +128,17 @@ Methods available on the `handler` parameter in event callbacks:
 - `ban(userId, spaceId)` - Ban a user from a space (requires `ModifyBanning` permission)
 - `unban(userId, spaceId)` - Unban a user from a space (requires `ModifyBanning` permission)
 
+**Tip Operations:**
+- `tip(params)` - Send a cryptocurrency tip to a user's message
+  - `params.account` (optional): Viem account with private key for signing. If not provided, uses bot's own account
+  - `params.to`: Recipient's address (Address type)
+  - `params.amount`: Amount in wei (bigint, e.g., `parseEther('0.01')`)
+  - `params.messageId`: Event ID of the message to tip
+  - `params.channelId`: Channel where the message was sent
+  - `params.currency` (optional): Token contract address (defaults to ETH: `0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE`)
+  - Returns: `Promise<{ txHash: string, eventId: string }>` - Transaction hash and stream event ID
+  - Note: Bot uses `currentMessageTags` automatically for proper event routing
+
 **Web3 Operations:**
 - `writeContract(tx)` - Execute contract write
 - `readContract(parameters)` - Read contract state
@@ -324,13 +335,73 @@ bot.onSlashCommand("ban", async (handler, { channelId, spaceId, args, userId }) 
 
 bot.onSlashCommand("unban", async (handler, { channelId, spaceId, args }) => {
   const userToUnban = args[0]
-  
+
   try {
     // Unban the user - bot must have ModifyBanning permission
     const result = await handler.unban(userToUnban, spaceId)
     await handler.sendMessage(channelId, `Successfully unbanned user ${userToUnban}`)
   } catch (error) {
     await handler.sendMessage(channelId, `Failed to unban user: ${error.message}`)
+  }
+})
+```
+
+### Sending Tips
+```typescript
+import { parseEther } from 'viem'
+import { ETH_ADDRESS } from '@towns-protocol/web3'
+
+// Reward bot that tips helpful messages
+bot.onMessage(async (handler, event) => {
+  // Skip bot's own messages
+  if (event.userId === bot.botId) return
+
+  // Tip helpful messages
+  if (event.message.includes('thanks') || event.message.includes('helpful')) {
+    try {
+      const { txHash, eventId } = await handler.sendTip({
+        to: event.userId, // Tip the message author
+        amount: parseEther('0.001'), // 0.001 ETH
+        messageId: event.eventId,
+        channelId: event.channelId,
+        currency: ETH_ADDRESS, // Optional, defaults to ETH
+      })
+
+      await handler.sendMessage(
+        event.channelId,
+        `Sent you a tip for being helpful! Transaction: ${txHash.slice(0, 10)}...`
+      )
+    } catch (error) {
+      console.error('Failed to send tip:', error)
+    }
+  }
+})
+
+// Using custom account for tipping
+import { privateKeyToAccount } from 'viem/accounts'
+
+const customAccount = privateKeyToAccount('0x...')
+
+bot.onSlashCommand("reward", async (handler, { channelId, args, replyId }) => {
+  if (!replyId) {
+    await handler.sendMessage(channelId, "Reply to a message to reward it")
+    return
+  }
+
+  const amount = parseEther(args[0] || '0.01')
+
+  try {
+    const { txHash, eventId } = await handler.sendTip({
+      account: customAccount, // Use custom account instead of bot's account
+      to: '0x...', // Recipient address
+      amount,
+      messageId: replyId,
+      channelId,
+    })
+
+    await handler.sendMessage(channelId, `Reward sent! TX: ${txHash}`)
+  } catch (error) {
+    await handler.sendMessage(channelId, `Failed to send reward: ${error.message}`)
   }
 })
 ```
