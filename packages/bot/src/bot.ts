@@ -1,6 +1,6 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
-import { SpaceDapp, Permission, ETH_ADDRESS } from '@towns-protocol/web3'
+import { SpaceDapp, Permission } from '@towns-protocol/web3'
 import SimpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
 import AppRegistry from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 
@@ -1296,7 +1296,7 @@ const buildBotActions = (
             amount,
             messageId,
             channelId,
-            currency = ETH_ADDRESS,
+            currency = zeroAddress,
         }: {
             to: Address
             amount: bigint
