@@ -6,8 +6,10 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	gcpstorage "cloud.google.com/go/storage"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	gcstorage "cloud.google.com/go/storage"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/jackc/pgx/v5"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -19,6 +21,18 @@ import (
 // This information can be used to decode a miniblock from an external object that combines
 // multiple miniblocks.
 type (
+	// externalMediaStreamStorage is a struct that holds the configuration for
+	// storing media stream miniblocks in external storage.
+	externalMediaStreamStorage struct {
+		s3 *struct {
+			client *awss3.Client
+			bucket string
+		}
+		gcs *struct {
+			bucket *gcstorage.BucketHandle
+		}
+	}
+
 	externallyStoredMiniblockDescriptor struct {
 		// Number is the miniblock number.
 		Number int64
@@ -32,6 +46,58 @@ type (
 
 	// MiniblockDataStorageLocation defines where miniblock.Data is stored.
 	MiniblockDataStorageLocation byte
+
+	// ExternalStorageWriter can write chunks of bytes to external storage.
+	ExternalStorageWriter interface {
+		// WriteMiniblockData writes or schedules the given blockdata to be written to external storage.
+		// If WriteMiniblockData returns an error the caller must call Abort to clean up the resources.
+		// If all miniblock data was written successfully the caller must call Finish to complete the upload.
+		// Only when Finish returns nil the object is considered successfully uploaded.
+		WriteMiniblockData(ctx context.Context, mbNum int64, blockdata []byte) error
+		// Finish the storage writer session.
+		// Only when Finish returned nil the object is considered successfully uploaded.
+		Finish(ctx context.Context) ([]externallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error)
+		// Abort the storage writer session.
+		// If Finish was called before successfully, this is a no-op
+		Abort()
+	}
+
+	// s3ExternalStorageWriter implements ExternalStorageWriter for S3 storage.
+	s3ExternalStorageWriter struct {
+		client              *awss3.Client
+		streamID            StreamId
+		schemaLockID        int64
+		buf                 *bytes.Buffer
+		totalMiniblockBytes uint64
+		miniblocks          []externallyStoredMiniblockDescriptor
+		bucket              string
+		completedParts      []s3types.CompletedPart
+		multiPartUploadID   *string
+	}
+
+	// gcsExternalStorageWriter implements ExternalStorageWriter for GCS storage.
+	gcsExternalStorageWriter struct {
+		streamID            StreamId
+		bucket              *gcstorage.BucketHandle
+		schemaLockID        int64
+		buf                 *bytes.Buffer
+		totalMiniblockBytes uint64
+		miniblocks          []externallyStoredMiniblockDescriptor
+		subObjects          []*gcstorage.ObjectHandle
+	}
+
+	// TestExternalStorage is a helper interface for testing purposes.
+	TestExternalStorage interface {
+		// TestDeleteExternalObject deletes an external object from the external storage.
+		// For testing purposes only.
+		TestDeleteExternalObject(ctx context.Context, streamID StreamId, loc MiniblockDataStorageLocation) error
+	}
+)
+
+var (
+	_ ExternalStorageWriter = (*s3ExternalStorageWriter)(nil)
+	_ ExternalStorageWriter = (*gcsExternalStorageWriter)(nil)
+	_ TestExternalStorage   = (*PostgresStreamStore)(nil)
 )
 
 const (
@@ -41,7 +107,370 @@ const (
 	MiniblockDataStorageLocationS3 MiniblockDataStorageLocation = 'S'
 	// MiniblockDataStorageLocationGCS indicates that the miniblock data is stored in Google Cloud Storage.
 	MiniblockDataStorageLocationGCS MiniblockDataStorageLocation = 'G'
+	// MinimumExternalStorageUploadPartSize is the minimum size of a part to upload to external storage.
+	// This is used to avoid uploading very small parts that can lead to performance issues.
+	// The value is set to 5MiB, which is the minimum part size for S3 and GCS.
+	// See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+	// and https://cloud.google.com/storage/quotas#requests
+	MinimumExternalStorageUploadPartSize = 5 * 1024 * 1024
 )
+
+// WriteMiniblockData either writes the given blockdata to the external storage, or schedules it for writing
+// when it's not big enough to be written at the moment.
+//
+// TODO: once appendable objects are out of preview consider using appendable writers to append each miniblock to the
+// object instead of composing multiple objects into a single final object.
+// https://pkg.go.dev/cloud.google.com/go/storage#ObjectHandle.NewWriterFromAppendableObject
+func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum int64, blockdata []byte) error {
+	if _, err := g.buf.Write(blockdata); err != nil {
+		return RiverErrorWithBase(Err_BUFFER_FULL, "Unable to write miniblock to buffer", err).
+			Tag("streamId", g.streamID).
+			Func("gcsExternalStorageWriter#WriteMiniblockData")
+	}
+
+	// store details about individual miniblocks that can be used to decode the miniblock later
+	// when all parts are combined into a single external storage object.
+	g.miniblocks = append(g.miniblocks, externallyStoredMiniblockDescriptor{
+		Number:              mbNum,
+		StartByte:           g.totalMiniblockBytes,
+		MiniblockDataLength: uint64(len(blockdata)),
+		Bucket:              g.bucket.BucketName(),
+	})
+
+	g.totalMiniblockBytes += uint64(len(blockdata))
+
+	rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
+	objectKey := fmt.Sprintf("%s_%d", rootObjectKey, len(g.subObjects))
+
+	return g.write(ctx, objectKey, true, false)
+}
+
+// Finish writes pending miniblock data to external storage and returns the parts that are needed
+// to decode miniblocks from the object stored in external storage.
+func (g *gcsExternalStorageWriter) Finish(ctx context.Context) (
+	[]externallyStoredMiniblockDescriptor,
+	MiniblockDataStorageLocation,
+	string,
+	error,
+) {
+	defer func() { g.buf = nil }()
+
+	if len(g.subObjects) == 0 { // the stream miniblock data can be uploaded in a single write operation
+		if g.buf.Len() == 0 {
+			return nil, MiniblockDataStorageLocationDB, "", RiverError(
+				Err_INTERNAL,
+				"no miniblock data to write to GCS",
+			).
+				Tag("streamId", g.streamID).
+				Func("gcsExternalStorageWriter#Finish")
+		}
+
+		objectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
+
+		if err := g.write(ctx, objectKey, false, true); err != nil {
+			return nil, MiniblockDataStorageLocationDB, "", err
+		}
+
+		return g.miniblocks, MiniblockDataStorageLocationGCS, g.bucket.BucketName(), nil
+	}
+
+	// write pending data to GCS
+	if g.buf.Len() > 0 {
+		rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
+		objectKey := fmt.Sprintf("%s_%d", rootObjectKey, len(g.subObjects))
+
+		if err := g.write(ctx, objectKey, true, true); err != nil {
+			return nil, MiniblockDataStorageLocationDB, "", err
+		}
+	}
+
+	// combine all sub objects into a single object
+	return g.combineIntoSingleObject(ctx)
+}
+
+// Abort aborts the upload session and deletes claimed resources.
+func (g *gcsExternalStorageWriter) Abort() {
+	g.buf = nil
+	for _, obj := range g.subObjects {
+		_ = obj.Delete(context.Background()) // lint:ignore context.Background() is fine here
+	}
+}
+
+// combineIntoSingleObject concatenates all sub objects into a single GCS object and deletes them.
+func (g *gcsExternalStorageWriter) combineIntoSingleObject(ctx context.Context) (
+	[]externallyStoredMiniblockDescriptor,
+	MiniblockDataStorageLocation,
+	string,
+	error,
+) {
+	rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
+
+	// combine all sub objects into a single object.
+	tempObjects, err := composeGCPObjects(ctx, g.bucket, rootObjectKey, g.subObjects)
+	if err != nil {
+		// best-effort cleanup of any temporary objects created before returning the error.
+		for _, obj := range tempObjects {
+			_ = obj.Delete(ctx)
+		}
+
+		return nil, MiniblockDataStorageLocationDB, "", RiverErrorWithBase(
+			Err_DOWNSTREAM_NETWORK_ERROR,
+			"Unable to combine sub objects to single GCS object",
+			err,
+		).
+			Tags("stream", g.streamID).
+			Func("combinePartsIntoSingleObject")
+	}
+
+	// now chunks are combined into a single object, remove parts and temporary objects
+	for _, obj := range append(g.subObjects, tempObjects...) {
+		_ = obj.Delete(context.Background()) // lint:ignore context.Background() is fine here
+	}
+
+	g.subObjects = nil // clients can call always Abort after calling Finish, this makes it a no-op
+
+	return g.miniblocks, MiniblockDataStorageLocationGCS, g.bucket.BucketName(), nil
+}
+
+// write writes the data in the buffer to a GCS object if there is enough to meet minimal
+// upload size requirements (or lastPart is true).
+func (g *gcsExternalStorageWriter) write(ctx context.Context, objectKey string, isSubObject bool, lastPart bool) error {
+	// if the buffer is big enough, upload it to GCS and reset the buffer for the next part.
+	// this is to reduce memory footprint when uploading large streams.
+	if g.buf.Len() < MinimumExternalStorageUploadPartSize && !lastPart {
+		return nil
+	}
+
+	object := g.bucket.Object(objectKey)
+	objectWriter := object.NewWriter(ctx)
+	data := g.buf.Bytes()
+
+	if _, err := objectWriter.Write(data); err != nil {
+		return RiverError(
+			Err_DOWNSTREAM_NETWORK_ERROR,
+			"Unable to write object to GCS",
+			err,
+		).
+			Tag("streamId", g.streamID).
+			Tag("objectKey", objectKey).
+			Func("externalMediaStreamStorage#Write")
+	}
+
+	if err := objectWriter.Close(); err != nil {
+		return RiverError(
+			Err_DOWNSTREAM_NETWORK_ERROR,
+			"Unable to close object writer",
+			err,
+		).
+			Tag("streamId", g.streamID).
+			Tag("objectKey", objectKey).
+			Func("externalMediaStreamStorage#Write")
+	}
+
+	g.buf.Reset()
+	if isSubObject {
+		g.subObjects = append(g.subObjects, object)
+	}
+
+	return nil
+}
+
+// WriteMiniblockData writes the miniblock data to an internal buffer. And once the buffer has enough data
+// it flushes the data to S3 as part of a multipart upload. When Finish is called the multipart upload is completed
+// or if there wasn't enough data for multiple parts it creates the final single S3 object.
+func (s *s3ExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum int64, blockdata []byte) error {
+	if _, err := s.buf.Write(blockdata); err != nil {
+		return RiverErrorWithBase(Err_BUFFER_FULL, "Unable to write miniblock to buffer", err).
+			Tag("streamId", s.streamID).
+			Func("s3ExternalStorageWriter#WriteMiniblockData")
+	}
+
+	// store details about individual miniblocks that can be used to decode the miniblock later
+	// when all parts are combined into a single external storage object.
+	s.miniblocks = append(s.miniblocks, externallyStoredMiniblockDescriptor{
+		Number:              mbNum,
+		StartByte:           s.totalMiniblockBytes,
+		MiniblockDataLength: uint64(len(blockdata)),
+		Bucket:              s.bucket,
+	})
+
+	s.totalMiniblockBytes += uint64(len(blockdata))
+
+	return s.write(ctx, false)
+}
+
+// write if there is enough data to s3.
+func (s *s3ExternalStorageWriter) write(
+	ctx context.Context,
+	lastPart bool,
+) error {
+	// if there are not enough bytes in the buffer to meet minimal upload size requirements,
+	// return early.
+	if s.buf.Len() < MinimumExternalStorageUploadPartSize && !lastPart {
+		return nil
+	}
+
+	// name of the final single S3 object
+	objectKey := ExternalStorageObjectKey(s.schemaLockID, s.streamID)
+
+	// if this is the last part and there is no multipart upload started, use a single put operation
+	if lastPart && len(s.completedParts) == 0 {
+		_, err := s.client.PutObject(ctx, &awss3.PutObjectInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(objectKey),
+			Body:   s.buf,
+		})
+		if err != nil {
+			return RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to write object to S3", err).
+				Tag("streamId", s.streamID).
+				Tag("objectKey", objectKey).
+				Func("s3ExternalStorageWriter#write")
+		}
+
+		s.buf.Reset()
+
+		return nil
+	}
+
+	// start multipart upload if there is no multipart upload already started
+	if s.multiPartUploadID == nil {
+		createMultipartUploadResult, err := s.client.CreateMultipartUpload(ctx, &awss3.CreateMultipartUploadInput{
+			Bucket: aws.String(s.bucket),
+			Key:    aws.String(objectKey),
+		})
+		if err != nil {
+			return RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to start S3 multipart upload", err).
+				Tag("streamId", s.streamID).
+				Tag("objectKey", objectKey).
+				Func("s3ExternalStorageWriter#write")
+		}
+
+		s.multiPartUploadID = createMultipartUploadResult.UploadId
+	}
+
+	// upload buffer as part of the multipart upload
+	partNumber := aws.Int32(int32(len(s.completedParts) + 1))
+	uploadPartResult, err := s.client.UploadPart(ctx, &awss3.UploadPartInput{
+		Bucket:     aws.String(s.bucket),
+		Key:        aws.String(objectKey),
+		PartNumber: partNumber,
+		UploadId:   s.multiPartUploadID,
+		Body:       s.buf,
+	})
+	if err != nil {
+		return RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to upload part to S3", err).
+			Tag("streamId", s.streamID).
+			Tag("objectKey", objectKey).
+			Tag("uploadId", *s.multiPartUploadID).
+			Func("s3ExternalStorageWriter#write")
+	}
+
+	s.completedParts = append(s.completedParts, s3types.CompletedPart{
+		ETag:       uploadPartResult.ETag,
+		PartNumber: partNumber,
+	})
+
+	s.buf.Reset()
+
+	if lastPart {
+		_, err := s.client.CompleteMultipartUpload(ctx, &awss3.CompleteMultipartUploadInput{
+			Bucket:   aws.String(s.bucket),
+			Key:      aws.String(objectKey),
+			UploadId: s.multiPartUploadID,
+			MultipartUpload: &s3types.CompletedMultipartUpload{
+				Parts: s.completedParts,
+			},
+		})
+		if err != nil {
+			return RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to complete S3 multipart upload", err).
+				Tag("streamId", s.streamID).
+				Tag("objectKey", objectKey).
+				Tag("uploadId", *s.multiPartUploadID).
+				Func("s3ExternalStorageWriter#write")
+		}
+	}
+
+	return nil
+}
+
+// Finish writes the remaining data to S3 as part of a multipart upload or if there is no data to write to S3 it
+// creates a single S3 object with the miniblock data. It returns the miniblock data and the location of the miniblock
+// data in the S3 object.
+func (s *s3ExternalStorageWriter) Finish(
+	ctx context.Context,
+) ([]externallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error) {
+	defer func() { s.buf = nil }()
+
+	if s.multiPartUploadID == nil {
+		if s.buf.Len() == 0 {
+			return nil, MiniblockDataStorageLocationDB, "", RiverError(
+				Err_INTERNAL,
+				"no miniblock data to write to S3",
+			).
+				Tag("streamId", s.streamID).
+				Func("s3ExternalStorageWriter#Finish")
+		}
+	}
+
+	if err := s.write(ctx, true); err != nil {
+		return nil, MiniblockDataStorageLocationDB, "", err
+	}
+
+	return s.miniblocks, MiniblockDataStorageLocationS3, s.bucket, nil
+}
+
+// Abort aborts the upload session.
+func (s *s3ExternalStorageWriter) Abort() {
+	s.buf = nil
+	if s.multiPartUploadID != nil {
+		_, _ = s.client.AbortMultipartUpload(
+			context.Background(),
+			&awss3.AbortMultipartUploadInput{ // lint:ignore context.Background() is fine here
+				Bucket:   aws.String(s.bucket),
+				Key:      aws.String(ExternalStorageObjectKey(s.schemaLockID, s.streamID)),
+				UploadId: s.multiPartUploadID,
+			},
+		)
+	}
+}
+
+// Enabled returns true if storing media stream miniblocks in external storage is enabled.
+func (e *externalMediaStreamStorage) Enabled() bool {
+	return e != nil && (e.gcs != nil || e.s3 != nil)
+}
+
+// StartUploadSession initiates a upload session to write miniblock data to external storage.
+func (e *externalMediaStreamStorage) StartUploadSession(
+	schemaLockID int64,
+	streamID StreamId,
+) (ExternalStorageWriter, error) {
+	if schemaLockID < 0 {
+		schemaLockID *= -1 // used as prefix for object keys, ensure that it doesn't start with a minus
+	}
+
+	if e.gcs != nil {
+		return &gcsExternalStorageWriter{
+			streamID:     streamID,
+			bucket:       e.gcs.bucket,
+			schemaLockID: schemaLockID,
+			buf:          new(bytes.Buffer),
+		}, nil
+	}
+
+	if e.s3 != nil {
+		return &s3ExternalStorageWriter{
+			client:       e.s3.client,
+			streamID:     streamID,
+			schemaLockID: schemaLockID,
+			buf:          new(bytes.Buffer),
+			bucket:       e.s3.bucket,
+		}, nil
+	}
+
+	return nil, RiverError(Err_BAD_CONFIG, "No external media storage configured").
+		Tag("streamId", streamID).
+		Func("externalMediaStreamStorage#StartUploadSession")
+}
 
 // Value implements river.Valuer for MiniblockDataStorageLocation.
 func (loc MiniblockDataStorageLocation) Value() (driver.Value, error) {
@@ -67,25 +496,25 @@ func (loc *MiniblockDataStorageLocation) Scan(src interface{}) error {
 }
 
 // WithCustomS3Client sets the AWS S3 client.
-func WithCustomS3Client(client *s3.Client, bucket string) PostgresStreamStoreOption {
+func WithCustomS3Client(client *awss3.Client, bucket string) PostgresStreamStoreOption {
 	return func(store *PostgresStreamStore) {
 		if store.externalMediaStreamStorage == nil {
 			store.externalMediaStreamStorage = &externalMediaStreamStorage{}
 		}
 		store.externalMediaStreamStorage.s3 = &struct {
-			client *s3.Client
+			client *awss3.Client
 			bucket string
 		}{client: client, bucket: bucket}
 	}
 }
 
 // WithCustomGcsClient sets the Google Cloud Storage client.
-func WithCustomGcsClient(bucket *gcpstorage.BucketHandle) PostgresStreamStoreOption {
+func WithCustomGcsClient(bucket *gcstorage.BucketHandle) PostgresStreamStoreOption {
 	return func(store *PostgresStreamStore) {
 		if store.externalMediaStreamStorage == nil {
 			store.externalMediaStreamStorage = &externalMediaStreamStorage{}
 		}
-		store.externalMediaStreamStorage.gcs = &struct{ bucket *gcpstorage.BucketHandle }{bucket: bucket}
+		store.externalMediaStreamStorage.gcs = &struct{ bucket *gcstorage.BucketHandle }{bucket: bucket}
 	}
 }
 
@@ -124,34 +553,19 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 			Func("MigrateMiniblocksToExternalStorage")
 	}
 
-	// combine miniblocks into a single object and keep track of parts to decode individual miniblocks
-	// from single object later
-	var (
-		combinedMiniblocksData = new(bytes.Buffer)
-		miniblocksTotalLength  = uint64(0)
-		parts                  []externallyStoredMiniblockDescriptor
-	)
+	uploadSession, err := s.externalMediaStreamStorage.StartUploadSession(s.computeLockIdFromSchema(), streamID)
+	if err != nil {
+		return true, err
+	}
+	defer uploadSession.Abort()
 
-	if err := s.ReadMiniblocksByStream(ctx, streamID, true, func(blockdata []byte, seqNum int64, snapshot []byte) error {
-		_, err := combinedMiniblocksData.Write(blockdata)
-
-		parts = append(parts, externallyStoredMiniblockDescriptor{
-			Number:              seqNum,
-			StartByte:           miniblocksTotalLength,
-			MiniblockDataLength: uint64(len(blockdata)),
-		})
-
-		miniblocksTotalLength += uint64(len(blockdata))
-
-		return err
+	if err := s.ReadMiniblocksByStream(ctx, streamID, true, func(blockdata []byte, seqNum int64, _ []byte) error {
+		return uploadSession.WriteMiniblockData(ctx, seqNum, blockdata)
 	}); err != nil {
 		return true, err
 	}
 
-	objectKey := s.ExternalStorageObjectKey(streamID)
-
-	// write the combined miniblock object to external storage
-	extStorageLoc, bucket, err := s.externalMediaStreamStorage.Write(ctx, streamID, objectKey, combinedMiniblocksData)
+	parts, extStorageLoc, bucket, err := uploadSession.Finish(ctx)
 	if err != nil {
 		return true, err
 	}
@@ -168,12 +582,11 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 
 // ExternalStorageObjectKey returns the object key where the miniblocks for the given
 // streamID are stored in external storage.
-func (s *PostgresStreamStore) ExternalStorageObjectKey(streamID StreamId) string {
-	id := s.computeLockIdFromSchema()
+func ExternalStorageObjectKey(id int64, streamID StreamId) string {
 	if id < 0 {
-		id *= -1
+		id *= -1 // ensure that object key doesn't start with a minus
 	}
-	return fmt.Sprintf("%d/%s", id, streamID.String())
+	return fmt.Sprintf("%d/%s", id, streamID)
 }
 
 // WriteMediaStreamExternalStorageParts writes the given parts to the DB and removes the
@@ -313,4 +726,76 @@ func (s *PostgresStreamStore) StreamMiniblocksStoredLocation(
 	)
 
 	return location, err
+}
+
+// composeGCPObjects composes the given source objects into the destination object located at dstKey.
+// GCP only allows up to 32 sources per compose call. This helper handles larger inputs by
+// incrementally composing at most 32 sources into temporary objects until the final compose can be
+// executed.
+func composeGCPObjects(
+	ctx context.Context,
+	bucket *gcstorage.BucketHandle,
+	dstKey string,
+	sources []*gcstorage.ObjectHandle,
+) ([]*gcstorage.ObjectHandle, error) {
+	if len(sources) == 0 {
+		return nil, nil
+	}
+
+	temporaryObjects := make([]*gcstorage.ObjectHandle, 0)
+	batchIndex := 0
+	parts := sources
+
+	for len(parts) > 32 {
+		nextParts := make([]*gcstorage.ObjectHandle, 0, (len(parts)+31)/32)
+		for i := 0; i < len(parts); i += 32 {
+			end := i + 32
+			if end > len(parts) {
+				end = len(parts)
+			}
+
+			batch := parts[i:end]
+			tempKey := fmt.Sprintf("%s/tmp-%d", dstKey, batchIndex)
+			tempObj := bucket.Object(tempKey)
+			if _, err := tempObj.ComposerFrom(batch...).Run(ctx); err != nil {
+				return append(temporaryObjects, tempObj), err
+			}
+
+			temporaryObjects = append(temporaryObjects, tempObj)
+			nextParts = append(nextParts, tempObj)
+			batchIndex++
+		}
+
+		parts = nextParts
+	}
+
+	dst := bucket.Object(dstKey)
+	if _, err := dst.ComposerFrom(parts...).Run(ctx); err != nil {
+		return temporaryObjects, err
+	}
+
+	return temporaryObjects, nil
+}
+
+// TestDeleteExternalObject is a helper function to clean up after unittests.
+// It must not be called from production code.
+func (s *PostgresStreamStore) TestDeleteExternalObject(
+	ctx context.Context,
+	streamID StreamId,
+	loc MiniblockDataStorageLocation,
+) error {
+	if loc == MiniblockDataStorageLocationS3 {
+		_, err := s.externalMediaStreamStorage.s3.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
+			Bucket: aws.String(s.externalMediaStreamStorage.s3.bucket),
+			Key:    aws.String(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)),
+		})
+		return err
+	}
+	if loc == MiniblockDataStorageLocationGCS {
+		return s.externalMediaStreamStorage.gcs.bucket.
+			Object(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)).
+			Delete(ctx)
+	}
+
+	return RiverError(Err_INTERNAL, "Storage location isn't external").Func("TestDeleteExternalObject")
 }
