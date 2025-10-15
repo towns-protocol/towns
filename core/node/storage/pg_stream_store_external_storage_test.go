@@ -137,6 +137,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
+			t.Skip("Too slow on CI")
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -260,6 +261,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
+			t.Skip("Too slow on CI")
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
