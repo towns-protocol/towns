@@ -17,6 +17,7 @@ import {
 } from './utils'
 import { AppPrivateDataSchema, ExportedDevice } from '@towns-protocol/proto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+import type { Address } from '@towns-protocol/web3'
 
 export const STREAM_ID_BYTES_LENGTH = 32
 export const STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
@@ -273,13 +274,13 @@ export const makeAppPrivateData = (
     /** alpha, gamma, delta, omega */
     env: string,
     /** app address: simple app or custom app contract address */
-    appAddress: string,
+    appAddress: Address,
 ) => {
     const appPrivateData = create(AppPrivateDataSchema, {
         privateKey,
         encryptionDevice: exportedDevice,
         env,
-        appAddress,
+        appAddress: bin_fromHexString(appAddress),
     })
     return `${APP_PRIVATE_DATA_PREFIX}${bin_toBase64(toBinary(AppPrivateDataSchema, appPrivateData))}`
 }
@@ -294,5 +295,9 @@ export const parseAppPrivateData = (encoded: string) => {
         // Older format where the private key was base64 encoded without a prefix
         appPrivateData = bin_fromBase64(encoded)
     }
-    return fromBinary(AppPrivateDataSchema, appPrivateData)
+    const raw = fromBinary(AppPrivateDataSchema, appPrivateData)
+    return {
+        ...raw,
+        appAddress: raw.appAddress ? (bin_toHexString(raw.appAddress) as Address) : undefined,
+    }
 }
