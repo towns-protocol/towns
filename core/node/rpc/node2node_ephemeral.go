@@ -58,7 +58,7 @@ func (s *Service) allocateEphemeralStream(
 		return nil, err
 	}
 
-	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb); err != nil {
+	if err = s.storage.CreateEphemeralStreamStorage(ctx, streamId, storageMb, false); err != nil {
 		return nil, err
 	}
 

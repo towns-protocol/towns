@@ -514,6 +514,7 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		ctx,
 		streamId,
 		&storage.MiniblockDescriptor{Data: mb, HasLegacySnapshot: true},
+		false,
 	)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_ALREADY_EXISTS) {

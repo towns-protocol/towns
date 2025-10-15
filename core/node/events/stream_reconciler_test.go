@@ -331,7 +331,7 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 	)
 	genesisStorage, err := genesis.AsStorageMb()
 	require.NoError(err)
-	err = leader.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, genesisStorage)
+	err = leader.params.Storage.CreateEphemeralStreamStorage(ctx, streamId, genesisStorage, false)
 	require.NoError(err)
 
 	// Write ephemeral miniblocks [1..chunks] on leader

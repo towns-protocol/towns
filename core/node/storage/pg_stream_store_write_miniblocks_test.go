@@ -20,7 +20,7 @@ func TestWriteMiniblocks_ValidationErrors(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Test: No miniblocks to write
@@ -89,7 +89,7 @@ func TestWriteMiniblocks_SuccessfulWrite(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Add some events to the initial minipool
@@ -147,7 +147,7 @@ func TestWriteMiniblocks_MultipleMiniblocksWithSnapshot(t *testing.T) {
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
 		Data:     genesisMiniblock,
 		Snapshot: []byte("genesis_snapshot"),
-	})
+	}, false)
 	require.NoError(err)
 
 	// Write multiple miniblocks, with a snapshot in the middle
@@ -198,7 +198,7 @@ func TestWriteMiniblocks_CandidateCleanup(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Write some miniblock candidates
@@ -266,7 +266,7 @@ func TestWriteMiniblocks_TransactionConsistency(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Add events to current minipool
@@ -324,7 +324,7 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Add events to minipool
@@ -364,7 +364,7 @@ func TestWriteMiniblocks_LastMiniblockValidation(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Write first miniblock
@@ -399,7 +399,7 @@ func TestWriteMiniblocks_EmptyMinipool(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Write miniblocks with empty new minipool
@@ -430,7 +430,7 @@ func TestWriteMiniblocks_LargeMinipool(t *testing.T) {
 
 	streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 	genesisMiniblock := []byte("genesisMiniblock")
-	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock})
+	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{Data: genesisMiniblock}, false)
 	require.NoError(err)
 
 	// Create a large minipool
@@ -474,7 +474,7 @@ func TestWriteMiniblocks_LastSnapshotIndexWithLegacySnapshot(t *testing.T) {
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
 		Data:              genesisMiniblock,
 		HasLegacySnapshot: true, // Genesis has legacy snapshot embedded in data
-	})
+	}, false)
 	require.NoError(err)
 
 	// Verify initial snapshot index is 0 (genesis)
@@ -580,7 +580,7 @@ func TestWriteMiniblocks_LastSnapshotIndexWithNonLegacySnapshot(t *testing.T) {
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
 		Data:     genesisMiniblock,
 		Snapshot: []byte("genesis_snapshot"), // Non-legacy snapshot
-	})
+	}, false)
 	require.NoError(err)
 
 	// Verify initial snapshot index is 0 (genesis)
@@ -686,7 +686,7 @@ func TestWriteMiniblocks_LastSnapshotIndexMixedSnapshotTypes(t *testing.T) {
 	err := store.CreateStreamStorage(ctx, streamId, &MiniblockDescriptor{
 		Data:              genesisMiniblock,
 		HasLegacySnapshot: true,
-	})
+	}, false)
 	require.NoError(err)
 
 	// Write miniblocks with mixed snapshot types

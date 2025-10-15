@@ -48,7 +48,7 @@ func TestStreamCreation_LegacySnapshot(t *testing.T) {
 	require.Empty(t, storageMb.Snapshot, "Genesis miniblock should not have separate snapshot field")
 
 	// Create stream storage with the genesis miniblock
-	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageMb)
+	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageMb, false)
 	require.NoError(t, err)
 
 	// Read back the stream and verify
@@ -95,7 +95,7 @@ func TestStreamCreation_NonLegacySnapshot(t *testing.T) {
 	require.NoError(t, err)
 
 	// Create stream with genesis
-	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageGenesis)
+	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageGenesis, false)
 	require.NoError(t, err)
 
 	// Now create a miniblock with non-legacy snapshot
@@ -200,7 +200,7 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 	require.True(t, storageGenesis.HasLegacySnapshot, "Genesis should have legacy snapshot flag")
 
 	// Create stream
-	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageGenesis)
+	err = streamStore.Storage.CreateStreamStorage(ctx, streamId, storageGenesis, false)
 	require.NoError(t, err)
 
 	// Read debug data to verify snapshot index
