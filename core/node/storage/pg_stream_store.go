@@ -2550,23 +2550,6 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	return maxSeqNum, nil
 }
 
-// getLowestStreamMiniblockTx retrieves the lowest miniblock number for a given stream
-func (s *PostgresStreamStore) getLowestStreamMiniblockTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-) (int64, error) {
-	var lowestMiniblock int64
-	err := tx.QueryRow(ctx,
-		s.sqlForStream(
-			`SELECT MIN(seq_num) FROM {{miniblocks}} WHERE stream_id = $1`,
-			streamId,
-		),
-		streamId,
-	).Scan(&lowestMiniblock)
-	return lowestMiniblock, err
-}
-
 // GetMiniblockNumberRanges returns every contiguous span of stored miniblocks for the stream.
 // Each span also lists the miniblock numbers whose snapshot column is non-null so callers can
 // make trimming or backfill decisions with the snapshot context baked in.
