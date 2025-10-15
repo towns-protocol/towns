@@ -2,7 +2,7 @@ package storage_test
 
 import (
 	"context"
-	"fmt"
+	"crypto/rand"
 	"net/http"
 	"strings"
 	"testing"
@@ -52,6 +52,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("AWS S3 Storage", func(t *testing.T) {
+		t.Parallel()
+
 		require := require.New(t)
 
 		// ensure that GC Storage is disabled for AWS S3 tests
@@ -82,17 +84,88 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		store := setupStreamStorageWithExternalStorage(
 			t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
 
-		streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
-			t, userWallet, nodeWallet, require, store, ctx)
+		t.Run("Small stream", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				10,
+				120*1025,
+			)
 
-		// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
-		// DB to external AWS S3 storage under the object key streamID in the background.
-		require.EventuallyWithT(func(collect *assert.CollectT) {
-			compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-		}, 20*time.Second, 2*time.Second)
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationS3)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
+
+		t.Run("Stream with many chunks", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				50,
+				120*1024,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationS3)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
+
+		t.Run("Stream with big chunks", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				5,
+				2*1024*1024,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationS3)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
 	})
 
 	t.Run("Google Cloud Storage", func(t *testing.T) {
+		t.Parallel()
+
 		// ensure that AWS S3 is disabled for GCS tests
 		gcsConfig := &config.ExternalMediaStreamStorageConfig{
 			Gcs: config.ExternalMediaStreamStorageGCStorageConfig{
@@ -133,20 +206,84 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		require.NoError(err)
 
 		store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
-		streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
-			t,
-			userWallet,
-			nodeWallet,
-			require,
-			store,
-			ctx,
-		)
 
-		// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
-		// DB to external Google Cloud Storage under the object key streamID in the background.
-		require.EventuallyWithT(func(collect *assert.CollectT) {
-			compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-		}, 30*time.Second, 3*time.Second)
+		t.Run("Small stream", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				10,
+				120*1025,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationGCS)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
+
+		t.Run("Stream with many chunks", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				50,
+				120*1024,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationGCS)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
+
+		t.Run("Stream with big chunks", func(t *testing.T) {
+			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				5,
+				2*1024*1024,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationGCS)
+			}()
+
+			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
+			// DB to external AWS S3 storage under the object key streamID in the background.
+			require.EventuallyWithT(func(collect *assert.CollectT) {
+				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+			}, 2*time.Minute, time.Second)
+		})
 	})
 }
 
@@ -227,8 +364,19 @@ func makeGenesisMiniblockForMediaStream(
 	return mbInfo
 }
 
-func makeMediaStreamChunk(t *testing.T, nodeWallet *crypto.Wallet, mbRef MiniblockRef, i int) *Miniblock {
-	payload := events.Make_MediaPayload_Chunk([]byte("chunk "+fmt.Sprint(i)), int32(i), nil)
+func makeMediaStreamChunk(
+	t *testing.T,
+	nodeWallet *crypto.Wallet,
+	mbRef MiniblockRef,
+	i int,
+	chunkSize int,
+) *Miniblock {
+	chunkData := make([]byte, chunkSize)
+	if _, err := rand.Read(chunkData); err != nil {
+		t.Fatalf("unable to prepare data chunk: %v", err)
+	}
+
+	payload := events.Make_MediaPayload_Chunk(chunkData, int32(i), nil)
 	envelope, err := events.MakeEnvelopeWithPayload(nodeWallet, payload, &mbRef)
 	require.NoError(t, err)
 
@@ -244,15 +392,17 @@ func makeMediaStreamChunk(t *testing.T, nodeWallet *crypto.Wallet, mbRef Miniblo
 
 func createMediaStreamAndAddChunks(
 	t *testing.T,
+	ctx context.Context,
 	userWallet *crypto.Wallet,
 	nodeWallet *crypto.Wallet,
 	require *require.Assertions,
 	store *storage.PostgresStreamStore,
-	ctx context.Context,
+	chunkCount int,
+	chunkSize int,
 ) (StreamId, int, []*storage.MiniblockDescriptor) {
 	streamID := testutils.FakeStreamId(STREAM_MEDIA_BIN)
 	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-	chunks := 5
+	chunks := chunkCount
 
 	genesisMiniblock := makeGenesisMiniblockForMediaStream(
 		t,
@@ -268,7 +418,7 @@ func createMediaStreamAndAddChunks(
 	miniblocks := []*storage.MiniblockDescriptor{genesisMiniblockDescriptor}
 	mbRef := *genesisMiniblock.Ref
 	for i := range chunks {
-		miniblock := makeMediaStreamChunk(t, nodeWallet, mbRef, i)
+		miniblock := makeMediaStreamChunk(t, nodeWallet, mbRef, i, chunkSize)
 		mbBytes, err := proto.Marshal(miniblock)
 		require.NoError(err)
 
@@ -366,7 +516,11 @@ func compareExternallyFetchedMiniblocks(
 	readMiniblocks = nil
 
 	// ensure that store.ReadMiniblocksByIds returns the correct miniblocks
-	if err = store.ReadMiniblocksByIds(ctx, streamID, []int64{0, 1, 2, 3, 4, 5, 6}, true, func(blockdata []byte, seqNum int64, snapshot []byte) error {
+	var mbIDs []int64
+	for _, mb := range miniblocks {
+		mbIDs = append(mbIDs, mb.Number)
+	}
+	if err = store.ReadMiniblocksByIds(ctx, streamID, mbIDs, true, func(blockdata []byte, seqNum int64, snapshot []byte) error {
 		readMiniblocks = append(readMiniblocks, &storage.MiniblockDescriptor{
 			Number:   seqNum,
 			Data:     blockdata,

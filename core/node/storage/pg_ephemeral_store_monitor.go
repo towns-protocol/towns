@@ -15,13 +15,21 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
+const (
+	// MigrateToExternalStorageRetryCounter is the number of times to retry migrating
+	// a streams miniblocks to external storage per boot.
+	MigrateToExternalStorageRetryCounter = 5
+)
+
 // ephemeralStreamMonitor is a monitor that keeps track of ephemeral streams and cleans up dead ones.
 type ephemeralStreamMonitor struct {
 	// streams is a map of ephemeral stream IDs to the creation time.
 	// This is used by the monitor to detect "dead" ephemeral streams and delete them.
 	streams *xsync.Map[StreamId, time.Time]
 	// streamsToMigrateToExternalStorage keeps a collection of ephemeral streams that
-	// need their miniblocks to be migrated to external storage.
+	// need their miniblocks to be migrated to external storage together with a retry
+	// counter. The retry counter is used to retry migrations up to
+	// MigrateToExternalStorageRetryCounter times in case of an error before giving up.
 	streamsToMigrateToExternalStorage *xsync.Map[StreamId, int]
 
 	// ttl is the duration of time an ephemeral stream can exist
@@ -102,7 +110,7 @@ func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context
 			failuredStreams := make(map[StreamId]int)
 			m.streamsToMigrateToExternalStorage.Range(func(streamID StreamId, retryCounter int) bool {
 				if mustRetry := m.migrateNormalizedEphemeralStream(ctx, streamID); mustRetry {
-					if retryCounter < 5 {
+					if retryCounter < MigrateToExternalStorageRetryCounter {
 						failuredStreams[streamID] = retryCounter + 1
 					}
 					return true
