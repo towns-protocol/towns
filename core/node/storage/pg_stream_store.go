@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"encoding/hex"
@@ -45,86 +44,6 @@ const (
 	// Background workers must respect this limit to avoid overloading.
 	maxWorkerPoolPendingTasks = 10000
 )
-
-// externalMediaStreamStorage is a struct that holds the configuration for
-// storing media stream miniblocks in external storage.
-type externalMediaStreamStorage struct {
-	s3 *struct {
-		client *awss3.Client
-		bucket string
-	}
-	gcs *struct {
-		bucket *gcpstorage.BucketHandle
-	}
-}
-
-// Enabled returns true if storing media stream miniblocks in external storage is enabled.
-func (e *externalMediaStreamStorage) Enabled() bool {
-	return e != nil && (e.gcs != nil || e.s3 != nil)
-}
-
-// Write the given data buffer to external storage under the given objectKey.
-//
-// If the object for the given objectKey already exists it will be overwritten.
-// This is intentional to support recovering when an upload might have failed before.
-func (e *externalMediaStreamStorage) Write(
-	ctx context.Context,
-	streamID StreamId,
-	objectKey string,
-	data *bytes.Buffer,
-) (MiniblockDataStorageLocation, string, error) {
-	if e.gcs != nil {
-		object := e.gcs.bucket.Object(objectKey)
-		objectWriter := object.NewWriter(ctx)
-
-		if _, err := objectWriter.Write(data.Bytes()); err != nil {
-			return MiniblockDataStorageLocationDB, "", RiverError(
-				Err_DOWNSTREAM_NETWORK_ERROR,
-				"Unable to write object to GCS",
-				err,
-			).
-				Tag("streamId", streamID).
-				Tag("objectKey", objectKey).
-				Func("externalMediaStreamStorage#Write")
-		}
-
-		if err := objectWriter.Close(); err != nil {
-			return MiniblockDataStorageLocationDB, "", RiverError(
-				Err_DOWNSTREAM_NETWORK_ERROR,
-				"Unable to close object writer",
-				err,
-			).
-				Tag("streamId", streamID).
-				Tag("objectKey", objectKey).
-				Func("externalMediaStreamStorage#Write")
-		}
-
-		return MiniblockDataStorageLocationGCS, e.gcs.bucket.BucketName(), nil
-	}
-
-	if e.s3 != nil {
-		_, err := e.s3.client.PutObject(ctx, &awss3.PutObjectInput{
-			Bucket: aws.String(e.s3.bucket),
-			Key:    aws.String(objectKey),
-			Body:   data,
-		})
-		if err != nil {
-			return MiniblockDataStorageLocationDB, "", RiverError(
-				Err_DOWNSTREAM_NETWORK_ERROR,
-				"Unable to write object to S3",
-				err,
-			).
-				Tag("streamId", streamID).
-				Func("externalMediaStreamStorage#Write")
-		}
-
-		return MiniblockDataStorageLocationS3, e.s3.bucket, nil
-	}
-
-	return MiniblockDataStorageLocationDB, "", RiverError(Err_BAD_CONFIG, "No external media storage configured").
-		Tag("streamId", streamID).
-		Func("externalMediaStreamStorage#Write")
-}
 
 type PostgresStreamStore struct {
 	PostgresEventStore
@@ -1547,7 +1466,7 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 			Func("readMiniblockDataFromGCS")
 	}
 
-	objectKey := s.ExternalStorageObjectKey(streamID)
+	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)
 	object := s.externalMediaStreamStorage.gcs.bucket.Object(objectKey)
 
 	objectReader, err := object.NewReader(ctx)
@@ -1575,6 +1494,7 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 				Tag("partNumber", part.Number).
 				Func("readMiniblockDataFromGCS")
 		}
+
 		results[part.Number] = miniblockData
 	}
 
@@ -1609,7 +1529,7 @@ func (s *PostgresStreamStore) readMiniblockDataFromS3(
 			Func("readMiniblockDataFromGCS")
 	}
 
-	objectKey := s.ExternalStorageObjectKey(streamID)
+	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)
 	getObjectResult, err := s.externalMediaStreamStorage.s3.client.GetObject(ctx, &awss3.GetObjectInput{
 		Bucket: aws.String(s.externalMediaStreamStorage.s3.bucket),
 		Key:    aws.String(objectKey),
