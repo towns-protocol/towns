@@ -92,14 +92,8 @@ import {
     type TransactionReceipt,
     zeroAddress,
     encodeAbiParameters,
-    parseAbiParameter,
 } from 'viem'
-import {
-    readContract,
-    waitForTransactionReceipt,
-    writeContract,
-    simulateContract,
-} from 'viem/actions'
+import { readContract, waitForTransactionReceipt } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
