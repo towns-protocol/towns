@@ -149,6 +149,10 @@ func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, streamHistoryMbs, re
 				"error", err,
 			)
 		}
+
+		t.pendingTasksLock.Lock()
+		delete(t.pendingTasks, task.streamId)
+		t.pendingTasksLock.Unlock()
 	})
 }
 
@@ -177,12 +181,6 @@ func (t *streamTrimmer) processTrimTaskTx(
 	tx pgx.Tx,
 	task trimTask,
 ) error {
-	defer func() {
-		t.pendingTasksLock.Lock()
-		delete(t.pendingTasks, task.streamId)
-		t.pendingTasksLock.Unlock()
-	}()
-
 	// Get the last snapshot miniblock number
 	lastSnapshotMiniblock, err := t.store.lockStream(ctx, tx, task.streamId, true)
 	if err != nil {
