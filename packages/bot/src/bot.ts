@@ -96,6 +96,8 @@ import { privateKeyToAccount } from 'viem/accounts'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
+export type BotHandler = ReturnType<typeof buildBotActions>
+
 const debug = dlog('csb:bot')
 
 export type BotPayload<
@@ -109,7 +111,7 @@ type ImageAttachment = {
     url: string
 }
 
-type MessageOpts = {
+export type MessageOpts = {
     threadId?: string
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
@@ -224,7 +226,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     ) => Promise<void> | void
 }
 
-type BasePayload = {
+export type BasePayload = {
     /** The user ID of the user that triggered the event */
     userId: Address
     /** The space ID that the event was triggered in */
