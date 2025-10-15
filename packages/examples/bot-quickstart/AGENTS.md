@@ -480,6 +480,16 @@ bot.onMessage(async (handler, event) => {
 
 All handlers receive a `handler` parameter with these methods:
 
+### Exported Types for Building Abstractions
+
+The `@towns-protocol/bot` package exports several types useful for building abstractions:
+
+**`BotHandler`** - Type representing all methods available on the `handler` parameter. Use this when building helper functions, middleware, or utilities that need to accept a handler as a parameter.
+
+**`BasePayload`** - Type containing common fields present in all event payloads (`userId`, `spaceId`, `channelId`, `eventId`, `createdAt`). Use this when building generic event processing utilities that work across different event types.
+
+**`MessageOpts`** - Type defining options for sending messages (threadId, replyId, mentions, attachments, ephemeral). Use this when building message utilities that need to accept or manipulate message sending options.
+
 ### Message Operations
 
 ```typescript
