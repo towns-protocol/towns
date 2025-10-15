@@ -121,59 +121,7 @@ func TestStreamTrimmer(t *testing.T) {
 		}, time.Second*5, 100*time.Millisecond)
 	})
 
-	t.Run("snapshot trimming prunes earlier miniblocks when history window disabled", func(t *testing.T) {
-		params := setupStreamStorageTest(t)
-		ctx := params.ctx
-		pgStreamStore := params.pgStreamStore
-		require := require.New(t)
-
-		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-
-		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
-		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
-		require.NoError(err)
-
-		var testEnvelopes [][]byte
-		testEnvelopes = append(testEnvelopes, []byte("event2"))
-
-		// Generate 500 miniblocks with snapshot on each 10th miniblock
-		mbs := make([]*MiniblockDescriptor, 500)
-		for i := 1; i <= 500; i++ {
-			mb := &MiniblockDescriptor{
-				Number: int64(i),
-				Hash:   common.BytesToHash([]byte("block_hash" + strconv.Itoa(i))),
-				Data:   []byte("block" + strconv.Itoa(i)),
-			}
-			if i%10 == 0 {
-				mb.Snapshot = []byte("snapshot" + strconv.Itoa(i))
-			}
-			mbs[i-1] = mb
-		}
-
-		err = pgStreamStore.WriteMiniblocks(
-			ctx,
-			streamId,
-			mbs,
-			mbs[len(mbs)-1].Number+1,
-			testEnvelopes,
-			mbs[0].Number,
-			-1,
-		)
-		require.NoError(err)
-
-		expectedSeqs := []int64{0, 500}
-		expectedSnapshots := []int64{0, 500}
-
-		var gotSeqs, gotSnapshots []int64
-		assert.Eventually(t, func() bool {
-			gotSeqs, gotSnapshots = collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal(expectedSeqs, gotSeqs) && slices.Equal(expectedSnapshots, gotSnapshots)
-		}, time.Second*5, 100*time.Millisecond, "snapshot retention did not converge in time")
-		require.Equal(expectedSeqs, gotSeqs)
-		require.Equal(expectedSnapshots, gotSnapshots)
-	})
-
-	t.Run("snapshot trimming enforces minimum retention interval", func(t *testing.T) {
+	t.Run("snapshot trimming enforces minimum retention interval and disables history trimming", func(t *testing.T) {
 		params := setupStreamStorageTest(t)
 		ctx := params.ctx
 		pgStreamStore := params.pgStreamStore
@@ -214,15 +162,15 @@ func TestStreamTrimmer(t *testing.T) {
 			-1,
 		))
 
-		expectedSeqs := []int64{0, 400}
-		expectedSnapshots := []int64{0, 400}
+		expectedMbs := 401
+		expectedSnapshots := []int64{0, 100, 200, 300, 320, 340, 360, 380, 400}
 
 		var gotSeqs, gotSnapshots []int64
 		assert.Eventually(t, func() bool {
 			gotSeqs, gotSnapshots = collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal(expectedSeqs, gotSeqs) && slices.Equal(expectedSnapshots, gotSnapshots)
+			return len(gotSeqs) == expectedMbs && slices.Equal(expectedSnapshots, gotSnapshots)
 		}, time.Second*5, 100*time.Millisecond, "min retention clamp not enforced")
-		require.Equal(expectedSeqs, gotSeqs)
+		require.Equal(expectedMbs, len(gotSeqs))
 		require.Equal(expectedSnapshots, gotSnapshots)
 	})
 
@@ -406,10 +354,10 @@ func TestStreamTrimmer(t *testing.T) {
 		))
 
 		beforeSeqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
-		require.Greater(t, len(beforeSeqs), 0)
-		require.Contains(beforeSeqs, int64(4))
-		require.NotContains(beforeSeqs, int64(5))
-		require.NotContains(beforeSeqs, int64(15))
+		require.Greater(len(beforeSeqs), 0, beforeSeqs)
+		require.Contains(beforeSeqs, int64(4), beforeSeqs)
+		require.NotContains(beforeSeqs, int64(5), beforeSeqs)
+		require.NotContains(beforeSeqs, int64(15), beforeSeqs)
 
 		err := pgStreamStore.txRunner(
 			ctx,
