@@ -9,9 +9,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/prometheus/client_golang/prometheus"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -192,29 +194,34 @@ func (t *streamTrimmer) processTrimTaskTx(
 		return err
 	}
 
+	// Stream not found, nothing to trim. This should not happen, but we handle it gracefully.
 	if len(ranges) == 0 {
-		t.log.Errorw("No miniblocks found for stream, skipping trimming",
-			"streamId", task.streamId,
-			"lastSnapshotMiniblock", lastSnapshotMiniblock,
-		)
 		return nil
 	}
 
-	// TODO:
-	//  1. The stream might have 0 miniblock as the first range, and the rest as the second range
-	//  2. The stream might have gaps. In this case, check the len of the last range, use config to decide if the history could be trimmed.
-	if len(ranges) > 1 {
-		t.log.Errorw("Stream has gaps, skipping trimming",
-			"streamId", task.streamId,
-			"ranges", ranges,
-			"lastSnapshotMiniblock", lastSnapshotMiniblock,
-		)
-		return nil
+	// It is not allowed to trim a stream that has gaps. There is an exception for genesis miniblock mentioned below.
+	if len(ranges) > 2 {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Stream has gaps, skip trimming").Tags("ranges", ranges)
 	}
 
-	// TODO: Replace ranges[0].EndInclusive with the last snapshot miniblock: slices.Max(ranges[0].SnapshotSeqNums).
+	// If there are a gap in ranges, it is only possible to have the following:
+	//  1. [0] - genesis miniblock only, no snapshots.
+	//  2. [0+N...] - a complete range from Nth miniblock to the latest miniblock.
+	if len(ranges) == 2 &&
+		ranges[0].StartInclusive != 0 &&
+		ranges[0].EndInclusive != 0 &&
+		ranges[1].EndInclusive < lastSnapshotMiniblock {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Stream has an unexpected gap, skip trimming").
+			Tags("ranges", ranges)
+	}
+
+	latestRange := ranges[0]
+	if len(ranges) > 0 {
+		latestRange = ranges[len(ranges)-1]
+	}
+
 	nullifySnapshotMbs := DetermineStreamSnapshotsToNullify(
-		ranges[0].StartInclusive, ranges[0].EndInclusive, ranges[0].SnapshotSeqNums,
+		latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
 		task.retentionIntervalMbs, MinKeepMiniblocks,
 	)
 
@@ -223,8 +230,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 		lastMbToKeep = 0
 	}
 
-	// Deleting all miniblocks below the calculated miniblock with a snapshot
+	// Deleting all miniblocks below the calculated miniblock with a snapshot which is the closest to the lastMbToKeep.
 	localStartMbInclusive := FindClosestSnapshotMiniblock(ranges, lastMbToKeep)
-
 	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, localStartMbInclusive, nullifySnapshotMbs)
 }

@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"math"
+	"slices"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -96,21 +97,36 @@ func (sr *streamReconciler) trim() error {
 
 	// Fetching the list of miniblock ranges from the storage. This is used to determine what actions to take
 	// such as backward/forwards reconciliation, gaps filling.
-	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO below.
+	// TODO: Stored ranges should be up to date after reconciliation, so no need to re-fetch them. Address TODO in "reconcile" function.
 	err := sr.loadRanges()
 	if err != nil {
 		return err
 	}
 
+	// Stream not found, nothing to trim.
 	if len(sr.presentRanges) == 0 {
-		// Stream not found, nothing to trim.
 		return nil
 	}
 
-	// TODO: There could be 2 ranges: [0] and [N...]
-	if len(sr.presentRanges) > 1 {
+	// It is not allowed to trim a stream that has gaps. There is an exception for genesis miniblock mentioned below.
+	if len(sr.presentRanges) > 2 {
 		return RiverError(Err_INTERNAL, "Stream has gaps after reconciliation").
 			Tags("streamId", sr.stream.streamId, "ranges", sr.presentRanges)
+	}
+
+	// If there are a gap in ranges, it is only possible to have the following:
+	//  1. [0] - genesis miniblock only, no snapshots.
+	//  2. [0+N...] - a complete range from Nth miniblock to the latest miniblock.
+	if len(sr.presentRanges) == 2 &&
+		sr.presentRanges[0].StartInclusive != 0 &&
+		sr.presentRanges[0].EndInclusive != 0 {
+		return RiverError(Err_INTERNAL, "Stream has an unexpected gap after reconciliation").
+			Tags("streamId", sr.stream.streamId, "ranges", sr.presentRanges)
+	}
+
+	latestRange := sr.presentRanges[0]
+	if len(sr.presentRanges) > 0 {
+		latestRange = sr.presentRanges[len(sr.presentRanges)-1]
 	}
 
 	var retentionIntervalMbs int64
@@ -118,9 +134,9 @@ func (sr *streamReconciler) trim() error {
 		retentionIntervalMbs = max(interval, storage.MinRetentionIntervalMiniblocks)
 	}
 
-	// TODO: Replace sr.presentRanges[0].EndInclusive with the last snapshot miniblock: slices.Max(sr.presentRanges[0].SnapshotSeqNums).
+	lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
 	nullifySnapshotMbs := storage.DetermineStreamSnapshotsToNullify(
-		sr.presentRanges[0].StartInclusive, sr.presentRanges[0].EndInclusive, sr.presentRanges[0].SnapshotSeqNums,
+		latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
 		retentionIntervalMbs, storage.MinKeepMiniblocks,
 	)
 
