@@ -75,10 +75,12 @@ func TestStreamTrimmer(t *testing.T) {
 		)
 		require.NoError(err)
 
-		// Check if the streams are trimmed correctly
+		// Trimming aligns to the nearest snapshot (miniblock 40) so expect genesis + 40..54.
 		require.Eventually(func() bool {
-			mbsLeft, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal([]int64{45, 46, 47, 48, 49, 50, 51, 52, 53, 54}, mbsLeft)
+			mbsLeft, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
+			expectedSeqs := []int64{0, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54}
+			expectedSnapshots := []int64{0, 40, 50}
+			return slices.Equal(expectedSeqs, mbsLeft) && slices.Equal(expectedSnapshots, snapshots)
 		}, time.Second*5, 100*time.Millisecond)
 
 		// Make sure the non-trimmable stream is not trimmed
@@ -105,10 +107,12 @@ func TestStreamTrimmer(t *testing.T) {
 		)
 		require.NoError(err)
 
-		// Check if the streams are trimmed correctly
+		// The subsequent trim anchors to snapshot 50, keeping genesis and 50..55.
 		require.Eventually(func() bool {
-			mbsLeft, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal([]int64{50, 51, 52, 53, 54, 55}, mbsLeft)
+			mbsLeft, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
+			expectedSeqs := []int64{0, 50, 51, 52, 53, 54, 55}
+			expectedSnapshots := []int64{0, 50, 55}
+			return slices.Equal(expectedSeqs, mbsLeft) && slices.Equal(expectedSnapshots, snapshots)
 		}, time.Second*5, 100*time.Millisecond)
 	})
 
@@ -433,22 +437,25 @@ func collectStreamState(
 ) ([]int64, []int64) {
 	t.Helper()
 
-	seqs := make([]int64, 0)
-	withSnapshot := make([]int64, 0)
-
-	err := store.ReadMiniblocksByStream(
-		ctx,
-		streamId,
-		false,
-		func(blockdata []byte, seqNum int64, snapshot []byte) error {
-			seqs = append(seqs, seqNum)
-			if len(snapshot) > 0 {
-				withSnapshot = append(withSnapshot, seqNum)
-			}
-			return nil
-		},
-	)
+	ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 	require.NoError(t, err)
+
+	var seqs []int64
+	var withSnapshot []int64
+
+	for _, r := range ranges {
+		for seq := r.StartInclusive; seq <= r.EndInclusive; seq++ {
+			seqs = append(seqs, seq)
+		}
+		if len(r.SnapshotSeqNums) > 0 {
+			withSnapshot = append(withSnapshot, r.SnapshotSeqNums...)
+		}
+	}
+
+	if len(withSnapshot) > 1 {
+		slices.Sort(withSnapshot)
+		withSnapshot = slices.Compact(withSnapshot)
+	}
 
 	return seqs, withSnapshot
 }

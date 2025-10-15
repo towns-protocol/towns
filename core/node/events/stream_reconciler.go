@@ -134,11 +134,14 @@ func (sr *streamReconciler) trim() error {
 		retentionIntervalMbs = max(interval, storage.MinRetentionIntervalMiniblocks)
 	}
 
-	lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
-	nullifySnapshotMbs := storage.DetermineStreamSnapshotsToNullify(
-		latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
-		retentionIntervalMbs, storage.MinKeepMiniblocks,
-	)
+	var nullifySnapshotMbs []int64
+	if len(latestRange.SnapshotSeqNums) > 0 {
+		lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
+		nullifySnapshotMbs = storage.DetermineStreamSnapshotsToNullify(
+			latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
+			retentionIntervalMbs, storage.MinKeepMiniblocks,
+		)
+	}
 
 	err = sr.cache.params.Storage.TrimStream(sr.ctx, sr.stream.StreamId(), sr.localStartMbInclusive, nullifySnapshotMbs)
 	if err != nil {
