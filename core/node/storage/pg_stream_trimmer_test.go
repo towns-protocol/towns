@@ -162,15 +162,18 @@ func TestStreamTrimmer(t *testing.T) {
 			-1,
 		))
 
-		expectedMbs := 401
+		expectedSeqs := make([]int64, 0, 401)
+		for i := int64(0); i <= 400; i++ {
+			expectedSeqs = append(expectedSeqs, i)
+		}
 		expectedSnapshots := []int64{0, 100, 200, 300, 320, 340, 360, 380, 400}
 
 		var gotSeqs, gotSnapshots []int64
 		assert.Eventually(t, func() bool {
 			gotSeqs, gotSnapshots = collectStreamState(t, pgStreamStore, ctx, streamId)
-			return len(gotSeqs) == expectedMbs && slices.Equal(expectedSnapshots, gotSnapshots)
+			return slices.Equal(expectedSeqs, gotSeqs) && slices.Equal(expectedSnapshots, gotSnapshots)
 		}, time.Second*5, 100*time.Millisecond, "min retention clamp not enforced")
-		require.Equal(expectedMbs, len(gotSeqs))
+		require.Equal(expectedSeqs, gotSeqs)
 		require.Equal(expectedSnapshots, gotSnapshots)
 	})
 
