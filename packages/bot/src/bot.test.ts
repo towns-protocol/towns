@@ -138,11 +138,11 @@ describe('Bot', { sequential: true }, () => {
     const shouldMintBot = async () => {
         botWallet = ethers.Wallet.createRandom().connect(ethersProvider)
         botClientAddress = botWallet.address as Address
-        const fundingTx = await bob.signer.sendTransaction({
+        const fundBotClientAddressTx = await bob.signer.sendTransaction({
             to: botClientAddress,
             value: ethers.utils.parseEther('0.5'),
         })
-        await fundingTx.wait()
+        await fundBotClientAddressTx.wait()
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
@@ -242,6 +242,7 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
+        expect(bot.appAddress).toBe(appAddress)
         const { jwtMiddleware, handler } = bot.start()
         const app = new Hono()
         app.use(jwtMiddleware)
@@ -759,14 +760,13 @@ describe('Bot', { sequential: true }, () => {
         expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
-    it('bot can use sendTip() to send tips', async () => {
+    it('bot can use sendTip() to send tips using app balance', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
 
-        // Bot tips bob's message using its own account
         bot.onMessage(async (handler, event) => {
             const result = await handler.sendTip({
-                to: bob.userId,
+                receiver: bob.userId,
                 amount: ethers.utils.parseUnits('0.005').toBigInt(),
                 messageId: event.eventId,
                 channelId: event.channelId,
@@ -1252,10 +1252,6 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')
         expect(receivedMessages[0].message).toEqual(message)
-    })
-
-    it('bot.appAddress should be equal to the address of the app contract', async () => {
-        expect(bot.appAddress).toBe(appAddress)
     })
 
     it('bot should be able to read app contract', async () => {

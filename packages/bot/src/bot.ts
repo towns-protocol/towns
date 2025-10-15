@@ -1,6 +1,12 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
-import { SpaceDapp, Permission, ETH_ADDRESS, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
+import {
+    SpaceDapp,
+    Permission,
+    SpaceAddressFromSpaceId,
+    type SendTipMemberParams,
+    TipRecipientType,
+} from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
 import TippingFacetAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
@@ -85,6 +91,8 @@ import {
     createWalletClient,
     type TransactionReceipt,
     zeroAddress,
+    encodeAbiParameters,
+    parseAbiParameter,
 } from 'viem'
 import {
     readContract,
@@ -98,6 +106,7 @@ import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
+import { execute } from 'viem/experimental/erc7821'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -321,10 +330,12 @@ export class Bot<
         this.commands = commands
         this.appAddress = appAddress
         this.snapshot = clientV2.snapshot
+        this.appAddress = appAddress
     }
 
     start() {
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+
         debug('start')
 
         return {
@@ -933,18 +944,16 @@ export class Bot<
         return this.client.unban(userId, spaceId)
     }
 
-    /**
-     * Send a tip to a user message
-     * @param params - Tip parameters including account, recipient, amount, messageId, channelId, currency.
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
      */
-    async sendTip(params: {
-        account: Account
-        to: Address
-        amount: bigint
-        messageId: string
-        channelId: string
-        currency?: Address
-    }) {
+    async sendTip(
+        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency'> & {
+            currency?: Address
+        },
+    ) {
         const result = await this.client.sendTip(params, this.currentMessageTags)
         this.currentMessageTags = undefined
         return result
@@ -1107,7 +1116,7 @@ const buildBotActions = (
     client: ClientV2,
     viem: WalletClient<Transport, Chain, Account>,
     spaceDapp: SpaceDapp,
-    _appAddress: string,
+    appAddress: Address,
 ) => {
     const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
 
@@ -1642,7 +1651,6 @@ const buildBotActions = (
      * @param chainId - The chain ID where the transaction occurred
      * @param receipt - The transaction receipt from the blockchain
      * @param content - The transaction content (tip, transfer, etc.)
-     * @param tags - Optional tags for the event
      * @returns The transaction hash and event ID
      */
     const sendBlockchainTransaction = async (
@@ -1676,51 +1684,80 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash, eventId: result.eventId }
     }
 
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
+     */
     const sendTip = async (
-        {
-            account,
-            to,
-            amount,
-            messageId,
-            channelId,
-            currency = ETH_ADDRESS,
-        }: {
-            account?: Account
-            to: Address
-            amount: bigint
-            messageId: string
-            channelId: string
+        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency'> & {
             currency?: Address
         },
         tags?: PlainMessage<Tags>,
     ): Promise<{ txHash: string; eventId: string }> => {
-        const acc = account ?? viem.account
+        const currency = params.currency ?? zeroAddress
+        const { receiver, amount, messageId, channelId } = params
         const spaceId = spaceIdFromChannelId(channelId)
-        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, to)
+        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
         if (!tokenId) {
-            throw new Error(`No token ID found for user ${to} in space ${spaceId}`)
+            throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
         }
 
-        const isETH = currency === ETH_ADDRESS
-        const { request } = await simulateContract(viem, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: TippingFacetAbi,
-            functionName: 'tip',
-            args: [
+        const recipientType = TipRecipientType.Member
+
+        const metadataData = encodeAbiParameters(
+            [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
+            [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
+        )
+
+        // TODO: Get the modular account address for the receiver (towns app case)
+        const encodedData = encodeAbiParameters(
+            [
                 {
-                    receiver: to,
-                    tokenId: BigInt(tokenId),
-                    currency,
-                    amount,
-                    messageId: `0x${messageId}`,
-                    channelId: `0x${channelId}`,
+                    type: 'tuple',
+                    components: [
+                        { name: 'receiver', type: 'address' },
+                        { name: 'tokenId', type: 'uint256' },
+                        { name: 'currency', type: 'address' },
+                        { name: 'amount', type: 'uint256' },
+                        {
+                            name: 'metadata',
+                            type: 'tuple',
+                            components: [
+                                { name: 'messageId', type: 'bytes32' },
+                                { name: 'channelId', type: 'bytes32' },
+                                { name: 'data', type: 'bytes' },
+                            ],
+                        },
+                    ],
                 },
             ],
-            account: acc,
-            chain: viem.chain,
-            value: isETH ? amount : undefined,
+            [
+                {
+                    receiver,
+                    amount,
+                    currency,
+                    tokenId: BigInt(tokenId),
+                    metadata: {
+                        messageId: `0x${messageId}`,
+                        channelId: `0x${channelId}`,
+                        data: metadataData,
+                    },
+                },
+            ],
+        )
+        const hash = await execute(viem, {
+            address: appAddress,
+            calls: [
+                {
+                    abi: TippingFacetAbi,
+                    to: SpaceAddressFromSpaceId(spaceId),
+                    functionName: 'sendTip',
+                    args: [recipientType, encodedData],
+                },
+            ],
         })
-        const hash = await writeContract(viem, request)
+
         const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
 
         return sendBlockchainTransaction(
@@ -1732,13 +1769,13 @@ const buildBotActions = (
                     event: {
                         tokenId: BigInt(tokenId),
                         currency: bin_fromHexString(currency),
-                        sender: bin_fromHexString(acc.address),
-                        receiver: bin_fromHexString(to),
+                        sender: bin_fromHexString(viem.account.address),
+                        receiver: bin_fromHexString(receiver),
                         amount,
                         messageId: bin_fromHexString(messageId),
                         channelId: bin_fromHexString(channelId),
                     },
-                    toUserAddress: bin_fromHexString(to),
+                    toUserAddress: bin_fromHexString(receiver),
                 },
             },
             {
@@ -1747,7 +1784,7 @@ const buildBotActions = (
                 threadId: tags?.threadId,
                 appClientAddress: tags?.appClientAddress,
                 messageInteractionType: MessageInteractionType.TIP,
-                participatingUserAddresses: [bin_fromHexString(to)],
+                participatingUserAddresses: [bin_fromHexString(receiver)],
             },
         )
     }

@@ -309,24 +309,26 @@ export interface TransactionOpts {
     retryCount?: number
 }
 
+export type SendTipMemberParams = {
+    tokenId: string
+    spaceId: string
+    receiver: Address
+    currency: Address
+    amount: bigint
+    messageId: string
+    channelId: string
+}
+
+export type SendTipBotParams = {
+    appId: string
+    spaceId: string
+    receiver: Address
+    currency: Address
+    amount: bigint
+    messageId: string
+    channelId: string
+}
+
 export type SendTipParams =
-    | {
-          spaceId: string
-          type: 'member'
-          receiver: string
-          tokenId: string
-          currency: string
-          amount: bigint
-          messageId: string
-          channelId: string
-      }
-    | {
-          spaceId: string
-          type: 'bot'
-          receiver: string
-          appId: string
-          currency: string
-          amount: bigint
-          messageId: string
-          channelId: string
-      }
+    | ({ type: 'member' } & SendTipMemberParams)
+    | ({ type: 'bot' } & SendTipBotParams)
