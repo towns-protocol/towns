@@ -67,6 +67,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 					UserSettings: 5,
 				},
 				StreamSnapshotIntervalInMiniblocks: 110,
+				StreamTrimActivationFactor:         1,
 			},
 		},
 		5,

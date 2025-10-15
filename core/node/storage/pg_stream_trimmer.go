@@ -224,7 +224,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 	)
 
 	lastMbToKeep := lastSnapshotMiniblock - task.streamHistoryMbs
-	if lastMbToKeep < 0 {
+	if lastMbToKeep < 0 || task.streamHistoryMbs <= 0 {
 		lastMbToKeep = 0
 	}
 

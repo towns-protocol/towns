@@ -155,10 +155,10 @@ type OnChainSettings struct {
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
 
-	// StreamTrimActivationFactor is the multiplicator that is used to determine when a stream trimming job should be
-	// scheduled based on its snapshot creation frequency.
-	// For example, if the snapshot creation frequency is 10 miniblocks and the trim activation factor is 5,
-	// then the stream will be trimmed every 50 miniblocks.
+	// StreamTrimActivationFactor scales the snapshot interval to decide when trimming should run.
+	// If snapshots come every N miniblocks and this factor is F, trimming considers a stream for pruning
+	// once roughly N*F miniblocks have accumulated since the last trimmed snapshot. A value of 0 disables
+	// auto-trimming.
 	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimActivationFactor"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.

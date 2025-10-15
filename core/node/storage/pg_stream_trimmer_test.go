@@ -12,8 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	base "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 )
@@ -77,7 +78,9 @@ func TestStreamTrimmer(t *testing.T) {
 		)
 		require.NoError(err)
 
-		// Trimming aligns to the nearest snapshot (miniblock 40) so expect genesis + 40..54.
+		// Initial trim anchors to the closest retained snapshot (40), so we keep genesis plus 40..54.
+		// As per test setting, we keep 5 miniblocks from the last snapshot, which is 50, and then do history trimming
+		// from the closest snapshot (40).
 		require.Eventually(func() bool {
 			mbsLeft, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
 			expectedSeqs := []int64{0, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54}
@@ -404,9 +407,9 @@ func TestStreamTrimmer(t *testing.T) {
 
 		beforeSeqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
 		require.Greater(t, len(beforeSeqs), 0)
-		require.Contains(t, beforeSeqs, int64(4))
-		require.NotContains(t, beforeSeqs, int64(5))
-		require.NotContains(t, beforeSeqs, int64(15))
+		require.Contains(beforeSeqs, int64(4))
+		require.NotContains(beforeSeqs, int64(5))
+		require.NotContains(beforeSeqs, int64(15))
 
 		err := pgStreamStore.txRunner(
 			ctx,
