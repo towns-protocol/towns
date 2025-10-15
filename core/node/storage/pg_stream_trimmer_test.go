@@ -8,9 +8,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	base "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -116,7 +118,7 @@ func TestStreamTrimmer(t *testing.T) {
 		}, time.Second*5, 100*time.Millisecond)
 	})
 
-	t.Run("snapshot trimming honors retention interval without deleting miniblocks", func(t *testing.T) {
+	t.Run("snapshot trimming prunes earlier miniblocks when history window disabled", func(t *testing.T) {
 		params := setupStreamStorageTest(t)
 		ctx := params.ctx
 		pgStreamStore := params.pgStreamStore
@@ -156,12 +158,8 @@ func TestStreamTrimmer(t *testing.T) {
 		)
 		require.NoError(err)
 
-		expectedSeqs := make([]int64, 0, 501)
-		for i := int64(0); i <= 500; i++ {
-			expectedSeqs = append(expectedSeqs, i)
-		}
-
-		expectedSnapshots := []int64{0, 110, 220, 330, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500}
+		expectedSeqs := []int64{0, 500}
+		expectedSnapshots := []int64{0, 500}
 
 		var gotSeqs, gotSnapshots []int64
 		assert.Eventually(t, func() bool {
@@ -213,11 +211,8 @@ func TestStreamTrimmer(t *testing.T) {
 			-1,
 		))
 
-		expectedSeqs := make([]int64, 0, 401)
-		for i := int64(0); i <= 400; i++ {
-			expectedSeqs = append(expectedSeqs, i)
-		}
-		expectedSnapshots := []int64{0, 100, 200, 300, 320, 340, 360, 380, 400}
+		expectedSeqs := []int64{0, 400}
+		expectedSnapshots := []int64{0, 400}
 
 		var gotSeqs, gotSnapshots []int64
 		assert.Eventually(t, func() bool {
@@ -347,6 +342,94 @@ func TestStreamTrimmer(t *testing.T) {
 		}, time.Second, 10*time.Millisecond)
 	})
 
+	t.Run("trimming aborts when stream has unexpected gaps", func(t *testing.T) {
+		params := setupStreamStorageTest(t)
+		ctx := params.ctx
+		pgStreamStore := params.pgStreamStore
+		require := require.New(t)
+
+		cfg := pgStreamStore.streamTrimmer.config.Get()
+		cfg.StreamHistoryMiniblocks.Space = 0
+		cfg.StreamSnapshotIntervalInMiniblocks = 0
+
+		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+		genesis := &MiniblockDescriptor{Data: []byte("g"), Snapshot: []byte("snap0")}
+		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesis))
+
+		var envelopes [][]byte
+		envelopes = append(envelopes, []byte("event"))
+
+		mbs := make([]*MiniblockDescriptor, 30)
+		for i := 1; i <= 30; i++ {
+			mb := &MiniblockDescriptor{
+				Number: int64(i),
+				Hash:   common.BytesToHash([]byte("hash" + strconv.Itoa(i))),
+				Data:   []byte("block" + strconv.Itoa(i)),
+			}
+			if i%5 == 0 {
+				mb.Snapshot = []byte("snap" + strconv.Itoa(i))
+			}
+			mbs[i-1] = mb
+		}
+
+		require.NoError(pgStreamStore.WriteMiniblocks(
+			ctx,
+			streamId,
+			mbs,
+			mbs[len(mbs)-1].Number+1,
+			envelopes,
+			mbs[0].Number,
+			-1,
+		))
+
+		require.NoError(pgStreamStore.txRunner(
+			ctx,
+			"deleteGap",
+			pgx.ReadWrite,
+			func(ctx context.Context, tx pgx.Tx) error {
+				deleteQuery := pgStreamStore.sqlForStream(
+					"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = $2",
+					streamId,
+				)
+				for _, seq := range []int64{5, 15} {
+					if _, err := tx.Exec(ctx, deleteQuery, streamId, seq); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			nil,
+			"streamId", streamId,
+		))
+
+		beforeSeqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
+		require.Greater(t, len(beforeSeqs), 0)
+		require.Contains(t, beforeSeqs, int64(4))
+		require.NotContains(t, beforeSeqs, int64(5))
+		require.NotContains(t, beforeSeqs, int64(15))
+
+		err := pgStreamStore.txRunner(
+			ctx,
+			"trimWithGap",
+			pgx.ReadWrite,
+			func(ctx context.Context, tx pgx.Tx) error {
+				task := trimTask{
+					streamId:             streamId,
+					streamHistoryMbs:     5,
+					retentionIntervalMbs: 0,
+				}
+				return pgStreamStore.streamTrimmer.processTrimTaskTx(ctx, tx, task)
+			},
+			nil,
+			"streamId", streamId,
+		)
+		require.Error(err)
+		require.True(base.IsRiverErrorCode(err, Err_MINIBLOCKS_STORAGE_FAILURE))
+
+		afterSeqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
+		require.Equal(beforeSeqs, afterSeqs)
+	})
+
 	t.Run("pending deduplication keeps only one task per stream", func(t *testing.T) {
 		params := setupStreamStorageTest(t)
 		ctx := params.ctx
@@ -415,7 +498,7 @@ func TestStreamTrimmer(t *testing.T) {
 
 		require.Eventually(func() bool {
 			seqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal([]int64{35, 36, 37, 38, 39, 40}, seqs)
+			return slices.Equal([]int64{0, 35, 36, 37, 38, 39, 40}, seqs)
 		}, time.Second*5, 100*time.Millisecond)
 
 		close(done)

@@ -52,6 +52,7 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
+	StreamTrimActivationFactorConfigKey             = "stream.trimActivationFactor"
 	StreamEnableNewSnapshotFormatConfigKey          = "stream.enableNewSnapshotFormat"
 	ServerEnableNode2NodeAuthConfigKey              = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
@@ -153,6 +154,12 @@ type OnChainSettings struct {
 
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
+
+	// StreamTrimActivationFactor is the multiplicator that is used to determine when a stream trimming job should be
+	// scheduled based on its snapshot creation frequency.
+	// For example, if the snapshot creation frequency is 10 miniblocks and the trim activation factor is 5,
+	// then the stream will be trimmed every 50 miniblocks.
+	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimActivationFactor"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
@@ -287,6 +294,7 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		StreamEphemeralStreamTTL:           time.Minute * 10,
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
+		StreamTrimActivationFactor:         0, // 0 means snapshots trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
