@@ -1,7 +1,8 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
-import { SpaceDapp, Permission, ETH_ADDRESS, SpaceAddressFromSpaceId } from '@towns-protocol/web3'
-import TippingFacetAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
+import { SpaceDapp, Permission, ETH_ADDRESS } from '@towns-protocol/web3'
+import SimpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
+import AppRegistry from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -253,11 +254,13 @@ export class Bot<
     private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
         new Map()
     private readonly commands: Commands | undefined
+    appAddress: Address
 
     constructor(
         clientV2: ClientV2<BotActions>,
         viemClient: ViemClient,
         jwtSecretBase64: string,
+        appAddress: Address,
         commands?: Commands,
     ) {
         this.client = clientV2
@@ -267,11 +270,13 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.snapshot = clientV2.snapshot
+        this.appAddress = appAddress
     }
 
     async start() {
         await this.client.uploadDeviceKeys()
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+
         debug('start')
 
         return {
@@ -802,12 +807,12 @@ export class Bot<
         return this.client.unban(userId, spaceId)
     }
 
-    /**
-     * Send a tip to a user message
-     * @param params - Tip parameters including account, recipient, amount, messageId, channelId, currency.
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
      */
     async sendTip(params: {
-        account: Account
         to: Address
         amount: bigint
         messageId: string
@@ -915,6 +920,12 @@ export const makeTownsBot = async <
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
     )
+    const appAddress = await readContract(viemClient, {
+        address: baseConfig.chainConfig.addresses.appRegistry,
+        abi: AppRegistry,
+        functionName: 'getAppByClient',
+        args: [viemClient.account.address],
+    })
     const client = await createTownsClient({
         privateKey,
         env,
@@ -922,14 +933,23 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp, appAddress)),
+    )
+    return new Bot<Commands, HonoEnv>(
+        client,
+        viemClient,
+        jwtSecretBase64,
+        appAddress,
+        opts.commands,
+    )
 }
 
 const buildBotActions = (
     client: ClientV2,
     viemClient: ViemClient<Transport, Chain, Account>,
     spaceDapp: SpaceDapp,
+    appAddress: Address,
 ) => {
     const createImageAttachmentFromURL = async (
         attachment: ImageAttachment,
@@ -1232,7 +1252,6 @@ const buildBotActions = (
      * @param chainId - The chain ID where the transaction occurred
      * @param receipt - The transaction receipt from the blockchain
      * @param content - The transaction content (tip, transfer, etc.)
-     * @param tags - Optional tags for the event
      * @returns The transaction hash and event ID
      */
     const sendBlockchainTransaction = async (
@@ -1266,16 +1285,19 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash, eventId: result.eventId }
     }
 
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
+     */
     const sendTip = async (
         {
-            account,
             to,
             amount,
             messageId,
             channelId,
             currency = ETH_ADDRESS,
         }: {
-            account?: Account
             to: Address
             amount: bigint
             messageId: string
@@ -1284,31 +1306,18 @@ const buildBotActions = (
         },
         tags?: PlainMessage<Tags>,
     ): Promise<{ txHash: string; eventId: string }> => {
-        const acc = account ?? viemClient.account
         const spaceId = spaceIdFromChannelId(channelId)
         const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, to)
         if (!tokenId) {
             throw new Error(`No token ID found for user ${to} in space ${spaceId}`)
         }
 
-        const isETH = currency === ETH_ADDRESS
         const { request } = await simulateContract(viemClient, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: TippingFacetAbi,
-            functionName: 'tip',
-            args: [
-                {
-                    receiver: to,
-                    tokenId: BigInt(tokenId),
-                    currency,
-                    amount,
-                    messageId: `0x${messageId}`,
-                    channelId: `0x${channelId}`,
-                },
-            ],
-            account: acc,
+            address: appAddress,
+            abi: SimpleAppAbi,
+            functionName: 'sendCurrency',
+            args: [to, currency, amount],
             chain: viemClient.chain,
-            value: isETH ? amount : undefined,
         })
         const hash = await writeContract(viemClient, request)
         const receipt = await waitForTransactionReceipt(viemClient, { hash, confirmations: 3 })
@@ -1322,7 +1331,7 @@ const buildBotActions = (
                     event: {
                         tokenId: BigInt(tokenId),
                         currency: bin_fromHexString(currency),
-                        sender: bin_fromHexString(acc.address),
+                        sender: bin_fromHexString(viemClient.account.address),
                         receiver: bin_fromHexString(to),
                         amount,
                         messageId: bin_fromHexString(messageId),
@@ -1343,8 +1352,6 @@ const buildBotActions = (
     }
 
     return {
-        // Is it those enough?
-        // TODO: think about a web3 use case..
         writeContract: <
             chain extends Chain | undefined,
             account extends Account | undefined,

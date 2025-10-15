@@ -128,11 +128,11 @@ describe('Bot', { sequential: true }, () => {
     const shouldMintBot = async () => {
         botWallet = ethers.Wallet.createRandom().connect(ethersProvider)
         botClientAddress = botWallet.address as Address
-        const fundingTx = await bob.signer.sendTransaction({
+        const fundBotClientAddressTx = await bob.signer.sendTransaction({
             to: botClientAddress,
             value: ethers.utils.parseEther('0.5'),
         })
-        await fundingTx.wait()
+        await fundBotClientAddressTx.wait()
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
@@ -144,6 +144,11 @@ describe('Bot', { sequential: true }, () => {
         )
         const receipt = await tx.wait()
         const { app: address } = appRegistryDapp.getCreateAppEvent(receipt)
+        const fundBotAppAddressTx = await bob.signer.sendTransaction({
+            to: address,
+            value: ethers.utils.parseEther('0.5'),
+        })
+        await fundBotAppAddressTx.wait()
         expect(address).toBeDefined()
         appAddress = address as Address
     }
@@ -226,6 +231,7 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
+        expect(bot.appAddress).toBe(appAddress)
         const { jwtMiddleware, handler } = await bot.start()
         const app = new Hono()
         app.use(jwtMiddleware)
@@ -706,11 +712,11 @@ describe('Bot', { sequential: true }, () => {
         expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
-    it('bot can use sendTip() to send tips', async () => {
+    it('bot can use sendTip() to send tips using app balance', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
 
-        // Bot tips bob's message using its own account
+        // Bot tips Bob using app account balance
         bot.onMessage(async (handler, event) => {
             const result = await handler.sendTip({
                 to: bob.userId,
