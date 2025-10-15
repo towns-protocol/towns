@@ -1,7 +1,13 @@
-import { ecrecover, fromRPCSig, hashPersonalMessage } from '@ethereumjs/util'
 import { ethers } from 'ethers'
-import { bin_equal, bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
-import { publicKeyToAddress, publicKeyToUint8Array, riverDelegateHashSrc } from './sign'
+import {
+    bin_equal,
+    bin_fromHexString,
+    bin_toHexString,
+    check,
+    publicKeyToUint8Array,
+    recoverPublicKeyFromDelegateSig,
+    riverDelegateHashSrc,
+} from '@towns-protocol/utils'
 import { BearerTokenSchema, Err } from '@towns-protocol/proto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 
@@ -47,24 +53,6 @@ export const checkDelegateSig = (params: {
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
     )
-}
-
-export const recoverPublicKeyFromDelegateSig = (params: {
-    delegatePubKey: Uint8Array | string
-    delegateSig: Uint8Array
-    expiryEpochMs: bigint
-}): Uint8Array => {
-    const { delegateSig, expiryEpochMs } = params
-    const delegatePubKey =
-        typeof params.delegatePubKey === 'string'
-            ? publicKeyToUint8Array(params.delegatePubKey)
-            : params.delegatePubKey
-    const hashSource = riverDelegateHashSrc(delegatePubKey, expiryEpochMs)
-    const hash = hashPersonalMessage(hashSource)
-    const { v, r, s } = fromRPCSig(('0x' + bin_toHexString(delegateSig)) as `0x${string}`)
-    const recoveredCreatorPubKey = ecrecover(hash, v, r, s)
-    const recoveredCreatorAddress = Uint8Array.from(publicKeyToAddress(recoveredCreatorPubKey))
-    return recoveredCreatorAddress
 }
 
 async function makeRiverDelegateSig(

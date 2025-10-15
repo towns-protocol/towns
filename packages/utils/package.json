@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/utils",
-    "version": "0.0.368",
+    "version": "0.0.369",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -19,6 +19,8 @@
     },
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
+        "@ethereumjs/util": "^10.0.0",
+        "@noble/hashes": "^1.8.0",
         "@towns-protocol/proto": "workspace:^",
         "debug": "^4.3.4",
         "ethereum-cryptography": "^3.2.0"

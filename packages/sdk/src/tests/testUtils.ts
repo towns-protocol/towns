@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { _impl_makeEvent_impl_, publicKeyToAddress, unpackStreamEnvelopes } from '../sign'
-
+import { _impl_makeEvent_impl_, unpackStreamEnvelopes } from '../sign'
 import {
     EncryptedData,
     Envelope,
@@ -31,7 +30,7 @@ import {
 import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '../decryptionExtensions'
-import { bin_fromHexString, check, dlog } from '@towns-protocol/utils'
+import { bin_fromHexString, check, dlog, publicKeyToAddress } from '@towns-protocol/utils'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
