@@ -253,6 +253,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 botWallet.privateKey,
                 exportedDevice!,
                 townsConfig.environmentId,
+                appAddress,
             )
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(

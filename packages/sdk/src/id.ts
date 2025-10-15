@@ -272,11 +272,14 @@ export const makeAppPrivateData = (
     exportedDevice: ExportedDevice,
     /** alpha, gamma, delta, omega */
     env: string,
+    /** app address: simple app or custom app contract address */
+    appAddress: string,
 ) => {
     const appPrivateData = create(AppPrivateDataSchema, {
         privateKey,
         encryptionDevice: exportedDevice,
         env,
+        appAddress,
     })
     return `${APP_PRIVATE_DATA_PREFIX}${bin_toBase64(toBinary(AppPrivateDataSchema, appPrivateData))}`
 }
