@@ -3,7 +3,6 @@ pragma solidity ^0.8.29;
 
 // interfaces
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
-import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
 import {IValidationHookModule} from "@erc6900/reference-implementation/interfaces/IValidationHookModule.sol";
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -14,8 +13,6 @@ import {IBanning} from "../../../spaces/facets/banning/IBanning.sol";
 // libraries
 import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
-import {LibCall} from "solady/utils/LibCall.sol";
-import {ValidationLocatorLib} from "modular-account/src/libraries/ValidationLocatorLib.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
@@ -27,6 +24,7 @@ import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {SubscriptionModuleBase} from "./SubscriptionModuleBase.sol";
 
 /// @title Subscription Module
 /// @notice Module for managing subscriptions to spaces
@@ -37,6 +35,7 @@ contract SubscriptionModuleFacet is
     ModuleBase,
     OwnableBase,
     ReentrancyGuardTransient,
+    SubscriptionModuleBase,
     Facet
 {
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
@@ -47,13 +46,6 @@ contract SubscriptionModuleFacet is
     uint256 internal constant _SIG_VALIDATION_FAILED = 1;
 
     uint256 public constant MAX_BATCH_SIZE = 50;
-    uint256 public constant GRACE_PERIOD = 3 days;
-
-    // Dynamic buffer times based on expiration proximity
-    uint256 public constant BUFFER_IMMEDIATE = 2 minutes; // For expirations within 1 hour
-    uint256 public constant BUFFER_SHORT = 1 hours; // For expirations within 6 hours
-    uint256 public constant BUFFER_MEDIUM = 6 hours; // For expirations within 24 hours
-    uint256 public constant BUFFER_LONG = 12 hours; // For expirations more than 24 hours away
 
     function __SubscriptionModule_init() external onlyInitializing {
         _addInterface(type(ISubscriptionModule).interfaceId);
@@ -112,13 +104,9 @@ contract SubscriptionModuleFacet is
 
         Subscription storage sub = $.subscriptions[msg.sender][entityId];
         sub.space = space;
-        sub.active = true;
         sub.tokenId = tokenId;
         sub.installTime = block.timestamp.toUint40();
-        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
-        sub.duration = duration;
-        sub.lastKnownRenewalPrice = membershipFacet.getMembershipRenewalPrice(tokenId);
-        sub.lastKnownExpiresAt = expiresAt;
+        _syncSubscriptionState(sub, membershipFacet, expiresAt, duration);
 
         emit SubscriptionConfigured(
             msg.sender,
@@ -179,7 +167,6 @@ contract SubscriptionModuleFacet is
         if (sender != address(this)) SubscriptionModule__InvalidSender.selector.revertWith();
         bool active = SubscriptionModuleStorage.getLayout().subscriptions[account][entityId].active;
         if (!active) SubscriptionModule__InactiveSubscription.selector.revertWith();
-        return;
     }
 
     /// @inheritdoc IValidationHookModule
@@ -224,83 +211,45 @@ contract SubscriptionModuleFacet is
         if (!$.operators.contains(msg.sender))
             SubscriptionModule__InvalidCaller.selector.revertWith();
 
-        IMembership membershipFacet;
-
         for (uint256 i; i < paramsLen; ++i) {
             Subscription storage sub = $.subscriptions[params[i].account][params[i].entityId];
 
-            // Skip if renewal not due (check original nextRenewalTime first)
-            if (sub.nextRenewalTime > block.timestamp) {
-                emit SubscriptionNotDue(params[i].account, params[i].entityId);
-                continue;
-            }
-
-            // Skip inactive subscriptions
-            if (!sub.active) {
-                emit BatchRenewalSkipped(params[i].account, params[i].entityId, "INACTIVE");
-                continue;
-            }
-
-            // Skip if past grace period
-            if (sub.nextRenewalTime + GRACE_PERIOD < block.timestamp) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(params[i].account, params[i].entityId, "PAST_GRACE");
-                continue;
-            }
-
-            if (IBanning(sub.space).isBanned(sub.tokenId)) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(
-                    params[i].account,
-                    params[i].entityId,
-                    "MEMBERSHIP_BANNED"
-                );
-                continue;
-            }
-
-            // Skip if account isn't owner anymore (for safety)
-            if (IERC721(sub.space).ownerOf(sub.tokenId) != params[i].account) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(params[i].account, params[i].entityId, "NOT_OWNER");
-                continue;
-            }
-
-            membershipFacet = IMembership(sub.space);
-
+            IMembership membershipFacet = IMembership(sub.space);
             uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
+            uint256 actualDuration = membershipFacet.getMembershipDuration();
 
-            if (sub.lastKnownRenewalPrice != actualRenewalPrice) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(
-                    params[i].account,
-                    params[i].entityId,
-                    "RENEWAL_PRICE_CHANGED"
-                );
+            // Validate renewal eligibility
+            (bool shouldSkip, bytes memory reason) = _validateRenewalEligibility(
+                sub,
+                params[i].account,
+                actualRenewalPrice,
+                actualDuration
+            );
+
+            if (shouldSkip) {
+                // Handle special case for "NOT_DUE" - different event
+                if (keccak256(reason) == keccak256("NOT_DUE")) {
+                    emit SubscriptionNotDue(params[i].account, params[i].entityId);
+                } else {
+                    // Pause subscription for conditions that require it
+                    if (
+                        keccak256(reason) == keccak256("PAST_GRACE") ||
+                        keccak256(reason) == keccak256("MEMBERSHIP_BANNED") ||
+                        keccak256(reason) == keccak256("NOT_OWNER") ||
+                        keccak256(reason) == keccak256("RENEWAL_PRICE_CHANGED") ||
+                        keccak256(reason) == keccak256("INSUFFICIENT_BALANCE") ||
+                        keccak256(reason) == keccak256("DURATION_CHANGED")
+                    ) {
+                        _pauseSubscription(sub, params[i].account, params[i].entityId);
+                    }
+                    emit BatchRenewalSkipped(params[i].account, params[i].entityId, string(reason));
+                }
                 continue;
             }
 
-            if (params[i].account.balance < actualRenewalPrice) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(
-                    params[i].account,
-                    params[i].entityId,
-                    "INSUFFICIENT_BALANCE"
-                );
-                continue;
-            }
-
-            uint256 duration = membershipFacet.getMembershipDuration();
-
-            if (sub.duration != duration) {
-                _pauseSubscription(sub, params[i].account, params[i].entityId);
-                emit BatchRenewalSkipped(params[i].account, params[i].entityId, "DURATION_CHANGED");
-                continue;
-            }
-
+            // Check for manual renewal (expiresAt changed)
             uint256 actualExpiresAt = membershipFacet.expiresAt(sub.tokenId);
-
             if (sub.lastKnownExpiresAt != actualExpiresAt) {
-                // Manual renewal detected - expiresAt changed
                 sub.nextRenewalTime = _calculateBaseRenewalTime(actualExpiresAt, sub.duration);
                 sub.lastKnownExpiresAt = actualExpiresAt;
                 emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
@@ -335,32 +284,25 @@ contract SubscriptionModuleFacet is
 
         if (sub.active) SubscriptionModule__ActiveSubscription.selector.revertWith();
 
-        address owner = IERC721(sub.space).ownerOf(sub.tokenId);
-        if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
+        _requireOwnership(sub);
 
         IMembership membershipFacet = IMembership(sub.space);
         uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
         uint64 duration = membershipFacet.getMembershipDuration();
 
-        sub.active = true;
-        sub.lastKnownRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
-        sub.lastKnownExpiresAt = expiresAt;
-        sub.duration = duration;
-        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
+        _syncSubscriptionState(sub, membershipFacet, expiresAt, duration);
 
         emit SubscriptionActivated(msg.sender, entityId);
     }
 
     /// @inheritdoc ISubscriptionModule
     function pauseSubscription(uint32 entityId) external nonReentrant {
-        Subscription storage sub = SubscriptionModuleStorage.getLayout().subscriptions[msg.sender][
-            entityId
-        ];
+        SubscriptionModuleStorage.Layout storage $ = SubscriptionModuleStorage.getLayout();
+        Subscription storage sub = $.subscriptions[msg.sender][entityId];
 
         if (!sub.active) SubscriptionModule__InactiveSubscription.selector.revertWith();
 
-        address owner = IERC721(sub.space).ownerOf(sub.tokenId);
-        if (msg.sender != owner) SubscriptionModule__InvalidCaller.selector.revertWith();
+        _requireOwnership(sub);
 
         _pauseSubscription(sub, msg.sender, entityId);
     }
@@ -403,144 +345,5 @@ contract SubscriptionModuleFacet is
     /// @inheritdoc ISubscriptionModule
     function getSpaceFactory() external view returns (address) {
         return SubscriptionModuleStorage.getLayout().spaceFactory;
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Internal                         */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _hasEntityId(
-        SubscriptionModuleStorage.Layout storage $,
-        address account,
-        uint32 entityId
-    ) internal view returns (bool) {
-        return $.entityIds[account].contains(entityId);
-    }
-
-    /// @dev Processes a single subscription renewal
-    /// @param sub The subscription to renew
-    /// @param params The parameters for the renewal
-    function _processRenewal(
-        Subscription storage sub,
-        RenewalParams calldata params,
-        IMembership membershipFacet,
-        uint256 actualRenewalPrice
-    ) internal {
-        // Construct the renewal call to space contract
-        bytes memory renewalCall = abi.encodeCall(IMembership.renewMembership, (sub.tokenId));
-
-        // Create the data parameter for executeWithRuntimeValidation
-        // This should be an execute() call to the space contract
-        bytes memory executeData = abi.encodeCall(
-            IModularAccount.execute,
-            (
-                sub.space, // target
-                actualRenewalPrice, // value
-                renewalCall // data
-            )
-        );
-
-        // Use the proper pack function from ValidationLocatorLib
-        bytes memory authorization = ValidationLocatorLib.packSignature(
-            params.entityId,
-            false, // selector-based
-            bytes.concat(hex"ff", abi.encode(sub.space, sub.tokenId))
-        );
-
-        // Call executeWithRuntimeValidation with the correct parameters
-        bytes memory runtimeValidationCall = abi.encodeCall(
-            IModularAccount.executeWithRuntimeValidation,
-            (
-                executeData, // The execute() call data
-                authorization // Authorization for validation
-            )
-        );
-
-        // External call happens here
-        LibCall.callContract(params.account, 0, runtimeValidationCall);
-
-        // Get the actual new expiration time after successful renewal
-        uint256 newExpiresAt = membershipFacet.expiresAt(sub.tokenId);
-
-        // Calculate next renewal time ensuring it's strictly in the future
-        uint256 duration = membershipFacet.getMembershipDuration();
-        sub.nextRenewalTime = _calculateBaseRenewalTime(newExpiresAt, duration);
-        sub.lastRenewalTime = block.timestamp.toUint40();
-        sub.lastKnownExpiresAt = newExpiresAt;
-        sub.spent += actualRenewalPrice;
-
-        emit SubscriptionRenewed(
-            params.account,
-            params.entityId,
-            sub.space,
-            sub.tokenId,
-            sub.nextRenewalTime,
-            newExpiresAt
-        );
-        emit SubscriptionSpent(params.account, params.entityId, actualRenewalPrice, sub.spent);
-    }
-
-    /// @dev Determines the appropriate renewal buffer time based on membership duration
-    /// @param duration The membership duration in seconds
-    /// @return The appropriate buffer time in seconds before expiration
-    function _getRenewalBuffer(uint256 duration) internal pure returns (uint256) {
-        // For memberships shorter than 1 hour, use immediate buffer (2 minutes)
-        if (duration <= 1 hours) return BUFFER_IMMEDIATE;
-
-        // For memberships shorter than 6 hours, use short buffer (1 hour)
-        if (duration <= 6 hours) return BUFFER_SHORT;
-
-        // For memberships shorter than 24 hours, use medium buffer (6 hours)
-        if (duration <= 24 hours) return BUFFER_MEDIUM;
-
-        // For memberships longer than 24 hours, use long buffer (12 hours)
-        return BUFFER_LONG;
-    }
-
-    /// @dev Calculates the base renewal time without minimum buffer enforcement
-    /// @param expirationTime The expiration timestamp of the membership
-    /// @param duration The membership duration in seconds
-    /// @return The base renewal time as uint40
-    function _calculateBaseRenewalTime(
-        uint256 expirationTime,
-        uint256 duration
-    ) internal view returns (uint40) {
-        if (expirationTime <= block.timestamp) return block.timestamp.toUint40();
-
-        uint256 buffer = _getRenewalBuffer(duration);
-        uint256 timeUntilExpiration = expirationTime - block.timestamp;
-
-        if (buffer >= timeUntilExpiration) {
-            // If buffer is larger than time until expiration,
-            // schedule for after the expiration by the same amount
-            return (expirationTime + (buffer - timeUntilExpiration)).toUint40();
-        }
-
-        return (expirationTime - buffer).toUint40();
-    }
-
-    /// @dev Creates the runtime final data for the renewal
-    /// @param entityId The entity ID of the subscription
-    /// @param finalData The final data for the renewal
-    /// @return The runtime final data
-    function _runtimeFinal(
-        uint32 entityId,
-        bytes memory finalData
-    ) internal pure returns (bytes memory) {
-        return
-            ValidationLocatorLib.packSignature(
-                entityId,
-                false, // selector-based
-                bytes.concat(hex"ff", finalData)
-            );
-    }
-
-    function _pauseSubscription(
-        Subscription storage sub,
-        address account,
-        uint32 entityId
-    ) internal {
-        sub.active = false;
-        emit SubscriptionPaused(account, entityId);
     }
 }
