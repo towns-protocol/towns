@@ -104,7 +104,7 @@ func (t *streamTrimmer) close() {
 
 // tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
 // TODO: Review the logic on when to trim the stream.
-func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId, lastSnapshotMb int64) {
+func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	t.snapshotsPerStreamLock.Lock()
 	t.snapshotsPerStream[streamId]++
 	streamSnapshots := t.snapshotsPerStream[streamId]

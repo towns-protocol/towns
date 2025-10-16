@@ -66,6 +66,9 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 					Space:        5,
 					UserSettings: 5,
 				},
+				MinSnapshotEvents: crypto.MinSnapshotEventsSettings{
+					Default: 10,
+				},
 				StreamSnapshotIntervalInMiniblocks: 110,
 				StreamTrimActivationFactor:         1,
 			},
