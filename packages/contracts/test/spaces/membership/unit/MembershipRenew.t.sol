@@ -34,7 +34,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         return membership.getMembershipRenewalPrice(tokenId);
     }
 
-    function _setupMembershipPricing(uint256 freeAllocation, uint256 price) private {
+    function _setupMembershipPricing(uint256, uint256 price) private {
         vm.startPrank(founder);
         // membership.setMembershipFreeAllocation(freeAllocation);
         membership.setMembershipPrice(price);
