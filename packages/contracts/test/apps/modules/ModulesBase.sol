@@ -176,7 +176,8 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         IMembership membershipFacet = IMembership(space);
 
         uint256 expirationTime = membershipFacet.expiresAt(tokenId);
-        uint256 buf = subscriptionModule.getRenewalBuffer(expirationTime);
+        uint256 duration = membershipFacet.getMembershipDuration();
+        uint256 buf = subscriptionModule.getRenewalBuffer(duration);
         uint64 nextRenewalTime;
 
         if (expirationTime > buf) {

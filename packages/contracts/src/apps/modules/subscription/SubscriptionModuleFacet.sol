@@ -101,16 +101,24 @@ contract SubscriptionModuleFacet is
         $.tokenIdByAccountBySpace[msg.sender][space] = tokenId;
 
         IMembership membershipFacet = IMembership(space);
+
         uint256 expiresAt = membershipFacet.expiresAt(tokenId);
-        uint256 duration = membershipFacet.getMembershipDuration();
+
+        // Prevent installation with expired membership
+        if (expiresAt <= block.timestamp)
+            SubscriptionModule__MembershipExpired.selector.revertWith();
+
+        uint64 duration = membershipFacet.getMembershipDuration();
 
         Subscription storage sub = $.subscriptions[msg.sender][entityId];
         sub.space = space;
         sub.active = true;
         sub.tokenId = tokenId;
         sub.installTime = block.timestamp.toUint40();
-        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration, block.timestamp);
-        sub.duration = duration.toUint64();
+        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
+        sub.duration = duration;
+        sub.lastKnownRenewalPrice = membershipFacet.getMembershipRenewalPrice(tokenId);
+        sub.lastKnownExpiresAt = expiresAt;
 
         emit SubscriptionConfigured(
             msg.sender,
@@ -261,6 +269,16 @@ contract SubscriptionModuleFacet is
 
             uint256 actualRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
 
+            if (sub.lastKnownRenewalPrice != actualRenewalPrice) {
+                _pauseSubscription(sub, params[i].account, params[i].entityId);
+                emit BatchRenewalSkipped(
+                    params[i].account,
+                    params[i].entityId,
+                    "RENEWAL_PRICE_CHANGED"
+                );
+                continue;
+            }
+
             if (params[i].account.balance < actualRenewalPrice) {
                 _pauseSubscription(sub, params[i].account, params[i].entityId);
                 emit BatchRenewalSkipped(
@@ -279,16 +297,13 @@ contract SubscriptionModuleFacet is
                 continue;
             }
 
-            uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
-            uint40 nextRenewalTime = _calculateBaseRenewalTime(
-                expiresAt,
-                sub.duration,
-                sub.lastRenewalTime > 0 ? sub.lastRenewalTime : sub.installTime
-            );
+            uint256 actualExpiresAt = membershipFacet.expiresAt(sub.tokenId);
 
-            if (sub.nextRenewalTime != nextRenewalTime) {
-                sub.nextRenewalTime = nextRenewalTime;
-                emit SubscriptionSynced(params[i].account, params[i].entityId, nextRenewalTime);
+            if (sub.lastKnownExpiresAt != actualExpiresAt) {
+                // Manual renewal detected - expiresAt changed
+                sub.nextRenewalTime = _calculateBaseRenewalTime(actualExpiresAt, sub.duration);
+                sub.lastKnownExpiresAt = actualExpiresAt;
+                emit SubscriptionSynced(params[i].account, params[i].entityId, sub.nextRenewalTime);
                 continue;
             }
 
@@ -325,20 +340,14 @@ contract SubscriptionModuleFacet is
 
         IMembership membershipFacet = IMembership(sub.space);
         uint256 expiresAt = membershipFacet.expiresAt(sub.tokenId);
-        uint256 duration = membershipFacet.getMembershipDuration();
-
-        // 6. Always sync renewal time to current membership state
-        uint40 correctNextRenewalTime = _calculateBaseRenewalTime(
-            expiresAt,
-            duration,
-            block.timestamp
-        );
-        if (sub.nextRenewalTime != correctNextRenewalTime) {
-            sub.nextRenewalTime = correctNextRenewalTime;
-            emit SubscriptionSynced(msg.sender, entityId, sub.nextRenewalTime);
-        }
+        uint64 duration = membershipFacet.getMembershipDuration();
 
         sub.active = true;
+        sub.lastKnownRenewalPrice = membershipFacet.getMembershipRenewalPrice(sub.tokenId);
+        sub.lastKnownExpiresAt = expiresAt;
+        sub.duration = duration;
+        sub.nextRenewalTime = _calculateBaseRenewalTime(expiresAt, duration);
+
         emit SubscriptionActivated(msg.sender, entityId);
     }
 
@@ -455,8 +464,9 @@ contract SubscriptionModuleFacet is
 
         // Calculate next renewal time ensuring it's strictly in the future
         uint256 duration = membershipFacet.getMembershipDuration();
-        sub.nextRenewalTime = _calculateBaseRenewalTime(newExpiresAt, duration, block.timestamp);
+        sub.nextRenewalTime = _calculateBaseRenewalTime(newExpiresAt, duration);
         sub.lastRenewalTime = block.timestamp.toUint40();
+        sub.lastKnownExpiresAt = newExpiresAt;
         sub.spent += actualRenewalPrice;
 
         emit SubscriptionRenewed(
@@ -493,16 +503,12 @@ contract SubscriptionModuleFacet is
     /// @return The base renewal time as uint40
     function _calculateBaseRenewalTime(
         uint256 expirationTime,
-        uint256 duration,
-        uint256 currentTime
-    ) internal pure returns (uint40) {
-        // If membership is already expired, schedule for the future
-        if (expirationTime <= currentTime) {
-            return (currentTime + duration).toUint40();
-        }
+        uint256 duration
+    ) internal view returns (uint40) {
+        if (expirationTime <= block.timestamp) return block.timestamp.toUint40();
 
         uint256 buffer = _getRenewalBuffer(duration);
-        uint256 timeUntilExpiration = expirationTime - currentTime;
+        uint256 timeUntilExpiration = expirationTime - block.timestamp;
 
         if (buffer >= timeUntilExpiration) {
             // If buffer is larger than time until expiration,

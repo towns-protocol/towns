@@ -41,6 +41,7 @@ interface ISubscriptionModuleBase {
     error SubscriptionModule__InsufficientBalance();
     error SubscriptionModule__ActiveSubscription();
     error SubscriptionModule__MembershipBanned();
+    error SubscriptionModule__MembershipExpired();
     error SubscriptionModule__SubscriptionAlreadyInstalled();
     error SubscriptionModule__SubscriptionNotInstalled();
 

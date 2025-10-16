@@ -11,7 +11,9 @@ struct Subscription {
     uint40 lastRenewalTime; // 5 bytes
     uint40 nextRenewalTime; // 5 bytes
     bool active; // 1 byte
-    uint64 duration;
+    uint64 duration; // 8 bytes
+    uint256 lastKnownRenewalPrice; // 32 bytes
+    uint256 lastKnownExpiresAt; // 32 bytes
 }
 
 struct OperatorConfig {
