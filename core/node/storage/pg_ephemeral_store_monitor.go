@@ -31,7 +31,9 @@ type ephemeralStreamMonitor struct {
 	// counter. The retry counter is used to retry migrations up to
 	// MigrateToExternalStorageRetryCounter times in case of an error before giving up.
 	streamsToMigrateToExternalStorage *xsync.Map[StreamId, int]
-
+	// migrateExistingMediaStreamsToExternalStorage if true, migrates existing media
+	// stream miniblock data to external storage.
+	migrateMediaStreamsToExternalStorage bool
 	// ttl is the duration of time an ephemeral stream can exist
 	// before either being sealed/normalized or deleted.
 	ttl      time.Duration
@@ -40,24 +42,28 @@ type ephemeralStreamMonitor struct {
 	stop     chan struct{}
 }
 
-// newEphemeralStreamMonitor creates and starts a ephemeral stream monitor.
+// newEphemeralStreamMonitor creates and starts an ephemeral stream monitor.
 // It purges ephemeral streams that have not been sealed/normalized for the given TTL
-// and migrates miniblocks of normalized ephemeral streams to external storage if configured.
+// and migrates miniblocks of just normalized ephemeral streams to external storage if
+// configured. If migrateMediaStreamsToExternalStorage is true is also migrates miniblock
+// data of existing media streams from database to external storage.
 func newEphemeralStreamMonitor(
 	ctx context.Context,
 	ttl time.Duration,
 	storage *PostgresStreamStore,
+	migrateMediaStreamsToExternalStorage bool,
 ) (*ephemeralStreamMonitor, error) {
 	if ttl == 0 {
 		ttl = time.Minute * 10
 	}
 
 	m := &ephemeralStreamMonitor{
-		streams:                           xsync.NewMap[StreamId, time.Time](),
-		streamsToMigrateToExternalStorage: xsync.NewMap[StreamId, int](),
-		storage:                           storage,
-		ttl:                               ttl,
-		stop:                              make(chan struct{}),
+		streams:                              xsync.NewMap[StreamId, time.Time](),
+		streamsToMigrateToExternalStorage:    xsync.NewMap[StreamId, int](),
+		storage:                              storage,
+		ttl:                                  ttl,
+		stop:                                 make(chan struct{}),
+		migrateMediaStreamsToExternalStorage: migrateMediaStreamsToExternalStorage,
 	}
 
 	// Load all ephemeral streams from the database.
@@ -94,34 +100,65 @@ func (m *ephemeralStreamMonitor) onSealed(streamId StreamId) {
 	if m.storage.ExternalStorageEnabled() && streamId.Type() == STREAM_MEDIA_BIN {
 		// if external store is enabled queue task to migrate media stream
 		// miniblock data to external storage
-		m.streamsToMigrateToExternalStorage.Store(streamId, 0)
+		_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(streamId, 0)
 	}
 }
 
-// runStreamMigrationToExternalStorage migrates the miniblocks of
-// ephemeral stream to external storage if configured.
+// runStreamMigrationToExternalStorage migrates miniblocks of normalized ephemeral stream
+// to external storage.
 func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context.Context) {
+	log := logging.FromCtx(ctx)
+
+	log.Info("Enable media stream miniblock data in external storage",
+		"migrateExistingStreams", m.migrateMediaStreamsToExternalStorage)
+
+	go func() {
+		// if migrating existing media streams to external storage is enabled, fetch streams that are ready
+		// to migrate and add them to the streamsToMigrateToExternalStorage collection for migration.
+		if m.migrateMediaStreamsToExternalStorage {
+			<-time.After(5 * time.Second)
+			migratedAllExistingStreams := false
+			for !migratedAllExistingStreams {
+				const limit = 2500
+				if m.migrateMediaStreamsToExternalStorage {
+					if streamsToMigrate, err := m.storage.LoadMediaStreamsWithMiniblocksReadyToMigrate(ctx, limit); err == nil {
+						for _, stream := range streamsToMigrate {
+							_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(stream, 0)
+						}
+						// stop migrating existing streams if there are none left.
+						// new streams will be added through the monitor.onSealed func.
+						migratedAllExistingStreams = len(streamsToMigrate) < limit
+					} else {
+						log.Error("failed to load media streams with miniblocks in database", "error", err)
+						migratedAllExistingStreams = true // try migrating existing streams on next monitor run
+					}
+				}
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-m.stop:
-			logging.FromCtx(ctx).Info("dead ephemeral stream monitor stopped")
+			log.Info("dead ephemeral stream monitor stopped")
 			return
 		case <-time.After(5 * time.Second):
-			failuredStreams := make(map[StreamId]int)
+			retryableFailedStreams := make(map[StreamId]int)
 			m.streamsToMigrateToExternalStorage.Range(func(streamID StreamId, retryCounter int) bool {
 				if mustRetry := m.migrateNormalizedEphemeralStream(ctx, streamID); mustRetry {
 					if retryCounter < MigrateToExternalStorageRetryCounter {
-						failuredStreams[streamID] = retryCounter + 1
+						retryableFailedStreams[streamID] = retryCounter + 1
 					}
-					return true
 				} else {
+					log.Debug("migrated media stream miniblocks to external storage",
+						"stream", streamID)
 					m.streamsToMigrateToExternalStorage.Delete(streamID)
 				}
 				return true
 			})
 
 			// reschedule migration for streams that failed
-			for streamId, retryCounter := range failuredStreams {
+			for streamId, retryCounter := range retryableFailedStreams {
 				m.streamsToMigrateToExternalStorage.Store(streamId, retryCounter)
 			}
 		case <-ctx.Done():

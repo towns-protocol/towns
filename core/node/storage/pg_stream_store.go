@@ -165,6 +165,7 @@ func NewPostgresStreamStore(
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 	}
 
+	// apply options that can update the store after initialization.
 	for _, opt := range storeOptions {
 		opt(store)
 	}
@@ -237,11 +238,16 @@ func NewPostgresStreamStore(
 		}
 	}
 
+	// migrate existing media streams to external storage if enabled
+	migrateExistingMediaStreamsToExternalStorage := externalStorageCfg != nil &&
+		externalStorageCfg.EnableMigrationExistingStreams
+
 	// Start the ephemeral stream monitor.
 	store.esm, err = newEphemeralStreamMonitor(
 		ctx,
 		chainCfg.Get().StreamEphemeralStreamTTL,
 		store,
+		migrateExistingMediaStreamsToExternalStorage,
 	)
 	if err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresStreamStore")
