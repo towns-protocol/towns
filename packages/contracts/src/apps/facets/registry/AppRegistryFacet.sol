@@ -26,9 +26,10 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     function __AppRegistry_init(
         address spaceFactory,
         string calldata schema,
-        ISchemaResolver resolver
+        ISchemaResolver resolver,
+        address initialBeacon
     ) external onlyInitializing {
-        __AppRegistry_init_unchained(spaceFactory, schema, resolver);
+        __AppRegistry_init_unchained(spaceFactory, schema, resolver, initialBeacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -54,11 +55,10 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _banApp(app);
     }
 
-    /// @notice Register a new app type with its beacon
-    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @notice Register a new app type with its beacon contract
     /// @param beacon The beacon contract address for this app type
-    function adminRegisterAppType(bytes32 appType, address beacon) external onlyOwner {
-        _registerAppType(appType, beacon);
+    function adminRegisterAppType(address beacon) external onlyOwner {
+        _registerAppType(beacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -70,7 +70,7 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     function createApp(
         AppParams calldata params
     ) external payable nonReentrant returns (address app, bytes32 appId) {
-        return _createApp(keccak256("simple"), params);
+        return _createSimpleApp(params);
     }
 
     /// @notice Create an upgradeable app contract

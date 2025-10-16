@@ -11,6 +11,7 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
+import {IMetadata} from "src/diamond/facets/metadata/IMetadata.sol";
 
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
@@ -35,15 +36,18 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 
     uint48 private constant MAX_DURATION = 365 days;
+    bytes32 private constant SIMPLE_APP_TYPE = bytes32("SimpleApp");
 
     function __AppRegistry_init_unchained(
         address spaceFactory,
         string calldata schema,
-        ISchemaResolver resolver
+        ISchemaResolver resolver,
+        address initialBeacon
     ) internal {
         bytes32 schemaId = _registerSchema(schema, resolver, true);
         _setSchemaId(schemaId);
         _setSpaceFactory(spaceFactory);
+        _registerAppType(initialBeacon);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -51,10 +55,14 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Registers a new app type with its beacon
-    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
     /// @param beacon The beacon contract address for this app type
-    function _registerAppType(bytes32 appType, address beacon) internal {
+    function _registerAppType(address beacon) internal {
         if (beacon == address(0)) InvalidAddressInput.selector.revertWith();
+        if (!IERC165(beacon).supportsInterface(type(IMetadata).interfaceId))
+            InvalidBeacon.selector.revertWith();
+
+        bytes32 appType = IMetadata(beacon).contractType();
+        if (appType == bytes32(0)) InvalidAppType.selector.revertWith();
 
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
 
@@ -139,6 +147,12 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @return The app address associated with the client
     function _getAppByClient(address client) internal view returns (address) {
         return AppRegistryStorage.getLayout().client[client].app;
+    }
+
+    function _createSimpleApp(
+        AppParams calldata params
+    ) internal returns (address app, bytes32 version) {
+        return _createApp(SIMPLE_APP_TYPE, params);
     }
 
     /// @notice Creates a new app with the specified parameters

@@ -51,6 +51,8 @@ interface IAppRegistryBase {
     error ClientAlreadyRegistered();
     error ClientNotRegistered();
     error UnknownAppType();
+    error InvalidBeacon();
+    error InvalidAppType();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -192,4 +194,8 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external returns (bytes32);
+
+    /// @notice Register a new app type with its beacon contract
+    /// @param beacon The beacon contract address with support for the IMetadata interface
+    function adminRegisterAppType(address beacon) external;
 }

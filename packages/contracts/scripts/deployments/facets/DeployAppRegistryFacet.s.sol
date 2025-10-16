@@ -60,12 +60,13 @@ library DeployAppRegistryFacet {
     function makeInitData(
         address spaceFactory,
         string memory schema,
-        address resolver
+        address resolver,
+        address initialBeacon
     ) internal pure returns (bytes memory) {
         return
             abi.encodeCall(
                 AppRegistryFacet.__AppRegistry_init,
-                (spaceFactory, schema, ISchemaResolver(resolver))
+                (spaceFactory, schema, ISchemaResolver(resolver), initialBeacon)
             );
     }
 

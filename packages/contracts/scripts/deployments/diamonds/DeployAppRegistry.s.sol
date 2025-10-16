@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
+import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
@@ -12,7 +13,7 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
-import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
+import {DeploySimpleAppBeacon} from "./DeploySimpleAppBeacon.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -29,6 +30,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     address private SPACE_FACTORY;
 
     DeployFacet private facetHelper = new DeployFacet();
+    DeploySimpleAppBeacon private simpleAppBeacon = new DeploySimpleAppBeacon();
 
     string internal constant APP_REGISTRY_SCHEMA = "address app, address client";
 
@@ -48,7 +50,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         return getDeployment("spaceFactory");
     }
 
-    function addImmutableCuts(address deployer) internal {
+    function _coreFacets(address deployer) internal {
         // Queue up all core facets for batch deployment
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
@@ -92,9 +94,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
-        facetHelper.add("UpgradeableBeaconFacet");
         facetHelper.add("AppRegistryFacet");
-        facetHelper.add("SimpleApp");
 
         facetHelper.deployBatch(deployer);
 
@@ -105,20 +105,19 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployMetadata.makeInitData(bytes32("AppRegistry"), "")
         );
 
-        address simpleApp = facetHelper.getDeployedAddress("SimpleApp");
-        facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
-
-        addFacet(
-            makeCut(facet, FacetCutAction.Add, DeployUpgradeableBeacon.selectors()),
-            facet,
-            DeployUpgradeableBeacon.makeInitData(simpleApp)
+        address simpleApp = simpleAppBeacon.deploy(deployer);
+        facet = facetHelper.getDeployedAddress("AppRegistryFacet");
+        bytes memory initData = DeployAppRegistryFacet.makeInitData(
+            getSpaceFactory(),
+            APP_REGISTRY_SCHEMA,
+            address(0),
+            simpleApp
         );
 
-        facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
-            DeployAppRegistryFacet.makeInitData(getSpaceFactory(), APP_REGISTRY_SCHEMA, address(0))
+            initData
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -156,7 +155,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function __deploy(address deployer) internal override returns (address) {
-        addImmutableCuts(deployer);
+        _coreFacets(deployer);
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
