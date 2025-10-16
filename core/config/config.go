@@ -145,6 +145,9 @@ type ExternalMediaStreamStorageConfig struct {
 	AwsS3 ExternalMediaStreamStorageAWSS3Config `mapstructure:"aws_s3"`
 	// Gcs, if configured, will be used to store media stream miniblocks in GCP Storage.
 	Gcs ExternalMediaStreamStorageGCStorageConfig `mapstructure:"gcs_storage"`
+	// EnableMigrationExistingStreams if true, actively migrate media stream miniblock data
+	// from database to external storage.
+	EnableMigrationExistingStreams bool `mapstructure:"enable_migration_existing_streams"`
 }
 
 // Config contains all configuration settings for the node.
