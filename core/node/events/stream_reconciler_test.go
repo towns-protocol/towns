@@ -753,6 +753,7 @@ func newTrimTestEnv(
 				STREAM_USER_SETTINGS_BIN: historyWindow,
 			},
 			streamSnapshotIntervalInMbs: &snapshotInterval,
+			streamTrimActivationFactor:  ptrUint64(0),
 		},
 	)
 
@@ -795,27 +796,45 @@ func newTrimTestEnv(
 }
 
 func TestReconciler_TrimRejectsMultipleGaps(t *testing.T) {
-	env := newTrimTestEnv(t, 25, 1, 40, false)
+	env := newTrimTestEnv(t, 0, 1, 40, false)
 	store := env.inst.cache.params.Storage
-
 	require := env.tc.require
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 5, 8))
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 15, 18))
 
-	err := env.reconciler.trim()
+	ranges, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 5, 10))
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 15, 20))
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-6), int64(env.producedBlocks-4)))
+
+	ranges, err = store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(ranges, 4)
+
+	err = env.reconciler.trim()
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_INTERNAL))
 }
 
 func TestReconciler_TrimRejectsInvalidTwoRangeLayout(t *testing.T) {
-	env := newTrimTestEnv(t, 25, 1, 40, false)
+	env := newTrimTestEnv(t, 0, 1, 40, false)
 	store := env.inst.cache.params.Storage
-
 	require := env.tc.require
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 0, 5))
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 20, 22))
 
-	err := env.reconciler.trim()
+	ranges, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 0, 1))
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-12), int64(env.producedBlocks-6)))
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-2), int64(env.producedBlocks)))
+
+	ranges, err = store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(ranges, 3)
+	require.NotEqual(int64(0), ranges[0].StartInclusive)
+	require.NotEqual(int64(0), ranges[0].EndInclusive)
+
+	err = env.reconciler.trim()
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_INTERNAL))
 }

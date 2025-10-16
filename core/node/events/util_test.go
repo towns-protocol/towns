@@ -61,6 +61,7 @@ type testParams struct {
 	streamHistoryDefaultMiniblocks   *uint64
 	streamHistoryMiniblocks          map[byte]uint64
 	streamSnapshotIntervalInMbs      *uint64
+	streamTrimActivationFactor       *uint64
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -729,6 +730,12 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 		btc.SetConfigValue(t, ctx,
 			crypto.StreamSnapshotIntervalInMiniblocksConfigKey,
 			crypto.ABIEncodeUint64(*p.streamSnapshotIntervalInMbs),
+		)
+	}
+	if p.streamTrimActivationFactor != nil {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamTrimActivationFactorConfigKey,
+			crypto.ABIEncodeUint64(*p.streamTrimActivationFactor),
 		)
 	}
 }
