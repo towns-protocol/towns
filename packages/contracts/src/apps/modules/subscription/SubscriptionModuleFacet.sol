@@ -219,7 +219,7 @@ contract SubscriptionModuleFacet is
             uint256 actualDuration = membershipFacet.getMembershipDuration();
 
             // Validate renewal eligibility
-            (bool shouldSkip, bytes memory reason) = _validateRenewalEligibility(
+            (bool shouldSkip, bool shouldPause, SkipReason reason) = _validateRenewalEligibility(
                 sub,
                 params[i].account,
                 actualRenewalPrice,
@@ -228,21 +228,18 @@ contract SubscriptionModuleFacet is
 
             if (shouldSkip) {
                 // Handle special case for "NOT_DUE" - different event
-                if (keccak256(reason) == keccak256("NOT_DUE")) {
+                if (reason == SkipReason.NOT_DUE) {
                     emit SubscriptionNotDue(params[i].account, params[i].entityId);
                 } else {
-                    // Pause subscription for conditions that require it
-                    if (
-                        keccak256(reason) == keccak256("PAST_GRACE") ||
-                        keccak256(reason) == keccak256("MEMBERSHIP_BANNED") ||
-                        keccak256(reason) == keccak256("NOT_OWNER") ||
-                        keccak256(reason) == keccak256("RENEWAL_PRICE_CHANGED") ||
-                        keccak256(reason) == keccak256("INSUFFICIENT_BALANCE") ||
-                        keccak256(reason) == keccak256("DURATION_CHANGED")
-                    ) {
+                    // Pause subscription if needed
+                    if (shouldPause) {
                         _pauseSubscription(sub, params[i].account, params[i].entityId);
                     }
-                    emit BatchRenewalSkipped(params[i].account, params[i].entityId, string(reason));
+                    emit BatchRenewalSkipped(
+                        params[i].account,
+                        params[i].entityId,
+                        _skipReasonToString(reason)
+                    );
                 }
                 continue;
             }

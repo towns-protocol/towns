@@ -24,6 +24,19 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
     using CustomRevert for bytes4;
     using EnumerableSetLib for EnumerableSetLib.Uint256Set;
 
+    /// @dev Reasons why a renewal might be skipped
+    enum SkipReason {
+        NONE,
+        NOT_DUE,
+        INACTIVE,
+        PAST_GRACE,
+        MEMBERSHIP_BANNED,
+        NOT_OWNER,
+        RENEWAL_PRICE_CHANGED,
+        INSUFFICIENT_BALANCE,
+        DURATION_CHANGED
+    }
+
     uint256 public constant GRACE_PERIOD = 3 days;
 
     // Dynamic buffer times based on expiration proximity
@@ -177,54 +190,70 @@ abstract contract SubscriptionModuleBase is ISubscriptionModuleBase {
     /// @param actualRenewalPrice The current renewal price
     /// @param actualDuration The current membership duration
     /// @return shouldSkip Whether to skip this renewal
+    /// @return shouldPause Whether to pause the subscription (only relevant if shouldSkip is true)
     /// @return reason The skip reason if shouldSkip is true
     function _validateRenewalEligibility(
         Subscription storage sub,
         address account,
         uint256 actualRenewalPrice,
         uint256 actualDuration
-    ) internal view returns (bool shouldSkip, bytes memory reason) {
+    ) internal view returns (bool shouldSkip, bool shouldPause, SkipReason reason) {
         // Check if renewal is due
         if (sub.nextRenewalTime > block.timestamp) {
-            return (true, "NOT_DUE");
+            return (true, false, SkipReason.NOT_DUE);
         }
 
         // Check if subscription is active
         if (!sub.active) {
-            return (true, "INACTIVE");
+            return (true, false, SkipReason.INACTIVE);
         }
 
         // Check if past grace period
         if (sub.nextRenewalTime + GRACE_PERIOD < block.timestamp) {
-            return (true, "PAST_GRACE");
+            return (true, true, SkipReason.PAST_GRACE);
         }
 
         // Check if membership is banned
         if (IBanning(sub.space).isBanned(sub.tokenId)) {
-            return (true, "MEMBERSHIP_BANNED");
+            return (true, true, SkipReason.MEMBERSHIP_BANNED);
         }
 
         // Check if account is still the owner
         if (IERC721(sub.space).ownerOf(sub.tokenId) != account) {
-            return (true, "NOT_OWNER");
+            return (true, true, SkipReason.NOT_OWNER);
         }
 
         // Check if renewal price changed
         if (sub.lastKnownRenewalPrice != actualRenewalPrice) {
-            return (true, "RENEWAL_PRICE_CHANGED");
+            return (true, true, SkipReason.RENEWAL_PRICE_CHANGED);
         }
 
         // Check if account has sufficient balance
         if (account.balance < actualRenewalPrice) {
-            return (true, "INSUFFICIENT_BALANCE");
+            return (true, true, SkipReason.INSUFFICIENT_BALANCE);
         }
 
         // Check if duration changed
         if (sub.duration != actualDuration) {
-            return (true, "DURATION_CHANGED");
+            return (true, true, SkipReason.DURATION_CHANGED);
         }
 
-        return (false, "");
+        return (false, false, SkipReason.NONE);
+    }
+
+    /// @dev Converts a SkipReason enum to its string representation
+    /// @param reason The skip reason to convert
+    /// @return The string representation of the reason
+    function _skipReasonToString(SkipReason reason) internal pure returns (string memory) {
+        if (reason == SkipReason.NOT_DUE) return "NOT_DUE";
+        if (reason == SkipReason.INACTIVE) return "INACTIVE";
+        if (reason == SkipReason.PAST_GRACE) return "PAST_GRACE";
+        if (reason == SkipReason.MEMBERSHIP_BANNED) return "MEMBERSHIP_BANNED";
+        if (reason == SkipReason.NOT_OWNER) return "NOT_OWNER";
+        if (reason == SkipReason.RENEWAL_PRICE_CHANGED) return "RENEWAL_PRICE_CHANGED";
+        if (reason == SkipReason.INSUFFICIENT_BALANCE) return "INSUFFICIENT_BALANCE";
+        if (reason == SkipReason.DURATION_CHANGED) return "DURATION_CHANGED";
+        return "";
     }
 
     function _pauseSubscription(
