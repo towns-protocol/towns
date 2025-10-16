@@ -46,6 +46,36 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      BEACON REGISTRY                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Registers a new app type with its beacon
+    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @param beacon The beacon contract address for this app type
+    function _registerAppType(bytes32 appType, address beacon) internal {
+        if (beacon == address(0)) InvalidAddressInput.selector.revertWith();
+
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+
+        // If new type, add to list
+        if ($.appBeacons[appType] == address(0)) {
+            $.registeredAppTypes.push(appType);
+        }
+
+        $.appBeacons[appType] = beacon;
+        emit AppTypeRegistered(appType, beacon);
+    }
+
+    /// @notice Gets the beacon for a specific app type
+    /// @param appType The app type identifier
+    /// @return beacon The beacon contract address
+    function _getAppBeacon(bytes32 appType) internal view returns (address) {
+        address beacon = AppRegistryStorage.getLayout().appBeacons[appType];
+        if (beacon == address(0)) UnknownAppType.selector.revertWith();
+        return beacon;
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           FUNCTIONS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -119,11 +149,15 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     /// @notice Creates a new app with the specified parameters
+    /// @param appType The type of app to create (e.g. keccak256("simple"), keccak256("flexible"))
     /// @param params The parameters for creating the app
     /// @return app The address of the created app
     /// @return version The version ID of the registered app
     /// @dev Validates inputs, deploys app contract, and registers it
-    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
+    function _createApp(
+        bytes32 appType,
+        AppParams calldata params
+    ) internal returns (address app, bytes32 version) {
         // Validate basic parameters
         if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
         if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
@@ -131,18 +165,44 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         uint48 duration = _validateDuration(params.accessDuration);
 
-        app = LibClone.deployERC1967BeaconProxy(address(this));
-        ISimpleApp(app).initialize(
-            msg.sender,
-            params.name,
-            params.permissions,
-            params.installPrice,
-            duration,
-            params.client
-        );
+        // Get beacon for app type
+        address beacon = _getAppBeacon(appType);
+
+        // Deploy beacon proxy
+        app = LibClone.deployERC1967BeaconProxy(beacon);
+
+        // Initialize - both SimpleApp and FlexibleApp implement ITownsApp
+        // SimpleApp uses 6 params, FlexibleApp uses 7 (adds useAllowList)
+        // We'll use a try-catch to handle both
+        try
+            ISimpleApp(app).initialize(
+                msg.sender,
+                params.name,
+                params.permissions,
+                params.installPrice,
+                duration,
+                params.client
+            )
+        {
+            // SimpleApp initialization succeeded
+        } catch {
+            // Try FlexibleApp initialization (7 params with useAllowList = false by default)
+            bytes memory initData = abi.encodeWithSignature(
+                "initialize(address,string,bytes32[],uint256,uint48,address,bool)",
+                msg.sender,
+                params.name,
+                params.permissions,
+                params.installPrice,
+                duration,
+                params.client,
+                false // useAllowList default to false
+            );
+            (bool success, ) = app.call(initData);
+            if (!success) AppDoesNotImplementInterface.selector.revertWith();
+        }
 
         version = _registerApp(ITownsApp(app), params.client);
-        emit AppCreated(app, version);
+        emit AppCreated(app, version, appType);
     }
 
     function _upgradeApp(

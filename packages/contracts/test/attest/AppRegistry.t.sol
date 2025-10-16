@@ -91,7 +91,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (address app, bytes32 appId) = registry.createApp(appData);
+        (address app, bytes32 appId) = registry.createApp(keccak256("simple"), appData);
         SIMPLE_APP_ID = appId;
         SIMPLE_APP = payable(app);
         _;
@@ -207,7 +207,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (address app, bytes32 appId) = registry.createApp(appData);
+        (address app, bytes32 appId) = registry.createApp(keccak256("simple"), appData);
 
         App memory appInfo = registry.getAppById(appId);
         address module = appInfo.module;
@@ -230,7 +230,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAppName.selector);
-        registry.createApp(appData);
+        registry.createApp(keccak256("simple"), appData);
     }
 
     function test_revertWhen_createApp_EmptyPermissions() external {
@@ -244,7 +244,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidArrayInput.selector);
-        registry.createApp(appData);
+        registry.createApp(keccak256("simple"), appData);
     }
 
     function test_revertWhen_createApp_ZeroAddressClient() external {
@@ -259,7 +259,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
-        registry.createApp(appData);
+        registry.createApp(keccak256("simple"), appData);
     }
 
     function test_revertWhen_createApp_InvalidDuration() external {
@@ -272,7 +272,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidDuration.selector);
-        registry.createApp(appData);
+        registry.createApp(keccak256("simple"), appData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -904,7 +904,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint48 newAccessDuration = DEFAULT_ACCESS_DURATION + 1;
 
         vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
+        (address app, ) = registry.createApp("simple", appData);
         SimpleApp(payable(app)).updatePricing(newInstallPrice, newAccessDuration);
         vm.stopPrank();
 
@@ -928,7 +928,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         newPermissions[1] = bytes32("Write");
 
         vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
+        (address app, ) = registry.createApp("simple", appData);
         SimpleApp(payable(app)).updatePermissions(newPermissions);
         vm.stopPrank();
 
@@ -950,7 +950,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (simpleApp, ) = registry.createApp(appData);
+        (simpleApp, ) = registry.createApp("simple", appData);
     }
 
     function _setupAppWithPrice(uint256 price) internal {

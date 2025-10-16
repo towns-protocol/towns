@@ -23,12 +23,16 @@ library AppRegistryStorage {
         bytes32 schemaId;
         // App => AppInfo
         mapping(address => AppInfo) apps;
-        // Simple app beacon
+        // Simple app beacon (deprecated - use appBeacons mapping instead)
         address beacon;
         // Space factory
         address spaceFactory;
         // client => ClientInfo
         mapping(address => ClientInfo) client;
+        // Beacon registry - supports multiple app types
+        mapping(bytes32 appType => address beacon) appBeacons;
+        // List of registered app types
+        bytes32[] registeredAppTypes;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

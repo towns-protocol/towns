@@ -7,6 +7,9 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 
+// libraries
+import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
@@ -48,16 +51,21 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _banApp(app);
     }
 
+    /// @inheritdoc IAppRegistry
+    function adminRegisterAppType(bytes32 appType, address beacon) external onlyOwner {
+        _registerAppType(appType, beacon);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           App Functions                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Create an upgradeable simple app contract
-    /// @param params The parameters of the app
+    /// @inheritdoc IAppRegistry
     function createApp(
+        bytes32 appType,
         AppParams calldata params
     ) external payable nonReentrant returns (address app, bytes32 appId) {
-        return _createApp(params);
+        return _createApp(appType, params);
     }
 
     /// @notice Register a new app with permissions
@@ -194,5 +202,15 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return isBanned True if the app is banned, false otherwise
     function isAppBanned(address app) external view returns (bool) {
         return _isBanned(app);
+    }
+
+    /// @inheritdoc IAppRegistry
+    function getRegisteredAppTypes() external view returns (bytes32[] memory) {
+        return AppRegistryStorage.getLayout().registeredAppTypes;
+    }
+
+    /// @inheritdoc IAppRegistry
+    function getAppBeacon(bytes32 appType) external view returns (address) {
+        return AppRegistryStorage.getLayout().appBeacons[appType];
     }
 }

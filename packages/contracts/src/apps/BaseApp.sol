@@ -12,7 +12,7 @@ import {ITownsApp} from "./ITownsApp.sol";
 /// @dev Inheriting contracts should override _onInstall and _onUninstall as needed
 /// @dev Implements IModule, IExecutionModule, and ITownsApp interfaces
 abstract contract BaseApp is ITownsApp {
-    receive() external payable {
+    receive() external payable virtual {
         _onPayment(msg.sender, msg.value);
     }
 
@@ -25,12 +25,12 @@ abstract contract BaseApp is ITownsApp {
     }
 
     /// @notice Required by IModule - called when module is installed
-    function onInstall(bytes calldata postInstallData) external {
+    function onInstall(bytes calldata postInstallData) external virtual {
         _onInstall(postInstallData);
     }
 
     /// @notice Required by IModule - called when module is uninstalled
-    function onUninstall(bytes calldata postUninstallData) external {
+    function onUninstall(bytes calldata postUninstallData) external virtual {
         _onUninstall(postUninstallData);
     }
 

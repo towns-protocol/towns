@@ -32,7 +32,10 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         });
 
         vm.broadcast(deployer);
-        (address app, bytes32 appId) = IAppRegistry(appRegistry).createApp(appData);
+        (address app, bytes32 appId) = IAppRegistry(appRegistry).createApp(
+            keccak256("simple"),
+            appData
+        );
 
         saveApp("SimpleApp", appId, address(app));
     }

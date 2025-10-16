@@ -285,7 +285,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         });
 
         vm.prank(appDeveloper);
-        (app, ) = IAppRegistry(appRegistry).createApp(appParams);
+        (app, ) = IAppRegistry(appRegistry).createApp(keccak256("simple"), appParams);
     }
 
     function _installAppOnEveryoneSpace(address app) internal {

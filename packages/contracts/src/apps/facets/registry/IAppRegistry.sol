@@ -49,6 +49,7 @@ interface IAppRegistryBase {
     error NotAllowed();
     error ClientAlreadyRegistered();
     error ClientNotRegistered();
+    error UnknownAppType();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -58,7 +59,7 @@ interface IAppRegistryBase {
     event AppUpdated(address indexed app, bytes32 uid);
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
-    event AppCreated(address indexed app, bytes32 uid);
+    event AppCreated(address indexed app, bytes32 uid, bytes32 appType);
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
@@ -68,6 +69,7 @@ interface IAppRegistryBase {
         bytes32 indexed oldVersionId,
         bytes32 indexed newVersionId
     );
+    event AppTypeRegistered(bytes32 indexed appType, address indexed beacon);
 }
 
 /// @title IAppRegistry Interface
@@ -112,10 +114,12 @@ interface IAppRegistry is IAppRegistryBase {
     function isAppBanned(address app) external view returns (bool);
 
     /// @notice Create a new app
+    /// @param appType The type of app to create (e.g. keccak256("simple"), keccak256("flexible"))
     /// @param params The parameters of the app
     /// @return app The app address
     /// @return appId The attestation UID of the registered app
     function createApp(
+        bytes32 appType,
         AppParams calldata params
     ) external payable returns (address app, bytes32 appId);
 
@@ -179,4 +183,18 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address to ban
     /// @return The attestation UID that was banned
     function adminBanApp(address app) external returns (bytes32);
+
+    /// @notice Register a new app type with its beacon
+    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @param beacon The beacon contract address for this app type
+    function adminRegisterAppType(bytes32 appType, address beacon) external;
+
+    /// @notice Get all registered app types
+    /// @return types Array of registered app type identifiers
+    function getRegisteredAppTypes() external view returns (bytes32[] memory);
+
+    /// @notice Get the beacon address for a specific app type
+    /// @param appType The app type identifier
+    /// @return beacon The beacon contract address
+    function getAppBeacon(bytes32 appType) external view returns (address);
 }
