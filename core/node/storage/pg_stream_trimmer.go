@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"math"
 	"sync"
 	"time"
 
@@ -105,34 +106,39 @@ func (t *streamTrimmer) close() {
 // tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
 // TODO: Review the logic on when to trim the stream.
 func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
-	t.snapshotsPerStreamLock.Lock()
-	t.snapshotsPerStream[streamId]++
-	streamSnapshots := t.snapshotsPerStream[streamId]
-	t.snapshotsPerStreamLock.Unlock()
-
 	if t.workerPool.Stopped() ||
 		t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
 		return
 	}
 
+	task, ok := t.computeTrimTask(streamId)
+	if !ok {
+		return
+	}
+
+	t.scheduleTrimTask(task)
+}
+
+func (t *streamTrimmer) computeTrimTask(streamId StreamId) (trimTask, bool) {
 	cfg := t.config.Get()
 
+	var task trimTask
+
 	if cfg.StreamTrimActivationFactor == 0 {
-		return
+		return task, false
 	}
 
-	minEventsPerSnapshot := cfg.MinSnapshotEvents.ForType(streamId.Type())
-	if minEventsPerSnapshot == 0 {
-		return
+	if cfg.MinSnapshotEvents.ForType(streamId.Type()) == 0 {
+		return task, false
 	}
 
-	totalEvents := minEventsPerSnapshot * streamSnapshots
-	scheduleFrequency := cfg.StreamTrimActivationFactor * minEventsPerSnapshot
-	if totalEvents%scheduleFrequency != 0 {
-		return
+	streamHistoryCfg := cfg.StreamHistoryMiniblocks.ForType(streamId.Type())
+	var streamHistoryMbs int64
+	if streamHistoryCfg >= uint64(math.MaxInt64) {
+		streamHistoryMbs = math.MaxInt64
+	} else {
+		streamHistoryMbs = int64(streamHistoryCfg)
 	}
-
-	streamHistoryMbs := int64(cfg.StreamHistoryMiniblocks.ForType(streamId.Type()))
 
 	var retentionIntervalMbs int64
 	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
@@ -140,27 +146,41 @@ func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
 	}
 
 	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 {
-		return
+		return task, false
 	}
 
-	t.scheduleTrimTask(streamId, streamHistoryMbs, retentionIntervalMbs)
-}
+	shouldSchedule := false
 
-// scheduleTrimTask schedules a new trim task for the given stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, streamHistoryMbs, retentionIntervalMbs int64) {
-	t.pendingTasksLock.Lock()
-	if _, exists := t.pendingTasks[streamId]; exists {
-		t.pendingTasksLock.Unlock()
-		return
+	t.snapshotsPerStreamLock.Lock()
+	count := t.snapshotsPerStream[streamId] + 1
+	if count%cfg.StreamTrimActivationFactor != 0 {
+		t.snapshotsPerStream[streamId] = count % cfg.StreamTrimActivationFactor
+	} else {
+		delete(t.snapshotsPerStream, streamId)
+		shouldSchedule = true
 	}
-	t.pendingTasks[streamId] = struct{}{}
-	t.pendingTasksLock.Unlock()
+	t.snapshotsPerStreamLock.Unlock()
 
-	task := trimTask{
+	if !shouldSchedule {
+		return task, false
+	}
+
+	return trimTask{
 		streamId:             streamId,
 		streamHistoryMbs:     streamHistoryMbs,
 		retentionIntervalMbs: retentionIntervalMbs,
+	}, true
+}
+
+// scheduleTrimTask schedules a new trim task for the given stream
+func (t *streamTrimmer) scheduleTrimTask(task trimTask) {
+	t.pendingTasksLock.Lock()
+	if _, exists := t.pendingTasks[task.streamId]; exists {
+		t.pendingTasksLock.Unlock()
+		return
 	}
+	t.pendingTasks[task.streamId] = struct{}{}
+	t.pendingTasksLock.Unlock()
 
 	t.workerPool.Submit(func() {
 		timer := prometheus.NewTimer(t.taskDuration)

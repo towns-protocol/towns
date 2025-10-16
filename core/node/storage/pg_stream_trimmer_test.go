@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"math"
 	"slices"
 	"strconv"
 	"testing"
@@ -17,6 +18,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 func TestStreamTrimmer(t *testing.T) {
@@ -495,4 +497,104 @@ func collectStreamState(
 	}
 
 	return seqs, withSnapshot
+}
+
+func TestStreamTrimmerComputeTrimTask(t *testing.T) {
+	makeTrimmer := func(cfg *crypto.OnChainSettings) *streamTrimmer {
+		return &streamTrimmer{
+			config:             &mocks.MockOnChainCfg{Settings: cfg},
+			snapshotsPerStream: make(map[StreamId]uint64),
+		}
+	}
+
+	spaceStream := testutils.FakeStreamId(STREAM_SPACE_BIN)
+
+	t.Run("activation factor disabled", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 0,
+		}
+		tr := makeTrimmer(cfg)
+		_, ok := tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		assert.Empty(t, tr.snapshotsPerStream)
+	})
+
+	t.Run("min events per snapshot zero", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+		}
+		tr := makeTrimmer(cfg)
+		_, ok := tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		assert.Empty(t, tr.snapshotsPerStream)
+	})
+
+	t.Run("no history and no retention", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+		}
+		tr := makeTrimmer(cfg)
+		_, ok := tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		assert.Empty(t, tr.snapshotsPerStream)
+	})
+
+	t.Run("schedules every activationFactor snapshots and resets counter", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 3,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: 5},
+		}
+		tr := makeTrimmer(cfg)
+
+		_, ok := tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		assert.Equal(t, uint64(1), tr.snapshotsPerStream[spaceStream])
+
+		_, ok = tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		assert.Equal(t, uint64(2), tr.snapshotsPerStream[spaceStream])
+
+		task, ok := tr.computeTrimTask(spaceStream)
+		assert.True(t, ok)
+		assert.Equal(t, trimTask{
+			streamId:             spaceStream,
+			streamHistoryMbs:     5,
+			retentionIntervalMbs: 0,
+		}, task)
+		_, exists := tr.snapshotsPerStream[spaceStream]
+		assert.False(t, exists, "counter reset after scheduling")
+	})
+
+	t.Run("retention-only schedule uses minimum clamp", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor:         2,
+			MinSnapshotEvents:                  crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamSnapshotIntervalInMiniblocks: 20,
+		}
+		tr := makeTrimmer(cfg)
+
+		_, ok := tr.computeTrimTask(spaceStream)
+		assert.False(t, ok)
+		task, ok := tr.computeTrimTask(spaceStream)
+		assert.True(t, ok)
+		assert.Equal(t, trimTask{
+			streamId:             spaceStream,
+			streamHistoryMbs:     0,
+			retentionIntervalMbs: MinRetentionIntervalMiniblocks,
+		}, task)
+	})
+
+	t.Run("history saturates to MaxInt64", func(t *testing.T) {
+		cfg := &crypto.OnChainSettings{
+			StreamTrimActivationFactor: 1,
+			MinSnapshotEvents:          crypto.MinSnapshotEventsSettings{Default: 1},
+			StreamHistoryMiniblocks:    crypto.StreamHistoryMiniblocks{Default: math.MaxUint64},
+		}
+		tr := makeTrimmer(cfg)
+		task, ok := tr.computeTrimTask(spaceStream)
+		assert.True(t, ok)
+		assert.Equal(t, int64(math.MaxInt64), task.streamHistoryMbs)
+	})
 }
