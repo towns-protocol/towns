@@ -16,6 +16,18 @@ abstract contract BaseApp is ITownsApp {
         _onPayment(msg.sender, msg.value);
     }
 
+    function initialize(
+        address owner,
+        string calldata appId,
+        bytes32[] calldata permissions,
+        uint256 price,
+        uint48 duration,
+        address client,
+        bytes calldata extraData
+    ) external {
+        _onInitialize(abi.encode(owner, appId, permissions, price, duration, client, extraData));
+    }
+
     // External functions
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return
@@ -47,6 +59,8 @@ abstract contract BaseApp is ITownsApp {
     }
 
     // Internal functions
+    function _onInitialize(bytes memory initializeData) internal virtual {}
+
     function _onInstall(bytes calldata postInstallData) internal virtual {}
 
     function _onUninstall(bytes calldata postUninstallData) internal virtual {}

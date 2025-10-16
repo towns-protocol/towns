@@ -28,7 +28,8 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
             permissions: permissions,
             client: client,
             installPrice: installPrice,
-            accessDuration: accessDuration
+            accessDuration: accessDuration,
+            extraData: ""
         });
 
         vm.broadcast(deployer);

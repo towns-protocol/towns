@@ -21,25 +21,6 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     using CustomRevert for bytes4;
     using SimpleAppStorage for SimpleAppStorage.Layout;
 
-    // External functions
-    /// @inheritdoc ISimpleApp
-    function initialize(
-        address owner,
-        string calldata appId,
-        bytes32[] calldata permissions,
-        uint256 installPrice,
-        uint48 accessDuration,
-        address client
-    ) external initializer {
-        _setOwner(owner);
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        $.name = appId;
-        $.permissions = permissions;
-        $.installPrice = installPrice;
-        $.accessDuration = accessDuration;
-        $.client = client;
-    }
-
     /// @inheritdoc ISimpleApp
     function withdrawETH(address recipient) external onlyOwner {
         if (recipient == address(0)) ZeroAddress.selector.revertWith();
@@ -101,6 +82,28 @@ contract SimpleApp is ISimpleApp, Ownable, BaseApp, Initializable {
     }
 
     // Internal functions
+    function _onInitialize(bytes memory initializeData) internal override {
+        (
+            address owner,
+            string memory appId,
+            bytes32[] memory permissions,
+            uint256 price,
+            uint48 duration,
+            address client,
+
+        ) = abi.decode(
+                initializeData,
+                (address, string, bytes32[], uint256, uint48, address, bytes)
+            );
+        _setOwner(owner);
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        $.name = appId;
+        $.permissions = permissions;
+        $.installPrice = price;
+        $.accessDuration = duration;
+        $.client = client;
+    }
+
     function _installPrice() internal view override returns (uint256) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.installPrice;

@@ -281,7 +281,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
             permissions: permissions,
             client: appClient,
             installPrice: 0,
-            accessDuration: 0
+            accessDuration: 0,
+            extraData: ""
         });
 
         vm.prank(appDeveloper);

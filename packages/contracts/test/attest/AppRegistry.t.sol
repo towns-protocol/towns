@@ -87,7 +87,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
 
         vm.prank(DEFAULT_DEV);
@@ -203,7 +204,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
 
         vm.prank(DEFAULT_DEV);
@@ -226,7 +228,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAppName.selector);
@@ -240,7 +243,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidArrayInput.selector);
@@ -255,7 +259,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: address(0),
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidAddressInput.selector);
@@ -268,7 +273,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: new bytes32[](1),
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: 365 days + 1
+            accessDuration: 365 days + 1,
+            extraData: ""
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidDuration.selector);
@@ -897,7 +903,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
 
         uint256 newInstallPrice = DEFAULT_INSTALL_PRICE + 1;
@@ -920,7 +927,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
 
         bytes32[] memory newPermissions = new bytes32[](2);
@@ -946,7 +954,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             permissions: permissions,
             client: DEFAULT_CLIENT,
             installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
+            accessDuration: DEFAULT_ACCESS_DURATION,
+            extraData: ""
         });
 
         vm.prank(DEFAULT_DEV);

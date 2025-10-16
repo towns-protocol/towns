@@ -16,7 +16,7 @@ library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(18);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(22);
         arr.p(AppRegistryFacet.getAppSchema.selector);
         arr.p(AppRegistryFacet.getAppSchemaId.selector);
         arr.p(AppRegistryFacet.getAppById.selector);
@@ -24,6 +24,7 @@ library DeployAppRegistryFacet {
         arr.p(AppRegistryFacet.registerApp.selector);
         arr.p(AppRegistryFacet.removeApp.selector);
         arr.p(AppRegistryFacet.createApp.selector);
+        arr.p(AppRegistryFacet.createAppByType.selector);
         arr.p(AppRegistryFacet.upgradeApp.selector);
         arr.p(AppRegistryFacet.installApp.selector);
         arr.p(AppRegistryFacet.uninstallApp.selector);
@@ -32,9 +33,12 @@ library DeployAppRegistryFacet {
         arr.p(AppRegistryFacet.getAppDuration.selector);
         arr.p(AppRegistryFacet.adminRegisterAppSchema.selector);
         arr.p(AppRegistryFacet.adminBanApp.selector);
+        arr.p(AppRegistryFacet.adminRegisterAppType.selector);
         arr.p(AppRegistryFacet.isAppBanned.selector);
         arr.p(AppRegistryFacet.getAppByClient.selector);
         arr.p(AppRegistryFacet.renewApp.selector);
+        arr.p(AppRegistryFacet.getRegisteredAppTypes.selector);
+        arr.p(AppRegistryFacet.getAppBeacon.selector);
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_

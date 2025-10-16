@@ -66,19 +66,4 @@ interface ISimpleApp is ISimpleAppBase {
     /// @notice Updates the permissions of the app
     /// @param permissions The new permissions of the app
     function updatePermissions(bytes32[] calldata permissions) external;
-
-    /// @notice Initializes the app
-    /// @param owner The owner of the app
-    /// @param appId The ID of the app
-    /// @param permissions The permissions of the app
-    /// @param installPrice The install price of the app
-    /// @param accessDuration The access duration of the app
-    function initialize(
-        address owner,
-        string calldata appId,
-        bytes32[] calldata permissions,
-        uint256 installPrice,
-        uint48 accessDuration,
-        address client
-    ) external;
 }

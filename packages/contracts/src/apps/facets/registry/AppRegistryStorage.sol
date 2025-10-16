@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 // interfaces
 
 // libraries
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // contracts
 
@@ -18,17 +19,23 @@ struct ClientInfo {
 }
 
 library AppRegistryStorage {
+    using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
+
     struct Layout {
         // Registered schema ID
         bytes32 schemaId;
         // App => AppInfo
         mapping(address => AppInfo) apps;
-        // Simple app beacon
+        // Simple app beacon (deprecated - use appBeacons mapping instead)
         address beacon;
         // Space factory
         address spaceFactory;
         // client => ClientInfo
         mapping(address => ClientInfo) client;
+        // Beacon registry - supports multiple app types
+        mapping(bytes32 appType => address beacon) appBeacons;
+        // List of registered app types
+        EnumerableSetLib.Bytes32Set registeredAppTypes;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -40,10 +47,10 @@ library AppRegistryStorage {
         0xe1abd3beb055e0136b3111c2c34ff6e869f8c0d7540225f8056528d6eb12b500;
 
     /// @notice Returns the storage layout for the module registry
-    /// @return l The storage layout struct
-    function getLayout() internal pure returns (Layout storage l) {
+    /// @return $ The storage layout struct
+    function getLayout() internal pure returns (Layout storage $) {
         assembly {
-            l.slot := STORAGE_SLOT
+            $.slot := STORAGE_SLOT
         }
     }
 }

@@ -22,6 +22,18 @@ contract MockPlugin is OwnableFacet, ITownsApp {
         __Ownable_init_unchained(owner);
     }
 
+    function initialize(
+        address owner,
+        string calldata,
+        bytes32[] calldata,
+        uint256,
+        uint48,
+        address,
+        bytes calldata
+    ) external {
+        __Ownable_init_unchained(owner);
+    }
+
     function executionManifest()
         external
         pure

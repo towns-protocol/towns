@@ -7,6 +7,10 @@ import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resol
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 
+// storage
+import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
+
 // types
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
@@ -17,6 +21,8 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
+    using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
+
     function __AppRegistry_init(
         address spaceFactory,
         string calldata schema,
@@ -48,16 +54,33 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
         return _banApp(app);
     }
 
+    /// @notice Register a new app type with its beacon
+    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @param beacon The beacon contract address for this app type
+    function adminRegisterAppType(bytes32 appType, address beacon) external onlyOwner {
+        _registerAppType(appType, beacon);
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           App Functions                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Create an upgradeable simple app contract
+    /// @notice Create a new app
     /// @param params The parameters of the app
     function createApp(
         AppParams calldata params
     ) external payable nonReentrant returns (address app, bytes32 appId) {
-        return _createApp(params);
+        return _createApp(keccak256("simple"), params);
+    }
+
+    /// @notice Create an upgradeable app contract
+    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @param params The parameters of the app
+    function createAppByType(
+        bytes32 appType,
+        AppParams calldata params
+    ) external payable nonReentrant returns (address app, bytes32 appId) {
+        return _createApp(appType, params);
     }
 
     /// @notice Register a new app with permissions
@@ -194,5 +217,18 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @return isBanned True if the app is banned, false otherwise
     function isAppBanned(address app) external view returns (bool) {
         return _isBanned(app);
+    }
+
+    /// @notice Get the registered app types
+    /// @return appTypes The registered app types
+    function getRegisteredAppTypes() external view returns (bytes32[] memory appTypes) {
+        return AppRegistryStorage.getLayout().registeredAppTypes.values();
+    }
+
+    /// @notice Get the app beacon for a app type
+    /// @param appType The app type
+    /// @return beacon The app beacon
+    function getAppBeacon(bytes32 appType) external view returns (address beacon) {
+        return AppRegistryStorage.getLayout().appBeacons[appType];
     }
 }

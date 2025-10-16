@@ -8,7 +8,6 @@ import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
@@ -20,6 +19,7 @@ import {AppRegistryStorage, ClientInfo, AppInfo} from "./AppRegistryStorage.sol"
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
@@ -32,6 +32,7 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
+    using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 
     uint48 private constant MAX_DURATION = 365 days;
 
@@ -46,8 +47,30 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           FUNCTIONS                        */
+    /*                        BEACON REGISTRY                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Registers a new app type with its beacon
+    /// @param appType The type identifier (e.g. keccak256("simple"), keccak256("flexible"))
+    /// @param beacon The beacon contract address for this app type
+    function _registerAppType(bytes32 appType, address beacon) internal {
+        if (beacon == address(0)) InvalidAddressInput.selector.revertWith();
+
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+
+        // add to registered types
+        $.registeredAppTypes.add(appType);
+
+        // set the beacon
+        $.appBeacons[appType] = beacon;
+        emit AppTypeRegistered(appType, beacon);
+    }
+
+    function _getAppBeacon(bytes32 appType) internal view returns (address) {
+        address beacon = AppRegistryStorage.getLayout().appBeacons[appType];
+        if (beacon == address(0)) UnknownAppType.selector.revertWith();
+        return beacon;
+    }
 
     function _setSpaceFactory(address spaceFactory) internal {
         if (spaceFactory == address(0)) InvalidAddressInput.selector.revertWith();
@@ -123,7 +146,10 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @return app The address of the created app
     /// @return version The version ID of the registered app
     /// @dev Validates inputs, deploys app contract, and registers it
-    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
+    function _createApp(
+        bytes32 appType,
+        AppParams calldata params
+    ) internal returns (address app, bytes32 version) {
         // Validate basic parameters
         if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
         if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
@@ -131,18 +157,19 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         uint48 duration = _validateDuration(params.accessDuration);
 
-        app = LibClone.deployERC1967BeaconProxy(address(this));
-        ISimpleApp(app).initialize(
+        app = LibClone.deployERC1967BeaconProxy(_getAppBeacon(appType));
+        ITownsApp(app).initialize(
             msg.sender,
             params.name,
             params.permissions,
             params.installPrice,
             duration,
-            params.client
+            params.client,
+            params.extraData
         );
 
         version = _registerApp(ITownsApp(app), params.client);
-        emit AppCreated(app, version);
+        emit AppCreated(app, version, appType);
     }
 
     function _upgradeApp(

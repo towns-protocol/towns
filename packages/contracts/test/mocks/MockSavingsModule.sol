@@ -34,6 +34,18 @@ contract MockSavingsModule is OwnableFacet, ITownsApp {
         __Ownable_init_unchained(msg.sender);
     }
 
+    function initialize(
+        address owner,
+        string calldata,
+        bytes32[] calldata,
+        uint256,
+        uint48,
+        address,
+        bytes calldata
+    ) external {
+        __Ownable_init_unchained(owner);
+    }
+
     function moduleId() external pure returns (string memory) {
         return "towns.savings.account.module";
     }
