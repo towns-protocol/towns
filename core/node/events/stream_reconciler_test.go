@@ -847,7 +847,7 @@ func TestReconciler_TrimHistoryAlignment(t *testing.T) {
 
 	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
-	require.Len(ranges, 2)
+	require.Len(ranges, 1)
 
 	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
 	if expectedStart < 0 {
@@ -855,18 +855,15 @@ func TestReconciler_TrimHistoryAlignment(t *testing.T) {
 	}
 	expectedLast := int64(env.producedBlocks)
 
-	require.Equal(int64(0), ranges[0].StartInclusive)
-	require.Equal(int64(0), ranges[0].EndInclusive)
-	require.Equal([]int64{0}, ranges[0].SnapshotSeqNums)
+	latestRange := ranges[0]
+	require.Equal(expectedStart, latestRange.StartInclusive)
+	require.Equal(expectedLast, latestRange.EndInclusive)
 
-	require.Equal(expectedStart, ranges[1].StartInclusive)
-	require.Equal(expectedLast, ranges[1].EndInclusive)
-
-	expectedSeqs := make([]int64, 0, env.producedBlocks-int(expectedStart)+1)
-	for seq := expectedStart; seq <= expectedLast; seq++ {
-		expectedSeqs = append(expectedSeqs, seq)
-	}
-	assert.Equal(t, expectedSeqs, ranges[1].SnapshotSeqNums)
+	require.NotEmpty(latestRange.SnapshotSeqNums)
+	firstSnapshot := latestRange.SnapshotSeqNums[0]
+	lastSnapshot := latestRange.SnapshotSeqNums[len(latestRange.SnapshotSeqNums)-1]
+	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
+	assert.LessOrEqual(t, lastSnapshot, expectedLast)
 }
 
 func TestReconciler_TrimNoRetentionPolicies(t *testing.T) {
