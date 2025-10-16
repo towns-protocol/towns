@@ -918,26 +918,6 @@ export const makeTownsBot = async <
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
     const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
-    const MAX_CHUNK_RETRIES = 3
-
-    async function retryWithBackoff<T>(
-        operation: () => Promise<T>,
-        maxAttempts: number = MAX_CHUNK_RETRIES,
-    ): Promise<T> {
-        let lastError
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            try {
-                return await operation()
-            } catch (error) {
-                lastError = error instanceof Error ? error : new Error(String(error))
-                if (attempt < maxAttempts - 1) {
-                    const delay = Math.min(1000 * Math.pow(2, attempt), 8000) // Initial 1s, max 8s
-                    await new Promise((resolve) => setTimeout(resolve, delay))
-                }
-            }
-        }
-        throw lastError ?? new Error('Operation failed')
-    }
 
     const createChunkedMediaAttachment = async (
         attachment: ChunkedMediaAttachment,
@@ -997,12 +977,10 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                 }),
             ),
         ])
-        const mediaStreamResponse = await retryWithBackoff(() =>
-            client.rpc.createMediaStream({
-                events,
-                streamId: streamIdAsBytes(streamId),
-            }),
-        )
+        const mediaStreamResponse = await client.rpc.createMediaStream({
+            events,
+            streamId: streamIdAsBytes(streamId),
+        })
 
         if (!mediaStreamResponse?.nextCreationCookie) {
             throw new Error('Failed to create media stream')
@@ -1020,13 +998,11 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                     }),
                     cc.prevMiniblockHash,
                 )
-                const result = await retryWithBackoff(() =>
-                    client.rpc.addMediaEvent({
-                        event: chunkEvent,
-                        creationCookie: cc,
-                        last: chunkIndex === chunkCount - 1,
-                    }),
-                )
+                const result = await client.rpc.addMediaEvent({
+                    event: chunkEvent,
+                    creationCookie: cc,
+                    last: chunkIndex === chunkCount - 1,
+                })
 
                 if (!result?.creationCookie) {
                     throw new Error('Failed to send media chunk')
