@@ -5,11 +5,13 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"time"
 
 	gcstorage "cloud.google.com/go/storage"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
 
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -91,6 +93,11 @@ type (
 		// TestDeleteExternalObject deletes an external object from the external storage.
 		// For testing purposes only.
 		TestDeleteExternalObject(ctx context.Context, streamID StreamId, loc MiniblockDataStorageLocation) error
+
+		// TestNormalizeStreamWithoutCallingEphemeralMonitor normalizes the stream but won't call
+		// EphemeralMonitor#onSealed afterwards
+		TestNormalizeStreamWithoutCallingEphemeralMonitor(
+			ctx context.Context, streamID StreamId) (common.Hash, error)
 	}
 )
 
@@ -681,6 +688,7 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 	if err != nil {
 		return nil, err
 	}
+	defer partsRows.Close()
 
 	var (
 		parts     []externallyStoredMiniblockDescriptor
@@ -726,6 +734,63 @@ func (s *PostgresStreamStore) StreamMiniblocksStoredLocation(
 	)
 
 	return location, err
+}
+
+// LoadMediaStreamsWithMiniblocksReadyToMigrate loads up to limit normalized media streams that
+// have their miniblock data stored in the database but are ready to migrate these miniblock to
+// external storage. If the returned streams slice is less than limit, it means that there are no
+// more streams to load. Limit must be between 1 and 2500.
+func (s *PostgresStreamStore) LoadMediaStreamsWithMiniblocksReadyToMigrate(
+	ctx context.Context,
+	limit uint,
+) (streams []StreamId, err error) {
+	if limit == 0 || limit > 2500 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "limit must be between 1 and 250").
+			Tag("limit", limit).
+			Func("LoadMediaStreamsWithMiniblocksInDB")
+	}
+
+	if err := s.txRunner(
+		ctx,
+		"LoadMediaStreamsWithMiniblocksReadyToMigrate",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			streams, err = s.loadMediaStreamsWithMiniblocksReadyToMigrateTx(ctx, tx, limit)
+			return err
+		},
+		nil,
+	); err != nil {
+		return nil, err
+	}
+
+	return streams, nil
+}
+
+func (s *PostgresStreamStore) loadMediaStreamsWithMiniblocksReadyToMigrateTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	limit uint,
+) ([]StreamId, error) {
+	query := `SELECT stream_id, blockdata_ext FROM es WHERE ephemeral = false AND stream_id LIKE 'ff%' AND COALESCE(blockdata_ext, 'D') = 'D' LIMIT $1`
+	rows, err := tx.Query(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		streamID StreamId
+		streams  = make([]StreamId, 0, limit)
+		loc      MiniblockDataStorageLocation
+	)
+	if _, err = pgx.ForEachRow(rows, []any{&streamID, &loc}, func() error {
+		streams = append(streams, streamID)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return streams, nil
 }
 
 // composeGCPObjects composes the given source objects into the destination object located at dstKey.
@@ -798,4 +863,29 @@ func (s *PostgresStreamStore) TestDeleteExternalObject(
 	}
 
 	return RiverError(Err_INTERNAL, "Storage location isn't external").Func("TestDeleteExternalObject")
+}
+
+func (s *PostgresStreamStore) TestNormalizeStreamWithoutCallingEphemeralMonitor(
+	ctx context.Context,
+	streamId StreamId,
+) (common.Hash, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var genesisMiniblockHash common.Hash
+
+	err := s.txRunner(
+		ctx,
+		"NormalizeEphemeralStream",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId, false)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+
+	return genesisMiniblockHash, err
 }

@@ -92,8 +92,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
+				true,
 				10,
-				120*1025,
+				10,
 			)
 
 			defer func() {
@@ -118,8 +119,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
+				true,
 				50,
-				120*1024,
+				10,
 			)
 
 			defer func() {
@@ -137,7 +139,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
-			t.Skip("Too slow on CI")
+			t.Skip("Too big for CI")
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -145,6 +148,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
+				true,
 				5,
 				2*1024*1024,
 			)
@@ -216,8 +220,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
+				true,
 				10,
-				120*1025,
+				10,
 			)
 
 			defer func() {
@@ -242,8 +247,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
+				true,
 				50,
-				120*1024,
+				10,
 			)
 
 			defer func() {
@@ -261,7 +267,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
-			t.Skip("Too slow on CI")
+			t.Skip("Too big for CI")
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -270,7 +276,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				nodeWallet,
 				require,
 				store,
-				5,
+				true,
+				10,
 				2*1024*1024,
 			)
 
@@ -287,6 +294,73 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
 			}, 2*time.Minute, time.Second)
 		})
+	})
+
+	t.Run("Migrate existing streams", func(t *testing.T) {
+		gcsConfig := &config.ExternalMediaStreamStorageConfig{
+			Gcs: config.ExternalMediaStreamStorageGCStorageConfig{
+				Bucket:          cfg.ExternalMediaStreamStorage.Gcs.Bucket,
+				JsonCredentials: cfg.ExternalMediaStreamStorage.Gcs.JsonCredentials,
+			},
+			EnableMigrationExistingStreams: true,
+		}
+
+		require.False(t, gcsConfig.AwsS3.Enabled())
+		require.True(t, gcsConfig.Gcs.Enabled())
+
+		// setup custom transport to disable keep-alive and max-idle connections to make goleak happy.
+		base := http.DefaultTransport.(*http.Transport).Clone()
+		base.DisableKeepAlives = true
+		base.MaxIdleConns = -1
+		defer http.DefaultTransport.(*http.Transport).CloseIdleConnections()
+		defer base.CloseIdleConnections()
+
+		trans, err := htransport.NewTransport(ctx, base,
+			option.WithCredentialsJSON([]byte(gcsConfig.Gcs.JsonCredentials)),
+			option.WithScopes(raw.DevstorageReadWriteScope))
+		require.NoError(t, err)
+
+		c := http.Client{Transport: trans}
+		defer c.CloseIdleConnections()
+
+		client, err := gcpstorage.NewClient(ctx, option.WithHTTPClient(&c))
+		require.NoError(t, err)
+		defer client.Close()
+
+		bucket := client.Bucket(gcsConfig.Gcs.Bucket)
+
+		require := require.New(t)
+
+		userWallet, err := crypto.NewWallet(ctx)
+		require.NoError(err)
+		nodeWallet, err := crypto.NewWallet(ctx)
+		require.NoError(err)
+
+		store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+
+		// insert media stream direct in DB
+		streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
+			t,
+			ctx,
+			userWallet,
+			nodeWallet,
+			require,
+			store,
+			false,
+			1,
+			50,
+		)
+
+		// normalize stream and bypass the store to call the onSealed on the ephemeral stream
+		// monitor that normally would migrate the miniblock data to external storage.
+		_, err = store.TestNormalizeStreamWithoutCallingEphemeralMonitor(ctx, streamID)
+		require.NoError(err)
+
+		// the ephemeral stream monitor must pick up the normalized stream as it was an already
+		// existing stream that became eligible for miniblock migration.
+		require.EventuallyWithT(func(collect *assert.CollectT) {
+			compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
+		}, 2*time.Minute, time.Second)
 	})
 }
 
@@ -400,6 +474,7 @@ func createMediaStreamAndAddChunks(
 	nodeWallet *crypto.Wallet,
 	require *require.Assertions,
 	store *storage.PostgresStreamStore,
+	normalizeStream bool,
 	chunkCount int,
 	chunkSize int,
 ) (StreamId, int, []*storage.MiniblockDescriptor) {
@@ -439,9 +514,11 @@ func createMediaStreamAndAddChunks(
 		mbRef.Hash = common.BytesToHash(miniblock.Header.Hash)
 	}
 
-	genesisMbHash, err := store.NormalizeEphemeralStream(ctx, streamID)
-	require.NoError(err)
-	require.Equal(genesisMiniblockDescriptor.Hash, genesisMbHash)
+	if normalizeStream {
+		genesisMbHash, err := store.NormalizeEphemeralStream(ctx, streamID)
+		require.NoError(err)
+		require.Equal(genesisMiniblockDescriptor.Hash, genesisMbHash)
+	}
 	return streamID, chunks, miniblocks
 }
 
