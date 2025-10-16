@@ -57,7 +57,6 @@ const (
 	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
-	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
 	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
@@ -132,11 +131,6 @@ type OnChainSettings struct {
 	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
-
-	// StreamEnableNewSnapshotFormat indicates whether the new snapshot format is enabled.
-	// 0 means the old snapshot format is used, 1 means the new snapshot format is used.
-	// TODO: remove this setting
-	StreamEnableNewSnapshotFormat uint64 `mapstructure:"stream.enableNewSnapshotFormat"`
 
 	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
 	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
@@ -306,7 +300,6 @@ func DefaultOnChainSettings() *OnChainSettings {
 			User:         10,
 			UserDevice:   10,
 		},
-		StreamEnableNewSnapshotFormat: 0,
 
 		// 0 means space stream trimming is disabled
 		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{

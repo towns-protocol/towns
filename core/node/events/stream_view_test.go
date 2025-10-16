@@ -30,7 +30,6 @@ func TestLoad(t *testing.T) {
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	cfg := crypto.DefaultOnChainSettings()
-	cfg.StreamEnableNewSnapshotFormat = 1
 	params := &StreamCacheParams{
 		Wallet:      nodeWallet,
 		ChainConfig: &mocks.MockOnChainCfg{Settings: cfg},
