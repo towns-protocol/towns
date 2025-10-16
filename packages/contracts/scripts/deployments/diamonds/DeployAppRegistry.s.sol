@@ -21,6 +21,7 @@ import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol"
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
 
 // deployers
+import {DeploySpaceFactory} from "./DeploySpaceFactory.s.sol";
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
 import {Deployer} from "../../common/Deployer.s.sol";
 
@@ -30,7 +31,8 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     address private SPACE_FACTORY;
 
     DeployFacet private facetHelper = new DeployFacet();
-    DeploySimpleAppBeacon private simpleAppBeacon = new DeploySimpleAppBeacon();
+    DeploySimpleAppBeacon private deploySimpleApp = new DeploySimpleAppBeacon();
+    DeploySpaceFactory private deploySpaceFactory = new DeploySpaceFactory();
 
     string internal constant APP_REGISTRY_SCHEMA = "address app, address client";
 
@@ -91,6 +93,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     }
 
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        address simpleAppBeacon = deploySimpleApp.deploy(deployer);
+        address spaceFactory = deploySpaceFactory.deploy(deployer);
+
         // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
@@ -105,13 +110,12 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployMetadata.makeInitData(bytes32("AppRegistry"), "")
         );
 
-        address simpleApp = simpleAppBeacon.deploy(deployer);
         facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         bytes memory initData = DeployAppRegistryFacet.makeInitData(
-            getSpaceFactory(),
+            spaceFactory,
             APP_REGISTRY_SCHEMA,
             address(0),
-            simpleApp
+            simpleAppBeacon
         );
 
         addFacet(

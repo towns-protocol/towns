@@ -30,7 +30,7 @@ contract DeploySimpleAppBeacon is DiamondHelper, Deployer, IDiamondInitHelper {
     DeployFacet private facetHelper = new DeployFacet();
 
     function versionName() public pure override returns (string memory) {
-        return "simpleApp";
+        return "simpleAppBeacon";
     }
 
     function diamondInitHelper(
