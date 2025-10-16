@@ -3,6 +3,7 @@ package events
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -795,25 +796,51 @@ func newTrimTestEnv(
 	}
 }
 
+func flattenMiniblockSeqs(ranges []storage.MiniblockRange) []int64 {
+	seqs := make([]int64, 0)
+	for _, r := range ranges {
+		for n := r.StartInclusive; n <= r.EndInclusive; n++ {
+			seqs = append(seqs, n)
+		}
+	}
+	return seqs
+}
+
+func flattenSnapshotSeqs(ranges []storage.MiniblockRange) []int64 {
+	snaps := make([]int64, 0)
+	for _, r := range ranges {
+		snaps = append(snaps, r.SnapshotSeqNums...)
+	}
+	slices.Sort(snaps)
+	snaps = slices.Compact(snaps)
+	return snaps
+}
+
 func TestReconciler_TrimRejectsMultipleGaps(t *testing.T) {
 	env := newTrimTestEnv(t, 0, 1, 40, false)
 	store := env.inst.cache.params.Storage
 	require := env.tc.require
 
-	ranges, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
-	require.NoError(err)
-
 	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 5, 10))
 	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 15, 20))
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-6), int64(env.producedBlocks-4)))
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-6), int64(env.producedBlocks-4)),
+	)
 
-	ranges, err = store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	rangesAfterDeletion, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
-	require.Len(ranges, 4)
+	require.Len(rangesAfterDeletion, 4)
+	seqsAfterDeletion := flattenMiniblockSeqs(rangesAfterDeletion)
+	snapsAfterDeletion := flattenSnapshotSeqs(rangesAfterDeletion)
 
 	err = env.reconciler.trim()
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_INTERNAL))
+
+	rangesAfter, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	assert.Equal(t, seqsAfterDeletion, flattenMiniblockSeqs(rangesAfter))
+	assert.Equal(t, snapsAfterDeletion, flattenSnapshotSeqs(rangesAfter))
 }
 
 func TestReconciler_TrimRejectsInvalidTwoRangeLayout(t *testing.T) {
@@ -821,22 +848,30 @@ func TestReconciler_TrimRejectsInvalidTwoRangeLayout(t *testing.T) {
 	store := env.inst.cache.params.Storage
 	require := env.tc.require
 
-	ranges, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
-	require.NoError(err)
-
 	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 0, 1))
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-12), int64(env.producedBlocks-6)))
-	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-2), int64(env.producedBlocks)))
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-12), int64(env.producedBlocks-6)),
+	)
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-2), int64(env.producedBlocks)),
+	)
 
-	ranges, err = store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	rangesAfterDeletion, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
-	require.Len(ranges, 3)
-	require.NotEqual(int64(0), ranges[0].StartInclusive)
-	require.NotEqual(int64(0), ranges[0].EndInclusive)
+	require.Len(rangesAfterDeletion, 3)
+	require.NotEqual(int64(0), rangesAfterDeletion[0].StartInclusive)
+	require.NotEqual(int64(0), rangesAfterDeletion[0].EndInclusive)
+	seqsAfterDeletion := flattenMiniblockSeqs(rangesAfterDeletion)
+	snapsAfterDeletion := flattenSnapshotSeqs(rangesAfterDeletion)
 
 	err = env.reconciler.trim()
 	require.Error(err)
 	require.True(IsRiverErrorCode(err, Err_INTERNAL))
+
+	rangesAfter, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	assert.Equal(t, seqsAfterDeletion, flattenMiniblockSeqs(rangesAfter))
+	assert.Equal(t, snapsAfterDeletion, flattenSnapshotSeqs(rangesAfter))
 }
 
 func TestReconciler_TrimHistoryAlignment(t *testing.T) {
@@ -864,6 +899,13 @@ func TestReconciler_TrimHistoryAlignment(t *testing.T) {
 	lastSnapshot := latestRange.SnapshotSeqNums[len(latestRange.SnapshotSeqNums)-1]
 	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
 	assert.LessOrEqual(t, lastSnapshot, expectedLast)
+
+	seqs := flattenMiniblockSeqs(ranges)
+	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	for seq := expectedStart; seq <= expectedLast; seq++ {
+		expectedSeqs = append(expectedSeqs, seq)
+	}
+	assert.Equal(t, expectedSeqs, seqs)
 }
 
 func TestReconciler_TrimNoRetentionPolicies(t *testing.T) {
@@ -905,4 +947,11 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 	lastSnapshot := keptRange.SnapshotSeqNums[len(keptRange.SnapshotSeqNums)-1]
 	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
 	assert.LessOrEqual(t, lastSnapshot, expectedLast)
+
+	seqs := flattenMiniblockSeqs(ranges)
+	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	for seq := expectedStart; seq <= expectedLast; seq++ {
+		expectedSeqs = append(expectedSeqs, seq)
+	}
+	assert.Equal(t, expectedSeqs, seqs)
 }
