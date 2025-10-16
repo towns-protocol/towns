@@ -888,7 +888,7 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 
 	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
 	require.NoError(err)
-	require.Len(ranges, 2)
+	require.Len(ranges, 1)
 
 	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
 	if expectedStart < 0 {
@@ -896,25 +896,13 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 	}
 	expectedLast := int64(env.producedBlocks)
 
-	require.Equal(int64(0), ranges[0].StartInclusive)
-	require.Equal(int64(0), ranges[0].EndInclusive)
-	require.Equal([]int64{0}, ranges[0].SnapshotSeqNums)
+	keptRange := ranges[0]
+	require.Equal(expectedStart, keptRange.StartInclusive)
+	require.Equal(expectedLast, keptRange.EndInclusive)
 
-	require.Equal(expectedStart, ranges[1].StartInclusive)
-	require.Equal(expectedLast, ranges[1].EndInclusive)
-
-	for _, r := range ranges[1:] {
-		for seq := r.StartInclusive; seq <= r.EndInclusive; seq++ {
-			if seq == 0 {
-				continue
-			}
-			require.GreaterOrEqual(seq, expectedStart)
-		}
-		for _, snap := range r.SnapshotSeqNums {
-			if snap == 0 {
-				continue
-			}
-			require.GreaterOrEqual(snap, expectedStart)
-		}
-	}
+	require.NotEmpty(keptRange.SnapshotSeqNums)
+	firstSnapshot := keptRange.SnapshotSeqNums[0]
+	lastSnapshot := keptRange.SnapshotSeqNums[len(keptRange.SnapshotSeqNums)-1]
+	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
+	assert.LessOrEqual(t, lastSnapshot, expectedLast)
 }
