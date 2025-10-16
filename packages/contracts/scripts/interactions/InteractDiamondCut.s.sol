@@ -13,6 +13,7 @@ import {AlphaHelper} from "./helpers/AlphaHelper.sol";
 
 // fetch facet deployer contract
 import {DeploySubscriptionModuleFacet} from "scripts/deployments/facets/DeploySubscriptionModuleFacet.s.sol";
+import {SubscriptionModuleFacet} from "src/apps/modules/subscription/SubscriptionModuleFacet.sol";
 
 contract InteractDiamondCut is Interaction, AlphaHelper {
     function __interact(address deployer) internal override {
@@ -41,5 +42,8 @@ contract InteractDiamondCut is Interaction, AlphaHelper {
         // execute the diamond cut
         vm.broadcast(deployer);
         IDiamondCut(diamond).diamondCut(baseFacets(), address(0), "");
+
+        vm.broadcast(deployer);
+        SubscriptionModuleFacet(diamond).setSpaceFactory(getDeployment("spaceFactory"));
     }
 }
