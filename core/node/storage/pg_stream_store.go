@@ -1868,9 +1868,8 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 		}
 
 		// Let the stream trimmer know that a new snapshot miniblock was created.
-		// TODO: Review the logic on when to trim the stream.
 		if s.streamTrimmer != nil {
-			s.streamTrimmer.tryScheduleTrimming(streamId)
+			s.streamTrimmer.tryScheduleTrimming(streamId, newLastSnapshotMiniblock)
 		}
 	}
 

@@ -38,8 +38,10 @@ type streamTrimmer struct {
 	workerPool *workerpool.WorkerPool
 
 	// Task tracking
-	pendingTasksLock sync.Mutex
-	pendingTasks     map[StreamId]struct{}
+	pendingTasksLock       sync.Mutex
+	pendingTasks           map[StreamId]struct{}
+	snapshotsPerStreamLock sync.Mutex
+	snapshotsPerStream     map[StreamId]uint64
 
 	stopOnce sync.Once
 	stop     chan struct{}
@@ -57,14 +59,15 @@ func newStreamTrimmer(
 	metrics infra.MetricsFactory,
 ) *streamTrimmer {
 	st := &streamTrimmer{
-		ctx:               ctx,
-		log:               logging.FromCtx(ctx).Named("stream-trimmer"),
-		store:             store,
-		config:            config,
-		trimmingBatchSize: trimmingBatchSize,
-		workerPool:        workerPool,
-		pendingTasks:      make(map[StreamId]struct{}),
-		stop:              make(chan struct{}),
+		ctx:                ctx,
+		log:                logging.FromCtx(ctx).Named("stream-trimmer"),
+		store:              store,
+		config:             config,
+		trimmingBatchSize:  trimmingBatchSize,
+		workerPool:         workerPool,
+		pendingTasks:       make(map[StreamId]struct{}),
+		snapshotsPerStream: make(map[StreamId]uint64),
+		stop:               make(chan struct{}),
 		taskDuration: metrics.NewHistogramEx(
 			"stream_trimmer_task_duration_seconds",
 			"Stream trimmer task duration in seconds",
@@ -100,12 +103,35 @@ func (t *streamTrimmer) close() {
 }
 
 // tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
-func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
-	if t.workerPool.Stopped() || t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+// TODO: Review the logic on when to trim the stream.
+func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId, lastSnapshotMb int64) {
+	t.snapshotsPerStreamLock.Lock()
+	t.snapshotsPerStream[streamId]++
+	streamSnapshots := t.snapshotsPerStream[streamId]
+	t.snapshotsPerStreamLock.Unlock()
+
+	if t.workerPool.Stopped() ||
+		t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
 		return
 	}
 
 	cfg := t.config.Get()
+
+	if cfg.StreamTrimActivationFactor == 0 {
+		return
+	}
+
+	minEventsPerSnapshot := cfg.MinSnapshotEvents.ForType(streamId.Type())
+	if minEventsPerSnapshot == 0 {
+		return
+	}
+
+	totalEvents := minEventsPerSnapshot * streamSnapshots
+	scheduleFrequency := cfg.StreamTrimActivationFactor * minEventsPerSnapshot
+	if totalEvents%scheduleFrequency != 0 {
+		return
+	}
+
 	streamHistoryMbs := int64(cfg.StreamHistoryMiniblocks.ForType(streamId.Type()))
 
 	var retentionIntervalMbs int64
