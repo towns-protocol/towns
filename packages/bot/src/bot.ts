@@ -1,6 +1,8 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
 import { SpaceDapp, Permission } from '@towns-protocol/web3'
+import SimpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
+import AppRegistry from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -21,6 +23,8 @@ import {
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
+    make_UserPayload_BlockchainTransaction,
+    makeUserStreamId,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -47,6 +51,8 @@ import {
     type Snapshot,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
+    type BlockchainTransaction,
+    BlockchainTransactionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -70,16 +76,24 @@ import {
     type ContractFunctionArgs,
     type ContractFunctionName,
     type Prettify,
+    type Address,
+    type Hex,
+    type TransactionReceipt,
+    zeroAddress,
+    type Transport,
 } from 'viem'
 import {
     readContract,
     type ReadContractParameters,
     writeContract,
     type WriteContractParameters,
+    waitForTransactionReceipt,
+    simulateContract,
 } from 'viem/actions'
-import { base, baseSepolia } from 'viem/chains'
+import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
+import { privateKeyToAccount } from 'viem/accounts'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -215,7 +229,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
 
 export type BasePayload = {
     /** The user ID of the user that triggered the event */
-    userId: string
+    userId: Address
     /** The space ID that the event was triggered in */
     spaceId: string
     /** channelId that the event was triggered in */
@@ -240,11 +254,13 @@ export class Bot<
     private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
         new Map()
     private readonly commands: Commands | undefined
+    appAddress: Address
 
     constructor(
         clientV2: ClientV2<BotActions>,
         viemClient: ViemClient,
         jwtSecretBase64: string,
+        appAddress: Address,
         commands?: Commands,
     ) {
         this.client = clientV2
@@ -254,11 +270,13 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.snapshot = clientV2.snapshot
+        this.appAddress = appAddress
     }
 
     async start() {
         await this.client.uploadDeviceKeys()
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+
         debug('start')
 
         return {
@@ -789,6 +807,23 @@ export class Bot<
         return this.client.unban(userId, spaceId)
     }
 
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
+     */
+    async sendTip(params: {
+        to: Address
+        amount: bigint
+        messageId: string
+        channelId: string
+        currency?: Address
+    }) {
+        const result = await this.client.sendTip(params, this.currentMessageTags)
+        this.currentMessageTags = undefined
+        return result
+    }
+
     /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
@@ -869,17 +904,28 @@ export const makeTownsBot = async <
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
     const baseConfig = townsEnv().makeBaseChainConfig(env)
+    const getChain = (chainId: number) => {
+        if (chainId === base.id) return base
+        if (chainId === foundry.id) return foundry
+        return baseSepolia
+    }
     const viemClient = createViemClient({
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
+        account: privateKeyToAccount(privateKey as Hex),
+        chain: getChain(baseConfig.chainConfig.chainId),
     })
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
     )
+    const appAddress = await readContract(viemClient, {
+        address: baseConfig.chainConfig.addresses.appRegistry,
+        abi: AppRegistry,
+        functionName: 'getAppByClient',
+        args: [viemClient.account.address],
+    })
     const client = await createTownsClient({
         privateKey,
         env,
@@ -887,11 +933,24 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp, appAddress)),
+    )
+    return new Bot<Commands, HonoEnv>(
+        client,
+        viemClient,
+        jwtSecretBase64,
+        appAddress,
+        opts.commands,
+    )
 }
 
-const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
+const buildBotActions = (
+    client: ClientV2,
+    viemClient: ViemClient<Transport, Chain, Account>,
+    spaceDapp: SpaceDapp,
+    appAddress: Address,
+) => {
     const createImageAttachmentFromURL = async (
         attachment: ImageAttachment,
     ): Promise<PlainMessage<ChannelMessage_Post_Attachment> | null> => {
@@ -1187,9 +1246,112 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         return undefined
     }
 
+    /**
+     * Send a blockchain transaction to the stream
+     * @param streamId - The stream ID to send the transaction to
+     * @param chainId - The chain ID where the transaction occurred
+     * @param receipt - The transaction receipt from the blockchain
+     * @param content - The transaction content (tip, transfer, etc.)
+     * @returns The transaction hash and event ID
+     */
+    const sendBlockchainTransaction = async (
+        chainId: number,
+        receipt: TransactionReceipt,
+        content?: PlainMessage<BlockchainTransaction>['content'],
+        tags?: PlainMessage<Tags>,
+    ): Promise<{ txHash: string; eventId: string }> => {
+        const transaction = create(BlockchainTransactionSchema, {
+            receipt: {
+                chainId: BigInt(chainId),
+                transactionHash: bin_fromHexString(receipt.transactionHash),
+                blockNumber: receipt.blockNumber,
+                to: bin_fromHexString(receipt.to || zeroAddress),
+                from: bin_fromHexString(receipt.from),
+                logs: receipt.logs.map((log) => ({
+                    address: bin_fromHexString(log.address),
+                    topics: log.topics.map((topic) => bin_fromHexString(topic)),
+                    data: bin_fromHexString(log.data),
+                })),
+            },
+            solanaReceipt: undefined,
+            content: content ?? { case: undefined },
+        })
+
+        const result = await client.sendEvent(
+            makeUserStreamId(client.userId),
+            make_UserPayload_BlockchainTransaction(transaction),
+            tags,
+        )
+        return { txHash: receipt.transactionHash, eventId: result.eventId }
+    }
+
+    /** Sends a tip to a user.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
+     */
+    const sendTip = async (
+        {
+            to,
+            amount,
+            messageId,
+            channelId,
+            currency = zeroAddress,
+        }: {
+            to: Address
+            amount: bigint
+            messageId: string
+            channelId: string
+            currency?: Address
+        },
+        tags?: PlainMessage<Tags>,
+    ): Promise<{ txHash: string; eventId: string }> => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, to)
+        if (!tokenId) {
+            throw new Error(`No token ID found for user ${to} in space ${spaceId}`)
+        }
+
+        const { request } = await simulateContract(viemClient, {
+            address: appAddress,
+            abi: SimpleAppAbi,
+            functionName: 'sendCurrency',
+            args: [to, currency, amount],
+            chain: viemClient.chain,
+        })
+        const hash = await writeContract(viemClient, request)
+        const receipt = await waitForTransactionReceipt(viemClient, { hash, confirmations: 3 })
+
+        return sendBlockchainTransaction(
+            viemClient.chain.id,
+            receipt,
+            {
+                case: 'tip',
+                value: {
+                    event: {
+                        tokenId: BigInt(tokenId),
+                        currency: bin_fromHexString(currency),
+                        sender: bin_fromHexString(viemClient.account.address),
+                        receiver: bin_fromHexString(to),
+                        amount,
+                        messageId: bin_fromHexString(messageId),
+                        channelId: bin_fromHexString(channelId),
+                    },
+                    toUserAddress: bin_fromHexString(to),
+                },
+            },
+            {
+                groupMentionTypes: tags?.groupMentionTypes || [],
+                mentionedUserAddresses: tags?.mentionedUserAddresses || [],
+                threadId: tags?.threadId,
+                appClientAddress: tags?.appClientAddress,
+                messageInteractionType: MessageInteractionType.TIP,
+                participatingUserAddresses: [bin_fromHexString(to)],
+            },
+        )
+    }
+
     return {
-        // Is it those enough?
-        // TODO: think about a web3 use case..
         writeContract: <
             chain extends Chain | undefined,
             account extends Account | undefined,
@@ -1221,6 +1383,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         unban,
         getChannelSettings,
         getFromSnapshot,
+        sendTip,
+        sendBlockchainTransaction,
         snapshot: SnapshotGetter(client.getStream),
     }
 }
