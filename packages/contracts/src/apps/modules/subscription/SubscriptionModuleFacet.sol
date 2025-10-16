@@ -47,10 +47,11 @@ contract SubscriptionModuleFacet is
 
     uint256 public constant MAX_BATCH_SIZE = 50;
 
-    function __SubscriptionModule_init() external onlyInitializing {
+    function __SubscriptionModule_init(address spaceFactory) external onlyInitializing {
         _addInterface(type(ISubscriptionModule).interfaceId);
         _addInterface(type(IValidationModule).interfaceId);
         _addInterface(type(IValidationHookModule).interfaceId);
+        SubscriptionModuleStorage.getLayout().spaceFactory = spaceFactory;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

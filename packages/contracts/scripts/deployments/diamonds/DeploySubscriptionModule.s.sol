@@ -25,9 +25,23 @@ import {Deployer} from "../../common/Deployer.s.sol";
 contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper {
     using LibString for string;
 
+    address private SPACE_FACTORY;
+
     DeployFacet private facetHelper = new DeployFacet();
 
     bytes32 internal constant METADATA_NAME = bytes32("SubscriptionModule");
+
+    function setSpaceFactory(address factory) public {
+        SPACE_FACTORY = factory;
+    }
+
+    function getSpaceFactory() public returns (address) {
+        if (SPACE_FACTORY != address(0)) {
+            return SPACE_FACTORY;
+        }
+
+        return getDeployment("spaceFactory");
+    }
 
     function versionName() public pure override returns (string memory) {
         return "subscriptionModule";
@@ -72,7 +86,7 @@ contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeploySubscriptionModuleFacet.selectors()),
             facet,
-            DeploySubscriptionModuleFacet.makeInitData()
+            DeploySubscriptionModuleFacet.makeInitData(getSpaceFactory())
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");

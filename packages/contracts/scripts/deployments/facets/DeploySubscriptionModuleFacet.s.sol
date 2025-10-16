@@ -45,8 +45,8 @@ library DeploySubscriptionModuleFacet {
         }
     }
 
-    function makeInitData() internal pure returns (bytes memory) {
-        return abi.encodeCall(SubscriptionModuleFacet.__SubscriptionModule_init, ());
+    function makeInitData(address spaceFactory) internal pure returns (bytes memory) {
+        return abi.encodeCall(SubscriptionModuleFacet.__SubscriptionModule_init, (spaceFactory));
     }
 
     function makeCut(

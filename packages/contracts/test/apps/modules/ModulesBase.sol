@@ -52,6 +52,7 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         super.setUp();
 
         deploySubscriptionModule = new DeploySubscriptionModule();
+        deploySubscriptionModule.setSpaceFactory(spaceFactory);
 
         platformRequirements = IPlatformRequirements(spaceFactory);
         executionInstallDelegate = new ExecutionInstallDelegate();
@@ -59,7 +60,6 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
 
         vm.startPrank(deployer);
         subscriptionModule.grantOperator(processor);
-        subscriptionModule.setSpaceFactory(spaceFactory);
         vm.stopPrank();
 
         SingleSignerValidationModule singleSignerValidationModule = new SingleSignerValidationModule();
