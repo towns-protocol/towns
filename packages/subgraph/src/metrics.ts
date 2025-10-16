@@ -89,7 +89,7 @@ function logMetricsSummary() {
         }
     }
 
-    console.log(
+    console.info(
         JSON.stringify({
             type: 'metrics_summary',
             block: latestBlockNumber.toString(),
