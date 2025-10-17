@@ -56,7 +56,6 @@ type testParams struct {
 	recencyConstraintsGenerations    int
 	recencyConstraintsAgeSec         int
 	defaultMinEventsPerSnapshot      int
-	enableNewSnapshotFormat          int
 	backwardsReconciliationThreshold *uint64
 	streamHistoryDefaultMiniblocks   *uint64
 	streamHistoryMiniblocks          map[byte]uint64
@@ -680,12 +679,6 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 		btc.SetConfigValue(t, ctx,
 			crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
 			crypto.ABIEncodeUint64(uint64(p.defaultMinEventsPerSnapshot)),
-		)
-	}
-	if p.enableNewSnapshotFormat != 0 {
-		btc.SetConfigValue(t, ctx,
-			crypto.StreamEnableNewSnapshotFormatConfigKey,
-			crypto.ABIEncodeUint64(uint64(p.enableNewSnapshotFormat)),
 		)
 	}
 	if p.backwardsReconciliationThreshold != nil {

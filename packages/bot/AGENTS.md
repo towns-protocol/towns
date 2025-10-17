@@ -307,6 +307,115 @@ bot.onSlashCommand("show", async (handler, { channelId, args }) => {
 - Image dimensions are auto-detected for URL-based images
 - All attachments are end-to-end encrypted automatically
 
+#### Chunked Media Attachments (Binary Data)
+
+Use `type: 'chunked'` to send raw binary data like videos, screenshots, or generated images. The framework automatically:
+- Splits data into 1.2MB encrypted chunks
+- Uploads each chunk with AES-GCM encryption (unique IV per chunk)
+- Auto-detects image dimensions using `image-size` library (for image files)
+
+You can send either `Blob` objects or `Uint8Array` raw data.
+
+**Video File Example:**
+```typescript
+import { readFileSync } from 'node:fs'
+
+bot.onSlashCommand("rickroll", async (handler, { channelId }) => {
+  // Load video file as binary data
+  const videoData = readFileSync('./rickroll.mp4')
+
+  await handler.sendMessage(channelId, "Never gonna give you up!", {
+    attachments: [{
+      type: 'chunked',
+      data: videoData,           // Uint8Array
+      filename: 'rickroll.mp4',
+      mimetype: 'video/mp4',     // Required for Uint8Array
+      width: 1920,               // Optional (not auto-detected for videos)
+      height: 1080               // Optional (not auto-detected for videos)
+    }]
+  })
+})
+```
+
+**Screenshot Example (Canvas):**
+```typescript
+// Using @napi-rs/canvas to generate images
+import { createCanvas } from '@napi-rs/canvas'
+
+bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
+  const value = parseInt(args[0]) || 50
+
+  // Generate chart image
+  const canvas = createCanvas(400, 300)
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = '#2c3e50'
+  ctx.fillRect(0, 0, 400, 300)
+  ctx.fillStyle = '#3498db'
+  ctx.fillRect(50, 300 - value * 2, 300, value * 2)
+  ctx.fillStyle = '#fff'
+  ctx.font = '24px sans-serif'
+  ctx.fillText(`Value: ${value}`, 150, 50)
+
+  // Export as PNG Blob
+  const blob = await canvas.encode('png')
+
+  await handler.sendMessage(channelId, "Your chart:", {
+    attachments: [{
+      type: 'chunked',
+      data: blob,                // Blob (no mimetype needed)
+      filename: 'chart.png',
+      width: 400,                // Optional (auto-detected for images)
+      height: 300                // Optional (auto-detected for images)
+    }]
+  })
+})
+```
+
+**Screenshot Example (Raw PNG Data):**
+```typescript
+bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
+  // Capture screen using your preferred library
+  const screenshotBuffer = await captureScreen()
+
+  await handler.sendMessage(channelId, "Current screen:", {
+    attachments: [{
+      type: 'chunked',
+      data: screenshotBuffer,    // Uint8Array or Buffer
+      filename: 'screenshot.png',
+      mimetype: 'image/png'      // Required for Uint8Array
+      // width/height auto-detected for image/* mimetypes
+    }]
+  })
+})
+```
+
+**Mixed Attachments Example:**
+```typescript
+// Combine URL images with chunked media
+await handler.sendMessage(channelId, "Product comparison:", {
+  attachments: [
+    {
+      type: 'image',
+      url: 'https://example.com/product-a.jpg',
+      alt: 'Product A'
+    },
+    {
+      type: 'chunked',
+      data: generatedComparisonChart,  // Binary data
+      filename: 'comparison.png',
+      mimetype: 'image/png'
+    }
+  ]
+})
+```
+
+**Important Notes:**
+- **Uint8Array requires `mimetype`**: Must specify `mimetype` when using Uint8Array data
+- **Blob mimetype is automatic**: Blob objects already contain mimetype information
+- **Image dimensions auto-detected**: For image mimetypes (`image/*`), dimensions are detected automatically
+- **Video/other dimensions manual**: For videos and other media, specify `width`/`height` manually if needed
+
 ### Moderation Operations
 ```typescript
 // Ban/unban users (requires ModifyBanning permission)

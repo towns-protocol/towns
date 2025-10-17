@@ -34,6 +34,8 @@ library DeploySubscriptionModuleFacet {
         arr.p(SubscriptionModuleFacet.isOperator.selector);
         arr.p(SubscriptionModuleFacet.grantOperator.selector);
         arr.p(SubscriptionModuleFacet.revokeOperator.selector);
+        arr.p(SubscriptionModuleFacet.setSpaceFactory.selector);
+        arr.p(SubscriptionModuleFacet.getSpaceFactory.selector);
         arr.p(bytes4(keccak256("MAX_BATCH_SIZE()")));
         arr.p(bytes4(keccak256("GRACE_PERIOD()")));
 

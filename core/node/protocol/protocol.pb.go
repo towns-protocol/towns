@@ -2048,6 +2048,9 @@ func (*GdmChannelPayload_Custom) isGdmChannelPayload_Content() {}
 
 // *
 // UserPayload
+// A potentially large stream that contains all of a users memberships and is the entrypoint for
+// many user interactions. For example, to join a space, the user posts a UserMembership event to this stream.
+// It is meant to be downloaded once by the user and updated via delta updates over sync.
 type UserPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2174,6 +2177,8 @@ func (*UserPayload_ReceivedBlockchainTransaction_) isUserPayload_Content() {}
 // *
 // UserInboxPayload
 // messages to a user encrypted per deviceId
+// This is a write heavy stream. Anything encrypted to a single user/device pair is sent to this stream.
+// The snapshot keeps track of read markers for each of the user's devices so that the user can effeciently download all new events.
 type UserInboxPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2271,6 +2276,8 @@ func (*UserInboxPayload_GroupEncryptionSessions_) isUserInboxPayload_Content() {
 
 // *
 // UserSettingsPayload
+// blob storage for the user
+// written to and read by the user
 type UserSettingsPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -2368,6 +2375,8 @@ func (*UserSettingsPayload_UserBlock_) isUserSettingsPayload_Content() {}
 
 // *
 // UserMetadataPayload
+// A light stream containing the user's "public" data like public encryption keys and links to user profile info.
+// Should remain small so that it can be quickly read by other users.
 type UserMetadataPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

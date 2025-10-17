@@ -16,8 +16,10 @@
 "stream.getMiniblocksMaxPageSize",0,200
 "stream.ephemeralStreamTTLMs",0,600000
 "stream.snapshotIntervalInMiniblocks",0,0
-"stream.trimActivationFactor",0,0
-"stream.enableNewSnapshotFormat",0,1
+"stream.defaultStreamTrimmingMiniblocksToKeep",0,0
+"stream.streamTrimmingMiniblocksToKeep.10",0,1000
+"stream.streamTrimmingMiniblocksToKeep.a5",0,1000
+"stream.trimActivationFactor",0,1
 "server.enablenode2nodeauth",0,0
 "stream.backwardsReconciliationThreshold",0,50
 "stream.historyminiblocks.default",0,0
