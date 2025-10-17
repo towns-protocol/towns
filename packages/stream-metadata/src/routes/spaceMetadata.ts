@@ -85,7 +85,7 @@ export async function fetchSpaceMetadata(request: FastifyRequest, reply: Fastify
 		}
 	} catch (error) {
 		// no-op
-		logger.error('Failed to get stream', { err: error, spaceAddress })
+		logger.error({ err: error, spaceAddress }, 'Failed to get stream')
 		imageEventId = 'unknown'
 	}
 

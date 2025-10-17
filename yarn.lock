@@ -9349,7 +9349,7 @@ __metadata:
     eslint: ^8.57.1
     eslint-plugin-import-x: ^4.10.2
     ethers: ^5.8.0
-    pino: ^8.17.1
+    pino: ^9.0.0
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
     typescript: ~5.8.3
@@ -9632,7 +9632,7 @@ __metadata:
     fastify: ^5.3.3
     lru-cache: ^11.0.1
     magic-bytes.js: ^1.10.0
-    pino: ^8.17.1
+    pino: ^9.0.0
     pino-pretty: ^13.0.0
     prettier: ^3.5.3
     sharp: 0.34.3
@@ -9673,7 +9673,7 @@ __metadata:
     ethers: ^5.8.0
     fake-indexeddb: ^6.0.1
     ioredis: ^5.3.2
-    pino: ^8.17.1
+    pino: ^9.0.0
     pino-pretty: ^13.0.0
     typed-emitter: ^2.1.0
     typescript: ~5.8.3
@@ -9766,7 +9766,7 @@ __metadata:
     dotenv: ^16.4.7
     esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
-    pino: ^8.17.1
+    pino: ^9.0.0
     pino-pretty: ^13.0.0
     tsx: ^4.7.1
     typescript: ~5.8.3
@@ -11549,7 +11549,7 @@ __metadata:
     source-map-support: ^0.5.19
     table: ^6.8.0
     typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
+  checksum: 8be8f2e1f8dbdb9c35edddf1f919f6c09fe764e45ad5733c0d449869e6c9241de6eac9710576d025bb3934f3bb97d017198a7c5f31b88a68aee0dbc898e1de97
   languageName: node
   linkType: hard
 
@@ -25743,7 +25743,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pino@npm:^8.16.2, pino@npm:^8.17.1":
+"pino@npm:^8.16.2":
   version: 8.21.0
   resolution: "pino@npm:8.21.0"
   dependencies:
