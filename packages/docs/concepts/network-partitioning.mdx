@@ -3,5 +3,8 @@ title: Network Partitioning
 description: ""
 ---
 
-In the event of complete network partitioning, where the majority of nodes reside in a single partition, the stream will continue to grow and blocks will be produced. Nodes in the minority partition will stall. As a potential future upgrade, a feature could be developed to avoid stalling nodes.
-In the case of partial partitioning, where some stream nodes do not see other nodes in the group serving the same stream, but a connected path among all nodes still exists, the stream will continue to progress as normal due to active minipool reconciliation. That is, nodes will actively fetch events when they observe a NodeToNode.NewEventInPool operation with an unknown hash.
+In the event of complete network partitioning, where the majority of nodes reside in a single partition, the stream will continue to grow and blocks will be produced.
+
+Nodes in the minority partition will stall. As a potential future upgrade, a feature could be developed to avoid stalling nodes.
+
+In the case of partial partitioning, where some stream nodes do not see other nodes in the group serving the same stream, but a connected path among all nodes still exists, the stream will continue to progress as normal due to active minipool reconciliation. That is, nodes will actively fetch events when they observe a `NodeToNode.NewEventInPool` operation with an unknown hash.

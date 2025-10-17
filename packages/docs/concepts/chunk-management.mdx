@@ -3,4 +3,10 @@ title: Chunk Management
 description: ""
 ---
 
-In distributed systems, managing resource allocation efficiently is crucial to prevent certain nodes from becoming overburdened. This is particularly important in the context of stream processing. To mitigate the issue of hotspots, where some nodes are overloaded with highly active streams while others handle less active streams, a strategy of breaking streams into chunks is proposed. The idea is that once a chunk of a stream reaches a predetermined size, it is then handed over to a new set of nodes. This approach, which is not part of the initial implementation but is on the immediate roadmap, ensures a more balanced distribution of processing load across the nodes. Additionally, these chunks would maintain the same replication factor, which is currently set at five, as is the case with entire streams in the current system. This method aims to optimize resource utilization and enhance the overall efficiency of the distributed system.
+In distributed systems, managing resource allocation efficiently is crucial to prevent certain nodes from becoming overburdened. This is particularly important in the context of stream processing. 
+
+To mitigate the issue of hotspots, where some nodes are overloaded with highly active streams while others handle less active streams, a strategy of breaking streams into chunks is proposed. The idea is that once a chunk of a stream reaches a predetermined size, it is then handed over to a new set of nodes.
+
+ This approach, which is not part of the initial implementation but is on the immediate roadmap, ensures a more balanced distribution of processing load across the nodes. 
+ 
+ Additionally, these chunks would maintain the same replication factor, which is currently set at five, as is the case with entire streams in the current system. This method aims to optimize resource utilization and enhance the overall efficiency of the distributed system.

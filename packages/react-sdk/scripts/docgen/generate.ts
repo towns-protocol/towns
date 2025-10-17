@@ -8,9 +8,9 @@ import { resolve } from 'node:path'
 
 const config = {
     projectName: 'react-sdk',
-    pagesDir: '../../../docs/sdk/react-sdk',
-    mintlifyJson: '../../../docs/mint.json',
-}
+    pagesDir: '../../../docs/build/react-sdk',
+    docsJson: '../../../docs/docs.json',
+} as const
 export type DocgenConfig = typeof config
 
 console.log('Generating API docs.')
@@ -102,13 +102,13 @@ for (const module of apiEntryPoint.members) {
     }
 }
 
-console.log('Updating mint.json navigation for React SDK API pages')
+console.log('Updating docs.json navigation for React SDK API pages')
 
-// Update mint.json navigation for React SDK API pages
-const mintJsonPath = resolve(import.meta.dirname, config.mintlifyJson)
-const mintJson = JSON.parse(fs.readFileSync(mintJsonPath, 'utf-8')) as MintJson
+// Update docs.json navigation for React SDK API pages
+const docsJsonPath = resolve(import.meta.dirname, config.docsJson)
+const docsJson = JSON.parse(fs.readFileSync(docsJsonPath, 'utf-8')) as DocsJson
 
-type MintJson = {
+type DocsJson = {
     navigation: {
         group: string
         pages: Array<
@@ -122,7 +122,7 @@ type MintJson = {
 }
 
 // Find React SDK navigation group
-const reactSdk = mintJson.navigation.find((group) => group.group === 'React SDK')
+const reactSdk = docsJson.navigation.find((group) => group.group === 'React SDK')
 if (!reactSdk) {
     throw new Error('Could not find React SDK navigation group')
 }
@@ -132,16 +132,16 @@ const apiDocsDir = resolve(import.meta.dirname, `${config.pagesDir}/api/`)
 const existingApiFiles = fs
     .readdirSync(apiDocsDir)
     .filter((file) => file.endsWith('.mdx'))
-    .map((file) => `sdk/react-sdk/api/${file.replace('.mdx', '')}`)
+    .map((file) => `build/react-sdk/api/${file.replace('.mdx', '')}`)
 
-// Get current API pages from mint.json
+// Get current API pages from docs.json
 const apiGroup = reactSdk.pages.find((page) => typeof page !== 'string' && page.group === 'API') as
     | { group: string; pages: string[] }
     | undefined
 
 const currentApiPages = apiGroup?.pages || []
 
-// Find files that exist in folder but not in mint.json - these should be purged
+// Find files that exist in folder but not in docs.json - these should be purged
 const filesToDelete = existingApiFiles.filter((file) => !currentApiPages.includes(file))
 
 // Delete the files
@@ -156,11 +156,11 @@ reactSdk.pages = [
     ...reactSdk.pages.filter((page) => typeof page !== 'string' && page.group !== 'API'), // add any other groups
     {
         group: 'API',
-        pages: Array.from(functionsMap.keys()).map((name) => `sdk/react-sdk/api/${name}`),
+        pages: Array.from(functionsMap.keys()).map((name) => `build/react-sdk/api/${name}`),
     },
 ]
 
-// Write updated mint.json
-fs.writeFileSync(mintJsonPath, JSON.stringify(mintJson, null, 2))
+// Write updated docs.json
+fs.writeFileSync(docsJsonPath, JSON.stringify(docsJson, null, 2))
 
 console.log('Done.')

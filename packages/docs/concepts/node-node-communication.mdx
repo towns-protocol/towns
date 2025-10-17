@@ -1,13 +1,17 @@
 ---
-title: Node-Node communication
+title: Node to Node communication
 description: ""
 ---
 
-## Server-Side Workflow for NodeToNode.NewEventReceived Server-to-Server RPC.
+## How it works
 
-The envelope is received through the NodeToNode.NewEventReceived RPC from the node that is processing the StreamService.AddEvent client RPC request.
-The node checks if the action is permitted. For instance, it verifies if the signer of the chat message event is a member of the channel to which the event is posted. If the action is not permitted, an error reply is sent.
+Nodes communicate with each other using the `NodeToNode` service defined in the [protocol](https://github.com/towns-protocol/towns/blob/main/protocol/internode.proto).
+
+The envelope is received through the `NodeToNode.NewEventReceived` RPC from the node that is processing the `StreamService.AddEvent` client RPC request.
+The node verifies if the action is permitted, by validating the signature of the event.
 The event is then added to the minipool of the stream and committed to local storage.
-A success response is sent to the NodeToNode.NewEventReceived RPC.
-A NodeToNode.NewEventInPool message, containing the event hash, is broadcast to the stream node, excluding the original NodeToNode.NewEventReceived RPC caller.
-Once a majority of minipools contain the event, the event is sent to any client monitoring the given stream through a Sync RPC call. The number of minipools is calculated by counting the local minipool and the number of NodeToNode.NewEventInPool messages received.
+A success response is sent to the `NodeToNode.NewEventReceived` RPC.
+A `NodeToNode.NewEventInPool` message, containing the event hash, is broadcast to the stream node, excluding the original `NodeToNode.NewEventReceived` RPC caller.
+
+Once a majority of minipools contain the event, the event is sent to any client monitoring the given stream through a Sync RPC call. 
+- The number of minipools is calculated by counting the local minipool and the number of `NodeToNode.NewEventInPool` messages received.
