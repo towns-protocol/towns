@@ -57,7 +57,7 @@ const (
 	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
 	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
 	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
-	StreamTrimActivationFactorConfigKey             = "stream.trimActivationFactor"
+	StreamTrimActivationFactorConfigKey                      = "stream.trimActivationFactor"
 	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
