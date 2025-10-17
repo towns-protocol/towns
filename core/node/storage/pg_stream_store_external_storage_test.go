@@ -81,10 +81,10 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		client := s3.NewFromConfig(cfg)
 
-		store := setupStreamStorageWithExternalStorage(
-			t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
-
 		t.Run("Small stream", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(
+				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -112,6 +112,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with many chunks", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(
+				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -140,6 +143,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
 			t.Skip("Too big for CI")
+
+			store := setupStreamStorageWithExternalStorage(
+				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -210,9 +216,9 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		nodeWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 
-		store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
-
 		t.Run("Small stream", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -240,6 +246,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		})
 
 		t.Run("Stream with many chunks", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
 				ctx,
@@ -268,6 +276,8 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
 			t.Skip("Too big for CI")
+
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
