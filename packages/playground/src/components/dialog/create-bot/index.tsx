@@ -200,7 +200,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
 
             const botWallet = ethers.Wallet.createRandom()
             const appRegistryDapp = new AppRegistryDapp(townsConfig.base.chainConfig, baseProvider)
-            let appAddress = ''
+            let appAddress: Address
             if (botKind === 'simple') {
                 const tx = await appRegistryDapp.createApp(
                     signer,
@@ -215,7 +215,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     throw new Error('Transaction failed')
                 }
                 const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-                appAddress = foundAppAddress
+                appAddress = foundAppAddress as Address
             } else if (botKind === 'contract' && contractAddress) {
                 const tx = await appRegistryDapp.registerApp(
                     signer,
@@ -228,7 +228,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 }
 
                 const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(receipt)
-                appAddress = foundAppAddress
+                appAddress = foundAppAddress as Address
             } else {
                 throw new Error('Invalid bot kind or contract address')
             }
@@ -253,6 +253,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 botWallet.privateKey,
                 exportedDevice!,
                 townsConfig.environmentId,
+                appAddress,
             )
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(

@@ -194,6 +194,7 @@ describe('Bot', { sequential: true }, () => {
             botWallet.privateKey,
             exportedDevice!,
             process.env.RIVER_ENV!,
+            appAddress,
         )
         expect(appPrivateData).toBeDefined()
     }
