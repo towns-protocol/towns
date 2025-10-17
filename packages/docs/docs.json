@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
+  "theme": "maple",
   "name": "Towns",
   "colors": {
     "primary": "#8c84f7",
@@ -144,7 +144,7 @@
                 ]
               }
             ]
-          }     
+          }
         ]
       },
       {
@@ -194,11 +194,11 @@
   "navbar": {
     "links": []
   },
- "contextual": {
-   "options": [
-     "copy",
-     "chatgpt"
-   ]
+  "contextual": {
+    "options": [
+      "copy",
+      "chatgpt"
+    ]
   },
   "footer": {
     "socials": {
