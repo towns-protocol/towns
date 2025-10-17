@@ -99,6 +99,8 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
     /// @inheritdoc IMembership
     function setMembershipPrice(uint256 newPrice) external onlyOwner {
         _verifyPrice(newPrice);
+        if (newPrice > 0 && _getMembershipFreeAllocation() > 0)
+            Membership__CannotSetPriceOnFreeSpace.selector.revertWith();
         IMembershipPricing(_getPricingModule()).setPrice(newPrice);
     }
 
@@ -129,6 +131,10 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
         // verify newLimit is not more than the max supply limit
         if (currentSupplyLimit != 0 && newAllocation > currentSupplyLimit) {
             Membership__InvalidFreeAllocation.selector.revertWith();
+        }
+
+        if (_getMembershipPrice(_totalSupply()) > 0) {
+            Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
         }
 
         // verify newLimit is not more than the allowed platform limit

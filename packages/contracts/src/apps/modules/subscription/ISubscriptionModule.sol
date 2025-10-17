@@ -41,6 +41,10 @@ interface ISubscriptionModuleBase {
     error SubscriptionModule__InsufficientBalance();
     error SubscriptionModule__ActiveSubscription();
     error SubscriptionModule__MembershipBanned();
+    error SubscriptionModule__MembershipExpired();
+    error SubscriptionModule__SubscriptionAlreadyInstalled();
+    error SubscriptionModule__SubscriptionNotInstalled();
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Events                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -88,6 +92,7 @@ interface ISubscriptionModuleBase {
 
     event OperatorGranted(address indexed operator);
     event OperatorRevoked(address indexed operator);
+    event SpaceFactoryChanged(address indexed spaceFactory);
 }
 
 interface ISubscriptionModule is ISubscriptionModuleBase {
@@ -137,4 +142,12 @@ interface ISubscriptionModule is ISubscriptionModuleBase {
     /// @notice Revokes an operator access to call processRenewal
     /// @param operator The address of the operator to revoke
     function revokeOperator(address operator) external;
+
+    /// @notice Sets the space factory
+    /// @param spaceFactory The address of the space factory
+    function setSpaceFactory(address spaceFactory) external;
+
+    /// @notice Gets the space factory
+    /// @return The address of the space factory
+    function getSpaceFactory() external view returns (address);
 }

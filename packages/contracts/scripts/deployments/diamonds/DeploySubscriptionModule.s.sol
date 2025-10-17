@@ -62,13 +62,21 @@ contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper
     function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
         // Queue up feature facets for batch deployment
         facetHelper.add("MultiInit");
+        facetHelper.add("MetadataFacet");
         facetHelper.add("SubscriptionModuleFacet");
 
         // Deploy all facets in a batch
         facetHelper.deployBatch(deployer);
 
         // Add feature facets
-        address facet = facetHelper.getDeployedAddress("SubscriptionModuleFacet");
+        address facet = facetHelper.getDeployedAddress("MetadataFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
+            facet,
+            DeployMetadata.makeInitData(METADATA_NAME, "")
+        );
+
+        facet = facetHelper.getDeployedAddress("SubscriptionModuleFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeploySubscriptionModuleFacet.selectors()),
             facet,
@@ -95,7 +103,6 @@ contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
-        facetHelper.add("MetadataFacet");
 
         // Get predicted addresses
         address facet = facetHelper.predictAddress("DiamondCutFacet");
@@ -124,13 +131,6 @@ contract DeploySubscriptionModule is DiamondHelper, Deployer, IDiamondInitHelper
             makeCut(facet, FacetCutAction.Add, DeployOwnable.selectors()),
             facet,
             DeployOwnable.makeInitData(deployer)
-        );
-
-        facet = facetHelper.predictAddress("MetadataFacet");
-        addFacet(
-            makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
-            facet,
-            DeployMetadata.makeInitData(METADATA_NAME, "")
         );
     }
 

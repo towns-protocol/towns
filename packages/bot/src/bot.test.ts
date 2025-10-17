@@ -845,4 +845,205 @@ describe('Bot', { sequential: true }, () => {
         const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
         expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
     })
+
+    function createTestPNG(width: number, height: number): Uint8Array {
+        // PNG signature
+        const signature = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
+
+        // IHDR chunk
+        const ihdrData = new Uint8Array(13)
+        const view = new DataView(ihdrData.buffer)
+        view.setUint32(0, width, false) // Width
+        view.setUint32(4, height, false) // Height
+        ihdrData[8] = 8 // Bit depth
+        ihdrData[9] = 2 // Color type (truecolor)
+        ihdrData[10] = 0 // Compression
+        ihdrData[11] = 0 // Filter
+        ihdrData[12] = 0 // Interlace
+
+        // Create IHDR chunk with CRC
+        const ihdrChunk = new Uint8Array(12 + 13)
+        new DataView(ihdrChunk.buffer).setUint32(0, 13, false)
+        ihdrChunk.set([73, 72, 68, 82], 4) // 'IHDR'
+        ihdrChunk.set(ihdrData, 8)
+        new DataView(ihdrChunk.buffer).setUint32(21, 0, false) // CRC placeholder
+
+        // IDAT chunk (minimal data)
+        const idatData = new Uint8Array(100) // Minimal compressed data
+        const idatChunk = new Uint8Array(12 + 100)
+        new DataView(idatChunk.buffer).setUint32(0, 100, false)
+        idatChunk.set([73, 68, 65, 84], 4) // 'IDAT'
+        idatChunk.set(idatData, 8)
+        new DataView(idatChunk.buffer).setUint32(108, 0, false) // CRC placeholder
+
+        // IEND chunk
+        const iendChunk = new Uint8Array([0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130])
+
+        // Combine all chunks
+        const png = new Uint8Array(
+            signature.length + ihdrChunk.length + idatChunk.length + iendChunk.length,
+        )
+        png.set(signature, 0)
+        png.set(ihdrChunk, signature.length)
+        png.set(idatChunk, signature.length + ihdrChunk.length)
+        png.set(iendChunk, signature.length + ihdrChunk.length + idatChunk.length)
+
+        return png
+    }
+
+    it('should send chunked media with Uint8Array data', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const testData = createTestPNG(100, 100)
+
+        const { eventId } = await bot.sendMessage(channelId, 'Chunked media test', {
+            attachments: [
+                {
+                    type: 'chunked',
+                    data: testData,
+                    filename: 'test.png',
+                    mimetype: 'image/png',
+                    width: 100,
+                    height: 100,
+                },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+
+        expect(attachments).toHaveLength(1)
+        expect(attachments?.[0].type).toBe('chunked_media')
+
+        const chunkedMedia =
+            attachments?.[0].type === 'chunked_media' ? attachments?.[0] : undefined
+        expect(chunkedMedia).toBeDefined()
+        expect(chunkedMedia?.info.filename).toBe('test.png')
+        expect(chunkedMedia?.info.mimetype).toBe('image/png')
+        expect(chunkedMedia?.info.widthPixels).toBe(100)
+        expect(chunkedMedia?.info.heightPixels).toBe(100)
+        expect(chunkedMedia?.streamId).toBeDefined()
+        expect(chunkedMedia?.encryption).toBeDefined()
+    })
+
+    it('should send chunked media with Blob data and auto-detect dimensions', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const testData = createTestPNG(200, 150)
+        const blob = new Blob([testData], { type: 'image/png' })
+
+        const { eventId } = await bot.sendMessage(channelId, 'Blob test', {
+            attachments: [
+                {
+                    type: 'chunked',
+                    data: blob,
+                    filename: 'blob-test.png',
+                },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+
+        expect(attachments).toHaveLength(1)
+        const chunkedMedia =
+            attachments?.[0].type === 'chunked_media' ? attachments?.[0] : undefined
+        expect(chunkedMedia?.info.widthPixels).toBe(200)
+        expect(chunkedMedia?.info.heightPixels).toBe(150)
+    })
+
+    it('should handle large chunked media (multiple chunks)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        // Create 2.5MB of data - will create mulitple chunks
+        const largeData = new Uint8Array(2500000)
+        for (let i = 0; i < largeData.length; i++) {
+            largeData[i] = i % 256
+        }
+
+        const { eventId } = await bot.sendMessage(channelId, 'Large media test', {
+            attachments: [
+                {
+                    type: 'chunked',
+                    data: largeData,
+                    filename: 'large-file.bin',
+                    mimetype: 'application/octet-stream',
+                },
+            ],
+        })
+
+        await waitFor(
+            () =>
+                expect(
+                    bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+                ).toBeDefined(),
+            { timeoutMS: 30000 },
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+
+        expect(attachments).toHaveLength(1)
+        const chunkedMedia =
+            attachments?.[0].type === 'chunked_media' ? attachments?.[0] : undefined
+        expect(chunkedMedia?.info.sizeBytes).toBe(BigInt(2500000))
+    })
+
+    it('should send mixed attachments (URL + chunked)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const testData = createTestPNG(50, 50)
+        const imageUrl = 'https://placehold.co/100x100.png'
+
+        const { eventId } = await bot.sendMessage(channelId, 'Mixed attachments', {
+            attachments: [
+                { type: 'image', url: imageUrl },
+                {
+                    type: 'chunked',
+                    data: testData,
+                    filename: 'generated.png',
+                    mimetype: 'image/png',
+                },
+            ],
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        const attachments =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage
+                ? message?.content?.attachments
+                : undefined
+
+        expect(attachments).toHaveLength(2)
+        expect(attachments?.[0].type).toBe('image')
+        expect(attachments?.[1].type).toBe('chunked_media')
+    })
 })

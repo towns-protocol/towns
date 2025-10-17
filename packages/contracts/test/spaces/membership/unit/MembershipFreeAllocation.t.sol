@@ -12,16 +12,12 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 
 contract MembershipFreeAllocationTest is MembershipBaseSetup {
     function test_setMembershipAllocation() external {
-        uint256 currentFreeAllocation = membership.getMembershipFreeAllocation();
-
-        assertEq(currentFreeAllocation, platformReqs.getMembershipMintLimit());
-
-        uint256 newAllocation = 100;
+        uint256 allocation = 10;
 
         vm.prank(founder);
-        membership.setMembershipFreeAllocation(newAllocation);
+        freeMembership.setMembershipFreeAllocation(allocation);
 
-        assertEq(membership.getMembershipFreeAllocation(), newAllocation);
+        assertEq(freeMembership.getMembershipFreeAllocation(), allocation);
     }
 
     function test_revertWhen_setMembershipFreeAllocationIsNotOwner() external {

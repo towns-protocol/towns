@@ -1,6 +1,6 @@
 {
     "name": "create-towns-protocol-app",
-    "version": "0.0.367",
+    "version": "0.0.371",
     "scripts": {
         "build": "tsup",
         "watch": "tsup --watch"

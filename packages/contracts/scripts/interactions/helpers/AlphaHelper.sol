@@ -8,6 +8,7 @@ import {IDiamondLoupe, IDiamondLoupeBase} from "@towns-protocol/diamond/src/face
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IOwnablePending} from "@towns-protocol/diamond/src/facets/ownable/pending/IOwnablePending.sol";
 import {IDiamondInitHelper} from "scripts/deployments/diamonds/IDiamondInitHelper.sol";
+import {IMetadata} from "src/diamond/facets/metadata/IMetadata.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -55,13 +56,14 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
     function getCoreFacetAddresses(
         address diamond
     ) internal view returns (address[] memory coreFacets) {
-        coreFacets = new address[](5);
+        coreFacets = new address[](6);
 
         coreFacets[0] = IDiamondLoupe(diamond).facetAddress(IDiamondCut.diamondCut.selector);
         coreFacets[1] = IDiamondLoupe(diamond).facetAddress(IDiamondLoupe.facets.selector);
         coreFacets[2] = IDiamondLoupe(diamond).facetAddress(IERC165.supportsInterface.selector);
         coreFacets[3] = IDiamondLoupe(diamond).facetAddress(IERC173.owner.selector);
         coreFacets[4] = IDiamondLoupe(diamond).facetAddress(IOwnablePending.currentOwner.selector);
+        coreFacets[5] = IDiamondLoupe(diamond).facetAddress(IMetadata.contractType.selector);
     }
 
     /// @notice Check if an address is a core facet that should not be removed
@@ -254,7 +256,7 @@ abstract contract AlphaHelper is Interaction, DiamondHelper, IDiamondLoupeBase {
             }
 
             if (removeSelectors.length() > 0) {
-                addCut(FacetCut(address(0), FacetCutAction.Remove, asBytes4Array(removeSelectors)));
+                addCut(FacetCut(facetAddr, FacetCutAction.Remove, asBytes4Array(removeSelectors)));
             }
         }
     }
