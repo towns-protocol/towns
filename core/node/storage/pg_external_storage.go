@@ -666,7 +666,9 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 		}),
 	)
 	if err != nil {
-		return err
+		return RiverErrorWithBase(Err_INTERNAL, "Unable to write miniblock ext storage parts", err).
+			Tag("streamId", streamID).
+			Func("writeMediaStreamExternalStoragePartsTx")
 	}
 
 	return nil
