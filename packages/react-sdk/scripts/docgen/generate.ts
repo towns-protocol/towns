@@ -110,19 +110,21 @@ const docsJson = JSON.parse(fs.readFileSync(docsJsonPath, 'utf-8')) as DocsJson
 
 type DocsJson = {
     navigation: {
-        group: string
-        pages: Array<
-            | string
-            | {
-                  group?: string
-                  pages: string[]
-              }
-        >
-    }[]
+        groups: {
+            group: string
+            pages: Array<
+                | string
+                | {
+                      group?: string
+                      pages: string[]
+                  }
+            >
+        }[]
+    }
 }
 
 // Find React SDK navigation group
-const reactSdk = docsJson.navigation.find((group) => group.group === 'React SDK')
+const reactSdk = docsJson.navigation.groups.find((group) => group.group === 'React SDK')
 if (!reactSdk) {
     throw new Error('Could not find React SDK navigation group')
 }
