@@ -11,7 +11,9 @@ struct Subscription {
     uint40 lastRenewalTime; // 5 bytes
     uint40 nextRenewalTime; // 5 bytes
     bool active; // 1 byte
-    uint64 duration;
+    uint64 duration; // 8 bytes
+    uint256 lastKnownRenewalPrice; // 32 bytes
+    uint256 lastKnownExpiresAt; // 32 bytes
 }
 
 struct OperatorConfig {
@@ -32,6 +34,8 @@ library SubscriptionModuleStorage {
         mapping(address account => mapping(uint32 entityId => Subscription)) subscriptions;
         mapping(address account => EnumerableSetLib.Uint256Set entityIds) entityIds;
         mapping(address operator => OperatorConfig) operatorConfig;
+        mapping(address account => mapping(address space => uint256 tokenId)) tokenIdByAccountBySpace;
+        address spaceFactory;
     }
 
     // keccak256(abi.encode(uint256(keccak256("towns.subscription.validation.module.storage")) - 1)) & ~bytes32(uint256(0xff))
@@ -46,7 +50,7 @@ library SubscriptionModuleStorage {
 
     function getOperatorBuffer(address operator) internal view returns (uint256) {
         OperatorConfig storage config = getLayout().operatorConfig[operator];
-        if (config.interval == 0) return MIN_RENEWAL_BUFFER;
+        if (config.interval == 0 || config.buffer == 0) return MIN_RENEWAL_BUFFER;
         return config.buffer;
     }
 }

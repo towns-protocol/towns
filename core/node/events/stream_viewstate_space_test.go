@@ -200,7 +200,6 @@ func leaveChannel_T(
 func TestSpaceViewState(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		defaultMinEventsPerSnapshot: 2,
-		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -294,7 +293,6 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
-		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 
@@ -356,7 +354,6 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	ctx, tt := makeCacheTestContext(t, testParams{
 		replFactor:                  1,
 		defaultMinEventsPerSnapshot: 2,
-		enableNewSnapshotFormat:     1,
 	})
 	_ = tt.initCache(0, nil)
 

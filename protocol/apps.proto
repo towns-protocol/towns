@@ -203,9 +203,14 @@ message AppServiceResponse {
     }
 
     message StatusResponse {
+        // Version established by the app registry that the bot framework supports.
+        // It indicates protocol compatibility.
         int32 framework_version = 1;
         string device_key = 2;
         string fallback_key = 3;
+        // Optional metadata used to identify the client SDK version.
+        // Example: "javascript:@towns-protocol/bot:0.0.1"
+        optional string client_version = 4;
     }
 
     oneof payload {

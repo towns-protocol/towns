@@ -21,6 +21,12 @@ import {
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
+    makeEvent,
+    make_MediaPayload_Inception,
+    make_MediaPayload_Chunk,
+    makeUniqueMediaStreamId,
+    streamIdAsBytes,
+    addressFromUserId,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -47,6 +53,8 @@ import {
     type Snapshot,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
+    ChunkedMediaSchema,
+    CreationCookieSchema,
 } from '@towns-protocol/proto'
 import {
     bin_fromBase64,
@@ -59,6 +67,7 @@ import {
     GroupEncryptionAlgorithmId,
     parseGroupEncryptionAlgorithmId,
 } from '@towns-protocol/encryption'
+import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
     createClient as createViemClient,
@@ -80,8 +89,11 @@ import {
 import { base, baseSepolia } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
+import packageJson from '../package.json' with { type: 'json' }
 
 type BotActions = ReturnType<typeof buildBotActions>
+
+export type BotHandler = ReturnType<typeof buildBotActions>
 
 const debug = dlog('csb:bot')
 
@@ -96,12 +108,28 @@ type ImageAttachment = {
     url: string
 }
 
-type MessageOpts = {
+type ChunkedMediaAttachment =
+    | {
+          type: 'chunked'
+          data: Blob
+          width?: number
+          height?: number
+          filename: string
+      }
+    | {
+          type: 'chunked'
+          data: Uint8Array
+          width?: number
+          height?: number
+          filename: string
+          mimetype: string
+      }
+
+export type MessageOpts = {
     threadId?: string
     replyId?: string
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    // TODO: chunked attachment
-    attachments?: Array<ImageAttachment>
+    attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
     ephemeral?: boolean
 }
 
@@ -211,7 +239,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     ) => Promise<void> | void
 }
 
-type BasePayload = {
+export type BasePayload = {
     /** The user ID of the user that triggered the event */
     userId: string
     /** The space ID that the event was triggered in */
@@ -303,6 +331,7 @@ export class Bot<
                 case: 'status',
                 value: {
                     frameworkVersion: 1,
+                    clientVersion: `javascript:${packageJson.name}:${packageJson.version}`,
                     deviceKey: encryptionDevice.deviceKey,
                     fallbackKey: encryptionDevice.fallbackKey,
                 },
@@ -890,6 +919,128 @@ export const makeTownsBot = async <
 }
 
 const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
+    const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
+
+    const createChunkedMediaAttachment = async (
+        attachment: ChunkedMediaAttachment,
+    ): Promise<PlainMessage<ChannelMessage_Post_Attachment>> => {
+        let data: Uint8Array
+        let mimetype: string
+
+        if (attachment.data instanceof Blob) {
+            const buffer = await attachment.data.arrayBuffer()
+            data = new Uint8Array(buffer)
+            mimetype = attachment.data.type
+        } else {
+            data = attachment.data
+            if ('mimetype' in attachment) {
+                mimetype = attachment.mimetype
+            } else {
+                throw new Error('mimetype is required for Uint8Array data')
+            }
+        }
+
+        let width = attachment.width || 0
+        let height = attachment.height || 0
+
+        if (mimetype.startsWith('image/') && (!width || !height)) {
+            const dimensions = imageSize(data)
+            width = dimensions.width || 0
+            height = dimensions.height || 0
+        }
+
+        const { chunks, secretKey } = await encryptChunkedAESGCM(data, CHUNK_SIZE)
+        const chunkCount = chunks.length
+
+        if (chunkCount === 0) {
+            throw new Error('No media chunks generated')
+        }
+
+        // TODO: Implement thumbnail generation with sharp
+        const thumbnail = undefined
+
+        const streamId = makeUniqueMediaStreamId()
+        const events = await Promise.all([
+            makeEvent(
+                client.signerContext,
+                make_MediaPayload_Inception({
+                    streamId: streamIdAsBytes(streamId),
+                    userId: addressFromUserId(client.userId),
+                    chunkCount,
+                    perChunkEncryption: true,
+                }),
+            ),
+            makeEvent(
+                client.signerContext,
+                make_MediaPayload_Chunk({
+                    data: chunks[0].ciphertext,
+                    chunkIndex: 0,
+                    iv: chunks[0].iv,
+                }),
+            ),
+        ])
+        const mediaStreamResponse = await client.rpc.createMediaStream({
+            events,
+            streamId: streamIdAsBytes(streamId),
+        })
+
+        if (!mediaStreamResponse?.nextCreationCookie) {
+            throw new Error('Failed to create media stream')
+        }
+
+        if (chunkCount > 1) {
+            let cc = create(CreationCookieSchema, mediaStreamResponse.nextCreationCookie)
+            for (let chunkIndex = 1; chunkIndex < chunkCount; chunkIndex++) {
+                const chunkEvent = await makeEvent(
+                    client.signerContext,
+                    make_MediaPayload_Chunk({
+                        data: chunks[chunkIndex].ciphertext,
+                        chunkIndex: chunkIndex,
+                        iv: chunks[chunkIndex].iv,
+                    }),
+                    cc.prevMiniblockHash,
+                )
+                const result = await client.rpc.addMediaEvent({
+                    event: chunkEvent,
+                    creationCookie: cc,
+                    last: chunkIndex === chunkCount - 1,
+                })
+
+                if (!result?.creationCookie) {
+                    throw new Error('Failed to send media chunk')
+                }
+
+                cc = create(CreationCookieSchema, result.creationCookie)
+            }
+        }
+
+        const mediaStreamInfo = { creationCookie: mediaStreamResponse.nextCreationCookie }
+
+        return {
+            content: {
+                case: 'chunkedMedia',
+                value: create(ChunkedMediaSchema, {
+                    info: {
+                        filename: attachment.filename,
+                        mimetype: mimetype,
+                        widthPixels: width,
+                        heightPixels: height,
+                        sizeBytes: BigInt(data.length),
+                    },
+                    streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
+                    encryption: {
+                        case: 'aesgcm',
+                        value: {
+                            iv: new Uint8Array(0),
+                            secretKey: secretKey,
+                        },
+                    },
+                    thumbnail,
+                }),
+            },
+        }
+    }
+
     const createImageAttachmentFromURL = async (
         attachment: ImageAttachment,
     ): Promise<PlainMessage<ChannelMessage_Post_Attachment> | null> => {
@@ -906,9 +1057,8 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                 )
                 return null
             }
-            const arrayBuffer = await response.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            const dimensions = imageSize(buffer)
+            const bytes = await response.bytes()
+            const dimensions = imageSize(bytes)
             const width = dimensions.width || 0
             const height = dimensions.height || 0
             const image = create(ChannelMessage_Post_Content_ImageSchema, {
@@ -1010,8 +1160,13 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
                         processedAttachments.push(result)
                         break
                     }
+                    case 'chunked': {
+                        const result = await createChunkedMediaAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
-                        logNever(attachment.type)
+                        logNever(attachment)
                 }
             }
         }
