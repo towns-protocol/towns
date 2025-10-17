@@ -1,0 +1,226 @@
+---
+title: Slash Commands
+---
+
+Slash commands are special message types that:
+- Start with `/` (e.g., `/help`, `/poll`, `/weather`)
+- Show up in autocomplete when users type `/` in Towns
+- Display descriptions to help users understand what they do
+- Are handled separately from regular messages (don't trigger `onMessage`)
+
+### Example Commands
+
+```
+/help                         → Show bot commands
+/ban @john                    → Ban a user
+/weather San Francisco        → Get weather for a location
+/remind 5m Check the oven     → Set a reminder
+```
+
+## Creating commands
+
+Commands are defined in a TypeScript file (typically `src/commands.ts`):
+
+```ts src/commands.ts
+import type { PlainMessage, SlashCommand } from '@towns-protocol/proto'
+
+export const commands = [
+  {
+    name: 'help',
+    description: 'Show available bot commands'
+  },
+  {
+    name: 'ping',
+    description: 'Check if bot is responding'
+  },
+  {
+    name: 'greet',
+    description: 'Greet a user'
+  },
+  {
+    name: 'weather',
+    description: 'Get current weather for a location'
+  }
+] as const satisfies PlainMessage<SlashCommand>[]
+
+export default commands
+```
+
+## Registering commands
+
+You can register commands with Towns using the CLI:
+
+```bash
+bunx towns-bot update-commands src/commands.ts <your-bearer-token>
+```
+
+If you need to add, remove, or modify commands, you can do so by updating the `src/commands.ts` file and running the command above again.
+
+In order to get your bearer token, you need to:
+
+<Steps>
+  <Step title="Open Towns App">
+    Go to any channel where you can send messages
+  </Step>
+
+  <Step title="Request Token">
+    Type `/bearer-token` and press Enter
+  </Step>
+
+  <Step title="Generate Token">
+    Click the "Generate your Bearer Token" button
+  </Step>
+
+  <Step title="Copy Token">
+    Copy the token that appears
+  </Step>
+</Steps>
+
+<Warning>
+Keep your bearer token secure! It grants full access to your Towns account.
+- Don't commit it to git
+- Don't share it publicly
+- Regenerate if compromised
+</Warning>
+
+
+## Handling Commands
+
+You can use `bot.onSlashCommand()` to handle each slash command:
+
+```ts src/index.ts
+import { makeTownsBot } from '@towns-protocol/bot'
+import commands from './commands'
+
+const bot = await makeTownsBot(appPrivateData, jwtSecret, { commands })
+
+// Handle /help command
+bot.onSlashCommand('help', async (handler, event) => {
+  const commandList = commands
+    .map(cmd => `• \`/${cmd.name}\` - ${cmd.description}`)
+    .join('\n')
+
+  await handler.sendMessage(
+    event.channelId,
+    `**Available Commands**\n${commandList}`
+  )
+})
+
+// Handle /ping command
+bot.onSlashCommand('ping', async (handler, event) => {
+  const latency = Date.now() - event.createdAt.getTime()
+  await handler.sendMessage(event.channelId, `Pong! 🏓 (${latency}ms)`)
+})
+```
+
+### Working with Arguments
+
+Slash commands can receive arguments after the command name. 
+
+You can get them from the `args` property of the event.
+
+```ts
+bot.onSlashCommand('weather', async (handler, { args, channelId }) => {
+  // /weather San Francisco
+  // args: ['San', 'Francisco']
+
+  const location = args.join(' ')
+
+  if (!location) {
+    await handler.sendMessage(
+      channelId,
+      'Usage: /weather <location>\nExample: /weather San Francisco'
+    )
+    return
+  }
+
+  const weather = await callWeatherAPI(location)
+  await handler.sendMessage(
+    channelId,
+    `Weather in ${location}: ${weather.temp}°F, ${weather.conditions}`
+  )
+})
+```
+
+### Working with Mentions
+
+Users can mention other users or the bot in slash commands.
+
+You can get the mentions from the `mentions` property of the event.
+
+```ts
+// /greet @john @jane
+bot.onSlashCommand('greet', async (handler, { channelId, mentions}) => {
+  if (mentions.length === 0) {
+    await handler.sendMessage(
+      channelId,
+      'Usage: /greet @user1 @user2 ...'
+    )
+    return
+  }
+
+  const greetings = mentions
+    .map(m => `Hello <@${m.userId}>!`)
+    .join('\n')
+
+  await handler.sendMessage(channelId, greetings, { mentions })
+})
+```
+
+
+### Checking Permissions
+
+You may want to check if the user has the necessary permissions to use a command.
+
+You can use the `hasAdminPermission` method to check if the user is an admin.
+This is a shortcut for checking if the user has the `ModifyBanning` permission.
+
+If you want to check for a specific permission, you can use the `checkPermission` method.
+
+
+```ts
+bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions }) => {
+  // Check if user is admin
+  const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+  if (!isAdmin) {
+    await handler.sendMessage( channelId, '❌ Only admins can use this command')
+    return
+  }
+  const userToBan = mentions[0]?.userId
+  if (!userToBan) {
+    await handler.sendMessage( channelId, 'Usage: /ban @user')
+    return
+  }
+  try {
+    await handler.ban(userToBan, spaceId)
+    await handler.sendMessage(
+      channelId,
+      `✓ Banned <@${userToBan}>`
+    )
+  } catch {
+    await handler.sendMessage( channelId, '❌ Failed to ban user')
+  }
+})
+```
+
+
+## Troubleshooting
+
+**Commands don't appear in autocomplete**
+
+- Run `bunx towns-bot update-commands` again
+- Wait a few minutes for Towns to update
+- Try closing and reopening the Towns app
+- Verify you're in a space where the bot is installed
+
+**"Unauthorized" when running update-commands**
+
+- Verify your bearer token is correct
+- Generate a new token with `/bearer-token`
+- Make sure you're using the bot owner's bearer token
+
+## Next Steps
+
+- Learn about [handling other events](/build/bot/events)
+- Explore [message formatting and attachments](/build/bot/events#message-formatting)
+- See [permission-based features](/build/bot/events#permissions)

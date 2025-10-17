@@ -1,0 +1,34 @@
+---
+title: Introduction
+---
+
+Bots in Towns Protocol are programmable applications that can interact with spaces, channels, and users through end-to-end encrypted messaging.
+
+They enable automation, integrations, and enhanced user experiences within Towns communities.
+
+## Architecture
+
+Towns bots consist of two interconnected pieces:
+
+### Onchain 
+
+Bots are a smart contract that is registered through the **App Registry** smart contract on Base and installed in a `Space`. 
+
+It allows us to have:
+- **Secure identity**: Each bot has a unique address and public key.
+- **Fine-grained permissions**: Control exactly what the bot can do (read/write messages, ban, etc.)
+- **Recurring revenue**: Bots can be paid monthly or yearly.
+- TODO: add more / rethink the section
+
+### Server 
+
+The server component is a webhook endpoint that receives events from Towns Protocol nodes and processes them.
+
+Bot is a fine-tuned user in the Towns Protocol network. It can do most of the things a user can do: send and receive messages, receive tips, etc. All of that with the same security guarantees as a user: **end-to-end encryption**.
+
+Additionally, the server can talk with the onchain piece, allowing it to perform onchain interactions, transactions, tips, swaps, and more.
+
+
+## Next Steps
+
+Ready to build your first bot? Continue to the [Getting Started guide](/build/bot/getting-started) to create and deploy your bot in minutes.

@@ -144,6 +144,16 @@
                 ]
               }
             ]
+          },
+          {
+            "group": "Bots",
+            "pages": [
+              "build/bots/introduction",
+              "build/bots/getting-started",
+              "build/bots/events",
+              "build/bots/slash-commands",
+              "build/bots/external-interactions"
+            ]
           }
         ]
       },
