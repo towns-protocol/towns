@@ -3,6 +3,6 @@
 }
 
 /* hack to hide the powered by mintlify */
-footer > div[class*="flex"] > div[class="sm:flex"] > a {
+#sidebar > ul[class*="bottom-0"] {
   display: none !important;
 }
