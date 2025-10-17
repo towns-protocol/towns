@@ -1,23 +1,19 @@
 ---
 title: Upgradeability
-description: "Smart Contract Upgradeability: The Diamond Pattern with Facets"
+description: "The Diamond Pattern with Facets"
 ---
-
-## Smart Contract Upgradeability: The Diamond Pattern with Facets
-
-### Introduction to the Diamond Pattern
 
 In the blockchain and smart contract realm, the [Diamond Pattern](https://eips.ethereum.org/EIPS/eip-2535) emerges as a sophisticated solution for contract upgradeability. This pattern is designed to overcome the limitations of traditional smart contract systems, where deployed contracts are immutable and cannot be upgraded. The Diamond Pattern, also known as [EIP-2535](https://eips.ethereum.org/EIPS/eip-2535), introduces a modular structure using 'facets', which allows for more flexible and manageable contract upgrades. Spaces meanwhile always retain the right to opt out of upgrades and always fully retain control ownership and funds.
 
-### Understanding Facets
+## Understanding Facets
 
 Facets are individual, modular contracts that together form the complete Diamond. Each facet can contain a specific set of functionalities or logic. The beauty of this approach lies in its compartmentalization; facets can be added, replaced, or removed without affecting the entire system.
 
-### The Role of the Diamond Proxy
+## The Role of the Diamond Proxy
 
 At the core of the Diamond Pattern is the Diamond Proxy. This is a single proxy contract that delegates calls to the appropriate facets. The Diamond Proxy maintains the state and delegates function calls to specific facets that implement these functions. This setup enables the core logic of the Diamond to be updated or expanded by modifying its facets.
 
-### Benefits of the Diamond Pattern
+## Benefits of the Diamond Pattern
 
 1. **Upgradeability**: The most significant advantage of the Diamond Pattern is the ability to upgrade smart contracts. Facets can be replaced or updated, allowing for improvements and bug fixes post-deployment.
 2. **Modularity**: By dividing functionality into different facets, the system becomes more organized and manageable. This modular approach also aids in understanding and auditing the contract's code.
@@ -26,7 +22,7 @@ At the core of the Diamond Pattern is the Diamond Proxy. This is a single proxy 
 
 4. **Enhanced Functionality**: The pattern allows for a broad range of functionalities to be implemented, which might not be possible in a single contract due to block gas limits.
 
-### Implementing the Diamond Pattern
+## Implementing the Diamond Pattern
 
 Implementing the Diamond Pattern requires careful planning:
 

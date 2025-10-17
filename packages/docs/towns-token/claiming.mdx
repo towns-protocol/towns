@@ -13,7 +13,7 @@ Rewards are claimed by calling the `claimReward(address beneficiary, address rec
 The `claimReward` function is called from the claimer address, who is either the beneficiary or an authorized claimer that can claim the reward for the beneficiary.
 
 <Note>
-  Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](../run/contracts)).
+  Since the RewardsDistribution contract is a facet of the BaseRegistry contract, the `claimReward` function is called from the BaseRegistry contract address (see [contracts](/node-operator/contracts)).
 </Note>
 
 To view the current reward claimable by `claimReward` in wei, call `currentReward(address beneficiary)` on the RewardsDistribution contract from the BaseRegistry diamond contract.
