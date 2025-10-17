@@ -432,14 +432,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
-			// Snapshot is outside the miniblock header, new format
-			header.SnapshotHash = parsedSnapshot.Envelope.Hash
-		} else {
-			// Snapshot is inside miniblock header, legacy format
-			header.Snapshot = parsedSnapshot.Snapshot
-			parsedSnapshot = nil
-		}
+		header.SnapshotHash = parsedSnapshot.Envelope.Hash
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)

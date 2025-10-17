@@ -89,6 +89,7 @@ import {
 import { base, baseSepolia } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
+import packageJson from '../package.json' with { type: 'json' }
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -330,6 +331,7 @@ export class Bot<
                 case: 'status',
                 value: {
                     frameworkVersion: 1,
+                    clientVersion: `javascript:${packageJson.name}:${packageJson.version}`,
                     deviceKey: encryptionDevice.deviceKey,
                     fallbackKey: encryptionDevice.fallbackKey,
                 },

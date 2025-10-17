@@ -19,6 +19,5 @@
 "stream.defaultStreamTrimmingMiniblocksToKeep",0,0
 "stream.streamTrimmingMiniblocksToKeep.10",0,1000
 "stream.streamTrimmingMiniblocksToKeep.a5",0,1000
-"stream.enableNewSnapshotFormat",0,1
 "server.enablenode2nodeauth",0,0
 "stream.backwardsReconciliationThreshold",0,50

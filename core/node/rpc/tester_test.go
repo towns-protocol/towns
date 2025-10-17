@@ -162,12 +162,6 @@ func newServiceTester(t *testing.T, opts serviceTesterOpts) *serviceTester {
 	st.btc.SetConfigValue(
 		t,
 		ctx,
-		crypto.StreamEnableNewSnapshotFormatConfigKey,
-		crypto.ABIEncodeUint64(1),
-	)
-	st.btc.SetConfigValue(
-		t,
-		ctx,
 		crypto.ServerEnableNode2NodeAuthConfigKey,
 		crypto.ABIEncodeUint64(1),
 	)

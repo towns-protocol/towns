@@ -57,8 +57,10 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         executionInstallDelegate = new ExecutionInstallDelegate();
         subscriptionModule = SubscriptionModuleFacet(deploySubscriptionModule.deploy(deployer));
 
-        vm.prank(deployer);
+        vm.startPrank(deployer);
         subscriptionModule.grantOperator(processor);
+        subscriptionModule.setSpaceFactory(spaceFactory);
+        vm.stopPrank();
 
         SingleSignerValidationModule singleSignerValidationModule = new SingleSignerValidationModule();
 
@@ -127,6 +129,17 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         _getMembership(space).setMembershipPrice(price);
     }
 
+    function _setMembershipDuration(address space, uint64 duration) internal {
+        vm.prank(address(owner));
+        _getMembership(space).setMembershipDuration(duration);
+    }
+
+    function _renewMembership(address space, address account, uint256 tokenId) internal {
+        uint256 renewalPrice = _getMembership(space).getMembershipRenewalPrice(tokenId);
+        hoax(account, renewalPrice);
+        _getMembership(space).renewMembership{value: renewalPrice}(tokenId);
+    }
+
     function _getMembership(address space) internal pure returns (IMembership) {
         return IMembership(space);
     }
@@ -163,7 +176,8 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         IMembership membershipFacet = IMembership(space);
 
         uint256 expirationTime = membershipFacet.expiresAt(tokenId);
-        uint256 buf = subscriptionModule.getRenewalBuffer(expirationTime);
+        uint256 duration = membershipFacet.getMembershipDuration();
+        uint256 buf = subscriptionModule.getRenewalBuffer(duration);
         uint64 nextRenewalTime;
 
         if (expirationTime > buf) {
@@ -338,8 +352,20 @@ contract ModulesBase is BaseSetup, ISubscriptionModuleBase {
         BalanceSnapshot memory beforeSnap,
         BalanceSnapshot memory afterSnap
     ) internal view {
+        // Ensure account balance decreased (paid)
+        assertGe(beforeSnap.account, afterSnap.account, "account balance should decrease");
         uint256 paidAmount = beforeSnap.account - afterSnap.account;
+
+        // Ensure fee recipient balance increased
+        assertGe(
+            afterSnap.feeRecipient,
+            beforeSnap.feeRecipient,
+            "fee recipient balance should increase"
+        );
         uint256 protocolFee = afterSnap.feeRecipient - beforeSnap.feeRecipient;
+
+        // Ensure space balance increased
+        assertGe(afterSnap.space, beforeSnap.space, "space balance should increase");
         uint256 creatorAmount = afterSnap.space - beforeSnap.space;
 
         uint256 expectedProtocolFee = _calculateProtocolFee(paidAmount);
