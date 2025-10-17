@@ -9,6 +9,7 @@ import {
     cloneTemplate,
     applyReplacements,
     printSuccess,
+    initializeGitRepository,
     type PackageJson,
 } from './utils.js'
 import type { InitArgs } from '../parser.js'
@@ -97,7 +98,7 @@ export async function init(argv: InitArgs) {
             modifiedContent = JSON.stringify(parsed, null, 2)
             fs.writeFileSync(packageJsonPath, modifiedContent)
         }
-
+        await initializeGitRepository(targetDir)
         printSuccess(projectName, packageManager)
     } catch (error) {
         console.error(red('Error:'), error instanceof Error ? error.message : error)
