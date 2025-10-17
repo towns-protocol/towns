@@ -35,6 +35,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     uint48 private constant MAX_DURATION = 365 days;
 
+    modifier onlyAllowed(IAppAccount account) {
+        if (IERC173(address(account)).owner() != msg.sender) NotAllowed.selector.revertWith();
+        _;
+    }
+
     function __AppRegistry_init_unchained(
         address spaceFactory,
         string calldata schema,
@@ -319,10 +324,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         IAppAccount(account).onRenewApp(appId, data);
 
         emit AppRenewed(app, account, appId);
-    }
-
-    function _onlyAllowed(address account) internal view {
-        if (IERC173(account).owner() != msg.sender) NotAllowed.selector.revertWith();
     }
 
     function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
