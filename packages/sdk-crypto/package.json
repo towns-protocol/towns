@@ -6,10 +6,10 @@
     "types": "./dist/web/index.d.ts",
     "scripts": {
         "build": "tsdown",
-        "cb": "yarn clean && yarn build",
+        "cb": "bun run clean && bun run build",
         "clean": "rm -rf dist",
         "lint": "eslint --format unix ./src  --max-warnings=0",
-        "lint:fix": "yarn lint --fix",
+        "lint:fix": "bun run lint --fix",
         "test": "vitest",
         "test:unit": "vitest run",
         "watch": "tsdown --watch"

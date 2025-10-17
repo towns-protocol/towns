@@ -4,9 +4,9 @@
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
-        "build": "node ./esbuild.config.mjs",
+        "build": "bun ./esbuild.config.mjs",
         "clean": "rm -rf dist",
-        "dev": "yarn tsx src/index.ts"
+        "dev": "bun run tsx src/index.ts"
     },
     "dependencies": {
         "@towns-protocol/generated": "workspace:^",
