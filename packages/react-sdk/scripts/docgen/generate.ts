@@ -123,10 +123,19 @@ type DocsJson = {
     }
 }
 
-// Find React SDK navigation group
-const reactSdk = docsJson.navigation.groups.find((group) => group.group === 'React SDK')
+// Find Build navigation group (top-level)
+const buildGroup = docsJson.navigation.groups.find((group) => group.group === 'Build')
+if (!buildGroup) {
+    throw new Error('Could not find Build navigation group')
+}
+
+// Find React SDK navigation group (nested within Build)
+const reactSdk = buildGroup.pages.find(
+    (page) => typeof page !== 'string' && page.group === 'React SDK',
+) as { group: string; pages: Array<string | { group?: string; pages: string[] }> } | undefined
+
 if (!reactSdk) {
-    throw new Error('Could not find React SDK navigation group')
+    throw new Error('Could not find React SDK navigation group within Build group')
 }
 
 // Get list of current API doc files
