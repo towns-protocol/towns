@@ -282,8 +282,7 @@ export class Bot<
         this.snapshot = clientV2.snapshot
     }
 
-    async start() {
-        await this.client.uploadDeviceKeys()
+    start() {
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
         debug('start')
 
@@ -915,6 +914,7 @@ export const makeTownsBot = async <
         },
         ...clientOpts,
     }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
+    await client.uploadDeviceKeys()
     return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
 }
 
