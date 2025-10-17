@@ -570,7 +570,7 @@ export async function riverSign(
 export function riverVerifySignature(
     hash: Uint8Array,
     signature: Uint8Array,
-    publicKey: Uint8Array | string,
+    publicKey: Uint8Array,
 ): boolean {
     checkHash(hash)
     checkSignature(signature)
