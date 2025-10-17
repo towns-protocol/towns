@@ -212,9 +212,6 @@ func TestSetOnChain(t *testing.T) {
 	btc.SetConfigValue(t, ctx, XChainBlockchainsConfigKey, ABIEncodeUint64Array([]uint64{1, 10, 100}))
 	btc.SetConfigValue(t, ctx, NodeBlocklistConfigKey, ABIEncodeAddressArray(addresses))
 	btc.SetConfigValue(t, ctx, StreamSnapshotIntervalInMiniblocksConfigKey, ABIEncodeUint64(1000))
-	btc.SetConfigValue(t, ctx, StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(1000))
-	btc.SetConfigValue(t, ctx, StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(999))
-	btc.SetConfigValue(t, ctx, StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(888))
 	btc.SetConfigValue(t, ctx, StreamTrimActivationFactorConfigKey, ABIEncodeUint64(10))
 	btc.SetConfigValue(t, ctx, ServerEnableNode2NodeAuthConfigKey, ABIEncodeUint64(1))
 
@@ -227,9 +224,6 @@ func TestSetOnChain(t *testing.T) {
 	assert.EqualValues([]uint64{1, 10, 100}, s.XChain.Blockchains)
 	assert.Equal(addresses, s.NodeBlocklist)
 	assert.Equal(uint64(1000), s.StreamSnapshotIntervalInMiniblocks)
-	assert.Equal(uint64(1000), s.StreamTrimmingMiniblocksToKeep.Default)
-	assert.Equal(uint64(999), s.StreamTrimmingMiniblocksToKeep.Space)
-	assert.Equal(uint64(888), s.StreamTrimmingMiniblocksToKeep.UserSetting)
 	assert.Equal(uint64(10), s.StreamTrimActivationFactor)
 	assert.Equal(uint64(1), s.ServerEnableNode2NodeAuth)
 
