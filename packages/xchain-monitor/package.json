@@ -1,13 +1,13 @@
 {
     "name": "@towns-protocol/xchain-monitor",
     "version": "0.0.372",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "bun@1.3.0",
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
-        "build": "node ./esbuild.config.mjs",
+        "build": "bun ./esbuild.config.mjs",
         "clean": "rm -rf dist",
-        "dev": "yarn tsx src/index.ts"
+        "dev": "bun run tsx src/index.ts"
     },
     "dependencies": {
         "@towns-protocol/generated": "workspace:^",
