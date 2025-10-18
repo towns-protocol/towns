@@ -226,6 +226,9 @@ type (
 			app common.Address,
 			active bool,
 		) error
+
+		// GetAllActiveBotAddresses returns all active bot addresses registered in the app registry
+		GetAllActiveBotAddresses(ctx context.Context) ([]common.Address, error)
 	}
 )
 
@@ -1363,4 +1366,35 @@ func (s *PostgresAppRegistryStore) setAppActiveStatus(
 	}
 
 	return nil
+}
+
+// GetAllActiveBotAddresses returns all active bot addresses registered in the app registry
+func (s *PostgresAppRegistryStore) GetAllActiveBotAddresses(ctx context.Context) ([]common.Address, error) {
+	var addresses []common.Address
+
+	rows, err := s.pool.Query(
+		ctx,
+		`SELECT app_id FROM app_registry WHERE active = true`,
+	)
+	if err != nil {
+		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to fetch active bot addresses")
+	}
+	defer rows.Close()
+
+	var appId PGAddress
+	for rows.Next() {
+		if err := rows.Scan(&appId); err != nil {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to scan bot address")
+		}
+		addresses = append(addresses, common.Address(appId))
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("error iterating bot addresses")
+	}
+
+	return addresses, nil
 }
