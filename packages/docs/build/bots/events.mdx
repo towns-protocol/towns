@@ -1,0 +1,94 @@
+---
+title: Events
+---
+
+This guide covers what you need to know about events and how to handle them in your bot. You'll learn about:
+
+- [Event anatomy](#event-anatomy)
+- [Event listeners](#event-listeners)
+
+## Event Anatomy
+
+All events share a common `BasePayload` structure:
+
+- `userId`: The user who triggered the event.
+- `spaceId`: The space that the event occurred in.
+- `channelId`: The channel that the event occurred in.
+- `eventId`: The unique event ID.
+- `createdAt`: The date and time the event occurred.
+
+Different event types extend this base with additional fields.
+
+## Event Listeners
+All event listeners are asynchronous functions that receive a `handler` and an `event` object. 
+
+The `handler` is the bot instance and the `event` contains the `BasePayload` and additional fields specific to the event type.
+
+### onMessage
+
+Fires when a message is sent in a channel the bot is in (subject to forwarding settings).
+
+- `message`: The decrypted message text.
+- `replyId`: The `eventId` of the message being replied to (if reply).
+- `threadId`: The `eventId` of the thread's first message (if in thread).
+- `mentions`: List of users mentioned in the message. Each mention contains the user's address and display name.
+- `isMentioned`: True if the bot was @mentioned.
+
+### onSlashCommand
+
+Fires when a user invokes one of your bot's slash commands. For more information about slash commands, see the [Slash Commands guide](/build/bot/slash-commands).
+
+- `command`: The name of the command invoked by the user.
+- `args`: The arguments passed to the command.
+
+### onReaction
+
+<Warning>
+You only get the `reaction` and `messageId` - not the message content! Store messages externally if you need context.
+</Warning>
+
+- `reaction`: The reaction emoji.
+- `refEventId`: The `eventId` of the message being reacted to.
+
+### onMessageEdit
+
+
+- `message`: The new message content.
+- `refEventId`: The `eventId` of the message being edited.
+
+### onRedaction
+
+Fires when a message is deleted by a user.
+
+- `refEventId`: The `eventId` of the message being deleted.
+
+### onEventRevoke
+
+- `refEventId`: The `eventId` of the message being revoked.
+
+### onTip
+
+Fires when a user sends a cryptocurrency tip on a message.
+
+- `messageId`: The `eventId` of the message that received the tip.
+- `senderAddress`: The address of the user who sent the tip.
+- `receiverAddress`: The address of the user who received the tip.
+- `amount`: The amount of the tip.
+- `currency`: The currency of the tip.
+
+It can fire for any tip, not just tips to the bot.
+
+
+### onChannelJoin 
+
+Fires when users join a channel.
+
+- `userId`: The user who joined or left the channel.
+- `channelId`: The channel that the user joined or left.
+
+### onChannelLeave
+
+Fires when users leave a channel.
+
+- `userId`: The user who left the channel.
+- `channelId`: The channel that the user left.
