@@ -1098,7 +1098,7 @@ bot.onSlashCommand("setup-github-here", async (handler, event) => {
 })
 
 // 2. Towns webhook endpoint (required for bot to work)
-const { jwtMiddleware, handler } = await bot.start()
+const { jwtMiddleware, handler } = bot.start()
 app.post('/webhook', jwtMiddleware, handler)
 
 // 3. GitHub webhook endpoint (separate from Towns webhook)

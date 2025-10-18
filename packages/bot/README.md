@@ -16,7 +16,7 @@ bot.onMessage((client, { channelId, isMentioned }) => {
   }
 });
 
-const { fetch } = await bot.start();
+const { fetch } = bot.start();
 serve({ fetch });
 ```
 

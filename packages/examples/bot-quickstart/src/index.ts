@@ -51,7 +51,7 @@ async function main() {
         }
     })
 
-    const { jwtMiddleware, handler } = await bot.start()
+    const { jwtMiddleware, handler } = bot.start()
 
     const app = new Hono()
     app.use(logger())

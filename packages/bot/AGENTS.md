@@ -195,7 +195,7 @@ bot.onMessage((handler, { message }) => {
 })
 
 // Start bot
-const { handler } = await bot.start()
+const { handler } = bot.start()
 ```
 
 ## Common Development Tasks
