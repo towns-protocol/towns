@@ -48,7 +48,8 @@ export async function startStressSlowChat(opts: {
 
     results.forEach((r, index) => {
         if (r.status === 'rejected') {
-            logger.error(`${clients[index].logId} error calling chitChat`, r.reason)
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            logger.error({ err: r.reason, logId: clients[index].logId }, 'error calling chitChat')
         }
     })
 

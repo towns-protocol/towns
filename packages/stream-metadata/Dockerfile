@@ -1,20 +1,13 @@
-FROM node:lts-alpine3.20 AS builder
+FROM oven/bun:1.2-alpine AS builder
 
 WORKDIR /river
 
 # Install dependencies needed for Sharp and other native modules
-RUN apk add --no-cache git curl libc6-compat vips-dev
+RUN apk add --no-cache git curl libc6-compat vips-dev npm
 
 # monorepo root config
-COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
-COPY ./buf.yaml ./buf.yaml
-COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
-COPY ./turbo.json ./turbo.json
-COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
+COPY buf.yaml package.json bunfig.toml bun.lock turbo.json ./
+COPY packages/tsconfig.base.json ./packages/
 
 # monorepo core dependencies
 COPY ./protocol ./protocol
@@ -37,13 +30,11 @@ COPY ./packages/rpc-connector /river/packages/rpc-connector
 COPY ./packages/stream-metadata /river/packages/stream-metadata
 
 # install dependencies and build
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
-RUN yarn install
-RUN yarn run turbo build --filter @towns-protocol/stream-metadata
+RUN bun install && bun pm cache rm
+RUN bun run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
-FROM node:lts-alpine3.20 AS runner
+FROM oven/bun:1.2-alpine AS runner
 
 # Install runtime dependencies for Sharp
 RUN apk add --no-cache libc6-compat vips
@@ -52,18 +43,17 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
-RUN yarn init --yes
+
+# Bun is already installed in the base image
+RUN bun init --yes
 
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3
+RUN bun add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3
 
-# Force rebuild sharp to ensure correct Linux binaries
-RUN yarn remove sharp && yarn add sharp@0.34.3
-
-# Clean yarn cache to reduce image size
-RUN yarn cache clean
+# Clean bun cache to reduce image size
+RUN bun pm cache rm
 
 # run the service
 ARG GIT_SHA
@@ -72,4 +62,4 @@ ENV DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns" \
     DD_GIT_COMMIT_SHA=${GIT_SHA} \
     NODE_ENV=production
 
-CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]
+CMD ["bun", "./dist/node_esbuild.cjs"]
