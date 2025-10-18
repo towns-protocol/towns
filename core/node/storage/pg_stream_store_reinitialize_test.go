@@ -85,7 +85,7 @@ func TestReinitializeStreamStorage_UpdateExisting(t *testing.T) {
 		Data:     []byte("genesis miniblock"),
 		Snapshot: []byte("genesis snapshot"),
 	}
-	err := store.CreateStreamStorage(ctx, streamId, genesisMb)
+	err := store.CreateStreamStorage(ctx, streamId, genesisMb, false)
 	require.NoError(err)
 
 	// Write a miniblock to extend the stream
@@ -324,7 +324,7 @@ func TestReinitializeStreamStorage_CandidateCleanup(t *testing.T) {
 		Data:     []byte("genesis miniblock"),
 		Snapshot: []byte("genesis snapshot"),
 	}
-	err := store.CreateStreamStorage(ctx, streamId, genesisMb)
+	err := store.CreateStreamStorage(ctx, streamId, genesisMb, false)
 	require.NoError(err)
 
 	// Add multiple miniblock candidates
@@ -384,7 +384,7 @@ func TestReinitializeStreamStorage_TransactionRollback(t *testing.T) {
 		Data:     []byte("genesis miniblock"),
 		Snapshot: []byte("genesis snapshot"),
 	}
-	err := store.CreateStreamStorage(ctx, streamId, genesisMb)
+	err := store.CreateStreamStorage(ctx, streamId, genesisMb, false)
 	require.NoError(err)
 
 	// Add event to minipool
@@ -677,7 +677,7 @@ func TestReinitializeStreamStorage_StreamWithoutMiniblocks(t *testing.T) {
 		func(ctx context.Context, tx pgx.Tx) error {
 			_, err := tx.Exec(
 				ctx,
-				"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false)",
+				"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, 0, true, false, false)",
 				streamId,
 			)
 			return err

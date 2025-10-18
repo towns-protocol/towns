@@ -87,7 +87,13 @@ type (
 		// CreateStreamStorage creates a new stream with the given genesis miniblock at index 0.
 		// Last snapshot minblock index is set to 0.
 		// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
-		CreateStreamStorage(ctx context.Context, streamId StreamId, genesisMiniblock *MiniblockDescriptor) error
+		// isLightweight indicates whether the new stream should be marked as lightweight.
+		CreateStreamStorage(
+			ctx context.Context,
+			streamId StreamId,
+			genesisMiniblock *MiniblockDescriptor,
+			isLightweight bool,
+		) error
 
 		// ReinitializeStreamStorage initialized or reinitializes storage for the given stream.
 		//
@@ -113,15 +119,18 @@ type (
 		) error
 
 		// CreateEphemeralStreamStorage same as CreateStreamStorage but marks the stream as ephemeral.
+		// isLightweight indicates whether the ephemeral stream should be marked as lightweight.
 		CreateEphemeralStreamStorage(
 			ctx context.Context,
 			streamId StreamId,
 			genesisMiniblock *MiniblockDescriptor,
+			isLightweight bool,
 		) error
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
-		CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
+		// isLightweight indicates whether the archive stream should be marked as lightweight.
+		CreateStreamArchiveStorage(ctx context.Context, streamId StreamId, isLightweight bool) error
 
 		// ReadStreamFromLastSnapshot reads last stream miniblocks and guarantees that last snapshot miniblock is included.
 		// It attempts to read at least numPrecedingMiniblocks miniblocks before the snapshot, but may return less if there are not enough miniblocks in storage,

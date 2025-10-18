@@ -39,7 +39,7 @@ func TestDbLocking(t *testing.T) {
 
 	_, err = pool.Exec(
 		ctx,
-		`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false);
+		`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, 0, true, false, false);
 		INSERT INTO miniblocks_r00 (stream_id, seq_num, blockdata) VALUES ($1, 0, $2);
 		INSERT INTO minipools_r00 (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		streamId,

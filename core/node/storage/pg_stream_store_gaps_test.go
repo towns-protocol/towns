@@ -41,7 +41,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 				Hash:     common.HexToHash("0x01"),
 				Data:     []byte("genesis"),
 				Snapshot: []byte("snapshot0"),
-			},
+			}, false,
 		)
 		require.NoError(err)
 
