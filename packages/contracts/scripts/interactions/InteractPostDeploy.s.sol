@@ -8,6 +8,7 @@ import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDeleg
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
+import {ISubscriptionModule} from "src/apps/modules/subscription/ISubscriptionModule.sol";
 
 // libraries
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
@@ -35,6 +36,7 @@ contract InteractPostDeploy is Interaction {
         address baseRegistry = getDeployment("baseRegistry");
         address riverAirdrop = getDeployment("riverAirdrop");
         address appRegistry = getDeployment("appRegistry");
+        address subscriptionModule = getDeployment("subscriptionModule");
         address townsBase = deployTownsBase.deploy(deployer);
         address proxyDelegation = deployProxyDelegation.deploy(deployer);
 
@@ -47,6 +49,7 @@ contract InteractPostDeploy is Interaction {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
+        ISubscriptionModule(subscriptionModule).setSpaceFactory(spaceFactory);
         IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
         IRewardsDistribution(baseRegistry).setRewardNotifier(deployer, true);
         IRewardsDistribution(baseRegistry).notifyRewardAmount(MAX_CLAIMABLE_SUPPLY);
