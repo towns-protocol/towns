@@ -51,11 +51,11 @@ async function main() {
         }
     })
 
-    const { jwtMiddleware, handler } = await bot.start()
-
     const app = new Hono()
     app.use(logger())
-    app.post('/webhook', jwtMiddleware, handler)
+    app.post('/webhook', async (c) => {
+        return await bot.fetch(c.req.raw)
+    })
 
     serve({ fetch: app.fetch, port: parseInt(process.env.PORT!) })
     console.log(`✅ Quickstart Bot is running on https://localhost:${process.env.PORT}`)

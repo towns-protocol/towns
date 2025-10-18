@@ -1098,8 +1098,9 @@ bot.onSlashCommand("setup-github-here", async (handler, event) => {
 })
 
 // 2. Towns webhook endpoint (required for bot to work)
-const { jwtMiddleware, handler } = await bot.start()
-app.post('/webhook', jwtMiddleware, handler)
+app.post('/webhook', async (c) => {
+  return await bot.fetch(c.req.raw)
+})
 
 // 3. GitHub webhook endpoint (separate from Towns webhook)
 app.post('/github-webhook', async (c) => {
@@ -1129,6 +1130,28 @@ app.post('/github-webhook', async (c) => {
 })
 
 serve({ fetch: app.fetch, port: 3000 })
+```
+
+### Framework Integration Examples
+
+The `bot.fetch` property works with any framework that supports Web API Request/Response:
+
+**Hono:**
+```typescript
+const app = new Hono()
+app.post('/webhook', async (c) => {
+  return await bot.fetch(c.req.raw)
+})
+```
+
+**Cloudflare Workers:**
+```typescript
+export default { fetch: bot.fetch }
+```
+
+**Bun:**
+```typescript
+Bun.serve({ fetch: bot.fetch, port: 3000 })
 ```
 
 ### Health Check Monitoring Example
