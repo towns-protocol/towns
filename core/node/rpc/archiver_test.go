@@ -319,8 +319,8 @@ func TestArchiveOneStream(t *testing.T) {
 		infra.NewMetricsFactory(nil, "", ""),
 		&mocks.MockOnChainCfg{
 			Settings: &crypto.OnChainSettings{
-				StreamEphemeralStreamTTL:       time.Minute * 10,
-				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+				StreamEphemeralStreamTTL: time.Minute * 10,
+				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{Default: 0, Space: 5},
 			},
 		},
 		100,
