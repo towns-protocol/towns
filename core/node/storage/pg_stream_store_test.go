@@ -69,6 +69,7 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 				StreamSnapshotIntervalInMiniblocks: 110,
 			},
 		},
+		nil,
 		5,
 	)
 	require.NoError(err, "Error creating new postgres stream store")
@@ -661,6 +662,7 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 					StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
 				},
 			},
+			nil,
 			5,
 		)
 		require.NoError(err)
