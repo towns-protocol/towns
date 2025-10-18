@@ -8,27 +8,19 @@ import {IDiamond} from "@towns-protocol/diamond/src/IDiamond.sol";
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 
 // contracts
-import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
+import {AppTreasuryFacet} from "src/spaces/facets/account/treasury/AppTreasuryFacet.sol";
 import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
-library DeployAppAccount {
+library DeployAppTreasury {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(14);
-        arr.p(AppAccount.execute.selector);
-        arr.p(AppAccount.onInstallApp.selector);
-        arr.p(AppAccount.onUninstallApp.selector);
-        arr.p(AppAccount.onRenewApp.selector);
-        arr.p(AppAccount.onUpdateApp.selector);
-        arr.p(AppAccount.isAppExecuting.selector);
-        arr.p(AppAccount.isAppEntitled.selector);
-        arr.p(AppAccount.disableApp.selector);
-        arr.p(AppAccount.getInstalledApps.selector);
-        arr.p(AppAccount.getAppId.selector);
-        arr.p(AppAccount.enableApp.selector);
-        arr.p(AppAccount.getAppExpiration.selector);
-        arr.p(AppAccount.isAppInstalled.selector);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(5);
+        arr.p(AppTreasuryFacet.requestFunds.selector);
+        arr.p(AppTreasuryFacet.configureStream.selector);
+        arr.p(AppTreasuryFacet.pauseStream.selector);
+        arr.p(AppTreasuryFacet.resumeStream.selector);
+        arr.p(AppTreasuryFacet.getStreamBalance.selector);
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
             res := selectors_
@@ -48,6 +40,6 @@ library DeployAppAccount {
     }
 
     function deploy() internal returns (address) {
-        return LibDeploy.deployCode("AppAccount.sol", "");
+        return LibDeploy.deployCode("AppTreasuryFacet.sol", "");
     }
 }
