@@ -966,15 +966,16 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 					"ActualSeqNum", seqNum,
 					"ExpectedSeqNum", miniblocks[0].Number+int64(len(miniblocks)))
 			}
+
+			if mbDataLocation != MiniblockDataStorageLocationDB {
+				blockdata = miniblockData[seqNum]
+			}
+
 			if len(blockdata) == 0 {
 				corrupt = true
 			}
 			if len(snapshot) == 0 {
 				snapshot = nil
-			}
-
-			if mbDataLocation != MiniblockDataStorageLocationDB {
-				blockdata = miniblockData[seqNum]
 			}
 
 			miniblocks = append(miniblocks, &MiniblockDescriptor{
