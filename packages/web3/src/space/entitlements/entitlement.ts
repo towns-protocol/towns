@@ -1267,20 +1267,6 @@ async function findEtherChainProviders(xchainConfig: XchainConfig) {
     return etherChainProviders
 }
 
-export async function findEthereumProviders(xchainConfig: XchainConfig) {
-    const ethereumProviders = []
-    for (const chainId of xchainConfig.ethereumNetworkIds) {
-        if (!(chainId in xchainConfig.supportedRpcUrls)) {
-            log.error(`findEthereumProviders: No supported RPC URL for chain id ${chainId}`)
-        } else {
-            const url = xchainConfig.supportedRpcUrls[chainId]
-            ethereumProviders.push(new ethers.providers.StaticJsonRpcProvider(url))
-        }
-    }
-    await Promise.all(ethereumProviders.map((p) => p.ready))
-    return ethereumProviders
-}
-
 function isValidAddress(value: unknown): value is Address {
     return (
         typeof value === 'string' &&

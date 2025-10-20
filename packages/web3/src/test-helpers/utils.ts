@@ -11,10 +11,11 @@ export async function makeDefaultMembershipInfo(
     price = 0n,
     freeAllocation = 1000,
 ) {
+    const pricingModules = await spaceDapp.readApp.pricingModules.read.listPricingModules()
     const pricingModule =
         pricing == 'dynamic'
-            ? await getDynamicPricingModule(spaceDapp)
-            : await getFixedPricingModule(spaceDapp)
+            ? await getDynamicPricingModule(pricingModules)
+            : await getFixedPricingModule(pricingModules)
     return {
         settings: {
             name: 'Everyone',

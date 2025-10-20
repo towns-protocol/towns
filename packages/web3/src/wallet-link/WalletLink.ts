@@ -5,6 +5,8 @@ import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../types/error-t
 import { BaseChainConfig } from '../utils/web3Env'
 import { IWalletLinkShim } from './WalletLinkShim'
 import { createEip712LinkedWalletdData } from '../eip-712/EIP-712'
+import { ReadApp } from '../reads'
+import { isAddress } from 'ethers/lib/utils'
 
 export const INVALID_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -12,9 +14,16 @@ export class WalletLink {
     private readonly LINKED_WALLET_MESSAGE = 'Link your external wallet'
     private readonly walletLinkShim: IWalletLinkShim
     private readonly eip712Domain: ethers.TypedDataDomain
+    private readonly walletReads: ReadApp['wallets']
     public address: Address
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+    constructor(args: {
+        config: BaseChainConfig
+        provider: ethers.providers.Provider
+        walletReads: ReadApp['wallets']
+    }) {
+        const { config, provider, walletReads } = args
+        this.walletReads = walletReads
         this.walletLinkShim = new IWalletLinkShim(config.addresses.spaceFactory, provider)
         this.address = config.addresses.spaceFactory
         this.eip712Domain = {
@@ -243,21 +252,38 @@ export class WalletLink {
         return this.walletLinkShim.parseError(error)
     }
 
-    public async getLinkedWallets(rootKey: string): Promise<string[]> {
-        return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
+    /**
+     * @deprecated - Use spaceFactoryReads.walletLink.read.getWalletsByRootKey() instead.
+     */
+    public async getLinkedWallets(rootKey: string) {
+        if (!isAddress(rootKey)) {
+            throw new Error('Invalid root key address')
+        }
+        return this.walletReads.read.getWalletsByRootKey([rootKey as Address])
     }
 
-    public async getLinkedWalletsWithDelegations(rootKey: string): Promise<string[]> {
-        return this.walletLinkShim.read.getWalletsByRootKey(rootKey)
-    }
-
+    /**
+     * @deprecated - Use spaceFactoryReads.walletLink.read.getRootKeyForWallet() instead.
+     */
     public getRootKeyForWallet(wallet: string): Promise<string> {
-        return this.walletLinkShim.read.getRootKeyForWallet(wallet)
+        if (!isAddress(wallet)) {
+            throw new Error('Invalid wallet address')
+        }
+        return this.walletReads.read.getRootKeyForWallet([wallet as Address])
     }
 
+    /**
+     * @deprecated - Use spaceFactoryReads.walletLink.read.checkIfLinked() instead.
+     */
     public async checkIfLinked(rootKey: ethers.Signer, wallet: string): Promise<boolean> {
         const rootKeyAddress = await rootKey.getAddress()
-        return this.walletLinkShim.read.checkIfLinked(rootKeyAddress, wallet)
+        if (!isAddress(rootKeyAddress)) {
+            throw new Error('Invalid rootKeyAddress address')
+        }
+        if (!isAddress(wallet)) {
+            throw new Error('Invalid wallet address')
+        }
+        return this.walletReads.read.checkIfLinked([rootKeyAddress as Address, wallet as Address])
     }
 
     private async generateRemoveLinkData(rootKey: ethers.Signer, walletAddress: string) {
