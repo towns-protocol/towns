@@ -42,8 +42,6 @@ type (
 		StartByte uint64
 		// MiniblockDataLength is the length of the miniblock data in the combined object.
 		MiniblockDataLength uint64
-		// Bucket where the miniblock data is stored.
-		Bucket string
 	}
 
 	// MiniblockDataStorageLocation defines where miniblock.Data is stored.
@@ -141,7 +139,6 @@ func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum
 		Number:              mbNum,
 		StartByte:           g.totalMiniblockBytes,
 		MiniblockDataLength: uint64(len(blockdata)),
-		Bucket:              g.bucket.BucketName(),
 	})
 
 	g.totalMiniblockBytes += uint64(len(blockdata))
@@ -298,7 +295,6 @@ func (s *s3ExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum 
 		Number:              mbNum,
 		StartByte:           s.totalMiniblockBytes,
 		MiniblockDataLength: uint64(len(blockdata)),
-		Bucket:              s.bucket,
 	})
 
 	s.totalMiniblockBytes += uint64(len(blockdata))
@@ -572,7 +568,7 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 		return true, err
 	}
 
-	parts, extStorageLoc, bucket, err := uploadSession.Finish(ctx)
+	parts, extStorageLoc, _, err := uploadSession.Finish(ctx)
 	if err != nil {
 		return true, err
 	}
@@ -580,7 +576,7 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 	// store the metadata about the combined object in the DB so it can be decoded in the future
 	// and drop the miniblock data from the DB finishing migrating the streams miniblocks to
 	// external storage.
-	if err := s.WriteMediaStreamExternalStorageParts(ctx, streamID, extStorageLoc, bucket, parts); err != nil {
+	if err := s.WriteMediaStreamExternalStorageParts(ctx, streamID, extStorageLoc, parts); err != nil {
 		return true, err
 	}
 
@@ -603,7 +599,6 @@ func (s *PostgresStreamStore) WriteMediaStreamExternalStorageParts(
 	ctx context.Context,
 	streamID StreamId,
 	extStorageLoc MiniblockDataStorageLocation,
-	bucket string,
 	parts []externallyStoredMiniblockDescriptor,
 ) error {
 	if streamID.Type() != STREAM_MEDIA_BIN {
@@ -617,7 +612,7 @@ func (s *PostgresStreamStore) WriteMediaStreamExternalStorageParts(
 		"WriteMediaStreamExternalStorageDetails",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.writeMediaStreamExternalStoragePartsTx(ctx, tx, streamID, extStorageLoc, bucket, parts)
+			return s.writeMediaStreamExternalStoragePartsTx(ctx, tx, streamID, extStorageLoc, parts)
 		},
 		nil,
 		"streamId", streamID,
@@ -631,7 +626,6 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 	tx pgx.Tx,
 	streamID StreamId,
 	extStorageLoc MiniblockDataStorageLocation,
-	bucket string,
 	parts []externallyStoredMiniblockDescriptor,
 ) error {
 	if _, _, err := s.lockStream(ctx, tx, streamID, true); err != nil {
@@ -659,10 +653,10 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 	_, err := tx.CopyFrom(
 		ctx,
 		pgx.Identifier{s.sqlForStream("{{miniblocks_ext_storage}}", streamID)},
-		[]string{"stream_id", "seq_num", "start_byte", "size", "bucket"},
+		[]string{"stream_id", "seq_num", "start_byte", "size"},
 		pgx.CopyFromSlice(len(parts), func(i int) ([]any, error) {
 			part := parts[i]
-			return []any{streamID, part.Number, part.StartByte, part.MiniblockDataLength, bucket}, nil
+			return []any{streamID, part.Number, part.StartByte, part.MiniblockDataLength}, nil
 		}),
 	)
 	if err != nil {
@@ -682,7 +676,7 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 	streamID StreamId,
 ) ([]externallyStoredMiniblockDescriptor, error) {
 	query := s.sqlForStream(
-		`SELECT seq_num, start_byte, size, bucket FROM {{miniblocks_ext_storage}} WHERE stream_id = $1 ORDER BY seq_num;`,
+		`SELECT seq_num, start_byte, size FROM {{miniblocks_ext_storage}} WHERE stream_id = $1 ORDER BY seq_num;`,
 		streamID,
 	)
 
@@ -697,14 +691,12 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 		startByte uint64
 		seqNum    int64
 		size      uint64
-		bucket    string
 	)
-	if _, err = pgx.ForEachRow(partsRows, []any{&seqNum, &startByte, &size, &bucket}, func() error {
+	if _, err = pgx.ForEachRow(partsRows, []any{&seqNum, &startByte, &size}, func() error {
 		parts = append(parts, externallyStoredMiniblockDescriptor{
 			Number:              seqNum,
 			StartByte:           startByte,
 			MiniblockDataLength: size,
-			Bucket:              bucket,
 		})
 		return nil
 	}); err != nil {

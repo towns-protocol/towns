@@ -1464,14 +1464,6 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 			Func("readMiniblockDataFromGCS")
 	}
 
-	if s.externalMediaStreamStorage.gcs.bucket.BucketName() != parts[0].Bucket {
-		return nil, RiverError(Err_BAD_CONFIG, "media stream miniblocks located in different GCS bucket").
-			Tag("streamId", streamID).
-			Tag("partBucket", parts[0].Bucket).
-			Tag("configuredBucket", s.externalMediaStreamStorage.gcs.bucket.BucketName()).
-			Func("readMiniblockDataFromGCS")
-	}
-
 	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)
 	object := s.externalMediaStreamStorage.gcs.bucket.Object(objectKey)
 
@@ -1525,14 +1517,6 @@ func (s *PostgresStreamStore) readMiniblockDataFromS3(
 		return nil, RiverError(Err_BAD_CONFIG, "no parts found for external S3 media stream storage").
 			Tag("streamId", streamID).
 			Func("readMiniblockDataFromS3")
-	}
-
-	if s.externalMediaStreamStorage.s3.bucket != parts[0].Bucket {
-		return nil, RiverError(Err_BAD_CONFIG, "media stream miniblocks located in different S3 bucket").
-			Tag("streamId", streamID).
-			Tag("partBucket", parts[0].Bucket).
-			Tag("configuredBucket", s.externalMediaStreamStorage.s3.bucket).
-			Func("readMiniblockDataFromGCS")
 	}
 
 	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)

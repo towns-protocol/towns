@@ -543,19 +543,19 @@ func compareExternallyFetchedMiniblocks(
 	// ensure that miniblocks are stored in external storage
 	location, err := store.StreamMiniblocksStoredLocation(ctx, streamID)
 	if err != nil || location == storage.MiniblockDataStorageLocationDB {
-		collect.Errorf("unexpected miniblock location")
+		collect.Errorf("unexpected miniblock location / err: %v", err)
 		return
 	}
 
 	// ensure that store.ReadMiniblocks returns the correct miniblocks
 	readMiniblocks, err := store.ReadMiniblocks(ctx, streamID, 0, int64(chunks)+1, true)
 	if err != nil {
-		collect.Errorf("unable to read miniblocks")
+		collect.Errorf("unable to read miniblocks: %v", err)
 		return
 	}
 
 	if len(miniblocks) != len(readMiniblocks) {
-		collect.Errorf("unexpected number of miniblocks in ReadMiniblocks")
+		collect.Errorf("unexpected number of miniblocks in ReadMiniblocks: %d != %d", len(miniblocks), len(readMiniblocks))
 		return
 	}
 
