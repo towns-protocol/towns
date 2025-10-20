@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { SimpleCache } from '../src/reads/cache/simpleCache'
+import { SimpleCache } from '../src/reads/cache/simple-cache'
 import { Keyable } from '../src/reads/cache/keyable'
 import { describe, it, expect } from 'vitest'
 
