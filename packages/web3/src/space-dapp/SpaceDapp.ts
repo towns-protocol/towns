@@ -257,24 +257,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         )
     }
 
-    public async waitForRoleCreated(
-        spaceId: string,
-        txn: ContractTransaction,
-    ): Promise<{ roleId: number | undefined; error: Error | undefined }> {
-        const receipt = await this.provider.waitForTransaction(txn.hash)
-        if (receipt.status === 0) {
-            return { roleId: undefined, error: new Error('Transaction failed') }
-        }
-
-        const parsedLogs = await this.parseSpaceLogs(spaceId, receipt.logs)
-        const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
-        if (!roleCreatedEvent) {
-            return { roleId: undefined, error: new Error('RoleCreated event not found') }
-        }
-        const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
-        return { roleId, error: undefined }
-    }
-
     public async banWalletAddress(
         spaceId: string,
         walletAddress: string,
@@ -601,23 +583,6 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
         return space.getChannels()
-    }
-
-    public async tokenURI(spaceId: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        const spaceInfo = await this.spaceOwner.getSpaceInfo(space.Address)
-        return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
-    }
-
-    public memberTokenURI(spaceId: string, tokenId: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        return space.ERC721A.read.tokenURI(tokenId)
     }
 
     public async getChannelDetails(
