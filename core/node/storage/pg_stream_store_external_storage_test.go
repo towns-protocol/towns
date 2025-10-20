@@ -555,7 +555,11 @@ func compareExternallyFetchedMiniblocks(
 	}
 
 	if len(miniblocks) != len(readMiniblocks) {
-		collect.Errorf("unexpected number of miniblocks in ReadMiniblocks: %d != %d", len(miniblocks), len(readMiniblocks))
+		collect.Errorf(
+			"unexpected number of miniblocks in ReadMiniblocks: %d != %d",
+			len(miniblocks),
+			len(readMiniblocks),
+		)
 		return
 	}
 
