@@ -16,6 +16,7 @@ import {
     type SyncAgent,
     Bot as SyncAgentTest,
     AppRegistryService,
+    MessageType,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
@@ -23,6 +24,7 @@ import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
+import { stringify as superjsonStringify } from 'superjson'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
@@ -1062,7 +1064,16 @@ describe('Bot', { sequential: true }, () => {
         })
 
         const testData = { text: 'Hello', count: 42 }
-        await bot.sendGM(channelId, 'test.typed.v1', messageSchema, testData)
+        // Bob sends the message so bot receives it (bot filters its own messages)
+        const jsonString = superjsonStringify(testData)
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.typed.v1',
+                    value: new TextEncoder().encode(jsonString),
+                },
+            }),
+        )
 
         await waitFor(() => receivedGmEvents.length > 0)
 
@@ -1079,23 +1090,32 @@ describe('Bot', { sequential: true }, () => {
             eventType: z.string(),
             timestamp: z.date(),
         })
-
-        const receivedMessages: Array<{ eventType: string; timestamp: Date }> = []
-        bot.onGmMessage('test.date.v1', eventSchema, (_h, e) => {
-            receivedMessages.push(e.data)
-        })
-
         const testDate = new Date('2025-01-15T12:00:00Z')
-        await bot.sendGM(channelId, 'test.date.v1', eventSchema, {
+        const { eventId } = await bot.sendGM(channelId, 'test.date.v1', eventSchema, {
             eventType: 'test',
             timestamp: testDate,
         })
 
-        await waitFor(() => receivedMessages.length > 0)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
 
-        expect(receivedMessages[0].eventType).toBe('test')
-        expect(receivedMessages[0].timestamp).toEqual(testDate)
-        expect(receivedMessages[0].timestamp instanceof Date).toBe(true)
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const gmData =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage &&
+            message?.content?.content.msgType === MessageType.GM
+                ? message?.content?.content.data
+                : undefined
+        expect(gmData).toBeDefined()
+        expect(gmData).toStrictEqual(
+            new TextEncoder().encode(
+                superjsonStringify({ eventType: 'test', timestamp: testDate }),
+            ),
+        )
     })
 
     it('should handle multiple handlers for different typeUrls', async () => {
@@ -1117,8 +1137,22 @@ describe('Bot', { sequential: true }, () => {
         const data1 = { type: 'type1' as const, value: 123 }
         const data2 = { type: 'type2' as const, text: 'hello' }
 
-        await bot.sendGM(channelId, 'test.multi.type1', schema1, data1)
-        await bot.sendGM(channelId, 'test.multi.type2', schema2, data2)
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.multi.type1',
+                    value: new TextEncoder().encode(superjsonStringify(data1)),
+                },
+            }),
+        )
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.multi.type2',
+                    value: new TextEncoder().encode(superjsonStringify(data2)),
+                },
+            }),
+        )
 
         await waitFor(() => receivedType1.length > 0 && receivedType2.length > 0)
 
@@ -1135,7 +1169,14 @@ describe('Bot', { sequential: true }, () => {
         })
 
         const message = new TextEncoder().encode('Hello, world!')
-        await bot.sendRawGM(channelId, 'test.raw.v1', message)
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.raw.v1',
+                    value: message,
+                },
+            }),
+        )
 
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')

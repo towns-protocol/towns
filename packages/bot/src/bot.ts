@@ -139,9 +139,12 @@ type ChunkedMediaAttachment =
 export type MessageOpts = {
     threadId?: string
     replyId?: string
+    ephemeral?: boolean
+}
+
+export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
-    ephemeral?: boolean
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -776,8 +779,9 @@ export class Bot<
      * Send a message to a stream
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param message - The cleartext of the message
+     * @param opts - The options for the message
      */
-    async sendMessage(streamId: string, message: string, opts?: MessageOpts) {
+    async sendMessage(streamId: string, message: string, opts?: PostMessageOpts) {
         const result = await this.client.sendMessage(
             streamId,
             message,
@@ -832,11 +836,17 @@ export class Bot<
      * @param messageId - The eventId of the message to edit
      * @param message - The new message text
      */
-    async editMessage(streamId: string, messageId: string, message: string) {
+    async editMessage(
+        streamId: string,
+        messageId: string,
+        message: string,
+        opts?: PostMessageOpts,
+    ) {
         const result = await this.client.editMessage(
             streamId,
             messageId,
             message,
+            opts,
             this.currentMessageTags,
         )
         this.currentMessageTags = undefined
@@ -855,12 +865,14 @@ export class Bot<
         typeUrl: string,
         schema: Schema,
         data: InferInput<Schema>,
+        opts?: MessageOpts,
     ) {
         const result = await this.client.sendGM(
             streamId,
             typeUrl,
             schema,
             data,
+            opts,
             this.currentMessageTags,
         )
         this.currentMessageTags = undefined
@@ -872,12 +884,14 @@ export class Bot<
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param typeUrl - The type URL identifying the message format
      * @param message - Optional raw message data as bytes
+     * @param opts - The options for the message
      */
-    async sendRawGM(streamId: string, typeUrl: string, message: Uint8Array) {
+    async sendRawGM(streamId: string, typeUrl: string, message: Uint8Array, opts?: MessageOpts) {
         const result = await this.client.sendRawGM(
             streamId,
             typeUrl,
             message,
+            opts,
             this.currentMessageTags,
         )
         this.currentMessageTags = undefined
@@ -1284,7 +1298,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
     const sendMessage = async (
         streamId: string,
         message: string,
-        opts?: MessageOpts,
+        opts?: PostMessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
         const processedAttachments: Array<PlainMessage<ChannelMessage_Post_Attachment> | null> = []
@@ -1333,20 +1347,51 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         streamId: string,
         messageId: string,
         message: string,
+        opts?: PostMessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
+        const processedAttachments: Array<PlainMessage<ChannelMessage_Post_Attachment> | null> = []
+        if (opts?.attachments && opts.attachments.length > 0) {
+            for (const attachment of opts.attachments) {
+                switch (attachment.type) {
+                    case 'image': {
+                        const result = await createImageAttachmentFromURL(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'chunked': {
+                        const result = await createChunkedMediaAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    default:
+                        logNever(attachment)
+                }
+            }
+        }
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'edit',
                 value: {
                     refEventId: messageId,
                     post: {
-                        content: { case: 'text', value: { body: message } },
+                        threadId: opts?.threadId,
+                        replyId: opts?.replyId,
+                        replyPreview: opts?.replyId ? '🙈' : undefined,
+                        threadPreview: opts?.threadId ? '🙉' : undefined,
+                        content: {
+                            case: 'text',
+                            value: {
+                                body: message,
+                                mentions: opts?.mentions || [],
+                                attachments: processedAttachments.filter((x) => x !== null),
+                            },
+                        },
                     },
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload, tags })
+        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
     }
 
     const sendReaction = async (
@@ -1376,6 +1421,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         typeUrl: string,
         schema: Schema,
         data: InferInput<Schema>,
+        opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ): ReturnType<typeof sendMessageEvent> {
         const result = await schema['~standard'].validate(data)
@@ -1390,11 +1436,15 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
             payload: {
                 case: 'post',
                 value: {
+                    threadId: opts?.threadId,
+                    replyId: opts?.replyId,
+                    replyPreview: opts?.replyId ? '🙈' : undefined,
+                    threadPreview: opts?.threadId ? '🙉' : undefined,
                     content: { case: 'gm', value: { typeUrl: typeUrl, value: jsonBytesMessage } },
                 },
             },
         })
-        return sendMessageEvent({ streamId, payload, tags })
+        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
     }
 
     /**
@@ -1411,15 +1461,22 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         streamId: string,
         typeUrl: string,
         message: Uint8Array,
+        opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
             payload: {
                 case: 'post',
-                value: { content: { case: 'gm', value: { typeUrl: typeUrl, value: message } } },
+                value: {
+                    threadId: opts?.threadId,
+                    replyId: opts?.replyId,
+                    replyPreview: opts?.replyId ? '🙈' : undefined,
+                    threadPreview: opts?.threadId ? '🙉' : undefined,
+                    content: { case: 'gm', value: { typeUrl: typeUrl, value: message } },
+                },
             },
         })
-        return sendMessageEvent({ streamId, payload, tags })
+        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
     }
 
     const removeEvent = async (streamId: string, messageId: string, tags?: PlainMessage<Tags>) => {
