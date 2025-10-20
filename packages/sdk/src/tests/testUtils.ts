@@ -1224,7 +1224,7 @@ export async function createRole(
         }
     }
 
-    const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(spaceId, txn)
+    const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
     return { roleId, error: roleError }
 }
 
@@ -1617,4 +1617,23 @@ export function extractMemberBlockchainTransactions(
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
     return stream.view.getMembers().tokenTransfers
+}
+
+export async function waitForRoleCreated(
+    spaceDapp: SpaceDapp,
+    spaceId: string,
+    txn: ContractTransaction,
+): Promise<{ roleId: number | undefined; error: Error | undefined }> {
+    const receipt = await spaceDapp.provider.waitForTransaction(txn.hash)
+    if (receipt.status === 0) {
+        return { roleId: undefined, error: new Error('Transaction failed') }
+    }
+
+    const parsedLogs = await spaceDapp.parseSpaceLogs(spaceId, receipt.logs)
+    const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
+    if (!roleCreatedEvent) {
+        return { roleId: undefined, error: new Error('RoleCreated event not found') }
+    }
+    const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
+    return { roleId, error: undefined }
 }
