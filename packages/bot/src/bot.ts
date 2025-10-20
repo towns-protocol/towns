@@ -1225,6 +1225,21 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         return sendMessageEvent({ streamId, payload, tags })
     }
 
+    const sendGM = async (
+        streamId: string,
+        typeUrl: string,
+        message?: Uint8Array,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        const payload = create(ChannelMessageSchema, {
+            payload: {
+                case: 'post',
+                value: { content: { case: 'gm', value: { typeUrl: typeUrl, value: message } } },
+            },
+        })
+        return sendMessageEvent({ streamId, payload, tags })
+    }
+
     const removeEvent = async (streamId: string, messageId: string, tags?: PlainMessage<Tags>) => {
         const payload = create(ChannelMessageSchema, {
             payload: { case: 'redaction', value: { refEventId: messageId } },
@@ -1363,6 +1378,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         sendMessage,
         editMessage,
         sendReaction,
+        sendGM,
         removeEvent,
         adminRemoveEvent,
         sendKeySolicitation,
