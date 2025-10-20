@@ -1933,30 +1933,26 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 break
             }
             case 'bot': {
+                // TipRecipientType.Bot = 1
+                recipientType = 1
+                const { receiver, appId, currency, amount, messageId, channelId } = args
+                // Encode struct BotTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address receiver, address currency, bytes32 appId, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
+                    ],
+                    [
+                        [
+                            receiver,
+                            currency,
+                            ensureHexPrefix(appId),
+                            amount,
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), '0x'],
+                        ],
+                    ],
+                )
                 break
             }
-        }
-        if (args.type === 'bot') {
-            // TipRecipientType.Bot = 1
-            recipientType = 1
-            const { receiver, appId, currency, amount, messageId, channelId } = args
-            // Encode struct BotTipParams
-            encodedData = ethers.utils.defaultAbiCoder.encode(
-                [
-                    'tuple(address receiver, address currency, bytes32 appId, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
-                ],
-                [
-                    [
-                        receiver,
-                        currency,
-                        ensureHexPrefix(appId),
-                        amount,
-                        [ensureHexPrefix(messageId), ensureHexPrefix(channelId), '0x'],
-                    ],
-                ],
-            )
-        } else {
-            throw new Error(`Unsupported tip recipient type: ${(args as any).type}`)
         }
 
         return wrapTransaction(

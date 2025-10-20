@@ -683,14 +683,24 @@ describe('Bot', { sequential: true }, () => {
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
 
         const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+
+        // Get space instance and appId for bot tip
+        const space = spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error('Space not found')
+        }
+        const appId = await space.AppAccount.read.getAppId(appAddress)
+
         // bob tips the bot
         await bobDefaultChannel.sendTip(
             messageId,
             {
+                type: 'bot',
+                appId: appId,
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
                 chainId: townsConfig.base.chainConfig.chainId,
-                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
+                receiver: appAddress,
             },
             bob.signer,
         )
