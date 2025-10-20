@@ -7,15 +7,26 @@ import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
 import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
+import {DynamicArrayLib} from "solady/utils/DynamicArrayLib.sol";
 
 library DeployTipping {
+    using DynamicArrayLib for DynamicArrayLib.DynamicArray;
+
     function selectors() internal pure returns (bytes4[] memory res) {
-        res = new bytes4[](5);
-        res[0] = ITipping.tip.selector;
-        res[1] = ITipping.tipsByCurrencyAndTokenId.selector;
-        res[2] = ITipping.tippingCurrencies.selector;
-        res[3] = ITipping.totalTipsByCurrency.selector;
-        res[4] = ITipping.tipAmountByCurrency.selector;
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(8);
+        arr.p(ITipping.sendTip.selector);
+        arr.p(ITipping.tip.selector);
+        arr.p(ITipping.tipsByWalletAndCurrency.selector);
+        arr.p(ITipping.tipCountByWalletAndCurrency.selector);
+        arr.p(ITipping.tipsByCurrencyAndTokenId.selector);
+        arr.p(ITipping.tippingCurrencies.selector);
+        arr.p(ITipping.totalTipsByCurrency.selector);
+        arr.p(ITipping.tipAmountByCurrency.selector);
+
+        bytes32[] memory selectors_ = arr.asBytes32Array();
+        assembly ("memory-safe") {
+            res := selectors_
+        }
     }
 
     function makeCut(
