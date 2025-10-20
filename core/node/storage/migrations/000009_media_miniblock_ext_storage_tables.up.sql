@@ -26,7 +26,6 @@ SELECT num_partitions from settings where single_row_key=true into numPartitions
                 seq_num BIGINT NOT NULL,             -- miniblock number
                 start_byte BIGINT NOT NULL,          -- offset where miniblock starts in combined object
                 size BIGINT NOT NULL,                -- how big the blockdata is in bytes
-                bucket TEXT NOT NULL,                -- bucket name
                 PRIMARY KEY (stream_id, seq_num)
             )';
     END LOOP;
