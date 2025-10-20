@@ -84,7 +84,7 @@ abstract contract TippingBase is ITippingBase, PointsBase {
             TipRecipientType.Member,
             tipRequest.currency,
             tipAmount,
-            tipRequest.tokenId
+            abi.encode(tipRequest.tokenId)
         );
     }
 
@@ -121,7 +121,7 @@ abstract contract TippingBase is ITippingBase, PointsBase {
             TipRecipientType.Member,
             params.currency,
             tipAmount,
-            params.tokenId
+            params.metadata.data
         );
 
         emit Tip(
@@ -165,7 +165,7 @@ abstract contract TippingBase is ITippingBase, PointsBase {
             TipRecipientType.Bot,
             params.currency,
             tipAmount,
-            0
+            params.metadata.data
         );
     }
 

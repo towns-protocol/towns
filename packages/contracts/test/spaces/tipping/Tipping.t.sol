@@ -428,7 +428,7 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
             TipRecipientType.Member,
             CurrencyTransfer.NATIVE_TOKEN,
             tipAmount,
-            tokenId
+            abi.encode(tokenId)
         );
         tipping.tip{value: amount}(
             TipRequest({
