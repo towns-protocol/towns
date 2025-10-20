@@ -55,6 +55,8 @@ type PostgresStreamStore struct {
 
 	numPartitions int
 
+	// externalMediaStreamStorage if set, provides functionality to store media stream miniblocks
+	// in external storage.
 	externalMediaStreamStorage *externalMediaStreamStorage
 
 	// workers
@@ -196,6 +198,16 @@ func NewPostgresStreamStore(
 			store.externalMediaStreamStorage = &externalMediaStreamStorage{}
 		}
 
+		attempsCounter := metrics.NewCounterVecEx(
+			"stream_store_external_storage_stream_attempts",
+			"Number of stream migration attempts, by storage and status",
+			"storage", "status")
+
+		miniblocksMigratedCounter := metrics.NewCounterVecEx(
+			"stream_store_external_storage_miniblocks_migrated",
+			"Number of miniblocks migrated to external storage, by storage and status",
+			"storage")
+
 		if externalStorageCfg.AwsS3.Enabled() {
 			// if aws client is already set through option skip creating s3 client
 			if store.externalMediaStreamStorage == nil || store.externalMediaStreamStorage.s3 == nil ||
@@ -215,6 +227,10 @@ func NewPostgresStreamStore(
 					client *awss3.Client
 					bucket string
 				}{client: awss3.NewFromConfig(cfg), bucket: externalStorageCfg.AwsS3.Bucket}
+
+				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues("s3", "success")
+				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues("s3", "failed")
+				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues("s3")
 			}
 		}
 
@@ -234,6 +250,10 @@ func NewPostgresStreamStore(
 				store.externalMediaStreamStorage.gcs = &struct {
 					bucket *gcpstorage.BucketHandle
 				}{bucket: client.Bucket(externalStorageCfg.Gcs.Bucket)}
+
+				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues("gcs", "success")
+				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues("gcs", "failed")
+				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues("gcs")
 			}
 		}
 	}
