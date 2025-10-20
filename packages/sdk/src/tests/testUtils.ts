@@ -1637,20 +1637,3 @@ export async function waitForRoleCreated(
     const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
     return { roleId, error: undefined }
 }
-
-export async function tokenURI(spaceId: string) {
-    const space = this.getSpace(spaceId)
-    if (!space) {
-        throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-    }
-    const spaceInfo = await this.spaceOwner.getSpaceInfo(space.Address)
-    return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
-}
-
-export async function memberTokenURI(spaceId: string, tokenId: string) {
-    const space = this.getSpace(spaceId)
-    if (!space) {
-        throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-    }
-    return space.ERC721A.read.tokenURI(tokenId)
-}
