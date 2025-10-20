@@ -2672,10 +2672,10 @@ func (s *PostgresStreamStore) trimStreamTxNoLock(
 		).Func("PostgresStreamStore.trimStreamTx")
 	}
 
-	if trimToMbExclusive > 1 {
+	if trimToMbExclusive > 0 {
 		query := s.sqlForStream(
 			`DELETE FROM {{miniblocks}}
-		WHERE stream_id = $1 AND seq_num >= 1 AND seq_num < $2`,
+		WHERE stream_id = $1 AND seq_num < $2`,
 			streamId,
 		)
 		if _, err := tx.Exec(ctx, query, streamId, trimToMbExclusive); err != nil {

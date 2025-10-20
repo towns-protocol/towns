@@ -38,10 +38,7 @@ func TestTrimStream(t *testing.T) {
 
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(t, err)
-		require.Equal(t, []MiniblockRange{
-			{StartInclusive: 0, EndInclusive: 0, SnapshotSeqNums: []int64{0}},
-			{StartInclusive: 3, EndInclusive: 4},
-		}, ranges)
+		require.Equal(t, []MiniblockRange{{StartInclusive: 3, EndInclusive: 4}}, ranges)
 	})
 
 	t.Run("nullifies snapshots without deleting miniblocks", func(t *testing.T) {
@@ -67,7 +64,7 @@ func TestTrimStream(t *testing.T) {
 
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(t, err)
-		require.Equal(t, []MiniblockRange{{StartInclusive: 0, EndInclusive: 3, SnapshotSeqNums: []int64{0, 3}}}, ranges)
+		require.Equal(t, []MiniblockRange{{StartInclusive: 1, EndInclusive: 3, SnapshotSeqNums: []int64{3}}}, ranges)
 	})
 
 	t.Run("recomputes after deleting latest snapshot", func(t *testing.T) {
@@ -93,6 +90,6 @@ func TestTrimStream(t *testing.T) {
 
 		ranges, err := store.GetMiniblockNumberRanges(ctx, streamId)
 		require.NoError(t, err)
-		require.Equal(t, []MiniblockRange{{StartInclusive: 0, EndInclusive: 0, SnapshotSeqNums: []int64{0}}}, ranges)
+		require.Empty(t, ranges)
 	})
 }

@@ -85,8 +85,8 @@ func TestStreamTrimmer(t *testing.T) {
 		// from the closest snapshot (40).
 		require.Eventually(func() bool {
 			mbsLeft, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
-			expectedSeqs := []int64{0, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54}
-			expectedSnapshots := []int64{0, 40, 50}
+			expectedSeqs := []int64{40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54}
+			expectedSnapshots := []int64{40, 50}
 			return slices.Equal(expectedSeqs, mbsLeft) && slices.Equal(expectedSnapshots, snapshots)
 		}, time.Second*5, 100*time.Millisecond)
 
@@ -117,8 +117,8 @@ func TestStreamTrimmer(t *testing.T) {
 		// The subsequent trim anchors to snapshot 50, keeping genesis and 50..55.
 		require.Eventually(func() bool {
 			mbsLeft, snapshots := collectStreamState(t, pgStreamStore, ctx, streamId)
-			expectedSeqs := []int64{0, 50, 51, 52, 53, 54, 55}
-			expectedSnapshots := []int64{0, 50, 55}
+			expectedSeqs := []int64{50, 51, 52, 53, 54, 55}
+			expectedSnapshots := []int64{50, 55}
 			return slices.Equal(expectedSeqs, mbsLeft) && slices.Equal(expectedSnapshots, snapshots)
 		}, time.Second*5, 100*time.Millisecond)
 	})
@@ -454,7 +454,7 @@ func TestStreamTrimmer(t *testing.T) {
 
 		require.Eventually(func() bool {
 			seqs, _ := collectStreamState(t, pgStreamStore, ctx, streamId)
-			return slices.Equal([]int64{0, 35, 36, 37, 38, 39, 40}, seqs)
+			return slices.Equal([]int64{35, 36, 37, 38, 39, 40}, seqs)
 		}, time.Second*5, 100*time.Millisecond)
 
 		close(done)
