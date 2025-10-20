@@ -2,8 +2,8 @@
  * @group main
  */
 
-import { SimpleCache } from '../src/cache/SimpleCache'
-import { Keyable } from '../src/cache/Keyable'
+import { SimpleCache } from '../src/reads/cache/simpleCache'
+import { Keyable } from '../src/reads/cache/keyable'
 import { describe, it, expect } from 'vitest'
 
 class TestKey implements Keyable {
