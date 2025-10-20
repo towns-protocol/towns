@@ -366,7 +366,7 @@ jobs:
 
             - name: Docs checking broken links
               working-directory: packages/docs
-              run: yarn docs:broken-links
+              run: yarn broken-links
 
             - name: Docs spellcheck
               working-directory: packages/docs

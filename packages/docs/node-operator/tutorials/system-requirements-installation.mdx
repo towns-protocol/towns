@@ -42,7 +42,7 @@ Node FE's can be installed either from docker with the Towns public [ECR image r
 
 <Accordion title="Install Image from Towns Public Image Registry">
 The Towns Protocol maintains a public docker image registry `public.ecr.aws/h5v6m2x1/river` for images that are built officially from [source](https://github.com/towns-protocol/towns) during CI/CD.
-As such, node operators can easily install the latest Node FE software from images stored in the public ECR registry. Images are tagged during [releases](/run/release-process) with the associated commit as well as mutable tags `mainnet`, `testnet`, for each network respectively.
+As such, node operators can easily install the latest Node FE software from images stored in the public ECR registry. Images are tagged during [releases](/node-operator/release-process) with the associated commit as well as mutable tags `mainnet`, `testnet`, for each network respectively.
 
 ```bash
  docker pull public.ecr.aws/h5v6m2x1/river:testnet
@@ -82,7 +82,7 @@ docker build -t river-node .
 
 Towns Stream Nodes run expecting certain environment variables to be present in the process environment and set at runtime. Config, which is described in [config.go](https://github.com/towns-protocol/towns/blob/main/core/config/config.go), is injected into the binary at runtime using [viper](https://github.com/spf13/viper).
 
-<Note>For the list of contracts required to run nodes and their addresses, see [contracts](/run/contracts). </Note>
+<Note>For the list of contracts required to run nodes and their addresses, see [contracts](/node-operator/contracts). </Note>
 <br />
 
 | Environment Variable | Purpose | Required | Testnet Value |Secret|
@@ -91,7 +91,7 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |ARCHITECTCONTRACT__VERSION|Contract interface version|Yes|v3|-|
 |BASECHAIN__CHAINID|Base ChainId|Yes|84532|-|
 |BASECHAIN__NETWORKURL|Base Chain RPC Url|Yes|https://sepolia.base.org|Yes|
-|CHAINSSTRING|List of chainIds and network RPC Urls supported|Yes|see [Cross-chain Requirements](/run/node-operator/system-requirements-installation#cross-chain-requirements)|-|
+|CHAINSSTRING|List of chainIds and network RPC Urls supported|Yes|see [Cross-chain Requirements](/node-operator/tutorials/system-requirements-installation#cross-chain-requirements)|-|
 |DATABASE__DATABASE|Postgres DB Name|Yes|river|-|
 |DATABASE__EXTRA|Extra Postgres Options|Yes|?sslmode=disable&pool_max_conns=1000|-|
 |DATABASE__HOST|Postgres DB Host Url|Yes|-|-|

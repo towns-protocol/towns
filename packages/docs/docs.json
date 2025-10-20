@@ -1,0 +1,210 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Towns",
+  "colors": {
+    "primary": "#8c84f7",
+    "light": "#8c84f7",
+    "dark": "#8c84f7"
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Learn",
+        "icon": "book",
+        "pages": [
+          "introduction",
+          {
+            "group": "Towns Smart Contracts",
+            "pages": [
+              "towns-smart-contracts/overview",
+              "towns-smart-contracts/space-ownership",
+              "towns-smart-contracts/space-membership",
+              "towns-smart-contracts/pricing-modules",
+              "towns-smart-contracts/roles-entitlements",
+              "towns-smart-contracts/upgradeability",
+              "towns-smart-contracts/contracts"
+            ]
+          },
+          {
+            "group": "Towns Messaging Protocol",
+            "pages": [
+              "towns-messaging-protocol/overview",
+              "towns-messaging-protocol/node-operators",
+              {
+                "group": "Towns Chain",
+                "pages": [
+                  "towns-messaging-protocol/towns-chain/overview",
+                  "towns-messaging-protocol/towns-chain/node-registry",
+                  "towns-messaging-protocol/towns-chain/stream-registry"
+                ]
+              },
+              {
+                "group": "Stream Nodes",
+                "pages": [
+                  "towns-messaging-protocol/stream-nodes/overview",
+                  "towns-messaging-protocol/stream-nodes/stream-allocation",
+                  "towns-messaging-protocol/stream-nodes/event-lifecycle"
+                ]
+              },
+              {
+                "group": "Concepts",
+                "pages": [
+                  "concepts/mini-blocks",
+                  "concepts/stream-checkpointing",
+                  "concepts/encryption",
+                  "concepts/rebalancing",
+                  "concepts/chunk-management",
+                  "concepts/snapshotting",
+                  "concepts/cross-chain-entitlement-checking",
+                  "concepts/node-node-communication",
+                  "concepts/network-partitioning"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Token Governance",
+            "pages": [
+              "token-governance/overview",
+              "token-governance/governance-framework",
+              "token-governance/towns-token"
+            ]
+          },
+          {
+            "group": "TOWNS Token",
+            "pages": [
+              "towns-token/utility",
+              "towns-token/economics",
+              "towns-token/mechanics",
+              "towns-token/staking",
+              "towns-token/claiming"
+            ]
+          },
+          {
+            "group": "Grants",
+            "pages": [
+              "grants/grants-program"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Build",
+        "icon": "wrench",
+        "pages": [
+          "build/towns-messaging-datastructures",
+          "build/delegate-key-signing",
+          "build/towns-encryption",
+          {
+            "group": "React SDK",
+            "pages": [
+              "build/react-sdk/getting-started",
+              {
+                "group": "API",
+                "pages": [
+                  "build/react-sdk/api/connectTowns",
+                  "build/react-sdk/api/connectTownsWithBearerToken",
+                  "build/react-sdk/api/getRoom",
+                  "build/react-sdk/api/signAndConnect",
+                  "build/react-sdk/api/TownsSyncProvider",
+                  "build/react-sdk/api/useAdminRedact",
+                  "build/react-sdk/api/useAgentConnection",
+                  "build/react-sdk/api/useChannel",
+                  "build/react-sdk/api/useCreateChannel",
+                  "build/react-sdk/api/useCreateDm",
+                  "build/react-sdk/api/useCreateGdm",
+                  "build/react-sdk/api/useCreateSpace",
+                  "build/react-sdk/api/useDm",
+                  "build/react-sdk/api/useGdm",
+                  "build/react-sdk/api/useJoinSpace",
+                  "build/react-sdk/api/useMember",
+                  "build/react-sdk/api/useMemberList",
+                  "build/react-sdk/api/useMyMember",
+                  "build/react-sdk/api/useObservable",
+                  "build/react-sdk/api/useReactions",
+                  "build/react-sdk/api/useRedact",
+                  "build/react-sdk/api/useScrollback",
+                  "build/react-sdk/api/useSendMessage",
+                  "build/react-sdk/api/useSendReaction",
+                  "build/react-sdk/api/useSetDisplayName",
+                  "build/react-sdk/api/useSetEnsAddress",
+                  "build/react-sdk/api/useSetNft",
+                  "build/react-sdk/api/useSetUsername",
+                  "build/react-sdk/api/useSpace",
+                  "build/react-sdk/api/useSyncAgent",
+                  "build/react-sdk/api/useThreads",
+                  "build/react-sdk/api/useTimeline",
+                  "build/react-sdk/api/useTowns",
+                  "build/react-sdk/api/useTownsAuthStatus",
+                  "build/react-sdk/api/useUserDms",
+                  "build/react-sdk/api/useUserGdms",
+                  "build/react-sdk/api/useUserSpaces"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Node Operator",
+        "icon": "rocket",
+        "pages": [
+          "node-operator/introduction",
+          {
+            "group": "Tutorials",
+            "pages": [
+              "node-operator/tutorials/system-requirements-installation",
+              "node-operator/tutorials/system-configuration-steps",
+              "node-operator/tutorials/node-best-practices",
+              "node-operator/tutorials/register-towns-operator",
+              "node-operator/tutorials/register-towns-stream-node",
+              "node-operator/tutorials/upgrade-towns-stream-node",
+              "node-operator/tutorials/node-observability"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "node-operator/contracts",
+              "node-operator/release-process"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "White Paper",
+        "icon": "scroll",
+        "pages": [
+          "white-paper/towns-technical-overview",
+          "white-paper/technical-whitepaper",
+          "white-paper/mica-whitepaper"
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/images/logo.svg",
+    "dark": "/images/logo-dark.svg"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "navbar": {
+    "links": []
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "chatgpt"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/TownsProtocol",
+      "github": "https://github.com/river-build",
+      "website": "https://towns.com"
+    }
+  }
+}

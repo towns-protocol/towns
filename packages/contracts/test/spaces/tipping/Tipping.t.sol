@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ITownsPoints, ITownsPointsBase} from "src/airdrop/points/ITownsPoints.sol";
+import {ITownsPoints} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
@@ -272,5 +272,222 @@ contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
                 channelId: DEFAULT_CHANNEL_ID
             })
         );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    New sendTip Tests                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_sendTip_memberWithEth(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) external givenUsersAreMembers(sender, receiver) {
+        vm.assume(sender != platformRecipient);
+        vm.assume(receiver != platformRecipient);
+        amount = bound(amount, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        uint256 initialBalance = receiver.balance;
+        uint256 initialPointBalance = IERC20(address(points)).balanceOf(sender);
+        uint256 tokenId = token.tokensOfOwner(receiver)[0];
+        uint256 protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
+        uint256 tipAmount;
+        unchecked {
+            tipAmount = amount - protocolFee;
+        }
+
+        hoax(sender, amount);
+        vm.startSnapshotGas("sendTip_member_eth");
+        tipping.sendTip{value: amount}(
+            TipRecipientType.Member,
+            abi.encode(
+                MembershipTipParams({
+                    receiver: receiver,
+                    tokenId: tokenId,
+                    currency: CurrencyTransfer.NATIVE_TOKEN,
+                    amount: amount,
+                    metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+                })
+            )
+        );
+        assertLt(vm.stopSnapshotGas(), 400_000);
+
+        assertEq(receiver.balance - initialBalance, tipAmount, "receiver balance");
+        assertEq(platformRecipient.balance, protocolFee, "protocol fee");
+        assertEq(sender.balance, 0, "sender balance");
+        assertEq(
+            IERC20(address(points)).balanceOf(sender) - initialPointBalance,
+            (protocolFee * 2_000_000) / 3,
+            "points minted"
+        );
+        assertEq(
+            tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN),
+            tipAmount
+        );
+        assertEq(
+            tipping.tipsByWalletAndCurrency(receiver, CurrencyTransfer.NATIVE_TOKEN),
+            tipAmount
+        );
+        assertEq(tipping.tipCountByWalletAndCurrency(receiver, CurrencyTransfer.NATIVE_TOKEN), 1);
+        assertEq(tipping.totalTipsByCurrency(CurrencyTransfer.NATIVE_TOKEN), 1);
+        assertEq(tipping.tipAmountByCurrency(CurrencyTransfer.NATIVE_TOKEN), tipAmount);
+    }
+
+    function test_sendTip_botWithEth(address sender, address botAddress, uint256 amount) external {
+        vm.assume(sender != address(0));
+        vm.assume(botAddress != address(0));
+        vm.assume(sender != botAddress);
+        assumeUnusedAddress(sender);
+        assumeUnusedAddress(botAddress);
+        amount = bound(amount, 1, type(uint256).max);
+
+        uint256 initialBalance = botAddress.balance;
+
+        hoax(sender, amount);
+        vm.startSnapshotGas("sendTip_bot_eth");
+        tipping.sendTip{value: amount}(
+            TipRecipientType.Bot,
+            abi.encode(
+                BotTipParams({
+                    receiver: botAddress,
+                    currency: CurrencyTransfer.NATIVE_TOKEN,
+                    appId: bytes32(0),
+                    amount: amount,
+                    metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+                })
+            )
+        );
+        assertLt(vm.stopSnapshotGas(), 300_000);
+
+        assertEq(botAddress.balance - initialBalance, amount, "bot balance");
+        assertEq(sender.balance, 0, "sender balance");
+        assertEq(
+            tipping.tipsByWalletAndCurrency(botAddress, CurrencyTransfer.NATIVE_TOKEN),
+            amount
+        );
+        assertEq(tipping.tipCountByWalletAndCurrency(botAddress, CurrencyTransfer.NATIVE_TOKEN), 1);
+        assertEq(tipping.totalTipsByCurrency(CurrencyTransfer.NATIVE_TOKEN), 1);
+        assertEq(tipping.tipAmountByCurrency(CurrencyTransfer.NATIVE_TOKEN), amount);
+    }
+
+    function test_sendTip_revertWhen_invalidRecipientType(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) external {
+        vm.assume(sender != address(0));
+        vm.assume(receiver != address(0));
+        vm.assume(sender != receiver);
+        amount = bound(amount, 1, type(uint256).max);
+
+        BotTipParams memory params = BotTipParams({
+            receiver: receiver,
+            currency: CurrencyTransfer.NATIVE_TOKEN,
+            appId: bytes32(0),
+            amount: amount,
+            metadata: TipMetadata({messageId: bytes32(0), channelId: bytes32(0), data: ""})
+        });
+
+        hoax(sender, amount);
+        vm.expectRevert(InvalidRecipientType.selector);
+        tipping.sendTip{value: amount}(TipRecipientType.Pool, abi.encode(params));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              Backwards Compatibility Tests                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_backwardsCompatibility_legacyTipEmitsBothEvents(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) external givenUsersAreMembers(sender, receiver) {
+        vm.assume(sender != platformRecipient);
+        vm.assume(receiver != platformRecipient);
+        amount = bound(amount, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        uint256 tokenId = token.tokensOfOwner(receiver)[0];
+        uint256 protocolFee = BasisPoints.calculate(amount, 50);
+        uint256 tipAmount = amount - protocolFee;
+
+        hoax(sender, amount);
+        vm.expectEmit(address(tipping));
+        emit Tip(
+            tokenId,
+            CurrencyTransfer.NATIVE_TOKEN,
+            sender,
+            receiver,
+            amount,
+            DEFAULT_MESSAGE_ID,
+            DEFAULT_CHANNEL_ID
+        );
+        vm.expectEmit(address(tipping));
+        emit TipSent(
+            sender,
+            receiver,
+            TipRecipientType.Member,
+            CurrencyTransfer.NATIVE_TOKEN,
+            tipAmount,
+            tokenId
+        );
+        tipping.tip{value: amount}(
+            TipRequest({
+                receiver: receiver,
+                tokenId: tokenId,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: DEFAULT_MESSAGE_ID,
+                channelId: DEFAULT_CHANNEL_ID
+            })
+        );
+    }
+
+    function test_backwardsCompatibility_legacyDataAccessible(
+        address sender,
+        address receiver,
+        uint256 amount
+    ) external givenUsersAreMembers(sender, receiver) {
+        vm.assume(sender != platformRecipient);
+        vm.assume(receiver != platformRecipient);
+        amount = bound(amount, 1, type(uint256).max / BasisPoints.MAX_BPS);
+
+        uint256 tokenId = token.tokensOfOwner(receiver)[0];
+        uint256 protocolFee = BasisPoints.calculate(amount, 50);
+        uint256 tipAmount = amount - protocolFee;
+
+        hoax(sender, amount);
+        tipping.tip{value: amount}(
+            TipRequest({
+                receiver: receiver,
+                tokenId: tokenId,
+                currency: CurrencyTransfer.NATIVE_TOKEN,
+                amount: amount,
+                messageId: DEFAULT_MESSAGE_ID,
+                channelId: DEFAULT_CHANNEL_ID
+            })
+        );
+
+        // Legacy view functions work
+        assertEq(
+            tipping.tipsByCurrencyAndTokenId(tokenId, CurrencyTransfer.NATIVE_TOKEN),
+            tipAmount
+        );
+        // New view functions also work
+        assertEq(
+            tipping.tipsByWalletAndCurrency(receiver, CurrencyTransfer.NATIVE_TOKEN),
+            tipAmount
+        );
+        assertEq(tipping.tipCountByWalletAndCurrency(receiver, CurrencyTransfer.NATIVE_TOKEN), 1);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      Helper Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function assertContains(address[] memory arr, address value) internal pure override {
+        for (uint256 i; i < arr.length; ++i) {
+            if (arr[i] == value) return;
+        }
+        revert("Value not found in array");
     }
 }

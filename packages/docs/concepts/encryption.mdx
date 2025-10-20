@@ -1,15 +1,13 @@
 ---
 title: Encryption
-description: ""
+description: "End-to-End Message Encryption"
 ---
-
-### End-to-End Message Encryption in Towns Protocol
 
 All messages in the context of the communication modalities that Towns Protocol supports are encrypted. Nodes are only privy to ciphertext and clients manage their device encryption keys.
 
 Two related cryptographic ratcheting algorithms are used by Towns to encrypt messages. Towns employs an implementation of the [Double Ratchet](https://signal.org/docs/specifications/doubleratchet/) cryptographic ratchet described by Signal to encrypt peer to peer messages. Towns also employs an AES-based cryptographic ratched optimized for group messaging.
 
-### Devices
+## Devices
 
 To facilitate end to end encryption in Towns, each `(user, client instance)` tuple is associated with a `deviceId`, which identifies that device and is used to establish peer-to-peer encrypted sessions for the purpose of sharing group message encryption keys.
 
@@ -20,7 +18,7 @@ Devices are objects storing key material created on the client and stored in the
 
 > Device lifecycle is outside of the purview of the Towns protocol and managed entirely by client implementations. However, given it is expected under the protocol that there exists a 1-1 relation between `(user, client instance)` tuples and `devices`, the Towns Node performs periodic compaction criteria to stem the uncontrolled growth of user's device key stream in storage.
 
-### Encryption Data Schemas
+## Encryption Data Schemas
 
 Encrypted data originating from messages or metadata, such as usernames, is described in the protocol with a protobuf message as follows.
 
@@ -67,7 +65,7 @@ Peer to peer encryption sessions are only used to transmit session keys correspo
 
 A map is used to index ciphertext by the intended user's deviceKey since peer-to-peer encrypted payloads are only able to be decrypted by the deviceKey that the `outbound` sender's session was created for. In general, peer-to-peer encrypted messages are encrypted in a per device basis.
 
-### Encryption Lifecycle
+## Encryption Lifecycle
 
 Below is an example of the encryption lifecycle between Alice and Bob who are co-members of a channel within a space.
 
@@ -81,17 +79,17 @@ Below is an example of the encryption lifecycle between Alice and Bob who are co
 
 > Peer-to-peer encryption in Towns requires distinct sessions `outbound`, `inbound` for encryption and decryption, respectively. Moreover, each message can only be decrypted once per established session.
 
-### Key Sharing
+## Key Sharing
 
-#### Active Sharing
+### Active Sharing
 
 Session keys to encrypt message events and metadata in Towns are created on an as-needed basis by clients. If a user is joining a channel and decides to subsequently send a message for the first time, they will create a new outbound session key to encrypt the message and send it to the member roster of the channel along with the message. The same key can be used as an inbound session key by other members to decrypt the message encrypted with that session.
 
-#### Passive Sharing
+### Passive Sharing
 
 The above contrasts with passive key sharing, which is used to transmit keys that users are entitled to but do not have locally. When joining a channel for the first time, a user will sync stream events, but will need session keys to decrypt message events. The protocol supports an efficient key sharing scheme that has users place an `KeySolicitation` event on the stream, which any online member of the stream will see and conditionally service if the solicitator is an entitled member of the stream.
 
-#### Data
+### Data
 
 The protocol allows for any stream to support key sharing by way of `KeySolicitation`, and `KeyFulfillment` messages. Since fulfilling a solicitation requires creating a peer-to-peer encrypted session with the solicitator, the `device_key` and `fallback_key` are added to the payload to save a lookup against the `UserDeviceKey` stream. Fulfillments are synced by members of the same stream to avoid the worst case behavior of every member fulfilling every request in a duplicative manner.
 

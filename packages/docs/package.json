@@ -6,13 +6,13 @@
     "license": "ISC",
     "private": true,
     "scripts": {
-        "docs:broken-links": "mintlify broken-links",
-        "docs:dev": "mintlify dev",
+        "broken-links": "mint broken-links",
+        "dev": "mint dev",
         "spellcheck": "cspell ."
     },
     "devDependencies": {
         "cspell": "^8.8.1",
-        "mintlify": "4.0.274"
+        "mint": "4.2.173"
     },
     "keywords": []
 }
