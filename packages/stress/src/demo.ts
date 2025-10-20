@@ -69,14 +69,14 @@ async function sendAMessage() {
     const channel = await alice.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - alice wait =======================')
     await waitFor(() => channel.view.timeline.filter(isChannelMessage).length > 0)
-    logger.debug('alices sees: ', channel.view.timeline.filter(isChannelMessage))
+    logger.debug({ timeline: channel.view.timeline.filter(isChannelMessage) }, 'alices sees')
     logger.debug('=======================send a message - alice sends =======================')
     await alice.sendMessage(defaultChannelId, 'hi bob')
     logger.debug('=======================send a message - alice sent =======================')
     const bobChannel = await bob.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - bob wait =======================')
     await waitFor(() => bobChannel.view.timeline.filter(isChannelMessage).length > 0) // bob doesn't decrypt his own messages
-    logger.debug(bobChannel.view.timeline.filter(isChannelMessage), 'bob sees')
+    logger.debug({ timeline: bobChannel.view.timeline.filter(isChannelMessage) }, 'bob sees')
 
     await bob.stop()
     await alice.stop()

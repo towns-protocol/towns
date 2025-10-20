@@ -3,13 +3,11 @@ title: Pricing Modules
 description: ""
 ---
 
-## Custom Pricing Modules in Spaces
-
-### Overview
+## Overview
 
 In the Towns ecosystem, Spaces have the flexibility to define their own pricing strategies through custom pricing modules. These modules are smart contracts that comply with the `IPricingModule` Interface and are responsible for determining the price of memberships based on various attributes.
 
-### Implementation of Custom Pricing Modules
+## Implementation of Custom Pricing Modules
 
 To implement a custom pricing module, a contract must adhere to the `IPricingModule` Interface. This interface includes the `getPrice` function, which can be programmed to calculate prices based on different criteria, such as the total number of memberships minted or other programmable attributes. See more examples in [Recipes].
 
@@ -31,7 +29,7 @@ Every newly deployed Space in the Towns ecosystem is equipped with two default p
    - **Minimum Price**: Sets a minimum price of $10 USD for a membership.
    - **Payment Method**: Also accepts ETH as payment.
 
-### Transaction Fee Distribution
+## Transaction Fee Distribution
 
 An essential aspect of the pricing modules is the distribution of fees from transactions. These fees are split among key stakeholders:
 

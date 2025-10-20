@@ -28,7 +28,7 @@ description: The following guide illustrates how to register a new Stream Node i
 </Note>
 
 
-All contract addresses for testnet and mainnet needed to register nodes can be found in the [contracts](/run/contracts) section.
+All contract addresses for testnet and mainnet needed to register nodes can be found in the [contracts](/node-operator/contracts) section.
 
 <Note>When referencing contract methods in the below guide, keep in mind that our contracts are deployed using the [Diamond Standard](https://www.quicknode.com/guides/ethereum-development/smart-contracts/the-diamond-standard-eip-2535-explained-part-1) pattern. This means for practical purposes that when interacting with contracts on Base or Towns Chain, you will be calling each method on the associated diamond contract.</Note>
 
@@ -39,7 +39,7 @@ The following outlines the logical steps to onboarding a Node FE with attached s
 
 Instructions with specific calling signatures can be found below in the [Node FE Registration](#node-fe-registration) sections.
 
-Please ensure you have completed [Node Operator registration](/run/node-operator/register-towns-operator) before proceeding with node registration.
+Please ensure you have completed [Node Operator registration](/node-operator/tutorials/register-towns-operator) before proceeding with node registration.
 
 <Steps>
 <Step title="Start Stream Node in Info Mode">Operator should start the stream node process in [info](https://github.com/towns-protocol/towns/tree/main/core/node#checking-on-gamma-status-from-local-host) mode and additionally ensure DNS, TLS, and network are configured correctly.</Step>
@@ -58,7 +58,7 @@ Once a node operator has registered their operator address on Towns Chain, they 
   once sufficient delegations are received.
 </Warning>
 
-Once a node is setup, attached to postgres storage, network configured with a public IP, and passing health checks (see [System Requirements & Installation](/run/node-operator/system-requirements-installation)), the node is ready to enter the Towns Network and begin accepting stream writes.
+Once a node is setup, attached to postgres storage, network configured with a public IP, and passing health checks (see [System Requirements & Installation](/node-operator/tutorials/system-requirements-installation)), the node is ready to enter the Towns Network and begin accepting stream writes.
 
 Registering a node on Towns Chain, can be accomplished by calling the `registerNode(address,string,uint8)` method on the RiverRegistry diamond contract.
 
