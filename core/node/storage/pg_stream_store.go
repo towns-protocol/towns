@@ -2624,7 +2624,7 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
 func (s *PostgresStreamStore) TrimStream(
 	ctx context.Context,
 	streamId StreamId,
-	startMbExclusively int64,
+	trimToMbExclusive int64,
 	nullifySnapshotMbs []int64,
 ) error {
 	return s.txRunner(
@@ -2632,11 +2632,11 @@ func (s *PostgresStreamStore) TrimStream(
 		"TrimStream",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.trimStreamTx(ctx, tx, streamId, startMbExclusively, nullifySnapshotMbs)
+			return s.trimStreamTx(ctx, tx, streamId, trimToMbExclusive, nullifySnapshotMbs)
 		},
 		nil,
 		"streamId", streamId,
-		"startMbExclusively", startMbExclusively,
+		"trimToMbExclusive", trimToMbExclusive,
 		"nullifySnapshotMbs", nullifySnapshotMbs,
 	)
 }
@@ -2645,7 +2645,7 @@ func (s *PostgresStreamStore) trimStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	startMbExclusively int64,
+	trimToMbExclusive int64,
 	nullifySnapshotMbs []int64,
 ) error {
 	_, err := s.lockStream(ctx, tx, streamId, true)
@@ -2653,36 +2653,36 @@ func (s *PostgresStreamStore) trimStreamTx(
 		return err
 	}
 
-	return s.trimStreamTxNoLock(ctx, tx, streamId, startMbExclusively, nullifySnapshotMbs)
+	return s.trimStreamTxNoLock(ctx, tx, streamId, trimToMbExclusive, nullifySnapshotMbs)
 }
 
 func (s *PostgresStreamStore) trimStreamTxNoLock(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
-	startMbExclusively int64,
+	trimToMbExclusive int64,
 	nullifySnapshotMbs []int64,
 ) error {
-	if startMbExclusively < 0 {
+	if trimToMbExclusive < 0 {
 		return RiverError(
 			Err_INVALID_ARGUMENT,
-			"startMbExclusively must be non-negative",
+			"trimToMbExclusive must be non-negative",
 			"streamId", streamId,
-			"startMbExclusively", startMbExclusively,
+			"trimToMbExclusive", trimToMbExclusive,
 		).Func("PostgresStreamStore.trimStreamTx")
 	}
 
-	if startMbExclusively > 1 {
+	if trimToMbExclusive > 1 {
 		query := s.sqlForStream(
 			`DELETE FROM {{miniblocks}}
 		WHERE stream_id = $1 AND seq_num >= 1 AND seq_num < $2`,
 			streamId,
 		)
-		if _, err := tx.Exec(ctx, query, streamId, startMbExclusively); err != nil {
+		if _, err := tx.Exec(ctx, query, streamId, trimToMbExclusive); err != nil {
 			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
 				Message("failed to delete miniblocks during trimming").
 				Tag("streamId", streamId).
-				Tag("startMbExclusively", startMbExclusively)
+				Tag("trimToMbExclusive", trimToMbExclusive)
 		}
 	}
 

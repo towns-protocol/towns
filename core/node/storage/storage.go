@@ -271,11 +271,11 @@ type (
 		GetMiniblockNumberRanges(ctx context.Context, streamId StreamId) ([]MiniblockRange, error)
 
 		// TrimStream trims the stream by removing miniblocks and nullifying snapshots.
-		// It removes miniblocks starting from 1 inclusively to startMb exclusively and nullifies snapshots in the range.
+		// It removes miniblocks starting from 1 inclusively to trimToMbExclusive exclusively and nullifies snapshots in the range.
 		TrimStream(
 			ctx context.Context,
 			streamId StreamId,
-			startMbExclusively int64,
+			trimToMbExclusive int64,
 			nullifySnapshotMbs []int64,
 		) error
 

@@ -737,7 +737,6 @@ func newTrimTestEnv(
 			replFactor:                       3,
 			numInstances:                     3,
 			disableStreamCacheCallbacks:      true,
-			enableNewSnapshotFormat:          1,
 			recencyConstraintsGenerations:    5,
 			defaultMinEventsPerSnapshot:      1,
 			backwardsReconciliationThreshold: ptrUint64(20),
