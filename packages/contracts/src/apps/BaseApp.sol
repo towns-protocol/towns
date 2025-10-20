@@ -12,17 +12,20 @@ import {ITownsApp} from "./ITownsApp.sol";
 /// @dev Inheriting contracts should override _onInstall and _onUninstall as needed
 /// @dev Implements IModule, IExecutionModule, and ITownsApp interfaces
 abstract contract BaseApp is ITownsApp {
-    receive() external payable {
+    receive() external payable virtual {
         _onPayment(msg.sender, msg.value);
     }
 
-    // External functions
-    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
         return
+            interfaceId == type(ITownsApp).interfaceId ||
             interfaceId == type(IExecutionModule).interfaceId ||
-            interfaceId == type(IModule).interfaceId ||
-            interfaceId == type(ITownsApp).interfaceId;
+            interfaceId == type(IModule).interfaceId;
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    Base App Functions                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Required by IModule - called when module is installed
     function onInstall(bytes calldata postInstallData) external {
@@ -46,7 +49,7 @@ abstract contract BaseApp is ITownsApp {
         return _accessDuration();
     }
 
-    // Internal functions
+    // Hooks
     function _onInstall(bytes calldata postInstallData) internal virtual {}
 
     function _onUninstall(bytes calldata postUninstallData) internal virtual {}

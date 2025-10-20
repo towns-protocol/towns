@@ -8,7 +8,6 @@ import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
@@ -20,6 +19,7 @@ import {AppRegistryStorage, ClientInfo, AppInfo} from "./AppRegistryStorage.sol"
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {LibAppRegistry} from "./LibAppRegistry.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
@@ -32,8 +32,6 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
-
-    uint48 private constant MAX_DURATION = 365 days;
 
     modifier onlyAllowed(IAppAccount account) {
         if (IERC173(address(account)).owner() != msg.sender) NotAllowed.selector.revertWith();
@@ -99,10 +97,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     function _getAppDuration(address app) internal view returns (uint48 duration) {
         try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
-            return _validateDuration(accessDuration);
+            duration = LibAppRegistry.validateDuration(accessDuration);
         } catch {
-            return MAX_DURATION;
+            duration = LibAppRegistry.validateDuration(0);
         }
+        return duration;
     }
 
     /// @notice Retrieves detailed information about an app by its ID
@@ -389,18 +388,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         newVersionId = _attest(msg.sender, msg.value, request).uid;
     }
 
-    function _validatePricing(uint256 price) internal view returns (uint256) {
-        uint256 minPlatformFee = _getPlatformRequirements().getMembershipFee();
-        if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
-        return price;
-    }
-
-    function _validateDuration(uint48 duration) internal pure returns (uint48) {
-        if (duration > MAX_DURATION) InvalidDuration.selector.revertWith();
-        if (duration == 0) duration = MAX_DURATION;
-        return duration;
-    }
-
     /// @notice Validates inputs for adding a new app
     /// @param appContract The app contract to verify
     /// @param client The client address to verify
@@ -434,8 +421,8 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
         if (owner == address(0)) InvalidAddressInput.selector.revertWith();
 
-        _validatePricing(installPrice);
-        uint48 duration = _validateDuration(accessDuration);
+        installPrice = LibAppRegistry.validatePricing(_getPlatformRequirements(), installPrice);
+        accessDuration = LibAppRegistry.validateDuration(accessDuration);
 
         if (
             !IERC165(appAddress).supportsInterface(type(IModule).interfaceId) ||
@@ -445,7 +432,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             AppDoesNotImplementInterface.selector.revertWith();
         }
 
-        return (owner, permissions, manifest, duration);
+        return (owner, permissions, manifest, accessDuration);
     }
 
     function _getPlatformRequirements() internal view returns (IPlatformRequirements) {

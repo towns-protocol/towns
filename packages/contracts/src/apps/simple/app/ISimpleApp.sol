@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 // interfaces
 
@@ -9,22 +9,27 @@ pragma solidity ^0.8.23;
 
 interface ISimpleAppBase {
     /// @notice Thrown when the recipient address is the zero address
-    error ZeroAddress();
+    error SimpleApp__ZeroAddress();
 
     /// @notice Thrown when there is no balance to withdraw
-    error NoBalanceToWithdraw();
+    error SimpleApp__NoBalanceToWithdraw();
 
     /// @notice Thrown when the currency address is the zero address
-    error InvalidAddressInput();
+    error SimpleApp__InvalidAddressInput();
 
     /// @notice Thrown when the amount is zero
-    error InvalidAmount();
+    error SimpleApp__InvalidAmount();
 
     /// @notice Thrown when the caller is not allowed
-    error InvalidCaller();
+    error SimpleApp__InvalidCaller();
 
     /// @notice Thrown when the currency is invalid
-    error InvalidCurrency();
+    error SimpleApp__InvalidCurrency();
+
+    /// @notice Emitted when the app is initialized
+    /// @param owner The owner of the app
+    /// @param client The client of the app
+    event SimpleAppInitialized(address indexed owner, address indexed client);
 
     /// @notice Emitted when the app is withdrawn
     /// @param recipient The address that received the withdrawal
@@ -66,19 +71,4 @@ interface ISimpleApp is ISimpleAppBase {
     /// @notice Updates the permissions of the app
     /// @param permissions The new permissions of the app
     function updatePermissions(bytes32[] calldata permissions) external;
-
-    /// @notice Initializes the app
-    /// @param owner The owner of the app
-    /// @param appId The ID of the app
-    /// @param permissions The permissions of the app
-    /// @param installPrice The install price of the app
-    /// @param accessDuration The access duration of the app
-    function initialize(
-        address owner,
-        string calldata appId,
-        bytes32[] calldata permissions,
-        uint256 installPrice,
-        uint48 accessDuration,
-        address client
-    ) external;
 }

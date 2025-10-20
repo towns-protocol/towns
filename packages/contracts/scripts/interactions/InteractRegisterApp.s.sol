@@ -6,7 +6,6 @@ import {IAppFactory} from "src/apps/facets/factory/IAppFactory.sol";
 
 //contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
 import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 
 contract InteractRegisterApp is Interaction, IAppFactoryBase {
