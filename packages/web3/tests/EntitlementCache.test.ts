@@ -2,8 +2,8 @@
  * @group main
  */
 
-import { Keyable } from '../src/cache/Keyable'
-import { EntitlementCache, CacheResult } from '../src/cache/EntitlementCache'
+import { Keyable } from '../src/reads/cache/keyable'
+import { EntitlementCache, CacheResult } from '../src/reads/cache/entitlements.cache'
 import { describe, it, expect } from 'vitest'
 
 class Key implements Keyable {
