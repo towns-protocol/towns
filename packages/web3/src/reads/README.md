@@ -20,22 +20,24 @@ The reads module is organized into independent, composable primitives:
 The simplest approach - provides a domain-organized API:
 
 ```typescript
-import { createReadApp } from '@towns-protocol/web3'
+import { createReadApp } from "@towns-protocol/web3";
 
 const readApp = createReadApp({
   chainId: 8453,
-  url: 'https://base.publicrpc.com',
-  spaceFactoryAddress: '0x...',
-})
+  url: "https://base.publicrpc.com",
+  spaceFactoryAddress: "0x...",
+});
 
 // Domain-organized methods
-const banned = await readApp.wallets.bannedWallets({ spaceId: '0x...' })
-const linked = await readApp.wallets.getLinkedWallets({ walletAddress: '0x...' })
-const modules = await readApp.pricingModules.read.listPricingModules()
+const banned = await readApp.wallets.bannedWallets({ spaceId: "0x..." });
+const linked = await readApp.wallets.getLinkedWallets({
+  walletAddress: "0x...",
+});
+const modules = await readApp.pricingModules.read.listPricingModules();
 
 // Access to primitives
-const client = readApp.readClient
-const caches = readApp.cacheManager
+const client = readApp.readClient;
+const caches = readApp.cacheManager;
 ```
 
 ### Option 2: Using with SpaceDapp (Current Integration)
@@ -43,15 +45,15 @@ const caches = readApp.cacheManager
 SpaceDapp now uses `createReadApp` internally:
 
 ```typescript
-import { createReadApp, SpaceDapp } from '@towns-protocol/web3'
+import { createReadApp, SpaceDapp } from "@towns-protocol/web3";
 
 const readApp = createReadApp({
   chainId: 8453,
-  url: 'https://base.publicrpc.com',
-  spaceFactoryAddress: '0x...',
-})
+  url: "https://base.publicrpc.com",
+  spaceFactoryAddress: "0x...",
+});
 
-const spaceDapp = new SpaceDapp(config, provider, readApp)
+const spaceDapp = new SpaceDapp(config, provider, readApp);
 ```
 
 ### Option 3: Composing Primitives (Advanced)
@@ -64,21 +66,21 @@ import {
   CacheManager,
   makeSpaceFactoryReads,
   createSpaceContracts,
-} from '@towns-protocol/web3'
+} from "@towns-protocol/web3";
 
 const readClient = createReadClient({
   chainId: 8453,
-  url: 'https://base.publicrpc.com',
-})
+  url: "https://base.publicrpc.com",
+});
 
-const cacheManager = new CacheManager()
+const cacheManager = new CacheManager();
 
 const spaceFactoryReads = makeSpaceFactoryReads({
-  spaceFactoryAddress: '0x...',
+  spaceFactoryAddress: "0x...",
   publicClient: readClient,
-})
+});
 
-const spaceContracts = createSpaceContracts(readClient)
+const spaceContracts = createSpaceContracts(readClient);
 
 // Use primitives directly or compose into your own abstraction
 ```
@@ -88,8 +90,8 @@ const spaceContracts = createSpaceContracts(readClient)
 ### Primitives Access
 
 ```typescript
-readApp.readClient       // viem PublicClient
-readApp.cacheManager     // CacheManager instance
+readApp.readClient; // viem PublicClient
+readApp.cacheManager; // CacheManager instance
 ```
 
 ## Migration Path
@@ -100,4 +102,3 @@ This module is the foundation for eventually separating reads and writes into di
 2. **Phase 2**: Add more domains (spaces, channels, etc.), expand coverage
 3. **Phase 3**: Deprecate SpaceDapp read methods, guide migration to `createReadApp`
 4. **Phase 4**: Remove SpaceDapp read methods, making it write-only
-
