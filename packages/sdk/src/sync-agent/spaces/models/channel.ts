@@ -9,11 +9,22 @@ import {
 import { MessageTimeline } from '../../timeline/timeline'
 import { check, dlogger } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
-import { ChannelDetails, SpaceDapp } from '@towns-protocol/web3'
+import { ChannelDetails, SendTipParams, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
 
 const logger = dlogger('csb:channel')
+
+type ChannelSendTipParams =
+    | (Omit<
+          Extract<SendTipParams, { type: 'member' }>,
+          'tokenId' | 'spaceId' | 'messageId' | 'channelId'
+      > & {
+          chainId: number
+      })
+    | (Omit<Extract<SendTipParams, { type: 'bot' }>, 'spaceId' | 'messageId' | 'channelId'> & {
+          chainId: number
+      })
 
 export interface ChannelModel extends Identifiable {
     /** The River `channelId` of the channel. */
@@ -240,46 +251,52 @@ export class Channel extends PersistedObservable<ChannelModel> {
         return result
     }
 
-    async sendTip(
-        messageId: string,
-        tip: {
-            receiver: string
-            amount: bigint
-            currency: string
-            chainId: number
-        },
-        signer: ethers.Signer,
-    ) {
-        const appAddress = this.members.get(tip.receiver)?.data.appAddress
+    async sendTip(messageId: string, tip: ChannelSendTipParams, signer: ethers.Signer) {
+        let tx: ethers.ContractTransaction
 
-        let tokenId: string
-        if (appAddress) {
-            // Since bots don't have a membership token, we're using a dummy tokenId of 0
-            tokenId = '0'
-        } else {
-            // For regular users, get their actual membership tokenId
-            const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
-                this.data.spaceId,
-                tip.receiver,
-            )
-            if (!membershipTokenId) {
-                throw new Error('tokenId not found')
+        switch (tip.type) {
+            case 'member': {
+                const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
+                    this.data.spaceId,
+                    tip.receiver,
+                )
+                if (!membershipTokenId) {
+                    throw new Error('tokenId not found')
+                }
+
+                tx = await this.spaceDapp.sendTip(
+                    {
+                        spaceId: this.data.spaceId,
+                        type: 'member',
+                        tokenId: membershipTokenId,
+                        currency: tip.currency,
+                        amount: tip.amount,
+                        messageId,
+                        channelId: this.data.id,
+                        receiver: tip.receiver,
+                    },
+                    signer,
+                )
+                break
             }
-            tokenId = membershipTokenId
+            case 'bot': {
+                tx = await this.spaceDapp.sendTip(
+                    {
+                        spaceId: this.data.spaceId,
+                        type: 'bot',
+                        receiver: tip.receiver,
+                        appId: tip.appId,
+                        currency: tip.currency,
+                        amount: tip.amount,
+                        messageId,
+                        channelId: this.data.id,
+                    },
+                    signer,
+                )
+                break
+            }
         }
 
-        const tx = await this.spaceDapp.tip(
-            {
-                spaceId: this.data.spaceId,
-                tokenId,
-                currency: tip.currency,
-                amount: tip.amount,
-                messageId,
-                channelId: this.data.id,
-                receiver: appAddress ?? tip.receiver,
-            },
-            signer,
-        )
         const receipt = await tx.wait(3)
         const senderAddress = await signer.getAddress()
         const tipEvent = this.spaceDapp.getTipEvent(this.data.spaceId, receipt, senderAddress)

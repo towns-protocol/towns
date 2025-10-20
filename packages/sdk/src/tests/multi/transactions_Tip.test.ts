@@ -93,9 +93,10 @@ describe('transactions_Tip', () => {
 
         try {
             // dummy tip, to be used to test error cases
-            const tx = await bob.riverConnection.spaceDapp.tip(
+            const tx = await bob.riverConnection.spaceDapp.sendTip(
                 {
                     spaceId,
+                    type: 'member',
                     tokenId: aliceTokenId,
                     currency: ETH_ADDRESS,
                     amount: 1000n,
@@ -133,9 +134,10 @@ describe('transactions_Tip', () => {
     test('addTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.tip(
+        const tx = await bob.riverConnection.spaceDapp.sendTip(
             {
                 spaceId,
+                type: 'member',
                 tokenId: aliceTokenId,
                 currency: ETH_ADDRESS,
                 amount: 1000n,
@@ -388,9 +390,10 @@ describe('transactions_Tip', () => {
     test('addSecondTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.tip(
+        const tx = await bob.riverConnection.spaceDapp.sendTip(
             {
                 spaceId,
+                type: 'member',
                 tokenId: aliceTokenId,
                 currency: ETH_ADDRESS,
                 amount: 1000n,

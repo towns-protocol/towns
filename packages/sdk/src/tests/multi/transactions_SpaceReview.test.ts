@@ -161,9 +161,10 @@ describe('transaction_SpaceReview', () => {
         expect(stream.view.membershipContent.spaceReviews.length).toBe(1)
     })
     test('bob can tip review', async () => {
-        const tx = await bob.riverConnection.spaceDapp.tip(
+        const tx = await bob.riverConnection.spaceDapp.sendTip(
             {
                 spaceId: spaceIdWithAlice,
+                type: 'member',
                 tokenId: aliceTokenId,
                 currency: ETH_ADDRESS,
                 amount: 1000n,
