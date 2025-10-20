@@ -624,19 +624,25 @@ describe('Bot', { sequential: true }, () => {
         // Ban carol
         const { txHash: banTxHash } = await bot.ban(carol.userId, spaceId)
         expect(banTxHash).toBeTruthy()
-        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned({
-            spaceId,
-            walletAddress: carol.userId as `0x${string}`,
-        })
+        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned(
+            {
+                spaceId,
+                walletAddress: carol.userId as `0x${string}`,
+            },
+            { skipCache: true },
+        )
         expect(isBanned).toBe(true)
         // Unban carol
         const { txHash: unbanTxHash } = await bot.unban(carol.userId, spaceId)
         expect(unbanTxHash).toBeTruthy()
         // Verify carol is unbanned
-        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned({
-            spaceId,
-            walletAddress: carol.userId as `0x${string}`,
-        })
+        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned(
+            {
+                spaceId,
+                walletAddress: carol.userId as `0x${string}`,
+            },
+            { skipCache: true },
+        )
         expect(isBanned).toBe(false)
     })
 
