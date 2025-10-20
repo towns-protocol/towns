@@ -131,7 +131,9 @@ export async function makeCreateSpaceParams(
 	/*
 	 * assemble all the parameters needed to create a space.
 	 */
-	const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+	const readApp = spaceDapp.readApp
+	const pricingModules = await readApp.pricingModules.read.listPricingModules()
+	const dynamicPricingModule = await getDynamicPricingModule(pricingModules)
 	const membership: LegacyMembershipStruct = {
 		settings: {
 			name: 'Everyone',
