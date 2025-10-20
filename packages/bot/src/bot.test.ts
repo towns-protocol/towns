@@ -30,6 +30,8 @@ import {
     SpaceAddressFromSpaceId,
     SpaceDapp,
     type Address,
+    createReadApp,
+    ChainId,
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
@@ -56,7 +58,16 @@ describe('Bot', { sequential: true }, () => {
         townsConfig.base.chainConfig,
         makeBaseProvider(townsConfig),
     )
-    const spaceDapp = new SpaceDapp(townsConfig.base.chainConfig, makeBaseProvider(townsConfig))
+    const readApp = createReadApp({
+        chainId: townsConfig.base.chainConfig.chainId as ChainId,
+        url: townsConfig.base.rpcUrl,
+        spaceFactoryAddress: townsConfig.base.chainConfig.addresses.spaceFactory,
+    })
+    const spaceDapp = new SpaceDapp(
+        townsConfig.base.chainConfig,
+        makeBaseProvider(townsConfig),
+        readApp,
+    )
     let bobClient: SyncAgent
 
     const alice = new SyncAgentTest(undefined, townsConfig)
@@ -605,18 +616,27 @@ describe('Bot', { sequential: true }, () => {
         // Carol joins the space first
         await carolClient.spaces.joinSpace(spaceId, carol.signer)
         // Carol should not be banned initially
-        let isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId)
+        let isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned({
+            spaceId,
+            walletAddress: carol.userId as `0x${string}`,
+        })
         expect(isBanned).toBe(false)
         // Ban carol
         const { txHash: banTxHash } = await bot.ban(carol.userId, spaceId)
         expect(banTxHash).toBeTruthy()
-        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId, { skipCache: true })
+        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned({
+            spaceId,
+            walletAddress: carol.userId as `0x${string}`,
+        })
         expect(isBanned).toBe(true)
         // Unban carol
         const { txHash: unbanTxHash } = await bot.unban(carol.userId, spaceId)
         expect(unbanTxHash).toBeTruthy()
         // Verify carol is unbanned
-        isBanned = await spaceDapp.walletAddressIsBanned(spaceId, carol.userId, { skipCache: true })
+        isBanned = await spaceDapp.readApp.wallets.walletAddressIsBanned({
+            spaceId,
+            walletAddress: carol.userId as `0x${string}`,
+        })
         expect(isBanned).toBe(false)
     })
 

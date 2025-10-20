@@ -46,7 +46,9 @@ describe('membershipRenewals', () => {
         await new Promise((resolve) => setTimeout(resolve, WAIT_TIME))
         await alice.leaveStream(spaceId)
 
-        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
+        const aliceWallets = await aliceSpaceDapp.readApp.wallets.getLinkedWallets({
+            walletAddress: alicesWallet.address as `0x${string}`,
+        })
         const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
         expect(membershipStatus.isMember).toBe(true)
         expect(membershipStatus.isExpired).toBe(true)
@@ -177,7 +179,9 @@ describe('membershipRenewals', () => {
             // now mint a membership for the eoa wallet, which is linked to alice - mint only, not joining stream
             await aliceSpaceDapp.joinSpace(spaceId, eoaWallet.address, aliceProvider.wallet)
 
-            const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
+            const aliceWallets = await aliceSpaceDapp.readApp.wallets.getLinkedWallets({
+                walletAddress: alicesWallet.address as `0x${string}`,
+            })
             const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
             expect(membershipStatus.isMember).toBe(true)
             expect(membershipStatus.isExpired).toBe(false)
@@ -244,7 +248,9 @@ describe('membershipRenewals', () => {
         // wait for membership to expire
         await new Promise((resolve) => setTimeout(resolve, _MEMBERSHIP_DURATION * 1_000 + 500))
 
-        const aliceWallets = await aliceSpaceDapp.getLinkedWallets(alicesWallet.address)
+        const aliceWallets = await aliceSpaceDapp.readApp.wallets.getLinkedWallets({
+            walletAddress: alicesWallet.address as `0x${string}`,
+        })
         const membershipStatus = await aliceSpaceDapp.getMembershipStatus(spaceId, aliceWallets)
         expect(membershipStatus.isMember).toBe(true)
         expect(membershipStatus.isExpired).toBe(true)

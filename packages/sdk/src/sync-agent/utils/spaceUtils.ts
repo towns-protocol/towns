@@ -13,10 +13,12 @@ export async function makeDefaultMembershipInfo(
     feeRecipient: string,
     pricing: 'dynamic' | 'fixed' = 'dynamic',
 ): Promise<MembershipStruct> {
+    const readApp = spaceDapp.readApp
+    const pricingModules = await readApp.pricingModules.read.listPricingModules()
     const pricingModule =
         pricing == 'dynamic'
-            ? await getDynamicPricingModule(spaceDapp)
-            : await getFixedPricingModule(spaceDapp)
+            ? await getDynamicPricingModule(pricingModules)
+            : await getFixedPricingModule(pricingModules)
     return {
         settings: {
             name: 'Everyone',

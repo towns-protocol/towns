@@ -5,7 +5,13 @@
 import { dlog } from '@towns-protocol/utils'
 import { makeSpaceStreamId } from '../../id'
 import { townsEnv } from '../../townsEnv'
-import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
+import {
+    ChainId,
+    createSpaceDapp,
+    LocalhostWeb3Provider,
+    createReadApp,
+    SpaceDapp,
+} from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'
 import { linkWallets, unlinkCaller } from '../testUtils'
@@ -20,7 +26,12 @@ describe('spaceDappTests', () => {
         const config = townsEnv().makeTownsConfig()
         const baseProvider = new LocalhostWeb3Provider(config.base.rpcUrl, wallet)
         await baseProvider.fundWallet()
-        const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider)
+        const readApp = createReadApp({
+            chainId: config.base.chainConfig.chainId as ChainId,
+            url: config.base.rpcUrl,
+            spaceFactoryAddress: config.base.chainConfig.addresses.spaceFactory,
+        })
+        const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider, readApp)
         const tx = await spaceDapp.createSpace(
             {
                 spaceName: 'test',

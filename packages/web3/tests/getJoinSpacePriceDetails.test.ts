@@ -6,6 +6,8 @@ import { makeDefaultMembershipInfo } from '../src/test-helpers/utils'
 import { SpaceIdFromSpaceAddress } from '../src/utils/ut'
 
 import { web3Env } from '../src/utils/web3Env'
+import { createReadApp } from '../src/reads/app'
+import { ChainId, isChainId } from '../src/reads'
 
 describe('getJoinSpacePriceDetails', () => {
     const baseConfig = web3Env().getDeployment().base
@@ -15,7 +17,12 @@ describe('getJoinSpacePriceDetails', () => {
         const wallet = ethers.Wallet.createRandom()
         const baseProvider = new LocalhostWeb3Provider(baseRpcUrl, wallet)
         await baseProvider.fundWallet()
-        const spaceDapp = new SpaceDapp(baseConfig, baseProvider)
+        const readApp = createReadApp({
+            chainId: baseConfig.chainId,
+            url: baseRpcUrl,
+            spaceFactoryAddress: baseConfig.spaceFactoryAddress,
+        })
+        const spaceDapp = new SpaceDapp(baseConfig, baseProvider, readApp)
         const tx = await spaceDapp.createSpace(
             {
                 spaceName: 'test',
@@ -43,7 +50,15 @@ describe('getJoinSpacePriceDetails', () => {
         const wallet = ethers.Wallet.createRandom()
         const baseProvider = new LocalhostWeb3Provider(baseRpcUrl, wallet)
         await baseProvider.fundWallet()
-        const spaceDapp = new SpaceDapp(baseConfig, baseProvider)
+        if (!isChainId(baseConfig.chainId)) {
+            throw new Error('Invalid chain id')
+        }
+        const readApp = createReadApp({
+            chainId: baseConfig.chainId,
+            url: baseRpcUrl,
+            spaceFactoryAddress: baseConfig.addresses.spaceFactory,
+        })
+        const spaceDapp = new SpaceDapp(baseConfig, baseProvider, readApp)
         const price = ethers.utils.parseEther('1')
         const tx = await spaceDapp.createSpace(
             {
