@@ -13,6 +13,7 @@ import (
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
+	"github.com/prometheus/client_golang/prometheus"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -33,6 +34,13 @@ type (
 		gcs *struct {
 			bucket *gcstorage.BucketHandle
 		}
+
+		// migrationAttemptsCounter is the number of stream migration attempts that succeeded.
+		migrationAttemptsSuccessCounter prometheus.Counter
+		// migrationAttemptsFailedCounter is the number of stream migration attempts that failed.
+		migrationAttemptsFailedCounter prometheus.Counter
+		// miniblocksStoredExternal keeps track of how many miniblocks are stored in external storage.
+		miniblocksStoredExternalCounter prometheus.Counter
 	}
 
 	externallyStoredMiniblockDescriptor struct {
@@ -120,6 +128,24 @@ const (
 	MinimumExternalStorageUploadPartSize = 5 * 1024 * 1024
 )
 
+// MigrationAttemptSuccessful must be called when a stream miniblocks are migrated to external storage.
+func (e *externalMediaStreamStorage) MigrationAttemptSuccessful(nMiniblocks int) {
+	if c := e.migrationAttemptsSuccessCounter; c != nil {
+		c.Inc()
+	}
+	if c := e.miniblocksStoredExternalCounter; c != nil {
+		c.Add(float64(nMiniblocks))
+	}
+}
+
+// MigrationAttemptFailed must be called when an attempt to migarte stream miniblocks to external
+// storage failed.
+func (e *externalMediaStreamStorage) MigrationAttemptFailed() {
+	if c := e.migrationAttemptsFailedCounter; c != nil {
+		c.Inc()
+	}
+}
+
 // WriteMiniblockData either writes the given blockdata to the external storage, or schedules it for writing
 // when it's not big enough to be written at the moment.
 //
@@ -146,7 +172,11 @@ func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum
 	rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
 	objectKey := fmt.Sprintf("%s_%d", rootObjectKey, len(g.subObjects))
 
-	return g.write(ctx, objectKey, true, false)
+	if err := g.write(ctx, objectKey, true, false); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Finish writes pending miniblock data to external storage and returns the parts that are needed
@@ -189,7 +219,12 @@ func (g *gcsExternalStorageWriter) Finish(ctx context.Context) (
 	}
 
 	// combine all sub objects into a single object
-	return g.combineIntoSingleObject(ctx)
+	desc, loc, bucket, err := g.combineIntoSingleObject(ctx)
+	if err != nil {
+		return nil, MiniblockDataStorageLocationDB, "", err
+	}
+
+	return desc, loc, bucket, nil
 }
 
 // Abort aborts the upload session and deletes claimed resources.
@@ -299,7 +334,11 @@ func (s *s3ExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum 
 
 	s.totalMiniblockBytes += uint64(len(blockdata))
 
-	return s.write(ctx, false)
+	if err := s.write(ctx, false); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // write if there is enough data to s3.
@@ -558,6 +597,7 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 
 	uploadSession, err := s.externalMediaStreamStorage.StartUploadSession(s.computeLockIdFromSchema(), streamID)
 	if err != nil {
+		s.externalMediaStreamStorage.MigrationAttemptFailed()
 		return true, err
 	}
 	defer uploadSession.Abort()
@@ -565,20 +605,26 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 	if err := s.ReadMiniblocksByStream(ctx, streamID, true, func(blockdata []byte, seqNum int64, _ []byte) error {
 		return uploadSession.WriteMiniblockData(ctx, seqNum, blockdata)
 	}); err != nil {
+		s.externalMediaStreamStorage.MigrationAttemptFailed()
 		return true, err
 	}
 
-	parts, extStorageLoc, _, err := uploadSession.Finish(ctx)
+	miniblocks, extStorageLoc, _, err := uploadSession.Finish(ctx)
 	if err != nil {
+		s.externalMediaStreamStorage.MigrationAttemptFailed()
 		return true, err
 	}
 
 	// store the metadata about the combined object in the DB so it can be decoded in the future
 	// and drop the miniblock data from the DB finishing migrating the streams miniblocks to
 	// external storage.
-	if err := s.WriteMediaStreamExternalStorageParts(ctx, streamID, extStorageLoc, parts); err != nil {
+	if err := s.WriteMediaStreamExternalStorageParts(ctx, streamID, extStorageLoc, miniblocks); err != nil {
+		s.externalMediaStreamStorage.MigrationAttemptFailed()
 		return true, err
 	}
+
+	// update metrics
+	s.externalMediaStreamStorage.MigrationAttemptSuccessful(len(miniblocks))
 
 	return false, nil
 }
