@@ -706,8 +706,9 @@ describe('Bot', { sequential: true }, () => {
         )
         // app address is the address of the bot contract (not the bot client, since client is per installation)
         const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
-        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
-        expect(balance).toBeGreaterThan(balanceBefore)
+        // Bot tips have no protocol fee, so the balance should increase by exactly 0.01 ETH
+        const expectedTipAmount = ethers.utils.parseUnits('0.01').toBigInt()
+        expect(balance).toEqual(balanceBefore + expectedTipAmount)
         await waitFor(() => receivedTipEvents.length > 0)
         const tipEvent = receivedTipEvents.find((x) => x.messageId === messageId)
         expect(tipEvent).toBeDefined()

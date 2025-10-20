@@ -18,6 +18,16 @@ import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTy
 const base_log = dlog('csb:test:transactions_Tip')
 const logError = dlogError('csb:test:transactions_Tip_error')
 
+// Protocol fee for member tips is 0.5% (50 basis points)
+const PROTOCOL_FEE_BASIS_POINTS = 50n
+const BASIS_POINTS_DENOMINATOR = 10000n
+
+// Helper function to calculate net tip amount after protocol fee
+function calculateNetTipAmount(grossAmount: bigint): bigint {
+    const fee = (grossAmount * PROTOCOL_FEE_BASIS_POINTS) / BASIS_POINTS_DENOMINATOR
+    return grossAmount - fee
+}
+
 describe('transactions_Tip', () => {
     const townsConfig = townsEnv().makeTownsConfig()
     const bobIdentity = new Bot(undefined, townsConfig)
@@ -182,8 +192,9 @@ describe('transactions_Tip', () => {
             return tip.content?.transaction
         })
         expect(tipEvent?.receipt).toBeDefined()
-        // the view should have been updated with the tip
-        expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
+        // the view should have been updated with the tip (net amount after 0.5% protocol fee)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
         expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
     })
@@ -208,8 +219,9 @@ describe('transactions_Tip', () => {
         if (!tipEvent) throw new Error('no tip event found')
         expect(tipEvent.receivedTransaction.transaction?.receipt).toBeDefined()
         expect(tipEvent?.receivedTransaction.transaction?.content?.case).toEqual('tip')
-        // the view should have been updated with the tip
-        expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
+        // the view should have been updated with the tip (net amount after 0.5% protocol fee)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
     })
 
@@ -233,13 +245,14 @@ describe('transactions_Tip', () => {
             return tip.content
         })
         expect(tipEvent.fromUserId).toEqual(bobIdentity.rootWallet.address)
-        expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.view.membershipContent.tips[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.view.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
         expect(
             stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)?.tipsSent?.[
                 ETH_ADDRESS
             ],
-        ).toEqual(1000n)
+        ).toEqual(netTipAmount)
         expect(
             stream.view.membershipContent.joined.get(bobIdentity.rootWallet.address)
                 ?.tipsSentCount?.[ETH_ADDRESS],
@@ -347,7 +360,8 @@ describe('transactions_Tip', () => {
         const stream = await bob.riverConnection.client!.getStream(
             bob.riverConnection.client!.userStreamId!,
         )
-        expect(stream.userContent.tipsSent[ETH_ADDRESS]).toEqual(1000n)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.userContent.tipsSent[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toBeUndefined()
         expect(stream.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(1n)
         expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(undefined)
@@ -363,7 +377,8 @@ describe('transactions_Tip', () => {
         const stream = await alice.riverConnection.client!.getStream(
             alice.riverConnection.client!.userStreamId!,
         )
-        expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toEqual(1000n)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.userContent.tipsReceived[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.userContent.tipsSent[ETH_ADDRESS]).toBeUndefined()
         expect(stream.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(1n)
         expect(stream.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(undefined)
@@ -377,13 +392,14 @@ describe('transactions_Tip', () => {
         // refetch the stream using getStream, make sure it parses the snapshot correctly
         const stream = await bob.riverConnection.client!.getStream(defaultChannelId)
         if (!stream) throw new Error('no stream found')
-        expect(stream.membershipContent.tips[ETH_ADDRESS]).toEqual(1000n)
+        const netTipAmount = calculateNetTipAmount(1000n)
+        expect(stream.membershipContent.tips[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(stream.membershipContent.tipsCount[ETH_ADDRESS]).toEqual(1n)
         const bobMember = stream.membershipContent.joined.get(bobIdentity.rootWallet.address)
         const aliceMember = stream.membershipContent.joined.get(aliceIdentity.rootWallet.address)
-        expect(bobMember?.tipsSent?.[ETH_ADDRESS]).toEqual(1000n)
+        expect(bobMember?.tipsSent?.[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(bobMember?.tipsSentCount?.[ETH_ADDRESS]).toEqual(1n)
-        expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(1000n)
+        expect(aliceMember?.tipsReceived?.[ETH_ADDRESS]).toEqual(netTipAmount)
         expect(aliceMember?.tipsReceivedCount?.[ETH_ADDRESS]).toEqual(1n)
     })
 
@@ -426,9 +442,10 @@ describe('transactions_Tip', () => {
         // get the user "stream" that is being synced by bob
         const stream = bob.riverConnection.client!.stream(bob.riverConnection.client!.userStreamId!)
         if (!stream) throw new Error('no stream found')
-        // the view should have been updated with the tip
+        // the view should have been updated with the tip (2 tips after protocol fees)
+        const totalNetTipAmount = calculateNetTipAmount(2000n)
         await waitFor(() => {
-            expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsSent[ETH_ADDRESS]).toEqual(totalNetTipAmount)
             expect(stream.view.userContent.tipsSentCount[ETH_ADDRESS]).toEqual(2n)
             expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(undefined)
         })
@@ -440,9 +457,10 @@ describe('transactions_Tip', () => {
             alice.riverConnection.client!.userStreamId!,
         )
         if (!stream) throw new Error('no stream found')
-        // the view should have been updated with the tip
+        // the view should have been updated with the tip (2 tips after protocol fees)
+        const totalNetTipAmount = calculateNetTipAmount(2000n)
         await waitFor(() => {
-            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(2000n)
+            expect(stream.view.userContent.tipsReceived[ETH_ADDRESS]).toEqual(totalNetTipAmount)
             expect(stream.view.userContent.tipsReceivedCount[ETH_ADDRESS]).toEqual(2n)
         })
     })
