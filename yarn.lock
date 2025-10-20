@@ -9808,6 +9808,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@standard-schema/spec@npm:^1.0.0-beta.9":
+  version: 1.0.0
+  resolution: "@standard-schema/spec@npm:1.0.0"
+  checksum: 2d7d73a1c9706622750ab06fc40ef7c1d320b52d5e795f8a1c7a77d0d6a9f978705092bc4149327b3cff4c9a14e5b3800d3b00dc945489175a2d3031ded8332a
+  languageName: node
+  linkType: hard
+
 "@stoplight/better-ajv-errors@npm:1.0.3":
   version: 1.0.3
   resolution: "@stoplight/better-ajv-errors@npm:1.0.3"
@@ -10108,6 +10115,7 @@ __metadata:
     "@bufbuild/protobuf": ^2.9.0
     "@connectrpc/connect-node": ^2.1.0
     "@hono/node-server": ^1.14.0
+    "@standard-schema/spec": ^1.0.0-beta.9
     "@towns-protocol/encryption": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/sdk": "workspace:^"
@@ -10129,9 +10137,11 @@ __metadata:
     image-size: ^2.0.2
     jsonwebtoken: ^9.0.2
     nanoevents: ^9.1.0
+    superjson: ^2.2.2
     typescript: ~5.8.3
     viem: ^2.29.3
     vitest: ^3.2.3
+    zod: ^3.25.76
   peerDependencies:
     hono: ^4.7.11
   languageName: unknown

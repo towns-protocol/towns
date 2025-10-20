@@ -1,6 +1,8 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
 import { SpaceDapp, Permission } from '@towns-protocol/web3'
+import type { StandardSchemaV1 } from '@standard-schema/spec'
+import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -94,6 +96,15 @@ import packageJson from '../package.json' with { type: 'json' }
 type BotActions = ReturnType<typeof buildBotActions>
 
 export type BotHandler = ReturnType<typeof buildBotActions>
+
+// StandardSchema type aliases for convenience
+export type InferInput<Schema extends StandardSchemaV1> = NonNullable<
+    Schema['~standard']['types']
+>['input']
+
+export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<
+    Schema['~standard']['types']
+>['output']
 
 const debug = dlog('csb:bot')
 
@@ -237,6 +248,14 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             threadId: string | undefined
         },
     ) => Promise<void> | void
+    rawGmMessage: (
+        handler: BotActions,
+        event: BasePayload & { typeUrl: string; message: Uint8Array },
+    ) => void | Promise<void>
+    gm: <Schema extends StandardSchemaV1>(
+        handler: BotActions,
+        event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
+    ) => void | Promise<void>
 }
 
 export type BasePayload = {
@@ -265,6 +284,16 @@ export class Bot<
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
     private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
         new Map()
+    private readonly gmTypedHandlers: Map<
+        string,
+        {
+            schema: StandardSchemaV1
+            handler: (
+                handler: BotActions,
+                event: BasePayload & { typeUrl: string; data: any },
+            ) => void | Promise<void>
+        }
+    > = new Map()
     private readonly commands: Commands | undefined
 
     constructor(
@@ -629,6 +658,51 @@ export class Bot<
                         debug('emit:message', forwardPayload)
                         this.emitter.emit('message', this.client, forwardPayload)
                     }
+                } else if (payload.value.content.case === 'gm') {
+                    const userId = userIdFromAddress(parsed.event.creatorAddress)
+                    const gmContent = payload.value.content.value
+
+                    const { typeUrl, value } = gmContent
+
+                    this.emitter.emit('rawGmMessage', this.client, {
+                        userId,
+                        spaceId: spaceIdFromChannelId(streamId),
+                        channelId: streamId,
+                        eventId: parsed.hashStr,
+                        createdAt,
+                        typeUrl,
+                        message: value ?? new Uint8Array(),
+                    })
+
+                    const typedHandler = this.gmTypedHandlers.get(typeUrl)
+
+                    if (typedHandler) {
+                        try {
+                            const possibleJsonString = new TextDecoder().decode(value)
+                            const deserializedData =
+                                superjsonParse<InferOutput<typeof typedHandler.schema>>(
+                                    possibleJsonString,
+                                )
+                            const result =
+                                await typedHandler.schema['~standard'].validate(deserializedData)
+                            if ('issues' in result && result.issues) {
+                                debug('GM validation failed', { typeUrl, issues: result.issues })
+                            } else {
+                                debug('emit:gmMessage', { userId, channelId: streamId })
+                                void typedHandler.handler(this.client, {
+                                    userId,
+                                    spaceId: spaceIdFromChannelId(streamId),
+                                    channelId: streamId,
+                                    eventId: parsed.hashStr,
+                                    createdAt,
+                                    typeUrl,
+                                    data: result.value,
+                                })
+                            }
+                        } catch (error) {
+                            debug('GM handler error', { typeUrl, error })
+                        }
+                    }
                 }
                 break
             }
@@ -769,6 +843,47 @@ export class Bot<
         return result
     }
 
+    /**
+     * Send a GM (generic message) to a stream with schema validation
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param typeUrl - The type URL identifying the message format
+     * @param schema - StandardSchema for validation
+     * @param data - Data to validate and send
+     */
+    async sendGM<Schema extends StandardSchemaV1>(
+        streamId: string,
+        typeUrl: string,
+        schema: Schema,
+        data: InferInput<Schema>,
+    ) {
+        const result = await this.client.sendGM(
+            streamId,
+            typeUrl,
+            schema,
+            data,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
+    }
+
+    /**
+     * Send a raw GM (generic message) to a stream without schema validation
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param typeUrl - The type URL identifying the message format
+     * @param message - Optional raw message data as bytes
+     */
+    async sendRawGM(streamId: string, typeUrl: string, message: Uint8Array) {
+        const result = await this.client.sendRawGM(
+            streamId,
+            typeUrl,
+            message,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
+    }
+
     writeContract<
         chain extends Chain | undefined,
         account extends Account | undefined,
@@ -876,6 +991,27 @@ export class Bot<
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
         this.slashCommandHandlers.set(command, fn)
+    }
+
+    /**
+     * Triggered when someone sends a GM (generic message) with type validation using StandardSchema
+     * @param typeUrl - The type URL to listen for
+     * @param schema - The StandardSchema to validate the message data
+     * @param handler - The handler function to call when a message is received
+     */
+    onGmMessage<Schema extends StandardSchemaV1>(
+        typeUrl: string,
+        schema: Schema,
+        handler: (
+            handler: BotActions,
+            event: BasePayload & { typeUrl: string; data: InferOutput<Schema> },
+        ) => void | Promise<void>,
+    ) {
+        this.gmTypedHandlers.set(typeUrl, { schema, handler: handler as any })
+    }
+
+    onRawGmMessage(handler: BotEvents['rawGmMessage']) {
+        this.emitter.on('rawGmMessage', handler)
     }
 }
 
@@ -1225,10 +1361,56 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         return sendMessageEvent({ streamId, payload, tags })
     }
 
-    const sendGM = async (
+    /**
+     * Used to send a typed message into a channel stream.
+     * The message will be serialized to JSON using superjson and then encoded to bytes.
+     * Clients can agree on the schema to deserialize the message by the typeUrl.
+     * @param streamId - The stream ID to send the message to.
+     * @param typeUrl - A schema type URL for the message
+     * @param message - The message to send as raw bytes.
+     * @param tags - The tags to send with the message.
+     * @returns The event ID of the sent message.
+     */
+    async function sendGM<Schema extends StandardSchemaV1>(
         streamId: string,
         typeUrl: string,
-        message?: Uint8Array,
+        schema: Schema,
+        data: InferInput<Schema>,
+        tags?: PlainMessage<Tags>,
+    ): ReturnType<typeof sendMessageEvent> {
+        const result = await schema['~standard'].validate(data)
+        if ('issues' in result && result.issues) {
+            throw new Error(
+                `Schema validation failed: ${result.issues.map((issue) => issue.message).join(', ')}`,
+            )
+        }
+        const jsonString = superjsonStringify(result.value)
+        const jsonBytesMessage = new TextEncoder().encode(jsonString)
+        const payload = create(ChannelMessageSchema, {
+            payload: {
+                case: 'post',
+                value: {
+                    content: { case: 'gm', value: { typeUrl: typeUrl, value: jsonBytesMessage } },
+                },
+            },
+        })
+        return sendMessageEvent({ streamId, payload, tags })
+    }
+
+    /**
+     * Used to send a custom message into a channel stream.
+     * The messages will be a raw bytes.
+     * Clients can agree on the schema to deserialize the message by the typeUrl.
+     * @param streamId - The stream ID to send the message to.
+     * @param typeUrl - A schema type URL for the message
+     * @param message - The message to send as raw bytes.
+     * @param tags - The tags to send with the message.
+     * @returns The event ID of the sent message.
+     */
+    const sendRawGM = async (
+        streamId: string,
+        typeUrl: string,
+        message: Uint8Array,
         tags?: PlainMessage<Tags>,
     ) => {
         const payload = create(ChannelMessageSchema, {
@@ -1379,6 +1561,7 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         editMessage,
         sendReaction,
         sendGM,
+        sendRawGM,
         removeEvent,
         adminRemoveEvent,
         sendKeySolicitation,

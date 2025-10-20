@@ -22,6 +22,7 @@ import type { Bot, BotPayload } from './bot'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
+import { z } from 'zod'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
@@ -1046,5 +1047,98 @@ describe('Bot', { sequential: true }, () => {
         expect(attachments).toHaveLength(2)
         expect(attachments?.[0].type).toBe('image')
         expect(attachments?.[1].type).toBe('chunked_media')
+    })
+
+    it('should send and receive GM messages with schema validation', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const messageSchema = z.object({ text: z.string(), count: z.number() })
+
+        const receivedGmEvents: Array<{ typeUrl: string; data: { text: string; count: number } }> =
+            []
+
+        bot.onGmMessage('test.typed.v1', messageSchema, (_h, e) => {
+            receivedGmEvents.push({ typeUrl: e.typeUrl, data: e.data })
+        })
+
+        const testData = { text: 'Hello', count: 42 }
+        await bot.sendGM(channelId, 'test.typed.v1', messageSchema, testData)
+
+        await waitFor(() => receivedGmEvents.length > 0)
+
+        const event = receivedGmEvents[0]
+        expect(event).toBeDefined()
+        expect(event.typeUrl).toBe('test.typed.v1')
+        expect(event.data).toEqual(testData)
+    })
+
+    it('should handle GM with Date objects (superjson serialization)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const eventSchema = z.object({
+            eventType: z.string(),
+            timestamp: z.date(),
+        })
+
+        const receivedMessages: Array<{ eventType: string; timestamp: Date }> = []
+        bot.onGmMessage('test.date.v1', eventSchema, (_h, e) => {
+            receivedMessages.push(e.data)
+        })
+
+        const testDate = new Date('2025-01-15T12:00:00Z')
+        await bot.sendGM(channelId, 'test.date.v1', eventSchema, {
+            eventType: 'test',
+            timestamp: testDate,
+        })
+
+        await waitFor(() => receivedMessages.length > 0)
+
+        expect(receivedMessages[0].eventType).toBe('test')
+        expect(receivedMessages[0].timestamp).toEqual(testDate)
+        expect(receivedMessages[0].timestamp instanceof Date).toBe(true)
+    })
+
+    it('should handle multiple handlers for different typeUrls', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const schema1 = z.object({ type: z.literal('type1'), value: z.number() })
+        const schema2 = z.object({ type: z.literal('type2'), text: z.string() })
+
+        const receivedType1: Array<{ type: 'type1'; value: number }> = []
+        const receivedType2: Array<{ type: 'type2'; text: string }> = []
+
+        bot.onGmMessage('test.multi.type1', schema1, (_h, e) => {
+            receivedType1.push(e.data)
+        })
+        bot.onGmMessage('test.multi.type2', schema2, (_h, e) => {
+            receivedType2.push(e.data)
+        })
+
+        const data1 = { type: 'type1' as const, value: 123 }
+        const data2 = { type: 'type2' as const, text: 'hello' }
+
+        await bot.sendGM(channelId, 'test.multi.type1', schema1, data1)
+        await bot.sendGM(channelId, 'test.multi.type2', schema2, data2)
+
+        await waitFor(() => receivedType1.length > 0 && receivedType2.length > 0)
+
+        expect(receivedType1[0]).toEqual(data1)
+        expect(receivedType2[0]).toEqual(data2)
+    })
+
+    it('should handle raw GM messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const receivedMessages: Array<{ typeUrl: string; message: Uint8Array }> = []
+        bot.onRawGmMessage((_h, e) => {
+            receivedMessages.push({ typeUrl: e.typeUrl, message: e.message })
+        })
+
+        const message = new TextEncoder().encode('Hello, world!')
+        await bot.sendRawGM(channelId, 'test.raw.v1', message)
+
+        await waitFor(() => receivedMessages.length > 0)
+        expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')
+        expect(receivedMessages[0].message).toEqual(message)
     })
 })
