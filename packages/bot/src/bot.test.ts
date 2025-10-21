@@ -230,7 +230,7 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
-        const { jwtMiddleware, handler } = await bot.start()
+        const { jwtMiddleware, handler } = bot.start()
         const app = new Hono()
         app.use(jwtMiddleware)
         app.post('/webhook', handler)
