@@ -11,9 +11,14 @@ func (s *Service) localGetLastMiniblockHash(
 	streamView *StreamView,
 ) (*connect.Response[GetLastMiniblockHashResponse], error) {
 	lastBlock := streamView.LastBlock()
+	encryptionAlgorithm, err := streamView.GetEncryptionAlgorithm()
+	if err != nil {
+		return nil, err
+	}
 	resp := &GetLastMiniblockHashResponse{
-		Hash:         lastBlock.Ref.Hash[:],
-		MiniblockNum: lastBlock.Ref.Num,
+		Hash:                lastBlock.Ref.Hash[:],
+		MiniblockNum:        lastBlock.Ref.Num,
+		EncryptionAlgorithm: encryptionAlgorithm,
 	}
 
 	return connect.NewResponse(resp), nil

@@ -226,3 +226,28 @@ func (r *StreamView) GetPinnedMessages() ([]*protocol.MemberPayload_SnappedPin, 
 	}
 	return pins, nil
 }
+
+func (r *StreamView) GetEncryptionAlgorithm() (*protocol.MemberPayload_EncryptionAlgorithm, error) {
+	s := r.snapshot
+
+	algorithm := s.Members.EncryptionAlgorithm
+
+	updateFn := func(e *ParsedEvent, minibockNum int64, eventNum int64) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_MemberPayload:
+			switch payload := payload.MemberPayload.Content.(type) {
+			case *protocol.MemberPayload_EncryptionAlgorithm_:
+				algorithm = payload.EncryptionAlgorithm
+			default:
+				break
+			}
+		}
+		return true, nil
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, updateFn)
+	if err != nil {
+		return nil, err
+	}
+	return algorithm, nil
+}

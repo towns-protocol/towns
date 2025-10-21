@@ -1040,6 +1040,7 @@ message GetLastMiniblockHashRequest {
 message GetLastMiniblockHashResponse {
     bytes hash = 1;
     int64 miniblock_num = 2;
+    MemberPayload.EncryptionAlgorithm encryption_algorithm = 3;
 }
 
 message AddEventRequest {
