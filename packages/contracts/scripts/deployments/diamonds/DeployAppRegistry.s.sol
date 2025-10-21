@@ -14,6 +14,7 @@ import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
 import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
 import {DeployAppInstallerFacet} from "../facets/DeployAppInstallerFacet.s.sol";
+import {DeployAppFactoryFacet} from "../facets/DeployAppFactoryFacet.s.sol";
 import {DeploySpaceFactory} from "../diamonds/DeploySpaceFactory.s.sol";
 
 // contracts
@@ -46,6 +47,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
+        facetHelper.add("MetadataFacet");
 
         // Deploy the first batch of facets
         facetHelper.deployBatch(deployer);
@@ -78,28 +80,28 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             facet,
             DeployOwnable.makeInitData(deployer)
         );
-    }
 
-    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-        // Queue up feature facets for batch deployment
-        facetHelper.add("MultiInit");
-        facetHelper.add("MetadataFacet");
-        facetHelper.add("UpgradeableBeaconFacet");
-        facetHelper.add("AppRegistryFacet");
-        facetHelper.add("AppInstallerFacet");
-        facetHelper.add("SimpleApp");
-
-        facetHelper.deployBatch(deployer);
-
-        address facet = facetHelper.getDeployedAddress("MetadataFacet");
+        facet = facetHelper.getDeployedAddress("MetadataFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployMetadata.selectors()),
             facet,
             DeployMetadata.makeInitData(bytes32("AppRegistry"), "")
         );
+    }
+
+    function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+        // Queue up feature facets for batch deployment
+        facetHelper.add("MultiInit");
+        facetHelper.add("UpgradeableBeaconFacet");
+        facetHelper.add("AppRegistryFacet");
+        facetHelper.add("AppInstallerFacet");
+        facetHelper.add("AppFactoryFacet");
+        facetHelper.add("SimpleApp");
+
+        facetHelper.deployBatch(deployer);
 
         address simpleApp = facetHelper.getDeployedAddress("SimpleApp");
-        facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
+        address facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
 
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployUpgradeableBeacon.selectors()),
@@ -119,6 +121,13 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()),
             facet,
             DeployAppInstallerFacet.makeInitData()
+        );
+
+        facet = facetHelper.getDeployedAddress("AppFactoryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()),
+            facet,
+            DeployAppFactoryFacet.makeInitData()
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -152,6 +161,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             }
             if (facetName.eq("AppInstallerFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()));
+            }
+            if (facetName.eq("AppFactoryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()));
             }
         }
 

@@ -8,6 +8,7 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
+import {IAppFactoryBase} from "../../src/apps/facets/factory/IAppFactory.sol";
 import {IAppAccountBase} from "../../src/spaces/facets/account/IAppAccount.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
@@ -26,13 +27,21 @@ import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol"
 //contracts
 import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
 import {AppInstallerFacet} from "../../src/apps/facets/installer/AppInstallerFacet.sol";
+import {AppFactoryFacet} from "../../src/apps/facets/factory/AppFactoryFacet.sol";
 import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
 import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase, IAppAccountBase {
+contract AppRegistryTest is
+    BaseSetup,
+    IAppRegistryBase,
+    IAppFactoryBase,
+    IAttestationRegistryBase,
+    IAppAccountBase
+{
     AppRegistryFacet internal registry;
+    AppFactoryFacet internal factory;
     AppInstallerFacet internal installer;
     AppAccount internal appAccount;
     MockModule internal mockModule;
@@ -49,6 +58,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     function setUp() public override {
         super.setUp();
         registry = AppRegistryFacet(appRegistry);
+        factory = AppFactoryFacet(appRegistry);
         installer = AppInstallerFacet(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
@@ -94,7 +104,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (address app, bytes32 appId) = registry.createApp(appData);
+        (address app, bytes32 appId) = factory.createApp(appData);
         SIMPLE_APP_ID = appId;
         SIMPLE_APP = payable(app);
         _;
@@ -210,7 +220,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (address app, bytes32 appId) = registry.createApp(appData);
+        (address app, bytes32 appId) = factory.createApp(appData);
 
         App memory appInfo = registry.getAppById(appId);
         address module = appInfo.module;
@@ -232,8 +242,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidAppName.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidAppName.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_EmptyPermissions() external {
@@ -246,8 +256,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidArrayInput.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidArrayInput.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_ZeroAddressClient() external {
@@ -261,8 +271,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidAddressInput.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidAddressInput.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_InvalidDuration() external {
@@ -275,7 +285,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
         vm.prank(DEFAULT_DEV);
         vm.expectRevert(InvalidDuration.selector);
-        registry.createApp(appData);
+        factory.createApp(appData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -907,7 +917,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint48 newAccessDuration = DEFAULT_ACCESS_DURATION + 1;
 
         vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
+        (address app, ) = factory.createApp(appData);
         SimpleApp(payable(app)).updatePricing(newInstallPrice, newAccessDuration);
         vm.stopPrank();
 
@@ -931,7 +941,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         newPermissions[1] = bytes32("Write");
 
         vm.startPrank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
+        (address app, ) = factory.createApp(appData);
         SimpleApp(payable(app)).updatePermissions(newPermissions);
         vm.stopPrank();
 
@@ -953,7 +963,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (simpleApp, ) = registry.createApp(appData);
+        (simpleApp, ) = factory.createApp(appData);
     }
 
     function _setupAppWithPrice(uint256 price) internal {

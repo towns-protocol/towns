@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 
 // types
@@ -54,14 +53,6 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           App Functions                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Create an upgradeable simple app contract
-    /// @param params The parameters of the app
-    function createApp(
-        AppParams calldata params
-    ) external payable nonReentrant returns (address app, bytes32 appId) {
-        return _createApp(params);
-    }
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register

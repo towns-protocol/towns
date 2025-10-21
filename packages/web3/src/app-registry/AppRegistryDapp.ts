@@ -3,12 +3,14 @@ import { BaseChainConfig } from '../utils/web3Env'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
 import { IAppInstallerShim } from './IAppInstallerShim'
+import { IAppFactoryShim } from './IAppFactoryShim'
 import { SimpleAppShim } from './SimpleAppShim'
 import type {
-    AppCreatedEventObject,
     AppRegisteredEventObject,
     IAppRegistryBase,
 } from '@towns-protocol/generated/dev/typings/IAppRegistry'
+
+import type { AppCreatedEventObject } from '@towns-protocol/generated/dev/typings/IAppFactory'
 import { Permission } from '../types/ContractTypes'
 
 export type BotInfo = {
@@ -24,6 +26,7 @@ export type BotInfo = {
 export class AppRegistryDapp {
     public readonly registry: IAppRegistryShim
     public readonly installer: IAppInstallerShim
+    public readonly factory: IAppFactoryShim
     private readonly provider: ethers.providers.Provider
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
@@ -32,6 +35,7 @@ export class AppRegistryDapp {
         }
         this.registry = new IAppRegistryShim(config.addresses.appRegistry, provider)
         this.installer = new IAppInstallerShim(config.addresses.appRegistry, provider)
+        this.factory = new IAppFactoryShim(config.addresses.appRegistry, provider)
         this.provider = provider
     }
 
@@ -48,7 +52,7 @@ export class AppRegistryDapp {
         installPrice: bigint,
         accessDuration: bigint, // in seconds
     ): Promise<ContractTransaction> {
-        return this.registry.write(signer).createApp({
+        return this.factory.write(signer).createApp({
             name,
             permissions: permissions.map((p) => ethers.utils.formatBytes32String(Permission[p])),
             client,
@@ -181,7 +185,7 @@ export class AppRegistryDapp {
 
     public async getAllAppsByOwner(targetOwner: Address, fromBlock?: number) {
         const appCreatedEvents = await this.registry.read.queryFilter(
-            this.registry.read.filters.AppCreated(),
+            this.factory.read.filters.AppCreated(),
             fromBlock,
         )
 
