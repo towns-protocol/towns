@@ -2568,17 +2568,23 @@ export class Client
     async getMiniblockInfo(
         streamId: string,
     ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> {
-        let streamView = this.stream(streamId)?.view
+        const streamView = this.stream(streamId)?.view
         // if we don't have a local copy, or if it's just not initialized, fetch the latest
-        if (!streamView || !streamView.isInitialized) {
-            streamView = await this.getStream(streamId)
+        if (streamView && streamView.isInitialized) {
+            check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
+            check(
+                isDefined(streamView.prevMiniblockHash),
+                `prevMiniblockHash not found: ${streamId}`,
+            )
+            return {
+                miniblockNum: streamView.miniblockInfo.max,
+                miniblockHash: streamView.prevMiniblockHash,
+            }
         }
-        check(isDefined(streamView), `stream not found: ${streamId}`)
-        check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
-        check(isDefined(streamView.prevMiniblockHash), `prevMiniblockHash not found: ${streamId}`)
+        const r = await this.getStreamLastMiniblockHash(streamId)
         return {
-            miniblockNum: streamView.miniblockInfo.max,
-            miniblockHash: streamView.prevMiniblockHash,
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
         }
     }
 

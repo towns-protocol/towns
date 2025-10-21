@@ -156,6 +156,16 @@ export const createTownsClient = async (
     // eslint-disable-next-line prefer-const
     let crypto: GroupEncryptionCrypto
 
+    const getMiniblockInfo = async (
+        streamId: string,
+    ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> => {
+        const r = await client.rpc.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
+        return {
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
+        }
+    }
+
     const getStream = async (streamId: string): Promise<ParsedStreamResponse> => {
         const { disableHashValidation, disableSignatureValidation } = client
         const stream = await client.rpc.getStream({ streamId: streamIdAsBytes(streamId) })
@@ -205,13 +215,6 @@ export const createTownsClient = async (
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
-        const getMiniblockInfo: IGroupEncryptionClient['getMiniblockInfo'] = async (streamId) => {
-            const { streamAndCookie } = await getStream(streamId)
-            return {
-                miniblockNum: streamAndCookie.miniblocks[0].header.miniblockNum,
-                miniblockHash: streamAndCookie.miniblocks[0].hash,
-            }
-        }
         const downloadUserDeviceInfo: IGroupEncryptionClient['downloadUserDeviceInfo'] = async (
             userIds,
         ) => {
