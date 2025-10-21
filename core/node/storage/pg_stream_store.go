@@ -887,14 +887,17 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	var ret *ReadStreamFromLastSnapshotResult
+	var (
+		ret *ReadStreamFromLastSnapshotResult
+		mbs *externalStoredMiniblocksRangeDescriptor
+	)
 	if err := s.txRunner(
 		ctx,
 		"ReadStreamFromLastSnapshot",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
+			ret, mbs, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
 			return err
 		},
 		nil,
@@ -902,6 +905,20 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	); err != nil {
 		return nil, err
 	}
+
+	// if miniblock data is stored externally, read and decode miniblock data from external storage
+	if mbs != nil && mbs.miniblockDataLocation != MiniblockDataStorageLocationDB {
+		miniblockData, err := s.readMiniblockDataFromExternalStorage(
+			ctx, mbs.miniblockDataLocation, streamId, mbs.objectMiniblockParts, mbs.fromInclusive, mbs.toExclusive)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, mb := range ret.Miniblocks {
+			mb.Data = miniblockData[mb.Number]
+		}
+	}
+
 	return ret, nil
 }
 
@@ -910,17 +927,14 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	numPrecedingMiniblocks int,
-) (*ReadStreamFromLastSnapshotResult, error) {
+) (*ReadStreamFromLastSnapshotResult, *externalStoredMiniblocksRangeDescriptor, error) {
 	snapshotMiniblockIndex, mbDataLocation, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
-	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
-	if startSeqNum < 0 {
-		startSeqNum = 0
-	}
+	startSeqNum := max(0, snapshotMiniblockIndex-int64(numPrecedingMiniblocks))
 
 	miniblocksRow, err := tx.Query(
 		ctx,
@@ -932,28 +946,16 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		streamId,
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	miniblockData := make(map[int64][]byte)
-
-	// if miniblock data is stored externally, retrieve it and assign it to the miniblock descriptors
-	if mbDataLocation != MiniblockDataStorageLocationDB {
-		parts, err := s.readMediaStreamExternalStoragePartsTx(ctx, tx, streamId)
-		if err != nil {
-			return nil, err
-		}
-
-		miniblockData, err = s.readMiniblockDataFromExternalStorage(ctx, parts, mbDataLocation, streamId)
-		if err != nil {
-			return nil, err
-		}
+		return nil, nil, err
 	}
 
 	var miniblocks []*MiniblockDescriptor
 	var blockdata []byte
 	var seqNum int64
 	var snapshot []byte
+	fromInclusive := int64(math.MaxInt64)
+	toExclusive := int64(0)
+
 	corrupt := false
 	if _, err := pgx.ForEachRow(
 		miniblocksRow,
@@ -967,11 +969,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 					"ExpectedSeqNum", miniblocks[0].Number+int64(len(miniblocks)))
 			}
 
-			if mbDataLocation != MiniblockDataStorageLocationDB {
-				blockdata = miniblockData[seqNum]
-			}
-
-			if len(blockdata) == 0 {
+			if len(blockdata) == 0 && mbDataLocation == MiniblockDataStorageLocationDB {
 				corrupt = true
 			}
 			if len(snapshot) == 0 {
@@ -983,22 +981,42 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 				Data:     blockdata,
 				Snapshot: snapshot,
 			})
+
+			fromInclusive = min(fromInclusive, seqNum)
+			toExclusive = max(toExclusive, seqNum+1)
+
 			return nil
 		},
 	); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if corrupt {
-		return nil, RiverError(
+		return nil, nil, RiverError(
 			Err_NOT_FOUND,
 			"Stream is corrupt - miniblock data is empty",
 			"streamId", streamId,
 		)
 	}
 
+	// if miniblock data is stored externally, retrieve data from db to retrieve and decode it.
+	var extStoredMiniblocks *externalStoredMiniblocksRangeDescriptor
+	if mbDataLocation != MiniblockDataStorageLocationDB {
+		objectMiniblockParts, err := s.readMediaStreamExternalStoragePartsTx(ctx, tx, streamId)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		extStoredMiniblocks = &externalStoredMiniblocksRangeDescriptor{
+			objectMiniblockParts:  objectMiniblockParts,
+			miniblockDataLocation: mbDataLocation,
+			fromInclusive:         fromInclusive,
+			toExclusive:           toExclusive,
+		}
+	}
+
 	if !(miniblocks[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
-		return nil, RiverError(
+		return nil, nil, RiverError(
 			Err_INTERNAL,
 			"Miniblocks consistency violation - snapshotMiniblockIndex is out of range",
 			"snapshotMiniblockIndex", snapshotMiniblockIndex,
@@ -1015,7 +1033,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		streamId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var envelopes [][]byte
@@ -1050,14 +1068,14 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		expectedSlot++
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &ReadStreamFromLastSnapshotResult{
 		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - miniblocks[0].Number),
 		Miniblocks:              miniblocks,
 		MinipoolEnvelopes:       envelopes,
-	}, nil
+	}, extStoredMiniblocks, nil
 }
 
 // WriteEvent adds event to the given minipool.
@@ -1321,14 +1339,17 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
-	var miniblocks []*MiniblockDescriptor
+	var (
+		miniblocks []*MiniblockDescriptor
+		mbs        *externalStoredMiniblocksRangeDescriptor
+	)
 	if err := s.txRunner(
 		ctx,
 		"ReadMiniblocks",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			miniblocks, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
+			miniblocks, mbs, err = s.readMiniblocksTx(ctx, tx, streamId, fromInclusive, toExclusive, omitSnapshot)
 			return err
 		},
 		nil,
@@ -1337,6 +1358,19 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		"toExclusive", toExclusive,
 	); err != nil {
 		return nil, err
+	}
+
+	// if miniblock data is stored externally, read and decode miniblock data from external storage
+	if mbs != nil && mbs.miniblockDataLocation != MiniblockDataStorageLocationDB {
+		miniblockData, err := s.readMiniblockDataFromExternalStorage(
+			ctx, mbs.miniblockDataLocation, streamId, mbs.objectMiniblockParts, mbs.fromInclusive, mbs.toExclusive)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, mb := range miniblocks {
+			mb.Data = miniblockData[mb.Number]
+		}
 	}
 
 	return miniblocks, nil
@@ -1349,10 +1383,10 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	fromInclusive int64,
 	toExclusive int64,
 	omitSnapshot bool,
-) ([]*MiniblockDescriptor, error) {
+) ([]*MiniblockDescriptor, *externalStoredMiniblocksRangeDescriptor, error) {
 	_, mbDataLocation, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var sql string
@@ -1370,7 +1404,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		streamId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Retrieve miniblocks starting from the latest miniblock with snapshot
@@ -1409,69 +1443,45 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 		})
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Check if we got any miniblocks at all when we expected some
 	if len(miniblocks) == 0 && fromInclusive < toExclusive {
-		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
+		return nil, nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "No miniblocks found in requested range").
 			Tag("fromInclusive", fromInclusive).
 			Tag("toExclusive", toExclusive).
 			Tag("streamId", streamId)
 	}
 
-	// if miniblock data is stored externally, retrieve it and assign it to the miniblock descriptors
+	// if miniblock data is stored externally, retrieve data from db to retrieve and decode it.
+	var extStoredMiniblocks *externalStoredMiniblocksRangeDescriptor
 	if mbDataLocation != MiniblockDataStorageLocationDB {
-		parts, err := s.readMediaStreamExternalStoragePartsTx(ctx, tx, streamId)
+		objectMiniblockParts, err := s.readMediaStreamExternalStoragePartsTx(ctx, tx, streamId)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
-		miniblockData, err := s.readMiniblockDataFromExternalStorage(ctx, parts, mbDataLocation, streamId)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, mb := range miniblocks {
-			mb.Data = miniblockData[mb.Number]
+		extStoredMiniblocks = &externalStoredMiniblocksRangeDescriptor{
+			objectMiniblockParts:  objectMiniblockParts,
+			miniblockDataLocation: mbDataLocation,
+			fromInclusive:         fromInclusive,
+			toExclusive:           toExclusive,
 		}
 	}
 
-	return miniblocks, nil
+	return miniblocks, extStoredMiniblocks, nil
 }
 
-// readMiniblockDataFromExternalStorage reads all miniblock data from external storage and returns
-// a mapping from the miniblock number to the miniblock data on success.
-func (s *PostgresStreamStore) readMiniblockDataFromExternalStorage(
-	ctx context.Context,
-	parts []externallyStoredMiniblockDescriptor,
-	location MiniblockDataStorageLocation,
-	streamID StreamId,
-) (map[int64][]byte, error) {
-	if !s.ExternalStorageEnabled() {
-		return nil, RiverError(Err_BAD_CONFIG, "external media stream storage is not enabled").
-			Tag("streamId", streamID).
-			Func("readMiniblockDataFromExternalStorage")
-	}
-
-	if location == MiniblockDataStorageLocationGCS {
-		return s.readMiniblockDataFromGCS(ctx, parts, streamID)
-	} else if location == MiniblockDataStorageLocationS3 {
-		return s.readMiniblockDataFromS3(ctx, parts, streamID)
-	}
-
-	return nil, RiverError(Err_BAD_CONFIG, "stream miniblock data is stored in DB").
-		Tag("streamId", streamID).
-		Func("readMiniblockDataFromExternalStorage")
-}
-
-// readMiniblockDataFromGCS reads all miniblock data from Google Cloud Storage and returns
-// a mapping from the miniblock number to the miniblock data on success. It uses the given
-// parts to decode the miniblocks.
+// readMiniblockDataFromGCS reads miniblock in range [fromInclusive..toExclusive) data
+// from S3 storage and returns a mapping from the miniblock number to the miniblock data
+// on success. It uses the given parts to decode the miniblocks.
 func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 	ctx context.Context,
-	parts []externallyStoredMiniblockDescriptor,
+	objectMiniblockParts []ExternallyStoredMiniblockDescriptor,
 	streamID StreamId,
+	fromInclusive int64,
+	toExclusive int64,
 ) (map[int64][]byte, error) {
 	if s.externalMediaStreamStorage.gcs == nil {
 		return nil, RiverError(Err_BAD_CONFIG, "external GCS media stream storage is not enabled").
@@ -1479,7 +1489,7 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 			Func("readMiniblockDataFromGCS")
 	}
 
-	if len(parts) == 0 {
+	if len(objectMiniblockParts) == 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "no parts found for external GCS media stream storage").
 			Tag("streamId", streamID).
 			Func("readMiniblockDataFromGCS")
@@ -1488,7 +1498,12 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)
 	object := s.externalMediaStreamStorage.gcs.bucket.Object(objectKey)
 
-	objectReader, err := object.NewReader(ctx)
+	offset, length, miniblocks, err := ObjectRangeMiniblocks(objectMiniblockParts, fromInclusive, toExclusive)
+	if err != nil {
+		return nil, err
+	}
+
+	objectReader, err := object.NewRangeReader(ctx, offset, length)
 	if err != nil {
 		return nil, RiverError(Err_DB_OPERATION_FAILURE, "failed to read miniblock data from GCS").
 			Tag("streamId", streamID).
@@ -1500,8 +1515,8 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 
 	results := make(map[int64][]byte)
 
-	for _, part := range parts {
-		miniblockData := make([]byte, part.MiniblockDataLength)
+	for _, miniblock := range miniblocks {
+		miniblockData := make([]byte, miniblock.MiniblockDataLength)
 		if _, err := io.ReadFull(objectReader, miniblockData); err != nil {
 			return nil, RiverErrorWithBase(
 				Err_DOWNSTREAM_NETWORK_ERROR,
@@ -1510,23 +1525,25 @@ func (s *PostgresStreamStore) readMiniblockDataFromGCS(
 			).
 				Tag("streamId", streamID).
 				Tag("objectKey", objectKey).
-				Tag("partNumber", part.Number).
+				Tag("partNumber", miniblock.Number).
 				Func("readMiniblockDataFromGCS")
 		}
 
-		results[part.Number] = miniblockData
+		results[miniblock.Number] = miniblockData
 	}
 
 	return results, nil
 }
 
-// readMiniblockDataFromS3 reads all miniblock data from S3 storage and returns
-// a mapping from the miniblock number to the miniblock data on success. It uses
-// the given parts to decode the miniblocks.
+// readMiniblockDataFromS3 reads miniblock in range [fromInclusive..toExclusive) data
+// from S3 storage and returns a mapping from the miniblock number to the miniblock data
+// on success. It uses the given parts to decode the miniblocks.
 func (s *PostgresStreamStore) readMiniblockDataFromS3(
 	ctx context.Context,
-	parts []externallyStoredMiniblockDescriptor,
+	objectMiniblockParts []ExternallyStoredMiniblockDescriptor,
 	streamID StreamId,
+	fromInclusive int64,
+	toExclusive int64,
 ) (map[int64][]byte, error) {
 	if s.externalMediaStreamStorage.s3 == nil {
 		return nil, RiverError(Err_BAD_CONFIG, "external S3 media stream storage is not enabled").
@@ -1534,16 +1551,22 @@ func (s *PostgresStreamStore) readMiniblockDataFromS3(
 			Func("readMiniblockDataFromS3")
 	}
 
-	if len(parts) == 0 {
+	if len(objectMiniblockParts) == 0 {
 		return nil, RiverError(Err_BAD_CONFIG, "no parts found for external S3 media stream storage").
 			Tag("streamId", streamID).
 			Func("readMiniblockDataFromS3")
+	}
+
+	offset, length, parts, err := ObjectRangeMiniblocks(objectMiniblockParts, fromInclusive, toExclusive)
+	if err != nil {
+		return nil, err
 	}
 
 	objectKey := ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)
 	getObjectResult, err := s.externalMediaStreamStorage.s3.client.GetObject(ctx, &awss3.GetObjectInput{
 		Bucket: aws.String(s.externalMediaStreamStorage.s3.bucket),
 		Key:    aws.String(objectKey),
+		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", offset, offset+length)),
 	})
 	if err != nil {
 		return nil, RiverError(Err_DB_OPERATION_FAILURE, "failed to read miniblock data from S3").
@@ -1617,7 +1640,16 @@ func (s *PostgresStreamStore) readMiniblocksByStreamTx(
 			return err
 		}
 
-		miniblockData, err = s.readMiniblockDataFromExternalStorage(ctx, parts, mbDataLocation, streamId)
+		fromInclusive := int64(0)
+		toExclusive := int64(1)
+
+		if len(parts) > 0 {
+			fromInclusive = parts[0].Number
+			toExclusive = parts[len(parts)-1].Number + 1
+		}
+
+		miniblockData, err = s.readMiniblockDataFromExternalStorage(
+			ctx, mbDataLocation, streamId, parts, fromInclusive, toExclusive)
 		if err != nil {
 			return err
 		}
@@ -1710,7 +1742,16 @@ func (s *PostgresStreamStore) readMiniblocksByIdsTx(
 			return err
 		}
 
-		miniblockData, err = s.readMiniblockDataFromExternalStorage(ctx, parts, mbDataLocation, streamId)
+		fromInclusive := int64(0)
+		toExclusive := int64(1)
+
+		if len(parts) > 0 {
+			fromInclusive = parts[0].Number
+			toExclusive = parts[len(parts)-1].Number + 1
+		}
+
+		miniblockData, err = s.readMiniblockDataFromExternalStorage(
+			ctx, mbDataLocation, streamId, parts, fromInclusive, toExclusive)
 		if err != nil {
 			return err
 		}
