@@ -700,7 +700,8 @@ describe('Bot', { sequential: true }, () => {
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
                 chainId: townsConfig.base.chainConfig.chainId,
-                receiver: appAddress,
+                appAddress: appAddress,
+                botId: bot.botId,
             },
             bob.signer,
         )

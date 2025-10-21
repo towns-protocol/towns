@@ -9,22 +9,30 @@ import {
 import { MessageTimeline } from '../../timeline/timeline'
 import { check, dlogger } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
-import { ChannelDetails, SendTipParams, SpaceDapp } from '@towns-protocol/web3'
+import { ChannelDetails, checkNever, SendTipParams, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
 
 const logger = dlogger('csb:channel')
 
 type ChannelSendTipParams =
-    | (Omit<
-          Extract<SendTipParams, { type: 'member' }>,
-          'tokenId' | 'spaceId' | 'messageId' | 'channelId'
-      > & {
+    | {
+          type: 'member'
+          receiver: string
+          tokenId: string
+          currency: string
+          amount: bigint
           chainId: number
-      })
-    | (Omit<Extract<SendTipParams, { type: 'bot' }>, 'spaceId' | 'messageId' | 'channelId'> & {
+      }
+    | {
+          type: 'bot'
+          botId: string // bot's user id
+          appId: string // app id
+          appAddress: string // app address
+          currency: string
+          amount: bigint
           chainId: number
-      })
+      }
 
 export interface ChannelModel extends Identifiable {
     /** The River `channelId` of the channel. */
@@ -253,7 +261,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
 
     async sendTip(messageId: string, tip: ChannelSendTipParams, signer: ethers.Signer) {
         let tx: ethers.ContractTransaction
-
+        let toUserId: string
         switch (tip.type) {
             case 'member': {
                 const membershipTokenId = await this.spaceDapp.getTokenIdOfOwner(
@@ -263,7 +271,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 if (!membershipTokenId) {
                     throw new Error('tokenId not found')
                 }
-
+                toUserId = tip.receiver
                 tx = await this.spaceDapp.sendTip(
                     {
                         spaceId: this.data.spaceId,
@@ -280,11 +288,12 @@ export class Channel extends PersistedObservable<ChannelModel> {
                 break
             }
             case 'bot': {
+                toUserId = tip.botId
                 tx = await this.spaceDapp.sendTip(
                     {
                         spaceId: this.data.spaceId,
                         type: 'bot',
-                        receiver: tip.receiver,
+                        receiver: tip.appAddress,
                         appId: tip.appId,
                         currency: tip.currency,
                         amount: tip.amount,
@@ -294,6 +303,9 @@ export class Channel extends PersistedObservable<ChannelModel> {
                     signer,
                 )
                 break
+            }
+            default: {
+                checkNever(tip)
             }
         }
 
@@ -307,9 +319,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
         const channelId = this.data.id
         const result = await this.riverConnection
             .withStream(channelId)
-            .call((client) =>
-                client.addTransaction_Tip(tip.chainId, receipt, tipEvent, tip.receiver),
-            )
+            .call((client) => client.addTransaction_Tip(tip.chainId, receipt, tipEvent, toUserId))
         return result
     }
 
