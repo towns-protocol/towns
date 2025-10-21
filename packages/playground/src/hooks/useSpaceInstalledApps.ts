@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSyncAgent } from '@towns-protocol/react-sdk'
 import { isChannelStreamId, makeBaseProvider, spaceIdFromChannelId } from '@towns-protocol/sdk'
-import { type Address, AppRegistryDapp, SpaceDapp } from '@towns-protocol/web3'
+import {
+    type Address,
+    AppRegistryDapp,
+    SpaceDapp,
+    createReadApp,
+    isChainId,
+} from '@towns-protocol/web3'
 
 export const getSpaceInstalledAppsQueryKey = (spaceId: string) => ['space-installed-apps', spaceId]
 
@@ -14,7 +20,16 @@ export const useSpaceInstalledApps = (streamId: string) => {
         queryFn: async () => {
             const baseProvider = makeBaseProvider(sync.config.townsConfig)
             const townsConfig = sync.config.townsConfig
-            const spaceDapp = new SpaceDapp(townsConfig.base.chainConfig, baseProvider)
+
+            if (!isChainId(townsConfig.base.chainConfig.chainId)) {
+                throw new Error('Invalid chain id')
+            }
+            const readApp = createReadApp({
+                chainId: townsConfig.base.chainConfig.chainId,
+                url: townsConfig.base.rpcUrl,
+                spaceFactoryAddress: townsConfig.base.chainConfig.addresses.spaceFactory,
+            })
+            const spaceDapp = new SpaceDapp(townsConfig.base.chainConfig, baseProvider, readApp)
 
             const space = spaceDapp.getSpace(spaceId)
             if (!space) {

@@ -27,9 +27,8 @@ import {
     EncodedNoopRuleData,
     DecodedCheckOperationBuilder,
     evaluateOperationsForEntitledWallet,
-    findEthereumProviders,
 } from '../src/space/entitlements/entitlement'
-import { IRuleEntitlementV2Base } from '../src/space/entitlements/IRuleEntitlementV2Shim'
+import { IRuleEntitlementV2Base } from '../src/space/entitlements/RuleEntitlementV2Shim'
 import { convertRuleDataV2ToV1 } from '../src/space/entitlements/ConvertersEntitlements'
 import {
     MOCK_ADDRESS,
@@ -42,7 +41,8 @@ import { zeroAddress } from 'viem'
 import { Address } from '../src/types/ContractTypes'
 
 import debug from 'debug'
-import { computeDelegatorsForProvider } from '../src/delegate-registry/DelegateRegistry'
+import { computeDelegatorsForProvider } from '../src/reads/contracts/delegate-registry'
+import { findEthereumProviders } from '../src/reads/aggregators/get-wallets'
 import { describe, it, expect } from 'vitest'
 
 const log = debug('test')
@@ -978,17 +978,17 @@ const coldWallet3 = '0xBda05058243FEf202FB4925b3877373396A08768'
 
 describe('computeDelegatorsForProvider', () => {
     it.skip.concurrent('single hot wallet maps to single cold wallet', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
+        const providers = findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
-        const delegated = await computeDelegatorsForProvider(provider, [hotWallet])
+        const delegated = computeDelegatorsForProvider(provider, [hotWallet])
         expect(delegated).toHaveLength(1)
         expect(delegated).toEqual(expect.arrayContaining([coldWallet]))
     })
 
     it.skip.concurrent('single hot wallet maps to multiple cold wallets', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
+        const providers = findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
@@ -998,7 +998,7 @@ describe('computeDelegatorsForProvider', () => {
     })
 
     it.skip.concurrent('multiple hot wallets map to multiple cold wallets', async () => {
-        const providers = await findEthereumProviders(xchainConfig)
+        const providers = findEthereumProviders(xchainConfig)
         expect(providers.length).toBe(1)
 
         const provider = providers[0]
@@ -1081,8 +1081,8 @@ it('encode/decode rule data', async () => {
         expect(v1.checkOperations[i].chainId).toBe(decodedDag.checkOperations[i].chainId)
         expect(
             addressesEqual(
-                v1.checkOperations[i].contractAddress as string,
-                decodedDag.checkOperations[i].contractAddress as string,
+                v1.checkOperations[i].contractAddress,
+                decodedDag.checkOperations[i].contractAddress,
             ),
         ).toBeTruthy()
         expect(v1.checkOperations[i].threshold).toBe(decodedDag.checkOperations[i].threshold)

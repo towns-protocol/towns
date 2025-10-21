@@ -3,7 +3,13 @@ import { type Address } from 'viem'
 import { useChannel, useSpace, useSyncAgent, useUserSpaces } from '@towns-protocol/react-sdk'
 import { ArrowLeftIcon, LoaderCircleIcon } from 'lucide-react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AppRegistryDapp, SpaceAddressFromSpaceId, SpaceDapp } from '@towns-protocol/web3'
+import {
+    AppRegistryDapp,
+    SpaceAddressFromSpaceId,
+    SpaceDapp,
+    createReadApp,
+    isChainId,
+} from '@towns-protocol/web3'
 import { makeBaseProvider } from '@towns-protocol/sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -72,9 +78,20 @@ export const BotInstallDialog = ({
                 sync.config.townsConfig.base.chainConfig,
                 makeBaseProvider(sync.config.townsConfig),
             )
+
+            if (!isChainId(sync.config.townsConfig.base.chainConfig.chainId)) {
+                throw new Error('Invalid chain id')
+            }
+            const readApp = createReadApp({
+                chainId: sync.config.townsConfig.base.chainConfig.chainId,
+                url: sync.config.townsConfig.base.rpcUrl,
+                spaceFactoryAddress:
+                    sync.config.townsConfig.base.chainConfig.addresses.spaceFactory,
+            })
             const spaceDapp = new SpaceDapp(
                 sync.config.townsConfig.base.chainConfig,
                 makeBaseProvider(sync.config.townsConfig),
+                readApp,
             )
             const space = spaceDapp.getSpace(state.spaceId)
 

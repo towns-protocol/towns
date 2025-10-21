@@ -1,8 +1,7 @@
 import { ethers } from 'ethers'
 import { BaseContractShim } from '../BaseContractShim'
 import { OwnableFacet__factory } from '@towns-protocol/generated/dev/typings/factories/OwnableFacet__factory'
-import { Keyable } from '../cache/Keyable'
-import { SimpleCache } from '../cache/SimpleCache'
+import { Keyable, SimpleCache } from '../reads'
 
 const { abi, connect } = OwnableFacet__factory
 

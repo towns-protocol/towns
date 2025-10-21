@@ -1,6 +1,6 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
 import { utils, ethers } from 'ethers'
-import { SpaceDapp, Permission } from '@towns-protocol/web3'
+import { SpaceDapp, Permission, createReadApp, ChainId } from '@towns-protocol/web3'
 
 import {
     getRefEventIdFromChannelMessage,
@@ -903,9 +903,15 @@ export const makeTownsBot = async <
         // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
         chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
     })
+    const readApp = createReadApp({
+        chainId: baseConfig.chainConfig.chainId as ChainId,
+        url: baseRpcUrl || baseConfig.rpcUrl,
+        spaceFactoryAddress: baseConfig.chainConfig.addresses.spaceFactory,
+    })
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
+        readApp,
     )
     const client = await createTownsClient({
         privateKey,

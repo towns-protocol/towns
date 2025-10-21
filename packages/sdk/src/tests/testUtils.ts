@@ -799,7 +799,9 @@ export async function dynamicMembershipStruct(
     spaceDapp: SpaceDapp,
     client: Client,
 ): Promise<LegacyMembershipStruct> {
-    const dynamicPricingModule = await getDynamicPricingModule(spaceDapp)
+    const readApp = spaceDapp.readApp
+    const pricingModules = await readApp.pricingModules.read.listPricingModules()
+    const dynamicPricingModule = await getDynamicPricingModule(pricingModules)
     expect(dynamicPricingModule).toBeDefined()
     return {
         settings: {
@@ -829,7 +831,9 @@ export async function fixedPriceMembershipStruct(
     client: Client,
     opts: { price: number } = { price: 1 },
 ): Promise<LegacyMembershipStruct> {
-    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
+    const readApp = spaceDapp.readApp
+    const pricingModules = await readApp.pricingModules.read.listPricingModules()
+    const fixedPricingModule = await getFixedPricingModule(pricingModules)
     expect(fixedPricingModule).toBeDefined()
     const { price } = opts
     const settings = {
@@ -861,7 +865,9 @@ export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
     freeAllocation: number
     price: number
 }> {
-    const fixedPricingModule = await getFixedPricingModule(spaceDapp)
+    const readApp = spaceDapp.readApp
+    const pricingModules = await readApp.pricingModules.read.listPricingModules()
+    const fixedPricingModule = await getFixedPricingModule(pricingModules)
     expect(fixedPricingModule).toBeDefined()
     return {
         price: 0,

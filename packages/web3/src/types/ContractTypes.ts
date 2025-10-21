@@ -13,11 +13,11 @@ import {
     IRuleEntitlementV2Base,
     RuleEntitlementV2Shim,
 } from '../space/entitlements/RuleEntitlementV2Shim'
-import { IPricingModulesBase } from '../pricing-modules/IPricingShim'
 
 import { NoopRuleData } from '../space/entitlements/entitlement'
 
 import { ethers } from 'ethers'
+import { SpaceFactoryReads } from '../reads'
 
 export const Permission = {
     /** No permission required. */
@@ -68,7 +68,9 @@ export type SpaceInfoStruct = ISpaceArchitectBaseV3.SpaceInfoStruct
 
 export type LegacySpaceInfoStruct = ILegacyArchitectBase.SpaceInfoStruct
 
-export type PricingModuleStruct = IPricingModulesBase.PricingModuleStruct
+export type PricingModuleStruct = Awaited<
+    ReturnType<SpaceFactoryReads['pricingModules']['read']['listPricingModules']>
+>[number]
 
 /**
  * Supported entitlement modules

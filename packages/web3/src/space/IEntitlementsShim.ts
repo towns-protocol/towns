@@ -2,8 +2,7 @@ import { EntitlementsManager__factory } from '@towns-protocol/generated/dev/typi
 import { ethers } from 'ethers'
 import { IEntitlementsManagerBase } from '@towns-protocol/generated/dev/typings/IEntitlementsManager'
 import { BaseContractShim } from '../BaseContractShim'
-import { Keyable } from '../cache/Keyable'
-import { SimpleCache } from '../cache/SimpleCache'
+import { Keyable, SimpleCache } from '../reads'
 
 const { abi, connect } = EntitlementsManager__factory
 

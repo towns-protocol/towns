@@ -2,8 +2,7 @@ import { ethers } from 'ethers'
 import { Towns as ITownsBase } from '@towns-protocol/generated/dev/typings/Towns'
 import { BaseContractShim } from '../BaseContractShim'
 import { Towns__factory } from '@towns-protocol/generated/dev/typings/factories/Towns__factory'
-import { Keyable } from '../cache/Keyable'
-import { SimpleCache } from '../cache/SimpleCache'
+import { Keyable, SimpleCache } from '../reads'
 
 class GetBalanceKey implements Keyable {
     address: string

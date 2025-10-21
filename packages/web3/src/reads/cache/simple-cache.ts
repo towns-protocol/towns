@@ -1,5 +1,5 @@
 import TTLCache from '@isaacs/ttlcache'
-import { Keyable } from './Keyable'
+import { Keyable } from './keyable'
 
 export class SimpleCache<K extends Keyable, V> {
     private cache: TTLCache<string, V>

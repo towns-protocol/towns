@@ -1,6 +1,6 @@
 import { RiverConnection, RiverConnectionModel } from './river-connection/riverConnection'
 import { TownsConfig } from '../townsEnv'
-import { RiverRegistry, SpaceDapp } from '@towns-protocol/web3'
+import { RiverRegistry, SpaceDapp, createReadApp, isChainId } from '@towns-protocol/web3'
 import { RetryParams } from '../rpcInterceptors'
 import { Store } from '../store/store'
 import { SignerContext } from '../signerContext'
@@ -34,7 +34,7 @@ export interface SyncAgentConfig {
     deviceId?: string
     disablePersistenceStore?: boolean
     riverProvider?: ethers.providers.Provider
-    baseProvider?: ethers.providers.Provider
+    baseProvider?: ethers.providers.StaticJsonRpcProvider
     encryptionDevice?: EncryptionDeviceInitOpts
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
@@ -80,7 +80,15 @@ export class SyncAgent {
         const riverProvider = config.riverProvider ?? makeRiverProvider(config.townsConfig)
         this.store = new Store(this.syncAgentDbName(), DB_VERSION, DB_MODELS)
         this.store.newTransactionGroup('SyncAgent::initialization')
-        const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
+        if (!isChainId(base.chainConfig.chainId)) {
+            throw new Error(`Invalid chain id: ${base.chainConfig.chainId}`)
+        }
+        const readApp = createReadApp({
+            chainId: base.chainConfig.chainId,
+            url: baseProvider.connection.url,
+            spaceFactoryAddress: base.chainConfig.addresses.spaceFactory,
+        })
+        const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider, readApp)
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
