@@ -2,7 +2,7 @@ import { dlogWarn } from './dlog'
 
 export interface SafeEnvOpts {
     // for looking up keys anywhere other than process.env, i.e. pass import.meta.env in a vite app
-    env?: Record<string, string>
+    env?: Record<string, string | undefined>
     // for looking up keys with a prefix, i.e. pass 'VITE_' for vite apps
     keyPrefix?: string
 }
