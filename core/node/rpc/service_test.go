@@ -1358,7 +1358,10 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 	syncCtx, syncCancel := context.WithTimeout(alice.ctx, 25*time.Second)
 	defer syncCancel()
 
-	updates, err := alice.client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}}))
+	updates, err := alice.client.SyncStreams(
+		syncCtx,
+		connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: []*protocol.SyncCookie{cookie}}),
+	)
 	tt.require.NoError(err)
 	testfmt.Print(t, "StartSync with wrong cookie done")
 
