@@ -204,9 +204,12 @@
     {
       "label": "Build Nodes",
       "type": "shell",
-      "command": "cd ./core && just build",
+      "command": "just build",
       "isBackground": true,
       "problemMatcher": [],
+      "options": {
+        "cwd": "./core"
+      },
       "presentation": {
         "group": "ephemeral",
         "focus": true,
@@ -498,6 +501,20 @@
       "dependsOn": [
         "KillAllLocalDev",
         "~Start Local Dev~",
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
+    },
+
+    {
+      "label": "Restart Local Dev (Native Anvil)",
+      "dependsOn": [
+        "KillAllLocalDev",
+        "~Start Local Dev (Native Anvil)~",
       ],
       // Mark as the default build task so cmd/ctrl+shift+b will create them
       "group": {
