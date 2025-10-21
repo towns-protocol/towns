@@ -526,6 +526,7 @@ func (s *PostgresStreamStore) CreateStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	isLightweight bool,
 ) error {
 	if len(genesisMiniblock.Data) == 0 {
 		return RiverError(
@@ -540,7 +541,7 @@ func (s *PostgresStreamStore) CreateStreamStorage(
 		"CreateStreamStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
+			return s.createStreamStorageTx(ctx, tx, streamId, genesisMiniblock, isLightweight)
 		},
 		nil,
 		"streamId", streamId,
@@ -568,15 +569,16 @@ func (s *PostgresStreamStore) createStreamStorageTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	isLightweight bool,
 ) error {
 	sql := s.sqlForStream(
 		`
-			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, false);
-			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);
+			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, 0, true, false, $2);
+			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $3, $4);
 			INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, 1, -1);`,
 		streamId,
 	)
-	_, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot)
+	_, err := tx.Exec(ctx, sql, streamId, isLightweight, genesisMiniblock.Data, genesisMiniblock.Snapshot)
 	if err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists").Tag("streamId", streamId)
@@ -631,13 +633,14 @@ func (s *PostgresStreamStore) maybeOverwriteCorruptGenesisMiniblockTx(
 func (s *PostgresStreamStore) CreateStreamArchiveStorage(
 	ctx context.Context,
 	streamId StreamId,
+	isLightweight bool,
 ) error {
 	return s.txRunner(
 		ctx,
 		"CreateStreamArchiveStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createStreamArchiveStorageTx(ctx, tx, streamId)
+			return s.createStreamArchiveStorageTx(ctx, tx, streamId, isLightweight)
 		},
 		nil,
 		"streamId", streamId,
@@ -648,9 +651,10 @@ func (s *PostgresStreamStore) createStreamArchiveStorageTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	isLightweight bool,
 ) error {
-	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) VALUES ($1, 0, true);`
-	if _, err := tx.Exec(ctx, sql, streamId); err != nil {
+	sql := `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, lightweight) VALUES ($1, 0, true, $2);`
+	if _, err := tx.Exec(ctx, sql, streamId, isLightweight); err != nil {
 		if isPgError(err, pgerrcode.UniqueViolation) {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
@@ -2730,7 +2734,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	// This handles race conditions atomically
 	tag, err := tx.Exec(
 		ctx,
-		"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, $2, true, false) ON CONFLICT (stream_id) DO NOTHING",
+		"INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, $2, true, false, false) ON CONFLICT (stream_id) DO NOTHING",
 		streamId,
 		lastSnapshotMiniblockNum,
 	)

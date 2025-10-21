@@ -1300,8 +1300,8 @@ func copyStream(
 	// TODO: if migrated field changes, delete previous tables?
 	_, err = tx.Exec(
 		ctx,
-		`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated) 
-        VALUES ($1, $2, $3)
+		`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, lightweight) 
+        VALUES ($1, $2, $3, FALSE)
         ON CONFLICT (stream_id) 
         DO UPDATE SET latest_snapshot_miniblock = $2, migrated = $3`,
 		streamId,

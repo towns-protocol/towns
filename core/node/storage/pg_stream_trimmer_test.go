@@ -30,9 +30,9 @@ func TestStreamTrimmer(t *testing.T) {
 
 		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
 
-		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
+		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb, false)
 		require.NoError(err)
-		err = pgStreamStore.CreateStreamStorage(ctx, nonTrimmableStreamId, genesisMb)
+		err = pgStreamStore.CreateStreamStorage(ctx, nonTrimmableStreamId, genesisMb, false)
 		require.NoError(err)
 
 		var testEnvelopes [][]byte
@@ -122,7 +122,7 @@ func TestStreamTrimmer(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
-		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
+		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb, false)
 		require.NoError(err)
 
 		var testEnvelopes [][]byte
@@ -182,7 +182,7 @@ func TestStreamTrimmer(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 
 		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
-		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb))
+		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb, false))
 
 		var envelopes [][]byte
 		envelopes = append(envelopes, []byte("event"))
@@ -238,7 +238,7 @@ func TestStreamTrimmer(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		genesisMb := &MiniblockDescriptor{Data: []byte("genesisMiniblock"), Snapshot: []byte("genesisSnapshot")}
-		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb)
+		err := pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb, false)
 		require.NoError(err)
 
 		var testEnvelopes [][]byte
@@ -296,7 +296,7 @@ func TestStreamTrimmer(t *testing.T) {
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 
 		genesis := &MiniblockDescriptor{Data: []byte("g"), Snapshot: []byte("snap0")}
-		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesis))
+		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesis, false))
 
 		var envelopes [][]byte
 		envelopes = append(envelopes, []byte("event"))
@@ -358,7 +358,7 @@ func TestStreamTrimmer(t *testing.T) {
 
 		streamId := testutils.FakeStreamId(STREAM_SPACE_BIN)
 		genesisMb := &MiniblockDescriptor{Data: []byte("genesis"), Snapshot: []byte("snap0")}
-		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb))
+		require.NoError(pgStreamStore.CreateStreamStorage(ctx, streamId, genesisMb, false))
 
 		var envelopes [][]byte
 		envelopes = append(envelopes, []byte("event"))

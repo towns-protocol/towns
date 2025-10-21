@@ -490,6 +490,7 @@ func (s *Stream) initFromGenesisLocked(
 		ctx,
 		s.streamId,
 		storageMb,
+		false,
 	)
 	if err != nil {
 		return err

@@ -36,10 +36,10 @@ func TestArchive(t *testing.T) {
 	require.Error(err)
 	require.Equal(Err_NOT_FOUND, AsRiverError(err).Code)
 
-	err = pgStreamStore.CreateStreamArchiveStorage(ctx, streamId1)
+	err = pgStreamStore.CreateStreamArchiveStorage(ctx, streamId1, false)
 	require.NoError(err)
 
-	err = pgStreamStore.CreateStreamArchiveStorage(ctx, streamId1)
+	err = pgStreamStore.CreateStreamArchiveStorage(ctx, streamId1, false)
 	require.Error(err)
 	require.Equal(Err_ALREADY_EXISTS, AsRiverError(err).Code)
 

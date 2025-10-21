@@ -1,0 +1,1 @@
+ALTER TABLE es DROP COLUMN IF EXISTS lightweight;

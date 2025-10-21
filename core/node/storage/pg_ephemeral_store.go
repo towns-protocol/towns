@@ -54,13 +54,14 @@ func (s *PostgresStreamStore) CreateEphemeralStreamStorage(
 	ctx context.Context,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	isLightweight bool,
 ) error {
 	return s.txRunner(
 		ctx,
 		"CreateEphemeralStreamStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.createEphemeralStreamStorageTx(ctx, tx, streamId, genesisMiniblock)
+			return s.createEphemeralStreamStorageTx(ctx, tx, streamId, genesisMiniblock, isLightweight)
 		},
 		nil,
 		"streamId", streamId,
@@ -72,15 +73,16 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 	tx pgx.Tx,
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
+	isLightweight bool,
 ) error {
 	sql := s.sqlForStream(
 		`
-			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);
-			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);`,
+			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, 0, true, true, $2);
+			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $3, $4);`,
 		streamId,
 	)
 
-	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
+	if _, err := tx.Exec(ctx, sql, streamId, isLightweight, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
 		if pgerr, ok := err.(*pgconn.PgError); ok && pgerr.Code == pgerrcode.UniqueViolation {
 			return WrapRiverError(Err_ALREADY_EXISTS, err).Message("stream already exists")
 		}
@@ -187,7 +189,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// If the given ephemeral stream does not exist, create one by adding an extra query.
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			query += `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);`
+			query += `INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) VALUES ($1, 0, true, true, false);`
 		} else {
 			return err
 		}
@@ -309,8 +311,8 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	if _, err = tx.Exec(
 		ctx,
 		s.sqlForStream(
-			`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) 
-					VALUES ($1, 0, true, false) ON CONFLICT (stream_id) DO UPDATE SET ephemeral = false;
+			`INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral, lightweight) 
+					VALUES ($1, 0, true, false, false) ON CONFLICT (stream_id) DO UPDATE SET ephemeral = false;
 				 INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, $2, -1);`,
 			streamId,
 		),
