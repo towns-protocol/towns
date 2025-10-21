@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
 } from './utils'
+import { ensureCriticalIndexes } from './db-init'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
@@ -124,6 +125,9 @@ ponder.on('SpaceOwner:SpaceOwner__UpdateSpace', async ({ event, context }) => {
 })
 
 ponder.on('SpaceOwner:Transfer', async ({ event, context }) => {
+    // Ensure critical indexes exist (runs once)
+    await ensureCriticalIndexes(context.db)
+
     // Get block number
     const blockNumber = event.block.number
 
