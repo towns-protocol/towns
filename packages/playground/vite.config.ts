@@ -1,8 +1,9 @@
-import react from '@vitejs/plugin-react-oxc'
+import react from '@vitejs/plugin-react-swc'
 import { defineConfig, searchForWorkspaceRoot } from 'vite'
 import { default as checker } from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import wasm from 'vite-plugin-wasm'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import path from 'path'
 
 // The encryption WASM module is imported dynamically.
@@ -15,8 +16,10 @@ export default ({ mode }: { mode: string }) => {
     return defineConfig({
         define: {
             'process.browser': true,
+            'process.env': process.env,
         },
         plugins: [
+            nodePolyfills(),
             wasm(),
             tsconfigPaths(),
             checker({
@@ -28,9 +31,19 @@ export default ({ mode }: { mode: string }) => {
             react(),
         ],
         resolve: {
-            alias: {
-                '@': path.resolve(__dirname, './src'),
-            },
+            alias: [
+                {
+                    find: '@',
+                    replacement: path.resolve(__dirname, './src'),
+                },
+                {
+                    find: /^(vite-plugin-node-polyfills\/shims\/.+)/,
+                    replacement: '$1',
+                    customResolver(source) {
+                        return import.meta.resolve(source).replace(/^file:\/\//, '')
+                    },
+                },
+            ],
         },
         server: {
             port: 3100,
@@ -43,9 +56,6 @@ export default ({ mode }: { mode: string }) => {
         },
         optimizeDeps: {
             exclude: ['@towns-protocol/olm'],
-        },
-        experimental: {
-            enableNativePlugin: true,
         },
     })
 }
