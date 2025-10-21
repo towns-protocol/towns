@@ -63,7 +63,7 @@ import { PlatformRequirements } from '../platform-requirements/PlatformRequireme
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { TipSentEventObject } from '../space/ITippingShim'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -1837,7 +1837,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         spaceId: string,
         receipt: ContractReceipt,
         senderAddress: string,
-    ): TipEventObject | undefined {
+    ): TipSentEventObject | undefined {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1915,6 +1915,10 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 // TipRecipientType.Member = 0
                 recipientType = 0
                 const { receiver, tokenId, currency, amount, messageId, channelId } = args
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32', 'uint256'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId), tokenId],
+                )
                 // Encode struct MembershipTipParams
                 encodedData = ethers.utils.defaultAbiCoder.encode(
                     [
@@ -1926,7 +1930,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                             tokenId,
                             currency,
                             amount,
-                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), '0x'],
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
                         ],
                     ],
                 )
@@ -1936,6 +1940,10 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                 // TipRecipientType.Bot = 1
                 recipientType = 1
                 const { receiver, appId, currency, amount, messageId, channelId } = args
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
+                )
                 // Encode struct BotTipParams
                 encodedData = ethers.utils.defaultAbiCoder.encode(
                     [
@@ -1947,7 +1955,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
                             currency,
                             ensureHexPrefix(appId),
                             amount,
-                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), '0x'],
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
                         ],
                     ],
                 )

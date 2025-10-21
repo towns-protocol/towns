@@ -9,7 +9,7 @@ import {
 import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
 import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
-import { TipEventObject } from '@towns-protocol/web3'
+import { TipSentEventObject } from '@towns-protocol/web3'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
 import { RiverTimelineEvent } from './views/models/timelineTypes'
@@ -48,7 +48,7 @@ export function makeTags(
 }
 
 export function makeTipTags(
-    event: TipEventObject,
+    event: TipSentEventObject,
     toUserId: string,
     streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {

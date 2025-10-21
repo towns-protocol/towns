@@ -4,7 +4,7 @@
 
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
-import { ETH_ADDRESS, LocalhostWeb3Provider, TipEventObject } from '@towns-protocol/web3'
+import { ETH_ADDRESS, LocalhostWeb3Provider, TipSentEventObject } from '@towns-protocol/web3'
 import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
@@ -48,8 +48,8 @@ describe('transactions_Tip', () => {
     let messageId: string
     let aliceTokenId: string
     let dummyReceipt: ethers.ContractReceipt
-    let dummyTipEvent: TipEventObject
-    let dummyTipEventCopy: TipEventObject
+    let dummyTipEvent: TipSentEventObject
+    let dummyTipEventCopy: TipSentEventObject
 
     beforeAll(async () => {
         // setup once
