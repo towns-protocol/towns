@@ -39,7 +39,8 @@ const (
 )
 
 type RemoteStreamSyncer interface {
-	client.StreamsSyncer
+	Run()
+	Modify(ctx context.Context, request *protocol.ModifySyncRequest) (*protocol.ModifySyncResponse, bool, error)
 	GetSyncId() string
 }
 
@@ -88,7 +89,6 @@ type syncSessionRunner struct {
 	nodeRegistry             nodes.NodeRegistry
 	metrics                  *TrackStreamsSyncMetrics
 	maxStreamsPerSyncSession int
-	useSharedSyncer          bool
 	otelTracer               trace.Tracer
 
 	trackedViewForStream TrackedViewForStream
@@ -363,14 +363,12 @@ func (ssr *syncSessionRunner) Run() {
 		streamClient,
 		ssr.relocateStream,
 		ssr.messages,
-		ssr.useSharedSyncer,
 		ssr.otelTracer,
 	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
-			Tag("sharedSyncer", ssr.useSharedSyncer).
 			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
@@ -540,7 +538,6 @@ func newSyncSessionRunner(
 	nodeRegistry nodes.NodeRegistry,
 	trackedViewForStream TrackedViewForStream,
 	maxStreamsPerSyncSession int,
-	useSharedSyncer bool,
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
@@ -551,7 +548,6 @@ func newSyncSessionRunner(
 		syncCtx:                  logging.CtxWithLog(ctx, logging.FromCtx(rootCtx).With("targetNode", targetNode)),
 		cancelSync:               cancel,
 		maxStreamsPerSyncSession: maxStreamsPerSyncSession,
-		useSharedSyncer:          useSharedSyncer,
 		trackedViewForStream:     trackedViewForStream,
 		relocateStreams:          relocateStreams,
 		node:                     targetNode,
@@ -714,7 +710,6 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
-			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
@@ -796,7 +791,6 @@ func (msr *MultiSyncRunner) addToSync(
 					return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 				},
 				msr.config.StreamsPerSyncSession,
-				msr.config.UseSharedSyncer,
 				targetNode,
 				msr.metrics,
 				msr.otelTracer,

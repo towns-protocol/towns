@@ -17,7 +17,6 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -42,11 +41,7 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 		req.SyncPos = cookies
 	}
 
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(req)
-	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
-
-	resp, err := c.client.SyncStreams(ctx, connReq)
+	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
 	if err == nil {
 	syncLoop:
 		for {
@@ -607,7 +602,6 @@ func TestSyncWithManyStreams(t *testing.T) {
 			NodeAddress: channel.GetNodeAddress(),
 			StreamId:    channel.GetStreamId(),
 		}}})
-		connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
 
 		resp, err := syncClient0.SyncStreams(ctx, connReq)
 		require.NoError(err)

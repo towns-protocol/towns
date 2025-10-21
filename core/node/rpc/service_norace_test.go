@@ -15,6 +15,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
+	"github.com/towns-protocol/towns/core/node/rpc/syncv3/handler"
+
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -24,8 +27,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
-	river_sync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
@@ -139,19 +140,18 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 		req.NotNil(channel, "nil create channel sync cookie")
 		channels = append(channels, channel)
 	}
+	syncPos := append(users, channels...)
 
 	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
-	syncPos := append(users, channels...)
-	syncOp, err := river_sync.NewStreamsSyncOperation(
-		ctx,
-		syncID,
-		node1.address,
-		node1.service.cache,
-		node1.service.nodeRegistry,
-		nil, nil,
-	)
-	req.NoError(err, "NewStreamsSyncOperation")
+	eventBus := eventbus.New(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil, nil)
+	handlerRegistry := handler.NewRegistry(eventBus, nil)
+	slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
+	syncHandler, err := handlerRegistry.New(ctx, syncID, slowSubscriber)
+	req.NoError(err, "handlerRegistry.New")
+	resp, err := syncHandler.Modify(&protocol.ModifySyncRequest{AddStreams: syncPos})
+	req.NoError(err, "syncHandler.Modify")
+	req.Empty(resp.GetAdds())
 
 	syncOpResult := make(chan error)
 	syncOpStopped := atomic.Bool{}
@@ -159,8 +159,7 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// run the subscription in the background that takes a long time for each update to send to the client.
 	// this must cancel the sync op with a buffer too full error.
 	go func() {
-		slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
-		syncOpErr := syncOp.Run(connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}), slowSubscriber)
+		syncOpErr := syncHandler.Run()
 		syncOpStopped.Store(true)
 		syncOpResult <- syncOpErr
 	}()
@@ -308,11 +307,7 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 	// subscribe to channel updates
 	syncPos := append(users, channels...)
 
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos})
-	connReq.Header().Set(headers.RiverUseSharedSyncHeaderName, "true")
-
-	syncRes, err := client1.SyncStreams(ctx, connReq)
+	syncRes, err := client1.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{SyncPos: syncPos}))
 	req.NoError(err, "sync streams")
 
 	syncRes.Receive()

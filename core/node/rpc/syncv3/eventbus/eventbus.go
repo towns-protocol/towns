@@ -167,7 +167,9 @@ func New(
 		}
 	}()
 
-	e.runMetricsCollector(metrics)
+	if metrics != nil {
+		e.runMetricsCollector(metrics)
+	}
 
 	return e
 }

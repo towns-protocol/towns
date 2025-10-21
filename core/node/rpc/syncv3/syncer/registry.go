@@ -90,7 +90,9 @@ func NewRegistry(
 		}
 	}()
 
-	r.runMetricsCollector(metrics)
+	if metrics != nil {
+		r.runMetricsCollector(metrics)
+	}
 
 	return r
 }
