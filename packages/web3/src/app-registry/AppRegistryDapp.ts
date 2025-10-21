@@ -64,7 +64,7 @@ export class AppRegistryDapp {
     public getCreateAppEvent(receipt: ContractReceipt): AppCreatedEventObject {
         for (const log of receipt.logs) {
             try {
-                const parsedLog = this.registry.interface.parseLog(log)
+                const parsedLog = this.factory.interface.parseLog(log)
                 if (parsedLog.name === 'AppCreated') {
                     return {
                         app: parsedLog.args.app,
@@ -184,7 +184,7 @@ export class AppRegistryDapp {
     }
 
     public async getAllAppsByOwner(targetOwner: Address, fromBlock?: number) {
-        const appCreatedEvents = await this.registry.read.queryFilter(
+        const appCreatedEvents = await this.factory.read.queryFilter(
             this.factory.read.filters.AppCreated(),
             fromBlock,
         )
