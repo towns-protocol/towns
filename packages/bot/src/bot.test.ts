@@ -16,12 +16,15 @@ import {
     type SyncAgent,
     Bot as SyncAgentTest,
     AppRegistryService,
+    MessageType,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
 import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
+import { z } from 'zod'
+import { stringify as superjsonStringify } from 'superjson'
 import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
@@ -1046,5 +1049,137 @@ describe('Bot', { sequential: true }, () => {
         expect(attachments).toHaveLength(2)
         expect(attachments?.[0].type).toBe('image')
         expect(attachments?.[1].type).toBe('chunked_media')
+    })
+
+    it('should send and receive GM messages with schema validation', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const messageSchema = z.object({ text: z.string(), count: z.number() })
+
+        const receivedGmEvents: Array<{ typeUrl: string; data: { text: string; count: number } }> =
+            []
+
+        bot.onGmMessage('test.typed.v1', messageSchema, (_h, e) => {
+            receivedGmEvents.push({ typeUrl: e.typeUrl, data: e.data })
+        })
+
+        const testData = { text: 'Hello', count: 42 }
+        // Bob sends the message so bot receives it (bot filters its own messages)
+        const jsonString = superjsonStringify(testData)
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.typed.v1',
+                    value: new TextEncoder().encode(jsonString),
+                },
+            }),
+        )
+
+        await waitFor(() => receivedGmEvents.length > 0)
+
+        const event = receivedGmEvents[0]
+        expect(event).toBeDefined()
+        expect(event.typeUrl).toBe('test.typed.v1')
+        expect(event.data).toEqual(testData)
+    })
+
+    it('should handle GM with Date objects (superjson serialization)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const eventSchema = z.object({
+            eventType: z.string(),
+            timestamp: z.date(),
+        })
+        const testDate = new Date('2025-01-15T12:00:00Z')
+        const { eventId } = await bot.sendGM(channelId, 'test.date.v1', eventSchema, {
+            eventType: 'test',
+            timestamp: testDate,
+        })
+
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+
+        expect(message?.content?.kind).toBe(RiverTimelineEvent.ChannelMessage)
+        const gmData =
+            message?.content?.kind === RiverTimelineEvent.ChannelMessage &&
+            message?.content?.content.msgType === MessageType.GM
+                ? message?.content?.content.data
+                : undefined
+        expect(gmData).toBeDefined()
+        expect(gmData).toStrictEqual(
+            new TextEncoder().encode(
+                superjsonStringify({ eventType: 'test', timestamp: testDate }),
+            ),
+        )
+    })
+
+    it('should handle multiple handlers for different typeUrls', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const schema1 = z.object({ type: z.literal('type1'), value: z.number() })
+        const schema2 = z.object({ type: z.literal('type2'), text: z.string() })
+
+        const receivedType1: Array<{ type: 'type1'; value: number }> = []
+        const receivedType2: Array<{ type: 'type2'; text: string }> = []
+
+        bot.onGmMessage('test.multi.type1', schema1, (_h, e) => {
+            receivedType1.push(e.data)
+        })
+        bot.onGmMessage('test.multi.type2', schema2, (_h, e) => {
+            receivedType2.push(e.data)
+        })
+
+        const data1 = { type: 'type1' as const, value: 123 }
+        const data2 = { type: 'type2' as const, text: 'hello' }
+
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.multi.type1',
+                    value: new TextEncoder().encode(superjsonStringify(data1)),
+                },
+            }),
+        )
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.multi.type2',
+                    value: new TextEncoder().encode(superjsonStringify(data2)),
+                },
+            }),
+        )
+
+        await waitFor(() => receivedType1.length > 0 && receivedType2.length > 0)
+
+        expect(receivedType1[0]).toEqual(data1)
+        expect(receivedType2[0]).toEqual(data2)
+    })
+
+    it('should handle raw GM messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+        const receivedMessages: Array<{ typeUrl: string; message: Uint8Array }> = []
+        bot.onRawGmMessage((_h, e) => {
+            receivedMessages.push({ typeUrl: e.typeUrl, message: e.message })
+        })
+
+        const message = new TextEncoder().encode('Hello, world!')
+        await bobClient.riverConnection.call((client) =>
+            client.sendChannelMessage_GM(channelId, {
+                content: {
+                    typeUrl: 'test.raw.v1',
+                    value: message,
+                },
+            }),
+        )
+
+        await waitFor(() => receivedMessages.length > 0)
+        expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')
+        expect(receivedMessages[0].message).toEqual(message)
     })
 })

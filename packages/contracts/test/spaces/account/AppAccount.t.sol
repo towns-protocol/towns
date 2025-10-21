@@ -21,6 +21,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 //contracts
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
+import {AppInstallerFacet} from "src/apps/facets/installer/AppInstallerFacet.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 // mocks
@@ -29,6 +30,7 @@ import {MockInvalidModule} from "test/mocks/MockInvalidModule.sol";
 
 contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
     AppRegistryFacet internal registry;
+    AppInstallerFacet internal installer;
     AppAccount internal appAccount;
     MockModule internal mockModule;
 
@@ -41,7 +43,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         super.setUp();
         appAccount = AppAccount(everyoneSpace);
         registry = AppRegistryFacet(appRegistry);
-
+        installer = AppInstallerFacet(appRegistry);
         dev = _randomAddress();
         client = _randomAddress();
 
@@ -79,7 +81,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
 
         hoax(founder, totalRequired);
         emit IModularAccount.ExecutionInstalled(address(mockModule), manifest);
-        registry.installApp{value: totalRequired}(mockModule, appAccount, "");
+        installer.installApp{value: totalRequired}(mockModule, appAccount, "");
 
         // assert that the founder has paid the price
         assertEq(address(deployer).balance, protocolFee);
@@ -134,7 +136,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
 
         hoax(founder, price);
         vm.expectRevert(IAppAccountBase.UnauthorizedSelector.selector);
-        registry.installApp{value: price}(invalidModule, appAccount, "");
+        installer.installApp{value: price}(invalidModule, appAccount, "");
     }
 
     // onUninstallApp
@@ -186,7 +188,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         emit MockModule.OnUninstallCalled(address(appAccount), uninstallData);
 
         vm.prank(founder);
-        registry.uninstallApp(mockModule, appAccount, uninstallData);
+        installer.uninstallApp(mockModule, appAccount, uninstallData);
     }
 
     function test_revertWhen_uninstallApp_whenHookFails() external givenAppIsInstalled {
@@ -199,7 +201,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
         emit IModularAccount.ExecutionUninstalled(address(mockModule), false, manifest);
-        registry.uninstallApp(mockModule, appAccount, uninstallData);
+        installer.uninstallApp(mockModule, appAccount, uninstallData);
 
         assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
     }
@@ -320,7 +322,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         emit MockModule.OnInstallCalled(address(appAccount), installData);
 
         hoax(founder, price);
-        registry.installApp{value: price}(mockModule, appAccount, installData);
+        installer.installApp{value: price}(mockModule, appAccount, installData);
     }
 
     function test_revertWhen_installApp_hookFails() external givenAppIsRegistered {
@@ -332,7 +334,7 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         bytes memory installData = abi.encode("test data");
         hoax(founder, price);
         vm.expectRevert("Installation failed");
-        registry.installApp{value: price}(mockModule, appAccount, installData);
+        installer.installApp{value: price}(mockModule, appAccount, installData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

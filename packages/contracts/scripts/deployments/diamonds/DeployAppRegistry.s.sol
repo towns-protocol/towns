@@ -13,6 +13,8 @@ import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
 import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
+import {DeployAppInstallerFacet} from "../facets/DeployAppInstallerFacet.s.sol";
+import {DeploySpaceFactory} from "../diamonds/DeploySpaceFactory.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -26,29 +28,19 @@ import {Deployer} from "../../common/Deployer.s.sol";
 contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
-    address private SPACE_FACTORY;
-
     DeployFacet private facetHelper = new DeployFacet();
+    DeploySpaceFactory private deploySpaceFactory = new DeploySpaceFactory();
 
     string internal constant APP_REGISTRY_SCHEMA = "address app, address client";
+    address internal spaceFactory;
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
     }
 
-    function setSpaceFactory(address factory) public {
-        SPACE_FACTORY = factory;
-    }
-
-    function getSpaceFactory() public returns (address) {
-        if (SPACE_FACTORY != address(0)) {
-            return SPACE_FACTORY;
-        }
-
-        return getDeployment("spaceFactory");
-    }
-
     function addImmutableCuts(address deployer) internal {
+        spaceFactory = deploySpaceFactory.deploy(deployer);
+
         // Queue up all core facets for batch deployment
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
@@ -94,6 +86,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MetadataFacet");
         facetHelper.add("UpgradeableBeaconFacet");
         facetHelper.add("AppRegistryFacet");
+        facetHelper.add("AppInstallerFacet");
         facetHelper.add("SimpleApp");
 
         facetHelper.deployBatch(deployer);
@@ -118,7 +111,14 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
-            DeployAppRegistryFacet.makeInitData(getSpaceFactory(), APP_REGISTRY_SCHEMA, address(0))
+            DeployAppRegistryFacet.makeInitData(spaceFactory, APP_REGISTRY_SCHEMA, address(0))
+        );
+
+        facet = facetHelper.getDeployedAddress("AppInstallerFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()),
+            facet,
+            DeployAppInstallerFacet.makeInitData()
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -149,6 +149,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
             if (facetName.eq("AppRegistryFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()));
+            }
+            if (facetName.eq("AppInstallerFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()));
             }
         }
 

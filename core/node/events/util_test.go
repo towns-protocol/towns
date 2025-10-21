@@ -59,6 +59,8 @@ type testParams struct {
 	backwardsReconciliationThreshold *uint64
 	streamHistoryDefaultMiniblocks   *uint64
 	streamHistoryMiniblocks          map[byte]uint64
+	streamSnapshotIntervalInMbs      *uint64
+	streamTrimActivationFactor       *uint64
 
 	disableMineOnTx             bool
 	numInstances                int
@@ -716,6 +718,18 @@ func setOnChainStreamConfig(t *testing.T, ctx context.Context, btc *crypto.Block
 			t.Fatalf("unsupported stream type for history config: 0x%02x", streamType)
 		}
 		btc.SetConfigValue(t, ctx, key, crypto.ABIEncodeUint64(value))
+	}
+	if p.streamSnapshotIntervalInMbs != nil {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamSnapshotIntervalInMiniblocksConfigKey,
+			crypto.ABIEncodeUint64(*p.streamSnapshotIntervalInMbs),
+		)
+	}
+	if p.streamTrimActivationFactor != nil {
+		btc.SetConfigValue(t, ctx,
+			crypto.StreamTrimActivationFactorConfigKey,
+			crypto.ABIEncodeUint64(*p.streamTrimActivationFactor),
+		)
 	}
 }
 

@@ -193,7 +193,7 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         $.tippingStatsByCurrencyByWallet[receiver][currency].totalTips += 1;
 
         // Update tokenId-based tracking (backwards compatibility, only for Member tips)
-        if (recipientType == TipRecipientType.Member && tokenId != 0) {
+        if (recipientType == TipRecipientType.Member) {
             $.tipsByCurrencyByTokenId[tokenId][currency] += amount;
         }
 

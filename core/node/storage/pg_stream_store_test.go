@@ -61,12 +61,16 @@ func setupStreamStorageTest(t *testing.T) *testStreamStoreParams {
 		&mocks.MockOnChainCfg{
 			Settings: &crypto.OnChainSettings{
 				StreamEphemeralStreamTTL: time.Minute * 10,
-				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{
-					Default:     0,
-					Space:       5,
-					UserSetting: 5,
+				StreamHistoryMiniblocks: crypto.StreamHistoryMiniblocks{
+					Default:      0,
+					Space:        5,
+					UserSettings: 5,
+				},
+				MinSnapshotEvents: crypto.MinSnapshotEventsSettings{
+					Default: 10,
 				},
 				StreamSnapshotIntervalInMiniblocks: 110,
+				StreamTrimActivationFactor:         1,
 			},
 		},
 		5,
@@ -657,8 +661,8 @@ func TestExitIfSecondStorageCreated(t *testing.T) {
 			infra.NewMetricsFactory(nil, "", ""),
 			&mocks.MockOnChainCfg{
 				Settings: &crypto.OnChainSettings{
-					StreamEphemeralStreamTTL:       time.Minute * 10,
-					StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+					StreamEphemeralStreamTTL: time.Minute * 10,
+					StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{},
 				},
 			},
 			5,

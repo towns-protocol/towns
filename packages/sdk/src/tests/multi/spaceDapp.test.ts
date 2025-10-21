@@ -43,10 +43,12 @@ describe('spaceDappTests', () => {
             throw new Error('tokenId not found')
         }
 
-        const uri = await spaceDapp.tokenURI(spaceId)
+        const spaceInfo = await spaceDapp.spaceOwner.getSpaceInfo(spaceAddress)
+        const uri = await spaceDapp.spaceOwner.read.tokenURI(spaceInfo.tokenId)
         expect(uri).toBe(`http://localhost:3002/${spaceAddress}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
 
-        const memberURI = await spaceDapp.memberTokenURI(spaceId, membership2.tokenId)
+        const space = spaceDapp.getSpace(spaceId)
+        const memberURI = await space?.ERC721A.read.tokenURI(membership2.tokenId)
         expect(memberURI).toBe(`http://localhost:3002/${spaceAddress}/token/${membership2.tokenId}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
     })
 

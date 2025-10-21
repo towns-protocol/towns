@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.374",
+    "version": "0.0.376",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -20,6 +20,7 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.9.0",
         "@connectrpc/connect-node": "^2.1.0",
+        "@standard-schema/spec": "^1.0.0-beta.9",
         "@towns-protocol/encryption": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
@@ -30,6 +31,7 @@
         "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
+        "superjson": "^2.2.2",
         "viem": "^2.29.3"
     },
     "devDependencies": {
@@ -46,7 +48,8 @@
         "fake-indexeddb": "^6.0.1",
         "hono": "^4.7.11",
         "typescript": "~5.8.3",
-        "vitest": "^3.2.3"
+        "vitest": "^3.2.3",
+        "zod": "^3.25.76"
     },
     "files": [
         "/dist",
