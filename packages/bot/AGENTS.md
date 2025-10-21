@@ -194,8 +194,26 @@ bot.onMessage((handler, { message }) => {
     // ...
 })
 
-// Start bot
-const { handler } = await bot.start()
+// Bot is ready to use - bot.fetch is available immediately
+```
+
+## Using the Bot
+
+After creating a bot with `makeTownsBot`, the webhook handler is available as `bot.fetch`:
+
+```typescript
+const bot = await makeTownsBot(privateData, jwtSecret, { commands })
+
+// With Hono
+app.post('/webhook', async (c) => {
+  return await bot.fetch(c.req.raw)
+})
+
+// With Bun
+Bun.serve({ fetch: bot.fetch, port: 3000 })
+
+// With Cloudflare Workers
+export default { fetch: bot.fetch }
 ```
 
 ## Common Development Tasks

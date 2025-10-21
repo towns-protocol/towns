@@ -6,6 +6,7 @@ A bot framework for Towns.
 
 ```ts
 import { makeTownsBot } from "@towns-protocol/bot";
+import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 
 const bot = await makeTownsBot("<app-private-data-base64>", "<jwt-secret>");
@@ -16,8 +17,12 @@ bot.onMessage((client, { channelId, isMentioned }) => {
   }
 });
 
-const { fetch } = await bot.start();
-serve({ fetch });
+const app = new Hono();
+app.post('/webhook', async (c) => {
+  return await bot.fetch(c.req.raw);
+});
+
+serve({ fetch: app.fetch, port: 3000 });
 ```
 
 ## Running Bots
