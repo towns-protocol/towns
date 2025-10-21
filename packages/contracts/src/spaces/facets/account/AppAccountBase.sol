@@ -241,7 +241,27 @@ abstract contract AppAccountBase is
         address client,
         bytes32 permission
     ) internal view returns (bool) {
-        return AppAccountStorage.isAppEntitled(module, client, permission);
+        bytes32 appId = AppAccountStorage.getLayout().appIdByApp[module];
+        if (appId == EMPTY_UID) return false;
+
+        IAppRegistry registry = DependencyLib.getAppRegistry();
+        if (registry.isAppBanned(module)) return false;
+
+        IAppRegistry.App memory app = registry.getAppById(appId);
+        if (app.appId == EMPTY_UID) return false;
+
+        (bool hasClientAccess, , bool isGroupActive) = ExecutorStorage.hasGroupAccess(
+            app.appId,
+            client
+        );
+        if (!hasClientAccess || !isGroupActive) return false;
+
+        uint256 permissionsLength = app.permissions.length;
+        for (uint256 i; i < permissionsLength; ++i) {
+            if (app.permissions[i] == permission) return true;
+        }
+
+        return false;
     }
 
     /// @notice Gets the ID of the installed app.
