@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.375",
+    "version": "0.0.376",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "./dist/web/index.cjs",
