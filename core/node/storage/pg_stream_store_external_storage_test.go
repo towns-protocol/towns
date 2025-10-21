@@ -141,6 +141,34 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			}, 2*time.Minute, 10*time.Millisecond)
 		})
 
+		t.Run("Stream range read", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(
+				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+
+			streamID, chunks, expMiniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				true,
+				10,
+				10,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationS3)
+			}()
+
+			require.EventuallyWithT(
+				rangeReadTest(ctx, store, streamID, chunks, expMiniblocks),
+				2*time.Minute, 10*time.Millisecond)
+		})
+
 		t.Run("Stream with big chunks", func(t *testing.T) {
 			t.Skip("Too big for CI")
 
@@ -274,6 +302,33 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			}, 2*time.Minute, 10*time.Millisecond)
 		})
 
+		t.Run("Stream range read", func(t *testing.T) {
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+
+			streamID, chunks, expMiniblocks := createMediaStreamAndAddChunks(
+				t,
+				ctx,
+				userWallet,
+				nodeWallet,
+				require,
+				store,
+				true,
+				10,
+				10,
+			)
+
+			defer func() {
+				_ = store.TestDeleteExternalObject(
+					context.Background(), // lint:ignore context.Background() is fine here
+					streamID,
+					storage.MiniblockDataStorageLocationGCS)
+			}()
+
+			require.EventuallyWithT(
+				rangeReadTest(ctx, store, streamID, chunks, expMiniblocks),
+				2*time.Minute, 10*time.Millisecond)
+		})
+
 		t.Run("Stream with big chunks", func(t *testing.T) {
 			t.Skip("Too big for CI")
 
@@ -372,6 +427,67 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
 		}, 2*time.Minute, 10*time.Millisecond)
 	})
+
+	t.Run("Miniblock range", func(t *testing.T) {
+		testMiniblockRange(t)
+	})
+}
+
+func rangeReadTest(
+	ctx context.Context,
+	store *storage.PostgresStreamStore,
+	streamID StreamId,
+	chunks int,
+	expMiniblocks []*storage.MiniblockDescriptor,
+) func(collect *assert.CollectT) {
+	return func(collect *assert.CollectT) {
+		// ensure that miniblocks are stored in external storage
+		location, err := store.StreamMiniblocksStoredLocation(ctx, streamID)
+		if err != nil || location == storage.MiniblockDataStorageLocationDB {
+			collect.Errorf("unexpected miniblock location / err: %v", err)
+			return
+		}
+
+		for _, tst := range []struct {
+			fromInclusive int64
+			toExclusive   int64
+		}{
+			{fromInclusive: 0, toExclusive: 1},
+			{fromInclusive: 0, toExclusive: 5},
+			{fromInclusive: 0, toExclusive: int64(chunks + 1)},
+			{fromInclusive: 3, toExclusive: int64(7 + 1)},
+			{fromInclusive: 3, toExclusive: int64(chunks + 1)},
+		} {
+			expNumberOfMiniblocks := int(tst.toExclusive - tst.fromInclusive)
+			gotMiniblocks, err := store.ReadMiniblocks(ctx, streamID, tst.fromInclusive, tst.toExclusive, true)
+			if err != nil {
+				collect.Errorf("unable to read miniblocks: %v", err)
+				return
+			}
+
+			if len(gotMiniblocks) != expNumberOfMiniblocks {
+				collect.Errorf(
+					"unexpected number of miniblocks in ReadMiniblocks: %d != %d",
+					len(gotMiniblocks),
+					expNumberOfMiniblocks,
+				)
+				return
+			}
+
+			for i := range gotMiniblocks {
+				expMiniblock := expMiniblocks[tst.fromInclusive+int64(i)]
+				if !cmp.Equal(expMiniblock.Number, gotMiniblocks[i].Number) {
+					collect.Errorf("unexpected miniblock number")
+				}
+				if !cmp.Equal(expMiniblock.Data, gotMiniblocks[i].Data) {
+					collect.Errorf("unexpected miniblock data, want %x \n\n got: %x", expMiniblock.Data, gotMiniblocks[i].Data)
+				}
+				if !cmp.Equal(expMiniblock.Snapshot, gotMiniblocks[i].Snapshot) {
+					collect.Errorf("unexpected miniblock snapshot")
+				}
+			}
+		}
+	}
 }
 
 func setupStreamStorageWithExternalStorage(
@@ -641,5 +757,120 @@ func compareExternallyFetchedMiniblocks(
 		if !cmp.Equal(miniblocks[i].Snapshot, readMiniblocks[i].Snapshot) {
 			collect.Errorf("unexpected miniblock snapshot")
 		}
+	}
+}
+
+func testMiniblockRange(t *testing.T) {
+	tests := []struct {
+		name          string
+		fromInclusive int64
+		toExclusive   int64
+		allMiniblocks []storage.ExternallyStoredMiniblockDescriptor
+		expOffset     int64
+		expSize       int64
+		expMiniblocks []storage.ExternallyStoredMiniblockDescriptor
+		checkErr      func(t require.TestingT, err error, msgAndArgs ...interface{})
+	}{
+		{
+			name:          "all miniblocks",
+			fromInclusive: 0,
+			toExclusive:   3,
+			expOffset:     0,
+			expSize:       45,
+			checkErr:      require.NoError,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+			},
+			expMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+			},
+		},
+		{
+			name:          "partial miniblocks",
+			fromInclusive: 1,
+			toExclusive:   3,
+			expOffset:     10,
+			expSize:       35,
+			checkErr:      require.NoError,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+				{Number: 3, StartByte: 45, MiniblockDataLength: 25},
+			},
+			expMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 1, StartByte: 0, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 15, MiniblockDataLength: 20},
+			},
+		},
+		{
+			name:          "single miniblock",
+			fromInclusive: 2,
+			toExclusive:   3,
+			expOffset:     25,
+			expSize:       20,
+			checkErr:      require.NoError,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+				{Number: 3, StartByte: 45, MiniblockDataLength: 25},
+			},
+			expMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 2, StartByte: 0, MiniblockDataLength: 20},
+			},
+		},
+		{
+			name:          "from miniblock missing",
+			fromInclusive: 1,
+			toExclusive:   3,
+			expOffset:     0,
+			expSize:       0,
+			checkErr:      require.Error,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+				{Number: 3, StartByte: 45, MiniblockDataLength: 25},
+			},
+		},
+		{
+			name:          "miniblocks missing in range",
+			fromInclusive: 1,
+			toExclusive:   3,
+			expOffset:     0,
+			expSize:       0,
+			checkErr:      require.Error,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+			},
+		},
+		{
+			name:          "zero length range",
+			fromInclusive: 2,
+			toExclusive:   2,
+			expOffset:     0,
+			expSize:       0,
+			checkErr:      require.Error,
+			allMiniblocks: []storage.ExternallyStoredMiniblockDescriptor{
+				{Number: 0, StartByte: 0, MiniblockDataLength: 10},
+				{Number: 1, StartByte: 10, MiniblockDataLength: 15},
+				{Number: 2, StartByte: 25, MiniblockDataLength: 20},
+			},
+		},
+	}
+
+	for _, tst := range tests {
+		t.Run(tst.name, func(t *testing.T) {
+			offset, size, downloadParts, err := storage.ObjectRangeMiniblocks(tst.allMiniblocks, tst.fromInclusive, tst.toExclusive)
+			tst.checkErr(t, err)
+			require.Equal(t, tst.expOffset, offset)
+			require.Equal(t, tst.expSize, size)
+			require.Empty(t, cmp.Diff(tst.expMiniblocks, downloadParts))
+		})
 	}
 }

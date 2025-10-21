@@ -24,6 +24,16 @@ type (
 		MinipoolEnvelopes       [][]byte
 	}
 
+	// externalStoredMiniblocksRangeDescriptor is a helper object that returns the
+	// required information to read and decode miniblocks from an externally
+	// stored object that contains multiple miniblocks.
+	externalStoredMiniblocksRangeDescriptor struct {
+		objectMiniblockParts  []ExternallyStoredMiniblockDescriptor
+		miniblockDataLocation MiniblockDataStorageLocation
+		fromInclusive         int64
+		toExclusive           int64
+	}
+
 	MiniblockDescriptor struct {
 		// Number is the miniblock number within the stream.
 		Number int64

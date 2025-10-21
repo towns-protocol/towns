@@ -20,7 +20,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// externallyStoredMiniblockDescriptor describes a miniblock that is stored in external storage.
+// ExternallyStoredMiniblockDescriptor describes a miniblock that is stored in external storage.
 // This information can be used to decode a miniblock from an external object that combines
 // multiple miniblocks.
 type (
@@ -43,7 +43,9 @@ type (
 		miniblocksStoredExternalCounter prometheus.Counter
 	}
 
-	externallyStoredMiniblockDescriptor struct {
+	// ExternallyStoredMiniblockDescriptor holds information about a miniblock that is stored in
+	// external storage in an object that combines all miniblocks for a stream.
+	ExternallyStoredMiniblockDescriptor struct {
 		// Number is the miniblock number.
 		Number int64
 		// StartByte is the byte offset of the miniblock in the combined object.
@@ -64,7 +66,7 @@ type (
 		WriteMiniblockData(ctx context.Context, mbNum int64, blockdata []byte) error
 		// Finish the storage writer session.
 		// Only when Finish returned nil the object is considered successfully uploaded.
-		Finish(ctx context.Context) ([]externallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error)
+		Finish(ctx context.Context) ([]ExternallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error)
 		// Abort the storage writer session.
 		// If Finish was called before successfully, this is a no-op
 		Abort()
@@ -77,7 +79,7 @@ type (
 		schemaLockID        int64
 		buf                 *bytes.Buffer
 		totalMiniblockBytes uint64
-		miniblocks          []externallyStoredMiniblockDescriptor
+		miniblocks          []ExternallyStoredMiniblockDescriptor
 		bucket              string
 		completedParts      []s3types.CompletedPart
 		multiPartUploadID   *string
@@ -90,7 +92,7 @@ type (
 		schemaLockID        int64
 		buf                 *bytes.Buffer
 		totalMiniblockBytes uint64
-		miniblocks          []externallyStoredMiniblockDescriptor
+		miniblocks          []ExternallyStoredMiniblockDescriptor
 		subObjects          []*gcstorage.ObjectHandle
 	}
 
@@ -161,7 +163,7 @@ func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum
 
 	// store details about individual miniblocks that can be used to decode the miniblock later
 	// when all parts are combined into a single external storage object.
-	g.miniblocks = append(g.miniblocks, externallyStoredMiniblockDescriptor{
+	g.miniblocks = append(g.miniblocks, ExternallyStoredMiniblockDescriptor{
 		Number:              mbNum,
 		StartByte:           g.totalMiniblockBytes,
 		MiniblockDataLength: uint64(len(blockdata)),
@@ -182,7 +184,7 @@ func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum
 // Finish writes pending miniblock data to external storage and returns the parts that are needed
 // to decode miniblocks from the object stored in external storage.
 func (g *gcsExternalStorageWriter) Finish(ctx context.Context) (
-	[]externallyStoredMiniblockDescriptor,
+	[]ExternallyStoredMiniblockDescriptor,
 	MiniblockDataStorageLocation,
 	string,
 	error,
@@ -237,7 +239,7 @@ func (g *gcsExternalStorageWriter) Abort() {
 
 // combineIntoSingleObject concatenates all sub objects into a single GCS object and deletes them.
 func (g *gcsExternalStorageWriter) combineIntoSingleObject(ctx context.Context) (
-	[]externallyStoredMiniblockDescriptor,
+	[]ExternallyStoredMiniblockDescriptor,
 	MiniblockDataStorageLocation,
 	string,
 	error,
@@ -326,7 +328,7 @@ func (s *s3ExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum 
 
 	// store details about individual miniblocks that can be used to decode the miniblock later
 	// when all parts are combined into a single external storage object.
-	s.miniblocks = append(s.miniblocks, externallyStoredMiniblockDescriptor{
+	s.miniblocks = append(s.miniblocks, ExternallyStoredMiniblockDescriptor{
 		Number:              mbNum,
 		StartByte:           s.totalMiniblockBytes,
 		MiniblockDataLength: uint64(len(blockdata)),
@@ -440,7 +442,7 @@ func (s *s3ExternalStorageWriter) write(
 // data in the S3 object.
 func (s *s3ExternalStorageWriter) Finish(
 	ctx context.Context,
-) ([]externallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error) {
+) ([]ExternallyStoredMiniblockDescriptor, MiniblockDataStorageLocation, string, error) {
 	defer func() { s.buf = nil }()
 
 	if s.multiPartUploadID == nil {
@@ -645,7 +647,7 @@ func (s *PostgresStreamStore) WriteMediaStreamExternalStorageParts(
 	ctx context.Context,
 	streamID StreamId,
 	extStorageLoc MiniblockDataStorageLocation,
-	parts []externallyStoredMiniblockDescriptor,
+	parts []ExternallyStoredMiniblockDescriptor,
 ) error {
 	if streamID.Type() != STREAM_MEDIA_BIN {
 		return RiverError(Err_INTERNAL, "unable to migrate miniblocks to external store, stream is not a media stream").
@@ -667,12 +669,39 @@ func (s *PostgresStreamStore) WriteMediaStreamExternalStorageParts(
 	return err
 }
 
+// readMiniblockDataFromExternalStorage reads all miniblock data from external storage and returns
+// a mapping from the miniblock number to the miniblock data on success.
+func (s *PostgresStreamStore) readMiniblockDataFromExternalStorage(
+	ctx context.Context,
+	location MiniblockDataStorageLocation,
+	streamID StreamId,
+	objectMiniblockParts []ExternallyStoredMiniblockDescriptor,
+	fromInclusive int64,
+	toExclusive int64,
+) (map[int64][]byte, error) {
+	if !s.ExternalStorageEnabled() {
+		return nil, RiverError(Err_BAD_CONFIG, "external media stream storage is not enabled").
+			Tag("streamId", streamID).
+			Func("readMiniblockDataFromExternalStorage")
+	}
+
+	if location == MiniblockDataStorageLocationGCS {
+		return s.readMiniblockDataFromGCS(ctx, objectMiniblockParts, streamID, fromInclusive, toExclusive)
+	} else if location == MiniblockDataStorageLocationS3 {
+		return s.readMiniblockDataFromS3(ctx, objectMiniblockParts, streamID, fromInclusive, toExclusive)
+	}
+
+	return nil, RiverError(Err_BAD_CONFIG, "stream miniblock data is stored in DB").
+		Tag("streamId", streamID).
+		Func("readMiniblockDataFromExternalStorage")
+}
+
 func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamID StreamId,
 	extStorageLoc MiniblockDataStorageLocation,
-	parts []externallyStoredMiniblockDescriptor,
+	parts []ExternallyStoredMiniblockDescriptor,
 ) error {
 	if _, _, err := s.lockStream(ctx, tx, streamID, true); err != nil {
 		return err
@@ -720,7 +749,7 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamID StreamId,
-) ([]externallyStoredMiniblockDescriptor, error) {
+) ([]ExternallyStoredMiniblockDescriptor, error) {
 	query := s.sqlForStream(
 		`SELECT seq_num, start_byte, size FROM {{miniblocks_ext_storage}} WHERE stream_id = $1 ORDER BY seq_num;`,
 		streamID,
@@ -733,13 +762,13 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 	defer partsRows.Close()
 
 	var (
-		parts     []externallyStoredMiniblockDescriptor
+		parts     []ExternallyStoredMiniblockDescriptor
 		startByte uint64
 		seqNum    int64
 		size      uint64
 	)
 	if _, err = pgx.ForEachRow(partsRows, []any{&seqNum, &startByte, &size}, func() error {
-		parts = append(parts, externallyStoredMiniblockDescriptor{
+		parts = append(parts, ExternallyStoredMiniblockDescriptor{
 			Number:              seqNum,
 			StartByte:           startByte,
 			MiniblockDataLength: size,
@@ -928,4 +957,71 @@ func (s *PostgresStreamStore) TestNormalizeStreamWithoutCallingEphemeralMonitor(
 	)
 
 	return genesisMiniblockHash, err
+}
+
+// ObjectRangeMiniblocks returns a range that can be used to download a byte range of an
+// externally stored object that contains multiple miniblocks allowing to decode a miniblock
+// range without the need to download the entire object.
+//
+// allObjectMiniblockParts are all the miniblocks that are combined in the object.
+// fromInclusive is the first miniblock number
+// toExclusive is the last miniblock number + 1
+//
+// The returned offset indicates which is the first byte to download from the object.
+// The returned size indicates how many bytes of the object from offset must be read.
+// The returned rangeParts describe how to decode the miniblocks from the object bytes.
+func ObjectRangeMiniblocks(
+	allObjectMiniblockParts []ExternallyStoredMiniblockDescriptor,
+	fromInclusive int64,
+	toExclusive int64,
+) (offset int64, size int64, rangeParts []ExternallyStoredMiniblockDescriptor, err error) {
+	foundFirstPart := false
+	foundLastPart := false
+
+	for _, p := range allObjectMiniblockParts {
+		partAlreadyAdded := false
+
+		if !foundFirstPart {
+			foundFirstPart = p.Number == fromInclusive
+			if foundFirstPart {
+				offset = int64(p.StartByte)
+				rangeParts = append(rangeParts, ExternallyStoredMiniblockDescriptor{
+					Number:              p.Number,
+					StartByte:           0, // start at the beginning of the range decoding miniblocks
+					MiniblockDataLength: p.MiniblockDataLength,
+				})
+				size = int64(p.MiniblockDataLength)
+				partAlreadyAdded = true
+
+				foundFirstPart = true
+			}
+		}
+
+		if foundFirstPart {
+			if !partAlreadyAdded {
+				rangeParts = append(rangeParts, ExternallyStoredMiniblockDescriptor{
+					Number:              p.Number,
+					StartByte:           uint64(size),
+					MiniblockDataLength: p.MiniblockDataLength,
+				})
+				size += int64(p.MiniblockDataLength)
+			}
+
+			foundLastPart = p.Number == toExclusive-1
+		}
+
+		if foundLastPart {
+			break
+		}
+	}
+
+	if !foundFirstPart || !foundLastPart {
+		return 0, 0, nil, RiverError(
+			Err_INTERNAL, "Invalid range requested").
+			Tag("fromInclusive", fromInclusive).
+			Tag("toExclusive", toExclusive).
+			Func("ObjectRangeMiniblocks")
+	}
+
+	return offset, size, rangeParts, nil
 }
