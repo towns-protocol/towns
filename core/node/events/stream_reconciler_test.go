@@ -3,10 +3,11 @@ package events
 import (
 	"context"
 	"fmt"
-	"sync"
+	"slices"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -18,23 +19,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/testutils"
 	"github.com/towns-protocol/towns/core/node/testutils/testfmt"
 )
-
-type recordingStreamStorage struct {
-	storage.StreamStorage
-	mu       sync.Mutex
-	recorded []int64
-}
-
-func (r *recordingStreamStorage) GetMiniblockNumberRanges(
-	ctx context.Context,
-	streamId StreamId,
-	fromInclusive int64,
-) ([]storage.MiniblockRange, error) {
-	r.mu.Lock()
-	r.recorded = append(r.recorded, fromInclusive)
-	r.mu.Unlock()
-	return r.StreamStorage.GetMiniblockNumberRanges(ctx, streamId, fromInclusive)
-}
 
 func TestReconciler(t *testing.T) {
 	cfg := config.GetDefaultConfig()
@@ -693,9 +677,6 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 	}
 	tc.addReplEvent(streamId, prevMb, nodesWithStream)
 
-	recStorage := &recordingStreamStorage{StreamStorage: tc.instances[2].params.Storage}
-	tc.instances[2].params.Storage = recStorage
-
 	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
 	inst := tc.instances[2]
 
@@ -714,15 +695,253 @@ func TestReconciler_BackwardUsesHistoryWindowForRanges(t *testing.T) {
 
 	require.True(reconciler.stats.backwardCalled)
 
-	expectedStart := record.LastMbNum() - int64(historyWindow)
+	desiredStart := int64(record.LastMbNum()) - int64(historyWindow)
+	if desiredStart < 0 {
+		desiredStart = 0
+	}
+
+	require.NotEmpty(reconciler.presentRanges)
+	expectedStart := storage.FindClosestSnapshotMiniblock(reconciler.presentRanges, desiredStart)
+	require.Equal(expectedStart, reconciler.localStartMbInclusive)
+}
+
+type trimTestEnv struct {
+	ctx              context.Context
+	tc               *cacheTestContext
+	inst             *cacheTestInstance
+	streamID         StreamId
+	reconciler       *streamReconciler
+	historyWindow    uint64
+	snapshotInterval uint64
+	producedBlocks   int
+}
+
+func newTrimTestEnv(
+	t *testing.T,
+	historyWindow uint64,
+	snapshotInterval uint64,
+	producedBlocks int,
+	forceSnapshot bool,
+) *trimTestEnv {
+	t.Helper()
+
+	cfg := config.GetDefaultConfig()
+	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+	cfg.StreamReconciliation.GetMiniblocksPageSize = 8
+
+	ctx, tc := makeCacheTestContext(
+		t,
+		testParams{
+			config:                           cfg,
+			replFactor:                       3,
+			numInstances:                     3,
+			disableStreamCacheCallbacks:      true,
+			recencyConstraintsGenerations:    5,
+			defaultMinEventsPerSnapshot:      1,
+			backwardsReconciliationThreshold: ptrUint64(20),
+			streamHistoryMiniblocks: map[byte]uint64{
+				STREAM_USER_SETTINGS_BIN: historyWindow,
+			},
+			streamSnapshotIntervalInMbs: &snapshotInterval,
+			streamTrimActivationFactor:  ptrUint64(0),
+		},
+	)
+
+	tc.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	tc.initCache(1, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+
+	streamID, streamNodes, prevMb := tc.allocateStream()
+	nodesWithStream := streamNodes[0:2]
+
+	for i := 0; i < producedBlocks; i++ {
+		tc.addReplEvent(streamID, prevMb, nodesWithStream)
+		prevMb = tc.makeMiniblockNoCallbacks(nodesWithStream, streamID, forceSnapshot)
+	}
+	tc.addReplEvent(streamID, prevMb, nodesWithStream)
+
+	tc.initCache(2, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	inst := tc.instances[2]
+
+	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
+	tc.require.NoError(err)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamID, blockNum)
+	tc.require.NoError(err)
+	tc.require.NotNil(recordNoId)
+	record := river.NewStreamWithId(streamID, recordNoId)
+
+	stream := inst.cache.insertEmptyLocalStream(record, blockNum, false)
+	reconciler := newStreamReconciler(inst.cache, stream, record)
+	tc.require.NoError(reconciler.reconcile())
+
+	return &trimTestEnv{
+		ctx:              ctx,
+		tc:               tc,
+		inst:             inst,
+		streamID:         streamID,
+		reconciler:       reconciler,
+		historyWindow:    historyWindow,
+		snapshotInterval: snapshotInterval,
+		producedBlocks:   producedBlocks,
+	}
+}
+
+func flattenMiniblockSeqs(ranges []storage.MiniblockRange) []int64 {
+	seqs := make([]int64, 0)
+	for _, r := range ranges {
+		for n := r.StartInclusive; n <= r.EndInclusive; n++ {
+			seqs = append(seqs, n)
+		}
+	}
+	return seqs
+}
+
+func flattenSnapshotSeqs(ranges []storage.MiniblockRange) []int64 {
+	snaps := make([]int64, 0)
+	for _, r := range ranges {
+		snaps = append(snaps, r.SnapshotSeqNums...)
+	}
+	slices.Sort(snaps)
+	snaps = slices.Compact(snaps)
+	return snaps
+}
+
+func TestReconciler_TrimRejectsMultipleGaps(t *testing.T) {
+	env := newTrimTestEnv(t, 0, 1, 40, false)
+	store := env.inst.cache.params.Storage
+	require := env.tc.require
+
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 5, 10))
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 15, 20))
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-6), int64(env.producedBlocks-4)),
+	)
+
+	rangesAfterDeletion, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(rangesAfterDeletion, 4)
+	seqsAfterDeletion := flattenMiniblockSeqs(rangesAfterDeletion)
+	snapsAfterDeletion := flattenSnapshotSeqs(rangesAfterDeletion)
+
+	err = env.reconciler.trim()
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INTERNAL))
+
+	rangesAfter, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	assert.Equal(t, seqsAfterDeletion, flattenMiniblockSeqs(rangesAfter))
+	assert.Equal(t, snapsAfterDeletion, flattenSnapshotSeqs(rangesAfter))
+}
+
+func TestReconciler_TrimRejectsInvalidTwoRangeLayout(t *testing.T) {
+	env := newTrimTestEnv(t, 0, 1, 40, false)
+	store := env.inst.cache.params.Storage
+	require := env.tc.require
+
+	require.NoError(store.DebugDeleteMiniblocks(env.ctx, env.streamID, 0, 1))
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-12), int64(env.producedBlocks-6)),
+	)
+	require.NoError(
+		store.DebugDeleteMiniblocks(env.ctx, env.streamID, int64(env.producedBlocks-2), int64(env.producedBlocks)),
+	)
+
+	rangesAfterDeletion, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(rangesAfterDeletion, 3)
+	require.NotEqual(int64(0), rangesAfterDeletion[0].StartInclusive)
+	require.NotEqual(int64(0), rangesAfterDeletion[0].EndInclusive)
+	seqsAfterDeletion := flattenMiniblockSeqs(rangesAfterDeletion)
+	snapsAfterDeletion := flattenSnapshotSeqs(rangesAfterDeletion)
+
+	err = env.reconciler.trim()
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_INTERNAL))
+
+	rangesAfter, err := store.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	assert.Equal(t, seqsAfterDeletion, flattenMiniblockSeqs(rangesAfter))
+	assert.Equal(t, snapsAfterDeletion, flattenSnapshotSeqs(rangesAfter))
+}
+
+func TestReconciler_TrimHistoryAlignment(t *testing.T) {
+	env := newTrimTestEnv(t, 10, 1, 45, false)
+	require := env.tc.require
+
+	require.NoError(env.reconciler.trim())
+
+	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(ranges, 1)
+
+	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
 	if expectedStart < 0 {
 		expectedStart = 0
 	}
+	expectedLast := int64(env.producedBlocks)
 
-	recStorage.mu.Lock()
-	recorded := append([]int64(nil), recStorage.recorded...)
-	recStorage.mu.Unlock()
+	latestRange := ranges[0]
+	require.Equal(expectedStart, latestRange.StartInclusive)
+	require.Equal(expectedLast, latestRange.EndInclusive)
 
-	require.NotEmpty(recorded)
-	require.Equal(expectedStart, recorded[0])
+	require.NotEmpty(latestRange.SnapshotSeqNums)
+	firstSnapshot := latestRange.SnapshotSeqNums[0]
+	lastSnapshot := latestRange.SnapshotSeqNums[len(latestRange.SnapshotSeqNums)-1]
+	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
+	assert.LessOrEqual(t, lastSnapshot, expectedLast)
+
+	seqs := flattenMiniblockSeqs(ranges)
+	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	for seq := expectedStart; seq <= expectedLast; seq++ {
+		expectedSeqs = append(expectedSeqs, seq)
+	}
+	assert.Equal(t, expectedSeqs, seqs)
+}
+
+func TestReconciler_TrimNoRetentionPolicies(t *testing.T) {
+	env := newTrimTestEnv(t, 0, 0, 20, false)
+	require := env.tc.require
+
+	rangesBefore, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+
+	require.NoError(env.reconciler.trim())
+
+	rangesAfter, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	assert.Equal(t, rangesBefore, rangesAfter)
+}
+
+func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
+	env := newTrimTestEnv(t, 5, 1, 32, false)
+	require := env.tc.require
+
+	require.NoError(env.reconciler.reconcileAndTrim())
+
+	ranges, err := env.inst.cache.params.Storage.GetMiniblockNumberRanges(env.ctx, env.streamID)
+	require.NoError(err)
+	require.Len(ranges, 1)
+
+	expectedStart := int64(env.producedBlocks) - int64(env.historyWindow)
+	if expectedStart < 0 {
+		expectedStart = 0
+	}
+	expectedLast := int64(env.producedBlocks)
+
+	keptRange := ranges[0]
+	require.Equal(expectedStart, keptRange.StartInclusive)
+	require.Equal(expectedLast, keptRange.EndInclusive)
+
+	require.NotEmpty(keptRange.SnapshotSeqNums)
+	firstSnapshot := keptRange.SnapshotSeqNums[0]
+	lastSnapshot := keptRange.SnapshotSeqNums[len(keptRange.SnapshotSeqNums)-1]
+	assert.GreaterOrEqual(t, firstSnapshot, expectedStart)
+	assert.LessOrEqual(t, lastSnapshot, expectedLast)
+
+	seqs := flattenMiniblockSeqs(ranges)
+	expectedSeqs := make([]int64, 0, env.historyWindow+1)
+	for seq := expectedStart; seq <= expectedLast; seq++ {
+		expectedSeqs = append(expectedSeqs, seq)
+	}
+	assert.Equal(t, expectedSeqs, seqs)
 }

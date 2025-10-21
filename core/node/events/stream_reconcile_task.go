@@ -154,7 +154,7 @@ func (s *StreamCache) reconciliationTask(streamId StreamId) {
 		return
 	}
 
-	err := newStreamReconciler(s, stream, streamRecord).reconcile()
+	err := newStreamReconciler(s, stream, streamRecord).reconcileAndTrim()
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
