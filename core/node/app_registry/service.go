@@ -407,14 +407,28 @@ func (s *Service) GetSession(
 		return nil, err
 	}
 
-	if req.Msg.SessionId == "" {
+	var envelopeBytes []byte
+	if req.Msg.SessionId != nil && *req.Msg.SessionId != "" {
+		envelopeBytes, err = s.store.GetSessionKey(ctx, app, *req.Msg.SessionId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE)
+		}
+	} else if req.Msg.StreamId != nil {
+		streamId, err := shared.StreamIdFromBytes(req.Msg.StreamId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT)
+		}
+		envelopeBytes, err = s.store.GetSessionKeyForStream(ctx, app, streamId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE)
+		}
+	} else {
 		return nil, base.RiverError(
 			Err_INVALID_ARGUMENT,
-			"Invalid session id",
+			"Invalid session id or stream id",
 		).Tag("sessionId", req.Msg.SessionId).Tag("appId", app).Func("GetSession")
 	}
 
-	envelopeBytes, err := s.store.GetSessionKey(ctx, app, req.Msg.SessionId)
 	if err != nil {
 		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE)
 	}

@@ -146,7 +146,8 @@ message GetSessionRequest {
     // public key of the app
     bytes app_id = 1;
 
-    string session_id = 2;    
+    optional string session_id = 2;    
+    optional bytes stream_id = 3;
 }
 
 message GetSessionResponse {
