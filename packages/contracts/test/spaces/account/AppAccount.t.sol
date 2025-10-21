@@ -249,6 +249,13 @@ contract AppAccountTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistr
         });
     }
 
+    function test_revertWhen_isAppEntitled_bannedApp() external givenAppIsInstalled {
+        vm.prank(deployer);
+        registry.adminBanApp(address(mockModule));
+
+        assertEq(appAccount.isAppEntitled(address(mockModule), client, keccak256("Read")), false);
+    }
+
     function test_disableAndReEnableApp() external givenAppIsInstalled {
         // Disable app
         vm.prank(founder);
