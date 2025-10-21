@@ -9,7 +9,7 @@ import {
 import { MessageTimeline } from '../../timeline/timeline'
 import { check, dlogger } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
-import { ChannelDetails, checkNever, SendTipParams, SpaceDapp } from '@towns-protocol/web3'
+import { ChannelDetails, checkNever, SpaceDapp } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
 
