@@ -16,6 +16,9 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
+/// @title AppRegistryFacet
+/// @author Towns Protocol
+/// @notice Facet for managing app registry
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
         address spaceFactory,
@@ -94,53 +97,6 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        Space Functions                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @notice Install an app
-    /// @param app The app address to install
-    /// @param space The space to install the app to
-    /// @param data The data to pass to the app's onInstall function
-    function installApp(
-        ITownsApp app,
-        IAppAccount space,
-        bytes calldata data
-    ) external payable nonReentrant {
-        _onlyAllowed(address(space));
-        return _installApp(address(app), address(space), data);
-    }
-
-    /// @notice Uninstall an app
-    /// @param app The app address to uninstall
-    /// @param space The space to uninstall the app from
-    /// @param data The data to pass to the app's onUninstall function
-    function uninstallApp(
-        ITownsApp app,
-        IAppAccount space,
-        bytes calldata data
-    ) external nonReentrant {
-        _onlyAllowed(address(space));
-        _uninstallApp(address(app), address(space), data);
-    }
-
-    /// @notice Update an app to the latest version
-    /// @param app The app address to update
-    /// @param space The space to update the app to
-    function updateApp(ITownsApp app, IAppAccount space) external nonReentrant {
-        _onlyAllowed(address(space));
-        _updateApp(address(app), address(space));
-    }
-
-    /// @notice Renew an app
-    /// @param app The app address to renew
-    /// @param account The account to renew the app for
-    /// @param data The data to pass to the app's onRenewApp function
-    function renewApp(
-        ITownsApp app,
-        IAppAccount account,
-        bytes calldata data
-    ) external payable nonReentrant {
-        _onlyAllowed(address(account));
-        _renewApp(address(app), address(account), data);
-    }
 
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure

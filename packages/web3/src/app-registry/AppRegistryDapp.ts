@@ -2,6 +2,7 @@ import { ethers, type BigNumber, type ContractReceipt, type ContractTransaction 
 import { BaseChainConfig } from '../utils/web3Env'
 import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
+import { IAppInstallerShim } from './IAppInstallerShim'
 import { SimpleAppShim } from './SimpleAppShim'
 import type {
     AppCreatedEventObject,
@@ -21,14 +22,16 @@ export type BotInfo = {
 }
 
 export class AppRegistryDapp {
-    public readonly shim: IAppRegistryShim
+    public readonly registry: IAppRegistryShim
+    public readonly installer: IAppInstallerShim
     private readonly provider: ethers.providers.Provider
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
         if (!config.addresses.appRegistry) {
             throw new Error('App registry address is not set')
         }
-        this.shim = new IAppRegistryShim(config.addresses.appRegistry, provider)
+        this.registry = new IAppRegistryShim(config.addresses.appRegistry, provider)
+        this.installer = new IAppInstallerShim(config.addresses.appRegistry, provider)
         this.provider = provider
     }
 
@@ -45,7 +48,7 @@ export class AppRegistryDapp {
         installPrice: bigint,
         accessDuration: bigint, // in seconds
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).createApp({
+        return this.registry.write(signer).createApp({
             name,
             permissions: permissions.map((p) => ethers.utils.formatBytes32String(Permission[p])),
             client,
@@ -57,7 +60,7 @@ export class AppRegistryDapp {
     public getCreateAppEvent(receipt: ContractReceipt): AppCreatedEventObject {
         for (const log of receipt.logs) {
             try {
-                const parsedLog = this.shim.interface.parseLog(log)
+                const parsedLog = this.registry.interface.parseLog(log)
                 if (parsedLog.name === 'AppCreated') {
                     return {
                         app: parsedLog.args.app,
@@ -74,7 +77,7 @@ export class AppRegistryDapp {
     public getRegisterAppEvent(receipt: ContractReceipt): AppRegisteredEventObject {
         for (const log of receipt.logs) {
             try {
-                const parsedLog = this.shim.interface.parseLog(log)
+                const parsedLog = this.registry.interface.parseLog(log)
                 if (parsedLog.name === 'AppRegistered') {
                     return {
                         app: parsedLog.args.app,
@@ -94,7 +97,7 @@ export class AppRegistryDapp {
         app: Address,
         client: Address,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).registerApp(app, client)
+        return this.registry.write(signer).registerApp(app, client)
     }
 
     /** To install a smart contract app in a space */
@@ -110,7 +113,7 @@ export class AppRegistryDapp {
         /** The data to pass to the app's onInstall function */
         data?: Uint8Array,
     ): Promise<ContractTransaction> {
-        return this.shim
+        return this.installer
             .write(signer)
             .installApp(app, spaceAddress, data ?? new Uint8Array(0), { value: price })
     }
@@ -126,39 +129,41 @@ export class AppRegistryDapp {
         /** The data to pass to the app's onUninstall function */
         data?: Uint8Array,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).uninstallApp(app, spaceAddress, data ?? new Uint8Array(0))
+        return this.installer
+            .write(signer)
+            .uninstallApp(app, spaceAddress, data ?? new Uint8Array(0))
     }
 
     public async removeApp(signer: ethers.Signer, appId: string): Promise<ContractTransaction> {
-        return this.shim.write(signer).removeApp(appId)
+        return this.registry.write(signer).removeApp(appId)
     }
 
     public async getAppPrice(app: Address): Promise<BigNumber> {
-        return this.shim.read.getAppPrice(app)
+        return this.registry.read.getAppPrice(app)
     }
 
     public async getAppDuration(app: Address): Promise<number> {
-        return this.shim.read.getAppDuration(app)
+        return this.registry.read.getAppDuration(app)
     }
 
     public async getAppSchema(): Promise<string> {
-        return this.shim.read.getAppSchema()
+        return this.registry.read.getAppSchema()
     }
 
     public async getAppSchemaId(): Promise<string> {
-        return this.shim.read.getAppSchemaId()
+        return this.registry.read.getAppSchemaId()
     }
 
     public async isAppBanned(app: Address): Promise<boolean> {
-        return this.shim.read.isAppBanned(app)
+        return this.registry.read.isAppBanned(app)
     }
 
     public async getLatestAppId(app: Address): Promise<string> {
-        return this.shim.read.getLatestAppId(app)
+        return this.registry.read.getLatestAppId(app)
     }
 
     public async getAppById(appId: string): Promise<IAppRegistryBase.AppStructOutput> {
-        return this.shim.read.getAppById(appId)
+        return this.registry.read.getAppById(appId)
     }
 
     public async adminRegisterAppSchema(
@@ -167,21 +172,21 @@ export class AppRegistryDapp {
         resolver: Address,
         revocable: boolean,
     ): Promise<ContractTransaction> {
-        return this.shim.write(signer).adminRegisterAppSchema(schema, resolver, revocable)
+        return this.registry.write(signer).adminRegisterAppSchema(schema, resolver, revocable)
     }
 
     public async adminBanApp(signer: ethers.Signer, app: Address): Promise<ContractTransaction> {
-        return this.shim.write(signer).adminBanApp(app)
+        return this.registry.write(signer).adminBanApp(app)
     }
 
     public async getAllAppsByOwner(targetOwner: Address, fromBlock?: number) {
-        const appCreatedEvents = await this.shim.read.queryFilter(
-            this.shim.read.filters.AppCreated(),
+        const appCreatedEvents = await this.registry.read.queryFilter(
+            this.registry.read.filters.AppCreated(),
             fromBlock,
         )
 
-        const appRegisteredEvents = await this.shim.read.queryFilter(
-            this.shim.read.filters.AppRegistered(),
+        const appRegisteredEvents = await this.registry.read.queryFilter(
+            this.registry.read.filters.AppRegistered(),
             fromBlock,
         )
 
@@ -193,7 +198,7 @@ export class AppRegistryDapp {
         const ownerApps: BotInfo[] = []
         for (const appId of allAppIds) {
             try {
-                const app = await this.shim.read.getAppById(appId)
+                const app = await this.registry.read.getAppById(appId)
                 if (app.owner.toLowerCase() === targetOwner.toLowerCase()) {
                     ownerApps.push({
                         appId: appId as Address,

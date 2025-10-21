@@ -25,6 +25,7 @@ import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol"
 
 //contracts
 import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
+import {AppInstallerFacet} from "../../src/apps/facets/installer/AppInstallerFacet.sol";
 import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
 import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
@@ -32,6 +33,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase, IAppAccountBase {
     AppRegistryFacet internal registry;
+    AppInstallerFacet internal installer;
     AppAccount internal appAccount;
     MockModule internal mockModule;
 
@@ -47,6 +49,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     function setUp() public override {
         super.setUp();
         registry = AppRegistryFacet(appRegistry);
+        installer = AppInstallerFacet(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
         DEFAULT_CLIENT = _randomAddress();
@@ -289,19 +292,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
         emit ExecutionInstalled(address(mockModule), appInfo.manifest);
-        registry.installApp{value: totalRequired}(mockModule, appAccount, "");
+        installer.installApp{value: totalRequired}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.installApp(mockModule, appAccount, "");
+        installer.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_appNotRegistered() external {
         vm.expectRevert(AppNotRegistered.selector);
         vm.prank(founder);
-        registry.installApp(mockModule, appAccount, "");
+        installer.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_insufficientPayment() external givenAppIsRegistered {
@@ -313,7 +316,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
-        registry.installApp{value: insufficientAmount}(mockModule, appAccount, "");
+        installer.installApp{value: insufficientAmount}(mockModule, appAccount, "");
     }
 
     function test_installApp_withFreeApp() external givenAppIsRegistered {
@@ -324,7 +327,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.expectEmit(address(appAccount));
         emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, requiredAmount);
-        registry.installApp{value: requiredAmount}(mockModule, appAccount, "");
+        installer.installApp{value: requiredAmount}(mockModule, appAccount, "");
 
         uint256 protocolFee = _getProtocolFee(0);
 
@@ -344,7 +347,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.expectEmit(address(appAccount));
         emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify fee distribution
         assertEq(address(deployer).balance, protocolFee);
@@ -365,7 +368,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, minFee);
         assertEq(address(mockModule).balance - devInitialBalance, totalPrice - minFee);
@@ -383,7 +386,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(protocolFee > minFee);
@@ -406,7 +409,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(bpsFee < minFee);
@@ -428,7 +431,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 founderInitialBalance = address(founder).balance;
 
         hoax(founder, payment);
-        registry.installApp{value: payment}(mockModule, appAccount, "");
+        installer.installApp{value: payment}(mockModule, appAccount, "");
 
         // Verify excess was refunded
         assertEq(address(founder).balance - founderInitialBalance, excess);
@@ -444,7 +447,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, price);
         vm.expectRevert(AppRevoked.selector);
-        registry.installApp{value: price}(mockModule, appAccount, "");
+        installer.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_bannedApp() external givenAppIsRegistered {
@@ -455,19 +458,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, price);
         vm.expectRevert(BannedApp.selector);
-        registry.installApp{value: price}(mockModule, appAccount, "");
+        installer.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.uninstallApp(mockModule, appAccount, "");
+        installer.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_appNotRegistered() external {
         vm.prank(founder);
         vm.expectRevert(AppNotRegistered.selector);
-        registry.uninstallApp(mockModule, appAccount, "");
+        installer.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_getAppById_getRevokedApp() external givenAppIsRegistered {
@@ -489,7 +492,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -504,7 +507,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         hoax(founder, totalPrice);
         vm.expectEmit(address(registry));
         emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
-        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -520,7 +523,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(0);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -532,7 +535,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
 
         hoax(founder, totalPrice);
-        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -545,7 +548,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -559,7 +562,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 founderInitialBalance = address(founder).balance;
 
         hoax(founder, payment);
-        registry.renewApp{value: payment}(mockModule, appAccount, "");
+        installer.renewApp{value: payment}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -575,12 +578,12 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Try to renew as non-owner
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_appNotInstalled() external givenAppIsRegistered {
@@ -590,7 +593,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, totalPrice);
         vm.expectRevert(AppNotInstalled.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_appRevoked() external givenAppIsRegistered {
@@ -599,7 +602,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Revoke the app
         vm.prank(DEFAULT_DEV);
@@ -608,7 +611,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // Try to renew
         hoax(founder, totalPrice);
         vm.expectRevert(AppRevoked.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_bannedApp() external givenAppIsRegistered {
@@ -617,7 +620,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Ban the app
         vm.prank(deployer);
@@ -626,7 +629,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // Try to renew
         hoax(founder, totalPrice);
         vm.expectRevert(BannedApp.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_insufficientPayment() external givenAppIsRegistered {
@@ -635,13 +638,13 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Try to renew with insufficient payment
         uint256 insufficientAmount = totalPrice - 1;
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
-        registry.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
+        installer.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -654,7 +657,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalRequired = registry.getAppPrice(address(appContract));
 
         hoax(founder, totalRequired);
-        registry.installApp{value: totalRequired}(appContract, appAccount, "");
+        installer.installApp{value: totalRequired}(appContract, appAccount, "");
 
         assertTrue(appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Read")));
 
@@ -675,7 +678,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.prank(founder);
         vm.expectEmit(address(registry));
         emit AppUpdated(address(appContract), address(appAccount), newAppId);
-        registry.updateApp(appContract, appAccount);
+        installer.updateApp(appContract, appAccount);
 
         assertTrue(
             appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, newPermissions[1])
@@ -726,13 +729,13 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.assume(notAllowed != founder);
         vm.prank(notAllowed);
         vm.expectRevert(NotAllowed.selector);
-        registry.updateApp(SimpleApp(SIMPLE_APP), appAccount);
+        installer.updateApp(SimpleApp(SIMPLE_APP), appAccount);
     }
 
     function test_revertWhen_updateApp_appNotInstalled() external givenSimpleAppIsRegistered {
         vm.prank(founder);
         vm.expectRevert(AppNotInstalled.selector);
-        registry.updateApp(SimpleApp(SIMPLE_APP), appAccount);
+        installer.updateApp(SimpleApp(SIMPLE_APP), appAccount);
     }
 
     function test_revertWhen_updateApp_appAlreadyInstalled() external givenSimpleAppIsRegistered {
@@ -741,11 +744,11 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalRequired = registry.getAppPrice(appAddress);
 
         hoax(founder, totalRequired);
-        registry.installApp{value: totalRequired}(appContract, appAccount, "");
+        installer.installApp{value: totalRequired}(appContract, appAccount, "");
 
         vm.prank(founder);
         vm.expectRevert(AppAlreadyInstalled.selector);
-        registry.updateApp(appContract, appAccount);
+        installer.updateApp(appContract, appAccount);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -803,7 +806,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.deal(founder, totalRequired);
 
         vm.prank(founder);
-        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+        installer.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
 
         vm.prank(DEFAULT_DEV);
         SimpleApp(payable(app)).withdrawETH(DEFAULT_DEV);
@@ -819,7 +822,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.deal(founder, totalRequired);
 
         vm.prank(founder);
-        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+        installer.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
 
         assertEq(address(app).balance, DEFAULT_INSTALL_PRICE);
 
@@ -839,7 +842,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         vm.deal(founder, totalRequired);
 
         vm.prank(founder);
-        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
+        installer.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
 
         assertEq(address(app).balance, DEFAULT_INSTALL_PRICE);
 

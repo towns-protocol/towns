@@ -20,6 +20,7 @@ import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
 import {IAppRegistry, IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppInstaller} from "src/apps/facets/installer/IAppInstaller.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 
@@ -170,7 +171,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
         // App Registry
-        deployAppRegistry.setSpaceFactory(spaceFactory);
         appRegistry = deployAppRegistry.deploy(deployer);
 
         // Base Registry Diamond
@@ -293,7 +293,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         vm.deal(address(founder), totalRequired);
 
         vm.prank(founder);
-        IAppRegistry(appRegistry).installApp{value: totalRequired}({
+        IAppInstaller(appRegistry).installApp{value: totalRequired}({
             app: ITownsApp(app),
             account: IAppAccount(everyoneSpace),
             data: ""
@@ -302,6 +302,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     function _uninstallAppOnEveryoneSpace(address app) internal {
         vm.prank(founder);
-        IAppRegistry(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
+        IAppInstaller(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
     }
 }
