@@ -60,7 +60,7 @@ interface ITippingBase {
         TipRecipientType indexed recipientType,
         address currency,
         uint256 amount,
-        uint256 tokenId // 0 if not a member tip
+        bytes data
     );
 
     // Maintain legacy event for backwards compatibility
