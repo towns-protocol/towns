@@ -72,26 +72,23 @@ import {
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
-    createClient as createViemClient,
     http,
-    type Abi,
     type Account,
     type Chain,
-    type Client as ViemClient,
-    type ContractFunctionArgs,
-    type ContractFunctionName,
     type Prettify,
+    type Transport,
+    type Hex,
+    type WalletClient,
+    createWalletClient,
+    type Address,
 } from 'viem'
-import {
-    readContract,
-    type ReadContractParameters,
-    writeContract,
-    type WriteContractParameters,
-} from 'viem/actions'
-import { base, baseSepolia } from 'viem/chains'
+import { readContract } from 'viem/actions'
+import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
+import { privateKeyToAccount } from 'viem/accounts'
+import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -279,8 +276,9 @@ export class Bot<
     HonoEnv extends Env = BlankEnv,
 > {
     private readonly client: ClientV2<BotActions>
+    readonly appAddress: Address
     botId: string
-    viemClient: ViemClient
+    viem: WalletClient<Transport, Chain, Account>
     snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
@@ -301,16 +299,18 @@ export class Bot<
 
     constructor(
         clientV2: ClientV2<BotActions>,
-        viemClient: ViemClient,
+        viem: WalletClient<Transport, Chain, Account>,
         jwtSecretBase64: string,
+        appAddress: Address,
         commands?: Commands,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
-        this.viemClient = viemClient
+        this.viem = viem
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
         this.commands = commands
+        this.appAddress = appAddress
         this.snapshot = clientV2.snapshot
     }
 
@@ -897,25 +897,6 @@ export class Bot<
         return result
     }
 
-    writeContract<
-        chain extends Chain | undefined,
-        account extends Account | undefined,
-        const abi extends Abi | readonly unknown[],
-        functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-        args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
-        chainOverride extends Chain | undefined,
-    >(tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>) {
-        return writeContract(this.viemClient, tx as WriteContractParameters)
-    }
-
-    readContract<
-        const abi extends Abi | readonly unknown[],
-        functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-        const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
-    >(parameters: ReadContractParameters<abi, functionName, args>) {
-        return readContract(this.viemClient, parameters)
-    }
-
     async hasAdminPermission(userId: string, spaceId: string) {
         return this.client.hasAdminPermission(userId, spaceId)
     }
@@ -1040,22 +1021,47 @@ export const makeTownsBot = async <
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
-    const { privateKey, encryptionDevice, env } = parseAppPrivateData(appPrivateData)
+    let appAddress: Address | undefined
+    const {
+        privateKey,
+        encryptionDevice,
+        env,
+        appAddress: appAddressFromPrivateData,
+    } = parseAppPrivateData(appPrivateData)
     if (!env) {
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
+    if (appAddressFromPrivateData) {
+        appAddress = appAddressFromPrivateData
+    }
+    const account = privateKeyToAccount(privateKey as Hex)
+
     const baseConfig = townsEnv().makeBaseChainConfig(env)
-    const viemClient = createViemClient({
+    const getChain = (chainId: number) => {
+        if (chainId === base.id) return base
+        if (chainId === foundry.id) return foundry
+        return baseSepolia
+    }
+    const viem = createWalletClient({
+        account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
         // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
+        chain: getChain(baseConfig.chainConfig.chainId),
     })
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
     )
+    if (!appAddress) {
+        appAddress = await readContract(viem, {
+            address: baseConfig.chainConfig.addresses.appRegistry,
+            abi: appRegistryAbi,
+            functionName: 'getAppByClient',
+            args: [account.address],
+        })
+    }
     const client = await createTownsClient({
         privateKey,
         env,
@@ -1063,12 +1069,19 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
+    )
     await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
+    return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
 }
 
-const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
+const buildBotActions = (
+    client: ClientV2,
+    _viem: WalletClient<Transport, Chain, Account>,
+    spaceDapp: SpaceDapp,
+    _appAddress: string,
+) => {
     const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
 
     const createChunkedMediaAttachment = async (
@@ -1595,25 +1608,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
     }
 
     return {
-        // Is it those enough?
-        // TODO: think about a web3 use case..
-        writeContract: <
-            chain extends Chain | undefined,
-            account extends Account | undefined,
-            const abi extends Abi | readonly unknown[],
-            functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-            args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
-            chainOverride extends Chain | undefined,
-        >(
-            tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>,
-        ) => writeContract(viemClient, tx as WriteContractParameters),
-        readContract: <
-            const abi extends Abi | readonly unknown[],
-            functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-            const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
-        >(
-            parameters: ReadContractParameters<abi, functionName, args>,
-        ) => readContract(viemClient, parameters),
         sendMessage,
         editMessage,
         sendReaction,

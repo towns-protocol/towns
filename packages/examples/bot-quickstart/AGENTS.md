@@ -854,22 +854,35 @@ bot.onMessage(async (handler, event) => {
 
 ### Web3 Operations
 
+Bot exposes viem client and app address for direct Web3 interactions:
+
 ```typescript
-// Read from smart contract
-const balance = await handler.readContract({
-  address: "0x...",
-  abi: [...],
-  functionName: "balanceOf",
-  args: [userAddress]
+import { readContract, writeContract, waitForTransactionReceipt } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+import { parseEther, zeroAddress } from 'viem'
+
+// Access bot's viem client and app address
+bot.viem        // WalletClient for contract interactions
+bot.appAddress   // Bot's app contract address
+
+// Read from contract
+const owner = await readContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'moduleOwner',
+  args: []
 })
 
-// Write to smart contract
-const tx = await handler.writeContract({
-  address: "0x...",
-  abi: [...],
-  functionName: "transfer",
-  args: [recipient, amount]
+// Write to contract
+const hash = await writeContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'sendCurrency',
+  args: [recipientAddress, zeroAddress, parseEther('0.01')]
 })
+
+// Wait for transaction confirmation
+await waitForTransactionReceipt(bot.viem, { hash })
 ```
 
 ### Snapshot Data Access
@@ -1001,8 +1014,12 @@ bot.onMessage(async (handler, event) => {
     
     // Ban after 3 warnings
     if (count >= 3) {
-      // Implement ban logic via smart contract
-      await handler.writeContract({...})
+      // Ban the user (requires ModifyBanning permission)
+      await handler.ban(event.userId, event.spaceId)
+      await handler.sendMessage(
+        event.channelId,
+        `<@${event.userId}> has been banned after 3 warnings`
+      )
     }
   }
 })
@@ -1222,11 +1239,16 @@ await bot.hasAdminPermission(userId, spaceId)
 await bot.checkPermission(channelId, userId, permission)
 await bot.ban(userId, spaceId)  // Requires ModifyBanning permission
 await bot.unban(userId, spaceId)  // Requires ModifyBanning permission
-await bot.readContract({ ... })
-await bot.writeContract({ ... })
 
 // Access bot properties:
-console.log(bot.botId)  // Bot's user ID (address)
+bot.botId      // Bot's user ID (address)
+bot.viem       // WalletClient for Web3 operations
+bot.appAddress // Bot's app contract address
+
+// For Web3 operations, use viem actions:
+import { readContract, writeContract } from 'viem/actions'
+await readContract(bot.viem, { address, abi, functionName, args })
+await writeContract(bot.viem, { address, abi, functionName, args })
 ```
 
 **Important Notes:**

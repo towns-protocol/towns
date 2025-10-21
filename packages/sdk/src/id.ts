@@ -18,12 +18,13 @@ import {
 import { AppPrivateDataSchema, ExportedDevice } from '@towns-protocol/proto'
 import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
 import type { Address } from '@towns-protocol/web3'
+import { getAddress } from 'ethers/lib/utils'
 
 export const STREAM_ID_BYTES_LENGTH = 32
 export const STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
 
-export const userIdFromAddress = (address: Uint8Array): string =>
-    utils.getAddress(bin_toHexString(address))
+export const userIdFromAddress = (address: Uint8Array): Address =>
+    utils.getAddress(bin_toHexString(address)) as Address
 
 // Assuming `userId` is an Ethereum address in string format
 export const userIdToAddress = (userId: string): Uint8Array => addressFromUserId(userId)
@@ -298,6 +299,8 @@ export const parseAppPrivateData = (encoded: string) => {
     const raw = fromBinary(AppPrivateDataSchema, appPrivateData)
     return {
         ...raw,
-        appAddress: raw.appAddress ? (bin_toHexString(raw.appAddress) as Address) : undefined,
+        appAddress: raw.appAddress
+            ? (getAddress(bin_toHexString(raw.appAddress)) as Address)
+            : undefined,
     }
 }

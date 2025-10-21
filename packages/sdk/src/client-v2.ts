@@ -15,7 +15,7 @@ import {
 } from './signerContext'
 import { townsEnv } from './townsEnv'
 import { ethers } from 'ethers'
-import { RiverRegistry } from '@towns-protocol/web3'
+import { RiverRegistry, type Address } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
 import { makeBaseProvider, makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
@@ -48,7 +48,7 @@ import {
 
 type Client_Base = {
     /** The userId of the Client. */
-    userId: string
+    userId: Address
     /** The signer context of the Client. */
     signerContext: SignerContext
     /** The wallet of the Client. */

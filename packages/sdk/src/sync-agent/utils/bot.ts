@@ -1,6 +1,6 @@
 import { TownsConfig, townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
-import { LocalhostWeb3Provider } from '@towns-protocol/web3'
+import { LocalhostWeb3Provider, type Address } from '@towns-protocol/web3'
 import { makeSignerContext } from '../../signerContext'
 import { SyncAgent, type SyncAgentConfig } from '../syncAgent'
 
@@ -18,7 +18,7 @@ export class Bot {
     }
 
     get userId() {
-        return this.rootWallet.address
+        return this.rootWallet.address as Address
     }
 
     get signer(): ethers.Signer {
