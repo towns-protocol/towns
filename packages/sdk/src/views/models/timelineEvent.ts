@@ -595,6 +595,10 @@ function toTownsContent_ChannelPayload(
             }
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
+        case 'interactionRequest':
+            return { error: `Interaction request not supported: ${description}` }
+        case 'interactionResponse':
+            return { error: `Interaction response not supported: ${description}` }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }

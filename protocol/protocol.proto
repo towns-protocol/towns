@@ -1293,6 +1293,9 @@ message InteractionRequest {
 }
 
 message InteractionResponse {
+    // The recipient of the interaction response.
+    bytes recipient = 1;
+
     message SignatureResponse {
         // The id of the request that this response is for
         string request_id = 1;

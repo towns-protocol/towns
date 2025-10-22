@@ -55,6 +55,8 @@ import {
     GetLastMiniblockHashResponse,
     InfoResponse,
     MessageInteractionType,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -167,6 +169,8 @@ import {
     isSolanaTransactionReceipt,
     ParsedEvent,
     ExclusionFilter,
+    make_ChannelPayload_InteractionRequest,
+    make_ChannelPayload_InteractionResponse,
 } from './types'
 import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
@@ -2117,6 +2121,29 @@ export class Client
                 value: content,
             },
         })
+    }
+
+    async sendInteractionRequest(
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+    ): Promise<{ eventId: string }> {
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionRequest(request),
+            {
+                method: 'sendInteractionRequest',
+            },
+        )
+    }
+
+    async sendInteractionResponse(
+        streamId: string,
+        response: PlainMessage<InteractionResponse>,
+    ): Promise<{ eventId: string }> {
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionResponse(response),
+        )
     }
 
     async redactMessage(streamId: string, eventId: string): Promise<{ eventId: string }> {
