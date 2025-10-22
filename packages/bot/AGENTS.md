@@ -138,16 +138,39 @@ The `@towns-protocol/bot` package exports several types useful for building abst
 - `ban(userId, spaceId)` - Ban a user from a space (requires `ModifyBanning` permission)
 - `unban(userId, spaceId)` - Unban a user from a space (requires `ModifyBanning` permission)
 
-**Web3 Operations:**
-- `writeContract(tx)` - Execute contract write
-- `readContract(parameters)` - Read contract state
-
 **Snapshot Data Access:**
 - `bot.snapshot.getChannelInception(streamId)` - Get channel settings and inception data
 - `bot.snapshot.getUserMemberships(streamId)` - Get user's space memberships
 - `bot.snapshot.getSpaceMemberships(streamId)` - Get space membership list
 - Note: Snapshot data may be outdated - it's a point-in-time view
 - Uses dynamic Proxy-based getters for type-safe access
+
+**Web3 Operations:**
+Bot exposes viem client and app address for direct Web3 interactions:
+- `bot.viem` - WalletClient for reading/writing contracts
+- `bot.appAddress` - The bot's app contract address
+
+Use viem actions directly for contract interactions:
+```typescript
+import { readContract, writeContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+
+// Read from contract
+const owner = await readContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'moduleOwner',
+  args: []
+})
+
+// Write to contract
+const hash = await writeContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'sendCurrency',
+  args: [recipientAddress, tokenAddress, amount]
+})
+```
 
 ### Encryption & Decryption
 
@@ -425,16 +448,16 @@ bot.onSlashCommand("ban", async (handler, { channelId, spaceId, args, userId }) 
     await handler.sendMessage(channelId, "Only admins can use this command")
     return
   }
-  
+
   const userToBan = args[0] // Expecting user address as first argument
   if (!userToBan) {
     await handler.sendMessage(channelId, "Please specify a user address to ban")
     return
   }
-  
+
   try {
     // Ban the user - bot must have ModifyBanning permission
-    const result = await handler.ban(userToBan, spaceId)
+    await handler.ban(userToBan, spaceId)
     await handler.sendMessage(channelId, `Successfully banned user ${userToBan}`)
   } catch (error) {
     await handler.sendMessage(channelId, `Failed to ban user: ${error.message}`)
@@ -443,14 +466,31 @@ bot.onSlashCommand("ban", async (handler, { channelId, spaceId, args, userId }) 
 
 bot.onSlashCommand("unban", async (handler, { channelId, spaceId, args }) => {
   const userToUnban = args[0]
-  
+
   try {
     // Unban the user - bot must have ModifyBanning permission
-    const result = await handler.unban(userToUnban, spaceId)
+    await handler.unban(userToUnban, spaceId)
     await handler.sendMessage(channelId, `Successfully unbanned user ${userToUnban}`)
   } catch (error) {
     await handler.sendMessage(channelId, `Failed to unban user: ${error.message}`)
   }
+})
+```
+
+### Web3 Contract Interactions
+```typescript
+import { readContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+
+// Read from your bot's contract
+bot.onSlashCommand("owner", async (handler, { channelId }) => {
+  const owner = await readContract(bot.viem, {
+    address: bot.appAddress,
+    abi: simpleAppAbi,
+    functionName: 'moduleOwner',
+    args: []
+  })
+  await handler.sendMessage(channelId, `Contract owner: ${owner}`)
 })
 ```
 

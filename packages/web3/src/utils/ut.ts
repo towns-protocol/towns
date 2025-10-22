@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { PublicClient } from 'viem'
+import { PublicClient, type Address } from 'viem'
 import { Permission } from '../types/ContractTypes'
 
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
@@ -65,8 +65,8 @@ export function isPublicClient(
 
 // River space stream ids are 64 characters long, and start with '10'
 // incidentally this should also work if you just pass the space contract address with 0x prefix
-export function SpaceAddressFromSpaceId(spaceId: string): string {
-    return ethers.utils.getAddress(spaceId.slice(2, 42))
+export function SpaceAddressFromSpaceId(spaceId: string): Address {
+    return ethers.utils.getAddress(spaceId.slice(2, 42)) as Address
 }
 
 // River space stream ids are 64 characters long, and start with '10'

@@ -38,6 +38,9 @@ import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
+import { getBalance, readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
+import { parseEther, zeroAddress } from 'viem'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -147,6 +150,11 @@ describe('Bot', { sequential: true }, () => {
         )
         const receipt = await tx.wait()
         const { app: address } = appRegistryDapp.getCreateAppEvent(receipt)
+        const fundingAppTx = await bob.signer.sendTransaction({
+            to: address,
+            value: ethers.utils.parseEther('0.5').toBigInt(),
+        })
+        await fundingAppTx.wait()
         expect(address).toBeDefined()
         appAddress = address as Address
     }
@@ -161,7 +169,7 @@ describe('Bot', { sequential: true }, () => {
         const tx = await appRegistryDapp.installApp(
             bob.signer,
             appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
         )
         const receipt = await tx.wait()
@@ -764,11 +772,7 @@ describe('Bot', { sequential: true }, () => {
 
     // TODO: waiting for disable bot feature
     it.skip('never receive message from a uninstalled app', async () => {
-        await appRegistryDapp.uninstallApp(
-            bob.signer,
-            appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
-        )
+        await appRegistryDapp.uninstallApp(bob.signer, appAddress, SpaceAddressFromSpaceId(spaceId))
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -1193,5 +1197,39 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')
         expect(receivedMessages[0].message).toEqual(message)
+    })
+
+    it('bot.appAddress should be equal to the address of the app contract', async () => {
+        expect(bot.appAddress).toBe(appAddress)
+    })
+
+    it('bot should be able to read app contract', async () => {
+        expect(appAddress).toBeDefined()
+        const botOwner = await readContract(bot.viem, {
+            address: bot.appAddress,
+            abi: simpleAppAbi,
+            functionName: 'moduleOwner',
+            args: [],
+        })
+        expect(botOwner).toBe(bob.userId)
+    })
+
+    it('bot should be able to call writeContract (send currency to another user)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const aliceBalance_before = await getBalance(bot.viem, {
+            address: alice.userId,
+        })
+
+        const hash = await writeContract(bot.viem, {
+            address: bot.appAddress,
+            abi: simpleAppAbi,
+            functionName: 'sendCurrency',
+            args: [alice.userId, zeroAddress, parseEther('0.01')],
+        })
+        await waitForTransactionReceipt(bot.viem, { hash: hash })
+        const aliceBalance_after = await getBalance(bot.viem, {
+            address: alice.userId,
+        })
+        expect(aliceBalance_after).toBeGreaterThan(aliceBalance_before)
     })
 })

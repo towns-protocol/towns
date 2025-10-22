@@ -124,7 +124,7 @@ describe('channelScrubbing', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
