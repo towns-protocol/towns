@@ -146,7 +146,16 @@ message GetSessionRequest {
     // public key of the app
     bytes app_id = 1;
 
-    string session_id = 2;    
+    oneof identifier {
+        // session_id retrieves a specific session by its ID.
+        // Use this when you have stored the session ID from a previous interaction.
+        string session_id = 2;
+
+        // stream_id retrieves the session key for a specific stream.
+        // Use this when you want to reuse an existing session for a stream
+        // without storing session IDs (useful for stateless bots).
+        bytes stream_id = 3;
+    }
 }
 
 message GetSessionResponse {
