@@ -1266,7 +1266,10 @@ const buildBotActions = (
             try {
                 const sessionResp = await appService.getSession({
                     appId: userIdToAddress(client.userId),
-                    streamId: streamIdAsBytes(streamId),
+                    identifier: {
+                        case: 'streamId',
+                        value: streamIdAsBytes(streamId),
+                    },
                 })
                 if (sessionResp.groupEncryptionSessions) {
                     const parsedEvent = await unpackEnvelope(
