@@ -1267,7 +1267,12 @@ message InteractionRequest {
         string id = 1;
         // The hex encoded data to be signed.
         // - For PERSONAL_SIGN: UTF-8 text (e.g. SIWE message).
-        // - For TYPED_DATA: JSON-encoded EIP-712 typed data or pre-hashed bytes.
+        // - For TYPED_DATA: JSON-encoded EIP-712 typed data
+        // SECURITY REQUIREMENT:
+        // The sender must embed any nonce, timestamp, audience, or session binding
+        // INSIDE the "data" payload before signing.
+        // Example for personal_sign:
+        // "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
         string data = 2;
         string chain_id = 3;
         // The address of the signer wallet. If not provided, the user can use any wallet to sign
@@ -1279,12 +1284,6 @@ message InteractionRequest {
         optional string title = 6;
         // Optional: a subtitle or human-readable explanation (UX only).
         optional string subtitle = 7;
-
-        // SECURITY REQUIREMENT:
-        // The sender must embed any nonce, timestamp, audience, or session binding
-        // INSIDE the "data" payload before signing.
-        // Example for personal_sign:
-        // "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
     }
 
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
