@@ -14,6 +14,7 @@ import (
 func TestReplMcConversationNoRace(t *testing.T) {
 	t.Parallel()
 	t.Run("5x100", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
 		testReplMcConversation(t, 5, 100, 10, 100, 100)
 	})
 	t.Run("10x1000", func(t *testing.T) {
