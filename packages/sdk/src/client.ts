@@ -55,7 +55,6 @@ import {
     GetLastMiniblockHashResponse,
     InfoResponse,
     MessageInteractionType,
-    InteractionRequest,
     InteractionResponse,
 } from '@towns-protocol/proto'
 import {
