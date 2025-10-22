@@ -193,8 +193,8 @@ type (
 			sessionId string,
 		) (encryptionEnvelope []byte, err error)
 
-		// GetSessionKey returns the envelope of the encrypted sessions message for the specified
-		// app that contains the encrypted ciphertext for the given session id, if it exists.
+		// GetSessionKeyForStream returns the envelope of the encrypted sessions message for the specified
+		// app that contains the encrypted ciphertext for the given stream, if it exists.
 		GetSessionKeyForStream(
 			ctx context.Context,
 			app common.Address,
@@ -754,7 +754,7 @@ func (s *PostgresAppRegistryStore) GetSessionKey(
 	err = s.txRunner(
 		ctx,
 		"GetSessionKeys",
-		pgx.ReadWrite,
+		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			encryptionEnvelope, err = s.getSessionKey(ctx, app, sessionId, tx)
@@ -778,7 +778,7 @@ func (s *PostgresAppRegistryStore) GetSessionKeyForStream(
 	err = s.txRunner(
 		ctx,
 		"GetSessionKeys",
-		pgx.ReadWrite,
+		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			encryptionEnvelope, err = s.getSessionKeyForStream(ctx, app, streamId, tx)
