@@ -239,11 +239,7 @@ message AppPrivateData {
     bytes app_address = 4;
 }
 
-message Interaction {
-
-    // Optional: identifies the recipient. If not provided, the interaction if for anyone to interact with.
-    optional bytes recipient = 2;
-
+message InteractionRequest {
     message SignatureRequest {
         // Type of signing method to use. The app must call the
         // corresponding method on the wallet as noted below.
@@ -253,7 +249,7 @@ message Interaction {
         }
 
         // A unique identifier for this interaction.
-        // Used to correlate a SignatureRequest with its SignatureResponse.
+        // Used to correlate an InteractionRequest with its InteractionResponse.
         string id = 1;
         // The hex encoded data to be signed.
         // - For PERSONAL_SIGN: UTF-8 text (e.g. SIWE message).
@@ -262,7 +258,7 @@ message Interaction {
         string chain_id = 3;
         // Which signature method the app expects the wallet to use.
         SignatureType type = 4;
-        // Optional: a short title for the wallet’s signature dialog (UX only).
+        // Optional: a short title for the wallet's signature dialog (UX only).
         optional string title = 5;
         // Optional: a subtitle or human-readable explanation (UX only).
         optional string subtitle = 6;
@@ -274,6 +270,15 @@ message Interaction {
         // "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
     }
 
+    // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
+    optional bytes recipient = 1;
+
+    oneof content {
+        SignatureRequest signature_request = 101;
+    }
+}
+
+message InteractionResponse {
     message SignatureResponse {
         // The id of the request that this response is for
         string request_id = 1;
@@ -282,7 +287,6 @@ message Interaction {
     }
 
     oneof content {
-        SignatureRequest signature_request = 101;
-        SignatureResponse signature_response = 102;
+        SignatureResponse signature_response = 101;
     }
 }
