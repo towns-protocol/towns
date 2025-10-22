@@ -7,6 +7,7 @@ pragma solidity ^0.8.23;
 
 // contracts
 
+// Test change for artifact regeneration verification
 interface IERC5643Base {
     error ERC5643__InvalidTokenId(uint256 tokenId);
     error ERC5643__SubscriptionNotRenewable(uint256 tokenId);
