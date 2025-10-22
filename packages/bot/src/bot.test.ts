@@ -17,6 +17,7 @@ import {
     Bot as SyncAgentTest,
     AppRegistryService,
     MessageType,
+    ClientV2,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
@@ -610,6 +611,31 @@ describe('Bot', { sequential: true }, () => {
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
+    })
+
+    it('bot can fetch new keys', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId1 } = await bot.sendMessage(channelId, 'Hello message 1')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId1)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        // DELETE OUTBOUND GROUP SESSIONS to simulate fresh server start
+        await (bot['client'] as ClientV2).crypto.cryptoStore.deleteOutboundGrounpSessions(channelId)
+        await (bot['client'] as ClientV2).crypto.cryptoStore.deleteHybridGroupSessions(channelId)
+
+        const { eventId: messageId2 } = await bot.sendMessage(channelId, 'Hello message 2')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId2)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const event1 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId1)
+        const event2 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId2)
+        expect(event1?.sessionId).toEqual(event2?.sessionId)
     })
 
     it('bot can ban and unban users', async () => {

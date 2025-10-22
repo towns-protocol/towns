@@ -15,7 +15,7 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { townsEnv } from './townsEnv'
+import { townsEnv, TownsService } from './townsEnv'
 import { ethers } from 'ethers'
 import { RiverRegistry, type Address } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
@@ -38,6 +38,7 @@ import {
     unpackStream,
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
+    UnpackEnvelopeOpts,
 } from './sign'
 import { bin_toHexString, check } from '@towns-protocol/utils'
 import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
@@ -49,6 +50,8 @@ import {
     type StreamEvent,
     type Tags,
 } from '@towns-protocol/proto'
+import { AppRegistryService } from './appRegistryService'
+import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
 
 type Client_Base = {
     /** The userId of the Client. */
@@ -71,6 +74,10 @@ type Client_Base = {
     disableHashValidation: boolean
     /** Disable signature validation for streams. */
     disableSignatureValidation: boolean
+    /** Options for unpacking envelopes */
+    unpackEnvelopeOpts: UnpackEnvelopeOpts
+    /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
+    appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
     getStream: (streamId: string) => Promise<ParsedStreamResponse>
     /** Get the miniblock info for a stream */
@@ -166,6 +173,7 @@ export const createTownsClient = async (
 
     // eslint-disable-next-line prefer-const
     let crypto: GroupEncryptionCrypto
+    let _appService: Awaited<ReturnType<typeof AppRegistryService.authenticate>> | undefined
 
     const getMiniblockInfo = async (streamId: string): Promise<MiniblockInfoResponse> => {
         const r = await client.rpc.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
@@ -335,6 +343,21 @@ export const createTownsClient = async (
         }
     }
 
+    const appServiceClient = async (): Promise<AppRegistryRpcClient> => {
+        if (_appService) {
+            return _appService.appRegistryRpcClient
+        }
+        const appServiceConfig = config.services.find((s) => s.id === TownsService.AppRegistry)
+        if (!appServiceConfig) {
+            throw new Error('App registry service not found')
+        }
+        if (!appServiceConfig.url) {
+            throw new Error('App registry service url not found')
+        }
+        _appService = await AppRegistryService.authenticate(signerContext, appServiceConfig.url)
+        return _appService.appRegistryRpcClient
+    }
+
     const importGroupEncryptionSessions = async (payload: {
         streamId: string
         sessions: UserInboxPayload_GroupEncryptionSessions
@@ -380,6 +403,10 @@ export const createTownsClient = async (
     await crypto.init(params.encryptionDevice)
 
     const { hashValidation = false, signatureValidation = false } = params
+    const unpackEnvelopeOpts: UnpackEnvelopeOpts = {
+        disableHashValidation: !hashValidation,
+        disableSignatureValidation: !signatureValidation,
+    }
     const client = {
         crypto,
         keychain: cryptoStore,
@@ -390,6 +417,8 @@ export const createTownsClient = async (
         userId,
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
+        unpackEnvelopeOpts,
+        appServiceClient,
         getStream,
         getMiniblockInfo,
         sendEvent,
