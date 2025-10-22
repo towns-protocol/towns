@@ -95,18 +95,7 @@ async function downloadArtifactsFromNpm() {
     
     if (!existsSync(devDir)) mkdirSync(devDir, { recursive: true });
     execSync(`cp -r "${extractedDevDir}/." "${devDir}/"`, { stdio: 'pipe' });
-    
-    // Validate hash if contracts exist
-    const currentHash = getContractsHash();
-    if (currentHash && existsSync(hashFile)) {
-      const downloadedHash = readFileSync(hashFile, 'utf8').trim();
-      if (currentHash !== downloadedHash) {
-        console.log('Hash mismatch, falling back to local generation');
-        execSync(`rm -rf "${devDir}"`, { stdio: 'pipe' });
-        return false;
-      }
-    }
-    
+
     console.log('Successfully downloaded artifacts from npm');
     return true;
   } catch (error) {
@@ -187,18 +176,14 @@ async function main() {
   
   if (!generatedFilesExist()) {
     console.log('No artifacts found, trying npm download first...');
-    if (!(await downloadArtifactsFromNpm())) {
-      console.log('NPM download failed, generating locally...');
-      generateArtifacts();
-    }
-    return;
+    await downloadArtifactsFromNpm();
   }
-  
+
   if (skipRequested) {
     console.log('Skipping generation (SKIP_CONTRACT_GEN=true)');
     return;
   }
-  
+
   if (contractsChanged()) {
     console.log('Contracts changed, regenerating...');
     generateArtifacts();
