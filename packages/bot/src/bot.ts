@@ -44,8 +44,6 @@ import {
     AppServiceResponseSchema,
     type AppServiceResponse,
     type EventPayload,
-    SessionKeysSchema,
-    type UserInboxPayload_GroupEncryptionSessions,
     MembershipOp,
     type PlainMessage,
     Tags,
@@ -58,17 +56,8 @@ import {
     ChunkedMediaSchema,
     CreationCookieSchema,
 } from '@towns-protocol/proto'
-import {
-    bin_fromBase64,
-    bin_fromHexString,
-    bin_toHexString,
-    check,
-    dlog,
-} from '@towns-protocol/utils'
-import {
-    GroupEncryptionAlgorithmId,
-    parseGroupEncryptionAlgorithmId,
-} from '@towns-protocol/encryption'
+import { bin_fromBase64, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/utils'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
@@ -440,11 +429,10 @@ export class Bot<
                     case 'gdmChannelPayload': {
                         if (!parsed.event.payload.value.content.case) return
                         if (parsed.event.payload.value.content.case === 'message') {
-                            const decryptedSessions = await this.client.decryptSessions(
+                            await this.client.importGroupEncryptionSessions({
                                 streamId,
-                                groupEncryptionSession,
-                            )
-                            await this.client.crypto.importSessionKeys(streamId, decryptedSessions)
+                                sessions: groupEncryptionSession,
+                            })
                             const eventCleartext = await this.client.crypto.decryptGroupEvent(
                                 streamId,
                                 parsed.event.payload.value.content.value,
@@ -1513,36 +1501,6 @@ const buildBotActions = (
         )
     }
 
-    const decryptSessions = async (
-        streamId: string,
-        sessions: UserInboxPayload_GroupEncryptionSessions,
-    ) => {
-        const { deviceKey } = client.crypto.getUserDevice()
-        const ciphertext = sessions.ciphertexts[deviceKey]
-        if (!ciphertext) {
-            throw new Error('No ciphertext found for device key')
-        }
-        const parsed = parseGroupEncryptionAlgorithmId(
-            sessions.algorithm,
-            GroupEncryptionAlgorithmId.GroupEncryption,
-        )
-        if (parsed.kind === 'unrecognized') {
-            throw new Error('Invalid algorithm')
-        }
-        const algorithm = parsed.value
-        // decrypt the session keys
-        const cleartext = await client.crypto.decryptWithDeviceKey(ciphertext, sessions.senderKey)
-        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
-        check(sessionKeys.keys.length === sessions.sessionIds.length, 'bad sessionKeys')
-        // make group sessions that can be used to decrypt events
-        return sessions.sessionIds.map((sessionId, i) => ({
-            streamId: streamId,
-            sessionId,
-            sessionKey: sessionKeys.keys[i],
-            algorithm,
-        }))
-    }
-
     const hasAdminPermission = async (userId: string, spaceId: string): Promise<boolean> => {
         const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
         // If you can ban, you're probably an "admin"
@@ -1617,7 +1575,6 @@ const buildBotActions = (
         adminRemoveEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
-        decryptSessions,
         hasAdminPermission,
         checkPermission,
         ban,

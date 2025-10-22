@@ -2,6 +2,8 @@ import {
     CryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
+    GroupEncryptionSession,
+    parseGroupEncryptionAlgorithmId,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
     type UserDevice,
@@ -37,9 +39,10 @@ import {
     unpackEnvelopes as sdk_unpackEnvelopes,
 } from './sign'
 import { bin_toHexString, check } from '@towns-protocol/utils'
-import { toJsonString } from '@bufbuild/protobuf'
+import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
 import {
     SessionKeysSchema,
+    UserInboxPayload_GroupEncryptionSessions,
     type Envelope,
     type PlainMessage,
     type StreamEvent,
@@ -73,6 +76,11 @@ type Client_Base = {
     unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
     /** Unpack envelopes using client config */
     unpackEnvelopes: (envelopes: Envelope[]) => Promise<ParsedEvent[]>
+    /** injest a group encryption session */
+    importGroupEncryptionSessions: (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => Promise<void>
     /** Send an event to a stream */
     sendEvent: (
         streamId: string,
@@ -325,6 +333,46 @@ export const createTownsClient = async (
         }
     }
 
+    const importGroupEncryptionSessions = async (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => {
+        const userDevice = crypto.getUserDevice()
+        const { streamId, sessions: session } = payload
+        // check if this message is to our device
+        const ciphertext = session.ciphertexts[userDevice.deviceKey]
+        if (!ciphertext) {
+            //log.debug('skipping, no session for our device')
+            return
+        }
+        // check if it contains any keys we need, default to GroupEncryption if the algorithm is not set
+        const parsed = parseGroupEncryptionAlgorithmId(
+            session.algorithm,
+            GroupEncryptionAlgorithmId.GroupEncryption,
+        )
+        if (parsed.kind === 'unrecognized') {
+            // todo dispatch event to update the error message
+            //this.log.error('skipping, invalid algorithm', session.algorithm)
+            return
+        }
+        const algorithm: GroupEncryptionAlgorithmId = parsed.value
+
+        // decrypt the message
+        const cleartext = await crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
+        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+        // make group sessions
+        const sessions = sessionKeys.keys.map(
+            (key, i) =>
+                ({
+                    streamId: streamId,
+                    sessionId: session.sessionIds[i],
+                    sessionKey: key,
+                    algorithm: algorithm,
+                }) satisfies GroupEncryptionSession,
+        )
+        await crypto.importSessionKeys(streamId, sessions)
+    }
     await cryptoStore.initialize()
     crypto = new GroupEncryptionCrypto(buildGroupEncryptionClient(), cryptoStore)
     await crypto.init(params.encryptionDevice)
@@ -344,6 +392,7 @@ export const createTownsClient = async (
         sendEvent,
         unpackEnvelope,
         unpackEnvelopes,
+        importGroupEncryptionSessions,
         env: config.environmentId,
     } satisfies Client_Base
 
