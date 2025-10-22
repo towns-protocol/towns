@@ -62,8 +62,9 @@ describe('integration/stream-metadata/userTips', () => {
 			}) at ${tokenId!} ${tipAmount} ETH`,
 		)
 
-		const tx = await bob.riverConnection.spaceDapp.tip(
+		const tx = await bob.riverConnection.spaceDapp.sendTip(
 			{
+				type: 'member',
 				spaceId,
 				tokenId: tokenId!,
 				currency: ETH_ADDRESS,

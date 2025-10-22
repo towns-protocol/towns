@@ -14,6 +14,7 @@ import {
     PricingModuleStruct,
     RemoveChannelParams,
     RoleDetails,
+    SendTipParams,
     SetChannelPermissionOverridesParams,
     TransactionOpts,
     UpdateChannelParams,
@@ -62,7 +63,7 @@ import { PlatformRequirements } from '../platform-requirements/PlatformRequireme
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { TipSentEventObject } from '../space/ITippingShim'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -1836,7 +1837,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         spaceId: string,
         receipt: ContractReceipt,
         senderAddress: string,
-    ): TipEventObject | undefined {
+    ): TipSentEventObject | undefined {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1874,10 +1875,20 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
     }
 
     /**
-     * Tip a user
-     * @param args
+     * Send a tip using the new sendTip interface
+     * @param args - The tip parameters
      * @param args.spaceId - The space id
+     * @param args.type - The recipient type: 'member' or 'bot'
+     * For member tips:
+     * @param args.receiver - The receiver's wallet address
      * @param args.tokenId - The token id to tip. Obtainable from getTokenIdOfOwner
+     * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
+     * @param args.amount - The amount to tip
+     * @param args.messageId - The message id - needs to be hex encoded to 64 characters
+     * @param args.channelId - The channel id - needs to be hex encoded to 64 characters
+     * For bot tips:
+     * @param args.receiver - The bot's wallet address
+     * @param args.appId - The app id - needs to be hex encoded to 64 characters
      * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
      * @param args.amount - The amount to tip
      * @param args.messageId - The message id - needs to be hex encoded to 64 characters
@@ -1885,40 +1896,78 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
      * @param signer - The signer to use for the tip
      * @returns The transaction
      */
-    public async tip(
-        args: {
-            spaceId: string
-            tokenId: string
-            currency: string
-            amount: bigint
-            messageId: string
-            channelId: string
-            receiver: string
-        },
+    public async sendTip(
+        args: SendTipParams,
         signer: ethers.Signer,
         txnOpts?: TransactionOpts,
     ): Promise<ContractTransaction> {
-        const { spaceId, tokenId, currency, amount, messageId, channelId, receiver } = args
+        const { spaceId } = args
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
+        let recipientType: number
+        let encodedData: string
+
+        switch (args.type) {
+            case 'member': {
+                // TipRecipientType.Member = 0
+                recipientType = 0
+                const { receiver, tokenId, currency, amount, messageId, channelId } = args
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32', 'uint256'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId), tokenId],
+                )
+                // Encode struct MembershipTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address receiver, uint256 tokenId, address currency, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
+                    ],
+                    [
+                        [
+                            receiver,
+                            tokenId,
+                            currency,
+                            amount,
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
+                        ],
+                    ],
+                )
+                break
+            }
+            case 'bot': {
+                // TipRecipientType.Bot = 1
+                recipientType = 1
+                const { receiver, appId, currency, amount, messageId, channelId } = args
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
+                )
+                // Encode struct BotTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address receiver, address currency, bytes32 appId, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
+                    ],
+                    [
+                        [
+                            receiver,
+                            currency,
+                            ensureHexPrefix(appId),
+                            amount,
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
+                        ],
+                    ],
+                )
+                break
+            }
+        }
+
         return wrapTransaction(
             () =>
-                space.Tipping.write(signer).tip(
-                    {
-                        receiver,
-                        tokenId,
-                        currency,
-                        amount,
-                        messageId: ensureHexPrefix(messageId),
-                        channelId: ensureHexPrefix(channelId),
-                    },
-                    {
-                        value: amount,
-                    },
-                ),
+                space.Tipping.write(signer).sendTip(recipientType, encodedData, {
+                    value: args.amount,
+                }),
             txnOpts,
         )
     }
