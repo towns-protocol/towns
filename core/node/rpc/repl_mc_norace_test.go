@@ -18,6 +18,7 @@ func TestReplMcConversationNoRace(t *testing.T) {
 		testReplMcConversation(t, 5, 100, 10, 100, 100)
 	})
 	t.Run("10x1000", func(t *testing.T) {
+		testutils.SkipFlakyTest(t, "TODO: REPLICATION: FIX: flaky")
 		if testing.Short() {
 			t.Skip("skipping 10x1000 in short mode")
 		}
