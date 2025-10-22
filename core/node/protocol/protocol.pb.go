@@ -10268,7 +10268,12 @@ type InteractionRequest_SignatureRequest struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// The hex encoded data to be signed.
 	// - For PERSONAL_SIGN: UTF-8 text (e.g. SIWE message).
-	// - For TYPED_DATA: JSON-encoded EIP-712 typed data or pre-hashed bytes.
+	// - For TYPED_DATA: JSON-encoded EIP-712 typed data
+	// SECURITY REQUIREMENT:
+	// The sender must embed any nonce, timestamp, audience, or session binding
+	// INSIDE the "data" payload before signing.
+	// Example for personal_sign:
+	// "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
 	Data    string `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
 	ChainId string `protobuf:"bytes,3,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// The address of the signer wallet. If not provided, the user can use any wallet to sign
