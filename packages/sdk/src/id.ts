@@ -297,10 +297,9 @@ export const parseAppPrivateData = (encoded: string) => {
         appPrivateData = bin_fromBase64(encoded)
     }
     const raw = fromBinary(AppPrivateDataSchema, appPrivateData)
+    const hex_appAddress = bin_toHexString(raw.appAddress)
     return {
         ...raw,
-        appAddress: raw.appAddress
-            ? (getAddress(bin_toHexString(raw.appAddress)) as Address)
-            : undefined,
+        appAddress: hex_appAddress ? (getAddress(hex_appAddress) as Address) : undefined,
     }
 }
