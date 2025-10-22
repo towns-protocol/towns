@@ -154,6 +154,18 @@ export class GroupEncryptionCrypto {
     }
 
     /**
+     *
+     * @param streamId - the id of the stream to check
+     * @param algorithm - the algorithm to use
+     * @returns true if the stream has an outbound session, false otherwise
+     */
+    public async hasOutboundSession(
+        streamId: string,
+        algorithm: GroupEncryptionAlgorithmId,
+    ): Promise<boolean> {
+        return this.groupEncryption[algorithm].hasOutboundSession(streamId)
+    }
+    /**
      * Encrypt an event using group encryption algorithm
      *
      * @returns Promise which resolves when the event has been
@@ -352,11 +364,6 @@ export class GroupEncryptionCrypto {
     }
 
     public async hasHybridSession(streamId: string): Promise<boolean> {
-        try {
-            await this.encryptionDevice.getHybridGroupSessionKeyForStream(streamId)
-            return true
-        } catch {
-            return false
-        }
+        return this.hasOutboundSession(streamId, GroupEncryptionAlgorithmId.HybridGroupEncryption)
     }
 }
