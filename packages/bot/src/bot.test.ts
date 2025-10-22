@@ -1267,7 +1267,7 @@ describe('Bot', { sequential: true }, () => {
     it('user should be able to send interaction response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const interactionResponse: PlainMessage<InteractionResponse> = {
-            recipient: bin_fromHexString(bob.userId),
+            recipient: bin_fromHexString(botClientAddress),
             content: {
                 case: 'signatureResponse',
                 value: {

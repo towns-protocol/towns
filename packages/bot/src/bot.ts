@@ -59,7 +59,13 @@ import {
     InteractionRequest,
     InteractionResponse,
 } from '@towns-protocol/proto'
-import { bin_fromBase64, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/utils'
+import {
+    bin_equal,
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_toHexString,
+    dlog,
+} from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
@@ -490,7 +496,7 @@ export class Bot<
                             parsed.event.payload.value.content.case === 'interactionResponse'
                         ) {
                             const payload = parsed.event.payload.value.content.value
-                            if (payload.recipient === bin_fromHexString(this.botId)) {
+                            if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
                                 return
                             }
                             this.emitter.emit('interactionResponse', this.client, {
