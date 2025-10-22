@@ -52,7 +52,7 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
-	StreamTrimActivationFactorConfigKey             = "stream.trimActivationFactor"
+	StreamTrimActivationFactorConfigKey             = "stream.trimactivationfactor"
 	ServerEnableNode2NodeAuthConfigKey              = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
@@ -153,7 +153,7 @@ type OnChainSettings struct {
 	// If snapshots come every N miniblocks and this factor is F, trimming considers a stream for pruning
 	// once roughly N*F miniblocks have accumulated since the last trimmed snapshot. A value of 0 disables
 	// auto-trimming.
-	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimActivationFactor"`
+	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimactivationfactor"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
