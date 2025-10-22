@@ -4,7 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
-    TipEventObject,
+    TipSentEventObject,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -2340,7 +2340,7 @@ export class Client
     async addTransaction_Tip(
         chainId: number,
         receipt: ContractReceipt,
-        event: TipEventObject,
+        event: TipSentEventObject,
         toUserId: string,
         opts?: SendBlockchainTransactionOptions,
     ): Promise<{ eventId: string }> {
@@ -2356,7 +2356,7 @@ export class Client
                 case: 'tip',
                 value: {
                     event: {
-                        tokenId: event.tokenId.toBigInt(),
+                        tokenId: event.tokenId?.toBigInt(),
                         currency: bin_fromHexString(event.currency),
                         sender: addressFromUserId(event.sender),
                         receiver: addressFromUserId(event.receiver),

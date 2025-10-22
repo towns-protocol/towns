@@ -41,7 +41,7 @@ type ITippingBaseTipRequest struct {
 
 // TippingMetaData contains all meta data concerning the Tipping contract.
 var TippingMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"tip\",\"inputs\":[{\"name\":\"tipRequest\",\"type\":\"tuple\",\"internalType\":\"structITippingBase.TipRequest\",\"components\":[{\"name\":\"receiver\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"tipAmountByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tippingCurrencies\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipsByCurrencyAndTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalTipsByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"Tip\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AmountIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CannotTipSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CurrencyIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"MsgValueMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReceiverIsNotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TokenDoesNotExist\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedETH\",\"inputs\":[]}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"sendTip\",\"inputs\":[{\"name\":\"recipientType\",\"type\":\"uint8\",\"internalType\":\"enumITippingBase.TipRecipientType\"},{\"name\":\"data\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"tip\",\"inputs\":[{\"name\":\"tipRequest\",\"type\":\"tuple\",\"internalType\":\"structITippingBase.TipRequest\",\"components\":[{\"name\":\"receiver\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}]}],\"outputs\":[],\"stateMutability\":\"payable\"},{\"type\":\"function\",\"name\":\"tipAmountByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipCountByWalletAndCurrency\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tippingCurrencies\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipsByCurrencyAndTokenId\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"tipsByWalletAndCurrency\",\"inputs\":[{\"name\":\"wallet\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"totalTipsByCurrency\",\"inputs\":[{\"name\":\"currency\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"Tip\",\"inputs\":[{\"name\":\"tokenId\",\"type\":\"uint256\",\"indexed\":true,\"internalType\":\"uint256\"},{\"name\":\"currency\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"sender\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"messageId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"channelId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"TipSent\",\"inputs\":[{\"name\":\"sender\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"receiver\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"recipientType\",\"type\":\"uint8\",\"indexed\":true,\"internalType\":\"enumITippingBase.TipRecipientType\"},{\"name\":\"currency\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\",\"indexed\":false,\"internalType\":\"uint256\"},{\"name\":\"data\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"AmountIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CannotTipSelf\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"CurrencyIsZero\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidRecipientType\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidTipData\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"MsgValueMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ReceiverIsNotMember\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"TokenDoesNotExist\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"UnexpectedETH\",\"inputs\":[]}]",
 }
 
 // TippingABI is the input ABI used to generate the binding from.
@@ -221,6 +221,37 @@ func (_Tipping *TippingCallerSession) TipAmountByCurrency(currency common.Addres
 	return _Tipping.Contract.TipAmountByCurrency(&_Tipping.CallOpts, currency)
 }
 
+// TipCountByWalletAndCurrency is a free data retrieval call binding the contract method 0xbc80be69.
+//
+// Solidity: function tipCountByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingCaller) TipCountByWalletAndCurrency(opts *bind.CallOpts, wallet common.Address, currency common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _Tipping.contract.Call(opts, &out, "tipCountByWalletAndCurrency", wallet, currency)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// TipCountByWalletAndCurrency is a free data retrieval call binding the contract method 0xbc80be69.
+//
+// Solidity: function tipCountByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingSession) TipCountByWalletAndCurrency(wallet common.Address, currency common.Address) (*big.Int, error) {
+	return _Tipping.Contract.TipCountByWalletAndCurrency(&_Tipping.CallOpts, wallet, currency)
+}
+
+// TipCountByWalletAndCurrency is a free data retrieval call binding the contract method 0xbc80be69.
+//
+// Solidity: function tipCountByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingCallerSession) TipCountByWalletAndCurrency(wallet common.Address, currency common.Address) (*big.Int, error) {
+	return _Tipping.Contract.TipCountByWalletAndCurrency(&_Tipping.CallOpts, wallet, currency)
+}
+
 // TippingCurrencies is a free data retrieval call binding the contract method 0x6e7ef3fa.
 //
 // Solidity: function tippingCurrencies() view returns(address[])
@@ -283,6 +314,37 @@ func (_Tipping *TippingCallerSession) TipsByCurrencyAndTokenId(tokenId *big.Int,
 	return _Tipping.Contract.TipsByCurrencyAndTokenId(&_Tipping.CallOpts, tokenId, currency)
 }
 
+// TipsByWalletAndCurrency is a free data retrieval call binding the contract method 0xc1d0a00c.
+//
+// Solidity: function tipsByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingCaller) TipsByWalletAndCurrency(opts *bind.CallOpts, wallet common.Address, currency common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _Tipping.contract.Call(opts, &out, "tipsByWalletAndCurrency", wallet, currency)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// TipsByWalletAndCurrency is a free data retrieval call binding the contract method 0xc1d0a00c.
+//
+// Solidity: function tipsByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingSession) TipsByWalletAndCurrency(wallet common.Address, currency common.Address) (*big.Int, error) {
+	return _Tipping.Contract.TipsByWalletAndCurrency(&_Tipping.CallOpts, wallet, currency)
+}
+
+// TipsByWalletAndCurrency is a free data retrieval call binding the contract method 0xc1d0a00c.
+//
+// Solidity: function tipsByWalletAndCurrency(address wallet, address currency) view returns(uint256)
+func (_Tipping *TippingCallerSession) TipsByWalletAndCurrency(wallet common.Address, currency common.Address) (*big.Int, error) {
+	return _Tipping.Contract.TipsByWalletAndCurrency(&_Tipping.CallOpts, wallet, currency)
+}
+
 // TotalTipsByCurrency is a free data retrieval call binding the contract method 0xe4177d0b.
 //
 // Solidity: function totalTipsByCurrency(address currency) view returns(uint256)
@@ -312,6 +374,27 @@ func (_Tipping *TippingSession) TotalTipsByCurrency(currency common.Address) (*b
 // Solidity: function totalTipsByCurrency(address currency) view returns(uint256)
 func (_Tipping *TippingCallerSession) TotalTipsByCurrency(currency common.Address) (*big.Int, error) {
 	return _Tipping.Contract.TotalTipsByCurrency(&_Tipping.CallOpts, currency)
+}
+
+// SendTip is a paid mutator transaction binding the contract method 0xde2d5762.
+//
+// Solidity: function sendTip(uint8 recipientType, bytes data) payable returns()
+func (_Tipping *TippingTransactor) SendTip(opts *bind.TransactOpts, recipientType uint8, data []byte) (*types.Transaction, error) {
+	return _Tipping.contract.Transact(opts, "sendTip", recipientType, data)
+}
+
+// SendTip is a paid mutator transaction binding the contract method 0xde2d5762.
+//
+// Solidity: function sendTip(uint8 recipientType, bytes data) payable returns()
+func (_Tipping *TippingSession) SendTip(recipientType uint8, data []byte) (*types.Transaction, error) {
+	return _Tipping.Contract.SendTip(&_Tipping.TransactOpts, recipientType, data)
+}
+
+// SendTip is a paid mutator transaction binding the contract method 0xde2d5762.
+//
+// Solidity: function sendTip(uint8 recipientType, bytes data) payable returns()
+func (_Tipping *TippingTransactorSession) SendTip(recipientType uint8, data []byte) (*types.Transaction, error) {
+	return _Tipping.Contract.SendTip(&_Tipping.TransactOpts, recipientType, data)
 }
 
 // Tip is a paid mutator transaction binding the contract method 0xc46be00e.
@@ -487,6 +570,171 @@ func (_Tipping *TippingFilterer) WatchTip(opts *bind.WatchOpts, sink chan<- *Tip
 func (_Tipping *TippingFilterer) ParseTip(log types.Log) (*TippingTip, error) {
 	event := new(TippingTip)
 	if err := _Tipping.contract.UnpackLog(event, "Tip", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// TippingTipSentIterator is returned from FilterTipSent and is used to iterate over the raw logs and unpacked data for TipSent events raised by the Tipping contract.
+type TippingTipSentIterator struct {
+	Event *TippingTipSent // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *TippingTipSentIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(TippingTipSent)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(TippingTipSent)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *TippingTipSentIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *TippingTipSentIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// TippingTipSent represents a TipSent event raised by the Tipping contract.
+type TippingTipSent struct {
+	Sender        common.Address
+	Receiver      common.Address
+	RecipientType uint8
+	Currency      common.Address
+	Amount        *big.Int
+	Data          []byte
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterTipSent is a free log retrieval operation binding the contract event 0x49d86eec8438889195f459aabb9fc6ab0de453fe6af9bf6316df61fae3a6ee98.
+//
+// Solidity: event TipSent(address indexed sender, address indexed receiver, uint8 indexed recipientType, address currency, uint256 amount, bytes data)
+func (_Tipping *TippingFilterer) FilterTipSent(opts *bind.FilterOpts, sender []common.Address, receiver []common.Address, recipientType []uint8) (*TippingTipSentIterator, error) {
+
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+	var receiverRule []interface{}
+	for _, receiverItem := range receiver {
+		receiverRule = append(receiverRule, receiverItem)
+	}
+	var recipientTypeRule []interface{}
+	for _, recipientTypeItem := range recipientType {
+		recipientTypeRule = append(recipientTypeRule, recipientTypeItem)
+	}
+
+	logs, sub, err := _Tipping.contract.FilterLogs(opts, "TipSent", senderRule, receiverRule, recipientTypeRule)
+	if err != nil {
+		return nil, err
+	}
+	return &TippingTipSentIterator{contract: _Tipping.contract, event: "TipSent", logs: logs, sub: sub}, nil
+}
+
+// WatchTipSent is a free log subscription operation binding the contract event 0x49d86eec8438889195f459aabb9fc6ab0de453fe6af9bf6316df61fae3a6ee98.
+//
+// Solidity: event TipSent(address indexed sender, address indexed receiver, uint8 indexed recipientType, address currency, uint256 amount, bytes data)
+func (_Tipping *TippingFilterer) WatchTipSent(opts *bind.WatchOpts, sink chan<- *TippingTipSent, sender []common.Address, receiver []common.Address, recipientType []uint8) (event.Subscription, error) {
+
+	var senderRule []interface{}
+	for _, senderItem := range sender {
+		senderRule = append(senderRule, senderItem)
+	}
+	var receiverRule []interface{}
+	for _, receiverItem := range receiver {
+		receiverRule = append(receiverRule, receiverItem)
+	}
+	var recipientTypeRule []interface{}
+	for _, recipientTypeItem := range recipientType {
+		recipientTypeRule = append(recipientTypeRule, recipientTypeItem)
+	}
+
+	logs, sub, err := _Tipping.contract.WatchLogs(opts, "TipSent", senderRule, receiverRule, recipientTypeRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(TippingTipSent)
+				if err := _Tipping.contract.UnpackLog(event, "TipSent", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTipSent is a log parse operation binding the contract event 0x49d86eec8438889195f459aabb9fc6ab0de453fe6af9bf6316df61fae3a6ee98.
+//
+// Solidity: event TipSent(address indexed sender, address indexed receiver, uint8 indexed recipientType, address currency, uint256 amount, bytes data)
+func (_Tipping *TippingFilterer) ParseTipSent(log types.Log) (*TippingTipSent, error) {
+	event := new(TippingTipSent)
+	if err := _Tipping.contract.UnpackLog(event, "TipSent", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
