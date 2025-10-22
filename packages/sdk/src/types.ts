@@ -531,6 +531,17 @@ export const make_ChannelPayload_Inception = (
     }
 }
 
+export const make_ChannelPayload_InteractionRequest = (
+    value: PlainMessage<InteractionRequest>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: { case: 'interactionRequest', value },
+        },
+    }
+}
+
 export const make_ChannelPayload_InteractionResponse = (
     value: PlainMessage<InteractionResponse>,
 ): PlainMessage<StreamEvent>['payload'] => {
