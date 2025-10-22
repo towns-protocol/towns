@@ -193,6 +193,14 @@ type (
 			sessionId string,
 		) (encryptionEnvelope []byte, err error)
 
+		// GetSessionKeyForStream returns the envelope of the encrypted sessions message for the specified
+		// app that contains the encrypted ciphertext for the given stream, if it exists.
+		GetSessionKeyForStream(
+			ctx context.Context,
+			app common.Address,
+			streamId shared.StreamId,
+		) (encryptionEnvelope []byte, err error)
+
 		// SetAppMetadata sets the metadata for an app
 		SetAppMetadata(
 			ctx context.Context,
@@ -746,7 +754,7 @@ func (s *PostgresAppRegistryStore) GetSessionKey(
 	err = s.txRunner(
 		ctx,
 		"GetSessionKeys",
-		pgx.ReadWrite,
+		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
 			encryptionEnvelope, err = s.getSessionKey(ctx, app, sessionId, tx)
@@ -755,6 +763,30 @@ func (s *PostgresAppRegistryStore) GetSessionKey(
 		nil,
 		"app", app,
 		"sessionId", sessionId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) GetSessionKeyForStream(
+	ctx context.Context,
+	app common.Address,
+	streamId shared.StreamId,
+) (encryptionEnvelope []byte, err error) {
+	err = s.txRunner(
+		ctx,
+		"GetSessionKeys",
+		pgx.ReadOnly,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			encryptionEnvelope, err = s.getSessionKeyForStream(ctx, app, streamId, tx)
+			return err
+		},
+		nil,
+		"app", app,
+		"streamId", streamId,
 	)
 	if err != nil {
 		return nil, err
@@ -786,6 +818,35 @@ func (s *PostgresAppRegistryStore) getSessionKey(
 		} else {
 			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("Unable to find session key for app")
+		}
+	}
+	return encryptionEnvelope, nil
+}
+
+func (s *PostgresAppRegistryStore) getSessionKeyForStream(
+	ctx context.Context,
+	app common.Address,
+	streamId shared.StreamId,
+	tx pgx.Tx,
+) (encryptionEnvelope []byte, err error) {
+	if err = tx.QueryRow(
+		ctx,
+		`
+		SELECT message_envelope FROM app_registry
+		INNER JOIN app_session_keys
+		ON app_registry.device_key = app_session_keys.device_key
+		AND app_registry.app_id = $1
+		AND $2 = app_session_keys.stream_id
+		LIMIT 1;
+		`,
+		PGAddress(app),
+		streamId,
+	).Scan(&encryptionEnvelope); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, RiverError(protocol.Err_NOT_FOUND, "session key for app for stream not found")
+		} else {
+			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("Unable to find session key for app for stream")
 		}
 	}
 	return encryptionEnvelope, nil

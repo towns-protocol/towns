@@ -183,6 +183,15 @@ func TestGetSessionKey(t *testing.T) {
 				require.Error(err)
 				require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 			}
+
+			envelope, error := store.GetSessionKeyForStream(params.ctx, tc.app, channelId)
+			if tc.sessionId != "" {
+				require.NoError(error)
+				require.NotNil(envelope)
+			} else {
+				require.Error(error)
+				require.True(base.IsRiverErrorCode(error, Err_NOT_FOUND))
+			}
 		})
 	}
 }
