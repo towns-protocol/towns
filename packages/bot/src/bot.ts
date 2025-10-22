@@ -1625,10 +1625,20 @@ const buildBotActions = (
         return undefined
     }
 
+    const sendInteractionRequest = async (
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+    ) => {
+        const payload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, payload, undefined, opts?.ephemeral)
+    }
+
     return {
         sendMessage,
         editMessage,
         sendReaction,
+        sendInteractionRequest,
         sendGM,
         sendRawGM,
         removeEvent,
