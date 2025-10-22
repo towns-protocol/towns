@@ -2126,12 +2126,15 @@ export class Client
     async sendInteractionRequest(
         streamId: string,
         request: PlainMessage<InteractionRequest>,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
     ): Promise<{ eventId: string }> {
         return this.makeEventAndAddToStream(
             streamId,
             make_ChannelPayload_InteractionRequest(request),
             {
                 method: 'sendInteractionRequest',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
             },
         )
     }
@@ -2139,10 +2142,16 @@ export class Client
     async sendInteractionResponse(
         streamId: string,
         response: PlainMessage<InteractionResponse>,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
     ): Promise<{ eventId: string }> {
         return this.makeEventAndAddToStream(
             streamId,
             make_ChannelPayload_InteractionResponse(response),
+            {
+                method: 'sendInteractionResponse',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
+            },
         )
     }
 
