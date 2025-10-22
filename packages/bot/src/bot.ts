@@ -1244,19 +1244,20 @@ const buildBotActions = (
         tags?: PlainMessage<Tags>
         ephemeral?: boolean
     }) => {
-        const stream = await client.getStream(streamId)
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
         const eventTags = {
             ...unsafe_makeTags(payload),
             participatingUserAddresses: tags?.participatingUserAddresses || [],
             threadId: tags?.threadId || undefined,
         }
-        const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
             toBinary(ChannelMessageSchema, payload),
-            (encryptionAlgorithm as GroupEncryptionAlgorithmId) ||
-                client.defaultGroupEncryptionAlgorithm,
+            encryptionAlgorithm,
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 

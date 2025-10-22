@@ -41,6 +41,7 @@ import {
     MembershipReason,
     PayloadCaseType,
     ContentCaseType,
+    MemberPayload_EncryptionAlgorithm,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/utils'
@@ -231,6 +232,12 @@ export interface ParsedStreamResponse {
     streamAndCookie: ParsedStreamAndCookie
     prevSnapshotMiniblockNum: bigint
     eventIds: string[]
+}
+
+export interface MiniblockInfoResponse {
+    miniblockNum: bigint
+    miniblockHash: Uint8Array
+    encryptionAlgorithm: MemberPayload_EncryptionAlgorithm | undefined
 }
 
 export type ClientInitStatus = {
