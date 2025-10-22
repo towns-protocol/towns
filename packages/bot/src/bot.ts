@@ -497,7 +497,7 @@ export class Bot<
                         ) {
                             const payload = parsed.event.payload.value.content.value
                             if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
-                                return
+                                continue
                             }
                             this.emitter.emit('interactionResponse', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
