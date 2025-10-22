@@ -47,6 +47,10 @@ export class CryptoStoreIndexedDb extends Dexie implements CryptoStore {
         await this.inboundGroupSessions.where({ streamId, sessionId }).delete()
     }
 
+    async deleteOutboundGrounpSessions(streamId: string): Promise<void> {
+        await this.outboundGroupSessions.where({ streamId }).delete()
+    }
+
     async deleteAccount(userId: string): Promise<void> {
         await this.account.where({ id: userId }).delete()
     }
@@ -108,6 +112,10 @@ export class CryptoStoreIndexedDb extends Dexie implements CryptoStore {
 
     async getAllHybridGroupSessions(): Promise<HybridGroupSessionRecord[]> {
         return await this.hybridGroupSessions.toArray()
+    }
+
+    async deleteHybridGroupSessions(streamId: string): Promise<void> {
+        await this.hybridGroupSessions.where({ streamId }).delete()
     }
 
     async storeEndToEndInboundGroupSession(
