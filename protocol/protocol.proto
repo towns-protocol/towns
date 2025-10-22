@@ -1270,12 +1270,15 @@ message InteractionRequest {
         // - For TYPED_DATA: JSON-encoded EIP-712 typed data or pre-hashed bytes.
         string data = 2;
         string chain_id = 3;
+        // The address of the signer wallet. If not provided, the user can use any wallet to sign
+        // this is useful in the case where a bot wants to send an interaction request to a specific user
+        optional string signer_wallet = 4; 
         // Which signature method the app expects the wallet to use.
-        SignatureType type = 4;
+        SignatureType type = 5;
         // Optional: a short title for the wallet's signature dialog (UX only).
-        optional string title = 5;
+        optional string title = 6;
         // Optional: a subtitle or human-readable explanation (UX only).
-        optional string subtitle = 6;
+        optional string subtitle = 7;
 
         // SECURITY REQUIREMENT:
         // The sender must embed any nonce, timestamp, audience, or session binding
