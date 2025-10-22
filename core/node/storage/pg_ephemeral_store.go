@@ -329,6 +329,35 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	return common.BytesToHash(genesisMb.Header.Hash), nil
 }
 
+func (s *PostgresStreamStore) TotalMiniblockDataSizeInDB(
+	ctx context.Context,
+	streamId StreamId,
+) (totalSize int64, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	err = s.txRunner(
+		ctx,
+		"TotalMiniblockDataSizeInDB",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			if err := tx.QueryRow(
+				ctx,
+				s.sqlForStream("SELECT SUM(LENGTH(blockdata)) from {{miniblocks}} WHERE stream_id = $1", streamId),
+				streamId,
+			).Scan(&totalSize); err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
+				}
+				return err
+			}
+			return nil
+		},
+		nil,
+		"streamId", streamId,
+	)
+	return totalSize, err
+}
+
 // IsStreamEphemeral returns true if the stream is ephemeral, false otherwise.
 func (s *PostgresStreamStore) IsStreamEphemeral(ctx context.Context, streamId StreamId) (ephemeral bool, err error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
