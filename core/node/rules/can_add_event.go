@@ -237,6 +237,14 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 		return aeBuilder().
 			check(params.creatorIsMember).
 			requireChainAuth(params.channelEntitlements(auth.PermissionRedact))
+	case *ChannelPayload_InteractionRequest:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
+	case *ChannelPayload_InteractionResponse:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
