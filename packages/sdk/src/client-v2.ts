@@ -29,6 +29,7 @@ import {
     make_UserInboxPayload_GroupEncryptionSessions,
     type ParsedEvent,
     type ParsedStreamResponse,
+    type MiniblockInfoResponse,
 } from './types'
 import {
     makeEvent,
@@ -69,6 +70,8 @@ type Client_Base = {
     disableSignatureValidation: boolean
     /** Get a stream by streamId and unpack it */
     getStream: (streamId: string) => Promise<ParsedStreamResponse>
+    /** Get the miniblock info for a stream */
+    getMiniblockInfo: (streamId: string) => Promise<MiniblockInfoResponse>
     /** Unpack envelope using client config */
     unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
     /** Unpack envelopes using client config */
@@ -156,13 +159,12 @@ export const createTownsClient = async (
     // eslint-disable-next-line prefer-const
     let crypto: GroupEncryptionCrypto
 
-    const getMiniblockInfo = async (
-        streamId: string,
-    ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> => {
+    const getMiniblockInfo = async (streamId: string): Promise<MiniblockInfoResponse> => {
         const r = await client.rpc.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
         return {
             miniblockNum: r.miniblockNum,
             miniblockHash: r.hash,
+            encryptionAlgorithm: r.encryptionAlgorithm,
         }
     }
 
@@ -341,6 +343,7 @@ export const createTownsClient = async (
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
         getStream,
+        getMiniblockInfo,
         sendEvent,
         unpackEnvelope,
         unpackEnvelopes,
