@@ -69,6 +69,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		// custom AWS client to disable keep-alive and max-idle connections to make goleak happy.
 		cfg, err := awsconfig.LoadDefaultConfig(ctx,
+			// awsconfig.WithClientLogMode(aws.LogRequest|aws.LogResponse),
 			awsconfig.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(
 					extStorageConfig.AwsS3.AccessKeyID, extStorageConfig.AwsS3.SecretAccessKey, "")),
@@ -81,9 +82,20 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		client := s3.NewFromConfig(cfg)
 
+		// go leak detects open connections if the default http client is used with keep-alive enabled.
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.DisableKeepAlives = true
+		httpClientNoKeepAlives := &http.Client{Transport: transport}
+
 		t.Run("Small stream", func(t *testing.T) {
 			store := setupStreamStorageWithExternalStorage(
-				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+				t, &extStorageConfig, storage.WithCustomS3Client(
+					extStorageConfig.AwsS3.AccessKeyID,
+					extStorageConfig.AwsS3.SecretAccessKey,
+					extStorageConfig.AwsS3.Bucket,
+					extStorageConfig.AwsS3.Region,
+					client,
+					httpClientNoKeepAlives))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -94,7 +106,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 				store,
 				true,
 				10,
-				10,
+				10*1024,
 			)
 
 			defer func() {
@@ -113,7 +125,13 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		t.Run("Stream with many chunks", func(t *testing.T) {
 			store := setupStreamStorageWithExternalStorage(
-				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+				t, &extStorageConfig, storage.WithCustomS3Client(
+					extStorageConfig.AwsS3.AccessKeyID,
+					extStorageConfig.AwsS3.SecretAccessKey,
+					extStorageConfig.AwsS3.Bucket,
+					extStorageConfig.AwsS3.Region,
+					client,
+					httpClientNoKeepAlives))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -143,7 +161,13 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		t.Run("Stream range read", func(t *testing.T) {
 			store := setupStreamStorageWithExternalStorage(
-				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+				t, &extStorageConfig, storage.WithCustomS3Client(
+					extStorageConfig.AwsS3.AccessKeyID,
+					extStorageConfig.AwsS3.SecretAccessKey,
+					extStorageConfig.AwsS3.Bucket,
+					extStorageConfig.AwsS3.Region,
+					client,
+					httpClientNoKeepAlives))
 
 			streamID, chunks, expMiniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -173,7 +197,13 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			t.Skip("Too big for CI")
 
 			store := setupStreamStorageWithExternalStorage(
-				t, &extStorageConfig, storage.WithCustomS3Client(client, extStorageConfig.AwsS3.Bucket))
+				t, &extStorageConfig, storage.WithCustomS3Client(
+					extStorageConfig.AwsS3.AccessKeyID,
+					extStorageConfig.AwsS3.SecretAccessKey,
+					extStorageConfig.AwsS3.Bucket,
+					extStorageConfig.AwsS3.Region,
+					client,
+					httpClientNoKeepAlives))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -480,7 +510,11 @@ func rangeReadTest(
 					collect.Errorf("unexpected miniblock number")
 				}
 				if !cmp.Equal(expMiniblock.Data, gotMiniblocks[i].Data) {
-					collect.Errorf("unexpected miniblock data, want %x \n\n got: %x", expMiniblock.Data, gotMiniblocks[i].Data)
+					collect.Errorf(
+						"unexpected miniblock data, want %x \n\n got: %x",
+						expMiniblock.Data,
+						gotMiniblocks[i].Data,
+					)
 				}
 				if !cmp.Equal(expMiniblock.Snapshot, gotMiniblocks[i].Snapshot) {
 					collect.Errorf("unexpected miniblock snapshot")
@@ -866,7 +900,11 @@ func testMiniblockRange(t *testing.T) {
 
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {
-			offset, size, downloadParts, err := storage.ObjectRangeMiniblocks(tst.allMiniblocks, tst.fromInclusive, tst.toExclusive)
+			offset, size, downloadParts, err := storage.ObjectRangeMiniblocks(
+				tst.allMiniblocks,
+				tst.fromInclusive,
+				tst.toExclusive,
+			)
 			tst.checkErr(t, err)
 			require.Equal(t, tst.expOffset, offset)
 			require.Equal(t, tst.expSize, size)

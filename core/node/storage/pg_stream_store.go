@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -224,13 +225,32 @@ func NewPostgresStreamStore(
 				}
 
 				store.externalMediaStreamStorage.s3 = &struct {
-					client *awss3.Client
-					bucket string
-				}{client: awss3.NewFromConfig(cfg), bucket: externalStorageCfg.AwsS3.Bucket}
+					accessKeyID     string
+					secretAccessKey string
+					bucket          string
+					region          string
+					client          *awss3.Client
+					httpClient      *http.Client
+				}{
+					accessKeyID:     externalStorageCfg.AwsS3.AccessKeyID,
+					secretAccessKey: externalStorageCfg.AwsS3.SecretAccessKey,
+					bucket:          externalStorageCfg.AwsS3.Bucket,
+					region:          externalStorageCfg.AwsS3.Region,
+					client:          awss3.NewFromConfig(cfg),
+					httpClient:      nil,
+				}
 
-				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues("s3", "success")
-				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues("s3", "failed")
-				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues("s3")
+				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues(
+					"s3",
+					"success",
+				)
+				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues(
+					"s3",
+					"failed",
+				)
+				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues(
+					"s3",
+				)
 			}
 		}
 
@@ -251,9 +271,17 @@ func NewPostgresStreamStore(
 					bucket *gcpstorage.BucketHandle
 				}{bucket: client.Bucket(externalStorageCfg.Gcs.Bucket)}
 
-				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues("gcs", "success")
-				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues("gcs", "failed")
-				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues("gcs")
+				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues(
+					"gcs",
+					"success",
+				)
+				store.externalMediaStreamStorage.migrationAttemptsFailedCounter = attempsCounter.WithLabelValues(
+					"gcs",
+					"failed",
+				)
+				store.externalMediaStreamStorage.miniblocksStoredExternalCounter = miniblocksMigratedCounter.WithLabelValues(
+					"gcs",
+				)
 			}
 		}
 	}
