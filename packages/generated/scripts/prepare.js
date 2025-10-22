@@ -23,6 +23,7 @@ const packageRoot = resolve(__dirname, '..');
 const contractsDir = resolve(packageRoot, '../contracts');
 const devDir = resolve(packageRoot, 'dev');
 const hashFile = resolve(devDir, '.contracts-hash');
+const foundryPath = `${process.env.HOME}/.foundry/bin`;
 
 // Get current package version
 function getCurrentVersion() {
@@ -134,13 +135,9 @@ function installFoundry() {
     // Install foundryup
     execSync('curl -L https://foundry.paradigm.xyz | bash', { stdio: 'inherit' });
 
-    // foundryup modifies shell PATH, but we need to update Node.js process PATH
-    // so subsequent execSync calls can find forge
-    const foundryPath = `${process.env.HOME}/.foundry/bin`;
-    process.env.PATH = `${foundryPath}:${process.env.PATH}`;
-
+    // foundryup is installed to ~/.foundry/bin, call it directly with full path
     // Install latest foundry
-    execSync('foundryup', { stdio: 'inherit' });
+    execSync(`${foundryPath}/foundryup`, { stdio: 'inherit' });
 
     console.log('Foundry installation completed');
     return true;
@@ -171,9 +168,16 @@ function generateArtifacts() {
     throw new Error(`Build script not found at ${buildScript}`);
   }
 
+  // Prepare environment with Foundry in PATH so forge can be found
+  const envWithFoundry = {
+    ...process.env,
+    PATH: `${foundryPath}:${process.env.PATH}`
+  };
+
   execSync(`bash ${buildScript}`, {
     cwd: contractsDir,
-    stdio: 'inherit'
+    stdio: 'inherit',
+    env: envWithFoundry
   });
 }
 
