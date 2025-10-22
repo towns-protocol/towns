@@ -921,7 +921,7 @@ export class Bot<
     }
 
     /**
-     *
+     * Send an interaction request to a stream
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param request - The interaction request to send
      * @param opts - The options for the interaction request
@@ -932,8 +932,14 @@ export class Bot<
         request: PlainMessage<InteractionRequest>,
         opts?: MessageOpts,
     ) {
-        const payload = make_ChannelPayload_InteractionRequest(request)
-        return this.client.sendEvent(streamId, payload, undefined, opts?.ephemeral)
+        const result = await this.client.sendInteractionRequest(
+            streamId,
+            request,
+            opts,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
     }
 
     async hasAdminPermission(userId: string, spaceId: string) {
@@ -1629,9 +1635,10 @@ const buildBotActions = (
         streamId: string,
         request: PlainMessage<InteractionRequest>,
         opts?: MessageOpts,
+        tags?: PlainMessage<Tags>,
     ) => {
         const payload = make_ChannelPayload_InteractionRequest(request)
-        return client.sendEvent(streamId, payload, undefined, opts?.ephemeral)
+        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
     }
 
     return {
