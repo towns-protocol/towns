@@ -52,6 +52,7 @@ wrap_comments = true
 sort_imports = true
 
 [lint]
+lint_on_build = false
 severity = ["high", "med", "low", "gas"]
 exclude_lints = ["asm-keccak256", "erc20-unchecked-transfer", "incorrect-shift"]
 ignore = ["scripts/**/*", "test/**/*"]
