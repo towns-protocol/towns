@@ -1635,7 +1635,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 					testCiphertexts,
 				)
 			} else {
-				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 10*time.Second, 100*time.Millisecond)
+				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 3*time.Second, 100*time.Millisecond)
 			}
 
 			if expectForwarding {
