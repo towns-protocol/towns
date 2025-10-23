@@ -2,7 +2,6 @@
 pragma solidity ^0.8.29;
 
 // interfaces
-import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntryPoint.sol";
 
 // libraries
 
@@ -19,7 +18,7 @@ library SimpleAccountStorage {
     }
 
     function getLayout() internal pure returns (Layout storage $) {
-        assembly {
+        assembly ("memory-safe") {
             $.slot := STORAGE_SLOT
         }
     }

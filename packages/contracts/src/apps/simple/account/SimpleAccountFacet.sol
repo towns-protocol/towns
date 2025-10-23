@@ -17,6 +17,7 @@ import {ERC7821} from "solady/accounts/ERC7821.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {UserOperationLib, PackedUserOperation} from "@eth-infinitism/account-abstraction/core/UserOperationLib.sol";
 import {ECDSA} from "solady/utils/ECDSA.sol";
+import {LibBit} from "solady/utils/LibBit.sol";
 import {SIG_VALIDATION_FAILED, SIG_VALIDATION_SUCCESS} from "@eth-infinitism/account-abstraction/core/Helpers.sol";
 import {SimpleAppStorage} from "../app/SimpleAppStorage.sol";
 import {SimpleAccountStorage} from "./SimpleAccountStorage.sol";
@@ -89,15 +90,22 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
 
     /// @notice Override the _requireForExecute function to allow the owner, client, coordinator, entry point, and self-calls.
     function _requireForExecute() internal view override {
+        address sender = msg.sender;
+
+        // Early return for owner
+        if (sender == _owner()) return;
+
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         SimpleAccountStorage.Layout storage $$ = SimpleAccountStorage.getLayout();
+
+        // Use LibBit.or for efficient multi-condition check
         if (
-            msg.sender == _owner() ||
-            msg.sender == $.client ||
-            msg.sender == $$.coordinator ||
-            msg.sender == $$.entryPoint ||
-            msg.sender == address(this)
+            LibBit.or(
+                LibBit.or(sender == $.client, sender == $$.coordinator),
+                LibBit.or(sender == $$.entryPoint, sender == address(this))
+            )
         ) return;
+
         SimpleAccount__NotFromTrustedCaller.selector.revertWith();
     }
 
@@ -105,14 +113,15 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
-        address signer = ECDSA.recover(userOpHash, userOp.signature);
+        address signer = ECDSA.recoverCalldata(userOpHash, userOp.signature);
+        address owner = _owner();
 
-        // Accept signatures from owner or client
+        // Early return for owner
+        if (signer == owner) return SIG_VALIDATION_SUCCESS;
+
+        // Check client using LibBit for consistency
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-
-        if (signer == _owner() || signer == $.client) {
-            return SIG_VALIDATION_SUCCESS;
-        }
+        if (signer == $.client) return SIG_VALIDATION_SUCCESS;
 
         return SIG_VALIDATION_FAILED;
     }

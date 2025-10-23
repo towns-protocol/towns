@@ -9,19 +9,31 @@ import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol"
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
 
 // contracts
 import {BaseApp} from "../../../apps/BaseApp.sol";
 import {SimpleAccountFacet} from "../account/SimpleAccountFacet.sol";
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
 import {Receiver} from "solady/accounts/Receiver.sol";
+import {ERC1271Facet} from "@towns-protocol/diamond/src/facets/accounts/ERC1271Facet.sol";
+import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 
 // libraries
 import {SimpleAppStorage} from "../../simple/app/SimpleAppStorage.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 
-contract SimpleAppFacet is ISimpleApp, BaseApp, SimpleAccountFacet, IntrospectionFacet {
+contract SimpleAppFacet is
+    ISimpleApp,
+    BaseApp,
+    SimpleAccountFacet,
+    IntrospectionFacet,
+    ERC1271Facet,
+    EIP712Facet
+{
     using CustomRevert for bytes4;
 
     receive() external payable override(BaseApp, Receiver) {
@@ -39,12 +51,12 @@ contract SimpleAppFacet is ISimpleApp, BaseApp, SimpleAccountFacet, Introspectio
         _addInterface(type(IExecutionModule).interfaceId);
         _addInterface(type(IERC721Receiver).interfaceId);
         _addInterface(type(IERC1155Receiver).interfaceId);
+        _addInterface(type(IERC5267).interfaceId);
         _initializeState(data);
     }
 
     /// @inheritdoc ITownsApp
     function initialize(bytes calldata data) external initializer {
-        __IntrospectionBase_init();
         __SimpleAppFacet_init_unchained(data);
     }
 
@@ -107,6 +119,26 @@ contract SimpleAppFacet is ISimpleApp, BaseApp, SimpleAccountFacet, Introspectio
     }
 
     // Internal functions
+    /// @dev Custom implementation supporting both owner and client
+    function _erc1271IsValidSignatureNowCalldata(
+        bytes32 hash,
+        bytes calldata signature
+    ) internal view virtual override returns (bool) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+
+        // Try owner first
+        if (SignatureCheckerLib.isValidSignatureNowCalldata(_owner(), hash, signature)) {
+            return true;
+        }
+
+        // Try client if set
+        if ($.client != address(0)) {
+            return SignatureCheckerLib.isValidSignatureNowCalldata($.client, hash, signature);
+        }
+
+        return false;
+    }
+
     function _installPrice() internal view override returns (uint256) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         return $.installPrice;
@@ -136,7 +168,10 @@ contract SimpleAppFacet is ISimpleApp, BaseApp, SimpleAccountFacet, Introspectio
                 (address, string, bytes32[], uint256, uint48, address, address, address)
             );
         _transferOwnership(owner);
+        __IntrospectionBase_init();
         __SimpleAccountFacet_init_unchained(entryPoint, coordinator);
+        __EIP712_init_unchained(appId, "1");
+        __ERC1271_init_unchained(owner);
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         $.name = appId;
         $.permissions = permissions;

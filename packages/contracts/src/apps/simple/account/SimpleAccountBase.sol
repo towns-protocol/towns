@@ -9,7 +9,6 @@ import {ISimpleAccountBase} from "./ISimpleAccount.sol";
 // libraries
 import {UserOperationLib, PackedUserOperation} from "@eth-infinitism/account-abstraction/core/UserOperationLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
-import {LibCall} from "solady/utils/LibCall.sol";
 
 /// @title SimpleAccountBase
 /// @notice Base contract for simple accounts implementing core ERC-6900 account functionality
@@ -52,13 +51,10 @@ abstract contract SimpleAccountBase is IAccount, ISimpleAccountBase {
     /// @dev Internal function to pay the prefund.
     /// @param missingAccountFunds The missing account funds.
     function _payPrefund(uint256 missingAccountFunds) internal virtual {
-        if (missingAccountFunds != 0) {
-            bytes memory success = LibCall.callContract(
-                payable(msg.sender),
-                missingAccountFunds,
-                ""
-            );
-            (success);
+        if (missingAccountFunds == 0) return;
+
+        assembly ("memory-safe") {
+            let success := call(gas(), caller(), missingAccountFunds, 0x00, 0x00, 0x00, 0x00)
         }
     }
 }
