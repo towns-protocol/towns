@@ -1294,28 +1294,14 @@ const buildBotActions = (
         }
     }
 
-    const sendMessageEvent = async ({
-        streamId,
-        payload,
-        tags,
-        ephemeral,
-    }: {
-        streamId: string
-        payload: ChannelMessage
-        tags?: PlainMessage<Tags>
-        ephemeral?: boolean
-    }) => {
-        const miniblockInfo = await client.getMiniblockInfo(streamId)
-        const eventTags = {
-            ...unsafe_makeTags(payload),
-            participatingUserAddresses: tags?.participatingUserAddresses || [],
-            threadId: tags?.threadId || undefined,
-        }
-        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
-            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
-            : client.defaultGroupEncryptionAlgorithm
-
+    const ensureOutboundSession = async (
+        streamId: string,
+        encryptionAlgorithm: GroupEncryptionAlgorithmId,
+        toUserIds: string[],
+        miniblockInfo: { miniblockNum: bigint; miniblockHash: Uint8Array },
+    ) => {
         if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
+            // ATTEMPT 1: Get session from app service
             const appService = await client.appServiceClient()
             try {
                 const sessionResp = await appService.getSession({
@@ -1340,11 +1326,53 @@ const buildBotActions = (
                         streamId,
                         sessions: parsedEvent.event.payload.value.content.value,
                     })
+                    // EARLY RETURN
+                    return
                 }
             } catch {
                 // ignore error (should log)
             }
+            // ATTEMPT 2: Create new session
+            await client.crypto.ensureOutboundSession(streamId, encryptionAlgorithm, {
+                shareShareSessionTimeoutMs: 5000,
+                priorityUserIds: [client.userId, ...toUserIds],
+                miniblockInfo,
+            })
         }
+    }
+
+    const sendMessageEvent = async ({
+        streamId,
+        payload,
+        tags,
+        ephemeral,
+    }: {
+        streamId: string
+        payload: ChannelMessage
+        tags?: PlainMessage<Tags>
+        ephemeral?: boolean
+    }) => {
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
+        const eventTags = {
+            ...unsafe_makeTags(payload),
+            participatingUserAddresses: tags?.participatingUserAddresses || [],
+            threadId: tags?.threadId || undefined,
+        }
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            Array.from(
+                new Set([
+                    ...eventTags.participatingUserAddresses.map((x) => userIdFromAddress(x)),
+                    ...eventTags.mentionedUserAddresses.map((x) => userIdFromAddress(x)),
+                ]),
+            ),
+            miniblockInfo,
+        )
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,

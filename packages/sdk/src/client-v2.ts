@@ -4,10 +4,9 @@ import {
     GroupEncryptionCrypto,
     GroupEncryptionSession,
     parseGroupEncryptionAlgorithmId,
+    UserDevice,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
-    type UserDevice,
-    type UserDeviceCollection,
 } from '@towns-protocol/encryption'
 import { makeStreamRpcClient, type StreamRpcClient } from './makeStreamRpcClient'
 import {
@@ -247,41 +246,68 @@ export const createTownsClient = async (
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
-        const downloadUserDeviceInfo: IGroupEncryptionClient['downloadUserDeviceInfo'] = async (
-            userIds,
-        ) => {
-            const forceDownload = userIds.length <= 10
-            const promises = userIds.map(
-                async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
-                    const streamId = makeUserMetadataStreamId(userId)
-                    try {
-                        // also always download your own keys so you always share to your most up to date devices
-                        if (!forceDownload && userId !== userId) {
-                            const devicesFromStore = await cryptoStore.getUserDevices(userId)
-                            if (devicesFromStore.length > 0) {
-                                return { userId, devices: devicesFromStore }
-                            }
-                        }
-                        // return latest 10 device keys
-                        const deviceLookback = 10
-                        const streamView = await getStream(streamId)
-                        const userDevices =
-                            streamView.userMetadataContent.deviceKeys.slice(-deviceLookback)
-                        await cryptoStore.saveUserDevices(userId, userDevices)
-                        return { userId, devices: userDevices }
-                    } catch (e) {
-                        return { userId, devices: [] }
-                    }
-                },
-            )
-            return (await Promise.all(promises)).reduce((acc, current) => {
-                acc[current.userId] = current.devices
-                return acc
-            }, {} as UserDeviceCollection)
+        const _downloadUserDeviceInfo = async (userId: string) => {
+            const streamId = makeUserMetadataStreamId(userId)
+            try {
+                const deviceLookback = 10
+                const streamView = await getStream(streamId)
+                const userDevices = streamView.userMetadataContent.deviceKeys.slice(-deviceLookback)
+                return { userId, devices: userDevices }
+            } catch (e) {
+                return { userId, devices: [] }
+            }
         }
 
-        const encryptAndShareGroupSessions: IGroupEncryptionClient['encryptAndShareGroupSessions'] =
-            async (streamId, sessions, toDevices, algorithm) => {
+        const _encryptAndShareGroupSessionsToUser = async (
+            streamId: string,
+            userId: string,
+            sessionIds: string[],
+            payloadStr: string,
+            algorithm: GroupEncryptionAlgorithmId,
+            userDevice: UserDevice,
+        ) => {
+            try {
+                const deviceKeys = await _downloadUserDeviceInfo(userId)
+                const ciphertext = await crypto.encryptWithDeviceKeys(
+                    payloadStr,
+                    deviceKeys.devices,
+                )
+                if (Object.keys(ciphertext).length === 0) {
+                    return
+                }
+                const toStreamId: string = makeUserInboxStreamId(userId)
+                const { hash: miniblockHash, miniblockNum } = await rpc.getLastMiniblockHash({
+                    streamId: streamIdAsBytes(toStreamId),
+                })
+                const event = await makeEvent(
+                    signerContext,
+                    make_UserInboxPayload_GroupEncryptionSessions({
+                        streamId: streamIdAsBytes(streamId),
+                        senderKey: userDevice.deviceKey,
+                        sessionIds: sessionIds,
+                        ciphertexts: ciphertext,
+                        algorithm: algorithm,
+                    }),
+                    miniblockHash,
+                    miniblockNum,
+                )
+                const eventId = bin_toHexString(event.hash)
+                await rpc.addEvent({
+                    streamId: streamIdAsBytes(toStreamId),
+                    event,
+                })
+                return { miniblockHash, eventId }
+            } catch (e) {
+                return undefined
+            }
+        }
+
+        const encryptAndShareGroupSessionsToStream: IGroupEncryptionClient['encryptAndShareGroupSessionsToStream'] =
+            async (streamId, sessions, algorithm, priorityUserIds) => {
+                const streamView = await getStream(streamId)
+                const otherUsers = Array.from(streamView.getUsersEntitledToKeyExchange()).filter(
+                    (userId) => !priorityUserIds.includes(userId),
+                )
                 check(sessions.length >= 0, 'no sessions to encrypt')
                 check(
                     new Set(sessions.map((s) => s.streamId)).size === 1,
@@ -297,57 +323,36 @@ export const createTownsClient = async (
                 const userDevice = crypto.getUserDevice()
                 const sessionIds = sessions.map((session) => session.sessionId)
                 const payload = makeSessionKeys(sessions)
-                const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
-                    try {
-                        const ciphertext = await crypto.encryptWithDeviceKeys(
-                            toJsonString(SessionKeysSchema, payload),
-                            deviceKeys,
-                        )
-                        if (Object.keys(ciphertext).length === 0) {
-                            return
-                        }
-                        const toStreamId: string = makeUserInboxStreamId(userId)
-                        const { hash: miniblockHash, miniblockNum } =
-                            await rpc.getLastMiniblockHash({
-                                streamId: streamIdAsBytes(toStreamId),
-                            })
-                        const event = await makeEvent(
-                            signerContext,
-                            make_UserInboxPayload_GroupEncryptionSessions({
-                                streamId: streamIdAsBytes(streamId),
-                                senderKey: userDevice.deviceKey,
-                                sessionIds: sessionIds,
-                                ciphertexts: ciphertext,
-                                algorithm: algorithm,
-                            }),
-                            miniblockHash,
-                            miniblockNum,
-                        )
-                        const eventId = bin_toHexString(event.hash)
-                        await rpc.addEvent({
-                            streamId: streamIdAsBytes(toStreamId),
-                            event,
-                        })
-                        return { miniblockHash, eventId }
-                    } catch (e) {
-                        return undefined
-                    }
+                const payloadStr = toJsonString(SessionKeysSchema, payload)
+                // do the priority users first
+                const priorityPromises = priorityUserIds.map(async (userId) => {
+                    return _encryptAndShareGroupSessionsToUser(
+                        streamId,
+                        userId,
+                        sessionIds,
+                        payloadStr,
+                        algorithm,
+                        userDevice,
+                    )
                 })
-                await Promise.all(promises)
+                await Promise.all(priorityPromises)
+                // then the other users
+                const otherPromises = otherUsers.map(async (userId) => {
+                    return _encryptAndShareGroupSessionsToUser(
+                        streamId,
+                        userId,
+                        sessionIds,
+                        payloadStr,
+                        algorithm,
+                        userDevice,
+                    )
+                })
+                await Promise.all(otherPromises)
             }
-        const getDevicesInStream: IGroupEncryptionClient['getDevicesInStream'] = async (
-            streamId,
-        ) => {
-            const streamView = await getStream(streamId)
-            const members = Array.from(streamView.getUsersEntitledToKeyExchange())
-            return downloadUserDeviceInfo(members ?? [], true)
-        }
 
         return {
             getMiniblockInfo,
-            downloadUserDeviceInfo,
-            encryptAndShareGroupSessions,
-            getDevicesInStream,
+            encryptAndShareGroupSessionsToStream,
         }
     }
 

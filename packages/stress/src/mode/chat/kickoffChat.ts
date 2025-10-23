@@ -26,7 +26,7 @@ export async function kickoffChat(rootClient: StressClient, cfg: ChatConfig) {
     logger.debug('share keys')
     const shareKeysStart = Date.now()
     await rootClient.streamsClient.ensureOutboundSession(announceChannelId, {
-        awaitInitialShareSession: true,
+        shareShareSessionTimeoutMs: 5000,
     })
     const shareKeysDuration = Date.now() - shareKeysStart
 

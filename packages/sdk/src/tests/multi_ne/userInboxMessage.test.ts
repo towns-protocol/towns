@@ -5,7 +5,7 @@
 import { Client } from '../../client'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { dlog } from '@towns-protocol/utils'
-import { GroupEncryptionAlgorithmId, UserDeviceCollection } from '@towns-protocol/encryption'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { makeUniqueChannelStreamId, streamIdAsString } from '../../id'
 
@@ -59,12 +59,9 @@ describe('inboxMessageTest', () => {
                 },
             )
 
-            const recipients: UserDeviceCollection = {}
-            recipients[alicesClient.userId] = [alicesClient.userDeviceKey()]
-
             // bob sends a message to Alice's device.
             await expect(
-                bobsClient.encryptAndShareGroupSessions(
+                bobsClient.encryptAndShareGroupSessionsToDevice(
                     fakeStreamId,
                     [
                         {
@@ -74,8 +71,9 @@ describe('inboxMessageTest', () => {
                             algorithm,
                         },
                     ],
-                    recipients,
                     algorithm,
+                    alicesClient.userId,
+                    [alicesClient.userDeviceKey()],
                 ),
             ).resolves.not.toThrow()
             await aliceSelfInbox.expectToSucceed()
