@@ -24,20 +24,6 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
     update: {
         // No special config needed
     },
-    'list-commands': {
-        string: ['file'],
-        alias: { f: 'file' },
-    },
-    'update-commands': {
-        // Force all positional args after command to be strings (prevents hex->number conversion)
-        string: ['file', 'bearerToken', 'envFile', '_'],
-        alias: {
-            f: 'file',
-            t: 'bearerToken',
-            e: 'envFile',
-        },
-        default: { envFile: '.env' },
-    },
 }
 
 /**
