@@ -39,12 +39,12 @@ import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
-import { getBalance, readContract } from 'viem/actions'
+import { getBalance, readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
 import { parseEther, zeroAddress } from 'viem'
-import { sendUserOperation, waitForUserOperationReceipt } from 'viem/account-abstraction'
 import tippingAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
 import erc721QueryableAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi'
+import { execute } from 'viem/experimental/erc7821'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -1234,7 +1234,7 @@ describe('Bot', { sequential: true }, () => {
 
     it('bot should be able to read app contract', async () => {
         expect(appAddress).toBeDefined()
-        const botOwner = await readContract(bot.publicClient, {
+        const botOwner = await readContract(bot.viem, {
             address: bot.appAddress,
             abi: simpleAppAbi,
             functionName: 'moduleOwner',
@@ -1243,48 +1243,47 @@ describe('Bot', { sequential: true }, () => {
         expect(botOwner).toBe(bob.userId)
     })
 
-    it('bot should be able to call sendUserOperation (send currency to another user)', async () => {
+    it('bot should be able to call send currency to another user)', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const aliceBalance_before = await getBalance(bot.publicClient, {
+        const aliceBalance_before = await getBalance(bot.viem, {
             address: alice.userId,
         })
 
-        const hash = await sendUserOperation(bot.app, {
-            calls: [
-                {
-                    to: bot.appAddress,
-                    abi: simpleAppAbi,
-                    functionName: 'sendCurrency',
-                    args: [alice.userId, zeroAddress, parseEther('0.01')],
-                },
-            ],
+        const hash = await writeContract(bot.viem, {
+            address: bot.appAddress,
+            abi: simpleAppAbi,
+            functionName: 'sendCurrency',
+            args: [alice.userId, zeroAddress, parseEther('0.01')],
         })
-        await waitForUserOperationReceipt(bot.app, { hash: hash })
-        const aliceBalance_after = await getBalance(bot.publicClient, {
+        await waitForTransactionReceipt(bot.viem, { hash: hash })
+        const aliceBalance_after = await getBalance(bot.viem, {
             address: alice.userId,
         })
         expect(aliceBalance_after).toBeGreaterThan(aliceBalance_before)
     })
 
     it('bot should be able to call tipping from space', async () => {
-        const bobBalance = await getBalance(bot.publicClient, {
+        const bobBalance = await getBalance(bot.viem, {
             address: bob.userId,
         })
         const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii')
 
-        const tokenid = await readContract(bot.publicClient, {
+        const tokenid = await readContract(bot.viem, {
             address: SpaceAddressFromSpaceId(spaceId),
             abi: erc721QueryableAbi,
             functionName: 'tokensOfOwner',
             args: [bob.userId],
         })
 
-        const hash = await sendUserOperation(bot.app, {
+        const hash = await execute(bot.viem, {
+            address: bot.appAddress,
+            account: bot.viem.account,
             calls: [
                 {
                     to: SpaceAddressFromSpaceId(spaceId),
                     abi: tippingAbi,
                     functionName: 'tip',
+                    value: parseEther('0.01'),
                     args: [
                         {
                             receiver: bob.userId,
@@ -1298,8 +1297,8 @@ describe('Bot', { sequential: true }, () => {
                 },
             ],
         })
-        await waitForUserOperationReceipt(bot.app, { hash: hash })
-        const bobBalance_after = await getBalance(bot.publicClient, {
+        await waitForTransactionReceipt(bot.viem, { hash: hash })
+        const bobBalance_after = await getBalance(bot.viem, {
             address: bob.userId,
         })
         expect(bobBalance_after).toBeGreaterThan(bobBalance)
