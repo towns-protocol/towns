@@ -25,12 +25,12 @@ import {
     makeUserInboxStreamId,
     makeUserMetadataStreamId,
     streamIdAsBytes,
+    streamIdAsString,
     userIdFromAddress,
 } from './id'
 import {
     make_UserInboxPayload_GroupEncryptionSessions,
     type ParsedEvent,
-    type ParsedStreamResponse,
     type MiniblockInfoResponse,
 } from './types'
 import {
@@ -52,6 +52,7 @@ import {
 } from '@towns-protocol/proto'
 import { AppRegistryService } from './appRegistryService'
 import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
+import { StreamStateView } from './streamStateView'
 
 type Client_Base = {
     /** The userId of the Client. */
@@ -79,7 +80,7 @@ type Client_Base = {
     /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
     appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
-    getStream: (streamId: string) => Promise<ParsedStreamResponse>
+    getStream: (streamId: string) => Promise<StreamStateView>
     /** Get the miniblock info for a stream */
     getMiniblockInfo: (streamId: string) => Promise<MiniblockInfoResponse>
     /** Unpack envelope using client config */
@@ -184,13 +185,26 @@ export const createTownsClient = async (
         }
     }
 
-    const getStream = async (streamId: string): Promise<ParsedStreamResponse> => {
+    const getStream = async (streamId: string): Promise<StreamStateView> => {
         const { disableHashValidation, disableSignatureValidation } = client
         const stream = await client.rpc.getStream({ streamId: streamIdAsBytes(streamId) })
-        return unpackStream(stream.stream, {
+        const unpackedResponse = await unpackStream(stream.stream, {
             disableHashValidation,
             disableSignatureValidation,
         })
+        const streamView = new StreamStateView(userId, streamIdAsString(streamId), undefined)
+        streamView.initialize(
+            unpackedResponse.streamAndCookie.nextSyncCookie,
+            unpackedResponse.streamAndCookie.events,
+            unpackedResponse.snapshot,
+            unpackedResponse.streamAndCookie.miniblocks,
+            [],
+            unpackedResponse.prevSnapshotMiniblockNum,
+            undefined,
+            [],
+            undefined,
+        )
+        return streamView
     }
 
     const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> => {
@@ -250,12 +264,9 @@ export const createTownsClient = async (
                         }
                         // return latest 10 device keys
                         const deviceLookback = 10
-                        const stream = await getStream(streamId)
-                        const encryptionDevices =
-                            stream.snapshot.content.case === 'userMetadataContent'
-                                ? stream.snapshot.content.value.encryptionDevices
-                                : []
-                        const userDevices = encryptionDevices.slice(-deviceLookback)
+                        const streamView = await getStream(streamId)
+                        const userDevices =
+                            streamView.userMetadataContent.deviceKeys.slice(-deviceLookback)
                         await cryptoStore.saveUserDevices(userId, userDevices)
                         return { userId, devices: userDevices }
                     } catch (e) {
@@ -296,27 +307,29 @@ export const createTownsClient = async (
                             return
                         }
                         const toStreamId: string = makeUserInboxStreamId(userId)
-                        const { hash: miniblockHash } = await rpc.getLastMiniblockHash({
-                            streamId: streamIdAsBytes(toStreamId),
-                        })
+                        const { hash: miniblockHash, miniblockNum } =
+                            await rpc.getLastMiniblockHash({
+                                streamId: streamIdAsBytes(toStreamId),
+                            })
                         const event = await makeEvent(
                             signerContext,
                             make_UserInboxPayload_GroupEncryptionSessions({
-                                streamId: streamIdAsBytes(toStreamId),
+                                streamId: streamIdAsBytes(streamId),
                                 senderKey: userDevice.deviceKey,
                                 sessionIds: sessionIds,
                                 ciphertexts: ciphertext,
                                 algorithm: algorithm,
                             }),
                             miniblockHash,
+                            miniblockNum,
                         )
                         const eventId = bin_toHexString(event.hash)
                         await rpc.addEvent({
-                            streamId: streamIdAsBytes(streamId),
+                            streamId: streamIdAsBytes(toStreamId),
                             event,
                         })
                         return { miniblockHash, eventId }
-                    } catch {
+                    } catch (e) {
                         return undefined
                     }
                 })
@@ -325,13 +338,8 @@ export const createTownsClient = async (
         const getDevicesInStream: IGroupEncryptionClient['getDevicesInStream'] = async (
             streamId,
         ) => {
-            const stream = await getStream(streamId)
-            if (!stream) {
-                return {}
-            }
-            const members = stream.snapshot.members?.joined.map((x) =>
-                userIdFromAddress(x.userAddress),
-            )
+            const streamView = await getStream(streamId)
+            const members = Array.from(streamView.getUsersEntitledToKeyExchange())
             return downloadUserDeviceInfo(members ?? [], true)
         }
 
