@@ -57,6 +57,8 @@ import {
     getReactionParentId,
     getReplyParentId,
     getThreadParentId,
+    InteractionRequestEvent,
+    InteractionResponseEvent,
 } from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
@@ -596,9 +598,19 @@ function toTownsContent_ChannelPayload(
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
         case 'interactionRequest':
-            return { error: `Interaction request not supported: ${description}` }
+            return {
+                content: {
+                    kind: RiverTimelineEvent.InteractionRequest,
+                    request: value.content.value,
+                } satisfies InteractionRequestEvent,
+            }
         case 'interactionResponse':
-            return { error: `Interaction response not supported: ${description}` }
+            return {
+                content: {
+                    kind: RiverTimelineEvent.InteractionResponse,
+                    response: value.content.value,
+                } satisfies InteractionResponseEvent,
+            }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
         }
@@ -1081,6 +1093,8 @@ export function toDecryptedEvent(
         case RiverTimelineEvent.ChannelMessageMissing:
         case RiverTimelineEvent.ChannelProperties:
         case RiverTimelineEvent.Inception:
+        case RiverTimelineEvent.InteractionRequest:
+        case RiverTimelineEvent.InteractionResponse:
         case RiverTimelineEvent.KeySolicitation:
         case RiverTimelineEvent.Fulfillment:
         case RiverTimelineEvent.MemberBlockchainTransaction:
@@ -1165,6 +1179,10 @@ export function getFallbackContent(
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
         case RiverTimelineEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
+        case RiverTimelineEvent.InteractionRequest:
+            return `interactionRequest: ${content.request.content.value?.id ?? ''}`
+        case RiverTimelineEvent.InteractionResponse:
+            return `interactionResponse: ${content.response.content.value?.requestId ?? ''}`
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {
