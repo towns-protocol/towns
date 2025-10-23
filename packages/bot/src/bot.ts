@@ -69,14 +69,18 @@ import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
     http,
-    type Account,
     type Chain,
     type Prettify,
     type Transport,
     type Hex,
-    type WalletClient,
     createWalletClient,
     type Address,
+    publicActions,
+    decodeFunctionData,
+    type PublicClient,
+    createPublicClient,
+    createClient,
+    type Client,
 } from 'viem'
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -85,6 +89,19 @@ import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
+import {
+    entryPoint08Abi,
+    entryPoint08Address,
+    getUserOperationTypedData,
+    toSmartAccount,
+    type BundlerClient,
+    type SmartAccount,
+} from 'viem/account-abstraction'
+import { createSmartAccountClient, type SmartAccountClient } from 'permissionless'
+import { createPimlicoClient } from 'permissionless/clients/pimlico'
+import { erc7821Actions } from 'viem/experimental'
+import { encodeExecuteData } from 'viem/experimental/erc7821'
+import { executeSingleAbi } from './erc7821Abi'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -274,7 +291,8 @@ export class Bot<
     private readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
-    viem: WalletClient<Transport, Chain, Account>
+    publicClient: Client<Transport, Chain>
+    app: SmartAccountClient<Transport, Chain, SmartAccount>
     snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
@@ -295,14 +313,16 @@ export class Bot<
 
     constructor(
         clientV2: ClientV2<BotActions>,
-        viem: WalletClient<Transport, Chain, Account>,
+        publicClient: Client<Transport, Chain>,
+        app: SmartAccountClient<Transport, Chain, SmartAccount>,
         jwtSecretBase64: string,
         appAddress: Address,
         commands?: Commands,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
-        this.viem = viem
+        this.publicClient = publicClient
+        this.app = app
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
         this.commands = commands
@@ -1012,10 +1032,13 @@ export const makeTownsBot = async <
     jwtSecretBase64: string,
     opts: {
         baseRpcUrl?: string
+        bundlerRpcUrl?: string
         commands?: Commands
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
-    const { baseRpcUrl, ...clientOpts } = opts
+    // eslint-disable-next-line prefer-const
+    let { baseRpcUrl, bundlerRpcUrl, ...clientOpts } = opts
+    bundlerRpcUrl = 'http://localhost:4337'
     let appAddress: Address | undefined
     const {
         privateKey,
@@ -1037,26 +1060,80 @@ export const makeTownsBot = async <
         if (chainId === foundry.id) return foundry
         return baseSepolia
     }
-    const viem = createWalletClient({
+    const chain = getChain(baseConfig.chainConfig.chainId)
+    const publicClient = createClient({
         account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: getChain(baseConfig.chainConfig.chainId),
-    })
+        chain,
+    }).extend(publicActions)
+
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
     )
     if (!appAddress) {
-        appAddress = await readContract(viem, {
+        appAddress = await readContract(publicClient, {
             address: baseConfig.chainConfig.addresses.appRegistry,
             abi: appRegistryAbi,
             functionName: 'getAppByClient',
             args: [account.address],
         })
     }
+    const bundlerClient = createPimlicoClient({
+        transport: http(bundlerRpcUrl),
+    }).extend(publicActions)
+
+    const simpleSmartAccount = await toSmartAccount({
+        client: publicClient,
+        entryPoint: {
+            abi: entryPoint08Abi,
+            address: entryPoint08Address,
+            version: '0.8',
+        },
+        getAddress: () => Promise.resolve(appAddress),
+        signMessage: account.signMessage,
+        signTypedData: account.signTypedData,
+        signUserOperation: async (userOperation) => {
+            // v0.8 uses typed data signatures instead of hash-based signatures
+            const typedData = getUserOperationTypedData({
+                chainId: chain.id,
+                entryPointAddress: entryPoint08Address,
+                userOperation: {
+                    ...userOperation,
+                    sender: appAddress,
+                    signature: '0x',
+                },
+            })
+            return account.signTypedData(typedData)
+        },
+        encodeCalls: async (calls) => encodeExecuteData({ calls }),
+        decodeCalls: async (callData): Promise<{ to: Address; value: bigint; data: Hex }[]> => {
+            const decodedSingle = decodeFunctionData({
+                abi: executeSingleAbi,
+                data: callData,
+            })
+            return [
+                {
+                    to: decodedSingle.args[0],
+                    value: decodedSingle.args[1],
+                    data: decodedSingle.args[2],
+                },
+            ]
+        },
+        isDeployed: () => Promise.resolve(true),
+        // its deployed, so we don't need to get the factory args
+        getFactoryArgs: () => Promise.resolve({ factory: undefined, factoryData: undefined }),
+        getStubSignature: async () => '0x',
+    })
+
+    const smartAccountClient = createSmartAccountClient({
+        account: simpleSmartAccount,
+        client: bundlerClient,
+        chain,
+        bundlerTransport: http(bundlerRpcUrl),
+    })
     const client = await createTownsClient({
         privateKey,
         env,
@@ -1065,15 +1142,25 @@ export const makeTownsBot = async <
         },
         ...clientOpts,
     }).then((x) =>
-        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
+        x.extend((townsClient) =>
+            buildBotActions(townsClient, publicClient, smartAccountClient, spaceDapp, appAddress),
+        ),
     )
     await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
+    return new Bot<Commands, HonoEnv>(
+        client,
+        publicClient,
+        smartAccountClient,
+        jwtSecretBase64,
+        appAddress,
+        opts.commands,
+    )
 }
 
 const buildBotActions = (
     client: ClientV2,
-    _viem: WalletClient<Transport, Chain, Account>,
+    _public: Client<Transport, Chain>,
+    _viem: SmartAccountClient<Transport, Chain, SmartAccount>,
     spaceDapp: SpaceDapp,
     _appAddress: string,
 ) => {
