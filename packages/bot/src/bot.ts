@@ -381,7 +381,12 @@ export class Bot<
             })
         } else if (request.payload.case === 'events') {
             for (const event of request.payload.value.events) {
-                await this.handleEvent(event)
+                try {
+                    await this.handleEvent(event)
+                } catch (err) {
+                    // eslint-disable-next-line no-console
+                    console.error('[@towns-protocol/bot] Error while handling event', err)
+                }
             }
             response = statusResponse
         } else if (request.payload.case === 'status') {

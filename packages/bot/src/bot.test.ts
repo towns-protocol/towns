@@ -20,7 +20,7 @@ import {
     make_ChannelPayload_InteractionRequest,
     ClientV2,
 } from '@towns-protocol/sdk'
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { Bot, BotPayload } from './bot'
 import { bin_fromHexString, bin_toBase64, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
@@ -1371,5 +1371,21 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedInteractionResponses[0].content.value?.requestId).toEqual(
             interactionResponse.content.value?.requestId,
         )
+    })
+
+    it('should log error and continue processing if throws an error when handling an event', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error')
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        expect(() =>
+            bot.onMessage(() => {
+                throw new Error('test error')
+            }),
+        ).not.toThrow()
+        await bobDefaultChannel.sendMessage('lol')
+        await waitFor(() => consoleErrorSpy.mock.calls.length > 0)
+        expect(consoleErrorSpy.mock.calls[0][0]).toContain(
+            '[@towns-protocol/bot] Error while handling event',
+        )
+        consoleErrorSpy.mockRestore()
     })
 })
