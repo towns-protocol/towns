@@ -34,31 +34,6 @@ contract AppFactoryFacet is
         _addInterface(type(IAppFactory).interfaceId);
     }
 
-    function addBeacons(Beacon[] calldata beacons) external onlyOwner {
-        _addBeacons(beacons);
-    }
-
-    function removeBeacons(bytes32[] calldata beaconIds) external onlyOwner {
-        _removeBeacons(beaconIds);
-    }
-
-    function getBeacon(bytes32 beaconId) external view returns (address beacon) {
-        return _getBeacon(beaconId);
-    }
-
-    function getBeacons() external view returns (bytes32[] memory beaconIds) {
-        return _getBeacons();
-    }
-
-    function setEntryPoint(address entryPoint) external onlyOwner {
-        AppFactoryStorage.Layout storage $ = AppFactoryStorage.getLayout();
-        $.entryPoint = entryPoint;
-    }
-
-    function getEntryPoint() external view returns (address entryPoint) {
-        entryPoint = AppFactoryStorage.getLayout().entryPoint;
-    }
-
     function createAppByBeacon(
         bytes32 beaconId,
         AppParams calldata params
@@ -81,5 +56,30 @@ contract AppFactoryFacet is
         app = _createApp(beaconId, params);
         appId = _registerApp(ITownsApp(app), params.client);
         emit AppCreated(app, appId);
+    }
+
+    function addBeacons(Beacon[] calldata beacons) external onlyOwner {
+        _addBeacons(beacons);
+    }
+
+    function removeBeacons(bytes32[] calldata beaconIds) external onlyOwner {
+        _removeBeacons(beaconIds);
+    }
+
+    function setEntryPoint(address entryPoint) external onlyOwner {
+        AppFactoryStorage.Layout storage $ = AppFactoryStorage.getLayout();
+        $.entryPoint = entryPoint;
+    }
+
+    function getBeacon(bytes32 beaconId) external view returns (address beacon) {
+        return _getBeacon(beaconId);
+    }
+
+    function getBeacons() external view returns (bytes32[] memory beaconIds) {
+        return _getBeacons();
+    }
+
+    function getEntryPoint() external view returns (address entryPoint) {
+        entryPoint = AppFactoryStorage.getLayout().entryPoint;
     }
 }

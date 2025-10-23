@@ -11,7 +11,7 @@ import {IERC7821} from "@openzeppelin/contracts/interfaces/draft-IERC7821.sol";
 import {SimpleAccountBase} from "./SimpleAccountBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {ERC7821} from "../utils/ERC7821.sol";
+import {ERC7821} from "solady/accounts/ERC7821.sol";
 
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";

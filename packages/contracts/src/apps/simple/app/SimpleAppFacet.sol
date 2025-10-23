@@ -7,26 +7,26 @@ import {ITownsApp} from "../../../apps/ITownsApp.sol";
 import {ExecutionManifest, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 // contracts
 import {BaseApp} from "../../../apps/BaseApp.sol";
 import {SimpleAccountFacet} from "../account/SimpleAccountFacet.sol";
-import {TokenCallbackHandlerFacet} from "../utils/TokenCallbackHandlerFacet.sol";
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";
+import {Receiver} from "solady/accounts/Receiver.sol";
 
 // libraries
 import {SimpleAppStorage} from "../../simple/app/SimpleAppStorage.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 
-contract SimpleAppFacet is
-    ISimpleApp,
-    BaseApp,
-    SimpleAccountFacet,
-    TokenCallbackHandlerFacet,
-    IntrospectionFacet
-{
+contract SimpleAppFacet is ISimpleApp, BaseApp, SimpleAccountFacet, IntrospectionFacet {
     using CustomRevert for bytes4;
+
+    receive() external payable override(BaseApp, Receiver) {
+        _onPayment(msg.sender, msg.value);
+    }
 
     function __SimpleAppFacet_init(bytes calldata data) external onlyInitializing {
         __SimpleAppFacet_init_unchained(data);
@@ -37,13 +37,14 @@ contract SimpleAppFacet is
         _addInterface(type(ITownsApp).interfaceId);
         _addInterface(type(IModule).interfaceId);
         _addInterface(type(IExecutionModule).interfaceId);
+        _addInterface(type(IERC721Receiver).interfaceId);
+        _addInterface(type(IERC1155Receiver).interfaceId);
         _initializeState(data);
     }
 
     /// @inheritdoc ITownsApp
     function initialize(bytes calldata data) external initializer {
         __IntrospectionBase_init();
-        __TokenCallbackHandlerFacet_init_unchained();
         __SimpleAppFacet_init_unchained(data);
     }
 

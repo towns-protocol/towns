@@ -16,9 +16,14 @@ import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFa
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {BaseApp} from "../../src/apps/BaseApp.sol";
 import {SimpleAccountFacet} from "../../src/apps/simple/account/SimpleAccountFacet.sol";
+import {Receiver} from "solady/accounts/Receiver.sol";
 
 contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp, SimpleAccountFacet {
     bytes4 private constant INVALID_SIGNATURE = 0xffffffff;
+
+    receive() external payable override(BaseApp, Receiver) {
+        _onPayment(msg.sender, msg.value);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

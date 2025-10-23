@@ -26,15 +26,14 @@ abstract contract AppFactoryBase is IAppFactoryBase {
         AppFactoryStorage.Layout storage $ = AppFactoryStorage.getLayout();
         uint256 length = beacons.length;
         for (uint256 i; i < length; ++i) {
-            if (beacons[i].beacon == address(0))
-                AppFactory__InvalidAddressInput.selector.revertWith();
-            if (beacons[i].beaconId == bytes32(0))
-                AppFactory__InvalidBeaconId.selector.revertWith();
-            if ($.beaconIds.contains(beacons[i].beaconId))
+            Beacon calldata beacon = beacons[i];
+            if (beacon.beacon == address(0)) AppFactory__InvalidAddressInput.selector.revertWith();
+            if (beacon.beaconId == bytes32(0)) AppFactory__InvalidBeaconId.selector.revertWith();
+            if ($.beaconIds.contains(beacon.beaconId))
                 AppFactory__BeaconAlreadyExists.selector.revertWith();
-            $.beacons[beacons[i].beaconId] = beacons[i].beacon;
-            $.beaconIds.add(beacons[i].beaconId);
-            emit BeaconAdded(beacons[i].beaconId, beacons[i].beacon);
+            $.beacons[beacon.beaconId] = beacon.beacon;
+            $.beaconIds.add(beacon.beaconId);
+            emit BeaconAdded(beacon.beaconId, beacon.beacon);
         }
     }
 
