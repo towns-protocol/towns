@@ -10,6 +10,27 @@ import {
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
+// Setup hook: Create critical indexes before indexing starts
+// These indexes are needed during historic sync for performance
+ponder.on('SpaceOwner:setup', async ({ context }) => {
+    try {
+        console.info('Creating critical indexes...')
+
+        // Index for spaces.tokenId (used by SpaceOwner:Transfer UPDATE queries)
+        await context.db.sql.execute(sql`
+            CREATE INDEX IF NOT EXISTS spaces_tokenid_idx
+            ON spaces (token_id)
+        `)
+
+        // Add more critical indexes here as needed
+        // await context.db.execute(sql`CREATE INDEX IF NOT EXISTS ...`)
+
+        console.info('✅ Critical indexes created successfully')
+    } catch (error) {
+        console.warn('⚠️ Failed to create indexes (may already exist):', error)
+    }
+})
+
 ponder.on('SpaceFactory:SpaceCreated', async ({ event, context }) => {
     // Get a block number suitable for reading the SpaceOwner contract
     const blockNumber = await getReadSpaceInfoBlockNumber(event.block.number)
