@@ -5,6 +5,8 @@ pragma solidity ^0.8.29;
 import {IAppFactoryBase} from "../../../src/apps/facets/factory/IAppFactory.sol";
 import {ISimpleAppBase} from "../../../src/apps/simple/app/ISimpleApp.sol";
 import {ITownsApp} from "../../../src/apps/ITownsApp.sol";
+import {IERC7821, IERC7821Base} from "../../../src/apps/simple/utils/IERC7821.sol";
+import {ISimpleAccountBase} from "../../../src/apps/simple/account/ISimpleAccount.sol";
 
 // libraries
 
@@ -15,7 +17,13 @@ import {AppInstallerFacet} from "../../../src/apps/facets/installer/AppInstaller
 import {AppRegistryFacet} from "../../../src/apps/facets/registry/AppRegistryFacet.sol";
 import {AppAccount} from "../../../src/spaces/facets/account/AppAccount.sol";
 
-abstract contract SimpleAppBaseTest is BaseSetup, IAppFactoryBase, ISimpleAppBase {
+abstract contract SimpleAppBaseTest is
+    BaseSetup,
+    IAppFactoryBase,
+    ISimpleAppBase,
+    IERC7821Base,
+    ISimpleAccountBase
+{
     AppFactoryFacet internal factory;
     AppInstallerFacet internal installer;
     AppRegistryFacet internal registry;
@@ -62,5 +70,29 @@ abstract contract SimpleAppBaseTest is BaseSetup, IAppFactoryBase, ISimpleAppBas
 
         vm.prank(_dev);
         (SIMPLE_APP, SIMPLE_APP_ID) = factory.createApp(appData);
+    }
+
+    // Helper function to encode execute calls
+    function _encodeExecute(
+        address to,
+        uint256 value,
+        bytes memory data
+    ) internal pure returns (bytes memory) {
+        Call[] memory calls = new Call[](1);
+        calls[0] = Call({to: to, value: value, data: data});
+
+        // Mode: 0x01 (batch call) + 0x00 (revert on failure)
+        bytes32 mode = bytes32(
+            uint256(0x0100000000000000000000000000000000000000000000000000000000000000)
+        );
+
+        return abi.encodeWithSelector(IERC7821.execute.selector, mode, abi.encode(calls));
+    }
+
+    // Helper to send native token via execute
+    function _sendNativeToken(address from, address to, uint256 amount) internal {
+        vm.prank(from);
+        (bool success, ) = SIMPLE_APP.call(_encodeExecute(to, amount, ""));
+        require(success, "Execute failed");
     }
 }

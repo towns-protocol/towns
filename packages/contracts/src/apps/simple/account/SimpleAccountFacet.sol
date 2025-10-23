@@ -72,13 +72,22 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Overrides                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    /// @dev Override the batch execution to add authorization
-    function _execute(Call[] calldata calls, bytes32 extraData) internal override {
-        _requireForExecute();
-        ERC7821._execute(calls, extraData);
+    /// @dev Override the 4-parameter execution to add custom authorization before the standard checks
+    function _execute(
+        bytes32,
+        bytes calldata,
+        Call[] calldata calls,
+        bytes calldata opData
+    ) internal virtual override {
+        if (opData.length == 0) {
+            _requireForExecute();
+            return _execute(calls, bytes32(0));
+        }
+
+        SimpleAccount__OpDataNotSupported.selector.revertWith();
     }
 
-    /// @notice Override the _requireForExecute function to allow the owner, client, and entry point to execute calls.
+    /// @notice Override the _requireForExecute function to allow the owner, client, coordinator, entry point, and self-calls.
     function _requireForExecute() internal view override {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         SimpleAccountStorage.Layout storage $$ = SimpleAccountStorage.getLayout();
@@ -86,7 +95,8 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
             msg.sender == _owner() ||
             msg.sender == $.client ||
             msg.sender == $$.coordinator ||
-            msg.sender == $$.entryPoint
+            msg.sender == $$.entryPoint ||
+            msg.sender == address(this)
         ) return;
         SimpleAccount__NotFromTrustedCaller.selector.revertWith();
     }
@@ -95,8 +105,15 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     ) internal virtual override returns (uint256 validationData) {
-        // UserOpHash can be generated using eth_signTypedData_v4
-        if (_owner() != ECDSA.recover(userOpHash, userOp.signature)) return SIG_VALIDATION_FAILED;
-        return SIG_VALIDATION_SUCCESS;
+        address signer = ECDSA.recover(userOpHash, userOp.signature);
+
+        // Accept signatures from owner or client
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+
+        if (signer == _owner() || signer == $.client) {
+            return SIG_VALIDATION_SUCCESS;
+        }
+
+        return SIG_VALIDATION_FAILED;
     }
 }

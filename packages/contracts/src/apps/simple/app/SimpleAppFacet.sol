@@ -6,7 +6,6 @@ import {ISimpleApp} from "../../simple/app/ISimpleApp.sol";
 import {ITownsApp} from "../../../apps/ITownsApp.sol";
 import {ExecutionManifest, IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
-import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntryPoint.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 // contracts
@@ -72,21 +71,6 @@ contract SimpleAppFacet is
     }
 
     /// @inheritdoc ISimpleApp
-    function sendCurrency(address recipient, address currency, uint256 amount) external {
-        if (!_isAllowedToCall()) SimpleApp__InvalidCaller.selector.revertWith();
-
-        if (recipient == address(0)) SimpleApp__ZeroAddress.selector.revertWith();
-        if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
-        if (currency.code.length == 0 && currency != CurrencyTransfer.NATIVE_TOKEN)
-            SimpleApp__InvalidCurrency.selector.revertWith();
-        if (amount == 0) SimpleApp__InvalidAmount.selector.revertWith();
-
-        CurrencyTransfer.transferCurrency(currency, address(this), recipient, amount);
-
-        emit SendCurrency(recipient, currency, amount);
-    }
-
-    /// @inheritdoc ISimpleApp
     function updatePricing(uint256 installPrice, uint48 accessDuration) external onlyOwner {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
 
@@ -134,12 +118,6 @@ contract SimpleAppFacet is
 
     function _moduleOwner() internal view override returns (address) {
         return _owner();
-    }
-
-    function _isAllowedToCall() internal view returns (bool) {
-        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
-        if (msg.sender == _owner() || msg.sender == $.client) return true;
-        return false;
     }
 
     function _initializeState(bytes calldata data) internal {

@@ -57,12 +57,6 @@ interface ISimpleApp is ISimpleAppBase {
     /// @param recipient The address to withdraw the ETH to
     function withdrawETH(address recipient) external;
 
-    /// @notice Sends the currency balance of the app to the recipient
-    /// @param recipient The address to send the currency to
-    /// @param currency The currency to send
-    /// @param amount The amount of currency to send
-    function sendCurrency(address recipient, address currency, uint256 amount) external;
-
     /// @notice Updates the pricing of the app
     /// @param installPrice The new install price
     /// @param accessDuration The new access duration

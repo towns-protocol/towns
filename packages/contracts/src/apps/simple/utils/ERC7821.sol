@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import {IERC7821} from "@openzeppelin/contracts/interfaces/draft-IERC7821.sol";
+import {IERC7821} from "./IERC7821.sol";
 
 /// @notice Minimal batch executor mixin.
 /// @author Solady (https://github.com/vectorized/solady/blob/main/src/accounts/ERC7821.sol)
@@ -18,27 +18,6 @@ import {IERC7821} from "@openzeppelin/contracts/interfaces/draft-IERC7821.sol";
 /// signature checks skip `ecrecover` if the signer has code. For a basic EOA batch executor,
 /// please refer to [BEBE](https://github.com/vectorized/bebe), which inherits from this class.
 contract ERC7821 is IERC7821 {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                          STRUCTS                           */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev Call struct for the `execute` function.
-    struct Call {
-        address to; // Replaced as `address(this)` if `address(0)`. Renamed to `to` for Ithaca Porto.
-        uint256 value; // Amount of native currency (i.e. Ether) to send.
-        bytes data; // Calldata to send with the call.
-    }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                       CUSTOM ERRORS                        */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    /// @dev The execution mode is not supported.
-    error UnsupportedExecutionMode();
-
-    /// @dev Cannot decode `executionData` as a batch of batches `abi.encode(bytes[])`.
-    error BatchOfBatchesDecodingError();
-
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    EXECUTION OPERATIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

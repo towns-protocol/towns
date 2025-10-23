@@ -7,7 +7,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ISimpleApp} from "../../../src/apps/simple/app/ISimpleApp.sol";
 
 // libraries
-import {CurrencyTransfer} from "../../../src/utils/libraries/CurrencyTransfer.sol";
 
 // contracts
 import {SimpleAppFacet} from "../../../src/apps/simple/app/SimpleAppFacet.sol";
@@ -33,80 +32,33 @@ contract SimpleAppFacetTest is SimpleAppBaseTest {
         assertEq(appDeveloper.balance, SIMPLE_APP_INSTALL_PRICE);
     }
 
-    function test_sendCurrencyAsClient() external givenSimpleAppIsCreatedAndInstalled {
+    function test_executeAsClient() external givenSimpleAppIsCreatedAndInstalled {
         address recipient = _randomAddress();
 
-        vm.prank(appClient);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(
-            recipient,
-            CurrencyTransfer.NATIVE_TOKEN,
-            SIMPLE_APP_INSTALL_PRICE
-        );
+        _sendNativeToken(appClient, recipient, SIMPLE_APP_INSTALL_PRICE);
 
         assertEq(recipient.balance, SIMPLE_APP_INSTALL_PRICE);
         assertEq(address(SIMPLE_APP).balance, 0);
     }
 
-    function test_sendCurrencyAsDeveloper() external givenSimpleAppIsCreatedAndInstalled {
+    function test_executeAsDeveloper() external givenSimpleAppIsCreatedAndInstalled {
         address recipient = _randomAddress();
 
-        vm.prank(appDeveloper);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(
-            recipient,
-            CurrencyTransfer.NATIVE_TOKEN,
-            SIMPLE_APP_INSTALL_PRICE
-        );
+        _sendNativeToken(appDeveloper, recipient, SIMPLE_APP_INSTALL_PRICE);
 
         assertEq(recipient.balance, SIMPLE_APP_INSTALL_PRICE);
         assertEq(address(SIMPLE_APP).balance, 0);
     }
 
-    function test_revertWhen_sendCurrency_invalidCaller()
+    function test_revertWhen_execute_unauthorizedCaller()
         external
         givenSimpleAppIsCreatedAndInstalled
     {
-        vm.prank(_randomAddress());
-        vm.expectRevert(SimpleApp__InvalidCaller.selector);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(
-            appDeveloper,
-            CurrencyTransfer.NATIVE_TOKEN,
-            SIMPLE_APP_INSTALL_PRICE
-        );
-    }
+        address unauthorized = _randomAddress();
+        address recipient = _randomAddress();
 
-    function test_revertWhen_sendCurrency_invalidRecipient()
-        external
-        givenSimpleAppIsCreatedAndInstalled
-    {
-        vm.prank(appDeveloper);
-        vm.expectRevert(SimpleApp__ZeroAddress.selector);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(
-            address(0),
-            address(0),
-            SIMPLE_APP_INSTALL_PRICE
-        );
-    }
-
-    function test_revertWhen_sendCurrency_invalidAmount()
-        external
-        givenSimpleAppIsCreatedAndInstalled
-    {
-        vm.prank(appDeveloper);
-        vm.expectRevert(SimpleApp__InvalidAmount.selector);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(appDeveloper, address(0), 0);
-    }
-
-    function test_revertWhen_sendCurrency_invalidCurrency()
-        external
-        givenSimpleAppIsCreatedAndInstalled
-    {
-        vm.prank(appDeveloper);
-        vm.expectRevert(SimpleApp__InvalidCurrency.selector);
-        SimpleAppFacet(payable(SIMPLE_APP)).sendCurrency(
-            appDeveloper,
-            _randomAddress(),
-            SIMPLE_APP_INSTALL_PRICE
-        );
+        vm.expectRevert(SimpleAccount__NotFromTrustedCaller.selector);
+        _sendNativeToken(unauthorized, recipient, SIMPLE_APP_INSTALL_PRICE);
     }
 
     function test_updatePricing() external givenSimpleAppIsCreatedAndInstalled {

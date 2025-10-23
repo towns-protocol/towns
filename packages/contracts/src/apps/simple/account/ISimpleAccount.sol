@@ -10,6 +10,7 @@ import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntry
 
 interface ISimpleAccountBase {
     error SimpleAccount__NotFromTrustedCaller();
+    error SimpleAccount__OpDataNotSupported();
 }
 
 interface ISimpleAccount is ISimpleAccountBase {
