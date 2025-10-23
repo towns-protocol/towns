@@ -3,7 +3,6 @@ import { utils, ethers } from 'ethers'
 import { SpaceDapp, Permission } from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
-
 import {
     getRefEventIdFromChannelMessage,
     isChannelStreamId,
@@ -30,6 +29,8 @@ import {
     streamIdAsBytes,
     addressFromUserId,
     make_ChannelPayload_InteractionRequest,
+    userIdToAddress,
+    unpackEnvelope,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -64,6 +65,10 @@ import {
     bin_fromBase64,
     bin_fromHexString,
     bin_toHexString,
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_toHexString,
+    check,
     dlog,
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
@@ -1318,6 +1323,37 @@ const buildBotActions = (
         const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
             ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
             : client.defaultGroupEncryptionAlgorithm
+
+        if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
+            const appService = await client.appServiceClient()
+            try {
+                const sessionResp = await appService.getSession({
+                    appId: userIdToAddress(client.userId),
+                    identifier: {
+                        case: 'streamId',
+                        value: streamIdAsBytes(streamId),
+                    },
+                })
+                if (sessionResp.groupEncryptionSessions) {
+                    const parsedEvent = await unpackEnvelope(
+                        sessionResp.groupEncryptionSessions,
+                        client.unpackEnvelopeOpts,
+                    )
+                    check(
+                        parsedEvent.event.payload.case === 'userInboxPayload' &&
+                            parsedEvent.event.payload.value.content.case ===
+                                'groupEncryptionSessions',
+                        'invalid event payload',
+                    )
+                    await client.importGroupEncryptionSessions({
+                        streamId,
+                        sessions: parsedEvent.event.payload.value.content.value,
+                    })
+                }
+            } catch {
+                // ignore error (should log)
+            }
+        }
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,

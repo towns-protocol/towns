@@ -407,22 +407,36 @@ func (s *Service) GetSession(
 		return nil, err
 	}
 
-	if req.Msg.SessionId == "" {
+	var envelopeBytes []byte
+	switch identifier := req.Msg.Identifier.(type) {
+	case *GetSessionRequest_SessionId:
+		envelopeBytes, err = s.store.GetSessionKey(ctx, app, identifier.SessionId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+				Tag("sessionId", identifier.SessionId).Tag("appId", app).Func("GetSession")
+		}
+	case *GetSessionRequest_StreamId:
+		streamId, err := shared.StreamIdFromBytes(identifier.StreamId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_INVALID_ARGUMENT).
+				Tag("streamId", identifier.StreamId).Tag("appId", app).Func("GetSession")
+		}
+		envelopeBytes, err = s.store.GetSessionKeyForStream(ctx, app, streamId)
+		if err != nil {
+			return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE).
+				Tag("streamId", streamId).Tag("appId", app).Func("GetSession")
+		}
+	default:
 		return nil, base.RiverError(
 			Err_INVALID_ARGUMENT,
-			"Invalid session id",
-		).Tag("sessionId", req.Msg.SessionId).Tag("appId", app).Func("GetSession")
-	}
-
-	envelopeBytes, err := s.store.GetSessionKey(ctx, app, req.Msg.SessionId)
-	if err != nil {
-		return nil, base.AsRiverError(err, Err_DB_OPERATION_FAILURE)
+			"Either session_id or stream_id must be provided",
+		).Tag("appId", app).Func("GetSession")
 	}
 
 	var envelope Envelope
 	if err = proto.Unmarshal(envelopeBytes, &envelope); err != nil {
-		return nil, base.AsRiverError(err, Err_BAD_EVENT).Message("Could not marshal encryption envelope").
-			Tag("sessionId", req.Msg.SessionId).Tag("appId", app).Func("GetSession")
+		return nil, base.AsRiverError(err, Err_BAD_EVENT).Message("Could not unmarshal encryption envelope").
+			Tag("appId", app).Func("GetSession")
 	}
 
 	return &connect.Response[GetSessionResponse]{

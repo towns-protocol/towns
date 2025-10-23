@@ -2,17 +2,13 @@
 
 /**
  * CONTRACT ARTIFACT MANAGEMENT
- *
+ * 
  * Strategy: npm download when possible, local generation when needed.
- * Foundry auto-installation is removed; requires manual installation in local dev.
- *
- * 1. No artifacts → try npm download → validate hash:
- *    - Hash match: use npm artifacts
- *    - Hash mismatch + Foundry installed: regenerate locally
- *    - Hash mismatch + NO Foundry: use npm artifacts with warning (Vercel case)
- * 2. Artifacts exist + contracts changed → regenerate locally (Foundry required, local only)
- * 3. SKIP_CONTRACT_GEN=true → skip checks, use existing artifacts
- *
+ * 
+ * 1. No artifacts → try npm download → validate hash → fallback to local gen
+ * 2. Artifacts exist → compare hash → regenerate if contracts changed  
+ * 3. SKIP_CONTRACT_GEN=true → use existing or npm download, never fail
+ * 
  * Uses package.json version + git tree hash for validation.
  */
 
@@ -27,6 +23,7 @@ const packageRoot = resolve(__dirname, '..');
 const contractsDir = resolve(packageRoot, '../contracts');
 const devDir = resolve(packageRoot, 'dev');
 const hashFile = resolve(devDir, '.contracts-hash');
+const foundryPath = `${process.env.HOME}/.foundry/bin`;
 
 // Get current package version
 function getCurrentVersion() {
@@ -120,56 +117,66 @@ function isFoundryInstalled() {
   }
 }
 
+// Install Foundry if not present
+function installFoundry() {
+  console.log('Installing Foundry...');
+  try {
+    // Install foundryup
+    execSync('curl -L https://foundry.paradigm.xyz | bash', { stdio: 'inherit' });
+
+    // foundryup is installed to ~/.foundry/bin, call it directly with full path
+    // Install latest foundry
+    execSync(`${foundryPath}/foundryup`, { stdio: 'inherit' });
+
+    console.log('Foundry installation completed');
+    return true;
+  } catch (error) {
+    console.log('Foundry installation failed:', error.message);
+    return false;
+  }
+}
+
 // Generate contract artifacts
 function generateArtifacts() {
-  // Check for contracts directory
+  // Check for contracts directory FIRST (before trying to install Foundry)
   if (!existsSync(contractsDir)) {
-    throw new Error('Cannot generate artifacts: contracts package not available');
+    console.log('Contracts directory not found, cannot generate locally');
+    throw new Error('Cannot generate artifacts: contracts package not available and npm download failed');
   }
-
-  // Require Foundry to be installed
+  
   if (!isFoundryInstalled()) {
-    throw new Error('Foundry is not installed and is required to generate contract artifacts.');
+    console.log('Foundry not found, attempting installation...');
+    if (!installFoundry()) {
+      throw new Error('Failed to install Foundry - cannot generate contract artifacts');
+    }
   }
-
+  
   const buildScript = resolve(contractsDir, 'scripts/build-contract-types.sh');
 
   if (!existsSync(buildScript)) {
     throw new Error(`Build script not found at ${buildScript}`);
   }
 
+  // Prepare environment with Foundry in PATH so forge can be found
+  const envWithFoundry = {
+    ...process.env,
+    PATH: `${foundryPath}:${process.env.PATH}`
+  };
+
   execSync(`bash ${buildScript}`, {
     cwd: contractsDir,
-    stdio: 'inherit'
+    stdio: 'inherit',
+    env: envWithFoundry
   });
 }
 
 // Main logic
 async function main() {
   const skipRequested = process.env.SKIP_CONTRACT_GEN === 'true';
-
+  
   if (!generatedFilesExist()) {
     console.log('No artifacts found, trying npm download first...');
-    if (await downloadArtifactsFromNpm()) {
-      // Check if hash validation is needed
-      const currentHash = getContractsHash();
-      if (currentHash && existsSync(hashFile)) {
-        const downloadedHash = readFileSync(hashFile, 'utf8').trim();
-        if (currentHash !== downloadedHash) {
-          // Hash mismatch: regenerate if Foundry available, otherwise use downloaded
-          if (isFoundryInstalled()) {
-            console.log('Hash mismatch detected, regenerating locally with Foundry...');
-            generateArtifacts();
-          } else {
-            console.log('WARNING: Hash mismatch but Foundry not available, using downloaded artifacts');
-          }
-        }
-      }
-    } else {
-      console.log('NPM download failed, attempting local generation...');
-      generateArtifacts();
-    }
-    return;
+    await downloadArtifactsFromNpm();
   }
 
   if (skipRequested) {
