@@ -1121,6 +1121,30 @@ export const makeTownsBot = async <
     }).then((x) =>
         x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
     )
+
+    if (opts.commands) {
+        void client
+            .appServiceClient()
+            .then((appRegistryRpcClient) => {
+                void appRegistryRpcClient
+                    .updateAppMetadata({
+                        appId: bin_fromHexString(account.address),
+                        updateMask: ['slash_commands'],
+                        metadata: {
+                            slashCommands: opts.commands,
+                        },
+                    })
+                    .catch((err) => {
+                        // eslint-disable-next-line no-console
+                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
+                    })
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
+            })
+    }
+
     await client.uploadDeviceKeys()
     return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
 }

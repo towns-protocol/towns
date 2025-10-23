@@ -1,8 +1,7 @@
 import { green, red, yellow, cyan } from 'picocolors'
 import { init, TEMPLATES, type Template } from './modules/init.js'
 import { update } from './modules/update.js'
-import { updateCommands } from './modules/update-commands.js'
-import { parseArgs, isInitArgs, isUpdateArgs, isUpdateCommandsArgs } from './parser.js'
+import { parseArgs, isInitArgs, isUpdateArgs } from './parser.js'
 
 async function main() {
     const args = parseArgs(process.argv.slice(2))
@@ -23,11 +22,6 @@ async function main() {
             case 'update':
                 if (isUpdateArgs(args)) {
                     await update(args)
-                }
-                break
-            case 'update-commands':
-                if (isUpdateCommandsArgs(args)) {
-                    await updateCommands(args)
                 }
                 break
             default:
