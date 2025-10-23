@@ -77,6 +77,8 @@ import {
     createClient,
     type Client,
     type Account,
+    type WalletClient,
+    createWalletClient,
 } from 'viem'
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -274,7 +276,7 @@ export class Bot<
     private readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
-    viem: Client<Transport, Chain, Account>
+    viem: WalletClient<Transport, Chain, Account>
     snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
@@ -295,7 +297,7 @@ export class Bot<
 
     constructor(
         clientV2: ClientV2<BotActions>,
-        viem: Client<Transport, Chain, Account>,
+        viem: WalletClient<Transport, Chain, Account>,
         jwtSecretBase64: string,
         appAddress: Address,
         commands?: Commands,
@@ -1015,8 +1017,7 @@ export const makeTownsBot = async <
         commands?: Commands
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
-    // eslint-disable-next-line prefer-const
-    let { baseRpcUrl, ...clientOpts } = opts
+    const { baseRpcUrl, ...clientOpts } = opts
     let appAddress: Address | undefined
     const {
         privateKey,
@@ -1039,7 +1040,7 @@ export const makeTownsBot = async <
         return baseSepolia
     }
     const chain = getChain(baseConfig.chainConfig.chainId)
-    const viem = createClient({
+    const viem = createWalletClient({
         account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
@@ -1076,7 +1077,7 @@ export const makeTownsBot = async <
 
 const buildBotActions = (
     client: ClientV2,
-    _viem: Client<Transport, Chain, Account>,
+    _viem: WalletClient<Transport, Chain, Account>,
     spaceDapp: SpaceDapp,
     _appAddress: string,
 ) => {

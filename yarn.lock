@@ -10137,7 +10137,6 @@ __metadata:
     image-size: ^2.0.2
     jsonwebtoken: ^9.0.2
     nanoevents: ^9.1.0
-    permissionless: ^0.2.57
     superjson: ^2.2.2
     typescript: ~5.8.3
     viem: ^2.29.3
@@ -26495,19 +26494,6 @@ __metadata:
   version: 1.2.0
   resolution: "pend@npm:1.2.0"
   checksum: 6c72f5243303d9c60bd98e6446ba7d30ae29e3d56fdb6fae8767e8ba6386f33ee284c97efe3230a0d0217e2b1723b8ab490b1bbf34fcbb2180dbc8a9de47850d
-  languageName: node
-  linkType: hard
-
-"permissionless@npm:^0.2.57":
-  version: 0.2.57
-  resolution: "permissionless@npm:0.2.57"
-  peerDependencies:
-    ox: ^0.8.0
-    viem: ^2.28.1
-  peerDependenciesMeta:
-    ox:
-      optional: true
-  checksum: f1d6b9577404a9ff6096b59d51a4fb410157bc8480d7d7f348803e05be4ed8799765a945ce9e6b0917e61a46b4c4b9287a51fbc4fe126c6dbbc33de7cd53abec
   languageName: node
   linkType: hard
 
