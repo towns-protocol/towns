@@ -623,7 +623,8 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it('bot can fetch existing keys', async () => {
+    it('bot can fetch existing decryption keys when sending a message', async () => {
+        // on a fresh boot the bot won't have any keys in cache, so it should fetch them from the app server if they exist
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId1 } = await bot.sendMessage(channelId, 'Hello message 1')
         await waitFor(() =>
@@ -648,7 +649,9 @@ describe('Bot', { sequential: true }, () => {
         expect(event1?.sessionId).toEqual(event2?.sessionId)
     })
 
-    it('bot shares new keys with users', async () => {
+    it('bot shares new decrytion keys with users created while sending a message', async () => {
+        // the bot should almost never have to create a new key - usually they will get a message in the channel first and can use that key to encrypt
+        // but in the case where they've never received one and want to send a message, they will create a new key and share it with the users in the channel
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         // have bob create a new channel, but don't send messages
         const newChannelId = await bobClient.spaces
