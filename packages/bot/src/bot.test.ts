@@ -201,7 +201,9 @@ describe('Bot', { sequential: true }, () => {
             cryptoStore,
             new MockEntitlementsDelegate(),
         )
-        await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
+        await expect(
+            botClient.initializeUser({ appAddress, skipSync: true }),
+        ).resolves.toBeDefined()
 
         await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
         await bobClient.riverConnection.call((client) =>
@@ -219,6 +221,7 @@ describe('Bot', { sequential: true }, () => {
             appAddress,
         )
         expect(appPrivateData).toBeDefined()
+        await botClient.stop()
     }
 
     const shouldRegisterBotInAppRegistry = async () => {

@@ -488,6 +488,7 @@ export class Client
         spaceId?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
         appAddress?: Uint8Array | string
+        skipSync?: boolean
     }): Promise<{
         initCryptoTime: number
         initUserStreamTime: number
@@ -525,7 +526,9 @@ export class Client
         ])
         this.initUserJoinedStreams()
 
-        this.syncedStreamsExtensions.start()
+        if (!opts?.skipSync) {
+            this.syncedStreamsExtensions.start()
+        }
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
         this.logCall('initializeUser::executionTime', executionTime)
@@ -2213,9 +2216,9 @@ export class Client
         },
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
-        check(isDefined(this.userStreamId))
+        check(isDefined(this.userStreamId), 'userStreamId not defined')
         const userStream = this.stream(this.userStreamId)
-        check(isDefined(userStream), 'userStream not found')
+        check(isDefined(userStream), 'userStream not defined')
         const streamIdStr = streamIdAsString(streamId)
         const stream = await this.initStream(streamId)
         // check your user stream for membership as that's the final source of truth
