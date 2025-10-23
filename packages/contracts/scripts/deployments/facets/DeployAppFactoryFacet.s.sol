@@ -44,7 +44,7 @@ library DeployAppFactoryFacet {
     }
 
     function makeInitData(
-        IAppFactoryBase.Beacon[] calldata beacons
+        IAppFactoryBase.Beacon[] memory beacons
     ) internal pure returns (bytes memory) {
         return abi.encodeCall(AppFactoryFacet.__AppFactory_init, (beacons));
     }
