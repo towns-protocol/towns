@@ -455,16 +455,13 @@ class MockGroupEncryptionClient
         return Promise.resolve({})
     }
 
-    public encryptAndShareGroupSessions(
+    public encryptAndShareGroupSessionsToStream(
         _streamId: string,
         _sessions: GroupEncryptionSession[],
-        _devicesInRoom: UserDeviceCollection,
+        _algorithm: GroupEncryptionAlgorithmId,
+        _priorityUserIds: string[],
     ): Promise<void> {
         return Promise.resolve()
-    }
-
-    public getDevicesInStream(_streamId: string): Promise<UserDeviceCollection> {
-        return Promise.resolve({})
     }
 
     public getMiniblockInfo(
