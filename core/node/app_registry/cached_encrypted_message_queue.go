@@ -127,6 +127,14 @@ func (q *CachedEncryptedMessageQueue) GetSessionKey(
 	return q.store.GetSessionKey(ctx, app, sessionId)
 }
 
+func (q *CachedEncryptedMessageQueue) GetSessionKeyForStream(
+	ctx context.Context,
+	app common.Address,
+	streamId shared.StreamId,
+) (encryptionEnvelope []byte, err error) {
+	return q.store.GetSessionKeyForStream(ctx, app, streamId)
+}
+
 func (q *CachedEncryptedMessageQueue) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,

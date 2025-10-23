@@ -65,6 +65,15 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         }
     }
 
+    public async hasOutboundSession(streamId: string): Promise<boolean> {
+        try {
+            await this.device.getHybridGroupSessionKeyForStream(streamId)
+            return true
+        } catch {
+            return false
+        }
+    }
+
     private async shareSession(streamId: string, sessionId: string): Promise<void> {
         const devicesInRoom = await this.client.getDevicesInStream(streamId)
         const session = await this.device.exportHybridGroupSession(streamId, sessionId)

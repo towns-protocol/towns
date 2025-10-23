@@ -18,6 +18,7 @@ import {
     tippingFacetAbi,
     membershipFacetAbi,
     reviewFacetAbi,
+    iAppFactoryAbi,
 } from '@towns-protocol/contracts/typings'
 import SubscriptionModuleFacetAbi from '@towns-protocol/generated/dev/abis/SubscriptionModuleFacet.abi'
 
@@ -160,7 +161,7 @@ export function makePonderConfig(
                 chain: baseChainName,
             },
             AppRegistry: {
-                abi: iAppRegistryAbi,
+                abi: mergeAbis([iAppRegistryAbi, iAppFactoryAbi]),
                 address: appRegistry,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,

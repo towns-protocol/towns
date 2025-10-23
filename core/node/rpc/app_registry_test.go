@@ -1635,7 +1635,7 @@ func TestAppRegistry_MessageForwardSettings(t *testing.T) {
 					testCiphertexts,
 				)
 			} else {
-				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 10*time.Second, 100*time.Millisecond)
+				participantClient.requireNoKeySolicitation(channelId, testBotEncryptionDevice(0).DeviceKey, "", 3*time.Second, 100*time.Millisecond)
 			}
 
 			if expectForwarding {
@@ -1717,14 +1717,30 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	require.EventuallyWithT(func(c *assert.CollectT) {
 		req := &connect.Request[protocol.GetSessionRequest]{
 			Msg: &protocol.GetSessionRequest{
-				AppId:     botWallet.Address[:],
-				SessionId: testSession1,
+				AppId: botWallet.Address[:],
+				Identifier: &protocol.GetSessionRequest_SessionId{
+					SessionId: testSession1,
+				},
+			},
+		}
+		req2 := &connect.Request[protocol.GetSessionRequest]{
+			Msg: &protocol.GetSessionRequest{
+				AppId: botWallet.Address[:],
+				Identifier: &protocol.GetSessionRequest_StreamId{
+					StreamId: channelId[:],
+				},
 			},
 		}
 		authenticateBS(tester.ctx, require, tester.authClient, botWallet, req)
+		authenticateBS(tester.ctx, require, tester.authClient, botWallet, req2)
 
 		resp, err := tester.appRegistryClient.GetSession(tester.ctx, req)
 		if !(assert.NoError(c, err, "GetSession should produce no error") && assert.NotNil(c, resp)) {
+			return
+		}
+
+		resp, error := tester.appRegistryClient.GetSession(tester.ctx, req2)
+		if !(assert.NoError(c, error, "GetSession with streamid should produce no error") && assert.NotNil(c, resp)) {
 			return
 		}
 
@@ -1751,8 +1767,10 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	// 2nd one because they are included in the same event.
 	req := &connect.Request[protocol.GetSessionRequest]{
 		Msg: &protocol.GetSessionRequest{
-			AppId:     botWallet.Address[:],
-			SessionId: testSession2,
+			AppId: botWallet.Address[:],
+			Identifier: &protocol.GetSessionRequest_SessionId{
+				SessionId: testSession2,
+			},
 		},
 	}
 	authenticateBS(tester.ctx, tester.require, tester.authClient, botWallet, req)
@@ -1773,11 +1791,15 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	require.Equal(testCiphertexts, deviceCiphertexts)
 	require.Equal(channelId[:], sessions.StreamId)
 
+	nonexistentSession := "nonexistentSession"
+
 	// Check non-existent session - should result in a NOT_FOUND error.
 	req = &connect.Request[protocol.GetSessionRequest]{
 		Msg: &protocol.GetSessionRequest{
-			AppId:     botWallet.Address[:],
-			SessionId: "nonexistentSession",
+			AppId: botWallet.Address[:],
+			Identifier: &protocol.GetSessionRequest_SessionId{
+				SessionId: nonexistentSession,
+			},
 		},
 	}
 	authenticateBS(tester.ctx, tester.require, tester.authClient, botWallet, req)
@@ -1789,8 +1811,10 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	req = &connect.Request[protocol.GetSessionRequest]{
 		Msg: &protocol.GetSessionRequest{
 			// participant is not a bot
-			AppId:     participantClient.wallet.Address[:],
-			SessionId: "nonexistentSession",
+			AppId: participantClient.wallet.Address[:],
+			Identifier: &protocol.GetSessionRequest_SessionId{
+				SessionId: nonexistentSession,
+			},
 		},
 	}
 	authenticateBS(tester.ctx, tester.require, tester.authClient, participantClient.wallet, req)
@@ -1802,8 +1826,10 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	req = &connect.Request[protocol.GetSessionRequest]{
 		Msg: &protocol.GetSessionRequest{
 			// participant is not a bot
-			AppId:     botWallet.Address[:],
-			SessionId: "nonexistentSession",
+			AppId: botWallet.Address[:],
+			Identifier: &protocol.GetSessionRequest_SessionId{
+				SessionId: nonexistentSession,
+			},
 		},
 	}
 	// Authorize with the participant wallet.
@@ -1815,8 +1841,10 @@ func TestAppRegistry_GetSession(t *testing.T) {
 	// An unauthenticated request should also fail.
 	req = &connect.Request[protocol.GetSessionRequest]{
 		Msg: &protocol.GetSessionRequest{
-			AppId:     participantClient.wallet.Address[:],
-			SessionId: "nonexistentSession",
+			AppId: participantClient.wallet.Address[:],
+			Identifier: &protocol.GetSessionRequest_SessionId{
+				SessionId: nonexistentSession,
+			},
 		},
 	}
 	resp, err = tester.appRegistryClient.GetSession(tester.ctx, req)

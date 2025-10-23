@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -1317,7 +1318,7 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 					Event: &BlockchainTransaction_Tip_Event{
 						MessageId: messageId,
 						Amount:    amount.Uint64(),
-						TokenId:   tokenId.Uint64(),
+						TokenId:   proto.Uint64(tokenId.Uint64()),
 						Currency:  currency.Bytes(),
 						Sender:    from.Address[:],
 						Receiver:  to.Address[:],

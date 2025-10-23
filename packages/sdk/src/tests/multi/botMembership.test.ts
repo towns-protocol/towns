@@ -70,7 +70,7 @@ describe('bot membership tests', () => {
         const tx2 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
         )
 
@@ -157,7 +157,7 @@ describe('bot membership tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
@@ -344,7 +344,7 @@ describe('bot membership tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
@@ -477,7 +477,7 @@ describe('bot membership tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()

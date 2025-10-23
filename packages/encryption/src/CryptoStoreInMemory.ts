@@ -42,6 +42,10 @@ export class CryptoStoreInMemory implements CryptoStore {
         this.inboundGroupSessions.delete(key)
     }
 
+    async deleteOutboundGrounpSessions(streamId: string): Promise<void> {
+        this.outboundGroupSessions.delete(streamId)
+    }
+
     async deleteAccount(userId: string): Promise<void> {
         this.accounts.delete(userId)
     }
@@ -116,6 +120,16 @@ export class CryptoStoreInMemory implements CryptoStore {
 
     async getAllHybridGroupSessions(): Promise<HybridGroupSessionRecord[]> {
         return Array.from(this.hybridGroupSessions.values())
+    }
+
+    async deleteHybridGroupSessions(streamId: string): Promise<void> {
+        for (const session of this.hybridGroupSessions.values()) {
+            if (session.streamId === streamId) {
+                this.hybridGroupSessions.delete(
+                    this.getHybridSessionKey(session.streamId, session.sessionId),
+                )
+            }
+        }
     }
 
     async storeEndToEndInboundGroupSession(

@@ -123,33 +123,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return AppRegistryStorage.getLayout().client[client].app;
     }
 
-    /// @notice Creates a new app with the specified parameters
-    /// @param params The parameters for creating the app
-    /// @return app The address of the created app
-    /// @return version The version ID of the registered app
-    /// @dev Validates inputs, deploys app contract, and registers it
-    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
-        // Validate basic parameters
-        if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
-        if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
-        if (params.client == address(0)) InvalidAddressInput.selector.revertWith();
-
-        uint48 duration = _validateDuration(params.accessDuration);
-
-        app = LibClone.deployERC1967BeaconProxy(address(this));
-        ISimpleApp(app).initialize(
-            msg.sender,
-            params.name,
-            params.permissions,
-            params.installPrice,
-            duration,
-            params.client
-        );
-
-        version = _registerApp(ITownsApp(app), params.client);
-        emit AppCreated(app, version);
-    }
-
     function _upgradeApp(
         ITownsApp app,
         address client,

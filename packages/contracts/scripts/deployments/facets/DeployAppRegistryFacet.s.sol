@@ -16,14 +16,13 @@ library DeployAppRegistryFacet {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(14);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(13);
         arr.p(AppRegistryFacet.getAppSchema.selector);
         arr.p(AppRegistryFacet.getAppSchemaId.selector);
         arr.p(AppRegistryFacet.getAppById.selector);
         arr.p(AppRegistryFacet.getLatestAppId.selector);
         arr.p(AppRegistryFacet.registerApp.selector);
         arr.p(AppRegistryFacet.removeApp.selector);
-        arr.p(AppRegistryFacet.createApp.selector);
         arr.p(AppRegistryFacet.upgradeApp.selector);
         arr.p(AppRegistryFacet.getAppPrice.selector);
         arr.p(AppRegistryFacet.getAppDuration.selector);

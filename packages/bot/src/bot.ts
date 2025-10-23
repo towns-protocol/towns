@@ -3,7 +3,6 @@ import { utils, ethers } from 'ethers'
 import { SpaceDapp, Permission } from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
-
 import {
     getRefEventIdFromChannelMessage,
     isChannelStreamId,
@@ -29,6 +28,9 @@ import {
     makeUniqueMediaStreamId,
     streamIdAsBytes,
     addressFromUserId,
+    make_ChannelPayload_InteractionRequest,
+    userIdToAddress,
+    unpackEnvelope,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -44,8 +46,6 @@ import {
     AppServiceResponseSchema,
     type AppServiceResponse,
     type EventPayload,
-    SessionKeysSchema,
-    type UserInboxPayload_GroupEncryptionSessions,
     MembershipOp,
     type PlainMessage,
     Tags,
@@ -57,41 +57,38 @@ import {
     ChannelMessage_Post_Content_Image_InfoSchema,
     ChunkedMediaSchema,
     CreationCookieSchema,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import {
+    bin_equal,
     bin_fromBase64,
     bin_fromHexString,
     bin_toHexString,
     check,
     dlog,
 } from '@towns-protocol/utils'
-import {
-    GroupEncryptionAlgorithmId,
-    parseGroupEncryptionAlgorithmId,
-} from '@towns-protocol/encryption'
+import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
-    createClient as createViemClient,
     http,
-    type Abi,
     type Account,
     type Chain,
-    type Client as ViemClient,
-    type ContractFunctionArgs,
-    type ContractFunctionName,
     type Prettify,
+    type Transport,
+    type Hex,
+    type WalletClient,
+    createWalletClient,
+    type Address,
 } from 'viem'
-import {
-    readContract,
-    type ReadContractParameters,
-    writeContract,
-    type WriteContractParameters,
-} from 'viem/actions'
-import { base, baseSepolia } from 'viem/chains'
+import { readContract } from 'viem/actions'
+import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
+import { privateKeyToAccount } from 'viem/accounts'
+import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -259,6 +256,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
     ) => void | Promise<void>
+    interactionResponse: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The interaction response that was received */
+            response: PlainMessage<InteractionResponse>
+        },
+    ) => void | Promise<void>
 }
 
 export type BasePayload = {
@@ -279,8 +283,9 @@ export class Bot<
     HonoEnv extends Env = BlankEnv,
 > {
     private readonly client: ClientV2<BotActions>
+    readonly appAddress: Address
     botId: string
-    viemClient: ViemClient
+    viem: WalletClient<Transport, Chain, Account>
     snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
@@ -301,21 +306,22 @@ export class Bot<
 
     constructor(
         clientV2: ClientV2<BotActions>,
-        viemClient: ViemClient,
+        viem: WalletClient<Transport, Chain, Account>,
         jwtSecretBase64: string,
+        appAddress: Address,
         commands?: Commands,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
-        this.viemClient = viemClient
+        this.viem = viem
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
         this.commands = commands
+        this.appAddress = appAddress
         this.snapshot = clientV2.snapshot
     }
 
-    async start() {
-        await this.client.uploadDeviceKeys()
+    start() {
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
         debug('start')
 
@@ -441,11 +447,10 @@ export class Bot<
                     case 'gdmChannelPayload': {
                         if (!parsed.event.payload.value.content.case) return
                         if (parsed.event.payload.value.content.case === 'message') {
-                            const decryptedSessions = await this.client.decryptSessions(
+                            await this.client.importGroupEncryptionSessions({
                                 streamId,
-                                groupEncryptionSession,
-                            )
-                            await this.client.crypto.importSessionKeys(streamId, decryptedSessions)
+                                sessions: groupEncryptionSession,
+                            })
                             const eventCleartext = await this.client.crypto.decryptGroupEvent(
                                 streamId,
                                 parsed.event.payload.value.content.value,
@@ -485,6 +490,25 @@ export class Bot<
                             // TODO: is there any use case for this?
                         } else if (parsed.event.payload.value.content.case === 'custom') {
                             // TODO: what to do with custom payload for bot?
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionRequest'
+                        ) {
+                            // ignored for bots
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionResponse'
+                        ) {
+                            const payload = parsed.event.payload.value.content.value
+                            if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
+                                continue
+                            }
+                            this.emitter.emit('interactionResponse', this.client, {
+                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                spaceId: spaceIdFromChannelId(streamId),
+                                channelId: streamId,
+                                eventId: parsed.hashStr,
+                                createdAt,
+                                response: payload,
+                            })
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
@@ -898,23 +922,26 @@ export class Bot<
         return result
     }
 
-    writeContract<
-        chain extends Chain | undefined,
-        account extends Account | undefined,
-        const abi extends Abi | readonly unknown[],
-        functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-        args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
-        chainOverride extends Chain | undefined,
-    >(tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>) {
-        return writeContract(this.viemClient, tx as WriteContractParameters)
-    }
-
-    readContract<
-        const abi extends Abi | readonly unknown[],
-        functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-        const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
-    >(parameters: ReadContractParameters<abi, functionName, args>) {
-        return readContract(this.viemClient, parameters)
+    /**
+     * Send an interaction request to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param request - The interaction request to send
+     * @param opts - The options for the interaction request
+     * @returns The eventId of the interaction request
+     */
+    async sendInteractionRequest(
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+    ) {
+        const result = await this.client.sendInteractionRequest(
+            streamId,
+            request,
+            opts,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
     }
 
     async hasAdminPermission(userId: string, spaceId: string) {
@@ -1027,6 +1054,14 @@ export class Bot<
     onRawGmMessage(handler: BotEvents['rawGmMessage']) {
         this.emitter.on('rawGmMessage', handler)
     }
+
+    /**
+     * Triggered when someone sends an interaction response
+     * @param fn - The handler function to call when an interaction response is received
+     */
+    onInteractionResponse(fn: BotEvents['interactionResponse']) {
+        this.emitter.on('interactionResponse', fn)
+    }
 }
 
 export const makeTownsBot = async <
@@ -1041,22 +1076,47 @@ export const makeTownsBot = async <
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
-    const { privateKey, encryptionDevice, env } = parseAppPrivateData(appPrivateData)
+    let appAddress: Address | undefined
+    const {
+        privateKey,
+        encryptionDevice,
+        env,
+        appAddress: appAddressFromPrivateData,
+    } = parseAppPrivateData(appPrivateData)
     if (!env) {
         throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
+    if (appAddressFromPrivateData) {
+        appAddress = appAddressFromPrivateData
+    }
+    const account = privateKeyToAccount(privateKey as Hex)
+
     const baseConfig = townsEnv().makeBaseChainConfig(env)
-    const viemClient = createViemClient({
+    const getChain = (chainId: number) => {
+        if (chainId === base.id) return base
+        if (chainId === foundry.id) return foundry
+        return baseSepolia
+    }
+    const viem = createWalletClient({
+        account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
         // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: baseConfig.chainConfig.chainId === base.id ? base : baseSepolia,
+        chain: getChain(baseConfig.chainConfig.chainId),
     })
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
     )
+    if (!appAddress) {
+        appAddress = await readContract(viem, {
+            address: baseConfig.chainConfig.addresses.appRegistry,
+            abi: appRegistryAbi,
+            functionName: 'getAppByClient',
+            args: [account.address],
+        })
+    }
     const client = await createTownsClient({
         privateKey,
         env,
@@ -1064,11 +1124,19 @@ export const makeTownsBot = async <
             fromExportedDevice: encryptionDevice,
         },
         ...clientOpts,
-    }).then((x) => x.extend((townsClient) => buildBotActions(townsClient, viemClient, spaceDapp)))
-    return new Bot<Commands, HonoEnv>(client, viemClient, jwtSecretBase64, opts.commands)
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
+    )
+    await client.uploadDeviceKeys()
+    return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
 }
 
-const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: SpaceDapp) => {
+const buildBotActions = (
+    client: ClientV2,
+    _viem: WalletClient<Transport, Chain, Account>,
+    spaceDapp: SpaceDapp,
+    _appAddress: string,
+) => {
     const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
 
     const createChunkedMediaAttachment = async (
@@ -1243,19 +1311,51 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         tags?: PlainMessage<Tags>
         ephemeral?: boolean
     }) => {
-        const stream = await client.getStream(streamId)
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
         const eventTags = {
             ...unsafe_makeTags(payload),
             participatingUserAddresses: tags?.participatingUserAddresses || [],
             threadId: tags?.threadId || undefined,
         }
-        const encryptionAlgorithm = stream.snapshot.members?.encryptionAlgorithm?.algorithm
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
+            const appService = await client.appServiceClient()
+            try {
+                const sessionResp = await appService.getSession({
+                    appId: userIdToAddress(client.userId),
+                    identifier: {
+                        case: 'streamId',
+                        value: streamIdAsBytes(streamId),
+                    },
+                })
+                if (sessionResp.groupEncryptionSessions) {
+                    const parsedEvent = await unpackEnvelope(
+                        sessionResp.groupEncryptionSessions,
+                        client.unpackEnvelopeOpts,
+                    )
+                    check(
+                        parsedEvent.event.payload.case === 'userInboxPayload' &&
+                            parsedEvent.event.payload.value.content.case ===
+                                'groupEncryptionSessions',
+                        'invalid event payload',
+                    )
+                    await client.importGroupEncryptionSessions({
+                        streamId,
+                        sessions: parsedEvent.event.payload.value.content.value,
+                    })
+                }
+            } catch {
+                // ignore error (should log)
+            }
+        }
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
             toBinary(ChannelMessageSchema, payload),
-            (encryptionAlgorithm as GroupEncryptionAlgorithmId) ||
-                client.defaultGroupEncryptionAlgorithm,
+            encryptionAlgorithm,
         )
         message.refEventId = getRefEventIdFromChannelMessage(payload)
 
@@ -1500,36 +1600,6 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         )
     }
 
-    const decryptSessions = async (
-        streamId: string,
-        sessions: UserInboxPayload_GroupEncryptionSessions,
-    ) => {
-        const { deviceKey } = client.crypto.getUserDevice()
-        const ciphertext = sessions.ciphertexts[deviceKey]
-        if (!ciphertext) {
-            throw new Error('No ciphertext found for device key')
-        }
-        const parsed = parseGroupEncryptionAlgorithmId(
-            sessions.algorithm,
-            GroupEncryptionAlgorithmId.GroupEncryption,
-        )
-        if (parsed.kind === 'unrecognized') {
-            throw new Error('Invalid algorithm')
-        }
-        const algorithm = parsed.value
-        // decrypt the session keys
-        const cleartext = await client.crypto.decryptWithDeviceKey(ciphertext, sessions.senderKey)
-        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
-        check(sessionKeys.keys.length === sessions.sessionIds.length, 'bad sessionKeys')
-        // make group sessions that can be used to decrypt events
-        return sessions.sessionIds.map((sessionId, i) => ({
-            streamId: streamId,
-            sessionId,
-            sessionKey: sessionKeys.keys[i],
-            algorithm,
-        }))
-    }
-
     const hasAdminPermission = async (userId: string, spaceId: string): Promise<boolean> => {
         const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
         // If you can ban, you're probably an "admin"
@@ -1594,36 +1664,27 @@ const buildBotActions = (client: ClientV2, viemClient: ViemClient, spaceDapp: Sp
         return undefined
     }
 
+    const sendInteractionRequest = async (
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        const payload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
+    }
+
     return {
-        // Is it those enough?
-        // TODO: think about a web3 use case..
-        writeContract: <
-            chain extends Chain | undefined,
-            account extends Account | undefined,
-            const abi extends Abi | readonly unknown[],
-            functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-            args extends ContractFunctionArgs<abi, 'nonpayable' | 'payable', functionName>,
-            chainOverride extends Chain | undefined,
-        >(
-            tx: WriteContractParameters<abi, functionName, args, chain, account, chainOverride>,
-        ) => writeContract(viemClient, tx as WriteContractParameters),
-        readContract: <
-            const abi extends Abi | readonly unknown[],
-            functionName extends ContractFunctionName<abi, 'pure' | 'view'>,
-            const args extends ContractFunctionArgs<abi, 'pure' | 'view', functionName>,
-        >(
-            parameters: ReadContractParameters<abi, functionName, args>,
-        ) => readContract(viemClient, parameters),
         sendMessage,
         editMessage,
         sendReaction,
+        sendInteractionRequest,
         sendGM,
         sendRawGM,
         removeEvent,
         adminRemoveEvent,
         sendKeySolicitation,
         uploadDeviceKeys,
-        decryptSessions,
         hasAdminPermission,
         checkPermission,
         ban,

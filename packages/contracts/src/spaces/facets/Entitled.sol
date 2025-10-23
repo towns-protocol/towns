@@ -14,13 +14,13 @@ import {CustomRevert} from "../../utils/libraries/CustomRevert.sol";
 import {EntitlementsManagerStorage} from "./entitlements/EntitlementsManagerStorage.sol";
 import {MembershipStorage} from "./membership/MembershipStorage.sol";
 import {BanningStorage} from "./banning/BanningStorage.sol";
-import {AppAccountStorage} from "./account/AppAccountStorage.sol";
+import {AppAccountBase} from "./account/AppAccountBase.sol";
 import {DependencyLib} from "./DependencyLib.sol";
 
 // contracts
 import {TokenOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/token/TokenOwnableBase.sol";
 
-abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
+abstract contract Entitled is IEntitlementBase, TokenOwnableBase, AppAccountBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using CustomRevert for bytes4;
@@ -135,7 +135,7 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase {
         address app = DependencyLib.getAppRegistry().getAppByClient(client);
         if (app == address(0)) return false;
 
-        return AppAccountStorage.isAppEntitled(app, client, permission);
+        return _isAppEntitled(app, client, permission);
     }
 
     function _hasAnyBannedWallet(address[] memory wallets) internal view returns (bool) {

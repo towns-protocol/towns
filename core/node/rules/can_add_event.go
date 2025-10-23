@@ -8,6 +8,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"google.golang.org/protobuf/proto"
@@ -236,6 +237,15 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 		return aeBuilder().
 			check(params.creatorIsMember).
 			requireChainAuth(params.channelEntitlements(auth.PermissionRedact))
+	case *ChannelPayload_InteractionRequest:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			check(params.creatorIsApp).
+			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
+	case *ChannelPayload_InteractionResponse:
+		return aeBuilder().
+			check(params.creatorIsMember).
+			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
 	default:
 		return aeBuilder().
 			fail(unknownContentType(content))
@@ -604,9 +614,29 @@ func checkIsMember(params *aeParams, creatorAddress []byte) error {
 	return nil
 }
 
+func checkIsApp(params *aeParams, creatorAddress []byte) error {
+	appAddress, err := params.streamView.GetMemberAppAddress(common.Address(creatorAddress))
+	if err != nil {
+		return err
+	}
+	if appAddress == (common.Address{}) {
+		return RiverError(Err_PERMISSION_DENIED, "creator is not an app registered with the client address")
+	}
+	return nil
+}
+
 func (params *aeParams) creatorIsMember() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	err := checkIsMember(params, creatorAddress)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (params *aeParams) creatorIsApp() (bool, error) {
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	err := checkIsApp(params, creatorAddress)
 	if err != nil {
 		return false, err
 	}
@@ -760,6 +790,20 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 		if err != nil {
 			return false, err
 		}
+
+		// Define ABI types for decoding TipSent data field
+		bytes32Type, _ := abi.NewType("bytes32", "", nil)
+		uint256Type, _ := abi.NewType("uint256", "", nil)
+		memberDataArgs := abi.Arguments{
+			{Type: bytes32Type, Name: "messageId"},
+			{Type: bytes32Type, Name: "channelId"},
+			{Type: uint256Type, Name: "tokenId"},
+		}
+		botDataArgs := abi.Arguments{
+			{Type: bytes32Type, Name: "messageId"},
+			{Type: bytes32Type, Name: "channelId"},
+		}
+
 		for _, receiptLog := range receipt.Logs {
 			// unpack the log
 			// compare to metadata in the tip
@@ -772,9 +816,75 @@ func (ru *aeBlockchainTransactionRules) validBlockchainTransaction_CheckReceiptM
 				Topics:  topics,
 				Data:    receiptLog.Data,
 			}
+
+			// Try parsing as TipSent event (new format)
+			tipSentEvent, err := filterer.ParseTipSent(log)
+			if err == nil {
+				// TipSent event found, decode data and validate
+				var messageId, channelId [32]byte
+
+				// RecipientType: 0 = Member, 1 = Bot, 2 = Pool
+				if tipSentEvent.RecipientType == 0 {
+					// Member tip: decode as (messageId, channelId, tokenId)
+					values, err := memberDataArgs.Unpack(tipSentEvent.Data)
+					if err != nil {
+						continue
+					}
+					messageId = values[0].([32]byte)
+					channelId = values[1].([32]byte)
+					tokenId := values[2].(*big.Int)
+
+					// Validate tokenId for member tips
+					if tokenId.Cmp(big.NewInt(int64(content.Tip.GetEvent().GetTokenId()))) != 0 {
+						continue
+					}
+				} else {
+					// Bot/Pool tip: decode as (messageId, channelId) - no tokenId
+					values, err := botDataArgs.Unpack(tipSentEvent.Data)
+					if err != nil {
+						continue
+					}
+					messageId = values[0].([32]byte)
+					channelId = values[1].([32]byte)
+					// Note: tokenId is not validated for bot/pool tips
+				}
+
+				// Validate that messageId and channelId are not empty
+				var emptyBytes32 [32]byte
+				if bytes.Equal(messageId[:], emptyBytes32[:]) {
+					continue // reject tips with empty messageId
+				}
+				if bytes.Equal(channelId[:], emptyBytes32[:]) {
+					continue // reject tips with empty channelId
+				}
+
+				// Validate common fields
+				if !bytes.Equal(tipSentEvent.Currency[:], content.Tip.GetEvent().GetCurrency()) {
+					continue
+				}
+				if !bytes.Equal(tipSentEvent.Sender[:], content.Tip.GetEvent().GetSender()) {
+					continue
+				}
+				if !bytes.Equal(tipSentEvent.Receiver[:], content.Tip.GetEvent().GetReceiver()) {
+					continue
+				}
+				if tipSentEvent.Amount.Cmp(big.NewInt(int64(content.Tip.GetEvent().GetAmount()))) != 0 {
+					continue
+				}
+				if !bytes.Equal(messageId[:], content.Tip.GetEvent().GetMessageId()) {
+					continue
+				}
+				if !bytes.Equal(channelId[:], content.Tip.GetEvent().GetChannelId()) {
+					continue
+				}
+				// match found
+				return true, nil
+			}
+
+			// Fallback to legacy Tip event for backwards compatibility
 			tipEvent, err := filterer.ParseTip(log)
 			if err != nil {
-				continue // not a tip
+				continue // not a tip event
 			}
 			if tipEvent.TokenId.Cmp(big.NewInt(int64(content.Tip.GetEvent().GetTokenId()))) != 0 {
 				continue

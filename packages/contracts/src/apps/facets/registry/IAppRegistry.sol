@@ -11,14 +11,6 @@ import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.so
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 interface IAppRegistryBase {
-    struct AppParams {
-        string name;
-        bytes32[] permissions;
-        address client;
-        uint256 installPrice;
-        uint48 accessDuration;
-    }
-
     struct App {
         bytes32 appId;
         address module;
@@ -58,7 +50,6 @@ interface IAppRegistryBase {
     event AppUpdated(address indexed app, bytes32 uid);
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
-    event AppCreated(address indexed app, bytes32 uid);
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
@@ -110,14 +101,6 @@ interface IAppRegistry is IAppRegistryBase {
     /// @param app The app address
     /// @return isBanned True if the app is banned, false otherwise
     function isAppBanned(address app) external view returns (bool);
-
-    /// @notice Create a new app
-    /// @param params The parameters of the app
-    /// @return app The app address
-    /// @return appId The attestation UID of the registered app
-    function createApp(
-        AppParams calldata params
-    ) external payable returns (address app, bytes32 appId);
 
     /// @notice Register a new app with permissions
     /// @param app The app address to register

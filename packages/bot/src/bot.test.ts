@@ -17,6 +17,8 @@ import {
     Bot as SyncAgentTest,
     AppRegistryService,
     MessageType,
+    make_ChannelPayload_InteractionRequest,
+    ClientV2,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
@@ -25,7 +27,14 @@ import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
-import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
+import {
+    ForwardSettingValue,
+    InteractionRequest,
+    InteractionRequest_SignatureRequest_SignatureType,
+    InteractionResponse,
+    type PlainMessage,
+    type SlashCommand,
+} from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -38,6 +47,9 @@ import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
+import { getBalance, readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
+import { parseEther, zeroAddress } from 'viem'
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -147,6 +159,11 @@ describe('Bot', { sequential: true }, () => {
         )
         const receipt = await tx.wait()
         const { app: address } = appRegistryDapp.getCreateAppEvent(receipt)
+        const fundingAppTx = await bob.signer.sendTransaction({
+            to: address,
+            value: ethers.utils.parseEther('0.5').toBigInt(),
+        })
+        await fundingAppTx.wait()
         expect(address).toBeDefined()
         appAddress = address as Address
     }
@@ -161,7 +178,7 @@ describe('Bot', { sequential: true }, () => {
         const tx = await appRegistryDapp.installApp(
             bob.signer,
             appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(), // sending more to cover protocol fee
         )
         const receipt = await tx.wait()
@@ -230,7 +247,7 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
-        const { jwtMiddleware, handler } = await bot.start()
+        const { jwtMiddleware, handler } = bot.start()
         const app = new Hono()
         app.use(jwtMiddleware)
         app.post('/webhook', handler)
@@ -604,6 +621,31 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
+    it('bot can fetch new keys', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId1 } = await bot.sendMessage(channelId, 'Hello message 1')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId1)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        // DELETE OUTBOUND GROUP SESSIONS to simulate fresh server start
+        await (bot['client'] as ClientV2).crypto.cryptoStore.deleteOutboundGrounpSessions(channelId)
+        await (bot['client'] as ClientV2).crypto.cryptoStore.deleteHybridGroupSessions(channelId)
+
+        const { eventId: messageId2 } = await bot.sendMessage(channelId, 'Hello message 2')
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId2)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const event1 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId1)
+        const event2 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId2)
+        expect(event1?.sessionId).toEqual(event2?.sessionId)
+    })
+
     it('bot can ban and unban users', async () => {
         // Carol joins the space first
         await carolClient.spaces.joinSpace(spaceId, carol.signer)
@@ -683,21 +725,33 @@ describe('Bot', { sequential: true }, () => {
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
 
         const balanceBefore = (await ethersProvider.getBalance(appAddress)).toBigInt()
+
+        // Get space instance and appId for bot tip
+        const space = spaceDapp.getSpace(spaceId)
+        if (!space) {
+            throw new Error('Space not found')
+        }
+        const appId = await space.AppAccount.read.getAppId(appAddress)
+
         // bob tips the bot
         await bobDefaultChannel.sendTip(
             messageId,
             {
+                type: 'bot',
+                appId: appId,
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
                 currency: ETH_ADDRESS,
                 chainId: townsConfig.base.chainConfig.chainId,
-                receiver: bot.botId, // Use bot.botId which is the bot's userId that has the membership token
+                appAddress: appAddress,
+                botId: bot.botId,
             },
             bob.signer,
         )
         // app address is the address of the bot contract (not the bot client, since client is per installation)
         const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
-        // Due to protocol fee, the balance should be greater than the balance before, but its not exactly + 0.01
-        expect(balance).toBeGreaterThan(balanceBefore)
+        // Bot tips have no protocol fee, so the balance should increase by exactly 0.01 ETH
+        const expectedTipAmount = ethers.utils.parseUnits('0.01').toBigInt()
+        expect(balance).toEqual(balanceBefore + expectedTipAmount)
         await waitFor(() => receivedTipEvents.length > 0)
         const tipEvent = receivedTipEvents.find((x) => x.messageId === messageId)
         expect(tipEvent).toBeDefined()
@@ -752,11 +806,7 @@ describe('Bot', { sequential: true }, () => {
 
     // TODO: waiting for disable bot feature
     it.skip('never receive message from a uninstalled app', async () => {
-        await appRegistryDapp.uninstallApp(
-            bob.signer,
-            appAddress,
-            SpaceAddressFromSpaceId(spaceId) as Address,
-        )
+        await appRegistryDapp.uninstallApp(bob.signer, appAddress, SpaceAddressFromSpaceId(spaceId))
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
         bot.onMessage((_h, e) => {
@@ -1181,5 +1231,118 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedMessages.length > 0)
         expect(receivedMessages[0].typeUrl).toBe('test.raw.v1')
         expect(receivedMessages[0].message).toEqual(message)
+    })
+
+    it('bot.appAddress should be equal to the address of the app contract', async () => {
+        expect(bot.appAddress).toBe(appAddress)
+    })
+
+    it('bot should be able to read app contract', async () => {
+        expect(appAddress).toBeDefined()
+        const botOwner = await readContract(bot.viem, {
+            address: bot.appAddress,
+            abi: simpleAppAbi,
+            functionName: 'moduleOwner',
+            args: [],
+        })
+        expect(botOwner).toBe(bob.userId)
+    })
+
+    it('bot should be able to call writeContract (send currency to another user)', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const aliceBalance_before = await getBalance(bot.viem, {
+            address: alice.userId,
+        })
+
+        const hash = await writeContract(bot.viem, {
+            address: bot.appAddress,
+            abi: simpleAppAbi,
+            functionName: 'sendCurrency',
+            args: [alice.userId, zeroAddress, parseEther('0.01')],
+        })
+        await waitForTransactionReceipt(bot.viem, { hash: hash })
+        const aliceBalance_after = await getBalance(bot.viem, {
+            address: alice.userId,
+        })
+        expect(aliceBalance_after).toBeGreaterThan(aliceBalance_before)
+    })
+
+    it('bot should be able to send interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'signatureRequest',
+                value: {
+                    id: randomUUID(),
+                    data: '0x1234567890',
+                    chainId: '1',
+                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                },
+            },
+        }
+        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message).toBeDefined()
+    })
+
+    it('user should NOT be able to send interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'signatureRequest',
+                value: {
+                    id: randomUUID(),
+                    data: '0x1234567890',
+                    chainId: '1',
+                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                },
+            },
+        }
+
+        await bobClient.riverConnection.call(async (client) => {
+            await expect(
+                client.makeEventAndAddToStream(
+                    channelId,
+                    make_ChannelPayload_InteractionRequest(interactionRequest),
+                    {
+                        method: 'sendInteractionRequest',
+                    },
+                ),
+            ).rejects.toThrow(/creator is not an app/)
+        })
+    })
+
+    it('user should be able to send interaction response', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionResponse: PlainMessage<InteractionResponse> = {
+            recipient: bin_fromHexString(botClientAddress),
+            content: {
+                case: 'signatureResponse',
+                value: {
+                    requestId: randomUUID(),
+                    signature: '0x123222222222',
+                },
+            },
+        }
+
+        const receivedInteractionResponses: Array<PlainMessage<InteractionResponse>> = []
+        bot.onInteractionResponse((_h, e) => {
+            receivedInteractionResponses.push(e.response)
+        })
+        await bobClient.riverConnection.call(async (client) => {
+            return await client.sendInteractionResponse(channelId, interactionResponse)
+        })
+
+        await waitFor(() => receivedInteractionResponses.length > 0)
+        expect(receivedInteractionResponses[0].recipient).toEqual(interactionResponse.recipient)
+        expect(receivedInteractionResponses[0].content.value?.requestId).toEqual(
+            interactionResponse.content.value?.requestId,
+        )
     })
 })

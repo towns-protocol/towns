@@ -2,6 +2,8 @@ import {
     CryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
+    GroupEncryptionSession,
+    parseGroupEncryptionAlgorithmId,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
     type UserDevice,
@@ -13,9 +15,9 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { townsEnv } from './townsEnv'
+import { townsEnv, TownsService } from './townsEnv'
 import { ethers } from 'ethers'
-import { RiverRegistry } from '@towns-protocol/web3'
+import { RiverRegistry, type Address } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
 import { makeBaseProvider, makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
@@ -29,26 +31,31 @@ import {
     make_UserInboxPayload_GroupEncryptionSessions,
     type ParsedEvent,
     type ParsedStreamResponse,
+    type MiniblockInfoResponse,
 } from './types'
 import {
     makeEvent,
     unpackStream,
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
+    UnpackEnvelopeOpts,
 } from './sign'
 import { bin_toHexString, check } from '@towns-protocol/utils'
-import { toJsonString } from '@bufbuild/protobuf'
+import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
 import {
     SessionKeysSchema,
+    UserInboxPayload_GroupEncryptionSessions,
     type Envelope,
     type PlainMessage,
     type StreamEvent,
     type Tags,
 } from '@towns-protocol/proto'
+import { AppRegistryService } from './appRegistryService'
+import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
 
 type Client_Base = {
     /** The userId of the Client. */
-    userId: string
+    userId: Address
     /** The signer context of the Client. */
     signerContext: SignerContext
     /** The wallet of the Client. */
@@ -67,12 +74,23 @@ type Client_Base = {
     disableHashValidation: boolean
     /** Disable signature validation for streams. */
     disableSignatureValidation: boolean
+    /** Options for unpacking envelopes */
+    unpackEnvelopeOpts: UnpackEnvelopeOpts
+    /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
+    appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
     getStream: (streamId: string) => Promise<ParsedStreamResponse>
+    /** Get the miniblock info for a stream */
+    getMiniblockInfo: (streamId: string) => Promise<MiniblockInfoResponse>
     /** Unpack envelope using client config */
     unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
     /** Unpack envelopes using client config */
     unpackEnvelopes: (envelopes: Envelope[]) => Promise<ParsedEvent[]>
+    /** injest a group encryption session */
+    importGroupEncryptionSessions: (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => Promise<void>
     /** Send an event to a stream */
     sendEvent: (
         streamId: string,
@@ -155,6 +173,16 @@ export const createTownsClient = async (
 
     // eslint-disable-next-line prefer-const
     let crypto: GroupEncryptionCrypto
+    let _appService: Awaited<ReturnType<typeof AppRegistryService.authenticate>> | undefined
+
+    const getMiniblockInfo = async (streamId: string): Promise<MiniblockInfoResponse> => {
+        const r = await client.rpc.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
+        return {
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
+            encryptionAlgorithm: r.encryptionAlgorithm,
+        }
+    }
 
     const getStream = async (streamId: string): Promise<ParsedStreamResponse> => {
         const { disableHashValidation, disableSignatureValidation } = client
@@ -205,13 +233,6 @@ export const createTownsClient = async (
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
-        const getMiniblockInfo: IGroupEncryptionClient['getMiniblockInfo'] = async (streamId) => {
-            const { streamAndCookie } = await getStream(streamId)
-            return {
-                miniblockNum: streamAndCookie.miniblocks[0].header.miniblockNum,
-                miniblockHash: streamAndCookie.miniblocks[0].hash,
-            }
-        }
         const downloadUserDeviceInfo: IGroupEncryptionClient['downloadUserDeviceInfo'] = async (
             userIds,
         ) => {
@@ -322,11 +343,70 @@ export const createTownsClient = async (
         }
     }
 
+    const appServiceClient = async (): Promise<AppRegistryRpcClient> => {
+        if (_appService) {
+            return _appService.appRegistryRpcClient
+        }
+        const appServiceConfig = config.services.find((s) => s.id === TownsService.AppRegistry)
+        if (!appServiceConfig) {
+            throw new Error('App registry service not found')
+        }
+        if (!appServiceConfig.url) {
+            throw new Error('App registry service url not found')
+        }
+        _appService = await AppRegistryService.authenticate(signerContext, appServiceConfig.url)
+        return _appService.appRegistryRpcClient
+    }
+
+    const importGroupEncryptionSessions = async (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => {
+        const userDevice = crypto.getUserDevice()
+        const { streamId, sessions: session } = payload
+        // check if this message is to our device
+        const ciphertext = session.ciphertexts[userDevice.deviceKey]
+        if (!ciphertext) {
+            //log.debug('skipping, no session for our device')
+            return
+        }
+        // check if it contains any keys we need, default to GroupEncryption if the algorithm is not set
+        const parsed = parseGroupEncryptionAlgorithmId(
+            session.algorithm,
+            GroupEncryptionAlgorithmId.GroupEncryption,
+        )
+        if (parsed.kind === 'unrecognized') {
+            // todo dispatch event to update the error message
+            //this.log.error('skipping, invalid algorithm', session.algorithm)
+            return
+        }
+        const algorithm: GroupEncryptionAlgorithmId = parsed.value
+
+        // decrypt the message
+        const cleartext = await crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
+        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+        // make group sessions
+        const sessions = sessionKeys.keys.map(
+            (key, i) =>
+                ({
+                    streamId: streamId,
+                    sessionId: session.sessionIds[i],
+                    sessionKey: key,
+                    algorithm: algorithm,
+                }) satisfies GroupEncryptionSession,
+        )
+        await crypto.importSessionKeys(streamId, sessions)
+    }
     await cryptoStore.initialize()
     crypto = new GroupEncryptionCrypto(buildGroupEncryptionClient(), cryptoStore)
     await crypto.init(params.encryptionDevice)
 
     const { hashValidation = false, signatureValidation = false } = params
+    const unpackEnvelopeOpts: UnpackEnvelopeOpts = {
+        disableHashValidation: !hashValidation,
+        disableSignatureValidation: !signatureValidation,
+    }
     const client = {
         crypto,
         keychain: cryptoStore,
@@ -337,10 +417,14 @@ export const createTownsClient = async (
         userId,
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
+        unpackEnvelopeOpts,
+        appServiceClient,
         getStream,
+        getMiniblockInfo,
         sendEvent,
         unpackEnvelope,
         unpackEnvelopes,
+        importGroupEncryptionSessions,
         env: config.environmentId,
     } satisfies Client_Base
 

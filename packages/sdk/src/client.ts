@@ -4,7 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
-    TipEventObject,
+    TipSentEventObject,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -55,6 +55,7 @@ import {
     GetLastMiniblockHashResponse,
     InfoResponse,
     MessageInteractionType,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -167,6 +168,7 @@ import {
     isSolanaTransactionReceipt,
     ParsedEvent,
     ExclusionFilter,
+    make_ChannelPayload_InteractionResponse,
 } from './types'
 import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
@@ -2119,6 +2121,22 @@ export class Client
         })
     }
 
+    async sendInteractionResponse(
+        streamId: string,
+        response: PlainMessage<InteractionResponse>,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+    ): Promise<{ eventId: string }> {
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionResponse(response),
+            {
+                method: 'sendInteractionResponse',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
+            },
+        )
+    }
+
     async redactMessage(streamId: string, eventId: string): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -2340,7 +2358,7 @@ export class Client
     async addTransaction_Tip(
         chainId: number,
         receipt: ContractReceipt,
-        event: TipEventObject,
+        event: TipSentEventObject,
         toUserId: string,
         opts?: SendBlockchainTransactionOptions,
     ): Promise<{ eventId: string }> {
@@ -2356,7 +2374,7 @@ export class Client
                 case: 'tip',
                 value: {
                     event: {
-                        tokenId: event.tokenId.toBigInt(),
+                        tokenId: event.tokenId?.toBigInt(),
                         currency: bin_fromHexString(event.currency),
                         sender: addressFromUserId(event.sender),
                         receiver: addressFromUserId(event.receiver),
@@ -2568,17 +2586,23 @@ export class Client
     async getMiniblockInfo(
         streamId: string,
     ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> {
-        let streamView = this.stream(streamId)?.view
+        const streamView = this.stream(streamId)?.view
         // if we don't have a local copy, or if it's just not initialized, fetch the latest
-        if (!streamView || !streamView.isInitialized) {
-            streamView = await this.getStream(streamId)
+        if (streamView && streamView.isInitialized) {
+            check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
+            check(
+                isDefined(streamView.prevMiniblockHash),
+                `prevMiniblockHash not found: ${streamId}`,
+            )
+            return {
+                miniblockNum: streamView.miniblockInfo.max,
+                miniblockHash: streamView.prevMiniblockHash,
+            }
         }
-        check(isDefined(streamView), `stream not found: ${streamId}`)
-        check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
-        check(isDefined(streamView.prevMiniblockHash), `prevMiniblockHash not found: ${streamId}`)
+        const r = await this.getStreamLastMiniblockHash(streamId)
         return {
-            miniblockNum: streamView.miniblockInfo.max,
-            miniblockHash: streamView.prevMiniblockHash,
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
         }
     }
 
