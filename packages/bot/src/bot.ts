@@ -28,6 +28,7 @@ import {
     makeUniqueMediaStreamId,
     streamIdAsBytes,
     addressFromUserId,
+    make_ChannelPayload_InteractionRequest,
     userIdToAddress,
     unpackEnvelope,
 } from '@towns-protocol/sdk'
@@ -56,8 +57,11 @@ import {
     ChannelMessage_Post_Content_Image_InfoSchema,
     ChunkedMediaSchema,
     CreationCookieSchema,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import {
+    bin_equal,
     bin_fromBase64,
     bin_fromHexString,
     bin_toHexString,
@@ -251,6 +255,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     gm: <Schema extends StandardSchemaV1>(
         handler: BotActions,
         event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
+    ) => void | Promise<void>
+    interactionResponse: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The interaction response that was received */
+            response: PlainMessage<InteractionResponse>
+        },
     ) => void | Promise<void>
 }
 
@@ -479,6 +490,25 @@ export class Bot<
                             // TODO: is there any use case for this?
                         } else if (parsed.event.payload.value.content.case === 'custom') {
                             // TODO: what to do with custom payload for bot?
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionRequest'
+                        ) {
+                            // ignored for bots
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionResponse'
+                        ) {
+                            const payload = parsed.event.payload.value.content.value
+                            if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
+                                continue
+                            }
+                            this.emitter.emit('interactionResponse', this.client, {
+                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                spaceId: spaceIdFromChannelId(streamId),
+                                channelId: streamId,
+                                eventId: parsed.hashStr,
+                                createdAt,
+                                response: payload,
+                            })
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
@@ -892,6 +922,28 @@ export class Bot<
         return result
     }
 
+    /**
+     * Send an interaction request to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param request - The interaction request to send
+     * @param opts - The options for the interaction request
+     * @returns The eventId of the interaction request
+     */
+    async sendInteractionRequest(
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+    ) {
+        const result = await this.client.sendInteractionRequest(
+            streamId,
+            request,
+            opts,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
+    }
+
     async hasAdminPermission(userId: string, spaceId: string) {
         return this.client.hasAdminPermission(userId, spaceId)
     }
@@ -1001,6 +1053,14 @@ export class Bot<
 
     onRawGmMessage(handler: BotEvents['rawGmMessage']) {
         this.emitter.on('rawGmMessage', handler)
+    }
+
+    /**
+     * Triggered when someone sends an interaction response
+     * @param fn - The handler function to call when an interaction response is received
+     */
+    onInteractionResponse(fn: BotEvents['interactionResponse']) {
+        this.emitter.on('interactionResponse', fn)
     }
 }
 
@@ -1604,10 +1664,21 @@ const buildBotActions = (
         return undefined
     }
 
+    const sendInteractionRequest = async (
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        const payload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
+    }
+
     return {
         sendMessage,
         editMessage,
         sendReaction,
+        sendInteractionRequest,
         sendGM,
         sendRawGM,
         removeEvent,
