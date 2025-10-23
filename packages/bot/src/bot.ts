@@ -51,8 +51,6 @@ import {
     Tags,
     MessageInteractionType,
     type SlashCommand,
-    type SnapshotCaseType,
-    type Snapshot,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
     ChunkedMediaSchema,
@@ -75,7 +73,6 @@ import {
     http,
     type Account,
     type Chain,
-    type Prettify,
     type Transport,
     type Hex,
     type WalletClient,
@@ -85,7 +82,6 @@ import {
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
-import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
@@ -286,7 +282,6 @@ export class Bot<
     readonly appAddress: Address
     botId: string
     viem: WalletClient<Transport, Chain, Account>
-    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
@@ -318,7 +313,6 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.appAddress = appAddress
-        this.snapshot = clientV2.snapshot
     }
 
     start() {
@@ -1644,24 +1638,11 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash }
     }
 
-    const getChannelSettings = async (channelId: string) =>
-        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
-
-    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
-        Snapshot['content'],
-        { case: TCase }
-    >['value']
-
-    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
-        streamId: string,
-        snapshotCase: TCase,
-        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
-    ): Promise<TResult | undefined> => {
-        const stream = await client.getStream(streamId)
-        if (stream.snapshot.content.case === snapshotCase) {
-            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
-        }
-        return undefined
+    const getChannelSettings = async (channelId: string) => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        const streamView = await client.getStream(spaceId)
+        const channel = streamView.spaceContent.spaceChannelsMetadata[channelId]
+        return channel
     }
 
     const sendInteractionRequest = async (
@@ -1690,8 +1671,6 @@ const buildBotActions = (
         ban,
         unban,
         getChannelSettings,
-        getFromSnapshot,
-        snapshot: SnapshotGetter(client.getStream),
     }
 }
 
