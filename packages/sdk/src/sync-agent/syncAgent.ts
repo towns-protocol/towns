@@ -92,7 +92,6 @@ export class SyncAgent {
                 highPriorityStreamIds: this.config.highPriorityStreamIds,
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
-                streamOpts: { },
             },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,

@@ -223,7 +223,6 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { }
     notifications?: {
         url: string
         store?: INotificationStore
@@ -370,7 +369,6 @@ export class Client
             this,
             opts?.unpackEnvelopeOpts,
             this.logId,
-            opts?.streamOpts,
             opts?.highPriorityStreamIds,
         )
 

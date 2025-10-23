@@ -30,7 +30,6 @@ export class SyncedStreams {
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private readonly logId: string,
-        private readonly streamOpts?: { } | undefined,
         highPriorityStreamIds?: string[],
     ) {
         this.userId = userId
@@ -112,7 +111,6 @@ export class SyncedStreams {
             this.logId,
             this.unpackEnvelopeOpts,
             this.highPriorityIds,
-            this.streamOpts,
             lastAccessedAt,
         )
         this.syncedStreamsLoop.start()

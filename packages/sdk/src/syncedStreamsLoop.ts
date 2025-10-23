@@ -155,7 +155,6 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { } | undefined,
         private lastAccessedAt: Record<string, number>,
     ) {
         this.rpcClient = rpcClient
@@ -481,7 +480,6 @@ export class SyncedStreamsLoop {
                                 syncId: this.syncId,
                                 nodeUrl: this.rpcClient.url,
                                 syncState: this.syncState,
-                                streamOpts: this.streamOpts,
                                 syncStartedAt: this.syncStartedAt,
                                 duration: performance.now() - this.syncStartedAt,
                             },
@@ -947,7 +945,6 @@ export class SyncedStreamsLoop {
                                                 syncId: this.syncId,
                                                 nodeUrl: this.rpcClient.url,
                                                 syncState: this.syncState,
-                                                streamOpts: this.streamOpts,
                                                 syncStartedAt: this.syncStartedAt,
                                                 duration,
                                             },
