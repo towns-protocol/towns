@@ -50,12 +50,21 @@ interface ISimpleAppBase {
     /// @param currency The currency that was sent
     /// @param amount The amount of currency that was sent
     event SendCurrency(address indexed recipient, address indexed currency, uint256 amount);
+
+    /// @notice Emitted when the client is updated
+    /// @param oldClient The old client
+    /// @param newClient The new client
+    event ClientUpdated(address indexed oldClient, address indexed newClient);
 }
 
 interface ISimpleApp is ISimpleAppBase {
     /// @notice Withdraws the ETH balance of the app to the recipient
     /// @param recipient The address to withdraw the ETH to
     function withdrawETH(address recipient) external;
+
+    /// @notice Updates the client of the app
+    /// @param newClient The new client
+    function updateClient(address newClient) external;
 
     /// @notice Updates the pricing of the app
     /// @param installPrice The new install price

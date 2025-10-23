@@ -23,7 +23,7 @@ import {SimpleAppStorage} from "../app/SimpleAppStorage.sol";
 import {SimpleAccountStorage} from "./SimpleAccountStorage.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
 
-contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
+contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, ERC7821, Facet {
     using CustomRevert for bytes4;
     using UserOperationLib for PackedUserOperation;
 
@@ -45,6 +45,24 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
         _addInterface(type(IERC7821).interfaceId);
     }
 
+    /// @inheritdoc ISimpleAccount
+    function updateEntryPoint(address newEntryPoint) external onlyOwner {
+        Validator.checkAddress(newEntryPoint);
+        SimpleAccountStorage.Layout storage $ = SimpleAccountStorage.getLayout();
+        address oldEntryPoint = $.entryPoint;
+        $.entryPoint = newEntryPoint;
+        emit EntryPointUpdated(oldEntryPoint, newEntryPoint);
+    }
+
+    /// @inheritdoc ISimpleAccount
+    function updateCoordinator(address newCoordinator) external onlyOwner {
+        Validator.checkAddress(newCoordinator);
+        SimpleAccountStorage.Layout storage $ = SimpleAccountStorage.getLayout();
+        address oldCoordinator = $.coordinator;
+        $.coordinator = newCoordinator;
+        emit CoordinatorUpdated(oldCoordinator, newCoordinator);
+    }
+
     /// @notice Return the account nonce.
     /// @dev This method returns the next sequential nonce.
     /// @dev For a nonce of a specific key, use `entrypoint.getNonce(account, key)`
@@ -54,7 +72,7 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
     }
 
     /// @notice Return the entryPoint used by this account.
-    function entryPoint() public view override returns (IEntryPoint) {
+    function entryPoint() public view override(SimpleAccountBase) returns (IEntryPoint) {
         return IEntryPoint(SimpleAccountStorage.getLayout().entryPoint);
     }
 
@@ -68,6 +86,13 @@ contract SimpleAccountFacet is SimpleAccountBase, OwnableBase, ERC7821, Facet {
         validationData = _validateSignature(userOp, userOpHash);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      INTERNAL FUNCTIONS                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function _getCoordinator() internal view returns (address) {
+        return SimpleAccountStorage.getLayout().coordinator;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
