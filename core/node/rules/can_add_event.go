@@ -240,6 +240,7 @@ func (params *aeParams) canAddChannelPayload(payload *StreamEvent_ChannelPayload
 	case *ChannelPayload_InteractionRequest:
 		return aeBuilder().
 			check(params.creatorIsMember).
+			check(params.creatorIsApp).
 			requireOneOfChainAuths(params.channelEntitlements(auth.PermissionWrite), params.channelEntitlements(auth.PermissionReact))
 	case *ChannelPayload_InteractionResponse:
 		return aeBuilder().
@@ -613,9 +614,29 @@ func checkIsMember(params *aeParams, creatorAddress []byte) error {
 	return nil
 }
 
+func checkIsApp(params *aeParams, creatorAddress []byte) error {
+	appAddress, err := params.streamView.GetMemberAppAddress(common.Address(creatorAddress))
+	if err != nil {
+		return err
+	}
+	if appAddress == (common.Address{}) {
+		return RiverError(Err_PERMISSION_DENIED, "creator is not an app registered with the client address")
+	}
+	return nil
+}
+
 func (params *aeParams) creatorIsMember() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	err := checkIsMember(params, creatorAddress)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (params *aeParams) creatorIsApp() (bool, error) {
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	err := checkIsApp(params, creatorAddress)
 	if err != nil {
 		return false, err
 	}

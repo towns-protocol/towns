@@ -17,6 +17,7 @@ import {
     Bot as SyncAgentTest,
     AppRegistryService,
     MessageType,
+    make_ChannelPayload_InteractionRequest,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
@@ -1262,6 +1263,33 @@ describe('Bot', { sequential: true }, () => {
 
         const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
         expect(message).toBeDefined()
+    })
+
+    it('user should NOT be able to send interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'signatureRequest',
+                value: {
+                    id: randomUUID(),
+                    data: '0x1234567890',
+                    chainId: '1',
+                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                },
+            },
+        }
+
+        await bobClient.riverConnection.call(async (client) => {
+            await expect(
+                client.makeEventAndAddToStream(
+                    channelId,
+                    make_ChannelPayload_InteractionRequest(interactionRequest),
+                    {
+                        method: 'sendInteractionRequest',
+                    },
+                ),
+            ).rejects.toThrow(/creator is not an app/)
+        })
     })
 
     it('user should be able to send interaction response', async () => {
