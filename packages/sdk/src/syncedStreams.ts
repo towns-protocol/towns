@@ -30,7 +30,7 @@ export class SyncedStreams {
         clientEmitter: TypedEmitter<SyncedStreamEvents>,
         private readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private readonly logId: string,
-        private readonly streamOpts?: { useSharedSyncer?: boolean } | undefined,
+        private readonly streamOpts?: { } | undefined,
         highPriorityStreamIds?: string[],
     ) {
         this.userId = userId

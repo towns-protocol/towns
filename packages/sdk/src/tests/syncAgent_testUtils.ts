@@ -29,9 +29,7 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
             logNamespaceFilter: undefined,
             highPriorityStreamIds: undefined,
-            streamOpts: {
-                useSharedSyncer: true,
-            },
+            streamOpts: {},
         },
         rpcRetryParams: config.retryParams,
     } satisfies ClientParams

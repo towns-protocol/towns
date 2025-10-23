@@ -1,4 +1,4 @@
-package client
+package track_streams
 
 import (
 	"context"
@@ -38,7 +38,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func NewRemoteSyncer(
+func newRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,

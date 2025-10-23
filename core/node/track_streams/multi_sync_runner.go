@@ -29,7 +29,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -355,7 +354,7 @@ func (ssr *syncSessionRunner) Run() {
 		return
 	}
 
-	syncer, err := client.NewRemoteSyncer(
+	syncer, err := newRemoteSyncer(
 		ssr.syncCtx,
 		ssr.cancelSync,
 		"SyncSessionRunner",
