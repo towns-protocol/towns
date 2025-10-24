@@ -5,6 +5,8 @@ pragma solidity ^0.8.23;
 import {ITippingBase} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
+import {FeeTypes} from "../../../factory/facets/fee/FeeTypes.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -204,25 +206,35 @@ abstract contract TippingBase is ITippingBase, PointsBase {
     /// @dev Handles protocol fee and points minting
     function _handleProtocolFee(uint256 amount) internal returns (uint256 protocolFee) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
-        IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
+        address spaceFactory = ds.spaceFactory;
 
-        protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
+        // First calculate the fee amount
+        protocolFee = IFeeManager(spaceFactory).calculateFee({
+            feeType: FeeTypes.TIP_MEMBER,
+            user: msg.sender,
+            amount: amount,
+            context: ""
+        });
 
-        CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN,
-            msg.sender,
-            platform.getFeeRecipient(),
-            protocolFee
-        );
+        // Charge fee using FeeManager (use address(0) for native token)
+        if (protocolFee > 0) {
+            IFeeManager(spaceFactory).chargeFee{value: protocolFee}({
+                feeType: FeeTypes.TIP_MEMBER,
+                user: msg.sender,
+                amount: amount,
+                currency: address(0),
+                context: ""
+            });
 
-        // Mint points
-        address airdropDiamond = _getAirdropDiamond();
-        uint256 points = _getPoints(
-            airdropDiamond,
-            ITownsPointsBase.Action.Tip,
-            abi.encode(protocolFee)
-        );
-        _mintPoints(airdropDiamond, msg.sender, points);
+            // Mint points if fee was charged
+            address airdropDiamond = _getAirdropDiamond();
+            uint256 points = _getPoints(
+                airdropDiamond,
+                ITownsPointsBase.Action.Tip,
+                abi.encode(protocolFee)
+            );
+            _mintPoints(airdropDiamond, msg.sender, points);
+        }
     }
 
     /// @dev Validates common tip requirements
