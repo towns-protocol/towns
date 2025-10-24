@@ -44,9 +44,10 @@ library DeployAppFactoryFacet {
     }
 
     function makeInitData(
-        IAppFactoryBase.Beacon[] memory beacons
+        IAppFactoryBase.Beacon[] memory beacons,
+        address entryPoint
     ) internal pure returns (bytes memory) {
-        return abi.encodeCall(AppFactoryFacet.__AppFactory_init, (beacons));
+        return abi.encodeCall(AppFactoryFacet.__AppFactory_init, (beacons, entryPoint));
     }
 
     function deploy() internal returns (address) {

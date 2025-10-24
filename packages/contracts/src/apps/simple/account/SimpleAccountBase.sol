@@ -9,6 +9,7 @@ import {ISimpleAccountBase} from "./ISimpleAccount.sol";
 // libraries
 import {UserOperationLib, PackedUserOperation} from "@eth-infinitism/account-abstraction/core/UserOperationLib.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 /// @title SimpleAccountBase
 /// @notice Base contract for simple accounts implementing core ERC-6900 account functionality
@@ -52,9 +53,6 @@ abstract contract SimpleAccountBase is IAccount, ISimpleAccountBase {
     /// @param missingAccountFunds The missing account funds.
     function _payPrefund(uint256 missingAccountFunds) internal virtual {
         if (missingAccountFunds == 0) return;
-
-        assembly ("memory-safe") {
-            let success := call(gas(), caller(), missingAccountFunds, 0x00, 0x00, 0x00, 0x00)
-        }
+        SafeTransferLib.safeTransferETH(msg.sender, missingAccountFunds);
     }
 }

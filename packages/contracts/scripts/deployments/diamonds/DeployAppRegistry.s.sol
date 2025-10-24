@@ -128,7 +128,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()),
             facet,
-            DeployAppFactoryFacet.makeInitData(beacons)
+            DeployAppFactoryFacet.makeInitData(beacons, _getEntryPoint())
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -178,7 +178,6 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
         vm.startBroadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
-        IAppFactory(address(diamond)).setEntryPoint(_getEntryPoint());
         vm.stopBroadcast();
 
         return address(diamond);

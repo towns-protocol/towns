@@ -29,9 +29,13 @@ contract AppFactoryFacet is
 {
     using CustomRevert for bytes4;
 
-    function __AppFactory_init(Beacon[] calldata beacons) external onlyInitializing {
+    function __AppFactory_init(
+        Beacon[] calldata beacons,
+        address entryPoint
+    ) external onlyInitializing {
         _addBeacons(beacons);
         _addInterface(type(IAppFactory).interfaceId);
+        _setEntryPoint(entryPoint);
     }
 
     function createAppByBeacon(
@@ -67,8 +71,7 @@ contract AppFactoryFacet is
     }
 
     function setEntryPoint(address entryPoint) external onlyOwner {
-        AppFactoryStorage.Layout storage $ = AppFactoryStorage.getLayout();
-        $.entryPoint = entryPoint;
+        _setEntryPoint(entryPoint);
     }
 
     function getBeacon(bytes32 beaconId) external view returns (address beacon) {

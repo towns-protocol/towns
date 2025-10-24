@@ -53,6 +53,13 @@ abstract contract AppFactoryBase is IAppFactoryBase {
         }
     }
 
+    function _setEntryPoint(address entryPoint) internal {
+        AppFactoryStorage.Layout storage $ = AppFactoryStorage.getLayout();
+        address oldEntryPoint = $.entryPoint;
+        $.entryPoint = entryPoint;
+        emit EntryPointSet(oldEntryPoint, entryPoint);
+    }
+
     function _getBeacon(bytes32 beaconId) internal view returns (address beacon) {
         return AppFactoryStorage.getLayout().beacons[beaconId];
     }
