@@ -19,7 +19,8 @@
         "@towns-protocol/bot": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
-        "hono": "^4.7.11"
+        "hono": "^4.7.11",
+        "viem": "^2.29.3"
     },
     "devDependencies": {
         "@types/node": "^20.14.8",

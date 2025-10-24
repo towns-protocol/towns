@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.380",
+    "version": "0.0.383",
     "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "dist/index.js",
@@ -31,8 +31,7 @@
         "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
-        "superjson": "^2.2.2",
-        "viem": "^2.29.3"
+        "superjson": "^2.2.2"
     },
     "devDependencies": {
         "@hono/node-server": "^1.14.0",
@@ -48,6 +47,7 @@
         "fake-indexeddb": "^6.0.1",
         "hono": "^4.7.11",
         "typescript": "~5.8.3",
+        "viem": "^2.29.3",
         "vitest": "^3.2.3",
         "zod": "^3.25.76"
     },
@@ -56,7 +56,8 @@
         "package.json"
     ],
     "peerDependencies": {
-        "hono": "^4.7.11"
+        "hono": ">=4",
+        "viem": "2.x"
     },
     "publishConfig": {
         "access": "public"

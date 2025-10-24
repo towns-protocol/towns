@@ -10,6 +10,10 @@ import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol"
 /// @dev Combines IModule (module lifecycle), and IExecutionModule (execution)
 /// @dev Apps must implement required permissions and support these interfaces
 interface ITownsApp is IModule, IExecutionModule {
+    /// @notice Initializes the app
+    /// @param data The data to initialize the app
+    function initialize(bytes calldata data) external;
+
     /// @notice Returns the required permissions for the app
     /// @return permissions The required permissions for the app
     function requiredPermissions() external view returns (bytes32[] memory);

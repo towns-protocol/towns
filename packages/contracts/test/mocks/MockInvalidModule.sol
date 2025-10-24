@@ -17,6 +17,8 @@ contract MockInvalidModule is OwnableFacet, ITownsApp {
         __Ownable_init_unchained(msg.sender);
     }
 
+    function initialize(bytes calldata data) external override initializer {}
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      MODULE METADATA                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

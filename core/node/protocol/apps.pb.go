@@ -772,8 +772,6 @@ type GetSessionRequest struct {
 
 	// public key of the app
 	AppId []byte `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	// Exactly one of the following must be provided to identify the session:
-	//
 	// Types that are assignable to Identifier:
 	//
 	//	*GetSessionRequest_SessionId

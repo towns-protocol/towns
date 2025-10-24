@@ -94,7 +94,6 @@ describe('clientCrypto', () => {
         await bobsClient.cryptoBackend.ensureOutboundSession(
             streamId,
             GroupEncryptionAlgorithmId.HybridGroupEncryption,
-            { awaitInitialShareSession: false },
         )
         hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
         expect(hasSession).toBe(true)

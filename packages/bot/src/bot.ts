@@ -51,8 +51,6 @@ import {
     Tags,
     MessageInteractionType,
     type SlashCommand,
-    type SnapshotCaseType,
-    type Snapshot,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
     ChunkedMediaSchema,
@@ -73,19 +71,17 @@ import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
     http,
-    type Account,
     type Chain,
-    type Prettify,
     type Transport,
     type Hex,
+    type Address,
+    type Account,
     type WalletClient,
     createWalletClient,
-    type Address,
 } from 'viem'
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
-import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
@@ -208,13 +204,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** The message ID of the parent of the tip */
             messageId: string
             /** The address of the sender of the tip */
-            senderAddress: string
+            senderAddress: Address
             /** The address of the receiver of the tip */
-            receiverAddress: string
+            receiverAddress: Address
             /** The amount of the tip */
             amount: bigint
             /** The currency of the tip */
-            currency: `0x${string}`
+            currency: Address
         },
     ) => Promise<void> | void
     channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
@@ -286,7 +282,6 @@ export class Bot<
     readonly appAddress: Address
     botId: string
     viem: WalletClient<Transport, Chain, Account>
-    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
@@ -318,7 +313,6 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.appAddress = appAddress
-        this.snapshot = clientV2.snapshot
     }
 
     start() {
@@ -1097,14 +1091,15 @@ export const makeTownsBot = async <
         if (chainId === foundry.id) return foundry
         return baseSepolia
     }
+    const chain = getChain(baseConfig.chainConfig.chainId)
     const viem = createWalletClient({
         account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: getChain(baseConfig.chainConfig.chainId),
+        chain,
     })
+
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
@@ -1117,6 +1112,7 @@ export const makeTownsBot = async <
             args: [account.address],
         })
     }
+
     const client = await createTownsClient({
         privateKey,
         env,
@@ -1127,6 +1123,30 @@ export const makeTownsBot = async <
     }).then((x) =>
         x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
     )
+
+    if (opts.commands) {
+        void client
+            .appServiceClient()
+            .then((appRegistryRpcClient) => {
+                void appRegistryRpcClient
+                    .updateAppMetadata({
+                        appId: bin_fromHexString(account.address),
+                        updateMask: ['slash_commands'],
+                        metadata: {
+                            slashCommands: opts.commands,
+                        },
+                    })
+                    .catch((err) => {
+                        // eslint-disable-next-line no-console
+                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
+                    })
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
+            })
+    }
+
     await client.uploadDeviceKeys()
     return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
 }
@@ -1300,28 +1320,14 @@ const buildBotActions = (
         }
     }
 
-    const sendMessageEvent = async ({
-        streamId,
-        payload,
-        tags,
-        ephemeral,
-    }: {
-        streamId: string
-        payload: ChannelMessage
-        tags?: PlainMessage<Tags>
-        ephemeral?: boolean
-    }) => {
-        const miniblockInfo = await client.getMiniblockInfo(streamId)
-        const eventTags = {
-            ...unsafe_makeTags(payload),
-            participatingUserAddresses: tags?.participatingUserAddresses || [],
-            threadId: tags?.threadId || undefined,
-        }
-        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
-            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
-            : client.defaultGroupEncryptionAlgorithm
-
+    const ensureOutboundSession = async (
+        streamId: string,
+        encryptionAlgorithm: GroupEncryptionAlgorithmId,
+        toUserIds: string[],
+        miniblockInfo: { miniblockNum: bigint; miniblockHash: Uint8Array },
+    ) => {
         if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
+            // ATTEMPT 1: Get session from app service
             const appService = await client.appServiceClient()
             try {
                 const sessionResp = await appService.getSession({
@@ -1346,11 +1352,53 @@ const buildBotActions = (
                         streamId,
                         sessions: parsedEvent.event.payload.value.content.value,
                     })
+                    // EARLY RETURN
+                    return
                 }
             } catch {
                 // ignore error (should log)
             }
+            // ATTEMPT 2: Create new session
+            await client.crypto.ensureOutboundSession(streamId, encryptionAlgorithm, {
+                shareShareSessionTimeoutMs: 5000,
+                priorityUserIds: [client.userId, ...toUserIds],
+                miniblockInfo,
+            })
         }
+    }
+
+    const sendMessageEvent = async ({
+        streamId,
+        payload,
+        tags,
+        ephemeral,
+    }: {
+        streamId: string
+        payload: ChannelMessage
+        tags?: PlainMessage<Tags>
+        ephemeral?: boolean
+    }) => {
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
+        const eventTags = {
+            ...unsafe_makeTags(payload),
+            participatingUserAddresses: tags?.participatingUserAddresses || [],
+            threadId: tags?.threadId || undefined,
+        }
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            Array.from(
+                new Set([
+                    ...eventTags.participatingUserAddresses.map((x) => userIdFromAddress(x)),
+                    ...eventTags.mentionedUserAddresses.map((x) => userIdFromAddress(x)),
+                ]),
+            ),
+            miniblockInfo,
+        )
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
@@ -1644,24 +1692,11 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash }
     }
 
-    const getChannelSettings = async (channelId: string) =>
-        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
-
-    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
-        Snapshot['content'],
-        { case: TCase }
-    >['value']
-
-    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
-        streamId: string,
-        snapshotCase: TCase,
-        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
-    ): Promise<TResult | undefined> => {
-        const stream = await client.getStream(streamId)
-        if (stream.snapshot.content.case === snapshotCase) {
-            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
-        }
-        return undefined
+    const getChannelSettings = async (channelId: string) => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        const streamView = await client.getStream(spaceId)
+        const channel = streamView.spaceContent.spaceChannelsMetadata[channelId]
+        return channel
     }
 
     const sendInteractionRequest = async (
@@ -1690,8 +1725,6 @@ const buildBotActions = (
         ban,
         unban,
         getChannelSettings,
-        getFromSnapshot,
-        snapshot: SnapshotGetter(client.getStream),
     }
 }
 

@@ -139,12 +139,7 @@ export const commands = [
 const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 ```
 
-3. Sync commands with Towns:
-```bash
-npx towns-bot update-commands src/commands.ts <bearer-token>
-```
-
-4. Register handlers:
+3. Register handlers:
 ```typescript
 bot.onSlashCommand("help", async (handler, event) => {
   await handler.sendMessage(event.channelId, "Commands: /help, /poll")
@@ -857,23 +852,37 @@ bot.onMessage(async (handler, event) => {
 Bot exposes viem client and app address for direct Web3 interactions:
 
 ```typescript
-import { readContract, writeContract, waitForTransactionReceipt } from 'viem/actions'
+bot.viem        // Viem client with Account for contract interactions
+bot.appAddress   // Bot's app contract address (SimpleAccount)
+```
+
+**Reading from Contracts:**
+
+Use `readContract` for reading from any contract:
+
+```typescript
+import { readContract } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
-import { parseEther, zeroAddress } from 'viem'
 
-// Access bot's viem client and app address
-bot.viem        // WalletClient for contract interactions
-bot.appAddress   // Bot's app contract address
-
-// Read from contract
+// Read from any contract
 const owner = await readContract(bot.viem, {
   address: bot.appAddress,
   abi: simpleAppAbi,
   functionName: 'moduleOwner',
   args: []
 })
+```
 
-// Write to contract
+**Writing to Bot's Own Contract:**
+
+Use `writeContract` ONLY for the bot's SimpleAccount contract operations:
+
+```typescript
+import { writeContract, waitForTransactionReceipt } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+import { parseEther, zeroAddress } from 'viem'
+
+// Only for SimpleAccount contract operations
 const hash = await writeContract(bot.viem, {
   address: bot.appAddress,
   abi: simpleAppAbi,
@@ -881,9 +890,173 @@ const hash = await writeContract(bot.viem, {
   args: [recipientAddress, zeroAddress, parseEther('0.01')]
 })
 
-// Wait for transaction confirmation
 await waitForTransactionReceipt(bot.viem, { hash })
 ```
+
+**Interacting with ANY Contract (PRIMARY METHOD):**
+
+Use `execute` from ERC-7821 for any onchain interaction. This is your main tool for blockchain operations - tipping, swapping, staking, NFTs, DeFi, anything!
+
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Single operation: tip a user on Towns
+bot.onSlashCommand("tip", async (handler, { channelId, spaceId, mentions, args }) => {
+  if (mentions.length === 0 || !args[0]) {
+    await handler.sendMessage(channelId, "Usage: /tip @user <amount>")
+    return
+  }
+
+  const recipient = mentions[0].userId
+  const amount = parseEther(args[0])
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [{
+      to: tippingContractAddress,
+      abi: tippingAbi,
+      functionName: 'tip',
+      value: amount,
+      args: [{
+        receiver: recipient,
+        tokenId: tokenId,
+        currency: ETH_ADDRESS,
+        amount: amount,
+        messageId: messageId,
+        channelId: channelId
+      }]
+    }]
+  })
+
+  await waitForTransactionReceipt(bot.viem, { hash })
+
+  await handler.sendMessage(channelId, `Tipped ${args[0]} ETH to ${recipient}! Tx: ${hash}`)
+})
+```
+
+**Batch Operations:**
+
+Execute multiple onchain interactions in a single atomic transaction:
+
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Airdrop tips to multiple users in one transaction
+bot.onSlashCommand("airdrop", async (handler, { channelId, mentions, args }) => {
+  if (mentions.length === 0 || !args[0]) {
+    await handler.sendMessage(channelId, "Usage: /airdrop @user1 @user2 ... <amount-each>")
+    return
+  }
+
+  const amountEach = parseEther(args[0])
+
+  // Build batch calls - one tip per user
+  const calls = mentions.map(mention => ({
+    to: tippingContractAddress,
+    abi: tippingAbi,
+    functionName: 'tip',
+    value: amountEach,
+    args: [{
+      receiver: mention.userId,
+      tokenId: tokenId,
+      currency: ETH_ADDRESS,
+      amount: amountEach,
+      messageId: messageId,
+      channelId: channelId
+    }]
+  }))
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls
+  })
+
+  await waitForTransactionReceipt(bot.viem, { hash })
+
+  await handler.sendMessage(
+    channelId,
+    `Airdropped ${args[0]} ETH to ${mentions.length} users! Tx: ${hash}`
+  )
+})
+```
+
+**Complex Multi-Step Operations:**
+
+Combine different contract interactions (approve + swap + stake, etc.):
+
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Approve, swap, and stake in one atomic transaction
+bot.onSlashCommand("defi", async (handler, { channelId, args }) => {
+  const amount = parseEther(args[0] || '100')
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [
+      {
+        to: tokenAddress,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [dexAddress, amount]
+      },
+      {
+        to: dexAddress,
+        abi: dexAbi,
+        functionName: 'swapExactTokensForTokens',
+        args: [amount, minOut, [tokenIn, tokenOut], bot.appAddress]
+      },
+      {
+        to: stakingAddress,
+        abi: stakingAbi,
+        functionName: 'stake',
+        args: [amount]
+      }
+    ]
+  })
+
+  await waitForTransactionReceipt(bot.viem, { hash })
+
+  await handler.sendMessage(channelId, `Swapped and staked ${args[0]} tokens! Tx: ${hash}`)
+})
+```
+
+**Advanced: Batch of Batches:**
+
+Use `executeBatch` for executing multiple batches (advanced use case):
+
+```typescript
+import { executeBatch } from 'viem/experimental/erc7821'
+
+// Execute batches of batches
+const hash = await executeBatch(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [
+    [/* first batch */],
+    [/* second batch */],
+    [/* third batch */]
+  ]
+})
+```
+
+**When to Use Each:**
+
+- **`readContract`**: Reading from any contract (no transaction needed)
+- **`writeContract`**: ONLY for bot's own SimpleAccount contract operations
+- **`execute`**: PRIMARY METHOD for any onchain interaction
+  - Tipping, swapping, staking, NFT minting, etc.
+  - Works for single operations OR batch operations
+  - Atomic execution (all succeed or all fail)
+  - Gas optimized when batching multiple operations
+  - This is how you interact with external contracts
+- **`executeBatch`**: Advanced batching (batches of batches)
 
 ### Snapshot Data Access
 
@@ -1242,13 +1415,25 @@ await bot.unban(userId, spaceId)  // Requires ModifyBanning permission
 
 // Access bot properties:
 bot.botId      // Bot's user ID (address)
-bot.viem       // WalletClient for Web3 operations
-bot.appAddress // Bot's app contract address
+bot.viem       // Viem client with Account for Web3 operations
+bot.appAddress // Bot's app contract address (SimpleAccount)
 
-// For Web3 operations, use viem actions:
+// For Web3 operations:
 import { readContract, writeContract } from 'viem/actions'
+import { execute } from 'viem/experimental/erc7821'
+
+// Read from any contract
 await readContract(bot.viem, { address, abi, functionName, args })
-await writeContract(bot.viem, { address, abi, functionName, args })
+
+// Write to bot's own SimpleAccount contract ONLY
+await writeContract(bot.viem, { address: bot.appAddress, abi: simpleAppAbi, functionName, args })
+
+// Execute any onchain interaction (PRIMARY METHOD for external contracts)
+await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [{ to, abi, functionName, args, value }]
+})
 ```
 
 **Important Notes:**
@@ -1280,15 +1465,6 @@ bot.onMessage(() => counter++)
 const db = new Database()
 bot.onMessage(() => db.increment('counter'))
 ```
-
-### Issue: Slash commands not working
-
-**Steps:**
-1. Define in `src/commands.ts`
-2. Pass to `makeTownsBot(data, secret, { commands })`
-3. Sync: `npx towns-bot update-commands src/commands.ts <token>`
-4. Register handler: `bot.onSlashCommand("name", handler)`
-
 ### Issue: Can't mention users
 
 **Format:**
@@ -1356,9 +1532,6 @@ yarn start             # Run production build
 yarn test              # Run tests
 yarn lint              # Check code quality
 yarn typecheck         # Verify types
-
-# Bot Management
-npx towns-bot update-commands src/commands.ts <token>  # Sync slash commands
 ```
 
 ## Summary for AI Agents
