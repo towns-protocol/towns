@@ -23,6 +23,7 @@ import {DeployMockLegacyArchitect} from "../facets/DeployMockLegacyArchitect.s.s
 import {DeployPartnerRegistry} from "../facets/DeployPartnerRegistry.s.sol";
 import {DeployPlatformRequirements} from "../facets/DeployPlatformRequirements.s.sol";
 import {DeployWalletLink} from "../facets/DeployWalletLink.s.sol";
+import {DeployFeeManager} from "../facets/DeployFeeManager.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -152,6 +153,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("EIP712Facet");
         facetHelper.add("PartnerRegistry");
         facetHelper.add("FeatureManagerFacet");
+        facetHelper.add("FeeManagerFacet");
         facetHelper.add("SpaceProxyInitializer");
         facetHelper.add("SpaceFactoryInit");
 
@@ -272,6 +274,13 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployFeatureManager.makeInitData()
         );
 
+        facet = facetHelper.getDeployedAddress("FeeManagerFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployFeeManager.selectors()),
+            facet,
+            DeployFeeManager.makeInitData(deployer)
+        );
+
         address spaceProxyInitializer = facetHelper.getDeployedAddress("SpaceProxyInitializer");
         spaceFactoryInit = facetHelper.getDeployedAddress("SpaceFactoryInit");
         spaceFactoryInitData = DeploySpaceFactoryInit.makeInitData(spaceProxyInitializer);
@@ -346,7 +355,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     DeployPlatformRequirements.makeInitData(
                         deployer, // feeRecipient
                         500, // membershipBps 5%
-                        0.005 ether, // membershipFee
+                        0.0005 ether, // membershipFee
                         1000, // membershipFreeAllocation
                         365 days, // membershipDuration
                         0.001 ether // membershipMinPrice
@@ -394,6 +403,12 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
                     makeCut(facet, FacetCutAction.Add, DeployFeatureManager.selectors()),
                     facet,
                     DeployFeatureManager.makeInitData()
+                );
+            } else if (facetName.eq("FeeManagerFacet")) {
+                addFacet(
+                    makeCut(facet, FacetCutAction.Add, DeployFeeManager.selectors()),
+                    facet,
+                    DeployFeeManager.makeInitData(deployer)
                 );
             }
         }

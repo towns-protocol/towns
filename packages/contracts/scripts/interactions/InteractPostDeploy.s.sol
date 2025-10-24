@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IImplementationRegistry} from "../../src/factory/facets/registry/IImplementationRegistry.sol";
-import {ISpaceDelegation} from "src/base/registry/facets/delegation/ISpaceDelegation.sol";
+import {IFeeManager} from "../../src/factory/facets/fee/IFeeManager.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
@@ -12,6 +12,8 @@ import {ISubscriptionModule} from "src/apps/modules/subscription/ISubscriptionMo
 
 // libraries
 import {NodeOperatorStatus} from "src/base/registry/facets/operator/NodeOperatorStorage.sol";
+import {FeeCalculationMethod} from "../../src/factory/facets/fee/FeeManagerStorage.sol";
+import {FeeTypesLib} from "../../src/factory/facets/fee/FeeTypesLib.sol";
 
 // contracts
 import {MAX_CLAIMABLE_SUPPLY} from "./InteractClaimCondition.s.sol";
@@ -49,6 +51,14 @@ contract InteractPostDeploy is Interaction {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
+        IFeeManager(spaceFactory).setFeeConfig(
+            FeeTypesLib.TIP_MEMBER,
+            deployer,
+            FeeCalculationMethod.PERCENT,
+            50,
+            0,
+            true
+        );
         ISubscriptionModule(subscriptionModule).setSpaceFactory(spaceFactory);
         IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
         IRewardsDistribution(baseRegistry).setRewardNotifier(deployer, true);

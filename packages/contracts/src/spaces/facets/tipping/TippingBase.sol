@@ -4,15 +4,18 @@ pragma solidity ^0.8.23;
 // interfaces
 import {ITippingBase} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
-import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
+import {IFeeManager} from "../../../factory/facets/fee/IFeeManager.sol";
+import {FeeTypesLib} from "../../../factory/facets/fee/FeeTypesLib.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {MembershipStorage} from "../membership/MembershipStorage.sol";
 import {TippingStorage} from "./TippingStorage.sol";
+import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
+import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
 // contracts
 import {PointsBase} from "../points/PointsBase.sol";
@@ -20,6 +23,8 @@ import {PointsBase} from "../points/PointsBase.sol";
 abstract contract TippingBase is ITippingBase, PointsBase {
     using EnumerableSet for EnumerableSet.AddressSet;
     using CustomRevert for bytes4;
+
+    uint256 internal constant MAX_FEE_TOLERANCE = 100; // 1% tolerance
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Internal Functions                    */
@@ -45,20 +50,15 @@ abstract contract TippingBase is ITippingBase, PointsBase {
             tipRequest.amount
         );
 
-        uint256 tipAmount = tipRequest.amount;
+        // Validate payment and transfer tokens to space
+        _validateAndTransferPayment(tipRequest.currency, tipRequest.amount);
 
-        // Handle native token
-        if (tipRequest.currency == CurrencyTransfer.NATIVE_TOKEN) {
-            if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
-            uint256 protocolFee = _handleProtocolFee(tipAmount);
-            tipAmount -= protocolFee;
-        } else {
-            if (msg.value != 0) UnexpectedETH.selector.revertWith();
-        }
+        // Charge protocol fee and calculate net tip amount
+        uint256 protocolFee = _handleProtocolFee(tipRequest.amount, tipRequest.currency);
+        uint256 tipAmount = tipRequest.amount - protocolFee;
 
         // Process tip
         _processTip(
-            msg.sender,
             tipRequest.receiver,
             tipRequest.tokenId,
             TipRecipientType.Member,
@@ -93,20 +93,15 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         MembershipTipParams memory params = abi.decode(data, (MembershipTipParams));
         _validateTipRequest(msg.sender, params.receiver, params.currency, params.amount);
 
-        uint256 tipAmount = params.amount;
+        // Validate payment and transfer tokens to space
+        _validateAndTransferPayment(params.currency, params.amount);
 
-        // Handle native token
-        if (params.currency == CurrencyTransfer.NATIVE_TOKEN) {
-            if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
-            uint256 protocolFee = _handleProtocolFee(tipAmount);
-            tipAmount -= protocolFee;
-        } else {
-            if (msg.value != 0) UnexpectedETH.selector.revertWith();
-        }
+        // Charge protocol fee and calculate net tip amount
+        uint256 protocolFee = _handleProtocolFee(params.amount, params.currency);
+        uint256 tipAmount = params.amount - protocolFee;
 
         // Process tip
         _processTip(
-            msg.sender,
             params.receiver,
             params.tokenId,
             TipRecipientType.Member,
@@ -146,12 +141,20 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         if (params.currency == CurrencyTransfer.NATIVE_TOKEN) {
             if (msg.value != tipAmount) MsgValueMismatch.selector.revertWith();
         } else {
+            // Handle ERC20 token (no fee for bot tips, just transfer)
             if (msg.value != 0) UnexpectedETH.selector.revertWith();
+
+            // Pull tokens from user to Space
+            CurrencyTransfer.transferCurrency(
+                params.currency,
+                msg.sender,
+                address(this),
+                tipAmount
+            );
         }
 
         // Process tip (tokenId = 0 for bot tips)
         _processTip(
-            msg.sender,
             params.receiver,
             0, // No tokenId for bot tips
             TipRecipientType.Bot,
@@ -171,7 +174,6 @@ abstract contract TippingBase is ITippingBase, PointsBase {
 
     /// @dev Core tip processing logic
     function _processTip(
-        address sender,
         address receiver,
         uint256 tokenId,
         TipRecipientType recipientType,
@@ -198,24 +200,65 @@ abstract contract TippingBase is ITippingBase, PointsBase {
         }
 
         // Transfer currency
-        CurrencyTransfer.transferCurrency(currency, sender, receiver, amount);
+        CurrencyTransfer.transferCurrency(currency, address(this), receiver, amount);
     }
 
-    /// @dev Handles protocol fee and points minting
-    function _handleProtocolFee(uint256 amount) internal returns (uint256 protocolFee) {
+    /// @dev Validates payment and transfers tokens to space contract
+    /// @param currency The currency being tipped (NATIVE_TOKEN or ERC20)
+    /// @param amount The amount being tipped
+    function _validateAndTransferPayment(address currency, uint256 amount) internal {
+        if (currency == CurrencyTransfer.NATIVE_TOKEN) {
+            if (msg.value != amount) MsgValueMismatch.selector.revertWith();
+        } else {
+            if (msg.value != 0) UnexpectedETH.selector.revertWith();
+            CurrencyTransfer.transferCurrency(currency, msg.sender, address(this), amount);
+        }
+    }
+
+    /// @dev Handles protocol fee charging and points minting
+    /// @param amount The tip amount to calculate fee on
+    /// @param currency The currency of the tip (NATIVE_TOKEN or ERC20 address)
+    /// @return protocolFee The fee amount charged
+    function _handleProtocolFee(
+        uint256 amount,
+        address currency
+    ) internal returns (uint256 protocolFee) {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
-        IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
+        address spaceFactory = ds.spaceFactory;
 
-        protocolFee = BasisPoints.calculate(amount, 50); // 0.5%
-
-        CurrencyTransfer.transferCurrency(
-            CurrencyTransfer.NATIVE_TOKEN,
+        // Calculate expected fee
+        uint256 expectedFee = IFeeManager(spaceFactory).calculateFee(
+            FeeTypesLib.TIP_MEMBER,
             msg.sender,
-            platform.getFeeRecipient(),
-            protocolFee
+            amount,
+            ""
         );
 
-        // Mint points
+        if (expectedFee == 0) return 0;
+
+        // Add slippage tolerance (1%)
+        uint256 maxFee = expectedFee + BasisPoints.calculate(expectedFee, MAX_FEE_TOLERANCE);
+
+        // Approve ERC20 if needed (native token sends value with call)
+        bool isNative = currency == CurrencyTransfer.NATIVE_TOKEN;
+        if (!isNative) SafeTransferLib.safeApproveWithRetry(currency, spaceFactory, maxFee);
+
+        // Charge fee (excess native token will be refunded)
+        protocolFee = IFeeManager(spaceFactory).chargeFee{value: isNative ? maxFee : 0}(
+            FeeTypesLib.TIP_MEMBER,
+            msg.sender,
+            amount,
+            currency,
+            maxFee,
+            ""
+        );
+
+        // Reset ERC20 approval
+        if (!isNative) {
+            SafeTransferLib.safeApprove(currency, spaceFactory, 0);
+        }
+
+        // Mint points for fee payment
         address airdropDiamond = _getAirdropDiamond();
         uint256 points = _getPoints(
             airdropDiamond,
