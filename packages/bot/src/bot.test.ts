@@ -42,8 +42,6 @@ import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
 import { parseEther } from 'viem'
-import tippingAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
-import erc721QueryableAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi'
 import { execute } from 'viem/experimental/erc7821'
 
 const log = dlog('test:bot')
@@ -140,11 +138,11 @@ describe('Bot', { sequential: true }, () => {
     const shouldMintBot = async () => {
         botWallet = ethers.Wallet.createRandom().connect(ethersProvider)
         botClientAddress = botWallet.address as Address
-        const fundingTx = await bob.signer.sendTransaction({
+        const fundBotClientAddressTx = await bob.signer.sendTransaction({
             to: botClientAddress,
             value: ethers.utils.parseEther('0.5'),
         })
-        await fundingTx.wait()
+        await fundBotClientAddressTx.wait()
 
         const tx = await appRegistryDapp.createApp(
             bob.signer,
@@ -247,6 +245,7 @@ describe('Bot', { sequential: true }, () => {
         bot = await makeTownsBot(appPrivateData, jwtSecretBase64, { commands: SLASH_COMMANDS })
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
+        expect(bot.appAddress).toBe(appAddress)
         const { jwtMiddleware, handler } = bot.start()
         const app = new Hono()
         app.use(jwtMiddleware)
@@ -794,6 +793,32 @@ describe('Bot', { sequential: true }, () => {
         expect(tipEvent?.receiverAddress).toBe(bot.botId)
     })
 
+    it('bot can use sendTip() to send tips using app balance', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const receivedMessages: OnMessageType[] = []
+
+        bot.onMessage(async (handler, event) => {
+            const result = await handler.sendTip({
+                receiver: bob.userId,
+                receiverUserId: bob.userId,
+                amount: ethers.utils.parseUnits('0.005').toBigInt(),
+                messageId: event.eventId,
+                channelId: event.channelId,
+            })
+            expect(result.txHash).toBeDefined()
+            expect(result.eventId).toBeDefined()
+            receivedMessages.push(event)
+        })
+
+        const bobBalanceBefore = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        // Bob sends a message asking for a tip
+        const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Tip me please!')
+        await waitFor(() => receivedMessages.some((x) => x.eventId === bobMessageId))
+        // Verify bob's balance increased
+        const bobBalanceAfter = (await ethersProvider.getBalance(bob.userId)).toBigInt()
+        expect(bobBalanceAfter).toBeGreaterThan(bobBalanceBefore)
+    })
+
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
@@ -1258,10 +1283,6 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedMessages[0].message).toEqual(message)
     })
 
-    it('bot.appAddress should be equal to the address of the app contract', async () => {
-        expect(bot.appAddress).toBe(appAddress)
-    })
-
     it('bot should be able to read app contract', async () => {
         expect(appAddress).toBeDefined()
         const botOwner = await readContract(bot.viem, {
@@ -1293,48 +1314,6 @@ describe('Bot', { sequential: true }, () => {
             address: alice.userId,
         })
         expect(aliceBalance_after).toBeGreaterThan(aliceBalance_before)
-    })
-
-    it('bot should be able to call tipping from space', async () => {
-        const bobBalance = await getBalance(bot.viem, {
-            address: bob.userId,
-        })
-        const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii')
-
-        const tokenid = await readContract(bot.viem, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: erc721QueryableAbi,
-            functionName: 'tokensOfOwner',
-            args: [bob.userId],
-        })
-
-        const hash = await execute(bot.viem, {
-            address: bot.appAddress,
-            account: bot.viem.account,
-            calls: [
-                {
-                    to: SpaceAddressFromSpaceId(spaceId),
-                    abi: tippingAbi,
-                    functionName: 'tip',
-                    value: parseEther('0.01'),
-                    args: [
-                        {
-                            receiver: bob.userId,
-                            tokenId: tokenid[0],
-                            currency: ETH_ADDRESS,
-                            amount: parseEther('0.01'),
-                            messageId: `0x${messageId}`,
-                            channelId: `0x${channelId}`,
-                        },
-                    ],
-                },
-            ],
-        })
-        await waitForTransactionReceipt(bot.viem, { hash: hash })
-        const bobBalance_after = await getBalance(bot.viem, {
-            address: bob.userId,
-        })
-        expect(bobBalance_after).toBeGreaterThan(bobBalance)
     })
 
     it('should log error and continue processing if throws an error when handling an event', async () => {

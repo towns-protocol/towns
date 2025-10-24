@@ -9,7 +9,7 @@ import {
 import { MessageTimeline } from '../../timeline/timeline'
 import { check, dlogger } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
-import { ChannelDetails, checkNever, SpaceDapp } from '@towns-protocol/web3'
+import { ChannelDetails, checkNever, SpaceDapp, type Address } from '@towns-protocol/web3'
 import { Members } from '../../members/members'
 import type { ethers } from 'ethers'
 
@@ -18,9 +18,9 @@ const logger = dlogger('csb:channel')
 type ChannelSendTipParams =
     | {
           type: 'member'
-          receiver: string
+          receiver: Address
           tokenId: string
-          currency: string
+          currency: Address
           amount: bigint
           chainId: number
       }
@@ -28,8 +28,8 @@ type ChannelSendTipParams =
           type: 'bot'
           botId: string // bot's user id
           appId: string // app id
-          appAddress: string // app address
-          currency: string
+          appAddress: Address // app address
+          currency: Address
           amount: bigint
           chainId: number
       }
