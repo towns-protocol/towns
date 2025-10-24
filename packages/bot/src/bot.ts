@@ -655,7 +655,11 @@ export class Bot<
         }
     }
 
-    async handleChannelMessage(streamId: string, parsed: ParsedEvent, { payload }: ChannelMessage) {
+    private async handleChannelMessage(
+        streamId: string,
+        parsed: ParsedEvent,
+        { payload }: ChannelMessage,
+    ) {
         if (!payload.case) {
             return
         }
