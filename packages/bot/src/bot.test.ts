@@ -17,7 +17,6 @@ import {
     Bot as SyncAgentTest,
     AppRegistryService,
     MessageType,
-    make_ChannelPayload_InteractionRequest,
     ClientV2,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -27,14 +26,7 @@ import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
-import {
-    ForwardSettingValue,
-    InteractionRequest,
-    InteractionRequest_SignatureRequest_SignatureType,
-    InteractionResponse,
-    type PlainMessage,
-    type SlashCommand,
-} from '@towns-protocol/proto'
+import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
