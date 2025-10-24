@@ -35,12 +35,13 @@ interface IAppRegistryBase {
     error InvalidArrayInput();
     error BannedApp();
     error InvalidAppId();
-    error InvalidPrice();
-    error InvalidDuration();
     error InsufficientPayment();
     error NotAllowed();
     error ClientAlreadyRegistered();
     error ClientNotRegistered();
+
+    error AppRegistry__InvalidDuration();
+    error AppRegistry__InvalidPrice();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */

@@ -72,7 +72,9 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address internal spaceFactory;
     address internal spaceDiamond;
 
+    uint256 internal appDeveloperPrivateKey;
     address internal appDeveloper;
+    uint256 internal appClientPrivateKey;
     address internal appClient;
 
     address internal userEntitlement;
@@ -193,8 +195,13 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         founder = vm.addr(founderPrivateKey);
         vm.label(founder, "founder");
 
-        appDeveloper = makeAddr("appDeveloper");
-        appClient = makeAddr("appClient");
+        appDeveloperPrivateKey = boundPrivateKey(_randomUint256());
+        appDeveloper = vm.addr(appDeveloperPrivateKey);
+        vm.label(appDeveloper, "appDeveloper");
+
+        appClientPrivateKey = boundPrivateKey(_randomUint256());
+        appClient = vm.addr(appClientPrivateKey);
+        vm.label(appClient, "appClient");
 
         // Create the arguments necessary for creating a space
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");

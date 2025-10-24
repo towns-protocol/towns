@@ -6,15 +6,24 @@ import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} fro
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
+import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntryPoint.sol";
+
+import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 
 // contracts
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
 import {OwnableFacet} from "@towns-protocol/diamond/src/facets/ownable/OwnableFacet.sol";
 import {EIP712Facet} from "@towns-protocol/diamond/src/utils/cryptography/EIP712Facet.sol";
 import {BaseApp} from "../../src/apps/BaseApp.sol";
+import {SimpleAccountFacet} from "../../src/apps/simple/account/SimpleAccountFacet.sol";
+import {Receiver} from "solady/accounts/Receiver.sol";
 
-contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
+contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp, SimpleAccountFacet {
     bytes4 private constant INVALID_SIGNATURE = 0xffffffff;
+
+    receive() external payable override(BaseApp, Receiver) {
+        _onPayment(msg.sender, msg.value);
+    }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -36,13 +45,18 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
     uint256 internal price;
     uint48 internal duration;
 
-    function initialize(
-        bool _shouldFailInstall,
-        bool _shouldFailManifest,
-        bool _shouldFailUninstall,
-        uint256 _price
-    ) external initializer {
+    function initialize(bytes calldata data) external virtual initializer {
+        (
+            bool _shouldFailInstall,
+            bool _shouldFailManifest,
+            bool _shouldFailUninstall,
+            uint256 _price
+        ) = abi.decode(data, (bool, bool, bool, uint256));
         __Ownable_init_unchained(msg.sender);
+        __SimpleAccountFacet_init_unchained(
+            0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108,
+            address(this)
+        );
         shouldFailInstall = _shouldFailInstall;
         shouldFailManifest = _shouldFailManifest;
         shouldFailUninstall = _shouldFailUninstall;
@@ -241,9 +255,27 @@ contract MockModule is UUPSUpgradeable, OwnableFacet, EIP712Facet, BaseApp {
     }
 
     function _authorizeUpgrade(address newImplementation) internal override {}
+
+    function _validateSignature(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal override returns (uint256 validationData) {}
 }
 
 contract MockModuleV2 is MockModule {
+    function initialize(bytes calldata data) external override initializer {
+        (
+            bool _shouldFailInstall,
+            bool _shouldFailManifest,
+            bool _shouldFailUninstall,
+            uint256 _price
+        ) = abi.decode(data, (bool, bool, bool, uint256));
+        shouldFailInstall = _shouldFailInstall;
+        shouldFailManifest = _shouldFailManifest;
+        shouldFailUninstall = _shouldFailUninstall;
+        price = _price;
+    }
+
     function executionManifest() external pure override returns (ExecutionManifest memory) {
         ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](2);
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](1);

@@ -71,13 +71,13 @@ import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
     http,
-    type Account,
     type Chain,
     type Transport,
     type Hex,
+    type Address,
+    type Account,
     type WalletClient,
     createWalletClient,
-    type Address,
 } from 'viem'
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -1091,14 +1091,15 @@ export const makeTownsBot = async <
         if (chainId === foundry.id) return foundry
         return baseSepolia
     }
+    const chain = getChain(baseConfig.chainConfig.chainId)
     const viem = createWalletClient({
         account,
         transport: baseRpcUrl
             ? http(baseRpcUrl, { batch: true })
             : http(baseConfig.rpcUrl, { batch: true }),
-        // TODO: would be nice if townsEnv().makeBaseChainConfig returned a viem chain
-        chain: getChain(baseConfig.chainConfig.chainId),
+        chain,
     })
+
     const spaceDapp = new SpaceDapp(
         baseConfig.chainConfig,
         new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
@@ -1111,6 +1112,7 @@ export const makeTownsBot = async <
             args: [account.address],
         })
     }
+
     const client = await createTownsClient({
         privateKey,
         env,

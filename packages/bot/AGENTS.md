@@ -147,30 +147,116 @@ The `@towns-protocol/bot` package exports several types useful for building abst
 
 **Web3 Operations:**
 Bot exposes viem client and app address for direct Web3 interactions:
-- `bot.viem` - WalletClient for reading/writing contracts
-- `bot.appAddress` - The bot's app contract address
+- `bot.viem` - Viem client with Account for reading/writing contracts
+- `bot.appAddress` - The bot's app contract address (SimpleAccount)
 
-Use viem actions directly for contract interactions:
+**Reading from Contracts:**
+Use `readContract` for reading from any contract:
 ```typescript
-import { readContract, writeContract } from 'viem/actions'
+import { readContract } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
 
-// Read from contract
+// Read from any contract
 const owner = await readContract(bot.viem, {
   address: bot.appAddress,
   abi: simpleAppAbi,
   functionName: 'moduleOwner',
   args: []
 })
+```
 
-// Write to contract
+**Writing to Bot's Own Contract (SimpleAccount):**
+Use `writeContract` ONLY for the bot's SimpleAccount contract:
+```typescript
+import { writeContract, waitForTransactionReceipt } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+import { parseEther, zeroAddress } from 'viem'
+
+// Only for SimpleAccount contract operations
 const hash = await writeContract(bot.viem, {
   address: bot.appAddress,
   abi: simpleAppAbi,
   functionName: 'sendCurrency',
-  args: [recipientAddress, tokenAddress, amount]
+  args: [recipientAddress, zeroAddress, parseEther('0.01')]
+})
+
+await waitForTransactionReceipt(bot.viem, { hash })
+```
+
+**Interacting with ANY Contract (PRIMARY METHOD):**
+Use `execute` from ERC-7821 for any onchain interaction - this is your main tool for blockchain operations:
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Single operation: tip a user on Towns
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [{
+    to: tippingContractAddress,
+    abi: tippingAbi,
+    functionName: 'tip',
+    value: parseEther('0.01'),
+    args: [recipientAddress, messageId, channelId]
+  }]
+})
+
+// Batch operations: multiple interactions in one transaction
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [
+    {
+      to: tokenAddress,
+      abi: erc20Abi,
+      functionName: 'approve',
+      args: [spenderAddress, parseEther('100')]
+    },
+    {
+      to: dexAddress,
+      abi: dexAbi,
+      functionName: 'swap',
+      args: [tokenIn, tokenOut, parseEther('100')]
+    },
+    {
+      to: stakingAddress,
+      abi: stakingAbi,
+      functionName: 'stake',
+      args: [parseEther('50')]
+    }
+  ]
+})
+
+await waitForTransactionReceipt(bot.viem, { hash })
+```
+
+**Advanced: Batch of Batches:**
+Use `executeBatch` for executing multiple batches (advanced use case):
+```typescript
+import { executeBatch } from 'viem/experimental/erc7821'
+
+// Execute batches of batches
+const hash = await executeBatch(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [
+    [/* first batch */],
+    [/* second batch */],
+    [/* third batch */]
+  ]
 })
 ```
+
+**When to Use Each:**
+- **`readContract`**: Reading from any contract (no transaction)
+- **`writeContract`**: ONLY for bot's own SimpleAccount contract operations
+- **`execute`**: PRIMARY METHOD for any onchain interaction (tipping, swapping, staking, NFTs, etc.)
+  - Works for single operations OR batch operations
+  - Use for interacting with external contracts
+  - Atomic execution (all succeed or all fail)
+  - Gas optimized when batching
+- **`executeBatch`**: Advanced batching (batches of batches)
 
 ### Encryption & Decryption
 
@@ -478,6 +564,8 @@ bot.onSlashCommand("unban", async (handler, { channelId, spaceId, args }) => {
 ```
 
 ### Web3 Contract Interactions
+
+**Reading from Contracts:**
 ```typescript
 import { readContract } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
@@ -491,6 +579,128 @@ bot.onSlashCommand("owner", async (handler, { channelId }) => {
     args: []
   })
   await handler.sendMessage(channelId, `Contract owner: ${owner}`)
+})
+```
+
+**Single Operation with Execute:**
+Use `execute` for any onchain interaction - tipping, swapping, staking, etc:
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Tip a user on Towns
+bot.onSlashCommand("tip", async (handler, { channelId, spaceId, mentions, args }) => {
+  if (mentions.length === 0 || !args[0]) {
+    await handler.sendMessage(channelId, "Usage: /tip @user <amount>")
+    return
+  }
+
+  const recipient = mentions[0].userId
+  const amount = parseEther(args[0])
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [{
+      to: tippingContractAddress,
+      abi: tippingAbi,
+      functionName: 'tip',
+      value: amount,
+      args: [{
+        receiver: recipient,
+        tokenId: tokenId,
+        currency: ETH_ADDRESS,
+        amount: amount,
+        messageId: messageId,
+        channelId: channelId
+      }]
+    }]
+  })
+
+  await handler.sendMessage(channelId, `Tipped ${args[0]} ETH to ${recipient}! Tx: ${hash}`)
+})
+```
+
+**Batch Operations with Execute:**
+Execute multiple onchain interactions in a single transaction:
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Airdrop tips to multiple users in one transaction
+bot.onSlashCommand("airdrop", async (handler, { channelId, mentions, args }) => {
+  if (mentions.length === 0 || !args[0]) {
+    await handler.sendMessage(channelId, "Usage: /airdrop @user1 @user2 ... <amount-each>")
+    return
+  }
+
+  const amountEach = parseEther(args[0])
+
+  // Build batch calls - one tip per user
+  const calls = mentions.map(mention => ({
+    to: tippingContractAddress,
+    abi: tippingAbi,
+    functionName: 'tip',
+    value: amountEach,
+    args: [{
+      receiver: mention.userId,
+      tokenId: tokenId,
+      currency: ETH_ADDRESS,
+      amount: amountEach,
+      messageId: messageId,
+      channelId: channelId
+    }]
+  }))
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls
+  })
+
+  await handler.sendMessage(
+    channelId,
+    `Airdropped ${args[0]} ETH to ${mentions.length} users! Tx: ${hash}`
+  )
+})
+```
+
+**Complex Multi-Step Operations:**
+Combine different contract interactions (approve + swap, swap + stake, etc):
+```typescript
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+
+// Approve token, swap, and stake in one transaction
+bot.onSlashCommand("swap-and-stake", async (handler, { channelId, args }) => {
+  const amount = parseEther(args[0] || '100')
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [
+      {
+        to: tokenAddress,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [dexAddress, amount]
+      },
+      {
+        to: dexAddress,
+        abi: dexAbi,
+        functionName: 'swap',
+        args: [tokenIn, tokenOut, amount, minOut]
+      },
+      {
+        to: stakingAddress,
+        abi: stakingAbi,
+        functionName: 'stake',
+        args: [amount]
+      }
+    ]
+  })
+
+  await handler.sendMessage(channelId, `Swapped and staked! Tx: ${hash}`)
 })
 ```
 
