@@ -204,13 +204,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** The message ID of the parent of the tip */
             messageId: string
             /** The address of the sender of the tip */
-            senderAddress: string
+            senderAddress: Address
             /** The address of the receiver of the tip */
-            receiverAddress: string
+            receiverAddress: Address
             /** The amount of the tip */
             amount: bigint
             /** The currency of the tip */
-            currency: `0x${string}`
+            currency: Address
         },
     ) => Promise<void> | void
     channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
