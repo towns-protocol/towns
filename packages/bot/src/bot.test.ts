@@ -41,7 +41,7 @@ import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
-import { parseEther, zeroAddress } from 'viem'
+import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 
 const log = dlog('test:bot')
@@ -769,7 +769,7 @@ describe('Bot', { sequential: true }, () => {
                 type: 'bot',
                 appId: appId,
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
-                currency: zeroAddress,
+                currency: ETH_ADDRESS,
                 chainId: townsConfig.base.chainConfig.chainId,
                 appAddress: appAddress,
                 botId: bot.botId,
@@ -800,6 +800,7 @@ describe('Bot', { sequential: true }, () => {
         bot.onMessage(async (handler, event) => {
             const result = await handler.sendTip({
                 receiver: bob.userId,
+                receiverUserId: bob.userId,
                 amount: ethers.utils.parseUnits('0.005').toBigInt(),
                 messageId: event.eventId,
                 channelId: event.channelId,
