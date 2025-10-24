@@ -53,6 +53,10 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case 'custom':
                 break
+            case 'interactionRequest':
+                break
+            case 'interactionResponse':
+                break
             case undefined:
                 break
             default:
@@ -85,6 +89,10 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
             case 'custom':
                 break
             case undefined:
+                break
+            case 'interactionRequest':
+                break
+            case 'interactionResponse':
                 break
             default:
                 logNever(payload.content)

@@ -12,7 +12,6 @@ import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/f
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
 import {DeployPausable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployPausable.sol";
 import {DeployProxyManager} from "@towns-protocol/diamond/scripts/deployments/utils/DeployProxyManager.sol";
-import {LibDeploy} from "@towns-protocol/diamond/src/utils/LibDeploy.sol";
 import {DeployFeatureManager} from "../facets/DeployFeatureManager.s.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployPricingModules} from "../facets/DeployPricingModules.s.sol";

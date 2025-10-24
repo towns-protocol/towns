@@ -53,10 +53,7 @@ contract SignerFacetTest is BaseSetup {
                         address(mockModuleV1),
                         abi.encodeWithSelector(
                             MockModule.initialize.selector,
-                            false,
-                            false,
-                            false,
-                            0
+                            abi.encode(false, false, false, 0)
                         )
                     )
                 )

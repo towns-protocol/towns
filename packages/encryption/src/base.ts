@@ -1,17 +1,15 @@
-import { GroupEncryptionAlgorithmId, GroupEncryptionSession, UserDeviceCollection } from './olmLib'
+import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 
 import { EncryptionDevice } from './encryptionDevice'
 import { EncryptedData } from '@towns-protocol/proto'
 
 export interface IGroupEncryptionClient {
-    downloadUserDeviceInfo(userIds: string[], forceDownload: boolean): Promise<UserDeviceCollection>
-    encryptAndShareGroupSessions(
+    encryptAndShareGroupSessionsToStream(
         streamId: string,
         sessions: GroupEncryptionSession[],
-        devicesInRoom: UserDeviceCollection,
         algorithm: GroupEncryptionAlgorithmId,
+        priorityUserIds: string[],
     ): Promise<void>
-    getDevicesInStream(streamId: string): Promise<UserDeviceCollection>
     getMiniblockInfo(streamId: string): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }>
 }
 
@@ -24,6 +22,12 @@ export interface IEncryptionParams {
     client: IGroupEncryptionClient
     /** olm.js wrapper */
     device: EncryptionDevice
+}
+
+export interface EnsureOutboundSessionOpts {
+    shareShareSessionTimeoutMs?: number // timeout for the initial share session, pass 0 if you want to wait for entire share session to complete (send keys to all members)
+    priorityUserIds?: string[] // ensure these users are sent keys and sent first
+    miniblockInfo?: { miniblockNum: bigint; miniblockHash: Uint8Array } // miniblock info to use for the session, if not provided, will be fetched from the client
 }
 
 /**
@@ -43,7 +47,7 @@ export abstract class EncryptionAlgorithm implements IEncryptionParams {
 
     abstract ensureOutboundSession(
         streamId: string,
-        opts?: { awaitInitialShareSession: boolean },
+        opts?: EnsureOutboundSessionOpts,
     ): Promise<void>
 
     abstract hasOutboundSession(streamId: string): Promise<boolean>

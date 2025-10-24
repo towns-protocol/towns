@@ -139,12 +139,7 @@ export const commands = [
 const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 ```
 
-3. Sync commands with Towns:
-```bash
-npx towns-bot update-commands src/commands.ts <bearer-token>
-```
-
-4. Register handlers:
+3. Register handlers:
 ```typescript
 bot.onSlashCommand("help", async (handler, event) => {
   await handler.sendMessage(event.channelId, "Commands: /help, /poll")
@@ -1470,15 +1465,6 @@ bot.onMessage(() => counter++)
 const db = new Database()
 bot.onMessage(() => db.increment('counter'))
 ```
-
-### Issue: Slash commands not working
-
-**Steps:**
-1. Define in `src/commands.ts`
-2. Pass to `makeTownsBot(data, secret, { commands })`
-3. Sync: `npx towns-bot update-commands src/commands.ts <token>`
-4. Register handler: `bot.onSlashCommand("name", handler)`
-
 ### Issue: Can't mention users
 
 **Format:**
@@ -1546,9 +1532,6 @@ yarn start             # Run production build
 yarn test              # Run tests
 yarn lint              # Check code quality
 yarn typecheck         # Verify types
-
-# Bot Management
-npx towns-bot update-commands src/commands.ts <token>  # Sync slash commands
 ```
 
 ## Summary for AI Agents

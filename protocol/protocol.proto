@@ -358,6 +358,8 @@ message ChannelPayload {
         EncryptedData message = 2;
         Redaction redaction = 3;
         google.protobuf.Any custom = 4;
+        InteractionRequest interaction_request = 5;
+        InteractionResponse interaction_response = 6;
     }
 }
 
@@ -1249,6 +1251,63 @@ enum GroupMentionType {
 enum EncryptedDataVersion {
     ENCRYPTED_DATA_VERSION_0 = 0;
     ENCRYPTED_DATA_VERSION_1 = 1;
+}
+
+message InteractionRequest {
+    message SignatureRequest {
+        // Type of signing method to use. The app must call the
+        // corresponding method on the wallet as noted below.
+        enum SignatureType {
+            PERSONAL_SIGN = 0; // -> personal_sign (EIP-191)
+            TYPED_DATA = 1;    // -> eth_signTypedData_v4 (EIP-712)
+        }
+
+        // A unique identifier for this interaction.
+        // Used to correlate an InteractionRequest with its InteractionResponse.
+        string id = 1;
+        // The hex encoded data to be signed.
+        // - For PERSONAL_SIGN: UTF-8 text (e.g. SIWE message).
+        // - For TYPED_DATA: JSON-encoded EIP-712 typed data
+        // SECURITY REQUIREMENT:
+        // The sender must embed any nonce, timestamp, audience, or session binding
+        // INSIDE the "data" payload before signing.
+        // Example for personal_sign:
+        // "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
+        string data = 2;
+        string chain_id = 3;
+        // The address of the signer wallet. If not provided, the user can use any wallet to sign
+        // this is useful in the case where a bot wants to send an interaction request to a specific user
+        optional string signer_wallet = 4; 
+        // Which signature method the app expects the wallet to use.
+        SignatureType type = 5;
+        // Optional: a short title for the wallet's signature dialog (UX only).
+        optional string title = 6;
+        // Optional: a subtitle or human-readable explanation (UX only).
+        optional string subtitle = 7;
+    }
+
+    // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
+    optional bytes recipient = 1;
+
+    oneof content {
+        SignatureRequest signature_request = 101;
+    }
+}
+
+message InteractionResponse {
+    // The recipient of the interaction response.
+    bytes recipient = 1;
+
+    message SignatureResponse {
+        // The id of the request that this response is for
+        string request_id = 1;
+        // The resulting signature in hex
+        string signature = 2;
+    }
+
+    oneof content {
+        SignatureResponse signature_response = 101;
+    }
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.
