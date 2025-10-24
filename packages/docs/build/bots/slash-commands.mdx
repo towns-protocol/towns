@@ -46,44 +46,6 @@ export const commands = [
 export default commands
 ```
 
-## Registering commands
-
-You can register commands with Towns using the CLI:
-
-```bash
-bunx towns-bot update-commands src/commands.ts <your-bearer-token>
-```
-
-If you need to add, remove, or modify commands, you can do so by updating the `src/commands.ts` file and running the command above again.
-
-In order to get your bearer token, you need to:
-
-<Steps>
-  <Step title="Open Towns App">
-    Go to any channel where you can send messages
-  </Step>
-
-  <Step title="Request Token">
-    Type `/bearer-token` and press Enter
-  </Step>
-
-  <Step title="Generate Token">
-    Click the "Generate your Bearer Token" button
-  </Step>
-
-  <Step title="Copy Token">
-    Copy the token that appears
-  </Step>
-</Steps>
-
-<Warning>
-Keep your bearer token secure! It grants full access to your Towns account.
-- Don't commit it to git
-- Don't share it publicly
-- Regenerate if compromised
-</Warning>
-
-
 ## Handling Commands
 
 You can use `bot.onSlashCommand()` to handle each slash command:
@@ -202,22 +164,6 @@ bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions
   }
 })
 ```
-
-
-## Troubleshooting
-
-**Commands don't appear in autocomplete**
-
-- Run `bunx towns-bot update-commands` again
-- Wait a few minutes for Towns to update
-- Try closing and reopening the Towns app
-- Verify you're in a space where the bot is installed
-
-**"Unauthorized" when running update-commands**
-
-- Verify your bearer token is correct
-- Generate a new token with `/bearer-token`
-- Make sure you're using the bot owner's bearer token
 
 ## Next Steps
 

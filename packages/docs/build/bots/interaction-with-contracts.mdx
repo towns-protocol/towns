@@ -1,0 +1,32 @@
+----
+title: Onchain Interactions
+---
+
+Towns bot are also onchain apps that can interact with smart contracts by using the `ERC4337` and `ERC7821` actions.
+
+In the server side, you can use the `execute` function from `viem` to interact with smart contracts.
+Bots expose the `viem` client and app address for direct onchain interactions.
+
+```ts
+import { execute } from 'viem/experimental/erc7821'
+import { makeTownsBot } from '@towns-protocol/bot'
+import { parseEther } from 'viem'
+
+const bot = await makeTownsBot(appPrivateData, jwtSecretBase64)
+
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  calls: [{
+    to: '0x00000000A22C618fd6b4D7E9A335C4B96B189a38',
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [recipient, 1000000000000000000],
+  }]
+})
+```
+
+<Note>
+Bot client address requires some gas to execute actions. You can get the private key after creating your bot in Towns app.
+</Note>
+
+We suggest you to read [viem documentation](https://viem.sh/docs/getting-started) to learn more about the available functions.

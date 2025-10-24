@@ -92,3 +92,129 @@ Fires when users leave a channel.
 
 - `userId`: The user who left the channel.
 - `channelId`: The channel that the user left.
+
+## Sending events
+
+You can use bot actions to send events to Towns Network.
+
+### sendMessage
+
+Send a message to a channel.
+```ts
+const { eventId } = await bot.sendMessage(channelId, message, opts)
+```
+- `channelId`: The channel to send the message to.
+- `message`: The message to send.
+- `opts`: The options for the message.
+  - `threadId`: The thread to send the message to.
+  - `replyId`: The message to reply to.
+  - `mentions`: The users to mention in the message. Accepts a list of `userId` and `displayName`.
+  - `attachments`: The attachments to send with the message.
+  - `ephemeral`: Whether the message should be ephemeral (wont be stored in the channel history)
+
+Returns the `eventId` of the sent message.
+
+#### Sending attachments
+
+The bot framework supports two types of attachments with automatic validation and encryption.
+
+##### Image Attachments from URLs
+
+Send images by URL with automatic validation and dimension detection:
+
+```ts
+await bot.sendMessage(channelId, message, {
+  attachments: [
+    {
+       type: 'image', 
+       url: 'https://example.com/image.png', 
+       alt: 'Example image'
+    } 
+  ]
+})
+```
+
+Returns the `eventId` of the sent message.
+
+##### Chunked Media Attachments
+
+Send binary data with a filename and MIME type. 
+This allow you to send large files, videos, screenshots or even create images on the fly.
+
+```ts
+const imageBuffer = await fs.readFile('image.png')
+await bot.sendMessage(channelId, message, {
+  attachments: [{ 
+    type: 'chunked', 
+    data: imageBuffer, 
+    filename: 'image.png', 
+    mimetype: 'image/png',
+    width: 400,
+    height: 300,
+  }]
+})
+```
+
+### sendReaction
+
+Send a reaction to a message.
+```ts
+await bot.sendReaction(channelId, eventId, reaction)
+```
+- `channelId`: The channel to send the reaction to.
+- `eventId`: The `eventId` of the message to react to.
+- `reaction`: The reaction to send.
+
+Returns the `eventId` of the sent reaction.
+
+Example:
+
+```ts
+bot.onMessage(async (handler, { channelId, eventId, message }) => {
+  if (message.includes('Towns')) {
+    await handler.sendReaction(channelId, eventId, '🔥')
+  }
+})
+```
+
+### editMessage
+
+Edit a message.
+```ts
+const { eventId } = await bot.editMessage(channelId, eventId, message, opts)
+```
+- `channelId`: The channel to edit the message in.
+- `eventId`: The `eventId` of the message to edit.
+- `message`: The new message content.
+- `opts?`: Optional options for the edit.
+  - `threadId`: Change the thread of the message.
+  - `replyId`: Change the reply of the message.
+  - `mentions`: Change the mentions of the message. Accepts a list of `userId` and `displayName`.
+  - `attachments`: Change the attachments of the message.
+
+Returns the `eventId` of the edited message.
+
+### removeEvent
+
+Remove any event that was sent by the bot.
+
+```ts
+await bot.removeEvent(channelId, eventId)
+```
+- `channelId`: The channel to remove the event from.
+- `eventId`: The `eventId` of the event to remove.
+
+Returns the `eventId` of the removed event.
+
+### adminRemoveEvent
+
+Remove any event from a channel. Requires the `Redact` permission.
+
+```ts
+await bot.adminRemoveEvent(channelId, eventId)
+```
+- `channelId`: The channel to remove the event from.
+- `eventId`: The `eventId` of the event to remove.
+
+Returns the `eventId` of the redaction event.
+
