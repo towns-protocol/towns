@@ -115,10 +115,8 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
 
     /// @notice Override the _requireForExecute function to allow the owner, client, coordinator, entry point, and self-calls.
     function _requireForExecute() internal view override {
-        address sender = msg.sender;
-
         // Early return for owner
-        if (sender == _owner()) return;
+        if (msg.sender == _owner()) return;
 
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
         SimpleAccountStorage.Layout storage $$ = SimpleAccountStorage.getLayout();
@@ -126,8 +124,8 @@ contract SimpleAccountFacet is ISimpleAccount, SimpleAccountBase, OwnableBase, E
         // Use LibBit.or for efficient multi-condition check
         if (
             LibBit.or(
-                LibBit.or(sender == $.client, sender == $$.coordinator),
-                LibBit.or(sender == $$.entryPoint, sender == address(this))
+                LibBit.or(msg.sender == $.client, msg.sender == $$.coordinator),
+                LibBit.or(msg.sender == $$.entryPoint, msg.sender == address(this))
             )
         ) return;
 
