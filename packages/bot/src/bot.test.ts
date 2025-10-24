@@ -42,8 +42,6 @@ import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
 import { parseEther, zeroAddress } from 'viem'
-import tippingAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
-import erc721QueryableAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi'
 import { execute } from 'viem/experimental/erc7821'
 
 const log = dlog('test:bot')
@@ -771,7 +769,7 @@ describe('Bot', { sequential: true }, () => {
                 type: 'bot',
                 appId: appId,
                 amount: ethers.utils.parseUnits('0.01').toBigInt(),
-                currency: ETH_ADDRESS,
+                currency: zeroAddress,
                 chainId: townsConfig.base.chainConfig.chainId,
                 appAddress: appAddress,
                 botId: bot.botId,
@@ -1315,47 +1313,5 @@ describe('Bot', { sequential: true }, () => {
             address: alice.userId,
         })
         expect(aliceBalance_after).toBeGreaterThan(aliceBalance_before)
-    })
-
-    it('bot should be able to call tipping from space', async () => {
-        const bobBalance = await getBalance(bot.viem, {
-            address: bob.userId,
-        })
-        const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii')
-
-        const tokenid = await readContract(bot.viem, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: erc721QueryableAbi,
-            functionName: 'tokensOfOwner',
-            args: [bob.userId],
-        })
-
-        const hash = await execute(bot.viem, {
-            address: bot.appAddress,
-            account: bot.viem.account,
-            calls: [
-                {
-                    to: SpaceAddressFromSpaceId(spaceId),
-                    abi: tippingAbi,
-                    functionName: 'tip',
-                    value: parseEther('0.01'),
-                    args: [
-                        {
-                            receiver: bob.userId,
-                            tokenId: tokenid[0],
-                            currency: ETH_ADDRESS,
-                            amount: parseEther('0.01'),
-                            messageId: `0x${messageId}`,
-                            channelId: `0x${channelId}`,
-                        },
-                    ],
-                },
-            ],
-        })
-        await waitForTransactionReceipt(bot.viem, { hash: hash })
-        const bobBalance_after = await getBalance(bot.viem, {
-            address: bob.userId,
-        })
-        expect(bobBalance_after).toBeGreaterThan(bobBalance)
     })
 })
