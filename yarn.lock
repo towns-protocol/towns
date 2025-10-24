@@ -10143,7 +10143,8 @@ __metadata:
     vitest: ^3.2.3
     zod: ^3.25.76
   peerDependencies:
-    hono: ^4.7.11
+    hono: ">=4"
+    viem: 2.x
   languageName: unknown
   linkType: soft
 
@@ -10255,6 +10256,7 @@ __metadata:
     eslint-plugin-tsdoc: ^0.3.0
     hono: ^4.7.11
     typescript: ~5.8.3
+    viem: ^2.29.3
   languageName: unknown
   linkType: soft
 

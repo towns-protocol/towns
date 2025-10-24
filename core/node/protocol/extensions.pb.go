@@ -18,6 +18,8 @@ type IsMetadataPayload_Content = isMetadataPayload_Content
 type IsSnapshot_Content = isSnapshot_Content
 type IsBlockchainTransaction_Content = isBlockchainTransaction_Content
 type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
+type IsInteractionRequest_Content = isInteractionRequest_Content
+type IsInteractionResponse_Content = isInteractionResponse_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()

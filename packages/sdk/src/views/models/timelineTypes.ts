@@ -20,6 +20,8 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
 import { isDefined, logNever } from '../../check'
@@ -81,6 +83,8 @@ export type TimelineEvent_OneOf =
     | EncryptedChannelPropertiesEvent
     | FulfillmentEvent
     | InceptionEvent
+    | InteractionRequestEvent
+    | InteractionResponseEvent
     | KeySolicitationEvent
     | MiniblockHeaderEvent
     | MemberBlockchainTransactionEvent
@@ -121,6 +125,8 @@ export enum RiverTimelineEvent {
     EncryptedChannelProperties = 'm.channel.encrypted_properties',
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
+    InteractionRequest = 'm.interaction_request',
+    InteractionResponse = 'm.interaction_response',
     KeySolicitation = 'm.key_solicitation',
     MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     MiniblockHeader = 'm.miniblockheader',
@@ -172,6 +178,16 @@ export interface InceptionEvent {
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
     appAddress?: string
+}
+
+export interface InteractionRequestEvent {
+    kind: RiverTimelineEvent.InteractionRequest
+    request: PlainMessage<InteractionRequest>
+}
+
+export interface InteractionResponseEvent {
+    kind: RiverTimelineEvent.InteractionResponse
+    response: PlainMessage<InteractionResponse>
 }
 
 export interface ChannelCreateEvent {

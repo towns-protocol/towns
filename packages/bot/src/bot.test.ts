@@ -17,16 +17,24 @@ import {
     Bot as SyncAgentTest,
     AppRegistryService,
     MessageType,
+    make_ChannelPayload_InteractionRequest,
     ClientV2,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { Bot, BotPayload } from './bot'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
+import { bin_fromHexString, bin_toBase64, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
-import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
+import {
+    ForwardSettingValue,
+    InteractionRequest,
+    InteractionRequest_SignatureRequest_SignatureType,
+    InteractionResponse,
+    type PlainMessage,
+    type SlashCommand,
+} from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -45,6 +53,8 @@ import { parseEther } from 'viem'
 import tippingAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
 import erc721QueryableAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi'
 import { execute } from 'viem/experimental/erc7821'
+
+const log = dlog('test:bot')
 
 const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 
@@ -194,7 +204,9 @@ describe('Bot', { sequential: true }, () => {
             cryptoStore,
             new MockEntitlementsDelegate(),
         )
-        await expect(botClient.initializeUser({ appAddress })).resolves.toBeDefined()
+        await expect(
+            botClient.initializeUser({ appAddress, skipSync: true }),
+        ).resolves.toBeDefined()
 
         await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
         await bobClient.riverConnection.call((client) =>
@@ -212,6 +224,7 @@ describe('Bot', { sequential: true }, () => {
             appAddress,
         )
         expect(appPrivateData).toBeDefined()
+        await botClient.stop()
     }
 
     const shouldRegisterBotInAppRegistry = async () => {
@@ -616,7 +629,8 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it('bot can fetch new keys', async () => {
+    it('bot can fetch existing decryption keys when sending a message', async () => {
+        // on a fresh boot the bot won't have any keys in cache, so it should fetch them from the app server if they exist
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId1 } = await bot.sendMessage(channelId, 'Hello message 1')
         await waitFor(() =>
@@ -639,6 +653,35 @@ describe('Bot', { sequential: true }, () => {
         const event1 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId1)
         const event2 = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId2)
         expect(event1?.sessionId).toEqual(event2?.sessionId)
+    })
+
+    it('bot shares new decrytion keys with users created while sending a message', async () => {
+        // the bot should almost never have to create a new key - usually they will get a message in the channel first and can use that key to encrypt
+        // but in the case where they've never received one and want to send a message, they will create a new key and share it with the users in the channel
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        // have bob create a new channel, but don't send messages
+        const newChannelId = await bobClient.spaces
+            .getSpace(spaceId)
+            .createChannel('test-channel', bob.signer)
+
+        const newChannel = bobClient.spaces.getSpace(spaceId).getChannel(newChannelId)
+        // add the bot to the channel
+        await bobClient.riverConnection.call((client) => client.joinUser(newChannelId, bot.botId))
+
+        // bot sends message to the channel
+        const { eventId: messageId } = await bot.sendMessage(newChannelId, 'Hello')
+
+        log('bot sends message to new channel', messageId)
+        // bob should see the DECRYPTED message
+        await waitFor(
+            () => {
+                expect(
+                    newChannel.timeline.events.value.find((x) => x.eventId === messageId)?.content
+                        ?.kind,
+                ).toBe(RiverTimelineEvent.ChannelMessage)
+            },
+            { timeoutMS: 20000 },
+        )
     })
 
     it('bot can ban and unban users', async () => {
@@ -769,11 +812,6 @@ describe('Bot', { sequential: true }, () => {
         await bobDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
         expect(receivedEventRevokeEvents.find((x) => x.refEventId === messageId)).toBeDefined()
-    })
-
-    it('should be able to get channel inception event', async () => {
-        const inception = await bot.snapshot.getChannelInception(channelId)
-        expect(inception?.spaceId).toBeDefined()
     })
 
     it.fails(

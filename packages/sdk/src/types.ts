@@ -42,6 +42,8 @@ import {
     PayloadCaseType,
     ContentCaseType,
     MemberPayload_EncryptionAlgorithm,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { bin_toHexString } from '@towns-protocol/utils'
@@ -526,6 +528,26 @@ export const make_ChannelPayload_Inception = (
                 value,
             },
         },
+    }
+}
+
+export const make_ChannelPayload_InteractionRequest = (
+    value: PlainMessage<InteractionRequest>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: { case: 'interactionRequest', value },
+        },
+    }
+}
+
+export const make_ChannelPayload_InteractionResponse = (
+    value: PlainMessage<InteractionResponse>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: { content: { case: 'interactionResponse', value } },
     }
 }
 

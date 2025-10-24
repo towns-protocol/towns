@@ -10,6 +10,7 @@ import {
     DecryptionAlgorithm,
     DecryptionError,
     EncryptionAlgorithm,
+    EnsureOutboundSessionOpts,
     IGroupEncryptionClient,
 } from './base'
 import { GroupDecryption } from './groupDecryption'
@@ -148,7 +149,7 @@ export class GroupEncryptionCrypto {
     public async ensureOutboundSession(
         streamId: string,
         algorithm: GroupEncryptionAlgorithmId,
-        opts?: { awaitInitialShareSession: boolean },
+        opts?: EnsureOutboundSessionOpts,
     ): Promise<void> {
         return this.groupEncryption[algorithm].ensureOutboundSession(streamId, opts)
     }

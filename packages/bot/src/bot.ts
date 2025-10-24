@@ -28,6 +28,7 @@ import {
     makeUniqueMediaStreamId,
     streamIdAsBytes,
     addressFromUserId,
+    make_ChannelPayload_InteractionRequest,
     userIdToAddress,
     unpackEnvelope,
 } from '@towns-protocol/sdk'
@@ -50,14 +51,15 @@ import {
     Tags,
     MessageInteractionType,
     type SlashCommand,
-    type SnapshotCaseType,
-    type Snapshot,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
     ChunkedMediaSchema,
     CreationCookieSchema,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import {
+    bin_equal,
     bin_fromBase64,
     bin_fromHexString,
     bin_toHexString,
@@ -70,7 +72,6 @@ import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import {
     http,
     type Chain,
-    type Prettify,
     type Transport,
     type Hex,
     type Address,
@@ -81,7 +82,6 @@ import {
 import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
-import { SnapshotGetter } from './snapshot-getter'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
@@ -204,13 +204,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
             /** The message ID of the parent of the tip */
             messageId: string
             /** The address of the sender of the tip */
-            senderAddress: string
+            senderAddress: Address
             /** The address of the receiver of the tip */
-            receiverAddress: string
+            receiverAddress: Address
             /** The amount of the tip */
             amount: bigint
             /** The currency of the tip */
-            currency: `0x${string}`
+            currency: Address
         },
     ) => Promise<void> | void
     channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
@@ -252,6 +252,13 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
     ) => void | Promise<void>
+    interactionResponse: (
+        handler: BotActions,
+        event: BasePayload & {
+            /** The interaction response that was received */
+            response: PlainMessage<InteractionResponse>
+        },
+    ) => void | Promise<void>
 }
 
 export type BasePayload = {
@@ -275,7 +282,6 @@ export class Bot<
     readonly appAddress: Address
     botId: string
     viem: WalletClient<Transport, Chain, Account>
-    snapshot: Prettify<ReturnType<typeof SnapshotGetter>>
     private readonly jwtSecret: Uint8Array
     private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
@@ -307,7 +313,6 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.appAddress = appAddress
-        this.snapshot = clientV2.snapshot
     }
 
     start() {
@@ -479,6 +484,25 @@ export class Bot<
                             // TODO: is there any use case for this?
                         } else if (parsed.event.payload.value.content.case === 'custom') {
                             // TODO: what to do with custom payload for bot?
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionRequest'
+                        ) {
+                            // ignored for bots
+                        } else if (
+                            parsed.event.payload.value.content.case === 'interactionResponse'
+                        ) {
+                            const payload = parsed.event.payload.value.content.value
+                            if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
+                                continue
+                            }
+                            this.emitter.emit('interactionResponse', this.client, {
+                                userId: userIdFromAddress(parsed.event.creatorAddress),
+                                spaceId: spaceIdFromChannelId(streamId),
+                                channelId: streamId,
+                                eventId: parsed.hashStr,
+                                createdAt,
+                                response: payload,
+                            })
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
@@ -892,6 +916,28 @@ export class Bot<
         return result
     }
 
+    /**
+     * Send an interaction request to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param request - The interaction request to send
+     * @param opts - The options for the interaction request
+     * @returns The eventId of the interaction request
+     */
+    async sendInteractionRequest(
+        streamId: string,
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+    ) {
+        const result = await this.client.sendInteractionRequest(
+            streamId,
+            request,
+            opts,
+            this.currentMessageTags,
+        )
+        this.currentMessageTags = undefined
+        return result
+    }
+
     async hasAdminPermission(userId: string, spaceId: string) {
         return this.client.hasAdminPermission(userId, spaceId)
     }
@@ -1002,6 +1048,14 @@ export class Bot<
     onRawGmMessage(handler: BotEvents['rawGmMessage']) {
         this.emitter.on('rawGmMessage', handler)
     }
+
+    /**
+     * Triggered when someone sends an interaction response
+     * @param fn - The handler function to call when an interaction response is received
+     */
+    onInteractionResponse(fn: BotEvents['interactionResponse']) {
+        this.emitter.on('interactionResponse', fn)
+    }
 }
 
 export const makeTownsBot = async <
@@ -1069,6 +1123,30 @@ export const makeTownsBot = async <
     }).then((x) =>
         x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
     )
+
+    if (opts.commands) {
+        void client
+            .appServiceClient()
+            .then((appRegistryRpcClient) => {
+                void appRegistryRpcClient
+                    .updateAppMetadata({
+                        appId: bin_fromHexString(account.address),
+                        updateMask: ['slash_commands'],
+                        metadata: {
+                            slashCommands: opts.commands,
+                        },
+                    })
+                    .catch((err) => {
+                        // eslint-disable-next-line no-console
+                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
+                    })
+            })
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
+            })
+    }
+
     await client.uploadDeviceKeys()
     return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
 }
@@ -1242,28 +1320,14 @@ const buildBotActions = (
         }
     }
 
-    const sendMessageEvent = async ({
-        streamId,
-        payload,
-        tags,
-        ephemeral,
-    }: {
-        streamId: string
-        payload: ChannelMessage
-        tags?: PlainMessage<Tags>
-        ephemeral?: boolean
-    }) => {
-        const miniblockInfo = await client.getMiniblockInfo(streamId)
-        const eventTags = {
-            ...unsafe_makeTags(payload),
-            participatingUserAddresses: tags?.participatingUserAddresses || [],
-            threadId: tags?.threadId || undefined,
-        }
-        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
-            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
-            : client.defaultGroupEncryptionAlgorithm
-
+    const ensureOutboundSession = async (
+        streamId: string,
+        encryptionAlgorithm: GroupEncryptionAlgorithmId,
+        toUserIds: string[],
+        miniblockInfo: { miniblockNum: bigint; miniblockHash: Uint8Array },
+    ) => {
         if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
+            // ATTEMPT 1: Get session from app service
             const appService = await client.appServiceClient()
             try {
                 const sessionResp = await appService.getSession({
@@ -1288,11 +1352,53 @@ const buildBotActions = (
                         streamId,
                         sessions: parsedEvent.event.payload.value.content.value,
                     })
+                    // EARLY RETURN
+                    return
                 }
             } catch {
                 // ignore error (should log)
             }
+            // ATTEMPT 2: Create new session
+            await client.crypto.ensureOutboundSession(streamId, encryptionAlgorithm, {
+                shareShareSessionTimeoutMs: 5000,
+                priorityUserIds: [client.userId, ...toUserIds],
+                miniblockInfo,
+            })
         }
+    }
+
+    const sendMessageEvent = async ({
+        streamId,
+        payload,
+        tags,
+        ephemeral,
+    }: {
+        streamId: string
+        payload: ChannelMessage
+        tags?: PlainMessage<Tags>
+        ephemeral?: boolean
+    }) => {
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
+        const eventTags = {
+            ...unsafe_makeTags(payload),
+            participatingUserAddresses: tags?.participatingUserAddresses || [],
+            threadId: tags?.threadId || undefined,
+        }
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            Array.from(
+                new Set([
+                    ...eventTags.participatingUserAddresses.map((x) => userIdFromAddress(x)),
+                    ...eventTags.mentionedUserAddresses.map((x) => userIdFromAddress(x)),
+                ]),
+            ),
+            miniblockInfo,
+        )
 
         const message = await client.crypto.encryptGroupEvent(
             streamId,
@@ -1586,30 +1692,28 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash }
     }
 
-    const getChannelSettings = async (channelId: string) =>
-        getFromSnapshot(channelId, 'channelContent', (value) => value.inception?.channelSettings)
+    const getChannelSettings = async (channelId: string) => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        const streamView = await client.getStream(spaceId)
+        const channel = streamView.spaceContent.spaceChannelsMetadata[channelId]
+        return channel
+    }
 
-    type SnapshotValueForCase<TCase extends SnapshotCaseType> = Extract<
-        Snapshot['content'],
-        { case: TCase }
-    >['value']
-
-    const getFromSnapshot = async <TCase extends SnapshotCaseType, TResult>(
+    const sendInteractionRequest = async (
         streamId: string,
-        snapshotCase: TCase,
-        getValue: (value: SnapshotValueForCase<TCase>) => TResult,
-    ): Promise<TResult | undefined> => {
-        const stream = await client.getStream(streamId)
-        if (stream.snapshot.content.case === snapshotCase) {
-            return getValue(stream.snapshot.content.value as SnapshotValueForCase<TCase>)
-        }
-        return undefined
+        request: PlainMessage<InteractionRequest>,
+        opts?: MessageOpts,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        const payload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
     }
 
     return {
         sendMessage,
         editMessage,
         sendReaction,
+        sendInteractionRequest,
         sendGM,
         sendRawGM,
         removeEvent,
@@ -1621,8 +1725,6 @@ const buildBotActions = (
         ban,
         unban,
         getChannelSettings,
-        getFromSnapshot,
-        snapshot: SnapshotGetter(client.getStream),
     }
 }
 
