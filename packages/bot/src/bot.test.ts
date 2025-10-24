@@ -39,9 +39,9 @@ import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
-import { getBalance, readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
+import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
-import { parseEther, zeroAddress } from 'viem'
+import { parseEther } from 'viem'
 import tippingAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
 import erc721QueryableAbi from '@towns-protocol/generated/dev/abis/IERC721AQueryable.abi'
 import { execute } from 'viem/experimental/erc7821'
@@ -1243,17 +1243,20 @@ describe('Bot', { sequential: true }, () => {
         expect(botOwner).toBe(bob.userId)
     })
 
-    it('bot should be able to call send currency to another user)', async () => {
+    it('bot should be able to send funds to another user)', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const aliceBalance_before = await getBalance(bot.viem, {
             address: alice.userId,
         })
 
-        const hash = await writeContract(bot.viem, {
+        const hash = await execute(bot.viem, {
             address: bot.appAddress,
-            abi: simpleAppAbi,
-            functionName: 'sendCurrency',
-            args: [alice.userId, zeroAddress, parseEther('0.01')],
+            calls: [
+                {
+                    to: alice.userId,
+                    value: parseEther('0.01'),
+                },
+            ],
         })
         await waitForTransactionReceipt(bot.viem, { hash: hash })
         const aliceBalance_after = await getBalance(bot.viem, {

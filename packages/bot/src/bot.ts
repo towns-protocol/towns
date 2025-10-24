@@ -74,8 +74,6 @@ import {
     type Transport,
     type Hex,
     type Address,
-    createClient,
-    type Client,
     type Account,
     type WalletClient,
     createWalletClient,
