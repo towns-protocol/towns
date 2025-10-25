@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 /// @notice Fee calculation methods
 enum FeeCalculationMethod {
@@ -9,13 +9,12 @@ enum FeeCalculationMethod {
 }
 
 /// @notice Fee configuration for a specific fee type
-/// @dev Packed into 2 storage slots for gas efficiency
-/// @param recipient Address to receive the fee (slot 0)
-/// @param lastUpdated Timestamp of last configuration update (slot 0)
-/// @param bps Basis points (1-10000) for percentage calculations (slot 1)
-/// @param method Fee calculation method (slot 1)
-/// @param enabled Whether the fee is active (slot 1)
-/// @param fixedFee Fixed amount in wei for FIXED or HYBRID methods (slot 1)
+/// @param recipient Address to receive the fee
+/// @param lastUpdated Timestamp of last configuration update
+/// @param bps Basis points (1-10000) for percentage calculations
+/// @param method Fee calculation method
+/// @param enabled Whether the fee is active
+/// @param fixedFee Fixed amount in wei for FIXED or HYBRID methods
 struct FeeConfig {
     address recipient; // 20 bytes
     uint48 lastUpdated; // 6 bytes
@@ -37,15 +36,14 @@ library FeeManagerStorage {
         mapping(bytes32 => FeeConfig) feeConfigs;
         /// @notice Fee hooks by fee type for dynamic fee adjustments
         mapping(bytes32 => address) feeHooks;
-        /// @notice Global fallback fee recipient
-        address globalFeeRecipient;
+        /// @notice Protocol fee recipient
+        address protocolFeeRecipient;
     }
 
     /// @notice Returns the diamond storage layout
-    function layout() internal pure returns (Layout storage ds) {
-        bytes32 slot = STORAGE_SLOT;
+    function getLayout() internal pure returns (Layout storage $) {
         assembly {
-            ds.slot := slot
+            $.slot := STORAGE_SLOT
         }
     }
 }

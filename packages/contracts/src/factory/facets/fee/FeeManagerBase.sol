@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
-import {FeeCalculationMethod, FeeConfig, FeeManagerStorage} from "./FeeManagerStorage.sol";
+// interfaces
 import {IFeeHook, FeeHookResult} from "./IFeeHook.sol";
 import {IFeeManagerBase} from "./IFeeManager.sol";
+
+// libraries
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
-import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
+import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {FeeCalculationMethod, FeeConfig, FeeManagerStorage} from "./FeeManagerStorage.sol";
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 /// @title FeeManagerBase
 /// @notice Base contract with internal fee management logic
 abstract contract FeeManagerBase is IFeeManagerBase {
+    using CustomRevert for bytes4;
     using FeeManagerStorage for FeeManagerStorage.Layout;
-
-    uint16 internal constant MAX_BPS = 10_000;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    INTERNAL CALCULATIONS                   */
@@ -23,16 +27,16 @@ abstract contract FeeManagerBase is IFeeManagerBase {
     /// @param amount Base amount for percentage calculations
     /// @return baseFee The calculated base fee
     function _calculateBaseFee(
-        FeeConfig memory config,
+        FeeConfig storage config,
         uint256 amount
-    ) internal pure returns (uint256 baseFee) {
+    ) internal view returns (uint256 baseFee) {
         if (config.method == FeeCalculationMethod.FIXED) {
             return config.fixedFee;
         } else if (config.method == FeeCalculationMethod.PERCENT) {
             return BasisPoints.calculate(amount, config.bps);
         } else if (config.method == FeeCalculationMethod.HYBRID) {
             uint256 percentFee = BasisPoints.calculate(amount, config.bps);
-            return percentFee > config.fixedFee ? percentFee : config.fixedFee;
+            return FixedPointMathLib.max(percentFee, config.fixedFee);
         }
         return 0;
     }
@@ -42,21 +46,19 @@ abstract contract FeeManagerBase is IFeeManagerBase {
     /// @param feeType The type of fee to calculate
     /// @param user The address that would be charged
     /// @param amount The base amount for percentage calculations
-    /// @param context Additional context passed to hooks
+    /// @param extraData Additional data passed to hooks
     /// @return finalFee The calculated fee amount
     function _calculateFee(
         bytes32 feeType,
         address user,
         uint256 amount,
-        bytes calldata context
+        bytes calldata extraData
     ) internal view returns (uint256 finalFee) {
-        FeeManagerStorage.Layout storage $ = FeeManagerStorage.layout();
-        FeeConfig memory config = $.feeConfigs[feeType];
+        FeeManagerStorage.Layout storage $ = FeeManagerStorage.getLayout();
+        FeeConfig storage config = $.feeConfigs[feeType];
 
         // Check if fee is configured and enabled
-        if (!config.enabled) {
-            return 0;
-        }
+        if (!config.enabled) return 0;
 
         // Calculate base fee
         uint256 baseFee = _calculateBaseFee(config, amount);
@@ -64,12 +66,10 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         // Apply hook if configured
         address hook = $.feeHooks[feeType];
         if (hook != address(0)) {
-            try IFeeHook(hook).calculateFee(feeType, user, baseFee, context) returns (
+            try IFeeHook(hook).calculateFee(feeType, user, baseFee, extraData) returns (
                 FeeHookResult memory result
             ) {
-                if (!result.shouldCharge) {
-                    return 0;
-                }
+                if (!result.shouldCharge) return 0;
                 return result.finalFee;
             } catch {
                 // If hook fails, fall back to base fee
@@ -96,13 +96,11 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         address currency,
         bytes calldata context
     ) internal virtual returns (uint256 finalFee) {
-        FeeManagerStorage.Layout storage $ = FeeManagerStorage.layout();
-        FeeConfig memory config = $.feeConfigs[feeType];
+        FeeManagerStorage.Layout storage $ = FeeManagerStorage.getLayout();
+        FeeConfig storage config = $.feeConfigs[feeType];
 
         // Check if fee is configured and enabled
-        if (!config.enabled) {
-            return 0;
-        }
+        if (!config.enabled) return 0;
 
         // Calculate base fee
         uint256 baseFee = _calculateBaseFee(config, amount);
@@ -129,17 +127,22 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         if (shouldCharge && finalFee > 0) {
             address recipient = config.recipient != address(0)
                 ? config.recipient
-                : $.globalFeeRecipient;
+                : $.protocolFeeRecipient;
 
-            if (recipient == address(0)) revert FeeManager__InvalidRecipient();
+            if (recipient == address(0)) FeeManager__InvalidRecipient.selector.revertWith();
 
             // Transfer currency
             if (currency == address(0)) {
                 // Native token transfer
-                SafeTransferLib.safeTransferETH(recipient, finalFee);
+                CurrencyTransfer.transferCurrency(
+                    CurrencyTransfer.NATIVE_TOKEN,
+                    msg.sender,
+                    recipient,
+                    finalFee
+                );
             } else {
                 // ERC20 transfer from msg.sender to recipient
-                SafeTransferLib.safeTransferFrom(currency, msg.sender, recipient, finalFee);
+                CurrencyTransfer.transferCurrency(currency, msg.sender, recipient, finalFee);
             }
 
             emit FeeCharged(feeType, user, finalFee, recipient, currency);
@@ -169,9 +172,11 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         uint160 fixedFee,
         bool enabled
     ) internal {
-        if (bps > MAX_BPS) revert FeeManager__InvalidBps();
+        if (recipient == address(0)) FeeManager__InvalidRecipient.selector.revertWith();
+        if (method > FeeCalculationMethod.HYBRID) FeeManager__InvalidMethod.selector.revertWith();
+        if (bps > BasisPoints.MAX_BPS) FeeManager__InvalidBps.selector.revertWith();
 
-        FeeManagerStorage.Layout storage $ = FeeManagerStorage.layout();
+        FeeManagerStorage.Layout storage $ = FeeManagerStorage.getLayout();
 
         $.feeConfigs[feeType] = FeeConfig({
             recipient: recipient,
@@ -189,18 +194,18 @@ abstract contract FeeManagerBase is IFeeManagerBase {
     /// @param feeType The fee type identifier
     /// @param hook Address of the hook contract (zero to remove)
     function _setFeeHook(bytes32 feeType, address hook) internal {
-        FeeManagerStorage.Layout storage $ = FeeManagerStorage.layout();
+        FeeManagerStorage.Layout storage $ = FeeManagerStorage.getLayout();
         $.feeHooks[feeType] = hook;
         emit FeeHookSet(feeType, hook);
     }
 
-    /// @notice Sets global fee recipient
-    /// @param recipient New global fee recipient
-    function _setGlobalFeeRecipient(address recipient) internal {
-        if (recipient == address(0)) revert FeeManager__InvalidRecipient();
-        FeeManagerStorage.Layout storage $ = FeeManagerStorage.layout();
-        $.globalFeeRecipient = recipient;
-        emit GlobalFeeRecipientSet(recipient);
+    /// @notice Sets protocol fee recipient
+    /// @param recipient New protocol fee recipient
+    function _setProtocolFeeRecipient(address recipient) internal {
+        if (recipient == address(0)) FeeManager__InvalidRecipient.selector.revertWith();
+        FeeManagerStorage.Layout storage $ = FeeManagerStorage.getLayout();
+        $.protocolFeeRecipient = recipient;
+        emit ProtocolFeeRecipientSet(recipient);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -211,19 +216,19 @@ abstract contract FeeManagerBase is IFeeManagerBase {
     /// @param feeType The fee type identifier
     /// @return config The fee configuration
     function _getFeeConfig(bytes32 feeType) internal view returns (FeeConfig memory config) {
-        return FeeManagerStorage.layout().feeConfigs[feeType];
+        return FeeManagerStorage.getLayout().feeConfigs[feeType];
     }
 
     /// @notice Returns fee hook address
     /// @param feeType The fee type identifier
     /// @return hook The hook contract address
     function _getFeeHook(bytes32 feeType) internal view returns (address hook) {
-        return FeeManagerStorage.layout().feeHooks[feeType];
+        return FeeManagerStorage.getLayout().feeHooks[feeType];
     }
 
-    /// @notice Returns global fee recipient
-    /// @return recipient The global fee recipient address
-    function _getGlobalFeeRecipient() internal view returns (address recipient) {
-        return FeeManagerStorage.layout().globalFeeRecipient;
+    /// @notice Returns protocol fee recipient
+    /// @return recipient The protocol fee recipient address
+    function _getProtocolFeeRecipient() internal view returns (address recipient) {
+        return FeeManagerStorage.getLayout().protocolFeeRecipient;
     }
 }

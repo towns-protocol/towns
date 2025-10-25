@@ -6,7 +6,7 @@ import {FeeManagerBaseTest} from "./FeeManagerBase.t.sol";
 
 // libraries
 import {FeeCalculationMethod, FeeConfig} from "src/factory/facets/fee/FeeManagerStorage.sol";
-import {FeeTypes} from "src/factory/facets/fee/FeeTypes.sol";
+import {FeeTypesLib} from "src/factory/facets/fee/libraries/FeeTypesLib.sol";
 
 /// @title FeeManagerTest
 /// @notice Unit tests for FeeManager facet
@@ -16,9 +16,9 @@ contract FeeManagerTest is FeeManagerBaseTest {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function test_setFeeConfig() external {
-        bytes32 feeType = FeeTypes.TIP_MEMBER;
+        bytes32 feeType = FeeTypesLib.TIP_MEMBER;
 
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(address(feeManager));
         emit FeeConfigured(feeType, feeRecipient, FeeCalculationMethod.PERCENT, 50, 0, true);
 
         _configureFee(feeType, feeRecipient, FeeCalculationMethod.PERCENT, 50, 0, true);
@@ -32,7 +32,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
     }
 
     function test_setFeeConfig_fixedMethod() external {
-        bytes32 feeType = FeeTypes.MEMBERSHIP;
+        bytes32 feeType = FeeTypesLib.MEMBERSHIP;
         uint160 fixedFee = 0.001 ether;
 
         _configureFee(feeType, feeRecipient, FeeCalculationMethod.FIXED, 0, fixedFee, true);
@@ -43,7 +43,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
     }
 
     function test_setFeeConfig_hybridMethod() external {
-        bytes32 feeType = FeeTypes.APP_INSTALL;
+        bytes32 feeType = FeeTypesLib.APP_INSTALL;
 
         _configureFee(
             feeType,
@@ -64,7 +64,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
         vm.expectRevert();
         vm.prank(testUser);
         feeManager.setFeeConfig(
-            FeeTypes.TIP_MEMBER,
+            FeeTypesLib.TIP_MEMBER,
             feeRecipient,
             FeeCalculationMethod.PERCENT,
             50,
@@ -77,7 +77,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
         vm.expectRevert(abi.encodeWithSelector(FeeManager__InvalidBps.selector));
         vm.prank(deployer);
         feeManager.setFeeConfig(
-            FeeTypes.TIP_MEMBER,
+            FeeTypesLib.TIP_MEMBER,
             feeRecipient,
             FeeCalculationMethod.PERCENT,
             10_001, // > MAX_BPS
@@ -92,18 +92,18 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_calculateFee_fixedMethod()
         external
-        givenFixedFeeConfigured(FeeTypes.MEMBERSHIP, 0.001 ether)
+        givenFixedFeeConfigured(FeeTypesLib.MEMBERSHIP, 0.001 ether)
     {
-        uint256 fee = feeManager.calculateFee(FeeTypes.MEMBERSHIP, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.MEMBERSHIP, testUser, 1 ether, "");
         assertEq(fee, 0.001 ether);
     }
 
     function test_calculateFee_fixedMethod_independentOfAmount()
         external
-        givenFixedFeeConfigured(FeeTypes.MEMBERSHIP, 0.001 ether)
+        givenFixedFeeConfigured(FeeTypesLib.MEMBERSHIP, 0.001 ether)
     {
-        uint256 fee1 = feeManager.calculateFee(FeeTypes.MEMBERSHIP, testUser, 1 ether, "");
-        uint256 fee2 = feeManager.calculateFee(FeeTypes.MEMBERSHIP, testUser, 10 ether, "");
+        uint256 fee1 = feeManager.calculateFee(FeeTypesLib.MEMBERSHIP, testUser, 1 ether, "");
+        uint256 fee2 = feeManager.calculateFee(FeeTypesLib.MEMBERSHIP, testUser, 10 ether, "");
 
         assertEq(fee1, 0.001 ether);
         assertEq(fee2, 0.001 ether);
@@ -113,17 +113,17 @@ contract FeeManagerTest is FeeManagerBaseTest {
     /*                 FEE CALCULATION - PERCENT                  */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_calculateFee_percentMethod() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
+    function test_calculateFee_percentMethod() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
         assertEq(fee, 0.005 ether); // 0.5% of 1 ether
     }
 
     function test_calculateFee_percentMethod_scales()
         external
-        givenFeeConfigured(FeeTypes.TIP_MEMBER)
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
     {
-        uint256 fee1 = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
-        uint256 fee2 = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 2 ether, "");
+        uint256 fee1 = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
+        uint256 fee2 = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 2 ether, "");
 
         assertEq(fee1, 0.005 ether);
         assertEq(fee2, 0.01 ether); // Double the amount = double the fee
@@ -135,7 +135,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_calculateFee_hybridMethod_usesFixed() external {
         _configureFee(
-            FeeTypes.APP_INSTALL,
+            FeeTypesLib.APP_INSTALL,
             feeRecipient,
             FeeCalculationMethod.HYBRID,
             500, // 5%
@@ -143,13 +143,13 @@ contract FeeManagerTest is FeeManagerBaseTest {
             true
         );
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.APP_INSTALL, testUser, 0.001 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.APP_INSTALL, testUser, 0.001 ether, "");
         assertEq(fee, 0.0005 ether); // Fixed fee is larger than 5% of 0.001 ether
     }
 
     function test_calculateFee_hybridMethod_usesPercent() external {
         _configureFee(
-            FeeTypes.APP_INSTALL,
+            FeeTypesLib.APP_INSTALL,
             feeRecipient,
             FeeCalculationMethod.HYBRID,
             500, // 5%
@@ -157,7 +157,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
             true
         );
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.APP_INSTALL, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.APP_INSTALL, testUser, 1 ether, "");
         assertEq(fee, 0.05 ether); // 5% of 1 ether is larger than fixed fee
     }
 
@@ -167,7 +167,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_calculateFee_disabled() external {
         _configureFee(
-            FeeTypes.TIP_MEMBER,
+            FeeTypesLib.TIP_MEMBER,
             feeRecipient,
             FeeCalculationMethod.PERCENT,
             50,
@@ -175,17 +175,17 @@ contract FeeManagerTest is FeeManagerBaseTest {
             false
         );
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
         assertEq(fee, 0);
     }
 
-    function test_calculateFee_notConfigured() external {
-        uint256 fee = feeManager.calculateFee(FeeTypes.BOT_ACTION, testUser, 1 ether, "");
+    function test_calculateFee_notConfigured() external view {
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.BOT_ACTION, testUser, 1 ether, "");
         assertEq(fee, 0);
     }
 
-    function test_calculateFee_zeroAmount() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 0, "");
+    function test_calculateFee_zeroAmount() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 0, "");
         assertEq(fee, 0);
     }
 
@@ -195,52 +195,56 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_calculateFee_withExemptionHook()
         external
-        givenFeeConfigured(FeeTypes.TIP_MEMBER)
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
     {
         address hook = _deployExemptionHook(testUser);
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
         assertEq(fee, 0); // testUser is exempt
     }
 
     function test_calculateFee_withExemptionHook_nonExemptUser()
         external
-        givenFeeConfigured(FeeTypes.TIP_MEMBER)
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
     {
         address hook = _deployExemptionHook(address(0x999));
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
         assertEq(fee, 0.005 ether); // testUser not exempt, pays full fee
     }
 
-    function test_calculateFee_withDiscountHook() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
+    function test_calculateFee_withDiscountHook()
+        external
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
+    {
         address hook = _deployDiscountHook(50); // 50% discount
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        uint256 fee = feeManager.calculateFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, "");
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
         assertEq(fee, 0.0025 ether); // 50% of 0.005 ether
     }
 
     function test_setFeeHook() external {
         address hook = _deployExemptionHook(testUser);
 
-        vm.expectEmit(true, false, false, true);
-        emit FeeHookSet(FeeTypes.TIP_MEMBER, hook);
+        vm.expectEmit(address(feeManager));
+        emit FeeHookSet(FeeTypesLib.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
-
-        assertEq(feeManager.getFeeHook(FeeTypes.TIP_MEMBER), hook);
+        assertEq(feeManager.getFeeHook(FeeTypesLib.TIP_MEMBER), hook);
     }
 
     function test_setFeeHook_remove() external {
         address hook = _deployExemptionHook(testUser);
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        _configureHook(FeeTypes.TIP_MEMBER, address(0));
+        assertEq(feeManager.getFeeHook(FeeTypesLib.TIP_MEMBER), hook);
 
-        assertEq(feeManager.getFeeHook(FeeTypes.TIP_MEMBER), address(0));
+        _configureHook(FeeTypesLib.TIP_MEMBER, address(0));
+
+        assertEq(feeManager.getFeeHook(FeeTypesLib.TIP_MEMBER), address(0));
     }
 
     function test_revertWhen_setFeeHook_unauthorizedCaller() external {
@@ -248,41 +252,41 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
         vm.expectRevert();
         vm.prank(testUser);
-        feeManager.setFeeHook(FeeTypes.TIP_MEMBER, hook);
+        feeManager.setFeeHook(FeeTypesLib.TIP_MEMBER, hook);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    GLOBAL FEE RECIPIENT                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_setGlobalFeeRecipient() external {
+    function test_setProtocolFeeRecipient() external {
         address newRecipient = _randomAddress();
 
-        vm.expectEmit(false, false, false, true);
-        emit GlobalFeeRecipientSet(newRecipient);
+        vm.expectEmit(address(feeManager));
+        emit ProtocolFeeRecipientSet(newRecipient);
 
-        _setGlobalRecipient(newRecipient);
+        _setProtocolFeeRecipient(newRecipient);
 
-        assertEq(feeManager.getGlobalFeeRecipient(), newRecipient);
+        assertEq(feeManager.getProtocolFeeRecipient(), newRecipient);
     }
 
-    function test_revertWhen_setGlobalFeeRecipient_zeroAddress() external {
+    function test_revertWhen_setProtocolFeeRecipient_zeroAddress() external {
         vm.expectRevert(abi.encodeWithSelector(FeeManager__InvalidRecipient.selector));
         vm.prank(deployer);
-        feeManager.setGlobalFeeRecipient(address(0));
+        feeManager.setProtocolFeeRecipient(address(0));
     }
 
-    function test_revertWhen_setGlobalFeeRecipient_unauthorizedCaller() external {
+    function test_revertWhen_setProtocolFeeRecipient_unauthorizedCaller() external {
         vm.expectRevert();
         vm.prank(testUser);
-        feeManager.setGlobalFeeRecipient(_randomAddress());
+        feeManager.setProtocolFeeRecipient(_randomAddress());
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       CHARGE FEE                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_chargeFee_nativeToken() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
+    function test_chargeFee_nativeToken() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
         uint256 tipAmount = 1 ether;
         uint256 expectedFee = 0.005 ether;
 
@@ -290,12 +294,12 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
         uint256 recipientBalanceBefore = feeRecipient.balance;
 
-        vm.expectEmit(true, true, false, true);
-        emit FeeCharged(FeeTypes.TIP_MEMBER, testUser, expectedFee, feeRecipient, address(0));
+        vm.expectEmit(address(feeManager));
+        emit FeeCharged(FeeTypesLib.TIP_MEMBER, testUser, expectedFee, feeRecipient, address(0));
 
         vm.prank(testUser);
         uint256 fee = feeManager.chargeFee{value: expectedFee}(
-            FeeTypes.TIP_MEMBER,
+            FeeTypesLib.TIP_MEMBER,
             testUser,
             tipAmount,
             address(0),
@@ -308,7 +312,7 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_chargeFee_disabled() external {
         _configureFee(
-            FeeTypes.TIP_MEMBER,
+            FeeTypesLib.TIP_MEMBER,
             feeRecipient,
             FeeCalculationMethod.PERCENT,
             50,
@@ -317,17 +321,29 @@ contract FeeManagerTest is FeeManagerBaseTest {
         );
 
         vm.prank(testUser);
-        uint256 fee = feeManager.chargeFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, address(0), "");
+        uint256 fee = feeManager.chargeFee(
+            FeeTypesLib.TIP_MEMBER,
+            testUser,
+            1 ether,
+            address(0),
+            ""
+        );
 
         assertEq(fee, 0);
     }
 
-    function test_chargeFee_withExemption() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
+    function test_chargeFee_withExemption() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
         address hook = _deployExemptionHook(testUser);
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
         vm.prank(testUser);
-        uint256 fee = feeManager.chargeFee(FeeTypes.TIP_MEMBER, testUser, 1 ether, address(0), "");
+        uint256 fee = feeManager.chargeFee(
+            FeeTypesLib.TIP_MEMBER,
+            testUser,
+            1 ether,
+            address(0),
+            ""
+        );
 
         assertEq(fee, 0); // Exempt user pays nothing
     }
@@ -336,8 +352,8 @@ contract FeeManagerTest is FeeManagerBaseTest {
     /*                          GETTERS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_getFeeConfig() external givenFeeConfigured(FeeTypes.TIP_MEMBER) {
-        FeeConfig memory config = feeManager.getFeeConfig(FeeTypes.TIP_MEMBER);
+    function test_getFeeConfig() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+        FeeConfig memory config = feeManager.getFeeConfig(FeeTypesLib.TIP_MEMBER);
 
         assertEq(config.recipient, feeRecipient);
         assertEq(uint8(config.method), uint8(FeeCalculationMethod.PERCENT));
@@ -347,12 +363,12 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_getFeeHook() external {
         address hook = _deployExemptionHook(testUser);
-        _configureHook(FeeTypes.TIP_MEMBER, hook);
+        _configureHook(FeeTypesLib.TIP_MEMBER, hook);
 
-        assertEq(feeManager.getFeeHook(FeeTypes.TIP_MEMBER), hook);
+        assertEq(feeManager.getFeeHook(FeeTypesLib.TIP_MEMBER), hook);
     }
 
-    function test_getGlobalFeeRecipient() external {
-        assertEq(feeManager.getGlobalFeeRecipient(), deployer);
+    function test_getProtocolFeeRecipient() external view {
+        assertEq(feeManager.getProtocolFeeRecipient(), deployer);
     }
 }

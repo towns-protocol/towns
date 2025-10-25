@@ -13,16 +13,15 @@ library DeployFeeManager {
     using DynamicArrayLib for DynamicArrayLib.DynamicArray;
 
     function selectors() internal pure returns (bytes4[] memory res) {
-        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(9);
-        arr.p(IFeeManager.initFeeManager.selector);
+        DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(8);
         arr.p(IFeeManager.calculateFee.selector);
         arr.p(IFeeManager.chargeFee.selector);
         arr.p(IFeeManager.setFeeConfig.selector);
         arr.p(IFeeManager.setFeeHook.selector);
-        arr.p(IFeeManager.setGlobalFeeRecipient.selector);
+        arr.p(IFeeManager.setProtocolFeeRecipient.selector);
         arr.p(IFeeManager.getFeeConfig.selector);
         arr.p(IFeeManager.getFeeHook.selector);
-        arr.p(IFeeManager.getGlobalFeeRecipient.selector);
+        arr.p(IFeeManager.getProtocolFeeRecipient.selector);
 
         bytes32[] memory selectors_ = arr.asBytes32Array();
         assembly ("memory-safe") {
@@ -41,7 +40,11 @@ library DeployFeeManager {
         return LibDeploy.deployCode("FeeManagerFacet.sol", "");
     }
 
-    function makeInitData(address globalFeeRecipient) internal pure returns (bytes memory) {
-        return abi.encodeWithSelector(IFeeManager.initFeeManager.selector, globalFeeRecipient);
+    function makeInitData(address protocolFeeRecipient) internal pure returns (bytes memory) {
+        return
+            abi.encodeWithSelector(
+                IFeeManager.__FeeManagerFacet__init.selector,
+                protocolFeeRecipient
+            );
     }
 }

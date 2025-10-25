@@ -4,14 +4,12 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IFeeManager, IFeeManagerBase} from "src/factory/facets/fee/IFeeManager.sol";
 import {IFeeHook, FeeHookResult} from "src/factory/facets/fee/IFeeHook.sol";
+import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 
 // libraries
-import {FeeCalculationMethod, FeeConfig} from "src/factory/facets/fee/FeeManagerStorage.sol";
-import {FeeTypes} from "src/factory/facets/fee/FeeTypes.sol";
 
 // contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
-import {FeeManagerFacet} from "src/factory/facets/fee/FeeManagerFacet.sol";
 
 /// @title FeeManagerBaseTest
 /// @notice Base test contract with setup and helper functions for FeeManager tests
@@ -49,9 +47,9 @@ abstract contract FeeManagerBaseTest is BaseSetup, IFeeManagerBase {
         feeManager.setFeeHook(feeType, hook);
     }
 
-    function _setGlobalRecipient(address recipient) internal {
+    function _setProtocolFeeRecipient(address recipient) internal {
         vm.prank(deployer);
-        feeManager.setGlobalFeeRecipient(recipient);
+        feeManager.setProtocolFeeRecipient(recipient);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -115,7 +113,7 @@ contract MockExemptionHook is IFeeHook {
         address user,
         uint256 baseFee,
         bytes calldata context
-    ) external returns (FeeHookResult memory) {
+    ) external view returns (FeeHookResult memory) {
         return this.calculateFee(feeType, user, baseFee, context);
     }
 }
@@ -145,7 +143,7 @@ contract MockDiscountHook is IFeeHook {
         address user,
         uint256 baseFee,
         bytes calldata context
-    ) external returns (FeeHookResult memory) {
+    ) external view returns (FeeHookResult memory) {
         return this.calculateFee(feeType, user, baseFee, context);
     }
 }

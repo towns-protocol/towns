@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 /// @notice Result returned by fee hooks
 /// @param finalFee The final fee amount after hook processing

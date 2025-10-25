@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
-/// @title FeeTypes
+/// @title FeeTypesLib
 /// @notice Library defining fee type constants for the FeeManager system
 /// @dev Uses keccak256 for gas-efficient constant generation
-library FeeTypes {
+library FeeTypesLib {
     /// @notice Fee for space membership purchases
     bytes32 internal constant MEMBERSHIP = keccak256("FEE_TYPE.MEMBERSHIP");
 

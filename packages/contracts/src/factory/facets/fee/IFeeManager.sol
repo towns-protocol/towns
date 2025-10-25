@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 import {FeeCalculationMethod, FeeConfig} from "./FeeManagerStorage.sol";
-import {FeeHookResult} from "./IFeeHook.sol";
 
 /// @title IFeeManagerBase
 /// @notice Base interface with errors and events
@@ -25,6 +24,12 @@ interface IFeeManagerBase {
 
     /// @dev Currency transfer failed
     error FeeManager__TransferFailed();
+
+    /// @dev Invalid hook (zero address)
+    error FeeManager__InvalidHook();
+
+    /// @dev Invalid method
+    error FeeManager__InvalidMethod();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
@@ -51,9 +56,9 @@ interface IFeeManagerBase {
     /// @param hook Address of the hook contract (zero address to remove)
     event FeeHookSet(bytes32 indexed feeType, address hook);
 
-    /// @notice Emitted when the global fee recipient is updated
-    /// @param recipient New global fee recipient
-    event GlobalFeeRecipientSet(address recipient);
+    /// @notice Emitted when the protocol fee recipient is updated
+    /// @param recipient New protocol fee recipient
+    event ProtocolFeeRecipientSet(address recipient);
 
     /// @notice Emitted when a fee is charged
     /// @param feeType The fee type identifier
@@ -78,8 +83,8 @@ interface IFeeManager is IFeeManagerBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Initializes the FeeManager facet
-    /// @param globalFeeRecipient Default recipient for all fees
-    function initFeeManager(address globalFeeRecipient) external;
+    /// @param protocolFeeRecipient Protocol fee recipient for all fees
+    function __FeeManagerFacet__init(address protocolFeeRecipient) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       FEE OPERATIONS                       */
@@ -90,13 +95,13 @@ interface IFeeManager is IFeeManagerBase {
     /// @param feeType The type of fee to calculate
     /// @param user The address that would be charged
     /// @param amount The base amount for percentage calculations
-    /// @param context Additional context passed to hooks
+    /// @param extraData Additional data passed to hooks
     /// @return finalFee The calculated fee amount
     function calculateFee(
         bytes32 feeType,
         address user,
         uint256 amount,
-        bytes calldata context
+        bytes calldata extraData
     ) external view returns (uint256 finalFee);
 
     /// @notice Charges a fee and transfers it to the recipient
@@ -105,14 +110,14 @@ interface IFeeManager is IFeeManagerBase {
     /// @param user The address being charged
     /// @param amount The base amount for percentage calculations
     /// @param currency The currency contract (address(0) for native token)
-    /// @param context Additional context passed to hooks
+    /// @param extraData Additional data passed to hooks
     /// @return finalFee The actual fee charged
     function chargeFee(
         bytes32 feeType,
         address user,
         uint256 amount,
         address currency,
-        bytes calldata context
+        bytes calldata extraData
     ) external payable returns (uint256 finalFee);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -142,10 +147,10 @@ interface IFeeManager is IFeeManagerBase {
     /// @param hook Address of the hook contract
     function setFeeHook(bytes32 feeType, address hook) external;
 
-    /// @notice Sets the global fee recipient
+    /// @notice Sets the protocol fee recipient
     /// @dev Only owner can call
-    /// @param recipient New global fee recipient
-    function setGlobalFeeRecipient(address recipient) external;
+    /// @param recipient New protocol fee recipient
+    function setProtocolFeeRecipient(address recipient) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          GETTERS                           */
@@ -161,7 +166,7 @@ interface IFeeManager is IFeeManagerBase {
     /// @return hook The hook contract address (zero if not set)
     function getFeeHook(bytes32 feeType) external view returns (address hook);
 
-    /// @notice Returns the global fee recipient
-    /// @return recipient The global fee recipient address
-    function getGlobalFeeRecipient() external view returns (address recipient);
+    /// @notice Returns the protocol fee recipient
+    /// @return recipient The protocol fee recipient address
+    function getProtocolFeeRecipient() external view returns (address recipient);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 import {StakingExemptionHookStorage} from "./StakingExemptionHookStorage.sol";
 import {IRewardsDistribution} from "src/base/registry/facets/distribution/v2/IRewardsDistribution.sol";
@@ -32,7 +32,7 @@ abstract contract StakingExemptionHookBase {
     /// @param baseRegistry Address of BaseRegistry implementing IRewardsDistribution
     function _setBaseRegistry(address baseRegistry) internal {
         if (baseRegistry == address(0)) revert StakingExemptionHook__InvalidRegistry();
-        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.layout();
+        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.getLayout();
         $.baseRegistry = baseRegistry;
         emit BaseRegistrySet(baseRegistry);
     }
@@ -41,7 +41,7 @@ abstract contract StakingExemptionHookBase {
     /// @param feeType The fee type identifier
     /// @param threshold Minimum stake required for exemption (in wei)
     function _setExemptionThreshold(bytes32 feeType, uint256 threshold) internal {
-        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.layout();
+        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.getLayout();
         $.exemptionThresholds[feeType] = threshold;
         emit ExemptionThresholdSet(feeType, threshold);
     }
@@ -90,17 +90,13 @@ abstract contract StakingExemptionHookBase {
     /// @param user The address to check
     /// @return exempt True if user has sufficient stake for exemption
     function _isExempt(bytes32 feeType, address user) internal view returns (bool exempt) {
-        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.layout();
+        StakingExemptionHookStorage.Layout storage $ = StakingExemptionHookStorage.getLayout();
 
         uint256 threshold = $.exemptionThresholds[feeType];
-        if (threshold == 0) {
-            return false; // No threshold configured = no exemption
-        }
+        if (threshold == 0) return false; // No threshold configured = no exemption
 
         address baseRegistry = $.baseRegistry;
-        if (baseRegistry == address(0)) {
-            return false; // No registry configured = no exemption
-        }
+        if (baseRegistry == address(0)) return false; // No registry configured = no exemption
 
         try IRewardsDistribution(baseRegistry).stakedByDepositor(user) returns (uint96 staked) {
             return staked >= threshold;
@@ -112,13 +108,13 @@ abstract contract StakingExemptionHookBase {
     /// @notice Returns the base registry address
     /// @return baseRegistry The base registry address
     function _getBaseRegistry() internal view returns (address baseRegistry) {
-        return StakingExemptionHookStorage.layout().baseRegistry;
+        return StakingExemptionHookStorage.getLayout().baseRegistry;
     }
 
     /// @notice Returns the exemption threshold for a fee type
     /// @param feeType The fee type identifier
     /// @return threshold The exemption threshold
     function _getExemptionThreshold(bytes32 feeType) internal view returns (uint256 threshold) {
-        return StakingExemptionHookStorage.layout().exemptionThresholds[feeType];
+        return StakingExemptionHookStorage.getLayout().exemptionThresholds[feeType];
     }
 }

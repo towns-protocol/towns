@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 import {IFeeHook, FeeHookResult} from "../IFeeHook.sol";
 import {StakingExemptionHookBase} from "./StakingExemptionHookBase.sol";
@@ -60,7 +60,7 @@ contract StakingExemptionHook is IFeeHook, StakingExemptionHookBase, Ownable {
         address user,
         uint256 baseFee,
         bytes calldata context
-    ) external returns (FeeHookResult memory result) {
+    ) external view returns (FeeHookResult memory result) {
         return _onChargeFee(feeType, user, baseFee, context);
     }
 

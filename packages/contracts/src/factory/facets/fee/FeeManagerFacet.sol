@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.29;
 
 import {IFeeManager} from "./IFeeManager.sol";
 import {FeeManagerBase} from "./FeeManagerBase.sol";
@@ -9,15 +9,18 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 /// @title FeeManagerFacet
 /// @notice Facet for unified fee management across the protocol
-/// @dev Implements the Diamond pattern for upgradeability
 contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   INITIALIZATION                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @inheritdoc IFeeManager
-    function initFeeManager(address globalFeeRecipient) external onlyInitializing {
-        _setGlobalFeeRecipient(globalFeeRecipient);
+    function __FeeManagerFacet__init(address protocolRecipient) external onlyInitializing {
+        _addInterface(type(IFeeManager).interfaceId);
+        __FeeManagerFacet__init_unchained(protocolRecipient);
+    }
+
+    function __FeeManagerFacet__init_unchained(address protocolRecipient) internal {
+        _setProtocolFeeRecipient(protocolRecipient);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -29,9 +32,9 @@ contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet {
         bytes32 feeType,
         address user,
         uint256 amount,
-        bytes calldata context
+        bytes calldata extraData
     ) external view returns (uint256 finalFee) {
-        return _calculateFee(feeType, user, amount, context);
+        return _calculateFee(feeType, user, amount, extraData);
     }
 
     /// @inheritdoc IFeeManager
@@ -40,9 +43,9 @@ contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet {
         address user,
         uint256 amount,
         address currency,
-        bytes calldata context
+        bytes calldata extraData
     ) external payable returns (uint256 finalFee) {
-        return _chargeFee(feeType, user, amount, currency, context);
+        return _chargeFee(feeType, user, amount, currency, extraData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -67,8 +70,8 @@ contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet {
     }
 
     /// @inheritdoc IFeeManager
-    function setGlobalFeeRecipient(address recipient) external onlyOwner {
-        _setGlobalFeeRecipient(recipient);
+    function setProtocolFeeRecipient(address recipient) external onlyOwner {
+        _setProtocolFeeRecipient(recipient);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -86,7 +89,7 @@ contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet {
     }
 
     /// @inheritdoc IFeeManager
-    function getGlobalFeeRecipient() external view returns (address recipient) {
-        return _getGlobalFeeRecipient();
+    function getProtocolFeeRecipient() external view returns (address recipient) {
+        return _getProtocolFeeRecipient();
     }
 }
