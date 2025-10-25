@@ -137,7 +137,7 @@ func makeCacheTestContext(t *testing.T, p testParams) (context.Context, *cacheTe
 
 		bc := btc.GetBlockchain(ctx, i)
 
-		streamStore := storage.NewTestStreamStore(ctx)
+		streamStore := storage.NewTestStreamStore(ctx, nil)
 		t.Cleanup(streamStore.Close)
 
 		registry, err := registries.NewRiverRegistryContract(

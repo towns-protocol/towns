@@ -219,7 +219,7 @@ func (s *PostgresStreamStore) NormalizeEphemeralStream(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId)
+			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId, true)
 			return err
 		},
 		nil,
@@ -233,6 +233,7 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	callOnSealedOnMonitor bool,
 ) (common.Hash, error) {
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// The given stream might be already normalized. In this case, return the genesis miniblock hash.
@@ -321,9 +322,40 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	}
 
 	// Delete the ephemeral stream from the ephemeral stream monitor
-	s.esm.onSealed(streamId)
+	if callOnSealedOnMonitor {
+		s.esm.onSealed(streamId)
+	}
 
 	return common.BytesToHash(genesisMb.Header.Hash), nil
+}
+
+func (s *PostgresStreamStore) TotalMiniblockDataSizeInDB(
+	ctx context.Context,
+	streamId StreamId,
+) (totalSize int64, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	err = s.txRunner(
+		ctx,
+		"TotalMiniblockDataSizeInDB",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			if err := tx.QueryRow(
+				ctx,
+				s.sqlForStream("SELECT SUM(LENGTH(blockdata)) from {{miniblocks}} WHERE stream_id = $1", streamId),
+				streamId,
+			).Scan(&totalSize); err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
+				}
+				return err
+			}
+			return nil
+		},
+		nil,
+		"streamId", streamId,
+	)
+	return totalSize, err
 }
 
 // IsStreamEphemeral returns true if the stream is ephemeral, false otherwise.
