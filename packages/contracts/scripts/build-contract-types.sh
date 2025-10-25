@@ -29,9 +29,11 @@ done
 
 # Generate contract hash for this artifact build
 echo "Generating contract hash..."
-CONTRACTS_HASH=$(git rev-parse HEAD:./src 2>/dev/null || echo "")
+SRC_HASH=$(git rev-parse HEAD:./src 2>/dev/null || echo "")
+BUILD_SCRIPT_HASH=$(git rev-parse HEAD:./scripts/build-contract-types.sh 2>/dev/null || echo "")
 
-if [ -n "$CONTRACTS_HASH" ]; then
+if [ -n "$SRC_HASH" ] && [ -n "$BUILD_SCRIPT_HASH" ]; then
+  CONTRACTS_HASH="$SRC_HASH:$BUILD_SCRIPT_HASH"
   echo "$CONTRACTS_HASH" > "$PARENT_DIR/generated/dev/.contracts-hash"
   echo "Contract hash: $CONTRACTS_HASH"
 else

@@ -39,14 +39,22 @@ function generatedFilesExist() {
 
 // Get git hash of contracts directory
 function getContractsHash() {
-  if (!existsSync(resolve(contractsDir, 'src'))) return null;
+  if (!existsSync(contractsDir)) return null;
   
   try {
-    return execSync('git rev-parse HEAD:./src', {
+    const srcHash = execSync('git rev-parse HEAD:./src', {
       cwd: contractsDir,
       encoding: 'utf8',
       stdio: 'pipe'
     }).trim();
+    
+    const buildScriptHash = execSync('git rev-parse HEAD:./scripts/build-contract-types.sh', {
+      cwd: contractsDir,
+      encoding: 'utf8',
+      stdio: 'pipe'
+    }).trim();
+    
+    return `${srcHash}:${buildScriptHash}`;
   } catch (error) {
     return null; // Not in git repo or other error
   }
