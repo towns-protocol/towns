@@ -1,0 +1,57 @@
+---
+title: External Interactions
+---
+
+
+Towns bots are built on [Hono](https://hono.dev), a lightweight web framework. While by default `/webhook` endpoint is reserved for receiving Towns events, you can add any number of additional routes for:
+
+- **External webhooks** - GitHub, Linear, monitoring services
+- **Custom APIs** - REST endpoints for third-party integrations
+- **Scheduled tasks** - Timers that run periodically
+- **Health checks** - Status endpoints for monitoring
+
+The bot instance get from `makeTownsBot` contains all the methods you can use to interact with your bot.
+
+This allows you to perform actions that are not triggered by Towns events, such as letting other services trigger actions on your bot.
+
+```ts
+import { Hono } from 'hono'
+import { makeTownsBot } from '@towns-protocol/bot'
+
+const bot = await makeTownsBot(privateData, jwtSecret)
+await bot.start()
+
+const app = new Hono()
+
+app.post('/api/post-message', async (c) => {
+  const { channelId, message } = await c.req.json()
+  await bot.sendMessage(channelId, message)
+  return c.json({ ok: true })
+})
+```
+
+Or fetch data from external APIs and send messages to channels.
+
+```ts
+import { Hono } from 'hono'
+import { makeTownsBot } from '@towns-protocol/bot'
+
+const bot = await makeTownsBot(privateData, jwtSecret)
+await bot.start()
+
+const app = new Hono()
+
+const channels: string[] = []
+bot.onSlashCommand('/set-channel', async (handler, event) => {
+  const { channelId } = event
+  channels.push(channelId)
+  await handler.sendMessage(channelId, 'Channel set successfully')
+})
+
+setInterval(async () => {
+  const tokenPrice = await fetchTokenPriceApi('ETH')
+  for (const channelId of channels) {
+    await bot.sendMessage(channelId, "💰 ETH update: $" + tokenPrice)
+  }
+}, 60_000)
+```
