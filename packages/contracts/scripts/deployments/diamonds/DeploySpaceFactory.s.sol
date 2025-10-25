@@ -23,6 +23,7 @@ import {DeployMockLegacyArchitect} from "../facets/DeployMockLegacyArchitect.s.s
 import {DeployPartnerRegistry} from "../facets/DeployPartnerRegistry.s.sol";
 import {DeployPlatformRequirements} from "../facets/DeployPlatformRequirements.s.sol";
 import {DeployWalletLink} from "../facets/DeployWalletLink.s.sol";
+import {DeployFeeManager} from "../facets/DeployFeeManager.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
 // contracts
@@ -152,6 +153,7 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("EIP712Facet");
         facetHelper.add("PartnerRegistry");
         facetHelper.add("FeatureManagerFacet");
+        facetHelper.add("FeeManagerFacet");
         facetHelper.add("SpaceProxyInitializer");
         facetHelper.add("SpaceFactoryInit");
 
@@ -270,6 +272,13 @@ contract DeploySpaceFactory is IDiamondInitHelper, DiamondHelper, Deployer {
             makeCut(facet, FacetCutAction.Add, DeployFeatureManager.selectors()),
             facet,
             DeployFeatureManager.makeInitData()
+        );
+
+        facet = facetHelper.getDeployedAddress("FeeManagerFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployFeeManager.selectors()),
+            facet,
+            DeployFeeManager.makeInitData(deployer)
         );
 
         address spaceProxyInitializer = facetHelper.getDeployedAddress("SpaceProxyInitializer");
