@@ -40,7 +40,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
-import simpleAppAbi from '@towns-protocol/generated/dev/abis/SimpleApp.abi'
+import simpleAppAbi from '@towns-protocol/generated/dev/abis/ISimpleApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 
