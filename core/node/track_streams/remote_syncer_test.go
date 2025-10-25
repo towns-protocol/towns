@@ -1,4 +1,4 @@
-package client
+package track_streams
 
 import (
 	"context"
@@ -43,7 +43,7 @@ func TestRemoteSyncerTimeoutFirstUpdate(t *testing.T) {
 	t.Cleanup(func() { server.Close() })
 
 	client := protocolconnect.NewStreamServiceClient(http.DefaultClient, server.URL)
-	_, err := NewRemoteSyncer(
+	_, err := newRemoteSyncer(
 		ctx,
 		cancelWithCause,
 		syncID,
@@ -51,7 +51,6 @@ func TestRemoteSyncerTimeoutFirstUpdate(t *testing.T) {
 		client,
 		unsubStream,
 		messages,
-		false,
 		nil,
 	)
 

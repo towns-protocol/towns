@@ -10,7 +10,6 @@ import (
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -26,7 +25,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	riversync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	riversyncv3 "github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
@@ -58,10 +56,8 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache       *StreamCache
-	syncSvc     riversync.Handler
-	syncv3Svc   riversyncv3.Service
-	syncv3OpIDs *xsync.Map[string, struct{}]
+	cache     *StreamCache
+	syncv3Svc riversyncv3.Service
 
 	// Notifications
 	notifications notifications.UserPreferencesStore

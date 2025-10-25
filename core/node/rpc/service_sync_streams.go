@@ -11,7 +11,6 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -39,13 +38,7 @@ func (s *Service) SyncStreams(
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
-		if req.Header().Get(headers.RiverUseSharedSyncHeaderName) == "true" {
-			s.syncv3OpIDs.Store(syncId, struct{}{})
-			err = s.syncv3Svc.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
-			s.syncv3OpIDs.Delete(syncId)
-		} else {
-			err = s.syncSvc.SyncStreams(ctx, syncId, req, res)
-		}
+		err = s.syncv3Svc.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
 	})
 	if err != nil {
 		level := zap.WarnLevel
@@ -70,11 +63,7 @@ func (s *Service) AddStreamToSync(
 	var res *connect.Response[AddStreamToSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.syncv3OpIDs.Load(req.Msg.GetSyncId()); ok {
-			err = RiverError(Err_UNIMPLEMENTED, "AddStreamToSync is not supported in V3")
-		} else {
-			res, err = s.syncSvc.AddStreamToSync(ctx, req)
-		}
+		err = RiverError(Err_UNIMPLEMENTED, "AddStreamToSync is not supported in V3")
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("AddStreamToSync").
@@ -93,11 +82,7 @@ func (s *Service) ModifySync(
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.syncv3OpIDs.Load(req.Msg.GetSyncId()); ok {
-			res.Msg, err = s.syncv3Svc.ModifySync(req.Msg)
-		} else {
-			res, err = s.syncSvc.ModifySync(ctx, req)
-		}
+		res.Msg, err = s.syncv3Svc.ModifySync(req.Msg)
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("ModifySync").
@@ -116,11 +101,7 @@ func (s *Service) RemoveStreamFromSync(
 	var res *connect.Response[RemoveStreamFromSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.syncv3OpIDs.Load(req.Msg.GetSyncId()); ok {
-			err = RiverError(Err_UNIMPLEMENTED, "RemoveStreamFromSync is not supported in V3")
-		} else {
-			res, err = s.syncSvc.RemoveStreamFromSync(ctx, req)
-		}
+		err = RiverError(Err_UNIMPLEMENTED, "RemoveStreamFromSync is not supported in V3")
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("RemoveStreamFromSync").
@@ -139,11 +120,7 @@ func (s *Service) CancelSync(
 	res := connect.NewResponse(&CancelSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.syncv3OpIDs.Load(req.Msg.GetSyncId()); ok {
-			err = s.syncv3Svc.CancelSync(ctx, req.Msg.GetSyncId())
-		} else {
-			res, err = s.syncSvc.CancelSync(ctx, req)
-		}
+		err = s.syncv3Svc.CancelSync(ctx, req.Msg.GetSyncId())
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("CancelSync").
@@ -162,11 +139,7 @@ func (s *Service) PingSync(
 	res := connect.NewResponse(&PingSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.syncv3OpIDs.Load(req.Msg.GetSyncId()); ok {
-			err = s.syncv3Svc.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
-		} else {
-			res, err = s.syncSvc.PingSync(ctx, req)
-		}
+		err = s.syncv3Svc.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("PingSync").

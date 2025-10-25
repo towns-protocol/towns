@@ -1,4 +1,4 @@
-package client
+package track_streams
 
 import (
 	"context"
@@ -18,7 +18,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
-	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -39,7 +38,7 @@ type remoteSyncer struct {
 	otelTracer trace.Tracer
 }
 
-func NewRemoteSyncer(
+func newRemoteSyncer(
 	ctx context.Context,
 	cancelGlobalSyncOp context.CancelCauseFunc,
 	forwarderSyncID string,
@@ -47,7 +46,6 @@ func NewRemoteSyncer(
 	client protocolconnect.StreamServiceClient,
 	unsubStream func(streamID StreamId),
 	messages *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse],
-	useSharedSyncer bool,
 	otelTracer trace.Tracer,
 ) (*remoteSyncer, error) {
 	syncStreamCtx, syncStreamCancel := context.WithCancel(ctx)
@@ -65,12 +63,7 @@ func NewRemoteSyncer(
 		}
 	}()
 
-	req := connect.NewRequest(&SyncStreamsRequest{})
-	if useSharedSyncer {
-		req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
-	}
-
-	responseStream, err := client.SyncStreams(syncStreamCtx, req)
+	responseStream, err := client.SyncStreams(syncStreamCtx, connect.NewRequest(&SyncStreamsRequest{}))
 	if err != nil {
 		syncStreamCancel()
 
@@ -265,10 +258,6 @@ func (s *remoteSyncer) connectionAlive(latestMsgReceived *atomic.Value) {
 	}
 }
 
-func (s *remoteSyncer) Address() common.Address {
-	return s.remoteAddr
-}
-
 func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (*ModifySyncResponse, bool, error) {
 	if s.otelTracer != nil {
 		var span trace.Span
@@ -310,20 +299,4 @@ func (s *remoteSyncer) Modify(ctx context.Context, request *ModifySyncRequest) (
 		s.syncStreamCancel()
 	}
 	return resp.Msg, noMoreStreams, nil
-}
-
-func (s *remoteSyncer) DebugDropStream(ctx context.Context, streamID StreamId) (bool, error) {
-	if _, err := s.client.Info(ctx, connect.NewRequest(&InfoRequest{Debug: []string{
-		"drop_stream",
-		s.syncID,
-		streamID.String(),
-	}})); err != nil {
-		return false, AsRiverError(err)
-	}
-
-	noMoreStreams := s.streams.Size() == 0
-	if noMoreStreams {
-		s.syncStreamCancel()
-	}
-	return noMoreStreams, nil
 }

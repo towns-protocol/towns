@@ -40,7 +40,7 @@ func TestSyncStreamHandlerImpl_Run(t *testing.T) {
 		require.NoError(t, env.streamUpdates.AddMessage(closeMsg))
 
 		err := env.handler.Run()
-		require.NoError(t, err)
+		require.ErrorIs(t, context.Canceled, err)
 
 		msgs := env.receiver.Messages()
 		require.Len(t, msgs, 3)

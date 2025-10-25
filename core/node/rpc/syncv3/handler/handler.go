@@ -95,7 +95,7 @@ func (s *syncStreamHandlerImpl) Run() error {
 	for {
 		select {
 		case <-s.ctx.Done():
-			return s.ctx.Err()
+			return context.Cause(s.ctx)
 		case <-s.streamUpdates.Wait():
 			msgs = s.streamUpdates.GetBatch(msgs)
 
@@ -113,7 +113,7 @@ func (s *syncStreamHandlerImpl) Run() error {
 			// Messages must be processed in the order they were received.
 			for _, msg := range msgs {
 				if stop := s.processMessage(msg); stop {
-					return nil
+					return context.Cause(s.ctx)
 				}
 			}
 		}
