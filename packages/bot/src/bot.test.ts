@@ -40,7 +40,7 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
-import simpleAppAbi from '@towns-protocol/generated/dev/abis/ISimpleApp.abi'
+import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 
@@ -1287,7 +1287,7 @@ describe('Bot', { sequential: true }, () => {
         expect(appAddress).toBeDefined()
         const botOwner = await readContract(bot.viem, {
             address: bot.appAddress,
-            abi: simpleAppAbi,
+            abi: townsAppAbi,
             functionName: 'moduleOwner',
             args: [],
         })
