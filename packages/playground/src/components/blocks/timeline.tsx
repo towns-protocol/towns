@@ -457,7 +457,7 @@ const NewMessagesIndicator = () => {
         <button
             type="button"
             className={cn(
-                'absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center  gap-1 px-3 py-1.5',
+                'absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1 px-3 py-1.5',
                 'rounded-full border border-transparent bg-blue-600 text-xs font-medium text-white shadow-sm',
                 'hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
             )}

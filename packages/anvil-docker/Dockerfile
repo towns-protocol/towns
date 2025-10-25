@@ -27,15 +27,13 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
+# Verify Bun installation
+RUN bun --version
 
 # Install just from precompiled binary
 RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
@@ -51,12 +49,7 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 WORKDIR /app
 
 # Copy package files for dependency installation (layer caching)
-COPY ./package.json package.json
-COPY ./yarn.lock yarn.lock
-COPY ./.yarnrc.yml .yarnrc.yml
-COPY ./.yarn/releases .yarn/releases
-COPY ./.yarn/plugins .yarn/plugins
-COPY ./turbo.json turbo.json
+COPY package.json bunfig.toml bun.lock ./
 
 # Copy workspace package.json files (needed for workspace resolution)
 COPY ./protocol/package.json protocol/package.json
@@ -65,11 +58,8 @@ COPY ./packages/generated/package.json packages/generated/package.json
 COPY ./packages/generated/scripts packages/generated/scripts
 COPY ./packages/prettier-config/package.json packages/prettier-config/package.json
 
-# Create empty deployments directory to satisfy preinstall script
-RUN mkdir -p packages/generated/deployments
-
-# Install dependencies with Yarn (only for contracts workspace to speed up build)
-RUN yarn workspaces focus @towns-protocol/contracts && yarn cache clean
+# Install dependencies with Bun
+RUN bun install --filter @towns-protocol/contracts && bun pm cache rm
 
 # Copy rest of the project files
 COPY ./packages/anvil-docker/scripts packages/anvil-docker/scripts

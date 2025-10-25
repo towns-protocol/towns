@@ -65,7 +65,7 @@ EOF
 
 # Format with prettier
 echo "Formatting event.json..."
-yarn prettier --write event.json
+bun run prettier --write event.json
 
 # Cleanup function to stop Anvil containers
 cleanup() {

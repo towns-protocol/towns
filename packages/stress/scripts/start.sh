@@ -88,14 +88,14 @@ if [ $((CONTAINER_COUNT * PROCESSES_PER_CONTAINER * CLIENTS_PER_PROCESS)) -ne $C
   exit 1
 fi
 
-yarn build
+bun run build
 
 # Array to hold process IDs
 declare -a pids
 
 # start the clients
 for i in $(seq $PROCESS_START_INDEX $((PROCESS_END_INDEX - 1))); do  # seq is inclusive
-  PROCESS_INDEX=$i CLIENTS_PER_PROCESS=$CLIENTS_PER_PROCESS yarn start &
+  PROCESS_INDEX=$i CLIENTS_PER_PROCESS=$CLIENTS_PER_PROCESS bun run start &
   pids+=($!)
 done
 
@@ -106,5 +106,3 @@ for pid in "${pids[@]}"; do
 done
 
 echo "All processes have completed."
-
-

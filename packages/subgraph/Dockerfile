@@ -22,19 +22,15 @@ RUN apt-get update && \
     make \
     ca-certificates \
     lsb-release \
-    python3 && \
+    python3 \
+    unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
 # Install Foundry
 RUN curl -L https://foundry.paradigm.xyz | bash && \
@@ -48,11 +44,8 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 # ==========================================
 
 # Copy monorepo configuration for dependency resolution
-COPY package.json yarn.lock .yarnrc.yml turbo.json ./
-COPY .yarn/releases .yarn/releases
-COPY .yarn/plugins .yarn/plugins
+COPY buf.yaml bunfig.toml bun.lock package.json turbo.json ./
 COPY packages/tsconfig.base.json ./packages/
-COPY buf.yaml ./
 
 # Copy workspace package.json files for dependency resolution
 COPY packages/utils/package.json ./packages/utils/
@@ -67,7 +60,7 @@ COPY packages/contracts ./packages/contracts/
 COPY packages/generated ./packages/generated/
 
 # Install all dependencies (cached unless package.json files change)
-RUN yarn install && yarn cache clean
+RUN bun install && bun pm cache rm
 
 # ==========================================
 # Source Code and Build
@@ -82,8 +75,7 @@ COPY packages/web3 ./packages/web3/
 COPY protocol ./protocol/
 
 # Build all packages using turbo
-RUN yarn turbo build --filter=@towns-protocol/subgraph...
-RUN yarn turbo typings --filter=@towns-protocol/contracts
+RUN bun run turbo typings --filter=@towns-protocol/subgraph...
 
 # Prepare subgraph for runtime
 RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
@@ -91,38 +83,25 @@ RUN chmod +x ./packages/subgraph/docker-entrypoint.sh
 # ==========================================
 # Stage 2: Runtime - Minimal runtime image
 # ==========================================
-FROM ubuntu:24.04 AS runtime
+FROM oven/bun:1.2-slim AS runtime
 
 # Set working directory
 WORKDIR /river
 
-# Install only runtime dependencies
+# Install runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     netcat-openbsd \
-    ca-certificates \
-    lsb-release && \
+    ca-certificates && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Install Node.js 20
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt-get install -y nodejs && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
 
 # Copy built node_modules from builder
 COPY --from=builder /river/node_modules ./node_modules
-COPY --from=builder /river/.yarn/releases ./.yarn/releases
-COPY --from=builder /river/.yarn/plugins ./.yarn/plugins
 
 # Copy monorepo configuration
-COPY --from=builder /river/package.json /river/yarn.lock /river/.yarnrc.yml /river/turbo.json ./
+COPY --from=builder /river/package.json /river/bun.lock /river/turbo.json ./
 
 # Copy only runtime-required packages
 COPY --from=builder /river/packages/contracts/deployments ./packages/contracts/deployments
