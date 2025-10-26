@@ -1,6 +1,17 @@
-FROM node:lts-alpine3.20 AS builder
+FROM ubuntu:24.04 AS builder
 
 WORKDIR /river
+
+# Install build dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git curl ca-certificates build-essential && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # monorepo root config
 COPY ./package.json ./package.json
@@ -30,10 +41,11 @@ COPY ./packages/web3 /river/packages/web3
 COPY ./packages/xchain-monitor /river/packages/xchain-monitor
 
 # install dependencies and build
-RUN apk add --no-cache git curl
 RUN corepack enable && \
     corepack prepare yarn@3.8.0 --activate
-RUN yarn install
+
+# Install dependencies
+RUN yarn install && yarn cache clean
 RUN yarn run turbo build --filter @towns-protocol/xchain-monitor
 
 # create runner image with only the necessary files
@@ -44,7 +56,7 @@ COPY --from=builder /river/packages/xchain-monitor/dist /river/packages/xchain-m
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
 WORKDIR /river/packages/xchain-monitor
 RUN yarn init --yes
-RUN yarn add dd-trace@^5.19.0
+RUN yarn add dd-trace@^5.19.0 && yarn cache clean
 
 # run the service
 ARG GIT_SHA

@@ -1,9 +1,17 @@
-FROM node:lts-alpine3.20 AS builder
+FROM ubuntu:24.04 AS builder
 
 WORKDIR /river
 
 # Install dependencies needed for Sharp and other native modules
-RUN apk add --no-cache git curl libc6-compat vips-dev
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git curl ca-certificates build-essential libvips-dev && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # monorepo root config
 COPY ./package.json ./package.json
@@ -39,7 +47,9 @@ COPY ./packages/stream-metadata /river/packages/stream-metadata
 # install dependencies and build
 RUN corepack enable && \
     corepack prepare yarn@3.8.0 --activate
-RUN yarn install
+
+# Install dependencies
+RUN yarn install && yarn cache clean
 RUN yarn run turbo build --filter @towns-protocol/stream-metadata
 
 # create runner image with only the necessary files
@@ -57,13 +67,10 @@ RUN yarn init --yes
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3
+RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && yarn cache clean
 
-# Force rebuild sharp to ensure correct Linux binaries
-RUN yarn remove sharp && yarn add sharp@0.34.3
-
-# Clean yarn cache to reduce image size
-RUN yarn cache clean
+# Force rebuild sharp to ensure correct Linux binaries and clean cache
+RUN yarn remove sharp && yarn add sharp@0.34.3 && yarn cache clean
 
 # run the service
 ARG GIT_SHA
