@@ -221,10 +221,12 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The message ID of the parent of the tip */
             messageId: string
-            /** The address of the sender of the tip */
+            /** The address that sent the tip */
             senderAddress: Address
-            /** The address of the receiver of the tip */
+            /** The address that received the tip */
             receiverAddress: Address
+            /** The user ID that received the tip */
+            receiverUserId: string
             /** The amount of the tip */
             amount: bigint
             /** The currency of the tip */
@@ -576,6 +578,8 @@ export class Bot<
                                     const transactionContent =
                                         parsed.event.payload.value.content.value.transaction
                                             ?.content
+                                    const fromUserAddress =
+                                        parsed.event.payload.value.content.value.fromUserAddress
 
                                     switch (transactionContent?.case) {
                                         case 'spaceReview':
@@ -591,31 +595,37 @@ export class Bot<
                                                 const currency = utils.getAddress(
                                                     bin_toHexString(tipEvent.currency),
                                                 )
-                                                const senderAddressBytes =
-                                                    parsed.event.payload.value.content.value
-                                                        .fromUserAddress
-                                                const senderAddress =
-                                                    userIdFromAddress(senderAddressBytes)
-                                                const receiverAddress = userIdFromAddress(
+                                                const senderAddress = utils.getAddress(
+                                                    bin_toHexString(tipEvent.sender),
+                                                ) as Address
+                                                const receiverAddress = utils.getAddress(
+                                                    bin_toHexString(tipEvent.receiver),
+                                                ) as Address
+                                                const senderUserId =
+                                                    userIdFromAddress(fromUserAddress)
+                                                const receiverUserId = userIdFromAddress(
                                                     transactionContent.value.toUserAddress,
                                                 )
                                                 debug('emit:tip', {
                                                     senderAddress,
+                                                    senderUserId,
                                                     receiverAddress,
+                                                    receiverUserId,
                                                     amount: tipEvent.amount.toString(),
                                                     currency,
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                                 this.emitter.emit('tip', this.client, {
-                                                    userId: senderAddress,
+                                                    userId: senderUserId,
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
                                                     eventId: parsed.hashStr,
                                                     createdAt,
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
-                                                    senderAddress: senderAddress,
+                                                    senderAddress,
                                                     receiverAddress,
+                                                    receiverUserId,
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                             }
