@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "node ./scripts/prepare.js",
+        "build-types": "bash scripts/build-contract-types.sh",
         "make-config": "node ./scripts/make-config.js"
     },
     "dependencies": {
@@ -13,7 +14,9 @@
         "ethers": "^5.8.0"
     },
     "devDependencies": {
-        "@towns-protocol/contracts": "workspace:^"
+        "@towns-protocol/contracts": "workspace:^",
+        "@typechain/ethers-v5": "^11.1.2",
+        "typechain": "^8.3.2"
     },
     "files": [
         "config/**/*",

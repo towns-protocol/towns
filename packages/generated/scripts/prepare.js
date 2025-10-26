@@ -49,7 +49,7 @@ function getContractsHash() {
     }).trim();
     
     const buildScriptHash = execSync('git rev-parse HEAD:./scripts/build-contract-types.sh', {
-      cwd: contractsDir,
+      cwd: packageRoot,
       encoding: 'utf8',
       stdio: 'pipe'
     }).trim();
@@ -167,7 +167,7 @@ function generateArtifacts() {
     }
   }
   
-  const buildScript = resolve(contractsDir, 'scripts/build-contract-types.sh');
+  const buildScript = resolve(packageRoot, 'scripts/build-contract-types.sh');
 
   if (!existsSync(buildScript)) {
     throw new Error(`Build script not found at ${buildScript}`);
@@ -180,7 +180,7 @@ function generateArtifacts() {
   };
 
   execSync(`bash ${buildScript}`, {
-    cwd: contractsDir,
+    cwd: packageRoot,
     stdio: 'inherit',
     env: envWithFoundry
   });

@@ -10165,7 +10165,6 @@ __metadata:
     "@prb/test": ^0.6.4
     "@towns-protocol/diamond": ^0.6.3
     "@towns-protocol/prettier-config": "workspace:^"
-    "@typechain/ethers-v5": ^11.1.2
     "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0"
     "@wagmi/cli": ^2.2.0
     account-abstraction: "github:eth-infinitism/account-abstraction#v0.7.0"
@@ -10177,7 +10176,6 @@ __metadata:
     solady: ^0.1.24
     solhint: ^5.0.5
     solidity-bytes-utils: ^0.8.4
-    typechain: ^8.3.2
   languageName: unknown
   linkType: soft
 
@@ -10267,7 +10265,9 @@ __metadata:
     "@ethersproject/abi": ^5.8.0
     "@ethersproject/providers": ^5.8.0
     "@towns-protocol/contracts": "workspace:^"
+    "@typechain/ethers-v5": ^11.1.2
     ethers: ^5.8.0
+    typechain: ^8.3.2
   languageName: unknown
   linkType: soft
 
@@ -12437,7 +12437,7 @@ __metadata:
     source-map-support: ^0.5.19
     table: ^6.8.0
     typescript: ^4.3.5
-  checksum: bdca754160deb9b34a6b668bbcb80477c1c596cdaa90ed4966e0b557f32d26f1d973033a468dca016ad8e5d909c68f15859408208b70602bdee0619c6208bd02
+  checksum: 8be8f2e1f8dbdb9c35edddf1f919f6c09fe764e45ad5733c0d449869e6c9241de6eac9710576d025bb3934f3bb97d017198a7c5f31b88a68aee0dbc898e1de97
   languageName: node
   linkType: hard
 
