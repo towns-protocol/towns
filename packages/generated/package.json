@@ -1,11 +1,11 @@
 {
     "name": "@towns-protocol/generated",
     "version": "0.0.385",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "bun@1.3.0",
     "type": "module",
     "scripts": {
-        "build": "node ./scripts/prepare.js",
-        "make-config": "node ./scripts/make-config.js"
+        "build": "bun ./scripts/prepare.js",
+        "make-config": "bun ./scripts/make-config.js"
     },
     "dependencies": {
         "@ethersproject/abi": "^5.8.0",
