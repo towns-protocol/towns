@@ -13,40 +13,40 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# monorepo root config
-COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
-COPY ./buf.yaml ./buf.yaml
-COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
-COPY ./turbo.json ./turbo.json
-COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
-
-# monorepo core dependencies
-COPY ./protocol ./protocol
-
-# monorepo scripts
-COPY ./scripts ./scripts
-
-# monorepo packages
-COPY ./packages/contracts /river/packages/contracts
-COPY ./packages/eslint-config /river/packages/eslint-config
-COPY ./packages/prettier-config /river/packages/prettier-config
-COPY ./packages/generated /river/packages/generated
-COPY ./packages/utils /river/packages/utils
-COPY ./packages/proto /river/packages/proto
-COPY ./packages/web3 /river/packages/web3
-COPY ./packages/xchain-monitor /river/packages/xchain-monitor
-
-# install dependencies and build
+# Enable Corepack and install Yarn
 RUN corepack enable && \
     corepack prepare yarn@3.8.0 --activate
 
-# Install dependencies
+# Copy monorepo configuration for dependency resolution
+COPY package.json yarn.lock .yarnrc.yml turbo.json buf.yaml ./
+COPY .yarn/releases .yarn/releases
+COPY .yarn/plugins .yarn/plugins
+COPY packages/tsconfig.base.json ./packages/
+
+# Copy workspace package.json files for dependency resolution
+COPY ./packages/xchain-monitor/package.json ./packages/xchain-monitor/
+COPY ./packages/generated/package.json ./packages/generated/
+COPY ./packages/contracts/package.json ./packages/contracts/
+COPY ./packages/web3/package.json ./packages/web3/
+COPY ./packages/utils/package.json ./packages/utils/
+COPY ./packages/proto/package.json ./packages/proto/
+COPY ./packages/eslint-config/package.json ./packages/eslint-config/
+COPY ./packages/prettier-config/package.json ./packages/prettier-config/
+COPY ./protocol/package.json ./protocol/
+
+# Install dependencies (cached unless package.json files change)
 RUN yarn install && yarn cache clean
-RUN yarn run turbo build --filter @towns-protocol/xchain-monitor
+
+# Copy remaining source code (only packages needed for build)
+COPY ./protocol ./protocol
+COPY ./packages/contracts ./packages/contracts
+COPY ./packages/generated ./packages/generated
+COPY ./packages/proto ./packages/proto
+COPY ./packages/web3 ./packages/web3
+COPY ./packages/utils ./packages/utils
+COPY ./packages/xchain-monitor ./packages/xchain-monitor
+
+RUN yarn run turbo build --filter @towns-protocol/xchain-monitor...
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner

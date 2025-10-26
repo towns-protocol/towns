@@ -48,23 +48,20 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 # ==========================================
 
 # Copy monorepo configuration for dependency resolution
-COPY package.json yarn.lock .yarnrc.yml turbo.json ./
+COPY package.json yarn.lock .yarnrc.yml turbo.json buf.yaml ./
 COPY .yarn/releases .yarn/releases
 COPY .yarn/plugins .yarn/plugins
 COPY packages/tsconfig.base.json ./packages/
-COPY buf.yaml ./
 
 # Copy workspace package.json files for dependency resolution
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/generated/package.json ./packages/generated/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/prettier-config/package.json ./packages/prettier-config/
 COPY packages/proto/package.json ./packages/proto/
 COPY packages/subgraph/package.json ./packages/subgraph/
 COPY packages/web3/package.json ./packages/web3/
 COPY protocol/package.json ./protocol/
-
-# Copy packages needed for yarn install (preinstall scripts)
-COPY packages/contracts ./packages/contracts/
-COPY packages/generated ./packages/generated/
 
 # Install all dependencies (cached unless package.json files change)
 RUN yarn install && yarn cache clean
@@ -74,6 +71,8 @@ RUN yarn install && yarn cache clean
 # ==========================================
 
 # Copy remaining source code
+COPY packages/contracts ./packages/contracts/
+COPY packages/generated ./packages/generated/
 COPY packages/utils ./packages/utils/
 COPY packages/prettier-config ./packages/prettier-config/
 COPY packages/proto ./packages/proto/
