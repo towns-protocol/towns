@@ -1,9 +1,17 @@
-FROM node:lts-alpine3.20 AS builder
+FROM ubuntu:24.04 AS builder
 
 WORKDIR /river
 
 # Install build dependencies
-RUN apk add --no-cache git curl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git curl ca-certificates build-essential && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Enable Corepack and install Yarn
 RUN corepack enable && \
@@ -16,6 +24,8 @@ COPY .yarn/plugins .yarn/plugins
 COPY packages/tsconfig.base.json ./packages/
 
 # Copy workspace package.json files for dependency resolution
+COPY packages/contracts/package.json ./packages/contracts/
+COPY packages/generated/package.json ./packages/generated/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/metrics-discovery/package.json ./packages/metrics-discovery/
 COPY packages/prettier-config/package.json ./packages/prettier-config/
@@ -23,14 +33,12 @@ COPY packages/proto/package.json ./packages/proto/
 COPY packages/web3/package.json ./packages/web3/
 COPY protocol/package.json ./protocol/
 
-# Copy packages needed for yarn install (preinstall scripts)
-COPY packages/contracts ./packages/contracts/
-COPY packages/generated ./packages/generated/
-
-# Install dependencies
-RUN yarn install
+# Install dependencies (prepare.js will install Foundry if needed)
+RUN yarn install && yarn cache clean
 
 # Copy remaining source code
+COPY packages/contracts ./packages/contracts/
+COPY packages/generated ./packages/generated/
 COPY packages/utils ./packages/utils/
 COPY packages/metrics-discovery ./packages/metrics-discovery/
 COPY packages/prettier-config ./packages/prettier-config/

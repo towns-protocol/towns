@@ -63,11 +63,19 @@ function getContractsHash() {
 // Check if contracts have changed by comparing hashes
 function contractsChanged() {
   const currentHash = getContractsHash();
-  
-  if (!currentHash) return false; // No contracts source, use existing generated files
-  
+
+  if (!currentHash) {
+    // Check if we're in Docker with source but no git (git rev-parse failed)
+    if (existsSync(resolve(contractsDir, 'src'))) {
+      console.log('Contract source exists but git unavailable - regenerating to ensure freshness');
+      return true; // Force regeneration in Docker
+    }
+    // No source = npm package scenario, use existing generated files
+    return false;
+  }
+
   if (!existsSync(hashFile)) return true; // No stored hash, need to generate
-  
+
   const storedHash = readFileSync(hashFile, 'utf8').trim();
   return currentHash !== storedHash;
 }
@@ -184,7 +192,11 @@ async function main() {
   
   if (!generatedFilesExist()) {
     console.log('No artifacts found, trying npm download first...');
-    await downloadArtifactsFromNpm();
+    if (!(await downloadArtifactsFromNpm())) {
+      console.log('NPM download failed, attempting local generation...');
+      generateArtifacts();
+      return;
+    }
   }
 
   if (skipRequested) {
