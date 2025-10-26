@@ -13,44 +13,48 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# monorepo root config
-COPY ./package.json ./package.json
-COPY ./.yarn/plugins ./.yarn/plugins
-COPY ./.yarn/releases ./.yarn/releases
-COPY ./.yarnrc.yml ./.yarnrc.yml
-COPY ./buf.yaml ./buf.yaml
-COPY ./lerna.json ./lerna.json
-COPY ./yarn.lock ./yarn.lock
-COPY ./turbo.json ./turbo.json
-COPY ./packages/tsconfig.base.json ./packages/tsconfig.base.json
-
-# monorepo core dependencies
-COPY ./protocol ./protocol
-
-# monorepo scripts
-COPY ./scripts ./scripts
-
-# monorepo packages
-COPY ./packages/contracts /river/packages/contracts
-COPY ./packages/eslint-config /river/packages/eslint-config
-COPY ./packages/prettier-config /river/packages/prettier-config
-COPY ./packages/generated /river/packages/generated
-COPY ./packages/web3 /river/packages/web3
-COPY ./packages/utils /river/packages/utils
-COPY ./packages/proto /river/packages/proto
-COPY ./packages/sdk /river/packages/sdk
-COPY ./packages/encryption /river/packages/encryption
-COPY ./packages/sdk-crypto /river/packages/sdk-crypto
-COPY ./packages/rpc-connector /river/packages/rpc-connector
-COPY ./packages/stream-metadata /river/packages/stream-metadata
-
-# install dependencies and build
+# Enable Corepack and install Yarn
 RUN corepack enable && \
     corepack prepare yarn@3.8.0 --activate
 
-# Install dependencies
+# Copy monorepo configuration for dependency resolution
+COPY package.json yarn.lock .yarnrc.yml turbo.json buf.yaml ./
+COPY .yarn/releases .yarn/releases
+COPY .yarn/plugins .yarn/plugins
+COPY packages/tsconfig.base.json ./packages/
+
+# Copy workspace package.json files for dependency resolution
+COPY ./packages/stream-metadata/package.json ./packages/stream-metadata/
+COPY ./packages/generated/package.json ./packages/generated/
+COPY ./packages/contracts/package.json ./packages/contracts/
+COPY ./packages/proto/package.json ./packages/proto/
+COPY ./packages/sdk/package.json ./packages/sdk/
+COPY ./packages/sdk-crypto/package.json ./packages/sdk-crypto/
+COPY ./packages/web3/package.json ./packages/web3/
+COPY ./packages/utils/package.json ./packages/utils/
+COPY ./packages/encryption/package.json ./packages/encryption/
+COPY ./packages/rpc-connector/package.json ./packages/rpc-connector/
+COPY ./packages/eslint-config/package.json ./packages/eslint-config/
+COPY ./packages/prettier-config/package.json ./packages/prettier-config/
+COPY ./protocol/package.json ./protocol/
+
+# Install dependencies (cached unless package.json files change)
 RUN yarn install && yarn cache clean
-RUN yarn run turbo build --filter @towns-protocol/stream-metadata
+
+# Copy remaining source code (only packages needed for build)
+COPY ./protocol ./protocol
+COPY ./packages/contracts ./packages/contracts
+COPY ./packages/generated ./packages/generated
+COPY ./packages/proto ./packages/proto
+COPY ./packages/sdk ./packages/sdk
+COPY ./packages/sdk-crypto ./packages/sdk-crypto
+COPY ./packages/web3 ./packages/web3
+COPY ./packages/utils ./packages/utils
+COPY ./packages/encryption ./packages/encryption
+COPY ./packages/rpc-connector ./packages/rpc-connector
+COPY ./packages/stream-metadata ./packages/stream-metadata
+
+RUN yarn run turbo build --filter @towns-protocol/stream-metadata...
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner

@@ -51,12 +51,9 @@ ENV PATH="/root/.foundry/bin:${PATH}"
 WORKDIR /app
 
 # Copy package files for dependency installation (layer caching)
-COPY ./package.json package.json
-COPY ./yarn.lock yarn.lock
-COPY ./.yarnrc.yml .yarnrc.yml
-COPY ./.yarn/releases .yarn/releases
-COPY ./.yarn/plugins .yarn/plugins
-COPY ./turbo.json turbo.json
+COPY package.json yarn.lock .yarnrc.yml turbo.json ./
+COPY .yarn/releases .yarn/releases
+COPY .yarn/plugins .yarn/plugins
 
 # Copy workspace package.json files (needed for workspace resolution)
 COPY ./protocol/package.json protocol/package.json
