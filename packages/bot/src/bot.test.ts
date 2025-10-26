@@ -790,7 +790,8 @@ describe('Bot', { sequential: true }, () => {
         expect(tipEvent?.amount).toBe(ethers.utils.parseUnits('0.01').toBigInt())
         expect(tipEvent?.currency).toBe(ETH_ADDRESS)
         expect(tipEvent?.senderAddress).toBe(bob.userId)
-        expect(tipEvent?.receiverAddress).toBe(bot.botId)
+        expect(tipEvent?.receiverAddress).toBe(bot.appAddress)
+        expect(tipEvent?.receiverUserId).toBe(bot.botId)
     })
 
     it('bot can use sendTip() to send tips using app balance', async () => {
