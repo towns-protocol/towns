@@ -4,12 +4,7 @@
 
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
-import {
-    ETH_ADDRESS,
-    LocalhostWeb3Provider,
-    TipSentEventObject,
-    type Address,
-} from '@towns-protocol/web3'
+import { ETH_ADDRESS, LocalhostWeb3Provider, TipSentEventObject } from '@towns-protocol/web3'
 import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
@@ -108,8 +103,8 @@ describe('transactions_Tip', () => {
 
         try {
             // dummy tip, to be used to test error cases
-            const tx = await bob.riverConnection.spaceDapp.sendTip(
-                {
+            const tx = await bob.riverConnection.spaceDapp.sendTip({
+                tipParams: {
                     spaceId,
                     type: 'member',
                     tokenId: aliceTokenId,
@@ -117,15 +112,15 @@ describe('transactions_Tip', () => {
                     amount: 1000n,
                     messageId: messageId,
                     channelId: defaultChannelId,
-                    receiver: aliceIdentity.rootWallet.address as Address,
+                    receiver: aliceIdentity.rootWallet.address,
                 },
-                bobIdentity.signer,
-            )
+                signer: bobIdentity.signer,
+            })
             dummyReceipt = await tx.wait(2)
             dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
                 spaceId,
                 dummyReceipt,
-                bobIdentity.rootWallet.address as Address, // if account abstraction is enabled, this is the abstract account address
+                bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
             )!
         } catch (err) {
             const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
@@ -149,8 +144,8 @@ describe('transactions_Tip', () => {
     test('addTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.sendTip(
-            {
+        const tx = await bob.riverConnection.spaceDapp.sendTip({
+            tipParams: {
                 spaceId,
                 type: 'member',
                 tokenId: aliceTokenId,
@@ -158,10 +153,10 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address as Address,
+                receiver: aliceIdentity.rootWallet.address,
             },
-            bobIdentity.signer,
-        )
+            signer: bobIdentity.signer,
+        })
         const receipt = await tx.wait(2)
         expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
         const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(
@@ -411,8 +406,8 @@ describe('transactions_Tip', () => {
     test('addSecondTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.sendTip(
-            {
+        const tx = await bob.riverConnection.spaceDapp.sendTip({
+            tipParams: {
                 spaceId,
                 type: 'member',
                 tokenId: aliceTokenId,
@@ -420,10 +415,10 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address as Address,
+                receiver: aliceIdentity.rootWallet.address,
             },
-            bobIdentity.signer,
-        )
+            signer: bobIdentity.signer,
+        })
         const receipt = await tx.wait(2)
         expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
         const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(

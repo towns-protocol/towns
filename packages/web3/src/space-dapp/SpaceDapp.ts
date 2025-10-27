@@ -1896,12 +1896,14 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
      * @param signer - The signer to use for the tip
      * @returns The transaction
      */
-    public async sendTip(
-        args: SendTipParams,
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const { spaceId } = args
+    public async sendTip<T = ContractTransaction>(args: {
+        tipParams: SendTipParams
+        signer: ethers.Signer
+        txnOpts?: TransactionOpts
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { tipParams, signer, txnOpts, overrideExecution } = args
+        const { spaceId } = tipParams
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1910,11 +1912,11 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         let recipientType: number
         let encodedData: string
 
-        switch (args.type) {
+        switch (tipParams.type) {
             case 'member': {
                 // TipRecipientType.Member = 0
                 recipientType = 0
-                const { receiver, tokenId, currency, amount, messageId, channelId } = args
+                const { receiver, tokenId, currency, amount, messageId, channelId } = tipParams
                 const metadataData = ethers.utils.defaultAbiCoder.encode(
                     ['bytes32', 'bytes32', 'uint256'],
                     [ensureHexPrefix(messageId), ensureHexPrefix(channelId), tokenId],
@@ -1939,7 +1941,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             case 'bot': {
                 // TipRecipientType.Bot = 1
                 recipientType = 1
-                const { receiver, appId, currency, amount, messageId, channelId } = args
+                const { receiver, appId, currency, amount, messageId, channelId } = tipParams
                 const metadataData = ethers.utils.defaultAbiCoder.encode(
                     ['bytes32', 'bytes32'],
                     [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
@@ -1963,13 +1965,14 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             }
         }
 
-        return wrapTransaction(
-            () =>
-                space.Tipping.write(signer).sendTip(recipientType, encodedData, {
-                    value: args.amount,
-                }),
-            txnOpts,
-        )
+        return space.Tipping.executeCall({
+            signer,
+            functionName: 'sendTip',
+            args: [recipientType, encodedData],
+            value: args.tipParams.amount,
+            overrideExecution,
+            transactionOpts: txnOpts,
+        })
     }
 
     /**
