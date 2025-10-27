@@ -298,7 +298,7 @@ export class Bot<
     Commands extends PlainMessage<SlashCommand>[] = [],
     HonoEnv extends Env = BlankEnv,
 > {
-    private readonly client: ClientV2<BotActions>
+    readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
     viem: WalletClient<Transport, Chain, Account>

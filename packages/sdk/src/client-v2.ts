@@ -14,7 +14,7 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { townsEnv, TownsService } from './townsEnv'
+import { townsEnv, TownsService, type TownsConfig } from './townsEnv'
 import { ethers } from 'ethers'
 import { RiverRegistry, type Address } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
@@ -62,8 +62,8 @@ type Client_Base = {
     wallet: ethers.Wallet
     /** RPC client that connects to the Towns network. */
     rpc: StreamRpcClient
-    /** The environment of the Client. */
-    env: string
+    /** The config of the Client. Stores environenment id, base and river chain config */
+    config: TownsConfig
     /** Crypto Store */
     keychain: CryptoStore
     /** Crypto Backend */
@@ -438,7 +438,7 @@ export const createTownsClient = async (
         unpackEnvelope,
         unpackEnvelopes,
         importGroupEncryptionSessions,
-        env: config.environmentId,
+        config,
     } satisfies Client_Base
 
     function extend(base: typeof client) {

@@ -20,6 +20,7 @@ import {
     UpdateChannelParams,
     UpdateRoleParams,
     VersionedRuleData,
+    type Address,
 } from '../types/ContractTypes'
 import { SpaceInfo } from '../types/types'
 
@@ -791,17 +792,17 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         return await this.decodeEntitlementData(space, entitlementData)
     }
 
-    public async getLinkedWallets(wallet: string): Promise<string[]> {
+    public async getLinkedWallets(wallet: string): Promise<Address[]> {
         let linkedWallets = await this.walletLink.getLinkedWallets(wallet)
         // If there are no linked wallets, consider that the wallet may be linked to another root key.
         if (linkedWallets.length === 0) {
             const possibleRoot = await this.walletLink.getRootKeyForWallet(wallet)
             if (possibleRoot !== INVALID_ADDRESS) {
                 linkedWallets = await this.walletLink.getLinkedWallets(possibleRoot)
-                return [possibleRoot, ...linkedWallets]
+                return [possibleRoot as Address, ...(linkedWallets as Address[])]
             }
         }
-        return [wallet, ...linkedWallets]
+        return [wallet as Address, ...(linkedWallets as Address[])]
     }
 
     private async getMainnetDelegationsForLinkedWallets(
