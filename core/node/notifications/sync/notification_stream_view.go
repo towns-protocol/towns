@@ -96,6 +96,10 @@ func NewNotificationStreamView(
 	listener track_streams.StreamEventListener,
 	preferences UserPreferencesStore,
 ) (*NotificationStreamView, error) {
+	log := logging.FromCtx(ctx)
+	log.Infow("NewNotificationStreamView: creating view",
+		"streamID", streamID)
+
 	view := &NotificationStreamView{
 		streamID:     streamID,
 		cfg:          cfg,
@@ -110,6 +114,11 @@ func NewNotificationStreamView(
 	if err := view.initializeFromStream(ctx, stream); err != nil {
 		return nil, err
 	}
+
+	log.Infow("NewNotificationStreamView: view created successfully",
+		"streamID", streamID,
+		"memberCount", len(view.members),
+		"seenEventsCount", len(view.seenEvents))
 
 	return view, nil
 }

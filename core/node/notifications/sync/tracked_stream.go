@@ -7,6 +7,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -53,6 +54,12 @@ func NewTrackedStreamForNotifications(
 	listener track_streams.StreamEventListener,
 	userPreferences UserPreferencesStore,
 ) (TrackedStreamView, error) {
+	log := logging.FromCtx(ctx)
+	log.Infow("NewTrackedStreamForNotifications: called",
+		"streamID", streamID,
+		"miniblockCount", len(stream.Miniblocks),
+		"minipoolEventCount", len(stream.Events))
+
 	// Use the memory-optimized notification stream view
 	return NewNotificationStreamView(
 		ctx,
