@@ -1,0 +1,81 @@
+---
+title: Introduction
+---
+
+Bots in Towns Protocol are programmable applications that can interact with spaces, channels, and users through end-to-end encrypted messaging.
+
+They enable automation, integrations, and enhanced user experiences within Towns communities.
+
+## Architecture
+
+Towns bots consist of two interconnected pieces:
+
+### Onchain Component
+
+Bots are smart contracts registered through the **App Registry** on Base and installed in a `Space`. 
+
+The onchain component provides:
+- **Secure identity**: Each bot has a unique address and public key
+- **Fine-grained permissions**: Control exactly what the bot can do (read/write messages, ban users, moderate, etc.)
+- **Recurring revenue**: Bots can be paid monthly or yearly by spaces that install them
+- **ERC-4337 Account Abstraction**: Bots use SimpleAccount contracts enabling advanced onchain interactions
+- **Batch execution support**: Execute multiple contract calls atomically using ERC-7821
+
+This allows bots to:
+- Have their own wallet address funded with ETH/tokens
+- Interact with any smart contract (DeFi, NFTs, DAOs, etc.)
+- Execute complex multi-step transactions in one atomic operation
+- Receive payments and tips onchain
+
+### Server Component
+
+The server component is a webhook endpoint that receives events from Towns Protocol nodes and processes them.
+
+A bot operates like a specialized user in the Towns Protocol network. It can:
+- **Send and receive messages** with full end-to-end encryption
+- **React to events** in real-time (messages, tips, joins, leaves)
+- **Execute slash commands** with custom logic
+- **Moderate channels** (ban/unban users with proper permissions)
+- **Check permissions** before executing sensitive operations
+- **Receive tips** just like regular users
+
+All of this with the same security guarantees as a user: **end-to-end encryption** for all messages.
+
+Additionally, the server can communicate with the onchain component, allowing it to:
+- Read from any smart contract
+- Write to contracts using the bot's wallet
+- Execute complex DeFi operations (swaps, staking, liquidity provision)
+- Mint NFTs, manage DAOs, and interact with any Web3 protocol
+
+## Use Cases
+
+With these capabilities, you can build bots that:
+
+### Communication & Engagement
+- AI assistants that answer questions using LLMs
+- Welcome bots that greet new members
+- Announcement bots for important updates
+- Poll and voting systems
+
+### Moderation & Safety
+- Auto-moderation based on rules
+- Spam detection and prevention
+- Content filtering
+- User verification systems
+
+### Onchain Integration
+- Tip tracking and leaderboards
+- Token price monitoring and alerts
+- NFT minting and distribution
+- DeFi operations (swaps, staking, yield farming)
+- DAO proposal notifications and voting
+
+### External Services
+- GitHub integration for code updates
+- Calendar and meeting reminders
+- Weather and news updates
+- Custom webhooks from any service
+
+## Next Steps
+
+Ready to build your first bot? Continue to the [Getting Started guide](/build/bots/getting-started) to create and deploy your bot in minutes.

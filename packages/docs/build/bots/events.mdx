@@ -1,0 +1,304 @@
+---
+title: Events
+---
+
+This guide covers what you need to know about events and how to handle them in your bot. You'll learn about:
+
+- [Event anatomy](#event-anatomy)
+- [Event listeners](#event-listeners)
+- [Sending events](#sending-events)
+- [Permissions](#permissions)
+- [Moderation](#moderation)
+- [Snapshot data](#snapshot-data)
+
+## Event Anatomy
+
+All events share a common `BasePayload` structure:
+
+- `userId`: The user who triggered the event.
+- `spaceId`: The space that the event occurred in.
+- `channelId`: The channel that the event occurred in.
+- `eventId`: The unique event ID.
+- `createdAt`: The date and time the event occurred.
+
+Different event types extend this base with additional fields.
+
+## Event Listeners
+All event listeners are asynchronous functions that receive a `handler` and an `event` object. 
+
+The `handler` is the bot instance and the `event` contains the `BasePayload` and additional fields specific to the event type.
+
+### onMessage
+
+Fires when a message is sent in a channel the bot is in (subject to forwarding settings).
+
+- `message`: The decrypted message text.
+- `replyId`: The `eventId` of the message being replied to (if reply).
+- `threadId`: The `eventId` of the thread's first message (if in thread).
+- `mentions`: List of users mentioned in the message. Each mention contains the user's address and display name.
+- `isMentioned`: True if the bot was @mentioned.
+
+### onSlashCommand
+
+Fires when a user invokes one of your bot's slash commands. For more information about slash commands, see the [Slash Commands guide](/build/bots/slash-commands).
+
+- `command`: The name of the command invoked by the user.
+- `args`: The arguments passed to the command.
+- `mentions`: List of users mentioned in the command.
+- `replyId`: The message being replied to (if any).
+- `threadId`: The thread context (if any).
+
+### onReaction
+
+<Warning>
+You only get the `reaction` and `messageId` - not the message content! Store messages externally if you need context.
+</Warning>
+
+- `reaction`: The reaction emoji.
+- `messageId`: The `eventId` of the message being reacted to.
+
+### onMessageEdit
+
+Fires when a message is edited.
+
+- `message`: The new message content.
+- `refEventId`: The `eventId` of the message being edited.
+- `replyId`: If the edited message was a reply.
+- `threadId`: If the edited message was in a thread.
+- `mentions`: Array of mentioned users in the edited message.
+- `isMentioned`: True if the bot is mentioned in the edited message.
+
+### onRedaction
+
+Fires when a message is deleted by a user.
+
+- `refEventId`: The `eventId` of the message being deleted.
+
+### onEventRevoke
+
+- `refEventId`: The `eventId` of the message being revoked.
+
+### onTip
+
+Fires when a user sends a cryptocurrency tip on a message.
+
+- `messageId`: The `eventId` of the message that received the tip.
+- `senderAddress`: The address of the user who sent the tip.
+- `receiverAddress`: The address of the user who received the tip.
+- `amount`: The amount of the tip.
+- `currency`: The currency of the tip.
+
+It can fire for any tip, not just tips to the bot.
+
+
+### onChannelJoin 
+
+Fires when users join a channel.
+
+- `userId`: The user who joined or left the channel.
+- `channelId`: The channel that the user joined or left.
+
+### onChannelLeave
+
+Fires when users leave a channel.
+
+- `userId`: The user who left the channel.
+- `channelId`: The channel that the user left.
+
+## Sending events
+
+You can use bot actions to send events to Towns Network.
+
+### sendMessage
+
+Send a message to a channel.
+```ts
+const { eventId } = await bot.sendMessage(channelId, message, opts)
+```
+- `channelId`: The channel to send the message to.
+- `message`: The message to send.
+- `opts`: The options for the message.
+  - `threadId`: The thread to send the message to.
+  - `replyId`: The message to reply to.
+  - `mentions`: The users to mention in the message. Accepts a list of `userId` and `displayName`.
+  - `attachments`: The attachments to send with the message.
+  - `ephemeral`: Whether the message should be ephemeral (wont be stored in the channel history)
+
+Returns the `eventId` of the sent message.
+
+#### Sending attachments
+
+The bot framework supports two types of attachments with automatic validation and encryption.
+
+##### Image Attachments from URLs
+
+Send images by URL with automatic validation and dimension detection:
+
+```ts
+await bot.sendMessage(channelId, message, {
+  attachments: [
+    {
+       type: 'image', 
+       url: 'https://example.com/image.png', 
+       alt: 'Example image'
+    } 
+  ]
+})
+```
+
+Returns the `eventId` of the sent message.
+
+##### Chunked Media Attachments
+
+Send binary data with a filename and MIME type. 
+This allow you to send large files, videos, screenshots or even create images on the fly.
+
+```ts
+const imageBuffer = await fs.readFile('image.png')
+await bot.sendMessage(channelId, message, {
+  attachments: [{ 
+    type: 'chunked', 
+    data: imageBuffer, 
+    filename: 'image.png', 
+    mimetype: 'image/png',
+    width: 400,
+    height: 300,
+  }]
+})
+```
+
+### sendReaction
+
+Send a reaction to a message.
+```ts
+await bot.sendReaction(channelId, eventId, reaction)
+```
+- `channelId`: The channel to send the reaction to.
+- `eventId`: The `eventId` of the message to react to.
+- `reaction`: The reaction to send.
+
+Returns the `eventId` of the sent reaction.
+
+Example:
+
+```ts
+bot.onMessage(async (handler, { channelId, eventId, message }) => {
+  if (message.includes('Towns')) {
+    await handler.sendReaction(channelId, eventId, '🔥')
+  }
+})
+```
+
+### editMessage
+
+Edit a message.
+```ts
+const { eventId } = await bot.editMessage(channelId, eventId, message, opts)
+```
+- `channelId`: The channel to edit the message in.
+- `eventId`: The `eventId` of the message to edit.
+- `message`: The new message content.
+- `opts?`: Optional options for the edit.
+  - `threadId`: Change the thread of the message.
+  - `replyId`: Change the reply of the message.
+  - `mentions`: Change the mentions of the message. Accepts a list of `userId` and `displayName`.
+  - `attachments`: Change the attachments of the message.
+
+Returns the `eventId` of the edited message.
+
+### removeEvent
+
+Remove any event that was sent by the bot.
+
+```ts
+await bot.removeEvent(channelId, eventId)
+```
+- `channelId`: The channel to remove the event from.
+- `eventId`: The `eventId` of the event to remove.
+
+Returns the `eventId` of the removed event.
+
+### adminRemoveEvent
+
+Remove any event from a channel. Requires the `Redact` permission.
+
+```ts
+await bot.adminRemoveEvent(channelId, eventId)
+```
+- `channelId`: The channel to remove the event from.
+- `eventId`: The `eventId` of the event to remove.
+
+Returns the `eventId` of the redaction event.
+
+## Permissions
+
+Bots can check user permissions before executing sensitive operations.
+
+### hasAdminPermission
+
+Check if a user has admin permission.
+
+```ts
+const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+```
+
+### checkPermission
+
+Check if a user has a specific permission.
+
+```ts
+const hasPermission = await handler.checkPermission(streamId, userId, permission)
+```
+
+## Moderation
+
+Bots can perform moderation actions if they have the `ModifyBanning` permission.
+
+### ban
+
+Ban a user from a space.
+
+```ts
+await handler.ban(userId, spaceId)
+```
+
+### unban
+
+Unban a user from a space.
+
+```ts
+await handler.unban(userId, spaceId)
+```
+
+## Snapshot Data
+
+Bots have access to snapshot data for reading channel settings and membership information.
+
+<Warning>
+Snapshot data may not reflect the latest state. It's cached and updated periodically.
+</Warning>
+
+### getChannelInception
+
+Get channel settings and inception data.
+
+```ts
+const channelData = await bot.snapshot.getChannelInception(streamId)
+```
+
+### getUserMemberships
+
+Get a user's space memberships.
+
+```ts
+const memberships = await bot.snapshot.getUserMemberships(userId)
+```
+
+### getSpaceMemberships
+
+Get all members of a space.
+
+```ts
+const members = await bot.snapshot.getSpaceMemberships(spaceId)
+```
+
