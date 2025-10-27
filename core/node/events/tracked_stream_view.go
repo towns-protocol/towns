@@ -62,6 +62,11 @@ func (ts *TrackedStreamViewImpl) Init(
 	return view, nil
 }
 
+// ApplyBlock applies a miniblock to the view, updating internal state.
+// IMPORTANT: This does NOT send notifications - blocks contain historical events
+// that were already notified when they arrived via ApplyEvent.
+// The view's minipool is automatically pruned - events included in the block
+// are removed from the minipool (see copyAndApplyBlock).
 func (ts *TrackedStreamViewImpl) ApplyBlock(
 	miniblock *Miniblock,
 	snapshot *Envelope,
@@ -92,16 +97,21 @@ func (ts *TrackedStreamViewImpl) ApplyEvent(
 	return ts.addEvent(ctx, parsedEvent)
 }
 
+// applyBlock updates the view with a new miniblock.
+// Deduplication: skips blocks we've already processed by comparing block numbers.
+// The returned view has a pruned minipool - events now in the block are removed.
 func (ts *TrackedStreamViewImpl) applyBlock(
 	miniblock *MiniblockInfo,
 	cfg *crypto.OnChainSettings,
 ) error {
+	// Skip duplicate blocks - already processed this block number
 	if lastBlock := ts.view.LastBlock(); lastBlock != nil {
 		if miniblock.Ref.Num <= lastBlock.Ref.Num {
 			return nil
 		}
 	}
 
+	// copyAndApplyBlock removes events from minipool that are now in the block
 	view, _, err := ts.view.copyAndApplyBlock(miniblock, cfg)
 	if err != nil {
 		return err
@@ -111,17 +121,30 @@ func (ts *TrackedStreamViewImpl) applyBlock(
 	return nil
 }
 
+// addEvent adds a real-time event to the view and sends notifications.
+// This is the ONLY place where notifications are sent.
+//
+// Deduplication strategy:
+// 1. minipool.events.Has(event.Hash) - skip if already in minipool (duplicate event)
+// 2. GetMiniblockHeader() != nil - skip miniblock headers (metadata, not user events)
+//
+// Events are added to the minipool here, then removed when a miniblock is created
+// (see ApplyBlock/copyAndApplyBlock). This keeps the minipool bounded to events
+// waiting for the next miniblock.
 func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEvent) error {
+	// Skip duplicates: already in minipool or is a miniblock header
 	if ts.view.minipool.events.Has(event.Hash) || event.Event.GetMiniblockHeader() != nil {
 		return nil
 	}
 
+	// Add to minipool
 	view, err := ts.view.copyAndAddEvent(event)
 	if err != nil {
 		return err
 	}
 	ts.view = view
 
+	// Send notification for real-time event
 	return ts.SendEventNotification(ctx, event)
 }
 
