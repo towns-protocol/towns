@@ -10,6 +10,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/track_streams"
@@ -115,6 +116,8 @@ func NewNotificationStreamView(
 
 // initializeFromStream extracts only member addresses from the stream
 func (v *NotificationStreamView) initializeFromStream(ctx context.Context, stream *StreamAndCookie) error {
+	log := logging.FromCtx(ctx)
+
 	if stream == nil || stream.Snapshot == nil {
 		return RiverError(Err_STREAM_EMPTY, "no stream or snapshot").Func("initializeFromStream")
 	}
@@ -179,6 +182,9 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		for _, envelope := range mb.Events {
 			eventHash := common.BytesToHash(envelope.Hash)
 			v.seenEvents[eventHash] = struct{}{}
+			log.Infow("initializeFromStream: marked miniblock event as seen",
+				"eventHash", eventHash,
+				"streamID", v.streamID)
 		}
 	}
 
@@ -193,7 +199,16 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		// Mark event as seen to prevent duplicate notifications
 		eventHash := common.BytesToHash(event.Hash)
 		v.seenEvents[eventHash] = struct{}{}
+		log.Infow("initializeFromStream: marked minipool event as seen",
+			"eventHash", eventHash,
+			"streamID", v.streamID)
 	}
+
+	log.Infow("initializeFromStream: completed",
+		"streamID", v.streamID,
+		"totalSeenEvents", len(v.seenEvents),
+		"miniblockCount", len(stream.Miniblocks),
+		"minipoolEventCount", len(stream.Events))
 
 	return nil
 }
@@ -350,11 +365,21 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 
 // SendEventNotification processes an event and triggers notifications (was callback, now direct method)
 func (v *NotificationStreamView) SendEventNotification(ctx context.Context, event *ParsedEvent) error {
+	log := logging.FromCtx(ctx)
+
 	// Skip events that were already seen during initialization.
 	// This prevents notifications for historical events that occurred before the service started.
 	if _, seen := v.seenEvents[event.Hash]; seen {
+		log.Infow("SendEventNotification: skipping seen event",
+			"eventHash", event.Hash,
+			"streamID", v.streamID)
 		return nil
 	}
+
+	log.Infow("SendEventNotification: processing event",
+		"eventHash", event.Hash,
+		"streamID", v.streamID,
+		"totalSeenEvents", len(v.seenEvents))
 
 	// Handle user settings stream (block/unblock events)
 	if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
