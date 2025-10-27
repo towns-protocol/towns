@@ -373,22 +373,15 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 }
 
 // SendEventNotification processes an event and triggers notifications (was callback, now direct method)
+// This method does NOT check seenEvents - deduplication is handled by ApplyEvent.
+// This can be called from:
+// 1. ApplyEvent (after deduplication check)
+// 2. multi_sync_runner for historical events (controlled by applyBlocks logic)
 func (v *NotificationStreamView) SendEventNotification(ctx context.Context, event *ParsedEvent) error {
 	log := logging.FromCtx(ctx)
-
-	// Skip events that were already seen during initialization.
-	// This prevents notifications for historical events that occurred before the service started.
-	if _, seen := v.seenEvents[event.Hash]; seen {
-		log.Infow("SendEventNotification: skipping seen event",
-			"eventHash", event.Hash,
-			"streamID", v.streamID)
-		return nil
-	}
-
 	log.Infow("SendEventNotification: processing event",
 		"eventHash", event.Hash,
-		"streamID", v.streamID,
-		"totalSeenEvents", len(v.seenEvents))
+		"streamID", v.streamID)
 
 	// Handle user settings stream (block/unblock events)
 	if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
