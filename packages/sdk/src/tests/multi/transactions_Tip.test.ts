@@ -4,7 +4,12 @@
 
 import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
 import { BigNumber, ethers } from 'ethers'
-import { ETH_ADDRESS, LocalhostWeb3Provider, TipSentEventObject } from '@towns-protocol/web3'
+import {
+    ETH_ADDRESS,
+    LocalhostWeb3Provider,
+    TipSentEventObject,
+    type Address,
+} from '@towns-protocol/web3'
 import { townsEnv } from '../../townsEnv'
 import { SyncAgent } from '../../sync-agent/syncAgent'
 import { Bot } from '../../sync-agent/utils/bot'
@@ -112,7 +117,7 @@ describe('transactions_Tip', () => {
                     amount: 1000n,
                     messageId: messageId,
                     channelId: defaultChannelId,
-                    receiver: aliceIdentity.rootWallet.address,
+                    receiver: aliceIdentity.rootWallet.address as Address,
                 },
                 signer: bobIdentity.signer,
             })
@@ -153,7 +158,7 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address,
+                receiver: aliceIdentity.rootWallet.address as Address,
             },
             signer: bobIdentity.signer,
         })
@@ -415,7 +420,7 @@ describe('transactions_Tip', () => {
                 amount: 1000n,
                 messageId: messageId,
                 channelId: defaultChannelId,
-                receiver: aliceIdentity.rootWallet.address,
+                receiver: aliceIdentity.rootWallet.address as Address,
             },
             signer: bobIdentity.signer,
         })
