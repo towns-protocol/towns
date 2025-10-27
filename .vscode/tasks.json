@@ -329,7 +329,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "yarn workspace @towns-protocol/contracts build-types",
+      "command": "yarn workspace @towns-protocol/generated build-types",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
