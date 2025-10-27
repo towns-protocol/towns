@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -70,7 +69,6 @@ type NotificationStreamView struct {
 	preferences UserPreferencesStore
 
 	// Membership tracking (only thing we store from the stream)
-	mu      sync.RWMutex
 	members map[common.Address]struct{}
 
 	// Minimal tracking to replace StreamView's minipool and block tracking.
@@ -80,6 +78,10 @@ type NotificationStreamView struct {
 	seenEvents   map[common.Hash]struct{} // Event deduplication cache (mimics minipool behavior)
 	// seenEvents is pruned when blocks are applied, removing events now in the block.
 	// This mirrors how minipool is flushed during ApplyBlock, keeping memory bounded.
+	//
+	// NOTE: No mutex needed - each NotificationStreamView is accessed from a single goroutine,
+	// just like TrackedStreamViewImpl. The listener comment about thread-safety refers to the
+	// listener implementation (which receives events from multiple streams), not the view itself.
 }
 
 // NewNotificationStreamView creates a lightweight stream view optimized for notifications.
@@ -135,13 +137,11 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 
 	// Extract member addresses
 	if snapshotMembers := snapshot.GetMembers(); snapshotMembers != nil {
-		v.mu.Lock()
 		for _, member := range snapshotMembers.Joined {
 			if len(member.UserAddress) > 0 {
 				v.members[common.BytesToAddress(member.UserAddress)] = struct{}{}
 			}
 		}
-		v.mu.Unlock()
 	}
 
 	// For user settings streams, extract blocked users
@@ -174,10 +174,8 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 	// Process events in minipool and mark them as seen
 	// These are events waiting for the next miniblock, so we need to track them
 	// to avoid sending duplicate notifications if they arrive again via ApplyEvent.
-	v.mu.Lock()
 	for _, event := range stream.Events {
 		if err := v.processEventForMembership(ctx, event); err != nil {
-			v.mu.Unlock()
 			return err
 		}
 
@@ -185,12 +183,13 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		eventHash := common.BytesToHash(event.Hash)
 		v.seenEvents[eventHash] = struct{}{}
 	}
-	v.mu.Unlock()
 
 	return nil
 }
 
-// extractBlockedUsers loads blocked users from user settings snapshot
+// extractBlockedUsers loads blocked users from user settings snapshot.
+// This is idempotent - it applies the exact snapshot state by calling both
+// BlockUser and UnblockUser based on the boolean value.
 func (v *NotificationStreamView) extractBlockedUsers(
 	ctx context.Context,
 	snapshot *Snapshot,
@@ -202,6 +201,8 @@ func (v *NotificationStreamView) extractBlockedUsers(
 			for _, block := range blocks.GetBlocks() {
 				if block.GetIsBlocked() {
 					v.preferences.BlockUser(user, addr)
+				} else {
+					v.preferences.UnblockUser(user, addr)
 				}
 			}
 		}
@@ -226,9 +227,6 @@ func (v *NotificationStreamView) processEventForMembership(ctx context.Context, 
 		return nil // Skip malformed events
 	}
 
-	v.mu.Lock()
-	defer v.mu.Unlock()
-
 	// Update membership based on event type
 	if memberPayload := event.GetMemberPayload(); memberPayload != nil {
 		if membership := memberPayload.GetMembership(); membership != nil {
@@ -249,9 +247,6 @@ func (v *NotificationStreamView) processEventForMembership(ctx context.Context, 
 
 // GetChannelMembers returns the set of member addresses
 func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error) {
-	v.mu.RLock()
-	defer v.mu.RUnlock()
-
 	memberSet := mapset.NewSet[string]()
 	for addr := range v.members {
 		memberSet.Add(addr.Hex())
@@ -272,9 +267,6 @@ func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error)
 // This mirrors how the old implementation's minipool is flushed when a block is created,
 // keeping memory bounded to events waiting for the next block (~10-100 events typically).
 func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Envelope) error {
-	v.mu.Lock()
-	defer v.mu.Unlock()
-
 	// Extract block number and check for duplicates
 	if headerEnvelope := miniblock.GetHeader(); headerEnvelope != nil {
 		var headerEvent StreamEvent
@@ -317,13 +309,10 @@ func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Enve
 func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envelope) error {
 	eventHash := common.BytesToHash(envelope.Hash)
 
-	v.mu.Lock()
 	// Skip if we've already seen this event (deduplication)
 	if _, seen := v.seenEvents[eventHash]; seen {
-		v.mu.Unlock()
 		return nil
 	}
-	v.mu.Unlock()
 
 	// Parse the event
 	parsed, err := ParseEvent(envelope)
@@ -333,16 +322,12 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 
 	// Skip miniblock headers - these are metadata events, not user events
 	if parsed.Event.GetMiniblockHeader() != nil {
-		v.mu.Lock()
 		v.seenEvents[eventHash] = struct{}{}
-		v.mu.Unlock()
 		return v.processEventForMembership(ctx, envelope)
 	}
 
 	// Mark event as seen before processing (add to cache)
-	v.mu.Lock()
 	v.seenEvents[eventHash] = struct{}{}
-	v.mu.Unlock()
 
 	// Update membership
 	if err := v.processEventForMembership(ctx, envelope); err != nil {
@@ -389,7 +374,5 @@ func (v *NotificationStreamView) StreamID() shared.StreamId {
 
 // MemberCount returns the current number of members (useful for metrics)
 func (v *NotificationStreamView) MemberCount() int {
-	v.mu.RLock()
-	defer v.mu.RUnlock()
 	return len(v.members)
 }
