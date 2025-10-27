@@ -26,7 +26,12 @@ import { SpaceInfo } from '../types/types'
 import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
-import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils/ut'
+import {
+    EVERYONE_ADDRESS,
+    stringifyChannelMetadataJSON,
+    NoEntitledWalletError,
+    ETH_ADDRESS,
+} from '../utils/ut'
 import { IRolesBase } from '../space/IRolesShim'
 import { Space } from '../space/Space'
 import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
@@ -1969,7 +1974,10 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
             signer,
             functionName: 'sendTip',
             args: [recipientType, encodedData],
-            value: args.tipParams.amount,
+            value:
+                tipParams.currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
+                    ? tipParams.amount
+                    : undefined,
             overrideExecution,
             transactionOpts: txnOpts,
         })
