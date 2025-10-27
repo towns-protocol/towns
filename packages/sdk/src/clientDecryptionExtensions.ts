@@ -53,7 +53,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
             if (userId === this.userId) {
-                this.retryDecryptionFailures(streamId)
+                this.retryKeySolicitations(streamId)
             }
         }
 
