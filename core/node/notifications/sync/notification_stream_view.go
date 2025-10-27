@@ -146,7 +146,10 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 
 	// For user settings streams, extract blocked users
 	if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
-		user := common.BytesToAddress(v.streamID[1:21])
+		user, err := shared.GetUserAddressFromStreamId(v.streamID)
+		if err != nil {
+			return err
+		}
 		if err := v.extractBlockedUsers(ctx, &snapshot, user); err != nil {
 			return err
 		}
@@ -168,6 +171,14 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 					}
 				}
 			}
+		}
+
+		// Mark all events in this miniblock as seen to prevent notifications
+		// for historical events when SendEventNotification is called during
+		// cold stream processing with ApplyHistoricalContent.Enabled=true
+		for _, envelope := range mb.Events {
+			eventHash := common.BytesToHash(envelope.Hash)
+			v.seenEvents[eventHash] = struct{}{}
 		}
 	}
 
@@ -320,14 +331,13 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 		return err
 	}
 
-	// Skip miniblock headers - these are metadata events, not user events
-	if parsed.Event.GetMiniblockHeader() != nil {
-		v.seenEvents[eventHash] = struct{}{}
-		return v.processEventForMembership(ctx, envelope)
-	}
-
 	// Mark event as seen before processing (add to cache)
 	v.seenEvents[eventHash] = struct{}{}
+
+	// Skip miniblock headers - these are metadata events, not user events
+	if parsed.Event.GetMiniblockHeader() != nil {
+		return v.processEventForMembership(ctx, envelope)
+	}
 
 	// Update membership
 	if err := v.processEventForMembership(ctx, envelope); err != nil {
@@ -340,6 +350,12 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 
 // SendEventNotification processes an event and triggers notifications (was callback, now direct method)
 func (v *NotificationStreamView) SendEventNotification(ctx context.Context, event *ParsedEvent) error {
+	// Skip events that were already seen during initialization.
+	// This prevents notifications for historical events that occurred before the service started.
+	if _, seen := v.seenEvents[event.Hash]; seen {
+		return nil
+	}
+
 	// Handle user settings stream (block/unblock events)
 	if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
 		if settings := event.Event.GetUserSettingsPayload(); settings != nil {
