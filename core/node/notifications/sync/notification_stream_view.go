@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/ethereum/go-ethereum/common"
@@ -70,8 +69,19 @@ type NotificationStreamView struct {
 	preferences UserPreferencesStore
 
 	// Membership tracking (only thing we store from the stream)
-	mu      sync.RWMutex
 	members map[common.Address]struct{}
+
+	// Minimal tracking to replace StreamView's minipool and block tracking.
+	// These fields enable the same deduplication guarantees as TrackedStreamViewImpl
+	// without storing the full StreamView (blocks, minipool, snapshot).
+	lastBlockNum int64                    // Last processed block number (for block deduplication)
+	seenEvents   map[common.Hash]struct{} // Event deduplication cache (mimics minipool behavior)
+	// seenEvents is pruned when blocks are applied, removing events now in the block.
+	// This mirrors how minipool is flushed during ApplyBlock, keeping memory bounded.
+	//
+	// NOTE: No mutex needed - each NotificationStreamView is accessed from a single goroutine,
+	// just like TrackedStreamViewImpl. The listener comment about thread-safety refers to the
+	// listener implementation (which receives events from multiple streams), not the view itself.
 }
 
 // NewNotificationStreamView creates a lightweight stream view optimized for notifications.
@@ -86,14 +96,16 @@ func NewNotificationStreamView(
 	preferences UserPreferencesStore,
 ) (*NotificationStreamView, error) {
 	view := &NotificationStreamView{
-		streamID:    streamID,
-		cfg:         cfg,
-		listener:    listener,
-		preferences: preferences,
-		members:     make(map[common.Address]struct{}),
+		streamID:     streamID,
+		cfg:          cfg,
+		listener:     listener,
+		preferences:  preferences,
+		members:      make(map[common.Address]struct{}),
+		seenEvents:   make(map[common.Hash]struct{}),
+		lastBlockNum: -1, // Start at -1, will be updated during initialization
 	}
 
-	// Extract member data from snapshot without storing full snapshot
+	// Extract member data and initialize tracking state from stream
 	if err := view.initializeFromStream(ctx, stream); err != nil {
 		return nil, err
 	}
@@ -125,13 +137,11 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 
 	// Extract member addresses
 	if snapshotMembers := snapshot.GetMembers(); snapshotMembers != nil {
-		v.mu.Lock()
 		for _, member := range snapshotMembers.Joined {
 			if len(member.UserAddress) > 0 {
 				v.members[common.BytesToAddress(member.UserAddress)] = struct{}{}
 			}
 		}
-		v.mu.Unlock()
 	}
 
 	// For user settings streams, extract blocked users
@@ -142,24 +152,44 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		}
 	}
 
-	// Process miniblocks to update membership
+	// Process miniblocks to update membership and track last block number
 	for _, mb := range stream.Miniblocks {
 		if err := v.processMiniblockForMembership(ctx, mb); err != nil {
 			return err
 		}
+
+		// Track the last block number we've processed
+		if headerEnvelope := mb.GetHeader(); headerEnvelope != nil {
+			var headerEvent StreamEvent
+			if err := proto.Unmarshal(headerEnvelope.Event, &headerEvent); err == nil {
+				if mbHeader := headerEvent.GetMiniblockHeader(); mbHeader != nil {
+					if mbHeader.MiniblockNum > v.lastBlockNum {
+						v.lastBlockNum = mbHeader.MiniblockNum
+					}
+				}
+			}
+		}
 	}
 
-	// Process events in minipool
+	// Process events in minipool and mark them as seen
+	// These are events waiting for the next miniblock, so we need to track them
+	// to avoid sending duplicate notifications if they arrive again via ApplyEvent.
 	for _, event := range stream.Events {
 		if err := v.processEventForMembership(ctx, event); err != nil {
 			return err
 		}
+
+		// Mark event as seen to prevent duplicate notifications
+		eventHash := common.BytesToHash(event.Hash)
+		v.seenEvents[eventHash] = struct{}{}
 	}
 
 	return nil
 }
 
-// extractBlockedUsers loads blocked users from user settings snapshot
+// extractBlockedUsers loads blocked users from user settings snapshot.
+// This is idempotent - it applies the exact snapshot state by calling both
+// BlockUser and UnblockUser based on the boolean value.
 func (v *NotificationStreamView) extractBlockedUsers(
 	ctx context.Context,
 	snapshot *Snapshot,
@@ -171,6 +201,8 @@ func (v *NotificationStreamView) extractBlockedUsers(
 			for _, block := range blocks.GetBlocks() {
 				if block.GetIsBlocked() {
 					v.preferences.BlockUser(user, addr)
+				} else {
+					v.preferences.UnblockUser(user, addr)
 				}
 			}
 		}
@@ -195,9 +227,6 @@ func (v *NotificationStreamView) processEventForMembership(ctx context.Context, 
 		return nil // Skip malformed events
 	}
 
-	v.mu.Lock()
-	defer v.mu.Unlock()
-
 	// Update membership based on event type
 	if memberPayload := event.GetMemberPayload(); memberPayload != nil {
 		if membership := memberPayload.GetMembership(); membership != nil {
@@ -218,9 +247,6 @@ func (v *NotificationStreamView) processEventForMembership(ctx context.Context, 
 
 // GetChannelMembers returns the set of member addresses
 func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error) {
-	v.mu.RLock()
-	defer v.mu.RUnlock()
-
 	memberSet := mapset.NewSet[string]()
 	for addr := range v.members {
 		memberSet.Add(addr.Hex())
@@ -229,25 +255,86 @@ func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error)
 	return memberSet, nil
 }
 
-// ApplyBlock processes a new miniblock and updates membership
+// ApplyBlock processes a new miniblock and updates membership.
+//
+// IMPORTANT: This does NOT send notifications. Miniblocks contain historical events
+// that were already notified when they arrived via ApplyEvent. Only ApplyEvent sends
+// notifications for real-time events.
+//
+// Deduplication: Skips blocks we've already processed by comparing block numbers.
+//
+// Cache pruning: Removes events from seenEvents cache that are now in the block.
+// This mirrors how the old implementation's minipool is flushed when a block is created,
+// keeping memory bounded to events waiting for the next block (~10-100 events typically).
 func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Envelope) error {
-	return v.processMiniblockForMembership(context.Background(), miniblock)
+	// Extract block number and check for duplicates
+	if headerEnvelope := miniblock.GetHeader(); headerEnvelope != nil {
+		var headerEvent StreamEvent
+		if err := proto.Unmarshal(headerEnvelope.Event, &headerEvent); err == nil {
+			if mbHeader := headerEvent.GetMiniblockHeader(); mbHeader != nil {
+				blockNum := mbHeader.MiniblockNum
+
+				// Skip if we've already processed this block (deduplication)
+				if blockNum <= v.lastBlockNum {
+					return nil
+				}
+
+				v.lastBlockNum = blockNum
+			}
+		}
+	}
+
+	// Prune seenEvents cache: remove events now in the block
+	// This mirrors the minipool flush behavior in TrackedStreamViewImpl.
+	// Events transition from minipool → block, so we remove them from our cache.
+	for _, envelope := range miniblock.Events {
+		eventHash := common.BytesToHash(envelope.Hash)
+		delete(v.seenEvents, eventHash)
+	}
+
+	// Update membership only - no notifications for historical events
+	ctx := context.TODO()
+	return v.processMiniblockForMembership(ctx, miniblock)
 }
 
-// ApplyEvent processes a new event, updates membership, and triggers notifications
+// ApplyEvent processes a new real-time event and sends notifications.
+// This is the ONLY place where notifications are sent.
+//
+// Deduplication strategy (matches TrackedStreamViewImpl.addEvent):
+// 1. Check seenEvents cache - skip if already processed
+// 2. Check for miniblock headers - skip metadata events
+// 3. Mark event as seen before processing
+//
+// The seenEvents cache is pruned when blocks are applied, keeping it bounded.
 func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envelope) error {
-	// Parse the event for notifications
+	eventHash := common.BytesToHash(envelope.Hash)
+
+	// Skip if we've already seen this event (deduplication)
+	if _, seen := v.seenEvents[eventHash]; seen {
+		return nil
+	}
+
+	// Parse the event
 	parsed, err := ParseEvent(envelope)
 	if err != nil {
 		return err
 	}
 
-	// Update membership first
+	// Skip miniblock headers - these are metadata events, not user events
+	if parsed.Event.GetMiniblockHeader() != nil {
+		v.seenEvents[eventHash] = struct{}{}
+		return v.processEventForMembership(ctx, envelope)
+	}
+
+	// Mark event as seen before processing (add to cache)
+	v.seenEvents[eventHash] = struct{}{}
+
+	// Update membership
 	if err := v.processEventForMembership(ctx, envelope); err != nil {
 		return err
 	}
 
-	// Then send notification
+	// Send notification for real-time event
 	return v.SendEventNotification(ctx, parsed)
 }
 
@@ -287,7 +374,5 @@ func (v *NotificationStreamView) StreamID() shared.StreamId {
 
 // MemberCount returns the current number of members (useful for metrics)
 func (v *NotificationStreamView) MemberCount() int {
-	v.mu.RLock()
-	defer v.mu.RUnlock()
 	return len(v.members)
 }
