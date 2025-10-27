@@ -9,7 +9,8 @@ The bot exposes `viem` client and app address for direct blockchain interactions
 - `bot.appAddress` - The bot's app contract address (SimpleAccount)
 
 <Note>
-Your bot's SimpleAccount address requires gas to execute transactions. Make sure to fund it with ETH on Base.
+Your bot client wallet will need to be funded with Base ETH to execute transactions.
+You receive the wallet credentials after creating your bot. 
 </Note>
 
 ## Reading from Contracts
@@ -21,7 +22,7 @@ import { readContract } from 'viem/actions'
 
 // Read from any contract
 const balance = await readContract(bot.viem, {
-  address: tokenAddress,
+  address: '0x00000000A22C618fd6b4D7E9A335C4B96B189a38',
   abi: erc20Abi,
   functionName: 'balanceOf',
   args: [userAddress]
@@ -101,36 +102,7 @@ const hash = await executeBatch(bot.viem, {
 
 ### writeContract
 
-Use `writeContract` **only** for your bot's SimpleAccount contract operations.
-
-To send ETH or ERC20 tokens, use `execute` with the recipient address as `to` and the amount as `value`:
-
-```ts
-import { execute } from 'viem/experimental/erc7821'
-import { parseEther } from 'viem'
-
-// Send ETH
-const hash = await execute(bot.viem, {
-  address: bot.appAddress,
-  account: bot.viem.account,
-  calls: [{
-    to: recipientAddress,
-    value: parseEther('0.1')
-  }]
-})
-
-// Send ERC20
-const hash = await execute(bot.viem, {
-  address: bot.appAddress,
-  account: bot.viem.account,
-  calls: [{
-    to: tokenAddress,
-    abi: erc20Abi,
-    functionName: 'transfer',
-    args: [recipientAddress, amount]
-  }]
-})
-```
+Use `writeContract` **only** for your bot's own contract operations. Can be helpful if you have a custom contract for your bot.
 
 ## Error Handling
 
