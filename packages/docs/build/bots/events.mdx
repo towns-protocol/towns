@@ -6,6 +6,10 @@ This guide covers what you need to know about events and how to handle them in y
 
 - [Event anatomy](#event-anatomy)
 - [Event listeners](#event-listeners)
+- [Sending events](#sending-events)
+- [Permissions](#permissions)
+- [Moderation](#moderation)
+- [Snapshot data](#snapshot-data)
 
 ## Event Anatomy
 
@@ -36,10 +40,13 @@ Fires when a message is sent in a channel the bot is in (subject to forwarding s
 
 ### onSlashCommand
 
-Fires when a user invokes one of your bot's slash commands. For more information about slash commands, see the [Slash Commands guide](/build/bot/slash-commands).
+Fires when a user invokes one of your bot's slash commands. For more information about slash commands, see the [Slash Commands guide](/build/bots/slash-commands).
 
 - `command`: The name of the command invoked by the user.
 - `args`: The arguments passed to the command.
+- `mentions`: List of users mentioned in the command.
+- `replyId`: The message being replied to (if any).
+- `threadId`: The thread context (if any).
 
 ### onReaction
 
@@ -48,13 +55,18 @@ You only get the `reaction` and `messageId` - not the message content! Store mes
 </Warning>
 
 - `reaction`: The reaction emoji.
-- `refEventId`: The `eventId` of the message being reacted to.
+- `messageId`: The `eventId` of the message being reacted to.
 
 ### onMessageEdit
 
+Fires when a message is edited.
 
 - `message`: The new message content.
 - `refEventId`: The `eventId` of the message being edited.
+- `replyId`: If the edited message was a reply.
+- `threadId`: If the edited message was in a thread.
+- `mentions`: Array of mentioned users in the edited message.
+- `isMentioned`: True if the bot is mentioned in the edited message.
 
 ### onRedaction
 
@@ -217,4 +229,76 @@ await bot.adminRemoveEvent(channelId, eventId)
 - `eventId`: The `eventId` of the event to remove.
 
 Returns the `eventId` of the redaction event.
+
+## Permissions
+
+Bots can check user permissions before executing sensitive operations.
+
+### hasAdminPermission
+
+Check if a user has admin permission.
+
+```ts
+const isAdmin = await handler.hasAdminPermission(userId, spaceId)
+```
+
+### checkPermission
+
+Check if a user has a specific permission.
+
+```ts
+const hasPermission = await handler.checkPermission(streamId, userId, permission)
+```
+
+## Moderation
+
+Bots can perform moderation actions if they have the `ModifyBanning` permission.
+
+### ban
+
+Ban a user from a space.
+
+```ts
+await handler.ban(userId, spaceId)
+```
+
+### unban
+
+Unban a user from a space.
+
+```ts
+await handler.unban(userId, spaceId)
+```
+
+## Snapshot Data
+
+Bots have access to snapshot data for reading channel settings and membership information.
+
+<Warning>
+Snapshot data may not reflect the latest state. It's cached and updated periodically.
+</Warning>
+
+### getChannelInception
+
+Get channel settings and inception data.
+
+```ts
+const channelData = await bot.snapshot.getChannelInception(streamId)
+```
+
+### getUserMemberships
+
+Get a user's space memberships.
+
+```ts
+const memberships = await bot.snapshot.getUserMemberships(userId)
+```
+
+### getSpaceMemberships
+
+Get all members of a space.
+
+```ts
+const members = await bot.snapshot.getSpaceMemberships(spaceId)
+```
 

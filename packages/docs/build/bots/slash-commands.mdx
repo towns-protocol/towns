@@ -165,8 +165,19 @@ bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions
 })
 ```
 
+## Updating Commands
+
+Commands are automatically synced with Towns when your bot starts. 
+
+To update your bot's slash commands:
+
+1. Modify your command definitions in `src/commands.ts`
+2. Restart your bot
+
+The new commands will be automatically registered and appear in Towns' autocomplete.
+
 ## Next Steps
 
-- Learn about [handling other events](/build/bot/events)
-- Explore [message formatting and attachments](/build/bot/events#message-formatting)
-- See [permission-based features](/build/bot/events#permissions)
+- Learn about [handling other events](/build/bots/events)
+- Explore [message formatting and attachments](/build/bots/events#sending-attachments)
+- See [permission-based features](/build/bots/events#permissions)
