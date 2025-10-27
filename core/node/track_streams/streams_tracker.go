@@ -259,18 +259,33 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	ctx context.Context,
 	event *river.StreamMiniblockUpdate,
 ) {
+	log := logging.FromCtx(ctx)
+	log.Infow("OnStreamLastMiniblockUpdated: called",
+		"streamId", event.GetStreamId(),
+		"lastMiniblockHash", event.LastMiniblockHash)
+
 	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
+		log.Infow("OnStreamLastMiniblockUpdated: stream filtered out (not tracked)",
+			"streamId", event.GetStreamId())
 		return
 	}
+
+	log.Infow("OnStreamLastMiniblockUpdated: adding stream",
+		"streamId", event.GetStreamId(),
+		"fromMiniblockHash", event.LastMiniblockHash)
+
 	added, err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]})
 	if err != nil {
-		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
+		log.Errorw("Failed to add stream on miniblock update",
 			"streamId", event.GetStreamId(),
 			"error", err)
 		return
 	}
 	if added {
-		logging.FromCtx(ctx).Infow("Added stream on miniblock update", "streamId", event.GetStreamId())
+		log.Infow("Added stream on miniblock update", "streamId", event.GetStreamId())
+	} else {
+		log.Infow("OnStreamLastMiniblockUpdated: stream already added (not new)",
+			"streamId", event.GetStreamId())
 	}
 }
 

@@ -93,6 +93,8 @@ func NewService(
 func (s *Service) Start(ctx context.Context) {
 	log := logging.FromCtx(ctx)
 
+	log.Infow("Notification service Start: launching tracker goroutine")
+
 	go func() {
 		for {
 			log.Infow("Start notification streams tracker")
@@ -103,8 +105,10 @@ func (s *Service) Start(ctx context.Context) {
 
 			select {
 			case <-time.After(10 * time.Second):
+				log.Infow("Notification streams tracker restarting after error")
 				continue
 			case <-ctx.Done():
+				log.Infow("Notification streams tracker stopping (context done)")
 				return
 			}
 		}
