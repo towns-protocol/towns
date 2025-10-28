@@ -65,25 +65,51 @@ export class AppRegistryDapp {
         receipt: ContractReceipt,
         senderAddress: Address,
     ): Promise<AppCreatedEventObject> {
-        for (const log of receipt.logs) {
-            try {
-                const parsedLog = this.factory.interface.parseLog(log)
-                if (parsedLog.name === 'AppCreated') {
-                    const app = await this.getAppById(parsedLog.args.uid as string)
-                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
-                    if (!isOwner) {
-                        continue
+        const appCreatedEvents = receipt.logs
+            .map((log) => {
+                try {
+                    const parsedLog = this.factory.interface.parseLog(log)
+                    if (parsedLog.name === 'AppCreated') {
+                        return {
+                            app: parsedLog.args.app,
+                            uid: parsedLog.args.uid,
+                        } satisfies AppCreatedEventObject
                     }
-                    return {
-                        app: parsedLog.args.app,
-                        uid: parsedLog.args.uid,
-                    } satisfies AppCreatedEventObject
+                } catch {
+                    // no need for error, this log is not from the contract we're interested in
                 }
-            } catch {
-                // no need for error, this log is not from the contract we're interested in
-            }
+                return undefined
+            })
+            .filter((x) => x !== undefined)
+
+        if (appCreatedEvents.length === 0) {
+            throw new Error('No app created event found')
         }
-        return { app: '', uid: '' }
+        if (appCreatedEvents.length === 1) {
+            return appCreatedEvents[0]
+        }
+        // more than one app created event found, we need to check if the sender is the owner of the app
+        let lastError: Error | undefined = undefined
+        let numRetires = 3
+        while (numRetires > 0) {
+            for (const event of appCreatedEvents) {
+                try {
+                    const app = await this.getAppById(event.uid as string)
+                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
+                    if (isOwner) {
+                        return event
+                    }
+                } catch (error) {
+                    lastError = error as Error
+                }
+            }
+            numRetires--
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+        if (lastError) {
+            throw lastError
+        }
+        throw new Error('No app created event with owner found')
     }
 
     public async getRegisterAppEvent(
