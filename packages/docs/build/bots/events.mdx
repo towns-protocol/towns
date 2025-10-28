@@ -270,6 +270,49 @@ await bot.adminRemoveEvent(channelId, eventId)
 
 Returns the `eventId` of the redaction event.
 
+### sendTip
+
+Send a cryptocurrency tip to a user on a message.
+
+<Note>
+Your bot client wallet will need to be funded with Base ETH to pay for gas fee transactions.
+The bot app account wallet will need to be funded with Base ETH to send tips.
+</Note>
+
+```ts
+import { parseEther } from 'viem'
+
+await bot.sendTip({
+  userId,
+  messageId,
+  channelId,
+  amount: parseEther('0.001')
+})
+```
+
+- `userId`: The user to tip
+- `messageId`: The `eventId` of the message to tip
+- `channelId`: The channel containing the message
+- `amount`: The tip amount in wei 
+
+Returns the `eventId` of the tip event.
+
+Example - tip users for helpful messages:
+
+```ts
+bot.onMessage(async (handler, { channelId, eventId, userId, message }) => {
+  const shouldTip = checkIfDeserveTip(message)
+  if (shouldTip) {
+    await handler.sendTip({
+      userId,
+      amount: parseEther('0.001'),
+      messageId: eventId,
+      channelId
+    })
+  }
+})
+```
+
 ## Permissions
 
 Bots can check user permissions before executing sensitive operations.
@@ -298,6 +341,11 @@ Bots can perform moderation actions if they have the `ModifyBanning` permission.
 
 Ban a user from a space.
 
+<Note>
+Your bot client wallet will need to be funded with Base ETH to pay for gas fee banning transactions.
+You receive the wallet credentials after creating your bot.
+</Note>
+
 ```ts
 await handler.ban(userId, spaceId)
 ```
@@ -305,6 +353,11 @@ await handler.ban(userId, spaceId)
 ### unban
 
 Unban a user from a space.
+
+<Note>
+Your bot client wallet will need to be funded with Base ETH to pay for gas fee unbanning transactions.
+You receive the wallet credentials after creating your bot.
+</Note>
 
 ```ts
 await handler.unban(userId, spaceId)
