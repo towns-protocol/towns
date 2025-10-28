@@ -30,10 +30,10 @@ export class GroupEncryption extends EncryptionAlgorithm {
     public async ensureOutboundSession(
         streamId: string,
         opts?: EnsureOutboundSessionOpts,
-    ): Promise<void> {
+    ): Promise<string> {
         try {
-            await this.device.getOutboundGroupSessionKey(streamId)
-            return
+            const sessionKey = await this.device.getOutboundGroupSessionKey(streamId)
+            return sessionKey.sessionId
         } catch (error) {
             // if we don't have a cached session at this point, create a new one
             const sessionId = await this.device.createOutboundGroupSession(streamId)
@@ -53,6 +53,7 @@ export class GroupEncryption extends EncryptionAlgorithm {
                     ),
                 ])
             }
+            return sessionId
         }
     }
 
