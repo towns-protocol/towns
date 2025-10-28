@@ -49,7 +49,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -146,7 +149,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -257,7 +263,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -323,7 +332,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -456,7 +468,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -564,7 +579,10 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         const everyoneMembership = await everyoneMembershipStruct(carolSpaceDapp, carol)
