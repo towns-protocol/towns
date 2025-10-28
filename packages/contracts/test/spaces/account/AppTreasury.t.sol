@@ -9,7 +9,6 @@ import {AppAccountBaseTest} from "test/spaces/account/AppAccountBase.t.sol";
 // contracts
 import {MockSimpleApp} from "test/mocks/MockSimpleApp.sol";
 import {MockERC20} from "test/mocks/MockERC20.sol";
-import {console} from "forge-std/console.sol";
 
 contract AppTreasuryTest is AppAccountBaseTest {
     function test_requestFunds() external {

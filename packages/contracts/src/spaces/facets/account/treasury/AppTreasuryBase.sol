@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {IAppTreasuryBase} from "./IAppTreasury.sol";
 
 // libraries
-import {AppTreasuryStorage} from "./AppTreasuryStorage.sol";
+import {AppTreasuryStorage, StreamConfig, VoucherConfig, CircuitBreaker, Voucher, VoucherStatus} from "./AppTreasuryStorage.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {ExecutorStorage} from "../../executor/ExecutorStorage.sol";
@@ -41,8 +41,10 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function _withdrawFromStream(address app, address currency, uint256 amount) internal {
+        if (_isCircuitBreakerTripped(currency)) AppTreasury__TreasuryPaused.selector.revertWith();
+
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.StreamConfig storage stream = $.streams[app][currency];
+        StreamConfig storage stream = $.streams[app][currency];
 
         if (!stream.active) AppTreasury__StreamNotActive.selector.revertWith();
 
@@ -61,7 +63,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         if (flowRate == 0) AppTreasury__InvalidFlowRate.selector.revertWith();
 
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.StreamConfig storage stream = $.streams[app][currency];
+        StreamConfig storage stream = $.streams[app][currency];
 
         if (stream.active) stream.balance = _calculateStreamBalance(stream);
 
@@ -73,9 +75,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
     }
 
     function _getStreamBalance(address app, address currency) internal view returns (uint256) {
-        AppTreasuryStorage.StreamConfig memory stream = AppTreasuryStorage.getLayout().streams[app][
-            currency
-        ];
+        StreamConfig storage stream = AppTreasuryStorage.getLayout().streams[app][currency];
 
         if (!stream.active) return 0;
         return _calculateStreamBalance(stream);
@@ -83,7 +83,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _pauseStream(address app, address currency) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.StreamConfig storage stream = $.streams[app][currency];
+        StreamConfig storage stream = $.streams[app][currency];
 
         if (stream.active) {
             // Accumulate balance before pausing
@@ -95,7 +95,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _resumeStream(address app, address currency) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.StreamConfig storage stream = $.streams[app][currency];
+        StreamConfig storage stream = $.streams[app][currency];
 
         if (stream.flowRatePerSecond > 0) {
             stream.active = true;
@@ -104,15 +104,14 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         }
     }
 
-    function _calculateStreamBalance(
-        AppTreasuryStorage.StreamConfig memory stream
-    ) internal view returns (uint256) {
+    function _calculateStreamBalance(StreamConfig storage stream) internal view returns (uint256) {
         if (!stream.active) return stream.balance;
 
         uint256 elapsed = block.timestamp - stream.lastWithdrawal;
         uint256 accumulated = elapsed * stream.flowRatePerSecond;
+        uint256 balance = stream.balance + accumulated;
 
-        return stream.balance + accumulated;
+        return balance > stream.maxBalance ? stream.maxBalance : balance;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -125,7 +124,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         uint256 cooldown
     ) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        $.circuitBreakers[currency] = AppTreasuryStorage.CircuitBreaker({
+        $.circuitBreakers[currency] = CircuitBreaker({
             limit: limit,
             windowInSeconds: window,
             windowStart: block.timestamp,
@@ -139,7 +138,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _updateCircuitBreaker(address currency, uint256 amount) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.CircuitBreaker storage breaker = $.circuitBreakers[currency];
+        CircuitBreaker storage breaker = $.circuitBreakers[currency];
 
         if (breaker.limit == 0) return; // Not configured
 
@@ -161,7 +160,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _resetCircuitBreaker(address currency) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.CircuitBreaker storage breaker = $.circuitBreakers[currency];
+        CircuitBreaker storage breaker = $.circuitBreakers[currency];
 
         breaker.pausedUntil = 0;
         breaker.withdrawn = 0;
@@ -171,9 +170,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
     }
 
     function _isCircuitBreakerTripped(address currency) internal view returns (bool) {
-        AppTreasuryStorage.CircuitBreaker memory breaker = AppTreasuryStorage
-            .getLayout()
-            .circuitBreakers[currency];
+        CircuitBreaker memory breaker = AppTreasuryStorage.getLayout().circuitBreakers[currency];
 
         return breaker.pausedUntil > block.timestamp;
     }
@@ -186,7 +183,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         address currency,
         uint256 amount
     ) internal returns (bytes32 voucherId) {
-        AppTreasuryStorage.VoucherConfig storage $v = AppTreasuryStorage.voucherConfig();
+        VoucherConfig storage $v = AppTreasuryStorage.voucherConfig();
 
         // Check rate limits
         if (_needsNewVoucherPeriod(app, $v)) {
@@ -211,16 +208,14 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
             ? DEFAULT_VOUCHER_EXPIRY
             : $v.defaultVoucherExpiry;
 
-        AppTreasuryStorage.Voucher storage voucher = AppTreasuryStorage.getLayout().vouchers[
-            voucherId
-        ];
+        Voucher storage voucher = AppTreasuryStorage.getLayout().vouchers[voucherId];
 
         voucher.app = app;
         voucher.currency = currency;
         voucher.amount = amount;
         voucher.createdAt = block.timestamp;
         voucher.expiresAt = block.timestamp + expiry;
-        voucher.status = AppTreasuryStorage.VoucherStatus.Pending;
+        voucher.status = VoucherStatus.Pending;
         voucher.executionId = ExecutorStorage.getExecutionId();
 
         $v.vouchersCreatedThisPeriod[app]++;
@@ -230,36 +225,36 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _approveVoucher(bytes32 voucherId) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.Voucher storage voucher = $.vouchers[voucherId];
+        Voucher storage voucher = $.vouchers[voucherId];
 
-        if (voucher.status != AppTreasuryStorage.VoucherStatus.Pending) {
+        if (voucher.status != VoucherStatus.Pending) {
             AppTreasury__InvalidVoucher.selector.revertWith();
         }
 
         if (block.timestamp > voucher.expiresAt) {
-            voucher.status = AppTreasuryStorage.VoucherStatus.Expired;
+            voucher.status = VoucherStatus.Expired;
             AppTreasury__VoucherExpired.selector.revertWith();
         }
 
-        voucher.status = AppTreasuryStorage.VoucherStatus.Approved;
+        voucher.status = VoucherStatus.Approved;
         emit VoucherApproved(voucherId, msg.sender);
     }
 
     function _claimVoucher(bytes32 voucherId) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.Voucher storage voucher = $.vouchers[voucherId];
+        Voucher storage voucher = $.vouchers[voucherId];
 
         if (_isCircuitBreakerTripped(voucher.currency))
             AppTreasury__TreasuryPaused.selector.revertWith();
         if (voucher.app != msg.sender) AppTreasury__UnauthorizedClaim.selector.revertWith();
-        if (voucher.status != AppTreasuryStorage.VoucherStatus.Approved)
+        if (voucher.status != VoucherStatus.Approved)
             AppTreasury__InvalidVoucher.selector.revertWith();
         if (block.timestamp > voucher.expiresAt) {
-            voucher.status = AppTreasuryStorage.VoucherStatus.Expired;
+            voucher.status = VoucherStatus.Expired;
             AppTreasury__VoucherExpired.selector.revertWith();
         }
 
-        voucher.status = AppTreasuryStorage.VoucherStatus.Claimed;
+        voucher.status = VoucherStatus.Claimed;
 
         _updateCircuitBreaker(voucher.currency, voucher.amount);
 
@@ -275,13 +270,10 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _cancelVoucher(bytes32 voucherId) internal {
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
-        AppTreasuryStorage.Voucher storage voucher = $.vouchers[voucherId];
+        Voucher storage voucher = $.vouchers[voucherId];
 
-        if (
-            voucher.status == AppTreasuryStorage.VoucherStatus.Pending ||
-            voucher.status == AppTreasuryStorage.VoucherStatus.Approved
-        ) {
-            voucher.status = AppTreasuryStorage.VoucherStatus.Cancelled;
+        if (voucher.status == VoucherStatus.Pending || voucher.status == VoucherStatus.Approved) {
+            voucher.status = VoucherStatus.Cancelled;
             emit VoucherCancelled(voucherId, voucher.app, voucher.amount);
         } else {
             AppTreasury__InvalidVoucher.selector.revertWith();
@@ -290,7 +282,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
 
     function _needsNewVoucherPeriod(
         address app,
-        AppTreasuryStorage.VoucherConfig storage $
+        VoucherConfig storage $
     ) internal view returns (bool) {
         uint256 periodDuration = $.voucherPeriodDuration == 0
             ? DEFAULT_VOUCHER_PERIOD

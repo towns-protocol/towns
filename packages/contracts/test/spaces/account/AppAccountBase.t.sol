@@ -8,7 +8,6 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccountBase} from "src/spaces/facets/account/IAppAccount.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
-import {ISimpleApp} from "src/apps/helpers/ISimpleApp.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 
@@ -21,8 +20,8 @@ import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {AppTreasuryFacet} from "src/spaces/facets/account/treasury/AppTreasuryFacet.sol";
 import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {MockSimpleApp} from "test/mocks/MockSimpleApp.sol";
-import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {AppInstallerFacet} from "src/apps/facets/installer/AppInstallerFacet.sol";
 
 abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
     AppAccount internal appAccount;
@@ -59,10 +58,10 @@ abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase
                         new ERC1967Proxy(
                             address(mockSimpleAppV1),
                             abi.encodeCall(
-                                SimpleApp.initialize,
-                                (
-                                    owner,
-                                    "mockSimpleApp",
+                                ITownsApp.initialize,
+                                abi.encode(
+                                    msg.sender,
+                                    "simple.app",
                                     permissions,
                                     DEFAULT_INSTALL_PRICE,
                                     DEFAULT_ACCESS_DURATION
@@ -86,7 +85,7 @@ abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase
     function _installAppAs(address _owner, ITownsApp _app) internal {
         uint256 totalRequired = registry.getAppPrice(address(_app));
         hoax(_owner, totalRequired);
-        registry.installApp{value: totalRequired}(_app, appAccount, "");
+        AppInstallerFacet(appRegistry).installApp{value: totalRequired}(_app, appAccount, "");
     }
 
     function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
