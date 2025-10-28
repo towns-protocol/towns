@@ -12,7 +12,7 @@
     "dependencies": {
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
-        "dotenv": "^16.4.7",
+        "dotenv": "^17.2.3",
         "esbuild-plugin-pino": "^2.2.0",
         "pino": "^9.0.0",
         "pino-pretty": "^13.0.0",

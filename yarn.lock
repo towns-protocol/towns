@@ -10554,7 +10554,7 @@ __metadata:
     "@typescript-eslint/parser": ^8.29.0
     axios: ^1.9.0
     dd-trace: ^5.19.0
-    dotenv: ^16.4.7
+    dotenv: ^17.2.3
     dotenv-cli: ^10.0.0
     esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
@@ -10598,7 +10598,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     bullmq: ^5.43.1
-    dotenv: ^16.4.7
+    dotenv: ^17.2.3
     dotenv-cli: ^10.0.0
     esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
@@ -10699,7 +10699,7 @@ __metadata:
     "@towns-protocol/generated": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
     "@types/uuid": ^10.0.0
-    dotenv: ^16.4.7
+    dotenv: ^17.2.3
     esbuild: ^0.25.9
     esbuild-plugin-pino: ^2.2.0
     pino: ^9.0.0
@@ -16152,7 +16152,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^16.4.5, dotenv@npm:^16.4.7":
+"dotenv@npm:^16.4.5":
   version: 16.6.1
   resolution: "dotenv@npm:16.6.1"
   checksum: e8bd63c9a37f57934f7938a9cf35de698097fadf980cb6edb61d33b3e424ceccfe4d10f37130b904a973b9038627c2646a3365a904b4406514ea94d7f1816b69
@@ -31433,7 +31433,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
     cross-spawn: ^7.0.5
-    dotenv: ^16.4.7
+    dotenv: ^17.2.3
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2

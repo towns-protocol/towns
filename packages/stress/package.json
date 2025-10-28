@@ -33,7 +33,7 @@
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "bullmq": "^5.43.1",
-        "dotenv": "^16.4.7",
+        "dotenv": "^17.2.3",
         "esbuild-plugin-pino": "^2.2.0",
         "ethers": "^5.8.0",
         "fake-indexeddb": "^6.0.1",
