@@ -3170,6 +3170,41 @@ export class Client
         this.logCall('encryptAndShareGroupSessions: done')
     }
 
+    // only works with hybrid group encryption
+    public async encryptAndShareLatestGroupSessionToUser(
+        inStreamId: string | Uint8Array,
+        toUserId: string,
+    ) {
+        const streamId = streamIdAsString(inStreamId)
+        if (
+            !this.cryptoBackend?.hasOutboundSession(
+                streamId,
+                GroupEncryptionAlgorithmId.HybridGroupEncryption,
+            )
+        ) {
+            throw new Error('No outbound session found')
+        }
+        const sessionId = await this.cryptoBackend.ensureOutboundSession(
+            streamId,
+            GroupEncryptionAlgorithmId.HybridGroupEncryption,
+        )
+        const session = await this.cryptoBackend.exportGroupSession(streamId, sessionId)
+        if (!session) {
+            throw new Error('Session not exported')
+        }
+        const deviceInfo = await this.downloadSingleUserDeviceInfo(toUserId, true)
+        if (deviceInfo.devices.length === 0) {
+            throw new Error('No device keys found')
+        }
+        await this.encryptAndShareGroupSessionsToDevice(
+            streamId,
+            [session],
+            GroupEncryptionAlgorithmId.HybridGroupEncryption,
+            toUserId,
+            deviceInfo.devices,
+        )
+    }
+
     // Encrypt event using GroupEncryption.
     public encryptGroupEvent(
         event: Uint8Array,
