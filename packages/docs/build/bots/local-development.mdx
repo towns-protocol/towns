@@ -23,22 +23,22 @@ Run your bot in development mode:
 bun run dev
 ```
 
-Your bot will start on `http://localhost:3000` (or the port specified in your `.env` file).
+Your bot will start on `http://localhost:5123` (or the port specified in your `.env` file).
 
 ### 2. Install and Start ngrok
 
 Follow the [ngrok installation guide](https://ngrok.com/download) to install ngrok for your platform.
 
-Once installed, start ngrok to forward port 3000:
+Once installed, start ngrok to forward port 5123 (or the port specified in your `.env` file):
 
 ```bash
-ngrok http 3000
+ngrok http 5123
 ```
 
 You'll see output like this:
 
 ```
-Forwarding  https://abc123.ngrok-free.app -> http://localhost:3000
+Forwarding  https://abc123.ngrok-free.app -> http://localhost:5123
 ```
 
 Copy the HTTPS URL (e.g., `https://abc123.ngrok-free.app`). This is your public-facing URL that Towns will use to send events to your bot.
