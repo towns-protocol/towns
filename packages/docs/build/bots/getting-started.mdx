@@ -63,12 +63,10 @@ bun install
 
 ### Configure Environment
 
-Create a `.env` file in your project root:
+Copy the `.env.sample` file in your project root:
 
-```bash .env
-APP_PRIVATE_DATA=<your-app-private-data>
-JWT_SECRET=<your-jwt-secret>
-PORT=3000
+```bash
+cp .env.sample .env
 ```
 
 ### Push to GitHub
@@ -98,7 +96,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    |---------|-------|
    | **Name** | `my-bot` (or any name you prefer) |
    | **Environment** | `Node` |
-   | **Build Command** | `bun install && bun run build` |
+   | **Build Command** | `bun install` |
    | **Start Command** | `bun run start` |
 
 4. **Add Environment Variables**
@@ -114,7 +112,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
 
    Click "Create Web Service". Render will:
    - Clone your repository
-   - Run `bun install && bun run build` to build your bot
+   - Run `bun install` to build your bot
    - Start your bot with `bun run start`
 
    Wait for the deploy to finish. You'll get a URL like:
