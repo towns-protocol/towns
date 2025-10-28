@@ -18,7 +18,6 @@
         "@towns-protocol/bot": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
-        "dotenv": "^17.2.3",
         "hono": "^4.7.11",
         "viem": "^2.29.3"
     },
