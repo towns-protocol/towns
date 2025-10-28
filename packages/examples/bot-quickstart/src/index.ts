@@ -3,6 +3,9 @@ import { makeTownsBot } from '@towns-protocol/bot'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import commands from './commands'
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 async function main() {
     const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!, {
