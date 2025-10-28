@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	gcstorage "cloud.google.com/go/storage"
-	"database/sql/driver"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsv4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
