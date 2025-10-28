@@ -405,8 +405,9 @@ export class EncryptionDevice {
         const session = await this.getOutboundGroupSession(streamId)
         const chain_index = session.message_index()
         const key = session.session_key()
+        const sessionId = session.session_id()
         session.free()
-        return { chain_index, key }
+        return { chain_index, key, sessionId }
     }
 
     /** */
