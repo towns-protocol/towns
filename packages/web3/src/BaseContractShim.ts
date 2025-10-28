@@ -4,8 +4,6 @@ import { Connect, ContractType } from './types/typechain'
 import { Abi } from 'abitype'
 import { TransactionOpts } from './types/ContractTypes'
 import { wrapTransaction } from './space-dapp/wrapTransaction'
-import { readRetryWrapper } from './readContractRetryer'
-import { BASE_MAINNET, BASE_SEPOLIA, LOCALHOST_CHAIN_ID } from './utils/Web3Constants'
 export type PromiseOrValue<T> = T | Promise<T>
 
 export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -30,7 +28,6 @@ export class BaseContractShim<
     private _networkPromise?: Promise<ethers.providers.Network>
     private contractInterface?: T_CONTRACT['interface']
     private readContract?: T_CONTRACT
-    private readContractWithRetry?: T_CONTRACT
     private writeContract?: T_CONTRACT
 
     constructor(
@@ -77,23 +74,6 @@ export class BaseContractShim<
         if (!this.readContract) {
             this.readContract = this.connect(this.address, this.provider)
             this.contractInterface = this.readContract.interface
-        }
-
-        if (!this._network) {
-            void this.getNetwork()
-        }
-
-        // if network is already resolved, use the appropriate contract version
-        if (this._network) {
-            // calling river chain, especially in tests, may expect a quick failure - i.e. stream doesn't exist
-            // the failed/limited calls are happening on base
-            const baseNetworks = [BASE_MAINNET, BASE_SEPOLIA, LOCALHOST_CHAIN_ID]
-            if (baseNetworks.includes(this._network.chainId)) {
-                if (!this.readContractWithRetry) {
-                    this.readContractWithRetry = readRetryWrapper(this.readContract)
-                }
-                return this.readContractWithRetry
-            }
         }
 
         return this.readContract
