@@ -18,10 +18,14 @@ import {
     AppRegistryService,
     MessageType,
     ClientV2,
+    getNftRuleData,
+    waitForRoleCreated,
+    createChannel,
+    isDefined,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { Bot, BotPayload } from './bot'
-import { bin_fromHexString, bin_toBase64, dlog } from '@towns-protocol/utils'
+import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
@@ -33,6 +37,7 @@ import {
     Permission,
     SpaceAddressFromSpaceId,
     SpaceDapp,
+    TestERC721,
     type Address,
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
@@ -1330,5 +1335,61 @@ describe('Bot', { sequential: true }, () => {
             '[@towns-protocol/bot] Error while handling event',
         )
         consoleErrorSpy.mockRestore()
+    })
+
+    it('bot should be able to send messages in gated channels', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const spaceDapp = bobClient.riverConnection.spaceDapp
+        const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
+        const ruleData = getNftRuleData(testNft1Address)
+        const permissions = [Permission.Read, Permission.Write, Permission.React]
+        const roleName = 'TestNFT1 Gated Role read/write/react'
+        const txn = await spaceDapp.createRole(
+            spaceId,
+            roleName,
+            permissions,
+            [],
+            ruleData,
+            bob.signer,
+        )
+        const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
+        expect(roleError).toBeUndefined()
+        // create the channel on chain with these permissions
+        const { channelId, error: channelError } = await createChannel(
+            spaceDapp,
+            bob.web3Provider,
+            spaceId,
+            'test-nft-1-gated-channel',
+            [roleId!.valueOf()],
+            bob.signer,
+        )
+        expect(channelError).toBeUndefined()
+        check(isDefined(channelId), 'channelId is defined')
+        // have bob grab the synced channel
+        const newChannel = bobClient.spaces.getSpace(spaceId).getChannel(channelId)
+        await waitFor(() => newChannel.value.status !== 'loading')
+        // create the stream on the river node
+        const { streamId: channelStreamId } = await bobClient.riverConnection.call((client) =>
+            client.createChannel(spaceId, '', '', channelId),
+        )
+        expect(channelStreamId).toEqual(channelId)
+        // join the bot to the channel
+        // add the bot to the channel
+        await bobClient.riverConnection.call((client) => client.joinUser(channelId, bot.botId))
+
+        // bot sends message to the channel
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello')
+
+        log('bot sends message to new channel', messageId)
+        // bob should see the DECRYPTED message
+        await waitFor(
+            () => {
+                expect(
+                    newChannel.timeline.events.value.find((x) => x.eventId === messageId)?.content
+                        ?.kind,
+                ).toBe(RiverTimelineEvent.ChannelMessage)
+            },
+            { timeoutMS: 20000 },
+        )
     })
 })
