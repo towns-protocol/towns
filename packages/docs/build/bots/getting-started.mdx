@@ -12,7 +12,7 @@ This guide will walk you through creating, developing, and deploying your first 
 ## Prerequisites
 
 Before you begin, make sure you have:
-- [Bun](https://bun.sh) installed (`curl -fsSL https://bun.sh/install | bash`)
+- [Bun](https://bun.sh/docs/installation) installed
 - A [GitHub account](https://github.com/signup)
 
 ## Create a Bot
@@ -73,7 +73,7 @@ PORT=3000
 
 ### Push to GitHub
 
-Create a [new repository on GitHub](https://github.com/new), follow their instructions and push your bot code to it.
+Create a [new repository on GitHub](https://github.com/new), follow their instructions, commit all your changes and push your bot code to it.
 
 
 ## Deploy Your Bot
@@ -103,20 +103,19 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
 
 4. **Add Environment Variables**
 
-   In the "Environment" section, add:
+   In the "Environment" section, you can either paste your `.env` file contents or add each variable manually.
 
    | Key | Value |
    |-----|-------|
    | `APP_PRIVATE_DATA` | Your app private data from bot creation |
    | `JWT_SECRET` | Your JWT secret from bot creation |
-   | `PORT` | `3000` |
 
 5. **Deploy**
 
    Click "Create Web Service". Render will:
    - Clone your repository
-   - Run `bun install`
-   - Start your bot with `bun run src/index.ts`
+   - Run `bun install && bun run build` to build your bot
+   - Start your bot with `bun run start`
 
    Wait for the deploy to finish. You'll get a URL like:
    ```
@@ -149,19 +148,18 @@ Now that your bot is deployed and publicly accessible, connect it to Towns.
 
 In the bot settings page, under "Forwarding Settings", choose which messages your bot receives.
 
-- **All Messages** - Bot receives every message in channels it's in
-  - Use for: AI agents, moderation bots, analytics, logging
-  - Warning: High volume in active channels
+- **All Messages** - Bot receives every event in channels it's in
+  - All event handlers available. See [Events](/build/bots/events) for more information.
+  - Use for: AI agents, moderation bots, analytics, or when you need tip/membership events
 
-- **Mentions, Replies & Reactions** - Bot only receives:
-  - Direct @mentions
-  - Replies to bot's messages
-  - Reactions to bot's messages
-  - Slash commands
+- **Mentions, Commands, Replies & Reactions** (Default) - Bot only receives:
+  - Direct @mentions, replies to bot's messages, reactions, and slash commands
+  - Available handlers: `onMessage` (filtered), `onSlashCommand`, `onReaction`, `onMessageEdit`, `onRedaction`
+  - NOT available: `onTip`, `onChannelJoin`, `onChannelLeave`, `onEventRevoke`
   - Use for: Most interactive bots
 
-- **No Messages** - Bot receives no messages
-  - Use for: Bots that only respond to external triggers (e.g. GitHub webhooks)
+- **No Messages** - Bot receives no message events
+  - Use for: External-only bots (e.g., GitHub webhooks, scheduled tasks)
 
 Click "Save" after selecting your preference.
 
@@ -187,14 +185,13 @@ In the channel you installed your bot to, mention your bot:
 @mybot hello
 ```
 
-The bot should respond with "Hello! 👋"
-
-
+The bot should respond with "Hello there! 👋"
 
 ## Next Steps
 
 Now that your bot is running, explore more capabilities:
 
+- [Local development](/build/bots/local-development) - Learn how to develop bots locally to fast iterate
 - [Learn about event handlers](/build/bots/events) - Handle different event types
 - [Add slash commands](/build/bots/slash-commands) - Create custom `/help`, `/poll`, etc.
 - [External interactions](/build/bots/external-interactions) - Timers, webhooks, custom APIs

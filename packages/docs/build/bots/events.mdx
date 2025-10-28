@@ -23,6 +23,28 @@ All events share a common `BasePayload` structure:
 
 Different event types extend this base with additional fields.
 
+## Message Forwarding Modes
+
+Bots have three message forwarding modes that control which events they receive. You configure this in your bot settings at [app.towns.com/developer](https://app.towns.com/developer).
+
+### Available Modes
+
+**All Messages**
+- Bot receives every event in channels it's in
+- All event handlers are available
+- Use for: AI agents, moderation bots, analytics, or when you need `onTip`, `onChannelJoin`, `onChannelLeave`, or `onEventRevoke` handlers
+- ⚠️ Warning: High volume in active channels
+
+**Mentions, Commands, Replies & Reactions** (Default)
+- Bot receives: messages where it's mentioned, replies to its messages, reactions, and slash commands
+- Event handlers available: `onMessage` (filtered), `onSlashCommand`, `onReaction`, `onMessageEdit`, `onRedaction`
+- Event handlers NOT available: `onTip`, `onChannelJoin`, `onChannelLeave`, `onEventRevoke`
+- Use for: Most interactive bots that respond to direct user interaction
+
+**No Messages**
+- Bot receives no message events
+- Use for: External-only bots triggered by [custom webhooks](/build/bots/external-interactions) or timers
+
 ## Event Listeners
 All event listeners are asynchronous functions that receive a `handler` and an `event` object. 
 
@@ -76,11 +98,21 @@ Fires when a message is deleted by a user.
 
 ### onEventRevoke
 
+Fires when a message is revoked, either by the user that sent it or by an admin with the `Redact` permission.
+
+<Note>
+This event handler only works in "All Messages" mode. See [Message Forwarding Modes](#message-forwarding-modes).
+</Note>
+
 - `refEventId`: The `eventId` of the message being revoked.
 
 ### onTip
 
 Fires when a user sends a cryptocurrency tip on a message.
+
+<Note>
+This event handler only works in "All Messages" mode. See [Message Forwarding Modes](#message-forwarding-modes).
+</Note>
 
 - `messageId`: The `eventId` of the message that received the tip.
 - `senderAddress`: The address of the user who sent the tip.
@@ -91,9 +123,13 @@ Fires when a user sends a cryptocurrency tip on a message.
 It can fire for any tip, not just tips to the bot.
 
 
-### onChannelJoin 
+### onChannelJoin
 
 Fires when users join a channel.
+
+<Note>
+This event handler only works in "All Messages" mode. See [Message Forwarding Modes](#message-forwarding-modes).
+</Note>
 
 - `userId`: The user who joined or left the channel.
 - `channelId`: The channel that the user joined or left.
@@ -101,6 +137,10 @@ Fires when users join a channel.
 ### onChannelLeave
 
 Fires when users leave a channel.
+
+<Note>
+This event handler only works in "All Messages" mode. See [Message Forwarding Modes](#message-forwarding-modes).
+</Note>
 
 - `userId`: The user who left the channel.
 - `channelId`: The channel that the user left.
