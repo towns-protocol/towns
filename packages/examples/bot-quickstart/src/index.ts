@@ -9,6 +9,21 @@ async function main() {
         commands,
     })
 
+    bot.onSlashCommand('help', async (handler, { channelId }) => {
+        await handler.sendMessage(
+            channelId,
+            '**Available Commands:**\n\n' +
+                '• `/help` - Show this help message\n' +
+                '• `/time` - Get the current time\n\n' +
+                '**Message Triggers:**\n\n' +
+                '• Say "hello" - I\'ll greet you back\n' +
+                '• Say "ping" - I\'ll show latency\n' +
+                '• Say "react" - I\'ll add a reaction\n' +
+                '• Mention me - I\'ll respond\n' +
+                '• React with 👋 - I\'ll wave back',
+        )
+    })
+
     bot.onSlashCommand('time', async (handler, { channelId }) => {
         const currentTime = new Date().toLocaleString()
         await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
