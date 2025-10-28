@@ -40,7 +40,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: bot1AppAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: bot1AppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt1,
+            bot1Wallet.address as Address,
+        )
         expect(bot1AppAddress).toBeDefined()
 
         // Create second bot app contract
@@ -53,7 +56,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: bot2AppAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: bot2AppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt2,
+            bot2Wallet.address as Address,
+        )
         expect(bot2AppAddress).toBeDefined()
 
         // Attempt to create user streams for bot1 using bot2's app address (should fail)
@@ -107,7 +113,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()
