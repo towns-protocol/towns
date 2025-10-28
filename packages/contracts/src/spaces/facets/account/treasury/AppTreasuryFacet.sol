@@ -12,11 +12,19 @@ import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {AppAccountBase} from "src/spaces/facets/account/AppAccountBase.sol";
 import {AppTreasuryBase} from "./AppTreasuryBase.sol";
 import {Entitled} from "src/spaces/facets/Entitled.sol";
+import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
 // contracts
 
-contract AppTreasuryFacet is IAppTreasury, AppTreasuryBase, AppAccountBase, Entitled, Facet {
+contract AppTreasuryFacet is
+    IAppTreasury,
+    AppTreasuryBase,
+    AppAccountBase,
+    Entitled,
+    ReentrancyGuardTransient,
+    Facet
+{
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -27,6 +35,10 @@ contract AppTreasuryFacet is IAppTreasury, AppTreasuryBase, AppAccountBase, Enti
         if (!_isAppExecuting(msg.sender)) AppTreasury__AppNotExecuting.selector.revertWith();
         if (_isCircuitBreakerTripped(currency)) AppTreasury__TreasuryPaused.selector.revertWith();
         return _requestFunds(currency, amount);
+    }
+
+    function claimVoucher(bytes32 voucherId) external {
+        _claimVoucher(voucherId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -54,5 +66,32 @@ contract AppTreasuryFacet is IAppTreasury, AppTreasuryBase, AppAccountBase, Enti
     ///@inheritdoc IAppTreasury
     function getStreamBalance(address app, address currency) external view returns (uint256) {
         return _getStreamBalance(app, currency);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                          Vouchers                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function approveVoucher(bytes32 voucherId) external {
+        _validatePermission(Permissions.ConfigureTreasury);
+        _approveVoucher(voucherId);
+    }
+
+    function cancelVoucher(bytes32 voucherId) external {
+        _validatePermission(Permissions.ConfigureTreasury);
+        _cancelVoucher(voucherId);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                         Circuits                           */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function configureCircuitBreaker(
+        address currency,
+        uint256 limit,
+        uint256 duration,
+        uint256 coolingOffPeriod
+    ) external {
+        _validatePermission(Permissions.ConfigureTreasury);
+        _configureCircuitBreaker(currency, limit, duration, coolingOffPeriod);
     }
 }

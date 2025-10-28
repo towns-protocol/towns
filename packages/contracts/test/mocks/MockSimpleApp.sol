@@ -6,11 +6,11 @@ import {ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} fro
 import {IAppTreasury} from "src/spaces/facets/account/treasury/IAppTreasury.sol";
 
 // contracts
-import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
+import {BaseApp} from "src/apps/BaseApp.sol";
 
-contract MockSimpleApp is SimpleApp {
+contract MockSimpleApp is BaseApp {
     // keccak256(abi.encode(uint256(keccak256("mock.simple.app.storage")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 internal constant STORAGE_SLOT =
+    bytes32 internal constant MOCK_STORAGE_SLOT =
         0x736fb6c69da8837a812897254acbb0c320fd7b33db95d04b065743ec92adf000;
 
     event VoucherRequested(bytes32 indexed voucherId, address indexed token, uint256 amount);
@@ -22,8 +22,20 @@ contract MockSimpleApp is SimpleApp {
 
     function store() internal pure returns (Layout storage $) {
         assembly {
-            $.slot := STORAGE_SLOT
+            $.slot := MOCK_STORAGE_SLOT
         }
+    }
+
+    function initialize(bytes calldata data) external {}
+
+    function moduleId() external pure returns (string memory) {
+        return "mock.simple.app";
+    }
+
+    function requiredPermissions() external pure returns (bytes32[] memory) {
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        return permissions;
     }
 
     function swap(address token) external payable {
