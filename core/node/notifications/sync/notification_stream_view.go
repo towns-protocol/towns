@@ -15,8 +15,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
-// NotificationStreamView is a memory-optimized replacement for TrackedStreamViewImpl that
-// eliminates the need to store full StreamView objects.
+// NotificationStreamView is a memory-optimized replacement for TrackedStreamViewImpl.
+// Stores only member addresses instead of full StreamView objects.
 //
 // OLD ARCHITECTURE (per stream, ESTIMATED):
 //
@@ -38,22 +38,8 @@ import (
 //	Measured memory (100 members): ~36 KB per stream
 //	Measured memory (1000 members): ~340 KB per stream
 //
-// OPTIMIZATION: Eliminates blocks/minipool/snapshot storage by processing stream data once
-// during initialization, then discarding it. This trades historical data storage for minimal
-// current-state tracking.
-//
-// KEY OPTIMIZATION:
-//
-//	The `stream *StreamAndCookie` parameter in initialization is READ ONCE to extract members,
-//	then discarded. We never store blocks, minipool, or snapshots.
-//
-//	The old `view *StreamView` parameter in onNewEvent() is eliminated. We maintain member
-//	state incrementally in our own map, making GetChannelMembers() O(1) instead of O(n).
-//
-// PRESERVED BEHAVIOR:
-//  1. Blocked lists: extractBlockedUsers() on init + SendEventNotification() on updates
-//  2. Message events: listener.OnMessageEvent() called for all message events
-//  3. Membership tracking: ApplyEvent() processes join/leave events
+// Stream data is parsed once during initialization to extract members, then discarded.
+// Member state is maintained incrementally via ApplyEvent/ApplyBlock.
 //
 // FUNCTION MAPPING:
 //
@@ -63,25 +49,20 @@ import (
 //	StreamView.GetChannelMembers()       -> GetChannelMembers()
 type NotificationStreamView struct {
 	streamID    shared.StreamId
-	spaceID     *shared.StreamId
 	cfg         crypto.OnChainConfiguration
 	listener    track_streams.StreamEventListener
 	preferences UserPreferencesStore
 
-	// Membership tracking (only thing we store from the stream)
-	members map[common.Address]struct{}
+	// Cached space ID for channel streams to avoid repeated allocations.
+	// For STREAM_CHANNEL_BIN, space ID is encoded in streamID bytes 1-21.
+	spaceID *shared.StreamId
 
-	// Minimal tracking to replace StreamView's minipool and block tracking.
-	// These fields enable the same deduplication guarantees as TrackedStreamViewImpl
-	// without storing the full StreamView (blocks, minipool, snapshot).
-	lastBlockNum int64                    // Last processed block number (for block deduplication)
-	seenEvents   map[common.Hash]struct{} // Event deduplication cache (mimics minipool behavior)
-	// seenEvents is pruned when blocks are applied, removing events now in the block.
-	// This mirrors how minipool is flushed during ApplyBlock, keeping memory bounded.
-	//
-	// NOTE: No mutex needed - each NotificationStreamView is accessed from a single goroutine,
-	// just like TrackedStreamViewImpl. The listener comment about thread-safety refers to the
-	// listener implementation (which receives events from multiple streams), not the view itself.
+	members map[common.Address]struct{} // Current membership state
+
+	// Deduplication tracking (replaces StreamView's minipool/block tracking)
+	lastBlockNum int64                    // Last processed block number
+	seenEvents   map[common.Hash]struct{} // Event cache, pruned when blocks are applied
+	// NOTE: No mutex needed - accessed from single goroutine like TrackedStreamViewImpl
 }
 
 // NewNotificationStreamView creates a lightweight stream view optimized for notifications.
@@ -105,6 +86,12 @@ func NewNotificationStreamView(
 		lastBlockNum: -1, // Start at -1, will be updated during initialization
 	}
 
+	// Cache space ID for channel streams to avoid repeated allocations in SendEventNotification
+	if streamID.Type() == shared.STREAM_CHANNEL_BIN {
+		sid := streamID.SpaceID()
+		view.spaceID = &sid
+	}
+
 	// Extract member data and initialize tracking state from stream
 	if err := view.initializeFromStream(ctx, stream); err != nil {
 		return nil, err
@@ -113,86 +100,103 @@ func NewNotificationStreamView(
 	return view, nil
 }
 
-// initializeFromStream extracts only member addresses from the stream
+// initializeFromStream extracts only member addresses from the stream.
+// Uses existing parsing functions (ParseMiniblocksFromProto, ParseEvent) to avoid code duplication.
+// The parsed structures (MiniblockInfo, ParsedEvent) are used only to extract minimal data,
+// then discarded when this function returns, maintaining memory efficiency.
+//
+// Equivalent to old TrackedStreamViewImpl which used:
+// - node/events/stream_view.go:ParseMiniblocksFromProto for snapshot and miniblocks
+// - node/events/parsed_event.go:ParseEvent for events
 func (v *NotificationStreamView) initializeFromStream(ctx context.Context, stream *StreamAndCookie) error {
 	if stream == nil || stream.Snapshot == nil {
 		return RiverError(Err_STREAM_EMPTY, "no stream or snapshot").Func("initializeFromStream")
 	}
 
-	var snapshot Snapshot
-	if err := proto.Unmarshal(stream.Snapshot.Event, &snapshot); err != nil {
-		return AsRiverError(err, Err_INTERNAL).Message("Failed to unmarshal snapshot")
-	}
+	var miniblocks []*MiniblockInfo
+	var snapshot *Snapshot
 
-	// Extract space ID if this is a channel stream
-	if v.streamID.Type() == shared.STREAM_CHANNEL_BIN {
-		if spaceContent := snapshot.GetChannelContent(); spaceContent != nil {
-			if inception := spaceContent.GetInception(); inception != nil && len(inception.SpaceId) > 0 {
-				if spaceID, err := shared.StreamIdFromBytes(inception.SpaceId); err == nil {
-					v.spaceID = &spaceID
-				}
-			}
-		}
-	}
-
-	// Extract member addresses
-	if snapshotMembers := snapshot.GetMembers(); snapshotMembers != nil {
-		for _, member := range snapshotMembers.Joined {
-			if len(member.UserAddress) > 0 {
-				v.members[common.BytesToAddress(member.UserAddress)] = struct{}{}
-			}
-		}
-	}
-
-	// For user settings streams, extract blocked users
-	if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
-		user, err := shared.GetUserAddressFromStreamId(v.streamID)
+	// Try to parse miniblocks if present
+	if len(stream.Miniblocks) > 0 {
+		// Use existing ParseMiniblocksFromProto to get validated miniblocks and snapshot.
+		// This handles all the complex parsing, validation, and snapshot extraction logic.
+		// Equivalent to: node/events/stream_view.go:152 (MakeRemoteStreamView)
+		var err error
+		miniblocks, snapshot, _, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
 		if err != nil {
 			return err
 		}
-		if err := v.extractBlockedUsers(ctx, &snapshot, user); err != nil {
-			return err
+	} else if stream.Snapshot != nil {
+		// No miniblocks but snapshot present (e.g., new streams in tests)
+		// Parse snapshot envelope directly without hash/signature validation
+		// Equivalent to: node/events/snapshot.go:76 (ParseSnapshot unmarshal step)
+		var err error
+		snapshot = &Snapshot{}
+		if err = proto.Unmarshal(stream.Snapshot.Event, snapshot); err != nil {
+			return AsRiverError(err, Err_INVALID_ARGUMENT).
+				Message("Failed to decode snapshot from bytes").
+				Func("initializeFromStream")
 		}
 	}
 
-	// Process miniblocks to update membership and track last block number
-	for _, mb := range stream.Miniblocks {
-		if err := v.processMiniblockForMembership(ctx, mb); err != nil {
-			return err
-		}
-
-		// Track the last block number we've processed
-		if headerEnvelope := mb.GetHeader(); headerEnvelope != nil {
-			var headerEvent StreamEvent
-			if err := proto.Unmarshal(headerEnvelope.Event, &headerEvent); err == nil {
-				if mbHeader := headerEvent.GetMiniblockHeader(); mbHeader != nil {
-					if mbHeader.MiniblockNum > v.lastBlockNum {
-						v.lastBlockNum = mbHeader.MiniblockNum
-					}
+	// Extract initial state from snapshot
+	if snapshot != nil {
+		// Extract member addresses
+		if snapshotMembers := snapshot.GetMembers(); snapshotMembers != nil {
+			for _, member := range snapshotMembers.Joined {
+				if len(member.UserAddress) > 0 {
+					v.members[common.BytesToAddress(member.UserAddress)] = struct{}{}
 				}
 			}
 		}
 
-		// Mark all events in this miniblock as seen to prevent notifications
-		// for historical events when SendEventNotification is called during
-		// cold stream processing with ApplyHistoricalContent.Enabled=true
-		for _, envelope := range mb.Events {
-			eventHash := common.BytesToHash(envelope.Hash)
-			v.seenEvents[eventHash] = struct{}{}
+		// For user settings streams, extract blocked users
+		if v.streamID.Type() == shared.STREAM_USER_SETTINGS_BIN {
+			user, err := shared.GetUserAddressFromStreamId(v.streamID)
+			if err != nil {
+				return err
+			}
+			if err := v.extractBlockedUsers(ctx, snapshot, user); err != nil {
+				return err
+			}
 		}
 	}
 
-	// Process events in minipool and mark them as seen
+	// Process miniblocks using already-parsed MiniblockInfo structures.
+	// MiniblockInfo.Events() returns []*ParsedEvent - no need to re-parse!
+	for _, mbInfo := range miniblocks {
+		// Track the last block number (already parsed in mbInfo.Ref)
+		if mbInfo.Ref.Num > v.lastBlockNum {
+			v.lastBlockNum = mbInfo.Ref.Num
+		}
+
+		// Process already-parsed events from MiniblockInfo.Events()
+		// Equivalent to: node/events/miniblock_info.go:316 (Events getter)
+		for _, parsedEvent := range mbInfo.Events() {
+			// Update membership from parsed event
+			v.updateMembershipFromEvent(parsedEvent.Event)
+
+			// Mark as seen to prevent notifications for historical events
+			v.seenEvents[parsedEvent.Hash] = struct{}{}
+		}
+	}
+
+	// Process events in minipool using ParseEvent (standard validation).
 	// These are events waiting for the next miniblock, so we need to track them
 	// to avoid sending duplicate notifications if they arrive again via ApplyEvent.
-	for _, event := range stream.Events {
-		if err := v.processEventForMembership(ctx, event); err != nil {
+	// Equivalent to: node/events/stream_view.go:163-164 (MakeRemoteStreamView minipool processing)
+	for _, envelope := range stream.Events {
+		// Use ParseEvent for validation (equivalent to old MakeRemoteStreamView)
+		parsed, err := ParseEvent(envelope)
+		if err != nil {
 			return err
 		}
 
+		// Update membership from parsed event
+		v.updateMembershipFromEvent(parsed.Event)
+
 		// Mark event as seen to prevent duplicate notifications
-		eventHash := common.BytesToHash(event.Hash)
-		v.seenEvents[eventHash] = struct{}{}
+		v.seenEvents[parsed.Hash] = struct{}{}
 	}
 
 	return nil
@@ -221,23 +225,9 @@ func (v *NotificationStreamView) extractBlockedUsers(
 	return nil
 }
 
-// processMiniblockForMembership extracts membership changes from a miniblock
-func (v *NotificationStreamView) processMiniblockForMembership(ctx context.Context, miniblock *Miniblock) error {
-	for _, envelope := range miniblock.Events {
-		if err := v.processEventForMembership(ctx, envelope); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// processEventForMembership updates membership from an event without storing the event
-func (v *NotificationStreamView) processEventForMembership(ctx context.Context, envelope *Envelope) error {
-	var event StreamEvent
-	if err := proto.Unmarshal(envelope.Event, &event); err != nil {
-		return nil // Skip malformed events
-	}
-
+// updateMembershipFromEvent extracts and updates membership from a parsed StreamEvent.
+// Used after parsing events with ParseEvent (minipool) or from MiniblockInfo.Events() (miniblocks).
+func (v *NotificationStreamView) updateMembershipFromEvent(event *StreamEvent) error {
 	// Update membership based on event type
 	if memberPayload := event.GetMemberPayload(); memberPayload != nil {
 		if membership := memberPayload.GetMembership(); membership != nil {
@@ -278,34 +268,37 @@ func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error)
 // This mirrors how the old implementation's minipool is flushed when a block is created,
 // keeping memory bounded to events waiting for the next block (~10-100 events typically).
 func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Envelope) error {
-	// Extract block number and check for duplicates
-	if headerEnvelope := miniblock.GetHeader(); headerEnvelope != nil {
-		var headerEvent StreamEvent
-		if err := proto.Unmarshal(headerEnvelope.Event, &headerEvent); err == nil {
-			if mbHeader := headerEvent.GetMiniblockHeader(); mbHeader != nil {
-				blockNum := mbHeader.MiniblockNum
-
-				// Skip if we've already processed this block (deduplication)
-				if blockNum <= v.lastBlockNum {
-					return nil
-				}
-
-				v.lastBlockNum = blockNum
-			}
-		}
+	// Parse the miniblock using existing function (equivalent to old TrackedStreamViewImpl.ApplyBlock)
+	// Equivalent to: node/events/tracked_stream_view.go:77-81
+	mbInfo, err := NewMiniblockInfoFromProto(
+		miniblock,
+		snapshot,
+		NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot(),
+	)
+	if err != nil {
+		return err
 	}
+
+	// Skip if we've already processed this block (deduplication)
+	if mbInfo.Ref.Num <= v.lastBlockNum {
+		return nil
+	}
+
+	v.lastBlockNum = mbInfo.Ref.Num
 
 	// Prune seenEvents cache: remove events now in the block
 	// This mirrors the minipool flush behavior in TrackedStreamViewImpl.
 	// Events transition from minipool → block, so we remove them from our cache.
-	for _, envelope := range miniblock.Events {
-		eventHash := common.BytesToHash(envelope.Hash)
-		delete(v.seenEvents, eventHash)
+	for _, parsedEvent := range mbInfo.Events() {
+		delete(v.seenEvents, parsedEvent.Hash)
 	}
 
-	// Update membership only - no notifications for historical events
-	ctx := context.TODO()
-	return v.processMiniblockForMembership(ctx, miniblock)
+	// Update membership from already-parsed events - no notifications for historical events
+	for _, parsedEvent := range mbInfo.Events() {
+		v.updateMembershipFromEvent(parsedEvent.Event)
+	}
+
+	return nil
 }
 
 // ApplyEvent processes a new real-time event and sends notifications.
@@ -336,11 +329,11 @@ func (v *NotificationStreamView) ApplyEvent(ctx context.Context, envelope *Envel
 
 	// Skip miniblock headers - these are metadata events, not user events
 	if parsed.Event.GetMiniblockHeader() != nil {
-		return v.processEventForMembership(ctx, envelope)
+		return v.updateMembershipFromEvent(parsed.Event)
 	}
 
-	// Update membership
-	if err := v.processEventForMembership(ctx, envelope); err != nil {
+	// Update membership from already-parsed event
+	if err := v.updateMembershipFromEvent(parsed.Event); err != nil {
 		return err
 	}
 
@@ -377,16 +370,7 @@ func (v *NotificationStreamView) SendEventNotification(ctx context.Context, even
 		return err
 	}
 
+	// Use cached space ID (computed once during initialization for channel streams)
 	v.listener.OnMessageEvent(ctx, v.streamID, v.spaceID, members, event)
 	return nil
-}
-
-// StreamID returns the stream identifier
-func (v *NotificationStreamView) StreamID() shared.StreamId {
-	return v.streamID
-}
-
-// MemberCount returns the current number of members (useful for metrics)
-func (v *NotificationStreamView) MemberCount() int {
-	return len(v.members)
 }

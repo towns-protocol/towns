@@ -121,11 +121,8 @@ func TestNotificationStreamView_MemberTracking(t *testing.T) {
 		},
 	}
 
-	joinEventBytes, err := proto.Marshal(joinEvent)
-	require.NoError(t, err)
-
 	// Note: tests bypass hash validation by directly processing membership
-	err = view.processEventForMembership(ctx, &Envelope{Event: joinEventBytes})
+	err = view.updateMembershipFromEvent(joinEvent)
 	require.NoError(t, err)
 
 	// Verify member was added
@@ -148,10 +145,7 @@ func TestNotificationStreamView_MemberTracking(t *testing.T) {
 		},
 	}
 
-	leaveEventBytes, err := proto.Marshal(leaveEvent)
-	require.NoError(t, err)
-
-	err = view.processEventForMembership(ctx, &Envelope{Event: leaveEventBytes})
+	err = view.updateMembershipFromEvent(leaveEvent)
 	require.NoError(t, err)
 
 	// Verify member was removed
@@ -202,40 +196,4 @@ func TestNotificationStreamView_BlockedUsers(t *testing.T) {
 
 	// Verify user was unblocked
 	require.False(t, prefs.IsBlocked(user, blockedUser))
-}
-
-// TestNotificationStreamView_MemberCount verifies the MemberCount method
-func TestNotificationStreamView_MemberCount(t *testing.T) {
-	ctx := context.Background()
-	streamID := shared.StreamId{0x20}
-
-	// Create snapshot with 5 members
-	snapshot := &Snapshot{
-		Content: &Snapshot_ChannelContent{
-			ChannelContent: &ChannelPayload_Snapshot{},
-		},
-		Members: &MemberPayload_Snapshot{
-			Joined: []*MemberPayload_Snapshot_Member{
-				{UserAddress: common.HexToAddress("0x1111111111111111111111111111111111111111").Bytes()},
-				{UserAddress: common.HexToAddress("0x2222222222222222222222222222222222222222").Bytes()},
-				{UserAddress: common.HexToAddress("0x3333333333333333333333333333333333333333").Bytes()},
-				{UserAddress: common.HexToAddress("0x4444444444444444444444444444444444444444").Bytes()},
-				{UserAddress: common.HexToAddress("0x5555555555555555555555555555555555555555").Bytes()},
-			},
-		},
-	}
-
-	snapshotBytes, err := proto.Marshal(snapshot)
-	require.NoError(t, err)
-
-	stream := &StreamAndCookie{
-		Snapshot: &Envelope{Event: snapshotBytes},
-	}
-
-	prefs := newMockUserPreferences()
-	listener := newMockListener()
-	view, err := NewNotificationStreamView(ctx, streamID, nil, stream, listener, prefs)
-	require.NoError(t, err)
-
-	require.Equal(t, 5, view.MemberCount())
 }
