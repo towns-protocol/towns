@@ -26,6 +26,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	raw "google.golang.org/api/storage/v1"
 	"google.golang.org/protobuf/proto"
@@ -237,7 +238,6 @@ func NewPostgresStreamStore(
 					bucket:          externalStorageCfg.AwsS3.Bucket,
 					region:          externalStorageCfg.AwsS3.Region,
 					client:          awss3.NewFromConfig(cfg),
-					httpClient:      nil,
 				}
 
 				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues(
@@ -267,9 +267,20 @@ func NewPostgresStreamStore(
 						Func("NewPostgresStreamStore")
 				}
 
+				creds, err := google.CredentialsFromJSON(
+					ctx,
+					[]byte(externalStorageCfg.Gcs.JsonCredentials),
+					gcsCredentialScope)
+				if err != nil {
+					return nil, RiverErrorWithBase(Err_BAD_CONFIG, "Unable to create GCP credentials", err).
+						Func("NewPostgresStreamStore")
+				}
+
 				store.externalMediaStreamStorage.gcs = &struct {
-					bucket *gcpstorage.BucketHandle
-				}{bucket: client.Bucket(externalStorageCfg.Gcs.Bucket)}
+					bucket     *gcpstorage.BucketHandle
+					creds      *google.Credentials
+					httpClient *http.Client
+				}{bucket: client.Bucket(externalStorageCfg.Gcs.Bucket), creds: creds}
 
 				store.externalMediaStreamStorage.migrationAttemptsSuccessCounter = attempsCounter.WithLabelValues(
 					"gcs",

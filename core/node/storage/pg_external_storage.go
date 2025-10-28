@@ -1,21 +1,23 @@
 package storage
 
 import (
-	"bytes"
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	gcstorage "cloud.google.com/go/storage"
+	"database/sql/driver"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsv4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awss3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -38,7 +40,9 @@ type (
 			httpClient      *http.Client
 		}
 		gcs *struct {
-			bucket *gcstorage.BucketHandle
+			bucket     *gcstorage.BucketHandle
+			creds      *google.Credentials
+			httpClient *http.Client
 		}
 
 		// migrationAttemptsCounter is the number of stream migration attempts that succeeded.
@@ -47,6 +51,10 @@ type (
 		migrationAttemptsFailedCounter prometheus.Counter
 		// miniblocksStoredExternal keeps track of how many miniblocks are stored in external storage.
 		miniblocksStoredExternalCounter prometheus.Counter
+		// googleOauthTokenMu guards googleOauthToken.
+		googleOauthTokenMu sync.Mutex
+		// googleOauthToken is the token used to authenticate with Google Cloud Storage.
+		googleOauthToken *oauth2.Token
 	}
 
 	// ExternallyStoredMiniblockDescriptor holds information about a miniblock that is stored in
@@ -93,13 +101,15 @@ type (
 
 	// gcsExternalStorageWriter implements ExternalStorageWriter for GCS storage.
 	gcsExternalStorageWriter struct {
+		reqCancel           context.CancelFunc
 		streamID            StreamId
-		bucket              *gcstorage.BucketHandle
-		schemaLockID        int64
-		buf                 *bytes.Buffer
+		gcStorage           io.WriteCloser
 		totalMiniblockBytes uint64
 		miniblocks          []ExternallyStoredMiniblockDescriptor
-		subObjects          []*gcstorage.ObjectHandle
+		resp                chan struct {
+			err  error
+			resp *http.Response
+		}
 	}
 
 	// TestExternalStorage is a helper interface for testing purposes.
@@ -134,6 +144,8 @@ const (
 	// See https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
 	// and https://cloud.google.com/storage/quotas#requests
 	MinimumExternalStorageUploadPartSize = 5 * 1024 * 1024
+	// gcsCredentialScope scopes the derived credential token to Google Cloud Storage API.
+	gcsCredentialScope = "https://www.googleapis.com/auth/devstorage.read_write"
 )
 
 // MigrationAttemptSuccessful must be called when a stream miniblocks are migrated to external storage.
@@ -154,15 +166,90 @@ func (e *externalMediaStreamStorage) MigrationAttemptFailed() {
 	}
 }
 
+// NewGoogleStorageExternalStorageWriter creates a new Google Storage external storage writer.
+func NewGoogleStorageExternalStorageWriter(
+	streamID StreamId,
+	schemaLockID int64,
+	bucket string,
+	totalMiniblockDataSizeInDB int64,
+	token *oauth2.Token,
+	httpClient *http.Client,
+) (*gcsExternalStorageWriter, error) {
+	var (
+		reqCtx, reqCancel = context.WithCancel(
+			context.Background(),
+		) // lint:ignore context.Background() is fine here
+		objectKey              = ExternalStorageObjectKey(schemaLockID, streamID)
+		url                    = fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, objectKey)
+		contentLength          = totalMiniblockDataSizeInDB
+		bodyReader, bodyWriter = io.Pipe()
+	)
+
+	// prepare s3 put object request
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodPut, url, bodyReader)
+	if err != nil {
+		reqCancel()
+		_ = bodyWriter.CloseWithError(err)
+		return nil, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR,
+			"Unable to create Google Storage put object request", err).
+			Tag("bucket", bucket).
+			Tag("stream", streamID).
+			Func("NewGoogleStorageExternalStorageWriter")
+	}
+	req.ContentLength = contentLength
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
+	req.Header.Set("Content-Type", "application/protobuf")
+
+	respChan := make(chan struct {
+		err  error
+		resp *http.Response
+	}, 1)
+
+	// execute the request in a background task that streams data written to bodyWriter to GC Storage
+	// data is written to bodyWriter in gcsExternalStorageWriter#WriteMiniblockData.
+	// the valid response or the error are written to respChan that is read in gcsExternalStorageWriter#Finish.
+	// otherwise the response is written to respChan that is read in gcsExternalStorageWriter#Finish.
+	go func() {
+		defer close(respChan)
+		defer reqCancel()
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			_ = bodyWriter.CloseWithError(err)
+			respChan <- struct {
+				err  error
+				resp *http.Response
+			}{err: err, resp: nil}
+			return
+		}
+
+		_ = bodyWriter.Close()
+		_ = resp.Body.Close()
+
+		respChan <- struct {
+			err  error
+			resp *http.Response
+		}{err: nil, resp: resp}
+	}()
+
+	return &gcsExternalStorageWriter{
+		streamID:  streamID,
+		reqCancel: reqCancel,
+		gcStorage: bodyWriter,
+		resp:      respChan,
+	}, nil
+}
+
 // WriteMiniblockData either writes the given blockdata to the external storage, or schedules it for writing
 // when it's not big enough to be written at the moment.
 //
-// TODO: once appendable objects are out of preview consider using appendable writers to append each miniblock to the
-// object instead of composing multiple objects into a single final object.
+// TODO: once appendable objects are out of preview consider using appendable writers to append each miniblock
+// to the object instead of doing a plain PUT operation.
 // https://pkg.go.dev/cloud.google.com/go/storage#ObjectHandle.NewWriterFromAppendableObject
 func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum int64, blockdata []byte) error {
-	if _, err := g.buf.Write(blockdata); err != nil {
-		return RiverErrorWithBase(Err_BUFFER_FULL, "Unable to write miniblock to buffer", err).
+	// try to write blockdata to s3, the background task writes this data to s3.
+	if _, err := g.gcStorage.Write(blockdata); err != nil {
+		return RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR, "Unable to write miniblock to GCS", err).
 			Tag("streamId", g.streamID).
 			Func("gcsExternalStorageWriter#WriteMiniblockData")
 	}
@@ -175,14 +262,9 @@ func (g *gcsExternalStorageWriter) WriteMiniblockData(ctx context.Context, mbNum
 		MiniblockDataLength: uint64(len(blockdata)),
 	})
 
+	// store the total number of miniblock data bytes written to gcs to keep track where one
+	// miniblock ends and the new one starts in the gcs object that combines all miniblocks.
 	g.totalMiniblockBytes += uint64(len(blockdata))
-
-	rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
-	objectKey := fmt.Sprintf("%s_%d", rootObjectKey, len(g.subObjects))
-
-	if err := g.write(ctx, objectKey, true, false); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -194,132 +276,43 @@ func (g *gcsExternalStorageWriter) Finish(ctx context.Context) (
 	MiniblockDataStorageLocation,
 	error,
 ) {
-	defer func() { g.buf = nil }()
+	// ensure that the background request is always canceled afterward
+	defer g.reqCancel()
 
-	if len(g.subObjects) == 0 { // the stream miniblock data can be uploaded in a single write operation
-		if g.buf.Len() == 0 {
-			return nil, MiniblockDataStorageLocationDB, RiverError(
-				Err_INTERNAL,
-				"no miniblock data to write to GCS",
-			).
-				Tag("streamId", g.streamID).
-				Func("gcsExternalStorageWriter#Finish")
-		}
+	// close the writer to gcs, this will finish the background http request
+	if err := g.gcStorage.Close(); err != nil {
+		return nil, MiniblockDataStorageLocationDB, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR,
+			"unable to finish writing miniblocks to gcs", err).
+			Tag("streamId", g.streamID).
+			Func("gcsExternalStorageWriter#Finish")
+	}
 
-		objectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
+	// wait until the http request reports the result of the put object request
+	result := <-g.resp
+	if result.err != nil {
+		return nil, MiniblockDataStorageLocationDB, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR,
+			"gcs put object request failed", result.err).
+			Tag("streamId", g.streamID).
+			Func("gcsExternalStorageWriter#Finish")
+	}
 
-		if err := g.write(ctx, objectKey, false, true); err != nil {
-			return nil, MiniblockDataStorageLocationDB, err
-		}
-
+	// http error code 2xx indicates that the request was successful
+	if (result.resp.StatusCode / 100) == 2 {
 		return g.miniblocks, MiniblockDataStorageLocationGCS, nil
 	}
 
-	// write pending data to GCS
-	if g.buf.Len() > 0 {
-		rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
-		objectKey := fmt.Sprintf("%s_%d", rootObjectKey, len(g.subObjects))
-
-		if err := g.write(ctx, objectKey, true, true); err != nil {
-			return nil, MiniblockDataStorageLocationDB, err
-		}
-	}
-
-	// combine all sub objects into a single object
-	desc, loc, _, err := g.combineIntoSingleObject(ctx)
-	if err != nil {
-		return nil, MiniblockDataStorageLocationDB, err
-	}
-
-	return desc, loc, nil
+	return nil, MiniblockDataStorageLocationDB, RiverError(Err_DOWNSTREAM_NETWORK_ERROR,
+		"gcs put object request failed").
+		Tag("streamId", g.streamID).
+		Tag("statusCode", result.resp.StatusCode).
+		Tag("status", result.resp.Status).
+		Func("gcsExternalStorageWriter#Finish")
 }
 
 // Abort aborts the upload session and deletes claimed resources.
 func (g *gcsExternalStorageWriter) Abort() {
-	g.buf = nil
-	for _, obj := range g.subObjects {
-		_ = obj.Delete(context.Background()) // lint:ignore context.Background() is fine here
-	}
-}
-
-// combineIntoSingleObject concatenates all sub objects into a single GCS object and deletes them.
-func (g *gcsExternalStorageWriter) combineIntoSingleObject(ctx context.Context) (
-	[]ExternallyStoredMiniblockDescriptor,
-	MiniblockDataStorageLocation,
-	string,
-	error,
-) {
-	rootObjectKey := ExternalStorageObjectKey(g.schemaLockID, g.streamID)
-
-	// combine all sub objects into a single object.
-	tempObjects, err := composeGCPObjects(ctx, g.bucket, rootObjectKey, g.subObjects)
-	if err != nil {
-		// best-effort cleanup of any temporary objects created before returning the error.
-		for _, obj := range tempObjects {
-			_ = obj.Delete(ctx)
-		}
-
-		return nil, MiniblockDataStorageLocationDB, "", RiverErrorWithBase(
-			Err_DOWNSTREAM_NETWORK_ERROR,
-			"Unable to combine sub objects to single GCS object",
-			err,
-		).
-			Tags("stream", g.streamID).
-			Func("combinePartsIntoSingleObject")
-	}
-
-	// now chunks are combined into a single object, remove parts and temporary objects
-	for _, obj := range append(g.subObjects, tempObjects...) {
-		_ = obj.Delete(context.Background()) // lint:ignore context.Background() is fine here
-	}
-
-	g.subObjects = nil // clients can call always Abort after calling Finish, this makes it a no-op
-
-	return g.miniblocks, MiniblockDataStorageLocationGCS, g.bucket.BucketName(), nil
-}
-
-// write writes the data in the buffer to a GCS object if there is enough to meet minimal
-// upload size requirements (or lastPart is true).
-func (g *gcsExternalStorageWriter) write(ctx context.Context, objectKey string, isSubObject bool, lastPart bool) error {
-	// if the buffer is big enough, upload it to GCS and reset the buffer for the next part.
-	// this is to reduce memory footprint when uploading large streams.
-	if g.buf.Len() < MinimumExternalStorageUploadPartSize && !lastPart {
-		return nil
-	}
-
-	object := g.bucket.Object(objectKey)
-	objectWriter := object.NewWriter(ctx)
-	objectWriter.ContentType = "application/protobuf"
-	data := g.buf.Bytes()
-
-	if _, err := objectWriter.Write(data); err != nil {
-		return RiverError(
-			Err_DOWNSTREAM_NETWORK_ERROR,
-			"Unable to write object to GCS",
-			err,
-		).
-			Tag("streamId", g.streamID).
-			Tag("objectKey", objectKey).
-			Func("externalMediaStreamStorage#Write")
-	}
-
-	if err := objectWriter.Close(); err != nil {
-		return RiverError(
-			Err_DOWNSTREAM_NETWORK_ERROR,
-			"Unable to close object writer",
-			err,
-		).
-			Tag("streamId", g.streamID).
-			Tag("objectKey", objectKey).
-			Func("externalMediaStreamStorage#Write")
-	}
-
-	g.buf.Reset()
-	if isSubObject {
-		g.subObjects = append(g.subObjects, object)
-	}
-
-	return nil
+	g.reqCancel()
+	_ = g.gcStorage.Close()
 }
 
 // NewS3ExternalStorageWriter creates a new S3 external storage writer.
@@ -489,7 +482,7 @@ func (e *externalMediaStreamStorage) Enabled() bool {
 	return e != nil && (e.gcs != nil || e.s3 != nil)
 }
 
-// StartUploadSession initiates a upload session to write miniblock data to external storage.
+// StartUploadSession initiates an upload session to write miniblock data to external storage.
 func (e *externalMediaStreamStorage) StartUploadSession(
 	schemaLockID int64,
 	streamID StreamId,
@@ -500,12 +493,32 @@ func (e *externalMediaStreamStorage) StartUploadSession(
 	}
 
 	if e.gcs != nil {
-		return &gcsExternalStorageWriter{
-			streamID:     streamID,
-			bucket:       e.gcs.bucket,
-			schemaLockID: schemaLockID,
-			buf:          new(bytes.Buffer),
-		}, nil
+		var (
+			deadline   = time.Now().Add(-5 * time.Minute)
+			httpClient = http.DefaultClient
+			apiToken   *oauth2.Token
+			err        error
+		)
+
+		if e.gcs.httpClient != nil {
+			httpClient = e.gcs.httpClient
+		}
+
+		e.googleOauthTokenMu.Lock()
+		if e.googleOauthToken == nil || e.googleOauthToken.Expiry.Before(deadline) {
+			e.googleOauthToken, err = e.gcs.creds.TokenSource.Token()
+			if err != nil {
+				e.googleOauthTokenMu.Unlock()
+				return nil, RiverError(Err_BAD_CONFIG, "Unable to get GCS oauth token").
+					Tag("streamId", streamID).
+					Func("externalMediaStreamStorage#StartUploadSession")
+			}
+		}
+		apiToken = e.googleOauthToken
+		e.googleOauthTokenMu.Unlock()
+
+		return NewGoogleStorageExternalStorageWriter(
+			streamID, schemaLockID, e.gcs.bucket.BucketName(), totalMiniblockDataSizeInDB, apiToken, httpClient)
 	}
 
 	if e.s3 != nil {
@@ -584,12 +597,20 @@ func WithCustomS3Client(
 }
 
 // WithCustomGcsClient sets the Google Cloud Storage client.
-func WithCustomGcsClient(bucket *gcstorage.BucketHandle) PostgresStreamStoreOption {
+func WithCustomGcsClient(
+	bucket *gcstorage.BucketHandle,
+	creds *google.Credentials,
+	httpClient *http.Client,
+) PostgresStreamStoreOption {
 	return func(store *PostgresStreamStore) {
 		if store.externalMediaStreamStorage == nil {
 			store.externalMediaStreamStorage = &externalMediaStreamStorage{}
 		}
-		store.externalMediaStreamStorage.gcs = &struct{ bucket *gcstorage.BucketHandle }{bucket: bucket}
+		store.externalMediaStreamStorage.gcs = &struct {
+			bucket     *gcstorage.BucketHandle
+			creds      *google.Credentials
+			httpClient *http.Client
+		}{bucket: bucket, creds: creds, httpClient: httpClient}
 	}
 }
 
@@ -907,103 +928,6 @@ func (s *PostgresStreamStore) loadMediaStreamsWithMiniblocksReadyToMigrateTx(
 	return streams, nil
 }
 
-// composeGCPObjects composes the given source objects into the destination object located at dstKey.
-// GCP only allows up to 32 sources per compose call. This helper handles larger inputs by
-// incrementally composing at most 32 sources into temporary objects until the final compose can be
-// executed.
-func composeGCPObjects(
-	ctx context.Context,
-	bucket *gcstorage.BucketHandle,
-	dstKey string,
-	sources []*gcstorage.ObjectHandle,
-) ([]*gcstorage.ObjectHandle, error) {
-	if len(sources) == 0 {
-		return nil, nil
-	}
-
-	temporaryObjects := make([]*gcstorage.ObjectHandle, 0)
-	batchIndex := 0
-	parts := sources
-
-	for len(parts) > 32 {
-		nextParts := make([]*gcstorage.ObjectHandle, 0, (len(parts)+31)/32)
-		for i := 0; i < len(parts); i += 32 {
-			end := i + 32
-			if end > len(parts) {
-				end = len(parts)
-			}
-
-			batch := parts[i:end]
-			tempKey := fmt.Sprintf("%s/tmp-%d", dstKey, batchIndex)
-			tempObj := bucket.Object(tempKey)
-			if _, err := tempObj.ComposerFrom(batch...).Run(ctx); err != nil {
-				return append(temporaryObjects, tempObj), err
-			}
-
-			temporaryObjects = append(temporaryObjects, tempObj)
-			nextParts = append(nextParts, tempObj)
-			batchIndex++
-		}
-
-		parts = nextParts
-	}
-
-	dst := bucket.Object(dstKey)
-	if _, err := dst.ComposerFrom(parts...).Run(ctx); err != nil {
-		return temporaryObjects, err
-	}
-
-	return temporaryObjects, nil
-}
-
-// TestDeleteExternalObject is a helper function to clean up after unittests.
-// It must not be called from production code.
-func (s *PostgresStreamStore) TestDeleteExternalObject(
-	ctx context.Context,
-	streamID StreamId,
-	loc MiniblockDataStorageLocation,
-) error {
-	if loc == MiniblockDataStorageLocationS3 {
-		_, err := s.externalMediaStreamStorage.s3.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
-			Bucket: aws.String(s.externalMediaStreamStorage.s3.bucket),
-			Key:    aws.String(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)),
-		})
-		return err
-	}
-	if loc == MiniblockDataStorageLocationGCS {
-		return s.externalMediaStreamStorage.gcs.bucket.
-			Object(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)).
-			Delete(ctx)
-	}
-
-	return RiverError(Err_INTERNAL, "Storage location isn't external").Func("TestDeleteExternalObject")
-}
-
-func (s *PostgresStreamStore) TestNormalizeStreamWithoutCallingEphemeralMonitor(
-	ctx context.Context,
-	streamId StreamId,
-) (common.Hash, error) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	var genesisMiniblockHash common.Hash
-
-	err := s.txRunner(
-		ctx,
-		"NormalizeEphemeralStream",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId, false)
-			return err
-		},
-		nil,
-		"streamId", streamId,
-	)
-
-	return genesisMiniblockHash, err
-}
-
 // ObjectRangeMiniblocks returns a range that can be used to download a byte range of an
 // externally stored object that contains multiple miniblocks allowing to decode a miniblock
 // range without the need to download the entire object.
@@ -1069,4 +993,52 @@ func ObjectRangeMiniblocks(
 	}
 
 	return offset, size, rangeParts, nil
+}
+
+// TestDeleteExternalObject is a helper function to clean up after unittests.
+// It must not be called from production code.
+func (s *PostgresStreamStore) TestDeleteExternalObject(
+	ctx context.Context,
+	streamID StreamId,
+	loc MiniblockDataStorageLocation,
+) error {
+	if loc == MiniblockDataStorageLocationS3 {
+		_, err := s.externalMediaStreamStorage.s3.client.DeleteObject(ctx, &awss3.DeleteObjectInput{
+			Bucket: aws.String(s.externalMediaStreamStorage.s3.bucket),
+			Key:    aws.String(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)),
+		})
+		return err
+	}
+	if loc == MiniblockDataStorageLocationGCS {
+		return s.externalMediaStreamStorage.gcs.bucket.
+			Object(ExternalStorageObjectKey(s.computeLockIdFromSchema(), streamID)).
+			Delete(ctx)
+	}
+
+	return RiverError(Err_INTERNAL, "Storage location isn't external").Func("TestDeleteExternalObject")
+}
+
+func (s *PostgresStreamStore) TestNormalizeStreamWithoutCallingEphemeralMonitor(
+	ctx context.Context,
+	streamId StreamId,
+) (common.Hash, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	var genesisMiniblockHash common.Hash
+
+	err := s.txRunner(
+		ctx,
+		"NormalizeEphemeralStream",
+		pgx.ReadWrite,
+		func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId, false)
+			return err
+		},
+		nil,
+		"streamId", streamId,
+	)
+
+	return genesisMiniblockHash, err
 }

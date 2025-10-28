@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	raw "google.golang.org/api/storage/v1"
 	htransport "google.golang.org/api/transport/http"
@@ -269,13 +270,19 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		require := require.New(t)
 
+		creds, err := google.CredentialsFromJSON(
+			ctx,
+			[]byte(gcsConfig.Gcs.JsonCredentials),
+			raw.DevstorageReadWriteScope)
+		require.NoError(err)
+
 		userWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 		nodeWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 
 		t.Run("Small stream", func(t *testing.T) {
-			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket, creds, &c))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -297,14 +304,14 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			}()
 
 			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
-			// DB to external AWS S3 storage under the object key streamID in the background.
+			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
 			}, 2*time.Minute, 10*time.Millisecond)
 		})
 
 		t.Run("Stream with many chunks", func(t *testing.T) {
-			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket, creds, &c))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -326,14 +333,14 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			}()
 
 			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
-			// DB to external AWS S3 storage under the object key streamID in the background.
+			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
 			}, 2*time.Minute, 10*time.Millisecond)
 		})
 
 		t.Run("Stream range read", func(t *testing.T) {
-			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket, creds, &c))
 
 			streamID, chunks, expMiniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -362,7 +369,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		t.Run("Stream with big chunks", func(t *testing.T) {
 			t.Skip("Too big for CI")
 
-			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+			store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket, creds, &c))
 
 			streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
 				t,
@@ -384,7 +391,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			}()
 
 			// the ephemeral stream monitor must now migrate the normalized stream miniblocks from
-			// DB to external AWS S3 storage under the object key streamID in the background.
+			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
 			}, 2*time.Minute, 10*time.Millisecond)
@@ -426,12 +433,18 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 		require := require.New(t)
 
+		creds, err := google.CredentialsFromJSON(
+			ctx,
+			[]byte(gcsConfig.Gcs.JsonCredentials),
+			raw.DevstorageReadWriteScope)
+		require.NoError(err)
+
 		userWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 		nodeWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 
-		store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket))
+		store := setupStreamStorageWithExternalStorage(t, gcsConfig, storage.WithCustomGcsClient(bucket, creds, &c))
 
 		// insert media stream direct in DB
 		streamID, chunks, miniblocks := createMediaStreamAndAddChunks(
