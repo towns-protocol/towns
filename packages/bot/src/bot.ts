@@ -103,6 +103,7 @@ import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
+import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -298,7 +299,7 @@ export class Bot<
     Commands extends PlainMessage<SlashCommand>[] = [],
     HonoEnv extends Env = BlankEnv,
 > {
-    private readonly client: ClientV2<BotActions>
+    readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
     viem: WalletClient<Transport, Chain, Account>
@@ -1004,15 +1005,15 @@ export class Bot<
         return this.client.unban(userId, spaceId)
     }
 
-    /** Sends a tip to a user.
+    /** Sends a tip to a user by looking up their smart account.
      *  Tip will always get funds from the app account balance.
-     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
+     * @param params - Tip parameters including userId, amount, messageId, channelId, currency.
      * @returns The transaction hash and event ID
      */
     async sendTip(
-        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency'> & {
+        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency' | 'receiver'> & {
             currency?: Address
-            receiverUserId: string
+            userId: Address
         },
     ) {
         const result = await this.client.sendTip(params, this.currentMessageTags)
@@ -1807,7 +1808,7 @@ const buildBotActions = (
      * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
      * @returns The transaction hash and event ID
      */
-    const sendTip = async (
+    const sendTipImpl = async (
         params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency'> & {
             currency?: Address
             receiverUserId: string
@@ -1912,6 +1913,34 @@ const buildBotActions = (
                 messageInteractionType: MessageInteractionType.TIP,
                 participatingUserAddresses: [bin_fromHexString(params.receiverUserId)],
             },
+        )
+    }
+
+    /** Sends a tip to a user by looking up their smart account by userId.
+     *  Tip will always get funds from the app account balance.
+     * @param params - Tip parameters including userId, amount, messageId, channelId, currency.
+     * @returns The transaction hash and event ID
+     */
+    const sendTip = async (
+        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency' | 'receiver'> & {
+            currency?: Address
+            userId: Address
+        },
+        tags?: PlainMessage<Tags>,
+    ): Promise<{ txHash: string; eventId: string }> => {
+        const smartAccountAddress = await getSmartAccountFromUserIdImpl(
+            client.config.base.chainConfig.addresses.spaceFactory,
+            viem,
+            params.userId,
+        )
+
+        return sendTipImpl(
+            {
+                ...params,
+                receiver: smartAccountAddress ?? params.userId,
+                receiverUserId: params.userId,
+            },
+            tags,
         )
     }
 

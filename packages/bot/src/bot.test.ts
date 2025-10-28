@@ -800,8 +800,7 @@ describe('Bot', { sequential: true }, () => {
 
         bot.onMessage(async (handler, event) => {
             const result = await handler.sendTip({
-                receiver: bob.userId,
-                receiverUserId: bob.userId,
+                userId: bob.userId,
                 amount: ethers.utils.parseUnits('0.005').toBigInt(),
                 messageId: event.eventId,
                 channelId: event.channelId,
