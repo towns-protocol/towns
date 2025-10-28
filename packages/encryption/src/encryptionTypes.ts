@@ -21,6 +21,7 @@ export type OutboundGroupSession = OlmOutboundGroupSession
 export type InboundGroupSession = OlmInboundGroupSession
 
 export interface IOutboundGroupSessionKey {
+    sessionId: string
     chain_index: number
     key: string
 }

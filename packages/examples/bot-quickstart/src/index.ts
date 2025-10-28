@@ -12,6 +12,21 @@ async function main() {
         commands,
     })
 
+    bot.onSlashCommand('help', async (handler, { channelId }) => {
+        await handler.sendMessage(
+            channelId,
+            '**Available Commands:**\n\n' +
+                '• `/help` - Show this help message\n' +
+                '• `/time` - Get the current time\n\n' +
+                '**Message Triggers:**\n\n' +
+                "• Mention me - I'll respond\n" +
+                "• React with 👋 - I'll wave back" +
+                '• Say "hello" - I\'ll greet you back\n' +
+                '• Say "ping" - I\'ll show latency\n' +
+                '• Say "react" - I\'ll add a reaction\n',
+        )
+    })
+
     bot.onSlashCommand('time', async (handler, { channelId }) => {
         const currentTime = new Date().toLocaleString()
         await handler.sendMessage(channelId, `Current time: ${currentTime} ⏰`)
@@ -20,13 +35,6 @@ async function main() {
     bot.onMessage(async (handler, { message, channelId, eventId, createdAt }) => {
         if (message.toLowerCase().includes('hello')) {
             await handler.sendMessage(channelId, 'Hello there! 👋')
-        }
-
-        if (message.toLowerCase().includes('help')) {
-            await handler.sendMessage(
-                channelId,
-                'I can respond to:\n• "hello" - I\'ll greet you back\n• "ping" - I\'ll respond with pong\n• "time" - I\'ll tell you the current time',
-            )
         }
 
         if (message.toLowerCase().includes('ping')) {
@@ -44,7 +52,7 @@ async function main() {
 
     bot.onReaction(async (handler, { reaction, channelId }) => {
         if (reaction === '👋') {
-            await handler.sendMessage(channelId, 'Thanks for the wave! 👋')
+            await handler.sendMessage(channelId, 'I saw your wave! 👋')
         }
     })
 

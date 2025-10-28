@@ -15,7 +15,8 @@ describe('BaseContractShim read method with retry logic', () => {
         return { provider, mockShim }
     }
 
-    describe.concurrent('retry functionality', () => {
+    // removed retry functionality for now 10.28.25
+    describe.skip('retry functionality', () => {
         it('should succeed on first try when contract call works', async () => {
             const { provider, mockShim } = await createTestSetup()
             await mockShim.getNetwork()

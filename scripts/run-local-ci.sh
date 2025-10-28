@@ -9,6 +9,12 @@ if ! which act >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! which yq >/dev/null 2>&1; then
+  echo "Error: 'yq' is not installed. Please install it with:"
+  echo "  brew install yq"
+  exit 1
+fi
+
 # Script to run GitHub CI locally using act
 
 # Default values
@@ -63,10 +69,6 @@ cat > event.json << EOF
 }
 EOF
 
-# Format with prettier
-echo "Formatting event.json..."
-yarn prettier --write event.json
-
 # Cleanup function to stop Anvil containers
 cleanup() {
     echo "Stopping Anvil containers..."
@@ -81,10 +83,25 @@ cleanup() {
     if [[ -n "${TEMP_LOG:-}" && -f "$TEMP_LOG" ]]; then
         rm "$TEMP_LOG"
     fi
+
+    # Restore original workflow file if it was backed up
+    if [[ -f ".github/workflows/ci.yml.original" ]]; then
+        mv ".github/workflows/ci.yml.original" ".github/workflows/ci.yml"
+    fi
 }
 
 # Set up trap to cleanup on exit
 trap cleanup EXIT INT TERM
+
+# Preprocess workflow to expand YAML anchors (act doesn't support them)
+echo "Preprocessing workflow to expand YAML anchors..."
+cp .github/workflows/ci.yml .github/workflows/ci.yml.original
+yq eval 'explode(.)' .github/workflows/ci.yml > .github/workflows/ci.expanded.yml
+mv .github/workflows/ci.expanded.yml .github/workflows/ci.yml
+
+# Format generated files with prettier
+echo "Formatting generated files..."
+yarn prettier --write event.json .github/workflows/ci.yml
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
@@ -94,6 +111,7 @@ TEMP_LOG=$(mktemp)
 # Run command and tee output to both terminal and temp file
 act "$EVENT_TYPE" -j "$JOB" --secret-file .env \
   -P blacksmith-16vcpu-ubuntu-2404=ghcr.io/catthehacker/ubuntu:act-latest \
+  -P blacksmith-32vcpu-ubuntu-2404=ghcr.io/catthehacker/ubuntu:act-latest \
   --container-architecture "$ARCH" \
   --eventpath event.json \
   --rm \
