@@ -3,4 +3,4 @@
  **************************************************************************/
 export * from './bot'
 export { default as simpleAppAbi } from '@towns-protocol/generated/dev/abis/ISimpleApp.abi'
-export * from './getSmartAccountFromUserId'
+export { getSmartAccountFromUserId } from './getSmartAccountFromUserId'

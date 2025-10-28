@@ -141,14 +141,21 @@ export async function getSmartAccountFromUserId(
         userId: Address
     },
 ): Promise<Address | null> {
+    const contractAddress = bot.client.config.base.chainConfig.addresses.spaceFactory
+    return getSmartAccountFromUserIdImpl(contractAddress, bot.viem, params.userId)
+}
+
+export async function getSmartAccountFromUserIdImpl(
+    contractAddress: Address,
+    viem: Client<Transport, Chain, Account>,
+    userId: Address,
+): Promise<Address | null> {
     try {
-        const { userId } = params
-        const contractAddress = bot.client.config.base.chainConfig.addresses.spaceFactory
         // Get all linked wallets for this user
-        const linkedWallets = await getLinkedWalletsWithRootKey(bot.viem, userId, contractAddress)
+        const linkedWallets = await getLinkedWalletsWithRootKey(viem, userId, contractAddress)
         // Check each wallet for a deployed modular smart account
         for (const address of linkedWallets) {
-            const isModular = await checkSmartAccountImplementation(bot.viem, address)
+            const isModular = await checkSmartAccountImplementation(viem, address)
             if (isModular) {
                 return address
             }
