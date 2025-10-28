@@ -39,7 +39,6 @@ export interface SyncAgentConfig {
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     logId?: string
-    useSharedSyncer?: boolean
 }
 
 export class SyncAgent {
@@ -93,9 +92,6 @@ export class SyncAgent {
                 highPriorityStreamIds: this.config.highPriorityStreamIds,
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,
                 logId: config.logId,
-                streamOpts: {
-                    useSharedSyncer: config.useSharedSyncer ?? true,
-                },
             },
             rpcRetryParams: config.retryParams,
             encryptionDevice: config.encryptionDevice,

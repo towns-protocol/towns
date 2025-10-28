@@ -43,7 +43,9 @@ func NewRegistry(
 		eventBus: eventBus,
 	}
 
-	h.runMetricsCollector(metrics)
+	if metrics != nil {
+		h.runMetricsCollector(metrics)
+	}
 
 	return h
 }

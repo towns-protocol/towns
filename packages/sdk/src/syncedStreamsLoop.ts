@@ -155,7 +155,6 @@ export class SyncedStreamsLoop {
         logNamespace: string,
         readonly unpackEnvelopeOpts: UnpackEnvelopeOpts | undefined,
         private highPriorityIds: Set<string>,
-        private streamOpts: { useSharedSyncer?: boolean } | undefined,
         private lastAccessedAt: Record<string, number>,
     ) {
         this.rpcClient = rpcClient
@@ -394,9 +393,6 @@ export class SyncedStreamsLoop {
                             },
                             {
                                 timeoutMs: -1,
-                                headers: this.streamOpts?.useSharedSyncer
-                                    ? { 'X-Use-Shared-Sync': 'true' }
-                                    : undefined,
                                 signal: this.abortController.signal,
                             },
                         )
@@ -484,7 +480,6 @@ export class SyncedStreamsLoop {
                                 syncId: this.syncId,
                                 nodeUrl: this.rpcClient.url,
                                 syncState: this.syncState,
-                                streamOpts: this.streamOpts,
                                 syncStartedAt: this.syncStartedAt,
                                 duration: performance.now() - this.syncStartedAt,
                             },
@@ -950,7 +945,6 @@ export class SyncedStreamsLoop {
                                                 syncId: this.syncId,
                                                 nodeUrl: this.rpcClient.url,
                                                 syncState: this.syncState,
-                                                streamOpts: this.streamOpts,
                                                 syncStartedAt: this.syncStartedAt,
                                                 duration,
                                             },
