@@ -1,0 +1,102 @@
+---
+title: Local Development
+---
+
+Testing your bot locally before deploying to production lets you iterate quickly, see logs in real-time, and debug issues efficiently. This guide will teach you how to set up a local development environment with ngrok.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+- A bot created in the [Developer Portal](https://app.towns.com/developer)
+- Your bot project set up locally with dependencies installed
+- Your `.env` file configured with `APP_PRIVATE_DATA` and `JWT_SECRET`
+
+## Using ngrok for Local Testing
+
+ngrok creates a secure tunnel from a public URL to your local development server, allowing Towns to send webhook events to your bot running on `localhost`.
+
+### 1. Start Your Bot Locally
+
+Run your bot in development mode:
+
+```bash
+bun run dev
+```
+
+Your bot will start on `http://localhost:3000` (or the port specified in your `.env` file).
+
+### 2. Install and Start ngrok
+
+Follow the [ngrok installation guide](https://ngrok.com/download) to install ngrok for your platform.
+
+Once installed, start ngrok to forward port 3000:
+
+```bash
+ngrok http 3000
+```
+
+You'll see output like this:
+
+```
+Forwarding  https://abc123.ngrok-free.app -> http://localhost:3000
+```
+
+Copy the HTTPS URL (e.g., `https://abc123.ngrok-free.app`). This is your public-facing URL that Towns will use to send events to your bot.
+
+<Note>
+The free tier of ngrok provides a random URL each time you restart. You can use a paid plan to get a consistent URL.
+</Note>
+
+### 3. Configure Webhook URL
+
+Update your bot's webhook URL to point to your ngrok tunnel:
+
+1. Go to [app.towns.com/developer](https://app.towns.com/developer)
+2. Click on your bot
+3. Under "Webhook URL", enter your ngrok URL with the `/webhook` path:
+   ```
+   https://abc123.ngrok-free.app/webhook
+   ```
+4. Click "Save"
+
+### 4. Test Your Bot
+
+Now you're ready to test! Install your bot in a test space and interact with it:
+
+1. In the Towns app, go to a space you own or admin
+2. Go to Space Settings → Bots
+3. Search for your bot and install it
+4. Try sending messages, mentioning the bot, or using slash commands
+
+You'll see webhook events arrive in your local terminal in real-time, along with any console logs you've added for debugging.
+
+## Debugging
+
+By default, your bot template includes request logging. You'll see each incoming webhook event in your console:
+
+```bash
+[2025-10-28 10:30:45] POST /webhook 200 - 45ms
+```
+
+You can also use `DEBUG=csb:bot bun run dev` to see more detailed logs about events in your local terminal.
+
+## Switching Back to Production
+
+When you're ready to deploy, remember to:
+
+1. Push your changes to GitHub
+2. Deploy to your production hosting (e.g., Render)
+3. Update your bot's webhook URL back to your production URL:
+   ```
+   https://your-bot.onrender.com/webhook
+   ```
+
+<Warning>
+Don't forget to switch the webhook URL! Leaving it pointed at ngrok will break your bot once you close the ngrok tunnel.
+</Warning>
+
+## Next Steps
+
+- [Learn about event handlers](/build/bots/events) - Handle different event types
+- [Add slash commands](/build/bots/slash-commands) - Create custom `/help`, `/poll`, etc.
+- [External interactions](/build/bots/external-interactions) - Timers, webhooks, custom APIs

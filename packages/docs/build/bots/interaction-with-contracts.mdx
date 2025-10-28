@@ -10,8 +10,35 @@ The bot exposes `viem` client and app address for direct blockchain interactions
 
 <Note>
 Your bot client wallet will need to be funded with Base ETH to execute transactions.
-You receive the wallet credentials after creating your bot. 
+You receive the wallet credentials after creating your bot.
 </Note>
+
+## Configuration
+
+### Base RPC URL
+
+Bots that interact with smart contracts require a reliable RPC endpoint for Base chain. The default public RPC (`mainnet.base.org`) has strict rate limits and will cause your bot to fail quickly under normal usage.
+
+You can configure a custom RPC URL by passing `baseRpcUrl` to `makeTownsBot()`:
+
+```typescript
+const bot = await makeTownsBot(
+  process.env.APP_PRIVATE_DATA!,
+  process.env.JWT_SECRET!,
+  {
+    baseRpcUrl: process.env.BASE_RPC_URL,
+    commands
+  }
+)
+```
+
+Add the RPC URL to your `.env` file:
+
+```bash
+BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/YOUR_API_KEY
+```
+
+We recommend getting a RPC URL from a reputable provider, like [Alchemy](https://www.alchemy.com/).
 
 ## Reading from Contracts
 
