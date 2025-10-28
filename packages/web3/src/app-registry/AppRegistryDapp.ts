@@ -61,11 +61,19 @@ export class AppRegistryDapp {
         })
     }
 
-    public getCreateAppEvent(receipt: ContractReceipt): AppCreatedEventObject {
+    public async getCreateAppEvent(
+        receipt: ContractReceipt,
+        senderAddress: Address,
+    ): Promise<AppCreatedEventObject> {
         for (const log of receipt.logs) {
             try {
                 const parsedLog = this.factory.interface.parseLog(log)
                 if (parsedLog.name === 'AppCreated') {
+                    const app = await this.getAppById(parsedLog.args.uid as string)
+                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
+                    if (!isOwner) {
+                        continue
+                    }
                     return {
                         app: parsedLog.args.app,
                         uid: parsedLog.args.uid,
@@ -78,11 +86,19 @@ export class AppRegistryDapp {
         return { app: '', uid: '' }
     }
 
-    public getRegisterAppEvent(receipt: ContractReceipt): AppRegisteredEventObject {
+    public async getRegisterAppEvent(
+        receipt: ContractReceipt,
+        senderAddress: Address,
+    ): Promise<AppRegisteredEventObject> {
         for (const log of receipt.logs) {
             try {
                 const parsedLog = this.registry.interface.parseLog(log)
                 if (parsedLog.name === 'AppRegistered') {
+                    const app = await this.getAppById(parsedLog.args.uid as string)
+                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
+                    if (!isOwner) {
+                        continue
+                    }
                     return {
                         app: parsedLog.args.app,
                         uid: parsedLog.args.uid,

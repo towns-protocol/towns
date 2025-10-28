@@ -41,7 +41,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -169,7 +172,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: readOnlyBotAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: readOnlyBotAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt1,
+            botWithoutWriteWallet.address as Address,
+        )
         expect(readOnlyBotAddress).toBeDefined()
 
         // Create second bot app contract with both READ and WRITE permissions
@@ -182,7 +188,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: readWriteBotAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: readWriteBotAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt2,
+            botWithWriteWallet.address as Address,
+        )
         expect(readWriteBotAddress).toBeDefined()
 
         // Create bot user streams for both bots
@@ -309,7 +318,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
