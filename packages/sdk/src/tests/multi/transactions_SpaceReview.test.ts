@@ -161,8 +161,8 @@ describe('transaction_SpaceReview', () => {
         expect(stream.view.membershipContent.spaceReviews.length).toBe(1)
     })
     test('bob can tip review', async () => {
-        const tx = await bob.riverConnection.spaceDapp.sendTip(
-            {
+        const tx = await bob.riverConnection.spaceDapp.sendTip({
+            tipParams: {
                 spaceId: spaceIdWithAlice,
                 type: 'member',
                 tokenId: aliceTokenId,
@@ -172,8 +172,8 @@ describe('transaction_SpaceReview', () => {
                 channelId: spaceIdWithAlice,
                 receiver: aliceIdentity.userId,
             },
-            bobIdentity.signer,
-        )
+            signer: bobIdentity.signer,
+        })
         const receipt = await tx.wait(2)
         expect(receipt).toBeDefined()
         const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(

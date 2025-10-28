@@ -272,8 +272,8 @@ export class Channel extends PersistedObservable<ChannelModel> {
                     throw new Error('tokenId not found')
                 }
                 toUserId = tip.receiver
-                tx = await this.spaceDapp.sendTip(
-                    {
+                tx = await this.spaceDapp.sendTip({
+                    tipParams: {
                         spaceId: this.data.spaceId,
                         type: 'member',
                         tokenId: membershipTokenId,
@@ -284,13 +284,13 @@ export class Channel extends PersistedObservable<ChannelModel> {
                         receiver: tip.receiver,
                     },
                     signer,
-                )
+                })
                 break
             }
             case 'bot': {
                 toUserId = tip.botId
-                tx = await this.spaceDapp.sendTip(
-                    {
+                tx = await this.spaceDapp.sendTip({
+                    tipParams: {
                         spaceId: this.data.spaceId,
                         type: 'bot',
                         receiver: tip.appAddress,
@@ -301,7 +301,7 @@ export class Channel extends PersistedObservable<ChannelModel> {
                         channelId: this.data.id,
                     },
                     signer,
-                )
+                })
                 break
             }
             default: {

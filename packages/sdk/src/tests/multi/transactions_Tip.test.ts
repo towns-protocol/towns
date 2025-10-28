@@ -108,8 +108,8 @@ describe('transactions_Tip', () => {
 
         try {
             // dummy tip, to be used to test error cases
-            const tx = await bob.riverConnection.spaceDapp.sendTip(
-                {
+            const tx = await bob.riverConnection.spaceDapp.sendTip({
+                tipParams: {
                     spaceId,
                     type: 'member',
                     tokenId: aliceTokenId,
@@ -119,13 +119,13 @@ describe('transactions_Tip', () => {
                     channelId: defaultChannelId,
                     receiver: aliceIdentity.rootWallet.address as Address,
                 },
-                bobIdentity.signer,
-            )
+                signer: bobIdentity.signer,
+            })
             dummyReceipt = await tx.wait(2)
             dummyTipEvent = bob.riverConnection.spaceDapp.getTipEvent(
                 spaceId,
                 dummyReceipt,
-                bobIdentity.rootWallet.address as Address, // if account abstraction is enabled, this is the abstract account address
+                bobIdentity.rootWallet.address, // if account abstraction is enabled, this is the abstract account address
             )!
         } catch (err) {
             const parsedError = bob.riverConnection.spaceDapp.parseSpaceError(spaceId, err)
@@ -149,8 +149,8 @@ describe('transactions_Tip', () => {
     test('addTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.sendTip(
-            {
+        const tx = await bob.riverConnection.spaceDapp.sendTip({
+            tipParams: {
                 spaceId,
                 type: 'member',
                 tokenId: aliceTokenId,
@@ -160,8 +160,8 @@ describe('transactions_Tip', () => {
                 channelId: defaultChannelId,
                 receiver: aliceIdentity.rootWallet.address as Address,
             },
-            bobIdentity.signer,
-        )
+            signer: bobIdentity.signer,
+        })
         const receipt = await tx.wait(2)
         expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
         const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(
@@ -411,8 +411,8 @@ describe('transactions_Tip', () => {
     test('addSecondTip', async () => {
         // a user should be able to upload a transaction that
         // is a tip and is valid on chain
-        const tx = await bob.riverConnection.spaceDapp.sendTip(
-            {
+        const tx = await bob.riverConnection.spaceDapp.sendTip({
+            tipParams: {
                 spaceId,
                 type: 'member',
                 tokenId: aliceTokenId,
@@ -422,8 +422,8 @@ describe('transactions_Tip', () => {
                 channelId: defaultChannelId,
                 receiver: aliceIdentity.rootWallet.address as Address,
             },
-            bobIdentity.signer,
-        )
+            signer: bobIdentity.signer,
+        })
         const receipt = await tx.wait(2)
         expect(receipt.from).toEqual(bobIdentity.rootWallet.address)
         const tipEvent = bob.riverConnection.spaceDapp.getTipEvent(
