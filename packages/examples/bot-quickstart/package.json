@@ -7,10 +7,10 @@
     "scripts": {
         "build": "tsc --noEmit && node ./esbuild.config.mjs",
         "clean": "rm -rf dist",
-        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env ./esbuild.config.mjs --watch",
+        "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 node ./esbuild.config.mjs --watch",
         "lint": "eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "eslint --format unix ./src  --max-warnings=0 --fix",
-        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node --env-file=.env dist/bot-quickstart.cjs",
+        "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 node dist/bot-quickstart.cjs",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
@@ -19,6 +19,7 @@
         "@towns-protocol/bot": "workspace:^",
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
+        "dotenv": "^17.2.3",
         "hono": "^4.7.11",
         "viem": "^2.29.3"
     },
