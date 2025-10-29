@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import {IFeeHook, FeeHookResult} from "src/factory/facets/fee/IFeeHook.sol";
+
 // test base
 import {FeeManagerBaseTest} from "./FeeManagerBase.t.sol";
 
@@ -414,13 +416,13 @@ contract FeeManagerTest is FeeManagerBaseTest {
 
     function test_chargeFee_usesProtocolRecipient_whenRecipientIsZero() external {
         bytes32 feeType = FeeTypesLib.TIP_MEMBER;
-        
+
         // Configure fee with zero address recipient (should fallback to protocol recipient)
         _configureFee(feeType, address(0), FeeCalculationMethod.PERCENT, 50, 0, true);
 
         uint256 amount = 1 ether;
         uint256 expectedFee = 0.005 ether; // 0.5% of 1 ether
-        
+
         // Get protocol recipient balance before
         uint256 protocolRecipientBefore = deployer.balance;
 
@@ -445,19 +447,25 @@ contract FeeManagerTest is FeeManagerBaseTest {
     /*                   HOOK FAILURE HANDLING                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_calculateFee_fallsBackToBaseFee_onHookFailure() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+    function test_calculateFee_fallsBackToBaseFee_onHookFailure()
+        external
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
+    {
         // Deploy a hook that always reverts
         MockRevertingHook revertingHook = new MockRevertingHook();
         _configureHook(FeeTypesLib.TIP_MEMBER, address(revertingHook));
 
         // calculateFee should fall back to base fee when hook reverts
         uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
-        
+
         // Should return base fee (0.5% of 1 ether)
         assertEq(fee, 0.005 ether);
     }
 
-    function test_chargeFee_fallsBackToBaseFee_onHookFailure() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+    function test_chargeFee_fallsBackToBaseFee_onHookFailure()
+        external
+        givenFeeConfigured(FeeTypesLib.TIP_MEMBER)
+    {
         // Deploy a hook that always reverts
         MockRevertingHook revertingHook = new MockRevertingHook();
         _configureHook(FeeTypesLib.TIP_MEMBER, address(revertingHook));
