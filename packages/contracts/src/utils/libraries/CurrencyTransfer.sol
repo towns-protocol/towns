@@ -97,7 +97,8 @@ library CurrencyTransfer {
         }
     }
 
-    /// @dev Transfers fee amount and refunds excess native token
+    /// @notice Transfers fee amount and refunds excess native token
+    /// @dev For native tokens, the subtraction maxPaid - actualFee will underflow and revert if actualFee > maxPaid.
     /// @param currency The currency (address(0) for native)
     /// @param payer The payer to refund
     /// @param recipient The fee recipient
@@ -114,7 +115,8 @@ library CurrencyTransfer {
             // Transfer fee to recipient if non-zero
             if (actualFee > 0) safeTransferNativeToken(recipient, actualFee);
 
-            // Refund excess to payer
+            // NOTE: uint256 underflow here (maxPaid - actualFee) will revert if actualFee > maxPaid,
+            // acting as a slippage check (never over-withdraws from msg.value).
             uint256 refund = maxPaid - actualFee;
             if (refund > 0) safeTransferNativeToken(payer, refund);
         } else {

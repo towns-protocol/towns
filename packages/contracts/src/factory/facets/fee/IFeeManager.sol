@@ -113,6 +113,7 @@ interface IFeeManager is IFeeManagerBase {
     /// @param user The address being charged
     /// @param amount The base amount for percentage calculations
     /// @param currency The currency contract (address(0) for native token)
+    /// @param maxFee The maximum fee that can be charged (amount + slippage tolerance)
     /// @param extraData Additional data passed to hooks
     /// @return finalFee The actual fee charged
     function chargeFee(
