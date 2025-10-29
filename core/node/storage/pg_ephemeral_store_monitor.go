@@ -104,6 +104,37 @@ func (m *ephemeralStreamMonitor) onSealed(streamId StreamId) {
 	}
 }
 
+// runMigrateMediaStreamsToExternalStorage schedules a task to migrate miniblocks of
+// existing media streams to external storage.
+func (m *ephemeralStreamMonitor) runMigrateMediaStreamsToExternalStorage(ctx context.Context) {
+	select {
+	case <-time.After(5 * time.Second):
+		break
+	case <-ctx.Done():
+		return
+	}
+
+	log := logging.FromCtx(ctx)
+
+	migratedAllExistingStreams := false
+	for !migratedAllExistingStreams {
+		const limit = 2500
+		if m.migrateMediaStreamsToExternalStorage {
+			if streamsToMigrate, err := m.storage.LoadMediaStreamsWithMiniblocksReadyToMigrate(ctx, limit); err == nil {
+				for _, stream := range streamsToMigrate {
+					_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(stream, 0)
+				}
+				// stop migrating existing streams if there are none left.
+				// new streams will be added through the monitor.onSealed func.
+				migratedAllExistingStreams = len(streamsToMigrate) < limit
+			} else {
+				log.Error("failed to load media streams with miniblocks in database", "error", err)
+				migratedAllExistingStreams = true // try migrating existing streams on next monitor run
+			}
+		}
+	}
+}
+
 // runStreamMigrationToExternalStorage migrates miniblocks of normalized ephemeral stream
 // to external storage.
 func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context.Context) {
@@ -112,30 +143,9 @@ func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context
 	log.Info("Enable media stream miniblock data in external storage",
 		"migrateExistingStreams", m.migrateMediaStreamsToExternalStorage)
 
-	go func() {
-		// if migrating existing media streams to external storage is enabled, fetch streams that are ready
-		// to migrate and add them to the streamsToMigrateToExternalStorage collection for migration.
-		if m.migrateMediaStreamsToExternalStorage {
-			<-time.After(5 * time.Second)
-			migratedAllExistingStreams := false
-			for !migratedAllExistingStreams {
-				const limit = 2500
-				if m.migrateMediaStreamsToExternalStorage {
-					if streamsToMigrate, err := m.storage.LoadMediaStreamsWithMiniblocksReadyToMigrate(ctx, limit); err == nil {
-						for _, stream := range streamsToMigrate {
-							_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(stream, 0)
-						}
-						// stop migrating existing streams if there are none left.
-						// new streams will be added through the monitor.onSealed func.
-						migratedAllExistingStreams = len(streamsToMigrate) < limit
-					} else {
-						log.Error("failed to load media streams with miniblocks in database", "error", err)
-						migratedAllExistingStreams = true // try migrating existing streams on next monitor run
-					}
-				}
-			}
-		}
-	}()
+	if m.migrateMediaStreamsToExternalStorage {
+		go m.runMigrateMediaStreamsToExternalStorage(ctx)
+	}
 
 	for {
 		select {
