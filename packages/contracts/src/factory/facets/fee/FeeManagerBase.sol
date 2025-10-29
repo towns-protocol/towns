@@ -83,6 +83,7 @@ abstract contract FeeManagerBase is IFeeManagerBase {
     /// @notice Charges fee and transfers it (state-changing)
     /// @dev Calls hook's onChargeFee if configured, then transfers currency
     /// @dev Note: `user` is metadata for hooks/events. Actual payment comes from msg.sender.
+    /// @dev Hook failures fall back to base fee (consistent with calculateFee behavior)
     /// @param feeType The type of fee to charge
     /// @param user The address for whom the fee is being charged (for hooks/events)
     /// @param amount The base amount for percentage calculations
@@ -106,17 +107,17 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         // Calculate base fee
         uint256 baseFee = _calculateBaseFee(config, amount);
 
-        // Apply hook if configured
+        // Apply hook if configured, with fallback to base fee on failure
         address hook = config.hook;
         if (hook != address(0)) {
-            FeeHookResult memory result = IFeeHook(hook).onChargeFee(
-                feeType,
-                user,
-                baseFee,
-                context
-            );
-
-            finalFee = result.finalFee;
+            try IFeeHook(hook).onChargeFee(feeType, user, baseFee, context) returns (
+                FeeHookResult memory result
+            ) {
+                finalFee = result.finalFee;
+            } catch {
+                // If hook fails, fall back to base fee (consistent with calculateFee)
+                finalFee = baseFee;
+            }
         } else {
             finalFee = baseFee;
         }
@@ -124,18 +125,24 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         // Enforce slippage protection
         if (finalFee > maxFee) FeeManager__ExceedsMaxFee.selector.revertWith();
 
-        // Convert address(0) to NATIVE_TOKEN for CurrencyTransfer library
-        address feeCurrency = currency == address(0) ? CurrencyTransfer.NATIVE_TOKEN : currency;
+        // Determine recipient (fallback to protocol recipient if not set)
+        address recipient = config.recipient;
+        if (recipient == address(0)) recipient = $.protocolFeeRecipient;
 
-        // For native token, validate msg.value matches maxFee
-        if (feeCurrency == CurrencyTransfer.NATIVE_TOKEN && msg.value != maxFee) {
-            CurrencyTransfer.MsgValueMismatch.selector.revertWith();
+        // Emit event before external calls (checks-effects-interactions pattern)
+        if (finalFee > 0) {
+            emit FeeCharged(feeType, user, currency, finalFee, recipient);
         }
 
         // Transfer fee and/or refund excess if maxFee > 0
         if (maxFee > 0) {
-            address recipient = config.recipient;
-            if (recipient == address(0)) recipient = $.protocolFeeRecipient;
+            // Convert address(0) to NATIVE_TOKEN for CurrencyTransfer library
+            address feeCurrency = currency == address(0) ? CurrencyTransfer.NATIVE_TOKEN : currency;
+
+            // For native token, validate msg.value matches maxFee
+            if (feeCurrency == CurrencyTransfer.NATIVE_TOKEN && msg.value != maxFee) {
+                CurrencyTransfer.MsgValueMismatch.selector.revertWith();
+            }
 
             CurrencyTransfer.transferFeeWithRefund(
                 feeCurrency,
@@ -144,10 +151,6 @@ abstract contract FeeManagerBase is IFeeManagerBase {
                 finalFee,
                 maxFee
             );
-
-            if (finalFee > 0) {
-                emit FeeCharged(feeType, user, currency, finalFee, recipient);
-            }
         }
     }
 
@@ -157,7 +160,7 @@ abstract contract FeeManagerBase is IFeeManagerBase {
 
     /// @notice Sets fee configuration
     /// @param feeType The fee type identifier
-    /// @param recipient Fee recipient (uses global if zero address)
+    /// @param recipient Fee recipient (zero address = use protocol fee recipient)
     /// @param method Calculation method
     /// @param bps Basis points (1-10000)
     /// @param fixedFee Fixed fee amount
@@ -170,7 +173,8 @@ abstract contract FeeManagerBase is IFeeManagerBase {
         uint128 fixedFee,
         bool enabled
     ) internal {
-        if (recipient == address(0)) FeeManager__InvalidRecipient.selector.revertWith();
+        // Allow zero address recipient to fallback to protocol fee recipient
+        // Validation that protocol fee recipient is set happens at initialization
         if (bps > BasisPoints.MAX_BPS) FeeManager__InvalidBps.selector.revertWith();
 
         FeeConfig storage config = _getFeeConfig(feeType);

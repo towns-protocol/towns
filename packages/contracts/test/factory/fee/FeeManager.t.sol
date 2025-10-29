@@ -407,4 +407,104 @@ contract FeeManagerTest is FeeManagerBaseTest {
     function test_getProtocolFeeRecipient() external view {
         assertEq(feeManager.getProtocolFeeRecipient(), deployer);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                 RECIPIENT FALLBACK LOGIC                   */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_chargeFee_usesProtocolRecipient_whenRecipientIsZero() external {
+        bytes32 feeType = FeeTypesLib.TIP_MEMBER;
+        
+        // Configure fee with zero address recipient (should fallback to protocol recipient)
+        _configureFee(feeType, address(0), FeeCalculationMethod.PERCENT, 50, 0, true);
+
+        uint256 amount = 1 ether;
+        uint256 expectedFee = 0.005 ether; // 0.5% of 1 ether
+        
+        // Get protocol recipient balance before
+        uint256 protocolRecipientBefore = deployer.balance;
+
+        // Charge fee
+        vm.deal(testUser, amount);
+        vm.prank(testUser);
+        uint256 actualFee = feeManager.chargeFee{value: expectedFee}(
+            feeType,
+            testUser,
+            amount,
+            address(0), // native token
+            expectedFee,
+            ""
+        );
+
+        // Verify protocol recipient received the fee
+        assertEq(deployer.balance, protocolRecipientBefore + expectedFee);
+        assertEq(actualFee, expectedFee);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                   HOOK FAILURE HANDLING                    */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_calculateFee_fallsBackToBaseFee_onHookFailure() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+        // Deploy a hook that always reverts
+        MockRevertingHook revertingHook = new MockRevertingHook();
+        _configureHook(FeeTypesLib.TIP_MEMBER, address(revertingHook));
+
+        // calculateFee should fall back to base fee when hook reverts
+        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, testUser, 1 ether, "");
+        
+        // Should return base fee (0.5% of 1 ether)
+        assertEq(fee, 0.005 ether);
+    }
+
+    function test_chargeFee_fallsBackToBaseFee_onHookFailure() external givenFeeConfigured(FeeTypesLib.TIP_MEMBER) {
+        // Deploy a hook that always reverts
+        MockRevertingHook revertingHook = new MockRevertingHook();
+        _configureHook(FeeTypesLib.TIP_MEMBER, address(revertingHook));
+
+        uint256 amount = 1 ether;
+        uint256 expectedBaseFee = 0.005 ether;
+        uint256 feeRecipientBefore = feeRecipient.balance;
+
+        // chargeFee should fall back to base fee when hook reverts
+        vm.deal(testUser, amount);
+        vm.prank(testUser);
+        uint256 actualFee = feeManager.chargeFee{value: expectedBaseFee}(
+            FeeTypesLib.TIP_MEMBER,
+            testUser,
+            amount,
+            address(0),
+            expectedBaseFee,
+            ""
+        );
+
+        // Should charge base fee despite hook failure
+        assertEq(actualFee, expectedBaseFee);
+        assertEq(feeRecipient.balance, feeRecipientBefore + expectedBaseFee);
+    }
+}
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ADDITIONAL MOCKS                       */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @notice Mock hook that always reverts
+contract MockRevertingHook is IFeeHook {
+    function calculateFee(
+        bytes32 /* feeType */,
+        address /* user */,
+        uint256 /* baseFee */,
+        bytes calldata /* context */
+    ) external pure returns (FeeHookResult memory) {
+        revert("Hook failed");
+    }
+
+    function onChargeFee(
+        bytes32 /* feeType */,
+        address /* user */,
+        uint256 /* baseFee */,
+        bytes calldata /* context */
+    ) external pure returns (FeeHookResult memory) {
+        revert("Hook failed");
+    }
 }
