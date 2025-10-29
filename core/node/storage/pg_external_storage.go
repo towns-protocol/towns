@@ -770,14 +770,20 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 	extStorageLoc MiniblockDataStorageLocation,
 	parts []ExternallyStoredMiniblockDescriptor,
 ) error {
-	if _, _, err := s.lockStream(ctx, tx, streamID, true); err != nil {
+	_, location, err := s.lockStream(ctx, tx, streamID, true)
+	if err != nil {
 		return err
 	}
 
-	// delete any previous parts for this stream
-	q := s.sqlForStream(`DELETE FROM {{miniblocks_ext_storage}} WHERE stream_id = $1;`, streamID)
+	if location != MiniblockDataStorageLocationDB {
+		return RiverError(Err_INTERNAL, "stream miniblock data is already stored in external storage").
+			Tag("streamId", streamID).
+			Tag("location", location).
+			Func("writeMediaStreamExternalStoragePartsTx")
+	}
+
 	// drop miniblock data from DB now the miniblock data is uploaded to external storage
-	q += s.sqlForStream(`UPDATE {{miniblocks}} SET blockdata = NULL WHERE stream_id = $1;`, streamID)
+	q := s.sqlForStream(`UPDATE {{miniblocks}} SET blockdata = NULL WHERE stream_id = $1;`, streamID)
 	// update the stream record with the new external storage location
 	q += s.sqlForStream(`UPDATE es SET blockdata_ext = $2 WHERE stream_id = $1;`, streamID)
 
@@ -792,7 +798,7 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 	}
 
 	// import parts in DB
-	_, err := tx.CopyFrom(
+	if _, err := tx.CopyFrom(
 		ctx,
 		pgx.Identifier{s.sqlForStream("{{miniblocks_ext_storage}}", streamID)},
 		[]string{"stream_id", "seq_num", "start_byte", "size"},
@@ -800,8 +806,7 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 			part := parts[i]
 			return []any{streamID, part.Number, part.StartByte, part.MiniblockDataLength}, nil
 		}),
-	)
-	if err != nil {
+	); err != nil {
 		return RiverErrorWithBase(Err_INTERNAL, "Unable to write miniblock ext storage parts", err).
 			Tag("streamId", streamID).
 			Func("writeMediaStreamExternalStoragePartsTx")
