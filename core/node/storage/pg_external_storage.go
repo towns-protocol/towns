@@ -495,10 +495,10 @@ func (e *externalMediaStreamStorage) StartUploadSession(
 
 	if e.gcs != nil {
 		var (
-			deadline   = time.Now().Add(-5 * time.Minute)
-			httpClient = http.DefaultClient
-			apiToken   *oauth2.Token
-			err        error
+			refreshWhenAfter = time.Now().Add(-5 * time.Minute)
+			httpClient       = http.DefaultClient
+			apiToken         *oauth2.Token
+			err              error
 		)
 
 		if e.gcs.httpClient != nil {
@@ -506,7 +506,7 @@ func (e *externalMediaStreamStorage) StartUploadSession(
 		}
 
 		e.googleOauthTokenMu.Lock()
-		if e.googleOauthToken == nil || e.googleOauthToken.Expiry.Before(deadline) {
+		if e.googleOauthToken == nil || e.googleOauthToken.Expiry.After(refreshWhenAfter) {
 			e.googleOauthToken, err = e.gcs.creds.TokenSource.Token()
 			if err != nil {
 				e.googleOauthTokenMu.Unlock()
