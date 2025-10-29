@@ -346,6 +346,7 @@ func TestStreamTrimmer(t *testing.T) {
 				deleteQuery := pgStreamStore.sqlForStream(
 					"DELETE FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = $2",
 					streamId,
+					MiniblockDataStorageLocationDB,
 				)
 				for _, seq := range []int64{5, 15} {
 					if _, err := tx.Exec(ctx, deleteQuery, streamId, seq); err != nil {

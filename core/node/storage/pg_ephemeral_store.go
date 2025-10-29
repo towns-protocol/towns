@@ -78,6 +78,7 @@ func (s *PostgresStreamStore) createEphemeralStreamStorageTx(
 			INSERT INTO es (stream_id, latest_snapshot_miniblock, migrated, ephemeral) VALUES ($1, 0, true, true);
 			INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, 0, $2, $3);`,
 		streamId,
+		MiniblockDataStorageLocationDB,
 	)
 
 	if _, err := tx.Exec(ctx, sql, streamId, genesisMiniblock.Data, genesisMiniblock.Snapshot); err != nil {
@@ -129,6 +130,7 @@ func (s *PostgresStreamStore) readEphemeralMiniblockNumsTx(
 		s.sqlForStream(
 			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	)
@@ -181,6 +183,7 @@ func (s *PostgresStreamStore) writeEphemeralMiniblockTx(
 	query := s.sqlForStream(
 		"INSERT INTO {{miniblocks}} (stream_id, seq_num, blockdata, snapshot) VALUES ($1, $2, $3, $4);",
 		streamId,
+		MiniblockDataStorageLocationDB,
 	)
 
 	// Lock the ephemeral stream to ensure that the stream exists and is ephemeral.
@@ -242,9 +245,14 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 
 	// Read the genesis miniblock for the given streeam
 	genesisMbData := make([]byte, 0)
+	query := s.sqlForStream(
+		"SELECT blockdata FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = 0",
+		streamId,
+		MiniblockDataStorageLocationDB,
+	)
 	if err := tx.QueryRow(
 		ctx,
-		s.sqlForStream("SELECT blockdata FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num = 0", streamId),
+		query,
 		streamId,
 	).Scan(&genesisMbData); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -274,6 +282,7 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 		s.sqlForStream(
 			"SELECT seq_num FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num > 0 ORDER BY seq_num",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	)
@@ -314,6 +323,7 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 					VALUES ($1, 0, true, false) ON CONFLICT (stream_id) DO UPDATE SET ephemeral = false;
 				 INSERT INTO {{minipools}} (stream_id, generation, slot_num) VALUES ($1, $2, -1);`,
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 		seqNum+1,
@@ -342,7 +352,7 @@ func (s *PostgresStreamStore) TotalMiniblockDataSizeInDB(
 		func(ctx context.Context, tx pgx.Tx) error {
 			if err := tx.QueryRow(
 				ctx,
-				s.sqlForStream("SELECT SUM(LENGTH(blockdata)) from {{miniblocks}} WHERE stream_id = $1", streamId),
+				s.sqlForStream("SELECT SUM(LENGTH(blockdata)) from {{miniblocks}} WHERE stream_id = $1", streamId, MiniblockDataStorageLocationDB),
 				streamId,
 			).Scan(&totalSize); err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {

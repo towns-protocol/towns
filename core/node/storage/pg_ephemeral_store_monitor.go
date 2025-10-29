@@ -247,6 +247,7 @@ func (m *ephemeralStreamMonitor) handleStream(ctx context.Context, streamId Stre
 									 DELETE from {{minipools}} WHERE stream_id = $1;
 									 DELETE FROM es WHERE stream_id = $1`,
 					streamId,
+					MiniblockDataStorageLocationDB,
 				),
 				streamId,
 			)

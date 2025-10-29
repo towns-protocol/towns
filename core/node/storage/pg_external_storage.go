@@ -782,10 +782,10 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 			Func("writeMediaStreamExternalStoragePartsTx")
 	}
 
-	// drop miniblock data from DB now the miniblock data is uploaded to external storage
-	q := s.sqlForStream(`UPDATE {{miniblocks}} SET blockdata = NULL WHERE stream_id = $1;`, streamID)
+	// drop miniblock records from miniblock regular now the miniblock data is uploaded to external storage
+	q := s.sqlForStream(`DELETE FROM {{miniblocks}} WHERE stream_id = $1;`, streamID, location)
 	// update the stream record with the new external storage location
-	q += s.sqlForStream(`UPDATE es SET blockdata_ext = $2 WHERE stream_id = $1;`, streamID)
+	q += s.sqlForStream(`UPDATE es SET blockdata_ext = $2 WHERE stream_id = $1;`, streamID, location)
 
 	if _, err := tx.Exec(ctx, q, streamID, extStorageLoc); err != nil {
 		return RiverErrorWithBase(
@@ -797,10 +797,10 @@ func (s *PostgresStreamStore) writeMediaStreamExternalStoragePartsTx(
 			Func("writeMediaStreamExternalStoragePartsTx")
 	}
 
-	// import parts in DB
+	// import parts in miniblocks external storage table
 	if _, err := tx.CopyFrom(
 		ctx,
-		pgx.Identifier{s.sqlForStream("{{miniblocks_ext_storage}}", streamID)},
+		pgx.Identifier{s.sqlForStream("{{miniblocks}}", streamID, extStorageLoc)},
 		[]string{"stream_id", "seq_num", "start_byte", "size"},
 		pgx.CopyFromSlice(len(parts), func(i int) ([]any, error) {
 			part := parts[i]
@@ -821,10 +821,12 @@ func (s *PostgresStreamStore) readMediaStreamExternalStoragePartsTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamID StreamId,
+	miniblockLocation MiniblockDataStorageLocation,
 ) ([]ExternallyStoredMiniblockDescriptor, error) {
 	query := s.sqlForStream(
-		`SELECT seq_num, start_byte, size FROM {{miniblocks_ext_storage}} WHERE stream_id = $1 ORDER BY seq_num;`,
+		`SELECT seq_num, start_byte, size FROM {{miniblocks}} WHERE stream_id = $1 ORDER BY seq_num;`,
 		streamID,
+		miniblockLocation,
 	)
 
 	partsRows, err := tx.Query(ctx, query, streamID)

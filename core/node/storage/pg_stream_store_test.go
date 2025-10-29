@@ -380,6 +380,7 @@ func TestAddEventConsistencyChecksImproperGeneration(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"UPDATE {{minipools}} SET generation = 777 WHERE slot_num = 1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 	err := pgStreamStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
@@ -407,6 +408,7 @@ func TestAddEventConsistencyChecksGaps(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{minipools}} WHERE slot_num = 1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 	err := pgStreamStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
@@ -434,6 +436,7 @@ func TestAddEventConsistencyChecksEventsNumberMismatch(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{minipools}} WHERE slot_num = 2",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 	err := pgStreamStore.WriteEvent(ctx, streamId, 1, 3, []byte("event4"))
@@ -546,6 +549,7 @@ func TestPromoteBlockConsistencyChecksProperNewMinipoolGeneration(t *testing.T) 
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{miniblocks}} WHERE seq_num = 2",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 	err := promoteMiniblockCandidate(ctx, pgStreamStore, streamId, 3, blockHash3, testEnvelopes3)
@@ -572,6 +576,7 @@ func TestCreateBlockProposalNoSuchStreamError(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{miniblocks}}",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -615,6 +620,7 @@ func TestPromoteBlockNoSuchStreamError(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{miniblocks}}",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -766,6 +772,7 @@ func TestGetStreamFromLastSnapshotConsistencyChecksMissingBlockFailure(t *testin
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{miniblocks}} WHERE seq_num = 2",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -835,6 +842,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckWrongEnvelopeGeneration(t *tes
 		pgStreamStore.sqlForStream(
 			"UPDATE {{minipools}} SET generation = 777 WHERE slot_num = 1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -903,6 +911,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckNoZeroIndexEnvelope(t *testing
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{minipools}} WHERE slot_num = 0",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -971,6 +980,7 @@ func TestGetStreamFromLastSnapshotConsistencyCheckGapInEnvelopesIndexes(t *testi
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{minipools}} WHERE slot_num = 1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -1055,6 +1065,7 @@ func TestGetMiniblocksConsistencyChecks(t *testing.T) {
 		pgStreamStore.sqlForStream(
 			"DELETE FROM {{miniblocks}} WHERE seq_num = 2",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 	)
 
@@ -1427,6 +1438,7 @@ func TestQueryPlan(t *testing.T) {
 		store.sqlForStream(
 			"EXPLAIN (ANALYZE, FORMAT JSON) SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	).Scan(&plan))
@@ -1438,6 +1450,7 @@ func TestQueryPlan(t *testing.T) {
 		store.sqlForStream(
 			"EXPLAIN (ANALYZE, FORMAT JSON) SELECT blockdata, seq_num FROM {{miniblocks}} WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		5,
 		streamId,
@@ -1450,6 +1463,7 @@ func TestQueryPlan(t *testing.T) {
 		store.sqlForStream(
 			"EXPLAIN (ANALYZE, FORMAT JSON) SELECT blockdata FROM {{miniblock_candidates}} WHERE stream_id = $1 AND seq_num = $2 AND block_hash = $3",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 		11,
@@ -1463,6 +1477,7 @@ func TestQueryPlan(t *testing.T) {
 		store.sqlForStream(
 			"EXPLAIN (ANALYZE, FORMAT JSON) SELECT generation, slot_num, envelope FROM {{minipools}} WHERE stream_id = $1 ORDER BY generation, slot_num",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	).Scan(&plan))
@@ -1474,6 +1489,7 @@ func TestQueryPlan(t *testing.T) {
 		store.sqlForStream(
 			"EXPLAIN (ANALYZE, FORMAT JSON) DELETE FROM {{minipools}} WHERE stream_id = $1 RETURNING generation, slot_num",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	).Scan(&plan))
@@ -1544,6 +1560,7 @@ func TestEmptyMiniblockRecordCorruptionFix(t *testing.T) {
 		params.pgStreamStore.sqlForStream(
 			"UPDATE {{miniblocks}} SET blockdata = ''::BYTEA WHERE stream_id = $1 AND seq_num = 0",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	)

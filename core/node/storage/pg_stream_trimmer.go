@@ -228,12 +228,12 @@ func (t *streamTrimmer) processTrimTaskTx(
 	task trimTask,
 ) error {
 	// Get the last snapshot miniblock number
-	lastSnapshotMiniblock, _, err := t.store.lockStream(ctx, tx, task.streamId, true)
+	lastSnapshotMiniblock, mbLocation, err := t.store.lockStream(ctx, tx, task.streamId, true)
 	if err != nil {
 		return err
 	}
 
-	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId)
+	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId, mbLocation)
 	if err != nil {
 		return err
 	}
@@ -276,5 +276,5 @@ func (t *streamTrimmer) processTrimTaskTx(
 
 	// Deleting all miniblocks below the calculated miniblock with a snapshot which is the closest to the lastMbToKeep.
 	localStartMbInclusive := FindClosestSnapshotMiniblock(ranges, lastMbToKeep)
-	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, localStartMbInclusive, nullifySnapshotMbs)
+	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, localStartMbInclusive, nullifySnapshotMbs, mbLocation)
 }
