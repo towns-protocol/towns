@@ -10240,15 +10240,13 @@ __metadata:
   resolution: "@towns-protocol/example-bot-quickstart@workspace:packages/examples/bot-quickstart"
   dependencies:
     "@connectrpc/connect-node": ^2.1.0
-    "@hono/node-server": ^1.14.0
     "@towns-protocol/bot": "workspace:^"
     "@towns-protocol/proto": "workspace:^"
     "@towns-protocol/web3": "workspace:^"
+    "@types/bun": ^1.3.1
     "@types/node": ^20.14.8
     "@typescript-eslint/eslint-plugin": ^8.29.0
     "@typescript-eslint/parser": ^8.29.0
-    dotenv: ^17.2.3
-    esbuild: ^0.25.9
     eslint: ^8.57.1
     eslint-import-resolver-typescript: ^4.3.2
     eslint-plugin-import-x: ^4.10.2
@@ -10854,6 +10852,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: c87b28c4af74545624f8a3dae5294b16aa190c222626e8d4b2e327b33b1a3f1eeb43e7a24d914a9774bca43d8cd6e1cb0325c1f4b3a244af6693a024e1d918e6
+  languageName: node
+  linkType: hard
+
+"@types/bun@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "@types/bun@npm:1.3.1"
+  dependencies:
+    bun-types: 1.3.1
+  checksum: 42a412b0c54137a8091bd8dd589e4016f89ebd6c6b50569ec73deac157e0d67d4ebbf58d000bf9d362b2b9bfadcc3becd32163069a1c929159076665587c5aa6
   languageName: node
   linkType: hard
 
@@ -13788,6 +13795,17 @@ __metadata:
     tslib: ^2.0.0
     uuid: ^9.0.0
   checksum: 8b7f927d799724287c808863341e3978838ed898eb007fd1b1ff6d7375ed5ab40dd69b037e87233f5cf56d309f8771c5e0c03e45bcafefdaba1949e3988081c7
+  languageName: node
+  linkType: hard
+
+"bun-types@npm:1.3.1":
+  version: 1.3.1
+  resolution: "bun-types@npm:1.3.1"
+  dependencies:
+    "@types/node": "*"
+  peerDependencies:
+    "@types/react": ^19
+  checksum: 2f618499dd4c84230e877b2992fbbaff1fda9fcec8c51de292abb31d1f2e394ba8fa7fa2d211e4e61e1ea46aa74a9f2755ade778b23c2ba4b0cc794030ab41df
   languageName: node
   linkType: hard
 

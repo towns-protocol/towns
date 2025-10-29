@@ -1268,7 +1268,6 @@ bot.onSlashCommand("stats", async (handler, event) => {
 ### GitHub Integration Example
 
 ```typescript
-import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { makeTownsBot } from '@towns-protocol/bot'
 
@@ -1317,8 +1316,7 @@ app.post('/github-webhook', async (c) => {
   
   return c.json({ success: true })
 })
-
-serve({ fetch: app.fetch, port: 3000 })
+export default app
 ```
 
 ### Health Check Monitoring Example
