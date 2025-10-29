@@ -41,7 +41,7 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -172,7 +172,7 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: readOnlyBotAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: readOnlyBotAddress } = appRegistryDapp.getCreateAppEvent(
             receipt1,
             botWithoutWriteWallet.address as Address,
         )
@@ -188,7 +188,7 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: readWriteBotAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: readWriteBotAddress } = appRegistryDapp.getCreateAppEvent(
             receipt2,
             botWithWriteWallet.address as Address,
         )
@@ -318,7 +318,7 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )

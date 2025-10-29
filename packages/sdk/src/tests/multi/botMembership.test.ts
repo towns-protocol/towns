@@ -49,7 +49,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -149,7 +149,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -263,7 +263,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -332,7 +332,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -468,7 +468,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )
@@ -579,7 +579,7 @@ describe('bot membership tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
             receipt,
             botWallet.address as Address,
         )

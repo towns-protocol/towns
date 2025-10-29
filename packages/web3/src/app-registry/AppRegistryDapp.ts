@@ -61,48 +61,54 @@ export class AppRegistryDapp {
         })
     }
 
-    public async getCreateAppEvent(
+    public getCreateAppEvent(
         receipt: ContractReceipt,
         senderAddress: Address,
-    ): Promise<AppCreatedEventObject> {
+    ): AppCreatedEventObject {
         for (const log of receipt.logs) {
             try {
-                const parsedLog = this.factory.interface.parseLog(log)
+                const parsedLog = this.factory.parseLog(log)
                 if (parsedLog.name === 'AppCreated') {
-                    const app = await this.getAppById(parsedLog.args.uid as string)
-                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
-                    if (!isOwner) {
-                        continue
+                    if ('owner' in parsedLog.args && typeof parsedLog.args.owner === 'string') {
+                        // newer contracts - filter by owner from event
+                        if (parsedLog.args.owner.toLowerCase() === senderAddress.toLowerCase()) {
+                            return {
+                                app: parsedLog.args.app,
+                                uid: parsedLog.args.uid,
+                                owner: parsedLog.args.owner,
+                            } satisfies AppCreatedEventObject
+                        }
+                    } else {
+                        // older contracts - return first match
+                        return {
+                            app: parsedLog.args.app,
+                            uid: parsedLog.args.uid,
+                            owner: '',
+                        } satisfies AppCreatedEventObject
                     }
-                    return {
-                        app: parsedLog.args.app,
-                        uid: parsedLog.args.uid,
-                    } satisfies AppCreatedEventObject
                 }
             } catch {
                 // no need for error, this log is not from the contract we're interested in
             }
         }
-        return { app: '', uid: '' }
+        return { app: '', uid: '', owner: '' }
     }
 
-    public async getRegisterAppEvent(
+    public getRegisterAppEvent(
         receipt: ContractReceipt,
-        senderAddress: Address,
-    ): Promise<AppRegisteredEventObject> {
+        appAddress: Address,
+    ): AppRegisteredEventObject {
         for (const log of receipt.logs) {
             try {
-                const parsedLog = this.registry.interface.parseLog(log)
+                const parsedLog = this.registry.parseLog(log)
                 if (parsedLog.name === 'AppRegistered') {
-                    const app = await this.getAppById(parsedLog.args.uid as string)
-                    const isOwner = app.owner.toLowerCase() === senderAddress.toLowerCase()
-                    if (!isOwner) {
-                        continue
+                    const eventAppAddress = parsedLog.args.app as Address
+                    if (eventAppAddress.toLowerCase() === appAddress.toLowerCase()) {
+                        return {
+                            app: parsedLog.args.app,
+                            uid: parsedLog.args.uid,
+                        } satisfies AppRegisteredEventObject
                     }
-                    return {
-                        app: parsedLog.args.app,
-                        uid: parsedLog.args.uid,
-                    } satisfies AppRegisteredEventObject
                 }
             } catch {
                 // no need for error, this log is not from the contract we're interested in

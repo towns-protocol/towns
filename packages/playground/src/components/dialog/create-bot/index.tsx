@@ -215,7 +215,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 if (!receipt) {
                     throw new Error('Transaction failed')
                 }
-                const { app: foundAppAddress } = await appRegistryDapp.getCreateAppEvent(
+                const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
                     receipt,
                     signerAddress,
                 )
@@ -231,9 +231,9 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     throw new Error('Transaction failed')
                 }
 
-                const { app: foundAppAddress } = await appRegistryDapp.getRegisterAppEvent(
+                const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(
                     receipt,
-                    signerAddress,
+                    contractAddress,
                 )
                 appAddress = foundAppAddress as Address
             } else {

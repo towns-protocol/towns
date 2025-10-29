@@ -158,7 +158,7 @@ describe('Bot', { sequential: true }, () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: address } = await appRegistryDapp.getCreateAppEvent(receipt, bob.userId)
+        const { app: address } = appRegistryDapp.getCreateAppEvent(receipt, bob.userId)
         const fundingAppTx = await bob.signer.sendTransaction({
             to: address,
             value: ethers.utils.parseEther('0.5').toBigInt(),
