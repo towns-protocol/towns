@@ -18,6 +18,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
+	"github.com/towns-protocol/towns/core/node/rpc/headers"
 	. "github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -93,10 +94,12 @@ func NewRemoteStreamUpdateEmitter(
 		}
 	}()
 
-	responseStream, err := client.SyncStreams(ctx, connect.NewRequest(&SyncStreamsRequest{SyncPos: []*SyncCookie{{
+	req := connect.NewRequest(&SyncStreamsRequest{SyncPos: []*SyncCookie{{
 		StreamId:    streamID[:],
 		NodeAddress: remoteAddr[:],
-	}}}))
+	}}})
+	req.Header().Set(headers.RiverUseSharedSyncHeaderName, headers.RiverHeaderTrueValue)
+	responseStream, err := client.SyncStreams(ctx, req)
 	if err != nil {
 		cancel(err)
 		stream.AdvanceStickyPeer(remoteAddr)
