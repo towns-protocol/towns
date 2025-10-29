@@ -121,7 +121,9 @@
       "addresses": {
         "appRegistry": "0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE",
         "baseRegistry": "0x7c0422b31401C936172C897802CF0373B35B7698",
+        "entryPoint": "0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108",
         "riverAirdrop": "0xe55fEE191604cdBeb874F87A28Ca89aED401C303",
+        "simpleAppBeacon": "0xb803E8B1F563B02a29bA0469e410DfFbdcB1c216",
         "space": "0x34f35E1ECA9C00791bF8121A01c20977d8bEB11C",
         "spaceFactory": "0x9978c826d93883701522d2CA645d5436e5654252",
         "spaceOwner": "0x2824D1235d1CbcA6d61C00C3ceeCB9155cd33a42",
