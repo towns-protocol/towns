@@ -6,11 +6,17 @@ import {FeeManagerBase} from "./FeeManagerBase.sol";
 import {FeeCalculationMethod, FeeConfig} from "./FeeManagerStorage.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
-import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
 /// @title FeeManagerFacet
 /// @notice Facet for unified fee management across the protocol
-contract FeeManagerFacet is IFeeManager, FeeManagerBase, OwnableBase, Facet, ReentrancyGuard {
+contract FeeManagerFacet is
+    IFeeManager,
+    FeeManagerBase,
+    OwnableBase,
+    Facet,
+    ReentrancyGuardTransient
+{
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                   INITIALIZATION                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
