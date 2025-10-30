@@ -48,7 +48,6 @@ interface IAppRegistryBase {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     event AppRegistered(address indexed app, bytes32 uid);
     event AppUnregistered(address indexed app, bytes32 uid);
-    event AppUpdated(address indexed app, bytes32 uid);
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
