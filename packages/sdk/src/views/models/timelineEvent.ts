@@ -96,7 +96,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         id: senderId,
     }
 
-    const { content, error } = toTownsContent(timelineEvent)
+    const { content, error } = toTownsContent(timelineEvent, userId)
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
     const sessionId = extractSessionId(timelineEvent)
@@ -150,7 +150,7 @@ function getSenderId(timelineEvent: StreamTimelineEvent): string {
     return timelineEvent.creatorUserId
 }
 
-function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult {
+function toTownsContent(timelineEvent: StreamTimelineEvent, userId: string): TownsContentResult {
     if (isLocalEvent(timelineEvent)) {
         return toTownsContent_FromChannelMessage(
             timelineEvent.localEvent.channelMessage,
@@ -158,7 +158,7 @@ function toTownsContent(timelineEvent: StreamTimelineEvent): TownsContentResult 
             timelineEvent.hashStr,
         )
     } else if (isRemoteEvent(timelineEvent)) {
-        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent)
+        return toTownsContent_fromParsedEvent(timelineEvent.hashStr, timelineEvent, userId)
     } else {
         return { error: 'unknown event content type' }
     }
@@ -188,6 +188,7 @@ function validateEvent(
 function toTownsContent_fromParsedEvent(
     eventId: string,
     timelineEvent: RemoteTimelineEvent,
+    userId: string,
 ): TownsContentResult {
     const message = timelineEvent.remoteEvent
     const { error, description } = validateEvent(eventId, message)
@@ -212,6 +213,7 @@ function toTownsContent_fromParsedEvent(
                 timelineEvent,
                 message.event.payload.value,
                 description,
+                userId,
             )
         case 'dmChannelPayload':
             return toTownsContent_ChannelPayload(
@@ -219,6 +221,7 @@ function toTownsContent_fromParsedEvent(
                 timelineEvent,
                 message.event.payload.value,
                 description,
+                userId,
             )
         case 'gdmChannelPayload':
             return toTownsContent_ChannelPayload(
@@ -226,6 +229,7 @@ function toTownsContent_fromParsedEvent(
                 timelineEvent,
                 message.event.payload.value,
                 description,
+                userId,
             )
         case 'spacePayload':
             return toTownsContent_SpacePayload(
@@ -556,6 +560,7 @@ function toTownsContent_ChannelPayload(
     timelineEvent: RemoteTimelineEvent,
     value: ChannelPayload | DmChannelPayload | GdmChannelPayload,
     description: string,
+    userId: string,
 ): TownsContentResult {
     const message = timelineEvent.remoteEvent
     switch (value.content.case) {
@@ -598,6 +603,12 @@ function toTownsContent_ChannelPayload(
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
         case 'interactionRequest':
+            if (
+                value.content.value.recipient &&
+                userIdFromAddress(value.content.value.recipient) !== userId
+            ) {
+                return { error: `Interaction request intended for another user` }
+            }
             return {
                 content: {
                     kind: RiverTimelineEvent.InteractionRequest,
