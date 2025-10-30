@@ -460,18 +460,15 @@ abstract contract ExecutorBase is IExecutorBase {
         // Fetch restrictions that apply to the caller on the targeted function
         (bool allowed, uint32 delay) = _canCall(msg.sender, target, selector);
 
-        // If call is not authorized, revert
-        if (!allowed && delay == 0) {
-            UnauthorizedCall.selector.revertWith();
-        }
+        if (!allowed && delay == 0) UnauthorizedCall.selector.revertWith();
 
         bytes32 operationId = _hashOperation(msg.sender, target, data);
+        uint48 scheduleTimepoint = _getScheduleTimepoint(operationId);
 
-        // If caller is authorized, check operation was scheduled early enough
-        // Consume an available schedule even if there is no currently enforced delay
-        if (delay != 0 || _getScheduleTimepoint(operationId) != 0) {
-            nonce = _consumeScheduledOp(operationId);
-        }
+        if (delay != 0 && scheduleTimepoint == 0) NotScheduled.selector.revertWith();
+
+        // Consume scheduled operation if one exists
+        if (scheduleTimepoint != 0) nonce = _consumeScheduledOp(operationId);
     }
 
     /// @dev Determines if a caller can invoke a function on a target, and if a delay is required.
