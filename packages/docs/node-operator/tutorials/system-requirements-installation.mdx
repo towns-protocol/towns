@@ -87,7 +87,7 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 
 | Environment Variable | Purpose | Required | Testnet Value |Secret|
 |---------------------------|---------|----------|---------------|------|
-|ARCHITECTCONTRACT__ADDRESS|SpaceFactory contract address in Base Network|Yes|0x968696BC59431Ef085441641f550C8e2Eaca8BEd|-|
+|ARCHITECTCONTRACT__ADDRESS|SpaceFactory contract address in Base Network|Yes|0x5A077e686545c541476D3a99711dE42339357467|-|
 |ARCHITECTCONTRACT__VERSION|Contract interface version|Yes|v3|-|
 |BASECHAIN__CHAINID|Base ChainId|Yes|84532|-|
 |BASECHAIN__NETWORKURL|Base Chain RPC Url|Yes|https://sepolia.base.org|Yes|
@@ -102,7 +102,7 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |DEBUGENDPOINTS__PPROF|Enable pprof endpoints|No|false|-|
 |DEBUGENDPOINTS__PRIVATEDEBUGSERVERADDRESS|Private debug server address|No|:8080|-|
 |DEBUGENDPOINTS__MEMPROFILEDIR|Directory for memory profile files|No|./mem_profile|-|
-|ENTITLEMENT_CONTRACT__ADDRESS|Entitlement contract address in Base Network|Yes|0x08cC41b782F27d62995056a4EF2fCBAe0d3c266F|-|
+|ENTITLEMENT_CONTRACT__ADDRESS|Entitlement contract address in Base Network|Yes|0x0d7eC5826626070b6a250C9878940D070128A265|-|
 |LOG__FORMAT|Log format option|No|text|-|
 |LOG__LEVEL|Default log level|No|info|-|
 |LOG__NOCOLOR|Logging without color|No|true|-|
@@ -111,7 +111,7 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |PERFORMANCETRACKING__PROFILINGENABLED|Used by Datadog for cpu profiling|no|true|No|
 |PERFORMANCETRACKING__TRACINGENABLED|Used by Datadog for tracing|no|true|No|
 |PORT|Port RPC service listens on|Yes|443|-|
-|REGISTRYCONTRACT__ADDRESS|River Registry contract address in Towns Chain Network|Yes|0xf18E98D36A6bd1aDb52F776aCc191E69B491c070|-|
+|REGISTRYCONTRACT__ADDRESS|River Registry contract address in Towns Chain Network|Yes|0x94bdc7016057fc47cC006Bc837bF0Aed5Dc5C6D6|-|
 |RIVERCHAIN__CHAINID|Towns Chain chainId|Yes|6524490|-|
 |RIVERCHAIN__NETWORKURL|Towns Chain RPC Url|Yes|https://testnet.rpc.towns.com/http|Yes|
 |RUN_MODE|Stream Node Run Mode (full, archive)|No|full|-|
@@ -120,6 +120,7 @@ Towns Stream Nodes run expecting certain environment variables to be present in 
 |STORAGE_TYPE|postgres or in-memory|No|postgres|-|
 |TLSCONFIG__CERT|TLS certificate value for node hostname|Yes|-|Yes|
 |TLSCONFIG__KEY|TLS certificate key for node hostname|Yes|-|Yes|
+|TOWNS_ENV|Environment name for network configuration (beta for testnet, omega for mainnet)|Yes|beta|-|
 |WALLETPRIVATEKEY|Node ECDSA private key string|Yes|-|Yes|
 
 <Note>
