@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IAppFactory, IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
+import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 
 // libraries
 import {console} from "forge-std/console.sol";
