@@ -8,15 +8,15 @@ import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 import {console} from "forge-std/console.sol";
 
 // contracts
-import {Interaction} from "../../common/Interaction.s.sol";
-import {AlphaHelper} from "../helpers/AlphaHelper.sol";
-import {DeployAppRegistry} from "../../deployments/diamonds/DeployAppRegistry.s.sol";
-import {DeploySimpleAppBeacon} from "../../deployments/diamonds/DeploySimpleAppBeacon.s.sol";
+import {Interaction} from "../common/Interaction.s.sol";
+import {AlphaHelper} from "./helpers/AlphaHelper.sol";
+import {DeployAppRegistry} from "../deployments/diamonds/DeployAppRegistry.s.sol";
+import {DeploySimpleAppBeacon} from "../deployments/diamonds/DeploySimpleAppBeacon.s.sol";
 
 // facet deployers
-import {DeployAppRegistryFacet} from "../../deployments/facets/DeployAppRegistryFacet.s.sol";
-import {DeployAppInstallerFacet} from "../../deployments/facets/DeployAppInstallerFacet.s.sol";
-import {DeployAppFactoryFacet} from "../../deployments/facets/DeployAppFactoryFacet.s.sol";
+import {DeployAppRegistryFacet} from "../deployments/facets/DeployAppRegistryFacet.s.sol";
+import {DeployAppInstallerFacet} from "../deployments/facets/DeployAppInstallerFacet.s.sol";
+import {DeployAppFactoryFacet} from "../deployments/facets/DeployAppFactoryFacet.s.sol";
 
 contract InteractAppRegistry is Interaction, AlphaHelper {
     DeployAppRegistry private deployHelper = new DeployAppRegistry();
