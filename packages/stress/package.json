@@ -2,7 +2,6 @@
     "name": "@towns-protocol/stress",
     "version": "0.0.1",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "scripts": {
         "bs": "yarn build && node --enable-source-maps ./dist/simpleChat.cjs",
         "build": "yarn typecheck && yarn build-esbuild",
