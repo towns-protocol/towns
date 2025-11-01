@@ -3,6 +3,7 @@ package scrub
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
@@ -148,18 +149,39 @@ func (m *miniblockScrubTaskProcessorImpl) Close() {
 
 var maxBlocksPerScan = 100
 
-func optsFromPrevMiniblock(prevMb *events.MiniblockInfo) *events.ParsedMiniblockInfoOpts {
+func optsFromPrevMiniblock(streamID shared.StreamId, prevMb *events.MiniblockInfo) *events.ParsedMiniblockInfoOpts {
 	expectedPrevSnapshotNum := prevMb.Header().PrevSnapshotMiniblockNum
 	if prevMb.Snapshot != nil {
 		expectedPrevSnapshotNum = prevMb.Header().MiniblockNum
 	}
 
-	return events.NewParsedMiniblockInfoOpts().
+	opts := events.NewParsedMiniblockInfoOpts().
 		WithExpectedBlockNumber(prevMb.Header().MiniblockNum + 1).
 		WithExpectedPrevMiniblockHash(prevMb.Ref.Hash).
-		WithExpectedEventNumOffset(prevMb.Header().EventNumOffset + int64(len(prevMb.Events())+1)).
 		WithExpectedMinimumTimestampExclusive(prevMb.Header().Timestamp.AsTime()).
 		WithExpectedPrevSnapshotMiniblockNum(expectedPrevSnapshotNum)
+
+	// due to a bug (2025[Feb...April]), some media streams have an event offset of 0,
+	// skip checking event offset in this time window for media streams if the previous block
+	// has an event offset of 0. The time window is chosen wide because it's unclear when all
+	// operators installed the release with the bug fix.
+	doEventNumOffsetCheck := true
+	if streamID.Type() == shared.STREAM_MEDIA_BIN {
+		blockCreated := prevMb.Header().Timestamp.AsTime()
+		startBugTimeWindow := time.Unix(1735686000, 0)
+		endBugTimeWindow := time.Unix(1746050400, 0)
+		if blockCreated.After(startBugTimeWindow) &&
+			blockCreated.Before(endBugTimeWindow) &&
+			prevMb.Header().EventNumOffset == 0 {
+			doEventNumOffsetCheck = false
+		}
+	}
+
+	if doEventNumOffsetCheck {
+		opts = opts.WithExpectedEventNumOffset(prevMb.Header().EventNumOffset + int64(len(prevMb.Events())+1))
+	}
+
+	return opts
 }
 
 func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
@@ -216,7 +238,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 			)
 		}
 
-		opts = optsFromPrevMiniblock(prevMb)
+		opts = optsFromPrevMiniblock(streamId, prevMb)
 	} else {
 		opts = opts.
 			WithExpectedBlockNumber(0).
@@ -262,7 +284,7 @@ func (m *miniblockScrubTaskProcessorImpl) scrubMiniblocks(
 					Tag("miniblockNum", blockNum+int64(offset))
 				return newCorruptStreamReport(streamId, err, blockNum+int64(offset))
 			}
-			opts = optsFromPrevMiniblock(mbInfo)
+			opts = optsFromPrevMiniblock(streamId, mbInfo)
 		}
 		blockNum = blockNum + int64(len(blocks))
 	}
