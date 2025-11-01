@@ -127,6 +127,7 @@ func TestGetMiniblockNumberRanges(t *testing.T) {
 					store.sqlForStream(
 						"UPDATE {{miniblocks}} SET snapshot = NULL WHERE stream_id = $1",
 						streamId,
+						MiniblockDataStorageLocationDB,
 					),
 					streamId,
 				)

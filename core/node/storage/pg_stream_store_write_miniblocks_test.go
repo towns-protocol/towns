@@ -339,6 +339,7 @@ func TestWriteMiniblocks_CorruptedMinipool(t *testing.T) {
 		store.sqlForStream(
 			"UPDATE {{minipools}} SET generation = 777 WHERE stream_id = $1 AND slot_num = 1",
 			streamId,
+			MiniblockDataStorageLocationDB,
 		),
 		streamId,
 	)

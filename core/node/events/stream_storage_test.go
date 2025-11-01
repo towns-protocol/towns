@@ -21,7 +21,7 @@ func TestStreamCreation_LegacySnapshot(t *testing.T) {
 	streamId := UserStreamIdFromAddr(wallet.Address)
 
 	// Create test storage
-	streamStore := storage.NewTestStreamStore(ctx)
+	streamStore := storage.NewTestStreamStore(ctx, nil)
 	t.Cleanup(streamStore.Close)
 
 	// Create genesis miniblock with legacy snapshot (embedded in header)
@@ -74,7 +74,7 @@ func TestStreamCreation_NonLegacySnapshot(t *testing.T) {
 	streamId := UserStreamIdFromAddr(wallet.Address)
 
 	// Create test storage
-	streamStore := storage.NewTestStreamStore(ctx)
+	streamStore := storage.NewTestStreamStore(ctx, nil)
 	t.Cleanup(streamStore.Close)
 
 	// First create genesis to establish the stream
@@ -177,7 +177,7 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 	streamId := UserStreamIdFromAddr(wallet.Address)
 
 	// Create test storage
-	streamStore := storage.NewTestStreamStore(ctx)
+	streamStore := storage.NewTestStreamStore(ctx, nil)
 	t.Cleanup(streamStore.Close)
 
 	// Create genesis miniblock with legacy snapshot
@@ -307,7 +307,7 @@ func TestStreamReinitialize_MixedSnapshots(t *testing.T) {
 	streamId := UserStreamIdFromAddr(wallet.Address)
 
 	// Create test storage
-	streamStore := storage.NewTestStreamStore(ctx)
+	streamStore := storage.NewTestStreamStore(ctx, nil)
 	t.Cleanup(streamStore.Close)
 
 	// Create genesis with legacy snapshot
