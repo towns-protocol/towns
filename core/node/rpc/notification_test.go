@@ -53,7 +53,7 @@ func authenticateNS[T any](
 var notificationDeliveryDelay = 30 * time.Second
 
 func TestNotificationsColdStreams(t *testing.T) {
-	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true, enableRiverLogs: true})
 	ctx := tester.ctx
 
 	nc := &notificationCapture{
@@ -92,17 +92,33 @@ func TestNotificationsColdStreams(t *testing.T) {
 		nc.WebPushNotificationsMu.Lock()
 		defer nc.WebPushNotificationsMu.Unlock()
 
+		// Log current state for debugging
+		t.Logf("=== Notification Debug State ===")
+		t.Logf("Total event hashes with notifications: %d", len(nc.WebPushNotifications))
+		t.Logf("eventHash0 (should NOT be present): %v", eventHash0)
+		t.Logf("eventHash1 (should BE present): %v", eventHash1)
+		for hash, addrs := range nc.WebPushNotifications {
+			t.Logf("  Event hash %v: %d notifications to %v", hash, len(addrs), addrs)
+		}
+
 		// eventHash0 should not have any notifications since it was sent before the notification service started
 		if _, exists := nc.WebPushNotifications[eventHash0]; exists {
+			t.Logf("FAIL: event0 was notified (but shouldn't be)")
 			return false
 		}
 
 		// Check that we have exactly 1 event hash
 		if len(nc.WebPushNotifications) != 1 {
+			t.Logf("FAIL: expected 1 event hash, got %d", len(nc.WebPushNotifications))
 			return false
 		}
 
 		_, hasHash1 := nc.WebPushNotifications[eventHash1]
+		if !hasHash1 {
+			t.Logf("FAIL: event1 not found in notifications")
+		} else {
+			t.Logf("SUCCESS: event1 found in notifications")
+		}
 		return hasHash1
 	}, notificationDeliveryDelay, 250*time.Millisecond, "Didn't receive expected notifications for stream %s", test.dmStreamID)
 }
