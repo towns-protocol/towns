@@ -435,7 +435,7 @@ func (s *StreamCache) loadStreamRecordImpl(
 	for {
 		blockNum, err := s.params.RiverChain.GetBlockNumber(ctx)
 		if err == nil {
-			record, err = s.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+			record, err = s.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 			if err == nil {
 				break
 			}
@@ -486,7 +486,7 @@ func (s *StreamCache) readGenesisAndCreateLocalStream(
 		return stream, nil
 	}
 
-	recordNoId, _, mb, err := s.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, streamId, blockNum)
+	recordNoId, _, mb, err := s.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, blockNum, streamId)
 	if err != nil {
 		return nil, err
 	}

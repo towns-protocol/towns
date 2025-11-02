@@ -73,7 +73,7 @@ func TestReconciler(t *testing.T) {
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
 
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -153,7 +153,7 @@ func TestReconciler_SmallGapForward(t *testing.T) {
 
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -222,7 +222,7 @@ func TestReconciler_BackfillOnly(t *testing.T) {
 	// Obtain the latest registry record
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -351,7 +351,7 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 	// Create empty local stream on target and run reconciler
 	blockNum, err := target.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := target.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := target.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.True(recordNoId.IsSealed())
 	require.EqualValues(chunks, recordNoId.LastMbNum())
@@ -425,7 +425,7 @@ func TestReconciler_ForwardOnly(t *testing.T) {
 
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -475,7 +475,7 @@ func TestReconciler_NoRemotes(t *testing.T) {
 	inst := tc.instances[0]
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -520,7 +520,7 @@ func TestReconciler_ImportGenesisFromRegistry(t *testing.T) {
 	// Read the genesis record (LastMbNum == 0)
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
@@ -595,7 +595,7 @@ func TestReconciler_BackfillHistoryWindow(t *testing.T) {
 	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
 	require.NoError(err)
 
-	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStream(ctx, blockNum, streamId)
 	require.NoError(err)
 	require.NotNil(recordNoId)
 	record := river.NewStreamWithId(streamId, recordNoId)
