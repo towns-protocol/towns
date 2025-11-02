@@ -61,6 +61,14 @@ func GetRiverNodeDbMigrationSchemaFS() *embed.FS {
 
 type txnFn func(ctx context.Context, tx pgx.Tx) error
 
+// LockStreamResult is returned by the lockStream function on success and captures
+// returned values into a single return value on success.
+type LockStreamResult struct {
+	// LastSnapshotMiniblock holds the miniblock number of the most recent miniblock
+	// that contains a snapshot.
+	LastSnapshotMiniblock int64
+}
+
 // createSettingsTableTxnWithPartitions creates a txnFn that can be ran on the
 // postgres store before migrations are applied. Our migrations actually check this
 // table and use the partitions setting in order to determine how many partitions
@@ -479,38 +487,38 @@ func (s *PostgresStreamStore) lockStream(
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
-) (int64, error) {
-	var lastSnapshotMiniblock int64
+) (*LockStreamResult, error) {
+	var result LockStreamResult
 	var err error
 	if write {
 		err = tx.QueryRow(
 			ctx,
 			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR UPDATE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&result.LastSnapshotMiniblock)
 	} else {
 		err = tx.QueryRow(
 			ctx,
 			"SELECT latest_snapshot_miniblock FROM es WHERE stream_id = $1 FOR SHARE",
 			streamId,
-		).Scan(&lastSnapshotMiniblock)
+		).Scan(&result.LastSnapshotMiniblock)
 	}
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, RiverError(
+			return nil, RiverError(
 				Err_NOT_FOUND,
 				"Stream not found",
 				"streamId",
 				streamId,
 			).Func("PostgresStreamStore.lockStream")
 		}
-		return 0, err
+		return nil, err
 	}
 
-	// There is a data corruption in prod when lastSnapshotMiniblock is -1.
-	if lastSnapshotMiniblock < 0 {
-		lastSnapshotMiniblock = 0
+	// There is data corruption in prod when lastSnapshotMiniblock is -1.
+	if result.LastSnapshotMiniblock < 0 {
+		result.LastSnapshotMiniblock = 0
 		logging.FromCtx(ctx).Warnw(
 			"lastSnapshotMiniblock is -1, setting to 0",
 			"streamId",
@@ -518,7 +526,7 @@ func (s *PostgresStreamStore) lockStream(
 		)
 	}
 
-	return lastSnapshotMiniblock, nil
+	return &result, nil
 }
 
 func (s *PostgresStreamStore) CreateStreamStorage(
@@ -592,11 +600,11 @@ func (s *PostgresStreamStore) maybeOverwriteCorruptGenesisMiniblockTx(
 	genesisMiniblock *MiniblockDescriptor,
 ) error {
 	okErr := RiverError(Err_ALREADY_EXISTS, "OK: Stream not corrupt")
-	snapshotMiniblock, err := s.lockStream(ctx, tx, streamId, true)
+	lockStream, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
 	}
-	if snapshotMiniblock != 0 {
+	if lockStream.LastSnapshotMiniblock != 0 {
 		return okErr
 	}
 
@@ -808,10 +816,12 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	snapshotMiniblockIndex, err := s.lockStream(ctx, tx, streamId, false)
+	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
+
+	snapshotMiniblockIndex := lockStream.LastSnapshotMiniblock
 
 	// Calculate the starting sequence number to read numPrecedingMiniblocks before the snapshot
 	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
@@ -2247,14 +2257,14 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamDataResult, error) {
-	lastSnapshotMiniblock, err := s.lockStream(ctx, tx, streamId, false)
+	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &DebugReadStreamDataResult{
 		StreamId:                   streamId,
-		LatestSnapshotMiniblockNum: lastSnapshotMiniblock,
+		LatestSnapshotMiniblockNum: lockStream.LastSnapshotMiniblock,
 	}
 
 	miniblocksRow, err := tx.Query(
@@ -2417,14 +2427,14 @@ func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamStatisticsResult, error) {
-	lastSnapshotMiniblock, err := s.lockStream(ctx, tx, streamId, false)
+	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &DebugReadStreamStatisticsResult{
 		StreamId:                   streamId.String(),
-		LatestSnapshotMiniblockNum: lastSnapshotMiniblock,
+		LatestSnapshotMiniblockNum: lockStream.LastSnapshotMiniblock,
 	}
 
 	if err = tx.QueryRow(
@@ -2821,10 +2831,12 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 		}
 
 		// Stream already exists, lock it for update
-		existingLastSnapshotMiniblockNum, err := s.lockStream(ctx, tx, streamId, true)
+		lockStream, err := s.lockStream(ctx, tx, streamId, true)
 		if err != nil {
 			return err
 		}
+
+		existingLastSnapshotMiniblockNum := lockStream.LastSnapshotMiniblock
 		if lastSnapshotMiniblockNum < existingLastSnapshotMiniblockNum {
 			return RiverError(
 				Err_INVALID_ARGUMENT,
