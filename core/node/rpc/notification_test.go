@@ -53,7 +53,6 @@ func authenticateNS[T any](
 var notificationDeliveryDelay = 30 * time.Second
 
 func TestNotificationsColdStreams(t *testing.T) {
-	t.Logf("=== Starting TestNotificationsColdStreams ===")
 	tester := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
 	ctx := tester.ctx
 

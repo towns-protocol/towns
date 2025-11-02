@@ -109,33 +109,40 @@ func NewNotificationStreamView(
 // - node/events/stream_view.go:ParseMiniblocksFromProto for snapshot and miniblocks
 // - node/events/parsed_event.go:ParseEvent for events
 func (v *NotificationStreamView) initializeFromStream(ctx context.Context, stream *StreamAndCookie) error {
-	if stream == nil || stream.Snapshot == nil {
-		return RiverError(Err_STREAM_EMPTY, "no stream or snapshot").Func("initializeFromStream")
+	if stream == nil {
+		return RiverError(Err_STREAM_EMPTY, "no stream").Func("initializeFromStream")
 	}
 
 	var miniblocks []*MiniblockInfo
 	var snapshot *Snapshot
 
-	// Try to parse miniblocks if present
-	if len(stream.Miniblocks) > 0 {
-		// Use existing ParseMiniblocksFromProto to get validated miniblocks and snapshot.
-		// This handles all the complex parsing, validation, and snapshot extraction logic.
-		// Equivalent to: node/events/stream_view.go:152 (MakeRemoteStreamView)
-		var err error
-		miniblocks, snapshot, _, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
-		if err != nil {
-			return err
-		}
-	} else if stream.Snapshot != nil {
-		// No miniblocks but snapshot present (e.g., new streams in tests)
+	// Parse snapshot if present to get initial membership state
+	if stream.Snapshot != nil {
 		// Parse snapshot envelope directly without hash/signature validation
 		// Equivalent to: node/events/snapshot.go:76 (ParseSnapshot unmarshal step)
-		var err error
 		snapshot = &Snapshot{}
-		if err = proto.Unmarshal(stream.Snapshot.Event, snapshot); err != nil {
+		if err := proto.Unmarshal(stream.Snapshot.Event, snapshot); err != nil {
 			return AsRiverError(err, Err_INVALID_ARGUMENT).
 				Message("Failed to decode snapshot from bytes").
 				Func("initializeFromStream")
+		}
+	}
+
+	// Parse miniblocks if present (these contain events after the snapshot)
+	if len(stream.Miniblocks) > 0 {
+		// Use existing ParseMiniblocksFromProto to get validated miniblocks.
+		// This handles all the complex parsing, validation, and snapshot extraction logic.
+		// Equivalent to: node/events/stream_view.go:152 (MakeRemoteStreamView)
+		var parsedSnapshot *Snapshot
+		var err error
+		miniblocks, parsedSnapshot, _, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
+		if err != nil {
+			return err
+		}
+		// Use the snapshot from ParseMiniblocksFromProto if we don't have one yet
+		// (this handles edge cases where miniblocks exist but snapshot wasn't parsed above)
+		if snapshot == nil && parsedSnapshot != nil {
+			snapshot = parsedSnapshot
 		}
 	}
 
@@ -174,7 +181,9 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		// Equivalent to: node/events/miniblock_info.go:316 (Events getter)
 		for _, parsedEvent := range mbInfo.Events() {
 			// Update membership from parsed event
-			v.updateMembershipFromEvent(parsedEvent.Event)
+			if err := v.updateMembershipFromEvent(parsedEvent.Event); err != nil {
+				return err
+			}
 
 			// Mark as seen to prevent notifications for historical events
 			v.seenEvents[parsedEvent.Hash] = struct{}{}
@@ -193,7 +202,9 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		}
 
 		// Update membership from parsed event
-		v.updateMembershipFromEvent(parsed.Event)
+		if err := v.updateMembershipFromEvent(parsed.Event); err != nil {
+			return err
+		}
 
 		// Mark event as seen to prevent duplicate notifications
 		v.seenEvents[parsed.Hash] = struct{}{}
@@ -295,7 +306,9 @@ func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Enve
 
 	// Update membership from already-parsed events - no notifications for historical events
 	for _, parsedEvent := range mbInfo.Events() {
-		v.updateMembershipFromEvent(parsedEvent.Event)
+		if err := v.updateMembershipFromEvent(parsedEvent.Event); err != nil {
+			return err
+		}
 	}
 
 	return nil

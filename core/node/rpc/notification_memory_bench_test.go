@@ -443,6 +443,9 @@ func benchmarkActualNotificationService(b *testing.B, numStreams int, memberCoun
 
 	// NOW initialize notification service AFTER streams are created (like TestNotificationsColdStreams)
 	notificationService := initNotificationServiceBench(ctx, tester)
+	if notificationService == nil {
+		b.Fatal("Failed to initialize notification service")
+	}
 
 	// Create HTTP clients to notification service
 	httpClient, _ := testcert.GetHttp2LocalhostTLSClient(ctx, tester.getConfig())
@@ -479,9 +482,7 @@ func benchmarkActualNotificationService(b *testing.B, numStreams int, memberCoun
 	b.Logf("Notification Service (delta) - Total: %.2f MB, Per-stream: %.2f KB", deltaMB, deltaPerStreamKB)
 
 	// Close notification service to clean up goroutines
-	if notificationService != nil {
-		notificationService.Close()
-	}
+	notificationService.Close()
 }
 
 // Helper functions for notification service benchmarking
