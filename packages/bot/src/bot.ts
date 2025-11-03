@@ -1180,10 +1180,10 @@ export const makeTownsBot = async <
     )
 
     if (opts.commands) {
-        void client
+        client
             .appServiceClient()
-            .then((appRegistryRpcClient) => {
-                void appRegistryRpcClient
+            .then((appRegistryClient) =>
+                appRegistryClient
                     .updateAppMetadata({
                         appId: bin_fromHexString(account.address),
                         updateMask: ['slash_commands'],
@@ -1194,8 +1194,8 @@ export const makeTownsBot = async <
                     .catch((err) => {
                         // eslint-disable-next-line no-console
                         console.warn('[@towns-protocol/bot] failed to update slash commands', err)
-                    })
-            })
+                    }),
+            )
             .catch((err) => {
                 // eslint-disable-next-line no-console
                 console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
