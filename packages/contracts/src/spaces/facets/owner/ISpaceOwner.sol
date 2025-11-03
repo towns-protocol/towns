@@ -51,11 +51,11 @@ interface ISpaceOwner is ISpaceOwnerBase {
     /// @param longDescription The long description of the space
     /// @return tokenId The token id of the minted space
     function mintSpace(
-        string memory name,
-        string memory uri,
+        string calldata name,
+        string calldata uri,
         address space,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata shortDescription,
+        string calldata longDescription
     ) external returns (uint256 tokenId);
 
     /// @notice Get the space info
@@ -77,9 +77,9 @@ interface ISpaceOwner is ISpaceOwnerBase {
     /// @param longDescription The long description of the space
     function updateSpaceInfo(
         address space,
-        string memory name,
-        string memory uri,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata name,
+        string calldata uri,
+        string calldata shortDescription,
+        string calldata longDescription
     ) external;
 }

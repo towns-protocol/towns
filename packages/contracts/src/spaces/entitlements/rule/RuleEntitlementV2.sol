@@ -16,19 +16,15 @@
  */
 pragma solidity ^0.8.0;
 
+// interfaces
+import {IEntitlement} from "../IEntitlement.sol";
+import {IRuleEntitlementV2} from "./IRuleEntitlement.sol";
+
 // contracts
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-
-// libraries
-
-// interfaces
-
-import {IRuleEntitlementV2} from "./IRuleEntitlement.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
 
 contract RuleEntitlementV2 is
     Initializable,
@@ -120,9 +116,8 @@ contract RuleEntitlementV2 is
         // equivalent: abi.decode(entitlementData, (RuleDataV2))
         RuleDataV2 calldata data;
         assembly {
-            // this is a variable length struct, so calldataload(entitlementData.offset) contains
-            // the
-            // offset from entitlementData.offset at which the struct begins
+            // this is a variable length struct, so entitlementData.offset contains
+            // the offset from entitlementData.offset at which the struct begins
             data := add(entitlementData.offset, calldataload(entitlementData.offset))
         }
 
