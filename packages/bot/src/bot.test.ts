@@ -1479,4 +1479,59 @@ describe('Bot', { sequential: true }, () => {
             interactionResponse.content.value?.requestId,
         )
     })
+
+    it('bot should be able to send form interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'form',
+                value: {
+                    id: randomUUID(),
+                    components: [
+                        { id: '1', component: { case: 'button', value: { label: 'Button' } } },
+                        {
+                            id: '2',
+                            component: { case: 'textInput', value: { placeholder: 'Text Input' } },
+                        },
+                    ],
+                },
+            },
+        }
+        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message).toBeDefined()
+    })
+
+    it('user should be able to send form interaction response', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionResponse: PlainMessage<InteractionResponse> = {
+            recipient: bin_fromHexString(botClientAddress),
+            content: {
+                case: 'form',
+                value: {
+                    requestId: randomUUID(),
+                    components: [
+                        { id: '1', component: { case: 'button', value: {} } },
+                        {
+                            id: '2',
+                            component: { case: 'textInput', value: { value: 'Text Input' } },
+                        },
+                    ],
+                },
+            },
+        }
+        const receivedInteractionResponses: Array<PlainMessage<InteractionResponse>> = []
+        bot.onInteractionResponse((_h, e) => {
+            receivedInteractionResponses.push(e.response)
+        })
+        await bobClient.riverConnection.call(async (client) => {
+            return await client.sendInteractionResponse(channelId, interactionResponse)
+        })
+        await waitFor(() => receivedInteractionResponses.length > 0)
+    })
 })
