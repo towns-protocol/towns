@@ -1797,7 +1797,10 @@ const buildBotActions = (
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
-        const payload = make_ChannelPayload_InteractionRequest(request)
+        const payload = make_ChannelPayload_InteractionRequest({
+            ...request,
+            encryptionDevice: client.crypto.getUserDevice(),
+        })
         return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
     }
 
