@@ -1308,12 +1308,26 @@ message InteractionRequest {
         repeated Component components = 4;
     }
 
+    message Transaction {
+        message EVMContent {
+            string chain_id = 1;
+            string to = 2;
+            string value = 3;
+            string data = 4;
+        }
+        string id = 1;
+        oneof content {
+            EVMContent evm = 101;
+        }
+    }
+
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
     optional bytes recipient = 1;
 
     oneof content {
         Signature signature = 101;
         Form form = 102;
+        Transaction transaction = 103;
     }
 }
 
@@ -1345,9 +1359,15 @@ message InteractionResponse {
         repeated Component components = 2;
     }
 
+    message Transaction {
+        string request_id = 1;
+        string tx_hash = 2;
+    }
+
     oneof content {
         Signature signature = 101;
         Form form = 102;
+        Transaction transaction = 103;
     }
 }
 
