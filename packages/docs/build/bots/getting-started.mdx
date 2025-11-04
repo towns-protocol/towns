@@ -13,7 +13,12 @@ This guide will walk you through creating, developing, and deploying your first 
 
 Before you begin, make sure you have:
 - [Bun](https://bun.sh) installed (`curl -fsSL https://bun.sh/install | bash`)
+  - **OR** [Node.js v20+](https://nodejs.org) (includes npm)
 - A [GitHub account](https://github.com/signup)
+
+<Note>
+This guide uses Bun. If using Node.js, replace `bunx` with `npx` and `bun` with `npm`.
+</Note>
 
 ## Create a Bot
 
@@ -97,7 +102,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    | Setting | Value |
    |---------|-------|
    | **Name** | `my-bot` (or any name you prefer) |
-   | **Environment** | `Node` |
+   | **Language** | `Node` |
    | **Build Command** | `bun install && bun run build` |
    | **Start Command** | `bun run start` |
 
