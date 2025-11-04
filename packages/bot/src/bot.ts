@@ -993,6 +993,7 @@ export class Bot<
         request: PlainMessage<InteractionRequest>,
         opts?: MessageOpts,
     ) {
+        request.encryptionDevice = this.getUserDevice() // todo i forgot this and tests still passed... why?
         const result = await this.client.sendInteractionRequest(
             streamId,
             request,
