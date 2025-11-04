@@ -3225,10 +3225,7 @@ export class Client
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
 
         // Don't encrypt to our own device
-        return this.cryptoBackend.encryptWithDeviceKeys(
-            payloadClearText,
-            deviceKeys.filter((key) => key.deviceKey !== this.userDeviceKey().deviceKey),
-        )
+        return this.cryptoBackend.encryptWithDeviceKeys(payloadClearText, deviceKeys)
     }
 
     // Used during testing
