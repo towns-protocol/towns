@@ -136,7 +136,11 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		var parsedSnapshot *Snapshot
 		var snapshotIndex int
 		var err error
-		miniblocks, parsedSnapshot, snapshotIndex, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
+		miniblocks, parsedSnapshot, snapshotIndex, err = ParseMiniblocksFromProto(
+			stream.Miniblocks,
+			stream.Snapshot,
+			nil,
+		)
 		if err != nil {
 			return err
 		}
