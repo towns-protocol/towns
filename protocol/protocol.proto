@@ -1317,8 +1317,13 @@ message InteractionRequest {
             string to = 2;
             string value = 3;
             string data = 4;
+            optional string signer_wallet = 5;
         }
+
         string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        
         oneof content {
             EVMContent evm = 101;
         }
