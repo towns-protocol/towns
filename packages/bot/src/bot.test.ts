@@ -36,9 +36,7 @@ import {
     ForwardSettingValue,
     InteractionRequest,
     InteractionRequest_SignatureRequest_SignatureType,
-    InteractionResponse,
     InteractionResponsePayload,
-    InteractionResponsePayloadSchema,
     type PlainMessage,
     type SlashCommand,
 } from '@towns-protocol/proto'
@@ -59,7 +57,6 @@ import { getBalance, readContract, waitForTransactionReceipt } from 'viem/action
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
-import { create, toBinary } from '@bufbuild/protobuf'
 
 const log = dlog('test:bot')
 
@@ -1407,15 +1404,13 @@ describe('Bot', { sequential: true }, () => {
 
     it('bot should be able to send interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest> = {
-            content: {
-                case: 'signatureRequest',
-                value: {
-                    id: randomUUID(),
-                    data: '0x1234567890',
-                    chainId: '1',
-                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
-                },
+        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+            case: 'signatureRequest',
+            value: {
+                id: randomUUID(),
+                data: '0x1234567890',
+                chainId: '1',
+                type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
             },
         }
         const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
@@ -1431,15 +1426,13 @@ describe('Bot', { sequential: true }, () => {
 
     it('user should NOT be able to send interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest> = {
-            content: {
-                case: 'signatureRequest',
-                value: {
-                    id: randomUUID(),
-                    data: '0x1234567890',
-                    chainId: '1',
-                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
-                },
+        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+            case: 'signatureRequest',
+            value: {
+                id: randomUUID(),
+                data: '0x1234567890',
+                chainId: '1',
+                type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
             },
         }
 
@@ -1447,7 +1440,7 @@ describe('Bot', { sequential: true }, () => {
             await expect(
                 client.makeEventAndAddToStream(
                     channelId,
-                    make_ChannelPayload_InteractionRequest(interactionRequest),
+                    make_ChannelPayload_InteractionRequest({ content: interactionRequest }),
                     {
                         method: 'sendInteractionRequest',
                     },
@@ -1493,19 +1486,17 @@ describe('Bot', { sequential: true }, () => {
 
     it('bot should be able to send form interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest> = {
-            content: {
-                case: 'form',
-                value: {
-                    id: randomUUID(),
-                    components: [
-                        { id: '1', component: { case: 'button', value: { label: 'Button' } } },
-                        {
-                            id: '2',
-                            component: { case: 'textInput', value: { placeholder: 'Text Input' } },
-                        },
-                    ],
-                },
+        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+            case: 'form',
+            value: {
+                id: randomUUID(),
+                components: [
+                    { id: '1', component: { case: 'button', value: { label: 'Button' } } },
+                    {
+                        id: '2',
+                        component: { case: 'textInput', value: { placeholder: 'Text Input' } },
+                    },
+                ],
             },
         }
         const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)

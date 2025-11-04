@@ -990,10 +990,15 @@ export class Bot<
      */
     async sendInteractionRequest(
         streamId: string,
-        request: PlainMessage<InteractionRequest>,
+        content: PlainMessage<InteractionRequest['content']>,
+        recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
-        request.encryptionDevice = this.getUserDevice() // setting this here to be sure, we could accept InteractionRequest['content'] instead...
+        const request: PlainMessage<InteractionRequest> = {
+            recipient,
+            content,
+            encryptionDevice: this.getUserDevice(),
+        }
         const result = await this.client.sendInteractionRequest(
             streamId,
             request,
