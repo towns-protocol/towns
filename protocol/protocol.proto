@@ -1302,9 +1302,10 @@ message InteractionRequest {
                 TextInput text_input = 102;
             }
         }
-        optional string title = 1;
-        optional string subtitle = 2;
-        repeated Component components = 3;
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        repeated Component components = 4;
     }
 
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
