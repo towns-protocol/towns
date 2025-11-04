@@ -119,7 +119,7 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 	// Parse snapshot if present to get initial membership state
 	if stream.Snapshot != nil {
 		// Parse snapshot envelope directly without hash/signature validation
-		// Equivalent to: node/events/snapshot.go:76 (ParseSnapshot unmarshal step)
+		// Equivalent to: node/events/snapshot.go (ParseSnapshot unmarshal step)
 		snapshot = &Snapshot{}
 		if err := proto.Unmarshal(stream.Snapshot.Event, snapshot); err != nil {
 			return AsRiverError(err, Err_INVALID_ARGUMENT).
@@ -132,7 +132,7 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 	if len(stream.Miniblocks) > 0 {
 		// Use existing ParseMiniblocksFromProto to get validated miniblocks.
 		// This handles all the complex parsing, validation, and snapshot extraction logic.
-		// Equivalent to: node/events/stream_view.go:152 (MakeRemoteStreamView)
+		// Equivalent to: node/events/stream_view.go (MakeRemoteStreamView)
 		var parsedSnapshot *Snapshot
 		var snapshotIndex int
 		var err error
@@ -180,7 +180,7 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		}
 
 		// Process already-parsed events from MiniblockInfo.Events()
-		// Equivalent to: node/events/miniblock_info.go:316 (Events getter)
+		// Equivalent to: node/events/miniblock_info.go (Events getter)
 		for _, parsedEvent := range mbInfo.Events() {
 			// Update membership from parsed event
 			if err := v.updateMembershipFromEvent(parsedEvent.Event); err != nil {
@@ -195,7 +195,7 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 	// Process events in minipool using ParseEvent (standard validation).
 	// These are events waiting for the next miniblock, so we need to track them
 	// to avoid sending duplicate notifications if they arrive again via ApplyEvent.
-	// Equivalent to: node/events/stream_view.go:163-164 (MakeRemoteStreamView minipool processing)
+	// Equivalent to: node/events/stream_view.go (MakeRemoteStreamView minipool processing)
 	for _, envelope := range stream.Events {
 		// Use ParseEvent for validation (equivalent to old MakeRemoteStreamView)
 		parsed, err := ParseEvent(envelope)
@@ -281,7 +281,7 @@ func (v *NotificationStreamView) GetChannelMembers() (mapset.Set[string], error)
 // keeping memory bounded to events waiting for the next block (~10-100 events typically).
 func (v *NotificationStreamView) ApplyBlock(miniblock *Miniblock, snapshot *Envelope) error {
 	// Parse the miniblock using existing function (equivalent to old TrackedStreamViewImpl.ApplyBlock)
-	// Equivalent to: node/events/tracked_stream_view.go:77-81
+	// Equivalent to: node/events/tracked_stream_view.go
 	mbInfo, err := NewMiniblockInfoFromProto(
 		miniblock,
 		snapshot,
