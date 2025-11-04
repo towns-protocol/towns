@@ -20,6 +20,8 @@ type IsBlockchainTransaction_Content = isBlockchainTransaction_Content
 type IsGetStreamExResponse_Data = isGetStreamExResponse_Data
 type IsInteractionRequest_Content = isInteractionRequest_Content
 type IsInteractionResponse_Content = isInteractionResponse_Content
+type IsInteractionRequest_Form_Component_Component = isInteractionRequest_Form_Component_Component
+type IsInteractionResponse_Form_Component_Component = isInteractionResponse_Form_Component_Component
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
