@@ -1294,7 +1294,7 @@ message InteractionRequest {
             }
 
             message TextInput {
-                string label = 1;
+                string placeholder = 1;
             }
 
             oneof component {
