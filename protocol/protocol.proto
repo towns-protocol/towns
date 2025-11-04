@@ -1254,7 +1254,7 @@ enum EncryptedDataVersion {
 }
 
 message InteractionRequest {
-    message SignatureRequest {
+    message Signature {
         // Type of signing method to use. The app must call the
         // corresponding method on the wallet as noted below.
         enum SignatureType {
@@ -1314,7 +1314,7 @@ message InteractionRequest {
     UserMetadataPayload.EncryptionDevice encryption_device = 2;
 
     oneof content {
-        SignatureRequest signature_request = 101;
+        Signature signature = 101;
         Form form = 102;
     }
 }
@@ -1327,7 +1327,7 @@ message InteractionResponse {
 }
 
 message InteractionResponsePayload {
-    message SignatureResponse {
+    message Signature {
         // The id of the request that this response is for
         string request_id = 1;
         // The resulting signature in hex
@@ -1352,7 +1352,7 @@ message InteractionResponsePayload {
     }
     bytes salt = 1;
     oneof content {
-        SignatureResponse signature_response = 101;
+        Signature signature = 101;
         Form form = 102;
     }
 }

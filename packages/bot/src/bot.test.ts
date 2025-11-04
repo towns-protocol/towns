@@ -35,7 +35,7 @@ import { stringify as superjsonStringify } from 'superjson'
 import {
     ForwardSettingValue,
     InteractionRequest,
-    InteractionRequest_SignatureRequest_SignatureType,
+    InteractionRequest_Signature_SignatureType,
     InteractionResponsePayload,
     type PlainMessage,
     type SlashCommand,
@@ -1405,12 +1405,12 @@ describe('Bot', { sequential: true }, () => {
     it('bot should be able to send interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const interactionRequest: PlainMessage<InteractionRequest['content']> = {
-            case: 'signatureRequest',
+            case: 'signature',
             value: {
                 id: randomUUID(),
                 data: '0x1234567890',
                 chainId: '1',
-                type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                type: InteractionRequest_Signature_SignatureType.PERSONAL_SIGN,
             },
         }
         const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
@@ -1427,12 +1427,12 @@ describe('Bot', { sequential: true }, () => {
     it('user should NOT be able to send interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const interactionRequest: PlainMessage<InteractionRequest['content']> = {
-            case: 'signatureRequest',
+            case: 'signature',
             value: {
                 id: randomUUID(),
                 data: '0x1234567890',
                 chainId: '1',
-                type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                type: InteractionRequest_Signature_SignatureType.PERSONAL_SIGN,
             },
         }
 
@@ -1455,7 +1455,7 @@ describe('Bot', { sequential: true }, () => {
         const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
             salt: genIdBlob(),
             content: {
-                case: 'signatureResponse',
+                case: 'signature',
                 value: {
                     requestId: randomUUID(),
                     signature: '0x123222222222',
