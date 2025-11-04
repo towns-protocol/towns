@@ -1402,7 +1402,7 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it('bot should be able to send interaction request', async () => {
+    it('bot should be able to send interaction request and user should send encrypted response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const interactionRequest: PlainMessage<InteractionRequest['content']> = {
             case: 'signature',
@@ -1422,6 +1422,50 @@ describe('Bot', { sequential: true }, () => {
 
         const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
         expect(message).toBeDefined()
+        if (message?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('message is not an interaction request')
+        }
+        const receivedRequest = message.content.request
+        if (!isDefined(receivedRequest.encryptionDevice)) {
+            throw new Error('interaction request is not encrypted')
+        }
+        if (receivedRequest.content.case !== 'signature') {
+            throw new Error('interaction request is not a signature request')
+        }
+        const signatureRequestPayload = receivedRequest.content.value
+
+        // bob should be able to send interaction response to the bot
+        const recipient = bin_fromHexString(botClientAddress)
+        const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
+            salt: genIdBlob(),
+            content: {
+                case: 'signature',
+                value: {
+                    requestId: signatureRequestPayload.id,
+                    signature: '0x123222222222',
+                },
+            },
+        }
+
+        const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
+        bot.onInteractionResponse((_h, e) => {
+            receivedInteractionResponses.push(e.response)
+        })
+        await bobClient.riverConnection.call(async (client) => {
+            // from the client, to the channel, encrypted so that only the bot can read it
+            return await client.sendInteractionResponse(
+                channelId,
+                recipient,
+                interactionResponsePayload,
+                receivedRequest.encryptionDevice!,
+            )
+        })
+
+        await waitFor(() => receivedInteractionResponses.length > 0)
+        expect(receivedInteractionResponses[0].recipient).toEqual(recipient)
+        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(
+            interactionResponsePayload.content.value?.requestId,
+        )
     })
 
     it('user should NOT be able to send interaction request', async () => {
@@ -1447,41 +1491,6 @@ describe('Bot', { sequential: true }, () => {
                 ),
             ).rejects.toThrow(/creator is not an app/)
         })
-    })
-
-    it('user should be able to send interaction response', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const recipient = bin_fromHexString(botClientAddress)
-        const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
-            salt: genIdBlob(),
-            content: {
-                case: 'signature',
-                value: {
-                    requestId: randomUUID(),
-                    signature: '0x123222222222',
-                },
-            },
-        }
-
-        const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
-        bot.onInteractionResponse((_h, e) => {
-            receivedInteractionResponses.push(e.response)
-        })
-        await bobClient.riverConnection.call(async (client) => {
-            // from the client, to the channel, encrypted so that only the bot can read it
-            return await client.sendInteractionResponse(
-                channelId,
-                recipient,
-                interactionResponsePayload,
-                bot.getUserDevice(),
-            )
-        })
-
-        await waitFor(() => receivedInteractionResponses.length > 0)
-        expect(receivedInteractionResponses[0].recipient).toEqual(recipient)
-        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(
-            interactionResponsePayload.content.value?.requestId,
-        )
     })
 
     it('bot should be able to send form interaction request', async () => {

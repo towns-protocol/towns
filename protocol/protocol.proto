@@ -878,6 +878,9 @@ message EncryptedData {
 
     // used to parse data after it's decrypted
     EncryptedDataVersion version = 11; 
+
+    // used when encrypting directly to a device
+    optional string device_key = 12;
 }
 
 message WrappedEncryptedData {

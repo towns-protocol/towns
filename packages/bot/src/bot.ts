@@ -531,6 +531,11 @@ export class Bot<
                             if (!payload.encryptedData) {
                                 continue
                             }
+                            if (
+                                payload.encryptedData.deviceKey !== this.getUserDevice().deviceKey
+                            ) {
+                                continue
+                            }
                             const decryptedBase64 = await this.client.crypto.decryptWithDeviceKey(
                                 payload.encryptedData.ciphertext,
                                 payload.encryptedData.senderKey,

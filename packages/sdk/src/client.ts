@@ -2141,13 +2141,13 @@ export class Client
             create(InteractionResponsePayloadSchema, payload),
         )
         const string = bin_toBase64(binaryData)
-        const cyphertextmap = await this.encryptWithDeviceKeys(string, [toUserDevice])
-        const cyphertext = cyphertextmap[toUserDevice.deviceKey]
-        check(isDefined(cyphertext), 'cyphertext not found')
+        const ciphertextmap = await this.encryptWithDeviceKeys(string, [toUserDevice])
+        const ciphertext = ciphertextmap[toUserDevice.deviceKey]
+        check(isDefined(ciphertext), 'ciphertext not found')
         const response: PlainMessage<InteractionResponse> = {
             recipient: recipient,
             encryptedData: {
-                ciphertext: cyphertext,
+                ciphertext: ciphertext,
                 algorithm: EncryptionAlgorithmId.Olm,
                 senderKey: this.userDeviceKey().deviceKey,
                 sessionId: '',
@@ -2156,6 +2156,7 @@ export class Client
                 ivBytes: new Uint8Array(),
                 sessionIdBytes: new Uint8Array(),
                 version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+                deviceKey: toUserDevice.deviceKey,
             } satisfies PlainMessage<EncryptedData>,
         }
         return this.makeEventAndAddToStream(
