@@ -69,7 +69,8 @@ import {
     type BlockchainTransaction,
     BlockchainTransactionSchema,
     InteractionRequest,
-    InteractionResponse,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -157,6 +158,11 @@ export type MessageOpts = {
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
+}
+
+export type DecryptedInteractionResponse = {
+    recipient: Uint8Array
+    payload: PlainMessage<InteractionResponsePayload>
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -277,7 +283,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & {
             /** The interaction response that was received */
-            response: PlainMessage<InteractionResponse>
+            response: DecryptedInteractionResponse
         },
     ) => void | Promise<void>
 }
@@ -522,13 +528,30 @@ export class Bot<
                             if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
                                 continue
                             }
+                            if (!payload.encryptedData) {
+                                continue
+                            }
+                            if (
+                                payload.encryptedData.deviceKey !== this.getUserDevice().deviceKey
+                            ) {
+                                continue
+                            }
+                            const decryptedBase64 = await this.client.crypto.decryptWithDeviceKey(
+                                payload.encryptedData.ciphertext,
+                                payload.encryptedData.senderKey,
+                            )
+                            const decrypted = bin_fromBase64(decryptedBase64)
+                            const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
                                 eventId: parsed.hashStr,
                                 createdAt,
-                                response: payload,
+                                response: {
+                                    recipient: payload.recipient,
+                                    payload: response,
+                                },
                             })
                         } else {
                             logNever(parsed.event.payload.value.content)
@@ -833,6 +856,14 @@ export class Bot<
     }
 
     /**
+     * get the public device key of the bot
+     * @returns the public device key of the bot
+     */
+    getUserDevice() {
+        return this.client.crypto.getUserDevice()
+    }
+
+    /**
      * Send a message to a stream
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param message - The cleartext of the message
@@ -964,9 +995,15 @@ export class Bot<
      */
     async sendInteractionRequest(
         streamId: string,
-        request: PlainMessage<InteractionRequest>,
+        content: PlainMessage<InteractionRequest['content']>,
+        recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
+        const request: PlainMessage<InteractionRequest> = {
+            recipient,
+            content,
+            encryptionDevice: this.getUserDevice(),
+        }
         const result = await this.client.sendInteractionRequest(
             streamId,
             request,

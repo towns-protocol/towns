@@ -1182,7 +1182,7 @@ export function getFallbackContent(
         case RiverTimelineEvent.InteractionRequest:
             return `interactionRequest: ${content.request.content.value?.id ?? ''}`
         case RiverTimelineEvent.InteractionResponse:
-            return `interactionResponse: ${content.response.content.value?.requestId ?? ''}`
+            return `interactionResponse: ${bin_toHexString(content.response.recipient)}`
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {
