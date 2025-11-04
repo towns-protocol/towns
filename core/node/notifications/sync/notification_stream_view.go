@@ -134,19 +134,21 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 		// This handles all the complex parsing, validation, and snapshot extraction logic.
 		// Equivalent to: node/events/stream_view.go:152 (MakeRemoteStreamView)
 		var parsedSnapshot *Snapshot
+		var snapshotIndex int
 		var err error
-		miniblocks, parsedSnapshot, _, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
+		miniblocks, parsedSnapshot, snapshotIndex, err = ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
 		if err != nil {
 			return err
 		}
 		// Use the snapshot from ParseMiniblocksFromProto if we don't have one yet
 		// (this handles edge cases where miniblocks exist but snapshot wasn't parsed above)
-		if snapshot == nil && parsedSnapshot != nil {
+		if parsedSnapshot != nil {
 			snapshot = parsedSnapshot
+			miniblocks = miniblocks[snapshotIndex:]
 		}
 	}
 
-	// Extract initial state from snapshot
+	// Extract initial stream member list from snapshot
 	if snapshot != nil {
 		// Extract member addresses
 		if snapshotMembers := snapshot.GetMembers(); snapshotMembers != nil {
@@ -163,13 +165,13 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 			if err != nil {
 				return err
 			}
-			if err := v.extractBlockedUsers(ctx, snapshot, user); err != nil {
+			if err := v.extractBlockedUsers(snapshot, user); err != nil {
 				return err
 			}
 		}
 	}
 
-	// Process miniblocks using already-parsed MiniblockInfo structures.
+	// apply user join/leave and block/unblock events in miniblocks that occurred after last snapshot
 	// MiniblockInfo.Events() returns []*ParsedEvent - no need to re-parse!
 	for _, mbInfo := range miniblocks {
 		// Track the last block number (already parsed in mbInfo.Ref)
@@ -217,7 +219,6 @@ func (v *NotificationStreamView) initializeFromStream(ctx context.Context, strea
 // This is idempotent - it applies the exact snapshot state by calling both
 // BlockUser and UnblockUser based on the boolean value.
 func (v *NotificationStreamView) extractBlockedUsers(
-	ctx context.Context,
 	snapshot *Snapshot,
 	user common.Address,
 ) error {
