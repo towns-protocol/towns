@@ -1286,11 +1286,33 @@ message InteractionRequest {
         optional string subtitle = 7;
     }
 
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+                string label = 1;
+            }
+
+            message TextInput {
+                string label = 1;
+            }
+
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        optional string title = 1;
+        optional string subtitle = 2;
+        repeated Component components = 3;
+    }
+
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
     optional bytes recipient = 1;
 
     oneof content {
         SignatureRequest signature_request = 101;
+        Form form = 102;
     }
 }
 
@@ -1305,8 +1327,26 @@ message InteractionResponse {
         string signature = 2;
     }
 
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+            }
+            message TextInput {
+                string value = 1;
+            }
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        string request_id = 1;
+        repeated Component components = 2;
+    }
+
     oneof content {
         SignatureResponse signature_response = 101;
+        Form form = 102;
     }
 }
 
