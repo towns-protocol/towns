@@ -23,9 +23,10 @@ import {
     createChannel,
     isDefined,
     make_ChannelPayload_InteractionRequest,
+    genIdBlob,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { Bot, BotPayload } from './bot'
+import type { Bot, BotPayload, DecryptedInteractionResponse } from './bot'
 import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
@@ -36,6 +37,8 @@ import {
     InteractionRequest,
     InteractionRequest_SignatureRequest_SignatureType,
     InteractionResponse,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
     type PlainMessage,
     type SlashCommand,
 } from '@towns-protocol/proto'
@@ -56,6 +59,7 @@ import { getBalance, readContract, waitForTransactionReceipt } from 'viem/action
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
+import { create, toBinary } from '@bufbuild/protobuf'
 
 const log = dlog('test:bot')
 
@@ -1454,8 +1458,9 @@ describe('Bot', { sequential: true }, () => {
 
     it('user should be able to send interaction response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionResponse: PlainMessage<InteractionResponse> = {
-            recipient: bin_fromHexString(botClientAddress),
+        const recipient = bin_fromHexString(botClientAddress)
+        const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
+            salt: genIdBlob(),
             content: {
                 case: 'signatureResponse',
                 value: {
@@ -1465,18 +1470,24 @@ describe('Bot', { sequential: true }, () => {
             },
         }
 
-        const receivedInteractionResponses: Array<PlainMessage<InteractionResponse>> = []
+        const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
         bot.onInteractionResponse((_h, e) => {
             receivedInteractionResponses.push(e.response)
         })
         await bobClient.riverConnection.call(async (client) => {
-            return await client.sendInteractionResponse(channelId, interactionResponse)
+            // from the client, to the channel, encrypted so that only the bot can read it
+            return await client.sendInteractionResponse(
+                channelId,
+                recipient,
+                interactionResponsePayload,
+                bot.getUserDevice(),
+            )
         })
 
         await waitFor(() => receivedInteractionResponses.length > 0)
-        expect(receivedInteractionResponses[0].recipient).toEqual(interactionResponse.recipient)
-        expect(receivedInteractionResponses[0].content.value?.requestId).toEqual(
-            interactionResponse.content.value?.requestId,
+        expect(receivedInteractionResponses[0].recipient).toEqual(recipient)
+        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(
+            interactionResponsePayload.content.value?.requestId,
         )
     })
 
@@ -1509,8 +1520,9 @@ describe('Bot', { sequential: true }, () => {
 
     it('user should be able to send form interaction response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionResponse: PlainMessage<InteractionResponse> = {
-            recipient: bin_fromHexString(botClientAddress),
+        const recipient = bin_fromHexString(botClientAddress)
+        const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
+            salt: genIdBlob(),
             content: {
                 case: 'form',
                 value: {
@@ -1525,12 +1537,17 @@ describe('Bot', { sequential: true }, () => {
                 },
             },
         }
-        const receivedInteractionResponses: Array<PlainMessage<InteractionResponse>> = []
+        const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
         bot.onInteractionResponse((_h, e) => {
             receivedInteractionResponses.push(e.response)
         })
         await bobClient.riverConnection.call(async (client) => {
-            return await client.sendInteractionResponse(channelId, interactionResponse)
+            return await client.sendInteractionResponse(
+                channelId,
+                recipient,
+                interactionResponsePayload,
+                bot.getUserDevice(),
+            )
         })
         await waitFor(() => receivedInteractionResponses.length > 0)
     })

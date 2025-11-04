@@ -22,6 +22,7 @@ import {
     MembershipReason,
     InteractionRequest,
     InteractionResponse,
+    EncryptedData,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
 import { isDefined, logNever } from '../../check'
