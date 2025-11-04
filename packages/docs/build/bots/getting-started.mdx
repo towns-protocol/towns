@@ -12,8 +12,11 @@ This guide will walk you through creating, developing, and deploying your first 
 ## Prerequisites
 
 Before you begin, make sure you have:
+- [Node.js v20+](https://nodejs.org/) installed (install with [Homebrew](https://brew.sh/): `brew install node`)
 - [Bun](https://bun.sh/docs/installation) installed
-- A [GitHub account](https://github.com/signup)
+- A [GitHub account](https://github.com/signup) with SSH key configured (for pushing your bot code)
+  - [Create SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+  - [Upload SSH key to GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 
 ## Create a Bot
 
@@ -95,7 +98,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    | Setting | Value |
    |---------|-------|
    | **Name** | `my-bot` (or any name you prefer) |
-   | **Environment** | `Node` |
+   | **Language** | `Node` |
    | **Build Command** | `bun install` |
    | **Start Command** | `bun run start` |
 
@@ -107,6 +110,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    |-----|-------|
    | `APP_PRIVATE_DATA` | Your app private data from bot creation |
    | `JWT_SECRET` | Your JWT secret from bot creation |
+   | `PORT` | `5123` |
 
 5. **Deploy**
 
