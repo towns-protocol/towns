@@ -22,6 +22,7 @@ import {
     waitForRoleCreated,
     createChannel,
     isDefined,
+    make_ChannelPayload_InteractionRequest,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { Bot, BotPayload } from './bot'
@@ -30,7 +31,14 @@ import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
 import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
-import { ForwardSettingValue, type PlainMessage, type SlashCommand } from '@towns-protocol/proto'
+import {
+    ForwardSettingValue,
+    InteractionRequest,
+    InteractionRequest_SignatureRequest_SignatureType,
+    InteractionResponse,
+    type PlainMessage,
+    type SlashCommand,
+} from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
@@ -1390,6 +1398,85 @@ describe('Bot', { sequential: true }, () => {
                 ).toBe(RiverTimelineEvent.ChannelMessage)
             },
             { timeoutMS: 20000 },
+        )
+    })
+
+    it('bot should be able to send interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'signatureRequest',
+                value: {
+                    id: randomUUID(),
+                    data: '0x1234567890',
+                    chainId: '1',
+                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                },
+            },
+        }
+        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
+            ).toBeDefined(),
+        )
+
+        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+        expect(message).toBeDefined()
+    })
+
+    it('user should NOT be able to send interaction request', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionRequest: PlainMessage<InteractionRequest> = {
+            content: {
+                case: 'signatureRequest',
+                value: {
+                    id: randomUUID(),
+                    data: '0x1234567890',
+                    chainId: '1',
+                    type: InteractionRequest_SignatureRequest_SignatureType.PERSONAL_SIGN,
+                },
+            },
+        }
+
+        await bobClient.riverConnection.call(async (client) => {
+            await expect(
+                client.makeEventAndAddToStream(
+                    channelId,
+                    make_ChannelPayload_InteractionRequest(interactionRequest),
+                    {
+                        method: 'sendInteractionRequest',
+                    },
+                ),
+            ).rejects.toThrow(/creator is not an app/)
+        })
+    })
+
+    it('user should be able to send interaction response', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const interactionResponse: PlainMessage<InteractionResponse> = {
+            recipient: bin_fromHexString(botClientAddress),
+            content: {
+                case: 'signatureResponse',
+                value: {
+                    requestId: randomUUID(),
+                    signature: '0x123222222222',
+                },
+            },
+        }
+
+        const receivedInteractionResponses: Array<PlainMessage<InteractionResponse>> = []
+        bot.onInteractionResponse((_h, e) => {
+            receivedInteractionResponses.push(e.response)
+        })
+        await bobClient.riverConnection.call(async (client) => {
+            return await client.sendInteractionResponse(channelId, interactionResponse)
+        })
+
+        await waitFor(() => receivedInteractionResponses.length > 0)
+        expect(receivedInteractionResponses[0].recipient).toEqual(interactionResponse.recipient)
+        expect(receivedInteractionResponses[0].content.value?.requestId).toEqual(
+            interactionResponse.content.value?.requestId,
         )
     })
 })
