@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk-crypto",
-    "version": "0.0.396",
+    "version": "0.0.400",
     "type": "module",
     "main": "./dist/web/index.cjs",
     "types": "./dist/web/index.d.ts",

@@ -878,6 +878,9 @@ message EncryptedData {
 
     // used to parse data after it's decrypted
     EncryptedDataVersion version = 11; 
+
+    // used when encrypting directly to a device
+    optional string device_key = 12;
 }
 
 message WrappedEncryptedData {
@@ -1308,19 +1311,44 @@ message InteractionRequest {
         repeated Component components = 4;
     }
 
+    message Transaction {
+        message EVMContent {
+            string chain_id = 1;
+            string to = 2;
+            string value = 3;
+            string data = 4;
+            optional string signer_wallet = 5;
+        }
+
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        
+        oneof content {
+            EVMContent evm = 101;
+        }
+    }
+
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
     optional bytes recipient = 1;
+    // if present, encrypt the interaction response with to encryption device
+    UserMetadataPayload.EncryptionDevice encryption_device = 2;
 
     oneof content {
         Signature signature = 101;
         Form form = 102;
+        Transaction transaction = 103;
     }
 }
 
 message InteractionResponse {
     // The recipient of the interaction response.
     bytes recipient = 1;
+    // encrypted binary InteractionResponsePayload
+    EncryptedData encrypted_data = 2;
+}
 
+message InteractionResponsePayload {
     message Signature {
         // The id of the request that this response is for
         string request_id = 1;
@@ -1345,9 +1373,16 @@ message InteractionResponse {
         repeated Component components = 2;
     }
 
+    message Transaction {
+        string request_id = 1;
+        string tx_hash = 2;
+    }
+
+    bytes salt = 1;
     oneof content {
         Signature signature = 101;
         Form form = 102;
+        Transaction transaction = 103;
     }
 }
 
