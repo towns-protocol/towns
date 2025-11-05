@@ -32,11 +32,11 @@ export const TownsSyncProvider = (props: {
 
     useEffect(() => {
         if (syncAgent) {
-            syncAgent.start()
+            void syncAgent.start()
         }
         return () => {
             if (syncAgent) {
-                syncAgent.stop()
+                void syncAgent.stop()
             }
         }
     }, [syncAgent])

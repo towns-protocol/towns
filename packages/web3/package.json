@@ -1,51 +1,50 @@
 {
-    "name": "@towns-protocol/web3",
-    "version": "0.0.400",
-    "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "scripts": {
-        "build": "tsc",
-        "cb": "yarn clean && yarn build",
-        "clean": "rm -rf dist",
-        "lint": "yarn eslint --format unix ./src",
-        "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
-        "lint:fix": "yarn lint --fix",
-        "test": "yarn load-env vitest run",
-        "test:ci": "yarn test",
-        "test:debug": "DEBUG=test yarn test",
-        "test:watch": "vitest --watch",
-        "watch": "tsc --watch"
-    },
-    "dependencies": {
-        "@isaacs/ttlcache": "^1.4.1",
-        "@towns-protocol/generated": "workspace:^",
-        "@towns-protocol/utils": "workspace:^",
-        "abitype": "^0.9.10",
-        "debug": "^4.3.4",
-        "ethers": "^5.8.0",
-        "lru-cache": "^11.0.1",
-        "nanoid": "^4.0.0",
-        "viem": "^2.29.3",
-        "zod": "^3.25.76"
-    },
-    "devDependencies": {
-        "@types/node": "^20.14.8",
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
-        "debug": "^4.3.4",
-        "dotenv-cli": "^10.0.0",
-        "eslint": "^8.57.1",
-        "eslint-import-resolver-typescript": "^4.3.2",
-        "eslint-plugin-import-x": "^4.10.2",
-        "typed-emitter": "^2.1.0",
-        "typescript": "~5.8.3",
-        "vitest": "^3.2.3"
-    },
-    "files": [
-        "/dist"
-    ],
-    "publishConfig": {
-        "access": "public"
-    }
+  "name": "@towns-protocol/web3",
+  "version": "0.0.400",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "cb": "yarn clean && yarn build",
+    "clean": "rm -rf dist",
+    "lint": "oxlint src --type-aware",
+    "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
+    "lint:fix": "oxlint src --type-aware --fix",
+    "test": "yarn load-env vitest run",
+    "test:ci": "yarn test",
+    "test:debug": "DEBUG=test yarn test",
+    "test:watch": "vitest --watch",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "@isaacs/ttlcache": "^1.4.1",
+    "@towns-protocol/generated": "workspace:^",
+    "@towns-protocol/utils": "workspace:^",
+    "abitype": "^0.9.10",
+    "debug": "^4.3.4",
+    "ethers": "^5.8.0",
+    "lru-cache": "^11.0.1",
+    "nanoid": "^4.0.0",
+    "viem": "^2.29.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.8",
+    "debug": "^4.3.4",
+    "dotenv-cli": "^10.0.0",
+    "eslint-import-resolver-typescript": "^4.3.2",
+    "eslint-plugin-import-x": "^4.10.2",
+    "oxlint": "^1.25.0",
+    "oxlint-tsgolint": "^0.5.0",
+    "typed-emitter": "^2.1.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.3"
+  },
+  "files": [
+    "/dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

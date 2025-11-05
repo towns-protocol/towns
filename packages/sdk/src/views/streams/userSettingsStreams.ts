@@ -44,7 +44,7 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
             [userSettingsStreamId]: {
                 ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 fullyReadMarkers: {
-                    ...(prev[userSettingsStreamId]?.fullyReadMarkers ?? {}),
+                    ...prev[userSettingsStreamId]?.fullyReadMarkers,
                     [streamId]: fullyReadMarkers,
                 },
             },
@@ -61,7 +61,7 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
             [userSettingsStreamId]: {
                 ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
-                    ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
+                    ...prev[userSettingsStreamId]?.userBlocks,
                     [userId]: userBlocks,
                 },
             },
@@ -78,7 +78,7 @@ export class UserSettingsStreamsView extends ObservableRecord<string, UserSettin
             [userSettingsStreamId]: {
                 ...(prev[userSettingsStreamId] ?? this.makeDefault(userSettingsStreamId)),
                 userBlocks: {
-                    ...(prev[userSettingsStreamId]?.userBlocks ?? {}),
+                    ...prev[userSettingsStreamId]?.userBlocks,
                     [userId]: {
                         ...(prev[userSettingsStreamId]?.userBlocks[userId] ?? EMPTY_USER_BLOCKS),
                         blocks: [

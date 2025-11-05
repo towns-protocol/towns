@@ -1,8 +1,4 @@
-import {
-    WrappedEncryptedData as WrappedEncryptedData,
-    EncryptedData,
-    MemberPayload_Nft,
-} from '@towns-protocol/proto'
+import { WrappedEncryptedData, EncryptedData, MemberPayload_Nft } from '@towns-protocol/proto'
 import TypedEmitter from 'typed-emitter'
 import { ConfirmedTimelineEvent, RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'

@@ -1,15 +1,15 @@
 {
-    "name": "@towns-protocol/prettier-config",
-    "version": "0.0.400",
-    "license": "MIT",
-    "main": "config.js",
-    "dependencies": {
-        "prettier-plugin-solidity": "^1.4.2"
-    },
-    "peerDependencies": {
-        "prettier": "^2.8.8"
-    },
-    "publishConfig": {
-        "access": "public"
-    }
+  "name": "@towns-protocol/prettier-config",
+  "version": "0.0.400",
+  "license": "MIT",
+  "main": "config.js",
+  "dependencies": {
+    "prettier-plugin-solidity": "^1.4.2"
+  },
+  "peerDependencies": {
+    "prettier": "^2.8.8"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

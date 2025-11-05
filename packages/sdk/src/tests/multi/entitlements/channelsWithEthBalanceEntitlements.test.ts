@@ -25,7 +25,7 @@ describe('channelsWithEthBalanceEntitlements', () => {
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], ruleData)
 
-        await Promise.all([TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneEth)])
+        await TestEthBalance.setBaseBalance(alicesWallet.address as Address, oneEth)
 
         log('expect that alice can join the channel')
         await expectUserCanJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)
@@ -66,7 +66,7 @@ describe('channelsWithEthBalanceEntitlements', () => {
 
         // alice's base wallet may need to be explicitly set to zero to compensate for wallet funding in
         // initialization methods.
-        await Promise.all([TestEthBalance.setBaseBalance(alicesWallet.address as Address, 0n)])
+        await TestEthBalance.setBaseBalance(alicesWallet.address as Address, 0n)
 
         log('expect that alice cannot join the channel (has no ETH)')
         await expectUserCannotJoinChannel(alice, aliceSpaceDapp, spaceId, channelId!)

@@ -40,6 +40,7 @@ export const AuthRoute = () => {
                     <a
                         href="https://towns.com"
                         target="_blank"
+                        rel="noreferrer"
                         className="inline-flex items-center font-semibold underline-offset-4 hover:underline"
                     >
                         Towns Protocol
@@ -72,6 +73,7 @@ export const AuthRoute = () => {
                             })}
                             href="https://github.com/towns-protocol/towns/tree/main/packages/playground"
                             target="_blank"
+                            rel="noreferrer"
                         >
                             View Repository <ExternalLink className="ml-2 size-4" />
                         </a>
@@ -95,6 +97,7 @@ export const AuthRoute = () => {
                                 })}
                                 href="https://app.towns.com/t/0xb089fc1acdea8b1da28463a2272d6fd3fe66a75b/"
                                 target="_blank"
+                                rel="noreferrer"
                             >
                                 Join Community <ExternalLink className="ml-2 size-4" />
                             </a>
@@ -118,6 +121,7 @@ export const AuthRoute = () => {
                             })}
                             href="https://docs.towns.com"
                             target="_blank"
+                            rel="noreferrer"
                         >
                             Read Docs <ExternalLink className="ml-2 size-4" />
                         </a>
@@ -148,6 +152,7 @@ export const AuthRoute = () => {
                                 <a
                                     href="https://app.towns.com"
                                     target="_blank"
+                                    rel="noreferrer"
                                     className="font-semibold underline-offset-4 hover:underline"
                                 >
                                     Towns
