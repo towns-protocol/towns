@@ -38,6 +38,7 @@ import {
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
     UnpackEnvelopeOpts,
+    makeEventV2,
 } from './sign'
 import { bin_toHexString, check } from '@towns-protocol/utils'
 import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
@@ -97,7 +98,7 @@ type Client_Base = {
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array }>
+    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array; event: StreamEvent }>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -224,12 +225,12 @@ export const createTownsClient = async (
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array }> => {
+    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array; event: StreamEvent }> => {
         const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
             await client.rpc.getLastMiniblockHash({
                 streamId: streamIdAsBytes(streamId),
             })
-        const event = await makeEvent(
+        const { envelope, event } = await makeEventV2(
             signerContext,
             eventPayload,
             prevMiniblockHash,
@@ -237,12 +238,12 @@ export const createTownsClient = async (
             tags,
             ephemeral,
         )
-        const eventId = bin_toHexString(event.hash)
+        const eventId = bin_toHexString(envelope.hash)
         await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
-            event,
+            event: envelope,
         })
-        return { eventId, prevMiniblockHash }
+        return { eventId, prevMiniblockHash, event }
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {

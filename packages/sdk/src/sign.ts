@@ -115,6 +115,73 @@ export const makeEvent = async (
     return _impl_makeEvent_impl_(context, pl, prevMiniblockHash, prevMiniblockNum, tags, ephemeral)
 }
 
+export const makeEventV2 = async (
+    context: SignerContext,
+    payload: PlainMessage<StreamEvent>['payload'],
+    prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
+    tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
+): Promise<{ envelope: Envelope; event: StreamEvent }> => {
+    // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
+    const pl = payload // todo check this
+    check(isDefined(pl), "Payload can't be undefined", Err.BAD_PAYLOAD)
+    check(isDefined(pl.case), "Payload can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value), "Payload value can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.content), "Payload content can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.content.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
+
+    if (prevMiniblockHash) {
+        check(
+            prevMiniblockHash.length === 32,
+            `prevMiniblockHash should be 32 bytes, got ${prevMiniblockHash.length}`,
+            Err.BAD_HASH_FORMAT,
+        )
+    }
+    if (prevMiniblockNum) {
+        check(isDefined(prevMiniblockNum), 'prevMiniblockNum is not set', Err.BAD_PAYLOAD)
+        check(prevMiniblockNum >= 0, 'prevMiniblockNum should be non-negative', Err.BAD_PAYLOAD)
+    }
+
+    return _impl_makeEvent_implV2_(
+        context,
+        pl,
+        prevMiniblockHash,
+        prevMiniblockNum,
+        tags,
+        ephemeral,
+    )
+}
+
+export const _impl_makeEvent_implV2_ = async (
+    context: SignerContext,
+    payload: PlainMessage<StreamEvent>['payload'],
+    prevMiniblockHash?: Uint8Array,
+    prevMiniblockNum?: bigint,
+    tags?: PlainMessage<Tags>,
+    ephemeral?: boolean,
+): Promise<{ envelope: Envelope; event: StreamEvent }> => {
+    const streamEvent = create(StreamEventSchema, {
+        creatorAddress: context.creatorAddress,
+        salt: genIdBlob(),
+        prevMiniblockHash,
+        prevMiniblockNum,
+        payload,
+        createdAtEpochMs: BigInt(Date.now()),
+        tags,
+        ephemeral,
+    })
+    if (context.delegateSig !== undefined) {
+        streamEvent.delegateSig = context.delegateSig
+        streamEvent.delegateExpiryEpochMs = context.delegateExpiryEpochMs ?? 0n
+    }
+
+    const event = toBinary(StreamEventSchema, streamEvent)
+    const hash = riverHash(event)
+    const signature = await riverSign(hash, context.signerPrivateKey())
+
+    return { envelope: create(EnvelopeSchema, { hash, signature, event }), event: streamEvent }
+}
 export const makeEvents = async (
     context: SignerContext,
     payloads: PlainMessage<StreamEvent>['payload'][],

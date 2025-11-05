@@ -42,6 +42,8 @@ import {
     unpackEnvelope,
     make_UserPayload_BlockchainTransaction,
     makeUserStreamId,
+    make_MemberPayload_Pin,
+    make_MemberPayload_Unpin,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -72,6 +74,8 @@ import {
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
     ChannelMessage_Post_AttachmentSchema,
+    type StreamEvent,
+    MemberPayloadSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -248,10 +252,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     ) => Promise<void> | void
     channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
     channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
-    streamEvent: (
-        handler: BotActions,
-        event: BasePayload & { event: ParsedEvent },
-    ) => Promise<void> | void
+    streamEvent: (handler: BotActions, event: BasePayload) => Promise<void> | void
     slashCommand: (
         handler: BotActions,
         event: BasePayload & {
@@ -305,6 +306,8 @@ export type BasePayload = {
     eventId: string
     /** The creation time of the event */
     createdAt: Date
+    /** The stream event that triggered the event */
+    streamEvent: PlainMessage<StreamEvent>
 }
 
 export class Bot<
@@ -471,7 +474,7 @@ export class Bot<
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     eventId: parsed.hashStr,
-                    event: parsed,
+                    streamEvent: parsed.event,
                     createdAt,
                 })
                 switch (parsed.event.payload.case) {
@@ -514,6 +517,7 @@ export class Bot<
                                 refEventId,
                                 eventId: parsed.hashStr,
                                 createdAt,
+                                streamEvent: parsed.event,
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -549,6 +553,7 @@ export class Bot<
                             const decrypted = bin_fromBase64(decryptedBase64)
                             const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
+                                streamEvent: parsed.event,
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
@@ -584,6 +589,7 @@ export class Bot<
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                             createdAt,
+                                            streamEvent: parsed.event,
                                         })
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
@@ -598,6 +604,7 @@ export class Bot<
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                             createdAt,
+                                            streamEvent: parsed.event,
                                         })
                                     }
                                 }
@@ -644,8 +651,10 @@ export class Bot<
                                                     amount: tipEvent.amount.toString(),
                                                     currency,
                                                     messageId: bin_toHexString(tipEvent.messageId),
+                                                    streamEvent: parsed.event,
                                                 })
                                                 this.emitter.emit('tip', this.client, {
+                                                    streamEvent: parsed.event,
                                                     userId: senderUserId,
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
@@ -714,6 +723,7 @@ export class Bot<
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
+                        streamEvent: parsed.event,
                         userId,
                         eventId: parsed.hashStr,
                         spaceId: spaceIdFromChannelId(streamId),
@@ -754,6 +764,7 @@ export class Bot<
                     const { typeUrl, value } = gmContent
 
                     this.emitter.emit('rawGmMessage', this.client, {
+                        streamEvent: parsed.event,
                         userId,
                         spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
@@ -779,6 +790,7 @@ export class Bot<
                             } else {
                                 debug('emit:gmMessage', { userId, channelId: streamId })
                                 void typedHandler.handler(this.client, {
+                                    streamEvent: parsed.event,
                                     userId,
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -803,6 +815,7 @@ export class Bot<
                     messageId: payload.value.refEventId,
                 })
                 this.emitter.emit('reaction', this.client, {
+                    streamEvent: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -826,6 +839,7 @@ export class Bot<
                     isMentioned,
                 })
                 this.emitter.emit('messageEdit', this.client, {
+                    streamEvent: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -847,6 +861,7 @@ export class Bot<
                     refEventId: payload.value.refEventId,
                 })
                 this.emitter.emit('redaction', this.client, {
+                    streamEvent: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -1062,6 +1077,24 @@ export class Bot<
         const result = await this.client.sendTip(params, this.currentMessageTags)
         this.currentMessageTags = undefined
         return result
+    }
+
+    /**
+     * Pin a message to a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param eventId - The eventId of the event to pin
+     * @param event - The event to pin
+     */
+    async pinMessage(streamId: string, eventId: string, event: StreamEvent) {
+        return this.client.pinMessage(streamId, eventId, event)
+    }
+    /**
+     * Unpin a message from a stream
+     * @param streamId - Id of the stream. Usually channelId or userId
+     * @param refEventId - The eventId of the pin event
+     */
+    async unpinMessage(streamId: string, refEventId: string) {
+        return this.client.unpinMessage(streamId, refEventId)
     }
 
     /**
@@ -2022,6 +2055,31 @@ const buildBotActions = (
         )
     }
 
+    const pinMessage = async (
+        streamId: string,
+        eventId: string,
+        event: StreamEvent,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        return client.sendEvent(
+            streamId,
+            make_MemberPayload_Pin(bin_fromHexString(eventId), event),
+            tags,
+        )
+    }
+
+    const unpinMessage = async (
+        streamId: string,
+        refEventId: string,
+        tags?: PlainMessage<Tags>,
+    ) => {
+        return client.sendEvent(
+            streamId,
+            make_MemberPayload_Unpin(bin_fromHexString(refEventId)),
+            tags,
+        )
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -2040,6 +2098,8 @@ const buildBotActions = (
         getChannelSettings,
         sendTip,
         sendBlockchainTransaction,
+        pinMessage,
+        unpinMessage,
     }
 }
 
