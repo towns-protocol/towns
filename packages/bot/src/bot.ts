@@ -1148,6 +1148,18 @@ export class Bot<
     onInteractionResponse(fn: BotEvents['interactionResponse']) {
         this.emitter.on('interactionResponse', fn)
     }
+
+    /**
+     * Get the stream view for a stream
+     * Stream views contain contextual information about the stream (space, channel, etc)
+     * Stream views contain member data for all streams - you can iterate over all members in a channel via: `streamView.getMembers().joined.keys()`
+     * note: potentially expensive operation because streams can be large, fine to use in small streams
+     * @param streamId - The stream ID to get the view for
+     * @returns The stream view
+     */
+    async getStreamView(streamId: string) {
+        return this.client.getStream(streamId)
+    }
 }
 
 export const makeTownsBot = async <
