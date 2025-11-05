@@ -2164,7 +2164,13 @@ export class Client
             make_ChannelPayload_InteractionResponse(response),
             {
                 method: 'sendInteractionResponse',
-                tags: opts?.tags,
+                tags: {
+                    groupMentionTypes: opts?.tags?.groupMentionTypes ?? [],
+                    mentionedUserAddresses: opts?.tags?.mentionedUserAddresses ?? [],
+                    participatingUserAddresses: opts?.tags?.participatingUserAddresses ?? [],
+                    messageInteractionType:
+                        opts?.tags?.messageInteractionType ?? MessageInteractionType.REPLY,
+                },
                 ephemeral: opts?.ephemeral,
             },
         )
