@@ -12,7 +12,11 @@ export interface InitArgs extends BaseArgs {
 
 export type UpdateArgs = BaseArgs
 
-export type CommandArgs = InitArgs | UpdateArgs
+export interface UploadPfpArgs extends BaseArgs {
+    imagePath: string
+}
+
+export type CommandArgs = InitArgs | UpdateArgs | UploadPfpArgs
 
 // Command configurations for minimist
 const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
@@ -23,6 +27,9 @@ const COMMAND_CONFIGS: Record<string, minimist.Opts> = {
     },
     update: {
         // No special config needed
+    },
+    'upload-pfp': {
+        string: ['_'],
     },
 }
 
@@ -79,4 +86,17 @@ export function isInitArgs(args: CommandArgs): args is InitArgs {
 
 export function isUpdateArgs(args: CommandArgs): args is UpdateArgs {
     return args._[0] === 'update'
+}
+
+export function isUploadPfpArgs(args: CommandArgs): args is UploadPfpArgs {
+    if (args._[0] !== 'upload-pfp') {
+        return false
+    }
+    const imagePath = args._[1]
+    if (!imagePath) {
+        console.error('Error: Image path is required')
+        console.log('Usage: towns-bot upload-pfp <image-path>')
+        process.exit(1)
+    }
+    return true
 }
