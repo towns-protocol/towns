@@ -44,7 +44,6 @@ export class SyncedStreamsControllerLite implements ISyncedStreamsController {
         this.log('constructor', highPriorityStreamIds)
         this.favoriteStreamIds = new Set(highPriorityStreamIds ?? [])
         this.highPriorityIds = new Set()
-        this.delegate = delegate
     }
 
     async stop(): Promise<void> {

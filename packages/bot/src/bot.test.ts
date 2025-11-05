@@ -175,7 +175,7 @@ describe('Bot', { sequential: true }, () => {
         const tx = await appRegistryDapp.createApp(
             bob.signer,
             BOT_USERNAME,
-            [...Object.values(Permission)], // all permissions
+            Object.values(Permission), // all permissions
             botClientAddress,
             ethers.utils.parseEther('0.01').toBigInt(),
             31536000n,

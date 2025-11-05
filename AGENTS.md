@@ -147,6 +147,8 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 #### For all changes:
 - **All PRs must pass global linting**
   - Run `bun run lint` from the root directory before committing
+  - This runs oxlint (with type-aware linting) across all TypeScript packages
+  - Oxlint provides fast, comprehensive linting with support for TypeScript, React and import ordering
   - This ensures code quality and consistency across the entire repository
 
 ## Key Technology Stack

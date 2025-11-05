@@ -83,7 +83,7 @@ export function SpaceIdFromSpaceAddress(spaceAddress: string): string {
  * @param data Optional data to include in the error
  */
 export function checkNever(value: never, message?: string): never {
-    throw new Error(message ?? `Unhandled switch value ${value}`)
+    throw new Error(message ?? `Unhandled switch value ${value as any}`)
 }
 
 export function parseChannelMetadataJSON(metadataStr: string): {

@@ -72,6 +72,7 @@ export class StressRunner {
                     result = await this.shutdown(job)
                     break
                 default:
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
                     throw new Error(`Unknown task: ${job.name}`)
             }
             this.logger.info({ jobName: job.name, jobId: job.id, result }, 'Job completed')

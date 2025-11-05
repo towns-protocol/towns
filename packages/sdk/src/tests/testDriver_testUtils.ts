@@ -28,6 +28,7 @@ class TestDriver {
 
         await this.client.initializeUser()
 
+        // eslint-disable-next-line @typescript-eslint/no-meaningless-void-operator
         this.client.on('eventDecrypted', (e, f, g) => void this.eventDecrypted.bind(this)(e, f, g))
 
         this.client.startSync()

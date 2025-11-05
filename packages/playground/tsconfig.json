@@ -3,7 +3,6 @@
     "compilerOptions": {
         "lib": ["ES2020", "DOM", "DOM.Iterable"],
         "module": "ESNext",
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"]
         },
@@ -17,6 +16,6 @@
         "jsx": "react-jsx",
         "incremental": true
     },
-    "include": ["src", ".eslintrc.cjs"],
+    "include": ["src"],
     "references": [{ "path": "./tsconfig.node.json" }]
 }

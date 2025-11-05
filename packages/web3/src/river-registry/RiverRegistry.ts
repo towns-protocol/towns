@@ -78,7 +78,7 @@ export class RiverRegistry {
             throw new Error('No operational nodes found in registry')
         }
         return nodeUrls
-            .sort()
+            .sort((a, b) => a.url.localeCompare(b.url))
             .map((x) => x.url)
             .join(',')
     }

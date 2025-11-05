@@ -209,6 +209,7 @@ export function decodePermissions(permissions: readonly string[]): Permission[] 
         try {
             const decoded = Buffer.from(perm.slice(2), 'hex')
                 .toString('utf8')
+                // oxlint-disable-next-line no-control-regex
                 .replace(/\0/g, '')
                 .trim() as Permission
 

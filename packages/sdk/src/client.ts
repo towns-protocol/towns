@@ -475,6 +475,7 @@ export class Client
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userInvitedToStream', (s) => void this.onInvitedToStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
+        // eslint-disable-next-line @typescript-eslint/no-meaningless-void-operator
         this.on('streamUpToDate', (s) => void this.onStreamUpToDate(s))
 
         const streamIds = Object.entries(stream.view.userContent.streamMemberships).reduce(
