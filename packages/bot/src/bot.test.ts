@@ -790,7 +790,7 @@ describe('Bot', { sequential: true }, () => {
             },
             bob.signer,
         )
-        // app address is the address of the bot contract (not the bot client, since client is per installation)
+        // app address is the address of the bot contract.
         const balance = (await ethersProvider.getBalance(appAddress)).toBigInt()
         // Bot tips have no protocol fee, so the balance should increase by exactly 0.01 ETH
         const expectedTipAmount = ethers.utils.parseUnits('0.01').toBigInt()
