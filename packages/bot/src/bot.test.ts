@@ -363,6 +363,13 @@ describe('Bot', { sequential: true }, () => {
         expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
     })
 
+    // !! requires previous test to run first
+    it('should see alice and bob in the channel', async () => {
+        const streamView = await bot.getStreamView(channelId)
+        expect(streamView.getMembers().joined.has(alice.userId)).toBe(true)
+        expect(streamView.getMembers().joined.has(bob.userId)).toBeDefined()
+    })
+
     it('should receive slash command messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
