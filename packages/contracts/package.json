@@ -1,6 +1,6 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.399",
+  "version": "0.0.400",
   "scripts": {
     "clean": "forge clean",
     "compile": "forge build",
