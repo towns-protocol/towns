@@ -501,6 +501,8 @@ await handler.sendMessage(
     }>,
     attachments?: Array<    // Add attachments (see Sending Attachments section)
       | { type: 'image', url: string, alt?: string }
+      | { type: 'link', url: string }
+      | { type: 'chunked', data: Blob | Uint8Array, filename: string, ... }
     >
   }
 )
@@ -522,7 +524,7 @@ await handler.sendReaction(
 
 ## Sending Attachments
 
-The bot framework supports two types of attachments with automatic validation and encryption.
+The bot framework supports three types of attachments with automatic validation and encryption.
 
 ### Image Attachments from URLs
 
@@ -587,6 +589,46 @@ bot.onSlashCommand("weather", async (handler, event) => {
 - Invalid URLs (404, network errors) are gracefully skipped - message still sends
 - URL images are fetched synchronously during `sendMessage`
 - Multiple URL attachments are processed sequentially
+
+### Link Attachments 
+
+Use `type: 'link'` to send link attachments. 
+
+**This is the recommended way to share miniapps, frames, and any web content.**
+
+```typescript
+bot.onSlashCommand("share", async (handler, event) => {
+  const url = event.args[0]
+
+  await handler.sendMessage(event.channelId, "Check this out!", {
+    attachments: [
+      {
+        type: 'link',
+        url: url
+      }
+    ]
+  })
+})
+```
+
+**Multiple Link Attachments:**
+```typescript
+// Share multiple links in one message
+await handler.sendMessage(event.channelId, "Resources:", {
+  attachments: [
+    { type: 'link', url: 'https://example.com/miniapp' },
+    { type: 'link', url: 'https://docs.towns.com' },
+    { type: 'link', url: 'https://github.com/townsprotocol' }
+  ]
+})
+```
+
+**Important Notes:**
+- If the URL doesn't have Open Graph metadata, title/description will be extracted from standard HTML meta tags
+- Invalid URLs or fetch failures are handled gracefully (attachment is skipped, message still sends)
+- **This is the preferred method for sharing miniapps and frames**
+- You can send multiple link attachments in a single message
+- All attachments are end-to-end encrypted automatically
 
 ### Chunked Media Attachments (Binary Data)
 
@@ -667,9 +709,13 @@ bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
 
 **Mixed Attachments Example:**
 ```typescript
-// Combine URL images with chunked media
+// Combine links, images, and chunked media
 await handler.sendMessage(channelId, "Product comparison:", {
   attachments: [
+    {
+      type: 'link',
+      url: 'https://example.com/product-page'
+    },
     {
       type: 'image',
       url: 'https://example.com/product-a.jpg',

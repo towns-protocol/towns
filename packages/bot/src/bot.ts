@@ -71,6 +71,7 @@ import {
     InteractionRequest,
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
+    ChannelMessage_Post_AttachmentSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -149,6 +150,11 @@ type ChunkedMediaAttachment =
           mimetype: string
       }
 
+type LinkAttachment = {
+    type: 'link'
+    url: string
+}
+
 export type MessageOpts = {
     threadId?: string
     replyId?: string
@@ -157,7 +163,7 @@ export type MessageOpts = {
 
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
+    attachments?: Array<ImageAttachment | ChunkedMediaAttachment | LinkAttachment>
 }
 
 export type DecryptedInteractionResponse = {
@@ -1412,6 +1418,16 @@ const buildBotActions = (
         }
     }
 
+    const createLinkAttachment = (
+        attachment: LinkAttachment,
+    ): PlainMessage<ChannelMessage_Post_Attachment> => {
+        return create(ChannelMessage_Post_AttachmentSchema, {
+            content: {
+                case: 'unfurledUrl',
+                value: { url: attachment.url },
+            },
+        })
+    }
     const ensureOutboundSession = async (
         streamId: string,
         encryptionAlgorithm: GroupEncryptionAlgorithmId,
@@ -1555,6 +1571,11 @@ const buildBotActions = (
                         processedAttachments.push(result)
                         break
                     }
+                    case 'link': {
+                        const result = createLinkAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
                         logNever(attachment)
                 }
@@ -1601,6 +1622,11 @@ const buildBotActions = (
                     }
                     case 'chunked': {
                         const result = await createChunkedMediaAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'link': {
+                        const result = createLinkAttachment(attachment)
                         processedAttachments.push(result)
                         break
                     }
