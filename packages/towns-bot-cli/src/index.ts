@@ -1,7 +1,8 @@
 import { green, red, yellow, cyan } from 'picocolors'
 import { init, TEMPLATES, type Template } from './modules/init.js'
 import { update } from './modules/update.js'
-import { parseArgs, isInitArgs, isUpdateArgs } from './parser.js'
+import { uploadPfp } from './modules/upload-pfp.js'
+import { parseArgs, isInitArgs, isUpdateArgs, isUploadPfpArgs } from './parser.js'
 
 async function main() {
     const args = parseArgs(process.argv.slice(2))
@@ -22,6 +23,11 @@ async function main() {
             case 'update':
                 if (isUpdateArgs(args)) {
                     await update(args)
+                }
+                break
+            case 'upload-pfp':
+                if (isUploadPfpArgs(args)) {
+                    await uploadPfp(args)
                 }
                 break
             default:
@@ -45,6 +51,7 @@ ${yellow('Usage:')}
 ${yellow('Commands:')}
   ${green('init')} [project-name]     Create a new bot project
   ${green('update')}                  Update @towns-protocol dependencies to latest versions
+  ${green('upload-pfp')} <image-path> Upload a profile picture for the bot user
 
 ${yellow('Init Options:')}
   -t, --template <name>    Template to use:
@@ -74,6 +81,9 @@ ${yellow('Examples:')}
 
   ${cyan('# Update dependencies')}
   towns-bot update
+
+  ${cyan('# Upload a profile picture')}
+  towns-bot upload-pfp ./avatar.png
 `)
 }
 

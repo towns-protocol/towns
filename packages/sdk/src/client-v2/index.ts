@@ -8,37 +8,37 @@ import {
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
 } from '@towns-protocol/encryption'
-import { makeStreamRpcClient, type StreamRpcClient } from './makeStreamRpcClient'
+import { makeStreamRpcClient, type StreamRpcClient } from '../makeStreamRpcClient'
 import {
     makeSignerContext,
     makeSignerContextFromBearerToken,
     type SignerContext,
-} from './signerContext'
-import { townsEnv, TownsService, type TownsConfig } from './townsEnv'
+} from '../signerContext'
+import { townsEnv, TownsService, type TownsConfig } from '../townsEnv'
 import { ethers } from 'ethers'
 import { RiverRegistry, type Address } from '@towns-protocol/web3'
-import { makeSessionKeys } from './decryptionExtensions'
-import { makeBaseProvider, makeRiverProvider } from './sync-agent/utils/providers'
-import { RiverDbManager } from './riverDbManager'
+import { makeSessionKeys } from '../decryptionExtensions'
+import { makeBaseProvider, makeRiverProvider } from '../sync-agent/utils/providers'
+import { RiverDbManager } from '../riverDbManager'
 import {
     makeUserInboxStreamId,
     makeUserMetadataStreamId,
     streamIdAsBytes,
     streamIdAsString,
     userIdFromAddress,
-} from './id'
+} from '../id'
 import {
     make_UserInboxPayload_GroupEncryptionSessions,
     type ParsedEvent,
     type MiniblockInfoResponse,
-} from './types'
+} from '../types'
 import {
     makeEvent,
     unpackStream,
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
     UnpackEnvelopeOpts,
-} from './sign'
+} from '../sign'
 import { bin_toHexString, check } from '@towns-protocol/utils'
 import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
 import {
@@ -49,9 +49,9 @@ import {
     type StreamEvent,
     type Tags,
 } from '@towns-protocol/proto'
-import { AppRegistryService } from './appRegistryService'
-import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
-import { StreamStateView } from './streamStateView'
+import { AppRegistryService } from '../appRegistryService'
+import { AppRegistryRpcClient } from '../makeAppRegistryRpcClient'
+import { StreamStateView } from '../streamStateView'
 
 type Client_Base = {
     /** The userId of the Client. */

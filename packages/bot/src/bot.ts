@@ -31,17 +31,14 @@ import {
     type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
-    makeEvent,
-    make_MediaPayload_Inception,
-    make_MediaPayload_Chunk,
-    makeUniqueMediaStreamId,
     streamIdAsBytes,
-    addressFromUserId,
     make_ChannelPayload_InteractionRequest,
     userIdToAddress,
     unpackEnvelope,
     make_UserPayload_BlockchainTransaction,
     makeUserStreamId,
+    sendChunkedMedia,
+    type SendChunkedMediaParams,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -64,8 +61,6 @@ import {
     type SlashCommand,
     ChannelMessage_Post_Content_ImageSchema,
     ChannelMessage_Post_Content_Image_InfoSchema,
-    ChunkedMediaSchema,
-    CreationCookieSchema,
     type BlockchainTransaction,
     BlockchainTransactionSchema,
     InteractionRequest,
@@ -81,7 +76,6 @@ import {
     dlog,
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
-import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 
 import {
     http,
@@ -132,23 +126,6 @@ type ImageAttachment = {
     url: string
 }
 
-type ChunkedMediaAttachment =
-    | {
-          type: 'chunked'
-          data: Blob
-          width?: number
-          height?: number
-          filename: string
-      }
-    | {
-          type: 'chunked'
-          data: Uint8Array
-          width?: number
-          height?: number
-          filename: string
-          mimetype: string
-      }
-
 export type MessageOpts = {
     threadId?: string
     replyId?: string
@@ -157,7 +134,7 @@ export type MessageOpts = {
 
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
+    attachments?: Array<ImageAttachment | SendChunkedMediaParams>
 }
 
 export type DecryptedInteractionResponse = {
@@ -1249,124 +1226,22 @@ const buildBotActions = (
     spaceDapp: SpaceDapp,
     appAddress: Address,
 ) => {
-    const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
-
     const createChunkedMediaAttachment = async (
-        attachment: ChunkedMediaAttachment,
+        attachment: SendChunkedMediaParams,
     ): Promise<PlainMessage<ChannelMessage_Post_Attachment>> => {
-        let data: Uint8Array
-        let mimetype: string
-
-        if (attachment.data instanceof Blob) {
-            const buffer = await attachment.data.arrayBuffer()
-            data = new Uint8Array(buffer)
-            mimetype = attachment.data.type
-        } else {
-            data = attachment.data
-            if ('mimetype' in attachment) {
-                mimetype = attachment.mimetype
-            } else {
-                throw new Error('mimetype is required for Uint8Array data')
-            }
-        }
-
-        let width = attachment.width || 0
-        let height = attachment.height || 0
-
-        if (mimetype.startsWith('image/') && (!width || !height)) {
-            const dimensions = imageSize(data)
-            width = dimensions.width || 0
-            height = dimensions.height || 0
-        }
-
-        const { chunks, secretKey } = await encryptChunkedAESGCM(data, CHUNK_SIZE)
-        const chunkCount = chunks.length
-
-        if (chunkCount === 0) {
-            throw new Error('No media chunks generated')
-        }
-
-        // TODO: Implement thumbnail generation with sharp
-        const thumbnail = undefined
-
-        const streamId = makeUniqueMediaStreamId()
-        const events = await Promise.all([
-            makeEvent(
-                client.signerContext,
-                make_MediaPayload_Inception({
-                    streamId: streamIdAsBytes(streamId),
-                    userId: addressFromUserId(client.userId),
-                    chunkCount,
-                    perChunkEncryption: true,
-                }),
-            ),
-            makeEvent(
-                client.signerContext,
-                make_MediaPayload_Chunk({
-                    data: chunks[0].ciphertext,
-                    chunkIndex: 0,
-                    iv: chunks[0].iv,
-                }),
-            ),
-        ])
-        const mediaStreamResponse = await client.rpc.createMediaStream({
-            events,
-            streamId: streamIdAsBytes(streamId),
-        })
-
-        if (!mediaStreamResponse?.nextCreationCookie) {
-            throw new Error('Failed to create media stream')
-        }
-
-        if (chunkCount > 1) {
-            let cc = create(CreationCookieSchema, mediaStreamResponse.nextCreationCookie)
-            for (let chunkIndex = 1; chunkIndex < chunkCount; chunkIndex++) {
-                const chunkEvent = await makeEvent(
-                    client.signerContext,
-                    make_MediaPayload_Chunk({
-                        data: chunks[chunkIndex].ciphertext,
-                        chunkIndex: chunkIndex,
-                        iv: chunks[chunkIndex].iv,
-                    }),
-                    cc.prevMiniblockHash,
-                )
-                const result = await client.rpc.addMediaEvent({
-                    event: chunkEvent,
-                    creationCookie: cc,
-                    last: chunkIndex === chunkCount - 1,
-                })
-
-                if (!result?.creationCookie) {
-                    throw new Error('Failed to send media chunk')
+        const chunkedMedia = await sendChunkedMedia(client, attachment, {
+            detectDimensions: (data, mimetype) => {
+                if (mimetype.startsWith('image/')) {
+                    const dimensions = imageSize(data)
+                    return { width: dimensions.width || 0, height: dimensions.height || 0 }
                 }
-
-                cc = create(CreationCookieSchema, result.creationCookie)
-            }
-        }
-
-        const mediaStreamInfo = { creationCookie: mediaStreamResponse.nextCreationCookie }
-
+                return { width: 0, height: 0 }
+            },
+        })
         return {
             content: {
                 case: 'chunkedMedia',
-                value: create(ChunkedMediaSchema, {
-                    info: {
-                        filename: attachment.filename,
-                        mimetype: mimetype,
-                        widthPixels: width,
-                        heightPixels: height,
-                        sizeBytes: BigInt(data.length),
-                    },
-                    streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
-                    encryption: {
-                        case: 'aesgcm',
-                        value: {
-                            iv: new Uint8Array(0),
-                            secretKey: secretKey,
-                        },
-                    },
-                    thumbnail,
-                }),
+                value: chunkedMedia,
             },
         }
     }

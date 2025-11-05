@@ -3,7 +3,9 @@
  **************************************************************************/
 export * from './appRegistryService'
 export * from './check'
-export * from './client-v2'
+export * from './client-v2/index'
+export * from './client-v2/actions/sendChunkedMedia'
+export * from './client-v2/actions/setProfileImage'
 export * from './client'
 export * from './clientDecryptionExtensions'
 export * from './decryptionExtensions'
