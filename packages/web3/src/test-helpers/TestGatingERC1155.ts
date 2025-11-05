@@ -77,7 +77,7 @@ async function publicMint(
             functionName = 'mintBronze'
             break
         default:
-            throw new Error(`Invalid token id: ${tokenId}`)
+            throw new Error(`Invalid token id: ${tokenId as any}`)
     }
 
     const txn = await client.writeContract({

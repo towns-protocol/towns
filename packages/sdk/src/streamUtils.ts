@@ -76,6 +76,7 @@ export function isPersistedEvent(event: ParsedEvent, direction: 'forward' | 'bac
         case undefined:
             return false
         default:
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             logNever(event.event.payload, `unsupported event payload ${event.event.payload}`)
             return false
     }

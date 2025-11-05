@@ -1,75 +1,73 @@
 {
-    "name": "@towns-protocol/react-sdk",
-    "description": "React Hooks for Towns Protocol SDK",
-    "version": "0.0.400",
-    "type": "module",
-    "main": "./dist/esm/index.js",
-    "types": "./dist/types/index.d.ts",
-    "scripts": {
-        "build": "yarn run clean && yarn run build:esm+types",
-        "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
-        "clean": "rm -rf dist tsconfig.tsbuildinfo",
-        "gen": "yarn gen:extractor && yarn gen:docs",
-        "gen:docs": "tsx ./scripts/docgen/generate.ts",
-        "gen:extractor": "api-extractor run --local",
-        "lint": "eslint ./src --max-warnings=0",
-        "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
-        "typecheck": "tsc --noEmit",
-        "watch": "yarn build -w"
-    },
-    "dependencies": {
-        "@towns-protocol/proto": "workspace:^",
-        "@towns-protocol/sdk": "workspace:^",
-        "@towns-protocol/web3": "workspace:^",
-        "ethers": "^5.8.0"
-    },
-    "devDependencies": {
-        "@microsoft/api-extractor": "^7.52.2",
-        "@microsoft/api-extractor-model": "^7.30.5",
-        "@microsoft/tsdoc": "^0.15.0",
-        "@microsoft/tsdoc-config": "^0.17.0",
-        "@types/node": "^20.14.8",
-        "@types/react": "^19.1.16",
-        "@types/react-dom": "^19.1.7",
-        "@typescript-eslint/eslint-plugin": "^8.29.0",
-        "@typescript-eslint/parser": "^8.29.0",
-        "eslint": "^8.57.1",
-        "eslint-plugin-import-x": "^4.10.2",
-        "eslint-plugin-react": "^7.32.2",
-        "eslint-plugin-react-hooks": "^4.6.0",
-        "eslint-plugin-tsdoc": "^0.3.0",
-        "react": "^19.1.0",
-        "react-dom": "^19.1.0",
-        "ts-morph": "^24.0.0",
-        "tsx": "^4.7.1",
-        "typescript": "~5.8.3"
-    },
-    "files": [
-        "dist/**",
-        "!dist/**/*.tsbuildinfo",
-        "src/**/*.ts",
-        "!src/**/*.test.ts",
-        "!src/**/*.test-d.ts"
-    ],
-    "keywords": [
-        "hooks",
-        "react",
-        "river",
-        "sdk",
-        "web3"
-    ],
-    "peerDependencies": {
-        "react": "^18.2 || ^19.0",
-        "typescript": "^5"
-    },
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/towns-protocol/towns.git",
-        "directory": "packages/react"
-    },
-    "sideEffects": false,
-    "typings": "./dist/types/index.d.ts"
+  "name": "@towns-protocol/react-sdk",
+  "description": "React Hooks for Towns Protocol SDK",
+  "version": "0.0.400",
+  "type": "module",
+  "main": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn run clean && yarn run build:esm+types",
+    "build:esm+types": "tsc --project tsconfig.build.json --outDir ./dist/esm --declaration --declarationMap --declarationDir ./dist/types",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "gen": "yarn gen:extractor && yarn gen:docs",
+    "gen:docs": "tsx ./scripts/docgen/generate.ts",
+    "gen:extractor": "api-extractor run --local",
+    "lint": "oxlint src --type-aware",
+    "test:build": "publint --strict && attw --pack --ignore-rules cjs-resolves-to-esm",
+    "typecheck": "tsc --noEmit",
+    "watch": "yarn build -w"
+  },
+  "dependencies": {
+    "@towns-protocol/proto": "workspace:^",
+    "@towns-protocol/sdk": "workspace:^",
+    "@towns-protocol/web3": "workspace:^",
+    "ethers": "^5.8.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.52.2",
+    "@microsoft/api-extractor-model": "^7.30.5",
+    "@microsoft/tsdoc": "^0.15.0",
+    "@microsoft/tsdoc-config": "^0.17.0",
+    "@types/node": "^20.14.8",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.7",
+    "eslint-plugin-import-x": "^4.10.2",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "oxlint": "^1.25.0",
+    "oxlint-tsgolint": "^0.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "ts-morph": "^24.0.0",
+    "tsx": "^4.7.1",
+    "typescript": "~5.8.3"
+  },
+  "files": [
+    "dist/**",
+    "!dist/**/*.tsbuildinfo",
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
+    "!src/**/*.test-d.ts"
+  ],
+  "keywords": [
+    "hooks",
+    "react",
+    "river",
+    "sdk",
+    "web3"
+  ],
+  "peerDependencies": {
+    "react": "^18.2 || ^19.0",
+    "typescript": "^5"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/towns-protocol/towns.git",
+    "directory": "packages/react"
+  },
+  "sideEffects": false,
+  "typings": "./dist/types/index.d.ts"
 }

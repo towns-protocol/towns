@@ -12,8 +12,9 @@ const log = dlogError('csb:error')
  * @param data - Optional data to include in the error
  */
 export function checkNever(value: never, message?: string, code?: Err, data?: any): never {
+    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     throwWithCode(
-        message ?? `Unhandled switch value ${value}`,
+        message ?? `Unhandled switch value: ${value as any}`,
         code ?? Err.INTERNAL_ERROR_SWITCH,
         data,
     )
@@ -32,7 +33,7 @@ export function checkNever(value: never, message?: string, code?: Err, data?: an
  * @param data - Optional data to include in the error
  */
 export function logNever(value: never, message?: string): void {
-    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console, @typescript-eslint/restrict-template-expressions
     console.warn(message ?? `Unhandled switch value: ${value}`)
 }
 
