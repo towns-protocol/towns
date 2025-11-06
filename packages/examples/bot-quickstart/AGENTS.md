@@ -1570,10 +1570,9 @@ bun dev
 
 ```bash
 # Development
-bun dev                # Start with hot reload
+bun dev               # Start with hot reload
 bun build             # Build for production
 bun start             # Run production build
-bun test              # Run tests
 bun lint              # Check code quality
 bun typecheck         # Verify types
 ```
