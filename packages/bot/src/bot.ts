@@ -153,6 +153,8 @@ type ChunkedMediaAttachment =
 type LinkAttachment = {
     type: 'link'
     url: string
+    title?: string
+    description?: string
     image?: {
         width: number
         height: number
@@ -1441,7 +1443,12 @@ const buildBotActions = (
         return create(ChannelMessage_Post_AttachmentSchema, {
             content: {
                 case: 'unfurledUrl',
-                value: { url: attachment.url, image: attachment.image },
+                value: {
+                    url: attachment.url,
+                    image: attachment.image,
+                    title: attachment.title ?? '',
+                    description: attachment.description ?? '',
+                },
             },
         })
     }
