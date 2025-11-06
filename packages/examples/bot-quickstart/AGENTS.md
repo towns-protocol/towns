@@ -1541,18 +1541,18 @@ REDIS_URL=redis://...
 ### Development Setup
 ```bash
 # 1. Install dependencies
-yarn install
+bun install
 
 # 2. Create .env file
 cp .env.sample .env
 # Edit .env with your credentials
 
 # 3. Build and run
-yarn build
-yarn start
+bun build
+bun start
 
 # 4. For development with hot reload
-yarn dev
+bun dev
 ```
 
 
@@ -1570,12 +1570,12 @@ yarn dev
 
 ```bash
 # Development
-yarn dev                # Start with hot reload
-yarn build             # Build for production
-yarn start             # Run production build
-yarn test              # Run tests
-yarn lint              # Check code quality
-yarn typecheck         # Verify types
+bun dev                # Start with hot reload
+bun build             # Build for production
+bun start             # Run production build
+bun test              # Run tests
+bun lint              # Check code quality
+bun typecheck         # Verify types
 ```
 
 ## Summary for AI Agents
