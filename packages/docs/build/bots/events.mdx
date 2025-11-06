@@ -168,7 +168,7 @@ Returns the `eventId` of the sent message.
 
 #### Sending attachments
 
-The bot framework supports two types of attachments with automatic validation and encryption.
+The bot framework supports three types of attachments with automatic validation and encryption.
 
 ##### Image Attachments from URLs
 
@@ -186,11 +186,36 @@ await bot.sendMessage(channelId, message, {
 })
 ```
 
+##### Link Attachments 
+
+Send link attachments. This is the recommended way to share miniapps, frames, and any web content.
+
+```ts
+await bot.sendMessage(channelId, "Check this out!", {
+  attachments: [{
+    type: 'link',
+    url: 'https://example.com/miniapp'
+  }]
+})
+```
+
+You can send multiple link attachments in a single message:
+
+```ts
+await bot.sendMessage(channelId, "Useful resources:", {
+  attachments: [
+    { type: 'link', url: 'https://example.com/miniapp' },
+    { type: 'link', url: 'https://docs.towns.com' },
+    { type: 'link', url: 'https://github.com/townsprotocol' }
+  ]
+})
+```
+
 Returns the `eventId` of the sent message.
 
 ##### Chunked Media Attachments
 
-Send binary data with a filename and MIME type. 
+Send binary data with a filename and MIME type.
 This allow you to send large files, videos, screenshots or even create images on the fly.
 
 ```ts
