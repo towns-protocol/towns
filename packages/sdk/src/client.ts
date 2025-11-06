@@ -57,6 +57,9 @@ import {
     MessageInteractionType,
     InteractionResponse,
     SessionKeys,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
+    EncryptedDataVersion,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -67,10 +70,12 @@ import {
     dlog,
     dlogError,
     bin_fromString,
+    bin_toBase64,
 } from '@towns-protocol/utils'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,
+    EncryptionAlgorithmId,
     EnsureOutboundSessionOpts,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
@@ -2126,9 +2131,34 @@ export class Client
 
     async sendInteractionResponse(
         streamId: string,
-        response: PlainMessage<InteractionResponse>,
+        recipient: Uint8Array,
+        payload: PlainMessage<InteractionResponsePayload>,
+        toUserDevice: UserDevice,
         opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
     ): Promise<{ eventId: string }> {
+        const binaryData = toBinary(
+            InteractionResponsePayloadSchema,
+            create(InteractionResponsePayloadSchema, payload),
+        )
+        const string = bin_toBase64(binaryData)
+        const ciphertextmap = await this.encryptWithDeviceKeys(string, [toUserDevice])
+        const ciphertext = ciphertextmap[toUserDevice.deviceKey]
+        check(isDefined(ciphertext), 'ciphertext not found')
+        const response: PlainMessage<InteractionResponse> = {
+            recipient: recipient,
+            encryptedData: {
+                ciphertext: ciphertext,
+                algorithm: EncryptionAlgorithmId.Olm,
+                senderKey: this.userDeviceKey().deviceKey,
+                sessionId: '',
+                checksum: '',
+                ciphertextBytes: new Uint8Array(),
+                ivBytes: new Uint8Array(),
+                sessionIdBytes: new Uint8Array(),
+                version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+                deviceKey: toUserDevice.deviceKey,
+            } satisfies PlainMessage<EncryptedData>,
+        }
         return this.makeEventAndAddToStream(
             streamId,
             make_ChannelPayload_InteractionResponse(response),

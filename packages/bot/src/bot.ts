@@ -69,7 +69,9 @@ import {
     type BlockchainTransaction,
     BlockchainTransactionSchema,
     InteractionRequest,
-    InteractionResponse,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
+    ChannelMessage_Post_AttachmentSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -148,6 +150,11 @@ type ChunkedMediaAttachment =
           mimetype: string
       }
 
+type LinkAttachment = {
+    type: 'link'
+    url: string
+}
+
 export type MessageOpts = {
     threadId?: string
     replyId?: string
@@ -156,7 +163,12 @@ export type MessageOpts = {
 
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<ImageAttachment | ChunkedMediaAttachment>
+    attachments?: Array<ImageAttachment | ChunkedMediaAttachment | LinkAttachment>
+}
+
+export type DecryptedInteractionResponse = {
+    recipient: Uint8Array
+    payload: PlainMessage<InteractionResponsePayload>
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -277,7 +289,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         handler: BotActions,
         event: BasePayload & {
             /** The interaction response that was received */
-            response: PlainMessage<InteractionResponse>
+            response: DecryptedInteractionResponse
         },
     ) => void | Promise<void>
 }
@@ -522,13 +534,30 @@ export class Bot<
                             if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
                                 continue
                             }
+                            if (!payload.encryptedData) {
+                                continue
+                            }
+                            if (
+                                payload.encryptedData.deviceKey !== this.getUserDevice().deviceKey
+                            ) {
+                                continue
+                            }
+                            const decryptedBase64 = await this.client.crypto.decryptWithDeviceKey(
+                                payload.encryptedData.ciphertext,
+                                payload.encryptedData.senderKey,
+                            )
+                            const decrypted = bin_fromBase64(decryptedBase64)
+                            const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
                                 eventId: parsed.hashStr,
                                 createdAt,
-                                response: payload,
+                                response: {
+                                    recipient: payload.recipient,
+                                    payload: response,
+                                },
                             })
                         } else {
                             logNever(parsed.event.payload.value.content)
@@ -833,6 +862,14 @@ export class Bot<
     }
 
     /**
+     * get the public device key of the bot
+     * @returns the public device key of the bot
+     */
+    getUserDevice() {
+        return this.client.crypto.getUserDevice()
+    }
+
+    /**
      * Send a message to a stream
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param message - The cleartext of the message
@@ -964,9 +1001,15 @@ export class Bot<
      */
     async sendInteractionRequest(
         streamId: string,
-        request: PlainMessage<InteractionRequest>,
+        content: PlainMessage<InteractionRequest['content']>,
+        recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
+        const request: PlainMessage<InteractionRequest> = {
+            recipient,
+            content,
+            encryptionDevice: this.getUserDevice(),
+        }
         const result = await this.client.sendInteractionRequest(
             streamId,
             request,
@@ -1110,6 +1153,18 @@ export class Bot<
      */
     onInteractionResponse(fn: BotEvents['interactionResponse']) {
         this.emitter.on('interactionResponse', fn)
+    }
+
+    /**
+     * Get the stream view for a stream
+     * Stream views contain contextual information about the stream (space, channel, etc)
+     * Stream views contain member data for all streams - you can iterate over all members in a channel via: `streamView.getMembers().joined.keys()`
+     * note: potentially expensive operation because streams can be large, fine to use in small streams
+     * @param streamId - The stream ID to get the view for
+     * @returns The stream view
+     */
+    async getStreamView(streamId: string) {
+        return this.client.getStream(streamId)
     }
 }
 
@@ -1375,6 +1430,16 @@ const buildBotActions = (
         }
     }
 
+    const createLinkAttachment = (
+        attachment: LinkAttachment,
+    ): PlainMessage<ChannelMessage_Post_Attachment> => {
+        return create(ChannelMessage_Post_AttachmentSchema, {
+            content: {
+                case: 'unfurledUrl',
+                value: { url: attachment.url },
+            },
+        })
+    }
     const ensureOutboundSession = async (
         streamId: string,
         encryptionAlgorithm: GroupEncryptionAlgorithmId,
@@ -1518,6 +1583,11 @@ const buildBotActions = (
                         processedAttachments.push(result)
                         break
                     }
+                    case 'link': {
+                        const result = createLinkAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
                         logNever(attachment)
                 }
@@ -1564,6 +1634,11 @@ const buildBotActions = (
                     }
                     case 'chunked': {
                         const result = await createChunkedMediaAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'link': {
+                        const result = createLinkAttachment(attachment)
                         processedAttachments.push(result)
                         break
                     }
@@ -1760,7 +1835,10 @@ const buildBotActions = (
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
-        const payload = make_ChannelPayload_InteractionRequest(request)
+        const payload = make_ChannelPayload_InteractionRequest({
+            ...request,
+            encryptionDevice: client.crypto.getUserDevice(),
+        })
         return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
     }
 
