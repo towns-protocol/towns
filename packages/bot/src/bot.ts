@@ -44,6 +44,7 @@ import {
     makeUserStreamId,
     make_MemberPayload_Pin,
     make_MemberPayload_Unpin,
+    riverHash,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -75,7 +76,7 @@ import {
     InteractionResponsePayloadSchema,
     ChannelMessage_Post_AttachmentSchema,
     type StreamEvent,
-    MemberPayloadSchema,
+    StreamEventSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -307,7 +308,7 @@ export type BasePayload = {
     /** The creation time of the event */
     createdAt: Date
     /** The stream event that triggered the event */
-    streamEvent: PlainMessage<StreamEvent>
+    streamEvent: StreamEvent
 }
 
 export class Bot<
@@ -1085,8 +1086,8 @@ export class Bot<
      * @param eventId - The eventId of the event to pin
      * @param event - The event to pin
      */
-    async pinMessage(streamId: string, eventId: string, event: StreamEvent) {
-        return this.client.pinMessage(streamId, eventId, event)
+    async pinMessage(streamId: string, event: StreamEvent) {
+        return this.client.pinMessage(streamId, event)
     }
     /**
      * Unpin a message from a stream
@@ -2055,17 +2056,10 @@ const buildBotActions = (
         )
     }
 
-    const pinMessage = async (
-        streamId: string,
-        eventId: string,
-        event: StreamEvent,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        return client.sendEvent(
-            streamId,
-            make_MemberPayload_Pin(bin_fromHexString(eventId), event),
-            tags,
-        )
+    const pinMessage = async (streamId: string, event: StreamEvent, tags?: PlainMessage<Tags>) => {
+        const eventBytes = toBinary(StreamEventSchema, event)
+        const correctHash = riverHash(eventBytes)
+        return client.sendEvent(streamId, make_MemberPayload_Pin(correctHash, event), tags)
     }
 
     const unpinMessage = async (

@@ -1559,10 +1559,33 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedInteractionResponses.length > 0)
     })
 
-    it('bot should be able to pin and unpin messages', async () => {
+    it('bot should be able to pin and unpin another user messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const { eventId, event } = await bot.sendMessage(channelId, 'Hello')
-        const { eventId: pinEventId } = await bot.pinMessage(channelId, eventId, event)
+        let pinEventId: string | undefined
+        bot.onMessage(async (handler, { channelId, streamEvent }) => {
+            const x = await handler.pinMessage(channelId, streamEvent)
+            pinEventId = x.eventId
+        })
+        await bobDefaultChannel.sendMessage('Hello')
+
+        await waitFor(() => pinEventId !== undefined)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === pinEventId),
+            ).toBeDefined(),
+        )
+        const { eventId: unpinEventId } = await bot.unpinMessage(channelId, pinEventId!)
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === unpinEventId),
+            ).toBeDefined(),
+        )
+    })
+
+    it('bot should be able to pin and unpin his own messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { event } = await bot.sendMessage(channelId, 'Hello')
+        const { eventId: pinEventId } = await bot.pinMessage(channelId, event)
         await bot.unpinMessage(channelId, pinEventId)
     })
 })
