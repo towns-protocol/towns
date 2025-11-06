@@ -54,6 +54,7 @@ import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
+import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 import { UserDevice } from '@towns-protocol/encryption'
@@ -1467,6 +1468,82 @@ describe('Bot', { sequential: true }, () => {
             { timeoutMS: 20000 },
         )
     })
+
+    it.for(['app', 'bot'] as const)(
+        'bob creates role, bot creates channel (wallet: %s), channel has the role, bob joins and sends message, bot receives message',
+        async (wallet) => {
+            await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+
+            const receivedMessages: OnMessageType[] = []
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            })
+
+            const spaceDapp = bobClient.riverConnection.spaceDapp
+            const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
+            const ruleData = getNftRuleData(testNft1Address)
+            const permissions = [Permission.Read, Permission.Write]
+            const roleName = `TestRole for bot channel ${wallet} wallet`
+
+            // Bob creates a role with Read permission
+            const txn = await spaceDapp.createRole(
+                spaceId,
+                roleName,
+                permissions,
+                [],
+                ruleData,
+                bob.signer,
+            )
+
+            const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
+            expect(roleError).toBeUndefined()
+            check(isDefined(roleId), 'roleId is defined')
+            log('bob created role', roleId)
+
+            // Bot creates a new channel
+            const newChannelId = await bot.createChannel(spaceId, {
+                name: `test-channel-with-role-${wallet}`,
+                description: `Channel with role created by bot with ${wallet} wallet`,
+                wallet,
+            })
+
+            log(`bot created channel with ${wallet} wallet`, newChannelId)
+
+            // Query the roles assigned to the channel
+            const channelRoles = await readContract(bot.viem, {
+                address: SpaceAddressFromSpaceId(spaceId),
+                abi: channelsFacetAbi,
+                functionName: 'getRolesByChannel',
+                args: [`0x${newChannelId}`],
+            })
+
+            log('channel roles', channelRoles)
+
+            // Verify the created role is included in the channel's roles
+            expect(channelRoles).toContain(roleId)
+
+            // Bob joins the new channel
+            await bobClient.riverConnection.call((client) => client.joinStream(newChannelId))
+
+            // Bob gets the channel
+            const bobNewChannel = bobClient.spaces.getSpace(spaceId).getChannel(newChannelId)
+            await waitFor(() => bobNewChannel.value.status !== 'loading', { timeoutMS: 10000 })
+
+            // Bob sends a message in the new channel
+            const testMessage = `Hello bot in new channel with ${wallet} wallet!`
+            const { eventId } = await bobNewChannel.sendMessage(testMessage)
+            log('bob sent message in new channel', eventId)
+
+            // Wait for bot to receive the message
+            await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15000 })
+
+            const receivedEvent = receivedMessages.find((x) => x.eventId === eventId)
+            expect(receivedEvent).toBeDefined()
+            expect(receivedEvent?.message).toBe(testMessage)
+            expect(receivedEvent?.channelId).toBe(newChannelId)
+            expect(receivedEvent?.userId).toBe(bobClient.userId)
+        },
+    )
 
     it('bot should be able to send encrypted interaction request and user should send encrypted response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)

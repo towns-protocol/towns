@@ -28,7 +28,6 @@ import {
     unsafe_makeTags,
     townsEnv,
     spaceIdFromChannelId,
-    type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
     makeEvent,
@@ -44,6 +43,10 @@ import {
     makeUserStreamId,
     make_MemberPayload_Pin,
     make_MemberPayload_Unpin,
+    makeUniqueChannelStreamId,
+    make_ChannelPayload_Inception,
+    make_MemberPayload_Membership2,
+    type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -104,7 +107,7 @@ import {
     zeroAddress,
     parseEventLogs,
 } from 'viem'
-import { readContract, waitForTransactionReceipt } from 'viem/actions'
+import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import packageJson from '../package.json' with { type: 'json' }
@@ -113,6 +116,8 @@ import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
 import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
+import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
+import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -200,6 +205,14 @@ export type PostMessageOpts = MessageOpts & {
 export type DecryptedInteractionResponse = {
     recipient: Uint8Array
     payload: PlainMessage<InteractionResponsePayload>
+}
+
+export type CreateChannelParams = {
+    name: string
+    description?: string
+    wallet?: 'bot' | 'app'
+    autojoin?: boolean
+    hideUserJoinLeaveEvents?: boolean
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -1100,6 +1113,26 @@ export class Bot<
 
     async unpinMessage(streamId: string, eventId: string) {
         return this.client.unpinMessage(streamId, eventId)
+    }
+
+    /**
+     * Create a channel in a space
+     * All users with Permission.Read will be able to join the channel.
+     * @param spaceId - The space ID to create the channel in
+     * @param params - The parameters for the channel creation
+     * @returns The channel ID
+     */
+    async createChannel(spaceId: string, params: CreateChannelParams) {
+        return this.client.createChannel(spaceId, params)
+    }
+
+    /**
+     * Get the roles for a space
+     * @param spaceId - The space ID to get the roles for
+     * @returns The roles
+     */
+    async getRoles(spaceId: string) {
+        return this.client.getRoles(spaceId)
     }
 
     /**
@@ -2279,6 +2312,85 @@ const buildBotActions = (
         )
     }
 
+    const getRoles = async (spaceId: string) => {
+        const roles = await readContract(viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: rolesFacetAbi,
+            functionName: 'getRoles',
+        })
+        return roles.filter((role) => role.name !== 'Owner')
+    }
+
+    const createChannelTx = async (
+        spaceId: string,
+        channelId: string,
+        params: CreateChannelParams,
+    ) => {
+        const roles = await getRoles(spaceId)
+        const allRolesThatCanRead = roles.filter((role) =>
+            role.permissions.includes(Permission.Read),
+        )
+        const args = [
+            `0x${channelId}`,
+            JSON.stringify({ name: params.name, description: params.description ?? '' }),
+            allRolesThatCanRead.map((role) => role.id),
+        ] as const
+
+        if (params.wallet === 'bot') {
+            return writeContract(viem, {
+                address: SpaceAddressFromSpaceId(spaceId),
+                abi: channelsFacetAbi,
+                functionName: 'createChannel',
+                args,
+            })
+        } else {
+            return execute(viem, {
+                address: appAddress,
+                calls: [
+                    {
+                        to: SpaceAddressFromSpaceId(spaceId),
+                        abi: channelsFacetAbi,
+                        functionName: 'createChannel',
+                        args,
+                    },
+                ],
+            })
+        }
+    }
+
+    const createChannel = async (spaceId: string, params: CreateChannelParams) => {
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        const hash = await createChannelTx(spaceId, channelId, params)
+        await waitForTransactionReceipt(viem, { hash })
+        const events = await Promise.all([
+            makeEvent(
+                client.signerContext,
+                make_ChannelPayload_Inception({
+                    streamId: streamIdAsBytes(channelId),
+                    spaceId: streamIdAsBytes(spaceId),
+                    settings: undefined,
+                    channelSettings: {
+                        autojoin: params.autojoin ?? false,
+                        hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
+                    },
+                }),
+            ),
+            makeEvent(
+                client.signerContext,
+                make_MemberPayload_Membership2({
+                    userId: client.userId,
+                    op: MembershipOp.SO_JOIN,
+                    initiatorId: client.userId,
+                }),
+            ),
+        ])
+        await client.rpc.createStream({
+            streamId: streamIdAsBytes(channelId),
+            events: events,
+        })
+        return channelId
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -2299,6 +2411,8 @@ const buildBotActions = (
         getChannelSettings,
         sendTip,
         sendBlockchainTransaction,
+        createChannel,
+        getRoles,
     }
 }
 
