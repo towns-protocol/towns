@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/eslint-config",
-    "version": "0.0.403",
+    "version": "0.0.404",
     "license": "MIT",
     "main": "typescript.js",
     "publishConfig": {
