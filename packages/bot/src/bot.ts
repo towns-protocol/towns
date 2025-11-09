@@ -1246,7 +1246,7 @@ export class Bot<
             motto,
             capabilities: this.commands?.map((c) => c.name) || [],
             version: packageJson.version,
-            framework: '@towns-protocol/bot',
+            framework: `javascript:${packageJson.name}:${packageJson.version}`,
             attributes: this.identityConfig?.attributes,
         }
     }
