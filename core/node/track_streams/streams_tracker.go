@@ -218,7 +218,7 @@ func (tracker *StreamsTrackerImpl) AddStream(
 	if _, alreadyTracked := tracker.tracked.Load(streamId); alreadyTracked {
 		return false, nil
 	}
-	streamNoId, err := tracker.riverRegistry.StreamRegistry.GetStreamOnLatestBlock(tracker.ctx, streamId)
+	streamNoId, err := tracker.riverRegistry.StreamRegistry.GetStream(tracker.ctx, 0, streamId)
 	if err != nil {
 		return false, base.WrapRiverError(protocol.Err_CANNOT_CALL_CONTRACT, err).
 			Message("Could not fetch stream from contract")
