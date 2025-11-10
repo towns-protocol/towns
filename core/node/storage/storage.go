@@ -150,14 +150,6 @@ type (
 			omitSnapshot bool,
 		) ([]*MiniblockDescriptor, error)
 
-		// ReadMiniblocksByStream calls onEachMb for each selected miniblock
-		ReadMiniblocksByStream(
-			ctx context.Context,
-			streamId StreamId,
-			omitSnapshot bool,
-			onEachMb MiniblockHandlerFunc,
-		) error
-
 		// ReadMiniblocksByIds calls onEachMb for each specified miniblock
 		ReadMiniblocksByIds(
 			ctx context.Context,

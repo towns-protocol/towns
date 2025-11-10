@@ -878,6 +878,9 @@ message EncryptedData {
 
     // used to parse data after it's decrypted
     EncryptedDataVersion version = 11; 
+
+    // used when encrypting directly to a device
+    optional string device_key = 12;
 }
 
 message WrappedEncryptedData {
@@ -1254,7 +1257,7 @@ enum EncryptedDataVersion {
 }
 
 message InteractionRequest {
-    message SignatureRequest {
+    message Signature {
         // Type of signing method to use. The app must call the
         // corresponding method on the wallet as noted below.
         enum SignatureType {
@@ -1286,27 +1289,100 @@ message InteractionRequest {
         optional string subtitle = 7;
     }
 
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+                string label = 1;
+            }
+
+            message TextInput {
+                string placeholder = 1;
+            }
+
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        repeated Component components = 4;
+    }
+
+    message Transaction {
+        message EVMContent {
+            string chain_id = 1;
+            string to = 2;
+            string value = 3;
+            string data = 4;
+            optional string signer_wallet = 5;
+        }
+
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        
+        oneof content {
+            EVMContent evm = 101;
+        }
+    }
+
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
     optional bytes recipient = 1;
+    // if present, encrypt the interaction response with to encryption device
+    UserMetadataPayload.EncryptionDevice encryption_device = 2;
 
     oneof content {
-        SignatureRequest signature_request = 101;
+        Signature signature = 101;
+        Form form = 102;
+        Transaction transaction = 103;
     }
 }
 
 message InteractionResponse {
     // The recipient of the interaction response.
     bytes recipient = 1;
+    // encrypted binary InteractionResponsePayload
+    EncryptedData encrypted_data = 2;
+}
 
-    message SignatureResponse {
+message InteractionResponsePayload {
+    message Signature {
         // The id of the request that this response is for
         string request_id = 1;
         // The resulting signature in hex
         string signature = 2;
     }
 
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+            }
+            message TextInput {
+                string value = 1;
+            }
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        string request_id = 1;
+        repeated Component components = 2;
+    }
+
+    message Transaction {
+        string request_id = 1;
+        string tx_hash = 2;
+    }
+
+    bytes salt = 1;
     oneof content {
-        SignatureResponse signature_response = 101;
+        Signature signature = 101;
+        Form form = 102;
+        Transaction transaction = 103;
     }
 }
 

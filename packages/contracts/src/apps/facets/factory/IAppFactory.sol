@@ -36,7 +36,7 @@ interface IAppFactoryBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    event AppCreated(address indexed app, bytes32 indexed uid);
+    event AppCreated(address indexed app, bytes32 indexed uid, address indexed owner);
     event BeaconAdded(bytes32 indexed beaconId, address indexed beacon);
     event BeaconRemoved(bytes32 indexed beaconId, address indexed beacon);
     event EntryPointSet(address indexed oldEntryPoint, address indexed newEntryPoint);

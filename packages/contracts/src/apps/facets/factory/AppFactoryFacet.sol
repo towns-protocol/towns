@@ -46,7 +46,7 @@ contract AppFactoryFacet is
 
         app = _createApp(beaconId, params);
         appId = _registerApp(ITownsApp(app), params.client);
-        emit AppCreated(app, appId);
+        emit AppCreated(app, appId, msg.sender);
     }
 
     /// @notice Create an upgradeable simple app contract
@@ -59,7 +59,7 @@ contract AppFactoryFacet is
         bytes32 beaconId = _getDefaultBeaconId();
         app = _createApp(beaconId, params);
         appId = _registerApp(ITownsApp(app), params.client);
-        emit AppCreated(app, appId);
+        emit AppCreated(app, appId, msg.sender);
     }
 
     function addBeacons(Beacon[] calldata beacons) external onlyOwner {

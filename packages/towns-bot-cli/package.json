@@ -1,7 +1,7 @@
 {
     "name": "towns-bot",
     "description": "CLI for creating and managing Towns Protocol bot projects",
-    "version": "0.0.388",
+    "version": "0.0.406",
     "author": "Towns Protocol",
     "scripts": {
         "build": "tsup",
@@ -18,7 +18,7 @@
         "@towns-protocol/sdk": "workspace:^",
         "@towns-protocol/utils": "workspace:^",
         "cross-spawn": "^7.0.5",
-        "dotenv": "^16.4.7",
+        "dotenv": "^17.2.3",
         "ethers": "^5.8.0",
         "jsonc-parser": "^3.3.1",
         "minimist": "^1.2.8",

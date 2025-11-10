@@ -405,9 +405,10 @@ func printMbSummary(miniblock *protocol.Miniblock, snapshot *protocol.Envelope, 
 		mbHeader.MiniblockHeader.MiniblockNum,
 		formatBytes(proto.Size(miniblock)),
 	)
-	fmt.Printf("  Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
-	fmt.Printf("  Hash:      %v\n", hex.EncodeToString(miniblock.Header.Hash))
-	fmt.Printf("  Author:    %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	fmt.Printf("       Timestamp: %v\n", mbHeader.MiniblockHeader.GetTimestamp().AsTime().UTC())
+	fmt.Printf("            Hash: %v\n", hex.EncodeToString(miniblock.Header.Hash))
+	fmt.Printf("          Author: %v\n", common.BytesToAddress(info.HeaderEvent().Event.CreatorAddress))
+	fmt.Printf("Event num offset: %d\n", mbHeader.MiniblockHeader.GetEventNumOffset())
 	if info.Snapshot != nil {
 		fmt.Printf(
 			"  **********************\n  Snapshot: (size %s)\n  **********************\n",

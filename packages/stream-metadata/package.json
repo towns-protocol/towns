@@ -2,7 +2,6 @@
 	"name": "@towns-protocol/stream-metadata",
 	"version": "0.0.0",
 	"private": true,
-	"packageManager": "yarn@3.8.0",
 	"type": "module",
 	"main": "dist/node.cjs",
 	"scripts": {
@@ -37,7 +36,7 @@
 		"@towns-protocol/sdk-crypto": "workspace:^",
 		"@towns-protocol/web3": "workspace:^",
 		"dd-trace": "^5.19.0",
-		"dotenv": "^16.4.7",
+		"dotenv": "^17.2.3",
 		"esbuild-plugin-pino": "^2.2.0",
 		"ethers": "^5.8.0",
 		"fastify": "^5.3.3",

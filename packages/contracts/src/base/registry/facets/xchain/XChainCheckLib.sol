@@ -57,10 +57,10 @@ library XChainCheckLib {
         uint256 requestId,
         IEntitlementGatedBase.NodeVoteStatus result
     ) internal {
-        uint256 nodeCount = self.nodes[requestId].length();
+        uint256 voteCount = self.votes[requestId].length;
         bool voteRecorded = false;
 
-        for (uint256 i; i < nodeCount; ++i) {
+        for (uint256 i; i < voteCount; ++i) {
             IEntitlementGatedBase.NodeVote storage currentVote = self.votes[requestId][i];
 
             if (currentVote.node == msg.sender) {
@@ -82,9 +82,10 @@ library XChainCheckLib {
         XChainLib.Check storage self,
         uint256 requestId
     ) internal view returns (VoteResults memory results) {
+        uint256 voteCount = self.votes[requestId].length;
         results.totalNodes = self.nodes[requestId].length();
 
-        for (uint256 i; i < results.totalNodes; ++i) {
+        for (uint256 i; i < voteCount; ++i) {
             IEntitlementGatedBase.NodeVote storage vote = self.votes[requestId][i];
 
             if (vote.vote == IEntitlementGatedBase.NodeVoteStatus.PASSED) {

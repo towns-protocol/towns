@@ -150,7 +150,7 @@ export class GroupEncryptionCrypto {
         streamId: string,
         algorithm: GroupEncryptionAlgorithmId,
         opts?: EnsureOutboundSessionOpts,
-    ): Promise<void> {
+    ): Promise<string> {
         return this.groupEncryption[algorithm].ensureOutboundSession(streamId, opts)
     }
 

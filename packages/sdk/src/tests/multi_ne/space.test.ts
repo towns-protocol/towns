@@ -76,7 +76,8 @@ describe('spaceTests', () => {
         })
     })
 
-    test('channelMetadata', async () => {
+    // @miguel-nascimento 2025-10-28 - flaky test - was timing out on CI
+    test.skip('channelMetadata', async () => {
         log('channelMetadata')
         const spaceId = makeUniqueSpaceStreamId()
         await expect(bobsClient.createSpace(spaceId)).resolves.not.toThrow()

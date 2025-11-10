@@ -32,7 +32,7 @@ This bot demonstrates the basic functionality of a Towns bot:
 
 - `APP_PRIVATE_DATA`: Your Towns app private data
 - `JWT_SECRET`: JWT secret for authentication
-- `PORT`: Port to run the bot on
+- `PORT`: Port to run the bot on (optional, defaults to 5123)
 
 ## Usage
 

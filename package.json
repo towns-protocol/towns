@@ -2,7 +2,7 @@
     "name": "towns-protocol",
     "version": "0.0.0",
     "license": "MIT",
-    "packageManager": "yarn@3.8.0",
+    "packageManager": "yarn@3.8.7",
     "scripts": {
         "anvil": "yarn workspace @towns-protocol/contracts exec anvil",
         "build": "turbo build",

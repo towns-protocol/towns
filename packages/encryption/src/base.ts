@@ -48,7 +48,7 @@ export abstract class EncryptionAlgorithm implements IEncryptionParams {
     abstract ensureOutboundSession(
         streamId: string,
         opts?: EnsureOutboundSessionOpts,
-    ): Promise<void>
+    ): Promise<string>
 
     abstract hasOutboundSession(streamId: string): Promise<boolean>
 

@@ -3,7 +3,6 @@
     "version": "0.0.0",
     "private": true,
     "description": "Pre-configured Anvil chains with deployed Towns Protocol contracts",
-    "packageManager": "yarn@3.8.0",
     "scripts": {
         "docker:build": "cd ../../core && just build-anvil-docker local",
         "docker:start": "cd ../../core && USE_DOCKER_CHAINS=1 just anvils",

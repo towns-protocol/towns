@@ -141,11 +141,13 @@ abstract contract AppAccountBase is
         if (currentAppId == EMPTY_UID) AppNotInstalled.selector.revertWith();
         if (currentAppId == appId) AppAlreadyInstalled.selector.revertWith();
 
-        App memory app = _getAppRegistry().getAppById(appId);
+        App memory currentApp = _getAppRegistry().getAppById(currentAppId);
 
         // revoke the current app
-        _revokeGroupAccess(currentAppId, app.client);
+        _revokeGroupAccess(currentAppId, currentApp.client);
         _setGroupStatus(currentAppId, false);
+
+        App memory app = _getAppRegistry().getAppById(appId);
 
         // update the app
         _addApp(app.module, appId);

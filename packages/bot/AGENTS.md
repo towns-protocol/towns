@@ -384,7 +384,7 @@ bot.onSlashCommand("ai", async (handler, { channelId, args }) => {
 
 ### Sending Attachments
 
-The bot supports two types of attachments:
+The bot supports three types of attachments:
 
 #### Image Attachments from URLs
 
@@ -414,6 +414,55 @@ bot.onSlashCommand("show", async (handler, { channelId, args }) => {
 - Invalid/non-image URLs are skipped gracefully (message still sends)
 - Non-image Content-Types trigger console warning and are skipped
 - Image dimensions are auto-detected for URL-based images
+- All attachments are end-to-end encrypted automatically
+
+#### Link Attachments (URL Unfurling)
+
+Use `type: 'link'` to send link attachments. Up for clients to unfurl the link.
+
+**This is the recommended way to share miniapps, frames, and any web content.**
+
+```typescript
+bot.onSlashCommand("share", async (handler, { channelId, args }) => {
+  const url = args[0]
+
+  await handler.sendMessage(channelId, "Check this out!", {
+    attachments: [
+      {
+        type: 'link',
+        url: url
+      }
+    ]
+  })
+})
+```
+
+**Multiple Link Attachments Example:**
+```typescript
+// Share multiple links in one message
+await handler.sendMessage(channelId, "Here are some useful resources:", {
+  attachments: [
+    {
+      type: 'link',
+      url: 'https://example.com/miniapp'
+    },
+    {
+      type: 'link',
+      url: 'https://docs.towns.com'
+    },
+    {
+      type: 'link',
+      url: 'https://github.com/townsprotocol'
+    }
+  ]
+})
+```
+
+**Important Notes:**
+- If the URL doesn't have Open Graph metadata, title/description will be extracted from standard HTML meta tags
+- Invalid URLs or fetch failures are handled gracefully (attachment is skipped, message still sends)
+- This is the preferred method for sharing miniapps and frames
+- You can send multiple link attachments in a single message
 - All attachments are end-to-end encrypted automatically
 
 #### Chunked Media Attachments (Binary Data)
@@ -501,9 +550,13 @@ bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
 
 **Mixed Attachments Example:**
 ```typescript
-// Combine URL images with chunked media
+// Combine links, images, and chunked media
 await handler.sendMessage(channelId, "Product comparison:", {
   attachments: [
+    {
+      type: 'link',
+      url: 'https://example.com/product-page'
+    },
     {
       type: 'image',
       url: 'https://example.com/product-a.jpg',

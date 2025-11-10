@@ -11,6 +11,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
+// localGetStreamEx is the local implementation of GetStreamEx and writes all the
+// stream miniblocks to the given resp.
 func (s *Service) localGetStreamEx(
 	ctx context.Context,
 	req *connect.Request[GetStreamExRequest],
@@ -21,32 +23,42 @@ func (s *Service) localGetStreamEx(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByStream(
-		ctx,
-		streamId,
-		req.Msg.GetOmitSnapshot(),
-		func(mbBytes []byte, _ int64, snBytes []byte) error {
+	lastMiniblockNum, err := s.storage.GetLastMiniblockNumber(ctx, streamId)
+	if err != nil {
+		return err
+	}
+
+	const pageSize = int64(10)
+	toExclusive := lastMiniblockNum + 1
+
+	for start := int64(0); start < toExclusive; start += pageSize {
+		miniblockDescriptors, err := s.storage.ReadMiniblocks(
+			ctx, streamId, start, min(start+pageSize, toExclusive), req.Msg.GetOmitSnapshot())
+		if err != nil {
+			return err
+		}
+
+		for _, miniblockDescriptor := range miniblockDescriptors {
 			var mb Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+			if err = proto.Unmarshal(miniblockDescriptor.Data, &mb); err != nil {
 				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
 			}
 
 			var snapshot *Envelope
-			if len(snBytes) > 0 && !req.Msg.GetOmitSnapshot() {
+			if len(miniblockDescriptor.Snapshot) > 0 && !req.Msg.GetOmitSnapshot() {
 				snapshot = &Envelope{}
-				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+				if err = proto.Unmarshal(miniblockDescriptor.Snapshot, snapshot); err != nil {
 					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
 				}
 			}
 
-			return resp.Send(&GetStreamExResponse{
-				Data: &GetStreamExResponse_Miniblock{
-					Miniblock: &mb,
-				},
+			if err := resp.Send(&GetStreamExResponse{
+				Data:     &GetStreamExResponse_Miniblock{Miniblock: &mb},
 				Snapshot: snapshot,
-			})
-		}); err != nil {
-		return err
+			}); err != nil {
+				return err
+			}
+		}
 	}
 
 	// Send back an empty response to signal the end of the stream.
