@@ -1429,13 +1429,6 @@ describe('Bot', { sequential: true }, () => {
                 bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
             ).toBeDefined(),
         )
-
-        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
-        expect(message).toBeDefined()
-        if (message?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
-            throw new Error('message is not an interaction request')
-        }
-
         // Wait for decryption to complete
         await waitFor(() => {
             const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
