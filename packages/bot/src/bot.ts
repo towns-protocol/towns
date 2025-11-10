@@ -1852,6 +1852,13 @@ const buildBotActions = (
             ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
             : client.defaultGroupEncryptionAlgorithm
 
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            recipient ? [userIdFromAddress(recipient)] : [],
+            miniblockInfo,
+        )
+
         // Create payload with content and encryption device for response
         const payload = create(InteractionRequestPayloadSchema, {
             encryptionDevice: client.crypto.getUserDevice(),
