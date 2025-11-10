@@ -16,8 +16,6 @@ const (
 )
 
 type (
-	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
-
 	ReadStreamFromLastSnapshotResult struct {
 		SnapshotMiniblockOffset int
 		Miniblocks              []*MiniblockDescriptor
@@ -149,15 +147,6 @@ type (
 			toExclusive int64,
 			omitSnapshot bool,
 		) ([]*MiniblockDescriptor, error)
-
-		// ReadMiniblocksByIds calls onEachMb for each specified miniblock
-		ReadMiniblocksByIds(
-			ctx context.Context,
-			streamId StreamId,
-			mbs []int64,
-			omitSnapshot bool,
-			onEachMb MiniblockHandlerFunc,
-		) error
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)

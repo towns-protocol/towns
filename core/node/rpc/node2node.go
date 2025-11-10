@@ -11,6 +11,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -245,6 +246,59 @@ func (s *Service) GetMiniblocksByIds(
 	return nil
 }
 
+// miniblockIdsToRanges converts a list of miniblock IDs to a list of contiguous ranges.
+// maxRange limits the maximum length of each range. If a contiguous sequence exceeds maxRange,
+// it is split into multiple ranges. If maxRange <= 0, no limit is applied.
+// For example with maxRange=10: [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+// -> [{1,3}, {5,6}, {8,17}, {18,20}]
+func miniblockIdsToRanges(ids []int64, maxRange int64) []storage.MiniblockRange {
+	if len(ids) == 0 {
+		return []storage.MiniblockRange{}
+	}
+
+	// Sort the IDs first
+	sortedIds := make([]int64, len(ids))
+	copy(sortedIds, ids)
+	for i := 0; i < len(sortedIds)-1; i++ {
+		for j := i + 1; j < len(sortedIds); j++ {
+			if sortedIds[i] > sortedIds[j] {
+				sortedIds[i], sortedIds[j] = sortedIds[j], sortedIds[i]
+			}
+		}
+	}
+
+	var ranges []storage.MiniblockRange
+	rangeStart := sortedIds[0]
+	rangeEnd := sortedIds[0]
+
+	for i := 1; i < len(sortedIds); i++ {
+		currentRangeLength := rangeEnd - rangeStart + 1
+		isConsecutive := sortedIds[i] == rangeEnd+1
+		wouldExceedMax := maxRange > 0 && currentRangeLength >= maxRange
+
+		if isConsecutive && !wouldExceedMax {
+			// Continue current range
+			rangeEnd = sortedIds[i]
+		} else {
+			// Close current range and start new one
+			ranges = append(ranges, storage.MiniblockRange{
+				StartInclusive: rangeStart,
+				EndInclusive:   rangeEnd,
+			})
+			rangeStart = sortedIds[i]
+			rangeEnd = sortedIds[i]
+		}
+	}
+
+	// Add the last range
+	ranges = append(ranges, storage.MiniblockRange{
+		StartInclusive: rangeStart,
+		EndInclusive:   rangeEnd,
+	})
+
+	return ranges
+}
+
 func (s *Service) streamMiniblocksByIds(
 	ctx context.Context,
 	req *GetMiniblocksByIdsRequest,
@@ -255,33 +309,43 @@ func (s *Service) streamMiniblocksByIds(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByIds(
-		ctx,
-		streamId,
-		req.GetMiniblockIds(),
-		req.GetOmitSnapshots(),
-		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+	// Convert miniblock IDs to ranges with a max range size of 10
+	miniblockRanges := miniblockIdsToRanges(req.GetMiniblockIds(), 10)
+
+	for _, mbRange := range miniblockRanges {
+		miniblocks, err := s.storage.ReadMiniblocks(
+			ctx,
+			streamId,
+			mbRange.StartInclusive,
+			mbRange.EndInclusive+1, // +1 because ReadMiniblocks expects toExclusive
+			req.GetOmitSnapshots(),
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, mbDesc := range miniblocks {
 			var mb Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+			if err = proto.Unmarshal(mbDesc.Data, &mb); err != nil {
 				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
 			}
 
 			var snapshot *Envelope
-			if len(snBytes) > 0 && !req.GetOmitSnapshots() {
+			if len(mbDesc.Snapshot) > 0 && !req.GetOmitSnapshots() {
 				snapshot = &Envelope{}
-				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+				if err = proto.Unmarshal(mbDesc.Snapshot, snapshot); err != nil {
 					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
 				}
 			}
 
-			return resp.Send(&GetMiniblockResponse{
-				Num:       seqNum,
+			if err = resp.Send(&GetMiniblockResponse{
+				Num:       mbDesc.Number,
 				Miniblock: &mb,
 				Snapshot:  snapshot,
-			})
-		},
-	); err != nil {
-		return err
+			}); err != nil {
+				return err
+			}
+		}
 	}
 
 	// Send back an empty response to signal the end of the stream.
