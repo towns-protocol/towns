@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -461,51 +460,6 @@ func (ctc *cacheTestContext) GetMbs(
 	return mbs, nil
 }
 
-// miniblockIdsToRanges converts a list of miniblock IDs to a list of contiguous ranges.
-// maxRange limits the maximum length of each range. If a contiguous sequence exceeds maxRange,
-// it is split into multiple ranges. If maxRangeSize <= 0, no limit is applied.
-// For example with maxRangeSize=10: [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-// -> [{1,3}, {5,6}, {8,17}, {18,20}]
-func miniblockIdsToRanges(ids []int64, maxRangeSize int64) []storage.MiniblockRange {
-	if len(ids) == 0 {
-		return []storage.MiniblockRange{}
-	}
-
-	// Sort the IDs first
-	slices.Sort(ids)
-
-	var ranges []storage.MiniblockRange
-	rangeStart := ids[0]
-	rangeEnd := ids[0]
-
-	for i := 1; i < len(ids); i++ {
-		currentRangeLength := rangeEnd - rangeStart + 1
-		isConsecutive := ids[i] == rangeEnd+1
-		wouldExceedMax := maxRangeSize > 0 && currentRangeLength >= maxRangeSize
-
-		if isConsecutive && !wouldExceedMax {
-			// Continue current range
-			rangeEnd = ids[i]
-		} else {
-			// Close current range and start new one
-			ranges = append(ranges, storage.MiniblockRange{
-				StartInclusive: rangeStart,
-				EndInclusive:   rangeEnd,
-			})
-			rangeStart = ids[i]
-			rangeEnd = ids[i]
-		}
-	}
-
-	// Add the last range
-	ranges = append(ranges, storage.MiniblockRange{
-		StartInclusive: rangeStart,
-		EndInclusive:   rangeEnd,
-	})
-
-	return ranges
-}
-
 // GetMiniblocksByIds returns miniblocks by their ids.
 func (ctc *cacheTestContext) GetMiniblocksByIds(
 	ctx context.Context,
@@ -523,7 +477,7 @@ func (ctc *cacheTestContext) GetMiniblocksByIds(
 	}
 
 	// Convert miniblock IDs to ranges with a max range size of 10
-	miniblockRanges := miniblockIdsToRanges(req.MiniblockIds, 10)
+	miniblockRanges := storage.MiniblockIdsToRanges(req.MiniblockIds, 10)
 	var data []*GetMiniblockResponse
 
 	for _, mbRange := range miniblockRanges {
