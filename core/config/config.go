@@ -101,6 +101,8 @@ type Config struct {
 	Database          DatabaseConfig
 	StorageType       string
 	TrimmingBatchSize int64
+	// ExternalMediaStreamStorage if configured, defines where media stream miniblocks are stored.
+	ExternalMediaStreamStorage ExternalMediaStreamStorageConfig `mapstructure:"external_media_stream_storage"`
 
 	// Blockchain configuration
 	BaseChain  ChainConfig
@@ -378,6 +380,71 @@ type ArchiveConfig struct {
 	// allow before considering a stream corrupt.
 	// Please access with GetMaxFailedConsecutiveUpdates
 	MaxFailedConsecutiveUpdates uint32 `json:",omitempty"` // If 0, default to 50.
+}
+
+// ExternalMediaStreamStorageAWSS3Config defines configuration to store media stream miniblocks
+// in AWS S3.
+type ExternalMediaStreamStorageAWSS3Config struct {
+	// Region is the region where the bucket is located.
+	Region string
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write
+	// access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	AccessKeyID string `mapstructure:"access_key_id"`
+	// SecretAccessKey is the AWS secret access key that has read/write access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	SecretAccessKey string `mapstructure:"secret_access_key" json:"-" yaml:"-"`
+}
+
+func (cfg ExternalMediaStreamStorageAWSS3Config) fieldsSet() int {
+	fieldsSet := 0
+	if cfg.Region != "" {
+		fieldsSet++
+	}
+	if cfg.Bucket != "" {
+		fieldsSet++
+	}
+	if cfg.AccessKeyID != "" {
+		fieldsSet++
+	}
+	if cfg.SecretAccessKey != "" {
+		fieldsSet++
+	}
+	return fieldsSet
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageAWSS3Config) Enabled() bool {
+	return cfg.fieldsSet() == 4
+}
+
+// ExternalMediaStreamStorageGCStorageConfig defines configuration to store media stream miniblocks
+// in GCP Storage.
+type ExternalMediaStreamStorageGCStorageConfig struct {
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// JsonCredentials is the JSON credentials file that has read/write access to the bucket.
+	JsonCredentials string `mapstructure:"json_credentials" json:"-" yaml:"-"` // Sensitive data, omit when possible
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageGCStorageConfig) Enabled() bool {
+	return cfg.Bucket != "" && cfg.JsonCredentials != ""
+}
+
+// ExternalMediaStreamStorageConfig specifies the configuration for storing media miniblock data
+// in external storage. For production only one of the storage backends should be configured. For
+// unittests all backends are supported.
+type ExternalMediaStreamStorageConfig struct {
+	// AwsS3 if configured, will be used to store media stream miniblocks in AWS S3.
+	AwsS3 ExternalMediaStreamStorageAWSS3Config `mapstructure:"aws_s3"`
+	// Gcs, if configured, will be used to store media stream miniblocks in GCP Storage.
+	Gcs ExternalMediaStreamStorageGCStorageConfig `mapstructure:"gcs_storage"`
+	// EnableMigrationExistingStreams if true, actively migrate media stream miniblock data
+	// from database to external storage.
+	EnableMigrationExistingStreams bool `mapstructure:"enable_migration_existing_streams"`
 }
 
 type APNPushNotificationsConfig struct {
