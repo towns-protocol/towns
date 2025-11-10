@@ -336,6 +336,7 @@ message SpacePayload {
 * ChannelPayload
 */
 message ChannelPayload {
+    reserved 6;
     message Snapshot {
         // inception
         Inception inception = 1;
@@ -359,7 +360,7 @@ message ChannelPayload {
         Redaction redaction = 3;
         google.protobuf.Any custom = 4;
         InteractionRequest interaction_request = 5;
-        InteractionResponse interaction_response = 6;
+        InteractionResponse interaction_response = 7;
     }
 }
 
