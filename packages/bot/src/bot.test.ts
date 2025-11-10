@@ -22,7 +22,6 @@ import {
     waitForRoleCreated,
     createChannel,
     isDefined,
-    make_ChannelPayload_InteractionRequest,
     genIdBlob,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
@@ -34,7 +33,6 @@ import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
 import {
     ForwardSettingValue,
-    InteractionRequest,
     InteractionRequestPayload,
     InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
