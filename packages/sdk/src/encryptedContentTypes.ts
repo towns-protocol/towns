@@ -20,7 +20,12 @@ export interface EncryptedContent {
 }
 
 export function isEncryptedContentKind(kind: string): kind is EncryptedContent['kind'] {
-    return kind === 'text' || kind === 'channelMessage' || kind === 'channelProperties' || kind === 'interactionRequestPayload'
+    return (
+        kind === 'text' ||
+        kind === 'channelMessage' ||
+        kind === 'channelProperties' ||
+        kind === 'interactionRequestPayload'
+    )
 }
 
 /*************
