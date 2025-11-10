@@ -1256,7 +1256,7 @@ enum EncryptedDataVersion {
     ENCRYPTED_DATA_VERSION_1 = 1;
 }
 
-message InteractionRequest {
+message InteractionRequestPayload {
     message Signature {
         // Type of signing method to use. The app must call the
         // corresponding method on the wallet as noted below.
@@ -1280,7 +1280,7 @@ message InteractionRequest {
         string chain_id = 3;
         // The address of the signer wallet. If not provided, the user can use any wallet to sign
         // this is useful in the case where a bot wants to send an interaction request to a specific user
-        optional string signer_wallet = 4; 
+        optional string signer_wallet = 4;
         // Which signature method the app expects the wallet to use.
         SignatureType type = 5;
         // Optional: a short title for the wallet's signature dialog (UX only).
@@ -1323,22 +1323,27 @@ message InteractionRequest {
         string id = 1;
         optional string title = 2;
         optional string subtitle = 3;
-        
+
         oneof content {
             EVMContent evm = 101;
         }
     }
 
-    // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
-    optional bytes recipient = 1;
     // if present, encrypt the interaction response with to encryption device
-    UserMetadataPayload.EncryptionDevice encryption_device = 2;
+    UserMetadataPayload.EncryptionDevice encryption_device = 1;
 
     oneof content {
         Signature signature = 101;
         Form form = 102;
         Transaction transaction = 103;
     }
+}
+
+message InteractionRequest {
+    // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
+    optional bytes recipient = 1;
+    // encrypted binary InteractionRequestPayload
+    EncryptedData encrypted_data = 2;
 }
 
 message InteractionResponse {

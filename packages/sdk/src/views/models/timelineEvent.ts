@@ -1094,6 +1094,7 @@ export function toDecryptedEvent(
         case RiverTimelineEvent.ChannelProperties:
         case RiverTimelineEvent.Inception:
         case RiverTimelineEvent.InteractionRequest:
+        case RiverTimelineEvent.InteractionRequestEncrypted:
         case RiverTimelineEvent.InteractionResponse:
         case RiverTimelineEvent.KeySolicitation:
         case RiverTimelineEvent.Fulfillment:
@@ -1180,7 +1181,10 @@ export function getFallbackContent(
         case RiverTimelineEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
         case RiverTimelineEvent.InteractionRequest:
-            return `interactionRequest: ${content.request.content.value?.id ?? ''}`
+            // The request now has encrypted data, so we can't access the content directly
+            return `interactionRequest: ${content.request.recipient ? 'targeted' : 'broadcast'}`
+        case RiverTimelineEvent.InteractionRequestEncrypted:
+            return `interactionRequest: (encrypted)`
         case RiverTimelineEvent.InteractionResponse:
             return `interactionResponse: ${bin_toHexString(content.response.recipient)}`
         case RiverTimelineEvent.ChannelMessageEncrypted:

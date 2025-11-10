@@ -53,8 +53,20 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case 'custom':
                 break
-            case 'interactionRequest':
+            case 'interactionRequest': {
+                // Decrypt interaction request using group encryption
+                const encryptedData = payload.content.value.encryptedData
+                if (encryptedData) {
+                    this.decryptEvent(
+                        'interactionRequestPayload',
+                        event,
+                        encryptedData,
+                        cleartext,
+                        encryptionEmitter,
+                    )
+                }
                 break
+            }
             case 'interactionResponse':
                 break
             case undefined:
@@ -90,8 +102,20 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case undefined:
                 break
-            case 'interactionRequest':
+            case 'interactionRequest': {
+                // Decrypt interaction request using group encryption
+                const encryptedData = payload.content.value.encryptedData
+                if (encryptedData) {
+                    this.decryptEvent(
+                        'interactionRequestPayload',
+                        event,
+                        encryptedData,
+                        cleartext,
+                        encryptionEmitter,
+                    )
+                }
                 break
+            }
             case 'interactionResponse':
                 break
             default:
