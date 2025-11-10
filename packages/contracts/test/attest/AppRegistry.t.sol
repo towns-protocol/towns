@@ -13,6 +13,7 @@ import {IAppAccountBase} from "../../src/spaces/facets/account/IAppAccount.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
+import {ISimpleApp} from "../../src/apps/simple/app/ISimpleApp.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -31,6 +32,7 @@ import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
 import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {IdentityRegistryFacet} from "../../src/apps/facets/identity/IdentityRegistryFacet.sol";
 
 contract AppRegistryTest is
     BaseSetup,
@@ -44,6 +46,8 @@ contract AppRegistryTest is
     AppInstallerFacet internal installer;
     AppAccount internal appAccount;
     MockModule internal mockModule;
+    IdentityRegistryFacet internal identityRegistry;
+    ISimpleApp internal simpleApp;
 
     uint256 private DEFAULT_INSTALL_PRICE = 0.001 ether;
     uint48 private DEFAULT_ACCESS_DURATION = 365 days;
@@ -59,6 +63,7 @@ contract AppRegistryTest is
         registry = AppRegistryFacet(appRegistry);
         factory = AppFactoryFacet(appRegistry);
         installer = AppInstallerFacet(appRegistry);
+        identityRegistry = IdentityRegistryFacet(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
         DEFAULT_CLIENT = _randomAddress();
@@ -103,6 +108,8 @@ contract AppRegistryTest is
         (address app, bytes32 appId) = factory.createApp(appData);
         SIMPLE_APP_ID = appId;
         SIMPLE_APP = payable(app);
+
+        simpleApp = ISimpleApp(SIMPLE_APP);
         _;
     }
 
@@ -799,6 +806,18 @@ contract AppRegistryTest is
         vm.prank(deployer);
         vm.expectRevert(AppNotRegistered.selector);
         registry.adminBanApp(address(app));
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     IDENTITY REGISTRY TESTS                 */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_publishAgent(string calldata uri) external givenSimpleAppIsRegistered {
+        vm.prank(DEFAULT_DEV);
+        uint256 agentId = simpleApp.publish(uri);
+
+        assertEq(agentId, 1);
+        assertEq(identityRegistry.tokenURI(agentId), uri);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
