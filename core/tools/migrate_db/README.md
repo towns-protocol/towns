@@ -37,7 +37,7 @@ Note: shutdown node process connected to source DB during migration process belo
     ./river_migrate_db target create  # create target schema (i.e. db partition)
     ./river_migrate_db target init    # create targe tables
 
-    # Use the copy comand with these specific flags
+    # Use the copy command with these specific flags
     # filter-streams-file is a file containing the stream ids of the specific
     # subset of streams to restore.
     ./river_migrate_db copy --from-archiver --filter-streams-file=/path/to/file.txt
