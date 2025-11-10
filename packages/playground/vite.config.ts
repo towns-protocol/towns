@@ -16,7 +16,6 @@ export default ({ mode }: { mode: string }) => {
     return defineConfig({
         define: {
             'process.browser': true,
-            'process.env': process.env,
         },
         plugins: [
             nodePolyfills(),
