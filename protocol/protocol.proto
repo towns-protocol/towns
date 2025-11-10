@@ -336,7 +336,6 @@ message SpacePayload {
 * ChannelPayload
 */
 message ChannelPayload {
-    reserved 6;
     message Snapshot {
         // inception
         Inception inception = 1;
@@ -360,7 +359,7 @@ message ChannelPayload {
         Redaction redaction = 3;
         google.protobuf.Any custom = 4;
         InteractionRequest interaction_request = 5;
-        InteractionResponse interaction_response = 7;
+        InteractionResponse interaction_response = 6;
     }
 }
 
@@ -1341,10 +1340,11 @@ message InteractionRequestPayload {
 }
 
 message InteractionRequest {
+    reserved 2;
     // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
     optional bytes recipient = 1;
     // encrypted binary InteractionRequestPayload
-    EncryptedData encrypted_data = 2;
+    EncryptedData encrypted_data = 3;
 }
 
 message InteractionResponse {
