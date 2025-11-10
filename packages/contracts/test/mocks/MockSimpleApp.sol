@@ -17,16 +17,20 @@ contract MockSimpleApp is BaseApp {
     event FundsReceived(address indexed sender, address indexed token, uint256 amount);
 
     struct Layout {
+        address owner;
         mapping(address => bytes32) voucherIds;
     }
 
-    function store() internal pure returns (Layout storage $) {
+    function getLayout() internal pure returns (Layout storage $) {
         assembly {
             $.slot := MOCK_STORAGE_SLOT
         }
     }
 
-    function initialize(bytes calldata data) external {}
+    function initialize(bytes calldata data) external {
+        (address owner, , , , ) = abi.decode(data, (address, string, bytes32[], uint256, uint48));
+        getLayout().owner = owner;
+    }
 
     function moduleId() external pure returns (string memory) {
         return "mock.simple.app";
@@ -38,14 +42,14 @@ contract MockSimpleApp is BaseApp {
         return permissions;
     }
 
-    function swap(address token) external payable {
+    function requestFunds(address token, uint256 amount) external payable {
         IAppTreasury treasury = IAppTreasury(msg.sender);
-        bytes32 voucherId = treasury.requestFunds(token, 1 ether);
+        bytes32 voucherId = treasury.fundsRequest(token, amount);
         if (voucherId != bytes32(0)) {
-            store().voucherIds[msg.sender] = voucherId;
-            emit VoucherRequested(voucherId, token, 1 ether);
+            getLayout().voucherIds[msg.sender] = voucherId;
+            emit VoucherRequested(voucherId, token, amount);
         } else {
-            emit FundsReceived(msg.sender, token, 1 ether);
+            emit FundsReceived(msg.sender, token, amount);
         }
     }
 
@@ -54,7 +58,7 @@ contract MockSimpleApp is BaseApp {
         ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](0);
 
         executionFunctions[0] = ManifestExecutionFunction({
-            executionSelector: this.swap.selector,
+            executionSelector: this.requestFunds.selector,
             skipRuntimeValidation: false,
             allowGlobalValidation: true
         });
@@ -67,5 +71,9 @@ contract MockSimpleApp is BaseApp {
                 executionHooks: executionHooks,
                 interfaceIds: interfaceIds
             });
+    }
+
+    function _moduleOwner() internal view override returns (address) {
+        return getLayout().owner;
     }
 }

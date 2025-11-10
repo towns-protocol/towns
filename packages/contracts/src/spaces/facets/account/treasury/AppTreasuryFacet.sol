@@ -28,15 +28,17 @@ contract AppTreasuryFacet is
     using CustomRevert for bytes4;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Requests                           */
+    /*                           Requests                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function requestFunds(address currency, uint256 amount) external returns (bytes32 voucherId) {
+    ///@inheritdoc IAppTreasury
+    function fundsRequest(address currency, uint256 amount) external returns (bytes32 voucherId) {
         if (!_isAppExecuting(msg.sender)) AppTreasury__AppNotExecuting.selector.revertWith();
         if (_isCircuitBreakerTripped(currency)) AppTreasury__TreasuryPaused.selector.revertWith();
-        return _requestFunds(currency, amount);
+        return _fundsRequest(currency, amount);
     }
 
+    ///@inheritdoc IAppTreasury
     function claimVoucher(bytes32 voucherId) external {
         _claimVoucher(voucherId);
     }
@@ -46,9 +48,14 @@ contract AppTreasuryFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     ///@inheritdoc IAppTreasury
-    function configureStream(address app, address currency, uint256 flowRate) external {
+    function configureStream(
+        address app,
+        address currency,
+        uint256 flowRate,
+        uint256 maxBalance
+    ) external {
         _validatePermission(Permissions.ConfigureTreasury);
-        _configureStream(app, currency, flowRate);
+        _configureStream(app, currency, flowRate, maxBalance);
     }
 
     ///@inheritdoc IAppTreasury
@@ -72,11 +79,13 @@ contract AppTreasuryFacet is
     /*                          Vouchers                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    ///@inheritdoc IAppTreasury
     function approveVoucher(bytes32 voucherId) external {
         _validatePermission(Permissions.ConfigureTreasury);
         _approveVoucher(voucherId);
     }
 
+    ///@inheritdoc IAppTreasury
     function cancelVoucher(bytes32 voucherId) external {
         _validatePermission(Permissions.ConfigureTreasury);
         _cancelVoucher(voucherId);
@@ -85,6 +94,8 @@ contract AppTreasuryFacet is
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                         Circuits                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    ///@inheritdoc IAppTreasury
     function configureCircuitBreaker(
         address currency,
         uint256 limit,

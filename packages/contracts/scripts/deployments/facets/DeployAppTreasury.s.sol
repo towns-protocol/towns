@@ -16,7 +16,7 @@ library DeployAppTreasury {
 
     function selectors() internal pure returns (bytes4[] memory res) {
         DynamicArrayLib.DynamicArray memory arr = DynamicArrayLib.p().reserve(5);
-        arr.p(AppTreasuryFacet.requestFunds.selector);
+        arr.p(AppTreasuryFacet.fundsRequest.selector);
         arr.p(AppTreasuryFacet.configureStream.selector);
         arr.p(AppTreasuryFacet.pauseStream.selector);
         arr.p(AppTreasuryFacet.resumeStream.selector);
