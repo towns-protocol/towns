@@ -21,7 +21,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
     /*                           Requests                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function _requestFunds(address currency, uint256 amount) internal returns (bytes32 voucherId) {
+    function _fundsRequest(address currency, uint256 amount) internal returns (bytes32 voucherId) {
         if (currency == address(0)) currency = CurrencyTransfer.NATIVE_TOKEN;
 
         uint256 streamBalance = _getStreamBalance(msg.sender, currency);
@@ -59,7 +59,12 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         emit StreamWithdrawal(app, currency, amount);
     }
 
-    function _configureStream(address app, address currency, uint256 flowRate) internal {
+    function _configureStream(
+        address app,
+        address currency,
+        uint256 flowRate,
+        uint256 maxBalance
+    ) internal {
         if (flowRate == 0) AppTreasury__InvalidFlowRate.selector.revertWith();
 
         AppTreasuryStorage.Layout storage $ = AppTreasuryStorage.getLayout();
@@ -68,10 +73,11 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         if (stream.active) stream.balance = _calculateStreamBalance(stream);
 
         stream.flowRatePerSecond = flowRate;
+        stream.maxBalance = maxBalance;
         stream.lastWithdrawal = block.timestamp;
         stream.active = true;
 
-        emit StreamConfigured(app, currency, flowRate);
+        emit StreamConfigured(app, currency, flowRate, maxBalance);
     }
 
     function _getStreamBalance(address app, address currency) internal view returns (uint256) {
@@ -100,7 +106,7 @@ abstract contract AppTreasuryBase is IAppTreasuryBase {
         if (stream.flowRatePerSecond > 0) {
             stream.active = true;
             stream.lastWithdrawal = block.timestamp;
-            emit StreamConfigured(app, currency, stream.flowRatePerSecond);
+            emit StreamConfigured(app, currency, stream.flowRatePerSecond, stream.maxBalance);
         }
     }
 

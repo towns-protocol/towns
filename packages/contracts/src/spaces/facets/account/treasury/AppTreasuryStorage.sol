@@ -39,8 +39,8 @@ struct Voucher {
     uint256 amount;
     uint256 createdAt;
     uint256 expiresAt;
+    bytes32 executionId;
     VoucherStatus status;
-    bytes32 executionId; // ties voucher to specific execution
 }
 
 struct VoucherConfig {

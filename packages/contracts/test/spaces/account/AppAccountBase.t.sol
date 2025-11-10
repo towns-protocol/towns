@@ -22,11 +22,21 @@ import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
 import {MockSimpleApp} from "test/mocks/MockSimpleApp.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {AppInstallerFacet} from "src/apps/facets/installer/AppInstallerFacet.sol";
+import {IAppFactory} from "src/apps/facets/factory/IAppFactory.sol";
+import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
+import {AppFactoryFacet} from "src/apps/facets/factory/AppFactoryFacet.sol";
 
-abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase, IAppRegistryBase {
+abstract contract AppAccountBaseTest is
+    BaseSetup,
+    IOwnableBase,
+    IAppAccountBase,
+    IAppRegistryBase,
+    IAppFactoryBase
+{
     AppAccount internal appAccount;
     AppTreasuryFacet internal appTreasury;
     AppRegistryFacet internal registry;
+    AppFactoryFacet internal factory;
 
     uint256 internal DEFAULT_INSTALL_PRICE = 0.001 ether;
     uint48 internal DEFAULT_ACCESS_DURATION = 365 days;
@@ -38,7 +48,7 @@ abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase
         appAccount = AppAccount(everyoneSpace);
         appTreasury = AppTreasuryFacet(everyoneSpace);
         registry = AppRegistryFacet(appRegistry);
-
+        factory = AppFactoryFacet(appRegistry);
         mockSimpleAppV1 = new MockSimpleApp();
     }
 
@@ -82,10 +92,23 @@ abstract contract AppAccountBaseTest is BaseSetup, IOwnableBase, IAppAccountBase
         return registry.registerApp(_app, _client);
     }
 
+    function _createAppAs(
+        address _owner,
+        AppParams memory _appParams
+    ) internal returns (address app, bytes32 appId) {
+        vm.prank(_owner);
+        (app, appId) = factory.createApp(_appParams);
+        return (app, appId);
+    }
+
     function _installAppAs(address _owner, ITownsApp _app) internal {
         uint256 totalRequired = registry.getAppPrice(address(_app));
         hoax(_owner, totalRequired);
-        AppInstallerFacet(appRegistry).installApp{value: totalRequired}(_app, appAccount, "");
+        AppInstallerFacet(appRegistry).installApp{value: totalRequired}(
+            _app,
+            appAccount,
+            abi.encode(address(appAccount))
+        );
     }
 
     function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {

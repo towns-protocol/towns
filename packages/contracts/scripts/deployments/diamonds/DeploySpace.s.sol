@@ -128,6 +128,8 @@ contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("AppTreasuryFacet");
         facetHelper.add("SignerFacet");
 
+        facetHelper.deployBatch(deployer);
+
         if (isAnvil()) {
             facetHelper.add("MockLegacyMembership");
         }
