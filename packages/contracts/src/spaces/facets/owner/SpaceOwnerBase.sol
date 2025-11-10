@@ -5,8 +5,8 @@ pragma solidity ^0.8.23;
 import {ISpaceOwnerBase} from "./ISpaceOwner.sol";
 
 // libraries
-import {SpaceOwnerStorage} from "./SpaceOwnerStorage.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
+import {SpaceOwnerStorage} from "./SpaceOwnerStorage.sol";
 
 // contracts
 
@@ -40,12 +40,12 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
     // =============================================================
 
     function _mintSpace(
-        string memory name,
-        string memory uri,
+        string calldata name,
+        string calldata uri,
         uint256 tokenId,
         address space,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata shortDescription,
+        string calldata longDescription
     ) internal {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`
@@ -69,10 +69,10 @@ abstract contract SpaceOwnerBase is ISpaceOwnerBase {
 
     function _updateSpace(
         address space,
-        string memory name,
-        string memory uri,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata name,
+        string calldata uri,
+        string calldata shortDescription,
+        string calldata longDescription
     ) internal {
         Validator.checkLength(name, 2);
         // if the space uri is empty, it will default to `${defaultUri}/${spaceAddress}`

@@ -2,22 +2,16 @@
 pragma solidity ^0.8.23;
 
 // interfaces
+import {IRuleEntitlement, IRuleEntitlementV2} from "../../../spaces/entitlements/rule/IRuleEntitlement.sol";
+import {IUserEntitlement} from "../../../spaces/entitlements/user/IUserEntitlement.sol";
+import {IMembershipBase} from "../../../spaces/facets/membership/IMembership.sol";
+import {ISpaceOwner} from "../../../spaces/facets/owner/ISpaceOwner.sol";
+import {ISpaceProxyInitializer} from "../../../spaces/facets/proxy/ISpaceProxyInitializer.sol";
 
-// libraries
-
-import {IRuleEntitlement} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IRuleEntitlementV2} from "src/spaces/entitlements/rule/IRuleEntitlement.sol";
-import {IUserEntitlement} from "src/spaces/entitlements/user/IUserEntitlement.sol";
-import {IMembershipBase} from "src/spaces/facets/membership/IMembership.sol";
-
-import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
-import {ISpaceProxyInitializer} from "src/spaces/facets/proxy/ISpaceProxyInitializer.sol";
-
-// contracts
 interface IArchitectBase {
-    // =============================================================
-    //                           STRUCTS
-    // =============================================================
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           STRUCTS                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     struct MembershipRequirementsOld {
         bool everyone;
@@ -46,10 +40,6 @@ interface IArchitectBase {
         Membership membership;
         ChannelInfo channel;
     }
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           CreateSpace                      */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     struct MembershipRequirements {
         bool everyone;
@@ -85,22 +75,21 @@ interface IArchitectBase {
         ChannelInfo channel;
         Prepay prepay;
     }
-    /**
-     * @notice Options for creating a space
-     * @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
-     */
 
+    /// @notice Options for creating a space
+    /// @param to Address that will receive the space NFT (defaults to msg.sender if not specified)
     struct SpaceOptions {
         address to;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Events                           */
+    /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     event SpaceCreated(address indexed owner, uint256 indexed tokenId, address indexed space);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Errors                           */
+    /*                           ERRORS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error Architect__InvalidStringLength();
@@ -116,6 +105,7 @@ interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Registry                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function getSpaceByTokenId(uint256 tokenId) external view returns (address space);
 
     function getTokenIdBySpace(address space) external view returns (uint256);
@@ -144,6 +134,7 @@ interface IArchitect is IArchitectBase {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Proxy Initializer                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     /// @notice Retrieves the current proxy initializer
     /// @return The address of the current ISpaceProxyInitializer contract
     function getProxyInitializer() external view returns (ISpaceProxyInitializer);

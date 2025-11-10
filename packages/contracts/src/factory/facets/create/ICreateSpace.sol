@@ -37,7 +37,7 @@ interface ICreateSpace is IArchitectBase, ICreateSpaceBase {
     /// @param SpaceInfo Struct containing space metadata, membership settings, and channel
     /// configuration
     /// @return address The address of the newly created space contract
-    function createSpace(SpaceInfo memory SpaceInfo) external returns (address);
+    function createSpace(SpaceInfo calldata SpaceInfo) external returns (address);
 
     /// @notice Creates a new space with prepaid memberships
     /// @param createSpace Struct containing space metadata, membership settings, channel config and
@@ -45,7 +45,7 @@ interface ICreateSpace is IArchitectBase, ICreateSpaceBase {
     /// @return address The address of the newly created space contract
     /// @dev The msg.value must cover the cost of prepaid memberships
     function createSpaceWithPrepay(
-        CreateSpace memory createSpace
+        CreateSpace calldata createSpace
     ) external payable returns (address);
 
     /// @notice Creates a new space with prepaid memberships and custom deployment options
@@ -55,8 +55,8 @@ interface ICreateSpace is IArchitectBase, ICreateSpaceBase {
     /// @return address The address of the newly created space contract
     /// @dev The msg.value must cover the cost of prepaid memberships
     function createSpaceV2(
-        CreateSpace memory createSpace,
-        SpaceOptions memory options
+        CreateSpace calldata createSpace,
+        SpaceOptions calldata options
     ) external payable returns (address);
 
     /// @notice Legacy function for backwards compatibility with older space creation format
@@ -65,6 +65,6 @@ interface ICreateSpace is IArchitectBase, ICreateSpaceBase {
     /// @dev This function converts the old format to the new format internally
     /// @dev The msg.value must cover the cost of prepaid memberships
     function createSpaceWithPrepay(
-        CreateSpaceOld memory spaceInfo
+        CreateSpaceOld calldata spaceInfo
     ) external payable returns (address);
 }

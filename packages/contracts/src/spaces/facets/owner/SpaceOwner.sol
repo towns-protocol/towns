@@ -2,22 +2,19 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-
-import {ISpaceOwner} from "./ISpaceOwner.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
-import {IMembershipMetadata} from "src/spaces/facets/membership/metadata/IMembershipMetadata.sol";
+import {IMembershipMetadata} from "../membership/metadata/IMembershipMetadata.sol";
+import {ISpaceOwner} from "./ISpaceOwner.sol";
 
 // libraries
 
 // contracts
-
-import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
-
-import {SpaceOwnerUriBase} from "./SpaceOwnerUriBase.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
-import {Votes} from "src/diamond/facets/governance/votes/Votes.sol";
-import {ERC721A} from "src/diamond/facets/token/ERC721A/ERC721A.sol";
-import {GuardianBase} from "src/spaces/facets/guardian/GuardianBase.sol";
+import {Votes} from "../../../diamond/facets/governance/votes/Votes.sol";
+import {ERC721A} from "../../../diamond/facets/token/ERC721A/ERC721A.sol";
+import {GuardianBase} from "../guardian/GuardianBase.sol";
+import {SpaceOwnerBase} from "./SpaceOwnerBase.sol";
+import {SpaceOwnerUriBase} from "./SpaceOwnerUriBase.sol";
 
 contract SpaceOwner is
     ISpaceOwner,
@@ -57,11 +54,11 @@ contract SpaceOwner is
 
     /// @inheritdoc ISpaceOwner
     function mintSpace(
-        string memory name,
-        string memory uri,
+        string calldata name,
+        string calldata uri,
         address space,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata shortDescription,
+        string calldata longDescription
     ) external onlyFactory returns (uint256 tokenId) {
         tokenId = _nextTokenId();
         _mintSpace(name, uri, tokenId, space, shortDescription, longDescription);
@@ -81,10 +78,10 @@ contract SpaceOwner is
     /// @inheritdoc ISpaceOwner
     function updateSpaceInfo(
         address space,
-        string memory name,
-        string memory uri,
-        string memory shortDescription,
-        string memory longDescription
+        string calldata name,
+        string calldata uri,
+        string calldata shortDescription,
+        string calldata longDescription
     ) external {
         _onlySpaceOwner(space);
         _updateSpace(space, name, uri, shortDescription, longDescription);
