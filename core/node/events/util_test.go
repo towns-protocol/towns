@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -471,36 +472,28 @@ func miniblockIdsToRanges(ids []int64, maxRangeSize int64) []storage.MiniblockRa
 	}
 
 	// Sort the IDs first
-	sortedIds := make([]int64, len(ids))
-	copy(sortedIds, ids)
-	for i := 0; i < len(sortedIds)-1; i++ {
-		for j := i + 1; j < len(sortedIds); j++ {
-			if sortedIds[i] > sortedIds[j] {
-				sortedIds[i], sortedIds[j] = sortedIds[j], sortedIds[i]
-			}
-		}
-	}
+	slices.Sort(ids)
 
 	var ranges []storage.MiniblockRange
-	rangeStart := sortedIds[0]
-	rangeEnd := sortedIds[0]
+	rangeStart := ids[0]
+	rangeEnd := ids[0]
 
-	for i := 1; i < len(sortedIds); i++ {
+	for i := 1; i < len(ids); i++ {
 		currentRangeLength := rangeEnd - rangeStart + 1
-		isConsecutive := sortedIds[i] == rangeEnd+1
+		isConsecutive := ids[i] == rangeEnd+1
 		wouldExceedMax := maxRangeSize > 0 && currentRangeLength >= maxRangeSize
 
 		if isConsecutive && !wouldExceedMax {
 			// Continue current range
-			rangeEnd = sortedIds[i]
+			rangeEnd = ids[i]
 		} else {
 			// Close current range and start new one
 			ranges = append(ranges, storage.MiniblockRange{
 				StartInclusive: rangeStart,
 				EndInclusive:   rangeEnd,
 			})
-			rangeStart = sortedIds[i]
-			rangeEnd = sortedIds[i]
+			rangeStart = ids[i]
+			rangeEnd = ids[i]
 		}
 	}
 
