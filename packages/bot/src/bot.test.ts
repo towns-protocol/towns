@@ -1526,7 +1526,7 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('user should be able to send form interaction response', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const recipient = bin_fromHexString(botClientAddress)
         const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
             salt: genIdBlob(),
