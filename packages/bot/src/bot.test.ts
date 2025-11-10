@@ -58,6 +58,7 @@ import { getBalance, readContract, waitForTransactionReceipt } from 'viem/action
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
+import { UserDevice } from '@towns-protocol/encryption'
 
 const log = dlog('test:bot')
 
@@ -1410,12 +1411,13 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it('bot should be able to send interaction request and user should send encrypted response', async () => {
+    it('bot should be able to send encrypted interaction request and user should send encrypted response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const requestId = randomUUID()
         const interactionRequestContent: PlainMessage<InteractionRequestPayload['content']> = {
             case: 'signature',
             value: {
-                id: randomUUID(),
+                id: requestId,
                 data: '0x1234567890',
                 chainId: '1',
                 type: InteractionRequestPayload_Signature_SignatureType.PERSONAL_SIGN,
@@ -1436,23 +1438,41 @@ describe('Bot', { sequential: true }, () => {
             throw new Error('message is not an interaction request')
         }
 
-        // The InteractionRequest should have encrypted_data
-        const receivedRequest = message.content.request
-        expect(receivedRequest.encryptedData).toBeDefined()
-        expect(receivedRequest.recipient).toBeUndefined() // no specific recipient
+        // Wait for decryption to complete
+        await waitFor(() => {
+            const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+            if (event?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+                return false
+            }
+            return event?.content?.payload !== undefined
+        })
 
-        // Note: In a real scenario, the SDK would decrypt the interaction request
-        // and Bob would see the decrypted content including the encryption device.
-        // For this test, we'll use the bot's device directly for the response.
+        const decryptedEvent = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === eventId,
+        )
+        expect(decryptedEvent?.content?.kind).toBe(RiverTimelineEvent.InteractionRequest)
+        if (decryptedEvent?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('Event is not an InteractionRequest')
+        }
 
-        // bob should be able to send interaction response to the bot
+        const decryptedPayload = decryptedEvent.content.payload
+        const encryptionDevice = decryptedPayload?.encryptionDevice as UserDevice
+        expect(decryptedPayload).toBeDefined()
+        expect(encryptionDevice).toBeDefined()
+        expect(decryptedPayload?.content.case).toBe('signature')
+        if (decryptedPayload?.content.case === 'signature') {
+            expect(decryptedPayload.content.value.id).toBe(requestId)
+            expect(decryptedPayload.content.value.data).toBe('0x1234567890')
+        }
+
+        // bob should be able to send interaction response to the bot using the decrypted encryption device
         const recipient = bin_fromHexString(botClientAddress)
         const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
             salt: genIdBlob(),
             content: {
                 case: 'signature',
                 value: {
-                    requestId: interactionRequestContent.value?.id, // Use the ID from our original request
+                    requestId: requestId,
                     signature: '0x123222222222',
                 },
             },
@@ -1469,15 +1489,13 @@ describe('Bot', { sequential: true }, () => {
                 channelId,
                 recipient,
                 interactionResponsePayload,
-                bot.getUserDevice(), // Use bot's device for response encryption
+                encryptionDevice, // Use the decrypted encryption device from the request
             )
         })
 
         await waitFor(() => receivedInteractionResponses.length > 0)
         expect(receivedInteractionResponses[0].recipient).toEqual(recipient)
-        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(
-            interactionResponsePayload.content.value?.requestId,
-        )
+        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(requestId)
     })
 
     it('user should NOT be able to send interaction request', async () => {

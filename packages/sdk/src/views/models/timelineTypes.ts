@@ -20,7 +20,7 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
-    InteractionRequest,
+    InteractionRequestPayload,
     InteractionResponse,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
@@ -184,7 +184,7 @@ export interface InceptionEvent {
 
 export interface InteractionRequestEvent {
     kind: RiverTimelineEvent.InteractionRequest
-    request: PlainMessage<InteractionRequest>
+    payload?: PlainMessage<InteractionRequestPayload>
 }
 
 export interface InteractionRequestEncryptedEvent {
