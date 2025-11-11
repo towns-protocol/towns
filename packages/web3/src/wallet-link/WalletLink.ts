@@ -5,6 +5,7 @@ import { WalletAlreadyLinkedError, WalletNotLinkedError } from '../types/error-t
 import { BaseChainConfig } from '../utils/web3Env'
 import { IWalletLinkShim } from './WalletLinkShim'
 import { createEip712LinkedWalletdData } from '../eip-712/EIP-712'
+import { OverrideExecution } from '../BaseContractShim'
 
 export const INVALID_ADDRESS = '0x0000000000000000000000000000000000000000'
 
@@ -46,6 +47,24 @@ export class WalletLink {
             throw new WalletNotLinkedError()
         }
         return { walletAddress }
+    }
+
+    public async getDefaultWallet(rootKeyAddress: string) {
+        return this.walletLinkShim.read.getDefaultWallet(rootKeyAddress)
+    }
+
+    public async setDefaultWallet<T = ContractTransaction>(args: {
+        signer: ethers.Signer
+        walletAddress: Address
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { signer, walletAddress, overrideExecution } = args
+        return this.walletLinkShim.executeCall({
+            signer,
+            functionName: 'setDefaultWallet',
+            args: [walletAddress],
+            overrideExecution,
+        })
     }
 
     private generateRootKeySignatureForWallet({
