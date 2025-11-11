@@ -84,3 +84,82 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 	impl.cleanupLocked(base.Add(25 * time.Hour))
 	require.Len(t, monitor.GetAbuserInfo(base.Add(25*time.Hour)), 0)
 }
+
+func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
+	cfg := Config{
+		Enabled: true,
+		Thresholds: map[CallType][]Threshold{
+			CallTypeEvent: {
+				{Window: time.Minute, Count: 1},
+			},
+			CallTypeMediaEvent: {
+				{Window: time.Minute, Count: 2},
+			},
+		},
+	}
+	monitor := NewCallRateMonitor(cfg)
+	user := common.HexToAddress("0x42")
+	base := time.Unix(0, 0)
+
+	monitor.RecordCall(user, base, CallTypeEvent)
+	monitor.RecordCall(user, base.Add(500*time.Millisecond), CallTypeMediaEvent)
+	monitor.RecordCall(user, base.Add(800*time.Millisecond), CallTypeMediaEvent)
+
+	abuse := monitor.GetAbuserInfo(base.Add(time.Second))
+	require.Len(t, abuse, 2)
+}
+
+func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
+	cfg := Config{
+		Enabled: true,
+		Thresholds: map[CallType][]Threshold{
+			CallTypeEvent: {
+				{Window: 3 * time.Second, Count: 3},
+			},
+		},
+	}
+	monitor := NewCallRateMonitor(cfg)
+	user := common.HexToAddress("0xab")
+	start := time.Unix(0, 0)
+	for i := 0; i < 3; i++ {
+		monitor.RecordCall(user, start.Add(time.Duration(i)*time.Second), CallTypeEvent)
+	}
+	require.Len(t, monitor.GetAbuserInfo(start.Add(2500*time.Millisecond)), 1)
+	monitor.RecordCall(user, start.Add(3500*time.Millisecond), CallTypeEvent)
+	require.Len(t, monitor.GetAbuserInfo(start.Add(4*time.Second)), 0)
+}
+
+func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
+	cfg := Config{
+		Enabled: true,
+		Thresholds: map[CallType][]Threshold{
+			CallTypeEvent: {
+				{Window: time.Minute, Count: 2},
+			},
+		},
+	}
+	monitor := NewCallRateMonitor(cfg)
+	user := common.HexToAddress("0xcd")
+	now := time.Unix(0, 0)
+	monitor.RecordCall(user, now, CallTypeEvent)
+	monitor.RecordCall(user, now.Add(10*time.Second), CallTypeEvent)
+	require.Len(t, monitor.GetAbuserInfo(now.Add(20*time.Second)), 1)
+	monitor.RecordCall(user, now.Add(70*time.Second), CallTypeEvent)
+	require.Len(t, monitor.GetAbuserInfo(now.Add(80*time.Second)), 0)
+}
+
+func TestMonitorConfigValidation(t *testing.T) {
+	cfg := Config{
+		Enabled: true,
+		Thresholds: map[CallType][]Threshold{
+			CallTypeEvent: {
+				{Window: time.Minute, Count: 0},
+				{Window: 0, Count: 10},
+			},
+		},
+	}
+	monitor := NewCallRateMonitor(cfg)
+	user := common.HexToAddress("0xef")
+	monitor.RecordCall(user, time.Unix(0, 0), CallTypeEvent)
+	require.Len(t, monitor.GetAbuserInfo(time.Unix(30, 0)), 0)
+}
