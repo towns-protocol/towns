@@ -270,6 +270,8 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	s.metrics = infra.NewMetricsFactory(metricsRegistry, "river", subsystem)
 	s.metricsPublisher = infra.NewMetricsPublisher(metricsRegistry)
 	s.metricsPublisher.StartMetricsServer(s.serverCtx, s.config.Metrics)
+
+	s.callRateMonitor = newCallRateMonitorFromConfig(s.config.AbuseDetection)
 }
 
 func (s *Service) initWallet() error {
