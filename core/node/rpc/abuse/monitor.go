@@ -139,7 +139,6 @@ func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time,
 
 	stats.record(now, callType, spec, 1)
 	stats.lastSeen = now
-
 }
 
 // GetAbuserInfo returns the current list of abusive users ordered by severity.
