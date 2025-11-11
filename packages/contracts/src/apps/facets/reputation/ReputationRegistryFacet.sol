@@ -13,7 +13,7 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReputationRegistryBase} from "./ReputationRegistryBase.sol";
 import {SchemaBase} from "../schema/SchemaBase.sol";
 
-contract ReputationRegistryFacet is ReputationRegistryBase, SchemaBase, Facet {
+contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase, SchemaBase, Facet {
     function __ReputationRegistry_init(
         string calldata feedbackSchema,
         string calldata responseSchema,
@@ -64,6 +64,10 @@ contract ReputationRegistryFacet is ReputationRegistryBase, SchemaBase, Facet {
         bytes32 commmentHash
     ) external {
         _appendResponse(agentId, reviewerAddress, feedbackIndex, comment, commmentHash);
+    }
+
+    function getIdentityRegistry() external view returns (address) {
+        return address(this);
     }
 
     function getSummary(
