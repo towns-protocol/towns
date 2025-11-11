@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.407",
+    "version": "0.0.408",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
