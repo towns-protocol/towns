@@ -2224,7 +2224,7 @@ export class Client
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
         const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
-        return this.makeEventAndAddToStream(
+        const { eventId } = await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
@@ -2232,8 +2232,19 @@ export class Client
                 streamId: streamIdAsBytes(streamId),
                 streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
-            { method: 'inviteUser' },
+            { method: 'joinUser' },
         )
+        // share the latest group session to the user
+        try {
+            await this.encryptAndShareLatestGroupSessionToUser(streamId, userId)
+        } catch (error) {
+            this.logError('Failed to share group session to user', {
+                streamId,
+                userId,
+                error,
+            })
+        }
+        return { eventId }
     }
 
     async joinStream(
