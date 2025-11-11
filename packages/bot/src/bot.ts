@@ -42,6 +42,8 @@ import {
     unpackEnvelope,
     make_UserPayload_BlockchainTransaction,
     makeUserStreamId,
+    make_MemberPayload_Pin,
+    make_MemberPayload_Unpin,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -73,6 +75,7 @@ import {
     InteractionResponsePayloadSchema,
     ChannelMessage_Post_AttachmentSchema,
     type AppMetadata,
+    StreamEvent,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -1076,6 +1079,14 @@ export class Bot<
         return result
     }
 
+    async pinMessage(streamId: string, eventId: string, streamEvent: StreamEvent) {
+        return this.client.pinMessage(streamId, eventId, streamEvent)
+    }
+
+    async unpinMessage(streamId: string, eventId: string) {
+        return this.client.unpinMessage(streamId, eventId)
+    }
+
     /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
@@ -1934,6 +1945,30 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash }
     }
 
+    /**
+     * Pin a message to a stream
+     * @param streamId - The stream ID to pin the message to
+     * @param eventId - The event ID of the message to pin
+     * @param streamEvent - The stream event to pin
+     * @returns The event ID of the pinned message
+     */
+    const pinMessage = async (streamId: string, eventId: string, streamEvent: StreamEvent) => {
+        return client.sendEvent(
+            streamId,
+            make_MemberPayload_Pin(bin_fromHexString(eventId), streamEvent),
+        )
+    }
+
+    /**
+     * Unpin a message from a stream
+     * @param streamId - The stream ID to unpin the message from
+     * @param eventId - The event ID of the message to unpin
+     * @returns The event ID of the unpinned message
+     */
+    const unpinMessage = async (streamId: string, eventId: string) => {
+        return client.sendEvent(streamId, make_MemberPayload_Unpin(bin_fromHexString(eventId)))
+    }
+
     const getChannelSettings = async (channelId: string) => {
         const spaceId = spaceIdFromChannelId(channelId)
         const streamView = await client.getStream(spaceId)
@@ -2149,6 +2184,8 @@ const buildBotActions = (
         checkPermission,
         ban,
         unban,
+        pinMessage,
+        unpinMessage,
         getChannelSettings,
         sendTip,
         sendBlockchainTransaction,

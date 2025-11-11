@@ -97,7 +97,7 @@ type Client_Base = {
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array }>
+    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -224,12 +224,12 @@ export const createTownsClient = async (
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array }> => {
+    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }> => {
         const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
             await client.rpc.getLastMiniblockHash({
                 streamId: streamIdAsBytes(streamId),
             })
-        const event = await makeEvent(
+        const envelope = await makeEvent(
             signerContext,
             eventPayload,
             prevMiniblockHash,
@@ -237,12 +237,12 @@ export const createTownsClient = async (
             tags,
             ephemeral,
         )
-        const eventId = bin_toHexString(event.hash)
+        const eventId = bin_toHexString(envelope.hash)
         await client.rpc.addEvent({
             streamId: streamIdAsBytes(streamId),
-            event,
+            event: envelope,
         })
-        return { eventId, prevMiniblockHash }
+        return { eventId, prevMiniblockHash, envelope }
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {

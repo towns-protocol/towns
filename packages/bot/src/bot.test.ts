@@ -1558,4 +1558,14 @@ describe('Bot', { sequential: true }, () => {
         })
         await waitFor(() => receivedInteractionResponses.length > 0)
     })
+
+    it('bot should be able to pin and unpin messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId, envelope } = await bot.sendMessage(channelId, 'Hello')
+        const parsedEvnet = await bot.client.unpackEnvelope(envelope)
+        const { eventId: pinEventId } = await bot.pinMessage(channelId, eventId, parsedEvnet.event)
+        log('pinned event', pinEventId)
+        const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
+        log('unpinned event', unpinEventId)
+    })
 })
