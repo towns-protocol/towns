@@ -53,6 +53,24 @@ func GetDefaultConfig() *Config {
 		Metrics: MetricsConfig{
 			Enabled: true,
 		},
+		AbuseDetection: AbuseDetectionConfig{
+			Enabled:    false,
+			MaxResults: 10,
+			Thresholds: map[string]AbuseThreshold{
+				"event": {
+					PerMinute: 600,
+					PerDay:    10_000,
+				},
+				"media_event": {
+					PerMinute: 120,
+					PerDay:    2_000,
+				},
+				"create_media_stream": {
+					PerMinute: 30,
+					PerDay:    500,
+				},
+			},
+		},
 		// TODO: Network: NetworkConfig{},
 		StandByOnStart:    true,
 		StandByPollPeriod: 500 * time.Millisecond,
@@ -122,6 +140,7 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
+	AbuseDetection      AbuseDetectionConfig
 
 	// Scrubbing
 	Scrubbing ScrubbingConfig
@@ -600,6 +619,22 @@ type MetricsConfig struct {
 
 	// Interface to use with the port above. Usually left empty to bind to all interfaces.
 	Interface string
+}
+
+type AbuseDetectionConfig struct {
+	// Enabled toggles the abuse detection tracker logic.
+	Enabled bool
+
+	// MaxResults limits the number of abusive accounts exposed via /status.
+	MaxResults int
+
+	// Thresholds maps call types (e.g., "event", "media_event") to per-minute / per-day limits.
+	Thresholds map[string]AbuseThreshold
+}
+
+type AbuseThreshold struct {
+	PerMinute uint32
+	PerDay    uint32
 }
 
 type DebugEndpointsConfig struct {
