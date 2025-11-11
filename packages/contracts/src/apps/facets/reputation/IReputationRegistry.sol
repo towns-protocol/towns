@@ -159,7 +159,7 @@ interface IReputationRegistry is IReputationRegistryBase {
         address clientAddress,
         uint64 feedbackIndex,
         address[] calldata responders
-    ) external view returns (uint64);
+    ) external view returns (uint256);
 
     /// @notice Gets the clients
     /// @param agentId The ID of the agent
