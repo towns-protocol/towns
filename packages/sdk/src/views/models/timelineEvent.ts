@@ -1105,17 +1105,14 @@ export function toDecryptedEvent(
                 return event
             }
         }
-        case RiverTimelineEvent.ChannelCreate:
-        case RiverTimelineEvent.ChannelMessage:
-        case RiverTimelineEvent.ChannelMessageMissing:
-        case RiverTimelineEvent.ChannelProperties:
-        case RiverTimelineEvent.InteractionRequestEncrypted: {
+        case RiverTimelineEvent.InteractionRequestEncrypted:
             if (decryptedContent.kind === 'interactionRequestPayload') {
                 return {
                     ...event,
                     content: {
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: decryptedContent.content,
+                        recipient: event.content.recipient,
                     } satisfies InteractionRequestEvent,
                 }
             } else {
@@ -1125,7 +1122,10 @@ export function toDecryptedEvent(
                 })
                 return event
             }
-        }
+        case RiverTimelineEvent.ChannelCreate:
+        case RiverTimelineEvent.ChannelMessage:
+        case RiverTimelineEvent.ChannelMessageMissing:
+        case RiverTimelineEvent.ChannelProperties:
         case RiverTimelineEvent.Inception:
         case RiverTimelineEvent.InteractionRequest:
         case RiverTimelineEvent.InteractionResponse:
