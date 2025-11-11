@@ -62,7 +62,7 @@ type inMemoryCallRateMonitor struct {
 
 const (
 	defaultCleanupAge = 1 * time.Hour
-	defaultMaxResults = 10
+	defaultMaxResults = 50
 	// cleanupHighWatermark bounds how many user entries we keep before forcing cleanup.
 	// Each active user consumes roughly ~2KB (per call type windows + metadata), so 4,096 users
 	// is on the order of 8–10MB of heap.
