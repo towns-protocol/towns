@@ -185,11 +185,13 @@ export interface InceptionEvent {
 export interface InteractionRequestEvent {
     kind: RiverTimelineEvent.InteractionRequest
     payload?: PlainMessage<InteractionRequestPayload>
+    recipient?: string
 }
 
 export interface InteractionRequestEncryptedEvent {
     kind: RiverTimelineEvent.InteractionRequestEncrypted
     error?: DecryptionSessionError
+    recipient?: string
 }
 
 export interface InteractionResponseEvent {

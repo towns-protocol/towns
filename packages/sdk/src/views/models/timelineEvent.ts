@@ -599,19 +599,25 @@ function toTownsContent_ChannelPayload(
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
         case 'interactionRequest': {
+            const recipient = value.content.value.recipient
+                ? bin_toHexString(value.content.value.recipient)
+                : undefined
             if (timelineEvent.decryptedContent?.kind === 'interactionRequestPayload') {
                 return {
                     content: {
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: timelineEvent.decryptedContent.content,
+                        recipient,
                     } satisfies InteractionRequestEvent,
                 }
             }
+
             // If not decrypted yet, show as encrypted
             return {
                 content: {
                     kind: RiverTimelineEvent.InteractionRequestEncrypted,
                     error: timelineEvent.decryptedContentError,
+                    recipient,
                 } satisfies InteractionRequestEncryptedEvent,
             }
         }
