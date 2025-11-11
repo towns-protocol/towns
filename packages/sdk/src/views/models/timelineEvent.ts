@@ -604,14 +604,21 @@ function toTownsContent_ChannelPayload(
                     content: {
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: timelineEvent.decryptedContent.content,
+                        recipient: value.content.value.recipient
+                            ? bin_toHexString(value.content.value.recipient)
+                            : undefined,
                     } satisfies InteractionRequestEvent,
                 }
             }
+
             // If not decrypted yet, show as encrypted
             return {
                 content: {
                     kind: RiverTimelineEvent.InteractionRequestEncrypted,
                     error: timelineEvent.decryptedContentError,
+                    recipient: value.content.value.recipient
+                        ? bin_toHexString(value.content.value.recipient)
+                        : undefined,
                 } satisfies InteractionRequestEncryptedEvent,
             }
         }
