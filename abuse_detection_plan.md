@@ -8,7 +8,7 @@ Detect wallet accounts that create excessive numbers of new events (regular or m
 
 1. **Define Abuse Policy**
    - Enumerate which RPC methods constitute “event creation” (e.g., `CreateEvent`, `AppendEvent`, media uploads).
-   - Choose concrete thresholds, such as `> 600` qualifying calls per minute or `> 10_000` calls over the past 24 hours.
+   - Choose concrete thresholds, such as `> 600` qualifying calls per minute or `> 10_000` calls over a 30-minute window.
    - Add a configuration block (e.g., `config.AbuseDetection`) to make thresholds tunable without code changes.
 
 ### Event-Creation RPC Methods
@@ -22,18 +22,17 @@ The following RPCs currently emit new user-visible events and count toward abuse
 If additional endpoints start producing events (e.g., future bulk APIs), update this list so the tracker stays aligned with product behavior.
 
 2. **Build the Tracker**
-   - Implement `abuse.Monitor` (new package under `core/node/rpc/abuse/`) that records timestamps keyed by account address.
-   - Use sliding windows (ring buffers + per-account counters) to answer both “current per-minute rate” and “rolling 24 hours total”.
+   - Implement `abuse.CallRateMonitor` (new package under `core/node/rpc/abuse/`) that records timestamps keyed by account address.
+   - Use sliding windows (ring buffers + per-account counters) driven entirely by config-defined thresholds (each threshold provides a `window` duration and max `count`), so new limits can be added without code changes.
    - Expose methods:
      - `RecordCall(user common.Address, now time.Time, kind CallType)` — invoked whenever a qualifying RPC succeeds.
-     - `Snapshot(now time.Time) []AbuserInfo` — returns current offenders with their per-minute totals, rolling 24 h totals, and `lastSeen`.
-     - `Cleanup(now time.Time)` — optional helper to prune idle entries (older than 24 h).
+     - `GetAbuserInfo(now time.Time) []AbuserInfo` — returns current offenders with the list of violated thresholds (window size, count observed, configured limit) plus `lastSeen`.
    - Implementation details:
-     - `Monitor` holds a `sync.Mutex`, config thresholds (per-minute limit, per-day limit, max results), and a map `map[common.Address]*userStats`.
-     - Each `userStats` contains two circular buffers (e.g., 60×1 s slots for the minute window, 24×1 h slots for the daily window) per call type, running sums per call type, and `lastSeen`.
-     - `RecordCall` advances both rings to `now`, zeroes skipped slots (adjusting running sums for the relevant call type), increments the current slots for that type, bumps the running sums, and updates `lastSeen`.
-     - `Snapshot` iterates the map under lock, filters users exceeding either threshold for any call type, sorts/truncates to `MaxResults`, and returns a copy so callers do not hold the mutex. Entries should indicate which call type triggered the alert so operators know whether it was standard events vs. media streams.
-     - `Cleanup` drops map entries whose `lastSeen` is older than 24 h to bound memory; call it periodically (ticker) or opportunistically when the map size crosses a high-water mark.
+     - `Monitor` holds a `sync.Mutex`, config thresholds (a slice of window/count pairs per call type) and `MaxResults`, plus a map `map[common.Address]*userStats`.
+     - Each `userStats` maintains one circular buffer per configured threshold, per call type, plus `lastSeen`.
+     - `RecordCall` advances the relevant buffers to `now`, zeroes skipped slots (adjusting running sums), increments the current slot for that type, and updates `lastSeen`.
+     - `Snapshot` iterates the map under lock, asks each call type for its violated thresholds, sorts offenders by severity (biggest `count/limit` ratio) and `lastSeen`, truncates to `MaxResults`, and returns a copy so callers do not hold the mutex.
+     - Entries older than the longest configured window (30 min by default) drop automatically whenever the internal watermark-triggered cleanup runs, so memory stays bounded without external calls.
 
 3. **Instrument Event-Creation Paths**
    - Identify all RPC handlers that create events or media.
@@ -42,7 +41,7 @@ If additional endpoints start producing events (e.g., future bulk APIs), update 
 
 4. **Expose Abusers via `/status`**
    - Extend `Service.handleStatus` to include a new field, e.g., `recent_abusers`.
-   - For each abuser, return wallet address, current per-minute rate, and rolling 24 h total (and optionally the time of last observed call).
+   - For each abuser, return wallet address, current per-minute rate, and rolling 30 min total (and optionally the time of last observed call).
 
 5. **Testing & Documentation**
    - Unit-test the monitor for threshold triggering, window expiration, and cleanup.
@@ -51,6 +50,6 @@ If additional endpoints start producing events (e.g., future bulk APIs), update 
 
 ## Open Questions / Next Steps
 
-- Finalize threshold numbers for both per-minute and per-24-hour limits.
+- Finalize threshold numbers for both per-minute and per-30-minute limits (or any other window we expose).
 - Decide whether different call types (regular vs. media events) require separate thresholds.
 - Determine retention/visibility requirements (e.g., maximum number of abusers to report, anonymization concerns).

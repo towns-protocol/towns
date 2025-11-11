@@ -56,18 +56,18 @@ func GetDefaultConfig() *Config {
 		AbuseDetection: AbuseDetectionConfig{
 			Enabled:    false,
 			MaxResults: 10,
-			Thresholds: map[string]AbuseThreshold{
+			Thresholds: map[string][]AbuseThreshold{
 				"event": {
-					PerMinute: 600,
-					PerDay:    10_000,
+					{Window: time.Minute, Count: 600},
+					{Window: 30 * time.Minute, Count: 10_000},
 				},
 				"media_event": {
-					PerMinute: 120,
-					PerDay:    2_000,
+					{Window: time.Minute, Count: 120},
+					{Window: 30 * time.Minute, Count: 2_000},
 				},
 				"create_media_stream": {
-					PerMinute: 30,
-					PerDay:    500,
+					{Window: time.Minute, Count: 30},
+					{Window: 30 * time.Minute, Count: 500},
 				},
 			},
 		},
@@ -628,13 +628,13 @@ type AbuseDetectionConfig struct {
 	// MaxResults limits the number of abusive accounts exposed via /status.
 	MaxResults int
 
-	// Thresholds maps call types (e.g., "event", "media_event") to per-minute / per-day limits.
-	Thresholds map[string]AbuseThreshold
+	// Thresholds maps call types (e.g., "event", "media_event") to a set of window/count limits.
+	Thresholds map[string][]AbuseThreshold
 }
 
 type AbuseThreshold struct {
-	PerMinute uint32
-	PerDay    uint32
+	Window time.Duration
+	Count  uint32
 }
 
 type DebugEndpointsConfig struct {
