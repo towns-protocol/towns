@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/sdk",
-    "version": "0.0.406",
+    "version": "0.0.407",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
