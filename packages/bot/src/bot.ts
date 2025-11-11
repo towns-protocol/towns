@@ -169,6 +169,12 @@ type LinkAttachment = {
     }
 }
 
+type TickerAttachment = {
+    type: 'ticker'
+    address: string
+    chainId: string
+}
+
 export type MessageOpts = {
     threadId?: string
     replyId?: string
@@ -177,7 +183,9 @@ export type MessageOpts = {
 
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<ImageAttachment | ChunkedMediaAttachment | LinkAttachment>
+    attachments?: Array<
+        ImageAttachment | ChunkedMediaAttachment | LinkAttachment | TickerAttachment
+    >
 }
 
 export type DecryptedInteractionResponse = {
@@ -1561,6 +1569,21 @@ const buildBotActions = (
             },
         })
     }
+
+    const createTickerAttachment = (
+        attachment: TickerAttachment,
+    ): PlainMessage<ChannelMessage_Post_Attachment> => {
+        return create(ChannelMessage_Post_AttachmentSchema, {
+            content: {
+                case: 'ticker',
+                value: {
+                    address: attachment.address,
+                    chainId: attachment.chainId,
+                },
+            },
+        })
+    }
+
     const ensureOutboundSession = async (
         streamId: string,
         encryptionAlgorithm: GroupEncryptionAlgorithmId,
@@ -1709,6 +1732,11 @@ const buildBotActions = (
                         processedAttachments.push(result)
                         break
                     }
+                    case 'ticker': {
+                        const result = createTickerAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
                         logNever(attachment)
                 }
@@ -1760,6 +1788,11 @@ const buildBotActions = (
                     }
                     case 'link': {
                         const result = createLinkAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'ticker': {
+                        const result = createTickerAttachment(attachment)
                         processedAttachments.push(result)
                         break
                     }
