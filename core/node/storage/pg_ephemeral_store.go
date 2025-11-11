@@ -219,7 +219,7 @@ func (s *PostgresStreamStore) NormalizeEphemeralStream(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId)
+			genesisMiniblockHash, err = s.normalizeEphemeralStreamTx(ctx, tx, streamId, true)
 			return err
 		},
 		nil,
@@ -233,6 +233,7 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	callOnSealedOnMonitor bool,
 ) (common.Hash, error) {
 	if _, err := s.lockEphemeralStream(ctx, tx, streamId, true); err != nil {
 		// The given stream might be already normalized. In this case, return the genesis miniblock hash.
@@ -321,7 +322,9 @@ func (s *PostgresStreamStore) normalizeEphemeralStreamTx(
 	}
 
 	// Delete the ephemeral stream from the ephemeral stream monitor
-	s.esm.onSealed(streamId)
+	if callOnSealedOnMonitor && s.esm != nil {
+		s.esm.onSealed(streamId)
+	}
 
 	return common.BytesToHash(genesisMb.Header.Hash), nil
 }
