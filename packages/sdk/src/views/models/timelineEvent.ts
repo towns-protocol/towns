@@ -599,14 +599,15 @@ function toTownsContent_ChannelPayload(
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
         case 'interactionRequest': {
+            const recipient = value.content.value.recipient
+                ? bin_toHexString(value.content.value.recipient)
+                : undefined
             if (timelineEvent.decryptedContent?.kind === 'interactionRequestPayload') {
                 return {
                     content: {
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: timelineEvent.decryptedContent.content,
-                        recipient: value.content.value.recipient
-                            ? bin_toHexString(value.content.value.recipient)
-                            : undefined,
+                        recipient,
                     } satisfies InteractionRequestEvent,
                 }
             }
@@ -616,9 +617,7 @@ function toTownsContent_ChannelPayload(
                 content: {
                     kind: RiverTimelineEvent.InteractionRequestEncrypted,
                     error: timelineEvent.decryptedContentError,
-                    recipient: value.content.value.recipient
-                        ? bin_toHexString(value.content.value.recipient)
-                        : undefined,
+                    recipient,
                 } satisfies InteractionRequestEncryptedEvent,
             }
         }
