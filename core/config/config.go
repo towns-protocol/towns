@@ -58,16 +58,16 @@ func GetDefaultConfig() *Config {
 			MaxResults: 10,
 			Thresholds: map[string][]AbuseThreshold{
 				"event": {
-					{Window: time.Minute, Count: 600},
-					{Window: 30 * time.Minute, Count: 10_000},
+					{Window: time.Minute, Count: 100},
+					{Window: 30 * time.Minute, Count: 1_000},
 				},
 				"media_event": {
-					{Window: time.Minute, Count: 120},
-					{Window: 30 * time.Minute, Count: 2_000},
+					{Window: time.Minute, Count: 50},
+					{Window: 30 * time.Minute, Count: 500},
 				},
 				"create_media_stream": {
-					{Window: time.Minute, Count: 30},
-					{Window: 30 * time.Minute, Count: 500},
+					{Window: time.Minute, Count: 10},
+					{Window: 30 * time.Minute, Count: 100},
 				},
 			},
 		},

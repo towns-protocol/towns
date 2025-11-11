@@ -23,6 +23,20 @@ type StatusResponse struct {
 	Base              *BlockchainPing  `json:"base,omitempty"`
 	OtherChains       []BlockchainPing `json:"other_chains,omitempty"`
 	XChainBlockchains []uint64         `json:"x_chain_blockchains"`
+	Abuse             []AbuserInfo     `json:"abuse,omitempty"`
+}
+
+type AbuserInfo struct {
+	User       string          `json:"user"`
+	CallType   string          `json:"call_type"`
+	LastSeen   string          `json:"last_seen"`
+	Violations []ViolationInfo `json:"violations"`
+}
+
+type ViolationInfo struct {
+	Window string `json:"window"`
+	Count  uint32 `json:"count"`
+	Limit  uint32 `json:"limit"`
 }
 
 func StatusResponseFromJson(data []byte) (StatusResponse, error) {
