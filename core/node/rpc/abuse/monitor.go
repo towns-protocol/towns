@@ -139,6 +139,7 @@ func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time,
 func (m *inMemoryCallRateMonitor) GetAbuserInfo(now time.Time) []AbuserInfo {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.cleanupLocked(now)
 
 	result := make([]AbuserInfo, 0)
 
