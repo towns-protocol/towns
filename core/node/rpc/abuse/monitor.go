@@ -1,10 +1,13 @@
-// Package abuse provides a lightweight in-memory CallRateMonitor that tracks how
-// often each account invokes specific RPC call types. It keeps per-user counters
-// across configurable sliding time windows by storing counts in circular buckets
-// (ring buffers) and maintaining running totals, so lookups are O(1) without
-// retaining every individual request. The monitor exposes a simple API for
-// recording a call and retrieving the current offenders, which higher layers can
-// feed into status endpoints or mitigation logic.
+package abuse
+
+import (
+	"sort"
+	"sync"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+)
+
 // Package abuse provides a lightweight in-memory CallRateMonitor that tracks how
 // often each account invokes specific RPC call types. It keeps per-user counters
 // across configurable sliding time windows by storing counts in circular buckets
@@ -16,15 +19,6 @@
 // Memory usage: each active user consumes roughly ~2KB per tracked call type
 // (window slots + metadata), so about 4k users equates to ~8–10MB of heap. The
 // cleanup watermark keeps the set bounded while remaining configurable.
-package abuse
-
-import (
-	"sort"
-	"sync"
-	"time"
-
-	"github.com/ethereum/go-ethereum/common"
-)
 
 // CallType identifies the RPC operation category being tracked.
 type CallType string
