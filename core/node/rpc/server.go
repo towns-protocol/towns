@@ -643,6 +643,7 @@ func (s *Service) initStore() error {
 			s.exitSignal,
 			s.metrics,
 			s.chainConfig,
+			&s.config.ExternalMediaStreamStorage,
 			s.config.TrimmingBatchSize,
 		)
 		if err != nil {

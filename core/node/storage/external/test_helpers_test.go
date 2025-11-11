@@ -55,7 +55,7 @@ func uploadMiniblocks(
 
 	uploadSession, err := storage.StartUploadSession(ctx, streamID, totalSize)
 	require.NoError(err)
-	defer uploadSession.Abort(ctx)
+	defer uploadSession.Abort()
 
 	for i := int64(0); i < int64(len(miniblocks)); i++ {
 		require.NoError(uploadSession.WriteMiniblockData(ctx, i, miniblocks[i]))
@@ -90,7 +90,7 @@ func validateDescriptors(
 func registerCleanup(t *testing.T, storage external.Storage, streamID StreamId) {
 	t.Cleanup(func() {
 		if tstorage, ok := storage.(external.TestStorage); ok {
-			if err := tstorage.DeleteObject(context.Background(), streamID); err != nil {
+			if err := tstorage.TestDeleteExternalObject(context.Background(), streamID); err != nil {
 				t.Logf("Failed to delete object: %v", err)
 			}
 		}
