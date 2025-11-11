@@ -65,17 +65,20 @@ type CallRateMonitor interface {
 }
 
 type inMemoryCallRateMonitor struct {
-	mu           sync.Mutex
-	cfg          Config
-	users        map[common.Address]*userStats
-	cleanupAfter time.Duration
-	callSpecs    map[CallType]*callTypeSpec
+	mu            sync.Mutex
+	cfg           Config
+	users         map[common.Address]*userStats
+	cleanupAfter  time.Duration
+	callSpecs     map[CallType]*callTypeSpec
+	lastCleanup   time.Time
+	cleanupTicker *time.Ticker
+	cleanupStop   chan struct{}
 }
 
 const (
-	defaultCleanupAge    = 1 * time.Hour
-	defaultMaxResults    = 50
-	cleanupHighWatermark = 4096
+	defaultCleanupAge  = 1 * time.Hour
+	defaultMaxResults  = 50
+	cleanupMinInterval = 30 * time.Second
 
 	targetSlotsPerWindow = 60
 	maxSlotsPerWindow    = 1024
@@ -99,12 +102,19 @@ func NewCallRateMonitor(cfg Config) CallRateMonitor {
 		cleanupWindow = maxWindow
 	}
 
-	return &inMemoryCallRateMonitor{
+	m := &inMemoryCallRateMonitor{
 		cfg:          cfg,
 		users:        make(map[common.Address]*userStats),
 		cleanupAfter: cleanupWindow,
 		callSpecs:    specs,
+		lastCleanup:  time.Now(),
 	}
+	if cleanupMinInterval > 0 {
+		m.cleanupTicker = time.NewTicker(cleanupMinInterval)
+		m.cleanupStop = make(chan struct{})
+		go m.cleanupLoop()
+	}
+	return m
 }
 
 // RecordCall increments the counters for the given user and call type.
@@ -130,12 +140,10 @@ func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time,
 	stats.record(now, callType, spec, 1)
 	stats.lastSeen = now
 
-	if len(m.users) > cleanupHighWatermark {
-		m.cleanupLocked(now)
-	}
 }
 
 // GetAbuserInfo returns the current list of abusive users ordered by severity.
+// The returned data should be treated as read-only; callers must not mutate it.
 func (m *inMemoryCallRateMonitor) GetAbuserInfo(now time.Time) []AbuserInfo {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -187,6 +195,21 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 	for addr, stats := range m.users {
 		if stats.lastSeen.Before(expireBefore) {
 			delete(m.users, addr)
+		}
+	}
+	m.lastCleanup = now
+}
+
+func (m *inMemoryCallRateMonitor) cleanupLoop() {
+	for {
+		select {
+		case now := <-m.cleanupTicker.C:
+			m.mu.Lock()
+			m.cleanupLocked(now)
+			m.mu.Unlock()
+		case <-m.cleanupStop:
+			m.cleanupTicker.Stop()
+			return
 		}
 	}
 }
