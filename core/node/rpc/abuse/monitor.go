@@ -1,3 +1,21 @@
+// Package abuse provides a lightweight in-memory CallRateMonitor that tracks how
+// often each account invokes specific RPC call types. It keeps per-user counters
+// across configurable sliding time windows by storing counts in circular buckets
+// (ring buffers) and maintaining running totals, so lookups are O(1) without
+// retaining every individual request. The monitor exposes a simple API for
+// recording a call and retrieving the current offenders, which higher layers can
+// feed into status endpoints or mitigation logic.
+// Package abuse provides a lightweight in-memory CallRateMonitor that tracks how
+// often each account invokes specific RPC call types. It keeps per-user counters
+// across configurable sliding time windows by storing counts in circular buckets
+// (ring buffers) and maintaining running totals, so lookups are O(1) without
+// retaining every individual request. The monitor exposes a simple API for
+// recording a call and retrieving the current offenders, which higher layers can
+// feed into status endpoints or mitigation logic.
+//
+// Memory usage: each active user consumes roughly ~2KB per tracked call type
+// (window slots + metadata), so about 4k users equates to ~8–10MB of heap. The
+// cleanup watermark keeps the set bounded while remaining configurable.
 package abuse
 
 import (
@@ -61,11 +79,8 @@ type inMemoryCallRateMonitor struct {
 }
 
 const (
-	defaultCleanupAge = 1 * time.Hour
-	defaultMaxResults = 50
-	// cleanupHighWatermark bounds how many user entries we keep before forcing cleanup.
-	// Each active user consumes roughly ~2KB (per call type windows + metadata), so 4,096 users
-	// is on the order of 8–10MB of heap.
+	defaultCleanupAge    = 1 * time.Hour
+	defaultMaxResults    = 50
 	cleanupHighWatermark = 4096
 
 	targetSlotsPerWindow = 60
@@ -272,6 +287,9 @@ func newWindow(slotDuration time.Duration, size int) window {
 	}
 }
 
+// advance moves the window's head to the bucket aligned with `now`, zeroing any
+// expired buckets and updating the running sum so totals always reflect the
+// most recent windowSize worth of observations.
 func (w *window) advance(now time.Time) {
 	if len(w.slots) == 0 {
 		return
