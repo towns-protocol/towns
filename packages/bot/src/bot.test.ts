@@ -22,7 +22,6 @@ import {
     waitForRoleCreated,
     createChannel,
     isDefined,
-    make_ChannelPayload_InteractionRequest,
     genIdBlob,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
@@ -34,8 +33,8 @@ import { z } from 'zod'
 import { stringify as superjsonStringify } from 'superjson'
 import {
     ForwardSettingValue,
-    InteractionRequest,
-    InteractionRequest_Signature_SignatureType,
+    InteractionRequestPayload,
+    InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
     type PlainMessage,
     type SlashCommand,
@@ -57,6 +56,7 @@ import { getBalance, readContract, waitForTransactionReceipt } from 'viem/action
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
+import { UserDevice } from '@towns-protocol/encryption'
 
 const log = dlog('test:bot')
 
@@ -1409,46 +1409,61 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it('bot should be able to send interaction request and user should send encrypted response', async () => {
+    it('bot should be able to send encrypted interaction request and user should send encrypted response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+        const requestId = randomUUID()
+        const interactionRequestContent: PlainMessage<InteractionRequestPayload['content']> = {
             case: 'signature',
             value: {
-                id: randomUUID(),
+                id: requestId,
                 data: '0x1234567890',
                 chainId: '1',
-                type: InteractionRequest_Signature_SignatureType.PERSONAL_SIGN,
+                type: InteractionRequestPayload_Signature_SignatureType.PERSONAL_SIGN,
             },
         }
-        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
+        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequestContent)
+
+        // Wait for Bob to receive the interaction request
         await waitFor(() =>
             expect(
                 bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),
             ).toBeDefined(),
         )
+        // Wait for decryption to complete
+        await waitFor(() => {
+            const event = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
+            if (event?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+                return false
+            }
+            return event?.content?.payload !== undefined
+        })
 
-        const message = bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId)
-        expect(message).toBeDefined()
-        if (message?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
-            throw new Error('message is not an interaction request')
+        const decryptedEvent = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === eventId,
+        )
+        expect(decryptedEvent?.content?.kind).toBe(RiverTimelineEvent.InteractionRequest)
+        if (decryptedEvent?.content?.kind !== RiverTimelineEvent.InteractionRequest) {
+            throw new Error('Event is not an InteractionRequest')
         }
-        const receivedRequest = message.content.request
-        if (!isDefined(receivedRequest.encryptionDevice)) {
-            throw new Error('interaction request is not encrypted')
-        }
-        if (receivedRequest.content.case !== 'signature') {
-            throw new Error('interaction request is not a signature request')
-        }
-        const signatureRequestPayload = receivedRequest.content.value
 
-        // bob should be able to send interaction response to the bot
+        const decryptedPayload = decryptedEvent.content.payload
+        const encryptionDevice = decryptedPayload?.encryptionDevice as UserDevice
+        expect(decryptedPayload).toBeDefined()
+        expect(encryptionDevice).toBeDefined()
+        expect(decryptedPayload?.content.case).toBe('signature')
+        if (decryptedPayload?.content.case === 'signature') {
+            expect(decryptedPayload.content.value.id).toBe(requestId)
+            expect(decryptedPayload.content.value.data).toBe('0x1234567890')
+        }
+
+        // bob should be able to send interaction response to the bot using the decrypted encryption device
         const recipient = bin_fromHexString(botClientAddress)
         const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
             salt: genIdBlob(),
             content: {
                 case: 'signature',
                 value: {
-                    requestId: signatureRequestPayload.id,
+                    requestId: requestId,
                     signature: '0x123222222222',
                 },
             },
@@ -1458,51 +1473,47 @@ describe('Bot', { sequential: true }, () => {
         bot.onInteractionResponse((_h, e) => {
             receivedInteractionResponses.push(e.response)
         })
+
         await bobClient.riverConnection.call(async (client) => {
             // from the client, to the channel, encrypted so that only the bot can read it
             return await client.sendInteractionResponse(
                 channelId,
                 recipient,
                 interactionResponsePayload,
-                receivedRequest.encryptionDevice!,
+                encryptionDevice, // Use the decrypted encryption device from the request
             )
         })
 
         await waitFor(() => receivedInteractionResponses.length > 0)
         expect(receivedInteractionResponses[0].recipient).toEqual(recipient)
-        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(
-            interactionResponsePayload.content.value?.requestId,
-        )
+        expect(receivedInteractionResponses[0].payload.content.value?.requestId).toEqual(requestId)
     })
 
     it('user should NOT be able to send interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+        const interactionRequestContent: PlainMessage<InteractionRequestPayload['content']> = {
             case: 'signature',
             value: {
                 id: randomUUID(),
                 data: '0x1234567890',
                 chainId: '1',
-                type: InteractionRequest_Signature_SignatureType.PERSONAL_SIGN,
+                type: InteractionRequestPayload_Signature_SignatureType.PERSONAL_SIGN,
             },
         }
 
         await bobClient.riverConnection.call(async (client) => {
+            // Try to send an interaction request as a user (should fail)
+            // Note: Even if we try to use the proper sendInteractionRequest method,
+            // it should fail because only apps can send interaction requests
             await expect(
-                client.makeEventAndAddToStream(
-                    channelId,
-                    make_ChannelPayload_InteractionRequest({ content: interactionRequest }),
-                    {
-                        method: 'sendInteractionRequest',
-                    },
-                ),
+                client.sendInteractionRequest(channelId, interactionRequestContent),
             ).rejects.toThrow(/creator is not an app/)
         })
     })
 
     it('bot should be able to send form interaction request', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        const interactionRequest: PlainMessage<InteractionRequest['content']> = {
+        const interactionRequestContent: PlainMessage<InteractionRequestPayload['content']> = {
             case: 'form',
             value: {
                 id: randomUUID(),
@@ -1515,7 +1526,7 @@ describe('Bot', { sequential: true }, () => {
                 ],
             },
         }
-        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequest)
+        const { eventId } = await bot.sendInteractionRequest(channelId, interactionRequestContent)
         await waitFor(() =>
             expect(
                 bobDefaultChannel.timeline.events.value.find((x) => x.eventId === eventId),

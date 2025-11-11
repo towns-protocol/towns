@@ -56,6 +56,9 @@ import {
     InfoResponse,
     MessageInteractionType,
     InteractionResponse,
+    InteractionRequest,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
     SessionKeys,
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
@@ -175,6 +178,7 @@ import {
     isSolanaTransactionReceipt,
     ParsedEvent,
     ExclusionFilter,
+    make_ChannelPayload_InteractionRequest,
     make_ChannelPayload_InteractionResponse,
 } from './types'
 import { applyExclusionFilterToMiniblocks } from './streamUtils'
@@ -2127,6 +2131,49 @@ export class Client
                 value: content,
             },
         })
+    }
+
+    async sendInteractionRequest(
+        streamId: string,
+        content: PlainMessage<InteractionRequestPayload['content']>,
+        recipient?: Uint8Array,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+    ): Promise<{ eventId: string }> {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
+
+        // Create payload with content and encryption device for responses
+        const payload = create(InteractionRequestPayloadSchema, {
+            encryptionDevice: this.userDeviceKey(),
+            content: content,
+        })
+
+        // Encrypt using group encryption (same as messages)
+        const encryptionAlgorithm =
+            stream.view.membershipContent.encryptionAlgorithm ??
+            this.defaultGroupEncryptionAlgorithm
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+            streamId,
+            toBinary(InteractionRequestPayloadSchema, payload),
+            encryptionAlgorithm as GroupEncryptionAlgorithmId,
+        )
+
+        // Create the request matching InteractionResponse structure
+        const request: PlainMessage<InteractionRequest> = {
+            recipient: recipient,
+            encryptedData: encryptedData,
+        }
+
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionRequest(request),
+            {
+                method: 'sendInteractionRequest',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
+            },
+        )
     }
 
     async sendInteractionResponse(

@@ -20,7 +20,7 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
-    InteractionRequest,
+    InteractionRequestPayload,
     InteractionResponse,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
@@ -84,6 +84,7 @@ export type TimelineEvent_OneOf =
     | FulfillmentEvent
     | InceptionEvent
     | InteractionRequestEvent
+    | InteractionRequestEncryptedEvent
     | InteractionResponseEvent
     | KeySolicitationEvent
     | MiniblockHeaderEvent
@@ -126,6 +127,7 @@ export enum RiverTimelineEvent {
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
     InteractionRequest = 'm.interaction_request',
+    InteractionRequestEncrypted = 'm.interaction_request.encrypted',
     InteractionResponse = 'm.interaction_response',
     KeySolicitation = 'm.key_solicitation',
     MemberBlockchainTransaction = 'm.member_blockchain_transaction',
@@ -182,7 +184,12 @@ export interface InceptionEvent {
 
 export interface InteractionRequestEvent {
     kind: RiverTimelineEvent.InteractionRequest
-    request: PlainMessage<InteractionRequest>
+    payload?: PlainMessage<InteractionRequestPayload>
+}
+
+export interface InteractionRequestEncryptedEvent {
+    kind: RiverTimelineEvent.InteractionRequestEncrypted
+    error?: DecryptionSessionError
 }
 
 export interface InteractionResponseEvent {

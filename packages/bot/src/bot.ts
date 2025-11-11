@@ -71,6 +71,8 @@ import {
     type BlockchainTransaction,
     BlockchainTransactionSchema,
     InteractionRequest,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
     ChannelMessage_Post_AttachmentSchema,
@@ -1016,18 +1018,14 @@ export class Bot<
      */
     async sendInteractionRequest(
         streamId: string,
-        content: PlainMessage<InteractionRequest['content']>,
+        content: PlainMessage<InteractionRequestPayload['content']>,
         recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
-        const request: PlainMessage<InteractionRequest> = {
-            recipient,
-            content,
-            encryptionDevice: this.getUserDevice(),
-        }
         const result = await this.client.sendInteractionRequest(
             streamId,
-            request,
+            content,
+            recipient,
             opts,
             this.currentMessageTags,
         )
@@ -1978,15 +1976,46 @@ const buildBotActions = (
 
     const sendInteractionRequest = async (
         streamId: string,
-        request: PlainMessage<InteractionRequest>,
+        content: PlainMessage<InteractionRequestPayload['content']>,
+        recipient?: Uint8Array,
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
-        const payload = make_ChannelPayload_InteractionRequest({
-            ...request,
+        // Get encryption settings (same as sendMessageEvent)
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            recipient ? [userIdFromAddress(recipient)] : [],
+            miniblockInfo,
+        )
+
+        // Create payload with content and encryption device for response
+        const payload = create(InteractionRequestPayloadSchema, {
             encryptionDevice: client.crypto.getUserDevice(),
+            content: content,
         })
-        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
+
+        // Encrypt using group encryption (same as messages)
+        const encryptedData = await client.crypto.encryptGroupEvent(
+            streamId,
+            toBinary(InteractionRequestPayloadSchema, payload),
+            encryptionAlgorithm,
+        )
+
+        // Create the request matching InteractionResponse structure
+        const request: PlainMessage<InteractionRequest> = {
+            recipient: recipient,
+            encryptedData: encryptedData,
+        }
+
+        // Send as InteractionRequest
+        const eventPayload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
     }
 
     /**
