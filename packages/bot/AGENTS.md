@@ -1101,13 +1101,13 @@ bot.onMessage(async (handler, event) => {
 
 Every bot has **TWO different blockchain addresses**:
 
-#### 1. **Bot Wallet (EOA)** - `bot.botId` / `bot.viem.account.address`
-- **Type:** Externally Owned Account (regular wallet)
+#### 1. **Gas Wallet** - `bot.botId` / `bot.viem.account.address`
+- **Type:** Externally Owned Account (EOA - regular wallet)
 - **Role:** Signs transactions to authorize operations
 - **Derived from:** Your `APP_PRIVATE_DATA` credentials
 - **Funding:** ❌ **NOT required** - This wallet just signs, doesn't pay
 
-#### 2. **App Contract (Smart Account)** - `bot.appAddress`
+#### 2. **Bot Treasury Wallet** - `bot.appAddress`
 - **Type:** SimpleAccount smart contract (ERC-4337)
 - **Role:** Executes transactions and pays for everything
 - **Deployed on:** Blockchain when bot is created
@@ -1118,9 +1118,9 @@ Every bot has **TWO different blockchain addresses**:
 ```
 User Action → Bot receives event
      ↓
-Bot Wallet (EOA at bot.botId) SIGNS transaction
+Gas Wallet (EOA at bot.botId) SIGNS transaction
      ↓
-App Contract (Smart Account at bot.appAddress) EXECUTES & PAYS
+Bot Treasury Wallet (Smart Account at bot.appAddress) EXECUTES & PAYS
      ↓
 Transaction completes (gas paid from bot.appAddress balance)
 ```
@@ -1145,19 +1145,19 @@ You **DON'T** need funding for:
 ```typescript
 import { formatEther } from 'viem'
 
-// Check App Contract balance (CRITICAL - this needs funding!)
+// Check Bot Treasury Wallet balance (CRITICAL - this needs funding!)
 const appBalance = await bot.viem.getBalance({ 
   address: bot.appAddress 
 })
-console.log(`App Contract: ${bot.appAddress}`)
+console.log(`Bot Treasury Wallet: ${bot.appAddress}`)
 console.log(`Balance: ${formatEther(appBalance)} ETH`)
 
-// Check Bot Wallet balance (just for reference)
-const botWalletBalance = await bot.viem.getBalance({ 
+// Check Gas Wallet balance (just for reference)
+const gasWalletBalance = await bot.viem.getBalance({ 
   address: bot.viem.account.address 
 })
-console.log(`Bot Wallet: ${bot.viem.account.address}`)
-console.log(`Balance: ${formatEther(botWalletBalance)} ETH`)
+console.log(`Gas Wallet: ${bot.viem.account.address}`)
+console.log(`Balance: ${formatEther(gasWalletBalance)} ETH`)
 ```
 
 **Fund your bot:**
@@ -1173,7 +1173,7 @@ bot.onSlashCommand("balance", async (handler, { channelId }) => {
   await handler.sendMessage(channelId,
 `💰 **Bot Balance**
 
-App Contract (pays for operations): ${formatEther(appBalance)} ETH
+Bot Treasury Wallet (pays for operations): ${formatEther(appBalance)} ETH
 Address: \`${bot.appAddress}\`
 
 ${appBalance === 0n ? '⚠️ **CRITICAL:** Bot needs funding to execute transactions!' : '✅ Bot is funded and ready'}`)
@@ -1217,8 +1217,8 @@ bot.onTip(async (handler, event) => {
 
 ### Key Takeaways
 
-1. **`bot.appAddress`** = Where you send funds (the smart contract that executes transactions)
-2. **`bot.botId`** = Bot's identity (the EOA that signs transactions)
+1. **`bot.appAddress`** (Bot Treasury Wallet) = Where you send funds (the smart contract that executes transactions)
+2. **`bot.botId`** (Gas Wallet) = Bot's identity (the EOA that signs transactions)
 3. **All on-chain operations execute from and pay gas from `bot.appAddress`**
 4. **Monitor `bot.appAddress` balance to avoid "insufficient funds" errors**
 5. **Tips can go to either address - check both in your handlers**
@@ -1635,7 +1635,7 @@ if (isAdmin) {
 **`checkPermission(streamId, userId, permission)`** - Check specific permission
 ```typescript
 // Import Permission enum from SDK
-import { Permission } from '@towns-protocol/sdk'
+import { Permission } from '@towns-protocol/web3'
 
 // Check if user can delete messages
 const canRedact = await handler.checkPermission(
