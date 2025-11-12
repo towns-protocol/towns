@@ -11,25 +11,23 @@ import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol"
 // contracts
 import {AppRegistryBase} from "../registry/AppRegistryBase.sol";
 import {IdentityRegistryBase} from "./IdentityRegistryBase.sol";
-import {ERC721ABase} from "../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
-import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
+import {ERC721A} from "../../../diamond/facets/token/ERC721A/ERC721A.sol";
 
 contract IdentityRegistryFacet is
     IIdentityRegistry,
     AppRegistryBase,
     IdentityRegistryBase,
-    ERC721ABase,
-    Facet
+    ERC721A
 {
     using CustomRevert for bytes4;
 
     function __IdentityRegistryFacet_init() external onlyInitializing {
         __IdentityRegistryFacet_init_unchained();
+        __ERC721A_init_unchained("Towns Bot Agent", "TBA");
     }
 
     function __IdentityRegistryFacet_init_unchained() internal {
         _addInterface(type(IIdentityRegistry).interfaceId);
-        __ERC721ABase_init("Towns Bot Agent", "TBA");
     }
 
     /// @inheritdoc IIdentityRegistry
@@ -66,14 +64,6 @@ contract IdentityRegistryFacet is
     }
 
     /// @inheritdoc IIdentityRegistry
-    function getMetadata(
-        uint256 agentId,
-        string memory metadataKey
-    ) external view returns (bytes memory) {
-        return _getMetadata(agentId, metadataKey);
-    }
-
-    /// @inheritdoc IIdentityRegistry
     function setMetadata(
         uint256 agentId,
         string memory metadataKey,
@@ -91,7 +81,17 @@ contract IdentityRegistryFacet is
     }
 
     /// @inheritdoc IIdentityRegistry
-    function tokenURI(uint256 agentId) public view returns (string memory) {
+    function getMetadata(
+        uint256 agentId,
+        string memory metadataKey
+    ) external view returns (bytes memory) {
+        return _getMetadata(agentId, metadataKey);
+    }
+
+    /// @inheritdoc IIdentityRegistry
+    function tokenURI(
+        uint256 agentId
+    ) public view override(ERC721A, IIdentityRegistry) returns (string memory) {
         if (!_exists(agentId)) revert IdentityRegistry__AgentDoesNotExist();
         return _getAgentUri(agentId);
     }

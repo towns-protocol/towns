@@ -2,6 +2,7 @@
 pragma solidity ^0.8.29;
 
 // interfaces
+import {IIdentityRegistryBase} from "../../facets/identity/IIdentityRegistry.sol";
 
 // libraries
 
@@ -25,6 +26,9 @@ interface ISimpleAppBase {
 
     /// @notice Thrown when the currency is invalid
     error SimpleApp__InvalidCurrency();
+
+    /// @notice Thrown when the agent is already promoted
+    error SimpleApp__AgentAlreadyPromoted();
 
     /// @notice Emitted when the app is initialized
     /// @param owner The owner of the app
@@ -56,16 +60,21 @@ interface ISimpleAppBase {
     /// @param newClient The new client
     event ClientUpdated(address indexed oldClient, address indexed newClient);
 
-    /// @notice Emitted when the agent is published
+    /// @notice Emitted when the agent is promoted
     /// @param owner The owner of the app
     /// @param agentId The ID of the agent
-    event AgentPublished(address indexed owner, uint256 indexed agentId);
+    event AgentPromoted(address indexed owner, uint256 indexed agentId);
 }
 
 interface ISimpleApp is ISimpleAppBase {
-    /// @notice Publishes the agent of the app
-    /// @param uri The URI of the agent
-    function publish(string calldata uri) external returns (uint256 agentId);
+    /// @notice Promotes the agent of the app
+    /// @param agentUri The URI pointing to the agent's registration file (e.g., ipfs://cid or https://domain.com/agent.json)
+    /// @param metadata The metadata of the agent
+    /// @return agentId The ID of the agent
+    function promoteAgent(
+        string calldata agentUri,
+        IIdentityRegistryBase.MetadataEntry[] calldata metadata
+    ) external returns (uint256 agentId);
 
     /// @notice Withdraws the ETH balance of the app to the recipient
     /// @param recipient The address to withdraw the ETH to

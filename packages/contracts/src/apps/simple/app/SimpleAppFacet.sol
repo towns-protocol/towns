@@ -10,7 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
-import {IIdentityRegistry} from "../../facets/identity/IIdentityRegistry.sol";
+import {IIdentityRegistry, IIdentityRegistryBase} from "../../facets/identity/IIdentityRegistry.sol";
 
 // contracts
 import {BaseApp} from "../../../apps/BaseApp.sol";
@@ -29,6 +29,7 @@ import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 
 contract SimpleAppFacet is
     ISimpleApp,
+    IIdentityRegistryBase,
     BaseApp,
     SimpleAccountFacet,
     IntrospectionFacet,
@@ -76,11 +77,16 @@ contract SimpleAppFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISimpleApp
-    function publish(string calldata uri) external onlyOwner returns (uint256 agentId) {
+    function promoteAgent(
+        string calldata agentUri,
+        MetadataEntry[] calldata metadata
+    ) external onlyOwner nonReentrant returns (uint256 agentId) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        if ($.agentId != 0) SimpleApp__AgentAlreadyPromoted.selector.revertWith();
         address coordinator = _getCoordinator();
-        agentId = IIdentityRegistry(coordinator).register(uri);
-        SimpleAppStorage.getLayout().agentId = agentId;
-        emit AgentPublished(msg.sender, agentId);
+        agentId = IIdentityRegistry(coordinator).register(agentUri, metadata);
+        $.agentId = agentId;
+        emit AgentPromoted(msg.sender, agentId);
     }
 
     /// @inheritdoc ISimpleApp
