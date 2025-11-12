@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap"
 )
 
 // Package highusage provides a lightweight in-memory CallRateMonitor that tracks how
@@ -40,6 +41,7 @@ type Config struct {
 	Enabled    bool
 	MaxResults int
 	Thresholds map[CallType][]Threshold
+	Logger     *zap.Logger
 }
 
 // UsageViolation captures the counts that exceeded a specific threshold.
@@ -73,6 +75,7 @@ type inMemoryCallRateMonitor struct {
 	lastCleanup   time.Time
 	cleanupTicker *time.Ticker
 	cleanupStop   chan struct{}
+	logger        *zap.Logger
 }
 
 const (
@@ -102,18 +105,34 @@ func NewCallRateMonitor(cfg Config) CallRateMonitor {
 		cleanupWindow = maxWindow
 	}
 
+	logger := cfg.Logger
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	m := &inMemoryCallRateMonitor{
 		cfg:          cfg,
 		users:        make(map[common.Address]*userStats),
 		cleanupAfter: cleanupWindow,
 		callSpecs:    specs,
 		lastCleanup:  time.Now(),
+		logger:       logger.Named("highusage_monitor"),
 	}
 	if cleanupMinInterval > 0 {
 		m.cleanupTicker = time.NewTicker(cleanupMinInterval)
 		m.cleanupStop = make(chan struct{})
 		go m.cleanupLoop()
 	}
+	callTypeKeys := make([]string, 0, len(specs))
+	for ct := range specs {
+		callTypeKeys = append(callTypeKeys, string(ct))
+	}
+	m.logger.Info(
+		"highusage monitor initialized",
+		zap.Duration("cleanup_after", cleanupWindow),
+		zap.Int("call_type_count", len(callTypeKeys)),
+		zap.Strings("call_types", callTypeKeys),
+	)
 	return m
 }
 
@@ -146,7 +165,6 @@ func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time,
 func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInfo {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.cleanupLocked(now)
 
 	result := make([]HighUsageInfo, 0)
 
@@ -162,6 +180,16 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 				Violations: violations,
 				LastSeen:   stats.lastSeen,
 			})
+			for _, v := range violations {
+				m.logger.Warn(
+					"highusage threshold exceeded",
+					zap.String("addr", addr.Hex()),
+					zap.String("call_type", string(callType)),
+					zap.String("window", v.Window.String()),
+					zap.Uint32("count", v.Count),
+					zap.Uint32("threshold", v.Limit),
+				)
+			}
 		}
 	}
 
@@ -190,11 +218,21 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 	if m.cleanupAfter == 0 {
 		m.cleanupAfter = defaultCleanupAge
 	}
+	before := len(m.users)
 	expireBefore := now.Add(-m.cleanupAfter)
 	for addr, stats := range m.users {
 		if stats.lastSeen.Before(expireBefore) {
 			delete(m.users, addr)
 		}
+	}
+	cleaned := before - len(m.users)
+	if cleaned > 0 {
+		m.logger.Info(
+			"highusage cleanup",
+			zap.Int("cleaned_count", cleaned),
+			zap.Duration("cleanup_after", m.cleanupAfter),
+			zap.Duration("since_last_cleanup", now.Sub(m.lastCleanup)),
+		)
 	}
 	m.lastCleanup = now
 }

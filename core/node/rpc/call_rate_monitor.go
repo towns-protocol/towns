@@ -4,12 +4,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap"
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 )
 
-func newCallRateMonitorFromConfig(cfg config.HighUsageDetectionConfig) highusage.CallRateMonitor {
+func newCallRateMonitorFromConfig(cfg config.HighUsageDetectionConfig, logger *zap.Logger) highusage.CallRateMonitor {
 	thresholds := make(map[highusage.CallType][]highusage.Threshold, len(cfg.Thresholds))
 	for key, values := range cfg.Thresholds {
 		callType := highusage.CallType(key)
@@ -32,6 +33,7 @@ func newCallRateMonitorFromConfig(cfg config.HighUsageDetectionConfig) highusage
 		Enabled:    cfg.Enabled,
 		MaxResults: cfg.MaxResults,
 		Thresholds: thresholds,
+		Logger:     logger,
 	})
 }
 
