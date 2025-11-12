@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/linkdata/deadlock"
 
@@ -106,6 +108,27 @@ func init() {
 		deadlock.Opts.DeadlockTimeout = 5 * time.Minute
 		deadlock.Opts.MaxMapSize = 1024 * 256
 		deadlock.Opts.PrintAllCurrentGoroutines = true
+		deadlock.Opts.OnPotentialDeadlock = func() {
+			// Capture stack trace before panic
+			buf := make([]byte, 1<<16)
+			stackSize := runtime.Stack(buf, true)
+
+			// Log as single structured entry using global zap logger
+			logger := zap.L()
+			if logger != nil {
+				logger.Error("DEADLOCK_DETECTED",
+					zap.String("error", "deadlock_detected"),
+					zap.String("stack_trace", string(buf[:stackSize])),
+				)
+			} else {
+				// Fallback to stderr if logger not initialized
+				fmt.Fprintf(os.Stderr, `{"level":"ERROR","msg":"DEADLOCK_DETECTED","error":"deadlock_detected","stack_trace":"%s"}`+"\n",
+					string(buf[:stackSize]))
+			}
+
+			// Then panic to maintain expected deadlock library behavior
+			panic("deadlock detected")
+		}
 	})
 
 	cobra.OnInitialize(initConfigAndLog)
