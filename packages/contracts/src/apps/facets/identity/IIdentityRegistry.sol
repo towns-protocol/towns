@@ -15,36 +15,41 @@ interface IIdentityRegistryBase {
     /// @dev Used in batch metadata operations during agent registration
     struct MetadataEntry {
         /// @notice The metadata key identifier
-        string key;
-        /// @notice The metadata value stored as bytes for flexibility
-        bytes value;
+        string metadataKey;
+        /// @notice The metadata value stored as bytes
+        bytes metadataValue;
     }
 
     /// @notice Emitted when a new agent is registered in the identity registry
-    /// @param agentId The unique identifier (tokenId) assigned to the agent
-    /// @param tokenURI The URI pointing to the agent's registration file
+    /// @param agentId The unique identifier (agentId) assigned to the agent
+    /// @param agentUri The URI pointing to the agent's registration file
     /// @param owner The address that owns the agent identity
-    event Registered(uint256 indexed agentId, string tokenURI, address indexed owner);
+    event Registered(uint256 indexed agentId, string agentUri, address indexed owner);
 
     /// @notice Emitted when metadata is set or updated for an agent
     /// @param agentId The unique identifier of the agent
     /// @param indexedKey The metadata key as indexed parameter for efficient filtering
-    /// @param key The metadata key as non-indexed parameter for reading
-    /// @param value The metadata value stored as bytes
-    event MetadataSet(uint256 indexed agentId, string indexed indexedKey, string key, bytes value);
+    /// @param metadataKey The metadata key as non-indexed parameter for reading
+    /// @param metadataValue The metadata value stored as bytes
+    event MetadataSet(
+        uint256 indexed agentId,
+        string indexed indexedKey,
+        string metadataKey,
+        bytes metadataValue
+    );
 
     /// @notice Emitted when an agent's URI is updated
     /// @param agentId The unique identifier of the agent
-    /// @param newUri The new URI pointing to the agent's registration file
+    /// @param agentUri The new URI pointing to the agent's registration file
     /// @param updatedBy The address that performed the update
-    event UriUpdated(uint256 indexed agentId, string newUri, address indexed updatedBy);
+    event UriUpdated(uint256 indexed agentId, string agentUri, address indexed updatedBy);
 
     /// @notice Thrown when caller is not authorized to perform the operation
     /// @dev Authorization requires being the owner, an approved operator, or approved for the specific token
     error IdentityRegistry__NotAuthorized();
 
-    /// @notice Thrown when attempting to access a token that does not exist
-    error IdentityRegistry__TokenDoesNotExist();
+    /// @notice Thrown when attempting to access an agent that does not exist
+    error IdentityRegistry__AgentDoesNotExist();
 
     /// @notice Thrown when attempting to register an agent that is not registered
     error IdentityRegistry__AgentNotRegistered();
@@ -52,8 +57,8 @@ interface IIdentityRegistryBase {
     /// @notice Thrown when attempting to register an agent that is banned
     error IdentityRegistry__AgentBanned();
 
-    /// @notice Thrown when attempting to register an agent that is already published
-    error IdentityRegistry__AgentAlreadyPublished();
+    /// @notice Thrown when attempting to register an agent that is already promoted
+    error IdentityRegistry__AgentAlreadyPromoted();
 }
 
 /// @title IIdentityRegistry
@@ -69,47 +74,54 @@ interface IIdentityRegistry is IIdentityRegistryBase {
 
     /// @notice Register a new agent identity with a tokenURI
     /// @dev Mints a new ERC-721 token to msg.sender and sets the tokenURI
-    /// @param tokenUri The URI pointing to the agent's registration file (e.g., ipfs://cid or https://domain.com/agent.json)
+    /// @param agentUri The URI pointing to the agent's registration file (e.g., ipfs://cid or https://domain.com/agent.json)
     /// @return agentId The unique identifier assigned to the newly registered agent
-    function register(string calldata tokenUri) external returns (uint256 agentId);
+    function register(string calldata agentUri) external returns (uint256 agentId);
 
     /// @notice Register a new agent identity with tokenURI and metadata
     /// @dev Mints a new ERC-721 token to msg.sender, sets the tokenURI, and stores metadata entries.
     ///      This is the most complete registration method for agents with immediate metadata.
-    /// @param tokenUri The URI pointing to the agent's registration file
-    /// @param metadata Array of key-value pairs to store as on-chain metadata
+    /// @param agentUri The URI pointing to the agent's registration file
+    /// @param metadata Array of metadata entries to store as on-chain metadata
     /// @return agentId The unique identifier assigned to the newly registered agent
     function register(
-        string calldata tokenUri,
+        string calldata agentUri,
         MetadataEntry[] calldata metadata
     ) external returns (uint256 agentId);
 
-    /// @notice Retrieve metadata value for a specific agent and key
-    /// @dev Returns empty bytes if the key does not exist
+    /// @notice Retrieve metadata value for a specific agent and metadataKey
+    /// @dev Returns empty bytes if the metadataKey does not exist
     /// @param agentId The unique identifier of the agent
-    /// @param key The metadata key to retrieve
+    /// @param metadataKey The metadata key to retrieve
     /// @return The metadata value stored as bytes
-    function getMetadata(uint256 agentId, string memory key) external view returns (bytes memory);
+    function getMetadata(
+        uint256 agentId,
+        string memory metadataKey
+    ) external view returns (bytes memory);
 
     /// @notice Set or update metadata for a specific agent
     /// @dev Only callable by the agent owner, approved operator, or token-specific approved address.
     ///      Emits MetadataSet event.
     /// @param agentId The unique identifier of the agent
-    /// @param key The metadata key to set
-    /// @param value The metadata value to store as bytes
-    function setMetadata(uint256 agentId, string memory key, bytes memory value) external;
+    /// @param metadataKey The metadata key to set
+    /// @param metadataValue The metadata value to store as bytes
+    function setMetadata(
+        uint256 agentId,
+        string memory metadataKey,
+        bytes memory metadataValue
+    ) external;
 
     /// @notice Update the tokenURI for an agent
     /// @dev Only callable by the agent owner, approved operator, or token-specific approved address.
     ///      Emits UriUpdated event. Useful when agent registration data changes.
     /// @param agentId The unique identifier of the agent
-    /// @param newUri The new URI pointing to the agent's updated registration file
-    function setAgentUri(uint256 agentId, string calldata newUri) external;
+    /// @param agentUri The new URI pointing to the agent's updated registration file
+    function setAgentUri(uint256 agentId, string calldata agentUri) external;
 
     /// @notice Get the tokenURI for an agent
     /// @dev Returns the URI pointing to the agent's registration file.
     ///      Reverts if the token does not exist.
-    /// @param tokenId The unique identifier of the agent (ERC-721 tokenId)
+    /// @param agentId The unique identifier of the agent (ERC-721 tokenId)
     /// @return The URI string pointing to the agent's registration file
-    function tokenURI(uint256 tokenId) external view returns (string memory);
+    function tokenURI(uint256 agentId) external view returns (string memory);
 }

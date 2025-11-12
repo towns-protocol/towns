@@ -5,20 +5,31 @@ pragma solidity ^0.8.23;
 import {IIdentityRegistry} from "./IIdentityRegistry.sol";
 
 // libraries
-import {AppRegistryStorage} from "../registry/AppRegistryStorage.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
+import {AppRegistryBase} from "../registry/AppRegistryBase.sol";
 import {IdentityRegistryBase} from "./IdentityRegistryBase.sol";
 import {ERC721ABase} from "../../../diamond/facets/token/ERC721A/ERC721ABase.sol";
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 
-contract IdentityRegistryFacet is IIdentityRegistry, IdentityRegistryBase, ERC721ABase, Facet {
+contract IdentityRegistryFacet is
+    IIdentityRegistry,
+    AppRegistryBase,
+    IdentityRegistryBase,
+    ERC721ABase,
+    Facet
+{
     using CustomRevert for bytes4;
 
     function __IdentityRegistryFacet_init() external onlyInitializing {
+        __IdentityRegistryFacet_init_unchained();
+    }
+
+    function __IdentityRegistryFacet_init_unchained() internal {
         _addInterface(type(IIdentityRegistry).interfaceId);
-        __ERC721ABase_init("AgentIdentity", "AID");
+        __ERC721ABase_init("Towns Bot Agent", "TBA");
     }
 
     /// @inheritdoc IIdentityRegistry
@@ -30,71 +41,71 @@ contract IdentityRegistryFacet is IIdentityRegistry, IdentityRegistryBase, ERC72
     }
 
     /// @inheritdoc IIdentityRegistry
-    function register(string calldata tokenUri) external returns (uint256 agentId) {
+    function register(string calldata agentUri) external returns (uint256 agentId) {
         _verifyAgent();
         agentId = _nextTokenId();
         _mint(msg.sender, 1);
-        _setTokenUri(agentId, tokenUri);
-        emit Registered(agentId, tokenUri, msg.sender);
+        _setAgentUri(agentId, agentUri);
+        emit Registered(agentId, agentUri, msg.sender);
     }
 
     /// @inheritdoc IIdentityRegistry
     function register(
-        string calldata tokenUri,
+        string calldata agentUri,
         MetadataEntry[] calldata metadata
     ) external returns (uint256 agentId) {
         _verifyAgent();
         agentId = _nextTokenId();
         _mint(msg.sender, 1);
-        _setTokenUri(agentId, tokenUri);
-        emit Registered(agentId, tokenUri, msg.sender);
+        _setAgentUri(agentId, agentUri);
+        emit Registered(agentId, agentUri, msg.sender);
 
         for (uint256 i; i < metadata.length; ++i) {
-            _setMetadata(agentId, metadata[i].key, metadata[i].value);
+            _setMetadata(agentId, metadata[i].metadataKey, metadata[i].metadataValue);
         }
     }
 
     /// @inheritdoc IIdentityRegistry
-    function getMetadata(uint256 agentId, string memory key) external view returns (bytes memory) {
-        return _getMetadata(agentId, key);
+    function getMetadata(
+        uint256 agentId,
+        string memory metadataKey
+    ) external view returns (bytes memory) {
+        return _getMetadata(agentId, metadataKey);
     }
 
     /// @inheritdoc IIdentityRegistry
-    function setMetadata(uint256 agentId, string memory key, bytes memory value) external {
+    function setMetadata(
+        uint256 agentId,
+        string memory metadataKey,
+        bytes memory metadataValue
+    ) external {
         _verifyAuthorization(agentId);
-        _setMetadata(agentId, key, value);
+        _setMetadata(agentId, metadataKey, metadataValue);
     }
 
     /// @inheritdoc IIdentityRegistry
-    function setAgentUri(uint256 agentId, string calldata newUri) external {
+    function setAgentUri(uint256 agentId, string calldata agentUri) external {
         _verifyAuthorization(agentId);
-        _setTokenUri(agentId, newUri);
-        emit UriUpdated(agentId, newUri, msg.sender);
+        _setAgentUri(agentId, agentUri);
+        emit UriUpdated(agentId, agentUri, msg.sender);
     }
 
     /// @inheritdoc IIdentityRegistry
-    function tokenURI(uint256 tokenId) public view returns (string memory) {
-        if (!_exists(tokenId)) revert IdentityRegistry__TokenDoesNotExist();
-        return _getTokenUri(tokenId);
+    function tokenURI(uint256 agentId) public view returns (string memory) {
+        if (!_exists(agentId)) revert IdentityRegistry__AgentDoesNotExist();
+        return _getAgentUri(agentId);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTERNAL FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @notice Verifies that the caller has a stake in the app
-    function _verifyStake() internal view {
-        // TODO: Implement stake verification
-    }
-
     function _verifyAgent() internal view {
         if (_balanceOf(msg.sender) > 0)
-            IdentityRegistry__AgentAlreadyPublished.selector.revertWith();
-
-        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
-        if ($.apps[msg.sender].app == address(0))
+            IdentityRegistry__AgentAlreadyPromoted.selector.revertWith();
+        if (_getLatestAppId(msg.sender) == EMPTY_UID)
             IdentityRegistry__AgentNotRegistered.selector.revertWith();
-        if ($.apps[msg.sender].isBanned) IdentityRegistry__AgentBanned.selector.revertWith();
+        if (_isBanned(msg.sender)) IdentityRegistry__AgentBanned.selector.revertWith();
     }
 
     function _verifyAuthorization(uint256 agentId) internal view {

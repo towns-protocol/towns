@@ -10,20 +10,23 @@ import {IdentityRegistryStorage} from "./IdentityRegistryStorage.sol";
 // contracts
 
 abstract contract IdentityRegistryBase is IIdentityRegistryBase {
-    function _setTokenUri(uint256 agentId, string memory tokenUri) internal {
-        IdentityRegistryStorage.getLayout().tokenUri[agentId] = tokenUri;
+    function _setAgentUri(uint256 agentId, string memory agentUri) internal {
+        IdentityRegistryStorage.getLayout().agentUri[agentId] = agentUri;
     }
 
-    function _getTokenUri(uint256 agentId) internal view returns (string memory) {
-        return IdentityRegistryStorage.getLayout().tokenUri[agentId];
+    function _getAgentUri(uint256 agentId) internal view returns (string memory) {
+        return IdentityRegistryStorage.getLayout().agentUri[agentId];
     }
 
-    function _setMetadata(uint256 agentId, string memory key, bytes memory value) internal {
-        IdentityRegistryStorage.getLayout().metadata[agentId][key] = value;
-        emit MetadataSet(agentId, key, key, value);
+    function _setMetadata(uint256 agentId, string memory metadataKey, bytes memory value) internal {
+        IdentityRegistryStorage.getLayout().metadata[agentId][metadataKey] = value;
+        emit MetadataSet(agentId, metadataKey, metadataKey, value);
     }
 
-    function _getMetadata(uint256 agentId, string memory key) internal view returns (bytes memory) {
-        return IdentityRegistryStorage.getLayout().metadata[agentId][key];
+    function _getMetadata(
+        uint256 agentId,
+        string memory metadataKey
+    ) internal view returns (bytes memory) {
+        return IdentityRegistryStorage.getLayout().metadata[agentId][metadataKey];
     }
 }

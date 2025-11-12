@@ -15,8 +15,8 @@ library IdentityRegistryStorage {
     struct Layout {
         // agentId => key => value
         mapping(uint256 => mapping(string => bytes)) metadata;
-        // token uri
-        mapping(uint256 => string) tokenUri;
+        // agent uri
+        mapping(uint256 => string) agentUri;
     }
 
     function getLayout() internal pure returns (Layout storage $) {
