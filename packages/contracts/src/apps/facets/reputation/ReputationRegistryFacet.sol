@@ -41,14 +41,13 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         bytes32 tag1,
         bytes32 tag2,
         string calldata comment,
-        bytes32 commentHash,
-        bytes calldata feedbackAuth
+        bytes32 commentHash
     ) external {
         Feedback memory feedback;
         feedback.rating = rating;
         feedback.tag1 = tag1;
         feedback.tag2 = tag2;
-        _giveFeedback(agentId, feedback, feedbackAuth);
+        _giveFeedback(agentId, feedback);
         emit NewFeedback(agentId, msg.sender, rating, tag1, tag2, comment, commentHash);
     }
 

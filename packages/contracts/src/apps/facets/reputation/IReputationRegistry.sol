@@ -27,8 +27,8 @@ interface IReputationRegistryBase {
     event NewFeedback(
         uint256 indexed agentId,
         address indexed clientAddress,
-        uint8 score,
-        bytes32 indexed tag1,
+        uint8 indexed score,
+        bytes32 tag1,
         bytes32 tag2,
         string feedbackUri,
         bytes32 feedbackHash
@@ -62,15 +62,13 @@ interface IReputationRegistry is IReputationRegistryBase {
     /// @param tag2 The second tag of the feedback
     /// @param feedbackUri The URI of the feedback
     /// @param feedbackHash The hash of the feedback
-    /// @param feedbackAuth The authentication of the feedback
     function giveFeedback(
         uint256 agentId,
         uint8 score,
         bytes32 tag1,
         bytes32 tag2,
         string calldata feedbackUri,
-        bytes32 feedbackHash,
-        bytes calldata feedbackAuth
+        bytes32 feedbackHash
     ) external;
 
     /// @notice Revokes a feedback

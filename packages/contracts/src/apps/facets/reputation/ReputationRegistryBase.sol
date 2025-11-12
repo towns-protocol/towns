@@ -26,13 +26,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
     error Reputation__InvalidScore();
     error Reputation__AgentNotExists();
     error Reputation__SelfFeedbackNotAllowed();
-    error Reputation__InvalidAuthLength();
-    error Reputation__InvalidAgentId();
-    error Reputation__InvalidReviewerAddress();
-    error Reputation__AuthExpired();
-    error Reputation__InvalidChainId();
-    error Reputation__InvalidIdentityRegistry();
-    error Reputation__IndexLimitExceeded();
     error Reputation__InvalidSignature();
     error Reputation__InvalidSignerAddress();
     error Reputation__InvalidFeedbackIndex();
@@ -49,14 +42,13 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
 
     // Total: 4 storage slots (saves 1 slot per entry)
 
-    function _giveFeedback(uint256 agentId, Feedback memory feedback, bytes calldata) internal {
+    function _giveFeedback(uint256 agentId, Feedback memory feedback) internal {
         if (feedback.rating > 100 || feedback.rating < 0)
             Reputation__InvalidScore.selector.revertWith();
         if (!_exists(agentId)) Reputation__AgentNotExists.selector.revertWith();
 
         address agentAddress = _ownerOf(agentId);
         _verifySelfFeedback(agentAddress, agentId);
-        // _verifyFeedbackAuth(agentId, msg.sender, feedbackAuth);
 
         ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
         uint64 currentIndex = $.lastIndex[agentId][msg.sender] + 1;
@@ -446,42 +438,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         for (uint256 i; i < clientList.length; ++i) {
             maxCount += $.lastIndex[agentId][clientList[i]];
         }
-    }
-
-    function _verifyFeedbackAuth(
-        uint256 agentId,
-        address reviewerAddress,
-        bytes calldata feedbackAuth
-    ) internal view virtual {
-        if (feedbackAuth.length < 289) Reputation__InvalidAuthLength.selector.revertWith();
-
-        FeedbackAuth memory auth;
-        (
-            auth.agentId,
-            auth.reviewerAddress,
-            auth.indexLimit,
-            auth.expiry,
-            auth.chainId,
-            auth.identityRegistry,
-            auth.signerAddress
-        ) = abi.decode(
-            feedbackAuth[:224],
-            (uint256, address, uint64, uint256, uint256, address, address)
-        );
-
-        if (auth.agentId != agentId) Reputation__InvalidAgentId.selector.revertWith();
-        if (auth.reviewerAddress != reviewerAddress)
-            Reputation__InvalidReviewerAddress.selector.revertWith();
-        if (block.timestamp >= auth.expiry) Reputation__AuthExpired.selector.revertWith();
-        if (auth.chainId != block.chainid) Reputation__InvalidChainId.selector.revertWith();
-        if (auth.identityRegistry != address(this))
-            Reputation__InvalidIdentityRegistry.selector.revertWith();
-        if (
-            auth.indexLimit <
-            ReputationRegistryStorage.getLayout().lastIndex[agentId][reviewerAddress] + 1
-        ) Reputation__IndexLimitExceeded.selector.revertWith();
-
-        _verifySignature(auth, feedbackAuth[224:]);
     }
 
     function _verifySignature(FeedbackAuth memory auth, bytes calldata signature) internal view {
