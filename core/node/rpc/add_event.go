@@ -12,8 +12,8 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/abuse"
 	rpcHeaders "github.com/towns-protocol/towns/core/node/rpc/headers"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -52,7 +52,7 @@ func (s *Service) localAddEvent(
 	if err != nil {
 		return nil, err
 	} else {
-		s.recordCallRate(abuse.CallTypeEvent, parsedEvent.Event.CreatorAddress)
+		s.recordCallRate(highusage.CallTypeEvent, parsedEvent.Event.CreatorAddress)
 		return connect.NewResponse(&AddEventResponse{
 			NewEvents: newEvents,
 		}), nil

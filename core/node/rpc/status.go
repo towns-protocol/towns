@@ -181,7 +181,7 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 	}
 
 	if s.callRateMonitor != nil {
-		resp.Abuse = convertAbuserInfo(s.callRateMonitor.GetAbuserInfo(time.Now()))
+		resp.HighUsage = convertHighUsageInfo(s.callRateMonitor.GetHighUsageInfo(time.Now()))
 	}
 
 	return resp, status
