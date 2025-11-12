@@ -35,6 +35,7 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         $.responseSchemaId = responseSchemaId;
     }
 
+    /// @inheritdoc IReputationRegistry
     function giveFeedback(
         uint256 agentId,
         uint8 rating,
@@ -51,10 +52,12 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         emit NewFeedback(agentId, msg.sender, rating, tag1, tag2, comment, commentHash);
     }
 
+    /// @inheritdoc IReputationRegistry
     function revokeFeedback(uint256 agentId, uint64 feedbackIndex) external {
         _revokeFeedback(agentId, feedbackIndex);
     }
 
+    /// @inheritdoc IReputationRegistry
     function appendResponse(
         uint256 agentId,
         address reviewerAddress,
@@ -65,10 +68,12 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         _appendResponse(agentId, reviewerAddress, feedbackIndex, comment, commmentHash);
     }
 
+    /// @inheritdoc IReputationRegistry
     function getIdentityRegistry() external view returns (address) {
         return address(this);
     }
 
+    /// @inheritdoc IReputationRegistry
     function getSummary(
         uint256 agentId,
         address[] calldata clientAddresses,
@@ -78,6 +83,7 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         return _getSummary(agentId, clientAddresses, tag1, tag2);
     }
 
+    /// @inheritdoc IReputationRegistry
     function readFeedback(
         uint256 agentId,
         address clientAddress,
@@ -87,6 +93,7 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         return (feedback.rating, feedback.tag1, feedback.tag2, revoked);
     }
 
+    /// @inheritdoc IReputationRegistry
     function readAllFeedback(
         uint256 agentId,
         address[] calldata clientAddresses,
@@ -120,6 +127,7 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         );
     }
 
+    /// @inheritdoc IReputationRegistry
     function getResponseCount(
         uint256 agentId,
         address clientAddress,
@@ -129,10 +137,12 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         return _getResponseCount(agentId, clientAddress, feedbackIndex, responders);
     }
 
+    /// @inheritdoc IReputationRegistry
     function getClients(uint256 agentId) external view returns (address[] memory) {
         return _getClients(agentId);
     }
 
+    /// @inheritdoc IReputationRegistry
     function getLastIndex(uint256 agentId, address clientAddress) external view returns (uint64) {
         return _getLastIndex(agentId, clientAddress);
     }
