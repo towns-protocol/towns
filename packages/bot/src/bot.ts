@@ -169,6 +169,11 @@ type LinkAttachment = {
     }
 }
 
+type MiniAppAttachment = {
+    type: 'miniapp'
+    url: string
+}
+
 type TickerAttachment = {
     type: 'ticker'
     address: string
@@ -184,7 +189,11 @@ export type MessageOpts = {
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
     attachments?: Array<
-        ImageAttachment | ChunkedMediaAttachment | LinkAttachment | TickerAttachment
+        | ImageAttachment
+        | ChunkedMediaAttachment
+        | LinkAttachment
+        | TickerAttachment
+        | MiniAppAttachment
     >
 }
 
@@ -1584,6 +1593,17 @@ const buildBotActions = (
         })
     }
 
+    const createMiniAppAttachment = (
+        attachment: MiniAppAttachment,
+    ): PlainMessage<ChannelMessage_Post_Attachment> => {
+        return create(ChannelMessage_Post_AttachmentSchema, {
+            content: {
+                case: 'miniapp',
+                value: { url: attachment.url },
+            },
+        })
+    }
+
     const ensureOutboundSession = async (
         streamId: string,
         encryptionAlgorithm: GroupEncryptionAlgorithmId,
@@ -1737,6 +1757,11 @@ const buildBotActions = (
                         processedAttachments.push(result)
                         break
                     }
+                    case 'miniapp': {
+                        const result = createMiniAppAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
                         logNever(attachment)
                 }
@@ -1793,6 +1818,11 @@ const buildBotActions = (
                     }
                     case 'ticker': {
                         const result = createTickerAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'miniapp': {
+                        const result = createMiniAppAttachment(attachment)
                         processedAttachments.push(result)
                         break
                     }
