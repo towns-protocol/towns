@@ -9,6 +9,7 @@ import (
 )
 
 func TestMonitorPerMinuteThreshold(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -38,6 +39,7 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 }
 
 func TestMonitorPerDayThreshold(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -64,6 +66,7 @@ func TestMonitorPerDayThreshold(t *testing.T) {
 }
 
 func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -86,6 +89,7 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 }
 
 func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -110,6 +114,7 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 }
 
 func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -130,6 +135,7 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 }
 
 func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
@@ -149,6 +155,7 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 }
 
 func TestMonitorConfigValidation(t *testing.T) {
+	t.Parallel()
 	cfg := Config{
 		Enabled: true,
 		Thresholds: map[CallType][]Threshold{
