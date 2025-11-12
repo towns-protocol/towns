@@ -5,12 +5,11 @@ title: Onchain Interactions
 Towns bots are onchain apps powered by ERC-4337 (Account Abstraction) that can interact with any smart contract using ERC-7821 batch execution.
 
 The bot exposes `viem` client and app address for direct blockchain interactions:
-- `bot.viem` - Viem client with Account for reading/writing contracts
-- `bot.appAddress` - The bot's app contract address (SimpleAccount)
+- `bot.viem` - Viem client with your gas wallet account for signing transactions
+- `bot.appAddress` - Your bot's treasury wallet address (SimpleAccount)
 
 <Note>
-Your bot wallet will need to be funded with Base ETH to execute transactions.
-You receive the wallet credentials after creating your bot.
+Your **gas wallet** (`bot.viem.account`) needs Base ETH to pay for gas fees when executing transactions. See [Understanding Your Bot's Wallet Architecture](/build/bots/getting-started#understanding-your-bots-wallet-architecture) for details.
 </Note>
 
 ## Configuration
@@ -42,76 +41,98 @@ We recommend getting a RPC URL from a reputable provider, like [Alchemy](https:/
 
 ## Reading from Contracts
 
-Use `readContract` to read from any contract without making a transaction:
+Read from any contract without making a transaction:
 
 ```ts
 import { readContract } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
 
-// Read from any contract
-const balance = await readContract(bot.viem, {
-  address: '0x00000000A22C618fd6b4D7E9A335C4B96B189a38',
-  abi: erc20Abi,
-  functionName: 'balanceOf',
-  args: [userAddress]
+const owner = await readContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'moduleOwner',
+  args: []
 })
 ```
 
 ## Writing to Contracts
 
-### ERC-7821
+### execute (Primary Method)
 
-#### execute
-
-Use `execute` for any onchain interaction - swapping, staking, NFTs, DeFi, etc.
+Use `execute` from ERC-7821 for any onchain interaction. This is your main tool for blockchain operations.
 
 **Single Operation:**
 
 ```ts
 import { execute } from 'viem/experimental/erc7821'
 import { parseEther } from 'viem'
+import { waitForTransactionReceipt } from 'viem/actions'
 
-// Transfer tokens
-const hash = await execute(bot.viem, {
-  address: bot.appAddress,
-  account: bot.viem.account,
-  calls: [{
-    to: tokenAddress,
-    abi: erc20Abi,
-    functionName: 'transfer',
-    args: [recipient, parseEther('100')]
-  }]
+bot.onSlashCommand('transfer', async (handler, { channelId, mentions, args }) => {
+  const recipient = mentions[0]?.userId
+  const amount = parseEther(args[0])
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [{
+      to: tokenAddress,
+      abi: erc20Abi,
+      functionName: 'transfer',
+      args: [recipient, amount]
+    }]
+  })
+
+  await waitForTransactionReceipt(bot.viem, { hash })
+  await handler.sendMessage(channelId, `Transferred! Tx: ${hash}`)
 })
 ```
 
 **Batch Operations:**
 
-Execute multiple operations in a single atomic transaction:
+Execute multiple operations atomically (all succeed or all fail):
 
 ```ts
-// Approve and transfer tokens
-const hash = await execute(bot.viem, {
-  address: bot.appAddress,
-  account: bot.viem.account,
-  calls: [
-    {
-      to: tokenAddress,
-      abi: erc20Abi,
-      functionName: 'approve',
-      args: [spenderAddress, amount]
-    },
-    {
-      to: tokenAddress,
-      abi: erc20Abi,
-      functionName: 'transferFrom',
-      args: [bot.appAddress, recipientAddress, amount]
-    }
-  ]
+import { execute } from 'viem/experimental/erc7821'
+import { parseEther } from 'viem'
+import { waitForTransactionReceipt } from 'viem/actions'
+
+bot.onSlashCommand('defi', async (handler, { channelId, args }) => {
+  const amount = parseEther(args[0])
+
+  const hash = await execute(bot.viem, {
+    address: bot.appAddress,
+    account: bot.viem.account,
+    calls: [
+      {
+        to: tokenAddress,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [dexAddress, amount]
+      },
+      {
+        to: dexAddress,
+        abi: dexAbi,
+        functionName: 'swap',
+        args: [tokenIn, tokenOut, amount]
+      },
+      {
+        to: stakingAddress,
+        abi: stakingAbi,
+        functionName: 'stake',
+        args: [amount]
+      }
+    ]
+  })
+
+  await waitForTransactionReceipt(bot.viem, { hash })
+  await handler.sendMessage(channelId, `Swapped and staked! Tx: ${hash}`)
 })
 ```
 
-#### executeBatch
+### executeBatch
 
-Use `executeBatch` for advanced use cases requiring batches of batches:
+For advanced use cases requiring batches of batches:
 
 ```ts
 import { executeBatch } from 'viem/experimental/erc7821'
@@ -129,36 +150,60 @@ const hash = await executeBatch(bot.viem, {
 
 ### writeContract
 
-Use `writeContract` **only** for your bot's own contract operations. Can be helpful if you have a custom contract for your bot.
-
-## Error Handling
-
-Always wrap contract interactions in try-catch blocks:
+Use **only** for your bot's SimpleAccount contract operations:
 
 ```ts
-bot.onSlashCommand('swap', async (handler, { channelId, args }) => {
-  try {
-    const hash = await execute(bot.viem, {
-      address: bot.appAddress,
-      account: bot.viem.account,
-      calls: [/* ... */]
-    })
+import { writeContract, waitForTransactionReceipt } from 'viem/actions'
+import simpleAppAbi from '@towns-protocol/bot/simpleAppAbi'
+import { parseEther, zeroAddress } from 'viem'
 
-    await waitForTransactionReceipt(bot.viem, { hash })
-    await handler.sendMessage(channelId, `✅ Success! Tx: ${hash}`)
-    
-  } catch (error) {
-    console.error('Transaction failed:', error)
-    await handler.sendMessage(
-      channelId, 
-      `❌ Transaction failed: ${error.message}`
-    )
+const hash = await writeContract(bot.viem, {
+  address: bot.appAddress,
+  abi: simpleAppAbi,
+  functionName: 'sendCurrency',
+  args: [recipientAddress, zeroAddress, parseEther('0.01')]
+})
+
+await waitForTransactionReceipt(bot.viem, { hash })
+```
+
+## Utility Functions
+
+### getSmartAccountFromUserId
+
+Get a user's smart account address from their Towns user ID.
+
+```ts
+import { getSmartAccountFromUserId } from '@towns-protocol/bot'
+
+bot.onSlashCommand('wallet', async (handler, event) => {
+  const wallet = await getSmartAccountFromUserId(bot, {
+    userId: event.userId
+  })
+
+  if (wallet) {
+    await handler.sendMessage(event.channelId, `Your wallet: ${wallet}`)
+  } else {
+    await handler.sendMessage(event.channelId, 'No smart account found')
   }
 })
 ```
 
-## Next Steps
+Returns `null` if no smart account exists.
 
-- Learn more about [viem documentation](https://viem.sh/docs/getting-started)
-- Explore [ERC-7821 batch execution](https://viem.sh/experimental/erc7821)
-- Read about [ERC-4337 Account Abstraction](https://eips.ethereum.org/EIPS/eip-4337)
+**Use cases:**
+- Send tokens/NFTs to users
+- Check on-chain balances
+- Airdrop rewards
+- Verify asset ownership
+
+## When to Use Each Method
+
+- **`readContract`** - Read from any contract (no transaction, no gas)
+- **`writeContract`** - Bot's SimpleAccount contract operations only
+- **`execute`** - Primary method for any onchain interaction
+  - Tips, swaps, staking, NFT minting, DeFi
+  - Single operations or batch operations
+  - Atomic execution (all succeed or all fail)
+  - Gas optimized for batches
+- **`executeBatch`** - Advanced batching (batches of batches)

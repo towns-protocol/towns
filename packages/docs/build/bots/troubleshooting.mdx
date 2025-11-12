@@ -1,0 +1,132 @@
+---
+title: Troubleshooting
+---
+
+Common issues and solutions for Towns bots.
+
+## Bot Doesn't Respond
+
+**Check:**
+1. ✅ `APP_PRIVATE_DATA` and `JWT_SECRET` are correct
+2. ✅ Webhook URL is accessible: `https://your-bot.com/webhook`
+3. ✅ Bot is installed in the space (Space Settings → Bots)
+4. ✅ Forwarding setting is correct:
+   - **"All Messages"** - Receives everything
+   - **"Mentions, Commands, Replies & Reactions"** (Default) - Only @mentions, commands, replies
+   - **"No Messages"** - Receives nothing
+
+**Test webhook:**
+```bash
+curl https://your-bot.com/health  # Should respond
+```
+
+## Lost Context Between Events
+
+<Warning>
+The bot framework is stateless. Each event is isolated - no access to previous messages or conversation history.
+</Warning>
+
+**Solution:** Store context externally:
+
+```ts
+const messageCache = new Map()
+
+bot.onMessage(async (handler, event) => {
+  messageCache.set(event.eventId, event.message)
+  
+  if (event.replyId) {
+    const original = messageCache.get(event.replyId)
+    // Now you have the context
+  }
+})
+```
+
+For production, use a database. See [Storing State](/build/bots/external-interactions#storing-state).
+
+## Transaction Errors
+
+```
+Error: insufficient funds for gas
+```
+
+**Problem:** Your bot treasury wallet (`bot.appAddress`) needs ETH for gas.
+
+**Solution:**
+
+```ts
+import { formatEther } from 'viem'
+
+// 1. Check balance
+const balance = await bot.viem.getBalance({ address: bot.appAddress })
+console.log(`Balance: ${formatEther(balance)} ETH`)
+console.log(`Fund this address: ${bot.appAddress}`)
+
+// 2. Send ETH to bot.appAddress from any wallet
+
+// 3. Verify
+const newBalance = await bot.viem.getBalance({ address: bot.appAddress })
+```
+
+<Note>
+Fund `bot.appAddress` (the app contract), not `bot.botId` (the signer). See [Wallet Architecture](/build/bots/getting-started#understanding-your-bots-wallet-architecture).
+</Note>
+
+## Can't Mention Users
+
+```ts
+// ❌ Wrong
+await handler.sendMessage(channelId, "@username hello")
+
+// ✅ Correct
+await handler.sendMessage(channelId, "Hello <@0x1234...>", {
+  mentions: [{
+    userId: "0x1234...",
+    displayName: "username"
+  }]
+})
+```
+
+## Slash Commands Not Showing
+
+**Fix:**
+
+```ts
+// Pass commands to makeTownsBot
+import commands from './commands'
+const bot = await makeTownsBot(privateData, jwtSecret, { commands })
+
+// Restart bot after changing commands
+```
+
+## Rate Limiting
+
+**Use a better RPC:**
+
+```ts
+const bot = await makeTownsBot(privateData, jwtSecret, {
+  baseRpcUrl: 'https://base-mainnet.g.alchemy.com/v2/YOUR_KEY'
+})
+```
+
+Get free RPC from [Alchemy](https://alchemy.com) or [Infura](https://infura.io).
+
+## Bot Crashes
+
+**Add error handling:**
+
+```ts
+bot.onMessage(async (handler, event) => {
+  try {
+    await someAsyncOperation()
+  } catch (error) {
+    console.error('Error:', error)
+    await handler.sendMessage(event.channelId, 'Something went wrong')
+  }
+})
+```
+
+## Next Steps
+
+- Review [bot architecture](/build/bots/introduction)
+- Learn about [stateless design](/build/bots/events#understanding-bot-state-and-context)
+- Set up [storage](/build/bots/external-interactions#storing-state)
