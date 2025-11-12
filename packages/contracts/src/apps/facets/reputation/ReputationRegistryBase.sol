@@ -40,15 +40,13 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         bytes32 tag2;
     }
 
-    // Total: 4 storage slots (saves 1 slot per entry)
-
     function _giveFeedback(uint256 agentId, Feedback memory feedback) internal {
         if (feedback.rating > 100 || feedback.rating < 0)
             Reputation__InvalidScore.selector.revertWith();
         if (!_exists(agentId)) Reputation__AgentNotExists.selector.revertWith();
 
         address agentAddress = _ownerOf(agentId);
-        _verifySelfFeedback(agentAddress, agentId);
+        _verifyNotSelfFeedback(agentAddress, agentId);
 
         ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
         uint64 currentIndex = $.lastIndex[agentId][msg.sender] + 1;
@@ -464,7 +462,7 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         ) Reputation__InvalidSignerAddress.selector.revertWith();
     }
 
-    function _verifySelfFeedback(address agent, uint256 agentId) internal view {
+    function _verifyNotSelfFeedback(address agent, uint256 agentId) internal view {
         if (
             msg.sender == agent ||
             _isApprovedForAll(agent, msg.sender) ||

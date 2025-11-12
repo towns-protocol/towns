@@ -27,8 +27,8 @@ interface IReputationRegistryBase {
     event NewFeedback(
         uint256 indexed agentId,
         address indexed clientAddress,
-        uint8 indexed score,
-        bytes32 tag1,
+        uint8 score,
+        bytes32 indexed tag1,
         bytes32 tag2,
         string feedbackUri,
         bytes32 feedbackHash
