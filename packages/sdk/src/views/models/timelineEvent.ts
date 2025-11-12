@@ -60,6 +60,7 @@ import {
     InteractionRequestEvent,
     InteractionRequestEncryptedEvent,
     InteractionResponseEvent,
+    MiniappAttachment,
 } from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
@@ -995,6 +996,14 @@ function toAttachment(
                 address: content.address,
                 chainId: content.chainId,
             } satisfies TickerAttachment
+        }
+        case 'miniapp': {
+            const content = attachment.content.value
+            return {
+                type: 'miniapp',
+                url: content.url,
+                id,
+            } satisfies MiniappAttachment
         }
         default:
             return undefined
