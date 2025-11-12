@@ -42,6 +42,8 @@ import {
     unpackEnvelope,
     make_UserPayload_BlockchainTransaction,
     makeUserStreamId,
+    make_MemberPayload_Pin,
+    make_MemberPayload_Unpin,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -69,9 +71,13 @@ import {
     type BlockchainTransaction,
     BlockchainTransactionSchema,
     InteractionRequest,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
     InteractionResponsePayload,
     InteractionResponsePayloadSchema,
     ChannelMessage_Post_AttachmentSchema,
+    type AppMetadata,
+    StreamEvent,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -106,6 +112,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
 import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
+import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -162,6 +169,12 @@ type LinkAttachment = {
     }
 }
 
+type TickerAttachment = {
+    type: 'ticker'
+    address: string
+    chainId: string
+}
+
 export type MessageOpts = {
     threadId?: string
     replyId?: string
@@ -170,7 +183,9 @@ export type MessageOpts = {
 
 export type PostMessageOpts = MessageOpts & {
     mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<ImageAttachment | ChunkedMediaAttachment | LinkAttachment>
+    attachments?: Array<
+        ImageAttachment | ChunkedMediaAttachment | LinkAttachment | TickerAttachment
+    >
 }
 
 export type DecryptedInteractionResponse = {
@@ -338,6 +353,7 @@ export class Bot<
         }
     > = new Map()
     private readonly commands: Commands | undefined
+    private readonly identityConfig?: BotIdentityConfig
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -345,6 +361,7 @@ export class Bot<
         jwtSecretBase64: string,
         appAddress: Address,
         commands?: Commands,
+        identityConfig?: BotIdentityConfig,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
@@ -353,6 +370,7 @@ export class Bot<
         this.currentMessageTags = undefined
         this.commands = commands
         this.appAddress = appAddress
+        this.identityConfig = identityConfig
     }
 
     start() {
@@ -1008,18 +1026,14 @@ export class Bot<
      */
     async sendInteractionRequest(
         streamId: string,
-        content: PlainMessage<InteractionRequest['content']>,
+        content: PlainMessage<InteractionRequestPayload['content']>,
         recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
-        const request: PlainMessage<InteractionRequest> = {
-            recipient,
-            content,
-            encryptionDevice: this.getUserDevice(),
-        }
         const result = await this.client.sendInteractionRequest(
             streamId,
-            request,
+            content,
+            recipient,
             opts,
             this.currentMessageTags,
         )
@@ -1069,6 +1083,14 @@ export class Bot<
         const result = await this.client.sendTip(params, this.currentMessageTags)
         this.currentMessageTags = undefined
         return result
+    }
+
+    async pinMessage(streamId: string, eventId: string, streamEvent: StreamEvent) {
+        return this.client.pinMessage(streamId, eventId, streamEvent)
+    }
+
+    async unpinMessage(streamId: string, eventId: string) {
+        return this.client.unpinMessage(streamId, eventId)
     }
 
     /**
@@ -1173,6 +1195,93 @@ export class Bot<
     async getStreamView(streamId: string) {
         return this.client.getStream(streamId)
     }
+
+    /**
+     * Get the ERC-8004 compliant metadata JSON
+     * This should be hosted at /.well-known/agent-metadata.json
+     * Fetches metadata from the App Registry and merges with local config
+     * @returns The ERC-8004 compliant metadata object or null
+     */
+    async getIdentityMetadata(): Promise<BotIdentityMetadata | null> {
+        // Fetch metadata from App Registry
+        let appMetadata: PlainMessage<AppMetadata> | undefined
+        try {
+            const appRegistry = await this.client.appServiceClient()
+            const response = await appRegistry.getAppMetadata({
+                appId: bin_fromHexString(this.botId),
+            })
+            appMetadata = response.metadata
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.warn('[@towns-protocol/bot] Failed to fetch app metadata', err)
+        }
+
+        // If no config and no fetched metadata, return null
+        if (!this.identityConfig && !appMetadata) return null
+
+        const endpoints: ERC8004Endpoint[] = []
+
+        if (this.identityConfig?.endpoints) {
+            endpoints.push(...this.identityConfig.endpoints)
+        }
+
+        const hasAgentWallet = endpoints.some((e) => e.name === 'agentWallet')
+        if (!hasAgentWallet) {
+            const chainId = this.viem.chain.id
+            endpoints.push({
+                name: 'agentWallet',
+                endpoint: `eip155:${chainId}:${this.appAddress}`,
+            })
+        }
+
+        const domain = this.identityConfig?.domain
+        if (domain && !endpoints.some((e) => e.name === 'A2A')) {
+            const origin = domain.startsWith('http') ? domain : `https://${domain}`
+
+            endpoints.push({
+                name: 'A2A',
+                endpoint: `${origin}/.well-known/agent-card.json`,
+                version: '0.3.0',
+            })
+        }
+
+        // Merge app metadata with identity config, preferring identity config
+        const name = this.identityConfig?.name || appMetadata?.displayName || 'Unknown Bot'
+        const description = this.identityConfig?.description || appMetadata?.description || ''
+        const image =
+            this.identityConfig?.image || appMetadata?.avatarUrl || appMetadata?.imageUrl || ''
+        const motto = this.identityConfig?.motto || appMetadata?.motto
+
+        return {
+            type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+            name,
+            description,
+            image,
+            endpoints,
+            registrations: this.identityConfig?.registrations || [],
+            supportedTrust: this.identityConfig?.supportedTrust,
+            motto,
+            capabilities: this.commands?.map((c) => c.name) || [],
+            version: packageJson.version,
+            framework: `javascript:${packageJson.name}:${packageJson.version}`,
+            attributes: this.identityConfig?.attributes,
+        }
+    }
+
+    /**
+     * Get the tokenURI that would be used for ERC-8004 registration
+     * Returns null if no domain is configured
+     * @returns The .well-known URL or null
+     */
+    getTokenURI(): string | null {
+        if (!this.identityConfig?.domain) return null
+
+        const origin = this.identityConfig.domain.startsWith('http')
+            ? this.identityConfig.domain
+            : `https://${this.identityConfig.domain}`
+
+        return `${origin}/.well-known/agent-metadata.json`
+    }
 }
 
 export const makeTownsBot = async <
@@ -1184,6 +1293,7 @@ export const makeTownsBot = async <
     opts: {
         baseRpcUrl?: string
         commands?: Commands
+        identity?: BotIdentityConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1265,7 +1375,14 @@ export const makeTownsBot = async <
     }
 
     await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(client, viem, jwtSecretBase64, appAddress, opts.commands)
+    return new Bot<Commands, HonoEnv>(
+        client,
+        viem,
+        jwtSecretBase64,
+        appAddress,
+        opts.commands,
+        opts.identity,
+    )
 }
 
 const buildBotActions = (
@@ -1452,6 +1569,21 @@ const buildBotActions = (
             },
         })
     }
+
+    const createTickerAttachment = (
+        attachment: TickerAttachment,
+    ): PlainMessage<ChannelMessage_Post_Attachment> => {
+        return create(ChannelMessage_Post_AttachmentSchema, {
+            content: {
+                case: 'ticker',
+                value: {
+                    address: attachment.address,
+                    chainId: attachment.chainId,
+                },
+            },
+        })
+    }
+
     const ensureOutboundSession = async (
         streamId: string,
         encryptionAlgorithm: GroupEncryptionAlgorithmId,
@@ -1600,6 +1732,11 @@ const buildBotActions = (
                         processedAttachments.push(result)
                         break
                     }
+                    case 'ticker': {
+                        const result = createTickerAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
                     default:
                         logNever(attachment)
                 }
@@ -1651,6 +1788,11 @@ const buildBotActions = (
                     }
                     case 'link': {
                         const result = createLinkAttachment(attachment)
+                        processedAttachments.push(result)
+                        break
+                    }
+                    case 'ticker': {
+                        const result = createTickerAttachment(attachment)
                         processedAttachments.push(result)
                         break
                     }
@@ -1834,6 +1976,30 @@ const buildBotActions = (
         return { txHash: receipt.transactionHash }
     }
 
+    /**
+     * Pin a message to a stream
+     * @param streamId - The stream ID to pin the message to
+     * @param eventId - The event ID of the message to pin
+     * @param streamEvent - The stream event to pin
+     * @returns The event ID of the pinned message
+     */
+    const pinMessage = async (streamId: string, eventId: string, streamEvent: StreamEvent) => {
+        return client.sendEvent(
+            streamId,
+            make_MemberPayload_Pin(bin_fromHexString(eventId), streamEvent),
+        )
+    }
+
+    /**
+     * Unpin a message from a stream
+     * @param streamId - The stream ID to unpin the message from
+     * @param eventId - The event ID of the message to unpin
+     * @returns The event ID of the unpinned message
+     */
+    const unpinMessage = async (streamId: string, eventId: string) => {
+        return client.sendEvent(streamId, make_MemberPayload_Unpin(bin_fromHexString(eventId)))
+    }
+
     const getChannelSettings = async (channelId: string) => {
         const spaceId = spaceIdFromChannelId(channelId)
         const streamView = await client.getStream(spaceId)
@@ -1843,15 +2009,46 @@ const buildBotActions = (
 
     const sendInteractionRequest = async (
         streamId: string,
-        request: PlainMessage<InteractionRequest>,
+        content: PlainMessage<InteractionRequestPayload['content']>,
+        recipient?: Uint8Array,
         opts?: MessageOpts,
         tags?: PlainMessage<Tags>,
     ) => {
-        const payload = make_ChannelPayload_InteractionRequest({
-            ...request,
+        // Get encryption settings (same as sendMessageEvent)
+        const miniblockInfo = await client.getMiniblockInfo(streamId)
+        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
+            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
+            : client.defaultGroupEncryptionAlgorithm
+
+        await ensureOutboundSession(
+            streamId,
+            encryptionAlgorithm,
+            recipient ? [userIdFromAddress(recipient)] : [],
+            miniblockInfo,
+        )
+
+        // Create payload with content and encryption device for response
+        const payload = create(InteractionRequestPayloadSchema, {
             encryptionDevice: client.crypto.getUserDevice(),
+            content: content,
         })
-        return client.sendEvent(streamId, payload, tags, opts?.ephemeral)
+
+        // Encrypt using group encryption (same as messages)
+        const encryptedData = await client.crypto.encryptGroupEvent(
+            streamId,
+            toBinary(InteractionRequestPayloadSchema, payload),
+            encryptionAlgorithm,
+        )
+
+        // Create the request matching InteractionResponse structure
+        const request: PlainMessage<InteractionRequest> = {
+            recipient: recipient,
+            encryptedData: encryptedData,
+        }
+
+        // Send as InteractionRequest
+        const eventPayload = make_ChannelPayload_InteractionRequest(request)
+        return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
     }
 
     /**
@@ -2049,6 +2246,8 @@ const buildBotActions = (
         checkPermission,
         ban,
         unban,
+        pinMessage,
+        unpinMessage,
         getChannelSettings,
         sendTip,
         sendBlockchainTransaction,

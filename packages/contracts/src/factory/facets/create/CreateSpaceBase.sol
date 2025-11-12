@@ -17,11 +17,12 @@ import {IRoles, IRolesBase} from "../../../spaces/facets/roles/IRoles.sol";
 import {IArchitectBase} from "../architect/IArchitect.sol";
 
 // libraries
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Permissions} from "../../../spaces/facets/Permissions.sol";
+import {Factory} from "../../../utils/libraries/Factory.sol";
 import {StringSet} from "../../../utils/libraries/StringSet.sol";
 import {Validator} from "../../../utils/libraries/Validator.sol";
+import {PricingModulesBase} from "../architect/pricing/PricingModulesBase.sol";
 import {ArchitectStorage} from "../architect/ArchitectStorage.sol";
 import {ImplementationStorage} from "../architect/ImplementationStorage.sol";
 
@@ -29,10 +30,8 @@ import {ImplementationStorage} from "../architect/ImplementationStorage.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {SpaceProxy} from "../../../spaces/facets/proxy/SpaceProxy.sol";
 import {SpaceProxyInitializer} from "../../../spaces/facets/proxy/SpaceProxyInitializer.sol";
-import {Factory} from "../../../utils/libraries/Factory.sol";
-import {PricingModulesBase} from "../architect/pricing/PricingModulesBase.sol";
 
-library CreateSpaceLib {
+abstract contract CreateSpaceBase is IArchitectBase {
     using StringSet for StringSet.Set;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -40,68 +39,81 @@ library CreateSpaceLib {
     string internal constant MINTER_ROLE = "Minter";
     bytes1 internal constant CHANNEL_PREFIX = 0x20;
 
-    function createSpaceWithPrepay(
-        IArchitectBase.CreateSpace memory space,
-        IArchitectBase.SpaceOptions memory spaceOptions
+    function _createSpaceWithPrepay(
+        CreateSpace calldata space,
+        SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
         Validator.checkAddress(space.membership.settings.pricingModule);
         Validator.checkAddress(spaceOptions.to);
 
-        IArchitectBase.SpaceInfo memory spaceInfo = IArchitectBase.SpaceInfo({
-            name: space.metadata.name,
-            uri: space.metadata.uri,
-            shortDescription: space.metadata.shortDescription,
-            longDescription: space.metadata.longDescription,
-            membership: space.membership,
-            channel: space.channel
-        });
-
-        spaceAddress = createSpace(spaceInfo, spaceOptions);
+        spaceAddress = _createSpaceCore(
+            space.metadata,
+            space.membership.settings,
+            space.membership.permissions,
+            space.membership.requirements,
+            space.channel,
+            spaceOptions
+        );
 
         if (space.prepay.supply > 0) {
             IPrepay(spaceAddress).prepayMembership{value: msg.value}(space.prepay.supply);
         }
     }
 
-    function createSpace(
-        IArchitectBase.SpaceInfo memory spaceInfo,
-        IArchitectBase.SpaceOptions memory spaceOptions
+    /// @dev Converts legacy CreateSpaceOld format and creates space
+    function _createSpaceWithPrepayFromLegacy(
+        CreateSpaceOld calldata space,
+        SpaceOptions memory spaceOptions
     ) internal returns (address spaceAddress) {
-        ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+        Validator.checkAddress(space.membership.settings.pricingModule);
+        Validator.checkAddress(spaceOptions.to);
+
+        // Convert legacy format to new format (syncEntitlements = false for legacy)
+        MembershipRequirements memory requirements = MembershipRequirements({
+            everyone: space.membership.requirements.everyone,
+            users: space.membership.requirements.users,
+            ruleData: space.membership.requirements.ruleData,
+            syncEntitlements: false
+        });
+
+        spaceAddress = _createSpaceCore(
+            space.metadata,
+            space.membership.settings,
+            space.membership.permissions,
+            requirements,
+            space.channel,
+            spaceOptions
+        );
+
+        if (space.prepay.supply > 0) {
+            IPrepay(spaceAddress).prepayMembership{value: msg.value}(space.prepay.supply);
+        }
+    }
+
+    function _createSpaceCore(
+        Metadata calldata metadata,
+        IMembershipBase.Membership calldata settings,
+        string[] calldata permissions,
+        MembershipRequirements memory requirements,
+        ChannelInfo calldata channel,
+        SpaceOptions memory spaceOptions
+    ) private returns (address spaceAddress) {
         ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
 
         // get the token id of the next space
         uint256 spaceTokenId = ims.spaceOwnerToken.nextTokenId();
 
         // deploy space
-        spaceAddress = deploySpace(spaceTokenId, spaceInfo.membership, spaceOptions);
-
-        // save space info to storage
-        unchecked {
-            ds.spaceCount++;
-        }
-
-        // save to mappings
-        ds.spaceByTokenId[spaceTokenId] = spaceAddress;
-        ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
-
-        // mint token to and transfer to Architect
-        ims.spaceOwnerToken.mintSpace(
-            spaceInfo.name,
-            spaceInfo.uri,
-            spaceAddress,
-            spaceInfo.shortDescription,
-            spaceInfo.longDescription
-        );
+        spaceAddress = _deploySpace(spaceTokenId, metadata, settings, spaceOptions);
 
         // deploy user entitlement
         IUserEntitlement userEntitlement = IUserEntitlement(
-            deployEntitlement(ims.userEntitlement, spaceAddress)
+            _deployEntitlement(ims.userEntitlement, spaceAddress)
         );
 
         // deploy token entitlement
         IRuleEntitlement ruleEntitlement = IRuleEntitlement(
-            deployEntitlement(ims.ruleEntitlement, spaceAddress)
+            _deployEntitlement(ims.ruleEntitlement, spaceAddress)
         );
 
         address[] memory entitlements = new address[](2);
@@ -114,14 +126,14 @@ library CreateSpaceLib {
         // create minter role with requirements
         string[] memory joinPermissions = new string[](1);
         joinPermissions[0] = Permissions.JoinSpace;
-        if (spaceInfo.membership.requirements.everyone) {
-            createEveryoneEntitlement(spaceAddress, MINTER_ROLE, joinPermissions, userEntitlement);
+        if (requirements.everyone) {
+            _createEveryoneEntitlement(spaceAddress, MINTER_ROLE, joinPermissions, userEntitlement);
         } else {
-            createEntitlementForRole(
+            _createEntitlementForRole(
                 spaceAddress,
                 MINTER_ROLE,
                 joinPermissions,
-                spaceInfo.membership.requirements,
+                requirements,
                 userEntitlement,
                 ruleEntitlement
             );
@@ -130,27 +142,27 @@ library CreateSpaceLib {
         uint256 memberRoleId;
 
         // if entitlement are synced, create a role with the membership requirements
-        if (spaceInfo.membership.requirements.syncEntitlements) {
-            memberRoleId = createEntitlementForRole(
+        if (requirements.syncEntitlements) {
+            memberRoleId = _createEntitlementForRole(
                 spaceAddress,
-                spaceInfo.membership.settings.name,
-                spaceInfo.membership.permissions,
-                spaceInfo.membership.requirements,
+                settings.name,
+                permissions,
+                requirements,
                 userEntitlement,
                 ruleEntitlement
             );
         } else {
             // else create a role with the everyone entitlement
-            memberRoleId = createEveryoneEntitlement(
+            memberRoleId = _createEveryoneEntitlement(
                 spaceAddress,
-                spaceInfo.membership.settings.name,
-                spaceInfo.membership.permissions,
+                settings.name,
+                permissions,
                 userEntitlement
             );
         }
 
         // create default channel
-        createDefaultChannel(spaceAddress, memberRoleId, spaceInfo.channel);
+        _createDefaultChannel(spaceAddress, memberRoleId, channel);
 
         // transfer nft to sender
         IERC721A(address(ims.spaceOwnerToken)).safeTransferFrom(
@@ -160,16 +172,37 @@ library CreateSpaceLib {
         );
 
         // emit event
-        emit IArchitectBase.SpaceCreated(spaceOptions.to, spaceTokenId, spaceAddress);
+        emit SpaceCreated(spaceOptions.to, spaceTokenId, spaceAddress);
     }
+
+    function _createSpace(
+        SpaceInfo calldata spaceInfo,
+        SpaceOptions memory spaceOptions
+    ) internal returns (address) {
+        Metadata calldata metadata;
+        assembly {
+            metadata := spaceInfo
+        }
+
+        return
+            _createSpaceCore(
+                metadata,
+                spaceInfo.membership.settings,
+                spaceInfo.membership.permissions,
+                spaceInfo.membership.requirements,
+                spaceInfo.channel,
+                spaceOptions
+            );
+    }
+
     // =============================================================
     //                  Internal Channel Helpers
     // =============================================================
 
-    function createDefaultChannel(
+    function _createDefaultChannel(
         address space,
         uint256 roleId,
-        IArchitectBase.ChannelInfo memory channelInfo
+        ChannelInfo calldata channelInfo
     ) internal {
         uint256[] memory roleIds = new uint256[](1);
         roleIds[0] = roleId;
@@ -182,11 +215,12 @@ library CreateSpaceLib {
     // =============================================================
     //                  Internal Entitlement Helpers
     // =============================================================
-    function createEntitlementForRole(
+
+    function _createEntitlementForRole(
         address spaceAddress,
         string memory roleName,
         string[] memory permissions,
-        IArchitectBase.MembershipRequirements memory requirements,
+        MembershipRequirements memory requirements,
         IUserEntitlement userEntitlement,
         IRuleEntitlement ruleEntitlement
     ) internal returns (uint256 roleId) {
@@ -194,13 +228,9 @@ library CreateSpaceLib {
         uint256 userReqsLen = requirements.users.length;
         uint256 ruleReqsLen = requirements.ruleData.length;
 
-        if (userReqsLen > 0) {
-            ++entitlementCount;
-        }
+        if (userReqsLen > 0) ++entitlementCount;
 
-        if (ruleReqsLen > 0) {
-            ++entitlementCount;
-        }
+        if (ruleReqsLen > 0) ++entitlementCount;
 
         IRolesBase.CreateEntitlement[] memory entitlements = new IRolesBase.CreateEntitlement[](
             entitlementCount
@@ -227,10 +257,10 @@ library CreateSpaceLib {
             });
         }
 
-        roleId = createRoleWithEntitlements(spaceAddress, roleName, permissions, entitlements);
+        roleId = _createRoleWithEntitlements(spaceAddress, roleName, permissions, entitlements);
     }
 
-    function createEveryoneEntitlement(
+    function _createEveryoneEntitlement(
         address spaceAddress,
         string memory roleName,
         string[] memory permissions,
@@ -243,10 +273,10 @@ library CreateSpaceLib {
         entitlements[0].module = userEntitlement;
         entitlements[0].data = abi.encode(users);
 
-        roleId = createRoleWithEntitlements(spaceAddress, roleName, permissions, entitlements);
+        roleId = _createRoleWithEntitlements(spaceAddress, roleName, permissions, entitlements);
     }
 
-    function createRoleWithEntitlements(
+    function _createRoleWithEntitlements(
         address spaceAddress,
         string memory roleName,
         string[] memory permissions,
@@ -259,26 +289,49 @@ library CreateSpaceLib {
     //                      Deployment Helpers
     // =============================================================
 
-    function deploySpace(
+    function _deploySpace(
         uint256 spaceTokenId,
-        IArchitectBase.Membership memory membership,
-        IArchitectBase.SpaceOptions memory spaceOptions
-    ) internal returns (address space) {
-        // get deployment info
-        (bytes memory initCode, bytes32 salt) = getSpaceDeploymentInfo(
-            spaceTokenId,
-            membership,
-            spaceOptions
+        Metadata calldata metadata,
+        IMembershipBase.Membership calldata membershipSettings,
+        SpaceOptions memory spaceOptions
+    ) internal returns (address spaceAddress) {
+        {
+            // get deployment info
+            (bytes memory initCode, bytes32 salt) = _getSpaceDeploymentInfo(
+                spaceTokenId,
+                membershipSettings,
+                spaceOptions
+            );
+            spaceAddress = Factory.deploy(initCode, salt);
+        }
+        {
+            ArchitectStorage.Layout storage ds = ArchitectStorage.layout();
+            // save space info to storage
+            unchecked {
+                ++ds.spaceCount;
+            }
+
+            // save to mappings
+            ds.spaceByTokenId[spaceTokenId] = spaceAddress;
+            ds.tokenIdBySpace[spaceAddress] = spaceTokenId;
+        }
+        // mint token to and transfer to Architect
+        ImplementationStorage.Layout storage ims = ImplementationStorage.layout();
+        ims.spaceOwnerToken.mintSpace(
+            metadata.name,
+            metadata.uri,
+            spaceAddress,
+            metadata.shortDescription,
+            metadata.longDescription
         );
-        return Factory.deploy(initCode, salt);
     }
 
-    function deployEntitlement(
+    function _deployEntitlement(
         IEntitlement entitlement,
         address spaceAddress
     ) internal returns (address) {
         // calculate init code
-        bytes memory initCode = abi.encodePacked(
+        bytes memory initCode = bytes.concat(
             type(ERC1967Proxy).creationCode,
             abi.encode(entitlement, abi.encodeCall(IEntitlement.initialize, (spaceAddress)))
         );
@@ -286,30 +339,28 @@ library CreateSpaceLib {
         return Factory.deploy(initCode);
     }
 
-    function verifyPricingModule(address pricingModule) internal view {
+    function _verifyPricingModule(address pricingModule) internal view {
         if (pricingModule == address(0) || !PricingModulesBase.isPricingModule(pricingModule)) {
-            revert IArchitectBase.Architect__InvalidPricingModule();
+            revert Architect__InvalidPricingModule();
         }
     }
 
-    function getSpaceDeploymentInfo(
+    function _getSpaceDeploymentInfo(
         uint256 spaceTokenId,
-        IArchitectBase.Membership memory membership,
-        IArchitectBase.SpaceOptions memory spaceOptions
+        IMembershipBase.Membership calldata membershipSettings,
+        SpaceOptions memory spaceOptions
     ) internal view returns (bytes memory initCode, bytes32 salt) {
-        verifyPricingModule(membership.settings.pricingModule);
+        _verifyPricingModule(membershipSettings.pricingModule);
 
         address spaceOwnerNFT = address(ImplementationStorage.layout().spaceOwnerToken);
 
         // calculate salt
         salt = keccak256(abi.encode(spaceTokenId, block.timestamp, block.number, spaceOwnerNFT));
 
-        IMembershipBase.Membership memory membershipSettings = membership.settings;
-
         address proxyInitializer = address(ImplementationStorage.layout().proxyInitializer);
 
         // calculate init code
-        initCode = abi.encodePacked(
+        initCode = bytes.concat(
             type(SpaceProxy).creationCode,
             abi.encode(
                 IManagedProxyBase.ManagedProxy({

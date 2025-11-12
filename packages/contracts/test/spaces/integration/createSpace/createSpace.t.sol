@@ -22,6 +22,7 @@ import {Permissions} from "src/spaces/facets/Permissions.sol";
 import {Validator} from "src/utils/libraries/Validator.sol";
 
 // contracts
+import {Test} from "forge-std/Test.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {MockERC721} from "test/mocks/MockERC721.sol";
 
@@ -31,6 +32,7 @@ contract IntegrationCreateSpace is
     IPausableBase,
     IRolesBase,
     IRuleEntitlementBase,
+    Test,
     BaseSetup
 {
     using LibString for string;
@@ -44,11 +46,11 @@ contract IntegrationCreateSpace is
         createSpaceFacet = ICreateSpace(spaceFactory);
     }
 
-    function test_fuzz_createEveryoneSpace(
+    function test_createEveryoneSpace(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) {
+    ) public assumeEOA(founder) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
@@ -61,11 +63,15 @@ contract IntegrationCreateSpace is
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
     }
 
-    function test_fuzz_createUserGatedSpace(
+    function test_createEveryoneSpace_gas() external {
+        test_createEveryoneSpace("TestSpace", makeAddr("founder"), makeAddr("user"));
+    }
+
+    function test_createUserGatedSpace(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    ) public assumeEOA(founder) assumeEOA(user) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         address[] memory users = new address[](1);
@@ -94,11 +100,15 @@ contract IntegrationCreateSpace is
         );
     }
 
-    function test_fuzz_createTokenGatedSpace(
+    function test_createUserGatedSpace_gas() external {
+        test_createUserGatedSpace("UserSpace", makeAddr("founder"), makeAddr("user"));
+    }
+
+    function test_createTokenGatedSpace(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    ) public assumeEOA(founder) assumeEOA(user) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         address mock = address(new MockERC721());
@@ -136,11 +146,15 @@ contract IntegrationCreateSpace is
         MockERC721(mock).mint(user, 1);
     }
 
+    function test_createTokenGatedSpace_gas() external {
+        test_createTokenGatedSpace("TokenSpace", makeAddr("founder"), makeAddr("user"));
+    }
+
     // =============================================================
     //                           Channels
     // =============================================================
 
-    function test_fuzz_createEveryoneSpace_with_separate_channels(
+    function test_createEveryoneSpace_with_separate_channels(
         string memory spaceId,
         address founder,
         address member
@@ -240,11 +254,11 @@ contract IntegrationCreateSpace is
         assertTrue(isEntitledToChannelAfter, "Member should be able to access the channel");
     }
 
-    function test_fuzz_createSpaceWithPrepay(
+    function test_createSpaceWithPrepay(
         string memory spaceId,
         address founder,
         address member
-    ) external assumeEOA(founder) assumeEOA(member) {
+    ) public assumeEOA(founder) assumeEOA(member) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != member);
 
@@ -264,6 +278,10 @@ contract IntegrationCreateSpace is
         uint256 prepaidSupply = IPrepay(newSpace).prepaidMembershipSupply();
         assertTrue(prepaidSupply == spaceInfo.prepay.supply, "Prepaid supply should match");
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(member, Permissions.JoinSpace));
+    }
+
+    function test_createSpaceWithPrepay_gas() external {
+        test_createSpaceWithPrepay("PrepaySpace", makeAddr("founder"), makeAddr("member"));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -289,11 +307,11 @@ contract IntegrationCreateSpace is
         createSpaceFacet.createSpaceV2(spaceInfo, SpaceOptions({to: address(0)}));
     }
 
-    function test_fuzz_createSpaceV2(
+    function test_createSpaceV2(
         string memory spaceId,
         address founder,
         address recipient
-    ) external assumeEOA(founder) assumeEOA(recipient) {
+    ) public assumeEOA(founder) assumeEOA(recipient) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != recipient);
 
@@ -310,15 +328,19 @@ contract IntegrationCreateSpace is
         assertTrue(IERC173(newSpace).owner() == recipient);
     }
 
+    function test_createSpaceV2_gas() external {
+        test_createSpaceV2("V2Space", makeAddr("founder"), makeAddr("recipient"));
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     Unified createSpace                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_fuzz_createSpace_CreateBasic(
+    function test_createSpace_CreateBasic(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) {
+    ) public assumeEOA(founder) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         SpaceInfo memory spaceInfo = _createEveryoneSpaceInfo(spaceId);
@@ -333,11 +355,15 @@ contract IntegrationCreateSpace is
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
     }
 
-    function test_fuzz_createSpace_CreateWithPrepay(
+    function test_createSpace_CreateBasic_gas() external {
+        test_createSpace_CreateBasic("BasicSpace", makeAddr("founder"), makeAddr("user"));
+    }
+
+    function test_createSpace_CreateWithPrepay(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) assumeEOA(user) {
+    ) public assumeEOA(founder) assumeEOA(user) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         address[] memory users = new address[](1);
@@ -362,11 +388,15 @@ contract IntegrationCreateSpace is
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
     }
 
-    function test_fuzz_createSpace_CreateWithOptions(
+    function test_createSpace_CreateWithPrepay_gas() external {
+        test_createSpace_CreateWithPrepay("PrepayUnified", makeAddr("founder"), makeAddr("user"));
+    }
+
+    function test_createSpace_CreateWithOptions(
         string memory spaceId,
         address founder,
         address recipient
-    ) external assumeEOA(founder) assumeEOA(recipient) {
+    ) public assumeEOA(founder) assumeEOA(recipient) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
         vm.assume(founder != recipient);
 
@@ -384,11 +414,19 @@ contract IntegrationCreateSpace is
         assertTrue(IERC173(newSpace).owner() == recipient, "Recipient should own the space");
     }
 
-    function test_fuzz_createSpace_CreateLegacy(
+    function test_createSpace_CreateWithOptions_gas() external {
+        test_createSpace_CreateWithOptions(
+            "OptionsSpace",
+            makeAddr("founder"),
+            makeAddr("recipient")
+        );
+    }
+
+    function test_createSpace_CreateLegacy(
         string memory spaceId,
         address founder,
         address user
-    ) external assumeEOA(founder) {
+    ) public assumeEOA(founder) {
         vm.assume(bytes(spaceId).length > 2 && bytes(spaceId).length < 100);
 
         // Use SpaceHelper to create legacy format space info
@@ -405,6 +443,10 @@ contract IntegrationCreateSpace is
 
         // Verify space creation and legacy conversion
         assertTrue(IEntitlementsManager(newSpace).isEntitledToSpace(user, Permissions.JoinSpace));
+    }
+
+    function test_createSpace_CreateLegacy_gas() external {
+        test_createSpace_CreateLegacy("LegacySpace", makeAddr("founder"), makeAddr("user"));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
