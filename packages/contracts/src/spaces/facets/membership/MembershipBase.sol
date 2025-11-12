@@ -190,11 +190,18 @@ abstract contract MembershipBase is IMembershipBase {
 
         uint256 minFee = platform.getMembershipFee();
         uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
+        uint256 currentPrice = _getMembershipPrice(totalSupply);
 
-        if (renewalPrice != 0) return FixedPointMathLib.max(renewalPrice, minFee);
+        // If no stored renewal price, use current price
+        if (renewalPrice == 0) {
+            return FixedPointMathLib.max(currentPrice, minFee);
+        }
 
-        uint256 price = _getMembershipPrice(totalSupply);
-        return FixedPointMathLib.max(price, minFee);
+        // Use the LOWER of stored renewal price or current price
+        // This ensures users benefit from price drops (including free transitions)
+        // while maintaining their locked-in rate if prices increase
+        uint256 effectivePrice = FixedPointMathLib.min(renewalPrice, currentPrice);
+        return FixedPointMathLib.max(effectivePrice, minFee);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
