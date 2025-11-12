@@ -382,4 +382,201 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertGt(membership.expiresAt(tokenId), originalExpiration);
         assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
+
+    function test_renewMembershipAfterPriceDropToFree() external {
+        // Setup: Create a paid town with initial price
+        uint256 initialPrice = MEMBERSHIP_PRICE;
+        uint256 platformMinFee = platformReqs.getMembershipFee();
+        _setupMembershipPricing(1, initialPrice);
+
+        // Alice joins at the higher price
+        vm.deal(alice, initialPrice);
+        vm.prank(alice);
+        membership.joinSpace{value: initialPrice}(alice);
+
+        uint256 tokenId = _getAliceTokenId();
+        uint256 originalExpiration = membership.expiresAt(tokenId);
+
+        // Verify Alice paid the initial price
+        uint256 lockedRenewalPrice = _getRenewalPrice(tokenId);
+        assertEq(lockedRenewalPrice, initialPrice, "Initial renewal price should be locked");
+
+        // Town transitions to minimum price (effectively free except for protocol fee)
+        vm.prank(founder);
+        membership.setMembershipPrice(platformMinFee);
+
+        // Verify current price is now just the platform minimum fee
+        uint256 newMembershipPrice = membership.getMembershipPrice();
+        assertEq(newMembershipPrice, platformMinFee, "New price should be platform minimum");
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        // Get updated renewal price - should be the lower free price, not the locked higher price
+        uint256 renewalPrice = _getRenewalPrice(tokenId);
+        assertEq(
+            renewalPrice,
+            platformMinFee,
+            "Renewal price should use lower current price, not locked price"
+        );
+        assertLt(renewalPrice, initialPrice, "Renewal price should be less than original");
+
+        // Track balances
+        (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
+        uint256 spaceBalanceBefore = address(membership).balance;
+        uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
+
+        // Alice renews at the new lower price
+        _renewMembershipWithValue(alice, tokenId, renewalPrice);
+
+        // Verify protocol fee (all goes to protocol since price equals min fee)
+        assertEq(
+            protocol.balance - protocolBalanceBefore,
+            platformMinFee,
+            "Protocol should receive the minimum fee"
+        );
+
+        // Verify space receives nothing (entire amount is protocol fee)
+        assertEq(address(membership).balance, spaceBalanceBefore, "Space should receive nothing");
+
+        // Verify membership was renewed
+        assertGt(membership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
+
+        // Verify points were awarded based on renewal price
+        uint256 points = _getPoints(renewalPrice);
+        assertEq(
+            IERC20(riverAirdrop).balanceOf(alice),
+            currentPoints + points,
+            "Points should be awarded"
+        );
+    }
+
+    function test_renewMembershipAfterPriceDropToLower() external {
+        // Setup: Create a paid town with high initial price
+        uint256 initialPrice = MEMBERSHIP_PRICE;
+        uint256 lowerPrice = MEMBERSHIP_PRICE / 2;
+        _setupMembershipPricing(1, initialPrice);
+
+        // Alice joins at the higher price
+        vm.deal(alice, initialPrice);
+        vm.prank(alice);
+        membership.joinSpace{value: initialPrice}(alice);
+
+        uint256 tokenId = _getAliceTokenId();
+        uint256 originalExpiration = membership.expiresAt(tokenId);
+
+        // Verify Alice's renewal price is locked at initial price
+        assertEq(_getRenewalPrice(tokenId), initialPrice, "Initial renewal price should be locked");
+
+        // Town reduces price to lower amount
+        vm.prank(founder);
+        membership.setMembershipPrice(lowerPrice);
+
+        // Verify new membership price
+        assertEq(
+            membership.getMembershipPrice(),
+            lowerPrice,
+            "New membership price should be lower"
+        );
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        // Get renewal price - should be the lower current price
+        uint256 renewalPrice = _getRenewalPrice(tokenId);
+        assertEq(renewalPrice, lowerPrice, "Renewal should use lower current price");
+        assertLt(renewalPrice, initialPrice, "Renewal price should be less than original");
+
+        // Track balances
+        (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
+        uint256 spaceBalanceBefore = address(membership).balance;
+        uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
+
+        // Alice renews at the lower price
+        _renewMembershipWithValue(alice, tokenId, renewalPrice);
+
+        // Calculate expected fees
+        uint256 protocolFee = _calculateProtocolFee(renewalPrice);
+        uint256 points = _getPoints(renewalPrice);
+
+        // Verify balances
+        assertEq(
+            protocol.balance - protocolBalanceBefore,
+            protocolFee,
+            "Protocol should receive correct fee"
+        );
+        assertEq(
+            address(membership).balance,
+            spaceBalanceBefore + renewalPrice - protocolFee,
+            "Space should receive net amount"
+        );
+
+        // Verify membership was renewed
+        assertGt(membership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
+
+        // Verify points
+        assertEq(
+            IERC20(riverAirdrop).balanceOf(alice),
+            currentPoints + points,
+            "Points should be awarded based on renewal price"
+        );
+    }
+
+    function test_renewMembershipAfterPriceIncrease() external {
+        // Setup: Create a paid town with low initial price
+        uint256 initialPrice = MEMBERSHIP_PRICE / 2;
+        uint256 higherPrice = MEMBERSHIP_PRICE;
+        _setupMembershipPricing(1, initialPrice);
+
+        // Alice joins at the lower price
+        vm.deal(alice, initialPrice);
+        vm.prank(alice);
+        membership.joinSpace{value: initialPrice}(alice);
+
+        uint256 tokenId = _getAliceTokenId();
+        uint256 originalExpiration = membership.expiresAt(tokenId);
+
+        // Verify Alice's renewal price is locked at initial lower price
+        assertEq(_getRenewalPrice(tokenId), initialPrice, "Initial renewal price should be locked");
+
+        // Town increases price
+        vm.prank(founder);
+        membership.setMembershipPrice(higherPrice);
+
+        // Verify new membership price is higher
+        assertEq(
+            membership.getMembershipPrice(),
+            higherPrice,
+            "New membership price should be higher"
+        );
+
+        // Warp to expiration
+        vm.warp(originalExpiration);
+
+        // Get renewal price - should still be the locked lower price
+        uint256 renewalPrice = _getRenewalPrice(tokenId);
+        assertEq(
+            renewalPrice,
+            initialPrice,
+            "Renewal should maintain locked lower price despite increase"
+        );
+        assertLt(renewalPrice, higherPrice, "Renewal price should be less than new higher price");
+
+        // Track balances
+        uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
+
+        // Alice renews at her locked-in lower price
+        _renewMembershipWithValue(alice, tokenId, renewalPrice);
+
+        // Verify membership was renewed
+        assertGt(membership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
+
+        // Verify points based on the lower renewal price
+        uint256 points = _getPoints(renewalPrice);
+        assertEq(
+            IERC20(riverAirdrop).balanceOf(alice),
+            currentPoints + points,
+            "Points should be awarded based on locked lower price"
+        );
+    }
 }
