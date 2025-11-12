@@ -64,6 +64,7 @@ type HighUsageInfo struct {
 type CallRateMonitor interface {
 	RecordCall(user common.Address, now time.Time, callType CallType)
 	GetHighUsageInfo(now time.Time) []HighUsageInfo
+	Close()
 }
 
 type inMemoryCallRateMonitor struct {
@@ -75,6 +76,8 @@ type inMemoryCallRateMonitor struct {
 	lastCleanup   time.Time
 	cleanupTicker *time.Ticker
 	cleanupStop   chan struct{}
+	cleanupWG     sync.WaitGroup
+	closeOnce     sync.Once
 	logger        *zap.Logger
 }
 
@@ -121,6 +124,7 @@ func NewCallRateMonitor(cfg Config) CallRateMonitor {
 	if cleanupMinInterval > 0 {
 		m.cleanupTicker = time.NewTicker(cleanupMinInterval)
 		m.cleanupStop = make(chan struct{})
+		m.cleanupWG.Add(1)
 		go m.cleanupLoop()
 	}
 	callTypeKeys := make([]string, 0, len(specs))
@@ -238,6 +242,7 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 }
 
 func (m *inMemoryCallRateMonitor) cleanupLoop() {
+	defer m.cleanupWG.Done()
 	for {
 		select {
 		case now := <-m.cleanupTicker.C:
@@ -245,10 +250,21 @@ func (m *inMemoryCallRateMonitor) cleanupLoop() {
 			m.cleanupLocked(now)
 			m.mu.Unlock()
 		case <-m.cleanupStop:
-			m.cleanupTicker.Stop()
 			return
 		}
 	}
+}
+
+func (m *inMemoryCallRateMonitor) Close() {
+	m.closeOnce.Do(func() {
+		if m.cleanupTicker != nil {
+			m.cleanupTicker.Stop()
+		}
+		if m.cleanupStop != nil {
+			close(m.cleanupStop)
+		}
+		m.cleanupWG.Wait()
+	})
 }
 
 type userStats struct {
@@ -493,3 +509,4 @@ type noopCallRateMonitor struct{}
 
 func (noopCallRateMonitor) RecordCall(common.Address, time.Time, CallType) {}
 func (noopCallRateMonitor) GetHighUsageInfo(time.Time) []HighUsageInfo     { return nil }
+func (noopCallRateMonitor) Close()                                         {}

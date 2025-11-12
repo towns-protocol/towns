@@ -276,6 +276,9 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
 	}
 	s.callRateMonitor = newCallRateMonitorFromConfig(s.config.HighUsageDetection, monitorLogger)
+	if s.callRateMonitor != nil {
+		s.onClose(s.callRateMonitor.Close)
+	}
 }
 
 func (s *Service) initWallet() error {
