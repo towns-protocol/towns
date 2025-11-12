@@ -271,7 +271,11 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	s.metricsPublisher = infra.NewMetricsPublisher(metricsRegistry)
 	s.metricsPublisher.StartMetricsServer(s.serverCtx, s.config.Metrics)
 
-	s.callRateMonitor = newCallRateMonitorFromConfig(s.config.HighUsageDetection)
+	var monitorLogger *zap.Logger
+	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
+		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
+	}
+	s.callRateMonitor = newCallRateMonitorFromConfig(s.config.HighUsageDetection, monitorLogger)
 }
 
 func (s *Service) initWallet() error {
