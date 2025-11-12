@@ -23,10 +23,10 @@ type StatusResponse struct {
 	Base              *BlockchainPing  `json:"base,omitempty"`
 	OtherChains       []BlockchainPing `json:"other_chains,omitempty"`
 	XChainBlockchains []uint64         `json:"x_chain_blockchains"`
-	Abuse             []AbuserInfo     `json:"abuse,omitempty"`
+	HighUsage         []HighUsageInfo  `json:"high_usage,omitempty"`
 }
 
-type AbuserInfo struct {
+type HighUsageInfo struct {
 	User       string          `json:"user"`
 	CallType   string          `json:"call_type"`
 	LastSeen   string          `json:"last_seen"`

@@ -1,4 +1,4 @@
-package abuse
+package highusage
 
 import (
 	"sort"
@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// Package abuse provides a lightweight in-memory CallRateMonitor that tracks how
+// Package highusage provides a lightweight in-memory CallRateMonitor that tracks how
 // often each account invokes specific RPC call types. It keeps per-user counters
 // across configurable sliding time windows by storing counts in circular buckets
 // (ring buffers) and maintaining running totals, so lookups are O(1) without
@@ -42,26 +42,26 @@ type Config struct {
 	Thresholds map[CallType][]Threshold
 }
 
-// WindowViolation captures the counts that exceeded a specific threshold.
-type WindowViolation struct {
+// UsageViolation captures the counts that exceeded a specific threshold.
+type UsageViolation struct {
 	Window time.Duration
 	Count  uint32
 	Limit  uint32
 }
 
-// AbuserInfo represents a single offending account for a specific call type.
-type AbuserInfo struct {
+// HighUsageInfo represents a single offending account for a specific call type.
+type HighUsageInfo struct {
 	User       common.Address
 	CallType   CallType
-	Violations []WindowViolation
+	Violations []UsageViolation
 	LastSeen   time.Time
 }
 
 // CallRateMonitor tracks per-user call rates across multiple call types and exposes
-// aggregated abuse data.
+// aggregated high-usage data.
 type CallRateMonitor interface {
 	RecordCall(user common.Address, now time.Time, callType CallType)
-	GetAbuserInfo(now time.Time) []AbuserInfo
+	GetHighUsageInfo(now time.Time) []HighUsageInfo
 }
 
 type inMemoryCallRateMonitor struct {
@@ -141,14 +141,14 @@ func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time,
 	stats.lastSeen = now
 }
 
-// GetAbuserInfo returns the current list of abusive users ordered by severity.
+// GetHighUsageInfo returns the current list of high-usage accounts ordered by severity.
 // The returned data should be treated as read-only; callers must not mutate it.
-func (m *inMemoryCallRateMonitor) GetAbuserInfo(now time.Time) []AbuserInfo {
+func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInfo {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.cleanupLocked(now)
 
-	result := make([]AbuserInfo, 0)
+	result := make([]HighUsageInfo, 0)
 
 	for addr, stats := range m.users {
 		for callType, cs := range stats.perType {
@@ -156,7 +156,7 @@ func (m *inMemoryCallRateMonitor) GetAbuserInfo(now time.Time) []AbuserInfo {
 			if len(violations) == 0 {
 				continue
 			}
-			result = append(result, AbuserInfo{
+			result = append(result, HighUsageInfo{
 				User:       addr,
 				CallType:   callType,
 				Violations: violations,
@@ -182,7 +182,7 @@ func (m *inMemoryCallRateMonitor) GetAbuserInfo(now time.Time) []AbuserInfo {
 		result = result[:m.cfg.MaxResults]
 	}
 
-	return append([]AbuserInfo(nil), result...)
+	return append([]HighUsageInfo(nil), result...)
 }
 
 // Cleanup removes idle users whose last activity is older than the retention window.
@@ -255,14 +255,14 @@ func (cs *callStats) record(now time.Time, delta uint32) {
 	}
 }
 
-func (cs *callStats) violations(now time.Time) []WindowViolation {
-	var res []WindowViolation
+func (cs *callStats) violations(now time.Time) []UsageViolation {
+	var res []UsageViolation
 	for i := range cs.windows {
 		cs.windows[i].advance(now)
 		total := cs.windows[i].total()
 		limit := cs.spec.thresholds[i].threshold.Count
 		if limit > 0 && total >= limit {
-			res = append(res, WindowViolation{
+			res = append(res, UsageViolation{
 				Window: cs.spec.thresholds[i].threshold.Window,
 				Count:  total,
 				Limit:  limit,
@@ -437,7 +437,7 @@ func safeDiv(window, slot time.Duration) int {
 	return res
 }
 
-func maxSeverity(info AbuserInfo) float64 {
+func maxSeverity(info HighUsageInfo) float64 {
 	var max float64
 	for _, v := range info.Violations {
 		if v.Limit == 0 {
@@ -454,4 +454,4 @@ func maxSeverity(info AbuserInfo) float64 {
 type noopCallRateMonitor struct{}
 
 func (noopCallRateMonitor) RecordCall(common.Address, time.Time, CallType) {}
-func (noopCallRateMonitor) GetAbuserInfo(time.Time) []AbuserInfo           { return nil }
+func (noopCallRateMonitor) GetHighUsageInfo(time.Time) []HighUsageInfo     { return nil }

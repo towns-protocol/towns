@@ -12,7 +12,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/abuse"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -74,7 +74,7 @@ func (s *Service) localAddMediaEvent(
 		return nil, AsRiverError(err).Func("localAddMediaEvent")
 	}
 
-	s.recordCallRate(abuse.CallTypeMediaEvent, parsedEvent.Event.CreatorAddress)
+	s.recordCallRate(highusage.CallTypeMediaEvent, parsedEvent.Event.CreatorAddress)
 
 	return connect.NewResponse(&AddMediaEventResponse{
 		CreationCookie: &CreationCookie{

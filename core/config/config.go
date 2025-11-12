@@ -53,10 +53,10 @@ func GetDefaultConfig() *Config {
 		Metrics: MetricsConfig{
 			Enabled: true,
 		},
-		AbuseDetection: AbuseDetectionConfig{
+		HighUsageDetection: HighUsageDetectionConfig{
 			Enabled:    false,
 			MaxResults: 10,
-			Thresholds: map[string][]AbuseThreshold{
+			Thresholds: map[string][]HighUsageThreshold{
 				"event": {
 					{Window: time.Minute, Count: 100},
 					{Window: 30 * time.Minute, Count: 1_000},
@@ -140,7 +140,7 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
-	AbuseDetection      AbuseDetectionConfig
+	HighUsageDetection  HighUsageDetectionConfig
 
 	// Scrubbing
 	Scrubbing ScrubbingConfig
@@ -621,18 +621,18 @@ type MetricsConfig struct {
 	Interface string
 }
 
-type AbuseDetectionConfig struct {
-	// Enabled toggles the abuse detection tracker logic.
+type HighUsageDetectionConfig struct {
+	// Enabled toggles the high-usage detection tracker logic.
 	Enabled bool
 
-	// MaxResults limits the number of abusive accounts exposed via /status.
+	// MaxResults limits the number of high-usage accounts exposed via /status.
 	MaxResults int
 
 	// Thresholds maps call types (e.g., "event", "media_event") to a set of window/count limits.
-	Thresholds map[string][]AbuseThreshold
+	Thresholds map[string][]HighUsageThreshold
 }
 
-type AbuseThreshold struct {
+type HighUsageThreshold struct {
 	Window time.Duration
 	Count  uint32
 }

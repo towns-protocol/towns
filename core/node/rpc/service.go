@@ -25,7 +25,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	"github.com/towns-protocol/towns/core/node/rpc/abuse"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	riversyncv3 "github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
@@ -106,7 +106,7 @@ type Service struct {
 	otelTracer            trace.Tracer
 	otelConnectIterceptor *otelconnect.Interceptor
 
-	callRateMonitor abuse.CallRateMonitor
+	callRateMonitor highusage.CallRateMonitor
 
 	// onCloseFuncs are called in reverse order from Service.Close()
 	onCloseFuncs []func()
