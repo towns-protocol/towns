@@ -274,9 +274,8 @@ export class WalletLink {
         return this.walletLinkShim.read.getRootKeyForWallet(wallet)
     }
 
-    public async checkIfLinked(rootKey: ethers.Signer, wallet: string): Promise<boolean> {
-        const rootKeyAddress = await rootKey.getAddress()
-        return this.walletLinkShim.read.checkIfLinked(rootKeyAddress, wallet)
+    public async checkIfLinked(rootKey: Address, wallet: Address): Promise<boolean> {
+        return this.walletLinkShim.read.checkIfLinked(rootKey, wallet)
     }
 
     private async generateRemoveLinkData(rootKey: ethers.Signer, walletAddress: string) {
