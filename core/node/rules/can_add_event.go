@@ -1320,31 +1320,6 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 	if ru.membership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
-	// for join events require a parent stream id if the stream has a parent
-	if ru.membership.Op == MembershipOp_SO_JOIN {
-		streamParentId := ru.params.streamView.StreamParentId()
-
-		if streamParentId != nil {
-			if ru.membership.StreamParentId == nil {
-				return false, RiverError(
-					Err_INVALID_ARGUMENT,
-					"membership parent stream id is nil",
-					"streamParentId",
-					streamParentId,
-				)
-			}
-			if !streamParentId.EqualsBytes(ru.membership.StreamParentId) {
-				return false, RiverError(
-					Err_INVALID_ARGUMENT,
-					"membership parent stream id does not match parent stream id",
-					"membershipParentStreamId",
-					FormatFullHashFromBytes(ru.membership.StreamParentId),
-					"streamParentId",
-					streamParentId,
-				)
-			}
-		}
-	}
 	return true, nil
 }
 
@@ -1590,7 +1565,6 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 			*streamParentId,
 			common.BytesToAddress(ru.membership.InitiatorAddress),
 			nil,
-			nil,
 		),
 		StreamId: userStreamId,
 	}, nil
@@ -1755,7 +1729,6 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 			userMembership.Op,
 			userAddress.Bytes(),
 			initiatorAddress,
-			userMembership.StreamParentId,
 			userMembership.Reason,
 			appAddress,
 		),
@@ -1797,7 +1770,6 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 		action.Op,
 		actionStreamId,
 		common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
-		action.StreamParentId,
 		nil,
 	)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
@@ -1843,11 +1815,12 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 }
 
 func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
-	inception, err := ru.params.streamView.GetChannelInception()
+	channelId := *ru.params.streamView.StreamId()
+	spaceId, err := shared.SpaceIdFromChannelId(channelId)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	permission, permissionUser, appAddress, err := ru.getPermissionForMembershipOp()
 	if err != nil {
 		return nil, err
@@ -1857,11 +1830,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 		return nil, nil
 	}
 
-	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
-	if err != nil {
-		return nil, err
-	}
-
+	
 	// ModifyBanning is a space level permission
 	// but users with this entitlement should also be entitled to kick users from the channel
 	if permission == auth.PermissionModifyBanning {
@@ -1875,7 +1844,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
 		spaceId,
-		*ru.params.streamView.StreamId(),
+		channelId,
 		permissionUser,
 		permission,
 		appAddress,
@@ -1914,13 +1883,7 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 	return func() (*auth.ChainAuthArgs, error) {
 		userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 		channelId := *params.streamView.StreamId()
-
-		inception, err := params.streamView.GetChannelInception()
-		if err != nil {
-			return nil, err
-		}
-
-		spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
+		spaceId, err := shared.SpaceIdFromChannelId(channelId)
 		if err != nil {
 			return nil, err
 		}
@@ -1953,10 +1916,6 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 	if !shared.ValidChannelStreamId(channelId) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid channel stream id", "streamId", channelId)
 	}
-	spaceId := params.streamView.StreamParentId()
-	if spaceId == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "channel has no parent", "channelId", channelId)
-	}
 
 	return &DerivedEvent{
 		StreamId: userStreamId,
@@ -1964,7 +1923,6 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 			MembershipOp_SO_LEAVE,
 			*channelId,
 			userId,
-			spaceId[:],
 			nil,
 		),
 	}, nil

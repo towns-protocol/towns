@@ -528,7 +528,11 @@ func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 }
 
 func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, error) {
-	spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
+	channelId, err := shared.StreamIdFromBytes(ru.inception.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	spaceId, err := shared.SpaceIdFromChannelId(channelId)
 	if err != nil {
 		return nil, err
 	}
@@ -545,11 +549,11 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 	if err != nil {
 		return nil, err
 	}
-	spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
+	spaceId, err := shared.SpaceIdFromChannelId(channelId)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	channelSettings := ru.inception.ChannelSettings
 	// If channel settings unspecified, apply defaults
 	if channelSettings == nil {
@@ -577,12 +581,10 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 
 func (ru *csParams) derivedMembershipEvent() (*DerivedEvent, error) {
 	creatorUserStreamId := shared.UserStreamIdFromAddr(ru.creatorAddress)
-	streamParentId := events.GetStreamParentId(ru.inceptionPayload)
 	payload := events.Make_UserPayload_Membership(
 		MembershipOp_SO_JOIN,
 		ru.streamId,
 		ru.creatorAddress,
-		streamParentId,
 		nil,
 	)
 
@@ -762,7 +764,6 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		ru.params.streamId,
 		ru.params.creatorAddress,
 		nil,
-		nil,
 	)
 
 	// second party
@@ -770,7 +771,6 @@ func (ru *csDmChannelRules) derivedDMMembershipEvents() ([]*DerivedEvent, error)
 		MembershipOp_SO_JOIN,
 		ru.params.streamId,
 		ru.params.creatorAddress,
-		nil,
 		nil,
 	)
 
@@ -895,7 +895,6 @@ func (ru *csGdmChannelRules) derivedGDMMembershipEvents() ([]*DerivedEvent, erro
 			MembershipOp_SO_JOIN,
 			ru.params.streamId,
 			ru.params.creatorAddress,
-			nil,
 			nil,
 		)
 		derivedEvents = append(derivedEvents, &DerivedEvent{

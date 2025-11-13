@@ -359,7 +359,6 @@ func (s *Snapshot) ParsedStringWithIndent(indent string) string {
 		if inception := content.ChannelContent.GetInception(); inception != nil {
 			inceptionData := map[string]any{
 				"StreamId": hex.EncodeToString(inception.GetStreamId()),
-				"SpaceId":  hex.EncodeToString(inception.GetSpaceId()),
 			}
 			if settingsMap := inception.GetSettings().ToMap(); len(settingsMap) > 0 {
 				inceptionData["StreamSettings"] = settingsMap

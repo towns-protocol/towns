@@ -60,7 +60,6 @@ func make_User_Membership(
 			streamId,
 			common.Address{},
 			nil,
-			nil,
 		),
 		prevMiniblock,
 	)

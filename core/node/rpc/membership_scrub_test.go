@@ -41,7 +41,6 @@ func addUserToChannel(
 			MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		&MiniblockRef{

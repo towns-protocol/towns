@@ -913,7 +913,6 @@ func (tc *testClient) joinChannel(
 			MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		userStreamMb,
@@ -932,7 +931,6 @@ func (tc *testClient) joinChannel(
 		Op:               MembershipOp_SO_JOIN,
 		UserAddress:      tc.wallet.Address[:],
 		InitiatorAddress: tc.wallet.Address[:],
-		StreamParentId:   spaceId[:],
 	}
 }
 

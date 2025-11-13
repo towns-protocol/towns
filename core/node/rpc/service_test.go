@@ -283,7 +283,6 @@ func joinChannel(
 			protocol.MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		&MiniblockRef{
@@ -326,7 +325,6 @@ func createChannel(
 		wallet,
 		events.Make_ChannelPayload_Inception(
 			channelStreamId,
-			spaceId,
 			streamSettings,
 		),
 		nil,
@@ -344,7 +342,6 @@ func createChannel(
 			protocol.MembershipOp_SO_JOIN,
 			userId,
 			userId,
-			&spaceId,
 		),
 		nil,
 	)
@@ -696,7 +693,7 @@ func testRiverDeviceId(tester *serviceTester) {
 	// receive optional error
 	event, err = events.MakeDelegatedStreamEvent(
 		wallet,
-		events.Make_ChannelPayload_Inception(channelId, spaceId, nil),
+		events.Make_ChannelPayload_Inception(channelId, nil),
 		channelHash,
 		delegateSig,
 	)

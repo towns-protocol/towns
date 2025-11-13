@@ -181,7 +181,6 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 					protocol.MembershipOp_SO_JOIN,
 					channelId,
 					common.Address{},
-					spaceID[:],
 					nil,
 				),
 				MiniblockRefFromLastHash(miniBlockHashResp.Msg),
@@ -404,7 +403,6 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 					protocol.MembershipOp_SO_JOIN,
 					channelId,
 					common.Address{},
-					spaceID[:],
 					nil,
 				),
 				&MiniblockRef{

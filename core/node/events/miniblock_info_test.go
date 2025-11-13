@@ -112,7 +112,7 @@ func TestAsStorageMb_NoSnapshot(t *testing.T) {
 
 	event, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		&MiniblockRef{Num: 0, Hash: common.BytesToHash([]byte("prevhash"))},
 	)
 	require.NoError(t, err)
@@ -508,7 +508,7 @@ func TestAsStorageMb_MixedSnapshots(t *testing.T) {
 	// Create second miniblock with non-legacy snapshot
 	event2, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		genesisMbInfo.Ref,
 	)
 	require.NoError(t, err)
@@ -540,7 +540,7 @@ func TestAsStorageMb_MixedSnapshots(t *testing.T) {
 	// Create third miniblock without snapshot
 	event3, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil),
 		mbInfo2.Ref,
 	)
 	require.NoError(t, err)
