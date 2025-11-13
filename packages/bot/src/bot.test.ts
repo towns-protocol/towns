@@ -1410,7 +1410,7 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('bot should be able to send encrypted interaction request and user should send encrypted response', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const requestId = randomUUID()
         const interactionRequestContent: PlainMessage<InteractionRequestPayload['content']> = {
             case: 'signature',
@@ -1537,7 +1537,7 @@ describe('Bot', { sequential: true }, () => {
     })
 
     it('user should be able to send form interaction response', async () => {
-        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const recipient = bin_fromHexString(botClientAddress)
         const interactionResponsePayload: PlainMessage<InteractionResponsePayload> = {
             salt: genIdBlob(),

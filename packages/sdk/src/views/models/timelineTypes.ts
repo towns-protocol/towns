@@ -520,12 +520,19 @@ export type TickerAttachment = {
     chainId: string
 }
 
+export type MiniappAttachment = {
+    type: 'miniapp'
+    url: string
+    id: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
+    | MiniappAttachment
 
 export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
     content: TipEvent
@@ -641,6 +648,15 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             value: {
                                 chainId: attachment.chainId,
                                 address: attachment.address,
+                            },
+                        },
+                    })
+                case 'miniapp':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'miniapp',
+                            value: {
+                                url: attachment.url,
                             },
                         },
                     })
