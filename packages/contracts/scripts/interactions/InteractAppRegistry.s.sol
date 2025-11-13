@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
+import {UpgradeableBeaconFacet} from "src/diamond/facets/beacon/UpgradeableBeaconFacet.sol";
 
 // libraries
 import {console} from "forge-std/console.sol";
@@ -14,50 +15,83 @@ import {DeployAppRegistry} from "../deployments/diamonds/DeployAppRegistry.s.sol
 import {DeploySimpleAppBeacon} from "../deployments/diamonds/DeploySimpleAppBeacon.s.sol";
 
 // facet deployers
-import {DeployAppRegistryFacet} from "../deployments/facets/DeployAppRegistryFacet.s.sol";
-import {DeployAppInstallerFacet} from "../deployments/facets/DeployAppInstallerFacet.s.sol";
-import {DeployAppFactoryFacet} from "../deployments/facets/DeployAppFactoryFacet.s.sol";
+import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
+import {DeployIdentityRegistry} from "../deployments/facets/DeployIdentityRegistry.s.sol";
+import {DeployReputationRegistry} from "../deployments/facets/DeployReputationRegistry.s.sol";
+import {DeployFacet} from "../common/DeployFacet.s.sol";
 
 contract InteractAppRegistry is Interaction, AlphaHelper {
     DeployAppRegistry private deployHelper = new DeployAppRegistry();
     DeploySimpleAppBeacon private beaconHelper = new DeploySimpleAppBeacon();
+    DeployFacet private facetHelper = new DeployFacet();
+
+    string internal constant FEEDBACK_SCHEMA =
+        "uint256 agentId, uint8 score, bytes32 tag1, bytes32 tag2, string feedbackUri, bytes32 feedbackHash";
+    string internal constant RESPONSE_SCHEMA =
+        "uint256 agentId, address reviewerAddress, uint64 feedbackIndex, string responseUri, bytes32 responseHash";
 
     function __interact(address deployer) internal override {
-        // Get the deployed AppRegistry diamond address
+        // Get the deployed contract addresses
         address appRegistry = getDeployment("appRegistry");
-        address spaceFactory = getDeployment("spaceFactory");
         address simpleAppBeacon = getDeployment("simpleAppBeacon");
-        address entryPoint = getDeployment("entryPoint");
 
         console.log("AppRegistry Diamond:", appRegistry);
-        console.log("Space Factory:", spaceFactory);
         console.log("Simple App Beacon:", simpleAppBeacon);
 
         // Deploy new facet implementations
         console.log("\n=== Deploying New Facets ===");
         vm.setEnv("OVERRIDE_DEPLOYMENTS", "1");
 
-        address appRegistryFacet = DeployAppRegistryFacet.deploy();
-        console.log("AppRegistryFacet deployed at:", appRegistryFacet);
+        // Deploy Identity Registry Facet
+        address identityRegistryFacet = DeployIdentityRegistry.deploy();
+        console.log("IdentityRegistryFacet deployed at:", identityRegistryFacet);
 
-        address appInstallerFacet = DeployAppInstallerFacet.deploy();
-        console.log("AppInstallerFacet deployed at:", appInstallerFacet);
+        // Deploy Reputation Registry Facet
+        address reputationRegistryFacet = DeployReputationRegistry.deploy();
+        console.log("ReputationRegistryFacet deployed at:", reputationRegistryFacet);
 
-        address appFactoryFacet = DeployAppFactoryFacet.deploy();
-        console.log("AppFactoryFacet deployed at:", appFactoryFacet);
+        // Deploy new version of Simple App Facet
+        facetHelper.add("SimpleAppFacet");
+        facetHelper.deployBatch(deployer);
+        address newSimpleAppFacet = facetHelper.getDeployedAddress("SimpleAppFacet");
+        console.log("SimpleAppFacet deployed at:", newSimpleAppFacet);
 
-        // Add the cuts for the new facet implementations
-        addCut(DeployAppRegistryFacet.makeCut(appRegistryFacet, FacetCutAction.Replace));
-        addCut(DeployAppInstallerFacet.makeCut(appInstallerFacet, FacetCutAction.Replace));
-        addCut(DeployAppFactoryFacet.makeCut(appFactoryFacet, FacetCutAction.Replace));
+        // Upgrade Simple App Beacon to use new implementation
+        console.log("\n=== Upgrading Simple App Beacon ===");
+        vm.broadcast(deployer);
+        UpgradeableBeaconFacet(simpleAppBeacon).upgradeTo(newSimpleAppFacet);
+        console.log("Simple App Beacon upgraded to:", newSimpleAppFacet);
 
-        // Prepare initialization data for AppFactoryFacet with the beacon configuration
-        IAppFactoryBase.Beacon[] memory beacons = new IAppFactoryBase.Beacon[](1);
-        beacons[0] = IAppFactoryBase.Beacon({
-            beaconId: beaconHelper.SIMPLE_APP_BEACON_ID(),
-            beacon: simpleAppBeacon
-        });
-        bytes memory initData = DeployAppFactoryFacet.makeInitData(beacons, entryPoint);
+        // Add the cuts for the new registry facets (Add action)
+        addCut(DeployIdentityRegistry.makeCut(identityRegistryFacet, FacetCutAction.Add));
+        addCut(DeployReputationRegistry.makeCut(reputationRegistryFacet, FacetCutAction.Add));
+
+        // Prepare initialization data for the new facets
+        bytes memory identityInitData = DeployIdentityRegistry.makeInitData();
+        bytes memory reputationInitData = DeployReputationRegistry.makeInitData(
+            FEEDBACK_SCHEMA,
+            RESPONSE_SCHEMA
+        );
+
+        // Prepare combined initialization using MultiInit pattern
+        address[] memory initAddresses = new address[](2);
+        bytes[] memory initDatas = new bytes[](2);
+
+        initAddresses[0] = identityRegistryFacet;
+        initDatas[0] = identityInitData;
+
+        initAddresses[1] = reputationRegistryFacet;
+        initDatas[1] = reputationInitData;
+
+        // Get MultiInit address from facet helper
+        facetHelper.add("MultiInit");
+        facetHelper.deployBatch(deployer);
+        address multiInit = facetHelper.getDeployedAddress("MultiInit");
+
+        bytes memory combinedInitData = abi.encodeCall(
+            MultiInit.multiInit,
+            (initAddresses, initDatas)
+        );
 
         // Generate and execute smart cuts with initialization
         console.log("\n=== Executing Diamond Cut with Initialization ===");
@@ -66,8 +100,8 @@ contract InteractAppRegistry is Interaction, AlphaHelper {
             appRegistry,
             "AppRegistry",
             deployHelper,
-            appFactoryFacet,
-            initData
+            multiInit,
+            combinedInitData
         );
 
         console.log("\n=== Diamond Cut Complete ===");
