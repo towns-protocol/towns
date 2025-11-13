@@ -91,6 +91,7 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         bytes32 commentHash
     ) internal {
         if (feedbackIndex == 0) Reputation__InvalidFeedbackIndex.selector.revertWith();
+
         ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
         if (feedbackIndex > $.lastIndex[agentId][reviewerAddress])
             Reputation__InvalidFeedbackIndex.selector.revertWith();

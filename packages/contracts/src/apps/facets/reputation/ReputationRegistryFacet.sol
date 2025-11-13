@@ -16,19 +16,25 @@ import {SchemaBase} from "../schema/SchemaBase.sol";
 contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase, SchemaBase, Facet {
     function __ReputationRegistry_init(
         string calldata feedbackSchema,
-        string calldata responseSchema,
-        ISchemaResolver resolver
+        string calldata responseSchema
     ) external onlyInitializing {
-        __ReputationRegistry_init_unchained(feedbackSchema, responseSchema, resolver);
+        __ReputationRegistry_init_unchained(feedbackSchema, responseSchema);
     }
 
     function __ReputationRegistry_init_unchained(
         string calldata feedbackSchema,
-        string calldata responseSchema,
-        ISchemaResolver resolver
+        string calldata responseSchema
     ) internal {
-        bytes32 feedbackSchemaId = _registerSchema(feedbackSchema, resolver, true);
-        bytes32 responseSchemaId = _registerSchema(responseSchema, resolver, true);
+        bytes32 feedbackSchemaId = _registerSchema(
+            feedbackSchema,
+            ISchemaResolver(address(0)),
+            true
+        );
+        bytes32 responseSchemaId = _registerSchema(
+            responseSchema,
+            ISchemaResolver(address(0)),
+            true
+        );
 
         ReputationRegistryStorage.Layout storage $ = ReputationRegistryStorage.getLayout();
         $.feedbackSchemaId = feedbackSchemaId;
