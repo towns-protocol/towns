@@ -11,6 +11,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
@@ -39,6 +40,8 @@ type EncryptedMessageQueue interface {
 		streamId shared.StreamId,
 		streamEventBytes []byte,
 	) (err error)
+
+	GetAllActiveBotAddresses(ctx context.Context) ([]common.Address, error)
 }
 
 type AppRegistryStreamsTracker struct {
@@ -76,30 +79,55 @@ func NewAppRegistryStreamsTracker(
 		return nil, err
 	}
 
+	// Load all registered bot inbox streams at startup
+	if err := tracker.loadBotInboxStreams(ctx); err != nil {
+		log := logging.FromCtx(ctx)
+		log.Errorw("Failed to load bot inbox streams at startup", "error", err)
+		return nil, err
+	}
+
 	return tracker, nil
 }
 
 func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
-	if streamType == shared.STREAM_CHANNEL_BIN {
-		return true
-	}
-	if streamType != shared.STREAM_USER_INBOX_BIN {
-		return false
-	}
-	userAddress, err := shared.GetUserAddressFromStreamId(streamId)
+	return streamType == shared.STREAM_CHANNEL_BIN
+}
+
+// loadBotInboxStreams loads all registered bot inbox streams at startup
+func (tracker *AppRegistryStreamsTracker) loadBotInboxStreams(ctx context.Context) error {
+	log := logging.FromCtx(ctx)
+
+	// Get all active bot addresses
+	botAddresses, err := tracker.queue.GetAllActiveBotAddresses(ctx)
 	if err != nil {
-		return false
+		return err
 	}
 
-	// Check if this user is a registered bot/app
-	isForwardable, _, err := tracker.queue.IsForwardableApp(ctx, userAddress)
-	if err != nil {
-		return false
+	log.Infow("Loading bot inbox streams", "count", len(botAddresses))
+
+	// Add inbox stream for each bot
+	for _, botAddress := range botAddresses {
+		// Create inbox stream ID for the bot
+		inboxStreamId := shared.UserInboxStreamIdFromAddress(botAddress)
+
+		// Add the stream to the tracker
+		added, err := tracker.AddStream(inboxStreamId, track_streams.ApplyHistoricalContent{Enabled: true})
+		if err != nil {
+			log.Errorw("Failed to add bot inbox stream",
+				"bot", botAddress.Hex(),
+				"streamId", inboxStreamId,
+				"error", err)
+			// Continue loading other bot streams even if one fails
+		} else if added {
+			log.Debugw("Added bot inbox stream",
+				"bot", botAddress.Hex(),
+				"streamId", inboxStreamId)
+		}
 	}
 
-	return isForwardable
+	return nil
 }
 
 func (tracker *AppRegistryStreamsTracker) NewTrackedStream(

@@ -380,3 +380,7 @@ func (q *CachedEncryptedMessageQueue) getCachedAppInfo(
 
 	return appInfo, nil
 }
+
+func (q *CachedEncryptedMessageQueue) GetAllActiveBotAddresses(ctx context.Context) ([]common.Address, error) {
+	return q.store.GetAllActiveBotAddresses(ctx)
+}
