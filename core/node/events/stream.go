@@ -159,6 +159,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	}
 
 	logging.FromCtx(ctx).Infow("mutex locked", keysAndValues...)
+	defer func() {
+		logging.FromCtx(ctx).Infow("lockMuAndLoadView returned", keysAndValues...)
+	}()
 
 	if s.local == nil {
 		return nil, nil
