@@ -69,9 +69,9 @@ contract ReputationRegistryFacet is IReputationRegistry, ReputationRegistryBase,
         address reviewerAddress,
         uint64 feedbackIndex,
         string calldata comment,
-        bytes32 commmentHash
+        bytes32 commentHash
     ) external {
-        _appendResponse(agentId, reviewerAddress, feedbackIndex, comment, commmentHash);
+        _appendResponse(agentId, reviewerAddress, feedbackIndex, comment, commentHash);
     }
 
     /// @inheritdoc IReputationRegistry

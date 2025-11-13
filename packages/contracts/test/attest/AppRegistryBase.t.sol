@@ -55,7 +55,7 @@ abstract contract AppRegistryBaseTest is
     address payable internal SIMPLE_APP;
     bytes32 internal SIMPLE_APP_ID;
 
-    function setUp() public override {
+    function setUp() public virtual override {
         super.setUp();
         registry = AppRegistryFacet(appRegistry);
         factory = AppFactoryFacet(appRegistry);
