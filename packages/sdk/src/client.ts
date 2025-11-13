@@ -2159,7 +2159,7 @@ export class Client
             encryptionAlgorithm as GroupEncryptionAlgorithmId,
         )
 
-        // Create the request matching InteractionResponse structure
+        // Create the request matching InteractionResquest structure
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
@@ -2206,12 +2206,24 @@ export class Client
                 deviceKey: toUserDevice.deviceKey,
             } satisfies PlainMessage<EncryptedData>,
         }
+        const tags = {
+            groupMentionTypes: [],
+            mentionedUserAddresses: [],
+            ...(opts?.tags ?? {}),
+            messageInteractionType:
+                opts?.tags?.messageInteractionType ?? MessageInteractionType.REPLY,
+            participatingUserAddresses: [
+                ...(opts?.tags?.participatingUserAddresses ?? []),
+                recipient,
+            ],
+        } satisfies PlainMessage<Tags>
+
         return this.makeEventAndAddToStream(
             streamId,
             make_ChannelPayload_InteractionResponse(response),
             {
                 method: 'sendInteractionResponse',
-                tags: opts?.tags,
+                tags,
                 ephemeral: opts?.ephemeral,
             },
         )
