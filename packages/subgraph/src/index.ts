@@ -684,22 +684,49 @@ ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
 })
 
 ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block, transaction, log } = event
     const blockNumber = event.block.number
+
     try {
+        // Create installation record
+        await context.db
+            .insert(schema.appInstallation)
+            .values({
+                app,
+                account,
+                appId,
+                installedAt: block.timestamp,
+                installTxHash: transaction.hash,
+                installLogIndex: log.logIndex,
+                isActive: true,
+            })
+            .onConflictDoUpdate({
+                // Handle re-installation after uninstall
+                appId,
+                installedAt: block.timestamp,
+                installTxHash: transaction.hash,
+                installLogIndex: log.logIndex,
+                uninstalledAt: null,
+                isActive: true,
+            })
+
+        // Also update the app.installedIn array for backward compatibility
         const result = await context.db.sql
             .update(schema.app)
             .set({
                 installedIn: sql`
                     CASE
-                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${event.args.account}]::text[]
-                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${event.args.account}::text
+                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${account}]::text[]
+                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${account}::text
                         ELSE ${schema.app.installedIn}
                     END
                 `,
             })
-            .where(eq(schema.app.appId, event.args.appId))
+            .where(eq(schema.app.appId, appId))
+
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppInstalled`, event.args.appId)
+            console.warn(`App not found for AppRegistry:AppInstalled`, appId)
         }
     } catch (error) {
         console.error(
@@ -710,20 +737,317 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
 })
 
 ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block } = event
     const blockNumber = event.block.number
+
     try {
+        // Soft delete installation record
+        const installResult = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                uninstalledAt: block.timestamp,
+                isActive: false,
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
+
+        if (installResult.changes === 0) {
+            console.warn(`No installation found for app ${app} in account ${account}`)
+        }
+
+        // Update app.installedIn array for backward compatibility
         const result = await context.db.sql
             .update(schema.app)
             .set({
-                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account}::text)`,
+                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${account}::text)`,
             })
-            .where(eq(schema.app.appId, event.args.appId))
+            .where(eq(schema.app.appId, appId))
+
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppUninstalled`, event.args.appId)
+            console.warn(`App not found for AppRegistry:AppUninstalled`, appId)
         }
     } catch (error) {
         console.error(
             `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppRenewed', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block } = event
+    const blockNumber = event.block.number
+
+    try {
+        const result = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                lastRenewedAt: block.timestamp,
+                appId, // Update to current version if changed
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(`No installation found for renewal: app ${app} in account ${account}`)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppRenewed at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUpdated', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Check if this is an instance update (has account param) or metadata update
+        if (account !== undefined) {
+            // Instance update - update the installation record
+            const result = await context.db.sql
+                .update(schema.appInstallation)
+                .set({
+                    lastUpdatedAt: block.timestamp,
+                    appId, // Update to new version/config
+                })
+                .where(
+                    and(
+                        eq(schema.appInstallation.app, app),
+                        eq(schema.appInstallation.account, account),
+                    ),
+                )
+
+            if (result.changes === 0) {
+                console.warn(`No installation found for update: app ${app} in account ${account}`)
+            }
+        } else {
+            // Metadata update - update the app table
+            // In this case, appId is actually the uid parameter
+            const uid = appId
+            const result = await context.db.sql
+                .update(schema.app)
+                .set({
+                    lastUpdatedAt: block.timestamp,
+                })
+                .where(eq(schema.app.appId, uid))
+
+            if (result.changes === 0) {
+                console.warn(`App not found for metadata update: ${uid}`)
+            }
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
+    const { app, oldVersionId, newVersionId } = event.args
+    const { block, transaction, log } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Mark old version as no longer latest
+        await context.db.sql
+            .update(schema.appVersion)
+            .set({ isLatest: false })
+            .where(eq(schema.appVersion.versionId, oldVersionId))
+
+        // Create new version record
+        await context.db
+            .insert(schema.appVersion)
+            .values({
+                versionId: newVersionId,
+                app,
+                createdAt: block.timestamp,
+                upgradedFromId: oldVersionId,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                blockNumber: block.number,
+                isLatest: true,
+                isCurrent: true,
+            })
+            .onConflictDoUpdate({
+                isLatest: true,
+                isCurrent: true,
+            })
+
+        // Update app's current version
+        await context.db.sql
+            .update(schema.app)
+            .set({
+                appId: newVersionId,
+                currentVersionId: newVersionId,
+                lastUpdatedAt: block.timestamp,
+            })
+            .where(eq(schema.app.address, app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUpgraded at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppSchemaSet', async ({ event, context }) => {
+    const { uid } = event.args
+    const { block, transaction, log } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Get previous active schema
+        const previousSchema = await context.db.sql.query.appRegistryConfig.findFirst({
+            where: and(
+                eq(schema.appRegistryConfig.configType, 'schema'),
+                eq(schema.appRegistryConfig.isActive, true),
+            ),
+        })
+
+        // Deactivate previous schema
+        if (previousSchema) {
+            await context.db.sql
+                .update(schema.appRegistryConfig)
+                .set({ isActive: false })
+                .where(
+                    and(
+                        eq(schema.appRegistryConfig.configType, 'schema'),
+                        eq(schema.appRegistryConfig.value, previousSchema.value),
+                    ),
+                )
+        }
+
+        // Insert new schema config
+        await context.db
+            .insert(schema.appRegistryConfig)
+            .values({
+                configType: 'schema',
+                value: uid,
+                setAt: block.timestamp,
+                previousValue: previousSchema?.value || null,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                isActive: true,
+            })
+            .onConflictDoUpdate({
+                setAt: block.timestamp,
+                isActive: true,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppSchemaSet at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:BeaconAdded', async ({ event, context }) => {
+    const { beaconId, beacon } = event.args
+    const { block, transaction, log } = event
+    const blockNumber = event.block.number
+
+    try {
+        await context.db
+            .insert(schema.appBeacon)
+            .values({
+                beaconId,
+                beacon,
+                addedAt: block.timestamp,
+                addedTxHash: transaction.hash,
+                addedLogIndex: log.logIndex,
+                isActive: true,
+            })
+            .onConflictDoUpdate({
+                // Re-activate if previously removed
+                removedAt: null,
+                isActive: true,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:BeaconAdded at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:BeaconRemoved', async ({ event, context }) => {
+    const { beaconId } = event.args
+    const { block } = event
+    const blockNumber = event.block.number
+
+    try {
+        const result = await context.db.sql
+            .update(schema.appBeacon)
+            .set({
+                removedAt: block.timestamp,
+                isActive: false,
+            })
+            .where(eq(schema.appBeacon.beaconId, beaconId))
+
+        if (result.changes === 0) {
+            console.warn(`No beacon found with id ${beaconId}`)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:BeaconRemoved at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:EntryPointSet', async ({ event, context }) => {
+    const { oldEntryPoint, newEntryPoint } = event.args
+    const { block, transaction, log } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Deactivate old entry point (if not zero address)
+        if (oldEntryPoint !== '0x0000000000000000000000000000000000000000') {
+            await context.db.sql
+                .update(schema.appRegistryConfig)
+                .set({ isActive: false })
+                .where(
+                    and(
+                        eq(schema.appRegistryConfig.configType, 'entryPoint'),
+                        eq(schema.appRegistryConfig.value, oldEntryPoint),
+                    ),
+                )
+        }
+
+        // Insert new entry point
+        await context.db
+            .insert(schema.appRegistryConfig)
+            .values({
+                configType: 'entryPoint',
+                value: newEntryPoint,
+                setAt: block.timestamp,
+                previousValue: oldEntryPoint,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                isActive: true,
+            })
+            .onConflictDoUpdate({
+                setAt: block.timestamp,
+                isActive: true,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:EntryPointSet at blockNumber ${blockNumber}:`,
             error,
         )
     }
