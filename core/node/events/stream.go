@@ -144,24 +144,8 @@ func (s *Stream) setViewLocked(view *StreamView) {
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	s.mu.Lock()
 
-	keysAndValues := []interface{}{"goid", getGoId(), "stream", s.streamId}
-	callerId := 0
-	for i := 1; i < 5; i++ {
-		if pc, file, no, ok := runtime.Caller(i); ok {
-			details := runtime.FuncForPC(pc)
-			if !strings.Contains(details.Name(), ".s:") {
-				keysAndValues = append(keysAndValues,
-					fmt.Sprintf("caller[%d]", callerId),
-					fmt.Sprintf("%s:%d#%s", filepath.Base(file), no, details.Name()))
-				callerId++
-			}
-		}
-	}
-
-	logging.FromCtx(ctx).Infow("mutex locked", keysAndValues...)
-	defer func() {
-		logging.FromCtx(ctx).Infow("lockMuAndLoadView returned", keysAndValues...)
-	}()
+	keysAndValues := logCaller(ctx, "mutex locked", s.streamId)
+	defer func() { logging.FromCtx(ctx).Infow("lockMuAndLoadView returned", keysAndValues...) }()
 
 	if s.local == nil {
 		return nil, nil
@@ -215,6 +199,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 // loadViewNoReconcileLocked should be called with a lock held.
 // Returns nil view and nil error if stream is not local.
 func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, error) {
+	keysAndValues := logCaller(ctx, "loadViewNoReconcileLocked", s.streamId)
+	defer func() { logging.FromCtx(ctx).Infow("loadViewNoReconcileLocked returned", keysAndValues...) }()
+
 	if s.local == nil {
 		return nil, nil
 	}
@@ -226,19 +213,24 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
+	keysAndValues2 := logCaller(ctx, "ReadStreamFromLastSnapshot", s.streamId)
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
 		streamRecencyConstraintsGenerations,
 	)
+	logging.FromCtx(ctx).Infow("ReadStreamFromLastSnapshot returned", keysAndValues2...)
+
 	if err != nil {
 		return nil, err
 	}
 
-	view, err := MakeStreamView(ctx, s.streamId, streamData)
+	keysAndValues3 := logCaller(ctx, "MakeStreamView", s.streamId)
+	view, err := MakeStreamView(streamData)
 	if err != nil {
 		return nil, err
 	}
+	logging.FromCtx(ctx).Infow("MakeStreamView returned", keysAndValues3...)
 
 	s.setViewLocked(view)
 	return view, nil
@@ -258,6 +250,26 @@ func getGoId() int64 {
 	}
 
 	return int64(id)
+}
+
+func logCaller(ctx context.Context, msg string, streamId StreamId) []interface{} {
+	keysAndValues := []interface{}{"goid", getGoId(), "stream", streamId}
+	callerId := 0
+	for i := 0; i < 5; i++ {
+		if pc, file, no, ok := runtime.Caller(i); ok {
+			details := runtime.FuncForPC(pc)
+			if !strings.Contains(details.Name(), "logCaller") && !strings.Contains(details.Name(), ".s:") {
+				keysAndValues = append(keysAndValues,
+					fmt.Sprintf("caller[%d]", callerId),
+					fmt.Sprintf("%s:%d#%s", filepath.Base(file), no, details.Name()))
+				callerId++
+			}
+		}
+	}
+
+	logging.FromCtx(ctx).Infow(msg, keysAndValues...)
+
+	return keysAndValues
 }
 
 func logMutexUnlocked(ctx context.Context, streamId StreamId) {
