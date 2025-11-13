@@ -37,6 +37,8 @@ export default defineConfig({
         "**/SwapRouter.sol/*.json",
         "**/IAppRegistry.sol/*.json",
         "**/IAppFactory.sol/*.json",
+        "**/IIdentityRegistry.sol/*.json",
+        "**/IReputationRegistry.sol/*.json",
       ],
       forge: {
         build: false,
