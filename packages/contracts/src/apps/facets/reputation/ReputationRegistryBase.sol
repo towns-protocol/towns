@@ -41,8 +41,7 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
     }
 
     function _giveFeedback(uint256 agentId, Feedback memory feedback) internal {
-        if (feedback.rating > 100 || feedback.rating < 0)
-            Reputation__InvalidScore.selector.revertWith();
+        if (feedback.rating > 100) Reputation__InvalidScore.selector.revertWith();
         if (!_exists(agentId)) Reputation__AgentNotExists.selector.revertWith();
 
         address agentAddress = _ownerOf(agentId);
