@@ -1117,7 +1117,7 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const testData = createTestPNG(200, 150)
-        const blob = new Blob([testData], { type: 'image/png' })
+        const blob = new Blob([testData as unknown as BlobPart], { type: 'image/png' })
 
         const { eventId } = await bot.sendMessage(channelId, 'Blob test', {
             attachments: [
