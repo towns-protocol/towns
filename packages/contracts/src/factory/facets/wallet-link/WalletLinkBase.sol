@@ -209,9 +209,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
             revert WalletLink__NotLinked(walletToRemove, rootWallet.addr);
         }
 
-        // Check that the wallet is not the default wallet
+        // If the wallet is the default wallet, unset it before removal
         if (ds.rootWalletByRootKey[rootWallet.addr].defaultWallet == walletToRemove) {
-            revert WalletLink__CannotRemoveDefaultWallet();
+            ds.rootWalletByRootKey[rootWallet.addr].defaultWallet = address(0);
+            emit SetDefaultWallet(rootWallet.addr, address(0));
         }
 
         // Verify that the root wallet signature contains the correct nonce and the correct wallet
@@ -246,9 +247,10 @@ abstract contract WalletLinkBase is IWalletLinkBase, EIP712Base, Nonces {
             revert WalletLink__NotLinked(walletToRemove, rootWallet);
         }
 
-        // check that the default wallet is not the wallet to remove
+        // If the wallet is the default wallet, unset it before removal
         if (ds.rootWalletByRootKey[rootWallet].defaultWallet == walletToRemove) {
-            revert WalletLink__CannotRemoveDefaultWallet();
+            ds.rootWalletByRootKey[rootWallet].defaultWallet = address(0);
+            emit SetDefaultWallet(rootWallet, address(0));
         }
 
         // Remove the link in the walletToRemove to root keys map

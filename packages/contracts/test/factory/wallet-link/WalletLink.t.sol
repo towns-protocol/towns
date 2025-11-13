@@ -388,6 +388,7 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
         vm.expectRevert(WalletLink__InvalidSignature.selector);
         walletLink.linkNonEVMWalletToRootKey(nonEVMWallet, 0);
     }
+
     // =============================================================
     //                   linkCallerToRootKey
     // =============================================================
@@ -875,6 +876,33 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
         });
     }
 
+    function test_removeLinkUnsetsDefaultWallet() external givenWalletIsLinkedViaCaller {
+        // Set wallet as default
+        vm.prank(wallet.addr);
+        walletLink.setDefaultWallet(wallet.addr);
+        assertEq(walletLink.getDefaultWallet(rootWallet.addr), wallet.addr);
+
+        // Remove the wallet that is set as default
+        uint256 nonce = walletLink.getLatestNonceForRootKey(rootWallet.addr);
+        bytes memory signature = _signWalletLink(rootWallet.privateKey, wallet.addr, nonce);
+
+        vm.startPrank(smartAccount.addr);
+        vm.expectEmit(address(walletLink));
+        emit SetDefaultWallet(rootWallet.addr, address(0));
+        vm.expectEmit(address(walletLink));
+        emit RemoveLink(wallet.addr, smartAccount.addr);
+        walletLink.removeLink({
+            wallet: wallet.addr,
+            rootWallet: LinkedWallet(rootWallet.addr, signature, LINKED_WALLET_MESSAGE),
+            nonce: nonce
+        });
+        vm.stopPrank();
+
+        // Verify wallet is unlinked and default wallet is unset
+        assertFalse(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
+        assertEq(walletLink.getDefaultWallet(rootWallet.addr), address(0));
+    }
+
     // =============================================================
     //                   removeCallerLink
     // =============================================================
@@ -896,6 +924,27 @@ contract WalletLinkTest is IWalletLinkBase, BaseSetup {
             abi.encodeWithSelector(WalletLink__NotLinked.selector, wallet.addr, address(0))
         );
         walletLink.removeCallerLink();
+    }
+
+    function test_removeCallerLinkUnsetsDefaultWallet() external givenWalletIsLinkedViaCaller {
+        // Set wallet as default
+        vm.prank(wallet.addr);
+        walletLink.setDefaultWallet(wallet.addr);
+        assertEq(walletLink.getDefaultWallet(rootWallet.addr), wallet.addr);
+
+        // Remove the wallet that is set as default
+        vm.startPrank(wallet.addr);
+        vm.expectEmit(address(walletLink));
+        emit SetDefaultWallet(rootWallet.addr, address(0));
+        vm.expectEmit(address(walletLink));
+        emit RemoveLink(wallet.addr, rootWallet.addr);
+        walletLink.removeCallerLink();
+        vm.stopPrank();
+
+        // Verify wallet is unlinked and default wallet is unset
+        assertFalse(walletLink.checkIfLinked(rootWallet.addr, wallet.addr));
+        assertEq(walletLink.getRootKeyForWallet(wallet.addr), address(0));
+        assertEq(walletLink.getDefaultWallet(rootWallet.addr), address(0));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
