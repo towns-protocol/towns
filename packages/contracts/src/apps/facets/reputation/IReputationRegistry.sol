@@ -7,6 +7,8 @@ pragma solidity ^0.8.23;
 
 // contracts
 
+/// @title Reputation Registry Base - ERC-8004 Data Structures
+/// @notice Core data structures and events for the ERC-8004 reputation system
 interface IReputationRegistryBase {
     struct Feedback {
         uint8 rating;
@@ -50,18 +52,24 @@ interface IReputationRegistryBase {
     );
 }
 
+/// @title Reputation Registry - ERC-8004 Implementation
+/// @notice A reputation system for AI agents enabling feedback collection, scoring, and trust establishment
+/// @dev This contract implements the ERC-8004 Reputation Registry specification, which enables
+///      discovering and trusting agents across organizational boundaries through reputation signals.
 interface IReputationRegistry is IReputationRegistryBase {
-    /// @notice Returns the address of the identity registry
-    /// @return The address of the identity registry
+    /// @notice Returns the address of the identity registry where agents are registered as NFTs
+    /// @dev The identity registry is an ERC-721 contract where each agent has a unique token ID.
+    ///      This registry links reputation data to agent identities defined in the ERC-8004 Identity Registry.
+    /// @return The address of the identity registry contract
     function getIdentityRegistry() external view returns (address);
 
-    /// @notice Gives feedback to an agent
-    /// @param agentId The ID of the agent
-    /// @param score The score of the feedback
-    /// @param tag1 The first tag of the feedback
-    /// @param tag2 The second tag of the feedback
-    /// @param feedbackUri The URI of the feedback
-    /// @param feedbackHash The hash of the feedback
+    /// @notice Posts feedback for an agent after completing a task or interaction
+    /// @param agentId The NFT token ID of the agent being reviewed
+    /// @param score The rating from 0 (worst) to 100 (best)
+    /// @param tag1 First tag for categorization and filtering (use bytes32(0) for none)
+    /// @param tag2 Second tag for categorization and filtering (use bytes32(0) for none)
+    /// @param feedbackUri URI pointing to detailed off-chain feedback data (IPFS recommended)
+    /// @param feedbackHash KECCAK-256 hash of off-chain data for integrity verification
     function giveFeedback(
         uint256 agentId,
         uint8 score,
@@ -71,17 +79,20 @@ interface IReputationRegistry is IReputationRegistryBase {
         bytes32 feedbackHash
     ) external;
 
-    /// @notice Revokes a feedback
-    /// @param agentId The ID of the agent
-    /// @param feedbackIndex The index of the feedback
+    /// @notice Revokes previously submitted feedback
+    /// @dev Only the original reviewer can revoke their feedback. Revoked feedback is excluded
+    ///      from getSummary() calculations but remains visible in readAllFeedback() with the
+    ///      revoked status flag. This maintains audit trail integrity per ERC-8004 principles.
+    /// @param agentId The NFT token ID of the agent
+    /// @param feedbackIndex The 1-based index of the feedback to revoke (must be > 0)
     function revokeFeedback(uint256 agentId, uint64 feedbackIndex) external;
 
-    /// @notice Appends a response to a feedback
-    /// @param agentId The ID of the agent
-    /// @param reviewerAddress The address of the client
-    /// @param feedbackIndex The index of the feedback
-    /// @param responseUri The URI of the response
-    /// @param responseHash The hash of the response
+    /// @notice Appends a response to existing feedback
+    /// @param agentId The NFT token ID of the agent
+    /// @param reviewerAddress The address that gave the original feedback
+    /// @param feedbackIndex The 1-based index of the feedback being responded to
+    /// @param responseUri URI pointing to the response content (IPFS recommended)
+    /// @param responseHash KECCAK-256 hash of response data for integrity verification
     function appendResponse(
         uint256 agentId,
         address reviewerAddress,
@@ -90,13 +101,13 @@ interface IReputationRegistry is IReputationRegistryBase {
         bytes32 responseHash
     ) external;
 
-    /// @notice Gets the summary of the feedback
-    /// @param agentId The ID of the agent
-    /// @param clientAddresses The addresses of the clients
-    /// @param tag1 The first tag of the feedback
-    /// @param tag2 The second tag of the feedback
-    /// @return count The count of the feedback
-    /// @return averageScore The average score of the feedback
+    /// @notice Retrieves aggregated reputation statistics for an agent with optional filtering
+    /// @param agentId The NFT token ID of the agent
+    /// @param clientAddresses Optional filter for specific reviewers (empty = all reviewers)
+    /// @param tag1 Optional filter for first tag (bytes32(0) = no filter)
+    /// @param tag2 Optional filter for second tag (bytes32(0) = no filter)
+    /// @return count Number of matching feedback entries (excludes revoked)
+    /// @return averageScore Mean score 0-100 (returns 0 if no feedback matches)
     function getSummary(
         uint256 agentId,
         address[] calldata clientAddresses,
@@ -104,31 +115,31 @@ interface IReputationRegistry is IReputationRegistryBase {
         bytes32 tag2
     ) external view returns (uint64 count, uint8 averageScore);
 
-    /// @notice Reads a feedback
-    /// @param agentId The ID of the agent
-    /// @param reviewerAddress The address of the client
-    /// @param index The index of the feedback
-    /// @return score The score of the feedback
-    /// @return tag1 The first tag of the feedback
-    /// @return tag2 The second tag of the feedback
-    /// @return isRevoked The revoked status of the feedback
+    /// @notice Reads a specific feedback entry by agent, reviewer, and index
+    /// @param agentId The NFT token ID of the agent
+    /// @param reviewerAddress The address that gave the feedback
+    /// @param index The 1-based feedback index (must be > 0 and <= lastIndex)
+    /// @return score The rating from 0 to 100
+    /// @return tag1 The first categorization tag
+    /// @return tag2 The second categorization tag
+    /// @return isRevoked True if feedback has been revoked, false otherwise
     function readFeedback(
         uint256 agentId,
         address reviewerAddress,
         uint64 index
     ) external view returns (uint8 score, bytes32 tag1, bytes32 tag2, bool isRevoked);
 
-    /// @notice Reads all feedback
-    /// @param agentId The ID of the agent
-    /// @param clientAddresses The addresses of the clients
-    /// @param tag1 The first tag of the feedback
-    /// @param tag2 The second tag of the feedback
-    /// @param includeRevoked The include revoked status
-    /// @return clients The addresses of the clients
-    /// @return scores The scores of the feedback
-    /// @return tag1s The first tags of the feedback
-    /// @return tag2s The second tags of the feedback
-    /// @return revokedStatuses The revoked statuses of the feedback
+    /// @notice Reads all feedback for an agent with flexible filtering options
+    /// @param agentId The NFT token ID of the agent
+    /// @param clientAddresses Optional filter for specific reviewers (empty = all reviewers)
+    /// @param tag1 Optional filter for first tag (bytes32(0) = no filter)
+    /// @param tag2 Optional filter for second tag (bytes32(0) = no filter)
+    /// @param includeRevoked Whether to include revoked feedback in results
+    /// @return clients Array of reviewer addresses (one per feedback entry)
+    /// @return scores Array of ratings 0-100 (parallel to clients array)
+    /// @return tag1s Array of first tags (parallel to clients array)
+    /// @return tag2s Array of second tags (parallel to clients array)
+    /// @return revokedStatuses Array of revocation flags (parallel to clients array)
     function readAllFeedback(
         uint256 agentId,
         address[] calldata clientAddresses,
@@ -146,12 +157,12 @@ interface IReputationRegistry is IReputationRegistryBase {
             bool[] memory revokedStatuses
         );
 
-    /// @notice Gets the response count
-    /// @param agentId The ID of the agent
-    /// @param reviewerAddress The address of the client
-    /// @param feedbackIndex The index of the feedback
-    /// @param responders The addresses of the responders
-    /// @return The response count
+    /// @notice Gets the total count of responses with flexible filtering
+    /// @param agentId The NFT token ID of the agent
+    /// @param reviewerAddress Filter by reviewer (address(0) = all reviewers)
+    /// @param feedbackIndex Filter by specific feedback index (0 = all feedback)
+    /// @param responders Filter by specific responders (empty = all responders)
+    /// @return Total count of responses matching the filter criteria
     function getResponseCount(
         uint256 agentId,
         address reviewerAddress,
@@ -159,15 +170,15 @@ interface IReputationRegistry is IReputationRegistryBase {
         address[] calldata responders
     ) external view returns (uint256);
 
-    /// @notice Gets the clients
-    /// @param agentId The ID of the agent
-    /// @return clients The clients
+    /// @notice Returns all addresses that have given feedback to this agent
+    /// @param agentId The NFT token ID of the agent
+    /// @return clients Array of all reviewer addresses (in order of first feedback)
     function getClients(uint256 agentId) external view returns (address[] memory clients);
 
-    /// @notice Gets the last index
-    /// @param agentId The ID of the agent
-    /// @param reviewerAddress The address of the client
-    /// @return lastIndex The last index
+    /// @notice Gets the highest feedback index for a specific reviewer-agent pair
+    /// @param agentId The NFT token ID of the agent
+    /// @param reviewerAddress The address of the reviewer
+    /// @return lastIndex The highest assigned index (0 if no feedback exists)
     function getLastIndex(
         uint256 agentId,
         address reviewerAddress
