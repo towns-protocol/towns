@@ -210,7 +210,6 @@ export type DecryptedInteractionResponse = {
 export type CreateChannelParams = {
     name: string
     description?: string
-    wallet?: 'bot' | 'app'
     autojoin?: boolean
     hideUserJoinLeaveEvents?: boolean
 }
@@ -2249,6 +2248,9 @@ const buildBotActions = (
         })
 
         const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
+        if (receipt.status !== 'success') {
+            throw new Error(`Tip transaction failed: ${hash}`)
+        }
         const tipEvent = parseEventLogs({
             abi: tippingFacetAbi,
             logs: receipt.logs,
@@ -2330,38 +2332,27 @@ const buildBotActions = (
         const allRolesThatCanRead = roles.filter((role) =>
             role.permissions.includes(Permission.Read),
         )
-        const args = [
-            `0x${channelId}`,
+        const args: [`0x${string}`, string, bigint[]] = [
+            channelId.startsWith('0x') ? (channelId as `0x${string}`) : `0x${channelId}`,
             JSON.stringify({ name: params.name, description: params.description ?? '' }),
             allRolesThatCanRead.map((role) => role.id),
         ] as const
 
-        if (params.wallet === 'bot') {
-            return writeContract(viem, {
-                address: SpaceAddressFromSpaceId(spaceId),
-                abi: channelsFacetAbi,
-                functionName: 'createChannel',
-                args,
-            })
-        } else {
-            return execute(viem, {
-                address: appAddress,
-                calls: [
-                    {
-                        to: SpaceAddressFromSpaceId(spaceId),
-                        abi: channelsFacetAbi,
-                        functionName: 'createChannel',
-                        args,
-                    },
-                ],
-            })
-        }
+        return writeContract(viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: channelsFacetAbi,
+            functionName: 'createChannel',
+            args,
+        })
     }
 
     const createChannel = async (spaceId: string, params: CreateChannelParams) => {
         const channelId = makeUniqueChannelStreamId(spaceId)
         const hash = await createChannelTx(spaceId, channelId, params)
-        await waitForTransactionReceipt(viem, { hash })
+        const receipt = await waitForTransactionReceipt(viem, { hash })
+        if (receipt.status !== 'success') {
+            throw new Error(`Channel creation transaction failed: ${hash}`)
+        }
         const events = await Promise.all([
             makeEvent(
                 client.signerContext,
@@ -2384,9 +2375,13 @@ const buildBotActions = (
                 }),
             ),
         ])
+        // the rpc client will retry a few times on failure, but if this doesn't succeed, the channel will exist on chain but not in the nodes
         await client.rpc.createStream({
             streamId: streamIdAsBytes(channelId),
             events: events,
+            metadata: {
+                appAddress: bin_fromHexString(appAddress),
+            },
         })
         return channelId
     }

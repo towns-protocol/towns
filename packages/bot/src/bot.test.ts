@@ -23,9 +23,10 @@ import {
     createChannel,
     isDefined,
     genIdBlob,
+    ParsedEvent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { Bot, BotPayload, DecryptedInteractionResponse } from './bot'
+import type { BasePayload, Bot, BotPayload, DecryptedInteractionResponse } from './bot'
 import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
@@ -307,6 +308,70 @@ describe('Bot', { sequential: true }, () => {
         expect(apps.has(botClientAddress)).toBe(true)
         expect(joined.has(botClientAddress)).toBe(true)
         expect(joined.get(botClientAddress)?.appAddress).toBe(appAddress)
+    })
+
+    it('should be entitled', async () => {
+        const spaceDapp = bobClient.riverConnection.spaceDapp
+
+        const isInstalled = await spaceDapp.isAppInstalled(spaceId, bot.appAddress)
+        expect(isInstalled).toBe(true)
+
+        const isEntitledRead = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.Read,
+        )
+        const isEntitledWrite = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.Write,
+        )
+        const isEntitledReact = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.React,
+        )
+        const isEntitledModifyBanning = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.ModifyBanning,
+        )
+        const isEntitledModifySpaceSettings = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.ModifySpaceSettings,
+        )
+        const isEntitledRedact = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.Redact,
+        )
+        const isEntitledPinMessage = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.PinMessage,
+        )
+        const isEntitledAddRemove = await spaceDapp.isAppEntitled(
+            spaceId,
+            bot.botId,
+            bot.appAddress,
+            Permission.AddRemoveChannels,
+        )
+        expect(isEntitledRead).toBe(true)
+        expect(isEntitledWrite).toBe(true)
+        expect(isEntitledReact).toBe(true)
+        expect(isEntitledModifyBanning).toBe(true)
+        expect(isEntitledModifySpaceSettings).toBe(true)
+        expect(isEntitledRedact).toBe(true)
+        expect(isEntitledPinMessage).toBe(true)
+        expect(isEntitledAddRemove).toBe(true)
     })
 
     it('should receive a message forwarded', async () => {
@@ -1118,7 +1183,7 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const testData = createTestPNG(200, 150)
-        const blob = new Blob([testData], { type: 'image/png' })
+        const blob = new Blob([testData as unknown as ArrayBuffer], { type: 'image/png' })
 
         const { eventId } = await bot.sendMessage(channelId, 'Blob test', {
             attachments: [
@@ -1469,81 +1534,100 @@ describe('Bot', { sequential: true }, () => {
         )
     })
 
-    it.for(['app', 'bot'] as const)(
-        'bob creates role, bot creates channel (wallet: %s), channel has the role, bob joins and sends message, bot receives message',
-        async (wallet) => {
-            await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+    it('bot can create channel, channel has the role, bob joins and sends message, bot receives message', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
-            const receivedMessages: OnMessageType[] = []
+        type WhyDoINeedThis = BasePayload & { event: ParsedEvent }
+        const streamEvents: WhyDoINeedThis[] = []
+        const receivedMessages: OnMessageType[] = []
+        subscriptions.push(
+            bot.onStreamEvent((_h, e) => {
+                log('stream event', e)
+                streamEvents.push(e)
+            }),
+        )
+        subscriptions.push(
             bot.onMessage((_h, e) => {
                 receivedMessages.push(e)
-            })
+            }),
+        )
 
-            const spaceDapp = bobClient.riverConnection.spaceDapp
-            const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
-            const ruleData = getNftRuleData(testNft1Address)
-            const permissions = [Permission.Read, Permission.Write]
-            const roleName = `TestRole for bot channel ${wallet} wallet`
+        const spaceDapp = bobClient.riverConnection.spaceDapp
+        const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
+        const ruleData = getNftRuleData(testNft1Address)
+        const permissions = [Permission.Read, Permission.Write]
+        const roleName = `TestRole for bot channel bot wallet`
 
-            // Bob creates a role with Read permission
-            const txn = await spaceDapp.createRole(
-                spaceId,
-                roleName,
-                permissions,
-                [],
-                ruleData,
-                bob.signer,
-            )
+        // Bob creates a role with Read permission
+        const txn = await spaceDapp.createRole(
+            spaceId,
+            roleName,
+            permissions,
+            [],
+            ruleData,
+            bob.signer,
+        )
 
-            const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
-            expect(roleError).toBeUndefined()
-            check(isDefined(roleId), 'roleId is defined')
-            log('bob created role', roleId)
+        const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
+        expect(roleError).toBeUndefined()
+        check(isDefined(roleId), 'roleId is defined')
+        log('bob created role', roleId)
 
-            // Bot creates a new channel
-            const newChannelId = await bot.createChannel(spaceId, {
-                name: `test-channel-with-role-${wallet}`,
-                description: `Channel with role created by bot with ${wallet} wallet`,
-                wallet,
-            })
+        // Bot creates a new channel
+        const newChannelId = await bot.createChannel(spaceId, {
+            name: `test-channel-with-role-bot`,
+            description: `Channel with role created by bot with bot wallet`,
+        })
 
-            log(`bot created channel with ${wallet} wallet`, newChannelId)
+        log(`bot created channel`, newChannelId)
 
-            // Query the roles assigned to the channel
-            const channelRoles = await readContract(bot.viem, {
-                address: SpaceAddressFromSpaceId(spaceId),
-                abi: channelsFacetAbi,
-                functionName: 'getRolesByChannel',
-                args: [`0x${newChannelId}`],
-            })
+        // Query the roles assigned to the channel
+        const channelRoles = await readContract(bot.viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: channelsFacetAbi,
+            functionName: 'getRolesByChannel',
+            args: [
+                newChannelId.startsWith('0x')
+                    ? (newChannelId as `0x${string}`)
+                    : `0x${newChannelId}`,
+            ],
+        })
 
-            log('channel roles', channelRoles)
+        log('channel roles', channelRoles)
 
-            // Verify the created role is included in the channel's roles
-            expect(channelRoles).toContain(roleId)
+        // Verify the created role is included in the channel's roles
+        expect(channelRoles).toContain(BigInt(roleId))
 
-            // Bob joins the new channel
-            await bobClient.riverConnection.call((client) => client.joinStream(newChannelId))
+        // Bob joins the new channel
+        await bobClient.riverConnection.call((client) => client.joinStream(newChannelId))
 
-            // Bob gets the channel
-            const bobNewChannel = bobClient.spaces.getSpace(spaceId).getChannel(newChannelId)
-            await waitFor(() => bobNewChannel.value.status !== 'loading', { timeoutMS: 10000 })
+        // Bob gets the channel
+        const bobNewChannel = bobClient.spaces.getSpace(spaceId).getChannel(newChannelId)
+        await waitFor(() => bobNewChannel.value.status !== 'loading', { timeoutMS: 10000 })
 
-            // Bob sends a message in the new channel
-            const testMessage = `Hello bot in new channel with ${wallet} wallet!`
-            const { eventId } = await bobNewChannel.sendMessage(testMessage)
-            log('bob sent message in new channel', eventId)
+        // Bob sends a message in the new channel
+        const testMessage = `Hello bot in new channel`
+        log('bob sending message in new channel', {
+            testMessage,
+            botId: bot.botId,
+            appAddress: bot.appAddress,
+            bobUserId: bob.userId,
+        })
+        const { eventId } = await bobNewChannel.sendMessage(testMessage)
+        log('bob sent message in new channel', eventId)
 
-            // Wait for bot to receive the message
-            await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15000 })
+        await waitFor(() => streamEvents.length > 0, { timeoutMS: 15000 })
+        await waitFor(() => expect(streamEvents.find((x) => x.eventId === eventId)).toBeDefined())
 
-            const receivedEvent = receivedMessages.find((x) => x.eventId === eventId)
-            expect(receivedEvent).toBeDefined()
-            expect(receivedEvent?.message).toBe(testMessage)
-            expect(receivedEvent?.channelId).toBe(newChannelId)
-            expect(receivedEvent?.userId).toBe(bobClient.userId)
-        },
-    )
+        // Wait for bot to receive the message
+        await waitFor(() => receivedMessages.length > 0, { timeoutMS: 15000 })
+
+        const receivedEvent = receivedMessages.find((x) => x.eventId === eventId)
+        expect(receivedEvent).toBeDefined()
+        expect(receivedEvent?.message).toBe(testMessage)
+        expect(receivedEvent?.channelId).toBe(newChannelId)
+        expect(receivedEvent?.userId).toBe(bobClient.userId)
+    })
 
     it('bot should be able to send encrypted interaction request and user should send encrypted response', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)

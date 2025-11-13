@@ -1596,6 +1596,35 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 	}, nil
 }
 
+func (ru *aeUserMembershipRules) addRemoveChannelChainAuthForApp(
+	userId common.Address,
+	appAddress common.Address,
+) (*auth.ChainAuthArgs, error) {
+	if ru.userMembership == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+	}
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	if streamId.Type() == shared.STREAM_CHANNEL_BIN {
+		return auth.NewChainAuthArgsForChannel(
+			streamId.SpaceID(),
+			streamId,
+			userId,
+			auth.PermissionAddRemoveChannels,
+			appAddress,
+		), nil
+	}
+
+	return nil, RiverError(
+		Err_PERMISSION_DENIED,
+		"Invalid stream for app join, wanted channel",
+		"streamId",
+		streamId,
+	)
+}
+
 // ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
 // For apps, we expect the user membership event to be derived from a user membership action posted
 // by the space owner; this authorization is required to ensure that apps are added to spaces or channels
@@ -1769,16 +1798,41 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 // be changed by either:
 // - the owner of a space where the bot is experiencing a membership change, OR
 // - by a node, specifically in the case of membership loss due to scrubbing.
+// - by the app itself, specifically in the case of creating a new channel and adding itself
 // Thus, for the very specific case when users are bot users, and the membership change is not a node-initiated
 // bounce, we want to verify that the initiator of the membership change has space ownership permissions.
 // NOTE that at this time, bots cannot be members of DMs or GDMs, so there will always be a space involved
 // in bot membership events.
 func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthArgs, error) {
-	isApp, _ := ru.params.streamView.IsAppUser()
-	isNodeInitiator := ru.params.isValidNode(ru.userMembership.Inviter)
+	appAddress, err := ru.params.streamView.GetAppAddress()
+	if err != nil {
+		return nil, err
+	}
+	isApp := appAddress != (common.Address{})
+	userId, err := shared.GetUserAddressFromStreamId(*ru.params.streamView.StreamId())
+	if err != nil {
+		return nil, err
+	}
+	isNodeCreator := ru.params.isValidNode(ru.params.parsedEvent.Event.CreatorAddress)
+	isNodeInitiator := isNodeCreator &&
+		bytes.Equal(ru.userMembership.Inviter, ru.params.parsedEvent.Event.CreatorAddress)
 	isNodeBoot := ru.userMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
 	if isApp && !isNodeBoot {
-		return ru.ownerChainAuthForInviter()
+		if !isNodeCreator {
+			return nil, RiverError(
+				Err_PERMISSION_DENIED,
+				"app memberships should come from derived events, apps can't add themselves",
+				"inviter",
+				ru.userMembership.Inviter,
+			)
+		}
+		if bytes.Equal(ru.userMembership.Inviter, userId.Bytes()) {
+			// if the app invited itself, check to see that they have add remove channel permissions (supposibly the only way we could have gotten here is via a new channel creation)
+			return ru.addRemoveChannelChainAuthForApp(userId, appAddress)
+		} else {
+			// otherwise, check to see that the inviter has space ownership permissions
+			return ru.ownerChainAuthForInviter()
+		}
 	}
 	return nil, nil
 }
