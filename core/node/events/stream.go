@@ -142,16 +142,24 @@ func (s *Stream) setViewLocked(view *StreamView) {
 // mu is always locked on return, even if error is returned.
 // Return nil view and nil error if stream is not local.
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
-	if pc, file, no, ok := runtime.Caller(1); ok {
-		details := runtime.FuncForPC(pc)
-		logging.FromCtx(ctx).Infow("mutex locked",
-			"streamId", s.streamId,
-			"goid", getGoId(),
-			"func", details.Name(),
-			"loc", fmt.Sprintf("%s:%d", filepath.Base(file), no))
+	s.mu.Lock()
+
+	keysAndValues := []interface{}{"goid", getGoId(), "stream", s.streamId}
+	callerId := 0
+	for i := 1; i < 5; i++ {
+		if pc, file, no, ok := runtime.Caller(i); ok {
+			details := runtime.FuncForPC(pc)
+			if !strings.Contains(details.Name(), ".s:") {
+				keysAndValues = append(keysAndValues,
+					fmt.Sprintf("caller[%d]", callerId),
+					fmt.Sprintf("%s:%d#%s", filepath.Base(file), no, details.Name()))
+				callerId++
+			}
+		}
 	}
 
-	s.mu.Lock()
+	logging.FromCtx(ctx).Infow("mutex locked", keysAndValues...)
+
 	if s.local == nil {
 		return nil, nil
 	}
