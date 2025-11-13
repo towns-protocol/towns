@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -139,7 +140,20 @@ func (s *Stream) setViewLocked(view *StreamView) {
 // mu is always locked on return, even if error is returned.
 // Return nil view and nil error if stream is not local.
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
+	// DEADLOCK FIX: Monitor write lock acquisition time to detect contention early
+	lockStart := time.Now()
 	s.mu.Lock()
+	lockDuration := time.Since(lockStart)
+
+	// Log warning if lock acquisition took too long (indicates contention)
+	if lockDuration > 100*time.Millisecond {
+		logging.FromCtx(ctx).Warnw(
+			"slow Lock acquisition in lockMuAndLoadView",
+			"streamId", s.streamId,
+			"lockDuration", lockDuration,
+		)
+	}
+
 	if s.local == nil {
 		return nil, nil
 	}
@@ -162,6 +176,10 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
 	// Wait for reconciliation to complete.
+	// Add absolute timeout to prevent infinite waiting if reconciliation never completes
+	reconcileCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	backoff := BackoffTracker{
 		NextDelay:   100 * time.Millisecond,
 		MaxAttempts: 12,
@@ -181,9 +199,18 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 		}
 		s.mu.Unlock()
 
-		err := backoff.Wait(ctx, nil)
+		err := backoff.Wait(reconcileCtx, nil)
 		if err != nil {
 			s.mu.Lock()
+			// Provide better error message when reconciliation times out
+			if errors.Is(err, context.DeadlineExceeded) {
+				return nil, RiverError(
+					Err_INTERNAL,
+					"stream reconciliation timed out after 30s",
+					"streamId", s.streamId,
+				).
+					Func("lockMuAndLoadView")
+			}
 			return nil, err
 		}
 	}
@@ -191,6 +218,8 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 
 // loadViewNoReconcileLocked should be called with a lock held.
 // Returns nil view and nil error if stream is not local.
+// DEADLOCK FIX: This function now releases the lock before expensive DB operations
+// and re-acquires it to update the cache.
 func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, error) {
 	if s.local == nil {
 		return nil, nil
@@ -201,15 +230,29 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 		return s.getViewLocked(), nil
 	}
 
+	// Release lock before expensive database operation to prevent blocking readers
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
+	streamId := s.streamId
+	s.mu.Unlock()
 
+	// Perform database read without holding the lock
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
-		s.streamId,
+		streamId,
 		streamRecencyConstraintsGenerations,
 	)
+
+	// Re-acquire lock to update cache
+	s.mu.Lock()
+
 	if err != nil {
 		return nil, err
+	}
+
+	// Check again in case another goroutine loaded it while we were reading from DB
+	if s.getViewLocked() != nil {
+		s.lastAccessedTime = time.Now()
+		return s.getViewLocked(), nil
 	}
 
 	view, err := MakeStreamView(streamData)
@@ -561,8 +604,21 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // tryGetView is thread-safe.
 func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
+	// DEADLOCK FIX: Monitor lock acquisition time to detect contention early
+	lockStart := time.Now()
 	s.mu.RLock()
+	lockDuration := time.Since(lockStart)
 	defer s.mu.RUnlock()
+
+	// Log warning if lock acquisition took too long (indicates contention)
+	if lockDuration > 100*time.Millisecond {
+		logging.FromCtx(s.params.ServerCtx).Warnw(
+			"slow RLock acquisition in tryGetView",
+			"streamId", s.streamId,
+			"lockDuration", lockDuration,
+		)
+	}
+
 	if s.local == nil {
 		return nil, false
 	}
