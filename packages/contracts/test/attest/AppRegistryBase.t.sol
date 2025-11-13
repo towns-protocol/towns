@@ -26,6 +26,7 @@ import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IdentityRegistryFacet} from "../../src/apps/facets/identity/IdentityRegistryFacet.sol";
+import {IReputationRegistry} from "../../src/apps/facets/reputation/IReputationRegistry.sol";
 
 abstract contract AppRegistryBaseTest is
     BaseSetup,
@@ -41,6 +42,7 @@ abstract contract AppRegistryBaseTest is
     AppAccount internal appAccount;
     MockModule internal mockModule;
     IdentityRegistryFacet internal identityRegistry;
+    IReputationRegistry internal reputationRegistry;
     ISimpleApp internal simpleApp;
 
     uint256 internal DEFAULT_INSTALL_PRICE = 0.001 ether;
@@ -48,6 +50,7 @@ abstract contract AppRegistryBaseTest is
     address internal DEFAULT_CLIENT;
     address internal DEFAULT_DEV;
     bytes32 internal DEFAULT_APP_ID;
+    uint256 internal DEFAULT_AGENT_TOKEN_ID;
 
     address payable internal SIMPLE_APP;
     bytes32 internal SIMPLE_APP_ID;
@@ -58,6 +61,7 @@ abstract contract AppRegistryBaseTest is
         factory = AppFactoryFacet(appRegistry);
         installer = AppInstallerFacet(appRegistry);
         identityRegistry = IdentityRegistryFacet(appRegistry);
+        reputationRegistry = IReputationRegistry(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
         DEFAULT_CLIENT = _randomAddress();
@@ -83,6 +87,13 @@ abstract contract AppRegistryBaseTest is
     modifier givenAppIsRegistered() {
         vm.prank(DEFAULT_DEV);
         DEFAULT_APP_ID = registry.registerApp(mockModule, DEFAULT_CLIENT);
+        _;
+    }
+
+    modifier givenAppIsPromoted() {
+        vm.prank(DEFAULT_DEV);
+        simpleApp.promoteAgent("ipfs://QmTest", new MetadataEntry[](0));
+        DEFAULT_AGENT_TOKEN_ID = simpleApp.getAgentId();
         _;
     }
 

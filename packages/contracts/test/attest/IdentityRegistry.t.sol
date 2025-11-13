@@ -3,14 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISimpleAppBase} from "../../src/apps/simple/app/ISimpleApp.sol";
-import {IIdentityRegistryBase} from "../../src/apps/facets/identity/IIdentityRegistry.sol";
-import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721ABase} from "../../src/diamond/facets/token/ERC721A/IERC721A.sol";
-
-// libraries
-import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 import {AppRegistryBaseTest} from "./AppRegistryBase.t.sol";

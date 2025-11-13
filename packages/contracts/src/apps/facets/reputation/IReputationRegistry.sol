@@ -26,7 +26,7 @@ interface IReputationRegistryBase {
 
     event NewFeedback(
         uint256 indexed agentId,
-        address indexed clientAddress,
+        address indexed reviewerAddress,
         uint8 score,
         bytes32 indexed tag1,
         bytes32 tag2,
@@ -36,13 +36,13 @@ interface IReputationRegistryBase {
 
     event FeedbackRevoked(
         uint256 indexed agentId,
-        address indexed clientAddress,
+        address indexed reviewerAddress,
         uint64 indexed feedbackIndex
     );
 
     event ResponseAppended(
         uint256 indexed agentId,
-        address indexed clientAddress,
+        address indexed reviewerAddress,
         uint64 feedbackIndex,
         address indexed responder,
         string responseUri,
@@ -78,13 +78,13 @@ interface IReputationRegistry is IReputationRegistryBase {
 
     /// @notice Appends a response to a feedback
     /// @param agentId The ID of the agent
-    /// @param clientAddress The address of the client
+    /// @param reviewerAddress The address of the client
     /// @param feedbackIndex The index of the feedback
     /// @param responseUri The URI of the response
     /// @param responseHash The hash of the response
     function appendResponse(
         uint256 agentId,
-        address clientAddress,
+        address reviewerAddress,
         uint64 feedbackIndex,
         string calldata responseUri,
         bytes32 responseHash
@@ -106,7 +106,7 @@ interface IReputationRegistry is IReputationRegistryBase {
 
     /// @notice Reads a feedback
     /// @param agentId The ID of the agent
-    /// @param clientAddress The address of the client
+    /// @param reviewerAddress The address of the client
     /// @param index The index of the feedback
     /// @return score The score of the feedback
     /// @return tag1 The first tag of the feedback
@@ -114,7 +114,7 @@ interface IReputationRegistry is IReputationRegistryBase {
     /// @return isRevoked The revoked status of the feedback
     function readFeedback(
         uint256 agentId,
-        address clientAddress,
+        address reviewerAddress,
         uint64 index
     ) external view returns (uint8 score, bytes32 tag1, bytes32 tag2, bool isRevoked);
 
@@ -148,13 +148,13 @@ interface IReputationRegistry is IReputationRegistryBase {
 
     /// @notice Gets the response count
     /// @param agentId The ID of the agent
-    /// @param clientAddress The address of the client
+    /// @param reviewerAddress The address of the client
     /// @param feedbackIndex The index of the feedback
     /// @param responders The addresses of the responders
     /// @return The response count
     function getResponseCount(
         uint256 agentId,
-        address clientAddress,
+        address reviewerAddress,
         uint64 feedbackIndex,
         address[] calldata responders
     ) external view returns (uint256);
@@ -166,10 +166,10 @@ interface IReputationRegistry is IReputationRegistryBase {
 
     /// @notice Gets the last index
     /// @param agentId The ID of the agent
-    /// @param clientAddress The address of the client
+    /// @param reviewerAddress The address of the client
     /// @return lastIndex The last index
     function getLastIndex(
         uint256 agentId,
-        address clientAddress
+        address reviewerAddress
     ) external view returns (uint64 lastIndex);
 }
