@@ -51,13 +51,13 @@ interface IIdentityRegistryBase {
     /// @notice Thrown when attempting to access an agent that does not exist
     error IdentityRegistry__AgentDoesNotExist();
 
-    /// @notice Thrown when attempting to register an agent that is not registered
+    /// @notice Thrown when attempting an operation on an agent that is not registered
     error IdentityRegistry__AgentNotRegistered();
 
     /// @notice Thrown when attempting to register an agent that is banned
     error IdentityRegistry__AgentBanned();
 
-    /// @notice Thrown when attempting to register an agent that is already promoted
+    /// @notice Thrown when attempting to promote or register an agent that already has a promoted identity
     error IdentityRegistry__AgentAlreadyPromoted();
 }
 
