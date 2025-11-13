@@ -146,6 +146,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 		details := runtime.FuncForPC(pc)
 		logging.FromCtx(ctx).Infow("mutex locked",
 			"streamId", s.streamId,
+			"goid", getGoId(),
 			"func", details.Name(),
 			"loc", fmt.Sprintf("%s:%d", filepath.Base(file), no))
 	}
