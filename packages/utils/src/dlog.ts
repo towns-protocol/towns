@@ -151,6 +151,7 @@ export interface DLogOpts {
 const allDlogs: Map<string, DLogger> = new Map()
 
 // Configurable error logger - evaluated at runtime to avoid order of operations issues
+let customInfoLogger: ((...args: unknown[]) => void) | undefined = undefined
 let customErrorLogger: ((...args: unknown[]) => void) | undefined = undefined
 let customWarnLogger: ((...args: unknown[]) => void) | undefined = undefined
 
@@ -174,6 +175,16 @@ export const setDlogWarnLogger = (logger: ((...args: unknown[]) => void) | undef
     customWarnLogger = logger
 }
 
+/**
+ * Set a custom info logger that will be used instead of console.log for dlog info output.
+ * This allows external libraries to capture and buffer info logs for reporting.
+ *
+ * @param logger Custom logger function, or undefined to reset to console.log
+ */
+export const setDlogInfoLogger = (logger: ((...args: unknown[]) => void) | undefined): void => {
+    customInfoLogger = logger
+}
+
 // github#722
 const isSingleLineLogsMode = safeEnv(['SINGLE_LINE_LOGS']) === 'true'
 
@@ -184,11 +195,18 @@ const makeDlog = (d: Debugger, opts?: DLogOpts): DLogger => {
             warnLogger(...args)
         }
     }
-    if (opts?.printStack) {
+    if (opts?.warn !== true && opts?.printStack) {
         // Use a dynamic logger that checks for custom error logger at runtime
         d.log = (...args: unknown[]) => {
             const errorLogger = customErrorLogger || console.error
             errorLogger(...args)
+        }
+    }
+
+    if (opts?.warn !== true && opts?.printStack !== true && opts?.defaultEnabled) {
+        d.log = (...args: unknown[]) => {
+            const infoLogger = customInfoLogger || console.log
+            infoLogger(...args)
         }
     }
 
