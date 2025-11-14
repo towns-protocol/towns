@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"iter"
 	"time"
 
@@ -128,9 +129,12 @@ func MakeStreamView(
 			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
-	logging.FromCtx(ctx).Infow("MakeStreamView", "minipoolLen", len(streamData.MinipoolEnvelopes))
+	logging.FromCtx(ctx).Infow("MakeStreamView",
+		"stream", streamId, "minipoolLen", len(streamData.MinipoolEnvelopes))
 
+	events := make(map[string]int)
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
+	s := time.Now()
 	for _, e := range streamData.MinipoolEnvelopes {
 		var env Envelope
 		err := proto.Unmarshal(e, &env)
@@ -148,10 +152,17 @@ func MakeStreamView(
 			).Func("MakeStreamView").
 				Tags("streamId", streamId, "event", parsed.ShortDebugStr())
 		}
+
+		events[fmt.Sprintf("%T", parsed.Event.GetPayload())] += 1
+
+		if len(events)%100 == 0 {
+			logging.FromCtx(ctx).Infow("MakeStreamView",
+				"streamId", streamId, "events", events, "took", time.Since(s).String())
+		}
 	}
 
 	logging.FromCtx(ctx).Infow("MakeStreamView After Parsing minipool envelopes",
-		"minipoolLen", len(streamData.MinipoolEnvelopes))
+		"stream", streamId, "minipoolLen", len(streamData.MinipoolEnvelopes))
 
 	lastBlockHeader := miniblocks[len(miniblocks)-1].Header()
 	generation := lastBlockHeader.MiniblockNum + 1
