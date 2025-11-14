@@ -479,17 +479,15 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                     log.info(
                         `Using ${usage.toFixed(1)} out of ${quota.toFixed(1)} MB (${usagePercentage}%)`,
                     )
-                    if (usage > quota * 0.95) {
+                    if (quota > 0 && usage > quota * 0.95) {
                         log.warn('Persistence storage is almost full, clearing cache...')
                         // drop the miniblocks, synced streams and snapshots
-                        this.miniblocks.clear().catch((e) => {
-                            log.error('Error clearing miniblocks: ', e)
-                        })
-                        this.syncedStreams.clear().catch((e) => {
-                            log.error('Error clearing synced streams: ', e)
-                        })
-                        this.snapshots.clear().catch((e) => {
-                            log.error('Error clearing snapshots: ', e)
+                        Promise.all([
+                            this.miniblocks.clear(),
+                            this.syncedStreams.clear(),
+                            this.snapshots.clear(),
+                        ]).catch((e) => {
+                            log.error('Error clearing cache: ', e)
                         })
                     }
                 })
