@@ -475,8 +475,9 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                 .then((estimate) => {
                     const usage = (estimate.usage ?? 0) / 1024 / 1024
                     const quota = (estimate.quota ?? 0) / 1024 / 1024
+                    const usagePercentage = quota > 0 ? ((usage / quota) * 100).toFixed(2) : '??%'
                     log.info(
-                        `Using ${usage.toFixed(1)} out of ${quota.toFixed(1)} MB (${((usage / quota) * 100).toFixed(2)}%)`,
+                        `Using ${usage.toFixed(1)} out of ${quota.toFixed(1)} MB (${usagePercentage}%)`,
                     )
                     if (usage > quota * 0.95) {
                         log.warn('Persistence storage is almost full, clearing cache...')
