@@ -243,17 +243,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 		return err
 	}
 	log := logging.FromCtx(ctx)
-	// log.Debugw(
-	// 	"enqueue unsendable messages",
-	// 	"sendableApps",
-	// 	sendableApps,
-	// 	"unsendableApps",
-	// 	unsendableApps,
-	// 	"sessionId",
-	// 	sessionId,
-	// 	"channelId",
-	// 	channelId,
-	// )
+
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
 		return base.AsRiverError(
 			fmt.Errorf(
@@ -277,17 +267,7 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 			return err
 		}
 	}
-	// log.Debugw(
-	// 	"RequestKeySolicitations",
-	// 	"channelId",
-	// 	channelId,
-	// 	"unsendable",
-	// 	unsendableApps,
-	// 	"sessionId",
-	// 	sessionId,
-	// 	"channelId",
-	// 	channelId,
-	// )
+
 	return q.appDispatcher.RequestKeySolicitations(
 		ctx,
 		sessionId,
