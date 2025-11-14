@@ -191,6 +191,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 
 // loadViewNoReconcileLocked should be called with a lock held.
 // Returns nil view and nil error if stream is not local.
+// IMPORTANT: This function temporarily releases the lock to perform expensive parsing operations.
 func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, error) {
 	if s.local == nil {
 		return nil, nil
@@ -203,6 +204,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
+	// Load data from storage while holding the lock (this is fast, just reads from DB)
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
@@ -212,9 +214,26 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 		return nil, err
 	}
 
+	// Release the lock before doing expensive protobuf parsing.
+	// MakeStreamView can take seconds for large streams with many events.
+	s.mu.Unlock()
 	view, err := MakeStreamView(streamData)
+	s.mu.Lock()
+
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if stream became non-local while we were parsing
+	if s.local == nil {
+		return nil, nil
+	}
+
+	// Check if another goroutine loaded the view while we were parsing.
+	// If so, use the existing view instead of overwriting it.
+	if s.getViewLocked() != nil {
+		s.lastAccessedTime = time.Now()
+		return s.getViewLocked(), nil
 	}
 
 	s.setViewLocked(view)
