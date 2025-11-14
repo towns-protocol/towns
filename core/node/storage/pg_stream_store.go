@@ -816,10 +816,20 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
+	log := logging.FromCtx(ctx).With("stream", streamId)
+	log.Info("Reading stream from last snapshot START :: GetLastMiniblockNumber")
+	lastMbNum, err := s.GetLastMiniblockNumber(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("Reading stream from last snapshot FINISH :: GetLastMiniblockNumber", "lastMbNum", lastMbNum)
+
+	log.Info("Reading stream from last snapshot START :: lockstream")
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
 	}
+	log.Info("Reading stream from last snapshot FINISHED :: lockstream")
 
 	snapshotMiniblockIndex := lockStream.LastSnapshotMiniblock
 
@@ -829,6 +839,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		startSeqNum = 0
 	}
 
+	log.Infow("Reading stream from last snapshot START :: query", "seq_num >=", startSeqNum)
 	miniblocksRow, err := tx.Query(
 		ctx,
 		s.sqlForStream(
@@ -838,6 +849,8 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		startSeqNum,
 		streamId,
 	)
+	log.Info("Reading stream from last snapshot FINISHED :: query", "seq_num >=", startSeqNum)
+
 	if err != nil {
 		return nil, err
 	}
