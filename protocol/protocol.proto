@@ -2,9 +2,9 @@ syntax = "proto3";
 package river;
 option go_package = "github.com/towns-protocol/towns/core/node/protocol";
 
-import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
-
+import "google/protobuf/timestamp.proto";
 
 /** 
 * Miniblock contains a list of events and the header event.
@@ -357,6 +357,9 @@ message ChannelPayload {
         Inception inception = 1;
         EncryptedData message = 2;
         Redaction redaction = 3;
+        google.protobuf.Any custom = 4;
+        InteractionRequest interaction_request = 5;
+        InteractionResponse interaction_response = 6;
     }
 }
 
@@ -378,6 +381,7 @@ message DmChannelPayload {
     oneof content {
         Inception inception = 1;
         EncryptedData message = 3;
+        google.protobuf.Any custom = 4;
     }
 }
 
@@ -400,11 +404,15 @@ message GdmChannelPayload {
         Inception inception = 1;
         EncryptedData message = 2;
         EncryptedData channel_properties = 3;
+        google.protobuf.Any custom = 4;
     }
 }
 
 /**
 * UserPayload
+* A potentially large stream that contains all of a users memberships and is the entrypoint for 
+* many user interactions. For example, to join a space, the user posts a UserMembership event to this stream.
+* It is meant to be downloaded once by the user and updated via delta updates over sync.
 */
 message UserPayload {
     message Snapshot {
@@ -466,6 +474,8 @@ message UserPayload {
 /**
 * UserInboxPayload
 * messages to a user encrypted per deviceId
+* This is a write heavy stream. Anything encrypted to a single user/device pair is sent to this stream.
+* The snapshot keeps track of read markers for each of the user's devices so that the user can effeciently download all new events.
 */
 message UserInboxPayload {
     message Snapshot {
@@ -516,6 +526,8 @@ message UserInboxPayload {
 
 /**
 * UserSettingsPayload
+* blob storage for the user 
+* written to and read by the user
 */
 message UserSettingsPayload {
     message Snapshot {
@@ -568,6 +580,8 @@ message UserSettingsPayload {
 
 /**
 * UserMetadataPayload
+* A light stream containing the user's "public" data like public encryption keys and links to user profile info.
+* Should remain small so that it can be quickly read by other users.
 */
 message UserMetadataPayload {
     message Snapshot {
@@ -708,7 +722,9 @@ message BlockchainTransaction {
     // metadata for tip transactions
     message Tip {
         message Event {
-            uint64 token_id = 1;
+            // required for member tips
+            // optional for bot
+            optional uint64 token_id = 1;
             bytes currency = 2;
             bytes sender = 3; // wallet that sent funds
             bytes receiver = 4; // wallet that received funds
@@ -862,6 +878,9 @@ message EncryptedData {
 
     // used to parse data after it's decrypted
     EncryptedDataVersion version = 11; 
+
+    // used when encrypting directly to a device
+    optional string device_key = 12;
 }
 
 message WrappedEncryptedData {
@@ -1026,6 +1045,7 @@ message GetLastMiniblockHashRequest {
 message GetLastMiniblockHashResponse {
     bytes hash = 1;
     int64 miniblock_num = 2;
+    MemberPayload.EncryptionAlgorithm encryption_algorithm = 3;
 }
 
 message AddEventRequest {
@@ -1234,6 +1254,142 @@ enum GroupMentionType {
 enum EncryptedDataVersion {
     ENCRYPTED_DATA_VERSION_0 = 0;
     ENCRYPTED_DATA_VERSION_1 = 1;
+}
+
+message InteractionRequestPayload {
+    message Signature {
+        // Type of signing method to use. The app must call the
+        // corresponding method on the wallet as noted below.
+        enum SignatureType {
+            PERSONAL_SIGN = 0; // -> personal_sign (EIP-191)
+            TYPED_DATA = 1;    // -> eth_signTypedData_v4 (EIP-712)
+        }
+
+        // A unique identifier for this interaction.
+        // Used to correlate an InteractionRequest with its InteractionResponse.
+        string id = 1;
+        // The hex encoded data to be signed.
+        // - For PERSONAL_SIGN: UTF-8 text (e.g. SIWE message).
+        // - For TYPED_DATA: JSON-encoded EIP-712 typed data
+        // SECURITY REQUIREMENT:
+        // The sender must embed any nonce, timestamp, audience, or session binding
+        // INSIDE the "data" payload before signing.
+        // Example for personal_sign:
+        // "Sign in to example.com\nNonce: 83fa29\nIssued At: 2025-10-22T12:00Z"
+        string data = 2;
+        string chain_id = 3;
+        // The address of the signer wallet. If not provided, the user can use any wallet to sign
+        // this is useful in the case where a bot wants to send an interaction request to a specific user
+        optional string signer_wallet = 4;
+        // Which signature method the app expects the wallet to use.
+        SignatureType type = 5;
+        // Optional: a short title for the wallet's signature dialog (UX only).
+        optional string title = 6;
+        // Optional: a subtitle or human-readable explanation (UX only).
+        optional string subtitle = 7;
+    }
+
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+                string label = 1;
+            }
+
+            message TextInput {
+                string placeholder = 1;
+            }
+
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+        repeated Component components = 4;
+    }
+
+    message Transaction {
+        message EVMContent {
+            string chain_id = 1;
+            string to = 2;
+            string value = 3;
+            string data = 4;
+            optional string signer_wallet = 5;
+        }
+
+        string id = 1;
+        optional string title = 2;
+        optional string subtitle = 3;
+
+        oneof content {
+            EVMContent evm = 101;
+        }
+    }
+
+    // if present, encrypt the interaction response with to encryption device
+    UserMetadataPayload.EncryptionDevice encryption_device = 1;
+
+    oneof content {
+        Signature signature = 101;
+        Form form = 102;
+        Transaction transaction = 103;
+    }
+}
+
+message InteractionRequest {
+    reserved 2;
+    // Optional: identifies the recipient. If not provided, the interaction is for anyone to interact with.
+    optional bytes recipient = 1;
+    // encrypted binary InteractionRequestPayload
+    EncryptedData encrypted_data = 3;
+}
+
+message InteractionResponse {
+    // The recipient of the interaction response.
+    bytes recipient = 1;
+    // encrypted binary InteractionResponsePayload
+    EncryptedData encrypted_data = 2;
+}
+
+message InteractionResponsePayload {
+    message Signature {
+        // The id of the request that this response is for
+        string request_id = 1;
+        // The resulting signature in hex
+        string signature = 2;
+    }
+
+    message Form {
+        message Component {
+            string id = 1;
+            message Button {
+            }
+            message TextInput {
+                string value = 1;
+            }
+            oneof component {
+                Button button = 101;
+                TextInput text_input = 102;
+            }
+        }
+        string request_id = 1;
+        repeated Component components = 2;
+    }
+
+    message Transaction {
+        string request_id = 1;
+        string tx_hash = 2;
+    }
+
+    bytes salt = 1;
+    oneof content {
+        Signature signature = 101;
+        Form form = 102;
+        Transaction transaction = 103;
+    }
 }
 
 // Codes from 1 to 16 match gRPC/Connect codes.

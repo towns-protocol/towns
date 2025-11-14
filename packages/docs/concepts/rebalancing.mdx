@@ -3,8 +3,6 @@ title: Rebalancing
 description: ""
 ---
 
-## Rebalancing in Distributed Systems
-
 In distributed systems, rebalancing is a critical process required to prevent specific nodes from being overloaded. This need arises particularly when nodes join or leave the network. It's crucial to differentiate between a node crash exiting and a node cleanly exiting, as these scenarios necessitate distinct responses.
 
 When a node exits a distributed system, it is essential to have a signal and corresponding logic to determine how to rebalance the network. The rebalance logic can be incorporated into a smart contract. However, generating a signal in a decentralized system is more challenging. Currently, there's ongoing research exploring methods for the protocol to autonomously detect crash exits through communication with other nodes. This approach aims to create a fully decentralized solution.

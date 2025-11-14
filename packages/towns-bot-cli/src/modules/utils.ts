@@ -47,11 +47,15 @@ export function getRunCommand(packageManager: string, script: string): string {
     }
 }
 
-export function runCommand(command: string, args: string[], cwd?: string): Promise<void> {
+export function runCommand(
+    command: string,
+    args: string[],
+    opts: { cwd?: string; silent?: boolean } = { cwd: undefined, silent: false },
+): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn(command, args, {
-            stdio: 'inherit',
-            cwd,
+            stdio: opts.silent ? 'ignore' : 'inherit',
+            cwd: opts.cwd,
             shell: process.platform === 'win32',
         })
 
@@ -296,4 +300,24 @@ export function printSuccess(projectName: string, packageManager: string) {
     console.log('  Edit .env with your bot credentials')
     console.log('Start your bot:')
     console.log(picocolors.cyan(`  ${getRunCommand(packageManager, 'dev')}`))
+}
+
+export async function initializeGitRepository(targetDir: string): Promise<boolean> {
+    try {
+        await runCommand('git', ['init'], { cwd: targetDir, silent: true })
+        await runCommand('git', ['add', '.'], { cwd: targetDir, silent: true })
+        await runCommand('git', ['commit', '-m', 'feat: towns bot scaffolding'], {
+            cwd: targetDir,
+            silent: true,
+        })
+        return true
+    } catch (error) {
+        console.log(
+            picocolors.yellow('⚠'),
+            'Failed to initialize git repository:',
+            error instanceof Error ? error.message : 'Unknown error',
+        )
+        console.log(picocolors.yellow('  You can manually initialize git later with: git init'))
+        return false
+    }
 }

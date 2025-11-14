@@ -32,6 +32,10 @@ func copyRequestForForwarding[T any](s *Service, req *connect.Request[T]) *conne
 	if allowNoQuorum(req) {
 		newReq.Header().Set(RiverAllowNoQuorumHeader, RiverHeaderTrueValue)
 	}
+	// Forward test bypass header if present so downstream node can honor it.
+	if v := req.Header().Get(RiverTestBypassHeaderName); v != "" {
+		newReq.Header().Set(RiverTestBypassHeaderName, v)
+	}
 	return newReq
 }
 
@@ -444,7 +448,7 @@ func (s *Service) addEventImpl(
 	if view != nil {
 		if resp, err := s.localAddEvent(ctx, req, streamId, stream, view); err == nil {
 			return resp, nil
-		} else if IsOperationRetriableOnRemotes(err) {
+		} else if IsOperationRetriableOnRemotes(err) && checkNoForward(req, err) == nil {
 			logging.FromCtx(ctx).Errorw("Failed to add event with local node, falling back to remotes",
 				"error", err, "nodeAddress", s.wallet.Address, "streamId", streamId)
 		} else {

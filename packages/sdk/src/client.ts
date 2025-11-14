@@ -4,6 +4,7 @@ import {
     SpaceAddressFromSpaceId,
     SpaceReviewAction,
     SpaceReviewEventObject,
+    TipSentEventObject,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -53,6 +54,15 @@ import {
     EnvelopeSchema,
     GetLastMiniblockHashResponse,
     InfoResponse,
+    MessageInteractionType,
+    InteractionResponse,
+    InteractionRequest,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
+    SessionKeys,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
+    EncryptedDataVersion,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -63,10 +73,13 @@ import {
     dlog,
     dlogError,
     bin_fromString,
-} from '@towns-protocol/dlog'
+    bin_toBase64,
+} from '@towns-protocol/utils'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,
+    EncryptionAlgorithmId,
+    EnsureOutboundSessionOpts,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
@@ -165,6 +178,8 @@ import {
     isSolanaTransactionReceipt,
     ParsedEvent,
     ExclusionFilter,
+    make_ChannelPayload_InteractionRequest,
+    make_ChannelPayload_InteractionResponse,
 } from './types'
 import { applyExclusionFilterToMiniblocks } from './streamUtils'
 
@@ -196,7 +211,6 @@ import {
     uint8ArrayToBase64,
 } from '@towns-protocol/sdk-crypto'
 import { makeTags, makeTipTags, makeTransferTags } from './tags'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
 import { StreamsView } from './views/streamsView'
 import { NotificationsClient, INotificationStore } from './notificationsClient'
 import { RpcOptions } from './rpcCommon'
@@ -220,7 +234,6 @@ export type ClientOptions = {
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     defaultGroupEncryptionAlgorithm?: GroupEncryptionAlgorithmId
     logId?: string
-    streamOpts?: { useSharedSyncer?: boolean }
     notifications?: {
         url: string
         store?: INotificationStore
@@ -235,6 +248,11 @@ type SendChannelMessageOptions = {
     beforeSendEventHook?: Promise<void>
     onLocalEventAppended?: (localId: string) => void
     disableTags?: boolean // if true, tags will not be added to the message
+    /**
+     * If provided, the app client address will be added to the tags
+     * and the message will be treated as a slash command.
+     */
+    appClientAddress?: string
 }
 
 type SendBlockchainTransactionOptions = {
@@ -362,7 +380,6 @@ export class Client
             this,
             opts?.unpackEnvelopeOpts,
             this.logId,
-            opts?.streamOpts,
             opts?.highPriorityStreamIds,
         )
 
@@ -478,6 +495,7 @@ export class Client
         spaceId?: Uint8Array | string
         encryptionDeviceInit?: EncryptionDeviceInitOpts
         appAddress?: Uint8Array | string
+        skipSync?: boolean
     }): Promise<{
         initCryptoTime: number
         initUserStreamTime: number
@@ -515,7 +533,9 @@ export class Client
         ])
         this.initUserJoinedStreams()
 
-        this.syncedStreamsExtensions.start()
+        if (!opts?.skipSync) {
+            this.syncedStreamsExtensions.start()
+        }
         const initializeUserEndTime = performance.now()
         const executionTime = initializeUserEndTime - initializeUserStartTime
         this.logCall('initializeUser::executionTime', executionTime)
@@ -1598,8 +1618,12 @@ export class Client
             const response = this.rpcClient.getStreamEx({
                 streamId: streamIdAsBytes(streamId),
             })
-            const miniblocks = await waitForStreamEx(streamId, response)
-            const unpackedResponse = await unpackStreamEx(miniblocks, this.opts?.unpackEnvelopeOpts)
+            const data = await waitForStreamEx(streamId, response)
+            const unpackedResponse = await unpackStreamEx(
+                data.miniblocks,
+                data.snapshot,
+                this.opts?.unpackEnvelopeOpts,
+            )
             return this.streamViewFromUnpackedResponse(streamId, unpackedResponse, streamsView)
         } catch (err) {
             this.logCall('getStreamEx', streamId, 'ERROR', err)
@@ -1805,6 +1829,7 @@ export class Client
         }
         return this.makeAndSendChannelMessageEvent(streamId, payload, localId, {
             disableTags: opts?.disableTags,
+            appClientAddress: opts?.appClientAddress,
         })
     }
 
@@ -1812,7 +1837,7 @@ export class Client
         streamId: string,
         payload: ChannelMessage,
         localId?: string,
-        opts?: { disableTags?: boolean },
+        opts?: { disableTags?: boolean; appClientAddress?: string },
     ) {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -1857,7 +1882,17 @@ export class Client
             }
         }
 
-        const tags = opts?.disableTags === true ? undefined : makeTags(payload, stream.view)
+        const tags =
+            opts?.disableTags === true
+                ? undefined
+                : makeTags(
+                      payload,
+                      stream.view,
+                      opts?.appClientAddress ? MessageInteractionType.SLASH_COMMAND : undefined,
+                  )
+        if (opts?.appClientAddress && tags) {
+            tags.appClientAddress = bin_fromHexString(opts.appClientAddress)
+        }
         const cleartext = toBinary(ChannelMessageSchema, payload)
 
         let message: EncryptedData
@@ -2098,6 +2133,102 @@ export class Client
         })
     }
 
+    async sendInteractionRequest(
+        streamId: string,
+        content: PlainMessage<InteractionRequestPayload['content']>,
+        recipient?: Uint8Array,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+    ): Promise<{ eventId: string }> {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
+
+        // Create payload with content and encryption device for responses
+        const payload = create(InteractionRequestPayloadSchema, {
+            encryptionDevice: this.userDeviceKey(),
+            content: content,
+        })
+
+        // Encrypt using group encryption (same as messages)
+        const encryptionAlgorithm =
+            stream.view.membershipContent.encryptionAlgorithm ??
+            this.defaultGroupEncryptionAlgorithm
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+            streamId,
+            toBinary(InteractionRequestPayloadSchema, payload),
+            encryptionAlgorithm as GroupEncryptionAlgorithmId,
+        )
+
+        // Create the request matching InteractionResquest structure
+        const request: PlainMessage<InteractionRequest> = {
+            recipient: recipient,
+            encryptedData: encryptedData,
+        }
+
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionRequest(request),
+            {
+                method: 'sendInteractionRequest',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
+            },
+        )
+    }
+
+    async sendInteractionResponse(
+        streamId: string,
+        recipient: Uint8Array,
+        payload: PlainMessage<InteractionResponsePayload>,
+        toUserDevice: UserDevice,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+    ): Promise<{ eventId: string }> {
+        const binaryData = toBinary(
+            InteractionResponsePayloadSchema,
+            create(InteractionResponsePayloadSchema, payload),
+        )
+        const string = bin_toBase64(binaryData)
+        const ciphertextmap = await this.encryptWithDeviceKeys(string, [toUserDevice])
+        const ciphertext = ciphertextmap[toUserDevice.deviceKey]
+        check(isDefined(ciphertext), 'ciphertext not found')
+        const response: PlainMessage<InteractionResponse> = {
+            recipient: recipient,
+            encryptedData: {
+                ciphertext: ciphertext,
+                algorithm: EncryptionAlgorithmId.Olm,
+                senderKey: this.userDeviceKey().deviceKey,
+                sessionId: '',
+                checksum: '',
+                ciphertextBytes: new Uint8Array(),
+                ivBytes: new Uint8Array(),
+                sessionIdBytes: new Uint8Array(),
+                version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+                deviceKey: toUserDevice.deviceKey,
+            } satisfies PlainMessage<EncryptedData>,
+        }
+        const tags = {
+            groupMentionTypes: [],
+            mentionedUserAddresses: [],
+            ...(opts?.tags ?? {}),
+            messageInteractionType:
+                opts?.tags?.messageInteractionType ?? MessageInteractionType.REPLY,
+            participatingUserAddresses: [
+                ...(opts?.tags?.participatingUserAddresses ?? []),
+                recipient,
+            ],
+        } satisfies PlainMessage<Tags>
+
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionResponse(response),
+            {
+                method: 'sendInteractionResponse',
+                tags,
+                ephemeral: opts?.ephemeral,
+            },
+        )
+    }
+
     async redactMessage(streamId: string, eventId: string): Promise<{ eventId: string }> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found')
@@ -2107,6 +2238,12 @@ export class Client
             make_ChannelPayload_Redaction(bin_fromHexString(eventId)),
             {
                 method: 'redactMessage',
+                tags: {
+                    groupMentionTypes: [],
+                    messageInteractionType: MessageInteractionType.REDACTION,
+                    mentionedUserAddresses: [],
+                    participatingUserAddresses: [],
+                },
             },
         )
     }
@@ -2146,7 +2283,7 @@ export class Client
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
         const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
-        return this.makeEventAndAddToStream(
+        const { eventId } = await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
@@ -2154,8 +2291,19 @@ export class Client
                 streamId: streamIdAsBytes(streamId),
                 streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
-            { method: 'inviteUser' },
+            { method: 'joinUser' },
         )
+        // share the latest group session to the user
+        try {
+            await this.encryptAndShareLatestGroupSessionToUser(streamId, userId)
+        } catch (error) {
+            this.logError('Failed to share group session to user', {
+                streamId,
+                userId,
+                error,
+            })
+        }
+        return { eventId }
     }
 
     async joinStream(
@@ -2166,9 +2314,9 @@ export class Client
         },
     ): Promise<Stream> {
         this.logCall('joinStream', streamId)
-        check(isDefined(this.userStreamId))
+        check(isDefined(this.userStreamId), 'userStreamId not defined')
         const userStream = this.stream(this.userStreamId)
-        check(isDefined(userStream), 'userStream not found')
+        check(isDefined(userStream), 'userStream not defined')
         const streamIdStr = streamIdAsString(streamId)
         const stream = await this.initStream(streamId)
         // check your user stream for membership as that's the final source of truth
@@ -2313,7 +2461,7 @@ export class Client
     async addTransaction_Tip(
         chainId: number,
         receipt: ContractReceipt,
-        event: TipEventObject,
+        event: TipSentEventObject,
         toUserId: string,
         opts?: SendBlockchainTransactionOptions,
     ): Promise<{ eventId: string }> {
@@ -2329,7 +2477,7 @@ export class Client
                 case: 'tip',
                 value: {
                     event: {
-                        tokenId: event.tokenId.toBigInt(),
+                        tokenId: event.tokenId?.toBigInt(),
                         currency: bin_fromHexString(event.currency),
                         sender: addressFromUserId(event.sender),
                         receiver: addressFromUserId(event.receiver),
@@ -2522,36 +2670,47 @@ export class Client
      *     that are in the room but that have been blocked.
      */
     async getDevicesInStream(stream_id: string): Promise<UserDeviceCollection> {
-        let stream: StreamStateView | undefined
-        stream = this.stream(stream_id)?.view
-        if (!stream || !stream.isInitialized) {
-            stream = await this.getStream(stream_id)
-        }
-        if (!stream) {
-            this.logError(`stream for room ${stream_id} not found`)
-            return {}
-        }
-        const members = Array.from(stream.getUsersEntitledToKeyExchange())
+        const members = await this.getUsersEntitledToKeyExchange(stream_id)
         this.logInfo(`getDevicesInStream: downloading device info for: `, members.length)
         const info = await this.downloadUserDeviceInfo(members)
         this.logCall('getDevicesInStream: done, keys.length ', Object.keys(info).length)
         return info
     }
 
+    async getUsersEntitledToKeyExchange(streamId: string): Promise<string[]> {
+        let stream: StreamStateView | undefined
+        stream = this.stream(streamId)?.view
+        if (!stream || !stream.isInitialized) {
+            stream = await this.getStream(streamId)
+        }
+        if (!stream) {
+            this.logError(`stream for room ${streamId} not found`)
+            return []
+        }
+        const members = Array.from(stream.getUsersEntitledToKeyExchange())
+        return members
+    }
+
     async getMiniblockInfo(
         streamId: string,
     ): Promise<{ miniblockNum: bigint; miniblockHash: Uint8Array }> {
-        let streamView = this.stream(streamId)?.view
+        const streamView = this.stream(streamId)?.view
         // if we don't have a local copy, or if it's just not initialized, fetch the latest
-        if (!streamView || !streamView.isInitialized) {
-            streamView = await this.getStream(streamId)
+        if (streamView && streamView.isInitialized) {
+            check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
+            check(
+                isDefined(streamView.prevMiniblockHash),
+                `prevMiniblockHash not found: ${streamId}`,
+            )
+            return {
+                miniblockNum: streamView.miniblockInfo.max,
+                miniblockHash: streamView.prevMiniblockHash,
+            }
         }
-        check(isDefined(streamView), `stream not found: ${streamId}`)
-        check(isDefined(streamView.miniblockInfo), `stream not initialized: ${streamId}`)
-        check(isDefined(streamView.prevMiniblockHash), `prevMiniblockHash not found: ${streamId}`)
+        const r = await this.getStreamLastMiniblockHash(streamId)
         return {
-            miniblockNum: streamView.miniblockInfo.max,
-            miniblockHash: streamView.prevMiniblockHash,
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
         }
     }
 
@@ -2585,31 +2744,38 @@ export class Client
         }
     }
 
+    async downloadSingleUserDeviceInfo(
+        userId: string,
+        forceDownload: boolean,
+    ): Promise<{ userId: string; devices: UserDevice[] }> {
+        const streamId = makeUserMetadataStreamId(userId)
+        try {
+            // except for small spaces and your own userId, check for the devices in the crypto store cause you might already have them
+            if (!forceDownload && userId !== this.userId) {
+                const devicesFromStore = await this.cryptoStore.getUserDevices(userId)
+                if (devicesFromStore.length > 0) {
+                    return { userId, devices: devicesFromStore }
+                }
+            }
+            // return latest 10 device keys
+            const deviceLookback = 10
+            const stream = await this.getStream(streamId)
+            const userDevices = stream.userMetadataContent.deviceKeys.slice(-deviceLookback)
+            await this.cryptoStore.saveUserDevices(userId, userDevices)
+            return { userId, devices: userDevices }
+        } catch (e) {
+            this.logError('Error downloading user device keys', e)
+            return { userId, devices: [] }
+        }
+    }
+
     public async downloadUserDeviceInfo(userIds: string[]): Promise<UserDeviceCollection> {
         // always fetch keys for arbitrarily small channels/dms/gdms. For large channels only
         // fetch keys if you don't already have keys, extended keysharing should work for those cases
         const forceDownload = userIds.length <= 10
         const promises = userIds.map(
             async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
-                const streamId = makeUserMetadataStreamId(userId)
-                try {
-                    // also always download your own keys so you always share to your most up to date devices
-                    if (!forceDownload && userId !== this.userId) {
-                        const devicesFromStore = await this.cryptoStore.getUserDevices(userId)
-                        if (devicesFromStore.length > 0) {
-                            return { userId, devices: devicesFromStore }
-                        }
-                    }
-                    // return latest 10 device keys
-                    const deviceLookback = 10
-                    const stream = await this.getStream(streamId)
-                    const userDevices = stream.userMetadataContent.deviceKeys.slice(-deviceLookback)
-                    await this.cryptoStore.saveUserDevices(userId, userDevices)
-                    return { userId, devices: userDevices }
-                } catch (e) {
-                    this.logError('Error downloading user device keys', e)
-                    return { userId, devices: [] }
-                }
+                return this.downloadSingleUserDeviceInfo(userId, forceDownload)
             },
         )
 
@@ -2914,10 +3080,7 @@ export class Client
         this.streams.setHighPriorityStreams(streamIds)
     }
 
-    public async ensureOutboundSession(
-        streamId: string,
-        opts: { awaitInitialShareSession: boolean },
-    ) {
+    public async ensureOutboundSession(streamId: string, opts?: EnsureOutboundSessionOpts) {
         check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
         return this.cryptoBackend.ensureOutboundSession(
             streamId,
@@ -2965,12 +3128,16 @@ export class Client
         return cleartext
     }
 
-    public async encryptAndShareGroupSessions(
+    private _makeShareGroupSessionsContent(
         inStreamId: string | Uint8Array,
         sessions: GroupEncryptionSession[],
-        toDevices: UserDeviceCollection,
         algorithm: GroupEncryptionAlgorithmId,
-    ) {
+    ): {
+        streamIdBytes: Uint8Array
+        sessionIds: string[]
+        payload: SessionKeys
+        payloadClearText: string
+    } {
         const streamIdStr = streamIdAsString(inStreamId)
         const streamIdBytes = streamIdAsBytes(inStreamId)
         check(isDefined(this.cryptoBackend), "crypto backend isn't initialized")
@@ -2986,62 +3153,156 @@ export class Client
         )
         check(sessions[0].streamId === streamIdStr, 'streamId mismatch')
 
-        this.logCall('share', { from: this.userId, to: toDevices })
-        const userDevice = this.userDeviceKey()
-
         const sessionIds = sessions.map((session) => session.sessionId)
         const payload = makeSessionKeys(sessions)
         const payloadClearText = toJsonString(SessionKeysSchema, payload)
-        const toDevicesEntries = Object.entries(toDevices)
-        const promises = toDevicesEntries.map(async ([userId, deviceKeys]) => {
-            try {
-                if (deviceKeys.length === 0) {
-                    // means we failed to download the device keys, we should enqueue a retry
-                    this.logCall(
-                        'encryptAndShareGroupSessions: no device keys to send',
-                        inStreamId,
-                        userId,
-                    )
-                    return
-                }
-                const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
-                if (Object.keys(ciphertext).length === 0) {
-                    // if you only have one device this is a valid state
-                    if (userId !== this.userId) {
-                        this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
-                    }
-                    return
-                }
-                const toStreamId: string = makeUserInboxStreamId(userId)
-                const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
-                const { hash: miniblockHash, miniblockNum } = gslmhResp
-                if (toDevicesEntries.length < 10 || Math.random() < 0.1) {
-                    this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
-                        toStreamId,
-                        deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
-                    })
-                }
-                await this.makeEventWithHashAndAddToStream(
-                    toStreamId,
-                    make_UserInboxPayload_GroupEncryptionSessions({
-                        streamId: streamIdBytes,
-                        senderKey: userDevice.deviceKey,
-                        sessionIds: sessionIds,
-                        ciphertexts: ciphertext,
-                        algorithm: algorithm,
-                    }),
-                    miniblockHash,
-                    miniblockNum,
+        return { streamIdBytes, sessionIds, payload, payloadClearText }
+    }
+
+    private async _encryptAndShareGroupSessionsToDevice(
+        inStreamId: string | Uint8Array,
+        content: {
+            streamIdBytes: Uint8Array
+            sessionIds: string[]
+            payloadClearText: string
+        },
+        algorithm: GroupEncryptionAlgorithmId,
+        userId: string,
+        deviceKeys: UserDevice[],
+        userDevice: UserDevice,
+        printLog: boolean = false,
+    ): Promise<void> {
+        const { streamIdBytes, sessionIds, payloadClearText } = content
+        try {
+            if (deviceKeys.length === 0) {
+                // means we failed to download the device keys, we should enqueue a retry
+                this.logCall(
+                    'encryptAndShareGroupSessions: no device keys to send',
+                    inStreamId,
+                    userId,
                 )
-            } catch (error) {
-                this.logError('encryptAndShareGroupSessions: ERROR', error)
-                return undefined
+                return
             }
+            const ciphertext = await this.encryptWithDeviceKeys(payloadClearText, deviceKeys)
+            if (Object.keys(ciphertext).length === 0) {
+                // if you only have one device this is a valid state
+                if (userId !== this.userId) {
+                    this.logError('encryptAndShareGroupSessions: no ciphertext to send', userId)
+                }
+                return
+            }
+            const toStreamId: string = makeUserInboxStreamId(userId)
+            const gslmhResp = await this.getStreamLastMiniblockHash(toStreamId)
+            const { hash: miniblockHash, miniblockNum } = gslmhResp
+            if (printLog) {
+                this.logCall("encryptAndShareGroupSessions: sent to user's devices", {
+                    toStreamId,
+                    deviceKeys: deviceKeys.map((d) => d.deviceKey).join(','),
+                })
+            }
+            await this.makeEventWithHashAndAddToStream(
+                toStreamId,
+                make_UserInboxPayload_GroupEncryptionSessions({
+                    streamId: streamIdBytes,
+                    senderKey: userDevice.deviceKey,
+                    sessionIds: sessionIds,
+                    ciphertexts: ciphertext,
+                    algorithm: algorithm,
+                }),
+                miniblockHash,
+                miniblockNum,
+            )
+        } catch (error) {
+            this.logError('encryptAndShareGroupSessions: ERROR', error)
+            return undefined
+        }
+    }
+
+    public async encryptAndShareGroupSessionsToDevice(
+        inStreamId: string | Uint8Array,
+        sessions: GroupEncryptionSession[],
+        algorithm: GroupEncryptionAlgorithmId,
+        userId: string,
+        deviceKeys: UserDevice[],
+    ): Promise<void> {
+        const content = this._makeShareGroupSessionsContent(inStreamId, sessions, algorithm)
+        return this._encryptAndShareGroupSessionsToDevice(
+            inStreamId,
+            content,
+            algorithm,
+            userId,
+            deviceKeys,
+            this.userDeviceKey(),
+            true,
+        )
+    }
+
+    public async encryptAndShareGroupSessionsToStream(
+        inStreamId: string | Uint8Array,
+        sessions: GroupEncryptionSession[],
+        algorithm: GroupEncryptionAlgorithmId,
+        priorityUserIds: string[],
+    ) {
+        this.logCall('share', { from: this.userId, to: priorityUserIds })
+        const streamId = streamIdAsString(inStreamId)
+        const users = await this.getUsersEntitledToKeyExchange(streamId)
+        users.sort((a, b) => priorityUserIds.indexOf(a) - priorityUserIds.indexOf(b))
+        const userDevice = this.userDeviceKey()
+
+        const content = this._makeShareGroupSessionsContent(inStreamId, sessions, algorithm)
+
+        const promises = users.map(async (userId) => {
+            const forceDownload = users.length <= 10 || userId === this.userId
+            const deviceKeys = await this.downloadSingleUserDeviceInfo(userId, forceDownload)
+            return this._encryptAndShareGroupSessionsToDevice(
+                inStreamId,
+                content,
+                algorithm,
+                userId,
+                deviceKeys.devices,
+                userDevice,
+                users.length < 10 || Math.random() < 0.1,
+            )
         })
 
         this.logCall('encryptAndShareGroupSessions: send to devices', promises.length)
         await Promise.all(promises)
         this.logCall('encryptAndShareGroupSessions: done')
+    }
+
+    // only works with hybrid group encryption
+    public async encryptAndShareLatestGroupSessionToUser(
+        inStreamId: string | Uint8Array,
+        toUserId: string,
+    ) {
+        const streamId = streamIdAsString(inStreamId)
+        if (
+            !this.cryptoBackend?.hasOutboundSession(
+                streamId,
+                GroupEncryptionAlgorithmId.HybridGroupEncryption,
+            )
+        ) {
+            throw new Error('No outbound session found')
+        }
+        const sessionId = await this.cryptoBackend.ensureOutboundSession(
+            streamId,
+            GroupEncryptionAlgorithmId.HybridGroupEncryption,
+        )
+        const session = await this.cryptoBackend.exportGroupSession(streamId, sessionId)
+        if (!session) {
+            throw new Error('Session not exported')
+        }
+        const deviceInfo = await this.downloadSingleUserDeviceInfo(toUserId, true)
+        if (deviceInfo.devices.length === 0) {
+            throw new Error('No device keys found')
+        }
+        await this.encryptAndShareGroupSessionsToDevice(
+            streamId,
+            [session],
+            GroupEncryptionAlgorithmId.HybridGroupEncryption,
+            toUserId,
+            deviceInfo.devices,
+        )
     }
 
     // Encrypt event using GroupEncryption.

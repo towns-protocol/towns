@@ -1,37 +1,44 @@
 {
     "name": "@towns-protocol/subgraph",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
-        "codegen": "ponder codegen",
+        "codegen": "yarn typings && ponder codegen",
         "db": "ponder db",
-        "dev": "ponder dev",
+        "dev": "yarn typings && ponder dev",
         "dev:fork": "./scripts/setup-subgraph.sh",
-        "dev:no-ui": "ponder dev --disable-ui",
+        "dev:no-ui": "yarn typings && ponder dev --disable-ui",
         "find-paths": "tsx utils/findContractsPath.ts",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
-        "serve": "ponder serve",
-        "start": "ponder start",
-        "typecheck": "tsc"
+        "serve": "yarn typings && ponder serve",
+        "start": "yarn typings && ponder start",
+        "test:unit": "yarn typings && sh -c 'tsc --noEmit'",
+        "transfer-ownership": "tsx interactions/transfer-ownership.ts",
+        "typings": "turbo typings --filter @towns-protocol/contracts && turbo build --filter @towns-protocol/web3"
     },
     "dependencies": {
+        "@towns-protocol/web3": "workspace:^",
         "hono": "^4.7.11",
-        "ponder": "^0.11.17",
+        "ponder": "^0.13.14",
         "viem": "^2.29.3"
     },
     "devDependencies": {
         "@towns-protocol/contracts": "workspace:^",
+        "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
         "@types/node": "^20.14.8",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
         "eslint": "^8.57.1",
         "eslint-config-ponder": "^0.9.27",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-prettier": "^5.2.6",
+        "eslint-plugin-tsdoc": "^0.3.0",
         "prettier": "^3.5.3",
         "tsx": "^4.7.1",
-        "typescript": "^5.8.2"
+        "turbo": "^2.5.4",
+        "typescript": "~5.8.3"
     },
     "engines": {
         "node": ">=18.14"

@@ -1,7 +1,7 @@
 {
     "name": "@towns-protocol/react-sdk",
     "description": "React Hooks for Towns Protocol SDK",
-    "version": "0.0.291",
+    "version": "0.0.412",
     "type": "module",
     "main": "./dist/esm/index.js",
     "types": "./dist/types/index.d.ts",
@@ -18,8 +18,10 @@
         "watch": "yarn build -w"
     },
     "dependencies": {
+        "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/sdk": "workspace:^",
-        "ethers": "^5.7.2"
+        "@towns-protocol/web3": "workspace:^",
+        "ethers": "^5.8.0"
     },
     "devDependencies": {
         "@microsoft/api-extractor": "^7.52.2",
@@ -27,8 +29,8 @@
         "@microsoft/tsdoc": "^0.15.0",
         "@microsoft/tsdoc-config": "^0.17.0",
         "@types/node": "^20.14.8",
-        "@types/react": "^19.1.8",
-        "@types/react-dom": "^19.1.6",
+        "@types/react": "^19.1.16",
+        "@types/react-dom": "^19.1.7",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "eslint": "^8.57.1",
@@ -40,7 +42,7 @@
         "react-dom": "^19.1.0",
         "ts-morph": "^24.0.0",
         "tsx": "^4.7.1",
-        "typescript": "^5.8.2"
+        "typescript": "~5.8.3"
     },
     "files": [
         "dist/**",

@@ -1,11 +1,9 @@
 # Start with an Alpine image that includes Go.
-FROM golang:1.24.2-alpine3.20 AS builder
+FROM golang:1.25.1-alpine AS builder
 
 # Install build-base for GCC (C compiler and related tools), git, and other dependencies.
 # Install libsecp256k1-dev if available or compile it from source.
 RUN apk add --no-cache build-base git libsecp256k1-dev
-RUN apk add cargo=1.78.0-r0
-RUN apk add protobuf-dev=24.4-r1
 
 ARG VER_VERSION=version_unset
 ARG VER_BRANCH=branch_unset
@@ -45,6 +43,7 @@ RUN adduser -D riveruser
 COPY docker/run.sh /etc/run.sh
 COPY --from=builder /bin/river_node /usr/bin/river_node
 COPY --from=builder /bin/river_node_race /usr/bin/river_node_race
+COPY --from=builder /build/env /riveruser/river_node/env
 
 # Use setcap to allow the web server binary to bind to privileged ports
 RUN setcap 'cap_net_bind_service=+ep' /usr/bin/river_node

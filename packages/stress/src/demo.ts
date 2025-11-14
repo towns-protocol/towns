@@ -1,12 +1,12 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
 import {
-    makeRiverConfig,
+    townsEnv,
     makeStreamRpcClient,
     randomUrlSelector,
     RiverTimelineEvent,
     TimelineEvent,
 } from '@towns-protocol/sdk'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { InfoRequestSchema } from '@towns-protocol/proto'
 import { EncryptionDelegate } from '@towns-protocol/encryption'
 import { makeStressClient } from './utils/stressClient'
@@ -22,7 +22,7 @@ import { create } from '@bufbuild/protobuf'
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
 const logger = getLogger('stress:index')
-const config = makeRiverConfig(process.env.RIVER_ENV)
+const config = townsEnv().makeTownsConfig(process.env.RIVER_ENV)
 logger.info(config, 'config')
 
 function getRootWallet() {
@@ -69,14 +69,14 @@ async function sendAMessage() {
     const channel = await alice.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - alice wait =======================')
     await waitFor(() => channel.view.timeline.filter(isChannelMessage).length > 0)
-    logger.debug('alices sees: ', channel.view.timeline.filter(isChannelMessage))
+    logger.debug({ timeline: channel.view.timeline.filter(isChannelMessage) }, 'alices sees')
     logger.debug('=======================send a message - alice sends =======================')
     await alice.sendMessage(defaultChannelId, 'hi bob')
     logger.debug('=======================send a message - alice sent =======================')
     const bobChannel = await bob.streamsClient.waitForStream(defaultChannelId)
     logger.debug('=======================send a message - bob wait =======================')
     await waitFor(() => bobChannel.view.timeline.filter(isChannelMessage).length > 0) // bob doesn't decrypt his own messages
-    logger.debug(bobChannel.view.timeline.filter(isChannelMessage), 'bob sees')
+    logger.debug({ timeline: bobChannel.view.timeline.filter(isChannelMessage) }, 'bob sees')
 
     await bob.stop()
     await alice.stop()

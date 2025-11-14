@@ -5,11 +5,17 @@ baseChain:
     blockTimeMs: 2000
 riverChain:
     chainId: 6524490
-    networkUrl: 'https://devnet.rpc.river.build'
+    networkUrl: 'https://testnet.rpc.towns.com'
     blockTimeMs: 2000
 
 # Base contracts
 architectContract:
+    address: '0xa7932228e6dAfb7A74dc8085F8bADAa993d4c592'
+
+appRegistryContract:
+    address: '0x9fCd4F3F98b170C7A1AfB9d20E76C6f5ca9Cbe71'
+
+entitlement_contract:
     address: '0xa7932228e6dAfb7A74dc8085F8bADAa993d4c592'
 
 # River contracts

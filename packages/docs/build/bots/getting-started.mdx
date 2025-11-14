@@ -1,0 +1,199 @@
+---
+title: Getting Started
+---
+
+This guide will walk you through creating, developing, and deploying your first Towns bot. You'll learn how to:
+
+1. [Create a bot in Towns](#create-a-bot)
+2. [Set up your development environment](#develop-your-bot)
+3. [Deploy to Render.com](#deploy-your-bot)
+4. [Configure your bot in Towns](#configure-in-towns)
+
+## Prerequisites
+
+Before you begin, make sure you have:
+- [Node.js v20+](https://nodejs.org/) installed (install with [Homebrew](https://brew.sh/): `brew install node`)
+- [Bun](https://bun.sh/docs/installation) installed
+- A [GitHub account](https://github.com/signup) with SSH key configured (for pushing your bot code)
+  - [Create SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+  - [Upload SSH key to GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
+
+## Create a Bot
+
+1. **Visit the Developer Portal**
+
+   Go to [app.towns.com/developer](https://app.towns.com/developer)
+
+2. **Create New Bot**
+
+   Fill in the details and click "Create Bot".
+
+3. **Save Your Credentials**
+
+   After creation, you'll receive two critical values:
+
+   - `APP_PRIVATE_DATA` - Your bot's private key and encryption device (base64 encoded string)
+   - `JWT_SECRET` - Used to verify webhook requests from Towns servers
+
+<Note>
+   Store these securely - you'll need them for deployment.
+</Note>
+
+After following the steps above, you should be redirected to the bot settings page. 
+
+Follow the instructions below to deploy your bot and set your webhook url.
+
+## Develop Your Bot
+
+Now let's set up your bot development environment.
+
+### Initialize Your Project
+
+Create a new bot project using the Towns bot CLI:
+
+```bash
+bunx towns-bot init my-bot
+```
+
+This creates a new directory with a basic bot template.
+
+### Install Dependencies
+
+```bash
+cd my-bot
+bun install
+```
+
+### Configure Environment
+
+Copy the `.env.sample` file in your project root:
+
+```bash
+cp .env.sample .env
+```
+
+### Push to GitHub
+
+Create a [new repository on GitHub](https://github.com/new), follow their instructions, commit all your changes and push your bot code to it.
+
+
+## Deploy Your Bot
+
+We'll deploy to Render.com, which offers a generous free tier perfect for bot hosting.
+
+1. **Sign up for Render**
+
+   Go to [render.com](https://render.com) and create an account (can use GitHub login)
+
+2. **Create New Web Service**
+
+   - Click "New +" → "Web Service"
+   - Connect your GitHub account if prompted
+   - Select your bot repository
+
+3. **Configure the Service**
+
+   Fill in the deployment settings:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Name** | `my-bot` (or any name you prefer) |
+   | **Language** | `Node` |
+   | **Build Command** | `bun install` |
+   | **Start Command** | `bun run start` |
+
+4. **Add Environment Variables**
+
+   In the "Environment" section, you can either paste your `.env` file contents or add each variable manually.
+
+   | Key | Value |
+   |-----|-------|
+   | `APP_PRIVATE_DATA` | Your app private data from bot creation |
+   | `JWT_SECRET` | Your JWT secret from bot creation |
+   | `PORT` | `5123` |
+
+5. **Deploy**
+
+   Click "Create Web Service". Render will:
+   - Clone your repository
+   - Run `bun install` to build your bot
+   - Start your bot with `bun run start`
+
+   Wait for the deploy to finish. You'll get a URL like:
+   ```
+   https://my-bot.onrender.com
+   ```
+
+<Note>
+Free tier services on Render may spin down after 15 minutes of inactivity. The first request after spin-down may take 30-60 seconds. Consider upgrading to a paid plan for production bots.
+</Note>
+
+## Configure in Towns
+
+Now that your bot is deployed and publicly accessible, connect it to Towns.
+
+### Set Webhook URL
+
+1. Go back to [app.towns.com/developer](https://app.towns.com/developer)
+2. Click on your bot
+3. Under "Webhook URL", enter:
+   ```
+   https://my-bot.onrender.com/webhook
+   ```
+   <Warning>
+   Don't forget the `/webhook` path at the end!
+   </Warning>
+
+4. Click "Save"
+
+### Configure Forwarding Settings
+
+In the bot settings page, under "Forwarding Settings", choose which messages your bot receives.
+
+- **All Messages** - Bot receives every event in channels it's in
+  - All event handlers available. See [Events](/build/bots/events) for more information.
+  - Use for: AI agents, moderation bots, analytics, or when you need tip/membership events
+
+- **Mentions, Commands, Replies & Reactions** (Default) - Bot only receives:
+  - Direct @mentions, replies to bot's messages, reactions, and slash commands
+  - Available handlers: `onMessage` (filtered), `onSlashCommand`, `onReaction`, `onMessageEdit`, `onRedaction`
+  - NOT available: `onTip`, `onChannelJoin`, `onChannelLeave`, `onEventRevoke`
+  - Use for: Most interactive bots
+
+- **No Messages** - Bot receives no message events
+  - Use for: External-only bots (e.g., GitHub webhooks, scheduled tasks)
+
+Click "Save" after selecting your preference.
+
+
+### Install Bot to a Space
+
+Finally, install your bot to a space to start using it:
+
+1. In Towns app, go to a space you own or admin
+2. Go to Space Settings → Bots
+3. Search for your bot by username
+4. Click "Install"
+5. Grant permissions as needed
+
+Your bot is now live! 🎉
+
+## Testing Your Bot
+
+Try these to verify everything works:
+
+In the channel you installed your bot to, mention your bot:
+```
+@mybot hello
+```
+
+The bot should respond with "Hello there! 👋"
+
+## Next Steps
+
+Now that your bot is running, explore more capabilities:
+
+- [Local development](/build/bots/local-development) - Learn how to develop bots locally to fast iterate
+- [Learn about event handlers](/build/bots/events) - Handle different event types
+- [Add slash commands](/build/bots/slash-commands) - Create custom `/help`, `/poll`, etc.
+- [External interactions](/build/bots/external-interactions) - Timers, webhooks, custom APIs

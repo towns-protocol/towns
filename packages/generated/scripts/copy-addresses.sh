@@ -5,3 +5,6 @@ cd ..
 
 rm -rf deployments
 rsync -av --exclude='*/addresses/facets' ../contracts/deployments/ deployments/
+
+# regenerate the config
+./scripts/make-config.sh

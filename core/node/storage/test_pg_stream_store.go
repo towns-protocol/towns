@@ -37,8 +37,8 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 		infra.NewMetricsFactory(nil, "", ""),
 		&mocks.MockOnChainCfg{
 			Settings: &crypto.OnChainSettings{
-				StreamEphemeralStreamTTL:       time.Minute * 10,
-				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{},
+				StreamEphemeralStreamTTL: time.Minute * 10,
+				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{},
 			},
 		},
 		100,

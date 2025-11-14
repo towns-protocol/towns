@@ -1,4 +1,4 @@
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     createSpaceAndDefaultChannel,
     dynamicMembershipStruct,

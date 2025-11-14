@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { _impl_makeEvent_impl_, publicKeyToAddress, unpackStreamEnvelopes } from '../sign'
-
+import { _impl_makeEvent_impl_, unpackStreamEnvelopes } from '../sign'
 import {
     EncryptedData,
     Envelope,
@@ -19,12 +18,7 @@ import {
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
 import { StreamStateView } from '../streamStateView'
 import { Client, ClientOptions } from '../client'
-import {
-    makeBaseChainConfig,
-    makeRiverChainConfig,
-    makeRiverConfig,
-    useLegacySpaces,
-} from '../riverConfig'
+import { townsEnv } from '../townsEnv'
 import {
     genId,
     makeSpaceStreamId,
@@ -36,7 +30,7 @@ import {
 import { ParsedEvent, StreamTimelineEvent } from '../types'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { EntitlementsDelegate } from '../decryptionExtensions'
-import { bin_fromHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_fromHexString, check, dlog, publicKeyToAddress } from '@towns-protocol/utils'
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
@@ -91,11 +85,15 @@ import { MemberTokenTransfer } from '../streamStateView_Members'
 
 const log = dlog('csb:test:util')
 
+function useLegacySpaces(): boolean {
+    return process.env.USE_LEGACY_SPACES === 'true'
+}
+
 const initTestUrls = async (): Promise<{
     testUrls: string[]
     refreshNodeUrl?: () => Promise<string>
 }> => {
-    const config = makeRiverChainConfig()
+    const config = townsEnv().makeRiverChainConfig()
     const provider = new LocalhostWeb3Provider(config.rpcUrl)
     const riverRegistry = createRiverRegistry(provider, config.chainConfig)
     const urls = await riverRegistry.getOperationalNodeUrls()
@@ -297,9 +295,6 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
     const client = new Client(context, rpcClient, cryptoStore, entitlementsDelegate, {
         ...opts,
         persistenceStoreName: persistenceDbName,
-        streamOpts: {
-            useSharedSyncer: false,
-        },
     }) as TestClient
     client.wallet = context.wallet
     client.deviceId = deviceId
@@ -307,13 +302,13 @@ export const makeTestClient = async (opts?: TestClientOpts): Promise<TestClient>
 }
 
 export async function setupWalletsAndContexts() {
-    const baseConfig = makeBaseChainConfig()
+    const baseConfig = townsEnv().makeBaseChainConfig()
 
-    const [alicesWallet, bobsWallet, carolsWallet] = await Promise.all([
+    const [alicesWallet, bobsWallet, carolsWallet] = [
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
         ethers.Wallet.createRandom(),
-    ])
+    ]
 
     const [alicesContext, bobsContext, carolsContext] = await Promise.all([
         makeUserContextFromWallet(alicesWallet),
@@ -336,20 +331,20 @@ export async function setupWalletsAndContexts() {
     const carolSpaceDapp = createSpaceDapp(carolProvider, baseConfig.chainConfig)
 
     // create a user
-    const riverConfig = makeRiverConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
     const [alice, bob, carol] = await Promise.all([
         makeTestClient({
             context: alicesContext,
             deviceId: 'alice',
-            entitlementsDelegate: new Entitlements(riverConfig, aliceSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, aliceSpaceDapp),
         }),
         makeTestClient({
             context: bobsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, bobSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, bobSpaceDapp),
         }),
         makeTestClient({
             context: carolsContext,
-            entitlementsDelegate: new Entitlements(riverConfig, carolSpaceDapp),
+            entitlementsDelegate: new Entitlements(townsConfig, carolSpaceDapp),
         }),
     ])
 
@@ -813,7 +808,7 @@ export async function dynamicMembershipStruct(
             currency: ETH_ADDRESS,
             feeRecipient: client.userId,
             freeAllocation: 0,
-            pricingModule: await dynamicPricingModule.module,
+            pricingModule: dynamicPricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write],
         requirements: {
@@ -867,7 +862,7 @@ export async function getFreeSpacePricingSetup(spaceDapp: SpaceDapp): Promise<{
     expect(fixedPricingModule).toBeDefined()
     return {
         price: 0,
-        fixedPricingModuleAddress: await fixedPricingModule.module,
+        fixedPricingModuleAddress: fixedPricingModule.module,
         freeAllocation: DefaultFreeAllocation,
     }
 }
@@ -1226,7 +1221,7 @@ export async function createRole(
         }
     }
 
-    const { roleId, error: roleError } = await spaceDapp.waitForRoleCreated(spaceId, txn)
+    const { roleId, error: roleError } = await waitForRoleCreated(spaceDapp, spaceId, txn)
     return { roleId, error: roleError }
 }
 
@@ -1619,4 +1614,23 @@ export function extractMemberBlockchainTransactions(
     const stream = client.streams.get(channelId)
     if (!stream) throw new Error('no stream found')
     return stream.view.getMembers().tokenTransfers
+}
+
+export async function waitForRoleCreated(
+    spaceDapp: SpaceDapp,
+    spaceId: string,
+    txn: ContractTransaction,
+): Promise<{ roleId: number | undefined; error: Error | undefined }> {
+    const receipt = await spaceDapp.provider.waitForTransaction(txn.hash)
+    if (receipt.status === 0) {
+        return { roleId: undefined, error: new Error('Transaction failed') }
+    }
+
+    const parsedLogs = await spaceDapp.parseSpaceLogs(spaceId, receipt.logs)
+    const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
+    if (!roleCreatedEvent) {
+        return { roleId: undefined, error: new Error('RoleCreated event not found') }
+    }
+    const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
+    return { roleId, error: undefined }
 }

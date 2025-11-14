@@ -22,7 +22,7 @@ import {
 import { isDefined, logNever } from './check'
 import { userIdFromAddress } from './id'
 import { StreamStateView_Members_Solicitations } from './streamStateView_Members_Solicitations'
-import { bin_toHexString, check, dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, check, dlog } from '@towns-protocol/utils'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamStateView_MemberMetadata } from './streamStateView_MemberMetadata'
 import { KeySolicitationContent } from './decryptionExtensions'
@@ -48,6 +48,7 @@ export type StreamMember = {
     tipsReceived?: { [key: string]: bigint }
     tipsSentCount?: { [key: string]: bigint }
     tipsReceivedCount?: { [key: string]: bigint }
+    appAddress?: string
 }
 
 export interface Pin {
@@ -81,6 +82,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly pendingJoinedUsers = new Set<string>()
     readonly pendingInvitedUsers = new Set<string>()
     readonly pendingLeftUsers = new Set<string>()
+    readonly apps = new Set<string>()
     readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
@@ -142,7 +144,11 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 tipsReceived: member.tipsReceived,
                 tipsSentCount: member.tipsSentCount,
                 tipsReceivedCount: member.tipsReceivedCount,
+                appAddress: member.appAddress ? userIdFromAddress(member.appAddress) : undefined,
             })
+            if (member.appAddress) {
+                this.apps.add(userId)
+            }
             this.applyMembershipEvent(userId, MembershipOp.SO_JOIN, 'confirmed', undefined)
         }
         this.streamMemberIdsView.setMembers(this.streamId, memberIds)
@@ -301,13 +307,24 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                                 miniblockNum: event.miniblockNum,
                                 eventNum: event.eventNum,
                                 solicitations: [],
+                                appAddress: membership.appAddress
+                                    ? userIdFromAddress(membership.appAddress)
+                                    : undefined,
                             })
+                            if (membership.appAddress) {
+                                this.apps.add(userId)
+                            }
                             this.streamMemberIdsView.addMember(this.streamId, userId)
                             break
-                        case MembershipOp.SO_LEAVE:
+                        case MembershipOp.SO_LEAVE: {
+                            const leavingMember = this.joined.get(userId)
+                            if (leavingMember?.appAddress) {
+                                this.apps.delete(userId)
+                            }
                             this.joined.delete(userId)
                             this.streamMemberIdsView.removeMember(this.streamId, userId)
                             break
+                        }
                         default:
                             break
                     }
@@ -318,6 +335,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'keySolicitation':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
                     check(isDefined(stateMember), 'key solicitation from non-member')
                     this.solicitHelper.applySolicitation(
                         stateMember,
@@ -332,6 +352,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 {
                     const userId = userIdFromAddress(payload.content.value.userAddress)
                     const stateMember = this.joined.get(userId)
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
                     check(isDefined(stateMember), 'key fulfillment from non-member')
                     this.solicitHelper.applyFulfillment(
                         stateMember,
@@ -343,6 +366,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'displayName':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
                     check(isDefined(stateMember), 'displayName from non-member')
                     stateMember.encryptedDisplayName = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
@@ -360,6 +386,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             case 'username':
                 {
                     const stateMember = this.joined.get(event.creatorUserId)
+                    if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                        break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                    }
                     check(isDefined(stateMember), 'username from non-member')
                     stateMember.encryptedUsername = create(WrappedEncryptedDataSchema, {
                         data: payload.content.value,
@@ -376,7 +405,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 break
             case 'ensAddress': {
                 const stateMember = this.joined.get(event.creatorUserId)
-                check(isDefined(stateMember), 'username from non-member')
+                if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                    break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                }
+                check(isDefined(stateMember), 'ensAddress from non-member')
                 this.memberMetadata.appendEnsAddress(
                     event.hashStr,
                     payload.content.value,
@@ -387,6 +419,9 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
             }
             case 'nft': {
                 const stateMember = this.joined.get(event.creatorUserId)
+                if (!isDefined(stateMember) && event.createdAtEpochMs < 1748736000000n) {
+                    break // bug fixed in https://github.com/towns-protocol/towns/pull/3150
+                }
                 check(isDefined(stateMember), 'nft from non-member')
                 this.memberMetadata.appendNft(
                     event.hashStr,

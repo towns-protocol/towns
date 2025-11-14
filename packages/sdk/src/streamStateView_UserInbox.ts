@@ -9,10 +9,11 @@ import {
     UserInboxPayload_Ack,
 } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
 import { UserInboxStreamModel, UserInboxStreamsView } from './views/streams/userInboxStreams'
+import { userIdFromAddress } from './id'
 
 export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
     readonly streamId: string
@@ -38,6 +39,12 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
         Object.entries(content.deviceSummary).map(([deviceId, summary]) => {
             this.deviceSummary[deviceId] = summary
         })
+        if (content.inception?.appAddress) {
+            this.userInboxStreamsView.setAppAddress(
+                this.streamId,
+                userIdFromAddress(content.inception.appAddress),
+            )
+        }
     }
 
     onConfirmedEvent(
@@ -81,6 +88,12 @@ export class StreamStateView_UserInbox extends StreamStateView_AbstractContent {
         const payload: UserInboxPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userInboxStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'groupEncryptionSessions':
                 this.addGroupSessions(event.creatorUserId, payload.content.value, encryptionEmitter)

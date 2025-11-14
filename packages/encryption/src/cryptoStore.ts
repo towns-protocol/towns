@@ -7,7 +7,7 @@ import { InboundGroupSessionData } from './encryptionDevice'
 import { UserDevice } from './olmLib'
 import { CryptoStoreIndexedDb } from './CryptoStoreIndexedDb'
 import { CryptoStoreInMemory } from './CryptoStoreInMemory'
-import { isBrowser } from '@towns-protocol/dlog'
+import { isBrowser } from '@towns-protocol/utils'
 
 const ONE_SECOND_MS = 1000
 const ONE_MINUTE_MS = 60 * ONE_SECOND_MS
@@ -30,6 +30,7 @@ export interface CryptoStore {
     initialize(): Promise<void>
     deleteAllData(): Promise<void>
     deleteInboundGroupSessions(streamId: string, sessionId: string): Promise<void>
+    deleteOutboundGrounpSessions(streamId: string): Promise<void>
     deleteAccount(userId: string): Promise<void>
     getAccount(): Promise<string>
     storeAccount(accountPickle: string): Promise<void>
@@ -51,6 +52,7 @@ export interface CryptoStore {
     getHybridGroupSessionsForStream(streamId: string): Promise<HybridGroupSessionRecord[]>
     getAllEndToEndInboundGroupSessions(): Promise<ExtendedInboundGroupSessionData[]>
     getAllHybridGroupSessions(): Promise<HybridGroupSessionRecord[]>
+    deleteHybridGroupSessions(streamId: string): Promise<void>
     storeEndToEndInboundGroupSession(
         streamId: string,
         sessionId: string,

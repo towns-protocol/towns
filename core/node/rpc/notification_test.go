@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	payload2 "github.com/sideshow/apns2/payload"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/towns-protocol/towns/core/node/authentication"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -69,6 +70,9 @@ func TestNotificationsColdStreams(t *testing.T) {
 
 	_, err := makeMiniblock(ctx, test.streamClient, test.dmStreamID, false, 0)
 	test.req.NoError(err)
+	// wait a little bit to increase the chances that the miniblock will be created before
+	// the service is initialized
+	time.Sleep(100 * time.Millisecond)
 
 	// initialize notifications service AFTER we've created the stream and sent a message
 	notificationService := initNotificationService(ctx, tester, nc)
@@ -1314,7 +1318,7 @@ func (tc *gdmChannelNotificationsTestContext) sendTip(
 					Event: &BlockchainTransaction_Tip_Event{
 						MessageId: messageId,
 						Amount:    amount.Uint64(),
-						TokenId:   tokenId.Uint64(),
+						TokenId:   proto.Uint64(tokenId.Uint64()),
 						Currency:  currency.Bytes(),
 						Sender:    from.Address[:],
 						Receiver:  to.Address[:],
@@ -1616,6 +1620,7 @@ func (nc *notificationCapture) SendWebPushNotification(
 	subscription *webpush.Subscription,
 	eventHash common.Hash,
 	_ []byte,
+	_ string,
 ) (bool, error) {
 	nc.WebPushNotificationsMu.Lock()
 	defer nc.WebPushNotificationsMu.Unlock()
@@ -1638,6 +1643,7 @@ func (nc *notificationCapture) SendApplePushNotification(
 	eventHash common.Hash,
 	_ *payload2.Payload,
 	_ bool,
+	_ string,
 ) (bool, int, error) {
 	nc.ApnPushNotificationsMu.Lock()
 	defer nc.ApnPushNotificationsMu.Unlock()

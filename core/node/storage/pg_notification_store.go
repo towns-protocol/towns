@@ -97,6 +97,7 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
+			app string,
 		) error
 
 		// RemoveExpiredWebPushSubscription deletes a web push subscription with an expired endpoint.
@@ -104,6 +105,7 @@ type (
 			ctx context.Context,
 			userID common.Address,
 			webPushSubscription *webpush.Subscription,
+			app string,
 		) error
 
 		// RemoveWebPushSubscription deletes a web push subscription.
@@ -124,6 +126,7 @@ type (
 			deviceToken []byte,
 			environment APNEnvironment,
 			pushVersion NotificationPushVersion,
+			app string,
 		) error
 
 		RemoveAPNSubscription(ctx context.Context,
@@ -593,7 +596,7 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 	var subs []*types.WebPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select key_auth, key_p256dh, endpoint, last_seen from webpushsubscriptions where user_id=$1",
+		"select key_auth, key_p256dh, endpoint, last_seen, app_name from webpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -606,8 +609,9 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 	var (
 		auth, p256dh, endpoint string
 		lastSeen               time.Time
+		appName                string
 	)
-	if _, err := pgx.ForEachRow(rows, []any{&auth, &p256dh, &endpoint, &lastSeen}, func() error {
+	if _, err := pgx.ForEachRow(rows, []any{&auth, &p256dh, &endpoint, &lastSeen, &appName}, func() error {
 		subs = append(subs, &types.WebPushSubscription{
 			Sub: &webpush.Subscription{
 				Endpoint: endpoint,
@@ -617,6 +621,7 @@ func (s *PostgresNotificationStore) getWebPushSubscriptions(
 				},
 			},
 			LastSeen: lastSeen,
+			App:      appName,
 		})
 		return nil
 	}); err != nil {
@@ -633,16 +638,18 @@ func (s *PostgresNotificationStore) AddWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"AddWebPushSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.addWebPushSubscription(ctx, tx, userID, webPushSubscription)
+			return s.addWebPushSubscription(ctx, tx, userID, webPushSubscription, app)
 		},
 		nil,
 		"userID", userID,
+		"app", app,
 	)
 }
 
@@ -651,14 +658,16 @@ func (s *PostgresNotificationStore) addWebPushSubscription(
 	tx pgx.Tx,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen) VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT (key_auth, key_p256dh) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
+		`INSERT INTO webpushsubscriptions (key_auth, key_p256dh, endpoint, user_id, last_seen, app_name) VALUES ($1, $2, $3, $4, NOW(), $5) ON CONFLICT (key_auth, key_p256dh) DO UPDATE SET endpoint=$3, user_id = $4, last_seen = NOW()`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
 		hex.EncodeToString(userID[:]),
+		app,
 	)
 
 	return err
@@ -671,16 +680,18 @@ func (s *PostgresNotificationStore) RemoveExpiredWebPushSubscription(
 	ctx context.Context,
 	userID common.Address,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"RemoveExpiredWebPushSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.removeExpiredWebPushSubscription(ctx, tx, webPushSubscription)
+			return s.removeExpiredWebPushSubscription(ctx, tx, webPushSubscription, app)
 		},
 		nil,
 		"userID", userID,
+		"app", app,
 	)
 }
 
@@ -688,13 +699,15 @@ func (s *PostgresNotificationStore) removeExpiredWebPushSubscription(
 	ctx context.Context,
 	tx pgx.Tx,
 	webPushSubscription *webpush.Subscription,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND endpoint=$3`,
+		`DELETE FROM webpushsubscriptions where key_auth=$1 AND key_p256dh=$2 AND endpoint=$3 AND app_name=$4`,
 		webPushSubscription.Keys.Auth,
 		webPushSubscription.Keys.P256dh,
 		webPushSubscription.Endpoint,
+		app,
 	)
 
 	return err
@@ -764,7 +777,7 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 	var subs []*types.APNPushSubscription
 	rows, err := tx.Query(
 		ctx,
-		"select device_token, environment, last_seen, push_version from apnpushsubscriptions where user_id=$1",
+		"select device_token, environment, last_seen, push_version, app_name from apnpushsubscriptions where user_id=$1",
 		hex.EncodeToString(userID[:]),
 	)
 	if err != nil {
@@ -779,13 +792,15 @@ func (s *PostgresNotificationStore) getAPNSubscriptions(
 		environment APNEnvironment
 		lastSeen    time.Time
 		pushVersion int32
+		appName     string
 	)
-	if _, err := pgx.ForEachRow(rows, []any{&deviceToken, &environment, &lastSeen, &pushVersion}, func() error {
+	if _, err := pgx.ForEachRow(rows, []any{&deviceToken, &environment, &lastSeen, &pushVersion, &appName}, func() error {
 		subs = append(subs, &types.APNPushSubscription{
 			DeviceToken: deviceToken,
 			LastSeen:    lastSeen,
 			Environment: environment,
 			PushVersion: NotificationPushVersion(pushVersion),
+			App:         appName,
 		})
 		return nil
 	}); err != nil {
@@ -801,16 +816,18 @@ func (s *PostgresNotificationStore) AddAPNSubscription(
 	deviceToken []byte,
 	environment APNEnvironment,
 	pushVersion NotificationPushVersion,
+	app string,
 ) error {
 	return s.txRunner(
 		ctx,
 		"AddAPNSubscription",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.addAPNSubscription(ctx, tx, deviceToken, environment, userID, pushVersion)
+			return s.addAPNSubscription(ctx, tx, deviceToken, environment, userID, pushVersion, app)
 		},
 		nil,
 		"userID", userID,
+		"app", app,
 	)
 }
 
@@ -821,14 +838,16 @@ func (s *PostgresNotificationStore) addAPNSubscription(
 	environment APNEnvironment,
 	userID common.Address,
 	pushVersion NotificationPushVersion,
+	app string,
 ) error {
 	_, err := tx.Exec(
 		ctx,
-		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version) VALUES ($1, $2, $3, NOW(), $4) ON CONFLICT (device_token) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
+		`INSERT INTO apnpushsubscriptions (device_token, environment, user_id, last_seen, push_version, app_name) VALUES ($1, $2, $3, NOW(), $4, $5) ON CONFLICT (device_token) DO UPDATE SET environment = $2, user_id = $3, last_seen = NOW(), push_version = $4`,
 		deviceToken,
 		int16(environment),
 		hex.EncodeToString(userID[:]),
 		int32(pushVersion),
+		app,
 	)
 
 	return err

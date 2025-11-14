@@ -1,10 +1,10 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
 import { Bot } from '../../../sync-agent/utils/bot'
-import { findMessageByText, waitFor, waitForValue } from '../../testUtils'
+import { findMessageByText, waitFor, waitForRoleCreated, waitForValue } from '../../testUtils'
 import { NoopRuleData, Permission } from '@towns-protocol/web3'
 
 const logger = dlogger('csb:test:syncAgents')
@@ -165,8 +165,11 @@ describe('syncAgents.test.ts', () => {
             NoopRuleData,
             bobUser.signer,
         )
-        const { roleId, error: roleError } =
-            await alice.riverConnection.spaceDapp.waitForRoleCreated(spaceId, txn1)
+        const { roleId, error: roleError } = await waitForRoleCreated(
+            alice.riverConnection.spaceDapp,
+            spaceId,
+            txn1,
+        )
         expect(roleError).toBeUndefined()
         expect(roleId).toBeDefined()
         const txn2 = await bob.riverConnection.spaceDapp.addRoleToChannel(

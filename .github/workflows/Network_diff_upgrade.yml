@@ -8,6 +8,7 @@ on:
                 default: 'gamma'
                 type: choice
                 options:
+                    - beta
                     - gamma
                     - omega
                     - all
@@ -16,6 +17,26 @@ on:
         - cron: '0 3 * * 1' # Run every Monday at 3:00 AM UTC
 
 jobs:
+    Run_Alpha_to_Beta:
+        name: Run Alpha to Beta Diff Upgrade
+        if: github.event.schedule == '0 6 * * *' || github.event.inputs.target == 'beta' || github.event.inputs.target == 'all'
+        uses: ./.github/workflows/Bytecode_diff_report.yml
+        with:
+            origin_environment: alpha
+            target_environment: beta
+        secrets:
+            BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
+            BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+            ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+            BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
+            BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
+            GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+            BETA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.BETA_BASE_SEPOLIA_DEPLOYER_PK }}
+            OMEGA_BASE_DEPLOYER_PK: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
+            RIVER_S3_AWS_ACCESS_KEY_ID: ${{ secrets.RIVER_S3_AWS_ACCESS_KEY_ID }}
+            RIVER_S3_AWS_SECRET_ACCESS_KEY: ${{ secrets.RIVER_S3_AWS_SECRET_ACCESS_KEY }}
+            RIVER_S3_AWS_REGION: ${{ secrets.RIVER_S3_AWS_REGION }}
+
     Run_Alpha_to_Gamma:
         name: Run Alpha to Gamma Diff Upgrade
         if: github.event.schedule == '0 6 * * *' || github.event.inputs.target == 'gamma' || github.event.inputs.target == 'all'
@@ -26,7 +47,7 @@ jobs:
         secrets:
             BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
             BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
-            BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+            ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
             BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
             BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
@@ -45,7 +66,7 @@ jobs:
         secrets:
             BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
             BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
-            BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+            ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
             BLOCKSCOUT_BASE_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_API_KEY }}
             BLOCKSCOUT_BASE_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}

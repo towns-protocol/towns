@@ -10,13 +10,14 @@ import {
     DecryptionAlgorithm,
     DecryptionError,
     EncryptionAlgorithm,
+    EnsureOutboundSessionOpts,
     IGroupEncryptionClient,
 } from './base'
 import { GroupDecryption } from './groupDecryption'
 import { GroupEncryption } from './groupEncryption'
 import { EncryptionDevice, type EncryptionDeviceInitOpts } from './encryptionDevice'
 import { EncryptionDelegate } from './encryptionDelegate'
-import { check, dlog } from '@towns-protocol/dlog'
+import { check, dlog } from '@towns-protocol/utils'
 import { HybridGroupEncryption } from './hybridGroupEncryption'
 import { HybridGroupDecryption } from './hybridGroupDecryption'
 import type { CryptoStore } from './cryptoStore'
@@ -148,11 +149,23 @@ export class GroupEncryptionCrypto {
     public async ensureOutboundSession(
         streamId: string,
         algorithm: GroupEncryptionAlgorithmId,
-        opts?: { awaitInitialShareSession: boolean },
-    ): Promise<void> {
+        opts?: EnsureOutboundSessionOpts,
+    ): Promise<string> {
         return this.groupEncryption[algorithm].ensureOutboundSession(streamId, opts)
     }
 
+    /**
+     *
+     * @param streamId - the id of the stream to check
+     * @param algorithm - the algorithm to use
+     * @returns true if the stream has an outbound session, false otherwise
+     */
+    public async hasOutboundSession(
+        streamId: string,
+        algorithm: GroupEncryptionAlgorithmId,
+    ): Promise<boolean> {
+        return this.groupEncryption[algorithm].hasOutboundSession(streamId)
+    }
     /**
      * Encrypt an event using group encryption algorithm
      *
@@ -352,11 +365,6 @@ export class GroupEncryptionCrypto {
     }
 
     public async hasHybridSession(streamId: string): Promise<boolean> {
-        try {
-            await this.encryptionDevice.getHybridGroupSessionKeyForStream(streamId)
-            return true
-        } catch {
-            return false
-        }
+        return this.hasOutboundSession(streamId, GroupEncryptionAlgorithmId.HybridGroupEncryption)
     }
 }

@@ -41,9 +41,12 @@ import {
     MembershipReason,
     PayloadCaseType,
     ContentCaseType,
+    MemberPayload_EncryptionAlgorithm,
+    InteractionRequest,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { DecryptedContent } from './encryptedContentTypes'
 import { addressFromUserId, streamIdAsBytes } from './id'
@@ -86,6 +89,7 @@ export interface StreamTimelineEvent {
     decryptedContentError?: DecryptionSessionError
     miniblockNum?: bigint
     confirmedEventNum?: bigint
+    confirmedAtEpochMs?: number
 }
 
 export type RemoteTimelineEvent = Omit<StreamTimelineEvent, 'remoteEvent'> & {
@@ -103,6 +107,7 @@ export type ConfirmedTimelineEvent = Omit<
     remoteEvent: ParsedEvent
     confirmedEventNum: bigint
     miniblockNum: bigint
+    confirmedAtEpochMs: number
 }
 
 export type DecryptedTimelineEvent = Omit<
@@ -196,6 +201,7 @@ export function makeRemoteTimelineEvent(params: {
     eventNum: bigint
     miniblockNum?: bigint
     confirmedEventNum?: bigint
+    confirmedAtEpochMs?: number
 }): RemoteTimelineEvent {
     return {
         hashStr: params.parsedEvent.hashStr,
@@ -205,6 +211,7 @@ export function makeRemoteTimelineEvent(params: {
         remoteEvent: params.parsedEvent,
         miniblockNum: params.miniblockNum,
         confirmedEventNum: params.confirmedEventNum,
+        confirmedAtEpochMs: params.confirmedAtEpochMs,
     }
 }
 
@@ -227,6 +234,12 @@ export interface ParsedStreamResponse {
     streamAndCookie: ParsedStreamAndCookie
     prevSnapshotMiniblockNum: bigint
     eventIds: string[]
+}
+
+export interface MiniblockInfoResponse {
+    miniblockNum: bigint
+    miniblockHash: Uint8Array
+    encryptionAlgorithm: MemberPayload_EncryptionAlgorithm | undefined
 }
 
 export type ClientInitStatus = {
@@ -515,6 +528,26 @@ export const make_ChannelPayload_Inception = (
                 value,
             },
         },
+    }
+}
+
+export const make_ChannelPayload_InteractionRequest = (
+    value: PlainMessage<InteractionRequest>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            content: { case: 'interactionRequest', value },
+        },
+    }
+}
+
+export const make_ChannelPayload_InteractionResponse = (
+    value: PlainMessage<InteractionResponse>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: { content: { case: 'interactionResponse', value } },
     }
 }
 

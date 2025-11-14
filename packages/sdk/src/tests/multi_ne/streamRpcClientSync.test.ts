@@ -139,7 +139,7 @@ describe('streamRpcClient using v2 sync', () => {
         expect(syncId).toBeDefined()
     })
 
-    test('addStreamToSyncGetsEvents', async () => {
+    test('modifySyncGetsEvents', async () => {
         /** Arrange */
         const alice = await makeTestRpcClient()
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)

@@ -160,7 +160,7 @@ verify-on-blockscout :;
 	@$(MAKE) explicit-verify-any verifier=blockscout verifier-url=$(blockscout_url) args="$(if $(blockscout_key),--etherscan-api-key $(blockscout_key),)"
 
 verify-on-etherscan :;
-	@$(MAKE) explicit-verify-any verifier=etherscan verifier-url=$(etherscan_url) args="--etherscan-api-key $(etherscan_key)"
+	@$(MAKE) explicit-verify-any verifier=etherscan verifier-url=$(etherscan_url) args="--etherscan-api-key $(ETHERSCAN_API_KEY)"
 
 # ===========================
 # 					Ledger
@@ -249,17 +249,17 @@ interact-any-ledger :;
 # 				Base Anvil
 # ===========================
 deploy-base-anvil :;
-	@$(MAKE) deploy-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) deploy-any-local context=local_dev rpc=base_anvil
 
 # THIS IS FOR TESTING ONLY
 deploy-base-anvil-ledger :;
-	@$(MAKE) deploy-any-local-ledger context=local_multi rpc=base_anvil hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
+	@$(MAKE) deploy-any-local-ledger context=local_dev rpc=base_anvil hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 interact-base-anvil :;
-	@$(MAKE) interact-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) interact-any-local context=local_dev rpc=base_anvil
 
 fork-base-anvil :;
-	@$(MAKE) fork-any-local context=local_multi rpc=base_anvil
+	@$(MAKE) fork-any-local context=local_dev rpc=base_anvil
 
 # ===========================
 # 				River Anvil
@@ -298,12 +298,12 @@ verify-river-testnet :;
 deploy-ledger-base-sepolia :;
 	@$(MAKE) deploy-ledger-verify-both rpc=base_sepolia hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 		blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY} \
-		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_SEPOLIA_API_KEY}
+		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${ETHERSCAN_API_KEY}
 
 deploy-base-sepolia :;
 	@$(MAKE) deploy-verify-both rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY} \
 		blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY} \
-		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_SEPOLIA_API_KEY}
+		etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${ETHERSCAN_API_KEY}
 
 interact-base-sepolia :;
 	@$(MAKE) interact-any rpc=base_sepolia private_key=${TESTNET_PRIVATE_KEY}
@@ -313,7 +313,7 @@ fork-base-sepolia :;
 
 verify-base-sepolia :;
 	@$(MAKE) verify-on-blockscout rpc=base_sepolia blockscout_url=${BLOCKSCOUT_SEPOLIA_URL} blockscout_key=${BLOCKSCOUT_SEPOLIA_API_KEY}
-	@$(MAKE) verify-on-etherscan rpc=base_sepolia etherscan_url=${BASESCAN_SEPOLIA_URL} etherscan_key=${BASESCAN_API_KEY}
+	@$(MAKE) verify-on-etherscan rpc=base_sepolia etherscan_url=${BASESCAN_SEPOLIA_URL}
 
 # ===========================
 # 				Sepolia
@@ -321,6 +321,9 @@ verify-base-sepolia :;
 
 deploy-sepolia :;
 	@$(MAKE) deploy-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
+
+deploy-sepolia-ledger :;
+	@$(MAKE) deploy-any-ledger rpc=sepolia hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
 
 interact-sepolia :;
 	@$(MAKE) interact-any rpc=sepolia private_key=${TESTNET_PRIVATE_KEY}
@@ -350,7 +353,7 @@ interact-river :;
 deploy-base :;
 	@$(MAKE) deploy-ledger-verify-both rpc=base hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS} \
 		blockscout_url=${BLOCKSCOUT_BASE_URL} blockscout_key=${BLOCKSCOUT_BASE_API_KEY} \
-		etherscan_url=${BASESCAN_URL} etherscan_key=${BASESCAN_API_KEY}
+		etherscan_url=${BASESCAN_URL} etherscan_key=${ETHERSCAN_API_KEY}
 
 interact-base :;
 	@$(MAKE) interact-any-ledger rpc=base hd_path=$(call format_hd_path,$(HD_PATH)) sender=${SENDER_ADDRESS}
@@ -360,7 +363,7 @@ fork-base :;
 
 verify-base :;
 	@$(MAKE) verify-on-blockscout rpc=base blockscout_url=${BLOCKSCOUT_BASE_URL} blockscout_key=${BLOCKSCOUT_BASE_API_KEY}
-	@$(MAKE) verify-on-etherscan rpc=base etherscan_url=${BASESCAN_URL} etherscan_key=${BASESCAN_API_KEY}
+	@$(MAKE) verify-on-etherscan rpc=base etherscan_url=${BASESCAN_URL}
 
 # ===========================
 # 				Mainnet
@@ -376,7 +379,7 @@ fork-mainnet :;
 
 verify-mainnet :;
 	@$(MAKE) verify-any rpc=mainnet
-	@$(MAKE) verify-on-etherscan rpc=mainnet etherscan_url=${ETHERSCAN_URL} etherscan_key=${ETHERSCAN_API_KEY}
+	@$(MAKE) verify-on-etherscan rpc=mainnet etherscan_url=${ETHERSCAN_URL}
 
 
 # ================================== ENVIRONMENTS ==================================
@@ -445,5 +448,5 @@ interact-any-account :;
 	--rpc-url ${rpc} --broadcast --verify --verifier-url ${verifier-url} --verifier ${verifier} ${args}
 
 deploy-base-sepolia-with-account :;
-	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=etherscan verifier-url=${BASESCAN_SEPOLIA_URL} args="--etherscan-api-key ${BASESCAN_SEPOLIA_API_KEY}"
+	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=etherscan verifier-url=${BASESCAN_SEPOLIA_URL} args="--etherscan-api-key ${ETHERSCAN_API_KEY}"
 	@$(MAKE) deploy-any-account rpc=base_sepolia verifier=blockscout verifier-url=${BLOCKSCOUT_SEPOLIA_URL} args="--resume"

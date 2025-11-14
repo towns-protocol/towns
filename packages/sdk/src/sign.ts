@@ -1,10 +1,10 @@
 import {
     bigIntToBytes,
     bin_equal,
-    bin_fromHexString,
     bin_toHexString,
     check,
-} from '@towns-protocol/dlog'
+    publicKeyToAddress,
+} from '@towns-protocol/utils'
 import { isDefined, assert, hasElements } from './check'
 import {
     Envelope,
@@ -147,7 +147,7 @@ export const unpackStream = async (
         snapshot !== undefined,
         `bad block: snapshot is undefined ${streamIdAsString(
             streamAndCookie.nextSyncCookie.streamId,
-        )}`,
+        )} (syncReset=${stream.syncReset})`,
     )
     const prevSnapshotMiniblockNum = streamAndCookie.miniblocks[0].header.prevSnapshotMiniblockNum
     const eventIds = [
@@ -169,10 +169,16 @@ export const unpackStream = async (
 export const waitForStreamEx = async (
     streamId: string | Uint8Array,
     response: AsyncIterable<GetStreamExResponse>,
-): Promise<Miniblock[]> => {
+): Promise<{ miniblocks: Miniblock[]; snapshot?: Envelope }> => {
     const miniblocks: Miniblock[] = []
+    let snapshot: Envelope | undefined = undefined
     let seenEndOfStream = false
     for await (const chunk of response) {
+        // One snapshot is expected in the response.
+        if (chunk.snapshot !== undefined && snapshot === undefined) {
+            snapshot = chunk.snapshot
+        }
+
         switch (chunk.data.case) {
             case 'miniblock':
                 if (seenEndOfStream) {
@@ -199,16 +205,18 @@ export const waitForStreamEx = async (
             )}.`,
         )
     }
-    return miniblocks
+    return { miniblocks, snapshot }
 }
 
 export const unpackStreamEx = async (
     miniblocks: Miniblock[],
+    snapshot: Envelope | undefined,
     opts: UnpackEnvelopeOpts | undefined,
 ): Promise<ParsedStreamResponse> => {
     const streamAndCookie: StreamAndCookie = create(StreamAndCookieSchema, {})
     streamAndCookie.events = []
     streamAndCookie.miniblocks = miniblocks
+    streamAndCookie.snapshot = snapshot
     // We don't need to set a valid nextSyncCookie here, as we are currently using getStreamEx only
     // for fetching media streams, and the result does not return a nextSyncCookie. However, it does
     // need to be non-null to avoid runtime errors when unpacking the stream into a StreamStateView,
@@ -447,8 +455,6 @@ const HASH_HEADER = new Uint8Array([67, 83, 66, 76, 65, 78, 67, 65])
 const HASH_SEPARATOR = new Uint8Array([65, 66, 67, 68, 69, 70, 71, 62])
 // Create hash footer as Uint8Array from string '<GFEDCBA'
 const HASH_FOOTER = new Uint8Array([60, 71, 70, 69, 68, 67, 66, 65])
-// Header for delegate signature 'RIVERSIG'
-const RIVER_SIG_HEADER = new Uint8Array([82, 73, 86, 69, 82, 83, 73, 71])
 // Create hash header as Uint8Array from string 'SNAPSHOT'
 const SNAPSHOT_HEADER = new Uint8Array([83, 78, 65, 80, 83, 72, 79, 84])
 
@@ -458,13 +464,6 @@ function numberToUint8Array64LE(num: number): Uint8Array {
         result[i] = num & 0xff
     }
     return result
-}
-
-function bigintToUint8Array64(num: bigint, endianMode: 'bigEndian' | 'littleEndian'): Uint8Array {
-    const buffer = new ArrayBuffer(8)
-    const view = new DataView(buffer)
-    view.setBigInt64(0, num, endianMode === 'littleEndian') // true for little endian
-    return new Uint8Array(buffer)
 }
 
 function pushByteToUint8Array(arr: Uint8Array, byte: number): Uint8Array {
@@ -502,23 +501,6 @@ export function riverSnapshotHash(data: Uint8Array): Uint8Array {
     hasher.update(data)
     hasher.update(HASH_FOOTER)
     return hasher.digest()
-}
-
-export function riverDelegateHashSrc(
-    devicePublicKey: Uint8Array,
-    expiryEpochMs: bigint,
-): Uint8Array {
-    abytes(devicePublicKey)
-    check(expiryEpochMs >= 0, 'Expiry should be positive')
-    check(devicePublicKey.length === 64 || devicePublicKey.length === 65, 'Bad public key')
-    const expiryBytes = bigintToUint8Array64(expiryEpochMs, 'littleEndian')
-    const retVal = new Uint8Array(
-        RIVER_SIG_HEADER.length + devicePublicKey.length + expiryBytes.length,
-    )
-    retVal.set(RIVER_SIG_HEADER)
-    retVal.set(devicePublicKey, RIVER_SIG_HEADER.length)
-    retVal.set(expiryBytes, RIVER_SIG_HEADER.length + devicePublicKey.length)
-    return retVal
 }
 
 export function notificationServiceHash(
@@ -588,7 +570,7 @@ export async function riverSign(
 export function riverVerifySignature(
     hash: Uint8Array,
     signature: Uint8Array,
-    publicKey: Uint8Array | string,
+    publicKey: Uint8Array,
 ): boolean {
     checkHash(hash)
     checkSignature(signature)
@@ -609,24 +591,6 @@ export function riverRecoverPubKey(hash: Uint8Array, signature: Uint8Array): Uin
 
     const publicKeyPoint = sig.recoverPublicKey(hash)
     return publicKeyPoint.toRawBytes(false)
-}
-
-export function publicKeyToAddress(publicKey: Uint8Array): Uint8Array {
-    abytes(publicKey, 64, 65)
-    if (publicKey.length === 65) {
-        publicKey = publicKey.slice(1)
-    }
-    return keccak256(publicKey).slice(-20)
-}
-
-export function publicKeyToUint8Array(publicKey: string): Uint8Array {
-    // Uncompressed public key in string form should start with '0x04'.
-    check(
-        typeof publicKey === 'string' && publicKey.startsWith('0x04') && publicKey.length === 132,
-        'Bad public key',
-        Err.BAD_PUBLIC_KEY,
-    )
-    return bin_fromHexString(publicKey)
 }
 
 const bytesToNumberBE = (bytes: Uint8Array): bigint => {

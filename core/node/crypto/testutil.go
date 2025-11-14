@@ -18,12 +18,15 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth/ethconfig"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/simulated"
+	"github.com/ethereum/go-ethereum/node"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/contracts/river/deploy"
@@ -77,7 +80,7 @@ type BlockchainTestContext struct {
 	OnChainConfig        OnChainConfiguration
 	RiverRegistryAddress common.Address
 	NodeRegistry         *river.NodeRegistryV1
-	StreamRegistry       *river.StreamRegistryV1
+	StreamRegistry       *river.StreamRegistryInstance
 	Configuration        *river.RiverConfigV1
 	ChainId              *big.Int
 
@@ -99,7 +102,14 @@ func initSimulated(ctx context.Context, numKeys int) ([]*Wallet, *simulated.Back
 		genesisAlloc[wallets[i].Address] = types.Account{Balance: Eth_100}
 	}
 
-	backend := simulated.NewBackend(genesisAlloc, simulated.WithBlockGasLimit(30_000_000))
+	// With very short block period the eth node log indexing service can't keep up indexing logs.
+	// This can cause a deadlock when retrieving logs through the api. Disabled the indexing service,
+	// this hasn't got a noticeable performance impact in tests.
+	disableLogIndexing := func(nodeConf *node.Config, ethConf *ethconfig.Config) {
+		ethConf.LogNoHistory = true
+	}
+
+	backend := simulated.NewBackend(genesisAlloc, disableLogIndexing, simulated.WithBlockGasLimit(30_000_000))
 	return wallets, backend, nil
 }
 
@@ -309,10 +319,7 @@ func NewBlockchainTestContext(ctx context.Context, params TestParams) (*Blockcha
 		return nil, err
 	}
 
-	btc.StreamRegistry, err = river.NewStreamRegistryV1(btc.RiverRegistryAddress, client)
-	if err != nil {
-		return nil, err
-	}
+	btc.StreamRegistry = river.StreamRegistry.NewInstance(client, btc.RiverRegistryAddress)
 
 	btc.Configuration, err = river.NewRiverConfigV1(btc.RiverRegistryAddress, client)
 	if err != nil {
@@ -614,12 +621,12 @@ func (c *BlockchainTestContext) RegistryConfig() config.ContractConfig {
 	}
 }
 
-func (c *BlockchainTestContext) BlockNum(ctx context.Context) BlockNumber {
+func (c *BlockchainTestContext) BlockNum(ctx context.Context) blockchain.BlockNumber {
 	blockNum, err := c.Client().BlockNumber(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return BlockNumber(blockNum)
+	return blockchain.BlockNumber(blockNum)
 }
 
 func (c *BlockchainTestContext) SetStreamReplicationFactor(
@@ -627,11 +634,12 @@ func (c *BlockchainTestContext) SetStreamReplicationFactor(
 	ctx context.Context,
 	requests []river.SetStreamReplicationFactor,
 ) {
-	pendingTx, err := c.DeployerBlockchain.TxPool.Submit(
+	pendingTx, err := c.DeployerBlockchain.TxPool.SubmitTx(
 		ctx,
 		"SetStreamReplicationFactor",
-		func(opts *bind.TransactOpts) (*types.Transaction, error) {
-			return c.StreamRegistry.SetStreamReplicationFactor(opts, requests)
+		c.StreamRegistry.BoundContract,
+		func() ([]byte, error) {
+			return river.StreamRegistry.TryPackSetStreamReplicationFactor(requests)
 		},
 	)
 
@@ -694,25 +702,32 @@ var _ ChainMonitor = NoopChainMonitor{}
 func (NoopChainMonitor) Start(
 	context.Context,
 	BlockchainClient,
-	BlockNumber,
+	blockchain.BlockNumber,
 	time.Duration,
 	infra.MetricsFactory,
 ) {
 }
 
-func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                         {}
-func (NoopChainMonitor) OnBlock(OnChainNewBlock)                                           {}
-func (NoopChainMonitor) OnBlockWithLogs(BlockNumber, OnChainNewBlockWithLogs)              {}
-func (NoopChainMonitor) OnAllEvents(BlockNumber, OnChainEventCallback)                     {}
-func (NoopChainMonitor) OnContractEvent(BlockNumber, common.Address, OnChainEventCallback) {}
-func (NoopChainMonitor) OnContractWithTopicsEvent(BlockNumber, common.Address, [][]common.Hash, OnChainEventCallback) {
+func (NoopChainMonitor) OnHeader(OnChainNewHeader)                                       {}
+func (NoopChainMonitor) OnBlock(OnChainNewBlock)                                         {}
+func (NoopChainMonitor) OnBlockWithLogs(blockchain.BlockNumber, OnChainNewBlockWithLogs) {}
+func (NoopChainMonitor) OnAllEvents(blockchain.BlockNumber, OnChainEventCallback)        {}
+func (NoopChainMonitor) OnContractEvent(blockchain.BlockNumber, common.Address, OnChainEventCallback) {
 }
-func (NoopChainMonitor) OnNodeAdded(BlockNumber, OnNodeAddedCallback)                 {}
-func (NoopChainMonitor) OnNodeStatusUpdated(BlockNumber, OnNodeStatusUpdatedCallback) {}
-func (NoopChainMonitor) OnNodeUrlUpdated(BlockNumber, OnNodeUrlUpdatedCallback)       {}
-func (NoopChainMonitor) OnNodeRemoved(BlockNumber, OnNodeRemovedCallback)             {}
-func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                      {}
-func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                  {}
+
+func (NoopChainMonitor) OnContractWithTopicsEvent(
+	blockchain.BlockNumber,
+	common.Address,
+	[][]common.Hash,
+	OnChainEventCallback,
+) {
+}
+func (NoopChainMonitor) OnNodeAdded(blockchain.BlockNumber, OnNodeAddedCallback)                 {}
+func (NoopChainMonitor) OnNodeStatusUpdated(blockchain.BlockNumber, OnNodeStatusUpdatedCallback) {}
+func (NoopChainMonitor) OnNodeUrlUpdated(blockchain.BlockNumber, OnNodeUrlUpdatedCallback)       {}
+func (NoopChainMonitor) OnNodeRemoved(blockchain.BlockNumber, OnNodeRemovedCallback)             {}
+func (NoopChainMonitor) OnStopped(OnChainMonitorStoppedCallback)                                 {}
+func (NoopChainMonitor) EnableRiverRegistryCallbacks(common.Address)                             {}
 
 // TestMainForLeaksIgnoreGeth is a helper function to check if there are goroutine leaks.
 // It ignores goroutines created by Geth's simulated backend.

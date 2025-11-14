@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
 	contractAddressFromSpaceId,
 	makeTestClient,
@@ -13,6 +13,30 @@ const log = dlog('test:stream-metadata:test:spaceImage', {
 	allowJest: true,
 	defaultEnabled: true,
 })
+
+const retryWithBackoff = async <T>(
+	fn: () => Promise<T>,
+	maxRetries: number = 3,
+	backoffMs: number = 2000,
+): Promise<T> => {
+	let lastError: Error
+
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			return await fn()
+		} catch (error) {
+			lastError = error as Error
+			log(`Attempt ${attempt} failed:`, error)
+
+			if (attempt < maxRetries) {
+				log(`Retrying in ${backoffMs}ms...`)
+				await new Promise((resolve) => setTimeout(resolve, backoffMs))
+			}
+		}
+	}
+
+	throw lastError!
+}
 
 describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 	const baseURL = getTestServerUrl()
@@ -119,9 +143,14 @@ describe('integration/stream-metadata/space/:spaceAddress/image', () => {
 		 */
 		const spaceContractAddress = contractAddressFromSpaceId(spaceId)
 		const route = `space/${spaceContractAddress}/image`
-		const response = await axios.get(`${baseURL}/${route}`, {
-			responseType: 'arraybuffer', // Ensures that Axios returns the response as a buffer
-		})
+		const response = await retryWithBackoff(
+			() =>
+				axios.get(`${baseURL}/${route}`, {
+					responseType: 'arraybuffer', // Ensures that Axios returns the response as a buffer
+				}),
+			3, // maxRetries
+			2000, // backoffMs (2 seconds)
+		)
 
 		expect(response.status).toBe(200)
 		// Verify the Content-Type header matches the expected MIME type

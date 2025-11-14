@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto' // used to mock indexdb in dexie, don't remove
-import { makeRiverConfig, makeSignerContext, NotificationService } from '@towns-protocol/sdk'
-import { check } from '@towns-protocol/dlog'
+import { townsEnv, makeSignerContext, NotificationService } from '@towns-protocol/sdk'
+import { check } from '@towns-protocol/utils'
 import {
     DmChannelSettingValue,
     GdmChannelSettingValue,
@@ -16,7 +16,7 @@ import { create, toJson } from '@bufbuild/protobuf'
 check(isSet(process.env.RIVER_ENV), 'process.env.RIVER_ENV')
 
 const logger = getLogger('stress:index')
-const config = makeRiverConfig(process.env.RIVER_ENV)
+const config = townsEnv().makeTownsConfig(process.env.RIVER_ENV)
 logger.info(config, 'config')
 
 const registerNotificationService = async () => {

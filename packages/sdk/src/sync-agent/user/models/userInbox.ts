@@ -1,4 +1,4 @@
-import { check, dlogger } from '@towns-protocol/dlog'
+import { check, dlogger } from '@towns-protocol/utils'
 import { Identifiable, LoadPriority, Store } from '../../../store/store'
 import { UserInboxPayload_Snapshot_DeviceSummary } from '@towns-protocol/proto'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'

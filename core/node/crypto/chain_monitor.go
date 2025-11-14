@@ -7,12 +7,15 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/linkdata/deadlock"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/towns-protocol/towns/core/blockchain"
+	"github.com/towns-protocol/towns/core/contracts/base"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -25,7 +28,7 @@ type (
 		Start(
 			ctx context.Context,
 			client BlockchainClient,
-			initialBlock BlockNumber,
+			initialBlock blockchain.BlockNumber,
 			blockPeriod time.Duration,
 			metrics infra.MetricsFactory,
 		)
@@ -36,14 +39,14 @@ type (
 		// OnBlock adds a callback that is called for each new block
 		OnBlock(cb OnChainNewBlock)
 		// OnBlockWithLogs adds a callback that is called for each new block with the logs that were created in the block.
-		OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs)
+		OnBlockWithLogs(from blockchain.BlockNumber, cb OnChainNewBlockWithLogs)
 		// OnAllEvents matches all events for all contracts, e.g. all chain events.
-		OnAllEvents(from BlockNumber, cb OnChainEventCallback)
+		OnAllEvents(from blockchain.BlockNumber, cb OnChainEventCallback)
 		// OnContractEvent matches all events created by the contract on the given address.
-		OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback)
+		OnContractEvent(from blockchain.BlockNumber, addr common.Address, cb OnChainEventCallback)
 		// OnContractWithTopicsEvent matches events created by the contract on the given
 		OnContractWithTopicsEvent(
-			from BlockNumber,
+			from blockchain.BlockNumber,
 			addr common.Address,
 			topics [][]common.Hash,
 			cb OnChainEventCallback,
@@ -55,24 +58,24 @@ type (
 	// NodeRegistryChainMonitor monitors the River Registry contract for node events and calls
 	// registered callbacks for each event.
 	NodeRegistryChainMonitor interface {
-		// OnNodeStatusUpdated registers a callback that is called each time a node is added to the
+		// OnNodeAdded registers a callback that is called each time a node is added to the
 		// River Registry contract.
-		OnNodeAdded(from BlockNumber, cb OnNodeAddedCallback)
+		OnNodeAdded(from blockchain.BlockNumber, cb OnNodeAddedCallback)
 
 		// OnNodeStatusUpdated registers a callback that is called each time a node status is updated
 		// in the River Registry contract.
-		OnNodeStatusUpdated(from BlockNumber, cb OnNodeStatusUpdatedCallback)
+		OnNodeStatusUpdated(from blockchain.BlockNumber, cb OnNodeStatusUpdatedCallback)
 
-		// OnNodeStatusUpdated registers a callback that is called each time a node url is updated
+		// OnNodeUrlUpdated registers a callback that is called each time a node url is updated
 		// in the River Registry contract.
-		OnNodeUrlUpdated(from BlockNumber, cb OnNodeUrlUpdatedCallback)
+		OnNodeUrlUpdated(from blockchain.BlockNumber, cb OnNodeUrlUpdatedCallback)
 
-		// OnNodeStatusUpdated registers a callback that is called each time a node is removed from the
+		// OnNodeRemoved registers a callback that is called each time a node is removed from the
 		// River Registry contract.
-		OnNodeRemoved(from BlockNumber, cb OnNodeRemovedCallback)
+		OnNodeRemoved(from blockchain.BlockNumber, cb OnNodeRemovedCallback)
 	}
 
-	// OnNodeRemovedCallback calles each time a node url is removed.
+	// OnNodeAddedCallback calles each time a node url is removed.
 	OnNodeAddedCallback = func(ctx context.Context, event *river.NodeRegistryV1NodeAdded)
 
 	// OnNodeStatusUpdatedCallback calles each time a node status is updated.
@@ -95,14 +98,14 @@ type (
 	OnChainNewHeader = func(context.Context, *types.Header)
 
 	// OnChainNewBlock is called for each new block that is added to the chain.
-	OnChainNewBlock = func(context.Context, BlockNumber)
+	OnChainNewBlock = func(context.Context, blockchain.BlockNumber)
 
 	// OnChainNewBlockWithLogs is called for new block that is added to the chain with the logs
 	// that were added to the all blocks that were created from the last call to this callback.
 	// I.e. while some block numbers may be skipped, all logs for the skipped block numbers are
 	// returned in the slice of logs on the next call to this callback.
 	// If new block is observed, but there are no logs, the slice of logs will be empty.
-	OnChainNewBlockWithLogs = func(context.Context, BlockNumber, []*types.Log)
+	OnChainNewBlockWithLogs = func(context.Context, blockchain.BlockNumber, []*types.Log)
 
 	// OnChainMonitorStoppedCallback is called after the chain monitor stopped monitoring the chain.
 	OnChainMonitorStoppedCallback = func(context.Context)
@@ -118,6 +121,26 @@ type (
 		chainMonitor ChainMonitor
 		nodeRegistry common.Address
 		nodeABI      *abi.ABI
+	}
+
+	// OnEntitlementRequestCallback is called when an entitlement check request is detected.
+	OnEntitlementRequestCallback = func(context.Context, *base.IEntitlementCheckerEntitlementCheckRequested)
+
+	// OnEntitlementRequestV2Callback is called when an entitlement check V2 request is detected.
+	OnEntitlementRequestV2Callback = func(context.Context, *base.IEntitlementCheckerEntitlementCheckRequestedV2)
+
+	// EntitlementCheckChainMonitor monitors the base chain for entitlement check request events
+	// and calls the registered callbacks for each event.
+	EntitlementCheckChainMonitor interface {
+		OnEntitlementCheckRequest(from blockchain.BlockNumber, cb OnEntitlementRequestCallback)
+		OnEntitlementCheckRequestV2(from blockchain.BlockNumber, cb OnEntitlementRequestV2Callback)
+	}
+
+	entitlementCheckChainMonitor struct {
+		chainMonitor        ChainMonitor
+		checkerContract     *bind.BoundContract
+		checkerContractAddr common.Address
+		checkerABI          *abi.ABI
 	}
 
 	// ChainMonitorPollInterval determines the next poll interval for the chain monitor
@@ -137,9 +160,10 @@ type (
 )
 
 var (
-	_ ChainMonitor             = (*chainMonitor)(nil)
-	_ NodeRegistryChainMonitor = (*nodeRegistryChainMonitor)(nil)
-	_ ChainMonitorPollInterval = (*defaultChainMonitorPollIntervalCalculator)(nil)
+	_ ChainMonitor                 = (*chainMonitor)(nil)
+	_ NodeRegistryChainMonitor     = (*nodeRegistryChainMonitor)(nil)
+	_ EntitlementCheckChainMonitor = (*entitlementCheckChainMonitor)(nil)
+	_ ChainMonitorPollInterval     = (*defaultChainMonitorPollIntervalCalculator)(nil)
 )
 
 // NewChainMonitor constructs an EVM chain monitor that can track state changes on an EVM chain.
@@ -165,6 +189,28 @@ func NewNodeRegistryChainMonitor(chainMonitor ChainMonitor, nodeRegistry common.
 	}
 }
 
+// NewEntitlementCheckChainMonitor constructs an EntitlementCheckChainMonitor that can monitor the base
+// chain for entitlement request and calls the registered callbacks for each event.
+func NewEntitlementCheckChainMonitor(
+	chainMonitor ChainMonitor,
+	entitlementChecker common.Address,
+) *entitlementCheckChainMonitor {
+	checkerABI, err := base.IEntitlementCheckerMetaData.GetAbi()
+	if err != nil {
+		logging.DefaultLogger(zapcore.InfoLevel).
+			Panicw("IEntitlementChecker ABI invalid", "error", err)
+	}
+
+	checkerContract := bind.NewBoundContract(entitlementChecker, *checkerABI, nil, nil, nil)
+
+	return &entitlementCheckChainMonitor{
+		chainMonitor:        chainMonitor,
+		checkerContract:     checkerContract,
+		checkerContractAddr: entitlementChecker,
+		checkerABI:          checkerABI,
+	}
+}
+
 func NewChainMonitorPollIntervalCalculator(
 	blockPeriod time.Duration,
 	errSlowdownLimit time.Duration,
@@ -175,6 +221,50 @@ func NewChainMonitorPollIntervalCalculator(
 		errCounter:        0,
 		errSlowdownLimit:  max(errSlowdownLimit, time.Second),
 	}
+}
+
+func (cm *entitlementCheckChainMonitor) OnEntitlementCheckRequest(
+	from blockchain.BlockNumber,
+	cb OnEntitlementRequestCallback,
+) {
+	entitlementCheckRequestedTopic := cm.checkerABI.Events["EntitlementCheckRequested"].ID
+	cm.chainMonitor.OnContractWithTopicsEvent(
+		from,
+		cm.checkerContractAddr,
+		[][]common.Hash{{entitlementCheckRequestedTopic}},
+		func(ctx context.Context, log types.Log) {
+			var e base.IEntitlementCheckerEntitlementCheckRequested
+			if err := cm.checkerABI.UnpackIntoInterface(&e, "EntitlementCheckRequested", log.Data); err == nil {
+				e.Raw = log
+				cb(ctx, &e)
+			} else {
+				logging.FromCtx(ctx).Errorw("unable to unpack EntitlementCheckRequested event",
+					"error", err, "tx", log.TxHash, "index", log.Index, "log", log)
+			}
+		},
+	)
+}
+
+func (cm *entitlementCheckChainMonitor) OnEntitlementCheckRequestV2(
+	from blockchain.BlockNumber,
+	cb OnEntitlementRequestV2Callback,
+) {
+	entitlementCheckRequestedTopic := cm.checkerABI.Events["EntitlementCheckRequestedV2"].ID
+	cm.chainMonitor.OnContractWithTopicsEvent(
+		from,
+		cm.checkerContractAddr,
+		[][]common.Hash{{entitlementCheckRequestedTopic}},
+		func(ctx context.Context, log types.Log) {
+			var e base.IEntitlementCheckerEntitlementCheckRequestedV2
+			if err := cm.checkerABI.UnpackIntoInterface(&e, "EntitlementCheckRequestedV2", log.Data); err == nil {
+				e.Raw = log
+				cb(ctx, &e)
+			} else {
+				logging.FromCtx(ctx).Errorw("unable to unpack EntitlementCheckRequestedV2 event",
+					"error", err, "tx", log.TxHash, "index", log.Index, "log", log)
+			}
+		},
+	)
 }
 
 func (p *defaultChainMonitorPollIntervalCalculator) Interval(
@@ -236,28 +326,28 @@ func (cm *chainMonitor) OnBlock(cb OnChainNewBlock) {
 	cm.builder.OnBlock(cb)
 }
 
-func (cm *chainMonitor) OnBlockWithLogs(from BlockNumber, cb OnChainNewBlockWithLogs) {
+func (cm *chainMonitor) OnBlockWithLogs(from blockchain.BlockNumber, cb OnChainNewBlockWithLogs) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.builder.OnBlockWithLogs(from, cb)
 	cm.setFromBlock(from.AsBigInt(), true)
 }
 
-func (cm *chainMonitor) OnAllEvents(from BlockNumber, cb OnChainEventCallback) {
+func (cm *chainMonitor) OnAllEvents(from blockchain.BlockNumber, cb OnChainEventCallback) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.builder.OnAllEvents(from, cb)
 	cm.setFromBlock(from.AsBigInt(), true)
 }
 
-func (cm *chainMonitor) OnContractEvent(from BlockNumber, addr common.Address, cb OnChainEventCallback) {
+func (cm *chainMonitor) OnContractEvent(from blockchain.BlockNumber, addr common.Address, cb OnChainEventCallback) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 	cm.builder.OnContractEvent(from, addr, cb)
 	cm.setFromBlock(from.AsBigInt(), true)
 }
 
-func (cm *nodeRegistryChainMonitor) OnNodeAdded(from BlockNumber, cb OnNodeAddedCallback) {
+func (cm *nodeRegistryChainMonitor) OnNodeAdded(from blockchain.BlockNumber, cb OnNodeAddedCallback) {
 	nodeAddedEventTopic := cm.nodeABI.Events["NodeAdded"].ID
 	cm.chainMonitor.OnContractWithTopicsEvent(
 		from,
@@ -280,7 +370,7 @@ func (cm *nodeRegistryChainMonitor) OnNodeAdded(from BlockNumber, cb OnNodeAdded
 	)
 }
 
-func (cm *nodeRegistryChainMonitor) OnNodeRemoved(from BlockNumber, cb OnNodeRemovedCallback) {
+func (cm *nodeRegistryChainMonitor) OnNodeRemoved(from blockchain.BlockNumber, cb OnNodeRemovedCallback) {
 	nodeRemovedEventTopic := cm.nodeABI.Events["NodeRemoved"].ID
 	cm.chainMonitor.OnContractWithTopicsEvent(
 		from,
@@ -297,7 +387,7 @@ func (cm *nodeRegistryChainMonitor) OnNodeRemoved(from BlockNumber, cb OnNodeRem
 	)
 }
 
-func (cm *nodeRegistryChainMonitor) OnNodeUrlUpdated(from BlockNumber, cb OnNodeUrlUpdatedCallback) {
+func (cm *nodeRegistryChainMonitor) OnNodeUrlUpdated(from blockchain.BlockNumber, cb OnNodeUrlUpdatedCallback) {
 	nodeUrlUpdatedEventTopic := cm.nodeABI.Events["NodeUrlUpdated"].ID
 	cm.chainMonitor.OnContractWithTopicsEvent(
 		from,
@@ -319,7 +409,7 @@ func (cm *nodeRegistryChainMonitor) OnNodeUrlUpdated(from BlockNumber, cb OnNode
 	)
 }
 
-func (cm *nodeRegistryChainMonitor) OnNodeStatusUpdated(from BlockNumber, cb OnNodeStatusUpdatedCallback) {
+func (cm *nodeRegistryChainMonitor) OnNodeStatusUpdated(from blockchain.BlockNumber, cb OnNodeStatusUpdatedCallback) {
 	nodeStatusUpdatedEventTopic := cm.nodeABI.Events["NodeStatusUpdated"].ID
 	cm.chainMonitor.OnContractWithTopicsEvent(
 		from,
@@ -342,7 +432,7 @@ func (cm *nodeRegistryChainMonitor) OnNodeStatusUpdated(from BlockNumber, cb OnN
 }
 
 func (cm *chainMonitor) OnContractWithTopicsEvent(
-	from BlockNumber,
+	from blockchain.BlockNumber,
 	addr common.Address,
 	topics [][]common.Hash,
 	cb OnChainEventCallback,
@@ -362,7 +452,7 @@ func (cm *chainMonitor) OnStopped(cb OnChainMonitorStoppedCallback) {
 func (cm *chainMonitor) Start(
 	ctx context.Context,
 	client BlockchainClient,
-	initialBlock BlockNumber,
+	initialBlock blockchain.BlockNumber,
 	blockPeriod time.Duration,
 	metrics infra.MetricsFactory,
 ) {
@@ -390,7 +480,7 @@ func (cm *chainMonitor) Start(
 func (cm *chainMonitor) runWithBlockPeriod(
 	ctx context.Context,
 	client BlockchainClient,
-	initialBlock BlockNumber,
+	initialBlock blockchain.BlockNumber,
 	blockPeriod time.Duration,
 	metrics infra.MetricsFactory,
 ) {
@@ -491,7 +581,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 			gotNewBlock = true
 
 			var (
-				newBlocks           []BlockNumber
+				newBlocks           []blockchain.BlockNumber
 				collectedLogs       []types.Log
 				toBlock             = new(big.Int).Set(head.Number)
 				moreBlocksAvailable = false
@@ -519,7 +609,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 
 			if len(cm.builder.blockCallbacks) > 0 {
 				for i := query.FromBlock.Uint64(); i <= query.ToBlock.Uint64(); i++ {
-					newBlocks = append(newBlocks, BlockNumber(i))
+					newBlocks = append(newBlocks, blockchain.BlockNumber(i))
 				}
 			}
 
@@ -556,7 +646,7 @@ func (cm *chainMonitor) runWithBlockPeriod(
 			if len(cm.builder.blockWithLogsCallbacks) > 0 {
 				cm.builder.blockWithLogsCallbacks.onBlockReceived(
 					ctx,
-					BlockNumberFromBigInt(query.ToBlock),
+					blockchain.BlockNumberFromBigInt(query.ToBlock),
 					collectedLogs,
 					&callbacksExecuted,
 				)

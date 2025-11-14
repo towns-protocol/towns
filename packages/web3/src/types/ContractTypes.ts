@@ -308,3 +308,27 @@ export interface ClearChannelPermissionOverridesParams {
 export interface TransactionOpts {
     retryCount?: number
 }
+
+export type SendTipMemberParams = {
+    tokenId: string
+    spaceId: string
+    receiver: Address
+    currency: Address
+    amount: bigint
+    messageId: string
+    channelId: string
+}
+
+export type SendTipBotParams = {
+    appId: string
+    spaceId: string
+    receiver: Address
+    currency: Address
+    amount: bigint
+    messageId: string
+    channelId: string
+}
+
+export type SendTipParams =
+    | ({ type: 'member' } & SendTipMemberParams)
+    | ({ type: 'bot' } & SendTipBotParams)

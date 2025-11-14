@@ -1,57 +1,120 @@
 #!/bin/bash
+set -euo pipefail
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd ..
+
+if ! which act >/dev/null 2>&1; then
+  echo "Error: 'act' is not installed. Please install it with:"
+  echo "  brew install act"
+  exit 1
+fi
+
+if ! which yq >/dev/null 2>&1; then
+  echo "Error: 'yq' is not installed. Please install it with:"
+  echo "  brew install yq"
+  exit 1
+fi
 
 # Script to run GitHub CI locally using act
 
 # Default values
 JOB="Common_CI"
-ARCH="linux/amd64"
 EVENT_TYPE="schedule"
 EVENT_TIME="2023-01-01T00:00:00Z"
 
+# Auto-detect architecture - default to native on Apple Silicon
+if [[ $(uname -m) == "arm64" ]]; then
+    ARCH="${ARCH:-linux/arm64}"
+else
+    ARCH="${ARCH:-linux/amd64}"
+fi
+
 # Function to display usage info
-function show_usage {
+show_usage() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -j, --job JOB_NAME     Specify the job to run (default: Common_CI)"
-  echo "  -e, --event TYPE       Event type: schedule, pull_request, workflow_dispatch (default: schedule)"
+  echo "  -a, --arch ARCH        Specify container architecture (default: auto-detect)"
+  echo "                         Options: linux/arm64, linux/amd64"
   echo "  -h, --help             Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0 -j Common_CI                    # Uses native architecture ($(uname -m))"
+  echo "  $0 -j Common_CI -a linux/amd64     # Force AMD64 (for compatibility testing)"
+  echo ""
+  echo "Note: Uses 'schedule' event type (only type that works reliably with act)"
 }
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -j|--job) JOB="$2"; shift ;;
-    -e|--event) EVENT_TYPE="$2"; shift ;;
+    -a|--arch) ARCH="$2"; shift ;;
     -h|--help) show_usage; exit 0 ;;
     *) echo "Unknown parameter: $1"; show_usage; exit 1 ;;
   esac
   shift
 done
 
-# Create event.json file
-echo "Creating event.json for $EVENT_TYPE event..."
-if [ "$EVENT_TYPE" == "schedule" ]; then
-  echo "{\"schedule\": {\"scheduled_at\": \"$EVENT_TIME\"}}" > event.json
-elif [ "$EVENT_TYPE" == "pull_request" ]; then
-  echo "{\"pull_request\": {\"head\": {\"ref\": \"$(git branch --show-current)\"}}}" > event.json
-elif [ "$EVENT_TYPE" == "workflow_dispatch" ]; then
-  echo "{\"inputs\": {}}" > event.json
-else
-  echo "Unsupported event type: $EVENT_TYPE"
-  exit 1
-fi
+# Create event.json file for schedule event
+echo "Creating event.json for schedule event..."
+cat > event.json << EOF
+{
+  "schedule": {
+    "scheduled_at": "$EVENT_TIME"
+  },
+  "repository": {
+    "default_branch": "main"
+  }
+}
+EOF
 
-# Format with prettier
-echo "Formatting event.json..."
-yarn prettier --write event.json
+# Cleanup function to stop Anvil containers
+cleanup() {
+    echo "Stopping Anvil containers..."
+    if command -v just >/dev/null 2>&1 && [ -d "core" ]; then
+        (cd core && USE_DOCKER_CHAINS=1 just anvils-stop) >/dev/null 2>&1 || true
+    fi
+
+    # Clean up temp files
+    if [[ -f "event.json" ]]; then
+        rm event.json
+    fi
+    if [[ -n "${TEMP_LOG:-}" && -f "$TEMP_LOG" ]]; then
+        rm "$TEMP_LOG"
+    fi
+
+    # Restore original workflow file if it was backed up
+    if [[ -f ".github/workflows/ci.yml.original" ]]; then
+        mv ".github/workflows/ci.yml.original" ".github/workflows/ci.yml"
+    fi
+}
+
+# Set up trap to cleanup on exit
+trap cleanup EXIT INT TERM
+
+# Preprocess workflow to expand YAML anchors (act doesn't support them)
+echo "Preprocessing workflow to expand YAML anchors..."
+cp .github/workflows/ci.yml .github/workflows/ci.yml.original
+yq eval 'explode(.)' .github/workflows/ci.yml > .github/workflows/ci.expanded.yml
+mv .github/workflows/ci.expanded.yml .github/workflows/ci.yml
+
+# Format generated files with prettier
+echo "Formatting generated files..."
+yarn prettier --write event.json .github/workflows/ci.yml
 
 # Run act and capture output to a temporary file
 echo "Running Act for job: $JOB..."
+echo "Using architecture: $ARCH"
 TEMP_LOG=$(mktemp)
 
 # Run command and tee output to both terminal and temp file
-act -j "$JOB" --secret-file .env -P arc-runners=ghcr.io/catthehacker/ubuntu:act-latest \
-  --container-architecture "$ARCH" --eventpath event.json --detect-event "$EVENT_TYPE" \
+act "$EVENT_TYPE" -j "$JOB" --secret-file .env \
+  -P blacksmith-16vcpu-ubuntu-2404=ghcr.io/catthehacker/ubuntu:act-latest \
+  -P blacksmith-32vcpu-ubuntu-2404=ghcr.io/catthehacker/ubuntu:act-latest \
+  --container-architecture "$ARCH" \
+  --eventpath event.json \
+  --rm \
   2>&1 | tee "$TEMP_LOG"
 EXIT_CODE=${PIPESTATUS[0]}
 
@@ -68,10 +131,6 @@ if [ $EXIT_CODE -ne 0 ]; then
   grep -i -E '(error|failed|failure)' "$TEMP_LOG" | grep -v -E '(Cached|::group)' | sort | uniq
 fi
 
-# Cleanup
-echo "Cleaning up..."
-rm event.json
-rm "$TEMP_LOG"
-
+# Exit with the status code from act
 echo "Done! Exit code: $EXIT_CODE"
 exit $EXIT_CODE

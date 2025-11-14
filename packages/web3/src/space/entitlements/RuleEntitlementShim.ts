@@ -5,7 +5,7 @@ import {
 import { BaseContractShim } from '../../BaseContractShim'
 import { BigNumberish, ethers } from 'ethers'
 import { EntitlementModuleType, EntitlementModule } from '../../types/ContractTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { IRuleEntitlement__factory } from '@towns-protocol/generated/dev/typings/factories/IRuleEntitlement.sol/IRuleEntitlement__factory'
 const logger = dlogger('csb:SpaceDapp:debug')
 

@@ -24,7 +24,7 @@ import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { UserEntitlementShim } from './entitlements/UserEntitlementShim'
 import { toPermissions, parseChannelMetadataJSON } from '../utils/ut'
 import { isRoleIdInArray } from '../utils/ContractHelpers'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 
 import { IMembershipShim } from './IMembershipShim'
 import { NoopRuleData } from './entitlements/entitlement'
@@ -38,7 +38,7 @@ import { IPrepayShim } from './IPrepayShim'
 import { IERC721AShim } from '../erc-721/IERC721AShim'
 import { IReviewShim } from './IReviewShim'
 import { ITreasuryShim } from './ITreasuryShim'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { IAppAccountShim } from './IAppAccountShim'
 const log = dlogger('csb:Space')
 

@@ -5,7 +5,6 @@
     "author": "",
     "license": "ISC",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "main": "index.js",
     "scripts": {
@@ -21,15 +20,18 @@
         "@towns-protocol/generated": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "esbuild-plugin-pino": "^2.2.0",
-        "ethers": "^5.7.2",
-        "pino": "^8.17.1",
+        "ethers": "^5.8.0",
+        "pino": "^9.0.0",
         "pino-pretty": "^13.0.0",
-        "zod": "^3.21.4"
+        "zod": "^3.25.76"
     },
     "devDependencies": {
-        "esbuild": "^0.21.5",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "esbuild": "^0.25.9",
         "eslint": "^8.57.1",
+        "eslint-plugin-import-x": "^4.10.2",
         "prettier": "^3.5.3",
-        "typescript": "^5.8.2"
+        "typescript": "~5.8.3"
     }
 }

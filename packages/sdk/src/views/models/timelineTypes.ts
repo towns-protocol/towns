@@ -20,6 +20,8 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
+    InteractionRequestPayload,
+    InteractionResponse,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
 import { isDefined, logNever } from '../../check'
@@ -58,6 +60,7 @@ export interface TimelineEvent {
     isSendFailed: boolean
     confirmedEventNum?: bigint
     confirmedInBlockNum?: bigint
+    confirmedAtEpochMs?: number // time miniblock containing this event was created, should be around 2 seconds after the event was created
     threadParentId?: string
     replyParentId?: string
     reactionParentId?: string
@@ -80,6 +83,9 @@ export type TimelineEvent_OneOf =
     | EncryptedChannelPropertiesEvent
     | FulfillmentEvent
     | InceptionEvent
+    | InteractionRequestEvent
+    | InteractionRequestEncryptedEvent
+    | InteractionResponseEvent
     | KeySolicitationEvent
     | MiniblockHeaderEvent
     | MemberBlockchainTransactionEvent
@@ -103,6 +109,13 @@ export type TimelineEvent_OneOf =
     | UserReceivedBlockchainTransactionEvent
     | UnpinEvent
 
+export type TimelineEventWithContent<T extends TimelineEvent_OneOf> = Omit<
+    TimelineEvent,
+    'content'
+> & {
+    content: T
+}
+
 export enum RiverTimelineEvent {
     ChannelCreate = 'm.channel.create',
     ChannelMessage = 'm.channel.message',
@@ -113,6 +126,9 @@ export enum RiverTimelineEvent {
     EncryptedChannelProperties = 'm.channel.encrypted_properties',
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
+    InteractionRequest = 'm.interaction_request',
+    InteractionRequestEncrypted = 'm.interaction_request.encrypted',
+    InteractionResponse = 'm.interaction_response',
     KeySolicitation = 'm.key_solicitation',
     MemberBlockchainTransaction = 'm.member_blockchain_transaction',
     MiniblockHeader = 'm.miniblockheader',
@@ -163,6 +179,24 @@ export interface InceptionEvent {
     creatorId: string
     type?: PayloadCaseType
     spaceId?: string // valid on casablanca channel streams
+    appAddress?: string
+}
+
+export interface InteractionRequestEvent {
+    kind: RiverTimelineEvent.InteractionRequest
+    payload?: PlainMessage<InteractionRequestPayload>
+    recipient?: string
+}
+
+export interface InteractionRequestEncryptedEvent {
+    kind: RiverTimelineEvent.InteractionRequestEncrypted
+    error?: DecryptionSessionError
+    recipient?: string
+}
+
+export interface InteractionResponseEvent {
+    kind: RiverTimelineEvent.InteractionResponse
+    response: PlainMessage<InteractionResponse>
 }
 
 export interface ChannelCreateEvent {
@@ -278,6 +312,7 @@ export interface StreamMembershipEvent {
     membership: Membership
     reason?: MembershipReason
     streamId?: string // in a case of an invitation to a channel with a streamId
+    appAddress?: string
 }
 
 export interface UserBlockchainTransactionEvent {
@@ -376,6 +411,13 @@ export interface ChannelMessageEvent {
     attachments?: Attachment[]
 }
 
+export type ChannelMessageEventWithContent<T extends ChannelMessageEventContentOneOf> = Omit<
+    ChannelMessageEvent,
+    'content'
+> & {
+    content: T
+}
+
 // original event: the event that was redacted
 export interface RedactedEvent {
     kind: RiverTimelineEvent.RedactedEvent
@@ -393,6 +435,7 @@ export interface TimelineEventConfirmation {
     eventId: string
     confirmedEventNum: bigint
     confirmedInBlockNum: bigint
+    confirmedAtEpochMs: number
 }
 
 export interface ThreadStatsData {
@@ -450,13 +493,6 @@ export type ChunkedMediaAttachment = {
     thumbnail?: { content: Uint8Array; info: MediaInfo }
 }
 
-export type EmbeddedMediaAttachment = {
-    type: 'embedded_media'
-    info: MediaInfo
-    content: Uint8Array
-    id: string
-}
-
 export type EmbeddedMessageAttachment = {
     type: 'embedded_message'
     url: string
@@ -484,13 +520,19 @@ export type TickerAttachment = {
     chainId: string
 }
 
+export type MiniappAttachment = {
+    type: 'miniapp'
+    url: string
+    id: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
-    | EmbeddedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
+    | MiniappAttachment
 
 export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
     content: TipEvent
@@ -532,16 +574,6 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                         },
                     })
 
-                case 'embedded_media':
-                    return create(ChannelMessage_Post_AttachmentSchema, {
-                        content: {
-                            case: 'embeddedMedia',
-                            value: {
-                                info: attachment.info,
-                                content: attachment.content,
-                            },
-                        },
-                    })
                 case 'image':
                     return create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
@@ -559,13 +591,26 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                     const post = create(ChannelMessage_PostSchema, {
                         threadId: channelMessageEvent.threadId,
                         threadPreview: channelMessageEvent.threadPreview,
-                        content: {
-                            case: 'text' as const,
-                            value: {
-                                ...channelMessageEvent,
-                                attachments: transformAttachments(channelMessageEvent.attachments),
-                            },
-                        },
+                        content:
+                            channelMessageEvent.content.msgType === MessageType.Text
+                                ? {
+                                      case: 'text' as const,
+                                      value: {
+                                          ...channelMessageEvent,
+                                          attachments: transformAttachments(
+                                              channelMessageEvent.attachments,
+                                          ),
+                                      },
+                                  }
+                                : channelMessageEvent.content.msgType === MessageType.Image
+                                  ? {
+                                        case: 'image' as const,
+                                        value: {
+                                            title: channelMessageEvent.body,
+                                            ...channelMessageEvent.content,
+                                        },
+                                    }
+                                  : undefined,
                     })
                     const value = create(ChannelMessage_Post_AttachmentSchema, {
                         content: {
@@ -603,6 +648,15 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             value: {
                                 chainId: attachment.chainId,
                                 address: attachment.address,
+                            },
+                        },
+                    })
+                case 'miniapp':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'miniapp',
+                            value: {
+                                url: attachment.url,
                             },
                         },
                     })

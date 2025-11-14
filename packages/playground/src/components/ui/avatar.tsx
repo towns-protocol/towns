@@ -1,11 +1,12 @@
 import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useState } from 'react'
-import { getStreamMetadataUrl } from '@towns-protocol/sdk'
+import { townsEnv } from '@towns-protocol/sdk'
 import { cn } from '@/utils'
 import { useAppMetadata } from '@/hooks/useAppMetadata'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 
 const getAvatarUrl = (environmentId: string, userId: string) => {
-    return `${getStreamMetadataUrl(environmentId)}/user/${userId}/image`
+    return `${townsEnv(VITE_ENV_OPTIONS).getStreamMetadataUrl(environmentId)}/user/${userId}/image`
 }
 
 export const Avatar = ({

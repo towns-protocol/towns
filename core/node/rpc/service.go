@@ -7,8 +7,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/puzpuzpuz/xsync/v4"
-
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,7 +25,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/notifications"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
-	riversync "github.com/towns-protocol/towns/core/node/rpc/sync"
 	riversyncv3 "github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/xchain/entitlement"
@@ -59,10 +56,8 @@ type Service struct {
 	storage         storage.StreamStorage
 
 	// Streams
-	cache   *StreamCache
-	sync    riversync.Handler
-	syncv3  riversyncv3.Service
-	v3Syncs *xsync.Map[string, struct{}]
+	cache     *StreamCache
+	syncv3Svc riversyncv3.Service
 
 	// Notifications
 	notifications notifications.UserPreferencesStore

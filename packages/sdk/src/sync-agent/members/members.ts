@@ -1,4 +1,4 @@
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { isDefined } from '../../check'
 import { PersistedObservable, persistedObservable } from '../../observable/persistedObservable'
 import type { Store } from '../../store/store'
@@ -71,7 +71,7 @@ export class Members extends PersistedObservable<MembersModel> {
         return my
     }
 
-    get(userId: string) {
+    get(userId: string): Member {
         check(isUserId(userId), 'invalid user id')
         // Its possible to get a member that its not in the userIds array, if the user left the stream for example
         // We can get a member that left, to get the last snapshot of the member

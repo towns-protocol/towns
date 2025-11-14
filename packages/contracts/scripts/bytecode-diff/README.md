@@ -40,7 +40,7 @@ ChannelBase: 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
 
 ### Run pairwise remote bytecode diff on facets deployed to two networks
 
-Runs bytecode diff from deployed facets for diamonds in alpha, gamma, and omega environments as per source coordinates of diamonds for each environment.
+Runs bytecode diff from deployed facets for diamonds in alpha, beta, gamma, and omega environments as per source coordinates of diamonds for each environment.
 
 ```bash
 # compare omega against gamma facets and facet selectors
@@ -136,7 +136,7 @@ You can also set the following environment variables instead of using flags:
 - `BASE_RPC_URL`: Base RPC provider URL
 - `BASE_SEPOLIA_RPC_URL`: Base Sepolia RPC provider URL
 - `FACET_SOURCE_PATH`: Path to facet source files
-- `BASESCAN_API_KEY`: Your API key for BaseScan.
+- `ETHERSCAN_API_KEY`: Your API key for Etherscan.
 - `COMPILED_FACETS_PATH`: (Optional) Path to compiled facets
 - `DEPLOYMENTS_PATH`: (Optional) Path to deployed contracts
 - `REPORT_OUT_DIR`: (Optional) Path to report output directory

@@ -9,7 +9,7 @@ import {
 } from './types'
 import { DecryptedContent } from './encryptedContentTypes'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { userIdFromAddress } from './id'
 import { DmStreamModel, DmStreamsView } from './views/streams/dmStreams'
@@ -76,6 +76,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                 this.updateLastEvent(event.remoteEvent, stateEmitter)
                 break
 
+            case 'custom':
+                break
             case undefined:
                 break
             default:
@@ -104,6 +106,8 @@ export class StreamStateView_DMChannel extends StreamStateView_AbstractContent {
                     encryptionEmitter,
                 )
                 this.updateLastEvent(event.remoteEvent, undefined)
+                break
+            case 'custom':
                 break
             case undefined:
                 break

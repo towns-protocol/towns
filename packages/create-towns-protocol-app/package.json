@@ -1,6 +1,6 @@
 {
     "name": "create-towns-protocol-app",
-    "version": "0.0.291",
+    "version": "0.0.412",
     "scripts": {
         "build": "tsup",
         "watch": "tsup --watch"
@@ -18,7 +18,7 @@
         "picocolors": "^1.1.1",
         "prompts": "^2.4.2",
         "tsup": "^8.3.5",
-        "typescript": "^5.8.2"
+        "typescript": "~5.8.3"
     },
     "engines": {
         "node": "^18.0.0 || >=20.0.0"

@@ -1,7 +1,7 @@
 import { SyncAgentConfig } from '../sync-agent/syncAgent'
 import { ClientParams } from '../sync-agent/river-connection/riverConnection'
 import { makeRandomUserContext } from './testUtils'
-import { makeRiverConfig } from '../riverConfig'
+import { townsEnv } from '../townsEnv'
 import { RiverDbManager } from '../riverDbManager'
 import { userIdFromAddress } from '../id'
 import { Entitlements } from '../sync-agent/entitlements/entitlements'
@@ -9,9 +9,9 @@ import { SpaceDapp } from '@towns-protocol/web3'
 
 export async function makeRandomSyncAgentConfig(): Promise<SyncAgentConfig> {
     const context = await makeRandomUserContext()
-    const riverConfig = makeRiverConfig()
+    const townsConfig = townsEnv().makeTownsConfig()
     return {
-        riverConfig,
+        townsConfig,
         context,
     } satisfies SyncAgentConfig
 }
@@ -24,14 +24,11 @@ export function makeClientParams(config: SyncAgentConfig, spaceDapp: SpaceDapp):
             userId,
             makeTestCryptoDbName(userId, config.deviceId),
         ),
-        entitlementsDelegate: new Entitlements(config.riverConfig, spaceDapp),
+        entitlementsDelegate: new Entitlements(config.townsConfig, spaceDapp),
         opts: {
             persistenceStoreName: makeTestPersistenceDbName(userId, config.deviceId),
             logNamespaceFilter: undefined,
             highPriorityStreamIds: undefined,
-            streamOpts: {
-                useSharedSyncer: false,
-            },
         },
         rpcRetryParams: config.retryParams,
     } satisfies ClientParams

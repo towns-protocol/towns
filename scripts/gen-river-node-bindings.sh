@@ -3,7 +3,7 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cd ..
 
 if [ -z ${ABIGEN_VERSION+x} ]; then
-  ABIGEN_VERSION="v1.14.11"
+  ABIGEN_VERSION="v1.16.2"
 fi
 
 echo "Go version:"
@@ -72,7 +72,14 @@ generate_go base/deploy deploy MockWalletLink mock_wallet_link
 
 # River contracts interfaces
 generate_go river river INodeRegistry node_registry_v1
-generate_go river river IStreamRegistry stream_registry_v1
+
+go run github.com/ethereum/go-ethereum/cmd/abigen@${ABIGEN_VERSION} \
+        --v2 \
+        --abi packages/contracts/out/IStreamRegistry.sol/IStreamRegistry.abi.json \
+        --pkg "river" \
+        --type "StreamRegistryContract" \
+        --out "core/contracts/river/stream_registry_contract.go"
+
 generate_go river river IOperatorRegistry operator_registry_v1
 generate_go river river IRiverConfig river_config_v1
 
@@ -95,4 +102,5 @@ go build -o bin/gen-bindings-remove-struct scripts/gen-bindings-remove-struct.go
 ./bin/gen-bindings-remove-struct core/contracts/base/xchain.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_entitlement_checker.go IRuleEntitlementBaseCheckOperation,IRuleEntitlementBaseLogicalOperation,IRuleEntitlementBaseOperation,IRuleEntitlementBaseRuleData
 ./bin/gen-bindings-remove-struct core/contracts/base/deploy/mock_wallet_link.go IWalletLinkBaseLinkedWallet
+./bin/gen-bindings-remove-struct core/contracts/base/app_registry.go ExecutionManifest,ManifestExecutionFunction,ManifestExecutionHook
 

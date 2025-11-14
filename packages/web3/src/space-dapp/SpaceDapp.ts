@@ -14,18 +14,25 @@ import {
     PricingModuleStruct,
     RemoveChannelParams,
     RoleDetails,
+    SendTipParams,
     SetChannelPermissionOverridesParams,
     TransactionOpts,
     UpdateChannelParams,
     UpdateRoleParams,
     VersionedRuleData,
+    type Address,
 } from '../types/ContractTypes'
 import { SpaceInfo } from '../types/types'
 
 import { computeDelegatorsForProvider } from '../delegate-registry/DelegateRegistry'
 import { BigNumber, BytesLike, ContractReceipt, ContractTransaction, ethers } from 'ethers'
 import { LOCALHOST_CHAIN_ID } from '../utils/Web3Constants'
-import { EVERYONE_ADDRESS, stringifyChannelMetadataJSON, NoEntitledWalletError } from '../utils/ut'
+import {
+    EVERYONE_ADDRESS,
+    stringifyChannelMetadataJSON,
+    NoEntitledWalletError,
+    ETH_ADDRESS,
+} from '../utils/ut'
 import { IRolesBase } from '../space/IRolesShim'
 import { Space } from '../space/Space'
 import { SpaceRegistrar } from '../space-registrar/SpaceRegistrar'
@@ -52,17 +59,17 @@ import {
 import { UserEntitlementShim } from '../space/entitlements/UserEntitlementShim'
 
 import { RiverAirdropDapp } from '../airdrop/RiverAirdropDapp'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { BaseChainConfig } from '../utils/web3Env'
 import { WalletLink, INVALID_ADDRESS } from '../wallet-link/WalletLink'
 import { OverrideExecution, UNKNOWN_ERROR } from '../BaseContractShim'
 import { PricingModules } from '../pricing-modules/PricingModules'
-import { dlogger, isTestEnv } from '@towns-protocol/dlog'
+import { dlogger, isTestEnv } from '@towns-protocol/utils'
 
 import { PlatformRequirements } from '../platform-requirements/PlatformRequirements'
 import { EntitlementDataStructOutput } from '../space/IEntitlementDataQueryableShim'
 import { CacheResult, EntitlementCache } from '../cache/EntitlementCache'
 import { SimpleCache } from '../cache/SimpleCache'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { TipSentEventObject } from '../space/ITippingShim'
 import {
     EntitlementRequest,
     BannedTokenIdsRequest,
@@ -155,11 +162,11 @@ const EmptyXchainConfig: XchainConfig = {
 }
 
 type EntitledWallet = string | undefined
-export class SpaceDapp {
+export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.providers.Provider> {
     private isLegacySpaceCache: Map<string, boolean>
     public readonly config: BaseChainConfig
     public readonly baseRegistry: BaseRegistry
-    public readonly provider: ethers.providers.Provider
+    public readonly provider: TProvider
     public readonly spaceRegistrar: SpaceRegistrar
     public readonly pricingModules: PricingModules
     public readonly walletLink: WalletLink
@@ -175,7 +182,7 @@ export class SpaceDapp {
     public readonly ownerOfTokenCache: SimpleCache<OwnerOfTokenRequest, string>
     public readonly isBannedTokenCache: SimpleCache<IsTokenBanned, boolean>
 
-    constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
+    constructor(config: BaseChainConfig, provider: TProvider) {
         this.isLegacySpaceCache = new Map()
         this.config = config
         this.provider = provider
@@ -257,24 +264,6 @@ export class SpaceDapp {
         )
     }
 
-    public async waitForRoleCreated(
-        spaceId: string,
-        txn: ContractTransaction,
-    ): Promise<{ roleId: number | undefined; error: Error | undefined }> {
-        const receipt = await this.provider.waitForTransaction(txn.hash)
-        if (receipt.status === 0) {
-            return { roleId: undefined, error: new Error('Transaction failed') }
-        }
-
-        const parsedLogs = await this.parseSpaceLogs(spaceId, receipt.logs)
-        const roleCreatedEvent = parsedLogs.find((log) => log?.name === 'RoleCreated')
-        if (!roleCreatedEvent) {
-            return { roleId: undefined, error: new Error('RoleCreated event not found') }
-        }
-        const roleId = (roleCreatedEvent.args[1] as ethers.BigNumber).toNumber()
-        return { roleId, error: undefined }
-    }
-
     public async banWalletAddress(
         spaceId: string,
         walletAddress: string,
@@ -321,19 +310,24 @@ export class SpaceDapp {
         this.isBannedTokenCache.remove(new IsTokenBanned(spaceId, tokenId))
     }
 
-    public async walletAddressIsBanned(spaceId: string, walletAddress: string): Promise<boolean> {
+    public async walletAddressIsBanned(
+        spaceId: string,
+        walletAddress: string,
+        opts?: { skipCache?: boolean },
+    ): Promise<boolean> {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        const token = await space.ERC721AQueryable.read
+        const tokenId = await space.ERC721AQueryable.read
             .tokensOfOwner(walletAddress)
             .then((tokens) => tokens[0])
 
         const isBanned = await this.isBannedTokenCache.executeUsingCache(
-            new IsTokenBanned(spaceId, token),
+            new IsTokenBanned(spaceId, tokenId),
             async (request) => space.Banning.read.isBanned(request.tokenId),
+            opts,
         )
         return isBanned
     }
@@ -598,23 +592,6 @@ export class SpaceDapp {
         return space.getChannels()
     }
 
-    public async tokenURI(spaceId: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        const spaceInfo = await this.spaceOwner.getSpaceInfo(space.Address)
-        return this.spaceOwner.read.tokenURI(spaceInfo.tokenId)
-    }
-
-    public memberTokenURI(spaceId: string, tokenId: string) {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
-        return space.ERC721A.read.tokenURI(tokenId)
-    }
-
     public async getChannelDetails(
         spaceId: string,
         channelNetworkId: string,
@@ -820,17 +797,17 @@ export class SpaceDapp {
         return await this.decodeEntitlementData(space, entitlementData)
     }
 
-    public async getLinkedWallets(wallet: string): Promise<string[]> {
+    public async getLinkedWallets(wallet: string): Promise<Address[]> {
         let linkedWallets = await this.walletLink.getLinkedWallets(wallet)
         // If there are no linked wallets, consider that the wallet may be linked to another root key.
         if (linkedWallets.length === 0) {
             const possibleRoot = await this.walletLink.getRootKeyForWallet(wallet)
             if (possibleRoot !== INVALID_ADDRESS) {
                 linkedWallets = await this.walletLink.getLinkedWallets(possibleRoot)
-                return [possibleRoot, ...linkedWallets]
+                return [possibleRoot as Address, ...(linkedWallets as Address[])]
             }
         }
-        return [wallet, ...linkedWallets]
+        return [wallet as Address, ...(linkedWallets as Address[])]
     }
 
     private async getMainnetDelegationsForLinkedWallets(
@@ -1133,6 +1110,15 @@ export class SpaceDapp {
             throw new Error('SpaceArchitect is not deployed properly.')
         }
         const decodedErr = this.spaceRegistrar.SpaceArchitect.parseError(error)
+        logger.error(decodedErr)
+        return decodedErr
+    }
+
+    public parseSpaceOwnerError(error: unknown): Error {
+        if (!this.spaceOwner) {
+            throw new Error('SpaceOwner is not deployed properly.')
+        }
+        const decodedErr = this.spaceOwner.parseError(error)
         logger.error(decodedErr)
         return decodedErr
     }
@@ -1857,7 +1843,7 @@ export class SpaceDapp {
         spaceId: string,
         receipt: ContractReceipt,
         senderAddress: string,
-    ): TipEventObject | undefined {
+    ): TipSentEventObject | undefined {
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
@@ -1895,10 +1881,20 @@ export class SpaceDapp {
     }
 
     /**
-     * Tip a user
-     * @param args
+     * Send a tip using the new sendTip interface
+     * @param args - The tip parameters
      * @param args.spaceId - The space id
+     * @param args.type - The recipient type: 'member' or 'bot'
+     * For member tips:
+     * @param args.receiver - The receiver's wallet address
      * @param args.tokenId - The token id to tip. Obtainable from getTokenIdOfOwner
+     * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
+     * @param args.amount - The amount to tip
+     * @param args.messageId - The message id - needs to be hex encoded to 64 characters
+     * @param args.channelId - The channel id - needs to be hex encoded to 64 characters
+     * For bot tips:
+     * @param args.receiver - The bot's wallet address
+     * @param args.appId - The app id - needs to be hex encoded to 64 characters
      * @param args.currency - The currency to tip - address or 0xEeeeeeeeee... for native currency
      * @param args.amount - The amount to tip
      * @param args.messageId - The message id - needs to be hex encoded to 64 characters
@@ -1906,42 +1902,86 @@ export class SpaceDapp {
      * @param signer - The signer to use for the tip
      * @returns The transaction
      */
-    public async tip(
-        args: {
-            spaceId: string
-            tokenId: string
-            currency: string
-            amount: bigint
-            messageId: string
-            channelId: string
-            receiver: string
-        },
-        signer: ethers.Signer,
-        txnOpts?: TransactionOpts,
-    ): Promise<ContractTransaction> {
-        const { spaceId, tokenId, currency, amount, messageId, channelId, receiver } = args
+    public async sendTip<T = ContractTransaction>(args: {
+        tipParams: SendTipParams
+        signer: ethers.Signer
+        txnOpts?: TransactionOpts
+        overrideExecution?: OverrideExecution<T>
+    }) {
+        const { tipParams, signer, txnOpts, overrideExecution } = args
+        const { spaceId } = tipParams
         const space = this.getSpace(spaceId)
         if (!space) {
             throw new Error(`Space with spaceId "${spaceId}" is not found.`)
         }
 
-        return wrapTransaction(
-            () =>
-                space.Tipping.write(signer).tip(
-                    {
-                        receiver,
-                        tokenId,
-                        currency,
-                        amount,
-                        messageId: ensureHexPrefix(messageId),
-                        channelId: ensureHexPrefix(channelId),
-                    },
-                    {
-                        value: amount,
-                    },
-                ),
-            txnOpts,
-        )
+        let recipientType: number
+        let encodedData: string
+
+        switch (tipParams.type) {
+            case 'member': {
+                // TipRecipientType.Member = 0
+                recipientType = 0
+                const { receiver, tokenId, currency, amount, messageId, channelId } = tipParams
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32', 'uint256'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId), tokenId],
+                )
+                // Encode struct MembershipTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address receiver, uint256 tokenId, address currency, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
+                    ],
+                    [
+                        [
+                            receiver,
+                            tokenId,
+                            currency,
+                            amount,
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
+                        ],
+                    ],
+                )
+                break
+            }
+            case 'bot': {
+                // TipRecipientType.Bot = 1
+                recipientType = 1
+                const { receiver, appId, currency, amount, messageId, channelId } = tipParams
+                const metadataData = ethers.utils.defaultAbiCoder.encode(
+                    ['bytes32', 'bytes32'],
+                    [ensureHexPrefix(messageId), ensureHexPrefix(channelId)],
+                )
+                // Encode struct BotTipParams
+                encodedData = ethers.utils.defaultAbiCoder.encode(
+                    [
+                        'tuple(address receiver, address currency, bytes32 appId, uint256 amount, tuple(bytes32 messageId, bytes32 channelId, bytes data) metadata)',
+                    ],
+                    [
+                        [
+                            receiver,
+                            currency,
+                            ensureHexPrefix(appId),
+                            amount,
+                            [ensureHexPrefix(messageId), ensureHexPrefix(channelId), metadataData],
+                        ],
+                    ],
+                )
+                break
+            }
+        }
+
+        return space.Tipping.executeCall({
+            signer,
+            functionName: 'sendTip',
+            args: [recipientType, encodedData],
+            value:
+                tipParams.currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
+                    ? tipParams.amount
+                    : undefined,
+            overrideExecution,
+            transactionOpts: txnOpts,
+        })
     }
 
     /**

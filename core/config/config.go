@@ -101,6 +101,8 @@ type Config struct {
 	Database          DatabaseConfig
 	StorageType       string
 	TrimmingBatchSize int64
+	// ExternalMediaStreamStorage if configured, defines where media stream miniblocks are stored.
+	ExternalMediaStreamStorage ExternalMediaStreamStorageConfig `mapstructure:"external_media_stream_storage"`
 
 	// Blockchain configuration
 	BaseChain  ChainConfig
@@ -192,6 +194,7 @@ type Config struct {
 	// ====================
 	// EntitlementContract denotes the address of the contract that receives entitlement check
 	// requests.
+	// TODO: is there elegant way to rename this to BaseRegistryContract and keep old name as an alias?
 	EntitlementContract ContractConfig `mapstructure:"entitlement_contract"`
 	// History indicates how far back xchain must look for entitlement check requests after start
 	History time.Duration
@@ -199,6 +202,10 @@ type Config struct {
 	// MetadataShardMask is the mask used to determine the shard for metadata streams.
 	// It is used for testing only.
 	MetadataShardMask uint64 `mapstructure:"TestOnlyOverrideMetadataShardMask"`
+
+	// TestEntitlementsBypassSecret enables test-only bypass of entitlement checks if set (non-empty).
+	// The value is a shared secret expected in the X-River-Test-Bypass header.
+	TestEntitlementsBypassSecret string
 }
 
 type TLSConfig struct {
@@ -375,6 +382,71 @@ type ArchiveConfig struct {
 	MaxFailedConsecutiveUpdates uint32 `json:",omitempty"` // If 0, default to 50.
 }
 
+// ExternalMediaStreamStorageAWSS3Config defines configuration to store media stream miniblocks
+// in AWS S3.
+type ExternalMediaStreamStorageAWSS3Config struct {
+	// Region is the region where the bucket is located.
+	Region string
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write
+	// access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	AccessKeyID string `mapstructure:"access_key_id"`
+	// SecretAccessKey is the AWS secret access key that has read/write access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	SecretAccessKey string `mapstructure:"secret_access_key" json:"-" yaml:"-"`
+}
+
+func (cfg ExternalMediaStreamStorageAWSS3Config) fieldsSet() int {
+	fieldsSet := 0
+	if cfg.Region != "" {
+		fieldsSet++
+	}
+	if cfg.Bucket != "" {
+		fieldsSet++
+	}
+	if cfg.AccessKeyID != "" {
+		fieldsSet++
+	}
+	if cfg.SecretAccessKey != "" {
+		fieldsSet++
+	}
+	return fieldsSet
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageAWSS3Config) Enabled() bool {
+	return cfg.fieldsSet() == 4
+}
+
+// ExternalMediaStreamStorageGCStorageConfig defines configuration to store media stream miniblocks
+// in GCP Storage.
+type ExternalMediaStreamStorageGCStorageConfig struct {
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// JsonCredentials is the JSON credentials file that has read/write access to the bucket.
+	JsonCredentials string `mapstructure:"json_credentials" json:"-" yaml:"-"` // Sensitive data, omit when possible
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageGCStorageConfig) Enabled() bool {
+	return cfg.Bucket != "" && cfg.JsonCredentials != ""
+}
+
+// ExternalMediaStreamStorageConfig specifies the configuration for storing media miniblock data
+// in external storage. For production only one of the storage backends should be configured. For
+// unittests all backends are supported.
+type ExternalMediaStreamStorageConfig struct {
+	// AwsS3 if configured, will be used to store media stream miniblocks in AWS S3.
+	AwsS3 ExternalMediaStreamStorageAWSS3Config `mapstructure:"aws_s3"`
+	// Gcs, if configured, will be used to store media stream miniblocks in GCP Storage.
+	Gcs ExternalMediaStreamStorageGCStorageConfig `mapstructure:"gcs_storage"`
+	// EnableMigrationExistingStreams if true, actively migrate media stream miniblock data
+	// from database to external storage.
+	EnableMigrationExistingStreams bool `mapstructure:"enable_migration_existing_streams"`
+}
+
 type APNPushNotificationsConfig struct {
 	// IosAppBundleID is used as the topic ID for notifications.
 	AppBundleID string
@@ -437,9 +509,16 @@ type StreamTrackingConfig struct {
 	// NumWorkers configures the number of workers placing streams in syncs on the sync runner. If
 	// unset, this will default to 20.
 	NumWorkers int
+}
 
-	// UseSharedSyncer indicates whether the notification service should use the shared syncer.
-	UseSharedSyncer bool
+// AppNotificationConfig holds notification configuration for a specific app.
+type AppNotificationConfig struct {
+	// App identifies which app this configuration is for
+	App string
+	// APN holds the Apple Push Notification settings for this app
+	APN APNPushNotificationsConfig
+	// Web holds the Web Push notification settings for this app
+	Web WebPushNotificationConfig `mapstructure:"webpush"`
 }
 
 type NotificationsConfig struct {
@@ -450,10 +529,15 @@ type NotificationsConfig struct {
 	// send notifications to the client but only logs them.
 	// This is intended for development purposes. Defaults to false.
 	Simulate bool
-	// APN holds the Apple Push Notification settings
-	APN APNPushNotificationsConfig
-	// Web holds the Web Push notification settings
-	Web WebPushNotificationConfig `mapstructure:"webpush"`
+	// Since viper does not support arrays configurations via env var,
+	// we can't use the Apps field directly. using two flat configuration
+	// for towns and sendit apps for now.
+	// in the future, this configuration (both *App and Apps) will be moved to
+	// a database, to allow dynamic config without code changes
+	TownsApp  AppNotificationConfig
+	SenditApp AppNotificationConfig
+	// Apps holds the notification configuration for each app
+	Apps []AppNotificationConfig
 
 	// Authentication holds configuration for the Client API authentication service.
 	Authentication AuthenticationConfig

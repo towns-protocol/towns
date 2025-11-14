@@ -10,7 +10,7 @@ import {
 import { Err } from '@towns-protocol/proto'
 import { genShortId, streamIdAsString } from './id'
 import { isBaseUrlIncluded, isIConnectError } from './utils'
-import { dlog, dlogError, check } from '@towns-protocol/dlog'
+import { dlog, dlogError, check } from '@towns-protocol/utils'
 import { cloneDeep } from 'lodash-es'
 
 export const DEFAULT_RETRY_PARAMS: RetryParams = {
@@ -246,7 +246,7 @@ export const loggingInterceptor: (transportId: number, serviceName?: string) => 
             } else {
                 logCalls(req.method.name, id)
             }
-            logProtos(req.method.name, 'REQUEST', id, req.message)
+            logProtos(req.method.name, 'REQUEST', id, req.message, req.header)
         }
         updateHistogram(req.method.name, streamId)
 

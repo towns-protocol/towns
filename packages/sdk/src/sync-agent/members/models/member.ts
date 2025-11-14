@@ -1,4 +1,4 @@
-import { bin_toHexString, bin_toString, check } from '@towns-protocol/dlog'
+import { bin_toHexString, bin_toString, check } from '@towns-protocol/utils'
 import { isDefined } from '../../../check'
 import { PersistedObservable, persistedObservable } from '../../../observable/persistedObservable'
 import type { Store } from '../../../store/store'
@@ -42,6 +42,8 @@ export type MemberModel = {
     nft?: NftModel
     /** {@link MembershipOp} of the member. */
     membership?: MembershipOp
+    /** The app address of the member. */
+    appAddress?: string
 }
 
 export type NftModel = {
@@ -75,6 +77,7 @@ export class Member extends PersistedObservable<MemberModel> {
                 ensAddress: undefined,
                 nft: undefined,
                 membership: undefined,
+                appAddress: undefined,
             },
             store,
         )
@@ -90,6 +93,7 @@ export class Member extends PersistedObservable<MemberModel> {
             const ensAddress = metadata?.ensAddresses.info(this.userId)
             const nft = metadata?.nfts.info(this.userId)
             const membership = streamView.getMembers().info(this.userId)
+            const appAddress = streamView.getMembers().joined.get(this.userId)?.appAddress
 
             this.setData({
                 initialized: true,
@@ -101,6 +105,7 @@ export class Member extends PersistedObservable<MemberModel> {
                 ensAddress,
                 nft,
                 membership,
+                appAddress,
             })
         }
     }

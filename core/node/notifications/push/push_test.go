@@ -14,6 +14,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/notifications/apps"
 	"github.com/towns-protocol/towns/core/node/notifications/push"
 	"github.com/towns-protocol/towns/core/node/notifications/types"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -23,29 +24,37 @@ func TestAPNSPushNotification(t *testing.T) {
 	t.Parallel()
 
 	var (
-		req = require.New(t)
-		ctx = context.Background()
-		cfg = &config.NotificationsConfig{
-			APN: config.APNPushNotificationsConfig{
-				AppBundleID: "com.towns.internal",
-				Expiration:  30 * time.Minute,
-				KeyID:       os.Getenv("TEST_APN_KEY_ID"),
-				TeamID:      os.Getenv("TEST_APN_TEAM_ID"),
-				AuthKey:     os.Getenv("TEST_APN_AUTH_KEY"),
-			},
-			Web: config.WebPushNotificationConfig{
-				Vapid: config.WebPushVapidNotificationConfig{
-					PrivateKey: os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY"),
-					PublicKey:  os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY"),
-					Subject:    "support@towns.com",
+		req            = require.New(t)
+		ctx            = context.Background()
+		apnKeyID       = os.Getenv("TEST_APN_KEY_ID")
+		apnTeamID      = os.Getenv("TEST_APN_TEAM_ID")
+		apnAuthKey     = os.Getenv("TEST_APN_AUTH_KEY")
+		deviceTokenHex = os.Getenv("TEST_APN_APPLE_DEVICE_TOKEN")
+		cfg            = &config.NotificationsConfig{
+			Apps: []config.AppNotificationConfig{
+				{
+					App: apps.Towns,
+					APN: config.APNPushNotificationsConfig{
+						AppBundleID: "com.towns.internal",
+						Expiration:  30 * time.Minute,
+						KeyID:       apnKeyID,
+						TeamID:      apnTeamID,
+						AuthKey:     apnAuthKey,
+					},
+					Web: config.WebPushNotificationConfig{
+						Vapid: config.WebPushVapidNotificationConfig{
+							PrivateKey: os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY"),
+							PublicKey:  os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY"),
+							Subject:    "support@towns.com",
+						},
+					},
 				},
 			},
 		}
-		notifier, err  = push.NewMessageNotifier(cfg, infra.NewMetricsFactory(nil, "", ""))
-		deviceTokenHex = os.Getenv("TEST_APN_APPLE_DEVICE_TOKEN")
+		notifier, err = push.NewMessageNotifier(cfg, infra.NewMetricsFactory(nil, "", ""))
 	)
 
-	if cfg.APN.KeyID == "" || cfg.APN.TeamID == "" || cfg.APN.AuthKey == "" || deviceTokenHex == "" {
+	if apnKeyID == "" || apnTeamID == "" || apnAuthKey == "" || deviceTokenHex == "" {
 		t.Skip("Missing required config to run this test")
 	}
 
@@ -64,7 +73,7 @@ func TestAPNSPushNotification(t *testing.T) {
 	}
 
 	expired, _, err := notifier.SendApplePushNotification(
-		ctx, &sub, common.Hash{1}, payload, true)
+		ctx, &sub, common.Hash{1}, payload, true, apps.Towns)
 	req.False(expired, "subscription should not be expired")
 	req.NoError(err, "send APN notification")
 }
@@ -73,21 +82,29 @@ func TestWebPushWithVapid(t *testing.T) {
 	t.Parallel()
 
 	var (
-		req = require.New(t)
-		ctx = context.Background()
-		cfg = &config.NotificationsConfig{
-			APN: config.APNPushNotificationsConfig{
-				AppBundleID: "com.towns.internal",
-				Expiration:  30 * time.Minute,
-				KeyID:       os.Getenv("TEST_APN_KEY_ID"),
-				TeamID:      os.Getenv("TEST_APN_TEAM_ID"),
-				AuthKey:     os.Getenv("TEST_APN_AUTH_KEY"),
-			},
-			Web: config.WebPushNotificationConfig{
-				Vapid: config.WebPushVapidNotificationConfig{
-					PrivateKey: os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY"),
-					PublicKey:  os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY"),
-					Subject:    "support@towns.com",
+		req             = require.New(t)
+		ctx             = context.Background()
+		vapidPrivateKey = os.Getenv("TEST_WEB_PUSH_VAPID_PRIV_KEY")
+		vapidPublicKey  = os.Getenv("TEST_WEB_PUSH_VAPID_PUB_KEY")
+		vapidSubject    = "support@towns.com"
+		cfg             = &config.NotificationsConfig{
+			Apps: []config.AppNotificationConfig{
+				{
+					App: apps.Towns,
+					APN: config.APNPushNotificationsConfig{
+						AppBundleID: "com.towns.internal",
+						Expiration:  30 * time.Minute,
+						KeyID:       os.Getenv("TEST_APN_KEY_ID"),
+						TeamID:      os.Getenv("TEST_APN_TEAM_ID"),
+						AuthKey:     os.Getenv("TEST_APN_AUTH_KEY"),
+					},
+					Web: config.WebPushNotificationConfig{
+						Vapid: config.WebPushVapidNotificationConfig{
+							PrivateKey: vapidPrivateKey,
+							PublicKey:  vapidPublicKey,
+							Subject:    vapidSubject,
+						},
+					},
 				},
 			},
 		}
@@ -113,7 +130,7 @@ func TestWebPushWithVapid(t *testing.T) {
 		payload = []byte("Some message")
 	)
 
-	if cfg.Web.Vapid.PrivateKey == "" || cfg.Web.Vapid.PublicKey == "" || cfg.Web.Vapid.Subject == "" {
+	if vapidPrivateKey == "" || vapidPublicKey == "" || vapidSubject == "" {
 		t.Skip("Missing required config to run this test")
 	}
 
@@ -121,7 +138,13 @@ func TestWebPushWithVapid(t *testing.T) {
 
 	// payload := payload2.NewPayload().Alert("Sry to bother you if this works...")
 
-	expired, err := notifier.SendWebPushNotification(ctx, subscription, common.Hash{1}, payload)
+	expired, err := notifier.SendWebPushNotification(
+		ctx,
+		subscription,
+		common.Hash{1},
+		payload,
+		apps.Towns,
+	)
 	req.False(expired, "expired")
 	req.NoError(err, "send web push notification")
 }

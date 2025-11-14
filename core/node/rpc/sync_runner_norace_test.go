@@ -122,7 +122,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -430,7 +430,7 @@ func setupTestChannelAndAddToSyncer(
 	}
 	tt.require.Equal(int64(0), b0ref.Num, "miniblock number should be 0 for %s", channelId.String())
 
-	streamOnChain, err := tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(
+	streamOnChain, err := tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
 		ctx,
 		channelId,
 	)
@@ -442,7 +442,7 @@ func setupTestChannelAndAddToSyncer(
 		&river.StreamWithId{
 			Id: channelId,
 			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
+				Nodes:     streamOnChain.Nodes,
 				Reserved0: uint64(replFactor),
 			},
 		},
@@ -483,8 +483,8 @@ func waitForMessagesDelivery(
 // tests that the MultiSyncer correctly detects when streams are not syncing and rotates them to new
 // nodes, verifying message delivery after each node failure.
 func TestMultiSyncerWithNodeFailures(t *testing.T) {
-	numNodes := 10
-	replFactor := 5
+	numNodes := 5
+	replFactor := 4
 	tt := newServiceTester(
 		t,
 		serviceTesterOpts{numNodes: numNodes, replicationFactor: replFactor, start: true},
@@ -603,8 +603,9 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		"Not all messages from first batch were received",
 	)
 
-	// Stop first node to force stream relocation
+	// Stop first 2 nodes to force stream relocation
 	tt.CloseNode(1)
+	tt.CloseNode(2)
 
 	// Send second batch of messages after first node failure
 	for i, channelId := range channelIds {
@@ -624,8 +625,8 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		"Not all messages were received after first node failure",
 	)
 
-	// Stop second node to force another stream relocation
-	tt.CloseNode(2)
+	// Stop third node to force another stream relocation
+	tt.CloseNode(3)
 
 	// Send third batch of messages after second node failure
 	for i, channelId := range channelIds {
@@ -672,13 +673,16 @@ type coldStreamsTestContext struct {
 
 // addStreamToSyncerNoHistory adds a stream to the syncer without historical content
 func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.GetStreamOnLatestBlock(tc.ctx, streamId)
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
+		tc.ctx,
+		streamId,
+	)
 	tc.require.NoError(err)
 	tc.msr.AddStream(
 		&river.StreamWithId{
 			Id: streamId,
 			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes(),
+				Nodes:     streamOnChain.Nodes,
 				Reserved0: uint64(tc.tt.opts.replicationFactor),
 			},
 		},
@@ -690,7 +694,11 @@ func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled b
 }
 
 // waitForAndVerifyMessages waits for messages to be received and verifies the count
-func (tc *coldStreamsTestContext) waitForAndVerifyMessages(streamId StreamId, expectedCount int, timeout time.Duration) map[string]int {
+func (tc *coldStreamsTestContext) waitForAndVerifyMessages(
+	streamId StreamId,
+	expectedCount int,
+	timeout time.Duration,
+) map[string]int {
 	tc.require.Eventually(func() bool {
 		tc.eventTrackerMu.Lock()
 		defer tc.eventTrackerMu.Unlock()
@@ -928,7 +936,12 @@ func TestColdStreamsFullHistory(t *testing.T) {
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
 
-	tc.require.Equal(messagesPerChannel, len(channelMessages), "Channel should have all %d messages", messagesPerChannel)
+	tc.require.Equal(
+		messagesPerChannel,
+		len(channelMessages),
+		"Channel should have all %d messages",
+		messagesPerChannel,
+	)
 	for i := 0; i < messagesPerChannel; i++ {
 		expectedMsg := fmt.Sprintf("channel1-msg%d", i)
 		count, found := channelMessages[expectedMsg]

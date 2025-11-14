@@ -4,9 +4,9 @@ import {
     EncryptedDataVersion,
     HybridGroupSessionKey,
 } from '@towns-protocol/proto'
-import { EncryptionAlgorithm, IEncryptionParams } from './base'
+import { EncryptionAlgorithm, EnsureOutboundSessionOpts, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { dlog } from '@towns-protocol/dlog'
+import { bin_toHexString, dlog } from '@towns-protocol/utils'
 import { encryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 import { create } from '@bufbuild/protobuf'
 
@@ -25,20 +25,22 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
 
     public async ensureOutboundSession(
         streamId: string,
-        opts?: { awaitInitialShareSession: boolean },
-    ): Promise<void> {
-        await this._ensureOutboundSession(streamId, opts)
+        opts?: EnsureOutboundSessionOpts,
+    ): Promise<string> {
+        const sessionKey = await this._ensureOutboundSession(streamId, opts)
+        return bin_toHexString(sessionKey.sessionId)
     }
 
     public async _ensureOutboundSession(
         streamId: string,
-        opts?: { awaitInitialShareSession: boolean },
+        opts?: EnsureOutboundSessionOpts,
     ): Promise<HybridGroupSessionKey> {
         try {
             const sessionKey = await this.device.getHybridGroupSessionKeyForStream(streamId)
             return sessionKey
         } catch (error) {
-            const { miniblockNum, miniblockHash } = await this.client.getMiniblockInfo(streamId)
+            const { miniblockNum, miniblockHash } =
+                opts?.miniblockInfo ?? (await this.client.getMiniblockInfo(streamId))
             // if we don't have a cached session at this point, create a new one
             const { sessionId, sessionKey } = await this.device.createHybridGroupSession(
                 streamId,
@@ -47,13 +49,13 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
             )
             log(`Started new hybrid group session ${sessionId}`)
             // don't wait for the session to be shared
-            const promise = this.shareSession(streamId, sessionId)
+            const promise = this.shareSession(streamId, sessionId, opts?.priorityUserIds ?? [])
 
-            if (opts?.awaitInitialShareSession === true) {
+            if (opts?.shareShareSessionTimeoutMs === 0) {
                 await promise
             } else {
                 // await the promise but timeout after N seconds
-                const waitTimeBeforeMovingOn = 30000
+                const waitTimeBeforeMovingOn = opts?.shareShareSessionTimeoutMs ?? 30000
                 await Promise.race([
                     promise,
                     new Promise<void>((resolve, _) =>
@@ -65,19 +67,29 @@ export class HybridGroupEncryption extends EncryptionAlgorithm {
         }
     }
 
-    private async shareSession(streamId: string, sessionId: string): Promise<void> {
-        const devicesInRoom = await this.client.getDevicesInStream(streamId)
-        const session = await this.device.exportHybridGroupSession(streamId, sessionId)
+    public async hasOutboundSession(streamId: string): Promise<boolean> {
+        try {
+            await this.device.getHybridGroupSessionKeyForStream(streamId)
+            return true
+        } catch {
+            return false
+        }
+    }
 
+    private async shareSession(
+        streamId: string,
+        sessionId: string,
+        priorityUserIds: string[],
+    ): Promise<void> {
+        const session = await this.device.exportHybridGroupSession(streamId, sessionId)
         if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
         }
-
-        await this.client.encryptAndShareGroupSessions(
+        await this.client.encryptAndShareGroupSessionsToStream(
             streamId,
             [session],
-            devicesInRoom,
             this.algorithm,
+            priorityUserIds,
         )
     }
 

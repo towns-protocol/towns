@@ -43,13 +43,13 @@ func newTestLoggerForName(name string) *logging.Log {
 		return logging.DefaultLogger(level)
 	}
 
-	err = os.MkdirAll(logDir, 0755)
+	err = os.MkdirAll(logDir, 0o755)
 	if err != nil {
 		panic(err)
 	}
 	name = strings.ReplaceAll(name, "/", "-")
 	name = strings.ReplaceAll(name, " ", "_")
-	writer, err := os.OpenFile(filepath.Join(logDir, name+".jsonl"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	writer, err := os.OpenFile(filepath.Join(logDir, name+".jsonl"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		panic(err)
 	}

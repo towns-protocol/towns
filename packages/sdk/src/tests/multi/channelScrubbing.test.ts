@@ -15,7 +15,7 @@ import {
     everyoneMembershipStruct,
     createSpaceAndDefaultChannel,
 } from '../testUtils'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     Address,
     TestERC721,
@@ -24,7 +24,7 @@ import {
     SpaceAddressFromSpaceId,
 } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 const log = dlog('csb:test:channelsWithEntitlements')
 
 describe('channelScrubbing', () => {
@@ -89,7 +89,7 @@ describe('channelScrubbing', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -103,7 +103,10 @@ describe('channelScrubbing', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -124,7 +127,7 @@ describe('channelScrubbing', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()

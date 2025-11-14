@@ -1,7 +1,7 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { findMessageByText, waitFor } from '../../testUtils'
 

@@ -109,7 +109,7 @@ If you want to interact with anvil via a front end, you will need to add the loc
 **To start a local base blockchain and river blockchain:**
 
 ```shell
-./scripts/bc-all-start.sh
+cd ../../core && just anvils
 ```
 
 ## Deployment
@@ -119,7 +119,7 @@ If you want to interact with anvil via a front end, you will need to add the loc
 **To deploy our contracts to your local base and river instances:**
 
 1. Duplicate `.env.localhost` file in the [contracts](.) folder of the project and rename it to `.env` (this is excluded from git via .gitignore)
-2. Run `export RIVER_ENV="local_multi"` from your terminal
+2. Run `export RIVER_ENV="local_dev"` from your terminal
 3. Execute `./scripts/deploy-contracts.sh` to deploy the entire suite of contracts to your local base-anvil and river-anvil chains
 
 ### Diamond Contract Deployment

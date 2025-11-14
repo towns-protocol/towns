@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -124,7 +125,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
@@ -149,7 +150,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
@@ -174,7 +175,7 @@ func TestOnChainConfigSettingMultipleActiveBlockValues(t *testing.T) {
 	})
 
 	for _, tt := range []struct {
-		block BlockNumber
+		block blockchain.BlockNumber
 		value uint64
 	}{
 		{0, 1},
@@ -211,10 +212,7 @@ func TestSetOnChain(t *testing.T) {
 	btc.SetConfigValue(t, ctx, XChainBlockchainsConfigKey, ABIEncodeUint64Array([]uint64{1, 10, 100}))
 	btc.SetConfigValue(t, ctx, NodeBlocklistConfigKey, ABIEncodeAddressArray(addresses))
 	btc.SetConfigValue(t, ctx, StreamSnapshotIntervalInMiniblocksConfigKey, ABIEncodeUint64(1000))
-	btc.SetConfigValue(t, ctx, StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(1000))
-	btc.SetConfigValue(t, ctx, StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(999))
-	btc.SetConfigValue(t, ctx, StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey, ABIEncodeUint64(888))
-	btc.SetConfigValue(t, ctx, StreamEnableNewSnapshotFormatConfigKey, ABIEncodeUint64(1))
+	btc.SetConfigValue(t, ctx, StreamTrimActivationFactorConfigKey, ABIEncodeUint64(10))
 	btc.SetConfigValue(t, ctx, ServerEnableNode2NodeAuthConfigKey, ABIEncodeUint64(1))
 
 	s := btc.OnChainConfig.Get()
@@ -226,10 +224,7 @@ func TestSetOnChain(t *testing.T) {
 	assert.EqualValues([]uint64{1, 10, 100}, s.XChain.Blockchains)
 	assert.Equal(addresses, s.NodeBlocklist)
 	assert.Equal(uint64(1000), s.StreamSnapshotIntervalInMiniblocks)
-	assert.Equal(uint64(1000), s.StreamTrimmingMiniblocksToKeep.Default)
-	assert.Equal(uint64(999), s.StreamTrimmingMiniblocksToKeep.Space)
-	assert.Equal(uint64(888), s.StreamTrimmingMiniblocksToKeep.UserSetting)
-	assert.Equal(uint64(1), s.StreamEnableNewSnapshotFormat)
+	assert.Equal(uint64(10), s.StreamTrimActivationFactor)
 	assert.Equal(uint64(1), s.ServerEnableNode2NodeAuth)
 
 	btc.SetConfigValue(t, ctx, StreamReplicationFactorConfigKey, []byte("invalid value is ignored"))

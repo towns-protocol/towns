@@ -66,13 +66,13 @@ library ExecutorStorage {
     /*                   Transient Execution Id                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function getTransientExecutionId() internal view returns (bytes32 id) {
+    function getExecutionId() internal view returns (bytes32 id) {
         assembly {
             id := tload(TRANSIENT_STORAGE_SLOT)
         }
     }
 
-    function setTransientExecutionId(bytes32 id) internal {
+    function setExecutionId(bytes32 id) internal {
         assembly {
             tstore(TRANSIENT_STORAGE_SLOT, id)
         }
@@ -90,9 +90,15 @@ library ExecutorStorage {
         }
     }
 
-    function clearTransientStorage(address target) internal {
+    function clearExecutionId(address target) internal {
         assembly {
             tstore(TRANSIENT_STORAGE_SLOT, 0)
+            tstore(target, 0)
+        }
+    }
+
+    function clearTargetExecutionId(address target) internal {
+        assembly {
             tstore(target, 0)
         }
     }

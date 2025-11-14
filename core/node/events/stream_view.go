@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -28,10 +29,47 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
+func MakeStreamView(
+	ctx context.Context,
+	streamId StreamId,
+	streamData *storage.ReadStreamFromLastSnapshotResult,
+) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
+
+	startTime := time.Now()
+	large := len(streamData.Miniblocks) > 100 || len(streamData.MinipoolEnvelopes) > 10
+	if large {
+		logging.FromCtx(ctx).Infow(
+			"MakeStreamView: parsing large stream",
+			"streamId", streamId,
+			"miniblocks", len(streamData.Miniblocks),
+			"minipoolSize", len(streamData.MinipoolEnvelopes),
+			"snapshotOffset", streamData.SnapshotMiniblockOffset,
+		)
+	}
+	defer func() {
+		duration := time.Since(startTime)
+		durationExceeded := duration > 10*time.Second
+		if durationExceeded || large {
+			level := zapcore.InfoLevel
+			msg := "MakeStreamView: large stream parsed"
+			if durationExceeded {
+				level = zapcore.ErrorLevel
+				msg = "MakeStreamView: stream parsing took too long"
+			}
+			logging.FromCtx(ctx).Logw(
+				level,
+				msg,
+				"duration", duration,
+				"streamId", streamId,
+				"miniblocks", len(streamData.Miniblocks),
+				"minipoolSize", len(streamData.MinipoolEnvelopes),
+				"snapshotOffset", streamData.SnapshotMiniblockOffset,
+			)
+		}
+	}()
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	snapshotIndex := -1
@@ -59,9 +97,17 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
+	snapshotStreamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
+	}
+	if streamId != snapshotStreamId {
+		return nil, RiverError(
+			Err_STREAM_BAD_EVENT,
+			"expected streamId does not match snapshot",
+		).Func("MakeStreamView").
+			Tag("expectedStreamId", streamId).
+			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -99,27 +145,34 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 	}, nil
 }
 
-func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
-	if stream == nil {
-		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
-	}
-	if len(stream.Miniblocks) <= 0 {
-		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
+func ParseMiniblocksFromProto(
+	protos []*Miniblock,
+	snapshotEnvelope *Envelope,
+	opts *ParsedMiniblockInfoOpts,
+) ([]*MiniblockInfo, *Snapshot, int, error) {
+	if len(protos) <= 0 {
+		return nil, nil, 0, RiverError(Err_STREAM_EMPTY, "no blocks").Func("ParseMiniblocksFromProto")
 	}
 
-	miniblocks := make([]*MiniblockInfo, len(stream.Miniblocks))
+	if opts == nil {
+		opts = NewParsedMiniblockInfoOpts()
+	}
+	opts = opts.WithApplyOnlyMatchingSnapshot()
+
+	miniblocks := make([]*MiniblockInfo, len(protos))
 	var snapshot *Snapshot
 	var snapshotIndex int
-	opts := NewParsedMiniblockInfoOpts().WithApplyOnlyMatchingSnapshot()
-	for i, mbProto := range stream.Miniblocks {
-		// Make sure block numbers are consecutive.
+
+	for i, mbProto := range protos {
+		// Make sure block numbers are consecutive and prev hashes match.
 		if i > 0 {
 			opts = opts.WithExpectedBlockNumber(miniblocks[0].Ref.Num + int64(i))
+			opts = opts.WithExpectedPrevMiniblockHash(miniblocks[i-1].Ref.Hash)
 		}
 
-		miniblock, err := NewMiniblockInfoFromProto(mbProto, stream.Snapshot, opts)
+		miniblock, err := NewMiniblockInfoFromProto(mbProto, snapshotEnvelope, opts)
 		if err != nil {
-			return nil, err
+			return nil, nil, 0, err
 		}
 
 		if miniblock.Snapshot != nil {
@@ -131,7 +184,20 @@ func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
 	}
 
 	if snapshot == nil {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
+		return nil, nil, 0, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("ParseMiniblocksFromProto")
+	}
+
+	return miniblocks, snapshot, snapshotIndex, nil
+}
+
+func MakeRemoteStreamView(stream *StreamAndCookie) (*StreamView, error) {
+	if stream == nil {
+		return nil, RiverError(Err_STREAM_EMPTY, "no stream").Func("MakeStreamViewFromRemote")
+	}
+
+	miniblocks, snapshot, snapshotIndex, err := ParseMiniblocksFromProto(stream.Miniblocks, stream.Snapshot, nil)
+	if err != nil {
+		return nil, err
 	}
 
 	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
@@ -412,14 +478,7 @@ func (r *StreamView) makeMiniblockCandidate(
 	}
 
 	if parsedSnapshot != nil {
-		if params.ChainConfig.Get().StreamEnableNewSnapshotFormat == 1 {
-			// Snapshot is outside the miniblock header, new format
-			header.SnapshotHash = parsedSnapshot.Envelope.Hash
-		} else {
-			// Snapshot is inside miniblock header, legacy format
-			header.Snapshot = parsedSnapshot.Snapshot
-			parsedSnapshot = nil
-		}
+		header.SnapshotHash = parsedSnapshot.Envelope.Hash
 	}
 
 	return NewMiniblockInfoFromHeaderAndParsed(params.Wallet, header, events, parsedSnapshot)
@@ -636,7 +695,7 @@ func (r *StreamView) MiniblocksFromLastSnapshot() (miniblocks []*Miniblock, snap
 	if len(miniblocks) > 0 {
 		snapshot = r.blocks[r.snapshotIndex].SnapshotEnvelope
 	}
-	return
+	return miniblocks, snapshot
 }
 
 func (r *StreamView) SyncCookie(localNodeAddress common.Address) *SyncCookie {

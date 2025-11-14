@@ -3,13 +3,13 @@ set -euo pipefail
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 if ! command -v "gofumpt" >/dev/null 2>&1; then
-    go install mvdan.cc/gofumpt@latest >/dev/null 2>&1
+    go install mvdan.cc/gofumpt@v0.9.1 >/dev/null 2>&1
 fi
 if ! command -v "golines" >/dev/null 2>&1; then
-    go install github.com/segmentio/golines@latest >/dev/null 2>&1
+    go install github.com/segmentio/golines@v0.13.0 >/dev/null 2>&1
 fi
 if ! command -v "goimports" >/dev/null 2>&1; then
-    go install golang.org/x/tools/cmd/goimports@latest >/dev/null 2>&1
+    go install golang.org/x/tools/cmd/goimports@v0.37.0 >/dev/null 2>&1
 fi
 
 # Read all STDIN into a variable, but do not stop if there is nothing on STDIN
@@ -19,8 +19,8 @@ else
   INPUT=$(cat)
 fi
 
-FMT_CMD="golines --base-formatter=gofumpt --max-len=120"
-IMPORTS_CMD="goimports -local github.com/towns-protocol/towns"
+FMT_CMD="go run github.com/segmentio/golines@v0.13.0 --base-formatter=gofumpt --max-len=120"
+IMPORTS_CMD="go run golang.org/x/tools/cmd/goimports@v0.37.0 -local github.com/towns-protocol/towns"
 
 # If arguments are empty and stdin is not empty, run formatter on stdin to stdout
 if [[ -z "$*" && -n "${INPUT}" ]]

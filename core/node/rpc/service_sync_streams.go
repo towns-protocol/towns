@@ -38,13 +38,7 @@ func (s *Service) SyncStreams(
 
 	var err error
 	runWithLabels(ctx, syncId, func(ctx context.Context) {
-		if req.Header().Get(UseSharedSyncHeaderName) == "true" {
-			s.v3Syncs.Store(syncId, struct{}{})
-			err = s.syncv3.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
-			s.v3Syncs.Delete(syncId)
-		} else {
-			err = s.sync.SyncStreams(ctx, syncId, req, res)
-		}
+		err = s.syncv3Svc.SyncStreams(ctx, syncId, req.Msg.GetSyncPos(), res)
 	})
 	if err != nil {
 		level := zap.WarnLevel
@@ -65,17 +59,11 @@ func (s *Service) AddStreamToSync(
 	ctx context.Context,
 	req *connect.Request[AddStreamToSyncRequest],
 ) (*connect.Response[AddStreamToSyncResponse], error) {
-	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 30*time.Second)
-	defer cancel()
-
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	var res *connect.Response[AddStreamToSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			err = RiverError(Err_UNIMPLEMENTED, "AddStreamToSync is not supported in V3")
-		} else {
-			res, err = s.sync.AddStreamToSync(ctx, req)
-		}
+		err = RiverError(Err_UNIMPLEMENTED, "AddStreamToSync is not supported in V3")
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("AddStreamToSync").
@@ -90,17 +78,11 @@ func (s *Service) ModifySync(
 	ctx context.Context,
 	req *connect.Request[ModifySyncRequest],
 ) (*connect.Response[ModifySyncResponse], error) {
-	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 30*time.Second)
-	defer cancel()
-
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			res.Msg, err = s.syncv3.ModifySync(ctx, req.Msg)
-		} else {
-			res, err = s.sync.ModifySync(ctx, req)
-		}
+		res.Msg, err = s.syncv3Svc.ModifySync(req.Msg)
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("ModifySync").
@@ -115,17 +97,11 @@ func (s *Service) RemoveStreamFromSync(
 	ctx context.Context,
 	req *connect.Request[RemoveStreamFromSyncRequest],
 ) (*connect.Response[RemoveStreamFromSyncResponse], error) {
-	ctx, cancel, log := utils.CtxAndLogForRequestWithTimeout(ctx, req, 10*time.Second)
-	defer cancel()
-
+	ctx, log := utils.CtxAndLogForRequest(ctx, req)
 	var res *connect.Response[RemoveStreamFromSyncResponse]
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			err = RiverError(Err_UNIMPLEMENTED, "RemoveStreamFromSync is not supported in V3")
-		} else {
-			res, err = s.sync.RemoveStreamFromSync(ctx, req)
-		}
+		err = RiverError(Err_UNIMPLEMENTED, "RemoveStreamFromSync is not supported in V3")
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("RemoveStreamFromSync").
@@ -144,11 +120,7 @@ func (s *Service) CancelSync(
 	res := connect.NewResponse(&CancelSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			err = s.syncv3.CancelSync(ctx, req.Msg.GetSyncId())
-		} else {
-			res, err = s.sync.CancelSync(ctx, req)
-		}
+		err = s.syncv3Svc.CancelSync(ctx, req.Msg.GetSyncId())
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("CancelSync").
@@ -167,11 +139,7 @@ func (s *Service) PingSync(
 	res := connect.NewResponse(&PingSyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		if _, ok := s.v3Syncs.Load(req.Msg.GetSyncId()); ok {
-			err = s.syncv3.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
-		} else {
-			res, err = s.sync.PingSync(ctx, req)
-		}
+		err = s.syncv3Svc.PingSync(ctx, req.Msg.GetSyncId(), req.Msg.GetNonce())
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("PingSync").

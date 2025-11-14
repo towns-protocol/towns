@@ -6,6 +6,8 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 # Array of directories to process
 declare -a dirs=(
+  "../packages/bot/src"
+  "../packages/utils/src"
   "../packages/encryption/src"
   "../packages/proto/src"
   "../packages/react-sdk/src"

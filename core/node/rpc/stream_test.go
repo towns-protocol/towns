@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind2 "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 
@@ -109,11 +109,6 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
 
-	// retrieve set last miniblock events and make sure that only 1 out of miniblockRegistrationFrequency
-	// miniblocks is registered
-	filterer, err := river.NewStreamRegistryV1Filterer(tt.btc.RiverRegistryAddress, tt.btc.Client())
-	tt.require.NoError(err)
-
 	i := -1
 	var conversation [][]string
 	tt.require.Eventually(func() bool {
@@ -124,16 +119,21 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
-			Start:   0,
-			End:     nil,
-			Context: tt.ctx,
-		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
+		logs, err := bind2.FilterEvents(
+			tt.btc.StreamRegistry.BoundContract,
+			&bind2.FilterOpts{
+				Start:   0,
+				End:     nil,
+				Context: tt.ctx,
+			},
+			river.StreamRegistry.UnpackStreamUpdatedEvent,
+			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
+		)
 		tt.require.NoError(err)
 
 		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Value())
 			tt.require.NoError(err)
 
 			for _, parsedLog := range parsedLogs {
@@ -208,16 +208,21 @@ func TestMiniBlockProductionFrequency(t *testing.T) {
 		alice.say(channelId, msg)
 
 		// get all logs and make sure that at least 3 miniblocks are registered
-		logs, err := filterer.FilterStreamUpdated(&bind.FilterOpts{
-			Start:   0,
-			End:     nil,
-			Context: tt.ctx,
-		}, []uint8{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)})
+		logs, err := bind2.FilterEvents(
+			tt.btc.StreamRegistry.BoundContract,
+			&bind2.FilterOpts{
+				Start:   0,
+				End:     nil,
+				Context: tt.ctx,
+			},
+			river.StreamRegistry.UnpackStreamUpdatedEvent,
+			[]any{uint8(river.StreamUpdatedEventTypeLastMiniblockBatchUpdated)},
+		)
 		tt.require.NoError(err)
 
 		var streamUpdates []*river.StreamMiniblockUpdate
 		for logs.Next() {
-			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Event)
+			parsedLogs, err := river.ParseStreamUpdatedEvent(logs.Value())
 			tt.require.NoError(err)
 
 			for _, parsedLog := range parsedLogs {
@@ -341,13 +346,13 @@ func TestGetStreamWithPrecedingMiniblocks(t *testing.T) {
 		},
 	)
 	require := tt.require
-	
+
 	// Create a user and a channel with some messages
 	alice := tt.newTestClient(0, testClientOpts{})
 	_ = alice.createUserStream()
 	spaceId, _ := alice.createSpace()
 	channelId, _, _ := alice.createChannel(spaceId)
-	
+
 	// Send multiple messages to create several miniblocks
 	for i := 0; i < 20; i++ {
 		alice.say(channelId, fmt.Sprintf("Message %d", i))
@@ -356,47 +361,47 @@ func TestGetStreamWithPrecedingMiniblocks(t *testing.T) {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
-	
+
 	// Wait for miniblocks to be created
 	time.Sleep(500 * time.Millisecond)
-	
+
 	// Test 1: GetStream without additional preceding miniblocks
 	resp1, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId:                       channelId[:],
-		NumberOfPrecedingMiniblocks:    0,
+		StreamId:                    channelId[:],
+		NumberOfPrecedingMiniblocks: 0,
 	}))
 	require.NoError(err)
 	require.NotNil(resp1.Msg.Stream)
-	
+
 	// Store the original snapshot index and miniblock count
 	originalSnapshotIndex := resp1.Msg.Stream.SnapshotMiniblockIndex
 	originalMiniblockCount := len(resp1.Msg.Stream.Miniblocks)
-	
+
 	// Test 2: GetStream with 3 additional preceding miniblocks
 	resp2, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId:                       channelId[:],
-		NumberOfPrecedingMiniblocks:    3,
+		StreamId:                    channelId[:],
+		NumberOfPrecedingMiniblocks: 3,
 	}))
 	require.NoError(err)
 	require.NotNil(resp2.Msg.Stream)
-	
+
 	// Verify we got the same or more miniblocks
 	require.GreaterOrEqual(len(resp2.Msg.Stream.Miniblocks), originalMiniblockCount)
-	
+
 	// Verify the snapshot index is adjusted if we got more miniblocks
 	if len(resp2.Msg.Stream.Miniblocks) > originalMiniblockCount {
 		additionalBlocks := len(resp2.Msg.Stream.Miniblocks) - originalMiniblockCount
 		require.Equal(originalSnapshotIndex+int64(additionalBlocks), resp2.Msg.Stream.SnapshotMiniblockIndex)
 	}
-	
+
 	// Test 3: GetStream with a large number of preceding miniblocks
 	resp3, err := alice.client.GetStream(tt.ctx, connect.NewRequest(&protocol.GetStreamRequest{
-		StreamId:                       channelId[:],
-		NumberOfPrecedingMiniblocks:    100, // More than available
+		StreamId:                    channelId[:],
+		NumberOfPrecedingMiniblocks: 100, // More than available
 	}))
 	require.NoError(err)
 	require.NotNil(resp3.Msg.Stream)
-	
+
 	// Should get all available miniblocks, but not error
 	require.GreaterOrEqual(len(resp3.Msg.Stream.Miniblocks), originalMiniblockCount)
 }

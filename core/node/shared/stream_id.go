@@ -131,6 +131,10 @@ func (id StreamId) String() string {
 	return hex.EncodeToString(id[:])
 }
 
+func (id StreamId) Bytes() []byte {
+	return id[:]
+}
+
 func (id StreamId) GoString() string {
 	return id.String()
 }
@@ -199,4 +203,16 @@ func (id *StreamId) ScanText(v pgtype.Text) error {
 
 func (id StreamId) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + id.String() + "\""), nil
+}
+
+func (id *StreamId) UnmarshalJSON(data []byte) error {
+	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
+		return RiverError(Err_BAD_STREAM_ID, "Unable to unmarshal stream id from json", "data", data)
+	}
+	var err error
+	*id, err = StreamIdFromString(string(data[1 : len(data)-1]))
+	if err != nil {
+		return err
+	}
+	return nil
 }

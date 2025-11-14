@@ -395,8 +395,9 @@ abstract contract ExecutorBase is IExecutorBase {
         _executePreHooks($, target, selector, value, data);
 
         // Set the executionId for the target and selector using transient storage
+        bytes32 executionIdBefore = ExecutorStorage.getExecutionId();
         bytes32 executionId = _hashExecutionId(target, selector);
-        ExecutorStorage.setTransientExecutionId(executionId);
+        ExecutorStorage.setExecutionId(executionId);
         ExecutorStorage.setTargetExecutionId(target, executionId);
 
         // Call the target
@@ -406,7 +407,8 @@ abstract contract ExecutorBase is IExecutorBase {
         _executePostHooks($, target, selector);
 
         // Clear transient storage to prevent composability issues
-        ExecutorStorage.clearTransientStorage(target);
+        ExecutorStorage.setExecutionId(executionIdBefore);
+        ExecutorStorage.clearTargetExecutionId(target);
     }
 
     /// @notice Gets the scheduled timepoint for an operation.
@@ -421,7 +423,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param target The target contract.
     /// @return True if currently executing.
     function _isTargetExecuting(address target) internal view returns (bool) {
-        bytes32 globalId = ExecutorStorage.getTransientExecutionId();
+        bytes32 globalId = ExecutorStorage.getExecutionId();
         bytes32 targetId = ExecutorStorage.getTargetExecutionId(target);
         return globalId != 0 && targetId == globalId;
     }
@@ -458,18 +460,15 @@ abstract contract ExecutorBase is IExecutorBase {
         // Fetch restrictions that apply to the caller on the targeted function
         (bool allowed, uint32 delay) = _canCall(msg.sender, target, selector);
 
-        // If call is not authorized, revert
-        if (!allowed && delay == 0) {
-            UnauthorizedCall.selector.revertWith();
-        }
+        if (!allowed && delay == 0) UnauthorizedCall.selector.revertWith();
 
         bytes32 operationId = _hashOperation(msg.sender, target, data);
+        uint48 scheduleTimepoint = _getScheduleTimepoint(operationId);
 
-        // If caller is authorized, check operation was scheduled early enough
-        // Consume an available schedule even if there is no currently enforced delay
-        if (delay != 0 || _getScheduleTimepoint(operationId) != 0) {
-            nonce = _consumeScheduledOp(operationId);
-        }
+        if (delay != 0 && scheduleTimepoint == 0) NotScheduled.selector.revertWith();
+
+        // Consume scheduled operation if one exists
+        if (scheduleTimepoint != 0) nonce = _consumeScheduledOp(operationId);
     }
 
     /// @dev Determines if a caller can invoke a function on a target, and if a delay is required.
@@ -524,7 +523,7 @@ abstract contract ExecutorBase is IExecutorBase {
     /// @param selector The function selector.
     /// @return True if currently executing.
     function _isExecuting(address target, bytes4 selector) private view returns (bool) {
-        return ExecutorStorage.getTransientExecutionId() == _hashExecutionId(target, selector);
+        return ExecutorStorage.getExecutionId() == _hashExecutionId(target, selector);
     }
 
     /// @dev Computes a unique hash for the execution context.

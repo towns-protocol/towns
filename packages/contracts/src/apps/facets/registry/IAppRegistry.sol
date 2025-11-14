@@ -8,17 +8,9 @@ import {ITownsApp} from "../../ITownsApp.sol";
 
 // libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 
 interface IAppRegistryBase {
-    struct AppParams {
-        string name;
-        bytes32[] permissions;
-        address client;
-        uint256 installPrice;
-        uint48 accessDuration;
-    }
-
     struct App {
         bytes32 appId;
         address module;
@@ -43,24 +35,30 @@ interface IAppRegistryBase {
     error InvalidArrayInput();
     error BannedApp();
     error InvalidAppId();
-    error InvalidPrice();
-    error InvalidDuration();
     error InsufficientPayment();
     error NotAllowed();
     error ClientAlreadyRegistered();
+    error ClientNotRegistered();
+
+    error AppRegistry__InvalidDuration();
+    error AppRegistry__InvalidPrice();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     event AppRegistered(address indexed app, bytes32 uid);
     event AppUnregistered(address indexed app, bytes32 uid);
-    event AppUpdated(address indexed app, bytes32 uid);
     event AppBanned(address indexed app, bytes32 uid);
     event AppSchemaSet(bytes32 uid);
-    event AppCreated(address indexed app, bytes32 uid);
     event AppInstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppUninstalled(address indexed app, address indexed account, bytes32 indexed appId);
     event AppRenewed(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpdated(address indexed app, address indexed account, bytes32 indexed appId);
+    event AppUpgraded(
+        address indexed app,
+        bytes32 indexed oldVersionId,
+        bytes32 indexed newVersionId
+    );
 }
 
 /// @title IAppRegistry Interface
@@ -104,41 +102,26 @@ interface IAppRegistry is IAppRegistryBase {
     /// @return isBanned True if the app is banned, false otherwise
     function isAppBanned(address app) external view returns (bool);
 
-    /// @notice Create a new app
-    /// @param params The parameters of the app
-    /// @return app The app address
-    /// @return appId The attestation UID of the registered app
-    function createApp(
-        AppParams calldata params
-    ) external payable returns (address app, bytes32 appId);
-
     /// @notice Register a new app with permissions
     /// @param app The app address to register
     /// @param client The client contract address that will use this app
     /// @return appId The attestation UID of the registered app
     function registerApp(ITownsApp app, address client) external payable returns (bytes32 appId);
 
+    /// @notice Upgrade an app
+    /// @param app The app address to update
+    /// @param client The client address part of the app's identity
+    /// @param appId The app ID to upgrade
+    /// @return appId The new app ID of the updated app
+    function upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 appId
+    ) external payable returns (bytes32);
+
     /// @notice Remove a app from the registry
     /// @param appId The app ID to remove
     function removeApp(bytes32 appId) external;
-
-    /// @notice Renew an app
-    /// @param app The app address to renew
-    /// @param account The account to renew the app for
-    /// @param data The data to pass to the app's onRenewApp function
-    function renewApp(ITownsApp app, IAppAccount account, bytes calldata data) external payable;
-
-    /// @notice Install an app
-    /// @param app The app address to install
-    /// @param account The account to install the app to
-    /// @param data The data to pass to the app's onInstall function
-    function installApp(ITownsApp app, IAppAccount account, bytes calldata data) external payable;
-
-    /// @notice Uninstall an app
-    /// @param app The app address to uninstall
-    /// @param account The account to uninstall the app from
-    /// @param data The data to pass to the app's onUninstall function
-    function uninstallApp(ITownsApp app, IAppAccount account, bytes calldata data) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Admin                            */

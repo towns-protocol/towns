@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
-import { dlogger } from '@towns-protocol/dlog'
-import { BaseChainConfig } from '../utils/IStaticContractsInfo'
+import { dlogger } from '@towns-protocol/utils'
+import { BaseChainConfig } from '../utils/web3Env'
 import { MockERC721AShim } from './MockERC721AShim'
 import { Address } from '../types/ContractTypes'
 import { getTestGatingNFTContractAddress } from './TestGatingNFT'

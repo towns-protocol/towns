@@ -5,7 +5,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
@@ -79,14 +78,18 @@ func (s *StreamCache) getRecordTask(
 	ctx, cancel := context.WithTimeout(s.params.ServerCtx, 5*time.Second)
 	defer cancel()
 
-	streamRecord, err := s.params.Registry.GetStreamOnLatestBlock(ctx, stream.streamId)
+	streamRecord, err := s.params.Registry.StreamRegistry.GetStreamOnLatestBlock(ctx, stream.streamId)
 	if err != nil {
 		logging.FromCtx(ctx).
 			Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
 		return
 	}
 
-	s.submitReconciliationTask(s.onlineReconcileWorkerPool, stream, streamRecord)
+	s.submitReconciliationTask(
+		s.onlineReconcileWorkerPool,
+		stream,
+		river.NewStreamWithId(stream.streamId, streamRecord),
+	)
 }
 
 func (s *StreamCache) submitReconciliationTask(
@@ -122,9 +125,7 @@ func (s *StreamCache) submitReconciliationTask(
 	}
 }
 
-func (s *StreamCache) reconciliationTask(
-	streamId StreamId,
-) {
+func (s *StreamCache) reconciliationTask(streamId StreamId) {
 	corrupt := false
 	var streamRecord *river.StreamWithId
 	var stream *Stream
@@ -153,7 +154,7 @@ func (s *StreamCache) reconciliationTask(
 		return
 	}
 
-	err := s.reconcileStreamFromPeers(stream, streamRecord)
+	err := newStreamReconciler(s, stream, streamRecord).reconcileAndTrim()
 	if err != nil {
 		logging.FromCtx(s.params.ServerCtx).
 			Errorw("reconcileStreamFromPeers: Unable to reconcile stream from peers",
@@ -212,6 +213,7 @@ func (s *StreamCache) reconciliationTask(
 	}
 }
 
+/*
 // reconcileStreamFromPeers reconciles the database for the given streamResult by fetching missing blocks from peers
 // participating in the stream.
 func (s *StreamCache) reconcileStreamFromPeers(
@@ -238,8 +240,33 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		}
 	}
 
+	if streamRecord.LastMbNum() < lastMiniblockNum {
+		if streamRecord.ReplicationFactor() > 1 && streamRecord.Nodes()[0] == s.params.Wallet.Address {
+			// Before replicated streams nodes would only register miniblocks every N miniblocks.
+			// Therefore, it is possible that registry stream record for streams that haven't seen new miniblocks
+			// after the stream was migrated to a replicated stream is lagging behind. For those streams register
+			// the latest miniblock to bring the record up to date.
+			go s.writeLatestMbToBlockchain(ctx, stream)
+		}
+		return nil
+	}
+
 	if streamRecord.LastMbNum() <= lastMiniblockNum {
 		return nil
+	}
+
+	// Several streams are in a state where the genesis miniblock is still stored on-chain, but
+	// the node that has the genesis block left the network and other nodes can't reconcile this
+	// stream anymore.
+	// This was the result of a bug when a node left the network, and the logic that checked if
+	// the leaving node didn't have any streams assigned didn't handle streamRecord.MbRef.Num == 0
+	// correct.
+	// If the stream record is still at miniblock 0, try to reconcile the stream from the genesis
+	// block in the stream registry instead of a peer.
+	if streamRecord.LastMbNum() == 0 {
+		if err := s.reconcileStreamFromStreamRegistryGenesisBlock(stream); err == nil {
+			return nil
+		}
 	}
 
 	stream.mu.Lock()
@@ -292,6 +319,33 @@ func (s *StreamCache) reconcileStreamFromPeers(
 		Tags("stream", stream.streamId, "missingFromInclusive", nextFromInclusive, "missingToExclusive", toExclusive)
 }
 
+// reconcileStreamFromStreamRegistryGenesisBlock reconciles the database for the given stream from the stream registry.
+// If the stream record has advanced beyond the genesis miniblock, this function returns an error and the caller is
+// expected to reconcile from peers.
+func (s *StreamCache) reconcileStreamFromStreamRegistryGenesisBlock(stream *Stream) error {
+	ctx, cancel := context.WithTimeout(s.params.ServerCtx, time.Minute)
+	defer cancel()
+
+	streamID := stream.StreamId()
+	_, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamID, 0)
+	if err != nil {
+		return err
+	}
+
+	if len(mb) == 0 {
+		return RiverError(Err_UNAVAILABLE, "Unable to read genesis mb from registry").
+			Tags("streamId", streamID).
+			Func("reconcileStreamFromStreamRegistryGenesisBlock")
+	}
+
+	genesisBlock, err := NewMiniblockInfoFromDescriptor(&storage.MiniblockDescriptor{Data: mb, HasLegacySnapshot: true})
+	if err != nil {
+		return err
+	}
+
+	return stream.importMiniblocks(ctx, []*MiniblockInfo{genesisBlock})
+}
+
 // reconcileStreamFromSinglePeer reconciles the database for the given streamResult by fetching missing blocks from a single peer.
 // It returns the block number of the last block successfully reconciled + 1.
 func (s *StreamCache) reconcileStreamFromSinglePeer(
@@ -341,6 +395,7 @@ func (s *StreamCache) reconcileStreamFromSinglePeer(
 		currentFromInclusive += int64(len(mbs))
 	}
 }
+*/
 
 // retryableReconciliationTasks holds a set of reconciliation tasks that failed and need
 // to be retried periodically until success.

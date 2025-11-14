@@ -1,7 +1,6 @@
 {
     "name": "@towns-protocol/web3",
-    "version": "0.0.291",
-    "packageManager": "yarn@3.8.0",
+    "version": "0.0.412",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -10,8 +9,9 @@
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
+        "load-env": "dotenv -e ../generated/deployments/local_dev/.env --",
         "lint:fix": "yarn lint --fix",
-        "test": "vitest run",
+        "test": "yarn load-env vitest run",
         "test:ci": "yarn test",
         "test:debug": "DEBUG=test yarn test",
         "test:watch": "vitest --watch",
@@ -19,26 +19,27 @@
     },
     "dependencies": {
         "@isaacs/ttlcache": "^1.4.1",
-        "@towns-protocol/dlog": "workspace:^",
         "@towns-protocol/generated": "workspace:^",
+        "@towns-protocol/utils": "workspace:^",
         "abitype": "^0.9.10",
         "debug": "^4.3.4",
-        "ethers": "^5.7.2",
+        "ethers": "^5.8.0",
         "lru-cache": "^11.0.1",
         "nanoid": "^4.0.0",
         "viem": "^2.29.3",
-        "zod": "^3.21.4"
+        "zod": "^3.25.76"
     },
     "devDependencies": {
         "@types/node": "^20.14.8",
         "@typescript-eslint/eslint-plugin": "^8.29.0",
         "@typescript-eslint/parser": "^8.29.0",
         "debug": "^4.3.4",
+        "dotenv-cli": "^10.0.0",
         "eslint": "^8.57.1",
         "eslint-import-resolver-typescript": "^4.3.2",
         "eslint-plugin-import-x": "^4.10.2",
         "typed-emitter": "^2.1.0",
-        "typescript": "^5.8.2",
+        "typescript": "~5.8.3",
         "vitest": "^3.2.3"
     },
     "files": [

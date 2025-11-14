@@ -42,11 +42,7 @@ func (c *syncClient) syncMany(ctx context.Context, cookies []*protocol.SyncCooki
 		req.SyncPos = cookies
 	}
 
-	// TODO: Remove after removing the legacy syncer
-	connReq := connect.NewRequest(req)
-	connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
-
-	resp, err := c.client.SyncStreams(ctx, connReq)
+	resp, err := c.client.SyncStreams(ctx, connect.NewRequest(req))
 	if err == nil {
 	syncLoop:
 		for {
@@ -243,30 +239,33 @@ func (sc *syncClients) expectNUpdates(
 	wantedUniqueStreamsWithUpdates int,
 	timeout time.Duration,
 	opts *updateOpts,
-) {
+) []map[StreamId][]byte {
 	t.Helper()
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
-	uniqueStreamsWithUpdates := make(map[StreamId]struct{})
+	uniqueStreamsWithUpdates := make([]map[StreamId][]byte, len(sc.clients))
 
 	for i, client := range sc.clients {
-		for len(uniqueStreamsWithUpdates) < wantedUniqueStreamsWithUpdates {
+		uniqueStreamsWithUpdates[i] = make(map[StreamId][]byte)
+		for len(uniqueStreamsWithUpdates[i]) < wantedUniqueStreamsWithUpdates {
 			select {
 			case update := <-client.updateC:
 				checkUpdate(t, update, opts)
 				if t.Failed() {
-					return
+					return nil
 				}
 
 				streamID, _ := StreamIdFromBytes(update.GetNextSyncCookie().GetStreamId())
-				uniqueStreamsWithUpdates[streamID] = struct{}{}
+				uniqueStreamsWithUpdates[i][streamID] = update.GetNextSyncCookie().GetNodeAddress()
 			case <-timer.C:
 				t.Fatalf("Timeout waiting for update on client %d", i)
-				return
+				return nil
 			}
 		}
 	}
+
+	return uniqueStreamsWithUpdates
 }
 
 func (sc *syncClients) expectNStreamsDown(
@@ -604,7 +603,6 @@ func TestSyncWithManyStreams(t *testing.T) {
 			NodeAddress: channel.GetNodeAddress(),
 			StreamId:    channel.GetStreamId(),
 		}}})
-		connReq.Header().Set(protocol.UseSharedSyncHeaderName, "true")
 
 		resp, err := syncClient0.SyncStreams(ctx, connReq)
 		require.NoError(err)
@@ -648,8 +646,6 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 	require.NoError(err)
 
 	var channelCookies []*protocol.SyncCookie
-	nodeToStreams := make(map[common.Address][]StreamId)
-	nodeToCookies := make(map[common.Address][]*protocol.SyncCookie)
 	for range 50 {
 		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
 		channel, channelHash, err := createChannel(
@@ -667,17 +663,13 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		require.Equal(int64(0), b0ref.Num)
 		addMessageToChannel(ctx, syncClient0, wallet, "hello", StreamId(channel.StreamId), channelHash, require)
 		channelCookies = append(channelCookies, channel)
-
-		node := common.BytesToAddress(channel.NodeAddress)
-		nodeToStreams[node] = append(nodeToStreams[node], StreamId(channel.StreamId))
-		nodeToCookies[node] = append(nodeToCookies[node], channel)
 	}
 
 	now := time.Now()
 	cleanup := syncClients.startSyncMany(t, ctx, channelCookies)
 	defer cleanup()
 
-	syncClients.expectNUpdates(
+	allUpdates := syncClients.expectNUpdates(
 		t,
 		len(channelCookies),
 		time.Second*10,
@@ -689,6 +681,12 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 		len(channelCookies),
 		time.Since(now),
 	)
+
+	nodeToStreams := make(map[common.Address][]StreamId)
+	for streamId, nodeAddress := range allUpdates[0] {
+		addr := common.BytesToAddress(nodeAddress)
+		nodeToStreams[addr] = append(nodeToStreams[addr], streamId)
+	}
 
 	// Shut down second and third nodes and expect stream down events for all streams on those nodes
 	tt.CloseNode(1)

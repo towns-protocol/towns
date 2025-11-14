@@ -155,7 +155,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 ) ([]byte, error) {
 	streamId, err := StreamIdFromBytes(cc.StreamId)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
 	header, err := MakeEnvelopeWithPayload(s.wallet, Make_MiniblockHeader(&MiniblockHeader{
@@ -166,37 +166,38 @@ func (s *Service) replicatedAddMediaEventImpl(
 		EventNumOffset:    cc.MiniblockNum + 1, // for media streams, each miniblock has only one event
 	}), event.MiniblockRef)
 	if err != nil {
-		return nil, err
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
-	mbHash := header.Hash
 
-	ephemeralMb := &Miniblock{
-		Events: []*Envelope{event.Envelope},
-		Header: header,
-	}
+	ephemeralMb := &Miniblock{Events: []*Envelope{event.Envelope}, Header: header}
 
 	// genesisMiniblockHashes is needed to register the stream onchain if everything goes well.
 	nodes := NewStreamNodesWithLock(len(cc.NodeAddresses()), cc.NodeAddresses(), s.wallet.Address)
 	remotes, _ := nodes.GetRemotesAndIsLocal()
 
 	var (
-		quorumCheckMu        sync.Mutex
-		genesisMiniblockHash common.Hash
-		streamSuccessCount   = 0
-		requiredVotes        = TotalQuorumNum(len(remotes) + 1)
-		quorum               *QuorumPool
+		quorumCheckMu          sync.Mutex
+		genesisMiniblockHashes = make(map[common.Hash]int)
+		requiredVotes          = TotalQuorumNum(len(remotes) + 1)
+		quorum                 *QuorumPool
 	)
 
-	quorumOpts := NewQuorumPoolOpts().WriteMode().WithTags("method", "replicatedAddMediaEvent", "streamId", streamId)
+	quorumOpts := NewQuorumPoolOpts().
+		WriteMode().
+		WithTags("method", "replicatedAddMediaEvent", "streamId", streamId)
+
 	if seal {
-		// TODO: once nodes are updated to return the genesis miniblock hash in the response when sealing the
-		// stream only reach quorum when enough nodes voted for the same genesis miniblock hash.
-		// For now reach quorum when the local task and enough remotes have successfully sealed the stream
-		// without counting the genesis miniblock hash.
+		// quorum is reached when enough nodes voted for the same genesis miniblock.
 		quorumOpts = quorumOpts.WithExternalQuorumCheck(func() bool {
 			quorumCheckMu.Lock()
 			defer quorumCheckMu.Unlock()
-			return streamSuccessCount >= requiredVotes && genesisMiniblockHash != (common.Hash{})
+
+			for genesisHash, votes := range genesisMiniblockHashes {
+				if genesisHash != (common.Hash{}) && votes >= requiredVotes {
+					return true
+				}
+			}
+			return false
 		})
 	}
 	quorum = NewQuorumPool(ctx, quorumOpts)
@@ -205,15 +206,15 @@ func (s *Service) replicatedAddMediaEventImpl(
 	quorum.AddTask(func(ctx context.Context) error {
 		mbBytes, err := proto.Marshal(ephemeralMb)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		if err = s.storage.WriteEphemeralMiniblock(ctx, streamId, &storage.MiniblockDescriptor{
 			Number: cc.MiniblockNum,
 			Hash:   common.BytesToHash(ephemeralMb.Header.Hash),
 			Data:   mbBytes,
-		}); err != nil {
-			return err
+		}); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		// Return here if there are more chunks to upload.
@@ -222,14 +223,13 @@ func (s *Service) replicatedAddMediaEventImpl(
 		}
 
 		// Normalize stream locally
-		hash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
+		genesisMiniblockHash, err := s.storage.NormalizeEphemeralStream(ctx, streamId)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		quorumCheckMu.Lock()
-		genesisMiniblockHash = hash
-		streamSuccessCount++
+		genesisMiniblockHashes[genesisMiniblockHash] += 1
 		quorumCheckMu.Unlock()
 
 		return nil
@@ -239,7 +239,7 @@ func (s *Service) replicatedAddMediaEventImpl(
 	quorum.AddNodeTasks(remotes, func(ctx context.Context, node common.Address) error {
 		stub, err := s.nodeRegistry.GetNodeToNodeClientForAddress(node)
 		if err != nil {
-			return err
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		if _, err = stub.SaveEphemeralMiniblock(
@@ -250,8 +250,8 @@ func (s *Service) replicatedAddMediaEventImpl(
 					Miniblock: ephemeralMb,
 				},
 			),
-		); err != nil {
-			return err
+		); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+			return AsRiverError(err).Func("replicatedAddMediaEventImpl")
 		}
 
 		// Return here if there are more chunks to upload.
@@ -269,57 +269,78 @@ func (s *Service) replicatedAddMediaEventImpl(
 			),
 		)
 		if err != nil {
-			return err
-		}
+			// It could be the second attempt to seal the stream which is already sealed.
+			// Make sure this is the case: re-fetch the genesis miniblock hash.
+			if AsRiverError(err).IsCodeWithBases(Err_NOT_FOUND) {
+				client, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
+				if err != nil {
+					return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+				}
 
-		quorumCheckMu.Lock()
-		streamSuccessCount++
-		if len(resp.Msg.GetGenesisMiniblockHash()) == 32 {
-			genesisMiniblockHash = common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
+				gmResp, err := client.GetMiniblocks(
+					ctx,
+					connect.NewRequest(&GetMiniblocksRequest{StreamId: streamId[:], FromInclusive: 0, ToExclusive: 1}),
+				)
+				if err != nil {
+					return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+				}
+
+				if len(gmResp.Msg.GetMiniblocks()) != 1 {
+					return RiverError(
+						Err_NOT_FOUND,
+						"Genesis miniblock not found in remote",
+					).Func("replicatedAddMediaEventImpl")
+				}
+
+				genesisHash := common.BytesToHash(gmResp.Msg.GetMiniblocks()[0].GetHeader().GetHash())
+				quorumCheckMu.Lock()
+				genesisMiniblockHashes[genesisHash] += 1
+				quorumCheckMu.Unlock()
+			} else {
+				return AsRiverError(err).Func("replicatedAddMediaEventImpl")
+			}
+		} else {
+			genesisHash := common.BytesToHash(resp.Msg.GetGenesisMiniblockHash())
+			quorumCheckMu.Lock()
+			genesisMiniblockHashes[genesisHash] += 1
+			quorumCheckMu.Unlock()
 		}
-		quorumCheckMu.Unlock()
 
 		return nil
 	})
 
 	if err = quorum.Wait(); err != nil {
-		if !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
-			logging.FromCtx(ctx).Errorw("replicatedAddMediaEvent: quorum.Wait() failed", "error", err)
-			return nil, err
-		}
-
-		mbHash, err = s.getEphemeralStreamMbHash(ctx, streamId, cc.MiniblockNum, remotes, true)
-		if err != nil {
-			return nil, err
-		}
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
-	if !seal {
-		return mbHash, nil
-	}
-
+	// pick the genesis hash that reached quorum.
+	var votedGenesisHash common.Hash
 	quorumCheckMu.Lock()
-	genesisMbHash := genesisMiniblockHash
+	for genesisHash, votes := range genesisMiniblockHashes {
+		if genesisHash != (common.Hash{}) && votes >= requiredVotes {
+			votedGenesisHash = genesisHash
+			break
+		}
+	}
 	quorumCheckMu.Unlock()
 
-	if genesisMbHash == (common.Hash{}) {
-		return nil, RiverError(Err_QUORUM_FAILED, "replicatedAddMediaEvent: quorum not reached", "stream", streamId)
+	if !seal {
+		return votedGenesisHash[:], nil
 	}
 
-	if seal {
-		// Register the given stream onchain with sealed flag
-		if err = s.registryContract.AddStream(
-			ctx,
-			streamId,
-			cc.NodeAddresses(),
-			genesisMbHash,
-			common.BytesToHash(ephemeralMb.Header.Hash),
-			cc.MiniblockNum,
-			true,
-		); err != nil {
-			return nil, err
-		}
+	// if a majority of nodes voted for the same genesis miniblock register and seal
+	// the stream in the stream registry.
+	if err = s.registryContract.AddStream(
+		ctx,
+		streamId,
+		cc.NodeAddresses(),
+		votedGenesisHash,
+		common.BytesToHash(ephemeralMb.Header.Hash),
+		cc.MiniblockNum,
+		true,
+	); err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
+		return nil, AsRiverError(err).Func("replicatedAddMediaEventImpl")
 	}
 
-	return mbHash, nil
+	return votedGenesisHash[:], nil
 }

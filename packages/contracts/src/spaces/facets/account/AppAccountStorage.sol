@@ -37,27 +37,4 @@ library AppAccountStorage {
         if (appId == EMPTY_UID) return app;
         return DependencyLib.getAppRegistry().getAppById(appId);
     }
-
-    function isAppEntitled(
-        address module,
-        address client,
-        bytes32 permission
-    ) internal view returns (bool) {
-        IAppRegistry.App memory app = getApp(module);
-
-        if (app.appId == EMPTY_UID) return false;
-
-        (bool hasClientAccess, , bool isGroupActive) = ExecutorStorage.hasGroupAccess(
-            app.appId,
-            client
-        );
-        if (!hasClientAccess || !isGroupActive) return false;
-
-        uint256 permissionsLength = app.permissions.length;
-        for (uint256 i; i < permissionsLength; ++i) {
-            if (app.permissions[i] == permission) return true;
-        }
-
-        return false;
-    }
 }

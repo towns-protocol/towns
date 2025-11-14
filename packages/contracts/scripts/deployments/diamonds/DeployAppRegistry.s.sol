@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
+import {IAppFactory, IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
@@ -12,13 +13,16 @@ import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/
 import {LibString} from "solady/utils/LibString.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAppRegistryFacet} from "../facets/DeployAppRegistryFacet.s.sol";
-import {DeployUpgradeableBeacon} from "../facets/DeployUpgradeableBeacon.s.sol";
-import {DeploySimpleApp} from "../facets/DeploySimpleApp.s.sol";
+import {DeployAppInstallerFacet} from "../facets/DeployAppInstallerFacet.s.sol";
+import {DeployAppFactoryFacet} from "../facets/DeployAppFactoryFacet.s.sol";
+import {DeploySpaceFactory} from "../diamonds/DeploySpaceFactory.s.sol";
+import {DeploySimpleAppBeacon} from "../diamonds/DeploySimpleAppBeacon.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
 import {MultiInit} from "@towns-protocol/diamond/src/initializers/MultiInit.sol";
 import {DiamondHelper} from "@towns-protocol/diamond/scripts/common/helpers/DiamondHelper.s.sol";
+import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
 
 // deployers
 import {DeployFacet} from "../../common/DeployFacet.s.sol";
@@ -27,35 +31,31 @@ import {Deployer} from "../../common/Deployer.s.sol";
 contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     using LibString for string;
 
-    address private SPACE_FACTORY;
-
     DeployFacet private facetHelper = new DeployFacet();
+    DeploySpaceFactory private deploySpaceFactory = new DeploySpaceFactory();
+    DeploySimpleAppBeacon private deploySimpleAppBeacon = new DeploySimpleAppBeacon();
 
     string internal constant APP_REGISTRY_SCHEMA = "address app, address client";
+    address internal spaceFactory;
+    address internal simpleAppBeacon;
 
     function versionName() public pure override returns (string memory) {
         return "appRegistry";
     }
 
-    function setSpaceFactory(address factory) public {
-        SPACE_FACTORY = factory;
-    }
-
-    function getSpaceFactory() public returns (address) {
-        if (SPACE_FACTORY != address(0)) {
-            return SPACE_FACTORY;
-        }
-
-        return getDeployment("spaceFactory");
-    }
-
     function addImmutableCuts(address deployer) internal {
+        spaceFactory = deploySpaceFactory.deploy(deployer);
+        simpleAppBeacon = deploySimpleAppBeacon.deploy(deployer);
+
         // Queue up all core facets for batch deployment
         facetHelper.add("DiamondCutFacet");
         facetHelper.add("DiamondLoupeFacet");
         facetHelper.add("IntrospectionFacet");
         facetHelper.add("OwnableFacet");
         facetHelper.add("MetadataFacet");
+
+        // Deploy the first batch of facets
+        facetHelper.deployBatch(deployer);
 
         // Get predicted addresses
         address facet = facetHelper.predictAddress("DiamondCutFacet");
@@ -99,26 +99,36 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MultiInit");
         facetHelper.add("UpgradeableBeaconFacet");
         facetHelper.add("AppRegistryFacet");
+        facetHelper.add("AppInstallerFacet");
+        facetHelper.add("AppFactoryFacet");
 
-        // Deploy all facets in a batch
         facetHelper.deployBatch(deployer);
 
-        vm.broadcast(deployer);
-        address simpleApp = DeploySimpleApp.deploy();
-
-        // Add feature facets
-        address facet = facetHelper.getDeployedAddress("UpgradeableBeaconFacet");
-        addFacet(
-            makeCut(facet, FacetCutAction.Add, DeployUpgradeableBeacon.selectors()),
-            facet,
-            DeployUpgradeableBeacon.makeInitData(simpleApp)
-        );
-
-        facet = facetHelper.getDeployedAddress("AppRegistryFacet");
+        address facet = facetHelper.getDeployedAddress("AppRegistryFacet");
         addFacet(
             makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()),
             facet,
-            DeployAppRegistryFacet.makeInitData(getSpaceFactory(), APP_REGISTRY_SCHEMA, address(0))
+            DeployAppRegistryFacet.makeInitData(spaceFactory, APP_REGISTRY_SCHEMA, address(0))
+        );
+
+        facet = facetHelper.getDeployedAddress("AppInstallerFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()),
+            facet,
+            DeployAppInstallerFacet.makeInitData()
+        );
+
+        IAppFactoryBase.Beacon[] memory beacons = new IAppFactoryBase.Beacon[](1);
+        beacons[0] = IAppFactoryBase.Beacon({
+            beaconId: deploySimpleAppBeacon.SIMPLE_APP_BEACON_ID(),
+            beacon: simpleAppBeacon
+        });
+
+        facet = facetHelper.getDeployedAddress("AppFactoryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()),
+            facet,
+            DeployAppFactoryFacet.makeInitData(beacons, _getEntryPoint())
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -150,6 +160,12 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             if (facetName.eq("AppRegistryFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppRegistryFacet.selectors()));
             }
+            if (facetName.eq("AppInstallerFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppInstallerFacet.selectors()));
+            }
+            if (facetName.eq("AppFactoryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()));
+            }
         }
 
         return baseFacets();
@@ -160,9 +176,15 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
 
         Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
 
-        vm.broadcast(deployer);
+        vm.startBroadcast(deployer);
         Diamond diamond = new Diamond(initDiamondCut);
+        vm.stopBroadcast();
 
         return address(diamond);
+    }
+
+    function _getEntryPoint() internal returns (address) {
+        if (isTesting()) return address(new EntryPoint());
+        return 0x4337084D9E255Ff0702461CF8895CE9E3b5Ff108;
     }
 }

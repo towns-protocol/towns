@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gammazero/workerpool"
 	"github.com/stretchr/testify/assert"
@@ -320,8 +319,8 @@ func TestArchiveOneStream(t *testing.T) {
 		infra.NewMetricsFactory(nil, "", ""),
 		&mocks.MockOnChainCfg{
 			Settings: &crypto.OnChainSettings{
-				StreamEphemeralStreamTTL:       time.Minute * 10,
-				StreamTrimmingMiniblocksToKeep: crypto.StreamTrimmingMiniblocksToKeepSettings{Default: 0, Space: 5},
+				StreamEphemeralStreamTTL: time.Minute * 10,
+				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{Default: 0, Space: 5},
 			},
 		},
 		100,
@@ -330,11 +329,7 @@ func TestArchiveOneStream(t *testing.T) {
 
 	arch := NewArchiver(&archiveCfg.Archive, registryContract, nodeRegistry, streamStorage)
 
-	callOpts := &bind.CallOpts{
-		Context: ctx,
-	}
-
-	streamRecord, err := registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err := registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
 	require.Zero(streamRecord.LastMiniblockNum) // Only genesis miniblock is created
 
@@ -354,13 +349,19 @@ func TestArchiveOneStream(t *testing.T) {
 	require.Zero(num) // Only genesis miniblock is created
 
 	// Add event to the stream, create miniblock, and archive it
-	err = addUserBlockedFillerEvent(ctx, wallet, client, streamId, river.MiniblockRefFromContractRecord(&streamRecord))
+	err = addUserBlockedFillerEvent(
+		ctx,
+		wallet,
+		client,
+		streamId,
+		river.MiniblockRefFromContractRecord(streamRecord),
+	)
 	require.NoError(err)
 
 	mbRef, err := makeMiniblock(ctx, client, streamId, false, 0)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
 	require.Equal(uint64(1), streamRecord.LastMiniblockNum)
 
@@ -383,7 +384,7 @@ func TestArchiveOneStream(t *testing.T) {
 	_, err = fillUserSettingsStreamWithData(ctx, streamId, wallet, client, 10, 5, mbRef)
 	require.NoError(err)
 
-	streamRecord, err = registryContract.StreamRegistry.GetStream(callOpts, streamId)
+	streamRecord, err = registryContract.StreamRegistry.GetStreamOnLatestBlock(ctx, streamId)
 	require.NoError(err)
 	require.GreaterOrEqual(streamRecord.LastMiniblockNum, uint64(10))
 

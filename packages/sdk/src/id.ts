@@ -1,6 +1,12 @@
 import { utils } from 'ethers'
 import { nanoid, customAlphabet } from 'nanoid'
-import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
+import {
+    bin_fromBase64,
+    bin_fromHexString,
+    bin_toBase64,
+    bin_toHexString,
+    check,
+} from '@towns-protocol/utils'
 import {
     ethereumAddressAsBytes,
     ethereumAddressAsString,
@@ -9,12 +15,15 @@ import {
     hashString,
     isEthereumAddress,
 } from './utils'
+import { AppPrivateDataSchema, ExportedDevice } from '@towns-protocol/proto'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+import type { Address } from '@towns-protocol/web3'
 
 export const STREAM_ID_BYTES_LENGTH = 32
 export const STREAM_ID_STRING_LENGTH = STREAM_ID_BYTES_LENGTH * 2
 
-export const userIdFromAddress = (address: Uint8Array): string =>
-    utils.getAddress(bin_toHexString(address))
+export const userIdFromAddress = (address: Uint8Array): Address =>
+    utils.getAddress(bin_toHexString(address)) as Address
 
 // Assuming `userId` is an Ethereum address in string format
 export const userIdToAddress = (userId: string): Uint8Array => addressFromUserId(userId)
@@ -254,3 +263,42 @@ export const genLocalId = (): string => {
 export const genIdBlob = (): Uint8Array => bin_fromHexString(hexNanoId(32))
 
 export const isLowercaseHex = (input: string): boolean => /^[0-9a-f]*$/.test(input)
+
+const APP_PRIVATE_DATA_PREFIX = 'towns-bot-'
+
+export const makeAppPrivateData = (
+    /** evm private key */
+    privateKey: string,
+    /** exported encryption device */
+    exportedDevice: ExportedDevice,
+    /** alpha, gamma, delta, omega */
+    env: string,
+    /** app address: simple app or custom app contract address */
+    appAddress: Address,
+) => {
+    const appPrivateData = create(AppPrivateDataSchema, {
+        privateKey,
+        encryptionDevice: exportedDevice,
+        env,
+        appAddress: bin_fromHexString(appAddress),
+    })
+    return `${APP_PRIVATE_DATA_PREFIX}${bin_toBase64(toBinary(AppPrivateDataSchema, appPrivateData))}`
+}
+
+export const parseAppPrivateData = (encoded: string) => {
+    let appPrivateData = null
+    const isNewFormat = encoded.startsWith(APP_PRIVATE_DATA_PREFIX)
+    if (isNewFormat) {
+        const [_, content] = encoded.split(APP_PRIVATE_DATA_PREFIX)
+        appPrivateData = bin_fromBase64(content)
+    } else {
+        // Older format where the private key was base64 encoded without a prefix
+        appPrivateData = bin_fromBase64(encoded)
+    }
+    const raw = fromBinary(AppPrivateDataSchema, appPrivateData)
+    const hex_appAddress = bin_toHexString(raw.appAddress)
+    return {
+        ...raw,
+        appAddress: hex_appAddress ? (utils.getAddress(hex_appAddress) as Address) : undefined,
+    }
+}

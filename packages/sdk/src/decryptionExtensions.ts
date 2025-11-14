@@ -15,7 +15,7 @@ import {
     DLogger,
     check,
     bin_toHexString,
-} from '@towns-protocol/dlog'
+} from '@towns-protocol/utils'
 import {
     GroupEncryptionAlgorithmId,
     GroupEncryptionSession,
@@ -510,7 +510,7 @@ export abstract class BaseDecryptionExtensions {
         this.checkStartTicking()
     }
 
-    public retryDecryptionFailures(streamId: string): void {
+    public retryKeySolicitations(streamId: string): void {
         const streamQueue = this.streamQueues.getQueue(streamId)
         if (
             this.decryptionFailures[streamId] &&
@@ -849,52 +849,52 @@ export abstract class BaseDecryptionExtensions {
                 neededKeyIndexs.push(i)
             }
         }
-        if (!neededKeyIndexs.length) {
-            this.log.debug('skipping, we have all the keys')
-            return
-        }
-        // decrypt the message
-        const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
-        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
-        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
-        // make group sessions
-        const sessions = neededKeyIndexs.map(
-            (i) =>
-                ({
-                    streamId: streamId,
-                    sessionId: session.sessionIds[i],
-                    sessionKey: sessionKeys.keys[i],
-                    algorithm: algorithm,
-                }) satisfies GroupEncryptionSession,
-        )
-        // import the sessions
-        this.log.debug(
-            'importing group sessions streamId:',
-            streamId,
-            'count: ',
-            sessions.length,
-            session.sessionIds,
-        )
-        try {
-            await this.crypto.importSessionKeys(streamId, sessions)
-            // re-enqueue any decryption failures with these ids
-            const streamQueue = this.streamQueues.getQueue(streamId)
-            for (const session of sessions) {
-                if (this.decryptionFailures[streamId]?.[session.sessionId]) {
-                    streamQueue.encryptedContent.push(
-                        ...this.decryptionFailures[streamId][session.sessionId],
-                    )
-                    delete this.decryptionFailures[streamId][session.sessionId]
-                }
+        if (neededKeyIndexs.length > 0) {
+            // decrypt the message
+            const cleartext = await this.crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
+            const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
+            check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+            // make group sessions
+            const neededSessions = neededKeyIndexs.map(
+                (i) =>
+                    ({
+                        streamId: streamId,
+                        sessionId: session.sessionIds[i],
+                        sessionKey: sessionKeys.keys[i],
+                        algorithm: algorithm,
+                    }) satisfies GroupEncryptionSession,
+            )
+            // import the sessions
+            this.log.debug(
+                'importing group sessions streamId:',
+                streamId,
+                'count: ',
+                neededSessions.length,
+                session.sessionIds,
+            )
+            try {
+                await this.crypto.importSessionKeys(streamId, neededSessions)
+            } catch (e) {
+                // don't re-enqueue to prevent infinite loops if this session is truely corrupted
+                // we will keep requesting it on each boot until it goes out of the scroll window
+                this.log.error('failed to import sessions', { sessionItem, error: e })
             }
-        } catch (e) {
-            // don't re-enqueue to prevent infinite loops if this session is truely corrupted
-            // we will keep requesting it on each boot until it goes out of the scroll window
-            this.log.error('failed to import sessions', { sessionItem, error: e })
         }
+        // re-enqueue any decryption failures with all new ids (there's a neat bug where if multiple tabs are open, the key could already be in the cryptoDb)
+        this.retryDecryptionFailures(streamId, session.sessionIds)
         // if we processed them all, ack the stream
         if (this.mainQueues.newGroupSession.length === 0) {
             await this.ackNewGroupSession(session)
+        }
+    }
+
+    private retryDecryptionFailures(streamId: string, sessionIds: string[]): void {
+        const streamQueue = this.streamQueues.getQueue(streamId)
+        for (const sessionId of sessionIds) {
+            if (this.decryptionFailures[streamId]?.[sessionId]) {
+                streamQueue.encryptedContent.push(...this.decryptionFailures[streamId][sessionId])
+                delete this.decryptionFailures[streamId][sessionId]
+            }
         }
     }
 

@@ -25,10 +25,30 @@ type (
 	}
 
 	MiniblockDescriptor struct {
-		Number   int64
-		Data     []byte
-		Hash     common.Hash // On read only set for miniblock candidates
+		// Number is the miniblock number within the stream.
+		Number int64
+
+		// Data is the miniblock data.
+		Data []byte
+
+		// Hash is the miniblock hash.
+		// NOTE: On read this field is only set for miniblock candidates.
+		// For regular miniblocks hash is not stored in db as a separate column,
+		// to get hash in this case parse it from the data.
+		Hash common.Hash
+
+		// Snapshot is the miniblock snapshot data.
+		// It's not empty if miniblock has non-legacy snapshot.
 		Snapshot []byte
+
+		// HasLegacySnapshot is true if snapshot is embedded in the Data
+		// and not stored in the Snapshot field.
+		// Legacy snapshots are embedded in the Data.
+		// Legacy snapshots are used in the miniblock 0 and in the
+		// historical data present in the system.
+		// This field is used on write to correctly set last snapshot index in es table.
+		// NOTE:This field is not set on read.
+		HasLegacySnapshot bool
 	}
 
 	EventDescriptor struct {
@@ -59,8 +79,9 @@ type (
 	}
 
 	MiniblockRange struct {
-		StartInclusive int64
-		EndInclusive   int64
+		StartInclusive  int64
+		EndInclusive    int64
+		SnapshotSeqNums []int64
 	}
 
 	StreamStorage interface {
@@ -128,14 +149,6 @@ type (
 			toExclusive int64,
 			omitSnapshot bool,
 		) ([]*MiniblockDescriptor, error)
-
-		// ReadMiniblocksByStream calls onEachMb for each selected miniblock
-		ReadMiniblocksByStream(
-			ctx context.Context,
-			streamId StreamId,
-			omitSnapshot bool,
-			onEachMb MiniblockHandlerFunc,
-		) error
 
 		// ReadMiniblocksByIds calls onEachMb for each specified miniblock
 		ReadMiniblocksByIds(
@@ -238,20 +251,25 @@ type (
 			miniblocks []*MiniblockDescriptor,
 		) error
 
-		// GetMiniblockNumberRanges returns all continuous ranges of miniblock numbers
-		// present in storage for the given stream, starting from the specified miniblock number.
-		// Each range contains StartInclusive and EndInclusive miniblock numbers.
-		// This is useful for identifying gaps in the miniblock sequence during reconciliation.
+		// GetMiniblockNumberRanges enumerates every contiguous span of stored miniblock numbers for the
+		// stream. Each span reports its inclusive bounds and the miniblock numbers whose snapshot column
+		// is currently populated.
 		//
-		// Example: If the stream has miniblocks [0,1,2,5,6,7,10] and startMiniblockNumberInclusive=0,
-		// the result would be: [{0,2}, {5,7}, {10,10}]
-		//
-		// If startMiniblockNumberInclusive is greater than all existing miniblocks, returns empty slice.
-		GetMiniblockNumberRanges(
+		// For example, if the stream holds miniblocks {0,1,2,5,6,7,10} with snapshots
+		// at 0 and 7, the result is [{StartInclusive:0, EndInclusive:2, SnapshotSeqNums:[0]},
+		// {StartInclusive:5, EndInclusive:7, SnapshotSeqNums:[7]}, {StartInclusive:10, EndInclusive:10}].
+		// The helper returns an empty slice when no miniblocks exist, and callers can use the spans to detect
+		// gaps or plan trimming work.
+		GetMiniblockNumberRanges(ctx context.Context, streamId StreamId) ([]MiniblockRange, error)
+
+		// TrimStream trims the stream by removing miniblocks and nullifying snapshots.
+		// It removes miniblocks starting from 1 inclusively to trimToMbExclusive exclusively and nullifies snapshots in the range.
+		TrimStream(
 			ctx context.Context,
 			streamId StreamId,
-			startMiniblockNumberInclusive int64,
-		) ([]MiniblockRange, error)
+			trimToMbExclusive int64,
+			nullifySnapshotMbs []int64,
+		) error
 
 		// DebugReadStreamData returns details for debugging about the stream.
 		DebugReadStreamData(ctx context.Context, streamId StreamId) (*DebugReadStreamDataResult, error)

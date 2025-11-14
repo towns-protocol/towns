@@ -14,10 +14,10 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  * ### Bearer Token
  * ```tsx
  * import { useAgentConnection } from '@towns-protocol/react-sdk'
- * import { makeRiverConfig } from '@towns-protocol/sdk'
+ * import { townsEnv } from '@towns-protocol/sdk'
  * import { useState } from 'react'
  *
- * const riverConfig = makeRiverConfig('gamma')
+ * const townsConfig = townsEnv().makeTownsConfig('gamma')
  *
  * const Login = () => {
  *   const { connectUsingBearerToken, isAgentConnecting, isAgentConnected } = useAgentConnection()
@@ -26,7 +26,7 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  *   return (
  *     <>
  *       <input value={bearerToken} onChange={(e) => setBearerToken(e.target.value)} />
- *       <button onClick={() => connectUsingBearerToken(bearerToken, { riverConfig })}>
+ *       <button onClick={() => connectUsingBearerToken(bearerToken, { townsConfig })}>
  *         Login
  *       </button>
  *       {isAgentConnecting && <span>Connecting... ⏳</span>}
@@ -42,10 +42,10 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  *
  * ```tsx
  * import { useAgentConnection } from '@towns-protocol/react-sdk'
- * import { makeRiverConfig } from '@towns-protocol/sdk'
+ * import { townsEnv } from '@towns-protocol/sdk'
  * import { useEthersSigner } from './utils/viem-to-ethers'
  *
- * const riverConfig = makeRiverConfig('gamma')
+ * const townsConfig = townsEnv().makeTownsConfig('gamma')
  *
  * const Login = () => {
  *   const { connect, isAgentConnecting, isAgentConnected } = useAgentConnection()
@@ -57,7 +57,7 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  *         if (!signer) {
  *           return
  *         }
- *         connect(signer, { riverConfig })
+ *         connect(signer, { townsConfig })
  *       }}>
  *         Login
  *       </button>
@@ -137,7 +137,7 @@ export const useAgentConnection = () => {
         isAgentConnecting,
         /** Whether the agent is connected */
         isAgentConnected,
-        /** The environment of the current connection (gamma, omega, alpha, local_multi, etc.) */
-        env: towns?.syncAgent?.config.riverConfig.environmentId,
+        /** The environment of the current connection (gamma, omega, alpha, local_dev, etc.) */
+        env: towns?.syncAgent?.config.townsConfig.environmentId,
     }
 }

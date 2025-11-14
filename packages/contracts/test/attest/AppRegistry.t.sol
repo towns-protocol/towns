@@ -8,11 +8,11 @@ import {BaseSetup} from "test/spaces/BaseSetup.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
+import {IAppFactoryBase} from "../../src/apps/facets/factory/IAppFactory.sol";
+import {IAppAccountBase} from "../../src/spaces/facets/account/IAppAccount.sol";
 import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegistry.sol";
-import {IERC6900Account} from "@erc6900/reference-implementation/interfaces/IERC6900Account.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ITownsApp} from "../../src/apps/ITownsApp.sol";
-import {ISimpleApp} from "../../src/apps/helpers/ISimpleApp.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -20,17 +20,28 @@ import {BasisPoints} from "../../src/utils/libraries/BasisPoints.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 //contracts
 import {AppRegistryFacet} from "../../src/apps/facets/registry/AppRegistryFacet.sol";
+import {AppInstallerFacet} from "../../src/apps/facets/installer/AppInstallerFacet.sol";
+import {AppFactoryFacet} from "../../src/apps/facets/factory/AppFactoryFacet.sol";
+import {SimpleAppFacet} from "../../src/apps/simple/app/SimpleAppFacet.sol";
 import {MockPlugin} from "../../test/mocks/MockPlugin.sol";
 import {AppAccount} from "../../src/spaces/facets/account/AppAccount.sol";
 import {MockModule} from "../../test/mocks/MockModule.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBase {
+contract AppRegistryTest is
+    BaseSetup,
+    IAppRegistryBase,
+    IAppFactoryBase,
+    IAttestationRegistryBase,
+    IAppAccountBase
+{
     AppRegistryFacet internal registry;
+    AppFactoryFacet internal factory;
+    AppInstallerFacet internal installer;
     AppAccount internal appAccount;
     MockModule internal mockModule;
 
@@ -40,9 +51,14 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     address private DEFAULT_DEV;
     bytes32 private DEFAULT_APP_ID;
 
+    address payable private SIMPLE_APP;
+    bytes32 private SIMPLE_APP_ID;
+
     function setUp() public override {
         super.setUp();
         registry = AppRegistryFacet(appRegistry);
+        factory = AppFactoryFacet(appRegistry);
+        installer = AppInstallerFacet(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
         DEFAULT_CLIENT = _randomAddress();
@@ -57,10 +73,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
                         address(mockModuleV1),
                         abi.encodeWithSelector(
                             MockModule.initialize.selector,
-                            false,
-                            false,
-                            false,
-                            0
+                            abi.encode(false, false, false, 0)
                         )
                     )
                 )
@@ -71,6 +84,25 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     modifier givenAppIsRegistered() {
         vm.prank(DEFAULT_DEV);
         DEFAULT_APP_ID = registry.registerApp(mockModule, DEFAULT_CLIENT);
+        _;
+    }
+
+    modifier givenSimpleAppIsRegistered() {
+        // create app
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Read");
+        AppParams memory appData = AppParams({
+            name: "simple.app",
+            permissions: permissions,
+            client: DEFAULT_CLIENT,
+            installPrice: DEFAULT_INSTALL_PRICE,
+            accessDuration: DEFAULT_ACCESS_DURATION
+        });
+
+        vm.prank(DEFAULT_DEV);
+        (address app, bytes32 appId) = factory.createApp(appData);
+        SIMPLE_APP_ID = appId;
+        SIMPLE_APP = payable(app);
         _;
     }
 
@@ -123,7 +155,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         mockModule.setDuration(365 days + 1);
 
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidDuration.selector);
+        vm.expectRevert(AppRegistry__InvalidDuration.selector);
         registry.registerApp(mockModule, DEFAULT_CLIENT);
     }
 
@@ -157,7 +189,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         address notOwner = _randomAddress();
 
         vm.prank(notOwner);
-        vm.expectRevert(InvalidRevoker.selector);
+        vm.expectRevert(NotAllowed.selector);
         registry.removeApp(DEFAULT_APP_ID);
     }
 
@@ -171,7 +203,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     /*                      SIMPLE APP TESTS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_createSimpleApp() external {
+    function test_createApp() external {
         bytes32[] memory permissions = new bytes32[](1);
         permissions[0] = bytes32("Read");
 
@@ -184,7 +216,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         });
 
         vm.prank(DEFAULT_DEV);
-        (address app, bytes32 appId) = registry.createApp(appData);
+        (address app, bytes32 appId) = factory.createApp(appData);
 
         App memory appInfo = registry.getAppById(appId);
         address module = appInfo.module;
@@ -193,34 +225,6 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         assertEq(module, app);
         assertEq(registry.getAppByClient(DEFAULT_CLIENT), app);
         assertEq(registry.getAppDuration(app), DEFAULT_ACCESS_DURATION);
-    }
-
-    function test_SimpleApp_withdrawETH() external {
-        bytes32[] memory permissions = new bytes32[](1);
-        permissions[0] = bytes32("Read");
-
-        AppParams memory appData = AppParams({
-            name: "simple.app",
-            permissions: permissions,
-            client: DEFAULT_CLIENT,
-            installPrice: DEFAULT_INSTALL_PRICE,
-            accessDuration: DEFAULT_ACCESS_DURATION
-        });
-
-        vm.prank(DEFAULT_DEV);
-        (address app, ) = registry.createApp(appData);
-
-        uint256 totalRequired = registry.getAppPrice(app);
-
-        vm.deal(founder, totalRequired);
-
-        vm.prank(founder);
-        registry.installApp{value: totalRequired}(ITownsApp(app), appAccount, "");
-
-        vm.prank(DEFAULT_DEV);
-        ISimpleApp(app).withdrawETH(DEFAULT_DEV);
-
-        assertEq(address(DEFAULT_DEV).balance, DEFAULT_INSTALL_PRICE);
     }
 
     function test_revertWhen_createApp_EmptyName() external {
@@ -234,8 +238,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidAppName.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidAppName.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_EmptyPermissions() external {
@@ -248,8 +252,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidArrayInput.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidArrayInput.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_ZeroAddressClient() external {
@@ -263,8 +267,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: DEFAULT_ACCESS_DURATION
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidAddressInput.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppFactory__InvalidAddressInput.selector);
+        factory.createApp(appData);
     }
 
     function test_revertWhen_createApp_InvalidDuration() external {
@@ -276,8 +280,8 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
             accessDuration: 365 days + 1
         });
         vm.prank(DEFAULT_DEV);
-        vm.expectRevert(InvalidDuration.selector);
-        registry.createApp(appData);
+        vm.expectRevert(AppRegistry__InvalidDuration.selector);
+        factory.createApp(appData);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -293,20 +297,20 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         vm.prank(founder);
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(address(mockModule), appInfo.manifest);
-        registry.installApp{value: totalRequired}(mockModule, appAccount, "");
+        emit ExecutionInstalled(address(mockModule), appInfo.manifest);
+        installer.installApp{value: totalRequired}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.installApp(mockModule, appAccount, "");
+        installer.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_appNotRegistered() external {
         vm.expectRevert(AppNotRegistered.selector);
         vm.prank(founder);
-        registry.installApp(mockModule, appAccount, "");
+        installer.installApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_insufficientPayment() external givenAppIsRegistered {
@@ -318,7 +322,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
-        registry.installApp{value: insufficientAmount}(mockModule, appAccount, "");
+        installer.installApp{value: insufficientAmount}(mockModule, appAccount, "");
     }
 
     function test_installApp_withFreeApp() external givenAppIsRegistered {
@@ -327,12 +331,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 requiredAmount = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, requiredAmount);
-        registry.installApp{value: requiredAmount}(mockModule, appAccount, "");
+        installer.installApp{value: requiredAmount}(mockModule, appAccount, "");
 
         uint256 protocolFee = _getProtocolFee(0);
 
@@ -350,12 +351,9 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify fee distribution
         assertEq(address(deployer).balance, protocolFee);
@@ -373,13 +371,10 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         vm.expectEmit(address(appAccount));
-        emit IERC6900Account.ExecutionInstalled(
-            address(mockModule),
-            mockModule.executionManifest()
-        );
+        emit ExecutionInstalled(address(mockModule), mockModule.executionManifest());
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, minFee);
         assertEq(address(mockModule).balance - devInitialBalance, totalPrice - minFee);
@@ -397,7 +392,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(protocolFee > minFee);
@@ -420,7 +415,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         assertEq(address(deployer).balance, protocolFee);
         assertTrue(bpsFee < minFee);
@@ -442,7 +437,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 founderInitialBalance = address(founder).balance;
 
         hoax(founder, payment);
-        registry.installApp{value: payment}(mockModule, appAccount, "");
+        installer.installApp{value: payment}(mockModule, appAccount, "");
 
         // Verify excess was refunded
         assertEq(address(founder).balance - founderInitialBalance, excess);
@@ -458,7 +453,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, price);
         vm.expectRevert(AppRevoked.selector);
-        registry.installApp{value: price}(mockModule, appAccount, "");
+        installer.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_installApp_bannedApp() external givenAppIsRegistered {
@@ -469,19 +464,19 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, price);
         vm.expectRevert(BannedApp.selector);
-        registry.installApp{value: price}(mockModule, appAccount, "");
+        installer.installApp{value: price}(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.uninstallApp(mockModule, appAccount, "");
+        installer.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_uninstallApp_appNotRegistered() external {
         vm.prank(founder);
         vm.expectRevert(AppNotRegistered.selector);
-        registry.uninstallApp(mockModule, appAccount, "");
+        installer.uninstallApp(mockModule, appAccount, "");
     }
 
     function test_getAppById_getRevokedApp() external givenAppIsRegistered {
@@ -503,7 +498,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -518,7 +513,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         hoax(founder, totalPrice);
         vm.expectEmit(address(registry));
         emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
-        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -534,7 +529,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(0);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -546,7 +541,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         emit AppRenewed(address(mockModule), address(appAccount), DEFAULT_APP_ID);
 
         hoax(founder, totalPrice);
-        registry.renewApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.renewApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -559,7 +554,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Get initial expiration
         uint48 initialExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -573,7 +568,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         uint256 founderInitialBalance = address(founder).balance;
 
         hoax(founder, payment);
-        registry.renewApp{value: payment}(mockModule, appAccount, "");
+        installer.renewApp{value: payment}(mockModule, appAccount, "");
 
         // Verify new expiration is extended by duration
         uint48 newExpiration = appAccount.getAppExpiration(address(mockModule));
@@ -589,12 +584,12 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Try to renew as non-owner
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_appNotInstalled() external givenAppIsRegistered {
@@ -604,7 +599,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
 
         hoax(founder, totalPrice);
         vm.expectRevert(AppNotInstalled.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_appRevoked() external givenAppIsRegistered {
@@ -613,7 +608,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Revoke the app
         vm.prank(DEFAULT_DEV);
@@ -622,7 +617,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // Try to renew
         hoax(founder, totalPrice);
         vm.expectRevert(AppRevoked.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_bannedApp() external givenAppIsRegistered {
@@ -631,7 +626,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Ban the app
         vm.prank(deployer);
@@ -640,7 +635,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         // Try to renew
         hoax(founder, totalPrice);
         vm.expectRevert(BannedApp.selector);
-        registry.renewApp(mockModule, appAccount, "");
+        installer.renewApp(mockModule, appAccount, "");
     }
 
     function test_revertWhen_renewApp_insufficientPayment() external givenAppIsRegistered {
@@ -649,13 +644,117 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
         _setupAppWithPrice(price);
         uint256 totalPrice = registry.getAppPrice(address(mockModule));
         hoax(founder, totalPrice);
-        registry.installApp{value: totalPrice}(mockModule, appAccount, "");
+        installer.installApp{value: totalPrice}(mockModule, appAccount, "");
 
         // Try to renew with insufficient payment
         uint256 insufficientAmount = totalPrice - 1;
         hoax(founder, insufficientAmount);
         vm.expectRevert(InsufficientPayment.selector);
-        registry.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
+        installer.renewApp{value: insufficientAmount}(mockModule, appAccount, "");
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      UPGRADE APP TESTS                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_upgradeApp() external givenSimpleAppIsRegistered {
+        SimpleAppFacet appContract = SimpleAppFacet(SIMPLE_APP);
+
+        uint256 totalRequired = registry.getAppPrice(address(appContract));
+
+        hoax(founder, totalRequired);
+        installer.installApp{value: totalRequired}(appContract, appAccount, "");
+
+        assertTrue(appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, bytes32("Read")));
+
+        bytes32[] memory newPermissions = new bytes32[](2);
+        newPermissions[0] = bytes32("Read");
+        newPermissions[1] = bytes32("Write");
+
+        vm.prank(DEFAULT_DEV);
+        appContract.updatePermissions(newPermissions);
+
+        assertFalse(
+            appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, newPermissions[1])
+        );
+
+        vm.prank(DEFAULT_DEV);
+        bytes32 newAppId = registry.upgradeApp(appContract, DEFAULT_CLIENT, SIMPLE_APP_ID);
+
+        vm.prank(founder);
+        vm.expectEmit(address(registry));
+        emit AppUpdated(address(appContract), address(appAccount), newAppId);
+        installer.updateApp(appContract, appAccount);
+
+        assertTrue(
+            appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, newPermissions[1])
+        );
+    }
+
+    function test_revertWhen_upgradeApp_notAllowed() external givenSimpleAppIsRegistered {
+        vm.prank(_randomAddress());
+        vm.expectRevert(NotAllowed.selector);
+        registry.upgradeApp(SimpleAppFacet(SIMPLE_APP), DEFAULT_CLIENT, SIMPLE_APP_ID);
+    }
+
+    function test_revertWhen_upgradeApp_invalidAppId() external givenSimpleAppIsRegistered {
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidAppId.selector);
+        registry.upgradeApp(SimpleAppFacet(SIMPLE_APP), DEFAULT_CLIENT, EMPTY_UID);
+    }
+
+    function test_revertWhen_upgradeApp_appIsBanned() external givenSimpleAppIsRegistered {
+        vm.prank(deployer);
+        registry.adminBanApp(address(SimpleAppFacet(SIMPLE_APP)));
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(BannedApp.selector);
+        registry.upgradeApp(SimpleAppFacet(SIMPLE_APP), DEFAULT_CLIENT, SIMPLE_APP_ID);
+    }
+
+    function test_revertWhen_upgradeApp_clientNotRegistered() external givenSimpleAppIsRegistered {
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(ClientNotRegistered.selector);
+        registry.upgradeApp(SimpleAppFacet(SIMPLE_APP), _randomAddress(), SIMPLE_APP_ID);
+    }
+
+    function test_revertWhen_upgradeApp_appIsNotLatestVersion(
+        bytes32 newAppId
+    ) external givenSimpleAppIsRegistered {
+        vm.assume(newAppId != SIMPLE_APP_ID);
+        vm.assume(newAppId != EMPTY_UID);
+
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(InvalidAppId.selector);
+        registry.upgradeApp(SimpleAppFacet(SIMPLE_APP), DEFAULT_CLIENT, newAppId);
+    }
+
+    function test_revertWhen_updateApp_notAllowed(
+        address notAllowed
+    ) external givenSimpleAppIsRegistered {
+        vm.assume(notAllowed != founder);
+        vm.prank(notAllowed);
+        vm.expectRevert(NotAllowed.selector);
+        installer.updateApp(SimpleAppFacet(SIMPLE_APP), appAccount);
+    }
+
+    function test_revertWhen_updateApp_appNotInstalled() external givenSimpleAppIsRegistered {
+        vm.prank(founder);
+        vm.expectRevert(AppNotInstalled.selector);
+        installer.updateApp(SimpleAppFacet(SIMPLE_APP), appAccount);
+    }
+
+    function test_revertWhen_updateApp_appAlreadyInstalled() external givenSimpleAppIsRegistered {
+        SimpleAppFacet appContract = SimpleAppFacet(SIMPLE_APP);
+        address appAddress = address(appContract);
+        uint256 totalRequired = registry.getAppPrice(appAddress);
+
+        hoax(founder, totalRequired);
+        installer.installApp{value: totalRequired}(appContract, appAccount, "");
+
+        vm.prank(founder);
+        vm.expectRevert(AppAlreadyInstalled.selector);
+        installer.updateApp(appContract, appAccount);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -705,6 +804,7 @@ contract AppRegistryTest is BaseSetup, IAppRegistryBase, IAttestationRegistryBas
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           Utils                            */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
     function _setupAppWithPrice(uint256 price) internal {
         vm.prank(DEFAULT_DEV);
         mockModule.setPrice(price);

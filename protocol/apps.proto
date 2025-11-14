@@ -24,7 +24,7 @@ service AppRegistryService {
     rpc GetAppSettings(GetAppSettingsRequest) returns (GetAppSettingsResponse);
 
     // App metadata management.
-    rpc SetAppMetadata(SetAppMetadataRequest) returns (SetAppMetadataResponse);
+    rpc UpdateAppMetadata(UpdateAppMetadataRequest) returns (UpdateAppMetadataResponse);
     rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
 
     // RotateSecret allows the bot owner to rotate the shared secret the app registry
@@ -36,6 +36,10 @@ service AppRegistryService {
 
     // ValidateBotName checks if a bot name is available for use.
     rpc ValidateBotName(ValidateBotNameRequest) returns (ValidateBotNameResponse);
+
+    // SetAppActiveStatus allows the bot owner or bot to activate or deactivate the app.
+    // Deactivated apps won't receive forwarded messages but retain their configuration.
+    rpc SetAppActiveStatus(SetAppActiveStatusRequest) returns (SetAppActiveStatusResponse);
 }
 
 // ForwardSettingValue is an app-specific setting applied to all space channels the app is a member
@@ -103,6 +107,7 @@ message GetAppSettingsRequest {
 
 message GetAppSettingsResponse {
     AppSettings settings = 1;
+    optional string webhook_url = 2;
 }
 
 
@@ -132,13 +137,25 @@ message GetStatusResponse {
 
     // Forward the status returned by the bot service.
     AppServiceResponse.StatusResponse status = 3;
+
+    // active indicates whether the app is currently active and receiving messages
+    bool active = 4;
 }
 
 message GetSessionRequest {
     // public key of the app
     bytes app_id = 1;
 
-    string session_id = 2;    
+    oneof identifier {
+        // session_id retrieves a specific session by its ID.
+        // Use this when you have stored the session ID from a previous interaction.
+        string session_id = 2;
+
+        // stream_id retrieves the session key for a specific stream.
+        // Use this when you want to reuse an existing session for a stream
+        // without storing session IDs (useful for stateless bots).
+        bytes stream_id = 3;
+    }
 }
 
 message GetSessionResponse {
@@ -195,9 +212,14 @@ message AppServiceResponse {
     }
 
     message StatusResponse {
+        // Version established by the app registry that the bot framework supports.
+        // It indicates protocol compatibility.
         int32 framework_version = 1;
         string device_key = 2;
         string fallback_key = 3;
+        // Optional metadata used to identify the client SDK version.
+        // Example: "javascript:@towns-protocol/bot:0.0.1"
+        optional string client_version = 4;
     }
 
     oneof payload {
@@ -225,12 +247,10 @@ message AppMetadata {
 
     string description = 2;
 
-    // image_url is an image URL with an acceptable schema and file extension.
     string image_url = 3;
 
     optional string external_url = 4;
 
-    // avatar_url is an image URL with an acceptable schema and file extension.
     string avatar_url = 5;
 
     // slash_commands is a list of commands the bot supports.
@@ -238,17 +258,34 @@ message AppMetadata {
     repeated SlashCommand slash_commands = 6;
 
     // display_name is the friendly name shown in chat conversations (e.g., "My Helpful Bot").
-    // Must be non-empty and unique across all bots.
+    // Must be non-empty.
     string display_name = 7;
+
+    // motto is a short tagline or slogan for the bot.
+    string motto = 8;
 }
 
-// Set app metadata
-message SetAppMetadataRequest {
+// AppMetadataUpdate represents a partial update to app metadata
+message AppMetadataUpdate {
+    // All fields are optional for partial updates
+    optional string username = 1;
+    optional string description = 2;
+    optional string image_url = 3;
+    optional string external_url = 4;
+    optional string avatar_url = 5;
+    repeated SlashCommand slash_commands = 6;
+    optional string display_name = 7;
+    optional string motto = 8;
+}
+
+// Update app metadata
+message UpdateAppMetadataRequest {
     bytes app_id = 1;
-    AppMetadata metadata = 2;
+    AppMetadataUpdate metadata = 2;  // Changed from AppMetadata
+    repeated string update_mask = 3;  // Added update mask
 }
 
-message SetAppMetadataResponse {}
+message UpdateAppMetadataResponse {}
 
 // Get app metadata
 message GetAppMetadataRequest {
@@ -268,5 +305,13 @@ message ValidateBotNameResponse {
     bool is_available = 1;
     string error_message = 2;
 }
+
+// Set app active status
+message SetAppActiveStatusRequest {
+    bytes app_id = 1;
+    bool active = 2;
+}
+
+message SetAppActiveStatusResponse {}
 
 

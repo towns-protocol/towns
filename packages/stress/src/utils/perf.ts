@@ -1,7 +1,7 @@
 import * as path from 'path'
 import * as os from 'os'
 import * as v8 from 'v8'
-import { DLogger } from '@towns-protocol/dlog'
+import { DLogger } from '@towns-protocol/utils'
 
 export function writeHeapSnapshotToFile(log: DLogger) {
     const startWriting = performance.now()

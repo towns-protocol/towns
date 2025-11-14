@@ -8,6 +8,8 @@ on:
                 required: true
                 type: choice
                 options:
+                    - alpha
+                    - beta
                     - gamma
                     - omega
                 default: gamma

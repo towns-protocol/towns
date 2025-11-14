@@ -13,6 +13,7 @@ import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/Messa
 
 import {AppAccount} from "src/spaces/facets/account/AppAccount.sol";
 import {AppRegistryFacet} from "src/apps/facets/registry/AppRegistryFacet.sol";
+import {AppInstallerFacet} from "src/apps/facets/installer/AppInstallerFacet.sol";
 import {SignerFacet} from "src/spaces/facets/account/SignerFacet.sol";
 
 // Mocks
@@ -22,6 +23,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 contract SignerFacetTest is BaseSetup {
     SignerFacet internal signerFacet;
     AppRegistryFacet internal registry;
+    AppInstallerFacet internal installer;
     AppAccount internal appAccount;
 
     bytes32 internal appId;
@@ -40,7 +42,7 @@ contract SignerFacetTest is BaseSetup {
         signerFacet = SignerFacet(everyoneSpace);
         appAccount = AppAccount(everyoneSpace);
         registry = AppRegistryFacet(appRegistry);
-
+        installer = AppInstallerFacet(appRegistry);
         address mockModuleV1 = address(new MockModule());
 
         vm.prank(dev);
@@ -51,10 +53,7 @@ contract SignerFacetTest is BaseSetup {
                         address(mockModuleV1),
                         abi.encodeWithSelector(
                             MockModule.initialize.selector,
-                            false,
-                            false,
-                            false,
-                            0
+                            abi.encode(false, false, false, 0)
                         )
                     )
                 )
@@ -69,7 +68,7 @@ contract SignerFacetTest is BaseSetup {
         uint256 totalRequired = registry.getAppPrice(address(mockModule));
 
         hoax(founder, totalRequired);
-        registry.installApp{value: totalRequired}(mockModule, appAccount, "");
+        installer.installApp{value: totalRequired}(mockModule, appAccount, "");
 
         _;
     }

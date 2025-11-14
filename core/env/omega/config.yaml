@@ -5,12 +5,18 @@ baseChain:
     blockTimeMs: 2000
 riverChain:
     chainId: 550
-    networkUrl: 'https://mainnet.rpc.river.build'
+    networkUrl: 'https://mainnet.rpc.towns.com'
     blockTimeMs: 2000
 
 # Base contracts TODO: not set yet
 architectContract:
     address: '0x9978c826d93883701522d2CA645d5436e5654252'
+
+appRegistryContract:
+    address: '0xB3173F2a02855F07A0C4BfB26D3D87c323fe42BE'
+
+entitlement_contract:
+    address: '0x7c0422b31401C936172C897802CF0373B35B7698'
 
 # River contracts
 registryContract:

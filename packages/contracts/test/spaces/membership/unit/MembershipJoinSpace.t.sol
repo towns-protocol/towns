@@ -17,6 +17,7 @@ import {MembershipFacet} from "src/spaces/facets/membership/MembershipFacet.sol"
 import {MockLegacyMembership} from "test/mocks/legacy/membership/MockLegacyMembership.sol";
 import {EntitlementTestUtils} from "test/utils/EntitlementTestUtils.sol";
 import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
+import {Factory} from "src/utils/libraries/Factory.sol";
 
 contract MembershipJoinSpaceTest is
     IEntitlementGatedBase,
@@ -103,7 +104,6 @@ contract MembershipJoinSpaceTest is
         uint256 overPayment
     ) external givenMembershipHasPrice {
         overPayment = bound(overPayment, MEMBERSHIP_PRICE, 100 * MEMBERSHIP_PRICE);
-
         _joinSpaceWithCrosschainValidation(bob, overPayment, NodeVoteStatus.PASSED, true);
     }
 
@@ -493,7 +493,7 @@ contract MembershipJoinSpaceTest is
     /*                     SPECIAL CASES                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_joinSpaceWithInitialFreeAllocation() external {
+    function test_createSpaceWithFreeAllocationOnPaidSpace() external {
         address[] memory allowedUsers = new address[](2);
         allowedUsers[0] = alice;
         allowedUsers[1] = bob;
@@ -503,16 +503,39 @@ contract MembershipJoinSpaceTest is
             allowedUsers
         );
         freeAllocationInfo.membership.settings.pricingModule = fixedPricingModule;
-        freeAllocationInfo.membership.settings.freeAllocation = 1;
+        freeAllocationInfo.membership.settings.price = 1 ether;
+        freeAllocationInfo.membership.settings.freeAllocation = 100;
 
         vm.prank(founder);
-        address freeAllocationSpace = ICreateSpace(spaceFactory).createSpace(freeAllocationInfo);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Factory.Factory__FailedDeployment.selector,
+                abi.encodeWithSelector(Membership__CannotSetFreeAllocationOnPaidSpace.selector)
+            )
+        );
+        ICreateSpace(spaceFactory).createSpace(freeAllocationInfo);
+    }
 
-        MembershipFacet freeAllocationMembership = MembershipFacet(freeAllocationSpace);
+    function test_joinSpace_freeTownsDontPayFees() external {
+        IArchitectBase.SpaceInfo memory freeSpaceInfo = _createEveryoneSpaceInfo("FreeSpace");
+        freeSpaceInfo.membership.settings.pricingModule = fixedPricingModule;
+        freeSpaceInfo.membership.settings.price = 0;
+        freeSpaceInfo.membership.settings.freeAllocation = 1;
+
+        vm.prank(founder);
+        address freeSpace = ICreateSpace(spaceFactory).createSpace(freeSpaceInfo);
+
+        MembershipFacet freeMembership = MembershipFacet(freeSpace);
 
         vm.prank(bob);
-        vm.expectRevert(Membership__InsufficientPayment.selector);
-        freeAllocationMembership.joinSpace(bob);
+        freeMembership.joinSpace(bob);
+
+        vm.prank(alice);
+        freeMembership.joinSpace(alice);
+
+        assertEq(IERC721A(freeSpace).balanceOf(bob), 1);
+        assertEq(IERC721A(freeSpace).balanceOf(alice), 1);
+        assertEq(freeMembership.revenue(), 0);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

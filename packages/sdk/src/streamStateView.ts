@@ -1,4 +1,4 @@
-import { dlog, dlogError, bin_toHexString, check, throwWithCode } from '@towns-protocol/dlog'
+import { dlog, dlogError, bin_toHexString, check, throwWithCode } from '@towns-protocol/utils'
 import { isDefined, logNever } from './check'
 import {
     ChannelMessage,
@@ -55,6 +55,7 @@ import { DecryptionSessionError, KeyFulfilmentData } from './decryptionExtension
 import { migrateSnapshot } from './migrations/migrateSnapshot'
 import { StreamsView } from './views/streamsView'
 import { TimelineEvent } from './views/models/timelineTypes'
+import { Timestamp } from '@bufbuild/protobuf/wkt'
 const log = dlog('csb:streams')
 const logError = dlogError('csb:streams:error')
 
@@ -332,6 +333,7 @@ export class StreamStateView {
                     eventNum: this.lastEventNum++,
                     miniblockNum: undefined,
                     confirmedEventNum: undefined,
+                    confirmedAtEpochMs: undefined,
                 })
                 const newlyConfirmed = this.processAppendedEvent(
                     event,
@@ -420,6 +422,9 @@ export class StreamStateView {
                     timelineEvent.confirmedEventNum =
                         payload.value.eventNumOffset + BigInt(payload.value.eventHashes.length)
                     timelineEvent.miniblockNum = payload.value.miniblockNum
+                    timelineEvent.confirmedAtEpochMs = payload.value.timestamp
+                        ? timestampToEpochMs(payload.value.timestamp)
+                        : undefined
                     confirmed = this.processMiniblockHeader(
                         payload.value,
                         payload.value.eventHashes,
@@ -471,6 +476,9 @@ export class StreamStateView {
             this.minipoolEvents.delete(eventId)
             event.miniblockNum = header.miniblockNum
             event.confirmedEventNum = header.eventNumOffset + BigInt(i)
+            event.confirmedAtEpochMs = header.timestamp
+                ? timestampToEpochMs(header.timestamp)
+                : undefined
             check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
             switch (event.remoteEvent.event.payload.case) {
                 case 'memberPayload':
@@ -624,6 +632,9 @@ export class StreamStateView {
                 eventNum,
                 miniblockNum: miniblocks[0].header.miniblockNum,
                 confirmedEventNum: eventNum,
+                confirmedAtEpochMs: miniblocks[0].header.timestamp
+                    ? timestampToEpochMs(miniblocks[0].header.timestamp)
+                    : undefined,
             })
         })
         // the rest need to be added to the timeline
@@ -635,6 +646,9 @@ export class StreamStateView {
                     eventNum,
                     miniblockNum: mb.header.miniblockNum,
                     confirmedEventNum: eventNum,
+                    confirmedAtEpochMs: mb.header.timestamp
+                        ? timestampToEpochMs(mb.header.timestamp)
+                        : undefined,
                 })
             }),
         )
@@ -732,6 +746,9 @@ export class StreamStateView {
                     eventNum: mb.header.eventNumOffset + BigInt(i),
                     miniblockNum: mb.header.miniblockNum,
                     confirmedEventNum: mb.header.eventNumOffset + BigInt(i),
+                    confirmedAtEpochMs: mb.header.timestamp
+                        ? timestampToEpochMs(mb.header.timestamp)
+                        : undefined,
                 }),
             ),
         )
@@ -874,4 +891,9 @@ export class StreamStateView {
                 return new Set()
         }
     }
+}
+
+export function timestampToEpochMs(ts: Timestamp): number {
+    // nanos -> ms (0..999), then add to seconds*1000
+    return Number(ts.seconds) * 1000 + Math.floor(ts.nanos / 1e6)
 }

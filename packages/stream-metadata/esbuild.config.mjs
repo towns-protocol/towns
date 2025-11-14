@@ -16,6 +16,7 @@ build({
 		// esbuild cannot bundle native modules
 		'@datadog/native-metrics',
 		'@towns-protocol/olm',
+		'sharp', // Sharp has native binaries that cannot be bundled
 
 		// required if you use profiling
 		'@datadog/pprof',
@@ -30,10 +31,6 @@ build({
 	platform: 'node',
 	plugins: [esbuildPluginPino({ transports: ['pino-pretty'] })],
 	assetNames: '[name]',
-	loader: {
-		'.ts': 'ts',
-		'.wasm': 'file',
-	},
 	sourcemap: true,
 	target: 'es2022',
 	minify: false, // No minification for easier debugging. Add minification in production later

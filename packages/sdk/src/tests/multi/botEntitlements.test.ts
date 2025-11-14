@@ -10,7 +10,7 @@ import {
     waitFor,
     createChannel,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { ethers } from 'ethers'
 import { MembershipOp } from '@towns-protocol/proto'
 import { make_MemberPayload_KeySolicitation } from '../../types'
@@ -27,7 +27,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -41,7 +41,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -62,7 +65,7 @@ describe('bot entitlements tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()
@@ -155,7 +158,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -169,7 +172,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: readOnlyBotAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: readOnlyBotAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt1,
+            botWithoutWriteWallet.address as Address,
+        )
         expect(readOnlyBotAddress).toBeDefined()
 
         // Create second bot app contract with both READ and WRITE permissions
@@ -182,7 +188,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: readWriteBotAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: readWriteBotAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt2,
+            botWithWriteWallet.address as Address,
+        )
         expect(readWriteBotAddress).toBeDefined()
 
         // Create bot user streams for both bots
@@ -209,7 +218,7 @@ describe('bot entitlements tests', () => {
         const installTx1 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             readOnlyBotAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt1 = await installTx1.wait()
@@ -218,7 +227,7 @@ describe('bot entitlements tests', () => {
         const installTx2 = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             readWriteBotAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt2 = await installTx2.wait()
@@ -295,7 +304,7 @@ describe('bot entitlements tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             spaceOwnerProvider,
         )
 
@@ -309,7 +318,10 @@ describe('bot entitlements tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         // Create bot user streams
@@ -330,7 +342,7 @@ describe('bot entitlements tests', () => {
         const installTx = await appRegistryDapp.installApp(
             spaceOwnerProvider.signer,
             foundAppAddress as Address,
-            SpaceAddressFromSpaceId(spaceId) as Address,
+            SpaceAddressFromSpaceId(spaceId),
             ethers.utils.parseEther('0.02').toBigInt(),
         )
         const installReceipt = await installTx.wait()

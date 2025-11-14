@@ -9,7 +9,7 @@ import {
     setupWalletsAndContexts,
     expectUserCanJoin,
 } from '../testUtils'
-import { makeBaseChainConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { makeDefaultChannelStreamId } from '../../id'
 import { ethers } from 'ethers'
 
@@ -26,7 +26,7 @@ describe('bot stream creation tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             ownerProvider,
         )
 
@@ -40,7 +40,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt1 = await tx1.wait()
-        const { app: bot1AppAddress } = appRegistryDapp.getCreateAppEvent(receipt1)
+        const { app: bot1AppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt1,
+            bot1Wallet.address as Address,
+        )
         expect(bot1AppAddress).toBeDefined()
 
         // Create second bot app contract
@@ -53,7 +56,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt2 = await tx2.wait()
-        const { app: bot2AppAddress } = appRegistryDapp.getCreateAppEvent(receipt2)
+        const { app: bot2AppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt2,
+            bot2Wallet.address as Address,
+        )
         expect(bot2AppAddress).toBeDefined()
 
         // Attempt to create user streams for bot1 using bot2's app address (should fail)
@@ -94,7 +100,7 @@ describe('bot stream creation tests', () => {
         } = await setupWalletsAndContexts()
 
         const appRegistryDapp = new AppRegistryDapp(
-            makeBaseChainConfig().chainConfig,
+            townsEnv().makeBaseChainConfig().chainConfig,
             botProvider, // use bot as it's own owner for convenience
         )
 
@@ -107,7 +113,10 @@ describe('bot stream creation tests', () => {
             31536000n,
         )
         const receipt = await tx.wait()
-        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
+        const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
+            receipt,
+            botWallet.address as Address,
+        )
         expect(foundAppAddress).toBeDefined()
 
         expect(await bot.initializeUser({ appAddress: foundAppAddress })).toBeDefined()

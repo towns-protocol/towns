@@ -8,8 +8,8 @@ import {
 } from '@towns-protocol/proto'
 import { StreamStateView } from './streamStateView'
 import { addressFromUserId } from './id'
-import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/dlog'
-import { TipEventObject } from '@towns-protocol/generated/dev/typings/ITipping'
+import { bin_fromHexString, bin_toHexString, check } from '@towns-protocol/utils'
+import { TipSentEventObject } from '@towns-protocol/web3'
 import { isDefined } from './check'
 import { bytesToHex } from 'ethereum-cryptography/utils'
 import { RiverTimelineEvent } from './views/models/timelineTypes'
@@ -36,9 +36,10 @@ export function unsafe_makeTags(message: PlainMessage<ChannelMessage>): PlainMes
 export function makeTags(
     message: PlainMessage<ChannelMessage>,
     streamView: StreamStateView,
+    messageInteractionType?: MessageInteractionType,
 ): PlainMessage<Tags> {
     return {
-        messageInteractionType: getMessageInteractionType(message),
+        messageInteractionType: messageInteractionType ?? getMessageInteractionType(message),
         groupMentionTypes: getGroupMentionTypes(message),
         mentionedUserAddresses: getMentionedUserAddresses(message),
         participatingUserAddresses: getParticipatingUserAddresses(message, streamView),
@@ -47,7 +48,7 @@ export function makeTags(
 }
 
 export function makeTipTags(
-    event: TipEventObject,
+    event: TipSentEventObject,
     toUserId: string,
     streamView: StreamStateView,
 ): PlainMessage<Tags> | undefined {

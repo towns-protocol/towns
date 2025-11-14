@@ -2,61 +2,78 @@ package storage
 
 import (
 	"context"
+	"math"
 	"sync"
 	"time"
 
 	"github.com/gammazero/workerpool"
 	"github.com/jackc/pgx/v5"
+	"github.com/prometheus/client_golang/prometheus"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
-// trimTask represents a task to trim miniblocks from a stream
+// trimTask represents a task to trim miniblocks from a stream.
 type trimTask struct {
-	streamId         StreamId
-	miniblocksToKeep int64
+	streamId             StreamId
+	streamHistoryMbs     int64
+	retentionIntervalMbs int64
 }
 
-// streamTrimmer handles periodic trimming of streams
+// streamTrimmer handles periodic trimming of streams.
+// It ensures that the number of miniblocks in a stream does not exceed a certain threshold and
+// that snapshots are retained according to the configured retention interval.
 type streamTrimmer struct {
-	ctx   context.Context
-	log   *logging.Log
-	store *PostgresStreamStore
-	// miniblocksToKeep is the number of miniblocks to keep before the last snapshot.
-	// Defined per stream type.
-	miniblocksToKeep  crypto.StreamTrimmingMiniblocksToKeepSettings
+	ctx               context.Context
+	log               *logging.Log
+	store             *PostgresStreamStore
+	config            crypto.OnChainConfiguration
 	trimmingBatchSize int64
 
 	// Worker pool for trimming operations
 	workerPool *workerpool.WorkerPool
 
 	// Task tracking
-	pendingTasksLock sync.Mutex
-	pendingTasks     map[StreamId]struct{}
+	pendingTasksLock       sync.Mutex
+	pendingTasks           map[StreamId]struct{}
+	snapshotsPerStreamLock sync.Mutex
+	snapshotsPerStream     map[StreamId]uint64
 
 	stopOnce sync.Once
 	stop     chan struct{}
+
+	taskDuration prometheus.Histogram
 }
 
 // newStreamTrimmer creates a new stream trimmer
 func newStreamTrimmer(
 	ctx context.Context,
 	store *PostgresStreamStore,
+	config crypto.OnChainConfiguration,
 	workerPool *workerpool.WorkerPool,
-	miniblocksToKeep crypto.StreamTrimmingMiniblocksToKeepSettings,
 	trimmingBatchSize int64,
+	metrics infra.MetricsFactory,
 ) *streamTrimmer {
 	st := &streamTrimmer{
-		ctx:               ctx,
-		log:               logging.FromCtx(ctx).Named("stream-trimmer"),
-		store:             store,
-		miniblocksToKeep:  miniblocksToKeep,
-		trimmingBatchSize: trimmingBatchSize,
-		workerPool:        workerPool,
-		pendingTasks:      make(map[StreamId]struct{}),
-		stop:              make(chan struct{}),
+		ctx:                ctx,
+		log:                logging.FromCtx(ctx).Named("stream-trimmer"),
+		store:              store,
+		config:             config,
+		trimmingBatchSize:  trimmingBatchSize,
+		workerPool:         workerPool,
+		pendingTasks:       make(map[StreamId]struct{}),
+		snapshotsPerStream: make(map[StreamId]uint64),
+		stop:               make(chan struct{}),
+		taskDuration: metrics.NewHistogramEx(
+			"stream_trimmer_task_duration_seconds",
+			"Stream trimmer task duration in seconds",
+			[]float64{0.1, 0.5, 1, 2, 4, 6, 8},
+		),
 	}
 
 	// Start the worker pool
@@ -87,43 +104,101 @@ func (t *streamTrimmer) close() {
 }
 
 // tryScheduleTrimming checks if the given stream type is trimmable and schedules trimming if it is.
+// TODO: Review the logic on when to trim the stream.
 func (t *streamTrimmer) tryScheduleTrimming(streamId StreamId) {
-	// Schedule trimming for the given stream if the trimming for this type is enabled.
-	if mbsToKeep := int64(t.miniblocksToKeep.ForType(streamId.Type())); mbsToKeep > 0 {
-		if t.workerPool.Stopped() || t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
-			// If the worker pool is full, do not schedule any new tasks
-			return
-		}
-
-		t.scheduleTrimTask(streamId, mbsToKeep)
+	if t.workerPool.Stopped() ||
+		t.workerPool.WaitingQueueSize() >= maxWorkerPoolPendingTasks {
+		return
 	}
+
+	task, ok := t.computeTrimTask(streamId)
+	if !ok {
+		return
+	}
+
+	t.scheduleTrimTask(task)
 }
 
-// scheduleTrimTask schedules a new trim task for a stream
-func (t *streamTrimmer) scheduleTrimTask(streamId StreamId, miniblocksToKeep int64) {
+func (t *streamTrimmer) computeTrimTask(streamId StreamId) (trimTask, bool) {
+	cfg := t.config.Get()
+
+	var task trimTask
+
+	if cfg.StreamTrimActivationFactor == 0 {
+		return task, false
+	}
+
+	if cfg.MinSnapshotEvents.ForType(streamId.Type()) == 0 {
+		return task, false
+	}
+
+	streamHistoryCfg := cfg.StreamHistoryMiniblocks.ForType(streamId.Type())
+	var streamHistoryMbs int64
+	if streamHistoryCfg >= uint64(math.MaxInt64) {
+		streamHistoryMbs = math.MaxInt64
+	} else {
+		streamHistoryMbs = int64(streamHistoryCfg)
+	}
+
+	var retentionIntervalMbs int64
+	if interval := int64(cfg.StreamSnapshotIntervalInMiniblocks); interval > 0 {
+		retentionIntervalMbs = max(interval, MinRetentionIntervalMiniblocks)
+	}
+
+	if streamHistoryMbs <= 0 && retentionIntervalMbs <= 0 {
+		return task, false
+	}
+
+	shouldSchedule := false
+
+	t.snapshotsPerStreamLock.Lock()
+	count := t.snapshotsPerStream[streamId] + 1
+	if count%cfg.StreamTrimActivationFactor != 0 {
+		t.snapshotsPerStream[streamId] = count % cfg.StreamTrimActivationFactor
+	} else {
+		delete(t.snapshotsPerStream, streamId)
+		shouldSchedule = true
+	}
+	t.snapshotsPerStreamLock.Unlock()
+
+	if !shouldSchedule {
+		return task, false
+	}
+
+	return trimTask{
+		streamId:             streamId,
+		streamHistoryMbs:     streamHistoryMbs,
+		retentionIntervalMbs: retentionIntervalMbs,
+	}, true
+}
+
+// scheduleTrimTask schedules a new trim task for the given stream
+func (t *streamTrimmer) scheduleTrimTask(task trimTask) {
 	t.pendingTasksLock.Lock()
-	if _, exists := t.pendingTasks[streamId]; exists {
+	if _, exists := t.pendingTasks[task.streamId]; exists {
 		t.pendingTasksLock.Unlock()
 		return
 	}
-	t.pendingTasks[streamId] = struct{}{}
+	t.pendingTasks[task.streamId] = struct{}{}
 	t.pendingTasksLock.Unlock()
 
-	// Create a new task
-	task := trimTask{
-		streamId:         streamId,
-		miniblocksToKeep: miniblocksToKeep,
-	}
-
-	// Submit the task to the worker pool
 	t.workerPool.Submit(func() {
-		if err := t.processTrimTask(task); err != nil {
+		timer := prometheus.NewTimer(t.taskDuration)
+		err := t.processTrimTask(task)
+		timer.ObserveDuration()
+
+		if err != nil {
 			t.log.Errorw("Failed to process stream trimming task",
 				"stream", task.streamId,
-				"miniblocksToKeep", task.miniblocksToKeep,
-				"err", err,
+				"streamHistoryMbs", task.streamHistoryMbs,
+				"retentionIntervalMbs", task.retentionIntervalMbs,
+				"error", err,
 			)
 		}
+
+		t.pendingTasksLock.Lock()
+		delete(t.pendingTasks, task.streamId)
+		t.pendingTasksLock.Unlock()
 	})
 }
 
@@ -141,6 +216,8 @@ func (t *streamTrimmer) processTrimTask(task trimTask) error {
 		},
 		nil,
 		"streamId", task.streamId,
+		"streamHistoryMbs", task.streamHistoryMbs,
+		"retentionIntervalMbs", task.retentionIntervalMbs,
 	)
 }
 
@@ -150,85 +227,56 @@ func (t *streamTrimmer) processTrimTaskTx(
 	tx pgx.Tx,
 	task trimTask,
 ) error {
-	var scheduledNext bool
-	defer func() {
-		if scheduledNext {
-			return
-		}
-
-		// Delete the pending task mark
-		t.pendingTasksLock.Lock()
-		delete(t.pendingTasks, task.streamId)
-		t.pendingTasksLock.Unlock()
-	}()
-
 	// Get the last snapshot miniblock number
-	lastSnapshotMiniblock, err := t.store.lockStream(ctx, tx, task.streamId, true)
+	lockStream, err := t.store.lockStream(ctx, tx, task.streamId, true)
 	if err != nil {
 		return err
 	}
 
-	// Get the miniblock number to start from
-	startMiniblockNum, err := t.store.getLowestStreamMiniblockTx(ctx, tx, task.streamId)
+	lastSnapshotMiniblock := lockStream.LastSnapshotMiniblock
+
+	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId)
 	if err != nil {
 		return err
 	}
 
-	// Calculate the highest miniblock number to keep
-	lastMiniblockToKeep := lastSnapshotMiniblock - task.miniblocksToKeep
-	if lastMiniblockToKeep <= 0 {
-		return nil // Nothing to trim
-	}
-
-	// Just for safety reasons
-	if lastMiniblockToKeep <= startMiniblockNum {
+	// Stream not found, nothing to trim. This should not happen, but we handle it gracefully.
+	if len(ranges) == 0 {
 		return nil
 	}
 
-	// Calculate the end sequence number for deletion.
-	// The given miniblock number will not be deleted.
-	exclusiveEndSeq := startMiniblockNum + t.trimmingBatchSize
-	if exclusiveEndSeq >= lastMiniblockToKeep {
-		exclusiveEndSeq = lastMiniblockToKeep
+	// It is not allowed to trim a stream that has gaps. There is an exception for genesis miniblock mentioned below.
+	if len(ranges) > 2 {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Stream has gaps, skip trimming").Tags("ranges", ranges)
 	}
 
-	// Delete miniblocks in the calculated range
-	rows, err := tx.Query(
-		ctx,
-		t.store.sqlForStream(
-			`DELETE FROM {{miniblocks}}
-			WHERE stream_id = $1 AND seq_num >= $2 AND seq_num < $3
-			RETURNING seq_num`,
-			task.streamId,
-		),
-		task.streamId,
-		startMiniblockNum,
-		exclusiveEndSeq,
+	// If there are a gap in ranges, it is only possible to have the following:
+	//  1. [0] - genesis miniblock only, no snapshots.
+	//  2. [0+N...] - a complete range from Nth miniblock to the latest miniblock.
+	if len(ranges) == 2 &&
+		ranges[0].StartInclusive != 0 &&
+		ranges[0].EndInclusive != 0 &&
+		ranges[1].EndInclusive < lastSnapshotMiniblock {
+		return RiverError(Err_MINIBLOCKS_STORAGE_FAILURE, "Stream has an unexpected gap, skip trimming").
+			Tags("ranges", ranges)
+	}
+
+	latestRange := ranges[0]
+	if len(ranges) > 0 {
+		latestRange = ranges[len(ranges)-1]
+	}
+
+	nullifySnapshotMbs := DetermineStreamSnapshotsToNullify(
+		latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
+		task.retentionIntervalMbs, MinKeepMiniblocks,
 	)
-	if err != nil {
-		return err
+
+	lastMbToKeep := lastSnapshotMiniblock - task.streamHistoryMbs
+	if lastMbToKeep < 0 || task.streamHistoryMbs <= 0 {
+		lastMbToKeep = 0
 	}
 
-	// Check if any rows were deleted and track the last deleted miniblock
-	var lastDeletedMiniblock int64 = -1
-	for rows.Next() {
-		if err = rows.Scan(&lastDeletedMiniblock); err != nil {
-			return err
-		}
-	}
-	rows.Close()
-
-	// Schedule the next trim task if there are more miniblocks to delete
-	if lastDeletedMiniblock >= 0 && lastDeletedMiniblock+1 < lastMiniblockToKeep {
-		// Delete the pending task mark
-		t.pendingTasksLock.Lock()
-		delete(t.pendingTasks, task.streamId)
-		t.pendingTasksLock.Unlock()
-		scheduledNext = true
-
-		// Schedule the next trim task
-		t.scheduleTrimTask(task.streamId, task.miniblocksToKeep)
-	}
-
-	return nil
+	// Deleting all miniblocks below the calculated miniblock with a snapshot which is the closest to the lastMbToKeep.
+	localStartMbInclusive := FindClosestSnapshotMiniblock(ranges, lastMbToKeep)
+	return t.store.trimStreamTxNoLock(ctx, tx, task.streamId, localStartMbInclusive, nullifySnapshotMbs)
 }

@@ -11,7 +11,6 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 import {Deployer} from "scripts/common/Deployer.s.sol";
 import {Towns} from "src/tokens/towns/base/Towns.sol";
 import {TownsDeployer} from "src/tokens/towns/base/TownsDeployer.sol";
-import {TownsDeployer} from "src/tokens/towns/base/TownsDeployer.sol";
 import {MockTowns} from "test/mocks/MockTowns.sol";
 import {MockTownsDeployer} from "test/mocks/MockTownsDeployer.sol";
 
@@ -24,21 +23,24 @@ contract DeployTownsBase is Deployer {
         return "utils/towns";
     }
 
-    function __deploy(address deployer) internal override returns (address) {
+    function __deploy(address deployer) internal override returns (address proxy) {
         (implSalt, proxySalt) = _getSalts();
 
         address vault = _getVault(deployer);
-        address proxy = _proxyAddress(_implAddress(implSalt), proxySalt, l1Token, vault);
+        proxy = _proxyAddress(_implAddress(implSalt), proxySalt, l1Token, vault);
+        if (proxy.code.length != 0) return proxy;
 
-        vm.startBroadcast(deployer);
-        if (isAnvil()) {
-            new MockTownsDeployer(l1Token, vault, implSalt, proxySalt);
+        if (!isTesting()) {
+            vm.broadcast(deployer);
+            if (isAnvil()) {
+                new MockTownsDeployer(l1Token, vault, implSalt, proxySalt);
+            } else {
+                new TownsDeployer(l1Token, vault, implSalt, proxySalt);
+            }
         } else {
-            new TownsDeployer(l1Token, vault, implSalt, proxySalt);
+            vm.prank(deployer);
+            new MockTownsDeployer(l1Token, vault, implSalt, proxySalt);
         }
-        vm.stopBroadcast();
-
-        return proxy;
     }
 
     function _implAddress(bytes32 salt) internal view returns (address impl) {
@@ -55,12 +57,9 @@ contract DeployTownsBase is Deployer {
         address remoteToken,
         address owner
     ) internal pure returns (address proxy) {
-        bytes memory byteCode = abi.encodePacked(
+        bytes memory byteCode = bytes.concat(
             type(ERC1967Proxy).creationCode,
-            abi.encode(
-                impl,
-                abi.encodePacked(Towns.initialize.selector, abi.encode(remoteToken, owner))
-            )
+            abi.encode(impl, abi.encodeCall(Towns.initialize, (remoteToken, owner)))
         );
 
         proxy = Create2Utils.computeCreate2Address(salt, byteCode);

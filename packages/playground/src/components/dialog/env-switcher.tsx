@@ -8,14 +8,14 @@ import {
 
 import { foundry } from 'viem/chains'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
-import { makeRiverConfig } from '@towns-protocol/sdk'
+import { townsEnv } from '@towns-protocol/sdk'
 import { privateKeyToAccount } from 'viem/accounts'
 import { parseEther } from 'viem'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getWeb3Deployment, getWeb3Deployments } from '@towns-protocol/web3'
 import { deleteAuth, storeAuth } from '@/utils/persist-auth'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { Button } from '../ui/button'
 import {
     Dialog,
@@ -29,11 +29,13 @@ import {
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
-const environments = getWeb3Deployments().map((id) => ({
-    id: id,
-    name: id,
-    chainId: getWeb3Deployment(id).base.chainId,
-}))
+const environments = townsEnv(VITE_ENV_OPTIONS)
+    .getEnvironments()
+    .map((env) => ({
+        id: env.environmentId,
+        name: env.environmentId,
+        townsConfig: env,
+    }))
 
 const privateNetworks =
     import.meta.env.VITE_ENABLE_PRIVATE_NETWORKS === 'true' ? [] : ['alpha', 'delta']
@@ -116,36 +118,37 @@ export const RiverEnvSwitcherContent = (props: {
                         <span className="text-sm font-medium">Select an environment</span>
                         {environments
                             .filter(({ id }) => !privateNetworks.includes(id))
-                            .map(({ id, name, chainId }) => (
+                            .map(({ id, name, townsConfig }) => (
                                 <DialogClose asChild key={id}>
                                     <Button
                                         variant="outline"
                                         disabled={currentEnv === id && isAgentConnected}
                                         onClick={async () => {
-                                            const riverConfig = makeRiverConfig(id)
                                             if (props.allowBearerToken) {
                                                 if (bearerToken) {
                                                     await connectUsingBearerToken(bearerToken, {
-                                                        riverConfig,
+                                                        townsConfig,
                                                     }).then((sync) => {
                                                         if (sync?.config.context) {
                                                             storeAuth(
                                                                 sync?.config.context,
-                                                                riverConfig,
+                                                                townsConfig,
                                                             )
                                                         }
                                                     })
                                                 }
                                             } else {
-                                                switchChain?.({ chainId })
+                                                switchChain?.({
+                                                    chainId: townsConfig.base.chainConfig.chainId,
+                                                })
                                                 if (!signer) {
                                                     return
                                                 }
                                                 await connect(signer, {
-                                                    riverConfig,
+                                                    townsConfig,
                                                 }).then((sync) => {
                                                     if (sync?.config.context) {
-                                                        storeAuth(sync?.config.context, riverConfig)
+                                                        storeAuth(sync?.config.context, townsConfig)
                                                     }
                                                 })
                                             }
@@ -158,7 +161,7 @@ export const RiverEnvSwitcherContent = (props: {
                                     </Button>
                                 </DialogClose>
                             ))}
-                        {currentEnv === 'local_multi' && <FundWallet />}
+                        {currentEnv === 'local_dev' && <FundWallet />}
                     </div>
                 </div>
             )}

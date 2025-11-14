@@ -9,16 +9,16 @@ import (
 	"github.com/linkdata/deadlock"
 	"github.com/puzpuzpuz/xsync/v4"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 const (
-	// MiniblockCandidateBatchSize keep track the max number of new miniblocks that are registered in the StreamRegistry
+	// MiniblockCandidateBatchSize keep track the max number of miniblockblocks that are registered in the StreamRegistry
 	// in a single transaction.
 	MiniblockCandidateBatchSize = 50
 
@@ -45,8 +45,8 @@ type MiniblockProducerOpts struct {
 	TestDisableMbProdcutionOnBlock bool
 }
 
-// NewMiniblockProducer instantiates a new miniblockProducer instance that implements the MiniblockProducer interface.
-// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates new miniblock
+// NewMiniblockProducer instantiates a miniblockblockProducer instance that implements the MiniblockProducer interface.
+// It registers a callback on new RiverChain blocks, and every time this callback is called, it creates miniblockblock
 // candidates and schedules these candidates for registration.
 func newMiniblockProducer(
 	ctx context.Context,
@@ -126,13 +126,13 @@ func (p *candidateTracker) add(ctx context.Context, mp *miniblockProducer, j *mb
 	}
 }
 
-// onNewBlock loops over streams and determines if it needs to produce a new mini block.
-// For every stream that is eligible to produce a new mini block it creates a new mini block candidate.
+// onNewBlock loops over streams and determines if it needs to produce a miniblock block.
+// For every stream that is eligible to produce a miniblock block it creates a miniblock block candidate.
 // It bundles candidates in a batch.
 // If the batch is full it submits the batch to the RiverRegistry#stream facet for registration and parses the resulting
 // logs to determine which mini block candidate was registered and which are not. For each registered mini block
 // candidate it applies the candidate to the stream.
-func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum crypto.BlockNumber) {
+func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum blockchain.BlockNumber) {
 	// Try lock to have only one invocation at a time. Previous onNewBlock may still be running.
 	if !p.onNewBlockMutex.TryLock() {
 		return
@@ -144,7 +144,7 @@ func (p *miniblockProducer) onNewBlock(ctx context.Context, blockNum crypto.Bloc
 	}()
 }
 
-func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum crypto.BlockNumber) []*mbJob {
+func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum blockchain.BlockNumber) []*mbJob {
 	log := logging.FromCtx(ctx)
 
 	candidates := p.streamCache.GetMbCandidateStreams(ctx)
@@ -184,7 +184,7 @@ func (p *miniblockProducer) scheduleCandidates(ctx context.Context, blockNum cry
 
 func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	stream *Stream,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) bool {
 	streamNodes := stream.GetQuorumNodes()
 	if len(streamNodes) == 0 {
@@ -194,7 +194,7 @@ func (p *miniblockProducer) isLocalLeaderOnCurrentBlock(
 	return streamNodes[index] == p.localNodeAddress
 }
 
-func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream, blockNum crypto.BlockNumber) *mbJob {
+func (p *miniblockProducer) trySchedule(ctx context.Context, stream *Stream, blockNum blockchain.BlockNumber) *mbJob {
 	j := &mbJob{
 		stream: stream,
 		cache:  p.streamCache,
@@ -228,7 +228,7 @@ func (p *miniblockProducer) testCheckAllDone(jobs []*mbJob) bool {
 //
 // If there are no events in the minipool and forceSnapshot is false, TestMakeMiniblock does nothing and succeeds.
 //
-// Returns the hash and number of the last know miniblock.
+// Returns the hash and number of the last known miniblock.
 func (p *miniblockProducer) TestMakeMiniblock(
 	ctx context.Context,
 	streamId StreamId,
@@ -289,7 +289,7 @@ func (p *miniblockProducer) TestMakeMiniblock(
 	return view.LastBlock().Ref, nil
 }
 
-func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum crypto.BlockNumber) {
+func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum blockchain.BlockNumber) {
 	if ctx.Err() != nil {
 		p.jobDone(ctx, j)
 		return
@@ -299,7 +299,7 @@ func (p *miniblockProducer) jobStart(ctx context.Context, j *mbJob, blockNum cry
 	if err != nil {
 		logging.FromCtx(ctx).
 			Warnw(
-				"MiniblockProducer: jobStart: Error creating new miniblock proposal",
+				"MiniblockProducer: jobStart: Error creating miniblockblock proposal",
 				"streamId",
 				j.stream.streamId,
 				"error",
@@ -447,7 +447,11 @@ func (p *miniblockProducer) promoteConfirmedCandidates(ctx context.Context, jobs
 	}
 
 	for _, job := range jobs {
-		stream, err := registry.GetStream(ctx, job.stream.streamId, crypto.BlockNumber(headNum))
+		stream, err := registry.StreamRegistry.GetStreamOnBlock(
+			ctx,
+			job.stream.streamId,
+			blockchain.BlockNumber(headNum),
+		)
 		if err != nil {
 			log.Errorw("Unable to retrieve stream details from registry",
 				"streamId", job.stream.streamId, "error", err)

@@ -12,11 +12,11 @@ import {
     UserBioSchema,
 } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { UserDevice } from '@towns-protocol/encryption'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { getUserIdFromStreamId } from './id'
+import { getUserIdFromStreamId, userIdFromAddress } from './id'
 import { decryptDerivedAESGCM } from '@towns-protocol/sdk-crypto'
 import { fromBinary } from '@bufbuild/protobuf'
 import {
@@ -67,6 +67,12 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         if (content.bio?.data) {
             this.addBio(content.bio.data)
         }
+        if (content.inception?.appAddress) {
+            this.userMetadataStreamsView.setAppAddress(
+                this.streamId,
+                userIdFromAddress(content.inception.appAddress),
+            )
+        }
     }
 
     prependEvent(
@@ -88,6 +94,12 @@ export class StreamStateView_UserMetadata extends StreamStateView_AbstractConten
         const payload: UserMetadataPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userMetadataStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'encryptionDevice':
                 this.addUserDeviceKey(payload.content.value, encryptionEmitter, stateEmitter)

@@ -1,6 +1,6 @@
 import { makeAuthenticationRpcClient } from './makeAuthenticationRpcClient'
 import { makeNotificationRpcClient } from './makeNotificationRpcClient'
-import { bin_fromHexString, check } from '@towns-protocol/dlog'
+import { bin_fromHexString, check } from '@towns-protocol/utils'
 import { riverSign, notificationServiceHash } from './sign'
 import { isDefined } from './check'
 import { Signer } from 'ethers'

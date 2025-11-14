@@ -2,7 +2,7 @@ import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { ChannelPayload, ChannelPayload_Snapshot, Snapshot } from '@towns-protocol/proto'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { streamIdFromBytes } from './id'
@@ -51,6 +51,23 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case 'redaction':
                 break
+            case 'custom':
+                break
+            case 'interactionRequest': {
+                const encryptedData = payload.content.value.encryptedData
+                if (encryptedData) {
+                    this.decryptEvent(
+                        'interactionRequestPayload',
+                        event,
+                        encryptedData,
+                        cleartext,
+                        encryptionEmitter,
+                    )
+                }
+                break
+            }
+            case 'interactionResponse':
+                break
             case undefined:
                 break
             default:
@@ -80,7 +97,24 @@ export class StreamStateView_Channel extends StreamStateView_AbstractContent {
                 break
             case 'redaction':
                 break
+            case 'custom':
+                break
             case undefined:
+                break
+            case 'interactionRequest': {
+                const encryptedData = payload.content.value.encryptedData
+                if (encryptedData) {
+                    this.decryptEvent(
+                        'interactionRequestPayload',
+                        event,
+                        encryptedData,
+                        cleartext,
+                        encryptionEmitter,
+                    )
+                }
+                break
+            }
+            case 'interactionResponse':
                 break
             default:
                 logNever(payload.content)

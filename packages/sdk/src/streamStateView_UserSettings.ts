@@ -14,7 +14,7 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { RemoteTimelineEvent } from './types'
 import { StreamEncryptionEvents, StreamStateEvents } from './streamEvents'
-import { check, dlog } from '@towns-protocol/dlog'
+import { check, dlog } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { create, fromJsonString } from '@bufbuild/protobuf'
@@ -58,6 +58,12 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
             const userId = userIdFromAddress(userBlocks.userId)
             this.userSettingsStreamsView.setUserBlocks(this.streamId, userId, userBlocks)
         }
+        if (content.inception?.appAddress) {
+            this.userSettingsStreamsView.setAppAddress(
+                this.streamId,
+                userIdFromAddress(content.inception.appAddress),
+            )
+        }
     }
 
     prependEvent(
@@ -94,6 +100,12 @@ export class StreamStateView_UserSettings extends StreamStateView_AbstractConten
         const payload: UserSettingsPayload = event.remoteEvent.event.payload.value
         switch (payload.content.case) {
             case 'inception':
+                if (payload.content.value.appAddress) {
+                    this.userSettingsStreamsView.setAppAddress(
+                        this.streamId,
+                        userIdFromAddress(payload.content.value.appAddress),
+                    )
+                }
                 break
             case 'fullyReadMarkers':
                 this.fullyReadMarkerUpdate(payload.content.value, stateEmitter)

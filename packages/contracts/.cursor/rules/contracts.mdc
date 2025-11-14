@@ -3,9 +3,11 @@ description: These rules are essential for working with a complex blockchain-bas
 globs: *.sol
 alwaysApply: false
 ---
+
 # Contracts Rule
 
 These rules are essential for working with a complex blockchain-based space management and permission system. They're particularly helpful when:
+
 1. Implementing new features or modifying existing ones in the space management system
 2. Working with cross-chain entitlements and permission validation
 3. Developing token distribution mechanisms or reward systems
@@ -22,6 +24,7 @@ This project is a blockchain-based space/channel management system with role-bas
 The system also supports cross-chain delegation between Ethereum L1 and Base L2, allowing users to stake tokens on L1 and have delegation benefits on L2. Node operators can receive delegations directly or via spaces, with rewards distributed based on stake amounts and time.
 
 ### The system allows for:
+
 - Creation and management of spaces and channels
 - Role-based access control with granular permissions
 - Cross-chain entitlement validation
@@ -73,6 +76,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 ## Rules
 
 ### General
+
 1. All contracts must follow the Diamond Pattern for upgradeability
 2. Use explicit visibility modifiers for all functions and state variables
 3. Implement proper access control using modifiers
@@ -85,12 +89,14 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 10. Library functions should be pure in the functional programming sense (no side effects)
 
 ### Storage
+
 1. Use diamond storage pattern for all state variables
 2. Namespace storage slots to avoid collisions
 3. Use efficient data structures for gas
 4. Use proper mapping patterns for complex data
 
 ### Types
+
 1. Use strict typing for all variables/parameters
 2. Implement interface inheritance
 3. Use enums for predefined sets
@@ -98,12 +104,14 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 5. Follow ABI encoding/decoding best practices
 
 ### Permissions
+
 1. Implement granular permission checks
 2. Use role-based access control
 3. Validate cross-chain entitlements
 4. Implement permission override mechanisms
 
 ### Testing
+
 1. Write comprehensive unit tests
 2. Test all edge cases
 3. Test permission/access control logic
@@ -111,6 +119,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 5. Test upgrade paths
 
 ### Documentation
+
 1. Use NatSpec for all public/external functions
 2. Document complex logic/algorithms
 3. Keep inline comments concise
@@ -118,6 +127,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 5. Document upgrade procedures
 
 ### Gas Optimization
+
 1. Use efficient data structures, pack storage
 2. Implement batch operations where possible
 3. Minimize storage reads/writes
@@ -126,6 +136,7 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 6. Use `msg.sender` directly
 
 ### Security
+
 1. Follow CEI (Checks-Effects-Interactions)
 2. Use reentrancy guards
 3. Validate all inputs
@@ -149,9 +160,9 @@ library FacetStorage {
     // storage variables go here
   }
 
-  function layout() internal pure returns (Layout storage ds) {
+  function layout() internal pure returns (Layout storage db) {
     assembly {
-      ds.slot := STORAGE_SLOT
+      db.slot := STORAGE_SLOT
     }
   }
 }
@@ -169,49 +180,55 @@ A typical facet in this codebase is split into several files for clarity and upg
 **Example: Votes Facet**
 
 - [`VotesStorage.sol`](mdc:src/diamond/facets/governance/votes/VotesStorage.sol)
-    ```solidity
-    library VotesStorage {
-        bytes32 internal constant STORAGE_SLOT = keccak256("diamond.facets.governance.votes.storage");
 
-        struct Layout {
-            mapping(address => address) _delegation;
-            mapping(address => Checkpoints.Trace224) _delegateCheckpoints;
-            Checkpoints.Trace224 _totalCheckpoints;
-        }
+  ```solidity
+  library VotesStorage {
+    bytes32 internal constant STORAGE_SLOT =
+      keccak256("diamond.facets.governance.votes.storage");
 
-        function layout() internal pure returns (Layout storage db) {
-            assembly { db.slot := STORAGE_SLOT }
-        }
+    struct Layout {
+      mapping(address => address) _delegation;
+      mapping(address => Checkpoints.Trace224) _delegateCheckpoints;
+      Checkpoints.Trace224 _totalCheckpoints;
     }
-    ```
+
+    function layout() internal pure returns (Layout storage db) {
+      assembly {
+        db.slot := STORAGE_SLOT
+      }
+    }
+  }
+  ```
 
 - [`VotesBase.sol`](mdc:src/diamond/facets/governance/votes/VotesBase.sol)
-    ```solidity
-    abstract contract VotesBase {
-        using VotesStorage for VotesStorage.Layout;
-        function _getVotes(address account) internal view returns (uint256) {
-            return VotesStorage.layout()._delegateCheckpoints[account].latest();
-        }
-        // ... more internal logic ...
+
+  ```solidity
+  abstract contract VotesBase is IVotesBase {
+    using VotesStorage for VotesStorage.Layout;
+    function _getVotes(address account) internal view returns (uint256) {
+      return VotesStorage.layout()._delegateCheckpoints[account].latest();
     }
-    ```
+    // ... more internal logic ...
+  }
+  ```
 
 - [`Votes.sol`](mdc:src/diamond/facets/governance/votes/Votes.sol)
-    ```solidity
-    abstract contract Votes is VotesBase, IERC5805 {
-        function getVotes(address account) public view virtual returns (uint256) {
-            return _getVotes(account);
-        }
-        // ... external functions ...
+
+  ```solidity
+  contract Votes is IVotes, VotesBase, Facet {
+    function getVotes(address account) public view virtual returns (uint256) {
+      return _getVotes(account);
     }
-    ```
+    // ... external functions ...
+  }
+  ```
 
 - **Guidelines**
-    - Use the diamond storage pattern to avoid collisions
-    - Split facet implementation into Storage Library, Base Contract, Facet Contract, and Interfaces
-    - Place business logic in a base contract.
-    - Expose only protected/external calls in the facet contract.
-    - Define interfaces for external APIs.
+  - Use the diamond storage pattern to avoid collisions
+  - Split facet implementation into Storage Library, Base Contract, Facet Contract, and Interfaces
+  - Place business logic in a base contract.
+  - Expose only protected/external calls in the facet contract.
+  - Define interfaces for external APIs.
 
 ### Deployment Script Example: Using Libraries
 
@@ -220,48 +237,50 @@ Deployment scripts use helper libraries to deploy facets and assemble the diamon
 **Example: Deploying a Diamond with Facets**
 
 - [`DeployMembership.s.sol`](mdc:scripts/deployments/facets/DeployMembership.s.sol)
-    ```solidity
-    library DeployMembership {
-        function selectors() internal pure returns (bytes4[] memory) { ... }
 
-        function makeCut(address facetAddress, IDiamond.FacetCutAction action)
-            internal pure returns (IDiamond.FacetCut memory)
-        { ... }
+  ```solidity
+  library DeployMembership {
+      function selectors() internal pure returns (bytes4[] memory) { ... }
 
-        function deploy() internal returns (address) {
-            return DeployLib.deployCode("MembershipFacet.sol", "");
-        }
-    }
-    ```
+      function makeCut(address facetAddress, IDiamond.FacetCutAction action)
+          internal pure returns (IDiamond.FacetCut memory)
+      { ... }
+
+      function deploy() internal returns (address) {
+          return DeployLib.deployCode("MembershipFacet.sol", "");
+      }
+  }
+  ```
 
 - [`DeploySpace.s.sol`](mdc:scripts/deployments/diamonds/DeploySpace.s.sol)
-    ```solidity
-    contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
-        function addImmutableCuts(address deployer) internal {
-            address facet = facetHelper.deploy("DiamondCutFacet", deployer);
-            addFacet(
-                DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
-                facet,
-                DeployDiamondCut.makeInitData()
-            );
-            // ... more facets ...
-        }
-        function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
-            address facet = facetHelper.deploy("MembershipToken", deployer);
-            addCut(DeployMembershipToken.makeCut(facet, IDiamond.FacetCutAction.Add));
-            // ... more facets ...
-            return Diamond.InitParams({ ... });
-        }
-        function __deploy(address deployer) internal override returns (address) {
-            addImmutableCuts(deployer);
-            Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
-            Diamond diamond = new Diamond(initDiamondCut);
-            return address(diamond);
-        }
-    }
-    ```
+  ```solidity
+  contract DeploySpace is IDiamondInitHelper, DiamondHelper, Deployer {
+      function addImmutableCuts(address deployer) internal {
+          address facet = facetHelper.deploy("DiamondCutFacet", deployer);
+          addFacet(
+              DeployDiamondCut.makeCut(facet, IDiamond.FacetCutAction.Add),
+              facet,
+              DeployDiamondCut.makeInitData()
+          );
+          // ... more facets ...
+      }
+      function diamondInitParams(address deployer) public returns (Diamond.InitParams memory) {
+          address facet = facetHelper.deploy("MembershipToken", deployer);
+          addCut(DeployMembership.makeCut(facet, IDiamond.FacetCutAction.Add));
+          // ... more facets ...
+          return Diamond.InitParams({ ... });
+      }
+      function __deploy(address deployer) internal override returns (address) {
+          addImmutableCuts(deployer);
+          Diamond.InitParams memory initDiamondCut = diamondInitParams(deployer);
+          Diamond diamond = new Diamond(initDiamondCut);
+          return address(diamond);
+      }
+  }
+  ```
 
 **Key Patterns:**
+
 - Each facet has a deployment library that provides selectors and cut data.
 - The deployment script uses these libraries to deploy facets, build the diamond cut, and initialize the diamond.
 - Facet deployment is modular and can be customized by passing different facet lists.

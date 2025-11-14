@@ -22,6 +22,7 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /// @inheritdoc IAppAccount
     function execute(
         address target,
         uint256 value,
@@ -50,6 +51,12 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
     function onRenewApp(bytes32 appId, bytes calldata data) external nonReentrant {
         _onlyRegistry();
         _onRenewApp(appId, data);
+    }
+
+    /// @inheritdoc IAppAccount
+    function onUpdateApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        _onlyRegistry();
+        _onUpdateApp(appId, data);
     }
 
     /// @inheritdoc IAppAccount
@@ -89,5 +96,10 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         bytes32 permission
     ) external view returns (bool) {
         return _isAppEntitled(app, publicKey, permission);
+    }
+
+    /// @inheritdoc IAppAccount
+    function isAppExecuting(address app) external view returns (bool) {
+        return _isAppExecuting(app);
     }
 }

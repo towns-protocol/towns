@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { dlog, check } from '@towns-protocol/dlog'
+import { dlog, check } from '@towns-protocol/utils'
 import { isDefined } from '../../check'
 import { GroupEncryptionAlgorithmId, UserDevice } from '@towns-protocol/encryption'
 import { DecryptionStatus } from '../../decryptionExtensions'
@@ -152,6 +152,7 @@ describe('clientTest', () => {
             )
             expect(event).toBeDefined()
             expect(event?.confirmedInBlockNum).toBeDefined()
+            expect(event?.confirmedAtEpochMs).toBeDefined()
         })
 
         await bobsClient.stopSync()
@@ -540,6 +541,7 @@ describe('clientTest', () => {
             )
             expect(event).toBeDefined()
             expect(event?.confirmedInBlockNum).toBeDefined()
+            expect(event?.confirmedAtEpochMs).toBeDefined()
         })
 
         log('bobSendsSingleMessage done')

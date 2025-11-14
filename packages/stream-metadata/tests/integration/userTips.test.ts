@@ -1,7 +1,7 @@
 import axios from 'axios'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { ethers } from 'ethers'
-import { Bot, makeRiverConfig, SyncAgent } from '@towns-protocol/sdk'
+import { Bot, townsEnv, SyncAgent } from '@towns-protocol/sdk'
 import { ETH_ADDRESS } from '@towns-protocol/web3'
 
 import { getTestServerUrl } from '../testUtils'
@@ -16,9 +16,9 @@ describe('integration/stream-metadata/userTips', () => {
 	const baseURL = getTestServerUrl()
 	log('baseURL', baseURL)
 
-	const riverConfig = makeRiverConfig()
-	const bobIdentity = new Bot(undefined, riverConfig)
-	const aliceIdentity = new Bot(undefined, riverConfig)
+	const townsConfig = townsEnv().makeTownsConfig()
+	const bobIdentity = new Bot(undefined, townsConfig)
+	const aliceIdentity = new Bot(undefined, townsConfig)
 	let bob: SyncAgent
 	let alice: SyncAgent
 
@@ -62,8 +62,9 @@ describe('integration/stream-metadata/userTips', () => {
 			}) at ${tokenId!} ${tipAmount} ETH`,
 		)
 
-		const tx = await bob.riverConnection.spaceDapp.tip(
+		const tx = await bob.riverConnection.spaceDapp.sendTip(
 			{
+				type: 'member',
 				spaceId,
 				tokenId: tokenId!,
 				currency: ETH_ADDRESS,
@@ -88,7 +89,7 @@ describe('integration/stream-metadata/userTips', () => {
 		log('Receipt', receipt)
 		if (!tipEvent) throw new Error('no tip event found')
 		await bob.riverConnection.client!.addTransaction_Tip(
-			riverConfig.base.chainConfig.chainId,
+			townsConfig.base.chainConfig.chainId,
 			receipt,
 			tipEvent,
 			aliceIdentity.rootWallet.address,

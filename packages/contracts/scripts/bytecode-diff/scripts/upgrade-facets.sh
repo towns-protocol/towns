@@ -11,14 +11,14 @@ find_most_recent_file() {
 # Check if the correct number of arguments is provided
 if [ $# -lt 1 ] || [ $# -gt 3 ]; then
     echo "Usage: $0 <network> [diff_directory] [file_name]"
-    echo "  <network>: Must be either 'gamma' or 'omega'"
+    echo "  <network>: Must be either 'beta', 'gamma' or 'omega'"
     exit 1
 fi
 
 # Set the network and validate it
 network="$1"
-if [ "$network" != "gamma" ] && [ "$network" != "omega" ]; then
-    echo "Error: Network must be either 'gamma' or 'omega'"
+if [ "$network" != "beta" ] && [ "$network" != "gamma" ] && [ "$network" != "omega" ]; then
+    echo "Error: Network must be either 'beta', 'gamma' or 'omega'"
     exit 1
 fi
 
@@ -58,7 +58,11 @@ process_file() {
         chain_id=8453
         context="omega"
         make_command="make deploy-any rpc=base private_key=${OMEGA_PRIVATE_KEY}"
-        resume_any="make resume-any rpc=base private_key=${OMEGA_PRIVATE_KEY} verifier=${BASESCAN_URL} etherscan=${BASESCAN_API_KEY}"
+        resume_any="make resume-any rpc=base private_key=${OMEGA_PRIVATE_KEY} verifier=etherscan verifier-url=${BASESCAN_URL} etherscan=${ETHERSCAN_API_KEY}"
+    elif [[ "$network" == "beta" ]]; then
+        chain_id=84532
+        context="beta"
+        make_command="make deploy-base-sepolia"
     elif [[ "$network" == "gamma" ]]; then
         chain_id=84532
         context="gamma"

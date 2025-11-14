@@ -1,7 +1,7 @@
 import { DecryptionAlgorithm, DecryptionError, IDecryptionParams } from './base'
 import { GroupEncryptionAlgorithmId, GroupEncryptionSession } from './olmLib'
 import { EncryptedData, EncryptedDataVersion, HybridGroupSessionKey } from '@towns-protocol/proto'
-import { bin_toHexString, dlogError } from '@towns-protocol/dlog'
+import { bin_toHexString, dlogError } from '@towns-protocol/utils'
 import { decryptAesGcm, importAesGsmKeyBytes } from './cryptoAesGcm'
 import { LRUCache } from 'lru-cache'
 

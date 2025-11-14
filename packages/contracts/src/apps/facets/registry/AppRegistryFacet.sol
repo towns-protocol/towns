@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 // interfaces
 import {IAppRegistry} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 
 // types
@@ -16,6 +15,9 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
+/// @title AppRegistryFacet
+/// @author Towns Protocol
+/// @notice Facet for managing app registry
 contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, ReentrancyGuard, Facet {
     function __AppRegistry_init(
         address spaceFactory,
@@ -55,67 +57,37 @@ contract AppRegistryFacet is IAppRegistry, AppRegistryBase, OwnableBase, Reentra
     /// @notice Register a new app with permissions
     /// @param app The app address to register
     /// @param client The client address that will make calls from this app
-    /// @return versionId The version ID of the registered app
+    /// @return appId The app ID of the registered app
     function registerApp(
         ITownsApp app,
         address client
-    ) external payable nonReentrant returns (bytes32 versionId) {
-        return _registerApp(address(app), client);
+    ) external payable nonReentrant returns (bytes32) {
+        return _registerApp(app, client);
     }
 
-    /// @notice Remove a app from the registry
-    /// @param versionId The app ID to remove
+    /// @notice Upgrade an app
+    /// @param app The app address to update
+    /// @param client The client address part of the app's identity
+    /// @param appId The app ID to upgrade
+    /// @return appId The new app ID of the updated app
+    function upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 appId
+    ) external payable nonReentrant returns (bytes32) {
+        return _upgradeApp(app, client, appId);
+    }
+
+    /// @notice Remove an app from the registry
+    /// @param appId The app ID to remove
     /// @dev Only the owner of the app can remove it
-    function removeApp(bytes32 versionId) external nonReentrant {
-        _removeApp(msg.sender, versionId);
+    function removeApp(bytes32 appId) external nonReentrant {
+        _removeApp(appId);
     }
 
-    /// @notice Create an upgradeable simple app contract
-    /// @param params The parameters of the app
-    function createApp(
-        AppParams calldata params
-    ) external payable nonReentrant returns (address app, bytes32 versionId) {
-        return _createApp(params);
-    }
-
-    /// @notice Install an app
-    /// @param app The app address to install
-    /// @param space The space to install the app to
-    /// @param data The data to pass to the app's onInstall function
-    function installApp(
-        ITownsApp app,
-        IAppAccount space,
-        bytes calldata data
-    ) external payable nonReentrant {
-        _onlyAllowed(address(space));
-        return _installApp(address(app), address(space), data);
-    }
-
-    /// @notice Uninstall an app
-    /// @param app The app address to uninstall
-    /// @param account The account to uninstall the app from
-    /// @param data The data to pass to the app's onUninstall function
-    function uninstallApp(
-        ITownsApp app,
-        IAppAccount account,
-        bytes calldata data
-    ) external nonReentrant {
-        _onlyAllowed(address(account));
-        return _uninstallApp(address(app), address(account), data);
-    }
-
-    /// @notice Renew an app
-    /// @param app The app address to renew
-    /// @param account The account to renew the app for
-    /// @param data The data to pass to the app's onRenewApp function
-    function renewApp(
-        ITownsApp app,
-        IAppAccount account,
-        bytes calldata data
-    ) external payable nonReentrant {
-        _onlyAllowed(address(account));
-        _renewApp(address(app), address(account), data);
-    }
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        Space Functions                     */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Get the schema structure used for registering modules
     /// @return The schema structure

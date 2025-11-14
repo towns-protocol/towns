@@ -1,10 +1,10 @@
 import { EntitlementsDelegate } from '../../decryptionExtensions'
 import { Permission, SpaceDapp } from '@towns-protocol/web3'
-import { RiverConfig } from '../../riverConfig'
+import { TownsConfig } from '../../townsEnv'
 
 export class Entitlements implements EntitlementsDelegate {
     constructor(
-        private config: RiverConfig,
+        private config: TownsConfig,
         private spaceDapp: SpaceDapp,
     ) {}
 
@@ -14,9 +14,7 @@ export class Entitlements implements EntitlementsDelegate {
         user: string,
         permission: Permission,
     ) {
-        if (this.config.environmentId === 'local_multi_ne') {
-            return true
-        } else if (channelId && spaceId) {
+        if (channelId && spaceId) {
             return this.spaceDapp.isEntitledToChannel(spaceId, channelId, user, permission)
         } else if (spaceId) {
             return this.spaceDapp.isEntitledToSpace(spaceId, user, permission)

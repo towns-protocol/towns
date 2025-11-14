@@ -2,10 +2,11 @@ import {
     CryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
+    GroupEncryptionSession,
+    parseGroupEncryptionAlgorithmId,
+    UserDevice,
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
-    type UserDevice,
-    type UserDeviceCollection,
 } from '@towns-protocol/encryption'
 import { makeStreamRpcClient, type StreamRpcClient } from './makeStreamRpcClient'
 import {
@@ -13,42 +14,56 @@ import {
     makeSignerContextFromBearerToken,
     type SignerContext,
 } from './signerContext'
-import { makeRiverConfig } from './riverConfig'
+import { townsEnv, TownsService, type TownsConfig } from './townsEnv'
 import { ethers } from 'ethers'
-import { RiverRegistry } from '@towns-protocol/web3'
+import { RiverRegistry, type Address } from '@towns-protocol/web3'
 import { makeSessionKeys } from './decryptionExtensions'
-import { makeRiverProvider } from './sync-agent/utils/providers'
+import { makeBaseProvider, makeRiverProvider } from './sync-agent/utils/providers'
 import { RiverDbManager } from './riverDbManager'
 import {
     makeUserInboxStreamId,
     makeUserMetadataStreamId,
     streamIdAsBytes,
+    streamIdAsString,
     userIdFromAddress,
 } from './id'
 import {
     make_UserInboxPayload_GroupEncryptionSessions,
     type ParsedEvent,
-    type ParsedStreamResponse,
+    type MiniblockInfoResponse,
 } from './types'
 import {
     makeEvent,
     unpackStream,
     unpackEnvelope as sdk_unpackEnvelope,
     unpackEnvelopes as sdk_unpackEnvelopes,
+    UnpackEnvelopeOpts,
 } from './sign'
-import { bin_toHexString, check } from '@towns-protocol/dlog'
-import { toJsonString } from '@bufbuild/protobuf'
-import { SessionKeysSchema, type Envelope } from '@towns-protocol/proto'
+import { bin_toHexString, check } from '@towns-protocol/utils'
+import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
+import {
+    SessionKeysSchema,
+    UserInboxPayload_GroupEncryptionSessions,
+    type Envelope,
+    type PlainMessage,
+    type StreamEvent,
+    type Tags,
+} from '@towns-protocol/proto'
+import { AppRegistryService } from './appRegistryService'
+import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
+import { StreamStateView } from './streamStateView'
 
 type Client_Base = {
     /** The userId of the Client. */
-    userId: string
-    /** The signer of the Client. */
-    signer: SignerContext
+    userId: Address
+    /** The signer context of the Client. */
+    signerContext: SignerContext
+    /** The wallet of the Client. */
+    wallet: ethers.Wallet
     /** RPC client that connects to the Towns network. */
     rpc: StreamRpcClient
-    /** The environment of the Client. */
-    env: string
+    /** The config of the Client. Stores environenment id, base and river chain config */
+    config: TownsConfig
     /** Crypto Store */
     keychain: CryptoStore
     /** Crypto Backend */
@@ -59,12 +74,30 @@ type Client_Base = {
     disableHashValidation: boolean
     /** Disable signature validation for streams. */
     disableSignatureValidation: boolean
+    /** Options for unpacking envelopes */
+    unpackEnvelopeOpts: UnpackEnvelopeOpts
+    /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
+    appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
-    getStream: (streamId: string) => Promise<ParsedStreamResponse>
+    getStream: (streamId: string) => Promise<StreamStateView>
+    /** Get the miniblock info for a stream */
+    getMiniblockInfo: (streamId: string) => Promise<MiniblockInfoResponse>
     /** Unpack envelope using client config */
     unpackEnvelope: (envelope: Envelope) => Promise<ParsedEvent>
     /** Unpack envelopes using client config */
     unpackEnvelopes: (envelopes: Envelope[]) => Promise<ParsedEvent[]>
+    /** injest a group encryption session */
+    importGroupEncryptionSessions: (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => Promise<void>
+    /** Send an event to a stream */
+    sendEvent: (
+        streamId: string,
+        eventPayload: PlainMessage<StreamEvent>['payload'],
+        tags?: PlainMessage<Tags>,
+        ephemeral?: boolean,
+    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -89,7 +122,7 @@ export type Prettify<T> = {
 } & {}
 
 export type CreateTownsClientParams = {
-    env: Parameters<typeof makeRiverConfig>[0]
+    env: string
     encryptionDevice?: EncryptionDeviceInitOpts
     /** Toggle hash validation of Envelopes. Defaults to `false`. */
     hashValidation?: boolean
@@ -110,19 +143,22 @@ export const createTownsClient = async (
     ) &
         CreateTownsClientParams,
 ): Promise<ClientV2> => {
-    const config = makeRiverConfig(params.env)
+    const config = townsEnv().makeTownsConfig(params.env)
+    const baseProvider = makeBaseProvider(config)
 
-    let signer: SignerContext
+    let signerContext: SignerContext
+    let wallet: ethers.Wallet | undefined
     if ('mnemonic' in params) {
-        const wallet = ethers.Wallet.fromMnemonic(params.mnemonic)
+        wallet = ethers.Wallet.fromMnemonic(params.mnemonic).connect(baseProvider)
         const delegateWallet = ethers.Wallet.createRandom()
-        signer = await makeSignerContext(wallet, delegateWallet)
+        signerContext = await makeSignerContext(wallet, delegateWallet)
     } else if ('privateKey' in params) {
-        const wallet = new ethers.Wallet(params.privateKey)
+        wallet = new ethers.Wallet(params.privateKey).connect(baseProvider)
         const delegateWallet = ethers.Wallet.createRandom()
-        signer = await makeSignerContext(wallet, delegateWallet)
+        signerContext = await makeSignerContext(wallet, delegateWallet)
     } else {
-        signer = await makeSignerContextFromBearerToken(params.bearerToken)
+        signerContext = await makeSignerContextFromBearerToken(params.bearerToken)
+        wallet = new ethers.Wallet(signerContext.signerPrivateKey()).connect(baseProvider)
     }
 
     const riverProvider = makeRiverProvider(config)
@@ -130,21 +166,44 @@ export const createTownsClient = async (
     const urls = await riverRegistryDapp.getOperationalNodeUrls()
     const rpc = makeStreamRpcClient(urls, () => riverRegistryDapp.getOperationalNodeUrls())
 
-    const userId = userIdFromAddress(signer.creatorAddress)
+    const userId = userIdFromAddress(signerContext.creatorAddress)
 
     const cryptoStore = RiverDbManager.getCryptoDb(userId)
     await cryptoStore.initialize()
 
     // eslint-disable-next-line prefer-const
     let crypto: GroupEncryptionCrypto
+    let _appService: Awaited<ReturnType<typeof AppRegistryService.authenticate>> | undefined
 
-    const getStream = async (streamId: string): Promise<ParsedStreamResponse> => {
+    const getMiniblockInfo = async (streamId: string): Promise<MiniblockInfoResponse> => {
+        const r = await client.rpc.getLastMiniblockHash({ streamId: streamIdAsBytes(streamId) })
+        return {
+            miniblockNum: r.miniblockNum,
+            miniblockHash: r.hash,
+            encryptionAlgorithm: r.encryptionAlgorithm,
+        }
+    }
+
+    const getStream = async (streamId: string): Promise<StreamStateView> => {
         const { disableHashValidation, disableSignatureValidation } = client
         const stream = await client.rpc.getStream({ streamId: streamIdAsBytes(streamId) })
-        return unpackStream(stream.stream, {
+        const unpackedResponse = await unpackStream(stream.stream, {
             disableHashValidation,
             disableSignatureValidation,
         })
+        const streamView = new StreamStateView(userId, streamIdAsString(streamId), undefined)
+        streamView.initialize(
+            unpackedResponse.streamAndCookie.nextSyncCookie,
+            unpackedResponse.streamAndCookie.events,
+            unpackedResponse.snapshot,
+            unpackedResponse.streamAndCookie.miniblocks,
+            [],
+            unpackedResponse.prevSnapshotMiniblockNum,
+            undefined,
+            [],
+            undefined,
+        )
+        return streamView
     }
 
     const unpackEnvelope = async (envelope: Envelope): Promise<ParsedEvent> => {
@@ -160,52 +219,95 @@ export const createTownsClient = async (
         return sdk_unpackEnvelopes(envelopes, { disableHashValidation, disableSignatureValidation })
     }
 
+    const sendEvent = async (
+        streamId: string,
+        eventPayload: PlainMessage<StreamEvent>['payload'],
+        tags?: PlainMessage<Tags>,
+        ephemeral?: boolean,
+    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }> => {
+        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
+            await client.rpc.getLastMiniblockHash({
+                streamId: streamIdAsBytes(streamId),
+            })
+        const envelope = await makeEvent(
+            signerContext,
+            eventPayload,
+            prevMiniblockHash,
+            prevMiniblockNum,
+            tags,
+            ephemeral,
+        )
+        const eventId = bin_toHexString(envelope.hash)
+        await client.rpc.addEvent({
+            streamId: streamIdAsBytes(streamId),
+            event: envelope,
+        })
+        return { eventId, prevMiniblockHash, envelope }
+    }
+
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {
-        const getMiniblockInfo: IGroupEncryptionClient['getMiniblockInfo'] = async (streamId) => {
-            const { streamAndCookie } = await getStream(streamId)
-            return {
-                miniblockNum: streamAndCookie.miniblocks[0].header.miniblockNum,
-                miniblockHash: streamAndCookie.miniblocks[0].hash,
+        const _downloadUserDeviceInfo = async (userId: string) => {
+            const streamId = makeUserMetadataStreamId(userId)
+            try {
+                const deviceLookback = 10
+                const streamView = await getStream(streamId)
+                const userDevices = streamView.userMetadataContent.deviceKeys.slice(-deviceLookback)
+                return { userId, devices: userDevices }
+            } catch (e) {
+                return { userId, devices: [] }
             }
         }
-        const downloadUserDeviceInfo: IGroupEncryptionClient['downloadUserDeviceInfo'] = async (
-            userIds,
+
+        const _encryptAndShareGroupSessionsToUser = async (
+            streamId: string,
+            userId: string,
+            sessionIds: string[],
+            payloadStr: string,
+            algorithm: GroupEncryptionAlgorithmId,
+            userDevice: UserDevice,
         ) => {
-            const forceDownload = userIds.length <= 10
-            const promises = userIds.map(
-                async (userId): Promise<{ userId: string; devices: UserDevice[] }> => {
-                    const streamId = makeUserMetadataStreamId(userId)
-                    try {
-                        // also always download your own keys so you always share to your most up to date devices
-                        if (!forceDownload && userId !== userId) {
-                            const devicesFromStore = await cryptoStore.getUserDevices(userId)
-                            if (devicesFromStore.length > 0) {
-                                return { userId, devices: devicesFromStore }
-                            }
-                        }
-                        // return latest 10 device keys
-                        const deviceLookback = 10
-                        const stream = await getStream(streamId)
-                        const encryptionDevices =
-                            stream.snapshot.content.case === 'userMetadataContent'
-                                ? stream.snapshot.content.value.encryptionDevices
-                                : []
-                        const userDevices = encryptionDevices.slice(-deviceLookback)
-                        await cryptoStore.saveUserDevices(userId, userDevices)
-                        return { userId, devices: userDevices }
-                    } catch (e) {
-                        return { userId, devices: [] }
-                    }
-                },
-            )
-            return (await Promise.all(promises)).reduce((acc, current) => {
-                acc[current.userId] = current.devices
-                return acc
-            }, {} as UserDeviceCollection)
+            try {
+                const deviceKeys = await _downloadUserDeviceInfo(userId)
+                const ciphertext = await crypto.encryptWithDeviceKeys(
+                    payloadStr,
+                    deviceKeys.devices,
+                )
+                if (Object.keys(ciphertext).length === 0) {
+                    return
+                }
+                const toStreamId: string = makeUserInboxStreamId(userId)
+                const { hash: miniblockHash, miniblockNum } = await rpc.getLastMiniblockHash({
+                    streamId: streamIdAsBytes(toStreamId),
+                })
+                const event = await makeEvent(
+                    signerContext,
+                    make_UserInboxPayload_GroupEncryptionSessions({
+                        streamId: streamIdAsBytes(streamId),
+                        senderKey: userDevice.deviceKey,
+                        sessionIds: sessionIds,
+                        ciphertexts: ciphertext,
+                        algorithm: algorithm,
+                    }),
+                    miniblockHash,
+                    miniblockNum,
+                )
+                const eventId = bin_toHexString(event.hash)
+                await rpc.addEvent({
+                    streamId: streamIdAsBytes(toStreamId),
+                    event,
+                })
+                return { miniblockHash, eventId }
+            } catch (e) {
+                return undefined
+            }
         }
 
-        const encryptAndShareGroupSessions: IGroupEncryptionClient['encryptAndShareGroupSessions'] =
-            async (streamId, sessions, toDevices, algorithm) => {
+        const encryptAndShareGroupSessionsToStream: IGroupEncryptionClient['encryptAndShareGroupSessionsToStream'] =
+            async (streamId, sessions, algorithm, priorityUserIds) => {
+                const streamView = await getStream(streamId)
+                const otherUsers = Array.from(streamView.getUsersEntitledToKeyExchange()).filter(
+                    (userId) => !priorityUserIds.includes(userId),
+                )
                 check(sessions.length >= 0, 'no sessions to encrypt')
                 check(
                     new Set(sessions.map((s) => s.streamId)).size === 1,
@@ -221,81 +323,122 @@ export const createTownsClient = async (
                 const userDevice = crypto.getUserDevice()
                 const sessionIds = sessions.map((session) => session.sessionId)
                 const payload = makeSessionKeys(sessions)
-                const promises = Object.entries(toDevices).map(async ([userId, deviceKeys]) => {
-                    try {
-                        const ciphertext = await crypto.encryptWithDeviceKeys(
-                            toJsonString(SessionKeysSchema, payload),
-                            deviceKeys,
-                        )
-                        if (Object.keys(ciphertext).length === 0) {
-                            return
-                        }
-                        const toStreamId: string = makeUserInboxStreamId(userId)
-                        const { hash: miniblockHash } = await rpc.getLastMiniblockHash({
-                            streamId: streamIdAsBytes(toStreamId),
-                        })
-                        const event = await makeEvent(
-                            signer,
-                            make_UserInboxPayload_GroupEncryptionSessions({
-                                streamId: streamIdAsBytes(toStreamId),
-                                senderKey: userDevice.deviceKey,
-                                sessionIds: sessionIds,
-                                ciphertexts: ciphertext,
-                                algorithm: algorithm,
-                            }),
-                            miniblockHash,
-                        )
-                        const eventId = bin_toHexString(event.hash)
-                        await rpc.addEvent({
-                            streamId: streamIdAsBytes(streamId),
-                            event,
-                        })
-                        return { miniblockHash, eventId }
-                    } catch {
-                        return undefined
-                    }
+                const payloadStr = toJsonString(SessionKeysSchema, payload)
+                // do the priority users first
+                const priorityPromises = priorityUserIds.map(async (userId) => {
+                    return _encryptAndShareGroupSessionsToUser(
+                        streamId,
+                        userId,
+                        sessionIds,
+                        payloadStr,
+                        algorithm,
+                        userDevice,
+                    )
                 })
-                await Promise.all(promises)
+                await Promise.all(priorityPromises)
+                // then the other users
+                const otherPromises = otherUsers.map(async (userId) => {
+                    return _encryptAndShareGroupSessionsToUser(
+                        streamId,
+                        userId,
+                        sessionIds,
+                        payloadStr,
+                        algorithm,
+                        userDevice,
+                    )
+                })
+                await Promise.all(otherPromises)
             }
-        const getDevicesInStream: IGroupEncryptionClient['getDevicesInStream'] = async (
-            streamId,
-        ) => {
-            const stream = await getStream(streamId)
-            if (!stream) {
-                return {}
-            }
-            const members = stream.snapshot.members?.joined.map((x) =>
-                userIdFromAddress(x.userAddress),
-            )
-            return downloadUserDeviceInfo(members ?? [], true)
-        }
 
         return {
             getMiniblockInfo,
-            downloadUserDeviceInfo,
-            encryptAndShareGroupSessions,
-            getDevicesInStream,
+            encryptAndShareGroupSessionsToStream,
         }
     }
 
+    const appServiceClient = async (): Promise<AppRegistryRpcClient> => {
+        if (_appService) {
+            return _appService.appRegistryRpcClient
+        }
+        const appServiceConfig = config.services.find((s) => s.id === TownsService.AppRegistry)
+        if (!appServiceConfig) {
+            throw new Error('App registry service not found')
+        }
+        if (!appServiceConfig.url) {
+            throw new Error('App registry service url not found')
+        }
+        _appService = await AppRegistryService.authenticate(signerContext, appServiceConfig.url)
+        return _appService.appRegistryRpcClient
+    }
+
+    const importGroupEncryptionSessions = async (payload: {
+        streamId: string
+        sessions: UserInboxPayload_GroupEncryptionSessions
+    }) => {
+        const userDevice = crypto.getUserDevice()
+        const { streamId, sessions: session } = payload
+        // check if this message is to our device
+        const ciphertext = session.ciphertexts[userDevice.deviceKey]
+        if (!ciphertext) {
+            //log.debug('skipping, no session for our device')
+            return
+        }
+        // check if it contains any keys we need, default to GroupEncryption if the algorithm is not set
+        const parsed = parseGroupEncryptionAlgorithmId(
+            session.algorithm,
+            GroupEncryptionAlgorithmId.GroupEncryption,
+        )
+        if (parsed.kind === 'unrecognized') {
+            // todo dispatch event to update the error message
+            //this.log.error('skipping, invalid algorithm', session.algorithm)
+            return
+        }
+        const algorithm: GroupEncryptionAlgorithmId = parsed.value
+
+        // decrypt the message
+        const cleartext = await crypto.decryptWithDeviceKey(ciphertext, session.senderKey)
+        const sessionKeys = fromJsonString(SessionKeysSchema, cleartext)
+        check(sessionKeys.keys.length === session.sessionIds.length, 'bad sessionKeys')
+        // make group sessions
+        const sessions = sessionKeys.keys.map(
+            (key, i) =>
+                ({
+                    streamId: streamId,
+                    sessionId: session.sessionIds[i],
+                    sessionKey: key,
+                    algorithm: algorithm,
+                }) satisfies GroupEncryptionSession,
+        )
+        await crypto.importSessionKeys(streamId, sessions)
+    }
     await cryptoStore.initialize()
     crypto = new GroupEncryptionCrypto(buildGroupEncryptionClient(), cryptoStore)
     await crypto.init(params.encryptionDevice)
 
     const { hashValidation = false, signatureValidation = false } = params
+    const unpackEnvelopeOpts: UnpackEnvelopeOpts = {
+        disableHashValidation: !hashValidation,
+        disableSignatureValidation: !signatureValidation,
+    }
     const client = {
         crypto,
         keychain: cryptoStore,
         defaultGroupEncryptionAlgorithm: GroupEncryptionAlgorithmId.HybridGroupEncryption,
         rpc,
-        signer,
+        signerContext,
+        wallet,
         userId,
         disableHashValidation: !hashValidation,
         disableSignatureValidation: !signatureValidation,
+        unpackEnvelopeOpts,
+        appServiceClient,
         getStream,
+        getMiniblockInfo,
+        sendEvent,
         unpackEnvelope,
         unpackEnvelopes,
-        env: config.environmentId,
+        importGroupEncryptionSessions,
+        config,
     } satisfies Client_Base
 
     function extend(base: typeof client) {

@@ -10,6 +10,7 @@ import (
 	"connectrpc.com/otelconnect"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
@@ -44,7 +45,7 @@ type nodeRegistryImpl struct {
 
 	mu                    sync.RWMutex
 	nodesLocked           map[common.Address]*NodeRecord
-	appliedBlockNumLocked crypto.BlockNumber
+	appliedBlockNumLocked blockchain.BlockNumber
 
 	// All fields below are recalculated from nodesLocked by resetLocked()
 	// All fields are immutable, i.e. copy under RWLock can be returned to the caller
@@ -60,7 +61,7 @@ func LoadNodeRegistry(
 	ctx context.Context,
 	contract *registries.RiverRegistryContract,
 	localNodeAddress common.Address,
-	appliedBlockNum crypto.BlockNumber,
+	appliedBlockNum blockchain.BlockNumber,
 	chainMonitor crypto.ChainMonitor,
 	onChainConfig crypto.OnChainConfiguration,
 	httpClient *http.Client,

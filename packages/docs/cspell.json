@@ -63,7 +63,11 @@
         "merkle",
         "repudiable",
         "FINMA",
-        "permissioned"
+        "permissioned",
+        "bunx",
+        "mybot",
+        "unban",
+        "Unban"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [

@@ -7,9 +7,14 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/contracts/base"
+	contract_types "github.com/towns-protocol/towns/core/contracts/types"
+	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/xchain/contracts"
@@ -20,13 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-
-	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
-	"github.com/towns-protocol/towns/core/node/infra"
-	"github.com/towns-protocol/towns/core/node/logging"
-
-	contract_types "github.com/towns-protocol/towns/core/contracts/types"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type (
@@ -37,7 +36,7 @@ type (
 		checkerABI          *abi.ABI
 		checkerContract     *bind.BoundContract
 		baseChain           *crypto.Blockchain
-		baseChainStartBlock crypto.BlockNumber
+		baseChainStartBlock blockchain.BlockNumber
 		evmErrDecoder       *crypto.EvmErrorDecoder
 		config              *config.Config
 		cancel              context.CancelFunc
@@ -82,7 +81,7 @@ type XChain interface {
 }
 
 // MaxHistoricalBlockOffset is the maximum number of blocks to go back when searching for a start block.
-const MaxHistoricalBlockOffset crypto.BlockNumber = 100
+const MaxHistoricalBlockOffset blockchain.BlockNumber = 100
 
 // New creates a new xchain instance that reads entitlement requests from Base,
 // processes the requests and writes the results back to Base.
@@ -186,7 +185,7 @@ func New(
 	if cfg.History > 0 {
 		history := min(cfg.History, time.Minute)
 		blockTime := time.Duration(baseChain.Config.BlockTimeMs) * time.Millisecond
-		numBlocksToSubtract := crypto.BlockNumber(history/blockTime + 1)
+		numBlocksToSubtract := blockchain.BlockNumber(history/blockTime + 1)
 		numBlocksToSubtract = min(numBlocksToSubtract, MaxHistoricalBlockOffset)
 		if baseChainStartBlock > numBlocksToSubtract {
 			baseChainStartBlock = baseChainStartBlock - numBlocksToSubtract
@@ -301,11 +300,11 @@ func (x *xchain) Run(ctx context.Context) {
 		log                                 = x.Log(ctx)
 		entitlementAddress                  = x.config.GetEntitlementContractAddress()
 		entitlementCheckReceipts            = make(chan *entitlementCheckReceipt, 256)
-		onEntitlementCheckRequestedCallback = func(ctx context.Context, event types.Log) {
-			x.onEntitlementCheckRequested(ctx, event, entitlementCheckReceipts)
+		onEntitlementCheckRequestedCallback = func(ctx context.Context, req *base.IEntitlementCheckerEntitlementCheckRequested) {
+			x.onEntitlementCheckRequested(ctx, req, entitlementCheckReceipts)
 		}
-		onEntitlementCheckRequestedV2Callback = func(ctx context.Context, event types.Log) {
-			x.onEntitlementCheckRequestedV2(ctx, event, entitlementCheckReceipts)
+		onEntitlementCheckRequestedV2Callback = func(ctx context.Context, req *base.IEntitlementCheckerEntitlementCheckRequestedV2) {
+			x.onEntitlementCheckRequestedV2(ctx, req, entitlementCheckReceipts)
 		}
 	)
 	x.cancel = cancel
@@ -325,19 +324,9 @@ func (x *xchain) Run(ctx context.Context) {
 		x.metricsPublisher.StartMetricsServer(runCtx, cfg)
 	}
 
-	// Register callback for Base EntitlementCheckRequested V1 events
-	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		x.baseChainStartBlock,
-		entitlementAddress,
-		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequested"].ID}},
-		onEntitlementCheckRequestedCallback)
-
-	// Register callback for Base EntitlementCheckRequested V2 events
-	x.baseChain.ChainMonitor.OnContractWithTopicsEvent(
-		x.baseChainStartBlock,
-		entitlementAddress,
-		[][]common.Hash{{x.checkerABI.Events["EntitlementCheckRequestedV2"].ID}},
-		onEntitlementCheckRequestedV2Callback)
+	entitlementChainMonitor := crypto.NewEntitlementCheckChainMonitor(x.baseChain.ChainMonitor, entitlementAddress)
+	entitlementChainMonitor.OnEntitlementCheckRequest(x.baseChainStartBlock, onEntitlementCheckRequestedCallback)
+	entitlementChainMonitor.OnEntitlementCheckRequestV2(x.baseChainStartBlock, onEntitlementCheckRequestedV2Callback)
 
 	// Read entitlement check results from entitlementCheckReceipts and write the result to Base
 	x.writeEntitlementCheckResults(runCtx, entitlementCheckReceipts)
@@ -347,42 +336,33 @@ func (x *xchain) Run(ctx context.Context) {
 // event emitted on Base from the entitlement contract.
 func (x *xchain) onEntitlementCheckRequested(
 	ctx context.Context,
-	event types.Log,
+	reqV1 *base.IEntitlementCheckerEntitlementCheckRequested,
 	entitlementCheckResults chan<- *entitlementCheckReceipt,
 ) {
-	var (
-		log                     = x.Log(ctx)
-		entitlementCheckRequest = base.IEntitlementCheckerEntitlementCheckRequested{}
-	)
-
-	// try to decode the EntitlementCheckRequested event
-	if err := x.checkerContract.UnpackLog(&entitlementCheckRequest, "EntitlementCheckRequested", event); err != nil {
-		x.entitlementCheckRequested.IncFail()
-		log.Errorw("Unable to decode EntitlementCheckRequested event", "error", err)
-		return
-	}
+	log := x.Log(ctx)
 
 	log.Infow("Received EntitlementCheckRequested",
-		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]),
-		"request", entitlementCheckRequest,
+		"xchain.req.txid", hex.EncodeToString(reqV1.TransactionId[:]),
+		"request", reqV1,
 	)
 
 	// process the entitlement request and post the result to entitlementCheckResults
 	// First, convert the check to a V2 request for unified processing.
-	v2Request := base.IEntitlementCheckerEntitlementCheckRequestedV2{
-		WalletAddress:   entitlementCheckRequest.CallerAddress,
-		SpaceAddress:    entitlementCheckRequest.ContractAddress,
-		ResolverAddress: entitlementCheckRequest.ContractAddress,
-		TransactionId:   entitlementCheckRequest.TransactionId,
-		RoleId:          entitlementCheckRequest.RoleId,
-		SelectedNodes:   entitlementCheckRequest.SelectedNodes,
-		Raw:             entitlementCheckRequest.Raw,
+	reqV2 := base.IEntitlementCheckerEntitlementCheckRequestedV2{
+		WalletAddress:   reqV1.CallerAddress,
+		SpaceAddress:    reqV1.ContractAddress,
+		ResolverAddress: reqV1.ContractAddress,
+		TransactionId:   reqV1.TransactionId,
+		RoleId:          reqV1.RoleId,
+		SelectedNodes:   reqV1.SelectedNodes,
+		Raw:             reqV1.Raw,
 	}
-	outcome, err := x.handleEntitlementCheckRequest(ctx, v2Request)
+
+	outcome, err := x.handleEntitlementCheckRequest(ctx, &reqV2)
 	if err != nil {
 		x.entitlementCheckRequested.IncFail()
 		log.Errorw("Entitlement check failed to process",
-			"error", err, "xchain.req.txid", hex.EncodeToString(entitlementCheckRequest.TransactionId[:]))
+			"error", err, "xchain.req.txid", hex.EncodeToString(reqV1.TransactionId[:]))
 		return
 	}
 
@@ -392,7 +372,7 @@ func (x *xchain) onEntitlementCheckRequested(
 
 		// Convert outcome back to a V1 outcome so that the post method knows
 		// how to branch
-		outcome.Event = entitlementCheckRequest
+		outcome.Event = *reqV1
 		outcome.EventV2 = base.IEntitlementCheckerEntitlementCheckRequestedV2{}
 
 		log.Infow(
@@ -415,20 +395,10 @@ func (x *xchain) onEntitlementCheckRequested(
 // EntitlementCheckRequestedV2 event emitted on Base from the entitlement contract.
 func (x *xchain) onEntitlementCheckRequestedV2(
 	ctx context.Context,
-	event types.Log,
+	entitlementCheckRequestV2 *base.IEntitlementCheckerEntitlementCheckRequestedV2,
 	entitlementCheckResults chan<- *entitlementCheckReceipt,
 ) {
-	var (
-		log                       = x.Log(ctx)
-		entitlementCheckRequestV2 = base.IEntitlementCheckerEntitlementCheckRequestedV2{}
-	)
-
-	// try to decode the EntitlementCheckRequested event
-	if err := x.checkerContract.UnpackLog(&entitlementCheckRequestV2, "EntitlementCheckRequestedV2", event); err != nil {
-		x.entitlementCheckRequested.IncFail()
-		log.Errorw("Unable to decode EntitlementCheckRequestedV2 event", "error", err)
-		return
-	}
+	log := x.Log(ctx)
 
 	log.Infow("Received EntitlementCheckRequestedV2",
 		"xchain.req.txid", hex.EncodeToString(entitlementCheckRequestV2.TransactionId[:]))
@@ -458,7 +428,7 @@ func (x *xchain) onEntitlementCheckRequestedV2(
 // It can return nil, nil in case the request wasn't targeted for the current xchain instance.
 func (x *xchain) handleEntitlementCheckRequest(
 	ctx context.Context,
-	request base.IEntitlementCheckerEntitlementCheckRequestedV2,
+	request *base.IEntitlementCheckerEntitlementCheckRequestedV2,
 ) (*entitlementCheckReceipt, error) {
 	log := x.Log(ctx).
 		With("function", "handleEntitlementCheckRequest").
@@ -476,7 +446,7 @@ func (x *xchain) handleEntitlementCheckRequest(
 				TransactionID: request.TransactionId,
 				RoleId:        request.RoleId,
 				Outcome:       outcome,
-				EventV2:       request,
+				EventV2:       *request,
 			}, nil
 		}
 	}
@@ -745,7 +715,7 @@ func (x *xchain) getRuleData(
 // It returns an indication of the request passes checks.
 func (x *xchain) process(
 	ctx context.Context,
-	request base.IEntitlementCheckerEntitlementCheckRequestedV2,
+	request *base.IEntitlementCheckerEntitlementCheckRequestedV2,
 	client crypto.BlockchainClient,
 	callerAddress common.Address,
 ) (result bool, err error) {

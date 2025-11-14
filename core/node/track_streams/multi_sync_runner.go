@@ -29,8 +29,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/client"
-	"github.com/towns-protocol/towns/core/node/rpc/sync/legacyclient"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/utils/dynmsgbuf"
 )
@@ -40,7 +38,8 @@ const (
 )
 
 type RemoteStreamSyncer interface {
-	client.StreamsSyncer
+	Run()
+	Modify(ctx context.Context, request *protocol.ModifySyncRequest) (*protocol.ModifySyncResponse, bool, error)
 	GetSyncId() string
 }
 
@@ -89,7 +88,6 @@ type syncSessionRunner struct {
 	nodeRegistry             nodes.NodeRegistry
 	metrics                  *TrackStreamsSyncMetrics
 	maxStreamsPerSyncSession int
-	useSharedSyncer          bool
 	otelTracer               trace.Tracer
 
 	trackedViewForStream TrackedViewForStream
@@ -356,33 +354,20 @@ func (ssr *syncSessionRunner) Run() {
 		return
 	}
 
-	var syncer RemoteStreamSyncer
-	if ssr.useSharedSyncer {
-		syncer, err = client.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr,
-			ssr.otelTracer,
-		)
-	} else {
-		syncer, err = legacyclient.NewRemoteSyncer(
-			ssr.syncCtx,
-			ssr.cancelSync,
-			"SyncSessionRunner",
-			ssr.node,
-			streamClient,
-			ssr.relocateStream,
-			ssr.messages,
-			ssr.otelTracer,
-		)
-	}
+	syncer, err := newRemoteSyncer(
+		ssr.syncCtx,
+		ssr.cancelSync,
+		"SyncSessionRunner",
+		ssr.node,
+		streamClient,
+		ssr.relocateStream,
+		ssr.messages,
+		ssr.otelTracer,
+	)
 	if err != nil {
 		ssr.Close(base.AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to create a remote syncer for node, closing sync session runner").
 			Tag("targetNode", ssr.node).
-			Tag("sharedSyncer", ssr.useSharedSyncer).
 			LogWarn(logging.FromCtx(ssr.syncCtx)))
 		ssr.syncStarted.Done()
 		return
@@ -419,7 +404,7 @@ func (ssr *syncSessionRunner) Run() {
 		// let's close the runner. If the sessionSyncRunner is closed, all of it's streams are
 		// re-assigned and it will become unassignable.
 		case <-ssr.syncCtx.Done():
-			ssr.Close(ssr.syncCtx.Err())
+			ssr.Close(context.Cause(ssr.syncCtx))
 			return
 
 		// Process the current batch of messages.
@@ -428,7 +413,12 @@ func (ssr *syncSessionRunner) Run() {
 
 			// If the batch is nil, it means the messages channel was closed.
 			if batch == nil {
-				ssr.Close(base.RiverError(protocol.Err_BUFFER_FULL, "Sync session runner messages buffer is full, closing sync session runner"))
+				ssr.Close(
+					base.RiverError(
+						protocol.Err_BUFFER_FULL,
+						"Sync session runner messages buffer is full, closing sync session runner",
+					),
+				)
 				return
 			}
 
@@ -507,38 +497,14 @@ func (ssr *syncSessionRunner) Close(err error) {
 	}
 
 	// Relocate all streams on this runner.
-	ssr.streamRecords.Range(func(streamId shared.StreamId, _ *streamSyncInitRecord) bool {
+	ssr.streamRecords.Range(func(streamId shared.StreamId, record *streamSyncInitRecord) bool {
+		if base.AsRiverError(err).IsCodeWithBases(protocol.Err_UNAVAILABLE) {
+			// Advance sticky peer if the current one is not available anymore.
+			record.remotes.AdvanceStickyPeer(ssr.node)
+		}
 		ssr.relocateStream(streamId)
 		return true
 	})
-}
-
-// DistributeMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeMessage",
-		)
-	}
-}
-
-// DistributeBackfillMessage implements MessageDistributor interface
-func (ssr *syncSessionRunner) DistributeBackfillMessage(_ shared.StreamId, msg *protocol.SyncStreamsResponse) {
-	if err := ssr.messages.AddMessage(msg); err != nil {
-		logging.FromCtx(ssr.syncCtx).Errorw(
-			"Failed to add message to sync session runner",
-			"error", err,
-			"syncId", ssr.GetSyncId(),
-			"node", ssr.node,
-			"streamId", msg.GetStreamId(),
-			"func", "DistributeBackfillMessage",
-		)
-	}
 }
 
 // startSpan starts a new OpenTelemetry span for the syncSessionRunner, using the provided attributes.
@@ -571,7 +537,6 @@ func newSyncSessionRunner(
 	nodeRegistry nodes.NodeRegistry,
 	trackedViewForStream TrackedViewForStream,
 	maxStreamsPerSyncSession int,
-	useSharedSyncer bool,
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
@@ -582,7 +547,6 @@ func newSyncSessionRunner(
 		syncCtx:                  logging.CtxWithLog(ctx, logging.FromCtx(rootCtx).With("targetNode", targetNode)),
 		cancelSync:               cancel,
 		maxStreamsPerSyncSession: maxStreamsPerSyncSession,
-		useSharedSyncer:          useSharedSyncer,
 		trackedViewForStream:     trackedViewForStream,
 		relocateStreams:          relocateStreams,
 		node:                     targetNode,
@@ -702,7 +666,7 @@ func (msr *MultiSyncRunner) Run(
 			case <-rootCtx.Done():
 				return
 			case <-ticker.C:
-				msr.metrics.UnsyncedQueueLength.Set(float64(len(msr.streamsToSync)))
+				msr.metrics.UnsyncedQueueLength.Set(float64(msr.workerPool.WaitingQueueSize()))
 			}
 		}
 	}()
@@ -745,7 +709,6 @@ func (msr *MultiSyncRunner) addToSync(
 				return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 			},
 			msr.config.StreamsPerSyncSession,
-			msr.config.UseSharedSyncer,
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
@@ -812,11 +775,13 @@ func (msr *MultiSyncRunner) addToSync(
 	// if the underlying sync fails or the root context is canceled.
 	// AddStream involves an rpc request to the node, so we use the node's worker pool to rate limit.
 	if err := runner.AddStream(rootCtx, *record); err != nil {
-		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) {
-			// Aggressively release the lock on target node resources to maximize request throughput.
-			pool.Release(1)
+		// Aggressively release the lock on target node resources to maximize request throughput.
+		pool.Release(1)
 
-			// Create a new runner and replace this one
+		if base.IsRiverErrorCode(err, protocol.Err_SYNC_SESSION_RUNNER_UNASSIGNABLE) ||
+			base.IsRiverErrorCode(err, protocol.Err_UNAVAILABLE) {
+			// If the sync operation is full OR the remote node is not available, we need to
+			// re-assign the stream to a new sync session runner.
 			newRunner := newSyncSessionRunner(
 				rootCtx,
 				msr.streamsToSync,
@@ -825,7 +790,6 @@ func (msr *MultiSyncRunner) addToSync(
 					return msr.trackedViewConstructor(rootCtx, streamId, msr.onChainConfig, streamAndCookie)
 				},
 				msr.config.StreamsPerSyncSession,
-				msr.config.UseSharedSyncer,
 				targetNode,
 				msr.metrics,
 				msr.otelTracer,
@@ -874,6 +838,9 @@ func (msr *MultiSyncRunner) addToSync(
 				"failedRemote", targetNode,
 				"newRemote", newRemote,
 			)
+		} else if base.IsRiverErrorCode(err, protocol.Err_NOT_FOUND) {
+			log.Warn("Sync not found; cancelling sync runner and relocating streams", "syncId", runner.syncer.GetSyncId())
+			runner.Close(err)
 		} else {
 			log.Errorw(
 				"Error adding stream to sync on node, retrying",

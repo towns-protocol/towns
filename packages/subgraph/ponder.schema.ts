@@ -1,36 +1,123 @@
-import { onchainTable, relations } from 'ponder'
+import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
 
-export const space = onchainTable('spaces', (t) => ({
-    id: t.hex().primaryKey(),
-    owner: t.hex(),
-    tokenId: t.bigint(),
-    name: t.text(),
-    uri: t.text(),
-    shortDescription: t.text(),
-    longDescription: t.text(),
-    createdAt: t.bigint(),
-    paused: t.boolean(),
-    totalAmountStaked: t.bigint().default(0n),
-}))
+export const analyticsEventType = onchainEnum('analytics_event_type', [
+    'swap',
+    'tip',
+    'join',
+    'review',
+])
+
+// Type definitions for analytics event data
+export type SwapEventData = {
+    type: 'swap'
+    tokenIn: string
+    tokenOut: string
+    amountIn: string
+    amountOut: string
+    recipient: string
+    poster: string
+}
+
+export type TipEventData = {
+    type: 'tip'
+    sender: string
+    receiver: string
+    currency: string
+    amount: string
+    tokenId: string
+    messageId: string
+    channelId: string
+}
+
+export type JoinEventData = {
+    type: 'join'
+    recipient: string
+    tokenId: string
+}
+
+export type ReviewEventData = {
+    type: 'review'
+    user: string
+    rating: number
+    comment: string
+}
+
+export type AnalyticsEventData = SwapEventData | TipEventData | JoinEventData | ReviewEventData
+
+export const space = onchainTable(
+    'spaces',
+    (t) => ({
+        id: t.hex().primaryKey(),
+        owner: t.hex().notNull(),
+        tokenId: t.bigint().notNull(),
+        name: t.text().notNull(),
+        nameLowercased: t.text().notNull(),
+        uri: t.text().notNull(),
+        shortDescription: t.text().notNull(),
+        longDescription: t.text().notNull(),
+        createdAt: t.bigint().notNull(),
+        paused: t.boolean().notNull(),
+        totalAmountStaked: t.bigint().default(0n),
+        swapVolume: t.bigint().default(0n),
+        tipVolume: t.bigint().default(0n),
+        joinVolume: t.bigint().default(0n),
+        memberCount: t.bigint().default(0n),
+        reviewCount: t.bigint().default(0n),
+    }),
+    (table) => ({
+        tokenIdIdx: index().on(table.tokenId),
+        totalAmountStakedIdx: index().on(table.totalAmountStaked),
+    }),
+)
 
 export const swap = onchainTable('swaps', (t) => ({
     txHash: t.hex().primaryKey(),
-    spaceId: t.hex(),
-    recipient: t.hex(),
-    tokenIn: t.hex(),
-    tokenOut: t.hex(),
-    amountIn: t.bigint(),
-    amountOut: t.bigint(),
-    poster: t.hex(),
-    blockTimestamp: t.bigint(),
-    createdAt: t.bigint(),
+    spaceId: t.hex().notNull(),
+    recipient: t.hex().notNull(),
+    tokenIn: t.hex().notNull(),
+    tokenOut: t.hex().notNull(),
+    amountIn: t.bigint().notNull(),
+    amountOut: t.bigint().notNull(),
+    poster: t.hex().notNull(),
+    blockTimestamp: t.bigint().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
+
+// Denormalized events table for all analytics
+export const analyticsEvent = onchainTable(
+    'analytics_events',
+    (t) => ({
+        txHash: t.hex().notNull(),
+        logIndex: t.integer().notNull(),
+        spaceId: t.hex().notNull(),
+        eventType: analyticsEventType().notNull(),
+        blockTimestamp: t.bigint().notNull(),
+        // ETH value for the event (calculated field for sorting/aggregation)
+        ethAmount: t.bigint().default(0n),
+
+        // Event-specific data stored as typed JSON
+        eventData: t.json().$type<AnalyticsEventData>().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.txHash, table.logIndex] }),
+        txHashIdx: index().on(table.txHash),
+        logIndexIdx: index().on(table.logIndex),
+        spaceIdx: index().on(table.spaceId),
+        timestampIdx: index().on(table.blockTimestamp),
+        eventTypeIdx: index().on(table.eventType),
+        spaceEventTypeTimestampIdx: index().on(
+            table.spaceId,
+            table.eventType,
+            table.blockTimestamp,
+        ),
+    }),
+)
 
 export const swapFee = onchainTable('swap_fees', (t) => ({
     spaceId: t.hex().primaryKey(),
-    posterFeeBps: t.integer(),
-    collectPosterFeeToSpace: t.boolean(),
-    createdAt: t.bigint(),
+    posterFeeBps: t.integer().notNull(),
+    collectPosterFeeToSpace: t.boolean().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
 
 // each space has one swap fee
@@ -43,15 +130,25 @@ export const spaceToSwaps = relations(space, ({ many }) => ({
     swaps: many(swap),
 }))
 
+// each space has many analytics events
+export const spaceToAnalyticsEvents = relations(space, ({ many }) => ({
+    analyticsEvents: many(analyticsEvent),
+}))
+
 // each swap belongs to a space
 export const swapToSpace = relations(swap, ({ one }) => ({
     space: one(space, { fields: [swap.spaceId], references: [space.id] }),
 }))
 
+// each analytics event belongs to a space
+export const analyticsEventToSpace = relations(analyticsEvent, ({ one }) => ({
+    space: one(space, { fields: [analyticsEvent.spaceId], references: [space.id] }),
+}))
+
 export const swapRouter = onchainTable('swap_router', (t) => ({
     txHash: t.hex().primaryKey(),
-    spaceFactory: t.hex(),
-    createdAt: t.bigint(),
+    spaceFactory: t.hex().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
 
 // each swap belongs to a swap router
@@ -61,15 +158,15 @@ export const swapToSwapRouter = relations(swap, ({ one }) => ({
 
 export const swapRouterSwap = onchainTable('swap_router_swap', (t) => ({
     txHash: t.hex().primaryKey(),
-    router: t.hex(),
-    caller: t.hex(),
-    tokenIn: t.hex(),
-    tokenOut: t.hex(),
-    amountIn: t.bigint(),
-    amountOut: t.bigint(),
-    recipient: t.hex(),
-    blockTimestamp: t.bigint(),
-    createdAt: t.bigint(),
+    router: t.hex().notNull(),
+    caller: t.hex().notNull(),
+    tokenIn: t.hex().notNull(),
+    tokenOut: t.hex().notNull(),
+    amountIn: t.bigint().notNull(),
+    amountOut: t.bigint().notNull(),
+    recipient: t.hex().notNull(),
+    blockTimestamp: t.bigint().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
 
 // each swap belongs to a swap router swap
@@ -82,12 +179,12 @@ export const swapToSwapRouterSwap = relations(swap, ({ one }) => ({
 
 export const feeDistribution = onchainTable('fee_distribution', (t) => ({
     txHash: t.hex().primaryKey(),
-    token: t.hex(),
-    treasury: t.hex(),
-    poster: t.hex(),
-    treasuryAmount: t.bigint(),
-    posterAmount: t.bigint(),
-    createdAt: t.bigint(),
+    token: t.hex().notNull(),
+    treasury: t.hex().notNull(),
+    poster: t.hex().notNull(),
+    treasuryAmount: t.bigint().notNull(),
+    posterAmount: t.bigint().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
 
 // each fee distribution belongs to a swap router swap
@@ -99,14 +196,20 @@ export const feeDistributionToSwapRouterSwap = relations(feeDistribution, ({ one
 }))
 
 // stakers
-export const stakers = onchainTable('stakers', (t) => ({
-    depositId: t.bigint().primaryKey(),
-    owner: t.hex(),
-    delegatee: t.hex(),
-    beneficiary: t.hex(),
-    amount: t.bigint(),
-    createdAt: t.bigint(),
-}))
+export const stakers = onchainTable(
+    'stakers',
+    (t) => ({
+        depositId: t.bigint().primaryKey(),
+        owner: t.hex().notNull(),
+        delegatee: t.hex().notNull(),
+        beneficiary: t.hex().notNull(),
+        amount: t.bigint().notNull(),
+        createdAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        ownerIdx: index().on(table.owner),
+    }),
+)
 
 // each staker can optionally belong to a space
 export const stakingToSpace = relations(stakers, ({ one }) => ({
@@ -124,8 +227,8 @@ export const spaceToStakers = relations(space, ({ many }) => ({
 // operators
 export const operator = onchainTable('operators', (t) => ({
     address: t.hex().primaryKey(),
-    status: t.integer(),
-    createdAt: t.bigint(),
+    status: t.integer().notNull(),
+    createdAt: t.bigint().notNull(),
 }))
 
 // each staker can optionally belong to an operator
@@ -140,3 +243,125 @@ export const stakingToOperator = relations(stakers, ({ one }) => ({
 export const operatorToStakings = relations(operator, ({ many }) => ({
     stakings: many(stakers),
 }))
+
+// apps
+export const app = onchainTable('apps', (t) => ({
+    address: t.hex().primaryKey(),
+    appId: t.hex().notNull(),
+    client: t.hex().notNull(),
+    module: t.hex().notNull(),
+    owner: t.hex().notNull(),
+    createdAt: t.bigint().notNull(),
+    permissions: t.text().array().notNull(),
+    isRegistered: t.boolean().default(false),
+    isBanned: t.boolean().default(false),
+    installedIn: t.hex().array().notNull(),
+}))
+
+// reviews
+export const review = onchainTable(
+    'reviews',
+    (t) => ({
+        spaceId: t.hex().notNull(),
+        user: t.hex().notNull(),
+        comment: t.text().notNull(),
+        rating: t.integer().notNull(),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.spaceId, table.user] }),
+        spaceIdx: index().on(table.spaceId),
+        userIdx: index().on(table.user),
+    }),
+)
+
+// subscriptions
+export const subscription = onchainTable(
+    'subscriptions',
+    (t) => ({
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        space: t.hex().notNull(),
+        tokenId: t.bigint().notNull(),
+        totalSpent: t.bigint().default(0n),
+        renewalAmount: t.bigint().default(0n),
+        lastRenewalTime: t.bigint(),
+        nextRenewalTime: t.bigint().notNull(),
+        expiresAt: t.bigint(),
+        active: t.boolean().default(true),
+        createdAt: t.bigint().notNull(),
+        updatedAt: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.account, table.entityId] }),
+        spaceIdx: index().on(table.space),
+        spaceTokenIdx: index().on(table.space, table.tokenId),
+        nextRenewalTimeIdx: index().on(table.nextRenewalTime),
+        activeIdx: index().on(table.active),
+    }),
+)
+
+// subscription failures
+export const subscriptionFailure = onchainTable(
+    'subscription_failures',
+    (t) => ({
+        account: t.hex().notNull(),
+        entityId: t.integer().notNull(),
+        timestamp: t.bigint().notNull(),
+        reason: t.text().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.account, table.entityId, table.timestamp] }),
+        timestampIdx: index().on(table.timestamp),
+    }),
+)
+
+// each space has many reviews
+export const spaceToReviews = relations(space, ({ many }) => ({
+    reviews: many(review),
+}))
+
+// each review belongs to a space
+export const reviewToSpace = relations(review, ({ one }) => ({
+    space: one(space, { fields: [review.spaceId], references: [space.id] }),
+}))
+
+// each space has many subscriptions
+export const spaceToSubscriptions = relations(space, ({ many }) => ({
+    subscriptions: many(subscription),
+}))
+
+// each subscription belongs to a space
+export const subscriptionToSpace = relations(subscription, ({ one }) => ({
+    space: one(space, { fields: [subscription.space], references: [space.id] }),
+}))
+
+// each subscription can have many failures
+export const subscriptionToFailures = relations(subscription, ({ many }) => ({
+    failures: many(subscriptionFailure),
+}))
+
+// each failure belongs to a subscription
+export const failureToSubscription = relations(subscriptionFailure, ({ one }) => ({
+    subscription: one(subscription, {
+        fields: [subscriptionFailure.account, subscriptionFailure.entityId],
+        references: [subscription.account, subscription.entityId],
+    }),
+}))
+
+// tip leaderboard - per-space tip stats per user (senders only)
+export const tipLeaderboard = onchainTable(
+    'tip_leaderboard',
+    (t) => ({
+        user: t.hex().notNull(),
+        spaceId: t.hex().notNull(),
+        totalSent: t.bigint().default(0n),
+        tipsSentCount: t.integer().default(0),
+        lastActivity: t.bigint().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.user, table.spaceId] }),
+        spaceSentIdx: index().on(table.spaceId, table.totalSent),
+    }),
+)

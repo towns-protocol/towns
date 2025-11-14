@@ -4,7 +4,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { MockERC20 } from './MockERC20'
 import { deployContract, Mutex } from './TestGatingUtils'
 import { Address } from '../types/ContractTypes'
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 
 const logger = dlogger('csb:TestGatingERC20')
 
@@ -76,6 +76,7 @@ async function publicMint(tokenName: string, toAddress: Address, amount: number)
         abi: MockERC20.abi,
         address: contractAddress,
         eventName: 'Transfer',
+        // @ts-ignore
         args: {
             to: toAddress,
         },

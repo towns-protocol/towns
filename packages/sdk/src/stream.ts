@@ -1,5 +1,5 @@
 import { ChannelMessage, MembershipOp, Snapshot, SyncCookie } from '@towns-protocol/proto'
-import { DLogger } from '@towns-protocol/dlog'
+import { DLogger } from '@towns-protocol/utils'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'

@@ -1,7 +1,7 @@
 import { EncryptedData, EncryptedDataSchema, EncryptedDataVersion } from '@towns-protocol/proto'
-import { EncryptionAlgorithm, IEncryptionParams } from './base'
+import { EncryptionAlgorithm, EnsureOutboundSessionOpts, IEncryptionParams } from './base'
 import { GroupEncryptionAlgorithmId } from './olmLib'
-import { bin_toBase64, dlog } from '@towns-protocol/dlog'
+import { bin_toBase64, dlog } from '@towns-protocol/utils'
 import { create } from '@bufbuild/protobuf'
 
 const log = dlog('csb:encryption:groupEncryption')
@@ -29,23 +29,23 @@ export class GroupEncryption extends EncryptionAlgorithm {
 
     public async ensureOutboundSession(
         streamId: string,
-        opts?: { awaitInitialShareSession: boolean },
-    ): Promise<void> {
+        opts?: EnsureOutboundSessionOpts,
+    ): Promise<string> {
         try {
-            await this.device.getOutboundGroupSessionKey(streamId)
-            return
+            const sessionKey = await this.device.getOutboundGroupSessionKey(streamId)
+            return sessionKey.sessionId
         } catch (error) {
             // if we don't have a cached session at this point, create a new one
             const sessionId = await this.device.createOutboundGroupSession(streamId)
             log(`Started new megolm session ${sessionId}`)
             // don't wait for the session to be shared
-            const promise = this.shareSession(streamId, sessionId)
+            const promise = this.shareSession(streamId, sessionId, opts?.priorityUserIds ?? [])
 
-            if (opts?.awaitInitialShareSession === true) {
+            if (opts?.shareShareSessionTimeoutMs === 0) {
                 await promise
             } else {
                 // await the promise but timeout after N seconds
-                const waitTimeBeforeMovingOn = 30000
+                const waitTimeBeforeMovingOn = opts?.shareShareSessionTimeoutMs ?? 30000
                 await Promise.race([
                     promise,
                     new Promise<void>((resolve, _) =>
@@ -53,22 +53,33 @@ export class GroupEncryption extends EncryptionAlgorithm {
                     ),
                 ])
             }
+            return sessionId
         }
     }
 
-    private async shareSession(streamId: string, sessionId: string): Promise<void> {
-        const devicesInRoom = await this.client.getDevicesInStream(streamId)
-        const session = await this.device.exportInboundGroupSession(streamId, sessionId)
+    public async hasOutboundSession(streamId: string): Promise<boolean> {
+        try {
+            await this.device.getOutboundGroupSessionKey(streamId)
+            return true
+        } catch {
+            return false
+        }
+    }
 
+    private async shareSession(
+        streamId: string,
+        sessionId: string,
+        priorityUserIds: string[],
+    ): Promise<void> {
+        const session = await this.device.exportInboundGroupSession(streamId, sessionId)
         if (!session) {
             throw new Error('Session key not found for session ' + sessionId)
         }
-
-        await this.client.encryptAndShareGroupSessions(
+        await this.client.encryptAndShareGroupSessionsToStream(
             streamId,
             [session],
-            devicesInRoom,
             this.algorithm,
+            priorityUserIds,
         )
     }
 

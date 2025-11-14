@@ -81,11 +81,13 @@ func (s *remoteProviderImpl) GetMbs(
 		return nil, err
 	}
 
-	resp, err := remote.GetMiniblocks(ctx, connect.NewRequest(&GetMiniblocksRequest{
+	req := connect.NewRequest(&GetMiniblocksRequest{
 		StreamId:      streamId[:],
 		FromInclusive: fromInclusive,
 		ToExclusive:   toExclusive,
-	}))
+	})
+	req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err := remote.GetMiniblocks(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -141,4 +143,24 @@ func (s *remoteProviderImpl) GetLastMiniblockHash(
 		Hash: common.BytesToHash(resp.Msg.Hash),
 		Num:  resp.Msg.MiniblockNum,
 	}, nil
+}
+
+func (s *remoteProviderImpl) GetStream(
+	ctx context.Context,
+	node common.Address,
+	request *GetStreamRequest,
+) (*GetStreamResponse, error) {
+	remote, err := s.nodeRegistry.GetStreamServiceClientForAddress(node)
+	if err != nil {
+		return nil, err
+	}
+
+	req := connect.NewRequest(request)
+	req.Header().Set(RiverNoForwardHeader, RiverHeaderTrueValue)
+	resp, err := remote.GetStream(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Msg, nil
 }

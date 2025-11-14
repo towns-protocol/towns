@@ -12,7 +12,6 @@ export BASE_CHAIN_ID="${BASE_CHAIN_ID:-31337}"
 export RIVER_CHAIN_ID="${RIVER_CHAIN_ID:-31338}"
 
 SKIP_CHAIN_WAIT="${SKIP_CHAIN_WAIT:-false}"
-BASE_EXECUTION_CLIENT="${BASE_EXECUTION_CLIENT:-}"
 BASE_ANVIL_SOURCE_DIR=${BASE_ANVIL_SOURCE_DIR:-"base_anvil"}
 RIVER_ANVIL_SOURCE_DIR=${RIVER_ANVIL_SOURCE_DIR:-"river_anvil"}
 RIVER_BLOCK_TIME="${RIVER_BLOCK_TIME:-1}"
@@ -39,16 +38,19 @@ set +a
 : ${RIVER_ANVIL_RPC_URL:?}
 
 if [ "${1-}" != "nobuild" ]; then
-    yarn run -T turbo build --filter=@towns-protocol/contracts
+    forge build
 fi
 
 # Account Abstraction is not supported on anvil
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployEntrypoint
 # make deploy-any-local context=$RIVER_ENV rpc=base_anvil type=utils contract=DeployAccountFactory
 
-# Deploying contracts with automine is faster
-cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
-cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
+# Deploying contracts with automine is faster if RIVER_BLOCK_TIME is ge 1
+# NOTE anvil fails if you try to set the block time to 0.1, but it's fine to start it with 0.1
+if [ "$RIVER_BLOCK_TIME" -ge 1 ]; then
+    cast rpc evm_setAutomine true --rpc-url $BASE_ANVIL_RPC_URL
+    cast rpc evm_setAutomine true --rpc-url $RIVER_ANVIL_RPC_URL
+fi
 
 # Deploy base contracts
 "$SCRIPT_DIR/deploy-base-contracts.sh" nobuild
@@ -62,19 +64,17 @@ cast rpc anvil_setCode $MULTICALL3_ADDRESS $MULTICALL3_BYTECODE --rpc-url $RIVER
 make deploy-any-local context=$RIVER_ENV rpc=river_anvil type=diamonds contract=DeployRiverRegistry
 
 # Restore to interval mining
-cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
-cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
+if [ "$RIVER_BLOCK_TIME" -ge 1 ]; then
+    cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $BASE_ANVIL_RPC_URL
+    cast rpc evm_setIntervalMining $RIVER_BLOCK_TIME --rpc-url $RIVER_ANVIL_RPC_URL
+fi
 
 cd "$PROJECT_ROOT"
 
+GENERATED_DIR="$PROJECT_ROOT/packages/generated"
 # Ensure the destination directory exists
-mkdir -p "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}"
-cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/"
-
-if [ -n "$BASE_EXECUTION_CLIENT" ]; then
-    echo "{\"executionClient\": \"${BASE_EXECUTION_CLIENT}\"}" > "$PROJECT_ROOT/packages/generated/deployments/${RIVER_ENV}/base/executionClient.json"
-fi
+mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
+cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
 
 # Update the config
-cd "$PROJECT_ROOT/packages/generated"
-yarn make-config
+cd "$GENERATED_DIR" && yarn make-config

@@ -1,7 +1,7 @@
 import { Client, ConnectTransportOptions, createClient } from '@towns-protocol/rpc-connector/common'
 import { createHttp2ConnectTransport } from '@towns-protocol/rpc-connector'
 import { Snapshot, StreamService } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { snakeCase } from 'lodash-es'
 import {
@@ -9,6 +9,7 @@ import {
     getRetryDelayMs,
     loggingInterceptor,
     retryInterceptor,
+    setHeaderInterceptor,
     type RetryParams,
 } from './rpcInterceptors'
 import { UnpackEnvelopeOpts, unpackMiniblock, unpackSnapshot } from './sign'
@@ -46,6 +47,13 @@ export function makeStreamRpcClient(
             retryInterceptor({ ...retryParams, refreshNodeUrl }),
         ],
         defaultTimeoutMs: undefined, // default timeout is undefined, we add a timeout in the retryInterceptor
+    }
+    // Inject test-only entitlement bypass header when configured via env (used by SDK tests).
+    const testBypassSecret = getEnvVar('RIVER_TEST_ENT_BYPASS_SECRET')
+    if (testBypassSecret) {
+        options.interceptors?.unshift(
+            setHeaderInterceptor({ 'X-River-Test-Bypass': testBypassSecret }),
+        )
     }
     if (getEnvVar('RIVER_DEBUG_TRANSPORT') !== 'true') {
         options.useBinaryFormat = true

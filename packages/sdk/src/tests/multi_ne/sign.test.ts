@@ -3,9 +3,9 @@
  */
 
 import { cloneDeep } from 'lodash-es'
-import { unpackEnvelope, makeEvent, publicKeyToAddress } from '../../sign'
+import { unpackEnvelope, makeEvent } from '../../sign'
 import { make_UserPayload_Inception } from '../../types'
-import { dlog, bin_fromHexString, bin_toHexString } from '@towns-protocol/dlog'
+import { dlog, bin_fromHexString, bin_toHexString, publicKeyToAddress } from '@towns-protocol/utils'
 import { makeUserStreamId, streamIdToBytes } from '../../id'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { ethers } from 'ethers'

@@ -15,7 +15,8 @@ describe('BaseContractShim read method with retry logic', () => {
         return { provider, mockShim }
     }
 
-    describe.concurrent('retry functionality', () => {
+    // removed retry functionality for now 10.28.25
+    describe.skip('retry functionality', () => {
         it('should succeed on first try when contract call works', async () => {
             const { provider, mockShim } = await createTestSetup()
             await mockShim.getNetwork()
@@ -69,25 +70,6 @@ describe('BaseContractShim read method with retry logic', () => {
                 'Persistent network error',
             )
             expect(spy).toHaveBeenCalledTimes(4) // Initial + 3 retries
-        })
-
-        it('should work with different contract methods', async () => {
-            const { provider, mockShim } = await createTestSetup()
-            await mockShim.getNetwork()
-
-            // Test with tokenURI method
-            const spy = vi
-                .spyOn(provider, 'call')
-                .mockRejectedValueOnce(new Error('RPC error'))
-                .mockResolvedValueOnce(
-                    '0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001068747470733a2f2f746573742e636f6d00000000000000000000000000000000',
-                )
-
-            const contract = mockShim.read
-            const result = await contract.tokenURI(1)
-
-            expect(typeof result).toBe('string')
-            expect(spy).toHaveBeenCalledTimes(2)
         })
 
         it('should work with callStatic methods', async () => {

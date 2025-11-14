@@ -1,4 +1,4 @@
-# Based on https://github.com/docker/build-push-action
+# Multi-architecture Docker build using native runners in parallel
 
 name: 'Build Towns Anvil Docker Image'
 
@@ -6,85 +6,108 @@ on:
     push:
         branches:
             - main
+        paths:
+            - '.github/workflows/Towns_anvil_docker.yml'
+            - '.github/workflows/_build-docker-arch.yml'
+            - 'packages/anvil-docker/**'
+            - 'packages/contracts/scripts/**'
+            - 'packages/contracts/src/**'
+            - 'scripts/deploy*contracts.sh'
+            - 'scripts/start-local-basechain.sh'
+            - 'scripts/start-local-riverchain.sh'
+            - 'core/justfile'
 
     workflow_dispatch: # A build was manually requested
 
 env:
-    PLATFORMS: linux/amd64,linux/arm64
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL || secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
 
 jobs:
-    build:
-        name: Build docker image
-
+    # Generate BUILD_HASH for Towns Anvil
+    generate-tags:
+        name: Generate build hash
         runs-on: ubuntu-latest
-
         permissions:
-            contents: write
-            packages: write
-
+            contents: read
+        outputs:
+            build_hash: ${{ steps.generate-tags.outputs.BUILD_HASH }}
         steps:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Setup AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v4
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+            - uses: taiki-e/install-action@just
 
-            - name: Login to Amazon ECR
-              id: login-aws-ecr
-              uses: aws-actions/amazon-ecr-login@v2
-              with:
-                  registry-type: 'public'
-
-            - name: Build and push image to Amazon ECR
-              id: build-image
-              env:
-                  ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-                  #This can be custom alias once requested to aws and approved for public repo
-                  REGISTRY_ALIAS: h5v6m2x1
-                  ECR_REPOSITORY: towns-anvil
-                  RELEASE_VERSION: ${{ inputs.release_version }}
-                  ADDITIONAL_TAGS: ${{ inputs.additional_tags_csv }}
-              working-directory: .
+            - name: Generate build hash for Towns Anvil
+              id: generate-tags
               run: |
-                  COMMIT_HASH=$(git describe --tags --always --dirty)
-                  BRANCH=$(git rev-parse --abbrev-ref HEAD)
-                  TAGS=($COMMIT_HASH)
+                  # Compute the hash of all files that affect the Docker build
+                  cd core
+                  BUILD_HASH=$(just _get-docker-build-hash)
+                  cd ..
 
-                  # If this is a push to main, we also tag the image as dev,
-                  # But RELEASE_VERSION remains untouched, as `dev` is not a version, but just a tag.
-                  if [ "$BRANCH" == "main" ] && [ "${{ github.event_name }}" == "push" ]; then  
-                    TAGS+=(latest)
-                  fi
+                  echo "Build hash: $BUILD_HASH"
+                  echo "BUILD_HASH=$BUILD_HASH" >> $GITHUB_OUTPUT
 
-                  echo "Building image with the following tags: ${TAGS[@]}"
-                  echo "Commit hash: $COMMIT_HASH"
-                  echo "Branch: $BRANCH"
-                  echo "Release version: $RELEASE_VERSION"
+    # Build AMD64 image on native runner
+    build-amd64:
+        name: Build AMD64 image
+        needs: generate-tags
+        uses: ./.github/workflows/_build-docker-arch.yml
+        with:
+            architecture: amd64
+            platform: linux/amd64
+            runner: ubuntu-latest
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
+            dockerfile: ./packages/anvil-docker/Dockerfile
+            cache_scope_prefix: towns-anvil
+            append_arch_suffix: true
+            extra_tags: ${{ needs.generate-tags.outputs.build_hash }}
+        secrets: inherit
 
-                  docker build \
-                    -t towns-anvil:local-latest \
-                    -f ./packages/contracts/docker/Dockerfile \
-                    .
+    # Build ARM64 image on native runner
+    build-arm64:
+        name: Build ARM64 image
+        needs: generate-tags
+        uses: ./.github/workflows/_build-docker-arch.yml
+        with:
+            architecture: arm64
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
+            dockerfile: ./packages/anvil-docker/Dockerfile
+            cache_scope_prefix: towns-anvil
+            append_arch_suffix: true
+            extra_tags: ${{ needs.generate-tags.outputs.build_hash }}
+        secrets: inherit
 
-                  for tag in "${TAGS[@]}"; do
-                    echo "Pushing image to $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag"
-                    docker tag towns-anvil:local-latest $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
-                    docker push $ECR_REGISTRY/$REGISTRY_ALIAS/$ECR_REPOSITORY:$tag
-                  done
-            # If action failed, we send a slack notification
+    # Merge architecture-specific images into multi-arch manifest
+    merge-manifest:
+        needs: [generate-tags, build-amd64, build-arm64]
+        uses: ./.github/workflows/_create-docker-manifest.yml
+        with:
+            ecr_registry_alias: h5v6m2x1
+            ecr_repository: towns-anvil
+            amd64_tags: ${{ needs.build-amd64.outputs.arch_tags }}
+            arm64_tags: ${{ needs.build-arm64.outputs.arch_tags }}
+            validation_tag: ${{ needs.generate-tags.outputs.build_hash }}
+        secrets: inherit
+
+    # Slack notification on failure
+    notify-failure:
+        name: Notify on failure
+        if: failure()
+        needs: [generate-tags, build-amd64, build-arm64, merge-manifest]
+        runs-on: ubuntu-latest
+        steps:
             - name: Slack notification
-              if: failure()
               uses: slackapi/slack-github-action@v1.24.0
               with:
                   payload: |
                       {
-                          "step": "Build Towns Anvil Docker Image",
-                          "environment": "N/",
+                          "step": "Build Towns Anvil Docker Image (Multi-arch)",
+                          "environment": "N/A",
                           "branch": "${{ github.ref }}",
                           "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
                           "commit": "${{ github.sha }}",

@@ -2,7 +2,7 @@
  * @group main
  */
 import { MembershipOp, StreamAndCookie, SyncOp } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import {
     makeUniqueChannelStreamId,
     makeUserStreamId,

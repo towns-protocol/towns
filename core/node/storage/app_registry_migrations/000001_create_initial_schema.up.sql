@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS app_session_keys (
 
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 
--- Combined index on device_id and individual elements of the session_ids column so that we can search the db
--- by (device_id, session_id) efficiently
+-- Combined index on device_key and individual elements of the session_ids column so that we can search the db
+-- by (device_key, session_id) efficiently
 CREATE INDEX idx_app_session_keys_device_key_session_id ON app_session_keys USING GIN (device_key, session_ids);
 
 CREATE TABLE IF NOT EXISTS enqueued_messages (

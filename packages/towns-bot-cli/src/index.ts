@@ -1,23 +1,13 @@
-import minimist from 'minimist'
 import { green, red, yellow, cyan } from 'picocolors'
 import { init, TEMPLATES, type Template } from './modules/init.js'
 import { update } from './modules/update.js'
-
-export type Argv = typeof argv
-
-const argv = minimist(process.argv.slice(2), {
-    string: ['template'],
-    boolean: ['help'],
-    alias: {
-        h: 'help',
-        t: 'template',
-    },
-})
+import { parseArgs, isInitArgs, isUpdateArgs } from './parser.js'
 
 async function main() {
-    const command = argv._[0]
+    const args = parseArgs(process.argv.slice(2))
+    const command = args._[0]
 
-    if (argv.help || !command) {
+    if (args.help || !command) {
         showHelp()
         return
     }
@@ -25,10 +15,14 @@ async function main() {
     try {
         switch (command) {
             case 'init':
-                await init(argv)
+                if (isInitArgs(args)) {
+                    await init(args)
+                }
                 break
             case 'update':
-                await update(argv)
+                if (isUpdateArgs(args)) {
+                    await update(args)
+                }
                 break
             default:
                 console.error(red(`Unknown command: ${command}`))
@@ -49,28 +43,36 @@ ${yellow('Usage:')}
   towns-bot <command> [options]
 
 ${yellow('Commands:')}
-  ${green('init')} [project-name]    Create a new bot project
-  ${green('update')}                 Update @towns-protocol dependencies to latest versions
+  ${green('init')} [project-name]     Create a new bot project
+  ${green('update')}                  Update @towns-protocol dependencies to latest versions
 
-${yellow('Options:')}
-  -t, --template <name>   Template to use:
+${yellow('Init Options:')}
+  -t, --template <name>    Template to use:
 ${Object.entries(TEMPLATES)
     .map(
         ([key, template]: [string, Template]) =>
-            `                            ${key} - ${template.description}`,
+            `                             ${key} - ${template.description}`,
     )
     .join('\n')}
-                          Default: quickstart
-  -h, --help              Show this help message
+                           Default: quickstart
+
+${yellow('List Commands Options:')}
+  -f, --file <path>        Path to commands file
+
+${yellow('Update Commands Options:')}
+  -f, --file <path>         Path to commands file
+  -t, --bearerToken <token>  Bearer token for authentication
+  -e, --envFile <path>       Path to .env file (default: .env)
+
+${yellow('Global Options:')}
+  -h, --help               Show this help message
 
 ${yellow('Examples:')}
-  ${cyan('# Create a new bot project with the default template')}
+  ${cyan('# Create a new bot project')}
   towns-bot init my-bot
+  towns-bot init my-ai-bot --template quickstart
 
-  ${cyan('# Create an AI bot project')}
-  towns-bot init my-ai-bot --template thread-ai
-
-  ${cyan('# Update dependencies in current project')}
+  ${cyan('# Update dependencies')}
   towns-bot update
 `)
 }

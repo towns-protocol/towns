@@ -2,9 +2,9 @@
  * @group with-entitlements
  */
 
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { makeSpaceStreamId } from '../../id'
-import { makeBaseChainConfig, makeRiverConfig } from '../../riverConfig'
+import { townsEnv } from '../../townsEnv'
 import { createSpaceDapp, LocalhostWeb3Provider, SpaceDapp } from '@towns-protocol/web3'
 import { ethers } from 'ethers'
 import { makeDefaultMembershipInfo } from '../../sync-agent/utils/spaceUtils'
@@ -17,7 +17,7 @@ describe('spaceDappTests', () => {
         log('spaceDapp URI')
         const wallet = ethers.Wallet.createRandom()
         const wallet2 = ethers.Wallet.createRandom()
-        const config = makeRiverConfig()
+        const config = townsEnv().makeTownsConfig()
         const baseProvider = new LocalhostWeb3Provider(config.base.rpcUrl, wallet)
         await baseProvider.fundWallet()
         const spaceDapp = new SpaceDapp(config.base.chainConfig, baseProvider)
@@ -43,15 +43,17 @@ describe('spaceDappTests', () => {
             throw new Error('tokenId not found')
         }
 
-        const uri = await spaceDapp.tokenURI(spaceId)
+        const spaceInfo = await spaceDapp.spaceOwner.getSpaceInfo(spaceAddress)
+        const uri = await spaceDapp.spaceOwner.read.tokenURI(spaceInfo.tokenId)
         expect(uri).toBe(`http://localhost:3002/${spaceAddress}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
 
-        const memberURI = await spaceDapp.memberTokenURI(spaceId, membership2.tokenId)
+        const space = spaceDapp.getSpace(spaceId)
+        const memberURI = await space?.ERC721A.read.tokenURI(membership2.tokenId)
         expect(memberURI).toBe(`http://localhost:3002/${spaceAddress}/token/${membership2.tokenId}`) // hardcoded in InteractSetDefaultUriLocalhost.s.sol
     })
 
     test('remove caller link', async () => {
-        const baseConfig = makeBaseChainConfig()
+        const baseConfig = townsEnv().makeBaseChainConfig()
 
         const rootProvider = new LocalhostWeb3Provider(
             baseConfig.rpcUrl,

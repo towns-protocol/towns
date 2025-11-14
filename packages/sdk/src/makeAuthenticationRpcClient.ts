@@ -1,6 +1,6 @@
 import { Client, createClient, ConnectTransportOptions } from '@towns-protocol/rpc-connector/common'
 import { AuthenticationService } from '@towns-protocol/proto'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { getEnvVar, randomUrlSelector } from './utils'
 import { DEFAULT_RETRY_PARAMS, loggingInterceptor, retryInterceptor } from './rpcInterceptors'
 import { RpcOptions } from './rpcCommon'

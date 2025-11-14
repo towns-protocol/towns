@@ -2,14 +2,14 @@ name: Bytecode Diff Report
 env:
     FOUNDRY_VERSION: stable
     OMEGA_PRIVATE_KEY: ${{ secrets.OMEGA_BASE_DEPLOYER_PK }}
-    TESTNET_PRIVATE_KEY: ${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}
+    # TESTNET_PRIVATE_KEY will be set dynamically based on target environment
     BASE_RPC_URL: ${{ secrets.BASE_RPC_URL }}
     BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
     FACET_SOURCE_PATH: ../../packages/contracts/src
     REPORT_OUT_DIR: ${{ vars.REPORT_OUT_DIR }}
-    BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
-    BASESCAN_SEPOLIA_URL: 'https://api-sepolia.basescan.org/api'
-    BASESCAN_URL: 'https://api.basescan.org/api'
+    ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+    BASESCAN_SEPOLIA_URL: 'https://api.etherscan.io/v2/api?chainid=84532'
+    BASESCAN_URL: 'https://api.etherscan.io/v2/api?chainid=8453'
     BLOCKSCOUT_SEPOLIA_URL: 'https://base-sepolia.blockscout.com/api'
     BLOCKSCOUT_BASE_URL: 'https://base.blockscout.com/api'
     BLOCKSCOUT_SEPOLIA_API_KEY: ${{ secrets.BLOCKSCOUT_BASE_SEPOLIA_API_KEY }}
@@ -28,6 +28,7 @@ on:
                 type: choice
                 options:
                     - 'alpha'
+                    - 'beta'
                     - 'gamma'
                     - 'omega'
                 default: 'alpha'
@@ -37,6 +38,7 @@ on:
                 type: choice
                 options:
                     - 'alpha'
+                    - 'beta'
                     - 'gamma'
                     - 'omega'
                 default: 'gamma'
@@ -56,12 +58,14 @@ on:
                 required: true
             BASE_SEPOLIA_RPC_URL:
                 required: true
-            BASESCAN_API_KEY:
+            ETHERSCAN_API_KEY:
                 required: true
             BLOCKSCOUT_BASE_SEPOLIA_API_KEY:
                 required: true
             BLOCKSCOUT_BASE_API_KEY:
                 required: true
+            BETA_BASE_SEPOLIA_DEPLOYER_PK:
+                required: false
             GAMMA_BASE_SEPOLIA_DEPLOYER_PK:
                 required: true
             OMEGA_BASE_DEPLOYER_PK:
@@ -78,6 +82,18 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Set environment-specific private key
+              run: |
+                  if [ "${{ inputs.target_environment }}" = "beta" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.BETA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  elif [ "${{ inputs.target_environment }}" = "gamma" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  elif [ "${{ inputs.target_environment }}" = "omega" ]; then
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.OMEGA_BASE_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  else
+                    echo "TESTNET_PRIVATE_KEY=${{ secrets.GAMMA_BASE_SEPOLIA_DEPLOYER_PK }}" >> $GITHUB_ENV
+                  fi
+
             - name: Checkout code
               uses: actions/checkout@v4
               with:
@@ -113,7 +129,7 @@ jobs:
               working-directory: packages/contracts/scripts/bytecode-diff
               env:
                   REPORT_OUT_DIR: ${{ env.REPORT_OUT_DIR }}
-                  BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
+                  ETHERSCAN_API_KEY: ${{ env.ETHERSCAN_API_KEY }}
                   BASE_RPC_URL: ${{ env.BASE_RPC_URL }}
                   BASE_SEPOLIA_RPC_URL: ${{ env.BASE_SEPOLIA_RPC_URL }}
                   FACET_SOURCE_PATH: ${{ env.FACET_SOURCE_PATH }}
@@ -137,7 +153,7 @@ jobs:
                   BLOCKSCOUT_SEPOLIA_API_KEY: ${{ env.BLOCKSCOUT_SEPOLIA_API_KEY }}
                   BLOCKSCOUT_BASE_URL: ${{ env.BLOCKSCOUT_BASE_URL }}
                   BLOCKSCOUT_BASE_API_KEY: ${{ env.BLOCKSCOUT_BASE_API_KEY }}
-                  BASESCAN_API_KEY: ${{ env.BASESCAN_API_KEY }}
+                  ETHERSCAN_API_KEY: ${{ env.ETHERSCAN_API_KEY }}
                   BASESCAN_SEPOLIA_URL: ${{ env.BASESCAN_SEPOLIA_URL }}
                   BASESCAN_URL: ${{ env.BASESCAN_URL }}
                   TESTNET_PRIVATE_KEY: ${{ env.TESTNET_PRIVATE_KEY }}

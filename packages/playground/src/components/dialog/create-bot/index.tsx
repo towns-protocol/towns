@@ -11,19 +11,19 @@ import {
     Client,
     MockEntitlementsDelegate,
     RiverDbManager,
-    getAppRegistryUrl,
+    makeAppPrivateData,
     makeBaseProvider,
     makeRiverProvider,
     makeRiverRpcClient,
     makeSignerContext,
+    townsEnv,
 } from '@towns-protocol/sdk'
-import { AppPrivateDataSchema } from '@towns-protocol/proto'
-import { create, toBinary } from '@bufbuild/protobuf'
-import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/dlog'
+import { bin_fromHexString, bin_toBase64 } from '@towns-protocol/utils'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAllBotsQueryKey } from '@/hooks/useAllBots'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { InfoStep, infoSchema } from './steps/info'
 import { TypeStep } from './steps/type'
 import { ReviewStep } from './steps/review'
@@ -104,7 +104,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
     const [step, setStep] = useState(0)
     const [credentialsData, setCredentialsData] = useState<{
         botAddress: string
-        appPrivateDataBase64: string
+        appPrivateData: string
         jwtSecretBase64: string
     } | null>(null)
     const [showCredentials, setShowCredentials] = useState(false)
@@ -188,15 +188,20 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             } = formData
             console.log('mutate', formData)
 
-            const baseProvider = makeBaseProvider(sync.config.riverConfig)
+            const appRegistryUrl = townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(
+                sync.config.townsConfig.environmentId,
+            )
+
+            const baseProvider = makeBaseProvider(sync.config.townsConfig)
             if (!signer) {
                 throw new Error('Signer is not set')
             }
-            const riverConfig = sync.config.riverConfig
+            const townsConfig = sync.config.townsConfig
 
             const botWallet = ethers.Wallet.createRandom()
-            const appRegistryDapp = new AppRegistryDapp(riverConfig.base.chainConfig, baseProvider)
-            let appAddress = ''
+            const appRegistryDapp = new AppRegistryDapp(townsConfig.base.chainConfig, baseProvider)
+            let appAddress: Address
+            const signerAddress = (await signer.getAddress()) as Address
             if (botKind === 'simple') {
                 const tx = await appRegistryDapp.createApp(
                     signer,
@@ -210,8 +215,11 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                 if (!receipt) {
                     throw new Error('Transaction failed')
                 }
-                const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(receipt)
-                appAddress = foundAppAddress
+                const { app: foundAppAddress } = appRegistryDapp.getCreateAppEvent(
+                    receipt,
+                    signerAddress,
+                )
+                appAddress = foundAppAddress as Address
             } else if (botKind === 'contract' && contractAddress) {
                 const tx = await appRegistryDapp.registerApp(
                     signer,
@@ -223,16 +231,19 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
                     throw new Error('Transaction failed')
                 }
 
-                const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(receipt)
-                appAddress = foundAppAddress
+                const { app: foundAppAddress } = appRegistryDapp.getRegisterAppEvent(
+                    receipt,
+                    contractAddress,
+                )
+                appAddress = foundAppAddress as Address
             } else {
                 throw new Error('Invalid bot kind or contract address')
             }
             const delegateWallet = ethers.Wallet.createRandom()
             const signerContext = await makeSignerContext(botWallet, delegateWallet)
             const rpcClient = await makeRiverRpcClient(
-                makeRiverProvider(riverConfig),
-                riverConfig.river.chainConfig,
+                makeRiverProvider(townsConfig),
+                townsConfig.river.chainConfig,
             )
             const cryptoStore = RiverDbManager.getCryptoDb(appAddress)
             const botClient = new Client(
@@ -245,20 +256,17 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
             await botClient.uploadDeviceKeys()
 
             const exportedDevice = await botClient.cryptoBackend?.exportDevice()
-            const appPrivateDataBase64 = bin_toBase64(
-                toBinary(
-                    AppPrivateDataSchema,
-                    create(AppPrivateDataSchema, {
-                        privateKey: botWallet.privateKey,
-                        encryptionDevice: exportedDevice,
-                    }),
-                ),
+            const appPrivateData = makeAppPrivateData(
+                botWallet.privateKey,
+                exportedDevice!,
+                townsConfig.environmentId,
+                appAddress,
             )
 
             const { appRegistryRpcClient } = await AppRegistryService.authenticateWithSigner(
                 user.id,
                 signer,
-                getAppRegistryUrl(riverConfig.environmentId),
+                appRegistryUrl,
             )
             const { hs256SharedSecret } = await appRegistryRpcClient.register({
                 appId: bin_fromHexString(botWallet.address),
@@ -275,7 +283,7 @@ export const CreateBotDialog = ({ open, onOpenChange }: CreateBotDialogProps) =>
 
             return {
                 botAddress: botWallet.address,
-                appPrivateDataBase64,
+                appPrivateData,
                 jwtSecretBase64,
             }
         },

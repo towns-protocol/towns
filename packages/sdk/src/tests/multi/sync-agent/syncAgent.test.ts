@@ -1,20 +1,20 @@
 /**
  * @group with-entitlements
  */
-import { dlogger } from '@towns-protocol/dlog'
+import { dlogger } from '@towns-protocol/utils'
 import { waitFor } from '../../testUtils'
 import { MembershipOp } from '@towns-protocol/proto'
 import { Bot } from '../../../sync-agent/utils/bot'
 import { AuthStatus } from '../../../sync-agent/river-connection/models/authStatus'
 import { makeBearerToken, makeSignerContextFromBearerToken } from '../../../signerContext'
 import { SyncAgent } from '../../../sync-agent/syncAgent'
-import { makeRiverConfig } from '../../../riverConfig'
+import { townsEnv } from '../../../townsEnv'
 
 const logger = dlogger('csb:test:syncAgent')
 
 describe('syncAgent.test.ts', () => {
-    const riverConfig = makeRiverConfig()
-    const testUser = new Bot(undefined, riverConfig)
+    const townsConfig = townsEnv().makeTownsConfig()
+    const testUser = new Bot(undefined, townsConfig)
 
     beforeEach(async () => {
         await testUser.fundWallet()
@@ -67,7 +67,10 @@ describe('syncAgent.test.ts', () => {
         const bearerToken = await makeBearerToken(testUser.signer, { days: 1 })
         logger.log('bearerTokenStr', bearerToken)
         const signerContext = await makeSignerContextFromBearerToken(bearerToken)
-        const syncAgent = new SyncAgent({ riverConfig: makeRiverConfig(), context: signerContext })
+        const syncAgent = new SyncAgent({
+            townsConfig: townsEnv().makeTownsConfig(),
+            context: signerContext,
+        })
         await syncAgent.start()
         expect(syncAgent.riverConnection.authStatus.value).toBe(AuthStatus.ConnectedToRiver)
         expect(syncAgent.user.value.status).toBe('loaded')

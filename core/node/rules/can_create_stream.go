@@ -644,6 +644,13 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		return nil, nil
 	}
 
+	// Test-only bypass for user stream creation: if enabled and header present, suppress chain auth.
+	if ru.cfg != nil && ru.cfg.TestEntitlementsBypassSecret != "" {
+		if auth.IsTestEntitlementBypassEnabled(ru.ctx) {
+			return nil, nil
+		}
+	}
+
 	appAddress := ru.inceptionAppAddress()
 	if len(appAddress) > 0 {
 		if len(appAddress) != 20 {

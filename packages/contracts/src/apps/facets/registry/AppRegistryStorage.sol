@@ -7,21 +7,17 @@ pragma solidity ^0.8.23;
 
 // contracts
 
+struct AppInfo {
+    address app;
+    bytes32 latestVersion;
+    bool isBanned;
+}
+
+struct ClientInfo {
+    address app;
+}
+
 library AppRegistryStorage {
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           STRUCTS                            */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    struct AppInfo {
-        address app;
-        bytes32 latestVersion;
-        bool isBanned;
-    }
-
-    struct ClientInfo {
-        address app;
-    }
-
     struct Layout {
         // Registered schema ID
         bytes32 schemaId;
@@ -44,10 +40,10 @@ library AppRegistryStorage {
         0xe1abd3beb055e0136b3111c2c34ff6e869f8c0d7540225f8056528d6eb12b500;
 
     /// @notice Returns the storage layout for the module registry
-    /// @return l The storage layout struct
-    function getLayout() internal pure returns (Layout storage l) {
+    /// @return $ The storage layout struct
+    function getLayout() internal pure returns (Layout storage $) {
         assembly {
-            l.slot := STORAGE_SLOT
+            $.slot := STORAGE_SLOT
         }
     }
 }

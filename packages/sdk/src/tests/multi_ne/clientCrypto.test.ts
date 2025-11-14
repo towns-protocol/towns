@@ -7,7 +7,7 @@ import { Client } from '../../client'
 import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { SessionKeysSchema } from '@towns-protocol/proto'
 import { create, fromJsonString, toJsonString } from '@bufbuild/protobuf'
-import { dlog } from '@towns-protocol/dlog'
+import { dlog } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 const log = dlog('test:clientCrypto')
 
@@ -94,7 +94,6 @@ describe('clientCrypto', () => {
         await bobsClient.cryptoBackend.ensureOutboundSession(
             streamId,
             GroupEncryptionAlgorithmId.HybridGroupEncryption,
-            { awaitInitialShareSession: false },
         )
         hasSession = await bobsClient.cryptoBackend.hasHybridSession(streamId)
         expect(hasSession).toBe(true)

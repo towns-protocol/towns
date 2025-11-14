@@ -177,11 +177,20 @@ func (s *Service) startMemProfile(cfg config.DebugEndpointsConfig) {
 
 func (s *Service) writeMemProfile(index int) {
 	// Ensure the memory profile directory exists
-	if err := os.MkdirAll(s.config.DebugEndpoints.MemProfileDir, 0755); err != nil {
-		s.defaultLogger.Errorw("unable to create mem profile directory", "dir", s.config.DebugEndpoints.MemProfileDir, "error", err)
+	if err := os.MkdirAll(s.config.DebugEndpoints.MemProfileDir, 0o755); err != nil {
+		s.defaultLogger.Errorw(
+			"unable to create mem profile directory",
+			"dir",
+			s.config.DebugEndpoints.MemProfileDir,
+			"error",
+			err,
+		)
 		return
 	}
-	fileName := filepath.Join(s.config.DebugEndpoints.MemProfileDir, fmt.Sprintf("mem_profile_%s_%d.pb.gz", s.getServerName(), index))
+	fileName := filepath.Join(
+		s.config.DebugEndpoints.MemProfileDir,
+		fmt.Sprintf("mem_profile_%s_%d.pb.gz", s.getServerName(), index),
+	)
 	f, err := os.Create(fileName)
 	if err != nil {
 		s.defaultLogger.Errorw("unable to create mem profile", "error", err)

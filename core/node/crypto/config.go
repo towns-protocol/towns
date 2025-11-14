@@ -19,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -51,17 +52,23 @@ const (
 	StreamEphemeralStreamTTLMsKey                   = "stream.ephemeralStreamTTLMs"
 	NodeBlocklistConfigKey                          = "node.blocklist"
 	StreamSnapshotIntervalInMiniblocksConfigKey     = "stream.snapshotIntervalInMiniblocks"
-	// StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey is the key for how many miniblocks to keep before the last
-	// snapshot for streams.
-	StreamDefaultStreamTrimmingMiniblocksToKeepConfigKey     = "stream.defaultStreamTrimmingMiniblocksToKeep"
-	StreamSpaceStreamTrimmingMiniblocksToKeepConfigKey       = "stream.streamTrimmingMiniblocksToKeep.10"
-	StreamUserSettingStreamTrimmingMiniblocksToKeepConfigKey = "stream.streamTrimmingMiniblocksToKeep.a5"
-	StreamEnableNewSnapshotFormatConfigKey                   = "stream.enableNewSnapshotFormat"
-	ServerEnableNode2NodeAuthConfigKey                       = "server.enablenode2nodeauth"
+	StreamTrimActivationFactorConfigKey             = "stream.trimactivationfactor"
+	ServerEnableNode2NodeAuthConfigKey              = "server.enablenode2nodeauth"
 	// StreamBackwardsReconciliationThresholdConfigKey is the threshold in miniblocks that determines
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThresholdConfigKey = "stream.backwardsReconciliationThreshold"
+
+	StreamDefaultStreamHistoryMiniblocksConfigKey      = "stream.historyminiblocks.default"
+	StreamChannelStreamHistoryMiniblocksConfigKey      = "stream.historyminiblocks.20"
+	StreamDMStreamHistoryMiniblocksConfigKey           = "stream.historyminiblocks.88"
+	StreamGDMStreamHistoryMiniblocksConfigKey          = "stream.historyminiblocks.77"
+	StreamMetadataStreamHistoryMiniblocksConfigKey     = "stream.historyminiblocks.dd"
+	StreamSpaceStreamHistoryMiniblocksConfigKey        = "stream.historyminiblocks.10"
+	StreamUserStreamHistoryMiniblocksConfigKey         = "stream.historyminiblocks.a8"
+	StreamUserDeviceStreamHistoryMiniblocksConfigKey   = "stream.historyminiblocks.ad"
+	StreamUserInboxStreamHistoryMiniblocksConfigKey    = "stream.historyminiblocks.a1"
+	StreamUserSettingsStreamHistoryMiniblocksConfigKey = "stream.historyminiblocks.a5"
 
 	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
 	// replication factor must be picked as candidates to place a stream on. From these candidates
@@ -109,7 +116,7 @@ func AllKnownOnChainSettingKeys() map[string]string {
 // OnChainSettings holds the configuration settings that are stored on-chain.
 // This data structure is immutable, so it is safe to access it concurrently.
 type OnChainSettings struct {
-	FromBlockNumber BlockNumber `mapstructure:"-"`
+	FromBlockNumber blockchain.BlockNumber `mapstructure:"-"`
 
 	MediaMaxChunkCount uint64 `mapstructure:"stream.media.maxChunkCount"`
 	MediaMaxChunkSize  uint64 `mapstructure:"stream.media.maxChunkSize"`
@@ -120,12 +127,10 @@ type OnChainSettings struct {
 	ReplicationFactor uint64 `mapstructure:"stream.replicationFactor"`
 
 	MinSnapshotEvents MinSnapshotEventsSettings `mapstructure:",squash"`
-	// StreamEnableNewSnapshotFormat indicates whether the new snapshot format is enabled.
-	// 0 means the old snapshot format is used, 1 means the new snapshot format is used.
-	StreamEnableNewSnapshotFormat uint64 `mapstructure:"stream.enableNewSnapshotFormat"`
 
 	// StreamMiniblockRegistrationFrequency indicates how often miniblocks are registered.
 	// E.g. StreamMiniblockRegistrationFrequency=5 means that only 1 out of 5 miniblocks for a stream are registered.
+	// TODO: remove this setting
 	StreamMiniblockRegistrationFrequency uint64 `mapstructure:"stream.miniblockRegistrationFrequency"`
 
 	StreamCacheExpiration    time.Duration `mapstructure:"stream.cacheExpirationMs"`
@@ -144,9 +149,11 @@ type OnChainSettings struct {
 	// StreamSnapshotIntervalInMiniblocks is the interval in miniblocks between snapshots.
 	StreamSnapshotIntervalInMiniblocks uint64 `mapstructure:"stream.snapshotIntervalInMiniblocks"`
 
-	// StreamTrimmingMiniblocksToKeep is the number of miniblocks to keep before the last snapshot.
-	// Defined with the default value and per stream type.
-	StreamTrimmingMiniblocksToKeep StreamTrimmingMiniblocksToKeepSettings `mapstructure:",squash"`
+	// StreamTrimActivationFactor scales the snapshot interval to decide when trimming should run.
+	// If snapshots come every N miniblocks and this factor is F, trimming considers a stream for pruning
+	// once roughly N*F miniblocks have accumulated since the last trimmed snapshot. A value of 0 disables
+	// auto-trimming.
+	StreamTrimActivationFactor uint64 `mapstructure:"stream.trimactivationfactor"`
 
 	// StreamDistribution holds settings for the stream distribution algorithm.
 	StreamDistribution StreamDistribution `mapstructure:",squash"`
@@ -159,6 +166,52 @@ type OnChainSettings struct {
 	// whether to use backwards or forward reconciliation. If a stream is behind by more than this
 	// number of miniblocks, backwards reconciliation is used; otherwise forward reconciliation is used.
 	StreamBackwardsReconciliationThreshold uint64 `mapstructure:"stream.backwardsReconciliationThreshold"`
+
+	// Number of miniblocks to keep for each type of stream.
+	// 0 means keep all miniblocks.
+	StreamHistoryMiniblocks StreamHistoryMiniblocks `mapstructure:",squash"`
+}
+
+type StreamHistoryMiniblocks struct {
+	Default      uint64 `mapstructure:"stream.historyminiblocks.default"`
+	Channel      uint64 `mapstructure:"stream.historyminiblocks.20"`
+	DM           uint64 `mapstructure:"stream.historyminiblocks.88"`
+	GDM          uint64 `mapstructure:"stream.historyminiblocks.77"`
+	Metadata     uint64 `mapstructure:"stream.historyminiblocks.dd"`
+	Space        uint64 `mapstructure:"stream.historyminiblocks.10"`
+	User         uint64 `mapstructure:"stream.historyminiblocks.a8"`
+	UserDevice   uint64 `mapstructure:"stream.historyminiblocks.ad"`
+	UserInbox    uint64 `mapstructure:"stream.historyminiblocks.a1"`
+	UserSettings uint64 `mapstructure:"stream.historyminiblocks.a5"`
+}
+
+func (s StreamHistoryMiniblocks) ForType(streamType byte) uint64 {
+	var ret uint64
+	switch streamType {
+	case shared.STREAM_CHANNEL_BIN:
+		ret = s.Channel
+	case shared.STREAM_DM_CHANNEL_BIN:
+		ret = s.DM
+	case shared.STREAM_GDM_CHANNEL_BIN:
+		ret = s.GDM
+	case shared.STREAM_METADATA_BIN:
+		ret = s.Metadata
+	case shared.STREAM_SPACE_BIN:
+		ret = s.Space
+	case shared.STREAM_USER_BIN:
+		ret = s.User
+	case shared.STREAM_USER_METADATA_KEY_BIN:
+		ret = s.UserDevice
+	case shared.STREAM_USER_INBOX_BIN:
+		ret = s.UserInbox
+	case shared.STREAM_USER_SETTINGS_BIN:
+		ret = s.UserSettings
+	}
+	// If value for streamType is not explicitly set, fallback to the default for all streams.
+	if ret == 0 {
+		ret = s.Default
+	}
+	return ret
 }
 
 type XChainSettings struct {
@@ -204,23 +257,6 @@ func (m MembershipLimitsSettings) ForType(streamType byte) uint64 {
 	}
 }
 
-type StreamTrimmingMiniblocksToKeepSettings struct {
-	Default     uint64 `mapstructure:"stream.defaultStreamTrimmingMiniblocksToKeep"`
-	Space       uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.10"`
-	UserSetting uint64 `mapstructure:"stream.streamTrimmingMiniblocksToKeep.a5"`
-}
-
-func (m StreamTrimmingMiniblocksToKeepSettings) ForType(streamType byte) uint64 {
-	switch streamType {
-	case shared.STREAM_SPACE_BIN:
-		return m.Space
-	case shared.STREAM_USER_SETTINGS_BIN:
-		return m.UserSetting
-	default:
-		return m.Default
-	}
-}
-
 // StreamDistribution holds settings for the stream distribution algorithm.
 type StreamDistribution struct {
 	// ExtraCandidatesCount is the number of extra candidate nodes to select when determining the
@@ -245,20 +281,13 @@ func DefaultOnChainSettings() *OnChainSettings {
 			User:         10,
 			UserDevice:   10,
 		},
-		StreamEnableNewSnapshotFormat: 0,
-
-		// 0 means space stream trimming is disabled
-		StreamTrimmingMiniblocksToKeep: StreamTrimmingMiniblocksToKeepSettings{
-			Default:     0,
-			Space:       0,
-			UserSetting: 0,
-		},
 
 		StreamCacheExpiration:    5 * time.Minute,
 		StreamCachePollIntterval: 30 * time.Second,
 
 		StreamEphemeralStreamTTL:           time.Minute * 10,
 		StreamSnapshotIntervalInMiniblocks: 0, // 0 means snapshots trimming is disabled
+		StreamTrimActivationFactor:         0, // 0 means snapshots trimming is disabled
 
 		// TODO: Set it to the default value when the client side is updated.
 		GetMiniblocksMaxPageSize: 0,
@@ -280,10 +309,10 @@ func DefaultOnChainSettings() *OnChainSettings {
 }
 
 type OnChainConfiguration interface {
-	ActiveBlock() BlockNumber
+	ActiveBlock() blockchain.BlockNumber
 
 	Get() *OnChainSettings
-	GetOnBlock(block BlockNumber) *OnChainSettings
+	GetOnBlock(block blockchain.BlockNumber) *OnChainSettings
 
 	All() []*OnChainSettings
 
@@ -299,7 +328,7 @@ type configEntry struct {
 
 // This datastructure mimics the on-chain configuration storage so updates
 // from events can be applied consistently.
-type rawSettingsMap map[string]map[BlockNumber][]byte
+type rawSettingsMap map[string]map[blockchain.BlockNumber][]byte
 
 func (r rawSettingsMap) init(
 	ctx context.Context,
@@ -320,10 +349,10 @@ func (r rawSettingsMap) init(
 		}
 		blockMap, ok := r[name]
 		if !ok {
-			blockMap = make(map[BlockNumber][]byte)
+			blockMap = make(map[blockchain.BlockNumber][]byte)
 			r[name] = blockMap
 		}
-		blockNum := BlockNumber(setting.BlockNumber)
+		blockNum := blockchain.BlockNumber(setting.BlockNumber)
 		oldVal, ok := blockMap[blockNum]
 		if ok {
 			logging.FromCtx(ctx).
@@ -351,7 +380,7 @@ func (r rawSettingsMap) apply(
 			if event.Block == math.MaxUint64 {
 				delete(r, name)
 			} else {
-				blockNum := BlockNumber(event.Block)
+				blockNum := blockchain.BlockNumber(event.Block)
 				if _, ok := blockMap[blockNum]; ok {
 					delete(blockMap, blockNum)
 					if len(blockMap) == 0 {
@@ -368,14 +397,14 @@ func (r rawSettingsMap) apply(
 		}
 	} else {
 		if _, ok := r[name]; !ok {
-			r[name] = make(map[BlockNumber][]byte)
+			r[name] = make(map[blockchain.BlockNumber][]byte)
 		}
-		r[name][BlockNumber(event.Block)] = event.Value
+		r[name][blockchain.BlockNumber(event.Block)] = event.Value
 	}
 }
 
-func (r rawSettingsMap) transform() (map[BlockNumber][]*configEntry, []BlockNumber) {
-	result := make(map[BlockNumber][]*configEntry)
+func (r rawSettingsMap) transform() (map[blockchain.BlockNumber][]*configEntry, []blockchain.BlockNumber) {
+	result := make(map[blockchain.BlockNumber][]*configEntry)
 	for name, blockMap := range r {
 		for block, value := range blockMap {
 			result[block] = append(result[block], &configEntry{
@@ -385,7 +414,7 @@ func (r rawSettingsMap) transform() (map[BlockNumber][]*configEntry, []BlockNumb
 		}
 	}
 
-	var blockNums []BlockNumber
+	var blockNums []blockchain.BlockNumber
 	for key := range result {
 		blockNums = append(blockNums, key)
 	}
@@ -411,15 +440,15 @@ type onChainConfiguration struct {
 
 var _ OnChainConfiguration = (*onChainConfiguration)(nil)
 
-func (occ *onChainConfiguration) ActiveBlock() BlockNumber {
-	return BlockNumber(occ.activeBlock.Load())
+func (occ *onChainConfiguration) ActiveBlock() blockchain.BlockNumber {
+	return blockchain.BlockNumber(occ.activeBlock.Load())
 }
 
 func (occ *onChainConfiguration) Get() *OnChainSettings {
 	return occ.GetOnBlock(occ.ActiveBlock())
 }
 
-func (occ *onChainConfiguration) GetOnBlock(block BlockNumber) *OnChainSettings {
+func (occ *onChainConfiguration) GetOnBlock(block blockchain.BlockNumber) *OnChainSettings {
 	settings := *occ.cfg.Load()
 	// Go in reverse order to find the most recent settings
 	for i := len(settings) - 1; i >= 0; i-- {
@@ -445,7 +474,7 @@ func HashSettingName(name string) common.Hash {
 
 func (occ *onChainConfiguration) processRawSettings(
 	ctx context.Context,
-	blockNum BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	log := logging.FromCtx(ctx)
 
@@ -492,7 +521,7 @@ func NewOnChainConfig(
 	ctx context.Context,
 	riverClient BlockchainClient,
 	riverRegistry common.Address,
-	appliedBlockNum BlockNumber,
+	appliedBlockNum blockchain.BlockNumber,
 	chainMonitor ChainMonitor,
 ) (*onChainConfiguration, error) {
 	caller, err := river.NewRiverConfigV1Caller(riverRegistry, riverClient)
@@ -539,7 +568,7 @@ func makeOnChainConfig(
 	ctx context.Context,
 	retrievedSettings []river.Setting,
 	contract *river.RiverConfigV1Caller,
-	appliedBlockNum BlockNumber,
+	appliedBlockNum blockchain.BlockNumber,
 ) (*onChainConfiguration, error) {
 	log := logging.FromCtx(ctx)
 
@@ -575,7 +604,7 @@ func makeOnChainConfig(
 	return cfg, nil
 }
 
-func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber BlockNumber) {
+func (occ *onChainConfiguration) onBlock(_ context.Context, blockNumber blockchain.BlockNumber) {
 	occ.activeBlock.Store(blockNumber.AsUint64())
 }
 
@@ -593,7 +622,7 @@ func (occ *onChainConfiguration) applyEvent(ctx context.Context, event *river.Ri
 	occ.mu.Lock()
 	defer occ.mu.Unlock()
 	occ.loadedSettingMap.apply(ctx, occ.keyHashToName, event)
-	occ.processRawSettings(ctx, BlockNumber(event.Block))
+	occ.processRawSettings(ctx, blockchain.BlockNumber(event.Block))
 }
 
 var (

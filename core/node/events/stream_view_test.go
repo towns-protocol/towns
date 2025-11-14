@@ -30,7 +30,6 @@ func TestLoad(t *testing.T) {
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
 	cfg := crypto.DefaultOnChainSettings()
-	cfg.StreamEnableNewSnapshotFormat = 1
 	params := &StreamCacheParams{
 		Wallet:      nodeWallet,
 		ChainConfig: &mocks.MockOnChainCfg{Settings: cfg},
@@ -68,6 +67,8 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockProtoBytes},
@@ -295,6 +296,8 @@ func TestMbHashConstraints(t *testing.T) {
 	cfg := crypto.DefaultOnChainSettings()
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
@@ -359,12 +362,12 @@ func TestMbHashConstraints(t *testing.T) {
 
 func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	ctx := test.NewTestContext(t)
-	
+
 	userWallet, _ := crypto.NewWallet(ctx)
 	nodeWallet, _ := crypto.NewWallet(ctx)
-	
+
 	streamId := UserStreamIdFromAddr(userWallet.Address)
-	
+
 	// Create a genesis miniblock using the helper function
 	inception, err := MakeEnvelopeWithPayload(
 		userWallet,
@@ -372,26 +375,26 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		nil,
 	)
 	assert.NoError(t, err)
-	
+
 	join, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
 		nil,
 	)
 	assert.NoError(t, err)
-	
+
 	genesisEvents := []*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)}
 	genesisMb, err := MakeGenesisMiniblock(userWallet, genesisEvents)
 	assert.NoError(t, err)
-	
+
 	// Parse the genesis miniblock to extract info
 	genesisParsed, err := NewMiniblockInfoFromProto(genesisMb, nil, NewParsedMiniblockInfoOpts())
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), genesisParsed.Header().MiniblockNum)
-	
+
 	// For testing, we'll create blocks without snapshots except at position 2
 	// This requires creating new events that don't have the snapshot flag
-	
+
 	// For this test, we need to create miniblocks where only block 2 has a snapshot
 	// Block 0 will be a genesis block with embedded snapshot (legacy format)
 	header0 := &MiniblockHeader{
@@ -404,29 +407,29 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		// Genesis blocks use legacy format with embedded snapshot
 		Snapshot: genesisParsed.Header().GetSnapshot(),
 	}
-	
+
 	headerProto0, err := MakeEnvelopeWithPayload(
 		userWallet,
 		Make_MiniblockHeader(header0),
 		nil,
 	)
 	assert.NoError(t, err)
-	
+
 	miniblock0 := &Miniblock{
 		Header: headerProto0,
 		Events: []*Envelope{inception, join},
 	}
-	
+
 	miniblockProtoBytes0, err := proto.Marshal(miniblock0)
 	assert.NoError(t, err)
-	
+
 	// Create miniblocks for positions 1-4
 	var miniblockBytes [][]byte
 	miniblockBytes = append(miniblockBytes, miniblockProtoBytes0) // Block 0 without snapshot
-	
+
 	// Variable to store snapshot data
 	var snapshotBytes2 []byte
-	
+
 	for i := 1; i < 5; i++ {
 		header := &MiniblockHeader{
 			MiniblockNum: int64(i),
@@ -436,7 +439,7 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 				None: &emptypb.Empty{},
 			},
 		}
-		
+
 		// Add snapshot at position 2
 		var snapshotData []byte
 		if i == 2 {
@@ -446,35 +449,37 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 			assert.NoError(t, err)
 			snapshotData, err = proto.Marshal(snapshotEnv)
 			assert.NoError(t, err)
-			
+
 			// For new format, store hash in header instead of snapshot
 			header.SnapshotHash = snapshotEnv.Hash
 		}
-		
+
 		headerProto, err := MakeEnvelopeWithPayload(
 			userWallet,
 			Make_MiniblockHeader(header),
 			nil,
 		)
 		assert.NoError(t, err)
-		
+
 		miniblock := &Miniblock{
 			Header: headerProto,
 			Events: []*Envelope{inception, join},
 		}
-		
+
 		miniblockProtoBytes, err := proto.Marshal(miniblock)
 		assert.NoError(t, err)
 		miniblockBytes = append(miniblockBytes, miniblockProtoBytes)
-		
+
 		// Store snapshot data for block 2
 		if i == 2 {
 			snapshotBytes2 = snapshotData
 		}
 	}
-	
+
 	// Test case 1: Create view with multiple miniblocks
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockBytes[0], Number: 0},
@@ -487,59 +492,71 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		},
 	)
 	assert.NoError(t, err)
-	
-	
+
 	// Test GetResetStreamAndCookie (old method - should always return 0)
 	streamAndCookie1 := view.GetResetStreamAndCookie(nodeWallet.Address)
 	assert.Equal(t, int64(0), streamAndCookie1.SnapshotMiniblockIndex) // Always 0 with old method
-	assert.Equal(t, 3, len(streamAndCookie1.Miniblocks)) // Only blocks from snapshot onwards
+	assert.Equal(t, 3, len(streamAndCookie1.Miniblocks))               // Only blocks from snapshot onwards
 	assert.NotNil(t, streamAndCookie1.Snapshot)
 	assert.True(t, streamAndCookie1.SyncReset)
-	
+
 	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 0 preceding blocks
 	streamAndCookie2 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 0)
 	assert.Equal(t, int64(0), streamAndCookie2.SnapshotMiniblockIndex) // 0 when no preceding blocks requested
-	assert.Equal(t, 3, len(streamAndCookie2.Miniblocks)) // Blocks from snapshot onwards
+	assert.Equal(t, 3, len(streamAndCookie2.Miniblocks))               // Blocks from snapshot onwards
 	assert.NotNil(t, streamAndCookie2.Snapshot)
-	
+
 	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 1 preceding block
 	streamAndCookie3 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 1)
 	assert.Equal(t, int64(1), streamAndCookie3.SnapshotMiniblockIndex) // Snapshot now at index 1
-	assert.Equal(t, 4, len(streamAndCookie3.Miniblocks)) // One extra block before snapshot
+	assert.Equal(t, 4, len(streamAndCookie3.Miniblocks))               // One extra block before snapshot
 	assert.NotNil(t, streamAndCookie3.Snapshot)
-	
+
 	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with 2 preceding blocks
 	streamAndCookie4 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 2)
 	assert.Equal(t, int64(2), streamAndCookie4.SnapshotMiniblockIndex) // Snapshot now at index 2
-	assert.Equal(t, 5, len(streamAndCookie4.Miniblocks)) // All blocks included
+	assert.Equal(t, 5, len(streamAndCookie4.Miniblocks))               // All blocks included
 	assert.NotNil(t, streamAndCookie4.Snapshot)
-	
+
 	// Test GetResetStreamAndCookieWithPrecedingMiniblocks with more blocks than available
 	streamAndCookie5 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 10)
 	assert.Equal(t, int64(2), streamAndCookie5.SnapshotMiniblockIndex) // Still at index 2 (all available)
-	assert.Equal(t, 5, len(streamAndCookie5.Miniblocks)) // All blocks included
+	assert.Equal(t, 5, len(streamAndCookie5.Miniblocks))               // All blocks included
 	assert.NotNil(t, streamAndCookie5.Snapshot)
-	
+
 	// Test edge cases for overflow/underflow protection
-	
+
 	// Test with negative number of preceding blocks
 	streamAndCookie6 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, -5)
 	assert.Equal(t, int64(0), streamAndCookie6.SnapshotMiniblockIndex) // Should be treated as 0
-	assert.Equal(t, 3, len(streamAndCookie6.Miniblocks)) // Same as no preceding blocks
+	assert.Equal(t, 3, len(streamAndCookie6.Miniblocks))               // Same as no preceding blocks
 	assert.NotNil(t, streamAndCookie6.Snapshot)
-	
+
 	// Test with very large number (potential overflow)
-	streamAndCookie7 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, int64(^uint64(0)>>1)) // Max int64
-	assert.Equal(t, int64(2), streamAndCookie7.SnapshotMiniblockIndex) // Should handle gracefully
-	assert.Equal(t, 5, len(streamAndCookie7.Miniblocks)) // All blocks included
+	streamAndCookie7 := view.GetResetStreamAndCookieWithPrecedingMiniblocks(
+		nodeWallet.Address,
+		int64(^uint64(0)>>1),
+	) // Max int64
+	assert.Equal(
+		t,
+		int64(2),
+		streamAndCookie7.SnapshotMiniblockIndex,
+	) // Should handle gracefully
+	assert.Equal(
+		t,
+		5,
+		len(streamAndCookie7.Miniblocks),
+	) // All blocks included
 	assert.NotNil(t, streamAndCookie7.Snapshot)
-	
+
 	// Test with empty view (edge case)
 	// Use the actual genesis miniblock which has a snapshot embedded (legacy format)
 	genesisMbBytes, err := proto.Marshal(genesisMb)
 	assert.NoError(t, err)
-	
+
 	emptyView, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: genesisMbBytes, Number: 0}, // No external snapshot for genesis blocks
@@ -548,7 +565,7 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 		},
 	)
 	assert.NoError(t, err)
-	
+
 	streamAndCookie8 := emptyView.GetResetStreamAndCookieWithPrecedingMiniblocks(nodeWallet.Address, 5)
 	assert.Equal(t, int64(0), streamAndCookie8.SnapshotMiniblockIndex)
 	assert.Equal(t, 1, len(streamAndCookie8.Miniblocks))

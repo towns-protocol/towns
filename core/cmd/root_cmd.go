@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/linkdata/deadlock"
+
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/config/builder"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -102,9 +103,11 @@ func initConfigAndLog() {
 
 func init() {
 	deadlock.Opts.WriteLocked(func() {
-		deadlock.Opts.DeadlockTimeout = 5 * time.Minute
+		deadlock.Opts.DeadlockTimeout = time.Minute
 		deadlock.Opts.MaxMapSize = 1024 * 256
-		deadlock.Opts.PrintAllCurrentGoroutines = true
+		deadlock.Opts.PrintAllCurrentGoroutines = false
+		deadlock.Opts.OnPotentialDeadlock = func() {} // Do not panic and continue execution
+		// TODO: make params configurable (move this section after config initialization) and wire zap logger to get better integration with log processors
 	})
 
 	cobra.OnInitialize(initConfigAndLog)

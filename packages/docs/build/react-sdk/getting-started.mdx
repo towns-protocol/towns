@@ -1,0 +1,350 @@
+---
+title: Getting Started
+---
+
+This guide will help you get started with Towns Protocol React SDK. You'll learn how to:
+1. [Install the React SDK](#installation)
+2. [Set up the necessary providers](#setting-up-providers)
+3. [Connect to Towns](#connecting-to-towns-protocol)
+4. [Create a space](#creating-a-space)
+5. [Send your first message](#sending-your-first-message)
+
+## Installation
+
+You can start a new Towns project in two ways:
+
+### Using create-towns-protocol-app (Recommended)
+
+The easiest way to get started is using `create-towns-protocol-app` and follow the instructions in the terminal. This will set up a new React project with all the necessary dependencies and configurations.
+
+```bash
+# npm
+npm create towns-protocol-app my-app
+
+# yarn
+yarn create towns-protocol-app my-app
+
+# pnpm
+pnpm create towns-protocol-app my-app
+```
+
+By default, this will create a new app using the Towns Playground template - a full-featured example application that demonstrates Towns's Protocol capabilities.
+
+### Manual Installation
+
+If you prefer to add the React SDK to an existing project, install the required dependencies:
+
+```bash
+yarn add @towns-protocol/react-sdk @towns-protocol/sdk vite-plugin-node-polyfills
+```
+
+Then, add the `vite-plugin-node-polyfills` to your `vite.config.ts`:
+
+```ts vite.config.ts {1,9}
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  // ...rest of your config
+  plugins: [
+    // ...rest of your plugins
+    nodePolyfills(),
+    react(),
+  ],
+})
+```
+
+## Setting Up Providers
+
+Towns requires a few providers to be set up at the root of your application:
+
+1. `WagmiProvider` - For Web3 wallet connection (recommended)
+2. `TownsSyncProvider` - For interacting with Towns Protocol
+
+Here's how to set them up:
+
+```tsx App.tsx
+import { TownsSyncProvider } from "@towns-protocol/react-sdk";
+import { base, baseSepolia } from 'viem/chains'
+import { WagmiConfig, createConfig } from "wagmi";
+import { createPublicClient, http } from 'viem'
+
+// Configure Wagmi
+export const wagmiConfig = createConfig({
+  autoConnect: true,
+  publicClient: createPublicClient({
+    chain: [base, baseSepolia],
+    transport: http()
+  }),
+})
+
+function App() {
+  return (
+    <WagmiConfig config={wagmiConfig}>
+      <TownsSyncProvider>
+        {/* Your app content */}
+      </TownsSyncProvider>
+    </WagmiConfig>
+  );
+}
+```
+
+If you need any assistance with setting up Wagmi, check out the [Wagmi Getting Started Guide](https://wagmi.sh/react/getting-started).
+
+## Connecting to Towns Protocol
+
+You can connect to Towns using either a Web3 wallet (recommended) or a bearer token.
+
+You can use the following networks:
+- `omega` - The Towns mainnet, uses Base as the EVM chain
+- `gamma` - The Towns testnet, uses Base Sepolia as the EVM chain
+
+We recommend using `gamma` as a starting point. 
+
+<Note>
+You can use other gamma clients like [Towns (gamma)](https://app.gamma.towns.com) or the [Towns Playground](https://river-sample-app.vercel.app) to help you inspect messages on the `gamma` network.
+</Note>
+
+### Using a Web3 Wallet
+
+```tsx
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { townsEnv } from "@towns-protocol/sdk";
+import { getEthersSigner } from "./utils/viem-to-ethers";
+import { wagmiConfig } from "./config/wagmi";
+
+const townsConfig = townsEnv().makeTownsConfig("gamma");
+
+function ConnectButton() {
+  const { connect, isAgentConnecting, isAgentConnected } = useAgentConnection();
+
+  return (
+    <button
+      onClick={async () => {
+        const signer = await getEthersSigner(wagmiConfig);
+        connect(signer, { townsConfig });
+      }}
+    >
+      {isAgentConnecting ? "Connecting..." : "Connect"}
+      {isAgentConnected && "Connected ✅"}
+    </button>
+  );
+}
+```
+
+<Note>
+You'll need to use `getEthersSigner` to get the signer from viem wallet client. 
+Towns SDK uses ethers under the hood, so you'll need to convert the viem wallet client to an ethers signer.
+
+You can get the `getEthersSigner` function from [Wagmi docs](https://wagmi.sh/core/guides/ethers#usage-1).
+</Note>
+
+### Using a Bearer Token
+
+You can connect to Towns using a pre-existing identity.
+This allows you to read and send messages, but you won't be able to create spaces or channels (on-chain actions).
+
+<Note>
+If you have a Towns account, you can get your bearer token from there. Type `/bearer-token` in any conversation to get your token.
+</Note>
+
+```tsx
+import { useAgentConnection } from "@towns-protocol/react-sdk";
+import { townsEnv } from "@towns-protocol/sdk";
+
+const townsConfig = townsEnv().makeTownsConfig("gamma");
+
+function ConnectButton() {
+  const { connectUsingBearerToken, isAgentConnecting, isAgentConnected } = useAgentConnection();
+  const [bearerToken, setBearerToken] = useState('');
+
+  return (
+    <div>
+      <input 
+        value={bearerToken} 
+        onChange={(e) => setBearerToken(e.target.value)}
+        placeholder="Enter bearer token" 
+      />
+      <button 
+        onClick={() => connectUsingBearerToken(bearerToken, { townsConfig })}
+      >
+        {isAgentConnecting ? "Connecting..." : "Connect"}
+        {isAgentConnected && "Connected ✅"}
+      </button>
+    </div>
+  );
+}
+```
+
+## Creating a Space
+
+Once connected, you can start interacting with Towns. Here's how to create a space:
+
+<Note>
+You can only create a space with a Web3 wallet. If you're using a bearer token, you can't create spaces.
+</Note>
+
+```tsx
+import { useCreateSpace } from "@towns-protocol/react-sdk";
+import { getEthersSigner } from "@/utils/viem-to-ethers";
+import { wagmiConfig } from "@/config/wagmi";
+
+function CreateSpace({ onCreateSpace }: { onCreateSpace: (spaceId: string) => void }) {
+  const { createSpace, isPending } = useCreateSpace();
+  const [spaceName, setSpaceName] = useState('');
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const signer = await getEthersSigner(wagmiConfig);
+        const { spaceId } = await createSpace({ spaceName }, signer);
+        // Let a parent component handle the spaceId, keep reading the guide! 
+        onCreateSpace(spaceId);
+        // Reset form
+        setSpaceName('');
+      }}
+    >
+      <div>
+        <input
+          value={spaceName}
+          onChange={(e) => setSpaceName(e.target.value)}
+          placeholder="Space name"
+          required
+        />
+      </div>
+      <button type="submit" disabled={isPending}>
+        {isPending ? "Creating..." : "Create Space"}
+      </button>
+    </form>
+  );
+}
+```
+
+## Sending Your First Message
+
+With the space created, we can send a message to the `#general` channel.
+Here's how to create a form 
+
+```tsx
+import {
+  useChannel,
+  useSendMessage,
+  useSpace,
+  useTimeline,
+  useUserSpaces,
+} from '@towns-protocol/react-sdk'
+import { RiverTimelineEvent } from '@towns-protocol/sdk'
+import { useState } from 'react'
+
+// Form to send a message to a channel
+function ChatInput({ spaceId, channelId }: { spaceId: string; channelId: string }) {
+  const { sendMessage, isPending } = useSendMessage(channelId)
+  const { data: channel } = useChannel(spaceId, channelId)
+  const [message, setMessage] = useState('')
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        sendMessage(message)
+        setMessage('')
+      }}
+    >
+      <input
+        value={message}
+        placeholder={`Type a message in ${channel?.metadata?.name || 'unnamed channel'}`}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+      <button type="submit" disabled={isPending}>
+        {isPending ? 'Sending...' : 'Send'}
+      </button>
+    </form>
+  )
+}
+
+// Display messages from a channel
+function ChatMessages({ channelId }: { channelId: string }) {
+  const { data: events } = useTimeline(channelId)
+  return (
+    <div>
+      {/* Filter out non-message events */}
+      {events
+        ?.filter((event) => event.content?.kind === RiverTimelineEvent.ChannelMessage)
+        .map((message) => (
+          <p key={message.eventId}>
+            {message.content?.kind === RiverTimelineEvent.ChannelMessage
+              ? message.content?.body
+              : ''}
+          </p>
+        ))}
+    </div>
+  )
+}
+
+// Chat component that renders the chat input and messages, given a spaceId
+function Chat({ spaceId }: { spaceId: string }) {
+  const { data: space } = useSpace(spaceId)
+  const channelId = space?.channelIds?.[0] // Spaces have a default channel called `general`
+
+  return (
+    <>
+      {channelId && <ChatInput spaceId={spaceId} channelId={channelId} />}
+      {channelId && <ChatMessages channelId={channelId} />}
+    </>
+  )
+}
+
+// Renders the name of a space
+const SpaceName = ({ spaceId }: { spaceId: string }) => {
+  const { data: space } = useSpace(spaceId)
+  return <>{space?.metadata?.name}</>
+}
+
+// Chat app that renders the create space and chat components
+export const ChatApp = () => {
+  // Get the list of spaces we're a member of
+  const { spaceIds } = useUserSpaces()
+  const [spaceId, setSpaceId] = useState('')
+
+  return (
+    <div>
+      {/* Show a list of spaces we're a member of, click to select one */}
+      {spaceIds.map((spaceId) => (
+        <button type="button" key={spaceId} onClick={() => setSpaceId(spaceId)}>
+          <SpaceName spaceId={spaceId} />
+        </button>
+      ))}
+      {/* Show the create space form if we don't have a space */}
+      {!spaceId && <CreateSpace onCreateSpace={(spaceId) => setSpaceId(spaceId)} />}
+      {/* Render the chat component with the current selected space */}
+      {spaceId && (
+        <h1>
+          Chatting in <SpaceName spaceId={spaceId} />
+        </h1>
+      )}
+      {spaceId && <Chat spaceId={spaceId} />}
+    </div>
+  )
+}
+```
+
+Add the `ChatApp` component to your app and you're ready to start chatting!
+
+## Next Steps
+
+Now that you have the basics set up, you can:
+
+- [Create and join spaces](/build/react-sdk/api/useCreateSpace)
+- [Create channels](/build/react-sdk/api/useCreateChannel)
+- [Send messages](/build/react-sdk/api/useSendMessage)
+- [Read messages](/build/react-sdk/api/useTimeline)
+- [Send reactions](/build/react-sdk/api/useSendReaction)
+- [Set username](/build/react-sdk/api/useSetUsername)
+- [Read message threads](/build/react-sdk/api/useThreads)
+- much more!
+You can find the full list of hooks in the [API Reference](/build/react-sdk/api).
+
+
+Check out our [Playground template](https://river-sample-app.vercel.app) for a full-featured example application.

@@ -1,4 +1,5 @@
 name: Continuous Integration
+
 env:
     FOUNDRY_VERSION: stable
     RIVER_BLOCK_TIME: 1
@@ -9,6 +10,13 @@ env:
     ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
     ETH_SEPOLIA_RPC_URL: ${{ secrets.ETH_SEPOLIA_RPC_URL }}
     CHAINS: '31337:http://localhost:8545,31338:http://localhost:8546'
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_BUCKET: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_BUCKET }}
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_JSON_CREDENTIALS: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_JSON_CREDENTIALS }}
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_SECRET_ACCESS_KEY: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_SECRET_ACCESS_KEY }}
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_ACCESS_KEY_ID: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_ACCESS_KEY_ID }}
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_BUCKET: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_BUCKET }}
+    RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_REGION: ${{ secrets.RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_REGION }}
+
 on:
     schedule:
         # Run every hour
@@ -49,15 +57,164 @@ on:
                 type: boolean
 
 jobs:
+    # This job is never run and is used as template for yaml anchors.
+    Settings_Template:
+        runs-on: blacksmith-ubuntu-latest
+        # never runs, only hosts anchors
+        if: ${{ false }}
+        services: &common_services
+            postgres-core:
+                image: postgres:17
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: river
+                    POSTGRES_INITDB_ARGS: >-
+                        -c shared_buffers=2GB
+                        -c effective_cache_size=6GB
+                        -c maintenance_work_mem=512MB
+                        -c work_mem=32MB
+                        -c wal_buffers=16MB
+                        -c max_connections=1000
+                        -c max_worker_processes=4
+                        -c max_parallel_workers=4
+                        -c max_parallel_workers_per_gather=2
+                        -c min_wal_size=1GB
+                        -c max_wal_size=4GB
+                        -c checkpoint_completion_target=0.9
+                        -c default_statistics_target=200
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --cpus 3
+                    --memory 8G
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name river_postgres_container
+        steps:
+            - &archive_river_node_logs_and_settings
+              name: Archive River Node Logs and Settings
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: 'river-node-${{ github.job }}'
+                  path: |
+                      ./core/run_files/
+                      !./core/**/bin/**
+
+    Build_Anvil_Docker:
+        runs-on: blacksmith-16vcpu-ubuntu-2404
+        outputs:
+            image_tag: ${{ steps.output.outputs.tag }}
+            build_hash: ${{ steps.hash.outputs.hash }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - uses: taiki-e/install-action@just
+
+            - name: Get docker build hash
+              id: hash
+              working-directory: core
+              run: |
+                  BUILD_HASH=$(just _get-docker-build-hash)
+                  echo "hash=${BUILD_HASH}" >> $GITHUB_OUTPUT
+
+            - name: Setup AWS Credentials
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Login to Amazon ECR
+              if: ${{ env.ACT != 'true' }}
+              uses: aws-actions/amazon-ecr-login@v2
+              with:
+                  registry-type: 'public'
+
+            - name: Check AWS ECR for existing image
+              id: check-remote
+              run: |
+                  IMAGE_TAG="public.ecr.aws/h5v6m2x1/towns-anvil:${{ steps.hash.outputs.hash }}"
+                  if docker manifest inspect ${IMAGE_TAG} >/dev/null 2>&1; then
+                    echo "exists=true" >> $GITHUB_OUTPUT
+                    echo "remote_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+                    echo "Found existing image: ${IMAGE_TAG}"
+                  else
+                    echo "exists=false" >> $GITHUB_OUTPUT
+                    echo "Image not found, will build locally: ${IMAGE_TAG}"
+                  fi
+
+            - name: Pull existing image from ECR
+              if: steps.check-remote.outputs.exists == 'true'
+              run: |
+                  docker pull ${{ steps.check-remote.outputs.remote_tag }}
+                  docker tag ${{ steps.check-remote.outputs.remote_tag }} towns-anvil:${{ steps.hash.outputs.hash }}
+                  # Only save to tar for GitHub Actions (not needed in act)
+                  if [ "$ACT" != "true" ]; then
+                    docker save towns-anvil:${{ steps.hash.outputs.hash }} > /tmp/anvil.tar
+                  fi
+
+            # GitHub Actions path - use build-push-action
+            - name: Setup Docker Buildx
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build and export Docker image (GitHub)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT != 'true' }}
+              uses: docker/build-push-action@v6
+              with:
+                  context: .
+                  file: ./packages/anvil-docker/Dockerfile
+                  tags: towns-anvil:${{ steps.hash.outputs.hash }}
+                  outputs: type=docker,dest=/tmp/anvil.tar
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+
+            # Local act path - use regular docker build
+            - name: Build Docker image (Local)
+              if: ${{ steps.check-remote.outputs.exists == 'false' && env.ACT == 'true' }}
+              run: |
+                  docker build -t towns-anvil:${{ steps.hash.outputs.hash }} \
+                    -f ./packages/anvil-docker/Dockerfile .
+                  # No need to save to tar in act since the image is already in local Docker
+
+            # Upload artifact in GitHub Actions (for both built and pulled images)
+            - name: Upload Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: anvil-docker-${{ steps.hash.outputs.hash }}
+                  path: /tmp/anvil.tar
+                  retention-days: 1
+
+            - name: Set outputs
+              id: output
+              run: |
+                  echo "tag=towns-anvil:${{ steps.hash.outputs.hash }}" >> $GITHUB_OUTPUT
+                  if [ "$ACT" = "true" ]; then
+                    echo "Using local image (act): towns-anvil:${{ steps.hash.outputs.hash }}"
+                  else
+                    echo "Will use artifact: towns-anvil:${{ steps.hash.outputs.hash }}"
+                  fi
+
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-32vcpu-ubuntu-2404
         timeout-minutes: 30
+        needs: [Build_Anvil_Docker]
 
         steps:
             - name: Print bash environment
               run: env
+
+            - uses: taiki-e/install-action@just
 
             - name: Cancel previous runs
               if: github.event_name != 'schedule'
@@ -100,8 +257,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -137,7 +312,7 @@ jobs:
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               uses: golangci/golangci-lint-action@v7
               with:
-                  version: v2.0.2
+                  version: v2.4.0
                   working-directory: core
                   args: --timeout=10m --config=.golangci.yml
 
@@ -152,6 +327,44 @@ jobs:
                     exit 1
                   fi
 
+            - name: Check Go Formatting
+              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
+              working-directory: core
+              run: |
+                  # Install formatting tools if not present
+                  if ! command -v gofumpt >/dev/null 2>&1; then
+                    go install mvdan.cc/gofumpt@latest
+                  fi
+                  if ! command -v golines >/dev/null 2>&1; then
+                    go install github.com/segmentio/golines@latest
+                  fi
+                  if ! command -v goimports >/dev/null 2>&1; then
+                    go install golang.org/x/tools/cmd/goimports@latest
+                  fi
+
+                  # Check if any files need formatting
+                  echo "Checking Go code formatting..."
+
+                  # Capture output and exit code
+                  set +e
+                  OUTPUT=$(./fmt.sh -l 2>&1)
+                  EXIT_CODE=$?
+                  set -e
+
+                  if [ $EXIT_CODE -ne 0 ]; then
+                    echo "❌ Go files are not properly formatted!"
+                    echo ""
+                    if [ -n "$OUTPUT" ]; then
+                      echo "The following files need formatting:"
+                      echo "$OUTPUT"
+                      echo ""
+                    fi
+                    echo "Please run './fmt.sh' in the core directory and commit the changes."
+                    exit 1
+                  fi
+
+                  echo "✅ All Go files are properly formatted."
+
             - name: Generate react-sdk docs
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               working-directory: packages/react-sdk
@@ -159,7 +372,7 @@ jobs:
 
             - name: Docs checking broken links
               working-directory: packages/docs
-              run: yarn docs:broken-links
+              run: yarn broken-links
 
             - name: Docs spellcheck
               working-directory: packages/docs
@@ -173,10 +386,6 @@ jobs:
                   working-directory: core
                   install-go: false
 
-            - name: Build town types
-              if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: ./scripts/build-contract-types.sh localhost --frozen
-
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
               run: yarn test:unit
@@ -184,24 +393,10 @@ jobs:
     Multinode:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        needs: [Build_Anvil_Docker]
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -213,21 +408,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -275,23 +455,34 @@ jobs:
             - name: Print versions
               run: ./scripts/print-versions.sh
 
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
             # Start an ssh session with tmate if the PR has the 'ssh' label
             - name: Setup tmate session
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
-
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
@@ -303,11 +494,19 @@ jobs:
 
             - name: Run multiple nodes
               working-directory: core
-              run: just RUN_ENV=multi_ne config-and-start
+              run: just config-and-start
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi_ne start-and-wait-app-registry
+              run: just start-and-wait-app-registry
+
+            # Wait for RPC handlers to be fully registered. Health endpoints respond immediately
+            # but RPC handlers for replicated stream operations need additional time to initialize
+            # quorum pools and establish inter-node connections.
+            - name: Wait for nodes to be ready
+              run: sleep 10
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
@@ -316,42 +515,27 @@ jobs:
 
             - name: Run Stream Metadata Nodes
               run: |
-                  yarn workspace @towns-protocol/stream-metadata dev:local_multi_ne &
-                  yarn wait-on http://localhost:3003/health --timeout=120000 --i=5000 --verbose
+                  mkdir -p core/run_files/local_dev/stream-metadata # make a directory for logs so they get saved
+                  yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
+                  yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
+
+            # Wait for data replication to complete. Similar to River nodes, the health endpoint
+            # responds before data propagation across nodes is finished.
+            - name: Wait for stream metadata service to be ready
+              run: sleep 10
 
             - name: Run Stream Metadata Tests (without entitlements)
               run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        needs: [Build_Anvil_Docker]
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -363,21 +547,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -417,8 +586,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -433,13 +620,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -449,12 +629,20 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: just RUN_ENV=multi config-and-start
+              run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi start-and-wait-app-registry
+              run: just start-and-wait-app-registry
+
+            # Wait for RPC handlers to be fully registered. Health endpoints respond immediately
+            # but RPC handlers for replicated stream operations need additional time to initialize
+            # quorum pools and establish inter-node connections.
+            - name: Wait for nodes to be ready
+              run: sleep 10
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -471,36 +659,15 @@ jobs:
             - name: Run Bot Uber Test (with entitlements)
               run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Multinode_Ent_Legacy:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_multinode_ent_legacy
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 40
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
-
+        needs: [Build_Anvil_Docker]
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -512,21 +679,6 @@ jobs:
 
             - name: Install Binaries
               run: sudo apt update && sudo apt-get install -y postgresql-client zstd make gcc netcat-openbsd
-
-            - name: Show PostgreSQL max_connections
-              run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
-            - name: Increase max_connections in Postgres
-              run: |
-                  docker exec -i river_postgres_container bash << EOF
-                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
-                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
-                  EOF
-                  docker restart --time 0 river_postgres_container
-                  sleep 5
 
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
@@ -566,8 +718,26 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
+
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
+              working-directory: core
+              run: just anvils
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Print Yarn package versions
               run: yarn info --name-only --all
@@ -582,13 +752,6 @@ jobs:
                       ${{ runner.os }}-turbo-common-main
                       ${{ runner.os }}-turbo-common-
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
-              working-directory: core
-              env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
-
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
@@ -598,12 +761,14 @@ jobs:
                   echo "NODE_EXTRA_CA_CERTS=$HOME/river-ca-cert.pem" >> $GITHUB_ENV
 
             - name: Run multiple nodes
-              run: just RUN_ENV=multi config-and-start
+              run: just config-and-start
               working-directory: core
+              env:
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Run app registry
               working-directory: core
-              run: just RUN_ENV=multi start-and-wait-app-registry
+              run: just start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
@@ -611,51 +776,15 @@ jobs:
             - name: Run River Tests Against Legacy Spaces (with entitlements)
               run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'river-node-${{ github.job }}'
-                  path: |
-                      ./core/run_files/
-                      !./core/**/bin/**
+            - *archive_river_node_logs_and_settings
 
     Go_Tests:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_go
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
-        services:
-            postgres-core:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: postgres
-                    POSTGRES_PASSWORD: postgres
-                    POSTGRES_INITDB_ARGS: >-
-                        -c shared_buffers=2GB
-                        -c effective_cache_size=6GB
-                        -c maintenance_work_mem=512MB
-                        -c work_mem=32MB
-                        -c wal_buffers=16MB
-                        -c max_connections=1000
-                        -c max_worker_processes=4
-                        -c max_parallel_workers=4
-                        -c max_parallel_workers_per_gather=2
-                        -c min_wal_size=1GB
-                        -c max_wal_size=4GB
-                        -c checkpoint_completion_target=0.9
-                        -c default_statistics_target=200
-                ports:
-                    # Maps tcp port 5433 on service container to the host
-                    - 5433:5432
-                options: >-
-                    --cpus 3
-                    --memory 8G
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
-                    --name river_postgres_container
+        needs: [Build_Anvil_Docker]
+        services: *common_services
         steps:
             - uses: taiki-e/install-action@just
 
@@ -699,21 +828,32 @@ jobs:
               uses: mxschmitt/action-tmate@v3
               if: contains(github.event.pull_request.labels.*.name, 'ssh')
 
-            - name: Start and configure blockchains
-              run: ./scripts/bc-all-start.sh
+            # Download Docker artifact (skip in act)
+            - name: Download Docker artifact
+              if: ${{ env.ACT != 'true' }}
+              uses: actions/download-artifact@v4
+              with:
+                  name: anvil-docker-${{ needs.Build_Anvil_Docker.outputs.build_hash }}
+                  path: /tmp
 
-            - name: create db
-              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+            - name: Load Docker image from artifact
+              if: ${{ env.ACT != 'true' }}
+              run: docker load -i /tmp/anvil.tar
+
+            # In act, the image should already be available from Build_Anvil_Docker job
+            # No additional steps needed for Docker image handling in local environment
+
+            - name: Start Anvil chains
               working-directory: core
+              run: just anvils
               env:
-                  POSTGRES_PASSWORD: postgres
-                  PGPASSWORD: postgres
+                  USE_DOCKER_CHAINS: '1'
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
               working-directory: core
 
-            - name: Run go tests with race detection exluding large tests
+            - name: Run go tests with race detection excluding large tests
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -race -v -timeout 15m -parallel 4 -count 1 -p 2
               working-directory: core
 
@@ -721,18 +861,12 @@ jobs:
               run: RIVER_TEST_LOG_DIR=$(pwd)/run_files/test_logs gotestsum  --format testname --format-hide-empty-pkg --format-icons text ./... -v -timeout 15m -parallel 4 -count 1 -p 2 -run NoRace
               working-directory: core
 
-            - name: Archive River Node Logs and Settings
-              if: always()
-              uses: actions/upload-artifact@v4
-              with:
-                  name: 'go-test-logs-${{ github.job }}'
-                  path: |
-                      ./core/run_files/test_logs/
+            - *archive_river_node_logs_and_settings
 
     XChain_Integration:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_integration
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
 
         steps:
@@ -773,6 +907,7 @@ jobs:
         # NOTE: We should make sure that new jobs get added here
         needs:
             [
+                Build_Anvil_Docker,
                 Common_CI,
                 Multinode,
                 Multinode_Ent,
@@ -781,7 +916,7 @@ jobs:
                 XChain_Integration,
             ]
         if: failure()
-        runs-on: ubuntu-x64-16core
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         steps:
             - name: Slack notification
               if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')

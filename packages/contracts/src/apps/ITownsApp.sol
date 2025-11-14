@@ -2,14 +2,18 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 
 /// @title ITownsApp Interface
 /// @notice Base interface for Towns apps implementing core module functionality
-/// @dev Combines IERC6900Module (module lifecycle), and IERC6900ExecutionModule (execution)
+/// @dev Combines IModule (module lifecycle), and IExecutionModule (execution)
 /// @dev Apps must implement required permissions and support these interfaces
-interface ITownsApp is IERC6900Module, IERC6900ExecutionModule {
+interface ITownsApp is IModule, IExecutionModule {
+    /// @notice Initializes the app
+    /// @param data The data to initialize the app
+    function initialize(bytes calldata data) external;
+
     /// @notice Returns the required permissions for the app
     /// @return permissions The required permissions for the app
     function requiredPermissions() external view returns (bytes32[] memory);

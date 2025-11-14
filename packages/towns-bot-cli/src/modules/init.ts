@@ -9,9 +9,10 @@ import {
     cloneTemplate,
     applyReplacements,
     printSuccess,
+    initializeGitRepository,
     type PackageJson,
 } from './utils.js'
-import type { Argv } from '../index.js'
+import type { InitArgs } from '../parser.js'
 
 export type Template = (typeof TEMPLATES)[keyof typeof TEMPLATES]
 export const TEMPLATES = {
@@ -20,19 +21,9 @@ export const TEMPLATES = {
         description: 'Simple starter bot with basic commands',
         packagePath: 'bot-quickstart',
     },
-    'thread-ai': {
-        name: 'Thread AI Bot',
-        description: 'AI-powered conversational bot using OpenAI',
-        packagePath: 'bot-thread-ai',
-    },
-    poll: {
-        name: 'Poll Bot',
-        description: 'Interactive poll bot for creating votes',
-        packagePath: 'bot-ask-poll',
-    },
 } as const
 
-export async function init(argv: Argv) {
+export async function init(argv: InitArgs) {
     const projectName = argv._[1]
     const template = argv.template || 'quickstart'
 
@@ -107,7 +98,7 @@ export async function init(argv: Argv) {
             modifiedContent = JSON.stringify(parsed, null, 2)
             fs.writeFileSync(packageJsonPath, modifiedContent)
         }
-
+        await initializeGitRepository(targetDir)
         printSuccess(projectName, packageManager)
     } catch (error) {
         console.error(red('Error:'), error instanceof Error ? error.message : error)

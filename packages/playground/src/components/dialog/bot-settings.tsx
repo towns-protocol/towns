@@ -4,14 +4,15 @@ import { useForm } from 'react-hook-form'
 import { useEffect } from 'react'
 import { type Address } from 'viem'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AppRegistryService, getAppRegistryUrl } from '@towns-protocol/sdk'
-import { bin_fromHexString } from '@towns-protocol/dlog'
+import { AppRegistryService, townsEnv } from '@towns-protocol/sdk'
+import { bin_fromHexString } from '@towns-protocol/utils'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ForwardSettingValue } from '@towns-protocol/proto'
 import { useAgentConnection } from '@towns-protocol/react-sdk'
 import { useEthersSigner } from '@/utils/viem-to-ethers'
 import { getAppMetadataQueryKey, useAppMetadata } from '@/hooks/useAppMetadata'
+import { VITE_ENV_OPTIONS } from '@/utils/environment'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog'
 import {
     Form,
@@ -49,6 +50,7 @@ const metadataFormSchema = z.object({
     imageUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
     avatarUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
     externalUrl: z.string().url({ message: 'Invalid URL' }).optional().or(z.literal('')),
+    motto: z.string().optional(),
 })
 
 type WebhookFormSchema = z.infer<typeof webhookFormSchema>
@@ -88,6 +90,7 @@ export const BotSettingsDialog = ({
             imageUrl: metadata?.imageUrl || '',
             avatarUrl: metadata?.avatarUrl || '',
             externalUrl: metadata?.externalUrl || '',
+            motto: metadata?.motto || '',
         },
     })
 
@@ -100,6 +103,7 @@ export const BotSettingsDialog = ({
                 imageUrl: metadata.imageUrl || '',
                 avatarUrl: metadata.avatarUrl || '',
                 externalUrl: metadata.externalUrl || '',
+                motto: metadata.motto || '',
             })
         }
     }, [metadata, isLoadingMetadata, open, metadataForm])
@@ -107,7 +111,9 @@ export const BotSettingsDialog = ({
     const signer = useEthersSigner()
     const { address: signerAddress } = useAccount()
     const { env: currentEnv } = useAgentConnection()
-    const appRegistryUrl = currentEnv ? getAppRegistryUrl(currentEnv) : ''
+    const appRegistryUrl = currentEnv
+        ? townsEnv(VITE_ENV_OPTIONS).getAppRegistryUrl(currentEnv)
+        : ''
 
     const registerWebhookMutation = useMutation({
         mutationFn: async ({ webhookUrl }: WebhookFormSchema) => {
@@ -164,7 +170,7 @@ export const BotSettingsDialog = ({
                 signer,
                 appRegistryUrl,
             )
-            await appRegistryRpcClient.setAppMetadata({
+            await appRegistryRpcClient.updateAppMetadata({
                 appId: bin_fromHexString(appClientId),
                 metadata: {
                     username: metadataData.name,
@@ -173,7 +179,17 @@ export const BotSettingsDialog = ({
                     imageUrl: metadataData.imageUrl || '',
                     avatarUrl: metadataData.avatarUrl || '',
                     externalUrl: metadataData.externalUrl,
+                    motto: metadataData.motto || '',
                 },
+                updateMask: [
+                    'username',
+                    'display_name',
+                    'description',
+                    'image_url',
+                    'avatar_url',
+                    'external_url',
+                    'motto',
+                ],
             })
         },
         onSuccess: () => {
@@ -287,6 +303,23 @@ export const BotSettingsDialog = ({
                                         <FormDescription>
                                             Link to your bot's homepage or documentation
                                         </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={metadataForm.control}
+                                name="motto"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Motto</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Your bot's tagline or slogan"
+                                                {...field}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

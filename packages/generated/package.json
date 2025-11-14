@@ -1,13 +1,30 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.291",
-    "packageManager": "yarn@3.8.0",
+    "version": "0.0.412",
     "type": "module",
     "scripts": {
-        "build": "yarn make-config",
-        "make-config": "node ./scripts/make-config.js",
-        "preinstall": "node ./scripts/make-config.js"
+        "build": "node ./scripts/prepare.js",
+        "build-types": "bash scripts/build-contract-types.sh",
+        "make-config": "node ./scripts/make-config.js"
     },
+    "dependencies": {
+        "@ethersproject/abi": "^5.8.0",
+        "@ethersproject/providers": "^5.8.0",
+        "ethers": "^5.8.0"
+    },
+    "devDependencies": {
+        "@towns-protocol/contracts": "workspace:^",
+        "@typechain/ethers-v5": "^11.1.2",
+        "typechain": "^8.3.2"
+    },
+    "files": [
+        "config/**/*",
+        "deployments/**/*",
+        "dev/**/*",
+        "scripts/**/*",
+        "v3/**/*",
+        "README.md"
+    ],
     "imports": {
         "#/dev/*": "./dev/*",
         "#/v3/*": "./v3/*",

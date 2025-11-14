@@ -36,11 +36,11 @@ message ChannelMessage {
         message Attachment {
             oneof content {
                 Content.Image image = 101;
-                EmbeddedMedia embeddedMedia = 102;
                 ChunkedMedia chunkedMedia = 103;
                 Content.EmbeddedMessage embeddedMessage = 104;
                 Content.UnfurledURL unfurledUrl = 105;
                 Content.Ticker ticker = 106;
+                Content.Miniapp miniapp = 107;
             }
         }
         
@@ -109,6 +109,10 @@ message ChannelMessage {
             message Ticker {
                 string address = 1;
                 string chain_id = 2;
+            }
+
+            message Miniapp {
+                string url = 1;
             }
         }
         
@@ -236,4 +240,6 @@ message ExportedDevice {
 message AppPrivateData {
     string private_key = 1;
     ExportedDevice encryption_device = 2;
+    string env = 3; // alpha, gamma, delta, omega
+    bytes app_address = 4;
 }

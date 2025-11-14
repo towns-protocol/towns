@@ -48,7 +48,6 @@ import {
     ChannelPropertiesEvent,
     MessageType,
     ChannelMessageEvent,
-    EmbeddedMediaAttachment,
     ImageAttachment,
     EmbeddedMessageAttachment,
     TickerAttachment,
@@ -58,6 +57,10 @@ import {
     getReactionParentId,
     getReplyParentId,
     getThreadParentId,
+    InteractionRequestEvent,
+    InteractionRequestEncryptedEvent,
+    InteractionResponseEvent,
+    MiniappAttachment,
 } from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
@@ -68,7 +71,7 @@ import {
     StreamTimelineEvent,
 } from '../../types'
 import { streamIdAsString, streamIdFromBytes, userIdFromAddress } from '../../id'
-import { bin_toHexString, dlogger } from '@towns-protocol/dlog'
+import { bin_toHexString, dlogger } from '@towns-protocol/utils'
 import { getSpaceReviewEventDataBin } from '@towns-protocol/web3'
 import { DecryptedContent } from '../../encryptedContentTypes'
 import { DecryptionSessionError } from '../../decryptionExtensions'
@@ -116,6 +119,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isSendFailed: timelineEvent.localEvent?.status === 'failed',
         confirmedEventNum: timelineEvent.confirmedEventNum,
         confirmedInBlockNum: timelineEvent.miniblockNum,
+        confirmedAtEpochMs: timelineEvent.confirmedAtEpochMs,
         threadParentId: getThreadParentId(content),
         replyParentId: getReplyParentId(content),
         reactionParentId: getReactionParentId(content),
@@ -304,6 +308,9 @@ function toTownsContent_MemberPayload(
                     initiatorId: userIdFromAddress(value.content.value.initiatorAddress),
                     membership: toMembership(value.content.value.op),
                     reason: value.content.value.reason,
+                    appAddress: value.content.value.appAddress
+                        ? userIdFromAddress(value.content.value.appAddress)
+                        : undefined,
                 } satisfies StreamMembershipEvent,
             }
         case 'keySolicitation':
@@ -485,6 +492,9 @@ function toTownsContent_UserPayload(
                     kind: RiverTimelineEvent.Inception,
                     creatorId: message.creatorUserId,
                     type: message.event.payload.case,
+                    appAddress: value.content.value.appAddress
+                        ? userIdFromAddress(value.content.value.appAddress)
+                        : undefined,
                 } satisfies InceptionEvent,
             }
         }
@@ -586,6 +596,38 @@ function toTownsContent_ChannelPayload(
                     refEventId: bin_toHexString(value.content.value.eventId),
                     adminRedaction: true,
                 } satisfies RedactionActionEvent,
+            }
+        case 'custom':
+            return { error: `Custom payload not supported: ${description}` }
+        case 'interactionRequest': {
+            const recipient = value.content.value.recipient
+                ? bin_toHexString(value.content.value.recipient)
+                : undefined
+            if (timelineEvent.decryptedContent?.kind === 'interactionRequestPayload') {
+                return {
+                    content: {
+                        kind: RiverTimelineEvent.InteractionRequest,
+                        payload: timelineEvent.decryptedContent.content,
+                        recipient,
+                    } satisfies InteractionRequestEvent,
+                }
+            }
+
+            // If not decrypted yet, show as encrypted
+            return {
+                content: {
+                    kind: RiverTimelineEvent.InteractionRequestEncrypted,
+                    error: timelineEvent.decryptedContentError,
+                    recipient,
+                } satisfies InteractionRequestEncryptedEvent,
+            }
+        }
+        case 'interactionResponse':
+            return {
+                content: {
+                    kind: RiverTimelineEvent.InteractionResponse,
+                    response: value.content.value,
+                } satisfies InteractionResponseEvent,
             }
         case undefined: {
             return { error: `Undefined payload case: ${description}` }
@@ -906,18 +948,6 @@ function toAttachment(
                 thumbnail: thumbnail,
             } satisfies ChunkedMediaAttachment
         }
-        case 'embeddedMedia': {
-            const info = attachment.content.value.info
-            if (!info) {
-                return undefined
-            }
-            return {
-                type: 'embedded_media',
-                info,
-                content: attachment.content.value.content,
-                id,
-            } satisfies EmbeddedMediaAttachment
-        }
         case 'image': {
             const info = attachment.content.value.info
             if (!info) {
@@ -966,6 +996,14 @@ function toAttachment(
                 address: content.address,
                 chainId: content.chainId,
             } satisfies TickerAttachment
+        }
+        case 'miniapp': {
+            const content = attachment.content.value
+            return {
+                type: 'miniapp',
+                url: content.url,
+                id,
+            } satisfies MiniappAttachment
         }
         default:
             return undefined
@@ -1076,11 +1114,30 @@ export function toDecryptedEvent(
                 return event
             }
         }
+        case RiverTimelineEvent.InteractionRequestEncrypted:
+            if (decryptedContent.kind === 'interactionRequestPayload') {
+                return {
+                    ...event,
+                    content: {
+                        kind: RiverTimelineEvent.InteractionRequest,
+                        payload: decryptedContent.content,
+                        recipient: event.content.recipient,
+                    } satisfies InteractionRequestEvent,
+                }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid interactionRequestEncrypted', {
+                    event,
+                    decryptedContent,
+                })
+                return event
+            }
         case RiverTimelineEvent.ChannelCreate:
         case RiverTimelineEvent.ChannelMessage:
         case RiverTimelineEvent.ChannelMessageMissing:
         case RiverTimelineEvent.ChannelProperties:
         case RiverTimelineEvent.Inception:
+        case RiverTimelineEvent.InteractionRequest:
+        case RiverTimelineEvent.InteractionResponse:
         case RiverTimelineEvent.KeySolicitation:
         case RiverTimelineEvent.Fulfillment:
         case RiverTimelineEvent.MemberBlockchainTransaction:
@@ -1165,6 +1222,12 @@ export function getFallbackContent(
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
         case RiverTimelineEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
+        case RiverTimelineEvent.InteractionRequest:
+            return content.payload ? `interactionRequest` : `interactionRequest: (encrypted)`
+        case RiverTimelineEvent.InteractionRequestEncrypted:
+            return `interactionRequest: (encrypted)`
+        case RiverTimelineEvent.InteractionResponse:
+            return `interactionResponse: ${bin_toHexString(content.response.recipient)}`
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {

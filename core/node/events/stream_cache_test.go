@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -57,7 +58,7 @@ func TestStreamCacheViewEviction(t *testing.T) {
 	require.Equal(1, streamWithLoadedViewCount, "stream cache must have one loaded stream")
 
 	// views of inactive stream must be dropped, even if there are subscribers
-	receiver := &testStreamCacheViewEvictionSub{}
+	receiver := &testSubscriber{}
 	syncCookie := streamView.SyncCookie(node.Wallet.Address)
 
 	err = streamSync.Sub(ctx, syncCookie, receiver)
@@ -203,32 +204,6 @@ func TestCacheEvictionWithFilledMiniBlockPool(t *testing.T) {
 	require.Nil(loadedStream.getViewLocked(), "view loaded in cache")
 }
 
-type testStreamCacheViewEvictionSub struct {
-	receivedStreamAndCookies []*StreamAndCookie
-	receivedErrors           []error
-	streamErrors             []StreamId
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnUpdate(sac *StreamAndCookie) {
-	sub.receivedStreamAndCookies = append(sub.receivedStreamAndCookies, sac)
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnSyncError(err error) {
-	sub.receivedErrors = append(sub.receivedErrors, err)
-}
-
-func (sub *testStreamCacheViewEvictionSub) OnStreamSyncDown(streamID StreamId) {
-	sub.streamErrors = append(sub.streamErrors, streamID)
-}
-
-func (sub *testStreamCacheViewEvictionSub) eventsReceived() int {
-	count := 0
-	for _, sac := range sub.receivedStreamAndCookies {
-		count += len(sac.Events)
-	}
-	return count
-}
-
 // TODO: it seems this test takes at least 60 seconds, why?
 func TestStreamMiniblockBatchProduction(t *testing.T) {
 	require := require.New(t)
@@ -276,8 +251,18 @@ func TestStreamMiniblockBatchProduction(t *testing.T) {
 			// add several events to the stream
 			numToAdd := 1 + int(streamID[3]%50)
 			for i := range numToAdd {
-				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
+				addEventToStream(
+					t,
+					ctx,
+					streamCache.params,
+					streamSync,
+					fmt.Sprintf(
+						"msg# %d",
+						i,
+					),
+					&MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0},
+					false,
+				)
 			}
 
 			mu.Lock()
@@ -377,7 +362,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 		node                  = tc.getBC()
 		genesisBlocks         = tc.allocateStreams(streamsCount)
 		syncCookies           = make(map[StreamId]*SyncCookie)
-		subscriptionReceivers = make(map[StreamId]*testStreamCacheViewEvictionSub)
+		subscriptionReceivers = make(map[StreamId]*testSubscriber)
 	)
 
 	// obtain sync cookies for allocated streams
@@ -402,7 +387,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, syncCookie := range syncCookies {
 		streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 		require.NoError(err, "get sync stream")
-		subscriptionReceivers[streamID] = new(testStreamCacheViewEvictionSub)
+		subscriptionReceivers[streamID] = new(testSubscriber)
 		err = streamSync.Sub(ctx, syncCookie, subscriptionReceivers[streamID])
 		require.NoError(err, "sub stream")
 	}
@@ -424,8 +409,18 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 			streamSync, err := streamCache.GetStreamWaitForLocal(ctx, streamID)
 			require.NoError(err, "get sync stream")
 			for i := 0; i < 1+int(streamID[3]%50); i++ {
-				addEventToStream(t, ctx, streamCache.params, streamSync,
-					fmt.Sprintf("msg# %d", i), &MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0}, false)
+				addEventToStream(
+					t,
+					ctx,
+					streamCache.params,
+					streamSync,
+					fmt.Sprintf(
+						"msg# %d",
+						i,
+					),
+					&MiniblockRef{Hash: common.BytesToHash(genesis.Header.Hash), Num: 0},
+					false,
+				)
 			}
 			streamsWithEvents[streamID] = 1 + int(streamID[3]%50)
 		} else {
@@ -437,7 +432,7 @@ func Disabled_TestStreamUnloadWithSubscribers(t *testing.T) {
 	for streamID, expectedEventCount := range streamsWithEvents {
 		subscriber := subscriptionReceivers[streamID]
 		gotEventCount := subscriber.eventsReceived()
-		require.Nilf(subscriber.receivedErrors, "subscriber received error: %s", subscriber.receivedErrors)
+		require.Nilf(subscriber.streamErrors, "subscriber received error: %s", subscriber.streamErrors)
 		require.Equal(expectedEventCount, gotEventCount, "subscriber unexpected event count")
 	}
 
@@ -469,7 +464,7 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	// through disableCallback the test can control if the stream cache witnesses river chain events.
 	var disableCallbacks atomic.Bool
 	instance.params.ChainMonitor.OnBlockWithLogs(instance.params.AppliedBlockNum+1,
-		func(ctx context.Context, blockNumber crypto.BlockNumber, logs []*types.Log) {
+		func(ctx context.Context, blockNumber blockchain.BlockNumber, logs []*types.Log) {
 			if !disableCallbacks.Load() {
 				mbProducer.onNewBlock(ctx, blockNumber)
 				instance.cache.onBlockWithLogs(ctx, blockNumber, logs)
@@ -567,7 +562,11 @@ func TestMiniblockRegistrationWithPendingLocalCandidate(t *testing.T) {
 	// because the candidate was not promoted because the node never witnessed the set stream event.
 	riverChainBlockNum, err := instance.params.RiverChain.Client.BlockNumber(ctx)
 	require.NoError(err)
-	getStream, err := instance.params.Registry.GetStream(ctx, spaceStreamId, crypto.BlockNumber(riverChainBlockNum))
+	getStream, err := instance.params.Registry.StreamRegistry.GetStreamOnBlock(
+		ctx,
+		spaceStreamId,
+		blockchain.BlockNumber(riverChainBlockNum),
+	)
 	require.NoError(err)
 
 	require.Equal(getStream.LastMbNum(), candidate.Ref.Num)

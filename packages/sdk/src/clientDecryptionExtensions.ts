@@ -19,7 +19,7 @@ import { make_MemberPayload_KeyFulfillment, make_MemberPayload_KeySolicitation }
 import { Client } from './client'
 import { EncryptedContent } from './encryptedContentTypes'
 import { Permission } from '@towns-protocol/web3'
-import { check } from '@towns-protocol/dlog'
+import { check } from '@towns-protocol/utils'
 import { chunk } from 'lodash-es'
 import { isDefined } from './check'
 import { isMobileSafari } from './utils'
@@ -53,7 +53,7 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         this.unpackEnvelopeOpts = unpackEnvelopeOpts
         const onMembershipChange = (streamId: string, userId: string) => {
             if (userId === this.userId) {
-                this.retryDecryptionFailures(streamId)
+                this.retryKeySolicitations(streamId)
             }
         }
 
@@ -286,19 +286,18 @@ export class ClientDecryptionExtensions extends BaseDecryptionExtensions {
         algorithm,
     }: GroupSessionsData): Promise<void> {
         const chunked = chunk(sessions, 100)
-        for (const chunk of chunked) {
-            await this.client.encryptAndShareGroupSessions(
+        for (const sessionIds of chunked) {
+            await this.client.encryptAndShareGroupSessionsToDevice(
                 streamId,
-                chunk,
-                {
-                    [item.fromUserId]: [
-                        {
-                            deviceKey: item.solicitation.deviceKey,
-                            fallbackKey: item.solicitation.fallbackKey,
-                        },
-                    ],
-                },
+                sessionIds,
                 algorithm,
+                item.fromUserId,
+                [
+                    {
+                        deviceKey: item.solicitation.deviceKey,
+                        fallbackKey: item.solicitation.fallbackKey,
+                    },
+                ],
             )
         }
     }

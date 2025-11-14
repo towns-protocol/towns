@@ -1,10 +1,9 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.291",
-  "packageManager": "yarn@3.8.0",
+  "version": "0.0.412",
   "scripts": {
-    "build": "forge build",
     "clean": "forge clean",
+    "compile": "forge build",
     "format": "yarn prettier:write",
     "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
@@ -15,34 +14,43 @@
     "typings": "wagmi generate"
   },
   "dependencies": {
-    "@erc6900/reference-implementation": "^0.8.1",
+    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
+    "@layerzerolabs/oft-evm": "^3.1.4",
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
     "@prb/math": "^4.1.0",
-    "@towns-protocol/diamond": "^0.6.1",
-    "@uniswap/permit2": "https://github.com/towns-protocol/permit2/archive/refs/tags/v1.0.0.tar.gz",
-    "crypto-lib": "https://github.com/towns-protocol/crypto-lib/archive/refs/tags/v1.0.0.tar.gz",
+    "@towns-protocol/diamond": "^0.6.3",
+    "@uniswap/permit2": "github:towns-protocol/permit2#v1.0.0",
+    "account-abstraction": "github:eth-infinitism/account-abstraction#v0.7.0",
+    "crypto-lib": "github:towns-protocol/crypto-lib#v1.0.1",
+    "modular-account": "github:towns-protocol/modular-account#v1.0.0",
     "solady": "^0.1.24"
   },
   "devDependencies": {
+    "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.112",
+    "@layerzerolabs/lz-evm-protocol-v2": "^3.0.112",
+    "@layerzerolabs/oapp-evm": "^0.3.2",
     "@openzeppelin/merkle-tree": "^1.0.8",
     "@prb/test": "^0.6.4",
     "@towns-protocol/prettier-config": "workspace:^",
     "@wagmi/cli": "^2.2.0",
-    "account-abstraction": "https://github.com/eth-infinitism/account-abstraction/archive/refs/tags/v0.7.0.tar.gz",
-    "forge-std": "github:foundry-rs/forge-std#v1.9.7",
+    "forge-std": "github:foundry-rs/forge-std#v1.10.0",
     "prettier": "^3.5.3",
     "prettier-plugin-solidity": "^1.4.2",
-    "solhint": "^5.0.5"
+    "solhint": "^5.0.5",
+    "solidity-bytes-utils": "^0.8.4"
   },
   "files": [
+    "docs/**/*",
     "src/**/*.sol",
     "scripts/**/*.sol",
-    "./typings/index.ts",
     "README.md"
   ],
   "installConfig": {
     "hoistingLimits": "dependencies"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

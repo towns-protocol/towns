@@ -33,6 +33,12 @@ func NewEVMErrorDecoder(metaData ...*bind.MetaData) (*EvmErrorDecoder, error) {
 	return cea, nil
 }
 
+func NewEVMErrorDecoderFromABI(abis ...*abi.ABI) *EvmErrorDecoder {
+	return &EvmErrorDecoder{
+		abis: abis,
+	}
+}
+
 // AddMetaData add extra ABI metadata to consider when decoding EVM errors.
 func (ca *EvmErrorDecoder) AddMetaData(md *bind.MetaData) error {
 	a, err := md.GetAbi()
@@ -41,6 +47,10 @@ func (ca *EvmErrorDecoder) AddMetaData(md *bind.MetaData) error {
 	}
 	ca.abis = append(ca.abis, a)
 	return nil
+}
+
+func (ca *EvmErrorDecoder) AddABI(abi *abi.ABI) {
+	ca.abis = append(ca.abis, abi)
 }
 
 // DecodeEVMError tries to decode the given error returned from a contract call

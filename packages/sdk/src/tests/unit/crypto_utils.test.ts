@@ -4,7 +4,7 @@
 
 import { deriveKeyAndIV, encryptAESGCM } from '@towns-protocol/sdk-crypto'
 import { randomBytes } from '../../utils'
-import { bin_toHexString } from '@towns-protocol/dlog'
+import { bin_toHexString } from '@towns-protocol/utils'
 
 describe('crypto_utils', () => {
     test('derivedKeyAndIV', async () => {

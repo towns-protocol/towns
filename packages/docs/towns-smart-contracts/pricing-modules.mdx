@@ -3,13 +3,11 @@ title: Pricing Modules
 description: ""
 ---
 
-## Custom Pricing Modules in Spaces
-
-### Overview
+## Overview
 
 In the Towns ecosystem, Spaces have the flexibility to define their own pricing strategies through custom pricing modules. These modules are smart contracts that comply with the `IPricingModule` Interface and are responsible for determining the price of memberships based on various attributes.
 
-### Implementation of Custom Pricing Modules
+## Implementation of Custom Pricing Modules
 
 To implement a custom pricing module, a contract must adhere to the `IPricingModule` Interface. This interface includes the `getPrice` function, which can be programmed to calculate prices based on different criteria, such as the total number of memberships minted or other programmable attributes. See more examples in [Recipes].
 
@@ -31,10 +29,12 @@ Every newly deployed Space in the Towns ecosystem is equipped with two default p
    - **Minimum Price**: Sets a minimum price of $10 USD for a membership.
    - **Payment Method**: Also accepts ETH as payment.
 
-### Transaction Fee Distribution
+## Transaction Fee Distribution
 
 An essential aspect of the pricing modules is the distribution of fees from transactions. These fees are split among key stakeholders:
 
 - **Space Owner**: A portion of the fees is allocated to the SpaceOwner, providing an incentive for maintaining and growing the Space.
-- **Towns DAO**: A share of the fees contribute to the Towns Lodge, supporting the overall development and sustainability of the ecosystem.
+- **Towns Community**: At present, a share of fees contribute to the **River Eridanus Association**, supporting the overall development and sustainability of the ecosystem.  Upon implementation of they buy-and-burn function, the remaining fees will be contributed to the [Towns Lodge](https://townslodge.com) giving TOWNS tokenholders the decision on how to deploy those funds to further the Towns Protocol.
 - **Referrers**: Referrers, if any, are also rewarded, encouraging community growth and engagement. Referrers can be set for both members of a Space as well as for the client being used to interact with the protocol.
+
+**Note**: Free Spaces do not incur protocol fees on membership transactions (joining or renewing). Tipping within any space (free or paid) incurs a separate protocol fee on member tips, while bot tips have no protocol fee.

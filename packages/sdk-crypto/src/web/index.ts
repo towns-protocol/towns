@@ -1,4 +1,4 @@
-import { throwWithCode } from '@towns-protocol/dlog'
+import { throwWithCode } from '@towns-protocol/utils'
 import { EncryptedData, Err } from '@towns-protocol/proto'
 import { AES_GCM_DERIVED_ALGORITHM } from '@towns-protocol/encryption'
 
@@ -133,4 +133,35 @@ export async function decryptDerivedAESGCM(
     const { key, iv } = await deriveKeyAndIV(keyPhrase)
     const ciphertext = base64ToUint8Array(encryptedData.ciphertext)
     return decryptAESGCM(ciphertext, key, iv)
+}
+
+export async function encryptChunkedAESGCM(
+    data: Uint8Array,
+    chunkSize: number,
+): Promise<{
+    chunks: Array<{ ciphertext: Uint8Array; iv: Uint8Array }>
+    secretKey: Uint8Array
+}> {
+    if (!data || data.length === 0) {
+        throw new Error('Cannot encrypt undefined or empty data')
+    }
+    const secretKey = crypto.getRandomValues(new Uint8Array(32))
+    // Adjust chunk size to account for AES-GCM overhead (16-byte auth tag)
+    const maxPlaintextSize = chunkSize - 16
+    const chunks: Array<{ ciphertext: Uint8Array; iv: Uint8Array }> = []
+
+    let offset = 0
+    while (offset < data.length) {
+        const dataChunk = data.slice(offset, offset + maxPlaintextSize)
+        const { ciphertext, iv } = await encryptAESGCM(dataChunk, secretKey)
+
+        if (ciphertext.byteLength > chunkSize) {
+            throw new Error(`Encrypted chunk exceeds chunkSize. Adjust chunkSize.`)
+        }
+
+        chunks.push({ ciphertext, iv })
+        offset += maxPlaintextSize
+    }
+
+    return { chunks, secretKey }
 }

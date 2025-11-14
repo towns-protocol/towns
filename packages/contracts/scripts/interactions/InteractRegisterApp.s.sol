@@ -2,14 +2,13 @@
 pragma solidity ^0.8.23;
 
 //interfaces
-import {IAppRegistry} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppFactory} from "src/apps/facets/factory/IAppFactory.sol";
 
 //contracts
 import {Interaction} from "../common/Interaction.s.sol";
-import {SimpleApp} from "src/apps/helpers/SimpleApp.sol";
-import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 
-contract InteractRegisterApp is Interaction, IAppRegistryBase {
+contract InteractRegisterApp is Interaction, IAppFactoryBase {
     function __interact(address deployer) internal override {
         address appRegistry = getDeployment("appRegistry");
 
@@ -32,7 +31,7 @@ contract InteractRegisterApp is Interaction, IAppRegistryBase {
         });
 
         vm.broadcast(deployer);
-        (address app, bytes32 appId) = IAppRegistry(appRegistry).createApp(appData);
+        (address app, bytes32 appId) = IAppFactory(appRegistry).createApp(appData);
 
         saveApp("SimpleApp", appId, address(app));
     }

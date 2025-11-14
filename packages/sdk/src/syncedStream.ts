@@ -7,7 +7,7 @@ import {
 } from '@towns-protocol/proto'
 import { Stream } from './stream'
 import { ParsedMiniblock, ParsedEvent, ParsedStreamResponse, ParsedSnapshot } from './types'
-import { DLogger, bin_equal, bin_toHexString, dlog } from '@towns-protocol/dlog'
+import { DLogger, bin_equal, bin_toHexString, dlog } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { IPersistenceStore, LoadedStream } from './persistenceStore'
 import { StreamEvents } from './streamEvents'

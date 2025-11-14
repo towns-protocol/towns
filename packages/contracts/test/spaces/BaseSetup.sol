@@ -4,11 +4,11 @@ pragma solidity ^0.8.23;
 // utils
 import {TestUtils} from "@towns-protocol/diamond/test/TestUtils.sol";
 import {EIP712Utils} from "@towns-protocol/diamond/test/facets/signature/EIP712Utils.sol";
-import {SimpleAccount} from "account-abstraction/samples/SimpleAccount.sol";
-import {SimpleAccountFactory} from "account-abstraction/samples/SimpleAccountFactory.sol";
+import {EntryPoint} from "@eth-infinitism/account-abstraction/core/EntryPoint.sol";
+import {SimpleAccount} from "@eth-infinitism/account-abstraction/samples/SimpleAccount.sol";
+import {SimpleAccountFactory} from "@eth-infinitism/account-abstraction/samples/SimpleAccountFactory.sol";
 
 // interfaces
-import {IEntryPoint} from "account-abstraction/interfaces/IEntryPoint.sol";
 import {IEntitlementChecker} from "src/base/registry/facets/checker/IEntitlementChecker.sol";
 import {IMainnetDelegation} from "src/base/registry/facets/mainnet/IMainnetDelegation.sol";
 import {INodeOperator} from "src/base/registry/facets/operator/INodeOperator.sol";
@@ -20,6 +20,8 @@ import {IWalletLink} from "src/factory/facets/wallet-link/IWalletLink.sol";
 import {ISpaceOwner} from "src/spaces/facets/owner/ISpaceOwner.sol";
 import {ITowns} from "src/tokens/towns/mainnet/ITowns.sol";
 import {IAppRegistry, IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {IAppInstaller} from "src/apps/facets/installer/IAppInstaller.sol";
+import {IAppFactory, IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 import {ITownsApp} from "src/apps/ITownsApp.sol";
 
@@ -70,7 +72,9 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     address internal spaceFactory;
     address internal spaceDiamond;
 
+    uint256 internal appDeveloperPrivateKey;
     address internal appDeveloper;
+    uint256 internal appClientPrivateKey;
     address internal appClient;
 
     address internal userEntitlement;
@@ -95,6 +99,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     address internal riverAirdrop;
     address internal appRegistry;
+
+    EntryPoint internal entryPoint;
     SimpleAccountFactory internal simpleAccountFactory;
 
     IEntitlementChecker internal entitlementChecker;
@@ -115,7 +121,8 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         operators = _createAccounts(10);
 
         // Simple Account Factory
-        simpleAccountFactory = new SimpleAccountFactory(IEntryPoint(_randomAddress()));
+        entryPoint = new EntryPoint();
+        simpleAccountFactory = new SimpleAccountFactory(entryPoint);
 
         deployBaseRegistry = new DeployBaseRegistry();
         deploySpaceFactory = new DeploySpaceFactory();
@@ -167,7 +174,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         riverAirdrop = deployRiverAirdrop.deploy(deployer);
 
         // App Registry
-        deployAppRegistry.setSpaceFactory(spaceFactory);
         appRegistry = deployAppRegistry.deploy(deployer);
 
         // Base Registry Diamond
@@ -189,8 +195,13 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         founder = vm.addr(founderPrivateKey);
         vm.label(founder, "founder");
 
-        appDeveloper = makeAddr("appDeveloper");
-        appClient = makeAddr("appClient");
+        appDeveloperPrivateKey = boundPrivateKey(_randomUint256());
+        appDeveloper = vm.addr(appDeveloperPrivateKey);
+        vm.label(appDeveloper, "appDeveloper");
+
+        appClientPrivateKey = boundPrivateKey(_randomUint256());
+        appClient = vm.addr(appClientPrivateKey);
+        vm.label(appClient, "appClient");
 
         // Create the arguments necessary for creating a space
         IArchitectBase.SpaceInfo memory spaceInfo = _createSpaceInfo("BaseSetupSpace");
@@ -273,7 +284,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
     }
 
     function _createTestApp(bytes32[] memory permissions) internal returns (address app) {
-        IAppRegistryBase.AppParams memory appParams = IAppRegistryBase.AppParams({
+        IAppFactoryBase.AppParams memory appParams = IAppFactoryBase.AppParams({
             name: "Test App",
             permissions: permissions,
             client: appClient,
@@ -282,7 +293,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         });
 
         vm.prank(appDeveloper);
-        (app, ) = IAppRegistry(appRegistry).createApp(appParams);
+        (app, ) = IAppFactory(appRegistry).createApp(appParams);
     }
 
     function _installAppOnEveryoneSpace(address app) internal {
@@ -290,7 +301,7 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
         vm.deal(address(founder), totalRequired);
 
         vm.prank(founder);
-        IAppRegistry(appRegistry).installApp{value: totalRequired}({
+        IAppInstaller(appRegistry).installApp{value: totalRequired}({
             app: ITownsApp(app),
             account: IAppAccount(everyoneSpace),
             data: ""
@@ -299,6 +310,6 @@ contract BaseSetup is TestUtils, EIP712Utils, SpaceHelper {
 
     function _uninstallAppOnEveryoneSpace(address app) internal {
         vm.prank(founder);
-        IAppRegistry(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
+        IAppInstaller(appRegistry).uninstallApp(ITownsApp(app), IAppAccount(everyoneSpace), "");
     }
 }

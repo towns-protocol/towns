@@ -30,10 +30,9 @@ This bot demonstrates the basic functionality of a Towns bot:
 
 ## Environment Variables
 
-- `APP_PRIVATE_DATA_BASE64`: Your Towns app private data
+- `APP_PRIVATE_DATA`: Your Towns app private data
 - `JWT_SECRET`: JWT secret for authentication
-- `RIVER_ENV`: Environment (development/production)
-- `PORT`: Port to run the bot on
+- `PORT`: Port to run the bot on (optional, defaults to 5123)
 
 ## Usage
 

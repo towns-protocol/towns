@@ -17,7 +17,7 @@ import {
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
 import { StreamStateView_AbstractContent } from './streamStateView_AbstractContent'
 import { DecryptedContent } from './encryptedContentTypes'
-import { check, throwWithCode } from '@towns-protocol/dlog'
+import { check, throwWithCode } from '@towns-protocol/utils'
 import { isDefined, logNever } from './check'
 import { contractAddressFromSpaceId, isDefaultChannelId, streamIdAsString } from './id'
 import { fromBinary } from '@bufbuild/protobuf'

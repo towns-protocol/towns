@@ -5,9 +5,9 @@ import (
 	"slices"
 	"time"
 
+	"github.com/towns-protocol/towns/core/blockchain"
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -16,7 +16,7 @@ import (
 func (s *StreamCache) onStreamCreated(
 	ctx context.Context,
 	event *river.StreamState,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	if !slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address) {
 		return
@@ -51,7 +51,7 @@ func (s *StreamCache) onStreamCreated(
 func (s *StreamCache) onStreamPlacementUpdated(
 	ctx context.Context,
 	event *river.StreamState,
-	blockNum crypto.BlockNumber,
+	blockNum blockchain.BlockNumber,
 ) {
 	participatingInStream := slices.Contains(event.Stream.Nodes(), s.params.Wallet.Address)
 	if !participatingInStream {
@@ -156,6 +156,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 	if len(missingMbs) > 0 {
 		remotes, _ := stream.GetRemotesAndIsLocal()
 		currentStickyPeer := stream.GetStickyPeer()
+	peersLoop:
 		for range len(remotes) {
 			resp, err := s.params.RemoteMiniblockProvider.GetMiniblocksByIds(
 				ctx,
@@ -175,6 +176,7 @@ func (s *StreamCache) normalizeEphemeralStream(
 			// Start processing miniblocks from the stream.
 			// If the processing breaks in the middle, the rest of missing miniblocks will be fetched from the next sticky peer.
 			var toNextPeer bool
+			var allFetched bool
 			for resp.Receive() {
 				msg := resp.Msg()
 				if msg == nil || msg.GetMiniblock() == nil {
@@ -226,8 +228,12 @@ func (s *StreamCache) normalizeEphemeralStream(
 				// No missing miniblocks left, just return.
 				if len(missingMbs) == 0 {
 					_ = resp.Close()
-					return nil
+					allFetched = true
+					break
 				}
+			}
+			if allFetched {
+				break peersLoop
 			}
 
 			if toNextPeer {

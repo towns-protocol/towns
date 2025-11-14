@@ -2,13 +2,12 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IERC6900ExecutionModule} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
-import {IERC6900Module} from "@erc6900/reference-implementation/interfaces/IERC6900Module.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {ITownsApp} from "../../ITownsApp.sol";
 import {IAppRegistryBase} from "./IAppRegistry.sol";
 import {ISchemaResolver} from "@ethereum-attestation-service/eas-contracts/resolver/ISchemaResolver.sol";
-import {ISimpleApp} from "../../helpers/ISimpleApp.sol";
 import {IPlatformRequirements} from "../../../factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {IERC173} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
@@ -16,13 +15,14 @@ import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 // libraries
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
-import {AppRegistryStorage} from "./AppRegistryStorage.sol";
+import {AppRegistryStorage, ClientInfo, AppInfo} from "./AppRegistryStorage.sol";
 import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
+import {LibAppRegistry} from "./LibAppRegistry.sol";
 
 // types
-import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IERC6900ExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 import {AttestationRequest, RevocationRequestData} from "@ethereum-attestation-service/eas-contracts/IEAS.sol";
 
@@ -33,7 +33,10 @@ import {AttestationBase} from "../attest/AttestationBase.sol";
 abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBase {
     using CustomRevert for bytes4;
 
-    uint48 private constant MAX_DURATION = 365 days;
+    modifier onlyAllowed(IAppAccount account) {
+        if (IERC173(address(account)).owner() != msg.sender) NotAllowed.selector.revertWith();
+        _;
+    }
 
     function __AppRegistry_init_unchained(
         address spaceFactory,
@@ -73,7 +76,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     /// @param app The address of the app
     /// @return The latest version ID
     function _getLatestAppId(address app) internal view returns (bytes32) {
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
         return appInfo.latestVersion;
     }
 
@@ -94,10 +97,11 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
     function _getAppDuration(address app) internal view returns (uint48 duration) {
         try ITownsApp(app).accessDuration() returns (uint48 accessDuration) {
-            return _validateDuration(accessDuration);
+            duration = LibAppRegistry.validateDuration(accessDuration);
         } catch {
-            return MAX_DURATION;
+            duration = LibAppRegistry.validateDuration(0);
         }
+        return duration;
     }
 
     /// @notice Retrieves detailed information about an app by its ID
@@ -118,66 +122,35 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return AppRegistryStorage.getLayout().client[client].app;
     }
 
-    /// @notice Creates a new app with the specified parameters
-    /// @param params The parameters for creating the app
-    /// @return app The address of the created app
-    /// @return version The version ID of the registered app
-    /// @dev Validates inputs, deploys app contract, and registers it
-    function _createApp(AppParams calldata params) internal returns (address app, bytes32 version) {
-        // Validate basic parameters
-        if (bytes(params.name).length == 0) InvalidAppName.selector.revertWith();
-        if (params.permissions.length == 0) InvalidArrayInput.selector.revertWith();
-        if (params.client == address(0)) InvalidAddressInput.selector.revertWith();
+    function _upgradeApp(
+        ITownsApp app,
+        address client,
+        bytes32 versionId
+    ) internal returns (bytes32 newVersionId) {
+        if (versionId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
-        uint48 duration = _validateDuration(params.accessDuration);
+        (
+            address owner,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest,
+            uint48 duration
+        ) = _validateApp(app, client);
 
-        app = LibClone.deployERC1967BeaconProxy(address(this));
-        ISimpleApp(app).initialize(
-            msg.sender,
-            params.name,
-            params.permissions,
-            params.installPrice,
-            duration
-        );
+        if (msg.sender != owner) NotAllowed.selector.revertWith();
 
-        version = _registerApp(app, params.client);
-        emit AppCreated(app, version);
-    }
-
-    /// @notice Registers a new app in the registry
-    /// @param app The address of the app to register
-    /// @param client The client address that can use the app
-    /// @return version The version ID of the registered app
-    /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
-    function _registerApp(address app, address client) internal returns (bytes32 version) {
-        _verifyAddAppInputs(app, client);
+        address appAddress = address(app);
 
         AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
-        AppRegistryStorage.AppInfo storage appInfo = $.apps[app];
-        AppRegistryStorage.ClientInfo storage clientInfo = $.client[client];
-
-        if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
+        AppInfo storage appInfo = $.apps[appAddress];
         if (appInfo.isBanned) BannedApp.selector.revertWith();
+        if (appInfo.latestVersion != versionId) InvalidAppId.selector.revertWith();
 
-        ITownsApp appContract = ITownsApp(app);
-
-        uint256 installPrice = appContract.installPrice();
-        _validatePricing(installPrice);
-
-        uint48 accessDuration = appContract.accessDuration();
-        uint48 duration = _validateDuration(accessDuration);
-
-        bytes32[] memory permissions = appContract.requiredPermissions();
-        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
-
-        address owner = appContract.moduleOwner();
-        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
-
-        ExecutionManifest memory manifest = appContract.executionManifest();
+        ClientInfo storage clientInfo = $.client[client];
+        if (clientInfo.app == address(0)) ClientNotRegistered.selector.revertWith();
 
         App memory appData = App({
-            appId: EMPTY_UID,
-            module: app,
+            appId: versionId,
+            module: appAddress,
             owner: owner,
             client: client,
             permissions: permissions,
@@ -185,27 +158,57 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
             duration: duration
         });
 
-        AttestationRequest memory request;
-        request.schema = _getSchemaId();
-        request.data.recipient = app;
-        request.data.revocable = true;
-        request.data.refUID = appInfo.latestVersion;
-        request.data.data = abi.encode(appData);
-        version = _attest(msg.sender, msg.value, request).uid;
+        newVersionId = _attestApp(appData);
 
+        appInfo.latestVersion = newVersionId;
+        emit AppUpgraded(appAddress, versionId, newVersionId);
+    }
+
+    /// @notice Registers a new app in the registry
+    /// @param app The address of the app to register
+    /// @param client The client address that can use the app
+    /// @return version The version ID of the registered app
+    /// @dev Reverts if app is banned, inputs are invalid, or caller is not the owner
+    function _registerApp(ITownsApp app, address client) internal returns (bytes32 version) {
+        (
+            address owner,
+            bytes32[] memory permissions,
+            ExecutionManifest memory manifest,
+            uint48 duration
+        ) = _validateApp(app, client);
+
+        address appAddress = address(app);
+
+        AppRegistryStorage.Layout storage $ = AppRegistryStorage.getLayout();
+        AppInfo storage appInfo = $.apps[appAddress];
+        ClientInfo storage clientInfo = $.client[client];
+
+        if (appInfo.isBanned) BannedApp.selector.revertWith();
+        if (clientInfo.app != address(0)) ClientAlreadyRegistered.selector.revertWith();
+
+        App memory appData = App({
+            appId: EMPTY_UID,
+            module: appAddress,
+            owner: owner,
+            client: client,
+            permissions: permissions,
+            manifest: manifest,
+            duration: duration
+        });
+
+        version = _attestApp(appData);
         appInfo.latestVersion = version;
-        appInfo.app = app;
-        clientInfo.app = app;
+        appInfo.app = appAddress;
+        clientInfo.app = appAddress;
 
-        emit AppRegistered(app, version);
+        emit AppRegistered(appAddress, version);
     }
 
     /// @notice Removes a app from the registry
-    /// @param revoker The address revoking the app
     /// @param appId The version ID of the app to remove
     /// @dev Reverts if app is not registered, revoked, or banned
     /// @dev Spaces that install this app will need to uninstall it
-    function _removeApp(address revoker, bytes32 appId) internal {
+    function _removeApp(bytes32 appId) internal {
         if (appId == EMPTY_UID) InvalidAppId.selector.revertWith();
 
         Attestation memory att = _getAttestation(appId);
@@ -214,20 +217,17 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         if (att.revocationTime > 0) AppRevoked.selector.revertWith();
 
         App memory appData = abi.decode(att.data, (App));
+        if (appData.owner != msg.sender) NotAllowed.selector.revertWith();
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[
-            appData.module
-        ];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[appData.module];
 
         if (appInfo.isBanned) BannedApp.selector.revertWith();
 
         RevocationRequestData memory request;
         request.uid = appId;
-        _revoke(att.schema, request, revoker, 0, true);
+        _revoke(att.schema, request, msg.sender, 0, true);
 
-        AppRegistryStorage.ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[
-            appData.client
-        ];
+        ClientInfo storage clientInfo = AppRegistryStorage.getLayout().client[appData.client];
         clientInfo.app = address(0);
 
         emit AppUnregistered(appData.module, appId);
@@ -263,6 +263,20 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         emit AppUninstalled(app, address(account), appId);
     }
 
+    function _updateApp(address app, address space) internal {
+        if (_isBanned(app)) BannedApp.selector.revertWith();
+
+        bytes32 appId = _getLatestAppId(app);
+        if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
+
+        Attestation memory att = _getAttestation(appId);
+        if (att.uid == EMPTY_UID) AppNotRegistered.selector.revertWith();
+        if (att.revocationTime > 0) AppRevoked.selector.revertWith();
+
+        IAppAccount(space).onUpdateApp(appId, abi.encode(app));
+        emit AppUpdated(app, space, appId);
+    }
+
     function _renewApp(address app, address account, bytes calldata data) internal {
         bytes32 appId = IAppAccount(account).getAppId(app);
         if (appId == EMPTY_UID) AppNotInstalled.selector.revertWith();
@@ -282,10 +296,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         IAppAccount(account).onRenewApp(appId, data);
 
         emit AppRenewed(app, account, appId);
-    }
-
-    function _onlyAllowed(address account) internal view {
-        if (IERC173(account).owner() != msg.sender) NotAllowed.selector.revertWith();
     }
 
     function _getProtocolFee(uint256 installPrice) internal view returns (uint256) {
@@ -356,7 +366,7 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     function _banApp(address app) internal returns (bytes32 version) {
         if (app == address(0)) AppNotRegistered.selector.revertWith();
 
-        AppRegistryStorage.AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
+        AppInfo storage appInfo = AppRegistryStorage.getLayout().apps[app];
 
         if (appInfo.app == address(0)) AppNotRegistered.selector.revertWith();
         if (appInfo.isBanned) BannedApp.selector.revertWith();
@@ -368,33 +378,61 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
         return appInfo.latestVersion;
     }
 
-    function _validatePricing(uint256 price) internal view {
-        IPlatformRequirements reqs = _getPlatformRequirements();
-        uint256 minPlatformFee = reqs.getMembershipFee();
-        if (price > 0 && price < minPlatformFee) InvalidPrice.selector.revertWith();
+    function _attestApp(App memory appData) internal returns (bytes32 newVersionId) {
+        AttestationRequest memory request;
+        request.schema = _getSchemaId();
+        request.data.recipient = appData.module;
+        request.data.revocable = true;
+        request.data.refUID = appData.appId;
+        request.data.data = abi.encode(appData);
+        newVersionId = _attest(msg.sender, msg.value, request).uid;
     }
 
-    function _validateDuration(uint48 duration) internal pure returns (uint48) {
-        if (duration > MAX_DURATION) InvalidDuration.selector.revertWith();
-        if (duration == 0) duration = MAX_DURATION;
-        return duration;
-    }
-
-    /// @notice Verifies inputs for adding a new app
-    /// @param app The app address to verify
+    /// @notice Validates inputs for adding a new app
+    /// @param appContract The app contract to verify
     /// @param client The client address to verify
     /// @dev Reverts if any input is invalid or app doesn't implement required interfaces
-    function _verifyAddAppInputs(address app, address client) internal view {
-        if (app == address(0)) InvalidAddressInput.selector.revertWith();
+    /// @return owner The owner of the app
+    /// @return permissions The permissions of the app
+    /// @return manifest The manifest of the app
+    /// @return duration The duration of the app
+    function _validateApp(
+        ITownsApp appContract,
+        address client
+    ) internal view returns (address, bytes32[] memory, ExecutionManifest memory, uint48) {
+        address appAddress = address(appContract);
+        if (appAddress == address(0)) InvalidAddressInput.selector.revertWith();
         if (client == address(0)) InvalidAddressInput.selector.revertWith();
 
+        (
+            uint256 installPrice,
+            uint48 accessDuration,
+            bytes32[] memory permissions,
+            address owner,
+            ExecutionManifest memory manifest
+        ) = (
+                appContract.installPrice(),
+                appContract.accessDuration(),
+                appContract.requiredPermissions(),
+                appContract.moduleOwner(),
+                appContract.executionManifest()
+            );
+
+        if (permissions.length == 0) InvalidArrayInput.selector.revertWith();
+        if (owner == address(0)) InvalidAddressInput.selector.revertWith();
+
+        installPrice = LibAppRegistry.validatePricing(_getPlatformRequirements(), installPrice);
+        accessDuration = LibAppRegistry.validateDuration(accessDuration);
+
         if (
-            !IERC165(app).supportsInterface(type(IERC6900Module).interfaceId) ||
-            !IERC165(app).supportsInterface(type(IERC6900ExecutionModule).interfaceId) ||
-            !IERC165(app).supportsInterface(type(ITownsApp).interfaceId)
+            !IERC165(appAddress).supportsInterface(type(IModule).interfaceId) ||
+            !IERC165(appAddress).supportsInterface(type(IExecutionModule).interfaceId) ||
+            !IERC165(appAddress).supportsInterface(type(ITownsApp).interfaceId)
         ) {
             AppDoesNotImplementInterface.selector.revertWith();
         }
+
+        return (owner, permissions, manifest, accessDuration);
     }
 
     function _getPlatformRequirements() internal view returns (IPlatformRequirements) {

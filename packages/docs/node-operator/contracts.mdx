@@ -1,0 +1,73 @@
+---
+title: Contracts
+description: Smart Contracts powering the Towns Protocol are deployed to Ethereum L2 networks for testnet and mainnet. This page provides a list of deployed contracts needed for running nodes and their network coordinates.
+---
+
+
+<Note>
+All contract source and deployed addresses can also be found on the [Towns Protocol repository](https://github.com/towns-protocol/towns).
+Contract source code is located in the `contracts` [directory](https://github.com/towns-protocol/towns/tree/main/packages/contracts).
+Deployed addresses can be found under `packages/generated` for testnet and mainnet, respectively.
+</Note>
+
+### Network Chain Ids
+
+| Network | Chain Id | Network Environment |
+| --- | --- | --- |
+| Base Sepolia | 84532 | Testnet |
+| Towns Chain Testnet | 6524490 | Testnet |
+| Base | 8453 | Mainnet |
+| Towns Chain | 550 | Mainnet |
+
+
+### Contract Addresses
+
+Below are contract addresses to diamond contracts that are required to register a node operator on Base.
+
+<Note>All contracts are deployed using the [Diamond](https://eips.ethereum.org/EIPS/eip-2535) pattern for modularity.</Note>
+
+| Contract Name | Testnet Address | Mainnet Address | Network |
+| --- | --- | --- | -- |
+| Base Registry | [baseRegistry.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/beta/base/addresses/baseRegistry.json) | [baseRegistry.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/omega/base/addresses/baseRegistry.json) | Base |
+
+Below are the deployed diamond contracts that are required to run Stream Nodes in the Towns Network.
+
+| Contract Name | Testnet Address | Mainnet Address | Network |
+| --- | --- | --- | -- |
+| SpaceFactory | [spaceFactory.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/beta/base/addresses/spaceFactory.json) | [spaceFactory.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/omega/base/addresses/spaceFactory.json) | Base |
+| Entitlements | [entitlementChecker.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/beta/base/addresses/entitlementChecker.json) | [entitlementChecker.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/omega/base/addresses/baseRegistry.json) | Base |
+| River Registry | [riverRegistry.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/beta/river/addresses/riverRegistry.json) | [riverRegistry.json](https://github.com/towns-protocol/towns/blob/main/packages/generated/deployments/omega/river/addresses/riverRegistry.json) | Towns Chain |
+
+### Towns Token Addresses
+| Network | Address |
+| --- | --- |
+| Base Sepolia | [0x00000000A22C618fd6b4D7E9A335C4B96B189a38](https://basescan.org/address/0x00000000A22C618fd6b4D7E9A335C4B96B189a38) |
+| Base | [0x00000000A22C618fd6b4D7E9A335C4B96B189a38](https://basescan.org/address/0x00000000A22C618fd6b4D7E9A335C4B96B189a38) |
+| Ethereum Mainnet | [0x000000Fa00b200406de700041CFc6b19BbFB4d13](https://etherscan.io/address/0x000000Fa00b200406de700041CFc6b19BbFB4d13) |
+
+### Mainnet Towns Chain Resources
+
+| Description | URL |
+| --- | --- |
+| Towns Chain Explorer | [explorer.towns.com](https://explorer.towns.com) |
+| Towns Chain RPC Node (HTTP) | [mainnet.rpc.towns.com](https://mainnet.rpc.towns.com) |
+| Towns Chain Hub | [mainnet.hub.towns.com](https://mainnet.hub.towns.com) |
+| Towns Chain Bridge L1 -> L2 | [mainnet.bridge.towns.com](https://mainnet.bridge.towns.com) |
+| Towns Chain Status | [mainnet.status.towns.com](https://mainnet.status.towns.com/) |
+
+### Testnet Towns Chain Resources
+
+| Description | URL |
+| --- | --- |
+| Towns Chain Explorer | [testnet.explorer.towns.com](https://testnet.explorer.towns.com) |
+| Towns Chain RPC Node (HTTP) | [testnet.rpc.towns.com](https://testnet.rpc.towns.com/http) |
+| Towns Chain Hub | [testnet.hub.towns.com](https://testnet.hub.towns.com) |
+| Towns Chain Bridge L1 -> L2 | [testnet.bridge.towns.com](https://testnet.bridge.towns.com) |
+
+### Celestia Data Availability Layer
+
+Towns uses the Celestia [DA](https://docs.celestia.org/learn/how-celestia-works/data-availability-layer) (Data Availability) Namespace to store blob data on the Towns Chain in a scalable, highly available, and cost-effective manner.
+
+| Namespace ID | Explorer |
+| --- | --- |
+| ca1d e12a 2bf1 0ef2 0a85 | [celenium.io](https://celenium.io/namespace/000000000000000000000000000000000000ca1de12a2bf10ef20a85) |
