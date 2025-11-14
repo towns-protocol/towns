@@ -54,7 +54,7 @@ const app = new Hono()
 app.use(logger())
 app.post('/webhook', jwtMiddleware, handler)
 app.get('/.well-known/agent-metadata.json', async (c) => {
-    c.json(await bot.getIdentityMetadata())
+    return c.json(await bot.getIdentityMetadata())
 })
 
 export default app
