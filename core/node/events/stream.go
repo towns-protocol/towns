@@ -212,7 +212,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 		return nil, err
 	}
 
-	view, err := MakeStreamView(streamData)
+	view, err := MakeStreamView(ctx, s.streamId, streamData)
 	if err != nil {
 		return nil, err
 	}
@@ -496,6 +496,8 @@ func (s *Stream) initFromGenesisLocked(
 	}
 
 	view, err := MakeStreamView(
+		ctx,
+		s.streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{storageMb},
 		},
@@ -1277,7 +1279,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 
 	// If success, update the view.
 	// TODO: REFACTOR: introduce MakeStreamView from parsed data (to avoid re-parsing).
-	view, err := MakeStreamView(&storage.ReadStreamFromLastSnapshotResult{
+	view, err := MakeStreamView(ctx, s.streamId, &storage.ReadStreamFromLastSnapshotResult{
 		Miniblocks:              storageMiniblocks,
 		SnapshotMiniblockOffset: snapshotMbIndex,
 		MinipoolEnvelopes:       [][]byte{},
