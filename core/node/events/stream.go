@@ -226,10 +226,12 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 	}
 
 	keysAndValues3 := logCaller(ctx, "MakeStreamView", s.streamId)
+	start := time.Now()
 	view, err := MakeStreamView(streamData)
 	if err != nil {
 		return nil, err
 	}
+	keysAndValues = append(keysAndValues, "took", time.Since(start))
 	logging.FromCtx(ctx).Infow("MakeStreamView returned", keysAndValues3...)
 
 	s.setViewLocked(view)

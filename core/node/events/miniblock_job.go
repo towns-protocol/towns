@@ -117,7 +117,12 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 			Tag("streamId", j.stream.streamId)
 	}
 
+	start := time.Now()
+	logging.FromCtx(ctx).Debugw("mbJob.produceCandidate/makeCandidate: start", "streamId", j.stream.streamId)
 	err = j.makeCandidate(ctx)
+	logging.FromCtx(ctx).Debugw("mbJob.produceCandidate/makeCandidate: finish",
+		"took", time.Since(start), "streamId", j.stream.streamId)
+
 	if err != nil {
 		return err
 	}
@@ -125,7 +130,12 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 		return nil
 	}
 
+	start = time.Now()
+	logging.FromCtx(ctx).Debugw("mbJob.produceCandidate/saveCandidate: start", "streamId", j.stream.streamId)
 	err = j.saveCandidate(ctx)
+	logging.FromCtx(ctx).Debugw("mbJob.produceCandidate/saveCandidate: finish",
+		"took", time.Since(start), "streamId", j.stream.streamId)
+
 	if err != nil {
 		return err
 	}
