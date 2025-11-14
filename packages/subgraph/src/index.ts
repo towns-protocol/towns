@@ -867,7 +867,12 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
         await context.db.sql
             .update(schema.appVersion)
             .set({ isLatest: false })
-            .where(eq(schema.appVersion.versionId, oldVersionId))
+            .where(
+                and(
+                    eq(schema.appVersion.app, app),
+                    eq(schema.appVersion.versionId, oldVersionId),
+                ),
+            )
 
         // Create new version record
         await context.db

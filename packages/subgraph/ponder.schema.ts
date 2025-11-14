@@ -295,7 +295,7 @@ export const appInstallation = onchainTable(
 export const appVersion = onchainTable(
     'app_versions',
     (t) => ({
-        versionId: t.hex().primaryKey(),
+        versionId: t.hex().notNull(),
         app: t.hex().notNull(),
 
         // Version metadata
@@ -312,7 +312,9 @@ export const appVersion = onchainTable(
         isCurrent: t.boolean().default(true).notNull(),
     }),
     (table) => ({
+        pk: primaryKey({ columns: [table.app, table.versionId] }),
         appIdx: index().on(table.app),
+        versionIdIdx: index().on(table.versionId),
         latestIdx: index().on(table.app, table.isLatest),
         currentIdx: index().on(table.isCurrent),
     }),
