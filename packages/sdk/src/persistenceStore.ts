@@ -20,7 +20,7 @@ import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
-const DEFAULT_RETRY_COUNT = 2
+const DEFAULT_RETRY_COUNT = 3
 const log = {
     debug: dlog('csb:persistence', { defaultEnabled: false }),
     info: dlog('csb:persistence:info', { defaultEnabled: true }),
@@ -47,10 +47,10 @@ async function fnReadRetryer<T>(
         try {
             if (retryCounter < retries) {
                 log.warn('retrying...', `${retryCounter}/${retries} retries left`)
-                retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
             }
+            retryCounter -= 1
             return await fn()
         } catch (err) {
             lastErr = err
