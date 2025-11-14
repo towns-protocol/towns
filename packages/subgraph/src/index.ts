@@ -868,10 +868,7 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
             .update(schema.appVersion)
             .set({ isLatest: false })
             .where(
-                and(
-                    eq(schema.appVersion.app, app),
-                    eq(schema.appVersion.versionId, oldVersionId),
-                ),
+                and(eq(schema.appVersion.app, app), eq(schema.appVersion.versionId, oldVersionId)),
             )
 
         // Create new version record
