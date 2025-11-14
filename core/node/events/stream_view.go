@@ -42,7 +42,7 @@ func MakeStreamView(
 	large := len(streamData.Miniblocks) > 100 || len(streamData.MinipoolEnvelopes) > 10
 	if large {
 		logging.FromCtx(ctx).Infow(
-			"MakeStreamView parsing large stream",
+			"MakeStreamView: parsing large stream",
 			"streamId", streamId,
 			"miniblocks", len(streamData.Miniblocks),
 			"minipoolSize", len(streamData.MinipoolEnvelopes),
@@ -54,12 +54,14 @@ func MakeStreamView(
 		durationExceeded := duration > 10*time.Second
 		if durationExceeded || large {
 			level := zapcore.InfoLevel
+			msg := "MakeStreamView: large stream parsed"
 			if durationExceeded {
 				level = zapcore.ErrorLevel
+				msg = "MakeStreamView: stream parsing took too long"
 			}
 			logging.FromCtx(ctx).Logw(
 				level,
-				"MakeStreamView took too long",
+				msg,
 				"duration", duration,
 				"streamId", streamId,
 				"miniblocks", len(streamData.Miniblocks),
