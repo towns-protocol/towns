@@ -110,7 +110,7 @@ func MakeStreamView(
 			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
-	logging.DefaultLogger(zapcore.InfoLevel).Infow("MakeStreamView", "minipoolLen", len(streamData.MinipoolEnvelopes))
+	logging.FromCtx(ctx).Infow("MakeStreamView", "minipoolLen", len(streamData.MinipoolEnvelopes))
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
 	for _, e := range streamData.MinipoolEnvelopes {
@@ -132,7 +132,7 @@ func MakeStreamView(
 		}
 	}
 
-	logging.DefaultLogger(zapcore.InfoLevel).Infow("MakeStreamView After Parsing minipool envelopes",
+	logging.FromCtx(ctx).Infow("MakeStreamView After Parsing minipool envelopes",
 		"minipoolLen", len(streamData.MinipoolEnvelopes))
 
 	lastBlockHeader := miniblocks[len(miniblocks)-1].Header()

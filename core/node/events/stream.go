@@ -227,7 +227,7 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	keysAndValues3 := logCaller(ctx, "MakeStreamView", s.streamId)
 	start := time.Now()
-	view, err := MakeStreamView(streamData)
+	view, err := MakeStreamView(ctx, s.streamId, streamData)
 	if err != nil {
 		return nil, err
 	}
