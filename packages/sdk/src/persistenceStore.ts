@@ -21,9 +21,12 @@ import { fromBinary, toBinary } from '@bufbuild/protobuf'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 2
-const log = dlog('csb:persistence', { defaultEnabled: false })
-const logWarn = dlog('csb:persistence:warn', { defaultEnabled: true })
-const logError = dlogError('csb:persistence:error')
+const log = {
+    debug: dlog('csb:persistence', { defaultEnabled: false }),
+    info: dlog('csb:persistence:info', { defaultEnabled: true }),
+    warn: dlog('csb:persistence:warn', { defaultEnabled: true }),
+    error: dlogError('csb:persistence:error'),
+}
 
 export interface LoadedStream {
     persistedSyncedStream: ParsedPersistedSyncedStream
@@ -43,7 +46,7 @@ async function fnReadRetryer<T>(
     while (retryCounter > 0) {
         try {
             if (retryCounter < retries) {
-                logWarn('retrying...', `${retryCounter}/${retries} retries left`)
+                log.warn('retrying...', `${retryCounter}/${retries} retries left`)
                 retryCounter--
                 // wait a bit before retrying
                 await new Promise((resolve) => setTimeout(resolve, 100))
@@ -58,14 +61,14 @@ async function fnReadRetryer<T>(
                     // catch and retry on abort errors
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                     if (e.inner) {
-                        log(
+                        log.info(
                             'AbortError reason:',
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             e.inner,
                             `${retryCounter}/${retries} retries left`,
                         )
                     } else {
-                        log(
+                        log.info(
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                             'AbortError message:' + e.message,
                             `${retryCounter}/${retries} retries left`,
@@ -74,7 +77,7 @@ async function fnReadRetryer<T>(
                     break
                 default:
                     // don't retry for unknown errors
-                    logError('Unhandled error:', err)
+                    log.error('Unhandled error:', err)
                     throw lastErr
             }
         }
@@ -155,7 +158,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         })
 
         this.requestPersistentStorage()
-        this.logPersistenceStats()
+        this.checkPersistenceStats()
     }
 
     setHighPriorityStreams(streamIds: string[]) {
@@ -167,7 +170,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         clearTimeout(this.scratchTimerId)
         this.scratchTimerId = setTimeout(() => {
             this.processScratchQueue().catch((e) => {
-                logError('Error processing scratch queue', e)
+                log.error('Error processing scratch queue', e)
             })
         }, 1000)
     }
@@ -232,7 +235,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             persistedSyncedStream.lastMiniblockNum !==
             persistedSyncedStream.syncCookie.minipoolGen - 1n
         ) {
-            logError(
+            log.error(
                 'Persisted miniblock num mismatch',
                 streamId,
                 persistedSyncedStream.lastMiniblockNum,
@@ -252,7 +255,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
 
         const snapshot = await this.getSnapshot(streamId)
         if (!snapshot) {
-            logError(
+            log.error(
                 'Persisted Snapshot undefined',
                 streamId,
                 persistedSyncedStream.lastSnapshotMiniblockNum,
@@ -261,7 +264,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         }
 
         if (snapshot.miniblockNum !== persistedSyncedStream.lastSnapshotMiniblockNum) {
-            logError(
+            log.error(
                 'Persisted Snapshot miniblock num mismatch',
                 streamId,
                 snapshot.miniblockNum,
@@ -351,7 +354,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async saveSyncedStream(streamId: string, syncedStream: PersistedSyncedStream) {
-        log('saving synced stream', streamId)
+        log.debug('saving synced stream', streamId)
         await this.syncedStreams.put({
             streamId,
             data: toBinary(PersistedSyncedStreamSchema, syncedStream),
@@ -359,7 +362,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
     }
 
     async saveMiniblock(streamId: string, miniblock: ParsedMiniblock) {
-        log('saving miniblock', streamId)
+        log.debug('saving miniblock', streamId)
         const cachedMiniblock = parsedMiniblockToPersistedMiniblock(miniblock, 'forward')
         await this.miniblocks.put({
             streamId: streamId,
@@ -427,7 +430,7 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
         if (record && record.data.miniblockNum >= miniblockNum) {
             return
         }
-        log('saving snapshot', streamId)
+        log.debug('saving snapshot', streamId)
         await this.snapshots.put({
             streamId: streamId,
             data: {
@@ -455,30 +458,45 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
             navigator.storage
                 .persist()
                 .then((persisted) => {
-                    log('Persisted storage granted: ', persisted)
+                    log.debug('Persisted storage granted: ', persisted)
                 })
                 .catch((e) => {
-                    log("Couldn't get persistent storage: ", e)
+                    log.error("Couldn't get persistent storage: ", e)
                 })
         } else {
-            log('navigator.storage unavailable')
+            log.error('navigator.storage unavailable')
         }
     }
 
-    private logPersistenceStats() {
+    private checkPersistenceStats() {
         if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
             navigator.storage
                 .estimate()
                 .then((estimate) => {
-                    const usage = ((estimate.usage ?? 0) / 1024 / 1024).toFixed(1)
-                    const quota = ((estimate.quota ?? 0) / 1024 / 1024).toFixed(1)
-                    log(`Using ${usage} out of ${quota} MB.`)
+                    const usage = (estimate.usage ?? 0) / 1024 / 1024
+                    const quota = (estimate.quota ?? 0) / 1024 / 1024
+                    log.info(
+                        `Using ${usage.toFixed(1)} out of ${quota.toFixed(1)} MB (${((usage / quota) * 100).toFixed(2)}%)`,
+                    )
+                    if (usage > quota * 0.95) {
+                        log.warn('Persistence storage is almost full, clearing cache...')
+                        // drop the miniblocks, synced streams and snapshots
+                        this.miniblocks.clear().catch((e) => {
+                            log.error('Error clearing miniblocks: ', e)
+                        })
+                        this.syncedStreams.clear().catch((e) => {
+                            log.error('Error clearing synced streams: ', e)
+                        })
+                        this.snapshots.clear().catch((e) => {
+                            log.error('Error clearing snapshots: ', e)
+                        })
+                    }
                 })
                 .catch((e) => {
-                    log("Couldn't get storage estimate: ", e)
+                    log.error("Couldn't get storage estimate: ", e)
                 })
         } else {
-            log('navigator.storage unavailable')
+            log.error('navigator.storage unavailable')
         }
     }
     private async cachedScrollback(
