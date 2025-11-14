@@ -67,6 +67,8 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockProtoBytes},
@@ -294,6 +296,8 @@ func TestMbHashConstraints(t *testing.T) {
 	cfg := crypto.DefaultOnChainSettings()
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
@@ -474,6 +478,8 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 
 	// Test case 1: Create view with multiple miniblocks
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockBytes[0], Number: 0},
@@ -549,6 +555,8 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	assert.NoError(t, err)
 
 	emptyView, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: genesisMbBytes, Number: 0}, // No external snapshot for genesis blocks

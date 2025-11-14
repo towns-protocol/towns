@@ -39,7 +39,7 @@ func newTestStream(
 
 	streamID := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	genesis := makeGenesisDescriptor(t, wallet, streamID)
-	view := makeStreamView(t, genesis)
+	view := makeStreamView(t, streamID, genesis)
 
 	params := &events.StreamCacheParams{
 		ServerCtx: ctx,
@@ -80,12 +80,12 @@ func makeGenesisDescriptor(t *testing.T, wallet *crypto.Wallet, streamID shared.
 	return descriptor
 }
 
-func makeStreamView(t *testing.T, genesis *storage.MiniblockDescriptor) *events.StreamView {
+func makeStreamView(t *testing.T, streamID shared.StreamId, genesis *storage.MiniblockDescriptor) *events.StreamView {
 	data := &storage.ReadStreamFromLastSnapshotResult{
 		SnapshotMiniblockOffset: 0,
 		Miniblocks:              []*storage.MiniblockDescriptor{genesis},
 	}
-	view, err := events.MakeStreamView(data)
+	view, err := events.MakeStreamView(context.Background(), streamID, data)
 	require.NoError(t, err)
 	return view
 }

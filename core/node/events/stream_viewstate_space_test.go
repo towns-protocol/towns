@@ -263,6 +263,8 @@ func TestSpaceViewState(t *testing.T) {
 	// load up a brand new view from the latest snapshot result
 	var view3 *StreamView
 	view3, err = MakeStreamView(
+		ctx,
+		spaceStreamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
@@ -330,6 +332,8 @@ func TestChannelViewState_JoinedMembers(t *testing.T) {
 	// create a stream view from the miniblock bytes
 	var streamView *StreamView
 	streamView, err = MakeStreamView(
+		ctx,
+		channelStreamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
@@ -393,6 +397,8 @@ func TestChannelViewState_RemainingMembers(t *testing.T) {
 	// create a stream view from the miniblock bytes
 	var streamView *StreamView
 	streamView, err = MakeStreamView(
+		ctx,
+		channelStreamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Number: 1, Data: miniblockProtoBytes, Snapshot: snapshotBytes},
