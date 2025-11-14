@@ -320,56 +320,6 @@ export const appVersion = onchainTable(
     }),
 )
 
-// app beacons - tracks beacon contracts for app factory
-export const appBeacon = onchainTable(
-    'app_beacons',
-    (t) => ({
-        beaconId: t.hex().primaryKey(),
-        beacon: t.hex().notNull(),
-
-        // Lifecycle
-        addedAt: t.bigint().notNull(),
-        removedAt: t.bigint(),
-
-        // Transaction metadata
-        addedTxHash: t.hex().notNull(),
-        addedLogIndex: t.integer().notNull(),
-
-        // Status
-        isActive: t.boolean().default(true).notNull(),
-    }),
-    (table) => ({
-        activeIdx: index().on(table.isActive),
-        beaconIdx: index().on(table.beacon),
-    }),
-)
-
-// app registry config - tracks configuration changes (schema, entryPoint)
-export const appRegistryConfig = onchainTable(
-    'app_registry_config',
-    (t) => ({
-        // Composite key: configType + value ensures uniqueness
-        configType: t.text().notNull(), // 'schema' | 'entryPoint'
-        value: t.hex().notNull(),
-
-        // Change tracking
-        setAt: t.bigint().notNull(),
-        previousValue: t.hex(),
-
-        // Transaction metadata
-        txHash: t.hex().notNull(),
-        logIndex: t.integer().notNull(),
-
-        // Status
-        isActive: t.boolean().default(true).notNull(),
-    }),
-    (table) => ({
-        pk: primaryKey({ columns: [table.configType, table.value] }),
-        typeIdx: index().on(table.configType),
-        activeIdx: index().on(table.isActive),
-    }),
-)
-
 // reviews
 export const review = onchainTable(
     'reviews',
