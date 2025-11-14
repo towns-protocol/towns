@@ -127,6 +127,18 @@ func (d *AppDispatcher) SubmitMessages(
 
 	d.workerPool.Submit(
 		func() {
+			log := logging.FromCtx(ctx)
+			log.Infow(
+				"Sending messages to bot",
+				"appId",
+				messages.AppId,
+				"streamId",
+				messages.StreamId,
+				"messageCount",
+				len(messages.MessageEnvelopes),
+				"webhookUrl",
+				messages.WebhookUrl,
+			)
 			if err := d.appClient.SendSessionMessages(
 				ctx,
 				messages.StreamId,
@@ -137,7 +149,7 @@ func (d *AppDispatcher) SubmitMessages(
 				messages.WebhookUrl,
 			); err != nil {
 				// TODO: retry logic?
-				logging.FromCtx(ctx).Errorw(
+				log.Errorw(
 					"Could not send session messages",
 					"appId",
 					messages.AppId,
