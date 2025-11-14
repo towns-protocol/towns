@@ -163,6 +163,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		return
 	}
 
+	// maybe we can have a list of apps per channel, so we won't have to iterate over all members
 	appIds := make([]common.Address, 0, members.Cardinality())
 	members.Each(func(memberId string) bool {
 		appId := common.HexToAddress(memberId)

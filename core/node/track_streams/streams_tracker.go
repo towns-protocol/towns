@@ -169,12 +169,10 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 				return true
 			}
 
-			streamsLoaded++
-
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
-				// start tracking the stream, until the root ctx expires.
+				streamsLoaded++
 				tracker.multiSyncRunner.AddStream(stream, ApplyHistoricalContent{Enabled: false})
 			}
 
