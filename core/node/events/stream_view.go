@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -38,21 +39,32 @@ func MakeStreamView(
 	}
 
 	startTime := time.Now()
-	large := len(streamData.Miniblocks) > 30 || len(streamData.MinipoolEnvelopes) > 1
+	large := len(streamData.Miniblocks) > 100 || len(streamData.MinipoolEnvelopes) > 10
 	if large {
-		logging.FromCtx(ctx).
-			Info("MakeStreamView parsing large stream", "streamId", streamId, "miniblocks", len(streamData.Miniblocks), "minipoolEnvelopes", len(streamData.MinipoolEnvelopes), "snapshotIndex", streamData.SnapshotMiniblockOffset)
+		logging.FromCtx(ctx).Infow(
+			"MakeStreamView parsing large stream",
+			"streamId", streamId,
+			"miniblocks", len(streamData.Miniblocks),
+			"minipoolSize", len(streamData.MinipoolEnvelopes),
+			"snapshotOffset", streamData.SnapshotMiniblockOffset,
+		)
 	}
 	defer func() {
 		duration := time.Since(startTime)
-		if duration > 10*time.Second || large {
-			logging.FromCtx(ctx).Error(
+		durationExceeded := duration > 10*time.Second
+		if durationExceeded || large {
+			level := zapcore.InfoLevel
+			if durationExceeded {
+				level = zapcore.ErrorLevel
+			}
+			logging.FromCtx(ctx).Logw(
+				level,
 				"MakeStreamView took too long",
 				"duration", duration,
 				"streamId", streamId,
 				"miniblocks", len(streamData.Miniblocks),
-				"minipoolEnvelopes", len(streamData.MinipoolEnvelopes),
-				"snapshotIndex", streamData.SnapshotMiniblockOffset,
+				"minipoolSize", len(streamData.MinipoolEnvelopes),
+				"snapshotOffset", streamData.SnapshotMiniblockOffset,
 			)
 		}
 	}()
