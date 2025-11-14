@@ -5,12 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/base"
-
 	"github.com/ethereum/go-ethereum/common"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/nodes"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -86,7 +85,7 @@ func (s *sharedStreamUpdateEmitter) run(
 
 	stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, s.streamID)
 	if err != nil {
-		if base.IsRiverErrorCode(err, Err_NOT_FOUND) {
+		if IsRiverErrorCode(err, Err_NOT_FOUND) {
 			s.log.With("error", err).Debug("stream not found, skipping emitter initialization")
 		} else {
 			s.log.With("error", err).Error("failed to get stream for further emitter initialization")
