@@ -105,7 +105,7 @@ func MakeStreamView(
 			logging.FromCtx(ctx).Infow("MakeStreamView AFTER parsing single miniblock",
 				"i", i, "stream", streamId,
 				"took", time.Since(s).String(),
-				"eventCount", miniblock.Events())
+				"eventCount", len(miniblock.Events()))
 		}
 	}
 
@@ -133,6 +133,7 @@ func MakeStreamView(
 		"stream", streamId, "minipoolLen", len(streamData.MinipoolEnvelopes))
 
 	events := make(map[string]int)
+	count := 0
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
 	s := time.Now()
 	for _, e := range streamData.MinipoolEnvelopes {
@@ -154,8 +155,9 @@ func MakeStreamView(
 		}
 
 		events[fmt.Sprintf("%T", parsed.Event.GetPayload())] += 1
-
-		if len(events)%100 == 0 {
+		count++
+		
+		if count%100 == 0 {
 			logging.FromCtx(ctx).Infow("MakeStreamView",
 				"streamId", streamId, "events", events, "took", time.Since(s).String())
 		}
