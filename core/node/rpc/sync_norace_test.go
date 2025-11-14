@@ -47,7 +47,7 @@ func TestSyncWithEmptyNodeAddress_NoRace(t *testing.T) {
 	require.NoError(err)
 
 	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channelId := testutils.MakeChannelId(spaceId)
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallet,

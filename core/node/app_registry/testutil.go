@@ -156,6 +156,7 @@ func FormatChannelInceptionReply(inception *protocol.ChannelPayload_Inception) s
 	return fmt.Sprintf(
 		"ChannelInception streamId(%v) spaceId(%v)",
 		streamId,
+		streamId.SpaceID(),
 	)
 }
 

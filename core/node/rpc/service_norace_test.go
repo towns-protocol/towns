@@ -127,15 +127,15 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	}
 
 	// create a space and several channels in it
-	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceId, nil)
 	req.NoError(err)
 	req.NotNil(resspace, "create space sync cookie")
 
 	// create enough channels that they will be distributed among local and remote nodes
 	for range TestStreams {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
+		channelId := testutils.MakeChannelId(spaceId)
+		channel, _, err := createChannel(ctx, wallets[0], client0, spaceId, channelId, nil)
 		req.NoError(err)
 		req.NotNil(channel, "nil create channel sync cookie")
 		channels = append(channels, channel)
@@ -289,15 +289,15 @@ func TestUnstableStreams_NoRace(t *testing.T) {
 	}
 
 	// create a space and several channels in it
-	spaceID := testutils.FakeStreamId(STREAM_SPACE_BIN)
-	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceID, nil)
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	resspace, _, err := createSpace(ctx, wallets[0], client0, spaceId, nil)
 	req.NoError(err)
 	req.NotNil(resspace, "create space sync cookie")
 
 	// create enough channels that they will be distributed among local and remote nodes
 	for range TestStreams {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
-		channel, _, err := createChannel(ctx, wallets[0], client0, spaceID, channelId, nil)
+		channelId := testutils.MakeChannelId(spaceId)
+		channel, _, err := createChannel(ctx, wallets[0], client0, spaceId, channelId, nil)
 		req.NoError(err)
 		req.NotNil(channel, "nil create channel sync cookie")
 		channels = append(channels, channel)

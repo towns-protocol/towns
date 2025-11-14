@@ -889,7 +889,7 @@ func (tc *testClient) createChannel(
 	spaceId StreamId,
 	streamSettings ...*StreamSettings,
 ) (StreamId, *MiniblockRef, *SyncCookie) {
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]

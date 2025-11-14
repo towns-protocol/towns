@@ -410,7 +410,7 @@ func setupTestChannelAndAddToSyncer(
 	replFactor int,
 	tt *serviceTester,
 ) (StreamId, *MiniblockRef, error) {
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		wallet,
@@ -846,7 +846,7 @@ func createChannelWithMessages(
 	channelIndex int,
 	messagesPerChannel int,
 ) (StreamId, *MiniblockRef, []MiniblockRef) {
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(tc.spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		tc.wallet,
