@@ -86,7 +86,7 @@ func (s *sharedStreamUpdateEmitter) run(
 	stream, err := streamCache.GetStreamNoWait(ctxWithTimeout, s.streamID)
 	if err != nil {
 		if IsRiverErrorCode(err, Err_NOT_FOUND) {
-			s.log.With("error", err).Debug("stream not found, skipping emitter initialization")
+			s.log.With("error", err).Warn("stream not found, skipping emitter initialization")
 		} else {
 			s.log.With("error", err).Error("failed to get stream for further emitter initialization")
 		}
