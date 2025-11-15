@@ -73,6 +73,7 @@ type OnMessageEditType = BotPayload<'messageEdit'>
 type OnSlashCommandType = BotPayload<'slashCommand', typeof SLASH_COMMANDS>
 
 describe('Bot', { sequential: true }, () => {
+    const subscriptions: (() => void)[] = []
     const townsConfig = townsEnv().makeTownsConfig()
 
     const bob = new SyncAgentTest(undefined, townsConfig)
@@ -121,6 +122,11 @@ describe('Bot', { sequential: true }, () => {
                 client.debugForceMakeMiniblock(channelId, { forceSnapshot: true }),
             ]),
         )
+    })
+
+    afterEach(() => {
+        subscriptions.forEach((unsub) => unsub())
+        subscriptions.splice(0, subscriptions.length)
     })
 
     const setForwardSetting = async (forwardSetting: ForwardSettingValue) => {
@@ -211,6 +217,7 @@ describe('Bot', { sequential: true }, () => {
         await expect(
             botClient.initializeUser({ appAddress, skipSync: true }),
         ).resolves.toBeDefined()
+        await botClient.uploadDeviceKeys()
 
         await bobClient.riverConnection.call((client) => client.joinUser(spaceId, botClient.userId))
         await bobClient.riverConnection.call((client) =>
@@ -305,9 +312,11 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const timeBeforeSendMessage = Date.now()
         let receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const TEST_MESSAGE = 'Hello bot!'
 
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
@@ -341,9 +350,11 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_NO_MESSAGES)
 
         const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
 
         const TEST_MESSAGE = 'This message should not be forwarded'
         await bobDefaultChannel.sendMessage(TEST_MESSAGE)
@@ -355,9 +366,11 @@ describe('Bot', { sequential: true }, () => {
     it('should receive channel join event when alice joins the channel if bot is listening to channel join events', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedChannelJoinEvents: OnChannelJoin[] = []
-        bot.onChannelJoin((_h, e) => {
-            receivedChannelJoinEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onChannelJoin((_h, e) => {
+                receivedChannelJoinEvents.push(e)
+            }),
+        )
         await aliceClient.spaces.joinSpace(spaceId, alice.signer)
         await waitFor(() => receivedChannelJoinEvents.length > 0)
         expect(receivedChannelJoinEvents.find((x) => x.userId === alice.userId)).toBeDefined()
@@ -373,9 +386,11 @@ describe('Bot', { sequential: true }, () => {
     it('should receive slash command messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
-        bot.onSlashCommand('help', (_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onSlashCommand('help', (_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const { eventId } = await bobDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
         })
@@ -388,9 +403,11 @@ describe('Bot', { sequential: true }, () => {
     it('should receive slash command in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
-        bot.onSlashCommand('help', (_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onSlashCommand('help', (_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const { eventId: threadId } = await bobDefaultChannel.sendMessage('starting a thread')
         const { eventId } = await bobDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
@@ -406,9 +423,11 @@ describe('Bot', { sequential: true }, () => {
     it('should receive slash command as a reply', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
-        bot.onSlashCommand('help', (_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onSlashCommand('help', (_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const { eventId: replyId } = await bobDefaultChannel.sendMessage('yo')
         const { eventId } = await bobDefaultChannel.sendMessage('/help', {
             appClientAddress: bot.botId,
@@ -424,9 +443,11 @@ describe('Bot', { sequential: true }, () => {
     it('should receive slash command with arguments', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnSlashCommandType[] = []
-        bot.onSlashCommand('status', (_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onSlashCommand('status', (_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const { eventId } = await bobDefaultChannel.sendMessage('/status detailed info', {
             appClientAddress: bot.botId,
         })
@@ -439,9 +460,11 @@ describe('Bot', { sequential: true }, () => {
     it('onMessageEdit should be triggered when a message is edited', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedEditEvents: OnMessageEditType[] = []
-        bot.onMessageEdit((_h, e) => {
-            receivedEditEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onMessageEdit((_h, e) => {
+                receivedEditEvents.push(e)
+            }),
+        )
 
         const originalMessage = 'Original message to delete'
         const editedMessage = 'Edited message content'
@@ -458,11 +481,13 @@ describe('Bot', { sequential: true }, () => {
     it('onMessage should be triggered with threadId when a message is sent in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedThreadMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            if (e.threadId) {
-                receivedThreadMessages.push(e)
-            }
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                if (e.threadId) {
+                    receivedThreadMessages.push(e)
+                }
+            }),
+        )
 
         const initialMessage = 'Starting a thread'
         const threadReply = 'Replying in thread'
@@ -483,11 +508,13 @@ describe('Bot', { sequential: true }, () => {
     it('onMessage should be triggered with isMentioned when a bot is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            if (e.isMentioned) {
-                receivedMentionedEvents.push(e)
-            }
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                if (e.isMentioned) {
+                    receivedMentionedEvents.push(e)
+                }
+            }),
+        )
         const TEST_MESSAGE = 'Hello @bot'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
             mentions: [
@@ -509,9 +536,11 @@ describe('Bot', { sequential: true }, () => {
     it('isMentioned should be false when someone else is mentioned', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
         const TEST_MESSAGE = 'Hello @alice'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE, {
             mentions: [
@@ -531,9 +560,11 @@ describe('Bot', { sequential: true }, () => {
     it('onMessage should be triggered with both threadId and isMentioned when bot is mentioned in a thread', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedInThreadEvents: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMentionedInThreadEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMentionedInThreadEvents.push(e)
+            }),
+        )
 
         const { eventId: initialMessageId } =
             await bobDefaultChannel.sendMessage('starting a thread')
@@ -565,9 +596,11 @@ describe('Bot', { sequential: true }, () => {
     it('thread message without bot mention should have isMentioned false', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMessages.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
 
         const initialMessage = 'Starting another thread'
         const threadMessageWithoutMention = 'Thread message without mention'
@@ -589,9 +622,11 @@ describe('Bot', { sequential: true }, () => {
     it('onReaction should be triggered when a reaction is added', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedReactionEvents: BotPayload<'reaction'>[] = []
-        bot.onReaction((_h, e) => {
-            receivedReactionEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onReaction((_h, e) => {
+                receivedReactionEvents.push(e)
+            }),
+        )
 
         const { eventId: messageId } = await bobClient.spaces
             .getSpace(spaceId)
@@ -608,9 +643,11 @@ describe('Bot', { sequential: true }, () => {
     it('onRedaction should be triggered when a message is redacted', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedRedactionEvents: BotPayload<'redaction'>[] = []
-        bot.onRedaction((_h, e) => {
-            receivedRedactionEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onRedaction((_h, e) => {
+                receivedRedactionEvents.push(e)
+            }),
+        )
         const { eventId: messageId } = await bobDefaultChannel.sendMessage('Hello')
         const { eventId: redactionId } = await bobDefaultChannel.redact(messageId)
         await waitFor(() => receivedRedactionEvents.length > 0)
@@ -718,9 +755,11 @@ describe('Bot', { sequential: true }, () => {
     it('bot can redact other people messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const messages: BotPayload<'message'>[] = []
-        bot.onMessage((_h, e) => {
-            messages.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                messages.push(e)
+            }),
+        )
         const { eventId: bobMessageId } = await bobDefaultChannel.sendMessage('Hello')
         await waitFor(() =>
             expect(
@@ -746,9 +785,11 @@ describe('Bot', { sequential: true }, () => {
     it.skip('onMessage should be triggered with replyId when a message is replied to', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
         const receivedReplyEvents: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedReplyEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedReplyEvents.push(e)
+            }),
+        )
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
         await waitFor(() =>
             expect(
@@ -767,9 +808,11 @@ describe('Bot', { sequential: true }, () => {
     it('onTip should be triggered when a tip is received', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedTipEvents: BotPayload<'tip'>[] = []
-        bot.onTip((_h, e) => {
-            receivedTipEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onTip((_h, e) => {
+                receivedTipEvents.push(e)
+            }),
+        )
 
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
@@ -819,17 +862,19 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMessages: OnMessageType[] = []
 
-        bot.onMessage(async (handler, event) => {
-            const result = await handler.sendTip({
-                userId: bob.userId,
-                amount: ethers.utils.parseUnits('0.005').toBigInt(),
-                messageId: event.eventId,
-                channelId: event.channelId,
-            })
-            expect(result.txHash).toBeDefined()
-            expect(result.eventId).toBeDefined()
-            receivedMessages.push(event)
-        })
+        subscriptions.push(
+            bot.onMessage(async (handler, event) => {
+                const result = await handler.sendTip({
+                    userId: bob.userId,
+                    amount: ethers.utils.parseUnits('0.005').toBigInt(),
+                    messageId: event.eventId,
+                    channelId: event.channelId,
+                })
+                expect(result.txHash).toBeDefined()
+                expect(result.eventId).toBeDefined()
+                receivedMessages.push(event)
+            }),
+        )
 
         const bobBalanceBefore = (await ethersProvider.getBalance(bob.userId)).toBigInt()
         // Bob sends a message asking for a tip
@@ -843,9 +888,11 @@ describe('Bot', { sequential: true }, () => {
     it('onEventRevoke (FORWARD_SETTING_ALL_MESSAGES) should be triggered when a message is revoked', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
-        bot.onEventRevoke((_h, e) => {
-            receivedEventRevokeEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onEventRevoke((_h, e) => {
+                receivedEventRevokeEvents.push(e)
+            }),
+        )
         const { eventId: messageId } = await bot.sendMessage(channelId, 'hii')
         await bobDefaultChannel.adminRedact(messageId)
         await waitFor(() => receivedEventRevokeEvents.length > 0)
@@ -857,9 +904,11 @@ describe('Bot', { sequential: true }, () => {
         async () => {
             await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_MENTIONS_REPLIES_REACTIONS)
             const receivedEventRevokeEvents: BotPayload<'eventRevoke'>[] = []
-            bot.onEventRevoke((_h, e) => {
-                receivedEventRevokeEvents.push(e)
-            })
+            subscriptions.push(
+                bot.onEventRevoke((_h, e) => {
+                    receivedEventRevokeEvents.push(e)
+                }),
+            )
             const { eventId: messageId } = await bobDefaultChannel.sendMessage('hii @bot', {
                 mentions: [
                     {
@@ -880,9 +929,11 @@ describe('Bot', { sequential: true }, () => {
         await appRegistryDapp.uninstallApp(bob.signer, appAddress, SpaceAddressFromSpaceId(spaceId))
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const receivedMentionedEvents: OnMessageType[] = []
-        bot.onMessage((_h, e) => {
-            receivedMentionedEvents.push(e)
-        })
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMentionedEvents.push(e)
+            }),
+        )
         const TEST_MESSAGE = 'wont be received'
         const { eventId } = await bobDefaultChannel.sendMessage(TEST_MESSAGE)
         await expect(waitFor(() => receivedMentionedEvents.length > 0)).rejects.toThrow()
@@ -1180,9 +1231,11 @@ describe('Bot', { sequential: true }, () => {
         const receivedGmEvents: Array<{ typeUrl: string; data: { text: string; count: number } }> =
             []
 
-        bot.onGmMessage('test.typed.v1', messageSchema, (_h, e) => {
-            receivedGmEvents.push({ typeUrl: e.typeUrl, data: e.data })
-        })
+        subscriptions.push(
+            bot.onGmMessage('test.typed.v1', messageSchema, (_h, e) => {
+                receivedGmEvents.push({ typeUrl: e.typeUrl, data: e.data })
+            }),
+        )
 
         const testData = { text: 'Hello', count: 42 }
         // Bob sends the message so bot receives it (bot filters its own messages)
@@ -1248,12 +1301,16 @@ describe('Bot', { sequential: true }, () => {
         const receivedType1: Array<{ type: 'type1'; value: number }> = []
         const receivedType2: Array<{ type: 'type2'; text: string }> = []
 
-        bot.onGmMessage('test.multi.type1', schema1, (_h, e) => {
-            receivedType1.push(e.data)
-        })
-        bot.onGmMessage('test.multi.type2', schema2, (_h, e) => {
-            receivedType2.push(e.data)
-        })
+        subscriptions.push(
+            bot.onGmMessage('test.multi.type1', schema1, (_h, e) => {
+                receivedType1.push(e.data)
+            }),
+        )
+        subscriptions.push(
+            bot.onGmMessage('test.multi.type2', schema2, (_h, e) => {
+                receivedType2.push(e.data)
+            }),
+        )
 
         const data1 = { type: 'type1' as const, value: 123 }
         const data2 = { type: 'type2' as const, text: 'hello' }
@@ -1285,9 +1342,11 @@ describe('Bot', { sequential: true }, () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const receivedMessages: Array<{ typeUrl: string; message: Uint8Array }> = []
-        bot.onRawGmMessage((_h, e) => {
-            receivedMessages.push({ typeUrl: e.typeUrl, message: e.message })
-        })
+        subscriptions.push(
+            bot.onRawGmMessage((_h, e) => {
+                receivedMessages.push({ typeUrl: e.typeUrl, message: e.message })
+            }),
+        )
 
         const message = new TextEncoder().encode('Hello, world!')
         await bobClient.riverConnection.call((client) =>
@@ -1340,11 +1399,11 @@ describe('Bot', { sequential: true }, () => {
     it('should log error and continue processing if throws an error when handling an event', async () => {
         const consoleErrorSpy = vi.spyOn(console, 'error')
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
-        expect(() =>
+        subscriptions.push(
             bot.onMessage(() => {
                 throw new Error('test error')
             }),
-        ).not.toThrow()
+        )
         await bobDefaultChannel.sendMessage('lol')
         await waitFor(() => consoleErrorSpy.mock.calls.length > 0)
         expect(consoleErrorSpy.mock.calls[0][0]).toContain(
@@ -1470,9 +1529,11 @@ describe('Bot', { sequential: true }, () => {
         }
 
         const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
-        bot.onInteractionResponse((_h, e) => {
-            receivedInteractionResponses.push(e.response)
-        })
+        subscriptions.push(
+            bot.onInteractionResponse((_h, e) => {
+                receivedInteractionResponses.push(e.response)
+            }),
+        )
 
         await bobClient.riverConnection.call(async (client) => {
             // from the client, to the channel, encrypted so that only the bot can read it
@@ -1556,9 +1617,11 @@ describe('Bot', { sequential: true }, () => {
             },
         }
         const receivedInteractionResponses: Array<DecryptedInteractionResponse> = []
-        bot.onInteractionResponse((_h, e) => {
-            receivedInteractionResponses.push(e.response)
-        })
+        subscriptions.push(
+            bot.onInteractionResponse((_h, e) => {
+                receivedInteractionResponses.push(e.response)
+            }),
+        )
         await bobClient.riverConnection.call(async (client) => {
             return await client.sendInteractionResponse(
                 channelId,
