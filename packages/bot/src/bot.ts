@@ -1107,61 +1107,70 @@ export class Bot<
      * This is triggered for all messages, including direct messages and group messages.
      */
     onMessage(fn: BotEvents['message']) {
-        this.emitter.on('message', fn)
+        return this.emitter.on('message', fn)
     }
 
     onRedaction(fn: BotEvents['redaction']) {
-        this.emitter.on('redaction', fn)
+        return this.emitter.on('redaction', fn)
     }
 
     /**
      * Triggered when a message gets edited
      */
     onMessageEdit(fn: BotEvents['messageEdit']) {
-        this.emitter.on('messageEdit', fn)
+        return this.emitter.on('messageEdit', fn)
     }
 
     /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
-        this.emitter.on('reaction', fn)
+        return this.emitter.on('reaction', fn)
     }
 
     /**
      * Triggered when a message is revoked by a moderator
      */
     onEventRevoke(fn: BotEvents['eventRevoke']) {
-        this.emitter.on('eventRevoke', fn)
+        return this.emitter.on('eventRevoke', fn)
     }
 
     /**
      * Triggered when someone tips the bot
      */
     onTip(fn: BotEvents['tip']) {
-        this.emitter.on('tip', fn)
+        return this.emitter.on('tip', fn)
     }
 
     /**
      * Triggered when someone joins a channel
      */
     onChannelJoin(fn: BotEvents['channelJoin']) {
-        this.emitter.on('channelJoin', fn)
+        return this.emitter.on('channelJoin', fn)
     }
 
     /**
      * Triggered when someone leaves a channel
      */
     onChannelLeave(fn: BotEvents['channelLeave']) {
-        this.emitter.on('channelLeave', fn)
+        return this.emitter.on('channelLeave', fn)
     }
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
-        this.emitter.on('streamEvent', fn)
+        return this.emitter.on('streamEvent', fn)
     }
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
         this.slashCommandHandlers.set(command, fn)
+        const unset = () => {
+            if (
+                this.slashCommandHandlers.has(command) &&
+                this.slashCommandHandlers.get(command) === fn
+            ) {
+                this.slashCommandHandlers.delete(command)
+            }
+        }
+        return unset
     }
 
     /**
@@ -1179,10 +1188,19 @@ export class Bot<
         ) => void | Promise<void>,
     ) {
         this.gmTypedHandlers.set(typeUrl, { schema, handler: handler as any })
+        const unset = () => {
+            if (
+                this.gmTypedHandlers.has(typeUrl) &&
+                this.gmTypedHandlers.get(typeUrl)?.handler === handler
+            ) {
+                this.gmTypedHandlers.delete(typeUrl)
+            }
+        }
+        return unset
     }
 
     onRawGmMessage(handler: BotEvents['rawGmMessage']) {
-        this.emitter.on('rawGmMessage', handler)
+        return this.emitter.on('rawGmMessage', handler)
     }
 
     /**
@@ -1190,7 +1208,7 @@ export class Bot<
      * @param fn - The handler function to call when an interaction response is received
      */
     onInteractionResponse(fn: BotEvents['interactionResponse']) {
-        this.emitter.on('interactionResponse', fn)
+        return this.emitter.on('interactionResponse', fn)
     }
 
     /**
