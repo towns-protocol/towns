@@ -2,57 +2,107 @@
 
 A simple, barebones bot example perfect for beginners learning to build Towns bots.
 
-## What This Bot Does
+# Features
 
-This bot demonstrates the basic functionality of a Towns bot:
+- **Slash commands**: Registering and handling `/commands`
+- **Message handling**: Detecting keywords in messages
+- **Sending messages**: Posting messages to channels
+- **Adding reactions**: Attaching emoji reactions to messages
+- **Reaction events**: Responding to user reactions
 
-- **Greetings**: Responds to "hello" with a friendly greeting
-- **Help**: Shows available commands when someone says "help"
-- **Ping/Pong**: Classic ping-pong response
-- **Time**: Shows current time when requested
-- **Reactions**: Adds thumbs up reaction when someone mentions "react"
-- **Reaction Responses**: Responds to wave emoji reactions
+## Slash Commands
 
-## Features Demonstrated
+- `/help` - Shows available commands and message triggers
+- `/time` - Displays the current server time
 
-- Message handling with keyword detection
-- Sending messages back to channels
-- Adding emoji reactions to messages
-- Responding to emoji reactions from users
-- Setting bot username and display name
-- Basic user filtering (ignoring bot's own messages)
+## Message Triggers
 
-## Setup
+- Say "hello" - Bot greets you back
+- Say "ping" - Bot responds with "Pong!" and latency
+- Say "react" - Bot adds a thumbs up reaction to your message
 
-1. Copy `.env.sample` to `.env` and fill in your credentials
-2. Install dependencies: `yarn install`
-3. Run the bot: `yarn dev`
+You will need to mention the bot if you're using the `Mentions, Commands, Replies & Reactions` message behavior for your bot.
 
-## Environment Variables
+## Reaction Handling
 
-- `APP_PRIVATE_DATA`: Your Towns app private data
-- `JWT_SECRET`: JWT secret for authentication
-- `PORT`: Port to run the bot on (optional, defaults to 5123)
+- React with 👋 to any message - Bot responds with "I saw your wave!"
 
-## Usage
+# Setup
 
-Once the bot is running in a channel, try these commands:
+1. Copy `.env.sample` to `.env` and fill in your credentials:
 
-- Type "hello" → Bot will greet you
-- Type "help" → Bot will show available commands
-- Type "ping" → Bot will respond with "Pong!"
-- Type "time" → Bot will show current time
-- Type "react" → Bot will add a thumbs up reaction
-- React with 👋 to any message → Bot will respond
+   ```bash
+   cp .env.sample .env
+   ```
 
-## Code Structure
+2. Install dependencies:
 
-The bot is implemented as a single file (`src/index.ts`) with:
+   ```bash
+   bun install
+   ```
 
-1. **Bot Creation**: Initialize the bot with environment variables
-2. **Channel Join Handler**: Set bot name when joining channels
-3. **Message Handler**: Process incoming messages and respond appropriately
-4. **Reaction Handler**: Respond to emoji reactions from users
-5. **Server Setup**: Start the bot HTTP server
+3. Run the bot:
+   ```bash
+   bun run dev
+   ```
 
-This is the perfect starting point for building more complex bots!
+# Environment Variables
+
+Required variables in `.env`:
+
+- `APP_PRIVATE_DATA` - Your Towns app private data (base64 encoded)
+- `JWT_SECRET` - JWT secret for webhook authentication
+- `PORT` - Port to run the bot on (optional, defaults to 5123)
+
+# Usage
+
+Once the bot is running, installed to a space and added to a channel:
+
+**Try the slash commands:**
+
+- `/help` - See all available features
+- `/time` - Get the current time
+
+**Try the message triggers:**
+
+- Type "hello" anywhere in your message
+- Type "ping" to check bot latency
+- Type "react" to get a reaction
+
+**Try reactions:**
+
+- Add a 👋 reaction to any message
+
+# Code Structure
+
+The bot consists of two main files:
+
+## `src/commands.ts`
+
+Defines the slash commands available to users. Commands registered here appear in the slash command menu.
+
+## `src/index.ts`
+
+Main bot logic with:
+
+1. **Bot initialization** (`makeTownsBot`) - Creates bot instance with credentials and commands
+2. **Slash command handlers** (`onSlashCommand`) - Handle `/help` and `/time` commands
+3. **Message handler** (`onMessage`) - Respond to message keywords (hello, ping, react)
+4. **Reaction handler** (`onReaction`) - Respond to emoji reactions (👋)
+5. **Server setup** (Hono) - HTTP server with `/webhook` endpoint for receiving events
+
+## Extending this Bot
+
+To add your own features:
+
+1. **Add a slash command:**
+
+   - Add to `src/commands.ts`
+   - Go to `src/index.ts` and create a handler with `bot.onSlashCommand('yourcommand', async (handler, event) => { ... })`
+
+2. **Add message triggers:**
+
+   - Add conditions in the `bot.onMessage()` handler
+
+3. **Handle more events:**
+   - Use `bot.onReaction()`, `bot.onMessageEdit()`, `bot.onChannelJoin()`, etc.
