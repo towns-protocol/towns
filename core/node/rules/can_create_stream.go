@@ -34,6 +34,7 @@ type csParams struct {
 	inceptionPayload      IsInceptionPayload
 	creatorAddress        common.Address
 	creatorUserStreamId   shared.StreamId
+	creatorAppAddress     common.Address
 	nodeRegistryChecks    NodeRegistryChecks
 }
 
@@ -132,6 +133,18 @@ func CanCreateStream(
 
 	creatorAddress := common.BytesToAddress(parsedEvents[0].Event.GetCreatorAddress())
 	creatorUserStreamId := shared.UserStreamIdFromAddr(creatorAddress)
+	creatorAppAddress := common.Address{}
+	if appAddress, ok := requestMetadata["appAddress"]; ok {
+		if len(appAddress) == 20 {
+			creatorAppAddress = common.BytesToAddress(appAddress)
+		} else if len(appAddress) != 0 {
+			return nil, RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid ethereum appAddress length",
+				"length", len(appAddress), "expectedLength", 20,
+			)
+		}
+	}
 
 	for _, event := range parsedEvents {
 		if event.Event.PrevMiniblockHash != nil {
@@ -172,6 +185,7 @@ func CanCreateStream(
 		inceptionPayload:      inceptionPayload,
 		creatorAddress:        creatorAddress,
 		creatorUserStreamId:   creatorUserStreamId,
+		creatorAppAddress:     creatorAppAddress,
 		nodeRegistryChecks:    nodeRegistryChecks,
 	}
 
@@ -523,7 +537,7 @@ func (ru *csSpaceRules) getCreateSpaceChainAuth() (*auth.ChainAuthArgs, error) {
 		ru.params.streamId,
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels, // todo should be isOwner...
-		common.Address{},
+		ru.params.creatorAppAddress,
 	), nil
 }
 
@@ -540,7 +554,7 @@ func (ru *csChannelRules) getCreateChannelChainAuth() (*auth.ChainAuthArgs, erro
 		spaceId, // check parent space id
 		ru.params.creatorAddress,
 		auth.PermissionAddRemoveChannels,
-		common.Address{},
+		ru.params.creatorAppAddress,
 	), nil
 }
 
@@ -685,7 +699,7 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 		return auth.NewChainAuthArgsForIsSpaceMember(
 			spaceId,
 			userAddress,
-			common.Address{},
+			ru.creatorAppAddress,
 		), nil
 	} else {
 		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
@@ -711,7 +725,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 			channelId,
 			ru.params.creatorAddress,
 			auth.PermissionWrite,
-			common.Address{},
+			ru.params.creatorAppAddress,
 		), nil
 	} else if shared.ValidSpaceStreamIdBytes(ru.inception.SpaceId) {
 		spaceId, err := shared.StreamIdFromBytes(ru.inception.SpaceId)
@@ -723,7 +737,7 @@ func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error
 			spaceId,
 			ru.params.creatorAddress,
 			auth.PermissionModifySpaceSettings, // TODO: should it be Owner?
-			common.Address{},
+			ru.params.creatorAppAddress,
 		), nil
 	} else {
 		return nil, nil
