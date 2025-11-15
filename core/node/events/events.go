@@ -584,10 +584,10 @@ func Make_UserPayload_Membership(
 		UserPayload: &UserPayload{
 			Content: &UserPayload_UserMembership_{
 				UserMembership: &UserPayload_UserMembership{
-					StreamId:       streamId[:],
-					Op:             op,
-					Inviter:        inviter,
-					Reason:         reason,
+					StreamId: streamId[:],
+					Op:       op,
+					Inviter:  inviter,
+					Reason:   reason,
 				},
 			},
 		},

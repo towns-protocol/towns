@@ -553,7 +553,7 @@ func (ru *csChannelRules) derivedChannelSpaceParentEvent() (*DerivedEvent, error
 	if err != nil {
 		return nil, err
 	}
-	
+
 	channelSettings := ru.inception.ChannelSettings
 	// If channel settings unspecified, apply defaults
 	if channelSettings == nil {
