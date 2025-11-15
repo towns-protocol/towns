@@ -46,6 +46,13 @@ func AddressFromSpaceId(spaceId StreamId) (common.Address, error) {
 	return common.BytesToAddress(spaceId[1:21]), nil
 }
 
+func SpaceIdFromChannelId(channelId StreamId) (StreamId, error) {
+	if channelId.Type() != STREAM_CHANNEL_BIN {
+		return StreamId{}, RiverError(Err_BAD_STREAM_ID, "invalid stream type for getting space", "streamId", channelId)
+	}
+	return channelId.SpaceID(), nil
+}
+
 func SpaceIdFromBytes(bytes []byte) (StreamId, error) {
 	if len(bytes) != 20 {
 		return StreamId{}, RiverError(Err_BAD_ADDRESS, "wrong length", "bytes", len(bytes))

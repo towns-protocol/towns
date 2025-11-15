@@ -927,7 +927,9 @@ func (r *StreamView) StreamParentId() *StreamId {
 func GetStreamParentId(inception IsInceptionPayload) []byte {
 	switch inceptionContent := inception.(type) {
 	case *ChannelPayload_Inception:
-		return inceptionContent.SpaceId
+		spaceID := StreamId{STREAM_SPACE_BIN}
+		copy(spaceID[1:], inceptionContent.StreamId[1:21])
+		return spaceID[:]
 	default:
 		return nil
 	}

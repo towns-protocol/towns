@@ -101,7 +101,7 @@ func TestStreamCreation_NonLegacySnapshot(t *testing.T) {
 	// Now create a miniblock with non-legacy snapshot
 	event, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		genesisMbInfo.Ref,
 	)
 	require.NoError(t, err)
@@ -213,7 +213,7 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 	for i := 1; i <= 3; i++ {
 		event, err := MakeParsedEventWithPayload(
 			wallet,
-			Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{byte(i)}, nil, nil),
+			Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{byte(i)}, nil),
 			&MiniblockRef{Num: int64(i - 1), Hash: common.BytesToHash([]byte{byte(i - 1)})},
 		)
 		require.NoError(t, err)
@@ -253,7 +253,7 @@ func TestStreamStorage_VerifyHasLegacySnapshotFlag(t *testing.T) {
 	// Now add a miniblock with a legacy snapshot
 	event4, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{4}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{4}, nil),
 		&MiniblockRef{Num: 3, Hash: common.BytesToHash([]byte{3})},
 	)
 	require.NoError(t, err)
@@ -330,7 +330,7 @@ func TestStreamReinitialize_MixedSnapshots(t *testing.T) {
 	// Create second miniblock with non-legacy snapshot
 	event2, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		genesisMbInfo.Ref,
 	)
 	require.NoError(t, err)
@@ -364,7 +364,7 @@ func TestStreamReinitialize_MixedSnapshots(t *testing.T) {
 	// Create third miniblock without snapshot
 	event3, err := MakeParsedEventWithPayload(
 		wallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil),
 		mbInfo2.Ref,
 	)
 	require.NoError(t, err)

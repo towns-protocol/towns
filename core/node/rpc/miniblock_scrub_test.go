@@ -92,7 +92,7 @@ func TestMiniblockScrubberBasic(t *testing.T) {
 	require.NoError(err)
 	require.NotNil(space)
 
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		wallet,
@@ -186,7 +186,7 @@ func createMultiblockChannelStream(
 	require.NoError(err)
 	require.NotNil(space)
 
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		wallet,

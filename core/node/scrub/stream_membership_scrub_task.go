@@ -166,7 +166,6 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 				MembershipOp_SO_LEAVE,
 				channelId,
 				tp.eventAdder.GetWalletAddress(),
-				spaceId[:],
 				&reason,
 			),
 			nil,
