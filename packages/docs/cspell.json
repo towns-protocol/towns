@@ -67,7 +67,10 @@
         "bunx",
         "mybot",
         "unban",
-        "Unban"
+        "Unban",
+        "napi",
+        "Turso",
+        "TURSO"
     ],
     "allowCompoundWords": true,
     "ignoreRegExpList": [
