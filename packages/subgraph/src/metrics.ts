@@ -9,6 +9,59 @@ const eventMetrics = new Map<string, { count: number; totalMs: number; slowCount
 let globalEventCount = 0
 let latestBlockNumber = 0n
 
+// Detailed query metrics
+interface DetailedQueryMetrics {
+    count: number
+    totalMs: number
+    minMs: number
+    maxMs: number
+    over50msCount: number
+    printInterval: number
+}
+
+const detailedQueryMetrics = new Map<string, DetailedQueryMetrics>()
+
+// Track detailed query metrics
+export function trackDetailedQuery(queryName: string, durationMs: number, printInterval = 100) {
+    if (!detailedQueryMetrics.has(queryName)) {
+        detailedQueryMetrics.set(queryName, {
+            count: 0,
+            totalMs: 0,
+            minMs: Infinity,
+            maxMs: 0,
+            over50msCount: 0,
+            printInterval,
+        })
+    }
+
+    const metrics = detailedQueryMetrics.get(queryName)!
+    metrics.count++
+    metrics.totalMs += durationMs
+    metrics.minMs = Math.min(metrics.minMs, durationMs)
+    metrics.maxMs = Math.max(metrics.maxMs, durationMs)
+
+    if (durationMs > 50) {
+        metrics.over50msCount++
+    }
+
+    // Print metrics every N calls
+    if (metrics.count % metrics.printInterval === 0) {
+        const avg = Math.round(metrics.totalMs / metrics.count)
+
+        console.info(
+            JSON.stringify({
+                type: 'detailed_query_metrics',
+                query: queryName,
+                count: metrics.count,
+                avg_ms: avg,
+                min_ms: metrics.minMs,
+                max_ms: metrics.maxMs,
+                over_50ms_count: metrics.over50msCount,
+            }),
+        )
+    }
+}
+
 // Wrapped ponder with automatic metrics
 export const ponder = new Proxy(originalPonder, {
     get(target, prop) {
