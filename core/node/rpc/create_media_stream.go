@@ -293,26 +293,27 @@ func (s *Service) getEphemeralStreamMbHash(
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		var hash []byte
-		err := s.storage.ReadMiniblocksByIds(
+		miniblocks, err := s.storage.ReadMiniblocks(
 			ctx,
 			streamId,
-			[]int64{num},
+			num,
+			num+1,
 			true,
-			func(data []byte, seqNum int64, _ []byte) error {
-				var mb Miniblock
-				if err := proto.Unmarshal(data, &mb); err != nil {
-					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
-				}
-				hash = mb.GetHeader().GetHash()
-				return nil
-			},
 		)
 		if err != nil {
 			logging.FromCtx(ctx).
 				Errorw("Failed to read genesis miniblock from store to re-create ephemeral stream creation cookie", "streamId", streamId, "error", err)
-		} else if len(hash) > 0 {
-			return hash, nil
+		} else if len(miniblocks) > 0 {
+			var mb Miniblock
+			if err := proto.Unmarshal(miniblocks[0].Data, &mb); err != nil {
+				logging.FromCtx(ctx).
+					Errorw("Unable to unmarshal miniblock", "streamId", streamId, "error", err)
+			} else {
+				hash := mb.GetHeader().GetHash()
+				if len(hash) > 0 {
+					return hash, nil
+				}
+			}
 		}
 	}
 

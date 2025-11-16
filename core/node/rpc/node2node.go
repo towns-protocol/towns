@@ -11,6 +11,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -255,33 +256,43 @@ func (s *Service) streamMiniblocksByIds(
 		return err
 	}
 
-	if err = s.storage.ReadMiniblocksByIds(
-		ctx,
-		streamId,
-		req.GetMiniblockIds(),
-		req.GetOmitSnapshots(),
-		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+	// Convert miniblock IDs to ranges with a max range size of 10
+	miniblockRanges := storage.MiniblockIdsToRanges(req.GetMiniblockIds(), 10)
+
+	for _, mbRange := range miniblockRanges {
+		miniblocks, err := s.storage.ReadMiniblocks(
+			ctx,
+			streamId,
+			mbRange.StartInclusive,
+			mbRange.EndInclusive+1, // +1 because ReadMiniblocks expects toExclusive
+			req.GetOmitSnapshots(),
+		)
+		if err != nil {
+			return err
+		}
+
+		for _, mbDesc := range miniblocks {
 			var mb Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
+			if err = proto.Unmarshal(mbDesc.Data, &mb); err != nil {
 				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
 			}
 
 			var snapshot *Envelope
-			if len(snBytes) > 0 && !req.GetOmitSnapshots() {
+			if len(mbDesc.Snapshot) > 0 && !req.GetOmitSnapshots() {
 				snapshot = &Envelope{}
-				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
+				if err = proto.Unmarshal(mbDesc.Snapshot, snapshot); err != nil {
 					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
 				}
 			}
 
-			return resp.Send(&GetMiniblockResponse{
-				Num:       seqNum,
+			if err = resp.Send(&GetMiniblockResponse{
+				Num:       mbDesc.Number,
 				Miniblock: &mb,
 				Snapshot:  snapshot,
-			})
-		},
-	); err != nil {
-		return err
+			}); err != nil {
+				return err
+			}
+		}
 	}
 
 	// Send back an empty response to signal the end of the stream.

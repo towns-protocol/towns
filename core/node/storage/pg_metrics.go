@@ -51,8 +51,7 @@ func newPostgresStats(pool *pgxpool.Pool) PostgresStats {
 }
 
 type PostgresStatusResult struct {
-	RegularPoolStats   PostgresStats `json:"regular_pool_stats"`
-	StreamingPoolStats PostgresStats `json:"streaming_pool_stats"`
+	RegularPoolStats PostgresStats `json:"regular_pool_stats"`
 
 	StreamCount int64
 
@@ -92,11 +91,10 @@ func PreparePostgresStatus(ctx context.Context, pool PgxPoolInfo) PostgresStatus
 	}
 
 	return PostgresStatusResult{
-		RegularPoolStats:   newPostgresStats(pool.Pool),
-		StreamingPoolStats: newPostgresStats(pool.StreamingPool),
-		StreamCount:        streamCount,
-		Version:            version,
-		SystemId:           systemId,
+		RegularPoolStats: newPostgresStats(pool.Pool),
+		StreamCount:      streamCount,
+		Version:          version,
+		SystemId:         systemId,
 	}
 }
 
@@ -208,27 +206,12 @@ func setupPostgresMetrics(ctx context.Context, pool PgxPoolInfo, factory infra.M
 		// Register stat metric for the regular pool
 		factory.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name:        metric.name,
-				Help:        metric.help,
-				ConstLabels: map[string]string{"pool": "regular"},
+				Name: metric.name,
+				Help: metric.help,
 			},
 			func(getValue func(PostgresStats) float64) func() float64 {
 				return func() float64 {
 					return getValue(status.RegularPoolStats)
-				}
-			}(metric.getValue),
-		)
-
-		// Register stat metric for the streaming pool
-		factory.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name:        metric.name,
-				Help:        metric.help,
-				ConstLabels: map[string]string{"pool": "streaming"},
-			},
-			func(getValue func(PostgresStats) float64) func() float64 {
-				return func() float64 {
-					return getValue(status.StreamingPoolStats)
 				}
 			}(metric.getValue),
 		)

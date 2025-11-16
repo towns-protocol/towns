@@ -161,3 +161,56 @@ func isPgError(err error, pgerrcode string) bool {
 	}
 	return false
 }
+
+// MiniblockIdsToRanges converts a list of miniblock IDs to a list of contiguous ranges.
+// maxRange limits the maximum length of each range. If a contiguous sequence exceeds maxRange,
+// it is split into multiple ranges. If maxRange <= 0, no limit is applied.
+// For example with maxRange=10: [1, 2, 3, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+// -> [{1,3}, {5,6}, {8,17}, {18,20}]
+func MiniblockIdsToRanges(ids []int64, maxRange int64) []MiniblockRange {
+	if len(ids) == 0 {
+		return []MiniblockRange{}
+	}
+
+	// Sort the IDs first
+	sortedIds := make([]int64, len(ids))
+	copy(sortedIds, ids)
+	for i := 0; i < len(sortedIds)-1; i++ {
+		for j := i + 1; j < len(sortedIds); j++ {
+			if sortedIds[i] > sortedIds[j] {
+				sortedIds[i], sortedIds[j] = sortedIds[j], sortedIds[i]
+			}
+		}
+	}
+
+	var ranges []MiniblockRange
+	rangeStart := sortedIds[0]
+	rangeEnd := sortedIds[0]
+
+	for i := 1; i < len(sortedIds); i++ {
+		currentRangeLength := rangeEnd - rangeStart + 1
+		isConsecutive := sortedIds[i] == rangeEnd+1
+		wouldExceedMax := maxRange > 0 && currentRangeLength >= maxRange
+
+		if isConsecutive && !wouldExceedMax {
+			// Continue current range
+			rangeEnd = sortedIds[i]
+		} else {
+			// Close current range and start new one
+			ranges = append(ranges, MiniblockRange{
+				StartInclusive: rangeStart,
+				EndInclusive:   rangeEnd,
+			})
+			rangeStart = sortedIds[i]
+			rangeEnd = sortedIds[i]
+		}
+	}
+
+	// Add the last range
+	ranges = append(ranges, MiniblockRange{
+		StartInclusive: rangeStart,
+		EndInclusive:   rangeEnd,
+	})
+
+	return ranges
+}
