@@ -53,6 +53,24 @@ func GetDefaultConfig() *Config {
 		Metrics: MetricsConfig{
 			Enabled: true,
 		},
+		HighUsageDetection: HighUsageDetectionConfig{
+			Enabled:    false,
+			MaxResults: 10,
+			Thresholds: map[string][]HighUsageThreshold{
+				"event": {
+					{Window: time.Minute, Count: 100},
+					{Window: 30 * time.Minute, Count: 1_000},
+				},
+				"media_event": {
+					{Window: time.Minute, Count: 50},
+					{Window: 30 * time.Minute, Count: 500},
+				},
+				"create_media_stream": {
+					{Window: time.Minute, Count: 10},
+					{Window: 30 * time.Minute, Count: 100},
+				},
+			},
+		},
 		// TODO: Network: NetworkConfig{},
 		StandByOnStart:    true,
 		StandByPollPeriod: 500 * time.Millisecond,
@@ -122,6 +140,7 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
+	HighUsageDetection  HighUsageDetectionConfig
 
 	// Scrubbing
 	Scrubbing ScrubbingConfig
@@ -600,6 +619,22 @@ type MetricsConfig struct {
 
 	// Interface to use with the port above. Usually left empty to bind to all interfaces.
 	Interface string
+}
+
+type HighUsageDetectionConfig struct {
+	// Enabled toggles the high-usage detection tracker logic.
+	Enabled bool
+
+	// MaxResults limits the number of high-usage accounts exposed via /status.
+	MaxResults int
+
+	// Thresholds maps call types (e.g., "event", "media_event") to a set of window/count limits.
+	Thresholds map[string][]HighUsageThreshold
+}
+
+type HighUsageThreshold struct {
+	Window time.Duration
+	Count  uint32
 }
 
 type DebugEndpointsConfig struct {
