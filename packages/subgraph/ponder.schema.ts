@@ -256,7 +256,69 @@ export const app = onchainTable('apps', (t) => ({
     isRegistered: t.boolean().default(false),
     isBanned: t.boolean().default(false),
     installedIn: t.hex().array().notNull(),
+    lastUpdatedAt: t.bigint(),
+    currentVersionId: t.hex(),
 }))
+
+// app installations - tracks which apps are installed in which spaces/accounts
+export const appInstallation = onchainTable(
+    'app_installations',
+    (t) => ({
+        // Composite key: app + account uniquely identifies an installation
+        app: t.hex().notNull(),
+        account: t.hex().notNull(),
+        appId: t.hex().notNull(),
+
+        // Lifecycle timestamps
+        installedAt: t.bigint().notNull(),
+        lastUpdatedAt: t.bigint(),
+        lastRenewedAt: t.bigint(),
+        uninstalledAt: t.bigint(),
+
+        // Transaction metadata
+        installTxHash: t.hex().notNull(),
+        installLogIndex: t.integer().notNull(),
+
+        // Status
+        isActive: t.boolean().default(true).notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.account] }),
+        accountIdx: index().on(table.account),
+        activeIdx: index().on(table.isActive),
+        appIdIdx: index().on(table.appId),
+        installedAtIdx: index().on(table.installedAt),
+    }),
+)
+
+// app versions - tracks version history for apps
+export const appVersion = onchainTable(
+    'app_versions',
+    (t) => ({
+        versionId: t.hex().notNull(),
+        app: t.hex().notNull(),
+
+        // Version metadata
+        createdAt: t.bigint().notNull(),
+        upgradedFromId: t.hex(),
+
+        // Transaction metadata
+        txHash: t.hex().notNull(),
+        logIndex: t.integer().notNull(),
+        blockNumber: t.bigint().notNull(),
+
+        // Status
+        isLatest: t.boolean().default(false).notNull(),
+        isCurrent: t.boolean().default(true).notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.versionId] }),
+        appIdx: index().on(table.app),
+        versionIdIdx: index().on(table.versionId),
+        latestIdx: index().on(table.app, table.isLatest),
+        currentIdx: index().on(table.isCurrent),
+    }),
+)
 
 // reviews
 export const review = onchainTable(
@@ -348,6 +410,36 @@ export const failureToSubscription = relations(subscriptionFailure, ({ one }) =>
         fields: [subscriptionFailure.account, subscriptionFailure.entityId],
         references: [subscription.account, subscription.entityId],
     }),
+}))
+
+// each app has many installations
+export const appToInstallations = relations(app, ({ many }) => ({
+    installations: many(appInstallation),
+}))
+
+// each installation belongs to an app
+export const installationToApp = relations(appInstallation, ({ one }) => ({
+    app: one(app, { fields: [appInstallation.app], references: [app.address] }),
+}))
+
+// each installation belongs to a space
+export const installationToSpace = relations(appInstallation, ({ one }) => ({
+    space: one(space, { fields: [appInstallation.account], references: [space.id] }),
+}))
+
+// each space has many app installations
+export const spaceToInstallations = relations(space, ({ many }) => ({
+    appInstallations: many(appInstallation),
+}))
+
+// each app has many versions
+export const appToVersions = relations(app, ({ many }) => ({
+    versions: many(appVersion),
+}))
+
+// each version belongs to an app
+export const versionToApp = relations(appVersion, ({ one }) => ({
+    app: one(app, { fields: [appVersion.app], references: [app.address] }),
 }))
 
 // tip leaderboard - per-space tip stats per user (senders only)
