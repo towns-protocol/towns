@@ -18,6 +18,7 @@ library SimpleAppStorage {
         uint256 installPrice;
         uint48 accessDuration;
         address client;
+        uint256 agentId;
     }
 
     function getLayout() internal pure returns (Layout storage l) {

@@ -10,6 +10,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IERC5267} from "@openzeppelin/contracts/interfaces/IERC5267.sol";
+import {IIdentityRegistry, IIdentityRegistryBase} from "../../facets/identity/IIdentityRegistry.sol";
 
 // contracts
 import {BaseApp} from "../../../apps/BaseApp.sol";
@@ -22,13 +23,13 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 
 // libraries
 import {SimpleAppStorage} from "../../simple/app/SimpleAppStorage.sol";
-import {SimpleAccountStorage} from "../account/SimpleAccountStorage.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {SignatureCheckerLib} from "solady/utils/SignatureCheckerLib.sol";
 
 contract SimpleAppFacet is
     ISimpleApp,
+    IIdentityRegistryBase,
     BaseApp,
     SimpleAccountFacet,
     IntrospectionFacet,
@@ -76,6 +77,19 @@ contract SimpleAppFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @inheritdoc ISimpleApp
+    function promoteAgent(
+        string calldata agentUri,
+        MetadataEntry[] calldata metadata
+    ) external onlyOwner nonReentrant returns (uint256 agentId) {
+        SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
+        if ($.agentId != 0) SimpleApp__AgentAlreadyPromoted.selector.revertWith();
+        address coordinator = _getCoordinator();
+        agentId = IIdentityRegistry(coordinator).register(agentUri, metadata);
+        $.agentId = agentId;
+        emit AgentPromoted(msg.sender, agentId);
+    }
+
+    /// @inheritdoc ISimpleApp
     function withdrawETH(address recipient) external onlyOwner nonReentrant {
         if (recipient == address(0)) SimpleApp__ZeroAddress.selector.revertWith();
 
@@ -121,6 +135,11 @@ contract SimpleAppFacet is
     }
 
     // Public functions
+    /// @inheritdoc ISimpleApp
+    function getAgentId() external view returns (uint256) {
+        return SimpleAppStorage.getLayout().agentId;
+    }
+
     /// @inheritdoc IModule
     function moduleId() public view returns (string memory) {
         SimpleAppStorage.Layout storage $ = SimpleAppStorage.getLayout();
