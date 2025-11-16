@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"path/filepath"
+	"runtime"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -140,6 +143,10 @@ func (s *Stream) setViewLocked(view *StreamView) {
 // Return nil view and nil error if stream is not local.
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	s.mu.Lock()
+
+	keysAndValues := logCaller(ctx, "mutex locked", s.streamId)
+	defer func() { logging.FromCtx(ctx).Infow("lockMuAndLoadView returned", keysAndValues...) }()
+
 	if s.local == nil {
 		return nil, nil
 	}
@@ -192,6 +199,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 // loadViewNoReconcileLocked should be called with a lock held.
 // Returns nil view and nil error if stream is not local.
 func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, error) {
+	keysAndValues := logCaller(ctx, "loadViewNoReconcileLocked", s.streamId)
+	defer func() { logging.FromCtx(ctx).Infow("loadViewNoReconcileLocked returned", keysAndValues...) }()
+
 	if s.local == nil {
 		return nil, nil
 	}
@@ -203,28 +213,91 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 
 	streamRecencyConstraintsGenerations := int(s.params.ChainConfig.Get().RecencyConstraintsGen)
 
+	keysAndValues2 := logCaller(ctx, "ReadStreamFromLastSnapshot", s.streamId)
 	streamData, err := s.params.Storage.ReadStreamFromLastSnapshot(
 		ctx,
 		s.streamId,
 		streamRecencyConstraintsGenerations,
 	)
+	logging.FromCtx(ctx).Infow("ReadStreamFromLastSnapshot returned", keysAndValues2...)
+
 	if err != nil {
 		return nil, err
 	}
 
+	keysAndValues3 := logCaller(ctx, "MakeStreamView", s.streamId)
+	start := time.Now()
 	view, err := MakeStreamView(ctx, s.streamId, streamData)
 	if err != nil {
 		return nil, err
 	}
+	keysAndValues = append(keysAndValues, "took", time.Since(start))
+	logging.FromCtx(ctx).Infow("MakeStreamView returned", keysAndValues3...)
 
 	s.setViewLocked(view)
 	return view, nil
+}
+
+func getGoId() int64 {
+	var (
+		buf [64]byte
+		n   = runtime.Stack(buf[:], false)
+		stk = strings.TrimPrefix(string(buf[:n]), "goroutine")
+	)
+
+	idField := strings.Fields(stk)[0]
+	id, err := strconv.Atoi(idField)
+	if err != nil {
+		return -1
+	}
+
+	return int64(id)
+}
+
+func logCaller(ctx context.Context, msg string, streamId StreamId) []interface{} {
+	keysAndValues := []interface{}{"goid", getGoId(), "stream", streamId}
+	callerId := 0
+	for i := 0; i < 5; i++ {
+		if pc, file, no, ok := runtime.Caller(i); ok {
+			details := runtime.FuncForPC(pc)
+			if !strings.Contains(details.Name(), "logCaller") && !strings.Contains(details.Name(), ".s:") {
+				keysAndValues = append(keysAndValues,
+					fmt.Sprintf("caller[%d]", callerId),
+					fmt.Sprintf("%s:%d#%s", filepath.Base(file), no, details.Name()))
+				callerId++
+			}
+		}
+	}
+
+	logging.FromCtx(ctx).Infow(msg, keysAndValues...)
+
+	return keysAndValues
+}
+
+func logMutexUnlocked(ctx context.Context, streamId StreamId) {
+	keysAndValues := []interface{}{"goid", getGoId(), "stream", streamId}
+	callerId := 0
+	for i := 0; i < 5; i++ {
+		if pc, file, no, ok := runtime.Caller(i); ok {
+			details := runtime.FuncForPC(pc)
+			if !strings.Contains(details.Name(), "logMutexUnlocked") && !strings.Contains(details.Name(), ".s:") {
+				keysAndValues = append(keysAndValues,
+					fmt.Sprintf("caller[%d]", callerId),
+					fmt.Sprintf("%s:%d#%s", filepath.Base(file), no, details.Name()))
+				callerId++
+			}
+		}
+	}
+
+	logging.FromCtx(ctx).Infow("mutex unlocked", keysAndValues...)
 }
 
 // ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
 // ApplyMiniblock is thread-safe.
 func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
 	_, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -393,6 +466,8 @@ func (s *Stream) applyMiniblockImplLocked(
 // promoteCandidate is thread-safe.
 func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	_, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -525,6 +600,8 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return nil, err
@@ -719,6 +796,8 @@ func (s *Stream) notifySubscribersLocked(
 
 func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
 	_, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return nil, err
@@ -857,6 +936,8 @@ func (s *Stream) UpdatesSinceCookie(
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -906,6 +987,8 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -940,6 +1023,8 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 	}
 
 	_, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return err
@@ -1057,6 +1142,8 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 // tryApplyCandidate is thread-safe.
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
 	_, err := s.lockMuAndLoadView(ctx)
+
+	defer logMutexUnlocked(ctx, s.streamId)
 	defer s.mu.Unlock()
 	if err != nil {
 		return false, err
@@ -1151,6 +1238,8 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
+	defer logMutexUnlocked(ctx, s.streamId)
+
 	if err != nil {
 		s.mu.Unlock()
 		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
