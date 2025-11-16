@@ -351,6 +351,244 @@ bot.onChannelJoin(async (handler, event) => {
 }
 ```
 
+### `onInteractionResponse` - Interactive Button Handler
+
+**When it fires:** User clicks a button or submits a form in an interactive message
+
+**Full Payload:**
+```typescript
+{
+  ...basePayload,
+  response: DecryptedInteractionResponse  // Contains form/button data
+}
+```
+
+**Interactive messages** allow you to create buttons, forms, and other UI elements that users can interact with. When a user clicks a button or submits a form, the `onInteractionResponse` handler is triggered.
+
+**Use Case - Button Click Handling:**
+```typescript
+bot.onInteractionResponse(async (handler, event) => {
+  const { response } = event
+  
+  // Check if it's a form response (buttons are sent as forms)
+  if (response.payload.content?.case !== "form") {
+    return
+  }
+  
+  const formResponse = response.payload.content?.value
+  
+  // Loop through all components to find which button was clicked
+  for (const component of formResponse.components) {
+    if (component.component.case === "button") {
+      const componentId = component.id
+      
+      // Route to different handlers based on button ID
+      if (componentId === "confirm-button") {
+        await handler.sendMessage(
+          event.channelId,
+          "You confirmed the action!"
+        )
+      } else if (componentId === "cancel-button") {
+        await handler.sendMessage(
+          event.channelId,
+          "Action cancelled."
+        )
+      }
+    }
+  }
+})
+```
+
+**Pattern - Game with Interactive Buttons:**
+```typescript
+// Store game state
+const gameStates = new Map()
+
+bot.onSlashCommand("play", async (handler, event) => {
+  // Initialize game state
+  gameStates.set(event.userId, {
+    score: 0,
+    health: 100,
+    channelId: event.channelId
+  })
+  
+  // Send message with interactive buttons
+  await handler.sendMessage(
+    event.channelId,
+    "🎮 Your turn! What do you do?",
+    {
+      // Buttons are sent as part of message options
+      // (Refer to SDK documentation for exact button API)
+    }
+  )
+})
+
+bot.onInteractionResponse(async (handler, event) => {
+  const { response } = event
+  
+  if (response.payload.content?.case !== "form") {
+    return
+  }
+  
+  const formResponse = response.payload.content?.value
+  const gameState = gameStates.get(event.userId)
+  
+  if (!gameState) {
+    await handler.sendMessage(event.channelId, "No active game. Use /play to start!")
+    return
+  }
+  
+  // Handle button clicks
+  for (const component of formResponse.components) {
+    if (component.component.case === "button") {
+      const buttonId = component.id
+      
+      if (buttonId === "attack-button") {
+        gameState.score += 10
+        await handler.sendMessage(
+          event.channelId,
+          `⚔️ You attacked! Score: ${gameState.score}`
+        )
+      } else if (buttonId === "defend-button") {
+        gameState.health += 5
+        await handler.sendMessage(
+          event.channelId,
+          `🛡️ You defended! Health: ${gameState.health}`
+        )
+      }
+      
+      gameStates.set(event.userId, gameState)
+    }
+  }
+})
+```
+
+**Pattern - Re-using Command Handlers with Buttons:**
+```typescript
+// Define your command handlers as separate functions
+async function handleHit(handler: any, event: any) {
+  const gameState = gameStates.get(event.userId)
+  // ... hit logic
+  await handler.sendMessage(event.channelId, "You hit!")
+}
+
+async function handleStand(handler: any, event: any) {
+  const gameState = gameStates.get(event.userId)
+  // ... stand logic
+  await handler.sendMessage(event.channelId, "You stand!")
+}
+
+// Register slash commands
+bot.onSlashCommand("hit", handleHit)
+bot.onSlashCommand("stand", handleStand)
+
+// Handle button clicks by routing to the same handlers
+bot.onInteractionResponse(async (handler, event) => {
+  const { response } = event
+  
+  if (response.payload.content?.case !== "form") {
+    return
+  }
+  
+  const formResponse = response.payload.content?.value
+  
+  for (const component of formResponse.components) {
+    if (component.component.case === "button") {
+      const componentId = component.id
+      
+      // Create a clean event object for the handler
+      const cleanEvent = {
+        userId: event.userId,
+        channelId: event.channelId,
+        eventId: event.eventId,
+        spaceId: event.spaceId,
+        createdAt: event.createdAt,
+        command: "",
+        args: [],
+        mentions: [],
+        replyId: undefined,
+        threadId: undefined,
+      }
+      
+      // Route button clicks to command handlers
+      if (componentId === "hit-button") {
+        cleanEvent.command = "hit"
+        await handleHit(handler, cleanEvent)
+      } else if (componentId === "stand-button") {
+        cleanEvent.command = "stand"
+        await handleStand(handler, cleanEvent)
+      }
+    }
+  }
+})
+```
+
+**Important Notes:**
+- Button IDs must be unique and match between your message creation and response handling
+- Interactive messages enable rich user experiences (games, polls, confirmations, etc.)
+- Store game/form state externally (database or in-memory) to maintain context
+- Always validate that `response.payload.content?.case === "form"` before processing
+
+## Utility Functions
+
+### Getting Smart Account Address from User ID
+
+The bot SDK provides a utility to convert a user's Towns ID to their smart account (wallet) address:
+
+```typescript
+import { getSmartAccountFromUserId } from "@towns-protocol/bot"
+
+bot.onMessage(async (handler, event) => {
+  // Get user's smart account (wallet) address
+  // userId comes from bot.onMessage, onSlashCommand, onTip, or other event listeners
+  const walletAddress = await getSmartAccountFromUserId(bot, { userId: event.userId })
+  
+  console.log(`User ${event.userId} has wallet address: ${walletAddress}`)
+  
+  // Use for Web3 operations
+  await handler.sendMessage(
+    event.channelId,
+    `Your wallet address is: ${walletAddress}`
+  )
+})
+```
+
+**Usage Examples:**
+
+```typescript
+// From slash command
+bot.onSlashCommand("wallet", async (handler, event) => {
+  const walletAddress = await getSmartAccountFromUserId(bot, { userId: event.userId })
+  await handler.sendMessage(event.channelId, `Your wallet: ${walletAddress}`)
+})
+
+// From tip event
+bot.onTip(async (handler, event) => {
+  const senderWallet = await getSmartAccountFromUserId(bot, { userId: event.userId })
+  console.log(`Tip from wallet: ${senderWallet}`)
+})
+
+// For mentioned users
+bot.onMessage(async (handler, event) => {
+  if (event.mentions.length > 0) {
+    const firstMentionWallet = await getSmartAccountFromUserId(bot, { 
+      userId: event.mentions[0].userId 
+    })
+    await handler.sendMessage(
+      event.channelId,
+      `${event.mentions[0].displayName}'s wallet: ${firstMentionWallet}`
+    )
+  }
+})
+```
+
+**Use Cases:**
+- Send tokens/NFTs to a user's smart account
+- Check user's on-chain balance or assets
+- Execute contract calls on behalf of users
+- Verify ownership of on-chain assets
+- Airdrop rewards to community members
+
 ## Handler Combination Patterns
 
 ### Pattern 1: Contextual Responses
