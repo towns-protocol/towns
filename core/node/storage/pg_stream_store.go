@@ -463,23 +463,13 @@ func CreatePartitionSuffix(streamId StreamId, numPartitions int) string {
 func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string {
 	suffix := CreatePartitionSuffix(streamId, s.numPartitions)
 
-	sql = strings.ReplaceAll(
-		sql,
-		"{{miniblocks}}",
-		"miniblocks_"+suffix,
-	)
-	sql = strings.ReplaceAll(
-		sql,
-		"{{minipools}}",
-		"minipools_"+suffix,
-	)
-	sql = strings.ReplaceAll(
-		sql,
-		"{{miniblock_candidates}}",
-		"miniblock_candidates_"+suffix,
+	replacer := strings.NewReplacer(
+		"{{miniblocks}}", "miniblocks_"+suffix,
+		"{{minipools}}", "minipools_"+suffix,
+		"{{miniblock_candidates}}", "miniblock_candidates_"+suffix,
 	)
 
-	return sql
+	return replacer.Replace(sql)
 }
 
 func (s *PostgresStreamStore) lockStream(
