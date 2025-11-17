@@ -287,6 +287,8 @@ func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) confi
 		case CallTypeCreateMediaStream:
 			cfg.Thresholds.ThresholdCreateMediaStreamWindow = thr.Window
 			cfg.Thresholds.ThresholdCreateMediaStreamCount = thr.Count
+		case callTypeCount:
+			panic("invalid callTypeCount entry")
 		default:
 			panic("unsupported call type in test helper: " + ct.String())
 		}
