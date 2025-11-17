@@ -26,10 +26,10 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 	user := common.HexToAddress("0x1")
 	base := time.Unix(0, 0)
 
-	monitor.RecordCall(user, base, CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), base, CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(base), 0)
 
-	monitor.RecordCall(user, base.Add(200*time.Millisecond), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), base.Add(200*time.Millisecond), CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(base.Add(500 * time.Millisecond))
 	require.Len(t, snapshot, 1)
 	require.Equal(t, user, snapshot[0].User)
@@ -56,7 +56,7 @@ func TestMonitorPerDayThreshold(t *testing.T) {
 	base := time.Unix(0, 0)
 
 	for i := 0; i < 3; i++ {
-		monitor.RecordCall(user, base.Add(time.Duration(i)*2*time.Hour), CallTypeMediaEvent)
+		monitor.RecordCall(user.Bytes(), base.Add(time.Duration(i)*2*time.Hour), CallTypeMediaEvent)
 	}
 
 	snapshot := monitor.GetHighUsageInfo(base.Add(6 * time.Hour))
@@ -80,7 +80,7 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 	user := common.HexToAddress("0x3")
 	base := time.Unix(0, 0)
 
-	monitor.RecordCall(user, base, CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), base, CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(base.Add(time.Second)), 1)
 
 	impl := monitor.(*inMemoryCallRateMonitor)
@@ -103,9 +103,9 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 	user := common.HexToAddress("0x42")
 	base := time.Unix(0, 0)
 
-	monitor.RecordCall(user, base, CallTypeEvent)
-	monitor.RecordCall(user, base.Add(500*time.Millisecond), CallTypeMediaEvent)
-	monitor.RecordCall(user, base.Add(800*time.Millisecond), CallTypeMediaEvent)
+	monitor.RecordCall(user.Bytes(), base, CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), base.Add(500*time.Millisecond), CallTypeMediaEvent)
+	monitor.RecordCall(user.Bytes(), base.Add(800*time.Millisecond), CallTypeMediaEvent)
 
 	usage := monitor.GetHighUsageInfo(base.Add(time.Second))
 	require.Len(t, usage, 2)
@@ -123,10 +123,10 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	user := common.HexToAddress("0xab")
 	start := time.Unix(0, 0)
 	for i := 0; i < 3; i++ {
-		monitor.RecordCall(user, start.Add(time.Duration(i)*time.Second), CallTypeEvent)
+		monitor.RecordCall(user.Bytes(), start.Add(time.Duration(i)*time.Second), CallTypeEvent)
 	}
 	require.Len(t, monitor.GetHighUsageInfo(start.Add(2500*time.Millisecond)), 1)
-	monitor.RecordCall(user, start.Add(3500*time.Millisecond), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), start.Add(3500*time.Millisecond), CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(start.Add(4*time.Second)), 0)
 }
 
@@ -141,10 +141,10 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 	defer monitor.Close()
 	user := common.HexToAddress("0xcd")
 	now := time.Unix(0, 0)
-	monitor.RecordCall(user, now, CallTypeEvent)
-	monitor.RecordCall(user, now.Add(10*time.Second), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), now, CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), now.Add(10*time.Second), CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(now.Add(20*time.Second)), 1)
-	monitor.RecordCall(user, now.Add(70*time.Second), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), now.Add(70*time.Second), CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(now.Add(80*time.Second)), 0)
 }
 
@@ -159,7 +159,7 @@ func TestMonitorConfigValidation(t *testing.T) {
 	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xef")
-	monitor.RecordCall(user, time.Unix(0, 0), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), time.Unix(0, 0), CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(time.Unix(30, 0)), 0)
 }
 
@@ -183,7 +183,7 @@ func TestMonitorConcurrentRecordCall(t *testing.T) {
 			defer wg.Done()
 			for j := 0; j < 10; j++ {
 				monitor.RecordCall(
-					user,
+					user.Bytes(),
 					start.Add(time.Duration(offset*j)*time.Millisecond),
 					CallTypeEvent,
 				)
@@ -213,7 +213,7 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 
 	go func() {
 		for i := 0; i < 100; i++ {
-			monitor.RecordCall(user, start.Add(time.Millisecond*time.Duration(i)), CallTypeEvent)
+			monitor.RecordCall(user.Bytes(), start.Add(time.Millisecond*time.Duration(i)), CallTypeEvent)
 		}
 	}()
 
@@ -232,7 +232,7 @@ func TestMonitorDisabledConfig(t *testing.T) {
 	defer monitor.Close()
 
 	user := common.HexToAddress("0xaa")
-	monitor.RecordCall(user, time.Now(), CallTypeEvent)
+	monitor.RecordCall(user.Bytes(), time.Now(), CallTypeEvent)
 	require.Nil(t, monitor.GetHighUsageInfo(time.Now()))
 }
 
@@ -250,7 +250,7 @@ func TestMonitorMultipleThresholdsPerCallType(t *testing.T) {
 	user := common.HexToAddress("0xbb")
 	base := time.Unix(0, 0)
 	for i := 0; i < 25; i++ {
-		monitor.RecordCall(user, base.Add(time.Duration(i)*time.Second), CallTypeEvent)
+		monitor.RecordCall(user.Bytes(), base.Add(time.Duration(i)*time.Second), CallTypeEvent)
 	}
 
 	usage := monitor.GetHighUsageInfo(base.Add(30 * time.Second))
@@ -276,7 +276,7 @@ func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 			defer wg.Done()
 			addr := common.BigToAddress(big.NewInt(int64(idx + 1)))
 			for i := 0; i < 12; i++ {
-				monitor.RecordCall(addr, start.Add(time.Duration(i)*time.Second), CallTypeEvent)
+				monitor.RecordCall(addr.Bytes(), start.Add(time.Duration(i)*time.Second), CallTypeEvent)
 			}
 		}(u)
 	}

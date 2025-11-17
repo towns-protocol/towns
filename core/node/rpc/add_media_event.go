@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"context"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -74,7 +75,7 @@ func (s *Service) localAddMediaEvent(
 		return nil, AsRiverError(err).Func("localAddMediaEvent")
 	}
 
-	s.recordCallRate(highusage.CallTypeMediaEvent, parsedEvent.Event.CreatorAddress)
+	s.callRateMonitor.RecordCall(parsedEvent.Event.CreatorAddress, time.Now(), highusage.CallTypeMediaEvent)
 
 	return connect.NewResponse(&AddMediaEventResponse{
 		CreationCookie: &CreationCookie{

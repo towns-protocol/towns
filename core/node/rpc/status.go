@@ -180,9 +180,7 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 		XChainBlockchains: s.chainConfig.Get().XChain.Blockchains,
 	}
 
-	if s.callRateMonitor != nil {
-		resp.HighUsage = convertHighUsageInfo(s.callRateMonitor.GetHighUsageInfo(time.Now()))
-	}
+	resp.HighUsage = convertHighUsageInfo(s.callRateMonitor.GetHighUsageInfo(time.Now()))
 
 	return resp, status
 }

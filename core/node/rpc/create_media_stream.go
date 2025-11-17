@@ -149,7 +149,7 @@ func (s *Service) createMediaStream(ctx context.Context, req *CreateMediaStreamR
 		return nil, AsRiverError(err).Func("createMediaStream")
 	}
 
-	s.recordCallRate(highusage.CallTypeCreateMediaStream, parsedEvents[0].Event.CreatorAddress)
+	s.callRateMonitor.RecordCall(parsedEvents[0].Event.CreatorAddress, time.Now(), highusage.CallTypeCreateMediaStream)
 
 	// add derived events
 	for _, de := range csRules.DerivedEvents {

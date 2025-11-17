@@ -56,7 +56,7 @@ type HighUsageInfo struct {
 // CallRateMonitor tracks per-user call rates across multiple call types and exposes
 // aggregated high-usage data.
 type CallRateMonitor interface {
-	RecordCall(user common.Address, now time.Time, callType CallType)
+	RecordCall(user []byte, now time.Time, callType CallType)
 	GetHighUsageInfo(now time.Time) []HighUsageInfo
 	Close()
 }
@@ -157,7 +157,12 @@ func convertThresholds(cfg config.HighUsageDetectionConfig) map[CallType][]Thres
 }
 
 // RecordCall increments the counters for the given user and call type.
-func (m *inMemoryCallRateMonitor) RecordCall(user common.Address, now time.Time, callType CallType) {
+func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, callType CallType) {
+	if len(userBytes) == 0 {
+		return
+	}
+
+	user := common.BytesToAddress(userBytes)
 	if user == (common.Address{}) {
 		return
 	}
@@ -523,6 +528,6 @@ func maxSeverity(info HighUsageInfo) float64 {
 
 type noopCallRateMonitor struct{}
 
-func (noopCallRateMonitor) RecordCall(common.Address, time.Time, CallType) {}
-func (noopCallRateMonitor) GetHighUsageInfo(time.Time) []HighUsageInfo     { return nil }
-func (noopCallRateMonitor) Close()                                         {}
+func (noopCallRateMonitor) RecordCall([]byte, time.Time, CallType)     {}
+func (noopCallRateMonitor) GetHighUsageInfo(time.Time) []HighUsageInfo { return nil }
+func (noopCallRateMonitor) Close()                                     {}

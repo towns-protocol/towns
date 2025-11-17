@@ -51,12 +51,13 @@ func (s *Service) localAddEvent(
 
 	if err != nil {
 		return nil, err
-	} else {
-		s.recordCallRate(highusage.CallTypeEvent, parsedEvent.Event.CreatorAddress)
-		return connect.NewResponse(&AddEventResponse{
-			NewEvents: newEvents,
-		}), nil
 	}
+
+	s.callRateMonitor.RecordCall(parsedEvent.Event.CreatorAddress, time.Now(), highusage.CallTypeEvent)
+
+	return connect.NewResponse(&AddEventResponse{
+		NewEvents: newEvents,
+	}), nil
 }
 
 // ensureStreamIsUpToDate returns the StreamView for the given StreamId that is up to date enough to
