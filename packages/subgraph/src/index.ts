@@ -689,7 +689,18 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        // Create installation record
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, app),
+        })
+        if (!existingApp) {
+            console.warn(
+                `Skipping AppInstalled: app ${app} not found at block ${blockNumber}. ` +
+                    `AppInstalled may have fired before AppCreated.`,
+            )
+            return
+        }
+
+        // Create installation record (only if app exists)
         await context.db
             .insert(schema.appInstallation)
             .values({
@@ -723,10 +734,10 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
                     END
                 `,
             })
-            .where(eq(schema.app.appId, appId))
+            .where(eq(schema.app.address, app))
 
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppInstalled`, appId)
+            console.warn(`App not found for AppRegistry:AppInstalled`, app)
         }
     } catch (error) {
         console.error(
@@ -766,10 +777,10 @@ ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
             .set({
                 installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${account}::text)`,
             })
-            .where(eq(schema.app.appId, appId))
+            .where(eq(schema.app.address, app))
 
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppUninstalled`, appId)
+            console.warn(`App not found for AppRegistry:AppUninstalled`, app)
         }
     } catch (error) {
         console.error(
