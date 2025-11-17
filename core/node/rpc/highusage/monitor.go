@@ -89,17 +89,16 @@ type CallRateMonitor interface {
 // sum so threshold comparisons are O(1). Cleanup compacts the user map by
 // evicting entries whose last seen timestamp falls outside the longest window.
 type inMemoryCallRateMonitor struct {
-	mu            sync.Mutex
-	cfg           config.HighUsageDetectionConfig
-	users         map[common.Address]*userStats
-	cleanupAfter  time.Duration
-	callSpecs     []*callTypeSpec
-	lastCleanup   time.Time
-	cleanupTicker *time.Ticker
-	cleanupStop   chan struct{}
-	cleanupWG     sync.WaitGroup
-	closeOnce     sync.Once
-	logger        *zap.Logger
+	mu           sync.Mutex
+	cfg          config.HighUsageDetectionConfig
+	users        map[common.Address]*userStats
+	cleanupAfter time.Duration
+	callSpecs    []*callTypeSpec
+	lastCleanup  time.Time
+	cleanupStop  chan struct{}
+	cleanupWG    sync.WaitGroup
+	closeOnce    sync.Once
+	logger       *zap.Logger
 }
 
 const (
@@ -143,10 +142,10 @@ func NewCallRateMonitor(cfg config.HighUsageDetectionConfig, logger *zap.Logger)
 		logger:       logger.Named("highusage_monitor"),
 	}
 	if cleanupMinInterval > 0 {
-		m.cleanupTicker = time.NewTicker(cleanupMinInterval)
+		ticker := time.NewTicker(cleanupMinInterval)
 		m.cleanupStop = make(chan struct{})
 		m.cleanupWG.Add(1)
-		go m.cleanupLoop()
+		go m.cleanupLoop(ticker)
 	}
 	callTypeKeys := make([]string, 0, len(specs))
 	for ct, spec := range specs {
@@ -301,11 +300,14 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 	m.lastCleanup = now
 }
 
-func (m *inMemoryCallRateMonitor) cleanupLoop() {
-	defer m.cleanupWG.Done()
+func (m *inMemoryCallRateMonitor) cleanupLoop(ticker *time.Ticker) {
+	defer func() {
+		ticker.Stop()
+		m.cleanupWG.Done()
+	}()
 	for {
 		select {
-		case now := <-m.cleanupTicker.C:
+		case now := <-ticker.C:
 			m.mu.Lock()
 			m.cleanupLocked(now)
 			m.mu.Unlock()
@@ -317,11 +319,9 @@ func (m *inMemoryCallRateMonitor) cleanupLoop() {
 
 func (m *inMemoryCallRateMonitor) Close() {
 	m.closeOnce.Do(func() {
-		if m.cleanupTicker != nil {
-			m.cleanupTicker.Stop()
-		}
 		if m.cleanupStop != nil {
 			close(m.cleanupStop)
+			m.cleanupStop = nil
 		}
 		m.cleanupWG.Wait()
 	})
