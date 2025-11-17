@@ -75,7 +75,7 @@ describe('memberMetadataTests', () => {
         }
     })
 
-    test('clientDontHaveAppAddress', async () => {
+    test('clientDoesntHaveAppAddress', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
 
