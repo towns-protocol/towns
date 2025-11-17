@@ -1,3 +1,14 @@
+// Package highusage provides a lightweight in-memory CallRateMonitor that tracks how
+// often each account invokes specific RPC call types. It keeps per-user counters
+// across configurable sliding time windows by storing counts in circular buckets
+// (ring buffers) and maintaining running totals, so lookups are O(1) without
+// retaining every individual request. The monitor exposes a simple API for
+// recording a call and retrieving the current offenders, which higher layers can
+// feed into status endpoints or mitigation logic.
+//
+// Memory usage: each active user consumes roughly ~2KB per tracked call type
+// (window slots + metadata), so about 4k users equates to ~8–10MB of heap. The
+// cleanup watermark keeps the set bounded while remaining configurable.
 package highusage
 
 import (
@@ -11,18 +22,6 @@ import (
 
 	"github.com/towns-protocol/towns/core/config"
 )
-
-// Package highusage provides a lightweight in-memory CallRateMonitor that tracks how
-// often each account invokes specific RPC call types. It keeps per-user counters
-// across configurable sliding time windows by storing counts in circular buckets
-// (ring buffers) and maintaining running totals, so lookups are O(1) without
-// retaining every individual request. The monitor exposes a simple API for
-// recording a call and retrieving the current offenders, which higher layers can
-// feed into status endpoints or mitigation logic.
-//
-// Memory usage: each active user consumes roughly ~2KB per tracked call type
-// (window slots + metadata), so about 4k users equates to ~8–10MB of heap. The
-// cleanup watermark keeps the set bounded while remaining configurable.
 
 // CallType identifies the RPC operation category being tracked.
 type CallType int
@@ -83,6 +82,12 @@ type CallRateMonitor interface {
 	Close()
 }
 
+// inMemoryCallRateMonitor keeps per-user counters for each call type, storing a
+// circular buffer (ring) of slot totals per configured threshold. RecordCall
+// looks up the call type spec (precomputed slot duration + bucket count),
+// advances the ring to "now", increments the current slot, and tracks a running
+// sum so threshold comparisons are O(1). Cleanup compacts the user map by
+// evicting entries whose last seen timestamp falls outside the longest window.
 type inMemoryCallRateMonitor struct {
 	mu            sync.Mutex
 	cfg           config.HighUsageDetectionConfig
