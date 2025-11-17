@@ -56,19 +56,16 @@ func GetDefaultConfig() *Config {
 		HighUsageDetection: HighUsageDetectionConfig{
 			Enabled:    false,
 			MaxResults: 10,
-			Thresholds: map[string][]HighUsageThreshold{
-				"event": {
-					{Window: time.Minute, Count: 100},
-					{Window: 30 * time.Minute, Count: 1_000},
-				},
-				"media_event": {
-					{Window: time.Minute, Count: 50},
-					{Window: 30 * time.Minute, Count: 500},
-				},
-				"create_media_stream": {
-					{Window: time.Minute, Count: 10},
-					{Window: 30 * time.Minute, Count: 100},
-				},
+			Thresholds: HighUsageThresholdFields{
+				Threshold1Name:   "event",
+				Threshold1Window: time.Minute,
+				Threshold1Count:  100,
+				Threshold2Name:   "media_event",
+				Threshold2Window: time.Minute,
+				Threshold2Count:  50,
+				Threshold3Name:   "create_media_stream",
+				Threshold3Window: time.Minute,
+				Threshold3Count:  10,
 			},
 		},
 		// TODO: Network: NetworkConfig{},
@@ -628,8 +625,57 @@ type HighUsageDetectionConfig struct {
 	// MaxResults limits the number of high-usage accounts exposed via /status.
 	MaxResults int
 
-	// Thresholds maps call types (e.g., "event", "media_event") to a set of window/count limits.
-	Thresholds map[string][]HighUsageThreshold
+	// Thresholds captures up to three explicit threshold definitions.
+	Thresholds HighUsageThresholdFields
+}
+
+// HighUsageThresholds flattens the configured threshold_* fields into a standard
+// map keyed by call type.
+func (cfg HighUsageDetectionConfig) HighUsageThresholds() map[string][]HighUsageThreshold {
+	return cfg.Thresholds.effectiveThresholds()
+}
+
+type HighUsageThresholdFields struct {
+	Threshold1Name   string        `mapstructure:"threshold_1_name"`
+	Threshold1Window time.Duration `mapstructure:"threshold_1_window"`
+	Threshold1Count  uint32        `mapstructure:"threshold_1_count"`
+
+	Threshold2Name   string        `mapstructure:"threshold_2_name"`
+	Threshold2Window time.Duration `mapstructure:"threshold_2_window"`
+	Threshold2Count  uint32        `mapstructure:"threshold_2_count"`
+
+	Threshold3Name   string        `mapstructure:"threshold_3_name"`
+	Threshold3Window time.Duration `mapstructure:"threshold_3_window"`
+	Threshold3Count  uint32        `mapstructure:"threshold_3_count"`
+}
+
+func (fields HighUsageThresholdFields) effectiveThresholds() map[string][]HighUsageThreshold {
+	result := make(map[string][]HighUsageThreshold)
+
+	explicit := []struct {
+		name   string
+		window time.Duration
+		count  uint32
+	}{
+		{fields.Threshold1Name, fields.Threshold1Window, fields.Threshold1Count},
+		{fields.Threshold2Name, fields.Threshold2Window, fields.Threshold2Count},
+		{fields.Threshold3Name, fields.Threshold3Window, fields.Threshold3Count},
+	}
+
+	for _, entry := range explicit {
+		if entry.name == "" || entry.window <= 0 || entry.count == 0 {
+			continue
+		}
+		result[entry.name] = append(result[entry.name], HighUsageThreshold{
+			Window: entry.window,
+			Count:  entry.count,
+		})
+	}
+
+	if len(result) == 0 {
+		return nil
+	}
+	return result
 }
 
 type HighUsageThreshold struct {

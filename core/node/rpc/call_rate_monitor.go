@@ -11,8 +11,9 @@ import (
 )
 
 func newCallRateMonitorFromConfig(cfg config.HighUsageDetectionConfig, logger *zap.Logger) highusage.CallRateMonitor {
-	thresholds := make(map[highusage.CallType][]highusage.Threshold, len(cfg.Thresholds))
-	for key, values := range cfg.Thresholds {
+	configured := cfg.HighUsageThresholds()
+	thresholds := make(map[highusage.CallType][]highusage.Threshold, len(configured))
+	for key, values := range configured {
 		callType := highusage.CallType(key)
 		converted := make([]highusage.Threshold, 0, len(values))
 		for _, value := range values {
