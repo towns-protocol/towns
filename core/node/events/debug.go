@@ -22,7 +22,6 @@ func (e *ParsedEvent) ParsedStringWithIndent(indent string) string {
 			case *ChannelPayload_Inception_:
 				{
 					data := map[string]interface{}{
-						"SpaceId":  hex.EncodeToString(content.Inception.SpaceId),
 						"StreamId": hex.EncodeToString(content.Inception.StreamId),
 					}
 

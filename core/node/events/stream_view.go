@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -28,10 +29,47 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
+func MakeStreamView(
+	ctx context.Context,
+	streamId StreamId,
+	streamData *storage.ReadStreamFromLastSnapshotResult,
+) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
+
+	startTime := time.Now()
+	large := len(streamData.Miniblocks) > 100 || len(streamData.MinipoolEnvelopes) > 10
+	if large {
+		logging.FromCtx(ctx).Infow(
+			"MakeStreamView: parsing large stream",
+			"streamId", streamId,
+			"miniblocks", len(streamData.Miniblocks),
+			"minipoolSize", len(streamData.MinipoolEnvelopes),
+			"snapshotOffset", streamData.SnapshotMiniblockOffset,
+		)
+	}
+	defer func() {
+		duration := time.Since(startTime)
+		durationExceeded := duration > 10*time.Second
+		if durationExceeded || large {
+			level := zapcore.InfoLevel
+			msg := "MakeStreamView: large stream parsed"
+			if durationExceeded {
+				level = zapcore.ErrorLevel
+				msg = "MakeStreamView: stream parsing took too long"
+			}
+			logging.FromCtx(ctx).Logw(
+				level,
+				msg,
+				"duration", duration,
+				"streamId", streamId,
+				"miniblocks", len(streamData.Miniblocks),
+				"minipoolSize", len(streamData.MinipoolEnvelopes),
+				"snapshotOffset", streamData.SnapshotMiniblockOffset,
+			)
+		}
+	}()
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	snapshotIndex := -1
@@ -59,9 +97,17 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
+	snapshotStreamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
+	}
+	if streamId != snapshotStreamId {
+		return nil, RiverError(
+			Err_STREAM_BAD_EVENT,
+			"expected streamId does not match snapshot",
+		).Func("MakeStreamView").
+			Tag("expectedStreamId", streamId).
+			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -881,7 +927,9 @@ func (r *StreamView) StreamParentId() *StreamId {
 func GetStreamParentId(inception IsInceptionPayload) []byte {
 	switch inceptionContent := inception.(type) {
 	case *ChannelPayload_Inception:
-		return inceptionContent.SpaceId
+		spaceID := StreamId{STREAM_SPACE_BIN}
+		copy(spaceID[1:], inceptionContent.StreamId[1:21])
+		return spaceID[:]
 	default:
 		return nil
 	}

@@ -16,7 +16,6 @@ import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
 import {BasisPoints} from "../../../utils/libraries/BasisPoints.sol";
 import {AppRegistryStorage, ClientInfo, AppInfo} from "./AppRegistryStorage.sol";
-import {LibClone} from "solady/utils/LibClone.sol";
 import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 import {CurrencyTransfer} from "../../../utils/libraries/CurrencyTransfer.sol";
 import {LibAppRegistry} from "./LibAppRegistry.sol";

@@ -283,7 +283,6 @@ func joinChannel(
 			protocol.MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		&MiniblockRef{
@@ -326,7 +325,6 @@ func createChannel(
 		wallet,
 		events.Make_ChannelPayload_Inception(
 			channelStreamId,
-			spaceId,
 			streamSettings,
 		),
 		nil,
@@ -344,7 +342,6 @@ func createChannel(
 			protocol.MembershipOp_SO_JOIN,
 			userId,
 			userId,
-			&spaceId,
 		),
 		nil,
 	)
@@ -528,7 +525,7 @@ func testMethodsWithClient(tester *serviceTester, client protocolconnect.StreamS
 	require.NotNil(resspace, "nil sync cookie")
 
 	// create channel
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		wallet1,
@@ -648,7 +645,7 @@ func testRiverDeviceId(tester *serviceTester) {
 	require.NoError(err)
 	require.NotNil(space)
 
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
 	require.NoError(err)
 	require.NotNil(channel)
@@ -696,7 +693,7 @@ func testRiverDeviceId(tester *serviceTester) {
 	// receive optional error
 	event, err = events.MakeDelegatedStreamEvent(
 		wallet,
-		events.Make_ChannelPayload_Inception(channelId, spaceId, nil),
+		events.Make_ChannelPayload_Inception(channelId, nil),
 		channelHash,
 		delegateSig,
 	)
@@ -737,7 +734,7 @@ func testSyncStreams(tester *serviceTester) {
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// create channel
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel1, channelHash, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
 	require.Nilf(err, "error calling createChannel: %v", err)
 	require.NotNil(channel1, "nil sync cookie")
@@ -818,7 +815,7 @@ func testAddStreamsToSync(tester *serviceTester) {
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel1, channelHash, err := createChannel(
 		ctx,
 		aliceWallet,
@@ -917,7 +914,7 @@ func testRemoveStreamsFromSync(tester *serviceTester) {
 	require.Nilf(err, "error calling createSpace: %v", err)
 	require.NotNil(space1, "nil sync cookie")
 	// alice creates a channel
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel1, channelHash, err := createChannel(ctx, aliceWallet, aliceClient, spaceId, channelId, nil)
 	require.Nilf(err, "error calling createChannel: %v", err)
 	require.NotNil(channel1, "nil sync cookie")

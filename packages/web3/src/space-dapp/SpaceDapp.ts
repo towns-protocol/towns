@@ -1004,6 +1004,28 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         return value
     }
 
+    public async isAppInstalled(spaceId: string, botAppAddress: string): Promise<boolean> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            return false
+        }
+        return space.AppAccount.read.isAppInstalled(botAppAddress)
+    }
+
+    public async isAppEntitled(
+        spaceId: string,
+        botId: string,
+        botAppAddress: string,
+        permission: Permission,
+    ): Promise<boolean> {
+        const space = this.getSpace(spaceId)
+        if (!space) {
+            return false
+        }
+        const permissionBytes = ethers.utils.formatBytes32String(permission)
+        return space.AppAccount.read.isAppEntitled(botAppAddress, botId, permissionBytes)
+    }
+
     public async isEntitledToSpaceUncached(
         spaceId: string,
         user: string,

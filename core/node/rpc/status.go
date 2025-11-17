@@ -172,7 +172,7 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 		Address:           addr,
 		Version:           version.GetFullVersion(),
 		StartTime:         s.startTime.UTC().Format(time.RFC3339),
-		Uptime:            time.Since(s.startTime).String(),
+		Uptime:            formatDurationToSeconds(time.Since(s.startTime)),
 		Graffiti:          s.config.GetGraffiti(),
 		River:             riverPing,
 		Base:              basePing,

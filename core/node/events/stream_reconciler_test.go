@@ -298,7 +298,8 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 
 	// Create a media stream ID and channel ID
 	streamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 
 	const chunks = 6
 

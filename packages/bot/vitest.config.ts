@@ -7,6 +7,7 @@ export default mergeConfig(
         test: {
             env: {
                 BOT_PORT: '5123',
+                DEBUG: process.env.DEBUG || 'test:*',
             },
             include: ['./src/**/*.test.ts'],
             hookTimeout: 120_000,

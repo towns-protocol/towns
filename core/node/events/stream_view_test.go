@@ -46,7 +46,7 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	join, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -67,6 +67,8 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockProtoBytes},
@@ -141,7 +143,7 @@ func TestLoad(t *testing.T) {
 	// add one more event (just join again)
 	join2, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
@@ -169,7 +171,7 @@ func TestLoad(t *testing.T) {
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		view.LastBlock().Ref,
 	)
 	assert.NoError(t, err)
@@ -234,7 +236,7 @@ func TestLoad(t *testing.T) {
 	// add an event with an old hash
 	join4, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_LEAVE, streamId, common.Address{}, nil),
 		newSV1.blocks[0].Ref,
 	)
 	assert.NoError(t, err)
@@ -294,6 +296,8 @@ func TestMbHashConstraints(t *testing.T) {
 	cfg := crypto.DefaultOnChainSettings()
 
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: mbDescriptors,
 		},
@@ -374,7 +378,7 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 
 	join, err := MakeEnvelopeWithPayload(
 		userWallet,
-		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil, nil),
+		Make_UserPayload_Membership(MembershipOp_SO_JOIN, streamId, common.Address{}, nil),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -474,6 +478,8 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 
 	// Test case 1: Create view with multiple miniblocks
 	view, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: miniblockBytes[0], Number: 0},
@@ -549,6 +555,8 @@ func TestGetResetStreamAndCookieSnapshotIndex(t *testing.T) {
 	assert.NoError(t, err)
 
 	emptyView, err := MakeStreamView(
+		ctx,
+		streamId,
 		&storage.ReadStreamFromLastSnapshotResult{
 			Miniblocks: []*storage.MiniblockDescriptor{
 				{Data: genesisMbBytes, Number: 0}, // No external snapshot for genesis blocks

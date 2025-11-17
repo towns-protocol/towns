@@ -889,7 +889,7 @@ func (tc *testClient) createChannel(
 	spaceId StreamId,
 	streamSettings ...*StreamSettings,
 ) (StreamId, *MiniblockRef, *SyncCookie) {
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	var ss *StreamSettings
 	if len(streamSettings) > 0 {
 		ss = streamSettings[0]
@@ -913,7 +913,6 @@ func (tc *testClient) joinChannel(
 			MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		userStreamMb,
@@ -932,7 +931,6 @@ func (tc *testClient) joinChannel(
 		Op:               MembershipOp_SO_JOIN,
 		UserAddress:      tc.wallet.Address[:],
 		InitiatorAddress: tc.wallet.Address[:],
-		StreamParentId:   spaceId[:],
 	}
 }
 

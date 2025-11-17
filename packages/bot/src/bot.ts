@@ -28,7 +28,6 @@ import {
     unsafe_makeTags,
     townsEnv,
     spaceIdFromChannelId,
-    type CreateTownsClientParams,
     make_ChannelPayload_Redaction,
     parseAppPrivateData,
     makeEvent,
@@ -44,6 +43,10 @@ import {
     makeUserStreamId,
     make_MemberPayload_Pin,
     make_MemberPayload_Unpin,
+    makeUniqueChannelStreamId,
+    make_ChannelPayload_Inception,
+    make_MemberPayload_Membership2,
+    type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
@@ -104,7 +107,7 @@ import {
     zeroAddress,
     parseEventLogs,
 } from 'viem'
-import { readContract, waitForTransactionReceipt } from 'viem/actions'
+import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import packageJson from '../package.json' with { type: 'json' }
@@ -113,6 +116,8 @@ import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
 import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
+import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
+import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -200,6 +205,13 @@ export type PostMessageOpts = MessageOpts & {
 export type DecryptedInteractionResponse = {
     recipient: Uint8Array
     payload: PlainMessage<InteractionResponsePayload>
+}
+
+export type CreateChannelParams = {
+    name: string
+    description?: string
+    autojoin?: boolean
+    hideUserJoinLeaveEvents?: boolean
 }
 
 export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
@@ -1103,65 +1115,94 @@ export class Bot<
     }
 
     /**
+     * Create a channel in a space
+     * All users with Permission.Read will be able to join the channel.
+     * @param spaceId - The space ID to create the channel in
+     * @param params - The parameters for the channel creation
+     * @returns The channel ID
+     */
+    async createChannel(spaceId: string, params: CreateChannelParams) {
+        return this.client.createChannel(spaceId, params)
+    }
+
+    /**
+     * Get the roles for a space
+     * @param spaceId - The space ID to get the roles for
+     * @returns The roles
+     */
+    async getRoles(spaceId: string) {
+        return this.client.getRoles(spaceId)
+    }
+
+    /**
      * Triggered when someone sends a message.
      * This is triggered for all messages, including direct messages and group messages.
      */
     onMessage(fn: BotEvents['message']) {
-        this.emitter.on('message', fn)
+        return this.emitter.on('message', fn)
     }
 
     onRedaction(fn: BotEvents['redaction']) {
-        this.emitter.on('redaction', fn)
+        return this.emitter.on('redaction', fn)
     }
 
     /**
      * Triggered when a message gets edited
      */
     onMessageEdit(fn: BotEvents['messageEdit']) {
-        this.emitter.on('messageEdit', fn)
+        return this.emitter.on('messageEdit', fn)
     }
 
     /**
      * Triggered when someone reacts to a message
      */
     onReaction(fn: BotEvents['reaction']) {
-        this.emitter.on('reaction', fn)
+        return this.emitter.on('reaction', fn)
     }
 
     /**
      * Triggered when a message is revoked by a moderator
      */
     onEventRevoke(fn: BotEvents['eventRevoke']) {
-        this.emitter.on('eventRevoke', fn)
+        return this.emitter.on('eventRevoke', fn)
     }
 
     /**
      * Triggered when someone tips the bot
      */
     onTip(fn: BotEvents['tip']) {
-        this.emitter.on('tip', fn)
+        return this.emitter.on('tip', fn)
     }
 
     /**
      * Triggered when someone joins a channel
      */
     onChannelJoin(fn: BotEvents['channelJoin']) {
-        this.emitter.on('channelJoin', fn)
+        return this.emitter.on('channelJoin', fn)
     }
 
     /**
      * Triggered when someone leaves a channel
      */
     onChannelLeave(fn: BotEvents['channelLeave']) {
-        this.emitter.on('channelLeave', fn)
+        return this.emitter.on('channelLeave', fn)
     }
 
     onStreamEvent(fn: BotEvents['streamEvent']) {
-        this.emitter.on('streamEvent', fn)
+        return this.emitter.on('streamEvent', fn)
     }
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
         this.slashCommandHandlers.set(command, fn)
+        const unset = () => {
+            if (
+                this.slashCommandHandlers.has(command) &&
+                this.slashCommandHandlers.get(command) === fn
+            ) {
+                this.slashCommandHandlers.delete(command)
+            }
+        }
+        return unset
     }
 
     /**
@@ -1179,10 +1220,19 @@ export class Bot<
         ) => void | Promise<void>,
     ) {
         this.gmTypedHandlers.set(typeUrl, { schema, handler: handler as any })
+        const unset = () => {
+            if (
+                this.gmTypedHandlers.has(typeUrl) &&
+                this.gmTypedHandlers.get(typeUrl)?.handler === handler
+            ) {
+                this.gmTypedHandlers.delete(typeUrl)
+            }
+        }
+        return unset
     }
 
     onRawGmMessage(handler: BotEvents['rawGmMessage']) {
-        this.emitter.on('rawGmMessage', handler)
+        return this.emitter.on('rawGmMessage', handler)
     }
 
     /**
@@ -1190,7 +1240,7 @@ export class Bot<
      * @param fn - The handler function to call when an interaction response is received
      */
     onInteractionResponse(fn: BotEvents['interactionResponse']) {
-        this.emitter.on('interactionResponse', fn)
+        return this.emitter.on('interactionResponse', fn)
     }
 
     /**
@@ -2198,6 +2248,9 @@ const buildBotActions = (
         })
 
         const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
+        if (receipt.status !== 'success') {
+            throw new Error(`Tip transaction failed: ${hash}`)
+        }
         const tipEvent = parseEventLogs({
             abi: tippingFacetAbi,
             logs: receipt.logs,
@@ -2261,6 +2314,78 @@ const buildBotActions = (
         )
     }
 
+    const getRoles = async (spaceId: string) => {
+        const roles = await readContract(viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: rolesFacetAbi,
+            functionName: 'getRoles',
+        })
+        return roles.filter((role) => role.name !== 'Owner')
+    }
+
+    const createChannelTx = async (
+        spaceId: string,
+        channelId: string,
+        params: CreateChannelParams,
+    ) => {
+        const roles = await getRoles(spaceId)
+        const allRolesThatCanRead = roles.filter((role) =>
+            role.permissions.includes(Permission.Read),
+        )
+        const args: [`0x${string}`, string, bigint[]] = [
+            channelId.startsWith('0x') ? (channelId as `0x${string}`) : `0x${channelId}`,
+            JSON.stringify({ name: params.name, description: params.description ?? '' }),
+            allRolesThatCanRead.map((role) => role.id),
+        ] as const
+
+        return writeContract(viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: channelsFacetAbi,
+            functionName: 'createChannel',
+            args,
+        })
+    }
+
+    const createChannel = async (spaceId: string, params: CreateChannelParams) => {
+        const channelId = makeUniqueChannelStreamId(spaceId)
+        const hash = await createChannelTx(spaceId, channelId, params)
+        const receipt = await waitForTransactionReceipt(viem, { hash })
+        if (receipt.status !== 'success') {
+            throw new Error(`Channel creation transaction failed: ${hash}`)
+        }
+        const events = await Promise.all([
+            makeEvent(
+                client.signerContext,
+                make_ChannelPayload_Inception({
+                    streamId: streamIdAsBytes(channelId),
+                    spaceId: streamIdAsBytes(spaceId),
+                    settings: undefined,
+                    channelSettings: {
+                        autojoin: params.autojoin ?? false,
+                        hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
+                    },
+                }),
+            ),
+            makeEvent(
+                client.signerContext,
+                make_MemberPayload_Membership2({
+                    userId: client.userId,
+                    op: MembershipOp.SO_JOIN,
+                    initiatorId: client.userId,
+                }),
+            ),
+        ])
+        // the rpc client will retry a few times on failure, but if this doesn't succeed, the channel will exist on chain but not in the nodes
+        await client.rpc.createStream({
+            streamId: streamIdAsBytes(channelId),
+            events: events,
+            metadata: {
+                appAddress: bin_fromHexString(appAddress),
+            },
+        })
+        return channelId
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -2281,6 +2406,8 @@ const buildBotActions = (
         getChannelSettings,
         sendTip,
         sendBlockchainTransaction,
+        createChannel,
+        getRoles,
     }
 }
 

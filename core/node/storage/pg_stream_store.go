@@ -463,23 +463,13 @@ func CreatePartitionSuffix(streamId StreamId, numPartitions int) string {
 func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string {
 	suffix := CreatePartitionSuffix(streamId, s.numPartitions)
 
-	sql = strings.ReplaceAll(
-		sql,
-		"{{miniblocks}}",
-		"miniblocks_"+suffix,
-	)
-	sql = strings.ReplaceAll(
-		sql,
-		"{{minipools}}",
-		"minipools_"+suffix,
-	)
-	sql = strings.ReplaceAll(
-		sql,
-		"{{miniblock_candidates}}",
-		"miniblock_candidates_"+suffix,
+	replacer := strings.NewReplacer(
+		"{{miniblocks}}", "miniblocks_"+suffix,
+		"{{minipools}}", "minipools_"+suffix,
+		"{{miniblock_candidates}}", "miniblock_candidates_"+suffix,
 	)
 
-	return sql
+	return replacer.Replace(sql)
 }
 
 func (s *PostgresStreamStore) lockStream(
@@ -1306,73 +1296,6 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	}
 
 	return miniblocks, nil
-}
-
-// ReadMiniblocksByIds returns miniblocks data of the given miniblocks by the given stream ID.
-func (s *PostgresStreamStore) ReadMiniblocksByIds(
-	ctx context.Context,
-	streamId StreamId,
-	mbs []int64,
-	omitSnapshot bool,
-	onEachMb MiniblockHandlerFunc,
-) error {
-	return s.txRunner(
-		ctx,
-		"ReadMiniblocksByIds",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.readMiniblocksByIdsTx(ctx, tx, streamId, mbs, omitSnapshot, onEachMb)
-		},
-		&txRunnerOpts{useStreamingPool: true},
-		"streamId", streamId,
-		"mbs", mbs,
-	)
-}
-
-func (s *PostgresStreamStore) readMiniblocksByIdsTx(
-	ctx context.Context,
-	tx pgx.Tx,
-	streamId StreamId,
-	mbs []int64,
-	omitSnapshot bool,
-	onEachMb MiniblockHandlerFunc,
-) error {
-	_, err := s.lockStream(ctx, tx, streamId, false)
-	if err != nil {
-		return err
-	}
-
-	var snapshotField string
-	if omitSnapshot {
-		snapshotField = "NULL as snapshot"
-	} else {
-		snapshotField = "snapshot"
-	}
-
-	rows, err := tx.Query(
-		ctx,
-		s.sqlForStream(
-			fmt.Sprintf(
-				"SELECT blockdata, seq_num, %s FROM {{miniblocks}} WHERE stream_id = $1 AND seq_num IN (SELECT unnest($2::int[])) ORDER BY seq_num",
-				snapshotField,
-			),
-			streamId,
-		),
-		streamId,
-		mbs,
-	)
-	if err != nil {
-		return err
-	}
-
-	var blockdata []byte
-	var seqNum int64
-	var snapshot []byte
-	_, err = pgx.ForEachRow(rows, []any{&blockdata, &seqNum, &snapshot}, func() error {
-		return onEachMb(blockdata, seqNum, snapshot)
-	})
-
-	return err
 }
 
 // WriteMiniblockCandidate adds a miniblock proposal candidate. When the miniblock is finalized, the node will promote the
