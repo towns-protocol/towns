@@ -1,6 +1,7 @@
 package highusage
 
 import (
+	"context"
 	"math/big"
 	"sync"
 	"testing"
@@ -20,7 +21,7 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x1")
 	base := time.Unix(0, 0)
@@ -49,7 +50,7 @@ func TestMonitorPerDayThreshold(t *testing.T) {
 		},
 	})
 
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x2")
 	base := time.Unix(0, 0)
@@ -74,7 +75,7 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 		},
 	})
 
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x3")
 	base := time.Unix(0, 0)
@@ -97,7 +98,7 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x42")
 	base := time.Unix(0, 0)
@@ -117,7 +118,7 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 			{Window: 3 * time.Second, Count: 3},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xab")
 	start := time.Unix(0, 0)
@@ -136,7 +137,7 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xcd")
 	now := time.Unix(0, 0)
@@ -154,7 +155,7 @@ func TestMonitorConfigValidation(t *testing.T) {
 			{Window: time.Minute, Count: 0},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xef")
 	monitor.RecordCall(user.Bytes(), time.Unix(0, 0), CallTypeEvent)
@@ -168,7 +169,7 @@ func TestMonitorConcurrentRecordCall(t *testing.T) {
 			{Window: time.Minute, Count: 200},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0x111")
@@ -202,7 +203,7 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 			{Window: time.Minute, Count: 50},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0x123")
@@ -226,7 +227,7 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 func TestMonitorDisabledConfig(t *testing.T) {
 	t.Parallel()
 	cfg := newDetectionConfig(false, nil)
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0xaa")
@@ -241,7 +242,7 @@ func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 			{Window: time.Minute, Count: 10},
 		},
 	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
 	defer monitor.Close()
 
 	var wg sync.WaitGroup

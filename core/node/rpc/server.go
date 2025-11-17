@@ -276,7 +276,7 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
 		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
 	}
-	s.callRateMonitor = highusage.NewCallRateMonitor(s.config.HighUsageDetection, monitorLogger)
+	s.callRateMonitor = highusage.NewCallRateMonitor(s.serverCtx, s.config.HighUsageDetection, monitorLogger)
 	s.onClose(s.callRateMonitor.Close)
 }
 
