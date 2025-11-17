@@ -11,6 +11,7 @@
         "find-paths": "tsx utils/findContractsPath.ts",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "lint:fix": "eslint --fix \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "serve": "yarn typings && ponder serve",
         "start": "yarn typings && ponder start",
         "test:unit": "yarn typings && sh -c 'tsc --noEmit'",

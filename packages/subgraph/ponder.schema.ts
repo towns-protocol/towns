@@ -267,6 +267,7 @@ export const appInstallation = onchainTable(
         // Composite key: app + account uniquely identifies an installation
         app: t.hex().notNull(),
         account: t.hex().notNull(),
+        // versionId
         appId: t.hex().notNull(),
 
         // Lifecycle timestamps
@@ -295,7 +296,7 @@ export const appInstallation = onchainTable(
 export const appVersion = onchainTable(
     'app_versions',
     (t) => ({
-        versionId: t.hex().notNull(),
+        appId: t.hex().notNull(),
         app: t.hex().notNull(),
 
         // Version metadata
@@ -312,9 +313,9 @@ export const appVersion = onchainTable(
         isCurrent: t.boolean().default(true).notNull(),
     }),
     (table) => ({
-        pk: primaryKey({ columns: [table.app, table.versionId] }),
+        pk: primaryKey({ columns: [table.app, table.appId] }),
         appIdx: index().on(table.app),
-        versionIdIdx: index().on(table.versionId),
+        appIdIdx: index().on(table.appId),
         latestIdx: index().on(table.app, table.isLatest),
         currentIdx: index().on(table.isCurrent),
     }),

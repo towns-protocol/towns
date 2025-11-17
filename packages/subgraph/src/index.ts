@@ -748,7 +748,7 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
 })
 
 ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
-    const { app, account, appId } = event.args
+    const { app, account } = event.args
     const { block } = event
     const blockNumber = event.block.number
 
@@ -861,14 +861,12 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
         await context.db.sql
             .update(schema.appVersion)
             .set({ isLatest: false, isCurrent: false })
-            .where(
-                and(eq(schema.appVersion.app, app), eq(schema.appVersion.versionId, oldVersionId)),
-            )
+            .where(and(eq(schema.appVersion.app, app), eq(schema.appVersion.appId, oldVersionId)))
 
         await context.db
             .insert(schema.appVersion)
             .values({
-                versionId: newVersionId,
+                appId: newVersionId,
                 app,
                 createdAt: block.timestamp,
                 upgradedFromId: oldVersionId,
