@@ -288,21 +288,11 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 	if m.cleanupAfter == 0 {
 		m.cleanupAfter = defaultCleanupAge
 	}
-	before := len(m.users)
 	expireBefore := now.Add(-m.cleanupAfter)
 	for addr, stats := range m.users {
 		if stats.lastSeen.Before(expireBefore) {
 			delete(m.users, addr)
 		}
-	}
-	cleaned := before - len(m.users)
-	if cleaned > 0 {
-		m.logger.Info(
-			"highusage cleanup",
-			zap.Int("cleaned_count", cleaned),
-			zap.Duration("cleanup_after", m.cleanupAfter),
-			zap.Duration("since_last_cleanup", now.Sub(m.lastCleanup)),
-		)
 	}
 	m.lastCleanup = now
 }
