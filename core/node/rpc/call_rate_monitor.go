@@ -11,31 +11,7 @@ import (
 )
 
 func newCallRateMonitorFromConfig(cfg config.HighUsageDetectionConfig, logger *zap.Logger) highusage.CallRateMonitor {
-	configured := cfg.HighUsageThresholds()
-	thresholds := make(map[highusage.CallType][]highusage.Threshold, len(configured))
-	for key, values := range configured {
-		callType := highusage.CallType(key)
-		converted := make([]highusage.Threshold, 0, len(values))
-		for _, value := range values {
-			if value.Window <= 0 || value.Count == 0 {
-				continue
-			}
-			converted = append(converted, highusage.Threshold{
-				Window: value.Window,
-				Count:  value.Count,
-			})
-		}
-		if len(converted) > 0 {
-			thresholds[callType] = converted
-		}
-	}
-
-	return highusage.NewCallRateMonitor(highusage.Config{
-		Enabled:    cfg.Enabled,
-		MaxResults: cfg.MaxResults,
-		Thresholds: thresholds,
-		Logger:     logger,
-	})
+	return highusage.NewCallRateMonitor(cfg, logger)
 }
 
 func (s *Service) recordCallRate(callType highusage.CallType, creator []byte) {

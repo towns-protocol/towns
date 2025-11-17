@@ -2,25 +2,26 @@ package highusage
 
 import (
 	"math/big"
+	"sort"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+
+	"github.com/towns-protocol/towns/core/config"
 )
 
 func TestMonitorPerMinuteThreshold(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 2},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 2},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x1")
 	base := time.Unix(0, 0)
@@ -43,16 +44,13 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 
 func TestMonitorPerDayThreshold(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeMediaEvent: {
-				{Window: 24 * time.Hour, Count: 3},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeMediaEvent: {
+			{Window: 24 * time.Hour, Count: 3},
 		},
-	}
+	})
 
-	monitor := NewCallRateMonitor(cfg)
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x2")
 	base := time.Unix(0, 0)
@@ -71,16 +69,13 @@ func TestMonitorPerDayThreshold(t *testing.T) {
 
 func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 1},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 1},
 		},
-	}
+	})
 
-	monitor := NewCallRateMonitor(cfg)
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x3")
 	base := time.Unix(0, 0)
@@ -95,18 +90,15 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 
 func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 1},
-			},
-			CallTypeMediaEvent: {
-				{Window: time.Minute, Count: 2},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 1},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+		CallTypeMediaEvent: {
+			{Window: time.Minute, Count: 2},
+		},
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0x42")
 	base := time.Unix(0, 0)
@@ -121,15 +113,12 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 
 func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: 3 * time.Second, Count: 3},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: 3 * time.Second, Count: 3},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xab")
 	start := time.Unix(0, 0)
@@ -143,15 +132,12 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 
 func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 2},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 2},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xcd")
 	now := time.Unix(0, 0)
@@ -164,16 +150,13 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 
 func TestMonitorConfigValidation(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 0},
-				{Window: 0, Count: 10},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 0},
+			{Window: 0, Count: 10},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 	user := common.HexToAddress("0xef")
 	monitor.RecordCall(user, time.Unix(0, 0), CallTypeEvent)
@@ -182,15 +165,12 @@ func TestMonitorConfigValidation(t *testing.T) {
 
 func TestMonitorConcurrentRecordCall(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 200},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 200},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0x111")
@@ -219,15 +199,12 @@ func TestMonitorConcurrentRecordCall(t *testing.T) {
 
 func TestMonitorGetWhileRecording(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 50},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 50},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0x123")
@@ -250,10 +227,8 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 
 func TestMonitorDisabledConfig(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: false,
-	}
-	monitor := NewCallRateMonitor(cfg)
+	cfg := newDetectionConfig(false, nil)
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0xaa")
@@ -263,16 +238,13 @@ func TestMonitorDisabledConfig(t *testing.T) {
 
 func TestMonitorMultipleThresholdsPerCallType(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 10},
-				{Window: 10 * time.Minute, Count: 20},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 10},
+			{Window: 10 * time.Minute, Count: 20},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 
 	user := common.HexToAddress("0xbb")
@@ -288,15 +260,12 @@ func TestMonitorMultipleThresholdsPerCallType(t *testing.T) {
 
 func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 	t.Parallel()
-	cfg := Config{
-		Enabled: true,
-		Thresholds: map[CallType][]Threshold{
-			CallTypeEvent: {
-				{Window: time.Minute, Count: 10},
-			},
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 10},
 		},
-	}
-	monitor := NewCallRateMonitor(cfg)
+	})
+	monitor := NewCallRateMonitor(cfg, zap.NewNop())
 	defer monitor.Close()
 
 	var wg sync.WaitGroup
@@ -315,4 +284,51 @@ func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 
 	usage := monitor.GetHighUsageInfo(start.Add(30 * time.Second))
 	require.Len(t, usage, 5)
+}
+
+func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) config.HighUsageDetectionConfig {
+	cfg := config.HighUsageDetectionConfig{Enabled: enabled}
+	if len(thresholds) == 0 {
+		return cfg
+	}
+
+	slots := []struct {
+		name   *string
+		window *time.Duration
+		count  *uint32
+	}{
+		{&cfg.Thresholds.Threshold1Name, &cfg.Thresholds.Threshold1Window, &cfg.Thresholds.Threshold1Count},
+		{&cfg.Thresholds.Threshold2Name, &cfg.Thresholds.Threshold2Window, &cfg.Thresholds.Threshold2Count},
+		{&cfg.Thresholds.Threshold3Name, &cfg.Thresholds.Threshold3Window, &cfg.Thresholds.Threshold3Count},
+	}
+
+	type entry struct {
+		callType string
+		thr      Threshold
+	}
+
+	entries := make([]entry, 0)
+	for ct, values := range thresholds {
+		for _, thr := range values {
+			entries = append(entries, entry{callType: string(ct), thr: thr})
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].callType == entries[j].callType {
+			return entries[i].thr.Window < entries[j].thr.Window
+		}
+		return entries[i].callType < entries[j].callType
+	})
+
+	if len(entries) > len(slots) {
+		panic("too many thresholds configured for test helper")
+	}
+
+	for i, entry := range entries {
+		*slots[i].name = entry.callType
+		*slots[i].window = entry.thr.Window
+		*slots[i].count = entry.thr.Count
+	}
+	return cfg
 }

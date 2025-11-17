@@ -7,6 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/zap"
+
+	"github.com/towns-protocol/towns/core/config"
 )
 
 // Package highusage provides a lightweight in-memory CallRateMonitor that tracks how
@@ -36,14 +38,6 @@ type Threshold struct {
 	Count  uint32
 }
 
-// Config drives the monitor behavior.
-type Config struct {
-	Enabled    bool
-	MaxResults int
-	Thresholds map[CallType][]Threshold
-	Logger     *zap.Logger
-}
-
 // UsageViolation captures the counts that exceeded a specific threshold.
 type UsageViolation struct {
 	Window time.Duration
@@ -69,7 +63,7 @@ type CallRateMonitor interface {
 
 type inMemoryCallRateMonitor struct {
 	mu            sync.Mutex
-	cfg           Config
+	cfg           config.HighUsageDetectionConfig
 	users         map[common.Address]*userStats
 	cleanupAfter  time.Duration
 	callSpecs     map[CallType]*callTypeSpec
@@ -93,7 +87,7 @@ const (
 )
 
 // NewCallRateMonitor builds a CallRateMonitor using the provided configuration.
-func NewCallRateMonitor(cfg Config) CallRateMonitor {
+func NewCallRateMonitor(cfg config.HighUsageDetectionConfig, logger *zap.Logger) CallRateMonitor {
 	if !cfg.Enabled {
 		return noopCallRateMonitor{}
 	}
@@ -102,13 +96,13 @@ func NewCallRateMonitor(cfg Config) CallRateMonitor {
 		cfg.MaxResults = defaultMaxResults
 	}
 
-	specs, maxWindow := buildCallSpecs(cfg.Thresholds)
+	thresholds := convertThresholds(cfg)
+	specs, maxWindow := buildCallSpecs(thresholds)
 	cleanupWindow := defaultCleanupAge
 	if maxWindow > 0 {
 		cleanupWindow = maxWindow
 	}
 
-	logger := cfg.Logger
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -138,6 +132,28 @@ func NewCallRateMonitor(cfg Config) CallRateMonitor {
 		zap.Strings("call_types", callTypeKeys),
 	)
 	return m
+}
+
+func convertThresholds(cfg config.HighUsageDetectionConfig) map[CallType][]Threshold {
+	configured := cfg.HighUsageThresholds()
+	thresholds := make(map[CallType][]Threshold, len(configured))
+	for key, values := range configured {
+		callType := CallType(key)
+		converted := make([]Threshold, 0, len(values))
+		for _, value := range values {
+			if value.Window <= 0 || value.Count == 0 {
+				continue
+			}
+			converted = append(converted, Threshold{
+				Window: value.Window,
+				Count:  value.Count,
+			})
+		}
+		if len(converted) > 0 {
+			thresholds[callType] = converted
+		}
+	}
+	return thresholds
 }
 
 // RecordCall increments the counters for the given user and call type.
