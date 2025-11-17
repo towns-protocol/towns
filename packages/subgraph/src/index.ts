@@ -826,39 +826,22 @@ ponder.on('AppRegistry:AppUpdated', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        // Check if this is an instance update (has account param) or metadata update
-        if (account !== undefined) {
-            // Instance update - update the installation record
-            const result = await context.db.sql
-                .update(schema.appInstallation)
-                .set({
-                    lastUpdatedAt: block.timestamp,
-                    appId, // Update to new version/config
-                })
-                .where(
-                    and(
-                        eq(schema.appInstallation.app, app),
-                        eq(schema.appInstallation.account, account),
-                    ),
-                )
+        // Update the installation record
+        const result = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                lastUpdatedAt: block.timestamp,
+                appId, // Update to new version/config
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
 
-            if (result.changes === 0) {
-                console.warn(`No installation found for update: app ${app} in account ${account}`)
-            }
-        } else {
-            // Metadata update - update the app table
-            // In this case, appId is actually the uid parameter
-            const uid = appId
-            const result = await context.db.sql
-                .update(schema.app)
-                .set({
-                    lastUpdatedAt: block.timestamp,
-                })
-                .where(eq(schema.app.appId, uid))
-
-            if (result.changes === 0) {
-                console.warn(`App not found for metadata update: ${uid}`)
-            }
+        if (result.changes === 0) {
+            console.warn(`No installation found for update: app ${app} in account ${account}`)
         }
     } catch (error) {
         console.error(
@@ -874,15 +857,14 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
     const blockNumber = event.block.number
 
     try {
-        // Mark old version as no longer latest
+        // Mark old version as no longer latest or current
         await context.db.sql
             .update(schema.appVersion)
-            .set({ isLatest: false })
+            .set({ isLatest: false, isCurrent: false })
             .where(
                 and(eq(schema.appVersion.app, app), eq(schema.appVersion.versionId, oldVersionId)),
             )
 
-        // Create new version record
         await context.db
             .insert(schema.appVersion)
             .values({
@@ -897,15 +879,19 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
                 isCurrent: true,
             })
             .onConflictDoUpdate({
+                createdAt: block.timestamp,
+                upgradedFromId: oldVersionId,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                blockNumber: block.number,
                 isLatest: true,
                 isCurrent: true,
             })
 
-        // Update app's current version
+        // Update app's current version (keep appId immutable as stable identifier)
         await context.db.sql
             .update(schema.app)
             .set({
-                appId: newVersionId,
                 currentVersionId: newVersionId,
                 lastUpdatedAt: block.timestamp,
             })
