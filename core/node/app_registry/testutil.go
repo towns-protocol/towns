@@ -153,24 +153,21 @@ func FormatChannelRedactionReply(redaction *protocol.ChannelPayload_Redaction) s
 
 func FormatChannelInceptionReply(inception *protocol.ChannelPayload_Inception) string {
 	streamId := shared.StreamId(inception.StreamId)
-	spaceId := shared.StreamId(inception.SpaceId)
 	return fmt.Sprintf(
 		"ChannelInception streamId(%v) spaceId(%v)",
 		streamId,
-		spaceId,
+		streamId.SpaceID(),
 	)
 }
 
 func FormatMembershipReply(membership *protocol.MemberPayload_Membership) string {
 	userAddress := common.BytesToAddress(membership.UserAddress)
 	initiatorAddress := common.BytesToAddress(membership.InitiatorAddress)
-	streamParent := shared.StreamId(membership.GetStreamParentId())
 	return fmt.Sprintf(
-		"Membership op(%v) user(%v) initiator(%v) streamParent(%v)",
+		"Membership op(%v) user(%v) initiator(%v)",
 		membership.Op,
 		userAddress,
 		initiatorAddress,
-		streamParent,
 	)
 }
 

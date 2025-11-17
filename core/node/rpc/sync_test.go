@@ -451,7 +451,7 @@ func TestSyncWithManyStreams(t *testing.T) {
 	require.NoError(err)
 
 	produceChannel := func() (*protocol.SyncCookie, *MiniblockRef) {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channelId := testutils.MakeChannelId(spaceId)
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallet,
@@ -646,7 +646,7 @@ func TestRemoteNodeFailsDuringSync(t *testing.T) {
 
 	var channelCookies []*protocol.SyncCookie
 	for range 50 {
-		channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+		channelId := testutils.MakeChannelId(spaceId)
 		channel, channelHash, err := createChannel(
 			ctx,
 			wallet,
@@ -749,7 +749,7 @@ func TestStreamSyncDownRightAfterSendingBackfillEvent(t *testing.T) {
 	_, _, err = createSpace(ctx, wallet, syncClient0, spaceId, &protocol.StreamSettings{})
 	require.NoError(err)
 
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 	channel, channelHash, err := createChannel(
 		ctx,
 		wallet,

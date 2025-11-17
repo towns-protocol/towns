@@ -31,10 +31,8 @@ type PostgresEventStore struct {
 	schemaName string
 	dbUrl      string
 
-	pool                *pgxpool.Pool
-	poolConfig          *pgxpool.Config
-	streamingPool       *pgxpool.Pool
-	streamingPoolConfig *pgxpool.Config
+	pool       *pgxpool.Pool
+	poolConfig *pgxpool.Config
 
 	preMigrationTx func(context.Context, pgx.Tx) error
 	migrationDir   fs.FS
@@ -50,7 +48,6 @@ type PostgresEventStore struct {
 
 type txRunnerOpts struct {
 	skipLoggingNotFound    bool
-	useStreamingPool       bool
 	overrideIsolationLevel *pgx.TxIsoLevel // Optional custom isolation level
 }
 
@@ -64,18 +61,13 @@ func (s *PostgresEventStore) txRunnerInner(
 	txFn func(context.Context, pgx.Tx) error,
 	opts *txRunnerOpts,
 ) error {
-	pool := s.pool
-	if opts != nil && opts.useStreamingPool {
-		pool = s.streamingPool
-	}
-
 	// Use override isolation level if provided, otherwise use default
 	isolationLevel := s.isolationLevel
 	if opts != nil && opts.overrideIsolationLevel != nil {
 		isolationLevel = *opts.overrideIsolationLevel
 	}
 
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: isolationLevel, AccessMode: accessMode})
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: isolationLevel, AccessMode: accessMode})
 	if err != nil {
 		return err
 	}
@@ -175,13 +167,11 @@ func (s *PostgresEventStore) txRunner(
 }
 
 type PgxPoolInfo struct {
-	Pool              *pgxpool.Pool
-	PoolConfig        *pgxpool.Config
-	StreamingPool     *pgxpool.Pool
-	StreamingPoolConf *pgxpool.Config
-	Url               string
-	Schema            string
-	Config            *config.DatabaseConfig
+	Pool       *pgxpool.Pool
+	PoolConfig *pgxpool.Config
+	Url        string
+	Schema     string
+	Config     *config.DatabaseConfig
 }
 
 func createPgxPool(
@@ -239,26 +229,12 @@ func createAndValidatePgxPool(
 		return nil, err
 	}
 
-	// This connection pool is used to select large number of rows and stream them directly into a client
-	streamingPool, streamingPoolConf, err := createPgxPool(
-		ctx,
-		databaseUrl,
-		databaseSchemaName,
-		tracerProvider,
-		"streaming",
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return &PgxPoolInfo{
-		Pool:              pool,
-		PoolConfig:        poolConf,
-		StreamingPool:     streamingPool,
-		StreamingPoolConf: streamingPoolConf,
-		Url:               databaseUrl,
-		Schema:            databaseSchemaName,
-		Config:            cfg,
+		Pool:       pool,
+		PoolConfig: poolConf,
+		Url:        databaseUrl,
+		Schema:     databaseSchemaName,
+		Config:     cfg,
 	}, nil
 }
 
@@ -288,8 +264,6 @@ func (s *PostgresEventStore) init(
 	s.config = poolInfo.Config
 	s.pool = poolInfo.Pool
 	s.poolConfig = poolInfo.PoolConfig
-	s.streamingPool = poolInfo.StreamingPool
-	s.streamingPoolConfig = poolInfo.StreamingPoolConf
 	s.schemaName = poolInfo.Schema
 	s.dbUrl = poolInfo.Url
 
@@ -338,7 +312,6 @@ func (s *PostgresEventStore) init(
 // Close closes the connection pool
 func (s *PostgresEventStore) Close(ctx context.Context) {
 	s.pool.Close()
-	s.streamingPool.Close()
 }
 
 func (s *PostgresEventStore) InitStorage(ctx context.Context) error {
