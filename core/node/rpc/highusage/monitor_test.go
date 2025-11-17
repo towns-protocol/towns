@@ -310,7 +310,7 @@ func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) confi
 	entries := make([]entry, 0)
 	for ct, values := range thresholds {
 		for _, thr := range values {
-			entries = append(entries, entry{callType: string(ct), thr: thr})
+			entries = append(entries, entry{callType: ct.String(), thr: thr})
 		}
 	}
 

@@ -1,6 +1,7 @@
 package highusage
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -24,13 +25,34 @@ import (
 // cleanup watermark keeps the set bounded while remaining configurable.
 
 // CallType identifies the RPC operation category being tracked.
-type CallType string
+type CallType int
 
 const (
-	CallTypeEvent             CallType = "event"
-	CallTypeMediaEvent        CallType = "media_event"
-	CallTypeCreateMediaStream CallType = "create_media_stream"
+	CallTypeEvent CallType = iota
+	CallTypeMediaEvent
+	CallTypeCreateMediaStream
+
+	callTypeCount
 )
+
+var callTypeNames = [...]string{
+	"event",
+	"media_event",
+	"create_media_stream",
+}
+
+var callTypeLookup = map[string]CallType{
+	"event":               CallTypeEvent,
+	"media_event":         CallTypeMediaEvent,
+	"create_media_stream": CallTypeCreateMediaStream,
+}
+
+func (ct CallType) String() string {
+	if ct >= 0 && int(ct) < len(callTypeNames) {
+		return callTypeNames[ct]
+	}
+	return fmt.Sprintf("call_type_%d", ct)
+}
 
 // Threshold defines a maximum count per time window.
 type Threshold struct {
@@ -66,7 +88,7 @@ type inMemoryCallRateMonitor struct {
 	cfg           config.HighUsageDetectionConfig
 	users         map[common.Address]*userStats
 	cleanupAfter  time.Duration
-	callSpecs     map[CallType]*callTypeSpec
+	callSpecs     []*callTypeSpec
 	lastCleanup   time.Time
 	cleanupTicker *time.Ticker
 	cleanupStop   chan struct{}
@@ -122,8 +144,11 @@ func NewCallRateMonitor(cfg config.HighUsageDetectionConfig, logger *zap.Logger)
 		go m.cleanupLoop()
 	}
 	callTypeKeys := make([]string, 0, len(specs))
-	for ct := range specs {
-		callTypeKeys = append(callTypeKeys, string(ct))
+	for ct, spec := range specs {
+		if spec == nil {
+			continue
+		}
+		callTypeKeys = append(callTypeKeys, CallType(ct).String())
 	}
 	m.logger.Info(
 		"highusage monitor initialized",
@@ -134,25 +159,26 @@ func NewCallRateMonitor(cfg config.HighUsageDetectionConfig, logger *zap.Logger)
 	return m
 }
 
-func convertThresholds(cfg config.HighUsageDetectionConfig) map[CallType][]Threshold {
+func convertThresholds(cfg config.HighUsageDetectionConfig) [][]Threshold {
 	configured := cfg.HighUsageThresholds()
-	thresholds := make(map[CallType][]Threshold, len(configured))
+	thresholds := make([][]Threshold, callTypeCount)
+
 	for key, values := range configured {
-		callType := CallType(key)
-		converted := make([]Threshold, 0, len(values))
+		callType, ok := callTypeLookup[key]
+		if !ok {
+			continue
+		}
 		for _, value := range values {
 			if value.Window <= 0 || value.Count == 0 {
 				continue
 			}
-			converted = append(converted, Threshold{
+			thresholds[callType] = append(thresholds[callType], Threshold{
 				Window: value.Window,
 				Count:  value.Count,
 			})
 		}
-		if len(converted) > 0 {
-			thresholds[callType] = converted
-		}
 	}
+
 	return thresholds
 }
 
@@ -164,6 +190,10 @@ func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, ca
 
 	user := common.BytesToAddress(userBytes)
 	if user == (common.Address{}) {
+		return
+	}
+
+	if callType < 0 || int(callType) >= len(m.callSpecs) {
 		return
 	}
 
@@ -194,14 +224,18 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 	result := make([]HighUsageInfo, 0)
 
 	for addr, stats := range m.users {
-		for callType, cs := range stats.perType {
+		for ct := CallType(0); ct < callTypeCount; ct++ {
+			cs := stats.perType[int(ct)]
+			if cs == nil {
+				continue
+			}
 			violations := cs.violations(now)
 			if len(violations) == 0 {
 				continue
 			}
 			result = append(result, HighUsageInfo{
 				User:       addr,
-				CallType:   callType,
+				CallType:   ct,
 				Violations: violations,
 				LastSeen:   stats.lastSeen,
 			})
@@ -209,7 +243,7 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 				m.logger.Warn(
 					"highusage threshold exceeded",
 					zap.String("addr", addr.Hex()),
-					zap.String("call_type", string(callType)),
+					zap.String("call_type", ct.String()),
 					zap.String("window", v.Window.String()),
 					zap.Uint32("count", v.Count),
 					zap.Uint32("threshold", v.Limit),
@@ -289,17 +323,18 @@ func (m *inMemoryCallRateMonitor) Close() {
 }
 
 type userStats struct {
-	perType  map[CallType]*callStats
+	perType  [callTypeCount]*callStats
 	lastSeen time.Time
 }
 
 func newUserStats() *userStats {
-	return &userStats{
-		perType: make(map[CallType]*callStats),
-	}
+	return &userStats{}
 }
 
 func (us *userStats) record(now time.Time, callType CallType, spec *callTypeSpec, delta uint32) {
+	if callType < 0 || int(callType) >= len(us.perType) {
+		return
+	}
 	stats := us.perType[callType]
 	if stats == nil {
 		stats = newCallStats(spec)
@@ -348,7 +383,6 @@ func (cs *callStats) violations(now time.Time) []UsageViolation {
 }
 
 type callTypeSpec struct {
-	callType   CallType
 	thresholds []thresholdSpec
 }
 
@@ -433,8 +467,8 @@ func (w *window) total() uint32 {
 	return w.sum
 }
 
-func buildCallTypeSpec(callType CallType, thresholds []Threshold) *callTypeSpec {
-	spec := &callTypeSpec{callType: callType}
+func buildCallTypeSpec(_ CallType, thresholds []Threshold) *callTypeSpec {
+	spec := &callTypeSpec{}
 	for _, th := range thresholds {
 		if th.Window <= 0 || th.Count == 0 {
 			continue
@@ -452,16 +486,20 @@ func buildCallTypeSpec(callType CallType, thresholds []Threshold) *callTypeSpec 
 	return spec
 }
 
-func buildCallSpecs(thresholds map[CallType][]Threshold) (map[CallType]*callTypeSpec, time.Duration) {
-	specs := make(map[CallType]*callTypeSpec, len(thresholds))
+func buildCallSpecs(thresholds [][]Threshold) ([]*callTypeSpec, time.Duration) {
+	specs := make([]*callTypeSpec, callTypeCount)
 	var maxWindow time.Duration
 
-	for callType, values := range thresholds {
-		spec := buildCallTypeSpec(callType, values)
+	for ct := CallType(0); ct < callTypeCount; ct++ {
+		values := thresholds[ct]
+		if len(values) == 0 {
+			continue
+		}
+		spec := buildCallTypeSpec(ct, values)
 		if spec == nil {
 			continue
 		}
-		specs[callType] = spec
+		specs[ct] = spec
 		for _, th := range spec.thresholds {
 			if th.threshold.Window > maxWindow {
 				maxWindow = th.threshold.Window

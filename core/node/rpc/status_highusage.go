@@ -31,7 +31,7 @@ func convertHighUsageInfo(entries []highusage.HighUsageInfo) []statusinfo.HighUs
 		}
 		result = append(result, statusinfo.HighUsageInfo{
 			User:       user,
-			CallType:   string(entry.CallType),
+			CallType:   entry.CallType.String(),
 			LastSeen:   entry.LastSeen.UTC().Format(time.RFC3339),
 			Violations: violations,
 		})
