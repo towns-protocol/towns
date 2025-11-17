@@ -177,12 +177,19 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 userId: member.userId,
                 nft: member.nft!,
             }))
+        const appAddresses = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.appAddress))
+            .map((member) => ({
+                userId: member.userId,
+                appAddress: member.appAddress!,
+            }))
 
         this.memberMetadata.applySnapshot(
             usernames,
             displayNames,
             ensAddresses,
             nfts,
+            appAddresses,
             cleartexts,
             encryptionEmitter,
         )
@@ -313,6 +320,10 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             })
                             if (membership.appAddress) {
                                 this.apps.add(userId)
+                                this.memberMetadata.setAppAddress(
+                                    userId,
+                                    userIdFromAddress(membership.appAddress),
+                                )
                             }
                             this.streamMemberIdsView.addMember(this.streamId, userId)
                             break
@@ -320,6 +331,7 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                             const leavingMember = this.joined.get(userId)
                             if (leavingMember?.appAddress) {
                                 this.apps.delete(userId)
+                                this.memberMetadata.removeAppAddress(userId)
                             }
                             this.joined.delete(userId)
                             this.streamMemberIdsView.removeMember(this.streamId, userId)
