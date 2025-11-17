@@ -438,30 +438,6 @@ abstract contract ReputationRegistryBase is IReputationRegistryBase, ERC721ABase
         }
     }
 
-    function _verifySignature(FeedbackAuth memory auth, bytes calldata signature) internal view {
-        bytes32 messageHash = keccak256(
-            abi.encode(
-                auth.agentId,
-                auth.reviewerAddress,
-                auth.indexLimit,
-                auth.expiry,
-                auth.chainId,
-                auth.identityRegistry,
-                auth.signerAddress
-            )
-        ).toEthSignedMessageHash();
-
-        if (!auth.signerAddress.isValidSignatureNow(messageHash, signature))
-            Reputation__InvalidSignature.selector.revertWith();
-
-        address owner = _ownerOf(auth.agentId);
-        if (
-            owner != auth.signerAddress &&
-            !_isApprovedForAll(owner, auth.signerAddress) &&
-            _getApproved(auth.agentId) != auth.signerAddress
-        ) Reputation__InvalidSignerAddress.selector.revertWith();
-    }
-
     function _verifyNotSelfFeedback(address agent, uint256 agentId) internal view {
         if (
             msg.sender == agent ||
