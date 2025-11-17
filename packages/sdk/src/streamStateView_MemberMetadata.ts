@@ -203,6 +203,14 @@ export class StreamStateView_MemberMetadata {
             appAddress,
         }
     }
+
+    setAppAddress(userId: string, appAddress: string): void {
+        this.appAddresses.set(userId, appAddress)
+    }
+
+    removeAppAddress(userId: string): void {
+        this.appAddresses.delete(userId)
+    }
 }
 
 function sortPayloads(
