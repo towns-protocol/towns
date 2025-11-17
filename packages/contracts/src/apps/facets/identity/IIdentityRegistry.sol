@@ -59,6 +59,9 @@ interface IIdentityRegistryBase {
 
     /// @notice Thrown when attempting to promote or register an agent that already has a promoted identity
     error IdentityRegistry__AgentAlreadyPromoted();
+
+    /// @notice Thrown when attempting to register an agent with too many metadata entries
+    error IdentityRegistry__TooManyMetadataEntries();
 }
 
 /// @title IIdentityRegistry

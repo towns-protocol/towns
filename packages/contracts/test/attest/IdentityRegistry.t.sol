@@ -3,14 +3,9 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {ISimpleAppBase} from "../../src/apps/simple/app/ISimpleApp.sol";
-import {IIdentityRegistryBase} from "../../src/apps/facets/identity/IIdentityRegistry.sol";
-import {IAppRegistryBase} from "../../src/apps/facets/registry/IAppRegistry.sol";
 import {IOwnableBase} from "@towns-protocol/diamond/src/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721ABase} from "../../src/diamond/facets/token/ERC721A/IERC721A.sol";
-
-// libraries
-import {EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
 
 // contracts
 import {AppRegistryBaseTest} from "./AppRegistryBase.t.sol";
@@ -30,10 +25,10 @@ contract IdentityRegistryTest is AppRegistryBaseTest, ISimpleAppBase {
     /*                   PROMOTE AGENT TESTS                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_promoteAgent(
-        string calldata uri,
-        MetadataEntry[] memory metadata
-    ) external givenSimpleAppIsRegistered {
+    function test_promoteAgent(string calldata uri) external givenSimpleAppIsRegistered {
+        MetadataEntry[] memory metadata = new MetadataEntry[](1);
+        metadata[0] = MetadataEntry({metadataKey: "name", metadataValue: bytes("Test Agent")});
+
         vm.prank(DEFAULT_DEV);
         uint256 id = simpleApp.promoteAgent(uri, metadata);
 
@@ -41,10 +36,10 @@ contract IdentityRegistryTest is AppRegistryBaseTest, ISimpleAppBase {
         assertEq(identityRegistry.tokenURI(id), uri, "Token URI should match provided URI");
     }
 
-    function test_promoteAgent_emitsEvent(
-        string calldata uri,
-        MetadataEntry[] memory metadata
-    ) external givenSimpleAppIsRegistered {
+    function test_promoteAgent_emitsEvent(string calldata uri) external givenSimpleAppIsRegistered {
+        MetadataEntry[] memory metadata = new MetadataEntry[](1);
+        metadata[0] = MetadataEntry({metadataKey: "name", metadataValue: bytes("Test Agent")});
+
         vm.expectEmit(address(simpleApp));
         emit AgentPromoted(DEFAULT_DEV, 1);
 
@@ -53,9 +48,11 @@ contract IdentityRegistryTest is AppRegistryBaseTest, ISimpleAppBase {
     }
 
     function test_promoteAgent_storesAgentId(
-        string calldata uri,
-        MetadataEntry[] memory metadata
+        string calldata uri
     ) external givenSimpleAppIsRegistered {
+        MetadataEntry[] memory metadata = new MetadataEntry[](1);
+        metadata[0] = MetadataEntry({metadataKey: "name", metadataValue: bytes("Test Agent")});
+
         vm.prank(DEFAULT_DEV);
         uint256 id = simpleApp.promoteAgent(uri, metadata);
 
@@ -109,6 +106,18 @@ contract IdentityRegistryTest is AppRegistryBaseTest, ISimpleAppBase {
         assertEq(id, 1, "First agent ID should be 1");
         assertEq(simpleApp.getAgentId(), id, "Stored agent ID should match");
         vm.stopPrank();
+    }
+
+    function test_promoteAgent_revertsWhenTooManyMetadataEntries(
+        string calldata uri
+    ) external givenSimpleAppIsRegistered {
+        MetadataEntry[] memory metadata = new MetadataEntry[](11);
+        for (uint256 i; i < 11; ++i) {
+            metadata[i] = MetadataEntry({metadataKey: "name", metadataValue: bytes("Test Agent")});
+        }
+        vm.prank(DEFAULT_DEV);
+        vm.expectRevert(IdentityRegistry__TooManyMetadataEntries.selector);
+        simpleApp.promoteAgent(uri, metadata);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
