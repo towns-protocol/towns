@@ -139,9 +139,8 @@ func TestConfig_ChainProvidersDoNotLog(t *testing.T) {
 func TestHighUsageDetectionConfig_DefaultThresholds(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			Threshold1Name:   "event",
-			Threshold1Window: time.Minute,
-			Threshold1Count:  100,
+			ThresholdAddEventWindow: time.Minute,
+			ThresholdAddEventCount:  100,
 		},
 	}
 
@@ -152,54 +151,48 @@ func TestHighUsageDetectionConfig_DefaultThresholds(t *testing.T) {
 	require.Equal(t, uint32(100), values["event"][0].Count)
 }
 
-func TestHighUsageDetectionConfig_FieldOverrides(t *testing.T) {
+func TestHighUsageDetectionConfig_MultipleCallTypes(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			Threshold1Name:   "event",
-			Threshold1Window: 2 * time.Minute,
-			Threshold1Count:  200,
-			Threshold2Name:   "event",
-			Threshold2Window: 5 * time.Minute,
-			Threshold2Count:  500,
-			Threshold3Name:   "media_event",
-			Threshold3Window: 45 * time.Second,
-			Threshold3Count:  15,
+			ThresholdAddEventWindow:          2 * time.Minute,
+			ThresholdAddEventCount:           200,
+			ThresholdAddMediaEventWindow:     45 * time.Second,
+			ThresholdAddMediaEventCount:      15,
+			ThresholdCreateMediaStreamWindow: 90 * time.Second,
+			ThresholdCreateMediaStreamCount:  25,
 		},
 	}
 
 	values := cfg.HighUsageThresholds()
 
-	require.Len(t, values["event"], 2)
+	require.Len(t, values["event"], 1)
 	require.Equal(t, 2*time.Minute, values["event"][0].Window)
 	require.Equal(t, uint32(200), values["event"][0].Count)
-	require.Equal(t, 5*time.Minute, values["event"][1].Window)
-	require.Equal(t, uint32(500), values["event"][1].Count)
-
 	require.Len(t, values["media_event"], 1)
 	require.Equal(t, 45*time.Second, values["media_event"][0].Window)
 	require.Equal(t, uint32(15), values["media_event"][0].Count)
+	require.Len(t, values["create_media_stream"], 1)
+	require.Equal(t, 90*time.Second, values["create_media_stream"][0].Window)
+	require.Equal(t, uint32(25), values["create_media_stream"][0].Count)
 }
 
 func TestHighUsageDetectionConfig_InvalidEntriesIgnored(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			Threshold1Name:   "event",
-			Threshold1Window: 0,
-			Threshold1Count:  100,
-			Threshold2Name:   "media_event",
-			Threshold2Window: time.Minute,
-			Threshold2Count:  0,
-			Threshold3Name:   "create_media_stream",
-			Threshold3Window: 30 * time.Second,
-			Threshold3Count:  5,
+			ThresholdAddEventWindow:          0,
+			ThresholdAddEventCount:           100,
+			ThresholdAddMediaEventWindow:     time.Minute,
+			ThresholdAddMediaEventCount:      0,
+			ThresholdCreateMediaStreamWindow: 30 * time.Second,
+			ThresholdCreateMediaStreamCount:  5,
 		},
 	}
 
 	values := cfg.HighUsageThresholds()
 
-	require.Len(t, values, 1)
-	require.Contains(t, values, "create_media_stream")
-	require.Len(t, values["create_media_stream"], 1)
-	require.Equal(t, 30*time.Second, values["create_media_stream"][0].Window)
-	require.Equal(t, uint32(5), values["create_media_stream"][0].Count)
+	require.Equal(t, map[string][]config.HighUsageThreshold{
+		"create_media_stream": {
+			{Window: 30 * time.Second, Count: 5},
+		},
+	}, values)
 }

@@ -2,7 +2,6 @@ package highusage
 
 import (
 	"math/big"
-	"sort"
 	"sync"
 	"testing"
 	"time"
@@ -153,7 +152,6 @@ func TestMonitorConfigValidation(t *testing.T) {
 	cfg := newDetectionConfig(true, map[CallType][]Threshold{
 		CallTypeEvent: {
 			{Window: time.Minute, Count: 0},
-			{Window: 0, Count: 10},
 		},
 	})
 	monitor := NewCallRateMonitor(cfg, zap.NewNop())
@@ -236,28 +234,6 @@ func TestMonitorDisabledConfig(t *testing.T) {
 	require.Nil(t, monitor.GetHighUsageInfo(time.Now()))
 }
 
-func TestMonitorMultipleThresholdsPerCallType(t *testing.T) {
-	t.Parallel()
-	cfg := newDetectionConfig(true, map[CallType][]Threshold{
-		CallTypeEvent: {
-			{Window: time.Minute, Count: 10},
-			{Window: 10 * time.Minute, Count: 20},
-		},
-	})
-	monitor := NewCallRateMonitor(cfg, zap.NewNop())
-	defer monitor.Close()
-
-	user := common.HexToAddress("0xbb")
-	base := time.Unix(0, 0)
-	for i := 0; i < 25; i++ {
-		monitor.RecordCall(user.Bytes(), base.Add(time.Duration(i)*time.Second), CallTypeEvent)
-	}
-
-	usage := monitor.GetHighUsageInfo(base.Add(30 * time.Second))
-	require.Len(t, usage, 1)
-	require.Len(t, usage[0].Violations, 2)
-}
-
 func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 	t.Parallel()
 	cfg := newDetectionConfig(true, map[CallType][]Threshold{
@@ -292,43 +268,27 @@ func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) confi
 		return cfg
 	}
 
-	slots := []struct {
-		name   *string
-		window *time.Duration
-		count  *uint32
-	}{
-		{&cfg.Thresholds.Threshold1Name, &cfg.Thresholds.Threshold1Window, &cfg.Thresholds.Threshold1Count},
-		{&cfg.Thresholds.Threshold2Name, &cfg.Thresholds.Threshold2Window, &cfg.Thresholds.Threshold2Count},
-		{&cfg.Thresholds.Threshold3Name, &cfg.Thresholds.Threshold3Window, &cfg.Thresholds.Threshold3Count},
-	}
-
-	type entry struct {
-		callType string
-		thr      Threshold
-	}
-
-	entries := make([]entry, 0)
 	for ct, values := range thresholds {
-		for _, thr := range values {
-			entries = append(entries, entry{callType: ct.String(), thr: thr})
+		if len(values) == 0 {
+			continue
 		}
-	}
-
-	sort.Slice(entries, func(i, j int) bool {
-		if entries[i].callType == entries[j].callType {
-			return entries[i].thr.Window < entries[j].thr.Window
+		if len(values) > 1 {
+			panic("test helper supports only one threshold per call type")
 		}
-		return entries[i].callType < entries[j].callType
-	})
-
-	if len(entries) > len(slots) {
-		panic("too many thresholds configured for test helper")
-	}
-
-	for i, entry := range entries {
-		*slots[i].name = entry.callType
-		*slots[i].window = entry.thr.Window
-		*slots[i].count = entry.thr.Count
+		thr := values[0]
+		switch ct {
+		case CallTypeEvent:
+			cfg.Thresholds.ThresholdAddEventWindow = thr.Window
+			cfg.Thresholds.ThresholdAddEventCount = thr.Count
+		case CallTypeMediaEvent:
+			cfg.Thresholds.ThresholdAddMediaEventWindow = thr.Window
+			cfg.Thresholds.ThresholdAddMediaEventCount = thr.Count
+		case CallTypeCreateMediaStream:
+			cfg.Thresholds.ThresholdCreateMediaStreamWindow = thr.Window
+			cfg.Thresholds.ThresholdCreateMediaStreamCount = thr.Count
+		default:
+			panic("unsupported call type in test helper: " + ct.String())
+		}
 	}
 	return cfg
 }
