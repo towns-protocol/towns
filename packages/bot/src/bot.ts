@@ -1,97 +1,30 @@
-import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
-import { utils, ethers } from 'ethers'
-import {
-    SpaceDapp,
-    Permission,
-    SpaceAddressFromSpaceId,
-    type SendTipMemberParams,
-    TipRecipientType,
-    ETH_ADDRESS,
-} from '@towns-protocol/web3'
+import { create, fromBinary, toBinary } from '@bufbuild/protobuf'
+import { ethers } from 'ethers'
+import { SpaceDapp, type SendTipMemberParams } from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
-import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
-import tippingFacetAbi from '@towns-protocol/generated/dev/abis/ITipping.abi'
 
 import {
-    getRefEventIdFromChannelMessage,
-    isChannelStreamId,
-    make_ChannelPayload_Message,
     createTownsClient,
     type ClientV2,
-    streamIdAsString,
-    make_MemberPayload_KeySolicitation,
-    make_UserMetadataPayload_EncryptionDevice,
-    logNever,
-    userIdFromAddress,
-    makeUserMetadataStreamId,
-    type ParsedEvent,
-    unsafe_makeTags,
     townsEnv,
-    spaceIdFromChannelId,
-    make_ChannelPayload_Redaction,
     parseAppPrivateData,
-    makeEvent,
-    make_MediaPayload_Inception,
-    make_MediaPayload_Chunk,
-    makeUniqueMediaStreamId,
-    streamIdAsBytes,
-    addressFromUserId,
-    make_ChannelPayload_InteractionRequest,
-    userIdToAddress,
-    unpackEnvelope,
-    make_UserPayload_BlockchainTransaction,
-    makeUserStreamId,
-    make_MemberPayload_Pin,
-    make_MemberPayload_Unpin,
-    makeUniqueChannelStreamId,
-    make_ChannelPayload_Inception,
-    make_MemberPayload_Membership2,
     type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
 import { type Context, type Env, type Next } from 'hono'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
 import { createNanoEvents, type Emitter } from 'nanoevents'
-import imageSize from 'image-size'
 import {
-    type ChannelMessage_Post_Attachment,
-    type ChannelMessage_Post_Mention,
-    ChannelMessage,
-    ChannelMessageSchema,
     AppServiceRequestSchema,
     AppServiceResponseSchema,
     type AppServiceResponse,
-    type EventPayload,
-    MembershipOp,
     type PlainMessage,
     Tags,
-    MessageInteractionType,
     type SlashCommand,
-    ChannelMessage_Post_Content_ImageSchema,
-    ChannelMessage_Post_Content_Image_InfoSchema,
-    ChunkedMediaSchema,
-    CreationCookieSchema,
-    type BlockchainTransaction,
-    BlockchainTransactionSchema,
-    InteractionRequest,
-    InteractionRequestPayload,
-    InteractionRequestPayloadSchema,
-    InteractionResponsePayload,
-    InteractionResponsePayloadSchema,
-    ChannelMessage_Post_AttachmentSchema,
     type AppMetadata,
-    StreamEvent,
+    type InteractionRequestPayload,
 } from '@towns-protocol/proto'
-import {
-    bin_equal,
-    bin_fromBase64,
-    bin_fromHexString,
-    bin_toHexString,
-    check,
-    dlog,
-} from '@towns-protocol/utils'
-import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
-import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
+import { bin_fromBase64, bin_fromHexString, bin_toHexString, dlog } from '@towns-protocol/utils'
 
 import {
     http,
@@ -102,252 +35,127 @@ import {
     type Account,
     type WalletClient,
     createWalletClient,
-    type TransactionReceipt,
-    encodeAbiParameters,
-    zeroAddress,
-    parseEventLogs,
 } from 'viem'
-import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
+import { readContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
 import type { BlankEnv } from 'hono/types'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
-import { execute } from 'viem/experimental/erc7821'
-import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
-import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
-import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
+import { buildBotActions, type BotActions } from './actions'
+import { handleEvent as dispatchEvent, type BotEvents, type BasePayload } from './event-dispatcher'
+import type { InferInput, InferOutput } from './actions/interaction'
+import type { MessageOpts, PostMessageOpts } from './actions/message'
+import type { PinMessageParams, UnpinMessageParams } from './actions/pinning'
+import type { CreateChannelActionParams, GetRolesParams } from './actions/channel'
+import type { AdminRemoveEventParams, BanParams, UnbanParams } from './actions/moderation'
+import type { HasAdminPermissionParams } from './actions/permissions'
 
-type BotActions = ReturnType<typeof buildBotActions>
-
-export type BotHandler = ReturnType<typeof buildBotActions>
-
-// StandardSchema type aliases for convenience
-export type InferInput<Schema extends StandardSchemaV1> = NonNullable<
-    Schema['~standard']['types']
->['input']
-
-export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<
-    Schema['~standard']['types']
->['output']
+export type BotHandler = BotActions
+export type { BotActions }
 
 const debug = dlog('csb:bot')
 
-export type BotPayload<
-    T extends keyof BotEvents<Commands>,
+export const makeTownsBot = async <
     Commands extends PlainMessage<SlashCommand>[] = [],
-> = Parameters<BotEvents<Commands>[T]>[1]
-
-type ImageAttachment = {
-    type: 'image'
-    alt?: string
-    url: string
-}
-
-type ChunkedMediaAttachment =
-    | {
-          type: 'chunked'
-          data: Blob
-          width?: number
-          height?: number
-          filename: string
-      }
-    | {
-          type: 'chunked'
-          data: Uint8Array
-          width?: number
-          height?: number
-          filename: string
-          mimetype: string
-      }
-
-type LinkAttachment = {
-    type: 'link'
-    url: string
-    title?: string
-    description?: string
-    image?: {
-        width: number
-        height: number
-        url: string
+    HonoEnv extends Env = BlankEnv,
+>(
+    appPrivateData: string,
+    jwtSecretBase64: string,
+    opts: {
+        baseRpcUrl?: string
+        commands?: Commands
+        identity?: BotIdentityConfig
+    } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
+) => {
+    const { baseRpcUrl, ...clientOpts } = opts
+    let appAddress: Address | undefined
+    const {
+        privateKey,
+        encryptionDevice,
+        env,
+        appAddress: appAddressFromPrivateData,
+    } = parseAppPrivateData(appPrivateData)
+    if (!env) {
+        throw new Error('Failed to parse APP_PRIVATE_DATA')
     }
-}
+    if (appAddressFromPrivateData) {
+        appAddress = appAddressFromPrivateData
+    }
+    const account = privateKeyToAccount(privateKey as Hex)
 
-type MiniAppAttachment = {
-    type: 'miniapp'
-    url: string
-}
+    const baseConfig = townsEnv().makeBaseChainConfig(env)
+    const getChain = (chainId: number) => {
+        if (chainId === base.id) return base
+        if (chainId === foundry.id) return foundry
+        return baseSepolia
+    }
+    const chain = getChain(baseConfig.chainConfig.chainId)
+    const viem = createWalletClient({
+        account,
+        transport: baseRpcUrl
+            ? http(baseRpcUrl, { batch: true })
+            : http(baseConfig.rpcUrl, { batch: true }),
+        chain,
+    })
 
-type TickerAttachment = {
-    type: 'ticker'
-    address: string
-    chainId: string
-}
+    const spaceDapp = new SpaceDapp(
+        baseConfig.chainConfig,
+        new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
+    )
+    if (!appAddress) {
+        appAddress = await readContract(viem, {
+            address: baseConfig.chainConfig.addresses.appRegistry,
+            abi: appRegistryAbi,
+            functionName: 'getAppByClient',
+            args: [account.address],
+        })
+    }
 
-export type MessageOpts = {
-    threadId?: string
-    replyId?: string
-    ephemeral?: boolean
-}
+    const client = await createTownsClient({
+        privateKey,
+        env,
+        encryptionDevice: {
+            fromExportedDevice: encryptionDevice,
+        },
+        ...clientOpts,
+    }).then((x) =>
+        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
+    )
 
-export type PostMessageOpts = MessageOpts & {
-    mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
-    attachments?: Array<
-        | ImageAttachment
-        | ChunkedMediaAttachment
-        | LinkAttachment
-        | TickerAttachment
-        | MiniAppAttachment
-    >
-}
+    if (opts.commands) {
+        client
+            .appServiceClient()
+            .then((appRegistryClient) =>
+                appRegistryClient
+                    .updateAppMetadata({
+                        appId: bin_fromHexString(account.address),
+                        updateMask: ['slash_commands'],
+                        metadata: {
+                            slashCommands: opts.commands,
+                        },
+                    })
+                    .catch((err) => {
+                        // eslint-disable-next-line no-console
+                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
+                    }),
+            )
+            .catch((err) => {
+                // eslint-disable-next-line no-console
+                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
+            })
+    }
 
-export type DecryptedInteractionResponse = {
-    recipient: Uint8Array
-    payload: PlainMessage<InteractionResponsePayload>
-}
-
-export type CreateChannelParams = {
-    name: string
-    description?: string
-    autojoin?: boolean
-    hideUserJoinLeaveEvents?: boolean
-}
-
-export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
-    message: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-            /** In case of a reply, that's  the eventId of the message that got replied */
-            replyId: string | undefined
-            /** In case of a thread, that's the thread id where the message belongs to */
-            threadId: string | undefined
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** Convenience flag to check if the bot was mentioned */
-            isMentioned: boolean
-        },
-    ) => void | Promise<void>
-    redaction: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID that got redacted */
-            refEventId: string
-        },
-    ) => void | Promise<void>
-    messageEdit: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID of the message that got edited */
-            refEventId: string
-            /** New message */
-            message: string
-            /** In case of a reply, that's  the eventId of the message that got replied */
-            replyId: string | undefined
-            /** In case of a thread, that's the thread id where the message belongs to */
-            threadId: string | undefined
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** Convenience flag to check if the bot was mentioned */
-            isMentioned: boolean
-        },
-    ) => void | Promise<void>
-    reaction: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The reaction that was added */
-            reaction: string
-            /** The event ID of the message that got reacted to */
-            messageId: string
-            /** The user ID of the user that added the reaction */
-            userId: string
-        },
-    ) => Promise<void> | void
-    eventRevoke: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID of the message that got revoked */
-            refEventId: string
-        },
-    ) => Promise<void> | void
-    tip: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The message ID of the parent of the tip */
-            messageId: string
-            /** The address that sent the tip */
-            senderAddress: Address
-            /** The address that received the tip */
-            receiverAddress: Address
-            /** The user ID that received the tip */
-            receiverUserId: string
-            /** The amount of the tip */
-            amount: bigint
-            /** The currency of the tip */
-            currency: Address
-        },
-    ) => Promise<void> | void
-    channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
-    channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
-    streamEvent: (
-        handler: BotActions,
-        event: BasePayload & { event: ParsedEvent },
-    ) => Promise<void> | void
-    slashCommand: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The slash command that was invoked (without the /) */
-            command: Commands[number]['name']
-            /** Arguments passed after the command
-             * @example
-             * ```
-             * /help
-             * args: []
-             * ```
-             * ```
-             * /sum 1 2
-             * args: ['1', '2']
-             * ```
-             */
-            args: string[]
-            /** Users mentioned in the command */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** The eventId of the message that got replied */
-            replyId: string | undefined
-            /** The thread id where the message belongs to */
-            threadId: string | undefined
-        },
-    ) => Promise<void> | void
-    rawGmMessage: (
-        handler: BotActions,
-        event: BasePayload & { typeUrl: string; message: Uint8Array },
-    ) => void | Promise<void>
-    gm: <Schema extends StandardSchemaV1>(
-        handler: BotActions,
-        event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
-    ) => void | Promise<void>
-    interactionResponse: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The interaction response that was received */
-            response: DecryptedInteractionResponse
-        },
-    ) => void | Promise<void>
-}
-
-export type BasePayload = {
-    /** The user ID of the user that triggered the event */
-    userId: Address
-    /** The space ID that the event was triggered in */
-    spaceId: string
-    /** channelId that the event was triggered in */
-    channelId: string
-    /** The ID of the event that triggered */
-    eventId: string
-    /** The creation time of the event */
-    createdAt: Date
+    await client.uploadDeviceKeys()
+    return new Bot<Commands, HonoEnv>(
+        client,
+        viem,
+        jwtSecretBase64,
+        appAddress,
+        opts.commands,
+        opts.identity,
+    )
 }
 
 export class Bot<
@@ -435,7 +243,7 @@ export class Bot<
 
     private async webhookHandler(c: Context<HonoEnv>) {
         const body = await c.req.arrayBuffer()
-        const encryptionDevice = this.client.crypto.getUserDevice()
+        const encryptionDevice = this.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
         debug('webhook', request)
         const statusResponse = create(AppServiceResponseSchema, {
@@ -462,7 +270,18 @@ export class Bot<
         } else if (request.payload.case === 'events') {
             for (const event of request.payload.value.events) {
                 try {
-                    await this.handleEvent(event)
+                    await dispatchEvent(
+                        {
+                            client: this.client,
+                            botId: this.botId,
+                            emitter: this.emitter,
+                            slashCommandHandlers: this.slashCommandHandlers,
+                            gmTypedHandlers: this.gmTypedHandlers,
+                            currentMessageTags: this.currentMessageTags,
+                            userDevice: this.getUserDevice(),
+                        },
+                        event,
+                    )
                 } catch (err) {
                     // eslint-disable-next-line no-console
                     console.error('[@towns-protocol/bot] Error while handling event', err)
@@ -475,436 +294,6 @@ export class Bot<
 
         c.header('Content-Type', 'application/x-protobuf')
         return c.body(toBinary(AppServiceResponseSchema, response), 200)
-    }
-
-    // TODO: onTip
-    private async handleEvent(appEvent: EventPayload) {
-        if (!appEvent.payload.case || !appEvent.payload.value) return
-        const streamId = streamIdAsString(appEvent.payload.value.streamId)
-
-        if (appEvent.payload.case === 'messages') {
-            const groupEncryptionSessionsMessages = await this.client
-                .unpackEnvelopes(appEvent.payload.value.groupEncryptionSessionsMessages)
-                .then((x) =>
-                    x.flatMap((e) => {
-                        if (
-                            e.event.payload.case === 'userInboxPayload' &&
-                            e.event.payload.value.content.case === 'groupEncryptionSessions'
-                        ) {
-                            return e.event.payload.value.content.value
-                        }
-                        return []
-                    }),
-                )
-            const events = await this.client.unpackEnvelopes(appEvent.payload.value.messages)
-            const zip = events.map((m, i) => [m, groupEncryptionSessionsMessages[i]] as const)
-            for (const [parsed, groupEncryptionSession] of zip) {
-                if (parsed.creatorUserId === this.client.userId) {
-                    continue
-                }
-                if (!parsed.event.payload.case) {
-                    continue
-                }
-                const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
-                this.currentMessageTags = parsed.event.tags
-                debug('emit:streamEvent', {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    channelId: streamId,
-                    eventId: parsed.hashStr,
-                })
-                this.emitter.emit('streamEvent', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    eventId: parsed.hashStr,
-                    event: parsed,
-                    createdAt,
-                })
-                switch (parsed.event.payload.case) {
-                    case 'channelPayload':
-                    case 'dmChannelPayload':
-                    case 'gdmChannelPayload': {
-                        if (!parsed.event.payload.value.content.case) return
-                        if (parsed.event.payload.value.content.case === 'message') {
-                            await this.client.importGroupEncryptionSessions({
-                                streamId,
-                                sessions: groupEncryptionSession,
-                            })
-                            const eventCleartext = await this.client.crypto.decryptGroupEvent(
-                                streamId,
-                                parsed.event.payload.value.content.value,
-                            )
-                            let channelMessage: ChannelMessage
-                            if (typeof eventCleartext === 'string') {
-                                channelMessage = fromJsonString(
-                                    ChannelMessageSchema,
-                                    eventCleartext,
-                                )
-                            } else {
-                                channelMessage = fromBinary(ChannelMessageSchema, eventCleartext)
-                            }
-                            await this.handleChannelMessage(streamId, parsed, channelMessage)
-                        } else if (parsed.event.payload.value.content.case === 'redaction') {
-                            const refEventId = bin_toHexString(
-                                parsed.event.payload.value.content.value.eventId,
-                            )
-                            debug('emit:eventRevoke', {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                channelId: streamId,
-                                refEventId,
-                            })
-                            this.emitter.emit('eventRevoke', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
-                                refEventId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                            })
-                        } else if (
-                            parsed.event.payload.value.content.case === 'channelProperties'
-                        ) {
-                            // TODO: currently, no support for channel properties (update name, topic)
-                        } else if (parsed.event.payload.value.content.case === 'inception') {
-                            // TODO: is there any use case for this?
-                        } else if (parsed.event.payload.value.content.case === 'custom') {
-                            // TODO: what to do with custom payload for bot?
-                        } else if (
-                            parsed.event.payload.value.content.case === 'interactionRequest'
-                        ) {
-                            // ignored for bots
-                        } else if (
-                            parsed.event.payload.value.content.case === 'interactionResponse'
-                        ) {
-                            const payload = parsed.event.payload.value.content.value
-                            if (!bin_equal(payload.recipient, bin_fromHexString(this.botId))) {
-                                continue
-                            }
-                            if (!payload.encryptedData) {
-                                continue
-                            }
-                            if (
-                                payload.encryptedData.deviceKey !== this.getUserDevice().deviceKey
-                            ) {
-                                continue
-                            }
-                            const decryptedBase64 = await this.client.crypto.decryptWithDeviceKey(
-                                payload.encryptedData.ciphertext,
-                                payload.encryptedData.senderKey,
-                            )
-                            const decrypted = bin_fromBase64(decryptedBase64)
-                            const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
-                            this.emitter.emit('interactionResponse', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                                response: {
-                                    recipient: payload.recipient,
-                                    payload: response,
-                                },
-                            })
-                        } else {
-                            logNever(parsed.event.payload.value.content)
-                        }
-                        break
-                    }
-                    case 'memberPayload': {
-                        switch (parsed.event.payload.value.content.case) {
-                            case 'membership':
-                                {
-                                    const membership = parsed.event.payload.value.content.value
-                                    const isChannel = isChannelStreamId(streamId)
-                                    // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
-                                    if (!isChannel) continue
-                                    if (membership.op === MembershipOp.SO_JOIN) {
-                                        debug('emit:channelJoin', {
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                        })
-                                        this.emitter.emit('channelJoin', this.client, {
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                        })
-                                    }
-                                    if (membership.op === MembershipOp.SO_LEAVE) {
-                                        debug('emit:channelLeave', {
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                        })
-                                        this.emitter.emit('channelLeave', this.client, {
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                        })
-                                    }
-                                }
-                                break
-
-                            case 'memberBlockchainTransaction':
-                                {
-                                    const transactionContent =
-                                        parsed.event.payload.value.content.value.transaction
-                                            ?.content
-                                    const fromUserAddress =
-                                        parsed.event.payload.value.content.value.fromUserAddress
-
-                                    switch (transactionContent?.case) {
-                                        case 'spaceReview':
-                                            break
-                                        case 'tokenTransfer':
-                                            break
-                                        case 'tip':
-                                            {
-                                                const tipEvent = transactionContent.value.event
-                                                if (!tipEvent) {
-                                                    return
-                                                }
-                                                const currency = utils.getAddress(
-                                                    bin_toHexString(tipEvent.currency),
-                                                )
-                                                const senderAddress = utils.getAddress(
-                                                    bin_toHexString(tipEvent.sender),
-                                                ) as Address
-                                                const receiverAddress = utils.getAddress(
-                                                    bin_toHexString(tipEvent.receiver),
-                                                ) as Address
-                                                const senderUserId =
-                                                    userIdFromAddress(fromUserAddress)
-                                                const receiverUserId = userIdFromAddress(
-                                                    transactionContent.value.toUserAddress,
-                                                )
-                                                debug('emit:tip', {
-                                                    senderAddress,
-                                                    senderUserId,
-                                                    receiverAddress,
-                                                    receiverUserId,
-                                                    amount: tipEvent.amount.toString(),
-                                                    currency,
-                                                    messageId: bin_toHexString(tipEvent.messageId),
-                                                })
-                                                this.emitter.emit('tip', this.client, {
-                                                    userId: senderUserId,
-                                                    spaceId: spaceIdFromChannelId(streamId),
-                                                    channelId: streamId,
-                                                    eventId: parsed.hashStr,
-                                                    createdAt,
-                                                    amount: tipEvent.amount,
-                                                    currency: currency as `0x${string}`,
-                                                    senderAddress,
-                                                    receiverAddress,
-                                                    receiverUserId,
-                                                    messageId: bin_toHexString(tipEvent.messageId),
-                                                })
-                                            }
-                                            break
-                                        case undefined:
-                                            break
-                                        default:
-                                            logNever(transactionContent)
-                                    }
-                                }
-                                break
-                            case 'keySolicitation':
-                            case 'keyFulfillment':
-                            case 'displayName':
-                            case 'username':
-                            case 'ensAddress':
-                            case 'nft':
-                            case 'pin':
-                            case 'unpin':
-                            case 'encryptionAlgorithm':
-                                break
-                            case undefined:
-                                break
-                            default:
-                                logNever(parsed.event.payload.value.content)
-                        }
-                    }
-                }
-            }
-        } else if (appEvent.payload.case === 'solicitation') {
-            const missingSessionIds = appEvent.payload.value.sessionIds.filter(
-                (sessionId) => sessionId !== '',
-            )
-            await this.client.sendKeySolicitation(streamId, missingSessionIds)
-        } else {
-            logNever(appEvent.payload)
-        }
-    }
-
-    private async handleChannelMessage(
-        streamId: string,
-        parsed: ParsedEvent,
-        { payload }: ChannelMessage,
-    ) {
-        if (!payload.case) {
-            return
-        }
-
-        const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
-        switch (payload.case) {
-            case 'post': {
-                if (payload.value.content.case === 'text') {
-                    const userId = userIdFromAddress(parsed.event.creatorAddress)
-                    const replyId = payload.value.replyId
-                    const threadId = payload.value.threadId
-                    const mentions = parseMentions(payload.value.content.value.mentions)
-                    const isMentioned = mentions.some((m) => m.userId === this.botId)
-                    const forwardPayload: BotPayload<'message', Commands> = {
-                        userId,
-                        eventId: parsed.hashStr,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        message: payload.value.content.value.body,
-                        createdAt,
-                        mentions,
-                        isMentioned,
-                        replyId,
-                        threadId,
-                    }
-
-                    if (
-                        parsed.event.tags?.messageInteractionType ===
-                        MessageInteractionType.SLASH_COMMAND
-                    ) {
-                        const { command, args } = parseSlashCommand(
-                            payload.value.content.value.body,
-                        )
-                        const handler = this.slashCommandHandlers.get(command)
-                        if (handler) {
-                            void handler(this.client, {
-                                ...forwardPayload,
-                                command: command as Commands[number]['name'],
-                                args,
-                                replyId,
-                                threadId,
-                            })
-                        }
-                    } else {
-                        debug('emit:message', forwardPayload)
-                        this.emitter.emit('message', this.client, forwardPayload)
-                    }
-                } else if (payload.value.content.case === 'gm') {
-                    const userId = userIdFromAddress(parsed.event.creatorAddress)
-                    const gmContent = payload.value.content.value
-
-                    const { typeUrl, value } = gmContent
-
-                    this.emitter.emit('rawGmMessage', this.client, {
-                        userId,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        eventId: parsed.hashStr,
-                        createdAt,
-                        typeUrl,
-                        message: value ?? new Uint8Array(),
-                    })
-
-                    const typedHandler = this.gmTypedHandlers.get(typeUrl)
-
-                    if (typedHandler) {
-                        try {
-                            const possibleJsonString = new TextDecoder().decode(value)
-                            const deserializedData =
-                                superjsonParse<InferOutput<typeof typedHandler.schema>>(
-                                    possibleJsonString,
-                                )
-                            const result =
-                                await typedHandler.schema['~standard'].validate(deserializedData)
-                            if ('issues' in result && result.issues) {
-                                debug('GM validation failed', { typeUrl, issues: result.issues })
-                            } else {
-                                debug('emit:gmMessage', { userId, channelId: streamId })
-                                void typedHandler.handler(this.client, {
-                                    userId,
-                                    spaceId: spaceIdFromChannelId(streamId),
-                                    channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                    createdAt,
-                                    typeUrl,
-                                    data: result.value,
-                                })
-                            }
-                        } catch (error) {
-                            debug('GM handler error', { typeUrl, error })
-                        }
-                    }
-                }
-                break
-            }
-            case 'reaction': {
-                debug('emit:reaction', {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    channelId: streamId,
-                    reaction: payload.value.reaction,
-                    messageId: payload.value.refEventId,
-                })
-                this.emitter.emit('reaction', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    reaction: payload.value.reaction,
-                    messageId: payload.value.refEventId,
-                    createdAt,
-                })
-                break
-            }
-            case 'edit': {
-                // TODO: framework doesnt handle non-text edits
-                if (payload.value.post?.content.case !== 'text') break
-                const mentions = parseMentions(payload.value.post?.content.value.mentions)
-                const isMentioned = mentions.some((m) => m.userId === this.botId)
-                debug('emit:messageEdit', {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    channelId: streamId,
-                    refEventId: payload.value.refEventId,
-                    messagePreview: payload.value.post?.content.value.body.substring(0, 50),
-                    isMentioned,
-                })
-                this.emitter.emit('messageEdit', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    refEventId: payload.value.refEventId,
-                    message: payload.value.post?.content.value.body,
-                    mentions,
-                    isMentioned,
-                    createdAt,
-                    replyId: payload.value.post?.replyId,
-                    threadId: payload.value.post?.threadId,
-                })
-                break
-            }
-            case 'redaction': {
-                debug('emit:redaction', {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    channelId: streamId,
-                    refEventId: payload.value.refEventId,
-                })
-                this.emitter.emit('redaction', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    refEventId: payload.value.refEventId,
-                    createdAt,
-                })
-                break
-            }
-            default:
-                logNever(payload)
-        }
     }
 
     /**
@@ -922,14 +311,9 @@ export class Bot<
      * @param opts - The options for the message
      */
     async sendMessage(streamId: string, message: string, opts?: PostMessageOpts) {
-        const result = await this.client.sendMessage(
-            streamId,
-            message,
-            opts,
-            this.currentMessageTags,
-        )
+        const tags = this.currentMessageTags
         this.currentMessageTags = undefined
-        return result
+        return this.client.sendMessage(streamId, message, opts, tags)
     }
 
     /**
@@ -965,9 +349,8 @@ export class Bot<
      * @param streamId - Id of the stream. Usually channelId or userId
      * @param refEventId - The eventId of the event to remove
      */
-    async adminRemoveEvent(streamId: string, refEventId: string) {
-        const result = await this.client.adminRemoveEvent(streamId, refEventId)
-        return result
+    async adminRemoveEvent(...params: AdminRemoveEventParams) {
+        return this.client.adminRemoveEvent(...params)
     }
 
     /**
@@ -1062,12 +445,9 @@ export class Bot<
         return result
     }
 
-    async hasAdminPermission(userId: string, spaceId: string) {
-        return this.client.hasAdminPermission(userId, spaceId)
-    }
-
-    async checkPermission(streamId: string, userId: string, permission: Permission) {
-        return this.client.checkPermission(streamId, userId, permission)
+    async hasAdminPermission(params: HasAdminPermissionParams) {
+        const result = await this.client.hasAdminPermission(...params)
+        return result
     }
 
     /**
@@ -1076,8 +456,9 @@ export class Bot<
      * @param userId - The userId of the user to ban
      * @param spaceId - The spaceId of the space to ban the user in
      */
-    async ban(userId: string, spaceId: string) {
-        return this.client.ban(userId, spaceId)
+    async ban(params: BanParams) {
+        const result = await this.client.ban(...params)
+        return result
     }
 
     /**
@@ -1086,8 +467,9 @@ export class Bot<
      * @param userId - The userId of the user to unban
      * @param spaceId - The spaceId of the space to unban the user in
      */
-    async unban(userId: string, spaceId: string) {
-        return this.client.unban(userId, spaceId)
+    async unban(params: UnbanParams) {
+        const result = await this.client.unban(...params)
+        return result
     }
 
     /** Sends a tip to a user by looking up their smart account.
@@ -1106,12 +488,12 @@ export class Bot<
         return result
     }
 
-    async pinMessage(streamId: string, eventId: string, streamEvent: StreamEvent) {
-        return this.client.pinMessage(streamId, eventId, streamEvent)
+    async pinMessage(...params: PinMessageParams) {
+        return this.client.pinMessage(...params)
     }
 
-    async unpinMessage(streamId: string, eventId: string) {
-        return this.client.unpinMessage(streamId, eventId)
+    async unpinMessage(...params: UnpinMessageParams) {
+        return this.client.unpinMessage(...params)
     }
 
     /**
@@ -1121,8 +503,8 @@ export class Bot<
      * @param params - The parameters for the channel creation
      * @returns The channel ID
      */
-    async createChannel(spaceId: string, params: CreateChannelParams) {
-        return this.client.createChannel(spaceId, params)
+    async createChannel(...params: CreateChannelActionParams) {
+        return this.client.createChannel(...params)
     }
 
     /**
@@ -1130,8 +512,8 @@ export class Bot<
      * @param spaceId - The space ID to get the roles for
      * @returns The roles
      */
-    async getRoles(spaceId: string) {
-        return this.client.getRoles(spaceId)
+    async getRoles(...params: GetRolesParams) {
+        return this.client.getRoles(...params)
     }
 
     /**
@@ -1342,1101 +724,3 @@ export class Bot<
         return `${origin}/.well-known/agent-metadata.json`
     }
 }
-
-export const makeTownsBot = async <
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
->(
-    appPrivateData: string,
-    jwtSecretBase64: string,
-    opts: {
-        baseRpcUrl?: string
-        commands?: Commands
-        identity?: BotIdentityConfig
-    } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
-) => {
-    const { baseRpcUrl, ...clientOpts } = opts
-    let appAddress: Address | undefined
-    const {
-        privateKey,
-        encryptionDevice,
-        env,
-        appAddress: appAddressFromPrivateData,
-    } = parseAppPrivateData(appPrivateData)
-    if (!env) {
-        throw new Error('Failed to parse APP_PRIVATE_DATA')
-    }
-    if (appAddressFromPrivateData) {
-        appAddress = appAddressFromPrivateData
-    }
-    const account = privateKeyToAccount(privateKey as Hex)
-
-    const baseConfig = townsEnv().makeBaseChainConfig(env)
-    const getChain = (chainId: number) => {
-        if (chainId === base.id) return base
-        if (chainId === foundry.id) return foundry
-        return baseSepolia
-    }
-    const chain = getChain(baseConfig.chainConfig.chainId)
-    const viem = createWalletClient({
-        account,
-        transport: baseRpcUrl
-            ? http(baseRpcUrl, { batch: true })
-            : http(baseConfig.rpcUrl, { batch: true }),
-        chain,
-    })
-
-    const spaceDapp = new SpaceDapp(
-        baseConfig.chainConfig,
-        new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
-    )
-    if (!appAddress) {
-        appAddress = await readContract(viem, {
-            address: baseConfig.chainConfig.addresses.appRegistry,
-            abi: appRegistryAbi,
-            functionName: 'getAppByClient',
-            args: [account.address],
-        })
-    }
-
-    const client = await createTownsClient({
-        privateKey,
-        env,
-        encryptionDevice: {
-            fromExportedDevice: encryptionDevice,
-        },
-        ...clientOpts,
-    }).then((x) =>
-        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
-    )
-
-    if (opts.commands) {
-        client
-            .appServiceClient()
-            .then((appRegistryClient) =>
-                appRegistryClient
-                    .updateAppMetadata({
-                        appId: bin_fromHexString(account.address),
-                        updateMask: ['slash_commands'],
-                        metadata: {
-                            slashCommands: opts.commands,
-                        },
-                    })
-                    .catch((err) => {
-                        // eslint-disable-next-line no-console
-                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
-                    }),
-            )
-            .catch((err) => {
-                // eslint-disable-next-line no-console
-                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
-            })
-    }
-
-    await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(
-        client,
-        viem,
-        jwtSecretBase64,
-        appAddress,
-        opts.commands,
-        opts.identity,
-    )
-}
-
-const buildBotActions = (
-    client: ClientV2,
-    viem: WalletClient<Transport, Chain, Account>,
-    spaceDapp: SpaceDapp,
-    appAddress: Address,
-) => {
-    const CHUNK_SIZE = 1200000 // 1.2MB max per chunk (including auth tag)
-
-    const createChunkedMediaAttachment = async (
-        attachment: ChunkedMediaAttachment,
-    ): Promise<PlainMessage<ChannelMessage_Post_Attachment>> => {
-        let data: Uint8Array
-        let mimetype: string
-
-        if (attachment.data instanceof Blob) {
-            const buffer = await attachment.data.arrayBuffer()
-            data = new Uint8Array(buffer)
-            mimetype = attachment.data.type
-        } else {
-            data = attachment.data
-            if ('mimetype' in attachment) {
-                mimetype = attachment.mimetype
-            } else {
-                throw new Error('mimetype is required for Uint8Array data')
-            }
-        }
-
-        let width = attachment.width || 0
-        let height = attachment.height || 0
-
-        if (mimetype.startsWith('image/') && (!width || !height)) {
-            const dimensions = imageSize(data)
-            width = dimensions.width || 0
-            height = dimensions.height || 0
-        }
-
-        const { chunks, secretKey } = await encryptChunkedAESGCM(data, CHUNK_SIZE)
-        const chunkCount = chunks.length
-
-        if (chunkCount === 0) {
-            throw new Error('No media chunks generated')
-        }
-
-        // TODO: Implement thumbnail generation with sharp
-        const thumbnail = undefined
-
-        const streamId = makeUniqueMediaStreamId()
-        const events = await Promise.all([
-            makeEvent(
-                client.signerContext,
-                make_MediaPayload_Inception({
-                    streamId: streamIdAsBytes(streamId),
-                    userId: addressFromUserId(client.userId),
-                    chunkCount,
-                    perChunkEncryption: true,
-                }),
-            ),
-            makeEvent(
-                client.signerContext,
-                make_MediaPayload_Chunk({
-                    data: chunks[0].ciphertext,
-                    chunkIndex: 0,
-                    iv: chunks[0].iv,
-                }),
-            ),
-        ])
-        const mediaStreamResponse = await client.rpc.createMediaStream({
-            events,
-            streamId: streamIdAsBytes(streamId),
-        })
-
-        if (!mediaStreamResponse?.nextCreationCookie) {
-            throw new Error('Failed to create media stream')
-        }
-
-        if (chunkCount > 1) {
-            let cc = create(CreationCookieSchema, mediaStreamResponse.nextCreationCookie)
-            for (let chunkIndex = 1; chunkIndex < chunkCount; chunkIndex++) {
-                const chunkEvent = await makeEvent(
-                    client.signerContext,
-                    make_MediaPayload_Chunk({
-                        data: chunks[chunkIndex].ciphertext,
-                        chunkIndex: chunkIndex,
-                        iv: chunks[chunkIndex].iv,
-                    }),
-                    cc.prevMiniblockHash,
-                )
-                const result = await client.rpc.addMediaEvent({
-                    event: chunkEvent,
-                    creationCookie: cc,
-                    last: chunkIndex === chunkCount - 1,
-                })
-
-                if (!result?.creationCookie) {
-                    throw new Error('Failed to send media chunk')
-                }
-
-                cc = create(CreationCookieSchema, result.creationCookie)
-            }
-        }
-
-        const mediaStreamInfo = { creationCookie: mediaStreamResponse.nextCreationCookie }
-
-        return {
-            content: {
-                case: 'chunkedMedia',
-                value: create(ChunkedMediaSchema, {
-                    info: {
-                        filename: attachment.filename,
-                        mimetype: mimetype,
-                        widthPixels: width,
-                        heightPixels: height,
-                        sizeBytes: BigInt(data.length),
-                    },
-                    streamId: streamIdAsString(mediaStreamInfo.creationCookie.streamId),
-                    encryption: {
-                        case: 'aesgcm',
-                        value: {
-                            iv: new Uint8Array(0),
-                            secretKey: secretKey,
-                        },
-                    },
-                    thumbnail,
-                }),
-            },
-        }
-    }
-
-    const createImageAttachmentFromURL = async (
-        attachment: ImageAttachment,
-    ): Promise<PlainMessage<ChannelMessage_Post_Attachment> | null> => {
-        try {
-            const response = await fetch(attachment.url)
-            if (!response.ok) {
-                return null
-            }
-            const contentType = response.headers.get('content-type')
-            if (!contentType || !contentType.startsWith('image/')) {
-                // eslint-disable-next-line no-console
-                console.warn(
-                    `A non-image URL attachment was provided. ${attachment.url} (Content-Type: ${contentType || 'unknown'})`,
-                )
-                return null
-            }
-            const bytes = await response.bytes()
-            const dimensions = imageSize(bytes)
-            const width = dimensions.width || 0
-            const height = dimensions.height || 0
-            const image = create(ChannelMessage_Post_Content_ImageSchema, {
-                title: attachment.alt || '',
-                info: create(ChannelMessage_Post_Content_Image_InfoSchema, {
-                    url: attachment.url,
-                    mimetype: contentType,
-                    width,
-                    height,
-                }),
-            })
-
-            return {
-                content: {
-                    case: 'image',
-                    value: image,
-                },
-            }
-        } catch {
-            return null
-        }
-    }
-
-    const createLinkAttachment = (
-        attachment: LinkAttachment,
-    ): PlainMessage<ChannelMessage_Post_Attachment> => {
-        return create(ChannelMessage_Post_AttachmentSchema, {
-            content: {
-                case: 'unfurledUrl',
-                value: {
-                    url: attachment.url,
-                    image: attachment.image,
-                    title: attachment.title ?? '',
-                    description: attachment.description ?? '',
-                },
-            },
-        })
-    }
-
-    const createTickerAttachment = (
-        attachment: TickerAttachment,
-    ): PlainMessage<ChannelMessage_Post_Attachment> => {
-        return create(ChannelMessage_Post_AttachmentSchema, {
-            content: {
-                case: 'ticker',
-                value: {
-                    address: attachment.address,
-                    chainId: attachment.chainId,
-                },
-            },
-        })
-    }
-
-    const createMiniAppAttachment = (
-        attachment: MiniAppAttachment,
-    ): PlainMessage<ChannelMessage_Post_Attachment> => {
-        return create(ChannelMessage_Post_AttachmentSchema, {
-            content: {
-                case: 'miniapp',
-                value: { url: attachment.url },
-            },
-        })
-    }
-
-    const ensureOutboundSession = async (
-        streamId: string,
-        encryptionAlgorithm: GroupEncryptionAlgorithmId,
-        toUserIds: string[],
-        miniblockInfo: { miniblockNum: bigint; miniblockHash: Uint8Array },
-    ) => {
-        if (!(await client.crypto.hasOutboundSession(streamId, encryptionAlgorithm))) {
-            // ATTEMPT 1: Get session from app service
-            const appService = await client.appServiceClient()
-            try {
-                const sessionResp = await appService.getSession({
-                    appId: userIdToAddress(client.userId),
-                    identifier: {
-                        case: 'streamId',
-                        value: streamIdAsBytes(streamId),
-                    },
-                })
-                if (sessionResp.groupEncryptionSessions) {
-                    const parsedEvent = await unpackEnvelope(
-                        sessionResp.groupEncryptionSessions,
-                        client.unpackEnvelopeOpts,
-                    )
-                    check(
-                        parsedEvent.event.payload.case === 'userInboxPayload' &&
-                            parsedEvent.event.payload.value.content.case ===
-                                'groupEncryptionSessions',
-                        'invalid event payload',
-                    )
-                    await client.importGroupEncryptionSessions({
-                        streamId,
-                        sessions: parsedEvent.event.payload.value.content.value,
-                    })
-                    // EARLY RETURN
-                    return
-                }
-            } catch {
-                // ignore error (should log)
-            }
-            // ATTEMPT 2: Create new session
-            await client.crypto.ensureOutboundSession(streamId, encryptionAlgorithm, {
-                shareShareSessionTimeoutMs: 5000,
-                priorityUserIds: [client.userId, ...toUserIds],
-                miniblockInfo,
-            })
-        }
-    }
-
-    const sendMessageEvent = async ({
-        streamId,
-        payload,
-        tags,
-        ephemeral,
-    }: {
-        streamId: string
-        payload: ChannelMessage
-        tags?: PlainMessage<Tags>
-        ephemeral?: boolean
-    }) => {
-        const miniblockInfo = await client.getMiniblockInfo(streamId)
-        const eventTags = {
-            ...unsafe_makeTags(payload),
-            participatingUserAddresses: tags?.participatingUserAddresses || [],
-            threadId: tags?.threadId || undefined,
-        }
-        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
-            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
-            : client.defaultGroupEncryptionAlgorithm
-
-        await ensureOutboundSession(
-            streamId,
-            encryptionAlgorithm,
-            Array.from(
-                new Set([
-                    ...eventTags.participatingUserAddresses.map((x) => userIdFromAddress(x)),
-                    ...eventTags.mentionedUserAddresses.map((x) => userIdFromAddress(x)),
-                ]),
-            ),
-            miniblockInfo,
-        )
-
-        const message = await client.crypto.encryptGroupEvent(
-            streamId,
-            toBinary(ChannelMessageSchema, payload),
-            encryptionAlgorithm,
-        )
-        message.refEventId = getRefEventIdFromChannelMessage(payload)
-
-        if (!isChannelStreamId(streamId)) {
-            throw new Error(
-                `Invalid stream ID type: ${streamId} - only channel streams are supported`,
-            )
-        }
-        const eventPayload = make_ChannelPayload_Message(message)
-        return client.sendEvent(streamId, eventPayload, eventTags, ephemeral)
-    }
-
-    const sendKeySolicitation = async (streamId: string, sessionIds: string[]) => {
-        const encryptionDevice = client.crypto.getUserDevice()
-        const missingSessionIds = sessionIds.filter((sessionId) => sessionId !== '')
-
-        return client.sendEvent(
-            streamId,
-            make_MemberPayload_KeySolicitation({
-                deviceKey: encryptionDevice.deviceKey,
-                fallbackKey: encryptionDevice.fallbackKey,
-                isNewDevice: missingSessionIds.length === 0,
-                sessionIds: missingSessionIds,
-            }),
-        )
-    }
-
-    const uploadDeviceKeys = async () => {
-        const streamId = makeUserMetadataStreamId(client.userId)
-        const encryptionDevice = client.crypto.getUserDevice()
-
-        return client.sendEvent(
-            streamId,
-            make_UserMetadataPayload_EncryptionDevice({
-                ...encryptionDevice,
-            }),
-        )
-    }
-
-    const sendMessage = async (
-        streamId: string,
-        message: string,
-        opts?: PostMessageOpts,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        const processedAttachments: Array<PlainMessage<ChannelMessage_Post_Attachment> | null> = []
-        if (opts?.attachments && opts.attachments.length > 0) {
-            for (const attachment of opts.attachments) {
-                switch (attachment.type) {
-                    case 'image': {
-                        const result = await createImageAttachmentFromURL(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'chunked': {
-                        const result = await createChunkedMediaAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'link': {
-                        const result = createLinkAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'ticker': {
-                        const result = createTickerAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'miniapp': {
-                        const result = createMiniAppAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    default:
-                        logNever(attachment)
-                }
-            }
-        }
-
-        const payload = create(ChannelMessageSchema, {
-            payload: {
-                case: 'post',
-                value: {
-                    threadId: opts?.threadId,
-                    replyId: opts?.replyId,
-                    replyPreview: opts?.replyId ? '🙈' : undefined,
-                    threadPreview: opts?.threadId ? '🙉' : undefined,
-                    content: {
-                        case: 'text',
-                        value: {
-                            body: message,
-                            attachments: processedAttachments.filter((x) => x !== null),
-                            mentions: opts?.mentions || [],
-                        },
-                    },
-                },
-            },
-        })
-        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
-    }
-
-    const editMessage = async (
-        streamId: string,
-        messageId: string,
-        message: string,
-        opts?: PostMessageOpts,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        const processedAttachments: Array<PlainMessage<ChannelMessage_Post_Attachment> | null> = []
-        if (opts?.attachments && opts.attachments.length > 0) {
-            for (const attachment of opts.attachments) {
-                switch (attachment.type) {
-                    case 'image': {
-                        const result = await createImageAttachmentFromURL(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'chunked': {
-                        const result = await createChunkedMediaAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'link': {
-                        const result = createLinkAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'ticker': {
-                        const result = createTickerAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    case 'miniapp': {
-                        const result = createMiniAppAttachment(attachment)
-                        processedAttachments.push(result)
-                        break
-                    }
-                    default:
-                        logNever(attachment)
-                }
-            }
-        }
-        const payload = create(ChannelMessageSchema, {
-            payload: {
-                case: 'edit',
-                value: {
-                    refEventId: messageId,
-                    post: {
-                        threadId: opts?.threadId,
-                        replyId: opts?.replyId,
-                        replyPreview: opts?.replyId ? '🙈' : undefined,
-                        threadPreview: opts?.threadId ? '🙉' : undefined,
-                        content: {
-                            case: 'text',
-                            value: {
-                                body: message,
-                                mentions: opts?.mentions || [],
-                                attachments: processedAttachments.filter((x) => x !== null),
-                            },
-                        },
-                    },
-                },
-            },
-        })
-        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
-    }
-
-    const sendReaction = async (
-        streamId: string,
-        messageId: string,
-        reaction: string,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        const payload = create(ChannelMessageSchema, {
-            payload: { case: 'reaction', value: { refEventId: messageId, reaction } },
-        })
-        return sendMessageEvent({ streamId, payload, tags })
-    }
-
-    /**
-     * Used to send a typed message into a channel stream.
-     * The message will be serialized to JSON using superjson and then encoded to bytes.
-     * Clients can agree on the schema to deserialize the message by the typeUrl.
-     * @param streamId - The stream ID to send the message to.
-     * @param typeUrl - A schema type URL for the message
-     * @param message - The message to send as raw bytes.
-     * @param tags - The tags to send with the message.
-     * @returns The event ID of the sent message.
-     */
-    async function sendGM<Schema extends StandardSchemaV1>(
-        streamId: string,
-        typeUrl: string,
-        schema: Schema,
-        data: InferInput<Schema>,
-        opts?: MessageOpts,
-        tags?: PlainMessage<Tags>,
-    ): ReturnType<typeof sendMessageEvent> {
-        const result = await schema['~standard'].validate(data)
-        if ('issues' in result && result.issues) {
-            throw new Error(
-                `Schema validation failed: ${result.issues.map((issue) => issue.message).join(', ')}`,
-            )
-        }
-        const jsonString = superjsonStringify(result.value)
-        const jsonBytesMessage = new TextEncoder().encode(jsonString)
-        const payload = create(ChannelMessageSchema, {
-            payload: {
-                case: 'post',
-                value: {
-                    threadId: opts?.threadId,
-                    replyId: opts?.replyId,
-                    replyPreview: opts?.replyId ? '🙈' : undefined,
-                    threadPreview: opts?.threadId ? '🙉' : undefined,
-                    content: { case: 'gm', value: { typeUrl: typeUrl, value: jsonBytesMessage } },
-                },
-            },
-        })
-        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
-    }
-
-    /**
-     * Used to send a custom message into a channel stream.
-     * The messages will be a raw bytes.
-     * Clients can agree on the schema to deserialize the message by the typeUrl.
-     * @param streamId - The stream ID to send the message to.
-     * @param typeUrl - A schema type URL for the message
-     * @param message - The message to send as raw bytes.
-     * @param tags - The tags to send with the message.
-     * @returns The event ID of the sent message.
-     */
-    const sendRawGM = async (
-        streamId: string,
-        typeUrl: string,
-        message: Uint8Array,
-        opts?: MessageOpts,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        const payload = create(ChannelMessageSchema, {
-            payload: {
-                case: 'post',
-                value: {
-                    threadId: opts?.threadId,
-                    replyId: opts?.replyId,
-                    replyPreview: opts?.replyId ? '🙈' : undefined,
-                    threadPreview: opts?.threadId ? '🙉' : undefined,
-                    content: { case: 'gm', value: { typeUrl: typeUrl, value: message } },
-                },
-            },
-        })
-        return sendMessageEvent({ streamId, payload, tags, ephemeral: opts?.ephemeral })
-    }
-
-    const removeEvent = async (streamId: string, messageId: string, tags?: PlainMessage<Tags>) => {
-        const payload = create(ChannelMessageSchema, {
-            payload: { case: 'redaction', value: { refEventId: messageId } },
-        })
-        return sendMessageEvent({ streamId, payload, tags })
-    }
-
-    const adminRemoveEvent = async (streamId: string, messageId: string) => {
-        return client.sendEvent(
-            streamId,
-            make_ChannelPayload_Redaction(bin_fromHexString(messageId)),
-            {
-                participatingUserAddresses: [],
-                threadId: undefined,
-                messageInteractionType: MessageInteractionType.REDACTION,
-                groupMentionTypes: [],
-                mentionedUserAddresses: [],
-            },
-        )
-    }
-
-    const hasAdminPermission = async (userId: string, spaceId: string): Promise<boolean> => {
-        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
-        // If you can ban, you're probably an "admin"
-        return spaceDapp
-            .isEntitledToSpace(spaceId, userAddress, Permission.ModifyBanning)
-            .catch(() => false)
-    }
-
-    const checkPermission = async (
-        streamId: string,
-        userId: string,
-        permission: Permission,
-    ): Promise<boolean> => {
-        const userAddress = userId.startsWith('0x') ? userId : `0x${userId}`
-        if (isChannelStreamId(streamId)) {
-            const spaceId = spaceIdFromChannelId(streamId)
-            return spaceDapp
-                .isEntitledToChannel(spaceId, streamId, userAddress, permission)
-                .catch(() => false)
-        } else {
-            return spaceDapp.isEntitledToSpace(streamId, userAddress, permission).catch(() => false)
-        }
-    }
-
-    /**
-     * Ban a user from a space
-     * Requires Permission.ModifyBanning to execute this action
-     */
-    const ban = async (userId: string, spaceId: string) => {
-        const tx = await spaceDapp.banWalletAddress(spaceId, userId, client.wallet)
-        const receipt = await tx.wait()
-        return { txHash: receipt.transactionHash }
-    }
-
-    /**
-     * Unban a user from a space
-     * Requires Permission.ModifyBanning to execute this action
-     */
-    const unban = async (userId: string, spaceId: string) => {
-        const tx = await spaceDapp.unbanWalletAddress(spaceId, userId, client.wallet)
-        const receipt = await tx.wait()
-        return { txHash: receipt.transactionHash }
-    }
-
-    /**
-     * Pin a message to a stream
-     * @param streamId - The stream ID to pin the message to
-     * @param eventId - The event ID of the message to pin
-     * @param streamEvent - The stream event to pin
-     * @returns The event ID of the pinned message
-     */
-    const pinMessage = async (streamId: string, eventId: string, streamEvent: StreamEvent) => {
-        return client.sendEvent(
-            streamId,
-            make_MemberPayload_Pin(bin_fromHexString(eventId), streamEvent),
-        )
-    }
-
-    /**
-     * Unpin a message from a stream
-     * @param streamId - The stream ID to unpin the message from
-     * @param eventId - The event ID of the message to unpin
-     * @returns The event ID of the unpinned message
-     */
-    const unpinMessage = async (streamId: string, eventId: string) => {
-        return client.sendEvent(streamId, make_MemberPayload_Unpin(bin_fromHexString(eventId)))
-    }
-
-    const getChannelSettings = async (channelId: string) => {
-        const spaceId = spaceIdFromChannelId(channelId)
-        const streamView = await client.getStream(spaceId)
-        const channel = streamView.spaceContent.spaceChannelsMetadata[channelId]
-        return channel
-    }
-
-    const sendInteractionRequest = async (
-        streamId: string,
-        content: PlainMessage<InteractionRequestPayload['content']>,
-        recipient?: Uint8Array,
-        opts?: MessageOpts,
-        tags?: PlainMessage<Tags>,
-    ) => {
-        // Get encryption settings (same as sendMessageEvent)
-        const miniblockInfo = await client.getMiniblockInfo(streamId)
-        const encryptionAlgorithm = miniblockInfo.encryptionAlgorithm?.algorithm
-            ? (miniblockInfo.encryptionAlgorithm.algorithm as GroupEncryptionAlgorithmId)
-            : client.defaultGroupEncryptionAlgorithm
-
-        await ensureOutboundSession(
-            streamId,
-            encryptionAlgorithm,
-            recipient ? [userIdFromAddress(recipient)] : [],
-            miniblockInfo,
-        )
-
-        // Create payload with content and encryption device for response
-        const payload = create(InteractionRequestPayloadSchema, {
-            encryptionDevice: client.crypto.getUserDevice(),
-            content: content,
-        })
-
-        // Encrypt using group encryption (same as messages)
-        const encryptedData = await client.crypto.encryptGroupEvent(
-            streamId,
-            toBinary(InteractionRequestPayloadSchema, payload),
-            encryptionAlgorithm,
-        )
-
-        // Create the request matching InteractionResponse structure
-        const request: PlainMessage<InteractionRequest> = {
-            recipient: recipient,
-            encryptedData: encryptedData,
-        }
-
-        // Send as InteractionRequest
-        const eventPayload = make_ChannelPayload_InteractionRequest(request)
-        return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
-    }
-
-    /**
-     * Send a blockchain transaction to the stream
-     * @param streamId - The stream ID to send the transaction to
-     * @param chainId - The chain ID where the transaction occurred
-     * @param receipt - The transaction receipt from the blockchain
-     * @param content - The transaction content (tip, transfer, etc.)
-     * @returns The transaction hash and event ID
-     */
-    const sendBlockchainTransaction = async (
-        chainId: number,
-        receipt: TransactionReceipt,
-        content?: PlainMessage<BlockchainTransaction>['content'],
-        tags?: PlainMessage<Tags>,
-    ): Promise<{ txHash: string; eventId: string }> => {
-        const transaction = create(BlockchainTransactionSchema, {
-            receipt: {
-                chainId: BigInt(chainId),
-                transactionHash: bin_fromHexString(receipt.transactionHash),
-                blockNumber: receipt.blockNumber,
-                to: bin_fromHexString(receipt.to || zeroAddress),
-                from: bin_fromHexString(receipt.from),
-                logs: receipt.logs.map((log) => ({
-                    address: bin_fromHexString(log.address),
-                    topics: log.topics.map((topic) => bin_fromHexString(topic)),
-                    data: bin_fromHexString(log.data),
-                })),
-            },
-            solanaReceipt: undefined,
-            content: content ?? { case: undefined },
-        })
-
-        const result = await client.sendEvent(
-            makeUserStreamId(client.userId),
-            make_UserPayload_BlockchainTransaction(transaction),
-            tags,
-        )
-        return { txHash: receipt.transactionHash, eventId: result.eventId }
-    }
-
-    /** Sends a tip to a user.
-     *  Tip will always get funds from the app account balance.
-     * @param params - Tip parameters including recipient, amount, messageId, channelId, currency.
-     * @returns The transaction hash and event ID
-     */
-    const sendTipImpl = async (
-        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency'> & {
-            currency?: Address
-            receiverUserId: string
-        },
-        tags?: PlainMessage<Tags>,
-    ): Promise<{ txHash: string; eventId: string }> => {
-        const currency = params.currency ?? ETH_ADDRESS
-        const isEth = currency === ETH_ADDRESS
-        const { receiver, amount, messageId, channelId } = params
-        const spaceId = spaceIdFromChannelId(channelId)
-        const tokenId = await spaceDapp.getTokenIdOfOwner(spaceId, receiver)
-        if (!tokenId) {
-            throw new Error(`No token ID found for user ${receiver} in space ${spaceId}`)
-        }
-
-        const recipientType = TipRecipientType.Member
-
-        const metadataData = encodeAbiParameters(
-            [{ type: 'bytes32' }, { type: 'bytes32' }, { type: 'uint256' }],
-            [`0x${messageId}`, `0x${channelId}`, BigInt(tokenId)],
-        )
-
-        // TODO: Get the modular account address for the receiver (towns app case)
-        const encodedData = encodeAbiParameters(
-            [
-                {
-                    type: 'tuple',
-                    components: [
-                        { name: 'receiver', type: 'address' },
-                        { name: 'tokenId', type: 'uint256' },
-                        { name: 'currency', type: 'address' },
-                        { name: 'amount', type: 'uint256' },
-                        {
-                            name: 'metadata',
-                            type: 'tuple',
-                            components: [
-                                { name: 'messageId', type: 'bytes32' },
-                                { name: 'channelId', type: 'bytes32' },
-                                { name: 'data', type: 'bytes' },
-                            ],
-                        },
-                    ],
-                },
-            ],
-            [
-                {
-                    receiver,
-                    amount,
-                    currency,
-                    tokenId: BigInt(tokenId),
-                    metadata: {
-                        messageId: `0x${messageId}`,
-                        channelId: `0x${channelId}`,
-                        data: metadataData,
-                    },
-                },
-            ],
-        )
-        const hash = await execute(viem, {
-            address: appAddress,
-            calls: [
-                {
-                    abi: tippingFacetAbi,
-                    to: SpaceAddressFromSpaceId(spaceId),
-                    functionName: 'sendTip',
-                    args: [recipientType, encodedData],
-                    value: isEth ? amount : undefined,
-                },
-            ],
-        })
-
-        const receipt = await waitForTransactionReceipt(viem, { hash, confirmations: 3 })
-        if (receipt.status !== 'success') {
-            throw new Error(`Tip transaction failed: ${hash}`)
-        }
-        const tipEvent = parseEventLogs({
-            abi: tippingFacetAbi,
-            logs: receipt.logs,
-            eventName: 'TipSent',
-        })[0]
-
-        return sendBlockchainTransaction(
-            viem.chain.id,
-            receipt,
-            {
-                case: 'tip',
-                value: {
-                    event: {
-                        tokenId: BigInt(tokenId),
-                        currency: bin_fromHexString(tipEvent.args.currency),
-                        sender: bin_fromHexString(tipEvent.args.sender),
-                        receiver: bin_fromHexString(tipEvent.args.receiver),
-                        amount: tipEvent.args.amount,
-                        messageId: bin_fromHexString(messageId),
-                        channelId: bin_fromHexString(channelId),
-                    },
-                    toUserAddress: bin_fromHexString(params.receiverUserId),
-                },
-            },
-            {
-                groupMentionTypes: tags?.groupMentionTypes || [],
-                mentionedUserAddresses: tags?.mentionedUserAddresses || [],
-                threadId: tags?.threadId,
-                appClientAddress: tags?.appClientAddress,
-                messageInteractionType: MessageInteractionType.TIP,
-                participatingUserAddresses: [bin_fromHexString(params.receiverUserId)],
-            },
-        )
-    }
-
-    /** Sends a tip to a user by looking up their smart account by userId.
-     *  Tip will always get funds from the app account balance.
-     * @param params - Tip parameters including userId, amount, messageId, channelId, currency.
-     * @returns The transaction hash and event ID
-     */
-    const sendTip = async (
-        params: Omit<SendTipMemberParams, 'spaceId' | 'tokenId' | 'currency' | 'receiver'> & {
-            currency?: Address
-            userId: Address
-        },
-        tags?: PlainMessage<Tags>,
-    ): Promise<{ txHash: string; eventId: string }> => {
-        const smartAccountAddress = await getSmartAccountFromUserIdImpl(
-            client.config.base.chainConfig.addresses.spaceFactory,
-            viem,
-            params.userId,
-        )
-
-        return sendTipImpl(
-            {
-                ...params,
-                receiver: smartAccountAddress ?? params.userId,
-                receiverUserId: params.userId,
-            },
-            tags,
-        )
-    }
-
-    const getRoles = async (spaceId: string) => {
-        const roles = await readContract(viem, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: rolesFacetAbi,
-            functionName: 'getRoles',
-        })
-        return roles.filter((role) => role.name !== 'Owner')
-    }
-
-    const createChannelTx = async (
-        spaceId: string,
-        channelId: string,
-        params: CreateChannelParams,
-    ) => {
-        const roles = await getRoles(spaceId)
-        const allRolesThatCanRead = roles.filter((role) =>
-            role.permissions.includes(Permission.Read),
-        )
-        const args: [`0x${string}`, string, bigint[]] = [
-            channelId.startsWith('0x') ? (channelId as `0x${string}`) : `0x${channelId}`,
-            JSON.stringify({ name: params.name, description: params.description ?? '' }),
-            allRolesThatCanRead.map((role) => role.id),
-        ] as const
-
-        return writeContract(viem, {
-            address: SpaceAddressFromSpaceId(spaceId),
-            abi: channelsFacetAbi,
-            functionName: 'createChannel',
-            args,
-        })
-    }
-
-    const createChannel = async (spaceId: string, params: CreateChannelParams) => {
-        const channelId = makeUniqueChannelStreamId(spaceId)
-        const hash = await createChannelTx(spaceId, channelId, params)
-        const receipt = await waitForTransactionReceipt(viem, { hash })
-        if (receipt.status !== 'success') {
-            throw new Error(`Channel creation transaction failed: ${hash}`)
-        }
-        const events = await Promise.all([
-            makeEvent(
-                client.signerContext,
-                make_ChannelPayload_Inception({
-                    streamId: streamIdAsBytes(channelId),
-                    spaceId: streamIdAsBytes(spaceId),
-                    settings: undefined,
-                    channelSettings: {
-                        autojoin: params.autojoin ?? false,
-                        hideUserJoinLeaveEvents: params.hideUserJoinLeaveEvents ?? false,
-                    },
-                }),
-            ),
-            makeEvent(
-                client.signerContext,
-                make_MemberPayload_Membership2({
-                    userId: client.userId,
-                    op: MembershipOp.SO_JOIN,
-                    initiatorId: client.userId,
-                }),
-            ),
-        ])
-        // the rpc client will retry a few times on failure, but if this doesn't succeed, the channel will exist on chain but not in the nodes
-        await client.rpc.createStream({
-            streamId: streamIdAsBytes(channelId),
-            events: events,
-            metadata: {
-                appAddress: bin_fromHexString(appAddress),
-            },
-        })
-        return channelId
-    }
-
-    return {
-        sendMessage,
-        editMessage,
-        sendReaction,
-        sendInteractionRequest,
-        sendGM,
-        sendRawGM,
-        removeEvent,
-        adminRemoveEvent,
-        sendKeySolicitation,
-        uploadDeviceKeys,
-        hasAdminPermission,
-        checkPermission,
-        ban,
-        unban,
-        pinMessage,
-        unpinMessage,
-        getChannelSettings,
-        sendTip,
-        sendBlockchainTransaction,
-        createChannel,
-        getRoles,
-    }
-}
-
-/**
- * Given a slash command message, returns the command and the arguments
- * @example
- * ```
- * /help
- * args: []
- * ```
- * ```
- * /sum 1 2
- * args: ['1', '2']
- * ```
- */
-const parseSlashCommand = (message: string): { command: string; args: string[] } => {
-    const parts = message.split(' ')
-    const commandWithSlash = parts[0]
-    const command = commandWithSlash.substring(1)
-    const args = parts.slice(1)
-    return { command, args }
-}
-
-const parseMentions = (
-    mentions: PlainMessage<ChannelMessage_Post_Mention>[],
-): Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[] =>
-    // Bots doesn't care about @channel or @role mentions
-    mentions.flatMap((m) =>
-        m.mentionBehavior.case === undefined
-            ? [{ userId: m.userId, displayName: m.displayName }]
-            : [],
-    )
