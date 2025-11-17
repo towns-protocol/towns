@@ -1653,14 +1653,7 @@ export class SpaceDapp<TProvider extends ethers.providers.Provider = ethers.prov
         return issued
     }
 
-    /**
-     * @deprecated use getMembershipStatus instead
-     */
     public async hasSpaceMembership(spaceId: string, addresses: string[]): Promise<boolean> {
-        const space = this.getSpace(spaceId)
-        if (!space) {
-            throw new Error(`Space with spaceId "${spaceId}" is not found.`)
-        }
         const membershipStatus = await this.getMembershipStatus(spaceId, addresses)
         return membershipStatus.isMember && !membershipStatus.isExpired
     }
