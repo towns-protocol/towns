@@ -75,6 +75,20 @@ describe('memberMetadataTests', () => {
         }
     })
 
+    test('clientDontHaveAppAddress', async () => {
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+
+        const streamId = makeUniqueSpaceStreamId()
+        await bobsClient.createSpace(streamId)
+        await bobsClient.waitForStream(streamId)
+
+        const streamView = bobsClient.streams.get(streamId)!.view
+        expect(streamView.getMemberMetadata().userInfo(bobsClient.userId).appAddress).toEqual(
+            undefined,
+        )
+    })
+
     test('clientCanSetDisplayNamesInDM', async () => {
         await expect(bobsClient.initializeUser()).resolves.not.toThrow()
         bobsClient.startSync()
@@ -313,6 +327,9 @@ describe('memberMetadataTests', () => {
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
             expect(streamView.getMemberMetadata()?.usernames.plaintextUsernames).toEqual(expected)
+            expect(
+                streamView.getMemberMetadata()?.userInfo(client.userId).appAddress,
+            ).toBeUndefined()
         }
     })
 

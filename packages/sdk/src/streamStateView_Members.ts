@@ -177,12 +177,19 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
                 userId: member.userId,
                 nft: member.nft!,
             }))
+        const appAddresses = Array.from(this.joined.values())
+            .filter((x) => isDefined(x.appAddress))
+            .map((member) => ({
+                userId: member.userId,
+                appAddress: member.appAddress!,
+            }))
 
         this.memberMetadata.applySnapshot(
             usernames,
             displayNames,
             ensAddresses,
             nfts,
+            appAddresses,
             cleartexts,
             encryptionEmitter,
         )
