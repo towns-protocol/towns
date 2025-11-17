@@ -21,6 +21,8 @@ contract IdentityRegistryFacet is
 {
     using CustomRevert for bytes4;
 
+    uint256 internal constant MAX_METADATA_ENTRIES = 10;
+
     function __IdentityRegistryFacet_init() external onlyInitializing {
         __IdentityRegistryFacet_init_unchained();
         __ERC721A_init_unchained("Towns Bot Agent", "TBA");
@@ -52,15 +54,17 @@ contract IdentityRegistryFacet is
         string calldata agentUri,
         MetadataEntry[] calldata metadata
     ) external returns (uint256 agentId) {
+        _verifyMetadataLength(metadata);
         _verifyAgent();
         agentId = _nextTokenId();
         _mint(msg.sender, 1);
         _setAgentUri(agentId, agentUri);
-        emit Registered(agentId, agentUri, msg.sender);
 
         for (uint256 i; i < metadata.length; ++i) {
             _setMetadata(agentId, metadata[i].metadataKey, metadata[i].metadataValue);
         }
+
+        emit Registered(agentId, agentUri, msg.sender);
     }
 
     /// @inheritdoc IIdentityRegistry
@@ -99,6 +103,12 @@ contract IdentityRegistryFacet is
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      INTERNAL FUNCTIONS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _verifyMetadataLength(MetadataEntry[] calldata metadata) internal pure {
+        uint256 metadataLength = metadata.length;
+        if (metadataLength > MAX_METADATA_ENTRIES)
+            IdentityRegistry__TooManyMetadataEntries.selector.revertWith();
+    }
 
     function _verifyAgent() internal view {
         if (_balanceOf(msg.sender) > 0)
