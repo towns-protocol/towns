@@ -107,7 +107,7 @@ setInterval(async () => {
 ## Storing State
 
 <Warning>
-In-memory storage (Map, Set) only works on always-on servers. For free hosting (Render free tier), use a database.
+In-memory storage (Map, Set) only works on always-on servers. Free hosting tiers can restart your server, losing all in-memory data. Consider storing data in a external database.
 </Warning>
 
 ### SQLite (Drizzle)
