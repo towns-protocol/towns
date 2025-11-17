@@ -36,6 +36,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/scrub"
@@ -275,7 +276,7 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
 		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
 	}
-	s.callRateMonitor = newCallRateMonitorFromConfig(s.config.HighUsageDetection, monitorLogger)
+	s.callRateMonitor = highusage.NewCallRateMonitor(s.config.HighUsageDetection, monitorLogger)
 	if s.callRateMonitor != nil {
 		s.onClose(s.callRateMonitor.Close)
 	}
