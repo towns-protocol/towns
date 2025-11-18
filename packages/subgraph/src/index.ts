@@ -1308,6 +1308,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                     type: 'tip',
                     sender: sender,
                     receiver: event.args.receiver,
+                    recipientType: 'Member',
                     currency: event.args.currency,
                     amount: event.args.amount.toString(),
                     tokenId: event.args.tokenId.toString(),
@@ -1353,6 +1354,112 @@ ponder.on('Space:Tip', async ({ event, context }) => {
         }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
+    }
+})
+
+ponder.on('Space:TipSent', async ({ event, context }) => {
+    const { sender, receiver, recipientType, currency, amount } = event.args
+
+    // Only handle bot tips (recipientType === 1)
+    if (recipientType !== 1) return
+
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        // Validate bot exists in app registry
+        const app = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, receiver),
+        })
+
+        if (!app) {
+            console.warn(
+                `⚠️  Bot tip sent to unregistered app at block ${blockNumber}. ` +
+                    `Receiver: ${receiver}, Amount: ${amount}, Currency: ${currency}`,
+            )
+        } else if (
+            !app.appId ||
+            app.appId === '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ) {
+            console.warn(
+                `⚠️  Bot tip sent to app without appId at block ${blockNumber}. ` +
+                    `Receiver: ${receiver}, AppId: ${app.appId}`,
+            )
+        }
+
+        const isETH = currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
+        const ethAmount = isETH ? amount : 0n
+
+        // Insert analytics event
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'tip',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'tip',
+                    sender,
+                    receiver,
+                    recipientType: 'Bot',
+                    currency,
+                    amount: amount.toString(),
+                },
+            })
+            .onConflictDoNothing()
+
+        // Update space bot tip volume
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
+            })
+            .where(eq(schema.space.id, spaceId))
+
+        // Update app tip metrics
+        await context.db.sql
+            .update(schema.app)
+            .set({
+                tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
+                tipsVolume: sql`COALESCE(${schema.app.tipsVolume}, 0) + ${ethAmount}`,
+            })
+            .where(eq(schema.app.address, receiver))
+
+        // Update tip leaderboard for sender (bot tips)
+        const result = await context.db.sql
+            .update(schema.tipLeaderboard)
+            .set({
+                totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
+                botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
+                botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                lastActivity: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.tipLeaderboard.user, sender),
+                    eq(schema.tipLeaderboard.spaceId, spaceId),
+                ),
+            )
+            .returning()
+
+        if (result.length === 0) {
+            await context.db.insert(schema.tipLeaderboard).values({
+                user: sender,
+                spaceId: spaceId,
+                totalSent: ethAmount,
+                tipsSentCount: 1,
+                botTipsSent: 1,
+                botTotalSent: ethAmount,
+                lastActivity: blockTimestamp,
+            })
+        }
+    } catch (error) {
+        console.error(`Error processing Space:TipSent (bot tip) at block ${blockNumber}:`, error)
     }
 })
 

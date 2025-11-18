@@ -22,11 +22,12 @@ export type TipEventData = {
     type: 'tip'
     sender: string
     receiver: string
+    recipientType: 'Member' | 'Bot'
     currency: string
     amount: string
-    tokenId: string
-    messageId: string
-    channelId: string
+    tokenId?: string
+    messageId?: string
+    channelId?: string
 }
 
 export type JoinEventData = {
@@ -60,6 +61,7 @@ export const space = onchainTable(
         totalAmountStaked: t.bigint().default(0n),
         swapVolume: t.bigint().default(0n),
         tipVolume: t.bigint().default(0n),
+        botTipVolume: t.bigint().default(0n),
         joinVolume: t.bigint().default(0n),
         memberCount: t.bigint().default(0n),
         reviewCount: t.bigint().default(0n),
@@ -258,6 +260,8 @@ export const app = onchainTable('apps', (t) => ({
     installedIn: t.hex().array().notNull(),
     lastUpdatedAt: t.bigint(),
     currentVersionId: t.hex(),
+    tipsCount: t.integer().default(0),
+    tipsVolume: t.bigint().default(0n),
 }))
 
 // app installations - tracks which apps are installed in which spaces/accounts
@@ -451,6 +455,8 @@ export const tipLeaderboard = onchainTable(
         spaceId: t.hex().notNull(),
         totalSent: t.bigint().default(0n),
         tipsSentCount: t.integer().default(0),
+        botTipsSent: t.integer().default(0),
+        botTotalSent: t.bigint().default(0n),
         lastActivity: t.bigint().notNull(),
     }),
     (table) => ({
