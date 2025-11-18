@@ -26,7 +26,7 @@ library ValidationRegistryStorage {
 
     struct Layout {
         mapping(bytes32 requestHash => ValidationStatus) validations;
-        mapping(uint256 agentId => EnumerableSetLib.Bytes32Set requestHashes) requestByAgentId;
+        mapping(uint256 agentId => EnumerableSetLib.Bytes32Set requestHashes) requestByAgent;
         mapping(address validatorAddress => EnumerableSetLib.Bytes32Set requestHashes) requestByValidator;
     }
 

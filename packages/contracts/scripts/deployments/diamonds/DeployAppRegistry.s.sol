@@ -19,6 +19,7 @@ import {DeploySpaceFactory} from "../diamonds/DeploySpaceFactory.s.sol";
 import {DeploySimpleAppBeacon} from "../diamonds/DeploySimpleAppBeacon.s.sol";
 import {DeployIdentityRegistry} from "../facets/DeployIdentityRegistry.s.sol";
 import {DeployReputationRegistry} from "../facets/DeployReputationRegistry.s.sol";
+import {DeployValidationRegistry} from "../facets/DeployValidationRegistry.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -110,6 +111,7 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("AppFactoryFacet");
         facetHelper.add("IdentityRegistryFacet");
         facetHelper.add("ReputationRegistryFacet");
+        facetHelper.add("ValidationRegistryFacet");
 
         facetHelper.deployBatch(deployer);
 
@@ -154,6 +156,13 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             DeployReputationRegistry.makeInitData(FEEDBACK_SCHEMA, RESPONSE_SCHEMA)
         );
 
+        facet = facetHelper.getDeployedAddress("ValidationRegistryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployValidationRegistry.selectors()),
+            facet,
+            DeployValidationRegistry.makeInitData()
+        );
+
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
 
         return
@@ -191,6 +200,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             }
             if (facetName.eq("IdentityRegistryFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployIdentityRegistry.selectors()));
+            }
+            if (facetName.eq("ValidationRegistryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployValidationRegistry.selectors()));
             }
         }
 

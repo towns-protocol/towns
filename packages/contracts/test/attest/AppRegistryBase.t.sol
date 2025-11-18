@@ -12,6 +12,7 @@ import {IAttestationRegistryBase} from "src/apps/facets/attest/IAttestationRegis
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
 import {ISimpleApp} from "../../src/apps/simple/app/ISimpleApp.sol";
 import {IIdentityRegistryBase} from "../../src/apps/facets/identity/IIdentityRegistry.sol";
+import {IValidationRegistry} from "../../src/apps/facets/validation/IValidationRegistry.sol";
 
 //libraries
 import {Attestation} from "@ethereum-attestation-service/eas-contracts/Common.sol";
@@ -43,6 +44,7 @@ abstract contract AppRegistryBaseTest is
     MockModule internal mockModule;
     IdentityRegistryFacet internal identityRegistry;
     IReputationRegistry internal reputationRegistry;
+    IValidationRegistry internal validationRegistry;
     ISimpleApp internal simpleApp;
 
     uint256 internal DEFAULT_INSTALL_PRICE = 0.001 ether;
@@ -62,6 +64,7 @@ abstract contract AppRegistryBaseTest is
         installer = AppInstallerFacet(appRegistry);
         identityRegistry = IdentityRegistryFacet(appRegistry);
         reputationRegistry = IReputationRegistry(appRegistry);
+        validationRegistry = IValidationRegistry(appRegistry);
         appAccount = AppAccount(everyoneSpace);
 
         DEFAULT_CLIENT = _randomAddress();

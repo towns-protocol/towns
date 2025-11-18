@@ -42,6 +42,14 @@ interface IValidationRegistryBase {
         bytes32 responseHash,
         bytes32 tag
     );
+
+    error ValidationRegistry__InvalidValidator();
+    error ValidationRegistry__InvalidAgent();
+    error ValidationRegistry__RequestAlreadyExists();
+    error ValidationRegistry__AgentNotExists();
+    error ValidationRegistry__NotAuthorized();
+    error ValidationRegistry__RequestNotFound();
+    error ValidationRegistry__InvalidResponseScore();
 }
 
 /// @title IValidationRegistry
