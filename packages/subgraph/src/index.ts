@@ -1333,6 +1333,8 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             .set({
                 totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
+                memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
+                memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1349,6 +1351,8 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 spaceId: spaceId,
                 totalSent: ethAmount,
                 tipsSentCount: 1,
+                memberTipsSent: 1,
+                memberTotalSent: ethAmount,
                 lastActivity: blockTimestamp,
             })
         }

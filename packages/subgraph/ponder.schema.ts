@@ -455,6 +455,8 @@ export const tipLeaderboard = onchainTable(
         spaceId: t.hex().notNull(),
         totalSent: t.bigint().default(0n),
         tipsSentCount: t.integer().default(0),
+        memberTipsSent: t.integer().default(0),
+        memberTotalSent: t.bigint().default(0n),
         botTipsSent: t.integer().default(0),
         botTotalSent: t.bigint().default(0n),
         lastActivity: t.bigint().notNull(),
