@@ -210,7 +210,9 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 	start := time.Unix(0, 0)
 	var getWG sync.WaitGroup
 
+	getWG.Add(1)
 	go func() {
+		defer getWG.Done()
 		for i := 0; i < 100; i++ {
 			monitor.RecordCall(user.Bytes(), start.Add(time.Millisecond*time.Duration(i)), CallTypeEvent)
 		}
