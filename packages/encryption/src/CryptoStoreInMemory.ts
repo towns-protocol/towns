@@ -8,15 +8,27 @@ import {
 import { InboundGroupSessionData } from './encryptionDevice'
 import { UserDevice } from './olmLib'
 import { CryptoStore, DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS } from './cryptoStore'
+import { LRUCache } from 'lru-cache'
+
+const DEFAULT_MAX_CRYPTO_STORE_ENTRIES = 5_000
 
 export class CryptoStoreInMemory implements CryptoStore {
-    private accounts: Map<string, AccountRecord> = new Map()
-    private outboundGroupSessions: Map<string, GroupSessionRecord> = new Map()
-    private inboundGroupSessions: Map<string, ExtendedInboundGroupSessionData> = new Map()
-    private hybridGroupSessions: Map<string, HybridGroupSessionRecord> = new Map()
-    private devices: Map<string, UserDeviceRecord> = new Map()
+    private accounts: LRUCache<string, AccountRecord>
+    private outboundGroupSessions: LRUCache<string, GroupSessionRecord>
+    private inboundGroupSessions: LRUCache<string, ExtendedInboundGroupSessionData>
+    private hybridGroupSessions: LRUCache<string, HybridGroupSessionRecord>
+    private devices: LRUCache<string, UserDeviceRecord>
 
-    constructor(public readonly userId: string) {}
+    constructor(
+        public readonly userId: string,
+        maxEntries: number = DEFAULT_MAX_CRYPTO_STORE_ENTRIES,
+    ) {
+        this.accounts = new LRUCache({ max: maxEntries })
+        this.outboundGroupSessions = new LRUCache({ max: maxEntries })
+        this.inboundGroupSessions = new LRUCache({ max: maxEntries })
+        this.hybridGroupSessions = new LRUCache({ max: maxEntries })
+        this.devices = new LRUCache({ max: maxEntries })
+    }
 
     async initialize(): Promise<void> {
         const now = Date.now()
