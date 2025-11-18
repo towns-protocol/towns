@@ -69,3 +69,60 @@ any events that were sealed while the App Registry was down.
 - Even with a subgraph-driven approach, implementing “track only streams with bots” is non-trivial.
 - As a stopgap we can reuse the notification service’s cold-streams mechanism: start with no channel streams tracked, and only call `AddStream` when a channel emits events. We still track channels regardless of bot presence, but only once they become active.
 - This doesn’t eliminate unnecessary tracking, but it dramatically reduces memory usage and restart cost because we no longer keep `StreamView`s for dormant channels.
+
+## Implementation notes
+
+### Persist cookies + bot-side dedup
+1. **App Registry persistence**
+   - Add a table (e.g., `stream_cookies`) keyed by `stream_id` storing the
+     last `SyncCookie` we successfully applied.
+   - After every `applyUpdateToStream`, write the returned `NextSyncCookie` to
+     that table in the same transaction as any queue mutations.
+   - On restart, load cookies for every stream before calling
+     `StreamsTracker.AddStream`. Pass the cookie as `ApplyHistoricalContent`
+     (i.e., set `FromMiniblockHash` from the stored hash) so we replay exactly
+     from where we left off.
+2. **Replay behavior**
+   - When replaying with cookies, we intentionally forward all events after the
+     stored checkpoint (even if they were delivered before the crash). That
+     creates duplicates, which bots must drop using their new dedup cache.
+3. **Bot framework changes**
+   - Enhance `@towns-protocol/bot` (and the SDK behind it) with a small
+     deduplication cache keyed by `eventId`/hash, bounded by either time or
+     memory. Only new events reach handlers; duplicates from replays are dropped.
+   - Document the behavior so bot developers understand retries are possible.
+
+### Webhook failure drops
+- Enhance `SubmitMessages` to persist in-flight deliveries so transient webhook
+  failures don’t drop messages. Two possible approaches:
+  1. Only delete `enqueued_messages` rows after the webhook responds 200; if the
+     HTTP call fails, leave the row so the message will be retried automatically.
+  2. Or, add a separate “in-flight” table keyed by event hash/device. Insert
+     before sending and delete on success; on failure, requeue into
+     `enqueued_messages`.
+- Either approach ensures webhook timeouts or 5xx responses don’t cause loss.
+  (We can combine this with the cookie persistence work since both involve more
+  durable bookkeeping around delivery.)
+
+### Unbounded backlog for offline bots
+- Introduce retention/quotas for `enqueued_messages`:
+  - Track `created_at` per row and add a cleanup job that deletes rows older than
+    N days (configurable) to avoid infinite growth.
+  - Optionally add per-bot item limits; once a bot exceeds `M` pending messages,
+    stop enqueueing and surface an alarm so operators know the backlog needs
+    intervention.
+- Pair this with better visibility (metrics/alerts) so we know when bots are
+  falling behind.
+
+### Cold streams for App Registry
+- Add `ColdStreamsEnabled` to `AppRegistryConfig` (mirroring notifications).
+- When enabled, `TrackStream` should only accept bots’ inbox streams during the
+  initial `ForAllStreams` pass; channel streams are deferred.
+- Modify `StreamsTrackerImpl` to allow channels to be added lazily from
+  River events (i.e., when we observe activity via `OnStreamAllocated` or
+  `SyncStreams` for a channel, call `AddStream` on demand with
+  `ApplyHistoricalContent.Enabled = true`).
+- Optionally store a small “recently active streams” cache so we can tear down
+  `TrackedStreamView`s after a channel goes idle for N hours. This keeps memory
+  usage proportional to active channels while retaining the ability to rejoin
+  quickly when they become active again.
