@@ -260,7 +260,6 @@ contract AttestationRegistryTest is TestUtils, IAttestationRegistryBase, ISchema
         (bytes32 schemaId, bytes32 attestationId) = registerApp(plugin, true);
 
         RevocationRequestData memory data = RevocationRequestData({uid: attestationId, value: 0});
-
         RevocationRequest memory request = RevocationRequest({schema: schemaId, data: data});
 
         vm.prank(developer);

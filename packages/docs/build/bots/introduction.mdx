@@ -22,7 +22,8 @@ The onchain component provides:
 - **Batch execution support**: Execute multiple contract calls atomically using ERC-7821
 
 This allows bots to:
-- Have their own wallet address funded with ETH/tokens
+- Have their own app contract (treasury) for receiving and storing ETH/tokens
+- Have a separate wallet for signing transactions and paying gas fees
 - Interact with any smart contract (DeFi, NFTs, DAOs, etc.)
 - Execute complex multi-step transactions in one atomic operation
 - Receive payments and tips onchain
@@ -43,9 +44,15 @@ All of this with the same security guarantees as a user: **end-to-end encryption
 
 Additionally, the server can communicate with the onchain component, allowing it to:
 - Read from any smart contract
-- Write to contracts using the bot's wallet
+- Interact with any smart contract using ERC-7821 batch execution
 - Execute complex DeFi operations (swaps, staking, liquidity provision)
 - Mint NFTs, manage DAOs, and interact with any Web3 protocol
+
+Your bot has two wallets:
+- **Bot Treasury Wallet** (`bot.appAddress`) - Holds funds and receives tips
+- **Gas Wallet** (`bot.viem.account`) - Signs transactions and pays for gas
+
+Learn more in the [Getting Started guide](/build/bots/getting-started#understanding-your-bots-wallet-architecture).
 
 ## Use Cases
 
