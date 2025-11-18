@@ -1,16 +1,23 @@
 # App Registry Delivery Problems
 
 We currently have multiple issues in the App Registry:
-1. Events not sent: when the App Registry service goes offline (planned redeploy or outage) while new
+1. **Events not sent** - when the App Registry service goes offline (planned redeploy or outage) while new
 channel events are being produced, those events can be sealed into a miniblock
 before the service comes back. Today the tracker starts from a fresh sync on
 boot (`ApplyHistoricalContent.Enabled = false`) and treats those sealed events as
 "already delivered". Any events that were added after the downtime started and sealed
 before it ended will not be sent to bots.
-2. Events sent multiple times: events that were in the minipool before the restart happened (and were sent to bots).
+2. **Events sent multiple times** - events that were in the minipool before the restart happened (and were sent to bots).
 will be sent again if they are still in the minipool when the service resumes (no dedup on the bot side)
-3. No events queue for offline bots: offline bots never receive events if the bot has the keys to decrypt the event (when the webhook is down)
-4. Unbounded queue for missing keys events (`enqueued_messages`): the queue of "missing key" events will keep growing unbounded if a bot never supplies encryption keys.
+3. **Webhook failure drop** – When a bot already has the session key, the event is
+      sent immediately via `SubmitMessages`. If the HTTPS call to the webhook fails
+      (timeout, 5xx, unreachable), we log the error but do not requeue the event.
+      Today we assume bots are up whenever they have keys, so a transient webhook
+      outage at the wrong time causes permanent loss.
+4. **Unbounded backlog for offline bots** – Unsigned events (no session key)
+   are persisted in `enqueued_messages` until the bot publishes the missing key.
+   There is no TTL or quota, so if a bot stays offline or never repays keys, its
+   backlog grows unbounded, limited only by database capacity.
 
 ## Candidate Solutions
 
@@ -35,19 +42,6 @@ will be sent again if they are still in the minipool when the service resumes (n
 - **Pros:** maintains existing guarantees (bots see each event exactly once even
   across restarts); no bot changes.
 - **Cons:** more state to manage; needs schema changes and careful replay logic.
-
-## Additional Reliability Gaps
-
-1. **Webhook failure drop** – When a bot already has the session key, the event is
-   sent immediately via `SubmitMessages`. If the HTTPS call to the webhook fails
-   (timeout, 5xx, unreachable), we log the error but do not requeue the event.
-   Today we assume bots are up whenever they have keys, so a transient webhook
-   outage at the wrong time causes permanent loss.
-
-2. **Unbounded backlog for offline bots** – Unsigned events (no session key)
-   are persisted in `enqueued_messages` until the bot publishes the missing key.
-   There is no TTL or quota, so if a bot stays offline or never repays keys, its
-   backlog grows unbounded, limited only by database capacity.
 
 ## Tracking Scope Problem
 - The App Registry currently subscribes to *all* channel streams across the
