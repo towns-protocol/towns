@@ -971,7 +971,12 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
                 agentUri: agentUri,
                 updatedAt: blockTimestamp,
             })
-            .where(eq(schema.agentIdentity.app, agent.app))
+            .where(
+                and(
+                    eq(schema.agentIdentity.app, agent.app),
+                    eq(schema.agentIdentity.agentId, agentId)
+                )
+            )
     } catch (error) {
         console.error(
             `Error processing AppRegistry:UriUpdated at blockNumber ${blockNumber}:`,
