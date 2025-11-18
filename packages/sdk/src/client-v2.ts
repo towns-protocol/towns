@@ -227,23 +227,12 @@ export const createTownsClient = async (
             retryCount: number,
         ) => Promise<T>,
     ): Promise<T> => {
-        // Retry policy matching old client.ts behavior
-        const RETRY_POLICY: Partial<
-            Record<
-                Err,
-                { delays: number[]; maxRetries: number } | { delay: number; maxRetries: number }
-            >
-        > = {
-            // Hash is too new - wait 1s and retry indefinitely
-            [Err.MINIBLOCK_TOO_NEW]: { delay: 1000, maxRetries: Infinity },
-
-            // Hash is too old - server provides correct hash, retry immediately up to 3 times
-            [Err.BAD_PREV_MINIBLOCK_HASH]: { delay: 0, maxRetries: 3 },
-
-            // Blockchain transaction not confirmed yet - exponential backoff for fast failure
-            // Retries: 200ms, 400ms, 800ms, 1100ms (total 2.5s before giving up)
-            [Err.PERMISSION_DENIED]: { delays: [200, 400, 800, 1100], maxRetries: 4 },
-        }
+        const RETRY_POLICY: Partial<Record<Err, { delay: number | number[]; maxRetries: number }>> =
+            {
+                [Err.MINIBLOCK_TOO_NEW]: { delay: 1000, maxRetries: Infinity },
+                [Err.BAD_PREV_MINIBLOCK_HASH]: { delay: 0, maxRetries: 3 },
+                [Err.PERMISSION_DENIED]: { delay: [200, 400, 800, 1100], maxRetries: 4 },
+            }
         const attempt = async (
             retryCount: number,
             prev?: { prevMiniblockHash: Uint8Array; prevMiniblockNum: bigint },
@@ -251,11 +240,7 @@ export const createTownsClient = async (
             try {
                 return await operation(prev, retryCount)
             } catch (err) {
-                // Determine which error type we have and get its retry policy
-                let policy:
-                    | { delays: number[]; maxRetries: number }
-                    | { delay: number; maxRetries: number }
-                    | undefined
+                let policy: { delay: number | number[]; maxRetries: number } | undefined
                 let errorType: Err | undefined
 
                 if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
@@ -272,23 +257,19 @@ export const createTownsClient = async (
                     policy = RETRY_POLICY[Err.PERMISSION_DENIED]
                     errorType = Err.PERMISSION_DENIED
                 }
-
                 // Not a retryable error or max retries exceeded
                 if (!policy || !errorType || retryCount >= policy.maxRetries) {
                     throw err
                 }
-
                 // Calculate delay for this retry
                 const delay =
-                    'delays' in policy
-                        ? policy.delays[retryCount] || policy.delays[policy.delays.length - 1]
-                        : policy.delay
-
+                    typeof policy.delay === 'number'
+                        ? policy.delay
+                        : policy.delay[retryCount] || policy.delay[policy.delay.length - 1]
                 // Handle BAD_PREV_MINIBLOCK_HASH - extract expected hash from error
                 if (errorType === Err.BAD_PREV_MINIBLOCK_HASH) {
                     const expectedHash = getRpcErrorProperty(err, 'expected')
                     const expectedMiniblockNum = getRpcErrorProperty(err, 'expNum')
-
                     check(
                         expectedHash !== undefined,
                         'expected hash not found in BAD_PREV_MINIBLOCK_HASH error',
@@ -297,23 +278,17 @@ export const createTownsClient = async (
                         expectedMiniblockNum !== undefined,
                         'expected miniblock num not found in BAD_PREV_MINIBLOCK_HASH error',
                     )
-
-                    // Retry with server-provided hash (delay will be 0 for this error type)
                     if (delay > 0) {
                         await new Promise((resolve) => setTimeout(resolve, delay))
                     }
-
                     return attempt(retryCount + 1, {
                         prevMiniblockHash: bin_fromHexString(expectedHash),
                         prevMiniblockNum: BigInt(expectedMiniblockNum),
                     })
                 }
-
-                // For MINIBLOCK_TOO_NEW and PERMISSION_DENIED - wait and retry
                 if (delay > 0) {
                     await new Promise((resolve) => setTimeout(resolve, delay))
                 }
-
                 return attempt(retryCount + 1, prev)
             }
         }
