@@ -13,7 +13,7 @@ import { LRUCache } from 'lru-cache'
 const DEFAULT_MAX_CRYPTO_STORE_ENTRIES = 5_000
 
 export class CryptoStoreInMemory implements CryptoStore {
-    private accounts: Map<string, AccountRecord> = new Map()
+    private accounts: LRUCache<string, AccountRecord>
     private outboundGroupSessions: LRUCache<string, GroupSessionRecord>
     private inboundGroupSessions: LRUCache<string, ExtendedInboundGroupSessionData>
     private hybridGroupSessions: LRUCache<string, HybridGroupSessionRecord>
@@ -23,6 +23,7 @@ export class CryptoStoreInMemory implements CryptoStore {
         public readonly userId: string,
         maxEntries: number = DEFAULT_MAX_CRYPTO_STORE_ENTRIES,
     ) {
+        this.accounts = new LRUCache({ max: maxEntries })
         this.outboundGroupSessions = new LRUCache({ max: maxEntries })
         this.inboundGroupSessions = new LRUCache({ max: maxEntries })
         this.hybridGroupSessions = new LRUCache({ max: maxEntries })
