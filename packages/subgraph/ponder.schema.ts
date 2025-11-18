@@ -7,6 +7,9 @@ export const analyticsEventType = onchainEnum('analytics_event_type', [
     'review',
 ])
 
+// Actor type enum for tip events
+export type ActorType = 'Member' | 'Bot'
+
 // Type definitions for analytics event data
 export type SwapEventData = {
     type: 'swap'
@@ -21,8 +24,9 @@ export type SwapEventData = {
 export type TipEventData = {
     type: 'tip'
     sender: string
+    senderType: ActorType
     receiver: string
-    recipientType: 'Member' | 'Bot'
+    recipientType: ActorType
     currency: string
     amount: string
     tokenId?: string
@@ -260,7 +264,7 @@ export const app = onchainTable('apps', (t) => ({
     installedIn: t.hex().array().notNull(),
     lastUpdatedAt: t.bigint(),
     currentVersionId: t.hex(),
-    tipsCount: t.integer().default(0),
+    tipsCount: t.bigint().default(0n),
     tipsVolume: t.bigint().default(0n),
 }))
 

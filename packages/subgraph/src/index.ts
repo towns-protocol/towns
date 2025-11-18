@@ -1293,6 +1293,12 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             ethAmount = event.args.amount
         }
 
+        // Check if sender is a bot (exists in apps table)
+        const senderApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, sender),
+        })
+        const senderType = senderApp ? 'Bot' : 'Member'
+
         // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
         // This leverages the existing primary key constraint (txHash, logIndex)
         await context.db
@@ -1307,6 +1313,7 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 eventData: {
                     type: 'tip',
                     sender: sender,
+                    senderType: senderType,
                     receiver: event.args.receiver,
                     recipientType: 'Member',
                     currency: event.args.currency,
@@ -1333,8 +1340,12 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             .set({
                 totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
-                memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
-                memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                ...(senderType === 'Member'
+                    ? {
+                          memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
+                          memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                      }
+                    : {}),
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -1351,8 +1362,10 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 spaceId: spaceId,
                 totalSent: ethAmount,
                 tipsSentCount: 1,
-                memberTipsSent: 1,
-                memberTotalSent: ethAmount,
+                memberTipsSent: senderType === 'Member' ? 1 : 0,
+                memberTotalSent: senderType === 'Member' ? ethAmount : 0n,
+                botTipsSent: 0,
+                botTotalSent: 0n,
                 lastActivity: blockTimestamp,
             })
         }
@@ -1395,6 +1408,12 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
         const isETH = currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
         const ethAmount = isETH ? amount : 0n
 
+        // Check if sender is a bot (exists in apps table)
+        const senderApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, sender),
+        })
+        const senderType = senderApp ? 'Bot' : 'Member'
+
         // Insert analytics event
         await context.db
             .insert(schema.analyticsEvent)
@@ -1408,6 +1427,7 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
                 eventData: {
                     type: 'tip',
                     sender,
+                    senderType: senderType,
                     receiver,
                     recipientType: 'Bot',
                     currency,
@@ -1457,6 +1477,8 @@ ponder.on('Space:TipSent', async ({ event, context }) => {
                 spaceId: spaceId,
                 totalSent: ethAmount,
                 tipsSentCount: 1,
+                memberTipsSent: 0,
+                memberTotalSent: 0n,
                 botTipsSent: 1,
                 botTotalSent: ethAmount,
                 lastActivity: blockTimestamp,
