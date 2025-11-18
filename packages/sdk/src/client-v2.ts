@@ -78,6 +78,7 @@ type Client_Base = {
     disableSignatureValidation: boolean
     /** Options for unpacking envelopes */
     unpackEnvelopeOpts: UnpackEnvelopeOpts
+
     /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
     appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
@@ -130,6 +131,11 @@ export type CreateTownsClientParams = {
     hashValidation?: boolean
     /** Toggle signature validation of Envelopes. Defaults to `false`. */
     signatureValidation?: boolean
+    /** Maximum number of entries to store in the crypto store (for in-memory stores).
+     *  Helps prevent memory leaks in long-running bots.
+     *  Defaults to 5000.
+     */
+    maxCryptoStoreEntries?: number
 }
 export const createTownsClient = async (
     params: (
@@ -170,7 +176,7 @@ export const createTownsClient = async (
 
     const userId = userIdFromAddress(signerContext.creatorAddress)
 
-    const cryptoStore = RiverDbManager.getCryptoDb(userId, undefined)
+    const cryptoStore = RiverDbManager.getCryptoDb(userId, undefined, params.maxCryptoStoreEntries)
     await cryptoStore.initialize()
 
     // eslint-disable-next-line prefer-const

@@ -44,11 +44,6 @@ export interface InboundGroupSessionData {
 export type EncryptionDeviceInitOpts = {
     fromExportedDevice?: ExportedDevice
     pickleKey?: string
-    /** Maximum number of entries to store in the crypto store (for in-memory stores).
-     *  Helps prevent memory leaks in long-running bots.
-     *  @default 5000
-     */
-    maxCryptoStoreEntries?: number
 }
 
 function checkPayloadLength(
