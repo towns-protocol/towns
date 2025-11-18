@@ -1353,7 +1353,7 @@ export const makeTownsBot = async <
         baseRpcUrl?: string
         commands?: Commands
         identity?: BotIdentityConfig
-    } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
+    } & Partial<Omit<CreateTownsClientParams, 'env'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
     let appAddress: Address | undefined
