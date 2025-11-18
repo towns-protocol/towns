@@ -229,7 +229,7 @@ export const createTownsClient = async (
     ): Promise<T> => {
         const RETRY_POLICY: Partial<Record<Err, { delay: number | number[]; maxRetries: number }>> =
             {
-                [Err.MINIBLOCK_TOO_NEW]: { delay: 1000, maxRetries: Infinity },
+                [Err.MINIBLOCK_TOO_NEW]: { delay: 1000, maxRetries: 5 },
                 [Err.BAD_PREV_MINIBLOCK_HASH]: { delay: 0, maxRetries: 3 },
                 [Err.PERMISSION_DENIED]: { delay: [200, 400, 800, 1100], maxRetries: 4 },
             }
