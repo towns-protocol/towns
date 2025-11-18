@@ -1,17 +1,16 @@
 # App Registry Delivery Problems
 
 We currently have multiple issues in the App Registry:
-1. When the App Registry service goes offline (planned redeploy or outage) while new
+1. Events not sent: when the App Registry service goes offline (planned redeploy or outage) while new
 channel events are being produced, those events can be sealed into a miniblock
 before the service comes back. Today the tracker starts from a fresh sync on
 boot (`ApplyHistoricalContent.Enabled = false`) and treats those sealed events as
 "already delivered". Any events that were added after the downtime started and sealed
 before it ended will not be sent to bots.
-2. events that were in the minipool before the restart happened (and were sent to bots).
+2. Events sent multiple times: events that were in the minipool before the restart happened (and were sent to bots).
 will be sent again if they are still in the minipool when the service resumes (no dedup on the bot side)
-3. offline bots never receive messages if the bot has the keys to decrypt the message (when the webhook is down)
-4. the queue of "missing key" messages will keep growing without bound if a bot never
-supplies encryption keys.
+3. No events queue for offline bots: offline bots never receive events if the bot has the keys to decrypt the event (when the webhook is down)
+4. Unbounded queue for missing keys events (`enqueued_messages`): the queue of "missing key" events will keep growing unbounded if a bot never supplies encryption keys.
 
 ## Candidate Solutions
 
