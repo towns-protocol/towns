@@ -51,13 +51,13 @@ will be sent again if they are still in the minipool when the service resumes (n
   also elongates startup time because MultiSyncRunner must resync every stream
   on restart.
 - We need a way to subscribe only to streams where bots are actually installed.
-  A practical approach is to consume AppAccount events from the subgraph  
+  One approach is to consume AppAccount events from the subgraph  
   so we can Add/Remove streams dynamically when bots join or leave channels.
 
 ## Bot-side deduplication gap
 - The @towns-protocol/bot SDK does not maintain a “seen event” cache. Every
   webhook payload is treated as new work.
-- If the App Registry replays minipool events (e.g., after a restart) or a bot’s
+- If the App Registry replays minipool events (after a restart) or a bot’s
   webhook recovers from downtime, the framework will process the same event
   multiple times because there is no built-in deduplication.
 - If we pursue the “persist cookies / replay and dedup on bots” solution, we must
