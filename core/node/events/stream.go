@@ -1038,6 +1038,7 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 	if err != nil {
 		return err
 	}
+
 	if applied {
 		return nil
 	}
@@ -1050,12 +1051,13 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 	return s.params.Storage.WriteMiniblockCandidate(ctx, s.streamId, storageMb)
 }
 
-// tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply iff
+// tryApplyCandidate tries to apply the miniblock candidate to the stream. It will apply if
 // it matches the first in the list of pending candidates, and then it will apply the entire
 // list of pending candidates. It will also return a true result if this block matches the
 // last block applied to the stream.
 // tryApplyCandidate is thread-safe.
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
+	// try to apply the candidate
 	_, err := s.lockMuAndLoadView(ctx)
 	defer s.mu.Unlock()
 	if err != nil {
