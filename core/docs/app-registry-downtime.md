@@ -10,14 +10,14 @@ before it ended will not be sent to bots.
 2. **Events sent multiple times** - events that were in the minipool before the restart happened (and were sent to bots).
 will be sent again if they are still in the minipool when the service resumes (no dedup on the bot side)
 3. **Webhook failure drop** – When a bot already has the session key, the event is
-      sent immediately via `SubmitMessages`. If the HTTPS call to the webhook fails
-      (timeout, 5xx, unreachable), we log the error but do not requeue the event.
-      Today we assume bots are up whenever they have keys, so a transient webhook
-      outage at the wrong time causes permanent loss.
+sent immediately via `SubmitMessages`. If the HTTPS call to the webhook fails
+(timeout, 5xx, unreachable), we log the error but do not requeue the event.
+Today we assume bots are up whenever they have keys, so a transient webhook
+outage at the wrong time causes permanent loss.
 4. **Unbounded backlog for offline bots** – Unsigned events (no session key)
-   are persisted in `enqueued_messages` until the bot publishes the missing key.
-   There is no TTL or quota, so if a bot stays offline or never repays keys, its
-   backlog grows unbounded, limited only by database capacity.
+are persisted in `enqueued_messages` until the bot publishes the missing key.
+There is no TTL or quota, so if a bot stays offline or never repays keys, its
+backlog grows unbounded, limited only by database capacity.
 
 ## Candidate Solutions
 
@@ -102,6 +102,8 @@ will be sent again if they are still in the minipool when the service resumes (n
 - Either approach ensures webhook timeouts or 5xx responses don’t cause loss.
   (We can combine this with the cookie persistence work since both involve more
   durable bookkeeping around delivery.)
+- We will limit the number of events in the queue, and the time they remain in
+  the queue, to avoid unbounded growth.
 
 ### Unbounded backlog for offline bots
 - Introduce retention/quotas for `enqueued_messages`:
