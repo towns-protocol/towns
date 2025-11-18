@@ -902,6 +902,340 @@ ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
     }
 })
 
+// ===== Agent Identity & Reputation Handlers =====
+
+ponder.on('AppRegistry:Registered', async ({ event, context }) => {
+    const { agentId, agentUri, owner } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+    const transactionHash = event.transaction.hash
+
+    try {
+        // Insert agent identity (owner is the app contract address)
+        await context.db
+            .insert(schema.agentIdentity)
+            .values({
+                app: owner, // FK to apps.address
+                agentId: agentId,
+                agentUri: agentUri || null,
+                registeredAt: blockTimestamp,
+                registeredAtBlock: blockNumber,
+                updatedAt: null,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Initialize reputation summary
+        await context.db
+            .insert(schema.agentReputationSummary)
+            .values({
+                app: owner,
+                agentId: agentId,
+                totalFeedback: 0,
+                activeFeedback: 0,
+                revokedFeedback: 0,
+                averageRating: null,
+                totalResponses: 0,
+                uniqueReviewers: 0,
+                lastFeedbackAt: null,
+            })
+            .onConflictDoNothing()
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:Registered at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
+    const { agentId, agentUri } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+
+    try {
+        // Find the agent identity by agentId
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.warn(`Agent identity not found for UriUpdated, agentId: ${agentId}`)
+            return
+        }
+
+        // Update the URI
+        await context.db.sql
+            .update(schema.agentIdentity)
+            .set({
+                agentUri: agentUri,
+                updatedAt: blockTimestamp,
+            })
+            .where(eq(schema.agentIdentity.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:UriUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:MetadataSet', async ({ event, context }) => {
+    const { agentId, metadataKey, metadataValue } = event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Find the agent identity by agentId to get the app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.warn(`Agent identity not found for MetadataSet, agentId: ${agentId}`)
+            return
+        }
+
+        // Upsert metadata
+        await context.db
+            .insert(schema.agentMetadata)
+            .values({
+                app: agent.app,
+                metadataKey: metadataKey,
+                metadataValue: metadataValue,
+                setAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoUpdate({
+                metadataValue: metadataValue,
+                setAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:MetadataSet at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:NewFeedback', async ({ event, context }) => {
+    const { agentId, reviewerAddress, score, tag1, tag2, feedbackUri, feedbackHash } = event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for NewFeedback, agentId: ${agentId}`)
+            return
+        }
+
+        // Determine feedback index (1-based, incremental per reviewer)
+        const lastFeedback = await context.db.sql.query.agentFeedback.findFirst({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.reviewerAddress, reviewerAddress),
+            ),
+            orderBy: (table, { desc }) => desc(table.feedbackIndex),
+        })
+
+        const feedbackIndex = lastFeedback ? lastFeedback.feedbackIndex + 1n : 1n
+
+        // Insert feedback
+        await context.db
+            .insert(schema.agentFeedback)
+            .values({
+                app: agent.app,
+                agentId: agentId,
+                reviewerAddress: reviewerAddress,
+                feedbackIndex: feedbackIndex,
+                rating: score,
+                tag1: tag1,
+                tag2: tag2,
+                comment: feedbackUri,
+                commentHash: feedbackHash,
+                isRevoked: false,
+                createdAt: blockTimestamp,
+                revokedAt: null,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Recalculate reputation summary
+        const activeFeedbackList = await context.db.sql.query.agentFeedback.findMany({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.isRevoked, false),
+            ),
+        })
+
+        const totalRating = activeFeedbackList.reduce((sum, f) => sum + f.rating, 0)
+        const count = activeFeedbackList.length
+        const avgRating = count > 0 ? totalRating / count : null
+
+        const uniqueReviewers = new Set(activeFeedbackList.map((f) => f.reviewerAddress)).size
+
+        const totalCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(eq(schema.agentFeedback.agentId, agentId))
+
+        const totalCount = Number(totalCountResult[0]?.count || 0)
+
+        // Update summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalFeedback: totalCount,
+                activeFeedback: count,
+                averageRating: avgRating,
+                uniqueReviewers: uniqueReviewers,
+                lastFeedbackAt: blockTimestamp,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:NewFeedback at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:FeedbackRevoked', async ({ event, context }) => {
+    const { agentId, reviewerAddress, feedbackIndex } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for FeedbackRevoked, agentId: ${agentId}`)
+            return
+        }
+
+        // Update feedback revoked status
+        await context.db.sql
+            .update(schema.agentFeedback)
+            .set({
+                isRevoked: true,
+                revokedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.agentFeedback.agentId, agentId),
+                    eq(schema.agentFeedback.reviewerAddress, reviewerAddress),
+                    eq(schema.agentFeedback.feedbackIndex, feedbackIndex),
+                ),
+            )
+
+        // Recalculate reputation summary (excluding revoked)
+        const activeFeedbackList = await context.db.sql.query.agentFeedback.findMany({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.isRevoked, false),
+            ),
+        })
+
+        const totalRating = activeFeedbackList.reduce((sum, f) => sum + f.rating, 0)
+        const count = activeFeedbackList.length
+        const avgRating = count > 0 ? totalRating / count : null
+
+        const totalCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(eq(schema.agentFeedback.agentId, agentId))
+
+        const revokedCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(
+                and(
+                    eq(schema.agentFeedback.agentId, agentId),
+                    eq(schema.agentFeedback.isRevoked, true),
+                ),
+            )
+
+        const totalCount = Number(totalCountResult[0]?.count || 0)
+        const revokedCount = Number(revokedCountResult[0]?.count || 0)
+
+        // Update summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalFeedback: totalCount,
+                activeFeedback: count,
+                revokedFeedback: revokedCount,
+                averageRating: avgRating,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:FeedbackRevoked at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
+    const { agentId, reviewerAddress, feedbackIndex, responder, responseUri, responseHash } =
+        event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for ResponseAppended, agentId: ${agentId}`)
+            return
+        }
+
+        // Insert response (use createdAt in PK to allow multiple responses from same responder)
+        await context.db
+            .insert(schema.feedbackResponse)
+            .values({
+                app: agent.app,
+                agentId: agentId,
+                reviewerAddress: reviewerAddress,
+                feedbackIndex: feedbackIndex,
+                responderAddress: responder,
+                comment: responseUri,
+                commentHash: responseHash,
+                createdAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Increment response count in summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalResponses: sql`${schema.agentReputationSummary.totalResponses} + 1`,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:ResponseAppended at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
 ponder.on('Space:MembershipTokenIssued', async ({ event, context }) => {
     const blockTimestamp = event.block.timestamp
 

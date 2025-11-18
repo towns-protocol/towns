@@ -458,3 +458,117 @@ export const tipLeaderboard = onchainTable(
         spaceSentIdx: index().on(table.spaceId, table.totalSent),
     }),
 )
+
+// Agent Identity Registry - ERC-721 based agent identities for apps
+export const agentIdentity = onchainTable(
+    'agent_identities',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        agentUri: t.text(),
+        registeredAt: t.bigint().notNull(),
+        registeredAtBlock: t.bigint().notNull(),
+        updatedAt: t.bigint(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.agentId] }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+    }),
+)
+
+// Agent Metadata - key-value metadata storage for agents
+export const agentMetadata = onchainTable(
+    'agent_metadata',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        metadataKey: t.text().notNull(),
+        metadataValue: t.hex().notNull(), // bytes from Solidity -> hex string
+        setAt: t.bigint().notNull(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.app, table.metadataKey] }),
+        appIdx: index().on(table.app),
+    }),
+)
+
+// Agent Feedback - reviews/feedback for agents (ERC-8004 compliant)
+export const agentFeedback = onchainTable(
+    'agent_feedback',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        reviewerAddress: t.hex().notNull(),
+        feedbackIndex: t.bigint().notNull(),
+        rating: t.integer().notNull(),
+        tag1: t.hex(),
+        tag2: t.hex(),
+        comment: t.text(),
+        commentHash: t.hex(),
+        isRevoked: t.boolean().default(false).notNull(),
+        createdAt: t.bigint().notNull(),
+        revokedAt: t.bigint(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.agentId, table.reviewerAddress, table.feedbackIndex] }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+        reviewerIdx: index().on(table.reviewerAddress),
+        ratingIdx: index().on(table.agentId, table.rating),
+        activeIdx: index().on(table.agentId, table.isRevoked),
+    }),
+)
+
+// Feedback Responses - responses to agent feedback
+export const feedbackResponse = onchainTable(
+    'feedback_responses',
+    (t) => ({
+        app: t.hex().notNull(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        reviewerAddress: t.hex().notNull(),
+        feedbackIndex: t.bigint().notNull(),
+        responderAddress: t.hex().notNull(),
+        comment: t.text(),
+        commentHash: t.hex(),
+        createdAt: t.bigint().notNull(),
+        transactionHash: t.hex().notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({
+            columns: [
+                table.agentId,
+                table.reviewerAddress,
+                table.feedbackIndex,
+                table.responderAddress,
+                table.createdAt,
+            ],
+        }),
+        appIdx: index().on(table.app),
+        agentIdIdx: index().on(table.agentId),
+        feedbackIdx: index().on(table.agentId, table.reviewerAddress, table.feedbackIndex),
+        responderIdx: index().on(table.responderAddress),
+    }),
+)
+
+// Agent Reputation Summary - precomputed aggregated stats
+export const agentReputationSummary = onchainTable(
+    'agent_reputation_summary',
+    (t) => ({
+        app: t.hex().primaryKey(), // FK to apps.address
+        agentId: t.bigint().notNull(),
+        totalFeedback: t.integer().notNull().default(0),
+        activeFeedback: t.integer().notNull().default(0),
+        revokedFeedback: t.integer().notNull().default(0),
+        averageRating: t.real(),
+        totalResponses: t.integer().notNull().default(0),
+        uniqueReviewers: t.integer().notNull().default(0),
+        lastFeedbackAt: t.bigint(),
+    }),
+    (table) => ({
+        agentIdIdx: index().on(table.agentId),
+        ratingIdx: index().on(table.averageRating),
+    }),
+)
