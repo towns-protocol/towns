@@ -974,8 +974,8 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
             .where(
                 and(
                     eq(schema.agentIdentity.app, agent.app),
-                    eq(schema.agentIdentity.agentId, agentId)
-                )
+                    eq(schema.agentIdentity.agentId, agentId),
+                ),
             )
     } catch (error) {
         console.error(
