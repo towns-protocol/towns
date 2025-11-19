@@ -19,7 +19,7 @@ All events include:
   userId: string      // Hex address (0x...)
   spaceId: string
   channelId: string
-  eventId: string     // For replies/threads
+  eventId: string     // Unique event ID (use as threadId/replyId when responding)
   createdAt: Date
 }
 ```
@@ -257,12 +257,23 @@ const hash = await writeContract(bot.viem, { address: bot.appAddress, abi: simpl
 
 // execute() - PRIMARY for external contracts
 import { execute } from 'viem/experimental/erc7821'
-// Single: await execute(bot.viem, { address: bot.appAddress, account: bot.viem.account,
-//   calls: [{ to, abi, functionName: 'transfer', args: [...] }] })
-// Batch (atomic):
-const hash = await execute(bot.viem, { address: bot.appAddress, account: bot.viem.account,
-  calls: [{ to: token, abi, functionName: 'approve', args: [...] },
-          { to: dex, abi, functionName: 'swap', args: [...] }] })
+
+// Single call
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [{ to, abi, functionName: 'transfer', args: [...] }]
+})
+
+// Batch (atomic)
+const hash = await execute(bot.viem, {
+  address: bot.appAddress,
+  account: bot.viem.account,
+  calls: [
+    { to: token, abi, functionName: 'approve', args: [...] },
+    { to: dex, abi, functionName: 'swap', args: [...] }
+  ]
+})
 ```
 
 **Use:** `readContract` (read) | `writeContract` (SimpleAccount) | `execute` (external)
