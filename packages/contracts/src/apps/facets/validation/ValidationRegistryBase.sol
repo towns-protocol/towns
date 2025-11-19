@@ -51,6 +51,9 @@ abstract contract ValidationRegistryBase is IValidationRegistryBase, ERC721ABase
         if (msg.sender != val.validatorAddress)
             ValidationRegistry__NotAuthorized.selector.revertWith();
         if (response > 100) ValidationRegistry__InvalidResponseScore.selector.revertWith();
+        if (response == 0 && responseHash == bytes32(0) && tag == bytes32(0)) {
+            ValidationRegistry__ZeroResponseRequiresMetadata.selector.revertWith();
+        }
 
         val.response = response;
         val.responseHash = responseHash;

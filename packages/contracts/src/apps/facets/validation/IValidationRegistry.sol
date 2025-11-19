@@ -50,6 +50,7 @@ interface IValidationRegistryBase {
     error ValidationRegistry__NotAuthorized();
     error ValidationRegistry__RequestNotFound();
     error ValidationRegistry__InvalidResponseScore();
+    error ValidationRegistry__ZeroResponseRequiresMetadata();
 }
 
 /// @title IValidationRegistry
