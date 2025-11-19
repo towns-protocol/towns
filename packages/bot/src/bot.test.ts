@@ -26,7 +26,8 @@ import {
     ParsedEvent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { BasePayload, Bot, BotPayload, DecryptedInteractionResponse } from './bot'
+import type { Bot } from './bot'
+import type { BasePayload, BotPayload, DecryptedInteractionResponse } from './event-dispatcher'
 import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
