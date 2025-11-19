@@ -1045,6 +1045,58 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
         assertEq(avgResponse, (0 + 50 + 100) / 3, "Average should be 50");
     }
 
+    function test_getSummary_includesZeroScoreWithMetadata()
+        external
+        givenSimpleAppIsRegistered
+        givenAgentIsRegistered
+    {
+        vm.prank(address(SIMPLE_APP));
+        validationRegistry.validationRequest(
+            DEFAULT_VALIDATOR,
+            agentId,
+            DEFAULT_REQUEST_URI,
+            DEFAULT_REQUEST_HASH
+        );
+
+        vm.prank(address(SIMPLE_APP));
+        validationRegistry.validationRequest(
+            SECOND_VALIDATOR,
+            agentId,
+            DEFAULT_REQUEST_URI,
+            SECOND_REQUEST_HASH
+        );
+
+        // Submit zero score with hash (no tag)
+        vm.prank(DEFAULT_VALIDATOR);
+        validationRegistry.validationResponse(
+            DEFAULT_REQUEST_HASH,
+            0,
+            DEFAULT_RESPONSE_URI,
+            DEFAULT_RESPONSE_HASH,
+            bytes32(0)
+        );
+
+        // Submit zero score with tag (no hash)
+        vm.prank(SECOND_VALIDATOR);
+        validationRegistry.validationResponse(
+            SECOND_REQUEST_HASH,
+            0,
+            DEFAULT_RESPONSE_URI,
+            bytes32(0),
+            DEFAULT_TAG
+        );
+
+        address[] memory emptyValidators = new address[](0);
+        (uint64 count, uint8 avgResponse) = validationRegistry.getSummary(
+            agentId,
+            emptyValidators,
+            EMPTY_TAG
+        );
+
+        assertEq(count, 2, "Should count both zero-score responses with metadata");
+        assertEq(avgResponse, 0, "Average of two zeros should be 0");
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*          AGENT AND VALIDATOR QUERY TESTS                   */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -1474,6 +1526,23 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
         );
     }
 
+    function test_revertWhen_validationResponse_zeroResponseWithoutMetadata()
+        external
+        givenSimpleAppIsRegistered
+        givenAgentIsRegistered
+        givenValidationRequestExists
+    {
+        vm.prank(DEFAULT_VALIDATOR);
+        vm.expectRevert(ValidationRegistry__ZeroResponseRequiresMetadata.selector);
+        validationRegistry.validationResponse(
+            DEFAULT_REQUEST_HASH,
+            0,
+            DEFAULT_RESPONSE_URI,
+            bytes32(0),
+            bytes32(0)
+        );
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      EDGE CASE TESTS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -1495,6 +1564,72 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
 
         (, , uint8 response, , ) = validationRegistry.getValidationStatus(DEFAULT_REQUEST_HASH);
         assertEq(response, LOW_SCORE, "Score of 0 should be valid");
+    }
+
+    function test_edgeCase_responseScoreZeroWithHash()
+        external
+        givenSimpleAppIsRegistered
+        givenAgentIsRegistered
+        givenValidationRequestExists
+    {
+        vm.prank(DEFAULT_VALIDATOR);
+        validationRegistry.validationResponse(
+            DEFAULT_REQUEST_HASH,
+            LOW_SCORE,
+            DEFAULT_RESPONSE_URI,
+            DEFAULT_RESPONSE_HASH,
+            bytes32(0)
+        );
+
+        (, , uint8 response, bytes32 tag, ) = validationRegistry.getValidationStatus(
+            DEFAULT_REQUEST_HASH
+        );
+        assertEq(response, LOW_SCORE, "Score of 0 with hash should be valid");
+        assertEq(tag, bytes32(0), "Tag should be zero");
+    }
+
+    function test_edgeCase_responseScoreZeroWithTag()
+        external
+        givenSimpleAppIsRegistered
+        givenAgentIsRegistered
+        givenValidationRequestExists
+    {
+        vm.prank(DEFAULT_VALIDATOR);
+        validationRegistry.validationResponse(
+            DEFAULT_REQUEST_HASH,
+            LOW_SCORE,
+            DEFAULT_RESPONSE_URI,
+            bytes32(0),
+            DEFAULT_TAG
+        );
+
+        (, , uint8 response, bytes32 tag, ) = validationRegistry.getValidationStatus(
+            DEFAULT_REQUEST_HASH
+        );
+        assertEq(response, LOW_SCORE, "Score of 0 with tag should be valid");
+        assertEq(tag, DEFAULT_TAG, "Tag should be set");
+    }
+
+    function test_edgeCase_responseScoreZeroWithHashAndTag()
+        external
+        givenSimpleAppIsRegistered
+        givenAgentIsRegistered
+        givenValidationRequestExists
+    {
+        vm.prank(DEFAULT_VALIDATOR);
+        validationRegistry.validationResponse(
+            DEFAULT_REQUEST_HASH,
+            LOW_SCORE,
+            DEFAULT_RESPONSE_URI,
+            DEFAULT_RESPONSE_HASH,
+            DEFAULT_TAG
+        );
+
+        (, , uint8 response, bytes32 tag, ) = validationRegistry.getValidationStatus(
+            DEFAULT_REQUEST_HASH
+        );
+        assertEq(response, LOW_SCORE, "Score of 0 with hash and tag should be valid");
+        assertEq(tag, DEFAULT_TAG, "Tag should be set");
     }
 
     function test_edgeCase_responseScoreMax()
