@@ -215,22 +215,75 @@ Returns the `eventId` of the sent message.
 
 ##### Chunked Media Attachments
 
-Send binary data with a filename and MIME type.
-This allow you to send large files, videos, screenshots or even create images on the fly.
+Send binary data (videos, screenshots, generated images). Framework automatically encrypts and chunks (1.2MB per chunk).
 
+**Video:**
 ```ts
-const imageBuffer = await fs.readFile('image.png')
-await bot.sendMessage(channelId, message, {
-  attachments: [{ 
-    type: 'chunked', 
-    data: imageBuffer, 
-    filename: 'image.png', 
-    mimetype: 'image/png',
-    width: 400,
-    height: 300,
-  }]
+import { readFileSync } from 'node:fs'
+
+bot.onSlashCommand("video", async (handler, { channelId }) => {
+  const videoData = readFileSync('./video.mp4')
+
+  await handler.sendMessage(channelId, "Check this out!", {
+    attachments: [{
+      type: 'chunked',
+      data: videoData,        // Uint8Array
+      filename: 'video.mp4',
+      mimetype: 'video/mp4',  // Required for Uint8Array
+      width: 1920,            // Optional
+      height: 1080
+    }]
+  })
 })
 ```
+
+**Canvas:**
+```ts
+import { createCanvas } from '@napi-rs/canvas'
+
+bot.onSlashCommand("chart", async (handler, { channelId, args }) => {
+  const value = parseInt(args[0]) || 50
+
+  const canvas = createCanvas(400, 300)
+  const ctx = canvas.getContext('2d')
+  ctx.fillStyle = '#2c3e50'
+  ctx.fillRect(0, 0, 400, 300)
+  ctx.fillStyle = '#3498db'
+  ctx.fillRect(50, 300 - value * 2, 300, value * 2)
+
+  const blob = await canvas.encode('png')
+
+  await handler.sendMessage(channelId, "Your chart:", {
+    attachments: [{
+      type: 'chunked',
+      data: blob,             // Blob (mimetype automatic)
+      filename: 'chart.png'
+    }]
+  })
+})
+```
+
+**Screenshot:**
+```ts
+bot.onSlashCommand("screenshot", async (handler, { channelId }) => {
+  const screenshotBuffer = await captureScreen()
+
+  await handler.sendMessage(channelId, "Screenshot:", {
+    attachments: [{
+      type: 'chunked',
+      data: screenshotBuffer, // Uint8Array
+      filename: 'screen.png',
+      mimetype: 'image/png'   // Required for Uint8Array
+    }]
+  })
+})
+```
+
+<Note>
+- Uint8Array requires `mimetype` parameter
+- Blob has automatic mimetype
+- Image dimensions auto-detected for `image/*` mimetypes
+</Note>
 
 ### sendReaction
 
@@ -300,8 +353,7 @@ Returns the `eventId` of the redaction event.
 Send a cryptocurrency tip to a user on a message.
 
 <Note>
-Your bot wallet will need to be funded with Base ETH to pay for gas fee transactions.
-The bot app account wallet will need to be funded with Base ETH to send tips.
+Your **gas wallet** needs Base ETH to pay for gas fees, and your **bot treasury wallet** needs to hold the ETH that will be sent as tips. See [Understanding Your Bot's Wallet Architecture](/build/bots/getting-started#understanding-your-bots-wallet-architecture) for details.
 </Note>
 
 ```ts
@@ -340,11 +392,11 @@ bot.onMessage(async (handler, { channelId, eventId, userId, message }) => {
 
 ## Permissions
 
-Bots can check user permissions before executing sensitive operations.
+Check user permissions before executing operations.
 
 ### hasAdminPermission
 
-Check if a user has admin permission.
+Check if user is a space admin (has `ModifyBanning` permission).
 
 ```ts
 const isAdmin = await handler.hasAdminPermission(userId, spaceId)
@@ -352,37 +404,64 @@ const isAdmin = await handler.hasAdminPermission(userId, spaceId)
 
 ### checkPermission
 
-Check if a user has a specific permission.
+Check specific permission for a user.
 
 ```ts
-const hasPermission = await handler.checkPermission(streamId, userId, permission)
+import { Permission } from '@towns-protocol/web3'
+
+const canRedact = await handler.checkPermission(
+  channelId,
+  userId,
+  Permission.Redact
+)
+```
+
+**Available permissions:**
+- `Permission.Read`
+- `Permission.Write`
+- `Permission.Redact`
+- `Permission.ModifyBanning`
+- `Permission.PinMessage`
+- `Permission.AddRemoveChannels`
+- `Permission.ModifySpaceSettings`
+
+**Example:**
+
+```ts
+bot.onSlashCommand('ban', async (handler, event) => {
+  // Check if user has admin permission
+  if (!await handler.hasAdminPermission(event.userId, event.spaceId)) {
+    await handler.sendMessage(event.channelId, 'No permission')
+    return
+  }
+  
+  const userToBan = event.mentions[0]?.userId
+  if (userToBan) {
+    try {
+      await handler.ban(userToBan, event.spaceId)
+      await handler.sendMessage(event.channelId, 'User banned')
+    } catch (error) {
+      await handler.sendMessage(event.channelId, 'Failed to ban user')
+    }
+  }
+})
 ```
 
 ## Moderation
 
-Bots can perform moderation actions if they have the `ModifyBanning` permission.
+Ban and unban users.
+
+<Warning>
+Your **bot** must have `ModifyBanning` permission in the space. Your **gas wallet** needs Base ETH to pay for gas fees.
+</Warning>
 
 ### ban
-
-Ban a user from a space.
-
-<Note>
-Your bot wallet will need to be funded with Base ETH to pay for gas fee banning transactions.
-You receive the wallet credentials after creating your bot.
-</Note>
 
 ```ts
 await handler.ban(userId, spaceId)
 ```
 
 ### unban
-
-Unban a user from a space.
-
-<Note>
-Your bot wallet will need to be funded with Base ETH to pay for gas fee unbanning transactions.
-You receive the wallet credentials after creating your bot.
-</Note>
 
 ```ts
 await handler.unban(userId, spaceId)

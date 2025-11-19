@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"context"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,6 +13,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -72,6 +74,8 @@ func (s *Service) localAddMediaEvent(
 	if err != nil && !AsRiverError(err).IsCodeWithBases(Err_ALREADY_EXISTS) {
 		return nil, AsRiverError(err).Func("localAddMediaEvent")
 	}
+
+	s.callRateMonitor.RecordCall(parsedEvent.Event.CreatorAddress, time.Now(), highusage.CallTypeMediaEvent)
 
 	return connect.NewResponse(&AddMediaEventResponse{
 		CreationCookie: &CreationCookie{

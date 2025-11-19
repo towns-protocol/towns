@@ -166,7 +166,7 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 	if status != http.StatusOK {
 		statusStr = "UNAVAILABLE"
 	}
-	return &statusinfo.StatusResponse{
+	resp := &statusinfo.StatusResponse{
 		Status:            statusStr,
 		InstanceId:        s.instanceId,
 		Address:           addr,
@@ -178,7 +178,11 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 		Base:              basePing,
 		OtherChains:       otherChainsPing,
 		XChainBlockchains: s.chainConfig.Get().XChain.Blockchains,
-	}, status
+	}
+
+	resp.HighUsage = convertHighUsageInfo(s.callRateMonitor.GetHighUsageInfo(time.Now()))
+
+	return resp, status
 }
 
 func (s *Service) handleStatus(w http.ResponseWriter, r *http.Request) {

@@ -4,6 +4,7 @@ import type { Address } from 'viem'
 import { IAppRegistryShim } from './IAppRegistryShim'
 import { IAppInstallerShim } from './IAppInstallerShim'
 import { IAppFactoryShim } from './IAppFactoryShim'
+import { IReputationRegistryShim } from './IReputationRegistryShim'
 import { SimpleAppShim } from './SimpleAppShim'
 import type {
     AppRegisteredEventObject,
@@ -27,6 +28,7 @@ export class AppRegistryDapp {
     public readonly registry: IAppRegistryShim
     public readonly installer: IAppInstallerShim
     public readonly factory: IAppFactoryShim
+    public readonly reputation: IReputationRegistryShim
     private readonly provider: ethers.providers.Provider
 
     constructor(config: BaseChainConfig, provider: ethers.providers.Provider) {
@@ -36,6 +38,7 @@ export class AppRegistryDapp {
         this.registry = new IAppRegistryShim(config.addresses.appRegistry, provider)
         this.installer = new IAppInstallerShim(config.addresses.appRegistry, provider)
         this.factory = new IAppFactoryShim(config.addresses.appRegistry, provider)
+        this.reputation = new IReputationRegistryShim(config.addresses.appRegistry, provider)
         this.provider = provider
     }
 

@@ -16,11 +16,15 @@ const ONE_DAY_MS = 24 * ONE_HOUR_MS
 
 export const DEFAULT_USER_DEVICE_EXPIRATION_TIME_MS = 5 * ONE_DAY_MS
 
-export function createCryptoStore(databaseName: string, userId: string): CryptoStore {
+export function createCryptoStore(
+    databaseName: string,
+    userId: string,
+    maxEntries?: number,
+): CryptoStore {
     if (isBrowser) {
         return new CryptoStoreIndexedDb(databaseName, userId)
     } else {
-        return new CryptoStoreInMemory(userId)
+        return new CryptoStoreInMemory(userId, maxEntries)
     }
 }
 

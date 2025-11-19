@@ -36,6 +36,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	"github.com/towns-protocol/towns/core/node/rpc/headers"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rpc/node2nodeauth"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3"
 	"github.com/towns-protocol/towns/core/node/scrub"
@@ -270,6 +271,12 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	s.metrics = infra.NewMetricsFactory(metricsRegistry, "river", subsystem)
 	s.metricsPublisher = infra.NewMetricsPublisher(metricsRegistry)
 	s.metricsPublisher.StartMetricsServer(s.serverCtx, s.config.Metrics)
+
+	var monitorLogger *zap.Logger
+	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
+		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
+	}
+	s.callRateMonitor = highusage.NewCallRateMonitor(s.serverCtx, s.config.HighUsageDetection, monitorLogger)
 }
 
 func (s *Service) initWallet() error {

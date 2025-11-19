@@ -99,6 +99,13 @@ describe('bot membership tests', () => {
             expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
         })
 
+        // Verify that the bot's userInfo includes the appAddress
+        const spaceStream = spaceOwner.stream(spaceId)
+        await spaceOwner.waitForStream(spaceId)
+        expect(spaceStream).toBeDefined()
+        const botUserInfo = spaceStream!.view.getMemberMetadata().userInfo(bot.userId)
+        expect(botUserInfo.appAddress?.toLowerCase()).toBe(foundAppAddress.toLowerCase())
+
         // Have space owner add the bot to the channel
         await expect(spaceOwner.joinUser(channelId, bot.userId)).resolves.toBeDefined()
 
@@ -211,6 +218,12 @@ describe('bot membership tests', () => {
         await waitFor(() => {
             expect(botUserStreamView.userContent.isMember(spaceId, MembershipOp.SO_JOIN)).toBe(true)
         })
+
+        // Verify that the bot's userInfo includes the appAddress
+        const spaceStream = spaceOwner.stream(spaceId)
+        expect(spaceStream).toBeDefined()
+        const botUserInfo = spaceStream!.view.getMemberMetadata().userInfo(bot.userId)
+        expect(botUserInfo.appAddress).toBe(foundAppAddress)
 
         // Space owner CAN add bot to default channel despite bot not satisfying entitlements
         await expect(spaceOwner.joinUser(defaultChannelId, bot.userId)).resolves.toBeDefined()
