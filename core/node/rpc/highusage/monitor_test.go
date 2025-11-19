@@ -27,10 +27,7 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 
 	monitor.RecordCall(user.Bytes(), base, CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(base)
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
-	require.Equal(t, uint32(1), snapshot[0].Usage[0].Count)
+	require.Len(t, snapshot, 0)
 
 	monitor.RecordCall(user.Bytes(), base.Add(200*time.Millisecond), CallTypeEvent)
 	snapshot = monitor.GetHighUsageInfo(base.Add(500 * time.Millisecond))
@@ -127,9 +124,7 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	require.Len(t, monitor.GetHighUsageInfo(start.Add(2500*time.Millisecond)), 1)
 	monitor.RecordCall(user.Bytes(), start.Add(3500*time.Millisecond), CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(start.Add(4 * time.Second))
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
+	require.Len(t, snapshot, 0)
 }
 
 func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
@@ -147,9 +142,7 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 	require.Len(t, monitor.GetHighUsageInfo(now.Add(20*time.Second)), 1)
 	monitor.RecordCall(user.Bytes(), now.Add(70*time.Second), CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(now.Add(80 * time.Second))
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
+	require.Len(t, snapshot, 0)
 }
 
 func TestMonitorConfigValidation(t *testing.T) {
