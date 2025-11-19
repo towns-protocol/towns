@@ -67,11 +67,19 @@ type UsageViolation struct {
 	Limit  uint32
 }
 
+// UsageSnapshot captures the current usage for a specific threshold window.
+type UsageSnapshot struct {
+	Window time.Duration
+	Count  uint32
+	Limit  uint32
+}
+
 // HighUsageInfo represents a single offending account for a specific call type.
 type HighUsageInfo struct {
 	User       common.Address
 	CallType   CallType
 	Violations []UsageViolation
+	Usage      []UsageSnapshot
 	LastSeen   time.Time
 }
 
@@ -200,7 +208,7 @@ func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, ca
 		return
 	}
 
-	spec := m.callSpecs[int(callType)]
+	spec := m.callSpecs[callType]
 	if spec == nil {
 		return
 	}
@@ -228,18 +236,19 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 
 	for addr, stats := range m.users {
 		for ct := CallType(0); ct < callTypeCount; ct++ {
-			cs := stats.perType[int(ct)]
+			cs := stats.perType[ct]
 			if cs == nil {
 				continue
 			}
-			violations := cs.violations(now)
-			if len(violations) == 0 {
+			usageSnapshots, violations := cs.snapshot(now)
+			if len(usageSnapshots) == 0 || !hasUsageCounts(usageSnapshots) {
 				continue
 			}
 			result = append(result, HighUsageInfo{
 				User:       addr,
 				CallType:   ct,
 				Violations: violations,
+				Usage:      usageSnapshots,
 				LastSeen:   stats.lastSeen,
 			})
 			for _, v := range violations {
@@ -347,21 +356,30 @@ func (cs *callStats) record(now time.Time, delta uint32) {
 	}
 }
 
-func (cs *callStats) violations(now time.Time) []UsageViolation {
-	var res []UsageViolation
+func (cs *callStats) snapshot(now time.Time) ([]UsageSnapshot, []UsageViolation) {
+	if cs == nil || cs.spec == nil {
+		return nil, nil
+	}
+	usage := make([]UsageSnapshot, 0, len(cs.windows))
+	var violations []UsageViolation
 	for i := range cs.windows {
 		cs.windows[i].advance(now)
 		total := cs.windows[i].total()
-		limit := cs.spec.thresholds[i].threshold.Count
-		if limit > 0 && total >= limit {
-			res = append(res, UsageViolation{
-				Window: cs.spec.thresholds[i].threshold.Window,
+		th := cs.spec.thresholds[i].threshold
+		usage = append(usage, UsageSnapshot{
+			Window: th.Window,
+			Count:  total,
+			Limit:  th.Count,
+		})
+		if th.Count > 0 && total >= th.Count {
+			violations = append(violations, UsageViolation{
+				Window: th.Window,
 				Count:  total,
-				Limit:  limit,
+				Limit:  th.Count,
 			})
 		}
 	}
-	return res
+	return usage, violations
 }
 
 type callTypeSpec struct {
@@ -535,16 +553,25 @@ func safeDiv(window, slot time.Duration) int {
 
 func maxSeverity(info HighUsageInfo) float64 {
 	var max float64
-	for _, v := range info.Violations {
-		if v.Limit == 0 {
+	for _, u := range info.Usage {
+		if u.Limit == 0 {
 			continue
 		}
-		sev := float64(v.Count) / float64(v.Limit)
+		sev := float64(u.Count) / float64(u.Limit)
 		if sev > max {
 			max = sev
 		}
 	}
 	return max
+}
+
+func hasUsageCounts(usage []UsageSnapshot) bool {
+	for _, u := range usage {
+		if u.Count > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 type noopCallRateMonitor struct{}

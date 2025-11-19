@@ -30,7 +30,14 @@ type HighUsageInfo struct {
 	User       string          `json:"user"`
 	CallType   string          `json:"call_type"`
 	LastSeen   string          `json:"last_seen"`
+	Usage      []UsageInfo     `json:"usage"`
 	Violations []ViolationInfo `json:"violations"`
+}
+
+type UsageInfo struct {
+	Window string `json:"window"`
+	Count  uint32 `json:"count"`
+	Limit  uint32 `json:"limit"`
 }
 
 type ViolationInfo struct {
