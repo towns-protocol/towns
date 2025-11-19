@@ -1,0 +1,47 @@
+---
+title: SDK
+---
+
+Towns extends the Farcaster miniapp specification with additional context data specific to the Towns platform.
+
+You can find the original Farcaster miniapp specification [here](https://miniapps.farcaster.xyz/docs/specification).
+
+Towns expect you to follow the [metatags specified in the Farcaster miniapp specification](https://miniapps.farcaster.xyz/docs/specification#metatags).
+
+## Context
+
+### context.user
+
+Towns provides information about the currently connected user:
+
+- `username` - Username of the user. Can change per channel.
+- `displayName` - Display name of the user. Can change per channel.
+- `pfpUrl` - Profile image URL of the user.
+
+### context.towns
+
+Towns-specific data about the current session:
+
+- `user`
+  - `userId` - The Towns UserId of the user currently connected to the miniapp
+  - `address` - The Towns App Smart Wallet address of the connected user
+- `env` - Environment identifier: `alpha` (testnet) or `omega` (production)
+- `spaceId` - The Space ID if the user is interacting from a space (optional)
+- `channelId` - The Channel ID where the user is interacting from. This can be a Space Channel, DM, or GDM.
+
+## Actions
+
+Towns supports the following Farcaster miniapp actions:
+
+### Core Actions
+- `actions.ready` - Notify when miniapp is ready
+- `actions.openUrl` - Open external URLs in a new window
+- `actions.close` - Close the miniapp
+- `actions.composeCast` - Compose messages in Towns with optional text and embeds
+- `actions.getCapabilities` - Get list of supported capabilities
+- `actions.getChains` - Get supported blockchain chains
+
+### Wallet Actions
+- `wallet.getEthereumProvider` - Get Ethereum wallet provider for the Towns Smart Wallet
+- `wallet.ethProviderRequest` - Make Ethereum provider requests using the connected wallet
+- `wallet.eip6963RequestProvider` - Announce Ethereum provider via EIP-6963
