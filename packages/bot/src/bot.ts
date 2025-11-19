@@ -114,7 +114,7 @@ import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
-import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
+import { getSmartAccountFromUserIdImpl } from './smart-account'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
 import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
