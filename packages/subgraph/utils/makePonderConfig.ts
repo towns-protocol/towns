@@ -14,11 +14,13 @@ import {
     xChainAbi,
     swapFacetAbi,
     swapRouterAbi,
-    iAppRegistryAbi,
     tippingFacetAbi,
     membershipFacetAbi,
     reviewFacetAbi,
+    iAppRegistryAbi,
     iAppFactoryAbi,
+    iIdentityRegistryAbi,
+    iReputationRegistryAbi,
 } from '@towns-protocol/contracts/typings'
 import SubscriptionModuleFacetAbi from '@towns-protocol/generated/dev/abis/SubscriptionModuleFacet.abi'
 
@@ -161,7 +163,12 @@ export function makePonderConfig(
                 chain: baseChainName,
             },
             AppRegistry: {
-                abi: mergeAbis([iAppRegistryAbi, iAppFactoryAbi]),
+                abi: mergeAbis([
+                    iAppRegistryAbi,
+                    iAppFactoryAbi,
+                    iIdentityRegistryAbi,
+                    iReputationRegistryAbi,
+                ]),
                 address: appRegistry,
                 startBlock: baseChainStartBlock,
                 chain: baseChainName,
