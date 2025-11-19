@@ -43,6 +43,16 @@ backlog grows unbounded, limited only by database capacity.
   across restarts); no bot changes.
 - **Cons:** more state to manage; needs schema changes and careful replay logic.
 
+### Decision
+Only two options are available in networked delivery systems:
+1. all events are guaranteed to be delivered, but there could be some duplicates
+2. There is guarantee there are no duplicates, but then not all events are guaranteed to be delivered
+
+For bots we need to guarantee at least once delivery, so we choose option 1.
+Since the server might be sending duplicate events anyway, we need to implement
+dededuplication on the bot side, so there is no point in storing watermarks in
+the App Registry, and we can simply store the cookie (candidate 1).
+
 ## Tracking Scope Problem
 - The App Registry currently subscribes to *all* channel streams across the
   network (mirroring the notification service). For each stream it maintains a
