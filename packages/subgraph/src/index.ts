@@ -7,6 +7,7 @@ import {
     handleRedelegation,
     decodePermissions,
 } from './utils'
+import { fetchAgentData } from './agentData'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
 
@@ -925,6 +926,22 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
             })
             .onConflictDoNothing()
 
+        // Fetch and store agent data if URI is provided
+        if (agentUri) {
+            const agentData = await fetchAgentData(agentUri)
+            if (agentData) {
+                await context.db.sql
+                    .update(schema.agentIdentity)
+                    .set({ agentData: agentData })
+                    .where(
+                        and(
+                            eq(schema.agentIdentity.app, owner),
+                            eq(schema.agentIdentity.agentId, agentId),
+                        ),
+                    )
+            }
+        }
+
         // Initialize reputation summary
         await context.db
             .insert(schema.agentReputationSummary)
@@ -964,19 +981,30 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
             return
         }
 
-        // Update the URI
-        await context.db.sql
-            .update(schema.agentIdentity)
-            .set({
-                agentUri: agentUri,
-                updatedAt: blockTimestamp,
-            })
-            .where(
-                and(
-                    eq(schema.agentIdentity.app, agent.app),
-                    eq(schema.agentIdentity.agentId, agentId),
-                ),
+        // Fetch agent data from new URI with retries
+        const agentData = await fetchAgentData(agentUri)
+
+        if (agentData !== null) {
+            // Only update if fetch succeeds - keeps URI and data in sync
+            await context.db.sql
+                .update(schema.agentIdentity)
+                .set({
+                    agentUri: agentUri,
+                    agentData: agentData,
+                    updatedAt: blockTimestamp,
+                })
+                .where(
+                    and(
+                        eq(schema.agentIdentity.app, agent.app),
+                        eq(schema.agentIdentity.agentId, agentId),
+                    ),
+                )
+        } else {
+            console.warn(
+                `Skipping URI update for agentId ${agentId}, fetch failed after retries. ` +
+                    `Keeping existing URI: ${agent.agentUri}`,
             )
+        }
     } catch (error) {
         console.error(
             `Error processing AppRegistry:UriUpdated at blockNumber ${blockNumber}:`,

@@ -1,4 +1,5 @@
 import { onchainTable, onchainEnum, primaryKey, relations, index } from 'ponder'
+import { AgentData } from './src/agentData'
 
 export const analyticsEventType = onchainEnum('analytics_event_type', [
     'swap',
@@ -478,6 +479,7 @@ export const agentIdentity = onchainTable(
         app: t.hex().notNull(), // FK to apps.address
         agentId: t.bigint().notNull(),
         agentUri: t.text(),
+        agentData: t.json().$type<AgentData>(),
         registeredAt: t.bigint().notNull(),
         registeredAtBlock: t.bigint().notNull(),
         updatedAt: t.bigint(),
