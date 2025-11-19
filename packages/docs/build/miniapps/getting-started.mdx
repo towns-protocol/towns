@@ -1,0 +1,30 @@
+---
+title: Getting Started
+---
+
+To build a Mini App for Towns, follow the [Farcaster Getting Started guide](https://miniapps.farcaster.xyz/docs/getting-started).
+
+## Sharing Mini Apps in Towns
+
+Once you've built your Mini App, you can share it in Towns in two ways:
+
+### 1. Via Bots
+
+Bots can share Mini Apps as link attachments in messages:
+
+```typescript
+await bot.sendMessage(channelId, "Check out this Mini App!", {
+  attachments: [{
+    type: 'link',
+    url: 'https://your-miniapp.com'
+  }]
+})
+```
+
+### 2. Via Direct URLs
+
+Users can paste Mini App URLs directly in Towns conversations. The Towns client will automatically render compatible Mini Apps.
+
+## Testing
+
+Test your Mini App in the Towns alpha environment before deploying to production.

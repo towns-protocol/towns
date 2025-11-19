@@ -156,6 +156,15 @@
               "build/bots/interaction-with-contracts",
               "build/bots/external-interactions"
             ]
+          },
+          {
+            "group": "Mini Apps",
+            "pages": [
+              "build/miniapps/introduction",
+              "build/miniapps/getting-started",
+              "build/miniapps/context",
+              "build/miniapps/actions"
+            ]
           }
         ]
       },
