@@ -229,12 +229,14 @@ func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, ca
 // GetHighUsageInfo returns the current list of high-usage accounts ordered by severity.
 // The returned data should be treated as read-only; callers must not mutate it.
 func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInfo {
+	m.logger.Info("gathering high usage info")
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	result := make([]HighUsageInfo, 0)
 
 	for addr, stats := range m.users {
+		m.logger.Info("getting status for user", zap.String("addr", addr.Hex()), zap.Any("stats", stats))
 		for ct := CallType(0); ct < callTypeCount; ct++ {
 			cs := stats.perType[ct]
 			if cs == nil {
@@ -242,8 +244,10 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 			}
 			usageSnapshots, violations := cs.snapshot(now)
 			if len(usageSnapshots) == 0 || !hasUsageCounts(usageSnapshots) {
+				m.logger.Info("no usage counts for user", zap.String("addr", addr.Hex()), zap.String("call_type", ct.String()))
 				continue
 			}
+			m.logger.Info("usage and violations for user", zap.String("addr", addr.Hex()), zap.String("call_type", ct.String()), zap.Any("usage", usageSnapshots), zap.Any("violations", violations))
 			result = append(result, HighUsageInfo{
 				User:       addr,
 				CallType:   ct,
@@ -264,6 +268,7 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 		}
 	}
 
+	m.logger.Info("finished gathering high usage info", zap.Any("result", result))
 	if len(result) == 0 {
 		return nil
 	}
@@ -280,6 +285,7 @@ func (m *inMemoryCallRateMonitor) GetHighUsageInfo(now time.Time) []HighUsageInf
 	if len(result) > m.cfg.MaxResults {
 		result = result[:m.cfg.MaxResults]
 	}
+	m.logger.Info("final result to return after sort", zap.Any("result", result))
 
 	return append([]HighUsageInfo(nil), result...)
 }
