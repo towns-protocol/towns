@@ -57,12 +57,12 @@ func GetDefaultConfig() *Config {
 			Enabled:    true,
 			MaxResults: 10,
 			Thresholds: HighUsageThresholdFields{
-				ThresholdAddEventWindow:          time.Minute,
-				ThresholdAddEventCount:           100,
-				ThresholdAddMediaEventWindow:     time.Minute,
-				ThresholdAddMediaEventCount:      50,
-				ThresholdCreateMediaStreamWindow: time.Minute,
-				ThresholdCreateMediaStreamCount:  10,
+				ThresholdAddEventWindow1:          time.Minute,
+				ThresholdAddEventCount1:           100,
+				ThresholdAddMediaEventWindow1:     time.Minute,
+				ThresholdAddMediaEventCount1:      50,
+				ThresholdCreateMediaStreamWindow1: time.Minute,
+				ThresholdCreateMediaStreamCount1:  10,
 			},
 		},
 		// TODO: Network: NetworkConfig{},
@@ -633,12 +633,18 @@ func (cfg HighUsageDetectionConfig) HighUsageThresholds() map[string][]HighUsage
 }
 
 type HighUsageThresholdFields struct {
-	ThresholdAddEventWindow          time.Duration `mapstructure:"threshold_add_event_window"`
-	ThresholdAddEventCount           uint32        `mapstructure:"threshold_add_event_count"`
-	ThresholdAddMediaEventWindow     time.Duration `mapstructure:"threshold_add_media_event_window"`
-	ThresholdAddMediaEventCount      uint32        `mapstructure:"threshold_add_media_event_count"`
-	ThresholdCreateMediaStreamWindow time.Duration `mapstructure:"threshold_create_media_stream_window"`
-	ThresholdCreateMediaStreamCount  uint32        `mapstructure:"threshold_create_media_stream_count"`
+	ThresholdAddEventWindow1          time.Duration `mapstructure:"threshold_add_event_window1"`
+	ThresholdAddEventCount1           uint32        `mapstructure:"threshold_add_event_count1"`
+	ThresholdAddEventWindow2          time.Duration `mapstructure:"threshold_add_event_window2"`
+	ThresholdAddEventCount2           uint32        `mapstructure:"threshold_add_event_count2"`
+	ThresholdAddMediaEventWindow1     time.Duration `mapstructure:"threshold_add_media_event_window1"`
+	ThresholdAddMediaEventCount1      uint32        `mapstructure:"threshold_add_media_event_count1"`
+	ThresholdAddMediaEventWindow2     time.Duration `mapstructure:"threshold_add_media_event_window2"`
+	ThresholdAddMediaEventCount2      uint32        `mapstructure:"threshold_add_media_event_count2"`
+	ThresholdCreateMediaStreamWindow1 time.Duration `mapstructure:"threshold_create_media_stream_window1"`
+	ThresholdCreateMediaStreamCount1  uint32        `mapstructure:"threshold_create_media_stream_count1"`
+	ThresholdCreateMediaStreamWindow2 time.Duration `mapstructure:"threshold_create_media_stream_window2"`
+	ThresholdCreateMediaStreamCount2  uint32        `mapstructure:"threshold_create_media_stream_count2"`
 }
 
 func (fields HighUsageThresholdFields) effectiveThresholds() map[string][]HighUsageThreshold {
@@ -654,9 +660,12 @@ func (fields HighUsageThresholdFields) effectiveThresholds() map[string][]HighUs
 		})
 	}
 
-	addThreshold("event", fields.ThresholdAddEventWindow, fields.ThresholdAddEventCount)
-	addThreshold("media_event", fields.ThresholdAddMediaEventWindow, fields.ThresholdAddMediaEventCount)
-	addThreshold("create_media_stream", fields.ThresholdCreateMediaStreamWindow, fields.ThresholdCreateMediaStreamCount)
+	addThreshold("event", fields.ThresholdAddEventWindow1, fields.ThresholdAddEventCount1)
+	addThreshold("event", fields.ThresholdAddEventWindow2, fields.ThresholdAddEventCount2)
+	addThreshold("media_event", fields.ThresholdAddMediaEventWindow1, fields.ThresholdAddMediaEventCount1)
+	addThreshold("media_event", fields.ThresholdAddMediaEventWindow2, fields.ThresholdAddMediaEventCount2)
+	addThreshold("create_media_stream", fields.ThresholdCreateMediaStreamWindow1, fields.ThresholdCreateMediaStreamCount1)
+	addThreshold("create_media_stream", fields.ThresholdCreateMediaStreamWindow2, fields.ThresholdCreateMediaStreamCount2)
 
 	if len(result) == 0 {
 		return nil

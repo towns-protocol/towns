@@ -280,14 +280,14 @@ func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) confi
 		thr := values[0]
 		switch ct {
 		case CallTypeEvent:
-			cfg.Thresholds.ThresholdAddEventWindow = thr.Window
-			cfg.Thresholds.ThresholdAddEventCount = thr.Count
+			cfg.Thresholds.ThresholdAddEventWindow1 = thr.Window
+			cfg.Thresholds.ThresholdAddEventCount1 = thr.Count
 		case CallTypeMediaEvent:
-			cfg.Thresholds.ThresholdAddMediaEventWindow = thr.Window
-			cfg.Thresholds.ThresholdAddMediaEventCount = thr.Count
+			cfg.Thresholds.ThresholdAddMediaEventWindow1 = thr.Window
+			cfg.Thresholds.ThresholdAddMediaEventCount1 = thr.Count
 		case CallTypeCreateMediaStream:
-			cfg.Thresholds.ThresholdCreateMediaStreamWindow = thr.Window
-			cfg.Thresholds.ThresholdCreateMediaStreamCount = thr.Count
+			cfg.Thresholds.ThresholdCreateMediaStreamWindow1 = thr.Window
+			cfg.Thresholds.ThresholdCreateMediaStreamCount1 = thr.Count
 		case callTypeCount:
 			panic("invalid callTypeCount entry")
 		default:
