@@ -13,6 +13,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	rpcHeaders "github.com/towns-protocol/towns/core/node/rpc/headers"
+	"github.com/towns-protocol/towns/core/node/rpc/highusage"
 	"github.com/towns-protocol/towns/core/node/rules"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
@@ -50,11 +51,13 @@ func (s *Service) localAddEvent(
 
 	if err != nil {
 		return nil, err
-	} else {
-		return connect.NewResponse(&AddEventResponse{
-			NewEvents: newEvents,
-		}), nil
 	}
+
+	s.callRateMonitor.RecordCall(parsedEvent.Event.CreatorAddress, time.Now(), highusage.CallTypeEvent)
+
+	return connect.NewResponse(&AddEventResponse{
+		NewEvents: newEvents,
+	}), nil
 }
 
 // ensureStreamIsUpToDate returns the StreamView for the given StreamId that is up to date enough to
