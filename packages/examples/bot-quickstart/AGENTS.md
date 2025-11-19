@@ -189,6 +189,10 @@ await handler.sendMessage(channelId, "Hello <@0x123...>", {
 
 await handler.editMessage(channelId, messageId, newMessage)  // Bot's own only
 await handler.sendReaction(channelId, messageId, reaction)
+await handler.pinMessage(channelId, eventId, streamEvent)
+await handler.unpinMessage(channelId, eventId)
+await handler.createChannel(spaceId, { name, description?, autojoin?, hideUserJoinLeaveEvents? })  // Returns channelId
+await handler.sendTip({ userId, amount, messageId, channelId, currency? })  // Requires gas in bot.botId, currency defaults to zeroAddress (ETH)
 await handler.removeEvent(channelId, eventId)  // Bot's own
 await handler.adminRemoveEvent(channelId, eventId)  // Any (needs Permission.Redact)
 ```
@@ -280,10 +284,12 @@ const hash = await execute(bot.viem, {
 
 ## External Interactions (Unprompted Messages)
 
-**Bot methods work outside handlers** (webhooks, timers, tasks):
+**All handler methods available on bot** (webhooks, timers, tasks):
+You need data prior (channelId, spaceId, etc):
 ```typescript
 bot.sendMessage(channelId, msg, opts?) | bot.editMessage(...) | bot.sendReaction(...) | bot.removeEvent(...)
-bot.adminRemoveEvent(...) | bot.hasAdminPermission(...) | bot.checkPermission(...) | bot.ban(...) | bot.unban(...)
+bot.adminRemoveEvent(...) | bot.pinMessage(...) | bot.unpinMessage(...) | bot.createChannel(...) | bot.sendTip(...)
+bot.hasAdminPermission(...) | bot.checkPermission(...) | bot.ban(...) | bot.unban(...)
 // Properties: bot.botId, bot.viem, bot.appAddress
 ```
 
