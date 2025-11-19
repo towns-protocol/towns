@@ -102,6 +102,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.id, content, error)}`
     const sessionId = extractSessionId(timelineEvent)
+    const appClientAddress = extractAppClientAddress(timelineEvent)
 
     return {
         eventId: eventId,
@@ -127,6 +128,7 @@ export function toEvent(timelineEvent: StreamTimelineEvent, userId: string): Tim
         isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
         sessionId,
+        appClientAddress,
     }
 }
 
@@ -139,6 +141,14 @@ function extractSessionId(event: StreamTimelineEvent): string | undefined {
     return payload.value.content.value.sessionIdBytes.length > 0
         ? bin_toHexString(payload.value.content.value.sessionIdBytes)
         : payload.value.content.value.sessionId
+}
+
+function extractAppClientAddress(event: StreamTimelineEvent): string | undefined {
+    const tags = event.remoteEvent?.event.tags
+    if (!tags?.appClientAddress || tags.appClientAddress.length === 0) {
+        return undefined
+    }
+    return `0x${bin_toHexString(tags.appClientAddress)}`
 }
 
 function getSenderId(timelineEvent: StreamTimelineEvent): string {
