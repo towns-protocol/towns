@@ -80,7 +80,6 @@ type HighUsageInfo struct {
 type CallRateMonitor interface {
 	RecordCall(user []byte, now time.Time, callType CallType)
 	GetHighUsageInfo(now time.Time) []HighUsageInfo
-	Close()
 }
 
 // inMemoryCallRateMonitor keeps per-user counters for each call type, storing a
@@ -96,10 +95,7 @@ type inMemoryCallRateMonitor struct {
 	cleanupAfter time.Duration
 	callSpecs    []*callTypeSpec
 	lastCleanup  time.Time
-	cleanupWG    sync.WaitGroup
-	closeOnce    sync.Once
 	logger       *zap.Logger
-	cancel       context.CancelFunc
 }
 
 const (
@@ -134,21 +130,17 @@ func NewCallRateMonitor(ctx context.Context, cfg config.HighUsageDetectionConfig
 		logger = zap.NewNop()
 	}
 
-	derivedCtx, cancel := context.WithCancel(ctx)
-
 	m := &inMemoryCallRateMonitor{
 		cfg:          cfg,
 		users:        make(map[common.Address]*userStats),
 		cleanupAfter: cleanupWindow,
 		callSpecs:    specs,
 		lastCleanup:  time.Now(),
-		cancel:       cancel,
 		logger:       logger.Named("highusage_monitor"),
 	}
 	if cleanupMinInterval > 0 {
 		ticker := time.NewTicker(cleanupMinInterval)
-		m.cleanupWG.Add(1)
-		go m.cleanupLoop(derivedCtx, ticker)
+		go m.cleanupLoop(ctx, ticker)
 	}
 	callTypeKeys := make([]string, 0, len(specs))
 	for ct, spec := range specs {
@@ -298,10 +290,7 @@ func (m *inMemoryCallRateMonitor) cleanupLocked(now time.Time) {
 }
 
 func (m *inMemoryCallRateMonitor) cleanupLoop(ctx context.Context, ticker *time.Ticker) {
-	defer func() {
-		ticker.Stop()
-		m.cleanupWG.Done()
-	}()
+	defer ticker.Stop()
 	for {
 		select {
 		case now := <-ticker.C:
@@ -312,15 +301,6 @@ func (m *inMemoryCallRateMonitor) cleanupLoop(ctx context.Context, ticker *time.
 			return
 		}
 	}
-}
-
-func (m *inMemoryCallRateMonitor) Close() {
-	m.closeOnce.Do(func() {
-		if m.cancel != nil {
-			m.cancel()
-		}
-		m.cleanupWG.Wait()
-	})
 }
 
 type userStats struct {
@@ -571,4 +551,3 @@ type noopCallRateMonitor struct{}
 
 func (noopCallRateMonitor) RecordCall([]byte, time.Time, CallType)     {}
 func (noopCallRateMonitor) GetHighUsageInfo(time.Time) []HighUsageInfo { return nil }
-func (noopCallRateMonitor) Close()                                     {}
