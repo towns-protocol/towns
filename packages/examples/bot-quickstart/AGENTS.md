@@ -183,9 +183,9 @@ const mentionWallet = await getSmartAccountFromUserId(bot, { userId: event.menti
 **Types:** `BotHandler`, `BasePayload`, `MessageOpts`
 
 ```typescript
-// Send (ALWAYS use <@{userId}> for mentions)
+// Send (ALWAYS use <@{userId}> in message AND add mentions in sendMessage options)
 await handler.sendMessage(channelId, "Hello <@0x123...>", {
-  threadId?, replyId?, mentions?: [{ userId: "0x123...", displayName: "name" }], attachments? })
+  threadId?, replyId?, mentions: [{ userId: "0x123...", displayName: "name" }], attachments? })
 
 await handler.editMessage(channelId, messageId, newMessage)  // Bot's own only
 await handler.sendReaction(channelId, messageId, reaction)
@@ -308,7 +308,7 @@ app.post('/github', async (c) => {
 ## Critical Notes
 
 1. **User IDs are addresses** - `0x...`, not usernames
-2. **Always use `<@{userId}>` for mentions** - Not `@username`
+2. **Always use `<@{userId}>` for mentions AND add mentions in sendMessage options** - Not `@username`
 3. **Slash commands exclusive** - Never trigger `onMessage`
 4. **Thread/Reply IDs only** - No original content
 5. **Stateless** - Store context externally
