@@ -191,6 +191,8 @@ func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, ca
 		return
 	}
 
+	m.logger.Info("Recording call", zap.String("user", common.Bytes2Hex(userBytes)), zap.String("call_type", callType.String()), zap.Time("now", now))
+
 	user := common.BytesToAddress(userBytes)
 	if user == (common.Address{}) {
 		return

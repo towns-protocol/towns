@@ -108,6 +108,37 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 	require.Len(t, usage, 2)
 }
 
+func TestMonitorMultipleThresholdsSameCallType(t *testing.T) {
+	t.Parallel()
+	cfg := config.HighUsageDetectionConfig{
+		Enabled: true,
+		Thresholds: config.HighUsageThresholdFields{
+			ThresholdAddEventWindow1: time.Minute,
+			ThresholdAddEventCount1:  10,
+			ThresholdAddEventWindow2: time.Hour,
+			ThresholdAddEventCount2:  30,
+		},
+	}
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	user := common.HexToAddress("0xbeef")
+	base := time.Unix(0, 0)
+
+	for i := 0; i < 35; i++ {
+		monitor.RecordCall(user.Bytes(), base.Add(time.Duration(i)*time.Second), CallTypeEvent)
+	}
+
+	usage := monitor.GetHighUsageInfo(base.Add(40 * time.Second))
+	require.Len(t, usage, 1)
+	require.Equal(t, CallTypeEvent, usage[0].CallType)
+	require.Len(t, usage[0].Violations, 2)
+	require.Equal(t, time.Minute, usage[0].Violations[0].Window)
+	require.Equal(t, uint32(35), usage[0].Violations[0].Count)
+	require.Equal(t, uint32(10), usage[0].Violations[0].Limit)
+	require.Equal(t, time.Hour, usage[0].Violations[1].Window)
+	require.Equal(t, uint32(35), usage[0].Violations[1].Count)
+	require.Equal(t, uint32(30), usage[0].Violations[1].Limit)
+}
+
 func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	t.Parallel()
 	cfg := newDetectionConfig(true, map[CallType][]Threshold{

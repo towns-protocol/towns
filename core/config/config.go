@@ -58,9 +58,9 @@ func GetDefaultConfig() *Config {
 			MaxResults: 50,
 			Thresholds: HighUsageThresholdFields{
 				ThresholdAddEventWindow1:          time.Minute,
-				ThresholdAddEventCount1:           50,
+				ThresholdAddEventCount1:           10,
 				ThresholdAddEventWindow2:          30 * time.Minute,
-				ThresholdAddEventCount2:           500,
+				ThresholdAddEventCount2:           50,
 				ThresholdAddMediaEventWindow1:     time.Minute,
 				ThresholdAddMediaEventCount1:      50,
 				ThresholdAddMediaEventWindow2:     30 * time.Minute,
