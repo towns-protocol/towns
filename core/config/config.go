@@ -54,19 +54,19 @@ func GetDefaultConfig() *Config {
 			Enabled: true,
 		},
 		HighUsageDetection: HighUsageDetectionConfig{
-			Enabled:    true,
+			Enabled:    false,
 			MaxResults: 50,
 			Thresholds: HighUsageThresholdFields{
 				ThresholdAddEventWindow1:          time.Minute,
-				ThresholdAddEventCount1:           10,
+				ThresholdAddEventCount1:           50,
 				ThresholdAddEventWindow2:          30 * time.Minute,
-				ThresholdAddEventCount2:           50,
+				ThresholdAddEventCount2:           1000,
 				ThresholdAddMediaEventWindow1:     time.Minute,
 				ThresholdAddMediaEventCount1:      50,
 				ThresholdAddMediaEventWindow2:     30 * time.Minute,
 				ThresholdAddMediaEventCount2:      500,
 				ThresholdCreateMediaStreamWindow1: time.Minute,
-				ThresholdCreateMediaStreamCount1:  10,
+				ThresholdCreateMediaStreamCount1:  5,
 				ThresholdCreateMediaStreamWindow2: 30 * time.Minute,
 				ThresholdCreateMediaStreamCount2:  100,
 			},
@@ -670,8 +670,16 @@ func (fields HighUsageThresholdFields) effectiveThresholds() map[string][]HighUs
 	addThreshold("event", fields.ThresholdAddEventWindow2, fields.ThresholdAddEventCount2)
 	addThreshold("media_event", fields.ThresholdAddMediaEventWindow1, fields.ThresholdAddMediaEventCount1)
 	addThreshold("media_event", fields.ThresholdAddMediaEventWindow2, fields.ThresholdAddMediaEventCount2)
-	addThreshold("create_media_stream", fields.ThresholdCreateMediaStreamWindow1, fields.ThresholdCreateMediaStreamCount1)
-	addThreshold("create_media_stream", fields.ThresholdCreateMediaStreamWindow2, fields.ThresholdCreateMediaStreamCount2)
+	addThreshold(
+		"create_media_stream",
+		fields.ThresholdCreateMediaStreamWindow1,
+		fields.ThresholdCreateMediaStreamCount1,
+	)
+	addThreshold(
+		"create_media_stream",
+		fields.ThresholdCreateMediaStreamWindow2,
+		fields.ThresholdCreateMediaStreamCount2,
+	)
 
 	if len(result) == 0 {
 		return nil
