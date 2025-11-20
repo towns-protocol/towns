@@ -10,6 +10,7 @@ import {
 import { fetchAgentData } from './agentData'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
+const ENVIRONMENT = process.env.PONDER_ENVIRONMENT || 'alpha'
 
 // Setup hook: Create critical indexes before indexing starts
 // These indexes are needed during historic sync for performance
@@ -931,7 +932,7 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
             console.info(
                 `[AgentRegistered] Fetching agent data: agentId=${agentId}, app=${owner}, uri=${agentUri}`,
             )
-            const agentData = await fetchAgentData(agentUri)
+            const agentData = await fetchAgentData(agentUri, 3, 1000, owner, ENVIRONMENT)
             if (agentData) {
                 await context.db.sql
                     .update(schema.agentIdentity)
@@ -996,7 +997,7 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
             `[AgentUriUpdated] Updating URI: agentId=${agentId}, app=${agent.app}, ` +
                 `oldUri=${agent.agentUri}, newUri=${agentUri}`,
         )
-        const agentData = await fetchAgentData(agentUri)
+        const agentData = await fetchAgentData(agentUri, 3, 1000, agent.app, ENVIRONMENT)
 
         if (agentData !== null) {
             // Only update if fetch succeeds - keeps URI and data in sync
