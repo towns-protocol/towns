@@ -22,7 +22,14 @@ func (s *PostgresStreamStore) ExternalStorageEnabled() bool {
 
 // MigrateMiniblocksToExternalStorage migrates miniblock data from the given stream to external
 // storage. In case it fails, it returns an indication if the migration can be retried. The stream
-// must be a media stream that has been normalized (e.g. not ephemeral).
+// must be a media stream that has been normalized (e.g. not ephemeral) and thus no more miniblocks
+// can be added to it.
+//
+// When all miniblocks are migrated to external storage, the stream is locked in the DB and the
+// miniblock data location is updated to external storage. The miniblocks are purged from the
+// {{miniblocks}} table, and records in the {{miniblocks_ext}} table are created and are used
+// to decode individual miniblocks from the external object. Once this is done the stream is
+// migrated to external storage.
 func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 	ctx context.Context,
 	streamID StreamId,
@@ -42,6 +49,7 @@ func (s *PostgresStreamStore) MigrateMiniblocksToExternalStorage(
 	// once all miniblocks are stored in the DB and the stream is sealed.
 	isEphemeral, err := s.IsStreamEphemeral(ctx, streamID)
 	if err != nil {
+		s.extStorageMigrationFailure.Inc()
 		return true, err
 	}
 	if isEphemeral {
@@ -146,7 +154,7 @@ func (s *PostgresStreamStore) TotalMiniblockDataSizeInDB(
 		func(ctx context.Context, tx pgx.Tx) error {
 			if err := tx.QueryRow(
 				ctx,
-				s.sqlForStream("SELECT SUM(LENGTH(blockdata)) from {{miniblocks}} WHERE stream_id = $1", streamId),
+				s.sqlForStream("SELECT COALESCE(SUM(LENGTH(blockdata)), 0) from {{miniblocks}} WHERE stream_id = $1", streamId),
 				streamId,
 			).Scan(&totalSize); err != nil {
 				if errors.Is(err, pgx.ErrNoRows) {
@@ -253,7 +261,7 @@ func (s *PostgresStreamStore) LoadMediaStreamsWithMiniblocksReadyToMigrate(
 	limit uint,
 ) (streams []StreamId, err error) {
 	if limit == 0 || limit > 2500 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "limit must be between 1 and 250").
+		return nil, RiverError(Err_INVALID_ARGUMENT, "limit must be between 1 and 2500").
 			Tag("limit", limit).
 			Func("LoadMediaStreamsWithMiniblocksInDB")
 	}

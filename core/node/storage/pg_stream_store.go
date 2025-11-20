@@ -1379,6 +1379,14 @@ func (s *PostgresStreamStore) readMiniblocksFromExternalStorageTx(
 			Tag("streamId", streamId)
 	}
 
+	// Ensure we got a full, continuous range [fromInclusive, toExclusive).
+	if len(miniblockParts) > 0 && int64(prevSeqNum) != toExclusive-1 {
+		return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks in ext storage DB at end of range").
+			Tag("ExpectedLast", toExclusive-1).
+			Tag("ActualLast", prevSeqNum).
+			Tag("streamId", streamId)
+	}
+
 	// fetch from external storage
 	miniblocksData, err := s.externalStorage.DownloadMiniblockData(
 		ctx, streamId, miniblockParts, []external.MiniblockRange{
@@ -1390,7 +1398,13 @@ func (s *PostgresStreamStore) readMiniblocksFromExternalStorageTx(
 
 	miniblocks := make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
 	for i := fromInclusive; i < toExclusive; i++ {
-		miniblocks = append(miniblocks, &MiniblockDescriptor{Number: i, Data: miniblocksData[i]})
+		data, ok := miniblocksData[i]
+		if !ok {
+			return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks data not found in external storage").
+				Tag("miniblock", i).
+				Tag("streamId", streamId)
+		}
+		miniblocks = append(miniblocks, &MiniblockDescriptor{Number: i, Data: data})
 	}
 
 	return miniblocks, nil
