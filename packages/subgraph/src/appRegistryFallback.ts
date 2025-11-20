@@ -84,15 +84,11 @@ async function fetchBotMetadata(
                 description?: string
                 externalUrl?: string
             }
-        }>(
-            `${appRegistryUrl}/river.AppRegistryService/GetAppMetadata`,
-            requestBody,
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+        }>(`${appRegistryUrl}/river.AppRegistryService/GetAppMetadata`, requestBody, {
+            headers: {
+                'Content-Type': 'application/json',
             },
-        )
+        })
 
         const data = response.data
 
