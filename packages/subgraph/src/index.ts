@@ -928,6 +928,9 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
 
         // Fetch and store agent data if URI is provided
         if (agentUri) {
+            console.info(
+                `[AgentRegistered] Fetching agent data: agentId=${agentId}, app=${owner}, uri=${agentUri}`,
+            )
             const agentData = await fetchAgentData(agentUri)
             if (agentData) {
                 await context.db.sql
@@ -939,6 +942,13 @@ ponder.on('AppRegistry:Registered', async ({ event, context }) => {
                             eq(schema.agentIdentity.agentId, agentId),
                         ),
                     )
+                console.info(
+                    `[AgentRegistered] Successfully stored agent data: agentId=${agentId}, app=${owner}`,
+                )
+            } else {
+                console.warn(
+                    `[AgentRegistered] Failed to fetch agent data: agentId=${agentId}, app=${owner}, uri=${agentUri}`,
+                )
             }
         }
 
@@ -982,6 +992,10 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
         }
 
         // Fetch agent data from new URI with retries
+        console.info(
+            `[AgentUriUpdated] Updating URI: agentId=${agentId}, app=${agent.app}, ` +
+                `oldUri=${agent.agentUri}, newUri=${agentUri}`,
+        )
         const agentData = await fetchAgentData(agentUri)
 
         if (agentData !== null) {
@@ -999,10 +1013,13 @@ ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
                         eq(schema.agentIdentity.agentId, agentId),
                     ),
                 )
+            console.info(
+                `[AgentUriUpdated] Successfully updated agent data: agentId=${agentId}, app=${agent.app}`,
+            )
         } else {
             console.warn(
-                `Skipping URI update for agentId ${agentId}, fetch failed after retries. ` +
-                    `Keeping existing URI: ${agent.agentUri}`,
+                `[AgentUriUpdated] Skipping URI update due to fetch failure: ` +
+                    `agentId=${agentId}, app=${agent.app}, attemptedUri=${agentUri}, keepingUri=${agent.agentUri}`,
             )
         }
     } catch (error) {
