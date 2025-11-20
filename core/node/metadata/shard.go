@@ -18,6 +18,9 @@ import (
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/types"
+
+	. "github.com/towns-protocol/towns/core/node/base"
+	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
 const defaultValidatorPower int64 = 1
@@ -56,7 +59,7 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 	if rootDir == "" {
 		tempRoot, err := os.MkdirTemp("", fmt.Sprintf("metadata-shard-%d-", opts.ShardID))
 		if err != nil {
-			return nil, fmt.Errorf("create shard root: %w", err)
+			return nil, RiverErrorWithBase(Err_INTERNAL, "create shard root", err)
 		}
 		rootDir = tempRoot
 	}
@@ -98,12 +101,12 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("load or generate priv validator: %w", err)
+		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
 	}
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
-		return nil, fmt.Errorf("load or generate node key: %w", err)
+		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate node key", err)
 	}
 
 	app := opts.App
@@ -128,22 +131,19 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 }
 
 func (s *MetadataShard) Start(ctx context.Context) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if s.node != nil {
-		return fmt.Errorf("metadata shard already started")
+		return RiverError(Err_FAILED_PRECONDITION, "metadata shard already started")
 	}
 	if s.genesisDoc == nil {
-		return fmt.Errorf("genesis doc is not configured")
+		return RiverError(Err_FAILED_PRECONDITION, "genesis doc is not configured")
 	}
 
 	if err := s.config.ValidateBasic(); err != nil {
-		return fmt.Errorf("invalid cometbft config: %w", err)
+		return RiverErrorWithBase(Err_INVALID_ARGUMENT, "invalid cometbft config", err)
 	}
 
 	if err := s.genesisDoc.SaveAs(s.config.GenesisFile()); err != nil {
-		return fmt.Errorf("write genesis file: %w", err)
+		return RiverErrorWithBase(Err_INTERNAL, "write genesis file", err)
 	}
 
 	nodeInstance, err := node.NewNode(
@@ -158,11 +158,11 @@ func (s *MetadataShard) Start(ctx context.Context) error {
 		s.logger,
 	)
 	if err != nil {
-		return fmt.Errorf("create cometbft node: %w", err)
+		return RiverErrorWithBase(Err_INTERNAL, "create cometbft node", err)
 	}
 
 	if err := nodeInstance.Start(); err != nil {
-		return fmt.Errorf("start cometbft node: %w", err)
+		return RiverErrorWithBase(Err_INTERNAL, "start cometbft node", err)
 	}
 
 	s.node = nodeInstance
@@ -182,7 +182,7 @@ func (s *MetadataShard) Stop() error {
 
 func (s *MetadataShard) SubmitTx(tx []byte) error {
 	if s.node == nil {
-		return fmt.Errorf("metadata shard not started")
+		return RiverError(Err_FAILED_PRECONDITION, "metadata shard not started")
 	}
 	_, err := s.node.Mempool().CheckTx(tx, "")
 	return err
@@ -197,7 +197,7 @@ func (s *MetadataShard) Height() int64 {
 
 func (s *MetadataShard) SetPersistentPeers(peers []string) error {
 	if s.node != nil {
-		return fmt.Errorf("cannot update peers after shard start")
+		return RiverError(Err_FAILED_PRECONDITION, "cannot update peers after shard start")
 	}
 	s.config.P2P.PersistentPeers = strings.Join(peers, ",")
 	return nil
@@ -221,7 +221,7 @@ func (s *MetadataShard) GenesisValidator(power int64) (types.GenesisValidator, e
 	}
 	pubKey, err := s.privValidator.GetPubKey()
 	if err != nil {
-		return types.GenesisValidator{}, fmt.Errorf("get validator public key: %w", err)
+		return types.GenesisValidator{}, RiverErrorWithBase(Err_INTERNAL, "get validator public key", err)
 	}
 	return types.GenesisValidator{
 		PubKey: pubKey,
@@ -232,12 +232,12 @@ func (s *MetadataShard) GenesisValidator(power int64) (types.GenesisValidator, e
 
 func (s *MetadataShard) SetGenesisDoc(doc *types.GenesisDoc) error {
 	if s.node != nil {
-		return fmt.Errorf("cannot update genesis after shard start")
+		return RiverError(Err_FAILED_PRECONDITION, "cannot update genesis after shard start")
 	}
 	if doc == nil {
 		pubKey, err := s.privValidator.GetPubKey()
 		if err != nil {
-			return fmt.Errorf("get validator public key: %w", err)
+			return RiverErrorWithBase(Err_INTERNAL, "get validator public key", err)
 		}
 		doc = s.defaultGenesisDoc(pubKey)
 	}
@@ -246,17 +246,17 @@ func (s *MetadataShard) SetGenesisDoc(doc *types.GenesisDoc) error {
 	if genDoc.ChainID == "" {
 		genDoc.ChainID = s.defaultChainID()
 	} else if s.opts.ChainID != "" && genDoc.ChainID != s.opts.ChainID {
-		return fmt.Errorf("genesis doc chain ID %q does not match shard chain ID %q", genDoc.ChainID, s.opts.ChainID)
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("genesis doc chain ID %q does not match shard chain ID %q", genDoc.ChainID, s.opts.ChainID))
 	}
 	if genDoc.GenesisTime.IsZero() {
 		genDoc.GenesisTime = time.Now().UTC()
 	}
 	if len(genDoc.Validators) == 0 {
-		return fmt.Errorf("genesis doc must contain at least one validator")
+		return RiverError(Err_INVALID_ARGUMENT, "genesis doc must contain at least one validator")
 	}
 
 	if err := genDoc.ValidateAndComplete(); err != nil {
-		return fmt.Errorf("invalid genesis doc: %w", err)
+		return RiverErrorWithBase(Err_INVALID_ARGUMENT, "invalid genesis doc", err)
 	}
 
 	s.genesisDoc = genDoc
@@ -281,17 +281,17 @@ func (s *MetadataShard) defaultGenesisDoc(pubKey crypto.PubKey) *types.GenesisDo
 
 func hostPortFromAddress(addr string) (string, error) {
 	if addr == "" {
-		return "", fmt.Errorf("p2p address is empty")
+		return "", RiverError(Err_INVALID_ARGUMENT, "p2p address is empty")
 	}
 	if !strings.Contains(addr, "://") {
 		return addr, nil
 	}
 	parsed, err := url.Parse(addr)
 	if err != nil {
-		return "", fmt.Errorf("parse p2p address %q: %w", addr, err)
+		return "", RiverErrorWithBase(Err_INVALID_ARGUMENT, fmt.Sprintf("parse p2p address %q", addr), err)
 	}
 	if parsed.Host == "" {
-		return "", fmt.Errorf("p2p address %q does not contain host", addr)
+		return "", RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("p2p address %q does not contain host", addr))
 	}
 	return parsed.Host, nil
 }

@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -13,9 +12,6 @@ import (
 )
 
 func TestMetadataShardProducesBlocks(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
-	t.Cleanup(cancel)
-
 	const (
 		shardID    = 1
 		nodeCount  = 4
@@ -74,7 +70,7 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 	}
 
 	for _, shard := range shards {
-		require.NoError(t, shard.Start(ctx))
+		require.NoError(t, shard.Start(t.Context()))
 	}
 	t.Cleanup(func() {
 		for _, shard := range shards {
