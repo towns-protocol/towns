@@ -16,9 +16,9 @@ function getAppRegistryUrl(environment: string): string {
     switch (environment) {
         case 'local_dev':
         case 'development':
-            return 'https://localhost:6170'
+            return 'http://localhost:6170'
         case 'test':
-            return 'https://localhost:6170'
+            return 'http://localhost:6170'
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
         case 'beta':
