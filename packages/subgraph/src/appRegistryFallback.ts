@@ -6,13 +6,7 @@ import { AgentData } from './agentData'
  */
 function hexToBase64(hex: string): string {
     const hexString = hex.startsWith('0x') ? hex.slice(2) : hex
-    const bytes = new Uint8Array(hexString.length / 2)
-    for (let i = 0; i < hexString.length; i += 2) {
-        bytes[i / 2] = parseInt(hexString.substring(i, i + 2), 16)
-    }
-    // Convert to base64
-    const binaryString = String.fromCharCode(...bytes)
-    return btoa(binaryString)
+    return Buffer.from(hexString, 'hex').toString('base64')
 }
 
 /**
