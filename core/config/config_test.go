@@ -139,8 +139,8 @@ func TestConfig_ChainProvidersDoNotLog(t *testing.T) {
 func TestHighUsageDetectionConfig_DefaultThresholds(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			ThresholdAddEventWindow: time.Minute,
-			ThresholdAddEventCount:  100,
+			ThresholdAddEventWindow1: time.Minute,
+			ThresholdAddEventCount1:  100,
 		},
 	}
 
@@ -154,12 +154,12 @@ func TestHighUsageDetectionConfig_DefaultThresholds(t *testing.T) {
 func TestHighUsageDetectionConfig_MultipleCallTypes(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			ThresholdAddEventWindow:          2 * time.Minute,
-			ThresholdAddEventCount:           200,
-			ThresholdAddMediaEventWindow:     45 * time.Second,
-			ThresholdAddMediaEventCount:      15,
-			ThresholdCreateMediaStreamWindow: 90 * time.Second,
-			ThresholdCreateMediaStreamCount:  25,
+			ThresholdAddEventWindow1:          2 * time.Minute,
+			ThresholdAddEventCount1:           200,
+			ThresholdAddMediaEventWindow1:     45 * time.Second,
+			ThresholdAddMediaEventCount1:      15,
+			ThresholdCreateMediaStreamWindow1: 90 * time.Second,
+			ThresholdCreateMediaStreamCount1:  25,
 		},
 	}
 
@@ -176,15 +176,37 @@ func TestHighUsageDetectionConfig_MultipleCallTypes(t *testing.T) {
 	require.Equal(t, uint32(25), values["create_media_stream"][0].Count)
 }
 
+func TestHighUsageDetectionConfig_MultipleThresholdsPerCallType(t *testing.T) {
+	cfg := config.HighUsageDetectionConfig{
+		Thresholds: config.HighUsageThresholdFields{
+			ThresholdAddEventWindow1: time.Minute,
+			ThresholdAddEventCount1:  100,
+			ThresholdAddEventWindow2: 5 * time.Minute,
+			ThresholdAddEventCount2:  400,
+		},
+	}
+
+	values := cfg.HighUsageThresholds()
+
+	require.Len(t, values, 1)
+	require.Len(t, values["event"], 2)
+	require.Equal(t, []config.HighUsageThreshold{
+		{Window: time.Minute, Count: 100},
+		{Window: 5 * time.Minute, Count: 400},
+	}, values["event"])
+}
+
 func TestHighUsageDetectionConfig_InvalidEntriesIgnored(t *testing.T) {
 	cfg := config.HighUsageDetectionConfig{
 		Thresholds: config.HighUsageThresholdFields{
-			ThresholdAddEventWindow:          0,
-			ThresholdAddEventCount:           100,
-			ThresholdAddMediaEventWindow:     time.Minute,
-			ThresholdAddMediaEventCount:      0,
-			ThresholdCreateMediaStreamWindow: 30 * time.Second,
-			ThresholdCreateMediaStreamCount:  5,
+			ThresholdAddEventWindow1:          0,
+			ThresholdAddEventCount1:           100,
+			ThresholdAddMediaEventWindow1:     time.Minute,
+			ThresholdAddMediaEventCount1:      0,
+			ThresholdCreateMediaStreamWindow1: 30 * time.Second,
+			ThresholdCreateMediaStreamCount1:  5,
+			ThresholdCreateMediaStreamWindow2: time.Second,
+			ThresholdCreateMediaStreamCount2:  0,
 		},
 	}
 

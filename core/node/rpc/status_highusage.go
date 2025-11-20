@@ -21,14 +21,6 @@ func convertHighUsageInfo(entries []highusage.HighUsageInfo) []statusinfo.HighUs
 		if addr == (common.Address{}) {
 			user = ""
 		}
-		usage := make([]statusinfo.UsageInfo, 0, len(entry.Usage))
-		for _, u := range entry.Usage {
-			usage = append(usage, statusinfo.UsageInfo{
-				Window: u.Window.String(),
-				Count:  u.Count,
-				Limit:  u.Limit,
-			})
-		}
 		violations := make([]statusinfo.ViolationInfo, 0, len(entry.Violations))
 		for _, v := range entry.Violations {
 			violations = append(violations, statusinfo.ViolationInfo{
@@ -41,7 +33,6 @@ func convertHighUsageInfo(entries []highusage.HighUsageInfo) []statusinfo.HighUs
 			User:       user,
 			CallType:   entry.CallType.String(),
 			LastSeen:   entry.LastSeen.UTC().Format(time.RFC3339),
-			Usage:      usage,
 			Violations: violations,
 		})
 	}
