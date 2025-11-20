@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -24,13 +24,13 @@ import (
 )
 
 const defaultValidatorPower int64 = 1
+const chainIDPrefix = "metadata-shard-"
 
 type MetadataShardOpts struct {
 	ShardID         uint64
 	P2PPort         int
 	RPCPort         int
 	RootDir         string
-	ChainID         string
 	GenesisDoc      *types.GenesisDoc
 	PersistentPeers []string
 	App             abci.Application
@@ -55,14 +55,12 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 		logger = log.NewNopLogger()
 	}
 
-	rootDir := opts.RootDir
-	if rootDir == "" {
-		tempRoot, err := os.MkdirTemp("", fmt.Sprintf("metadata-shard-%d-", opts.ShardID))
-		if err != nil {
-			return nil, RiverErrorWithBase(Err_INTERNAL, "create shard root", err)
-		}
-		rootDir = tempRoot
+	if opts.RootDir == "" {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "root dir is required")
 	}
+
+	chainID := chainIDForShard(opts.ShardID)
+	rootDir := filepath.Join(opts.RootDir, chainID)
 
 	cfg := cmtcfg.DefaultConfig()
 	cfg.SetRoot(rootDir)
@@ -243,10 +241,11 @@ func (s *MetadataShard) SetGenesisDoc(doc *types.GenesisDoc) error {
 	}
 
 	genDoc := cloneGenesisDoc(doc)
+	expectedChainID := s.defaultChainID()
 	if genDoc.ChainID == "" {
-		genDoc.ChainID = s.defaultChainID()
-	} else if s.opts.ChainID != "" && genDoc.ChainID != s.opts.ChainID {
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("genesis doc chain ID %q does not match shard chain ID %q", genDoc.ChainID, s.opts.ChainID))
+		genDoc.ChainID = expectedChainID
+	} else if genDoc.ChainID != expectedChainID {
+		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("genesis doc chain ID %q does not match shard chain ID %q", genDoc.ChainID, expectedChainID))
 	}
 	if genDoc.GenesisTime.IsZero() {
 		genDoc.GenesisTime = time.Now().UTC()
@@ -264,10 +263,7 @@ func (s *MetadataShard) SetGenesisDoc(doc *types.GenesisDoc) error {
 }
 
 func (s *MetadataShard) defaultChainID() string {
-	if s.opts.ChainID != "" {
-		return s.opts.ChainID
-	}
-	return fmt.Sprintf("metadata-shard-%d", s.opts.ShardID)
+	return chainIDForShard(s.opts.ShardID)
 }
 
 func (s *MetadataShard) defaultGenesisDoc(pubKey crypto.PubKey) *types.GenesisDoc {
@@ -308,4 +304,8 @@ func cloneGenesisDoc(doc *types.GenesisDoc) *types.GenesisDoc {
 		copyDoc.ConsensusParams = &params
 	}
 	return &copyDoc
+}
+
+func chainIDForShard(shardID uint64) string {
+	return fmt.Sprintf("%s%x", chainIDPrefix, shardID)
 }
