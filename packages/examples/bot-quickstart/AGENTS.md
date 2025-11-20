@@ -310,8 +310,6 @@ app.post('/github', async (c) => {
 1. **User IDs are addresses** - `0x...`, not usernames
 2. **Always use `<@{userId}>` for mentions AND add mentions in sendMessage options** - Not `@username`
 3. **Slash commands exclusive** - Never trigger `onMessage`
-4. **Thread/Reply IDs only** - No original content
 5. **Stateless** - Store context externally
-6. **Fund `bot.appAddress`** - For on-chain ops
-7. **Encryption automatic** - Never handle manually
-8. **Multiple handlers fire** - All registered handlers execute
+6. **Fund gas wallet for on-chain ops** - `bot.viem.account`
+7. Use `getSmartAccountFromUserId` to get user's wallet address
