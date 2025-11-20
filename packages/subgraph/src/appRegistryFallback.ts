@@ -1,8 +1,8 @@
+import axios from 'axios'
 import { AgentData } from './agentData'
 
 /**
  * Convert hex string to base64 (for gRPC bytes fields)
- * Copied from harmony/servers/workers/gateway-worker/src/bots/fetchBotMetadata.ts
  */
 function hexToBase64(hex: string): string {
     const hexString = hex.startsWith('0x') ? hex.slice(2) : hex
@@ -17,7 +17,6 @@ function hexToBase64(hex: string): string {
 
 /**
  * Get the App Registry service URL for the given environment
- * Copied from harmony/servers/workers/gateway-worker/src/bots/getAppRegistryUrl.ts
  */
 function getAppRegistryUrl(environment: string): string {
     switch (environment) {
@@ -46,7 +45,7 @@ function getAppRegistryUrl(environment: string): string {
 /**
  * Fetch bot metadata from the App Registry service
  * Uses gRPC-web protocol to communicate with the service
- * Copied from harmony/servers/workers/gateway-worker/src/bots/fetchBotMetadata.ts
+ * See harmony/servers/workers/gateway-worker/src/bots/fetchBotMetadata.ts
  */
 async function fetchBotMetadata(
     clientAddress: string,
@@ -75,22 +74,7 @@ async function fetchBotMetadata(
             appId: appIdBase64,
         }
 
-        const response = await fetch(`${appRegistryUrl}/river.AppRegistryService/GetAppMetadata`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        })
-
-        if (!response.ok) {
-            console.warn(
-                `[AppRegistry] Failed to fetch metadata: status=${response.status}, app=${clientAddress}`,
-            )
-            return null
-        }
-
-        const data = (await response.json()) as {
+        const response = await axios.post<{
             metadata?: {
                 username?: string
                 displayName?: string
@@ -100,7 +84,17 @@ async function fetchBotMetadata(
                 description?: string
                 externalUrl?: string
             }
-        }
+        }>(
+            `${appRegistryUrl}/river.AppRegistryService/GetAppMetadata`,
+            requestBody,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            },
+        )
+
+        const data = response.data
 
         if (!data.metadata) {
             console.warn(`[AppRegistry] No metadata in response for app=${clientAddress}`)
@@ -109,10 +103,18 @@ async function fetchBotMetadata(
 
         return data.metadata
     } catch (error) {
-        console.error(
-            `[AppRegistry] Error fetching metadata for app=${clientAddress}:`,
-            error instanceof Error ? error.message : String(error),
-        )
+        if (axios.isAxiosError(error)) {
+            const status = error.response?.status
+            console.error(
+                `[AppRegistry] Failed to fetch metadata: ` +
+                    `app=${clientAddress}, status=${status || 'unknown'}, message="${error.message}"`,
+            )
+        } else {
+            console.error(
+                `[AppRegistry] Error fetching metadata for app=${clientAddress}:`,
+                error instanceof Error ? error.message : String(error),
+            )
+        }
         return null
     }
 }
