@@ -24,6 +24,7 @@ import {
     isDefined,
     genIdBlob,
     ParsedEvent,
+    type ChannelMessageEvent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { BasePayload, Bot, BotPayload, DecryptedInteractionResponse } from './bot'
@@ -742,6 +743,60 @@ describe('Bot', { sequential: true }, () => {
                     ?.content?.kind,
             ).toBe(RiverTimelineEvent.RedactedEvent),
         )
+    })
+
+    it('bot can mention bob', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello @bob', {
+            mentions: [
+                {
+                    userId: bob.userId,
+                    displayName: 'bob',
+                },
+            ],
+        })
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const channelMessage = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === messageId,
+        )?.content as ChannelMessageEvent
+
+        expect(channelMessage.mentions).toBeDefined()
+        expect(channelMessage.mentions?.length).toBe(1)
+        expect(channelMessage.mentions?.[0].userId).toBe(bob.userId)
+        expect(channelMessage.mentions?.[0].displayName).toBe('bob')
+    })
+
+    it('bot can mention channel', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId: messageId } = await bot.sendMessage(channelId, 'Hello @channel', {
+            mentions: [{ atChannel: true }],
+        })
+        await waitFor(() =>
+            expect(
+                bobDefaultChannel.timeline.events.value.find((x) => x.eventId === messageId)
+                    ?.content?.kind,
+            ).toBe(RiverTimelineEvent.ChannelMessage),
+        )
+        const channelMessage = bobDefaultChannel.timeline.events.value.find(
+            (x) => x.eventId === messageId,
+        )
+        let channelMessageEvent: ChannelMessageEvent | undefined
+        if (channelMessage?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+            channelMessageEvent = channelMessage.content
+        } else {
+            throw new Error('Message is not a channel message')
+        }
+
+        expect(channelMessageEvent.mentions).toBeDefined()
+        expect(channelMessageEvent.mentions?.length).toBe(1)
+        // @ts-expect-error - types of timeline is wrong
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(channelMessageEvent.mentions?.[0].mentionBehavior?.case).toBe('atChannel')
     })
 
     it('bot can fetch existing decryption keys when sending a message', async () => {
