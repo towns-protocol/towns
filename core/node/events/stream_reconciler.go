@@ -8,6 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/shared"
+
 	"github.com/towns-protocol/towns/core/contracts/river"
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -175,7 +177,23 @@ func (sr *streamReconciler) reconcile() error {
 	sr.stream.mu.RUnlock()
 
 	if len(remotes) == 0 {
-		return RiverError(Err_UNAVAILABLE, "Stream has no remotes", "stream", sr.stream.streamId)
+		// For non-replicated streams it is possible that the node missed the stream updated event
+		// and never promoted the candidate in its DB and can't reconcile the stream from other nodes.
+		// Try to promote the local candidate to finish reconciliation.
+		lastMBHash := sr.streamRecord.LastMbHash()
+		lastMbNum := sr.streamRecord.LastMbNum()
+
+		promoted, err := sr.tryPromoteLocalCandidate(lastMbNum, lastMBHash)
+		if err != nil {
+			return err
+		}
+		if promoted {
+			return nil
+		}
+
+		// Stream stuck: can't reconcile from other nodes nor make the local stream
+		// in line with the stream registry.
+		return RiverError(Err_UNAVAILABLE, "Stream stuck, no remotes", "stream", sr.stream.streamId)
 	}
 
 	sr.remotes = newRemoteTracker(remote, remotes)
@@ -195,6 +213,22 @@ func (sr *streamReconciler) reconcile() error {
 	err := sr.loadRanges()
 	if err != nil {
 		return err
+	}
+
+	// If stream is 1 miniblock behind the stream canonical chain, and has the candidate available,
+	// promote it instead of asking remotes. Otherwise it is possible that all replicas missed the
+	// stream update event and none of them promoted the candidate, causing the stream to get stuck.
+	if sr.localLastMbInclusive+1 == sr.streamRecord.LastMbNum() {
+		lastMBHash := sr.streamRecord.LastMbHash()
+		lastMbNum := sr.streamRecord.LastMbNum()
+
+		promoted, err := sr.tryPromoteLocalCandidate(lastMbNum, lastMBHash)
+		if err != nil {
+			return err
+		}
+		if promoted {
+			return nil
+		}
 	}
 
 	if sr.expectedLastMbInclusive <= sr.localLastMbInclusive {
@@ -232,6 +266,36 @@ func (sr *streamReconciler) reconcile() error {
 	}
 
 	return sr.backfillGaps()
+}
+
+// tryPromoteLocalCandidate attempts to promote a local miniblock candidate if one exists.
+// Returns (true, nil) if a candidate was successfully promoted.
+// Returns (false, nil) if no candidate exists (NOT_FOUND error).
+// Returns (false, err) for any other error (database errors, promotion failures, etc.).
+func (sr *streamReconciler) tryPromoteLocalCandidate(mbNum int64, mbHash common.Hash) (bool, error) {
+	candidate, err := sr.cache.params.Storage.ReadMiniblockCandidate(
+		sr.ctx, sr.stream.StreamId(), mbHash, mbNum)
+	if err != nil {
+		if IsRiverErrorCode(err, Err_NOT_FOUND) {
+			// No candidate available - this is expected in many cases
+			return false, nil
+		}
+		// Database or other error - propagate it
+		return false, err
+	}
+
+	if candidate == nil {
+		// Shouldn't happen if err is nil, but handle defensively
+		return false, nil
+	}
+
+	// Promote the candidate
+	err = sr.stream.promoteCandidate(sr.ctx, &shared.MiniblockRef{Hash: mbHash, Num: mbNum})
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // reconcileFromRegistryGenesisBlock attempts to load the genesis miniblock from the stream registry
