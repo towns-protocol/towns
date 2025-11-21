@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cometbft/cometbft/libs/service"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/privval"
@@ -32,6 +34,8 @@ type MetadataShardOpts struct {
 	RPCPort         int
 	RootDir         string
 	GenesisDoc      *types.GenesisDoc
+	NodeKey         *p2p.NodeKey
+	PrivValidator   types.PrivValidator
 	PersistentPeers []string
 	App             abci.Application
 	Logger          log.Logger
@@ -43,13 +47,14 @@ type MetadataShard struct {
 	config        *cmtcfg.Config
 	node          *node.Node
 	app           abci.Application
+	serverCtx     context.Context
 	logger        log.Logger
 	privValidator types.PrivValidator
 	nodeKey       *p2p.NodeKey
 	genesisDoc    *types.GenesisDoc
 }
 
-func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
+func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
 	logger := opts.Logger
 	if logger == nil {
 		logger = log.NewNopLogger()
@@ -91,20 +96,28 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 		cfg.P2P.PersistentPeers = strings.Join(opts.PersistentPeers, ",")
 	}
 
-	privVal, err := privval.LoadOrGenFilePV(
-		cfg.PrivValidatorKeyFile(),
-		cfg.PrivValidatorStateFile(),
-		func() (crypto.PrivKey, error) {
-			return ed25519.GenPrivKey(), nil
-		},
-	)
-	if err != nil {
-		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
+	privVal := opts.PrivValidator
+	if privVal == nil {
+		var err error
+		privVal, err = privval.LoadOrGenFilePV(
+			cfg.PrivValidatorKeyFile(),
+			cfg.PrivValidatorStateFile(),
+			func() (crypto.PrivKey, error) {
+				return ed25519.GenPrivKey(), nil
+			},
+		)
+		if err != nil {
+			return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
+		}
 	}
 
-	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
-	if err != nil {
-		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate node key", err)
+	nodeKey := opts.NodeKey
+	if nodeKey == nil {
+		var err error
+		nodeKey, err = p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
+		if err != nil {
+			return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate node key", err)
+		}
 	}
 
 	app := opts.App
@@ -125,16 +138,27 @@ func NewMetadataShard(opts MetadataShardOpts) (*MetadataShard, error) {
 		return nil, err
 	}
 
+	if err := shard.start(ctx); err != nil {
+		return nil, err
+	}
+
+	go func() {
+		<-ctx.Done()
+		_ = shard.stop()
+	}()
+
 	return shard, nil
 }
 
-func (s *MetadataShard) Start(ctx context.Context) error {
+func (s *MetadataShard) start(ctx context.Context) error {
 	if s.node != nil {
 		return RiverError(Err_FAILED_PRECONDITION, "metadata shard already started")
 	}
 	if s.genesisDoc == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "genesis doc is not configured")
 	}
+
+	s.serverCtx = ctx
 
 	if err := s.config.ValidateBasic(); err != nil {
 		return RiverErrorWithBase(Err_INVALID_ARGUMENT, "invalid cometbft config", err)
@@ -167,12 +191,14 @@ func (s *MetadataShard) Start(ctx context.Context) error {
 	return nil
 }
 
-func (s *MetadataShard) Stop() error {
+func (s *MetadataShard) stop() error {
 	if s.node == nil {
 		return nil
 	}
 	if err := s.node.Stop(); err != nil {
-		return err
+		if !errors.Is(err, service.ErrAlreadyStopped) {
+			return err
+		}
 	}
 	s.node = nil
 	return nil

@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/types"
 )
 
@@ -22,61 +24,54 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 	rootDir := t.TempDir()
 
 	shards := make([]*MetadataShard, nodeCount)
+	privValidators := make([]types.PrivValidator, nodeCount)
 	validators := make([]types.GenesisValidator, nodeCount)
+	nodeKeys := make([]*p2p.NodeKey, nodeCount)
+	nodeAddrs := make([]string, nodeCount)
 
 	for i := 0; i < nodeCount; i++ {
-		shardRoot := filepath.Join(rootDir, fmt.Sprintf("shard-%d", i))
-		shard, err := NewMetadataShard(MetadataShardOpts{
-			ShardID: shardID,
-			RootDir: shardRoot,
-			P2PPort: p2pBase + i,
-		})
+		privValidators[i] = types.NewMockPV()
+		pubKey, err := privValidators[i].GetPubKey()
 		require.NoError(t, err)
-		shards[i] = shard
-
-		validator, err := shard.GenesisValidator(defaultValidatorPower)
-		require.NoError(t, err)
-		validators[i] = validator
+		validators[i] = types.GenesisValidator{PubKey: pubKey, Power: defaultValidatorPower}
+		nodeKeys[i] = &p2p.NodeKey{PrivKey: ed25519.GenPrivKey()}
+		nodeAddrs[i] = fmt.Sprintf("%s@127.0.0.1:%d", nodeKeys[i].ID(), p2pBase+i)
 	}
 
 	genesisDoc := &types.GenesisDoc{
-		ChainID:         fmt.Sprintf("metadata-shard-%d", shardID),
+		ChainID:         chainIDForShard(shardID),
 		GenesisTime:     time.Now().UTC(),
 		Validators:      validators,
 		ConsensusParams: types.DefaultConsensusParams(),
 		InitialHeight:   1,
 	}
 
-	for _, shard := range shards {
-		require.NoError(t, shard.SetGenesisDoc(genesisDoc))
-	}
-
-	peerAddresses := make([]string, nodeCount)
-	for i, shard := range shards {
-		addr, err := shard.NodeAddress()
-		require.NoError(t, err)
-		peerAddresses[i] = addr
-	}
-
-	for i, shard := range shards {
+	for i := 0; i < nodeCount; i++ {
+		shardRoot := filepath.Join(rootDir, fmt.Sprintf("shard-%d", i))
 		var peers []string
-		for peerIdx, peerAddr := range peerAddresses {
+		for peerIdx := 0; peerIdx < nodeCount; peerIdx++ {
 			if peerIdx == i {
 				continue
 			}
-			peers = append(peers, peerAddr)
+			peers = append(peers, nodeAddrs[peerIdx])
 		}
-		require.NoError(t, shard.SetPersistentPeers(peers))
-	}
 
-	for _, shard := range shards {
-		require.NoError(t, shard.Start(t.Context()))
+		shard, err := NewMetadataShard(t.Context(), MetadataShardOpts{
+			ShardID:         shardID,
+			RootDir:         shardRoot,
+			P2PPort:         p2pBase + i,
+			GenesisDoc:      genesisDoc,
+			PrivValidator:   privValidators[i],
+			NodeKey:         nodeKeys[i],
+			PersistentPeers: peers,
+		})
+		require.NoError(t, err)
+		shards[i] = shard
+		currentShard := shard
+		t.Cleanup(func() {
+			require.NoError(t, currentShard.stop())
+		})
 	}
-	t.Cleanup(func() {
-		for _, shard := range shards {
-			require.NoError(t, shard.Stop())
-		}
-	})
 
 	targetHeight := shards[0].Height()
 
