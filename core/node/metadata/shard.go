@@ -23,6 +23,7 @@ import (
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
+	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -38,7 +39,6 @@ type MetadataShardOpts struct {
 	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
 	App             abci.Application
-	Logger          log.Logger
 }
 
 type MetadataShard struct {
@@ -55,10 +55,7 @@ type MetadataShard struct {
 }
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
-	logger := opts.Logger
-	if logger == nil {
-		logger = log.NewNopLogger()
-	}
+	logger := newCometLogger(ctx)
 
 	if opts.RootDir == "" {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "root dir is required")
@@ -345,4 +342,28 @@ func ensureValidatorType(genDoc *types.GenesisDoc, keyType string) {
 		}
 	}
 	genDoc.ConsensusParams.Validator.PubKeyTypes = append(pubKeyTypes, keyType)
+}
+
+type cometZapLogger struct {
+	log *logging.Log
+}
+
+func newCometLogger(ctx context.Context) log.Logger {
+	return cometZapLogger{log: logging.FromCtx(ctx)}
+}
+
+func (l cometZapLogger) Debug(msg string, keyvals ...any) {
+	l.log.Default.Debugw(msg, keyvals...)
+}
+
+func (l cometZapLogger) Info(msg string, keyvals ...any) {
+	l.log.Default.Infow(msg, keyvals...)
+}
+
+func (l cometZapLogger) Error(msg string, keyvals ...any) {
+	l.log.Default.Errorw(msg, keyvals...)
+}
+
+func (l cometZapLogger) With(keyvals ...any) log.Logger {
+	return cometZapLogger{log: l.log.With(keyvals...)}
 }
