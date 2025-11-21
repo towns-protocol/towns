@@ -70,10 +70,25 @@ const (
 	StreamUserInboxStreamHistoryMiniblocksConfigKey    = "stream.historyminiblocks.a1"
 	StreamUserSettingsStreamHistoryMiniblocksConfigKey = "stream.historyminiblocks.a5"
 
+	// StreamMaxEventsPerMiniblockKey is the maximum number of events in a miniblock.
+	StreamMaxEventsPerMiniblockKey = "stream.maxeventsperminiblock"
+
+	// StreamMaxTotalEventsSizePerMiniblockKey is the maximum size (in bytes) of all protobuf encoded events
+	// combined in a miniblock.
+	StreamMaxTotalEventsSizePerMiniblockKey = "stream.maxtotaleventssizeperminiblock"
+
 	// StreamDistributionExtraCandidatesCountCountKey is the key for many extra nodes on top of
 	// replication factor must be picked as candidates to place a stream on. From these candidates
 	// the best replication factor nodes are picked.
 	StreamDistributionExtraCandidatesCountCountKey = "stream.distribution.extracandidatescount"
+
+	// MaxEventsPerMiniblockDefault defines the default (also the maximum) number of events in a miniblock
+	// if not overwritten by StreamMaxEventsPerMiniblockKey.
+	MaxEventsPerMiniblockDefault = 15_000
+
+	// StreamMaxTotalEventsSizePerMiniblockDefault defines the default (also the maximum) size of all protobuf encoded events
+	// combined in a miniblock if not overwritten by StreamMaxTotalEventsSizePerMiniblockKey.
+	StreamMaxTotalEventsSizePerMiniblockDefault = 10 * 1024 * 1024
 )
 
 var (
@@ -170,6 +185,12 @@ type OnChainSettings struct {
 	// Number of miniblocks to keep for each type of stream.
 	// 0 means keep all miniblocks.
 	StreamHistoryMiniblocks StreamHistoryMiniblocks `mapstructure:",squash"`
+
+	// StreamMaxEventsPerMiniblock is the maximum number of events that can be included in a miniblock.
+	StreamMaxEventsPerMiniblock uint64 `mapstructure:"stream.maxeventsperminiblock"`
+	// StreamMaxTotalEventsSizePerMiniblock is the maximum size (in bytes) of all protobuf encoded events
+	// combined in a miniblock.
+	StreamMaxTotalEventsSizePerMiniblock uint64 `mapstructure:"stream.maxtotaleventssizeperminiblock"`
 }
 
 type StreamHistoryMiniblocks struct {

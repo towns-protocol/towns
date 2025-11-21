@@ -3,6 +3,8 @@ package events
 import (
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
+
 	. "github.com/towns-protocol/towns/core/node/utils"
 )
 
@@ -76,14 +78,34 @@ func (m *minipoolInstance) getEnvelopeBytes() ([][]byte, error) {
 	return bytes, nil
 }
 
-func (m *minipoolInstance) eventHashes() []common.Hash {
-	hashes := make([]common.Hash, m.events.Len())
-	for i, e := range m.events.Values {
-		hashes[i] = e.Hash
+// proposalEvents returns all events from m that can be included in a proposal.
+func (m *minipoolInstance) proposalEvents() []mbProposalEvent {
+	events := make([]mbProposalEvent, 0, m.events.Len())
+	for _, e := range m.events.Values {
+		events = append(events, mbProposalEvent{Hash: e.Hash, Size: len(e.Envelope.Event)})
 	}
-	return hashes
+	return events
 }
 
+// proposalEventsWithMiniblockLimits returns events from m that can be included in a proposal
+// until the limits as specified in the given cfg are reached.
+func (m *minipoolInstance) proposalEventsWithMiniblockLimits(cfg *crypto.OnChainSettings) []mbProposalEvent {
+	maxEventsPerMiniblock, maxEventCombinedSize := MiniblockEventLimits(cfg)
+	events := make([]mbProposalEvent, 0, m.events.Len())
+	totalEventsSize := 0
+	for _, e := range m.events.Values {
+		eventSize := len(e.Envelope.Event)
+		// Check if adding the next event would exceed limits before appending
+		if len(events) >= maxEventsPerMiniblock || totalEventsSize+eventSize > maxEventCombinedSize {
+			return events
+		}
+		events = append(events, mbProposalEvent{Hash: e.Hash, Size: eventSize})
+		totalEventsSize += eventSize
+	}
+	return events
+}
+
+// eventHashesAsBytes returns all event hashes from m.
 func (m *minipoolInstance) eventHashesAsBytes() [][]byte {
 	hashes := make([][]byte, m.events.Len())
 	for i, e := range m.events.Values {
