@@ -48,7 +48,7 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 	}
 
 	for i := 0; i < nodeCount; i++ {
-		shardRoot := filepath.Join(rootDir, fmt.Sprintf("shard-%d", i))
+		shardRoot := filepath.Join(rootDir, fmt.Sprintf("instance-%d", i))
 		var peers []string
 		for peerIdx := 0; peerIdx < nodeCount; peerIdx++ {
 			if peerIdx == i {
@@ -67,10 +67,6 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 		})
 		require.NoError(t, err)
 		shards[i] = shard
-		currentShard := shard
-		t.Cleanup(func() {
-			require.NoError(t, currentShard.stop())
-		})
 	}
 
 	targetHeight := shards[0].Height()
