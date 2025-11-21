@@ -348,7 +348,7 @@ PONDER_RPC_URL_1=https://base-mainnet.g.alchemy.com/v2/YOUR_KEY
 # Starting block for indexing (default: 22890725)
 PONDER_START_BLOCK=22890725
 
-# Environment name (local_dev, alpha, gamma, omega, beta)
+# Environment name (local_dev, alpha, beta, omega)
 PONDER_ENVIRONMENT=local_dev
 
 # Database connection (auto-configured in Docker)
