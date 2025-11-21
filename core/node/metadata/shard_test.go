@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -12,10 +13,14 @@ import (
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/types"
 
+	"github.com/towns-protocol/towns/core/node/base/test"
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 )
 
 func TestMetadataShardProducesBlocks(t *testing.T) {
+	ctx, cancel := context.WithCancel(test.NewTestContext(t))
+	defer cancel()
+
 	const (
 		shardID    = 1
 		nodeCount  = 4
@@ -31,7 +36,7 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 	nodeAddrs := make([]string, nodeCount)
 
 	for i := 0; i < nodeCount; i++ {
-		wallet, err := rivercrypto.NewWalletFromPrivKey(t.Context(), fmt.Sprintf("%064x", i+1))
+		wallet, err := rivercrypto.NewWalletFromPrivKey(ctx, fmt.Sprintf("%064x", i+1))
 		require.NoError(t, err)
 		wallets[i] = wallet
 		privKey := ed25519.GenPrivKeyFromSecret(wallet.PrivateKey)
@@ -57,7 +62,7 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 			peers = append(peers, nodeAddrs[peerIdx])
 		}
 
-		shard, err := NewMetadataShard(t.Context(), MetadataShardOpts{
+		shard, err := NewMetadataShard(ctx, MetadataShardOpts{
 			ShardID:         shardID,
 			RootDir:         shardRoot,
 			P2PPort:         p2pBase + i,
@@ -85,5 +90,10 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 			}
 			return true
 		}, 90*time.Second, 200*time.Millisecond, "expected all shards to reach height %d", targetHeight)
+	}
+
+	cancel()
+	for _, shard := range shards {
+		<-shard.Stopped()
 	}
 }

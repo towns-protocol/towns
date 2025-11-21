@@ -29,6 +29,8 @@ const (
 	chainIDPrefix               = "metadata-shard-"
 )
 
+var _ abci.Application = (*MetadataShard)(nil)
+
 type MetadataShardOpts struct {
 	ShardID         uint64
 	P2PPort         int
@@ -36,7 +38,6 @@ type MetadataShardOpts struct {
 	GenesisDoc      *types.GenesisDoc
 	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
-	App             abci.Application
 }
 
 type MetadataShard struct {
@@ -44,7 +45,6 @@ type MetadataShard struct {
 	serverCtx context.Context
 
 	chainID string
-	app     abci.Application
 
 	node *node.Node
 }
@@ -99,16 +99,10 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	nodeKey := &p2p.NodeKey{PrivKey: privKey}
 
-	app := opts.App
-	if app == nil {
-		app = abci.NewBaseApplication()
-	}
-
 	shard := &MetadataShard{
 		opts:      opts,
 		serverCtx: ctx,
 		chainID:   chainID,
-		app:       app,
 	}
 
 	// Save genenis doc
@@ -126,7 +120,7 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 		cfg,
 		privVal,
 		nodeKey,
-		proxy.NewLocalClientCreator(app),
+		proxy.NewLocalClientCreator(shard),
 		node.DefaultGenesisDocProviderFunc(cfg),
 		cmtcfg.DefaultDBProvider,
 		node.DefaultMetricsProvider(cfg.Instrumentation),
@@ -148,6 +142,10 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	return shard, nil
 }
 
+func (s *MetadataShard) Stopped() <-chan struct{} {
+	return s.node.Quit()
+}
+
 func (s *MetadataShard) SubmitTx(tx []byte) error {
 	if s.node == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "metadata shard not started")
@@ -165,6 +163,97 @@ func (s *MetadataShard) Height() int64 {
 
 func chainIDForShard(shardID uint64) string {
 	return fmt.Sprintf("%s%016x", chainIDPrefix, shardID)
+}
+
+func (MetadataShard) Info(context.Context, *abci.InfoRequest) (*abci.InfoResponse, error) {
+	return &abci.InfoResponse{}, nil
+}
+
+func (MetadataShard) CheckTx(context.Context, *abci.CheckTxRequest) (*abci.CheckTxResponse, error) {
+	return &abci.CheckTxResponse{Code: abci.CodeTypeOK}, nil
+}
+
+func (MetadataShard) Commit(context.Context, *abci.CommitRequest) (*abci.CommitResponse, error) {
+	return &abci.CommitResponse{}, nil
+}
+
+func (MetadataShard) Query(context.Context, *abci.QueryRequest) (*abci.QueryResponse, error) {
+	return &abci.QueryResponse{Code: abci.CodeTypeOK}, nil
+}
+
+func (MetadataShard) InitChain(context.Context, *abci.InitChainRequest) (*abci.InitChainResponse, error) {
+	return &abci.InitChainResponse{}, nil
+}
+
+func (MetadataShard) ListSnapshots(context.Context, *abci.ListSnapshotsRequest) (*abci.ListSnapshotsResponse, error) {
+	return &abci.ListSnapshotsResponse{}, nil
+}
+
+func (MetadataShard) OfferSnapshot(context.Context, *abci.OfferSnapshotRequest) (*abci.OfferSnapshotResponse, error) {
+	return &abci.OfferSnapshotResponse{}, nil
+}
+
+func (MetadataShard) LoadSnapshotChunk(
+	context.Context,
+	*abci.LoadSnapshotChunkRequest,
+) (*abci.LoadSnapshotChunkResponse, error) {
+	return &abci.LoadSnapshotChunkResponse{}, nil
+}
+
+func (MetadataShard) ApplySnapshotChunk(
+	context.Context,
+	*abci.ApplySnapshotChunkRequest,
+) (*abci.ApplySnapshotChunkResponse, error) {
+	return &abci.ApplySnapshotChunkResponse{}, nil
+}
+
+func (MetadataShard) PrepareProposal(
+	_ context.Context,
+	req *abci.PrepareProposalRequest,
+) (*abci.PrepareProposalResponse, error) {
+	txs := make([][]byte, 0, len(req.Txs))
+	var totalBytes int64
+	for _, tx := range req.Txs {
+		totalBytes += int64(len(tx))
+		if totalBytes > req.MaxTxBytes {
+			break
+		}
+		txs = append(txs, tx)
+	}
+	return &abci.PrepareProposalResponse{Txs: txs}, nil
+}
+
+func (MetadataShard) ProcessProposal(
+	context.Context,
+	*abci.ProcessProposalRequest,
+) (*abci.ProcessProposalResponse, error) {
+	return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_ACCEPT}, nil
+}
+
+func (MetadataShard) ExtendVote(context.Context, *abci.ExtendVoteRequest) (*abci.ExtendVoteResponse, error) {
+	return &abci.ExtendVoteResponse{}, nil
+}
+
+func (MetadataShard) VerifyVoteExtension(
+	context.Context,
+	*abci.VerifyVoteExtensionRequest,
+) (*abci.VerifyVoteExtensionResponse, error) {
+	return &abci.VerifyVoteExtensionResponse{
+		Status: abci.VERIFY_VOTE_EXTENSION_STATUS_ACCEPT,
+	}, nil
+}
+
+func (MetadataShard) FinalizeBlock(
+	_ context.Context,
+	req *abci.FinalizeBlockRequest,
+) (*abci.FinalizeBlockResponse, error) {
+	txs := make([]*abci.ExecTxResult, len(req.Txs))
+	for i := range req.Txs {
+		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
+	}
+	return &abci.FinalizeBlockResponse{
+		TxResults: txs,
+	}, nil
 }
 
 type cometZapLogger struct {
