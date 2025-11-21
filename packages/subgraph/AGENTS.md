@@ -40,9 +40,8 @@ packages/subgraph/
 │       └── index.ts          # API routes (GraphQL, SQL endpoints)
 ├── ponder.config.ts          # Main config (local/development)
 ├── ponder.config.alpha.ts    # Alpha environment config
-├── ponder.config.gamma.ts    # Gamma environment config
-├── ponder.config.omega.ts    # Omega environment config
 ├── ponder.config.beta.ts     # Beta environment config
+├── ponder.config.omega.ts    # Omega environment config
 ├── ponder.schema.ts          # Database schema definitions
 ├── utils/
 │   └── makePonderConfig.ts   # Config factory for environments
@@ -243,7 +242,7 @@ async function getReadBlockNumber(blockNumber: bigint): Promise<bigint> {
 
     const minBlockByEnvironment: Record<string, bigint> = {
         alpha: 30861709n,
-        gamma: 30861709n,
+        beta: 30861709n,
         omega: 35350928n
     }
 
@@ -361,10 +360,10 @@ DATABASE_URL=postgresql://ponder:ponder@localhost:5432/ponder
 The subgraph supports multiple deployment environments:
 
 ```typescript
-// ponder.config.alpha.ts, ponder.config.gamma.ts, etc.
+// ponder.config.alpha.ts, ponder.config.beta.ts, etc.
 export default createConfig(
     makePonderConfig({
-        environment: 'alpha',  // or 'gamma', 'omega', 'beta'
+        environment: 'alpha',  // or 'beta', 'omega'
         baseChain: {
             id: 8453,  // Base mainnet
             rpc: http(process.env.PONDER_RPC_URL_1),
