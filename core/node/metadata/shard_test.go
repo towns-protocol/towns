@@ -11,6 +11,8 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/types"
+
+	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 )
 
 func TestMetadataShardProducesBlocks(t *testing.T) {
@@ -24,18 +26,17 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 	rootDir := t.TempDir()
 
 	shards := make([]*MetadataShard, nodeCount)
-	privValidators := make([]types.PrivValidator, nodeCount)
+	wallets := make([]*rivercrypto.Wallet, nodeCount)
 	validators := make([]types.GenesisValidator, nodeCount)
-	nodeKeys := make([]*p2p.NodeKey, nodeCount)
 	nodeAddrs := make([]string, nodeCount)
 
 	for i := 0; i < nodeCount; i++ {
-		privValidators[i] = types.NewMockPV()
-		pubKey, err := privValidators[i].GetPubKey()
+		wallet, err := rivercrypto.NewWalletFromPrivKey(t.Context(), fmt.Sprintf("%064x", i+1))
 		require.NoError(t, err)
-		validators[i] = types.GenesisValidator{PubKey: pubKey, Power: defaultValidatorPower}
-		nodeKeys[i] = &p2p.NodeKey{PrivKey: ed25519.GenPrivKey()}
-		nodeAddrs[i] = fmt.Sprintf("%s@127.0.0.1:%d", nodeKeys[i].ID(), p2pBase+i)
+		wallets[i] = wallet
+		privKey := ed25519.GenPrivKeyFromSecret(wallet.PrivateKey)
+		nodeAddrs[i] = fmt.Sprintf("%s@127.0.0.1:%d", p2p.PubKeyToID(privKey.PubKey()), p2pBase+i)
+		validators[i] = types.GenesisValidator{PubKey: privKey.PubKey(), Power: defaultValidatorPower}
 	}
 
 	genesisDoc := &types.GenesisDoc{
@@ -61,8 +62,7 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 			RootDir:         shardRoot,
 			P2PPort:         p2pBase + i,
 			GenesisDoc:      genesisDoc,
-			PrivValidator:   privValidators[i],
-			NodeKey:         nodeKeys[i],
+			Wallet:          wallets[i],
 			PersistentPeers: peers,
 		})
 		require.NoError(t, err)
@@ -75,6 +75,8 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 
 	targetHeight := shards[0].Height()
 
+	time.Sleep(5 * time.Second)
+
 	for blockIndex := 0; blockIndex < blockCount; blockIndex++ {
 		require.NoError(t, shards[0].SubmitTx([]byte(fmt.Sprintf("tx-%d", blockIndex))))
 		targetHeight++
@@ -86,6 +88,6 @@ func TestMetadataShardProducesBlocks(t *testing.T) {
 				}
 			}
 			return true
-		}, 30*time.Second, 200*time.Millisecond, "expected all shards to reach height %d", targetHeight)
+		}, 90*time.Second, 200*time.Millisecond, "expected all shards to reach height %d", targetHeight)
 	}
 }

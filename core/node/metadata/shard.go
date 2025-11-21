@@ -22,6 +22,7 @@ import (
 	"github.com/cometbft/cometbft/types"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
 
@@ -34,8 +35,7 @@ type MetadataShardOpts struct {
 	RPCPort         int
 	RootDir         string
 	GenesisDoc      *types.GenesisDoc
-	NodeKey         *p2p.NodeKey
-	PrivValidator   types.PrivValidator
+	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
 	App             abci.Application
 	Logger          log.Logger
@@ -62,6 +62,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	if opts.RootDir == "" {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "root dir is required")
+	}
+	if opts.Wallet == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "wallet is required")
 	}
 
 	chainID := chainIDForShard(opts.ShardID)
@@ -96,29 +99,19 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 		cfg.P2P.PersistentPeers = strings.Join(opts.PersistentPeers, ",")
 	}
 
-	privVal := opts.PrivValidator
-	if privVal == nil {
-		var err error
-		privVal, err = privval.LoadOrGenFilePV(
-			cfg.PrivValidatorKeyFile(),
-			cfg.PrivValidatorStateFile(),
-			func() (crypto.PrivKey, error) {
-				return ed25519.GenPrivKey(), nil
-			},
-		)
-		if err != nil {
-			return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
-		}
+	privKey := ed25519.GenPrivKeyFromSecret(opts.Wallet.PrivateKey)
+	privVal, err := privval.LoadOrGenFilePV(
+		cfg.PrivValidatorKeyFile(),
+		cfg.PrivValidatorStateFile(),
+		func() (crypto.PrivKey, error) {
+			return privKey, nil
+		},
+	)
+	if err != nil {
+		return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate priv validator", err)
 	}
 
-	nodeKey := opts.NodeKey
-	if nodeKey == nil {
-		var err error
-		nodeKey, err = p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
-		if err != nil {
-			return nil, RiverErrorWithBase(Err_INTERNAL, "load or generate node key", err)
-		}
-	}
+	nodeKey := &p2p.NodeKey{PrivKey: privKey}
 
 	app := opts.App
 	if app == nil {
@@ -273,6 +266,11 @@ func (s *MetadataShard) SetGenesisDoc(doc *types.GenesisDoc) error {
 	} else if genDoc.ChainID != expectedChainID {
 		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("genesis doc chain ID %q does not match shard chain ID %q", genDoc.ChainID, expectedChainID))
 	}
+	pubKey, err := s.privValidator.GetPubKey()
+	if err != nil {
+		return RiverErrorWithBase(Err_INTERNAL, "get validator public key", err)
+	}
+	ensureValidatorType(genDoc, pubKey.Type())
 	if genDoc.GenesisTime.IsZero() {
 		genDoc.GenesisTime = time.Now().UTC()
 	}
@@ -334,4 +332,17 @@ func cloneGenesisDoc(doc *types.GenesisDoc) *types.GenesisDoc {
 
 func chainIDForShard(shardID uint64) string {
 	return fmt.Sprintf("%s%x", chainIDPrefix, shardID)
+}
+
+func ensureValidatorType(genDoc *types.GenesisDoc, keyType string) {
+	if genDoc.ConsensusParams == nil {
+		genDoc.ConsensusParams = types.DefaultConsensusParams()
+	}
+	pubKeyTypes := genDoc.ConsensusParams.Validator.PubKeyTypes
+	for _, existing := range pubKeyTypes {
+		if existing == keyType {
+			return
+		}
+	}
+	genDoc.ConsensusParams.Validator.PubKeyTypes = append(pubKeyTypes, keyType)
 }
