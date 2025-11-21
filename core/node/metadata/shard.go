@@ -72,7 +72,7 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	cmtcfg.EnsureRoot(rootDir)
 
 	// P2P and RPC defaults are tuned for local shard instances.
-	cfg.BaseConfig.Moniker = fmt.Sprintf("metadata-shard-%d", opts.ShardID)
+	cfg.BaseConfig.Moniker = chainID
 	cfg.P2P.AddrBookStrict = false
 	cfg.P2P.AllowDuplicateIP = true
 	cfg.Consensus.CreateEmptyBlocks = false // produce blocks only when txs are available
