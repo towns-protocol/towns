@@ -64,6 +64,19 @@ cd my-bot
 bun install
 ```
 
+### Add Bot Discovery Endpoint
+
+Open `src/index.ts` and add this route after the `/webhook` route:
+
+```ts
+// After your /webhook route
+app.get('/.well-known/agent-metadata.json', async (c) => {
+  return c.json(await bot.getIdentityMetadata())
+})
+```
+
+This endpoint is **required** for bot directories to discover and index your bot. After deploying your bot, go to the [developer dashboard](https://app.towns.com/developer/dashboard) and click the **Boost** button to submit your bot for indexing.
+
 ### Configure Environment
 
 Copy the `.env.sample` file in your project root:
