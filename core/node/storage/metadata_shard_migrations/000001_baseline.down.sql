@@ -1,0 +1,1 @@
+-- No-op baseline for metadata shard storage.
