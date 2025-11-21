@@ -784,11 +784,19 @@ describe('Bot', { sequential: true }, () => {
         )
         const channelMessage = bobDefaultChannel.timeline.events.value.find(
             (x) => x.eventId === messageId,
-        )?.content as ChannelMessageEvent
+        )
+        let channelMessageEvent: ChannelMessageEvent | undefined
+        if (channelMessage?.content?.kind === RiverTimelineEvent.ChannelMessage) {
+            channelMessageEvent = channelMessage.content
+        } else {
+            throw new Error('Message is not a channel message')
+        }
 
-        expect(channelMessage.mentions).toBeDefined()
-        expect(channelMessage.mentions?.length).toBe(1)
-        expect(channelMessage.mentions?.[0].atChannel).toBe(true)
+        expect(channelMessageEvent.mentions).toBeDefined()
+        expect(channelMessageEvent.mentions?.length).toBe(1)
+        // @ts-expect-error - types of timeline is wrong
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        expect(channelMessageEvent.mentions?.[0].mentionBehavior?.case).toBe('atChannel')
     })
 
     it('bot can fetch existing decryption keys when sending a message', async () => {
