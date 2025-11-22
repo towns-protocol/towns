@@ -34,12 +34,9 @@ import (
 )
 
 const (
-	defaultValidatorPower int64  = 1
-	chainIDPrefix                = "metadata-shard-"
-	codeEncodingError     uint32 = 1
-	codeValidationError   uint32 = 2
-	codeStorageError      uint32 = 3
-	codeNotFoundError     uint32 = 4
+	defaultValidatorPower int64 = 1
+	chainIDPrefix               = "metadata-shard-"
+	codeSpaceRiver              = "towns-protocol"
 )
 
 var _ abci.Application = (*MetadataShard)(nil)
@@ -206,17 +203,28 @@ func decodeMetadataTx(txBytes []byte) (*MetadataTx, error) {
 	return nil, RiverError(Err_INVALID_ARGUMENT, "unable to decode metadata tx")
 }
 
-func abciCodeFromError(err error) uint32 {
+type abciErrorResponder interface {
+	*abci.CheckTxResponse | *abci.ExecTxResult | *abci.QueryResponse
+}
+
+func setError[T abciErrorResponder](resp T, err error) {
+	if err == nil {
+		return
+	}
 	riverErr := AsRiverError(err)
-	switch riverErr.Code {
-	case Err_NOT_FOUND:
-		return codeNotFoundError
-	case Err_INVALID_ARGUMENT:
-		return codeValidationError
-	case Err_ALREADY_EXISTS, Err_FAILED_PRECONDITION:
-		return codeValidationError
-	default:
-		return codeStorageError
+	switch r := any(resp).(type) {
+	case *abci.CheckTxResponse:
+		r.Code = uint32(riverErr.Code)
+		r.Log = riverErr.Error()
+		r.Codespace = codeSpaceRiver
+	case *abci.ExecTxResult:
+		r.Code = uint32(riverErr.Code)
+		r.Log = riverErr.Error()
+		r.Codespace = codeSpaceRiver
+	case *abci.QueryResponse:
+		r.Code = uint32(riverErr.Code)
+		r.Log = riverErr.Error()
+		r.Codespace = codeSpaceRiver
 	}
 }
 
@@ -228,7 +236,7 @@ func parsePagination(u *url.URL) (int64, int32, error) {
 	if rawOffset := values.Get("offset"); rawOffset != "" {
 		val, err := strconv.ParseInt(rawOffset, 10, 64)
 		if err != nil {
-			return 0, 0, fmt.Errorf("invalid offset: %w", err)
+			return 0, 0, RiverError(Err_INVALID_ARGUMENT, "invalid offset", "err", err)
 		}
 		if val < 0 {
 			return 0, 0, RiverError(Err_INVALID_ARGUMENT, "offset must be >= 0")
@@ -239,7 +247,7 @@ func parsePagination(u *url.URL) (int64, int32, error) {
 	if rawLimit := values.Get("limit"); rawLimit != "" {
 		val, err := strconv.ParseInt(rawLimit, 10, 32)
 		if err != nil {
-			return 0, 0, fmt.Errorf("invalid limit: %w", err)
+			return 0, 0, RiverError(Err_INVALID_ARGUMENT, "invalid limit", "err", err)
 		}
 		if val > 0 {
 			limit = int32(val)
@@ -265,14 +273,17 @@ func (m *MetadataShard) Info(ctx context.Context, _ *abci.InfoRequest) (*abci.In
 }
 
 func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (*abci.CheckTxResponse, error) {
+	resp := &abci.CheckTxResponse{Code: abci.CodeTypeOK}
 	metaTx, err := decodeMetadataTx(req.Tx)
 	if err != nil {
-		return &abci.CheckTxResponse{Code: codeEncodingError, Log: err.Error()}, nil
+		setError(resp, err)
+		return resp, nil
 	}
 	if err := m.validateTx(metaTx); err != nil {
-		return &abci.CheckTxResponse{Code: codeValidationError, Log: err.Error()}, nil
+		setError(resp, err)
+		return resp, nil
 	}
-	return &abci.CheckTxResponse{Code: abci.CodeTypeOK}, nil
+	return resp, nil
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
@@ -304,8 +315,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 
 	parsedPath, err := url.Parse(req.Path)
 	if err != nil {
-		resp.Code = codeValidationError
-		resp.Log = fmt.Sprintf("invalid path: %v", err)
+		setError(resp, RiverError(Err_INVALID_ARGUMENT, "invalid path", "err", err))
 		return resp, nil
 	}
 
@@ -317,14 +327,12 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 		}
 		streamID, err := shared.StreamIdFromString(streamHex)
 		if err != nil {
-			resp.Code = codeValidationError
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		record, err := m.store.GetStream(ctx, m.opts.ShardID, streamID)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		payload, err := protojson.Marshal(record)
@@ -335,20 +343,17 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 	case parsedPath.Path == "/streams":
 		offset, limit, err := parsePagination(parsedPath)
 		if err != nil {
-			resp.Code = codeValidationError
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		streams, err := m.store.ListStreams(ctx, m.opts.ShardID, offset, limit)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		count, err := m.store.CountStreams(ctx, m.opts.ShardID)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		payload, err := json.Marshal(struct {
@@ -372,27 +377,23 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 			addrHex = addrHex[2:]
 		}
 		if len(addrHex) != 40 {
-			resp.Code = codeValidationError
-			resp.Log = "node address must be 20 bytes hex"
+			setError(resp, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes hex"))
 			return resp, nil
 		}
 		nodeAddr := common.HexToAddress(addrHex)
 		offset, limit, err := parsePagination(parsedPath)
 		if err != nil {
-			resp.Code = codeValidationError
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		streams, err := m.store.ListStreamsByNode(ctx, m.opts.ShardID, nodeAddr, offset, limit)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		count, err := m.store.CountStreamsByNode(ctx, m.opts.ShardID, nodeAddr)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		payload, err := json.Marshal(struct {
@@ -415,8 +416,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 	case parsedPath.Path == "/streams/count":
 		count, err := m.store.CountStreams(ctx, m.opts.ShardID)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		payload, err := json.Marshal(struct {
@@ -432,15 +432,13 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 			addrHex = addrHex[2:]
 		}
 		if len(addrHex) != 40 {
-			resp.Code = codeValidationError
-			resp.Log = "node address must be 20 bytes hex"
+			setError(resp, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes hex"))
 			return resp, nil
 		}
 		nodeAddr := common.HexToAddress(addrHex)
 		count, err := m.store.CountStreamsByNode(ctx, m.opts.ShardID, nodeAddr)
 		if err != nil {
-			resp.Code = abciCodeFromError(err)
-			resp.Log = err.Error()
+			setError(resp, err)
 			return resp, nil
 		}
 		payload, err := json.Marshal(struct {
@@ -455,8 +453,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 		}
 		resp.Value = payload
 	default:
-		resp.Code = codeValidationError
-		resp.Log = fmt.Sprintf("unsupported query path %q", req.Path)
+		setError(resp, RiverError(Err_INVALID_ARGUMENT, "unsupported query path", "path", req.Path))
 	}
 	return resp, nil
 }
@@ -561,18 +558,21 @@ func (m *MetadataShard) FinalizeBlock(
 	for i, txBytes := range req.Txs {
 		metaTx, err := decodeMetadataTx(txBytes)
 		if err != nil {
-			txs[i] = &abci.ExecTxResult{Code: codeEncodingError, Log: err.Error()}
+			res := &abci.ExecTxResult{}
+			setError(res, err)
+			txs[i] = res
 			continue
 		}
 		if err := m.validateTx(metaTx); err != nil {
-			txs[i] = &abci.ExecTxResult{Code: codeValidationError, Log: err.Error()}
+			res := &abci.ExecTxResult{}
+			setError(res, err)
+			txs[i] = res
 			continue
 		}
 		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
-			txs[i] = &abci.ExecTxResult{
-				Code: abciCodeFromError(err),
-				Log:  err.Error(),
-			}
+			res := &abci.ExecTxResult{}
+			setError(res, err)
+			txs[i] = res
 			continue
 		}
 		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
