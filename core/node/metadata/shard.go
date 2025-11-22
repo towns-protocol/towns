@@ -2,9 +2,12 @@ package metadata
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,17 +21,25 @@ import (
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/types"
+	"github.com/ethereum/go-ethereum/common"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 const (
-	defaultValidatorPower int64 = 1
-	chainIDPrefix               = "metadata-shard-"
+	defaultValidatorPower int64  = 1
+	chainIDPrefix                = "metadata-shard-"
+	codeEncodingError     uint32 = 1
+	codeValidationError   uint32 = 2
+	codeStorageError      uint32 = 3
+	codeNotFoundError     uint32 = 4
 )
 
 var _ abci.Application = (*MetadataShard)(nil)
@@ -53,6 +64,11 @@ type MetadataShard struct {
 
 	store storage.MetadataStore
 	log   *logging.Log
+
+	// These are only touched on the consensus ABCI connection (FinalizeBlock/Commit),
+	// which CometBFT invokes sequentially, so no mutex is required.
+	lastBlockHeight int64
+	lastAppHash     []byte
 }
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
@@ -67,6 +83,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	}
 
 	chainID := chainIDForShard(opts.ShardID)
+	if err := opts.Store.EnsureShardStorage(ctx, opts.ShardID); err != nil {
+		return nil, AsRiverError(err).Func("EnsureShardStorage")
+	}
 	rootDir := filepath.Join(opts.RootDir, chainID)
 
 	cfg := cmtcfg.DefaultConfig()
@@ -176,31 +195,286 @@ func chainIDForShard(shardID uint64) string {
 	return fmt.Sprintf("%s%016x", chainIDPrefix, shardID)
 }
 
-func (MetadataShard) Info(context.Context, *abci.InfoRequest) (*abci.InfoResponse, error) {
-	return &abci.InfoResponse{}, nil
+func decodeMetadataTx(txBytes []byte) (*MetadataTx, error) {
+	metaTx := &MetadataTx{}
+	if err := proto.Unmarshal(txBytes, metaTx); err == nil {
+		return metaTx, nil
+	}
+	if err := protojson.Unmarshal(txBytes, metaTx); err == nil {
+		return metaTx, nil
+	}
+	return nil, RiverError(Err_INVALID_ARGUMENT, "unable to decode metadata tx")
 }
 
-func (MetadataShard) CheckTx(context.Context, *abci.CheckTxRequest) (*abci.CheckTxResponse, error) {
+func abciCodeFromError(err error) uint32 {
+	riverErr := AsRiverError(err)
+	switch riverErr.Code {
+	case Err_NOT_FOUND:
+		return codeNotFoundError
+	case Err_INVALID_ARGUMENT:
+		return codeValidationError
+	case Err_ALREADY_EXISTS, Err_FAILED_PRECONDITION:
+		return codeValidationError
+	default:
+		return codeStorageError
+	}
+}
+
+func parsePagination(u *url.URL) (int64, int32, error) {
+	offset := int64(0)
+	limit := int32(100)
+
+	values := u.Query()
+	if rawOffset := values.Get("offset"); rawOffset != "" {
+		val, err := strconv.ParseInt(rawOffset, 10, 64)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid offset: %w", err)
+		}
+		if val < 0 {
+			return 0, 0, RiverError(Err_INVALID_ARGUMENT, "offset must be >= 0")
+		}
+		offset = val
+	}
+
+	if rawLimit := values.Get("limit"); rawLimit != "" {
+		val, err := strconv.ParseInt(rawLimit, 10, 32)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid limit: %w", err)
+		}
+		if val > 0 {
+			limit = int32(val)
+		}
+	}
+
+	return offset, limit, nil
+}
+
+func (m *MetadataShard) Info(ctx context.Context, _ *abci.InfoRequest) (*abci.InfoResponse, error) {
+	if err := m.store.EnsureShardStorage(ctx, m.opts.ShardID); err != nil {
+		return nil, AsRiverError(err).Func("Info")
+	}
+	state, err := m.store.GetShardState(ctx, m.opts.ShardID)
+	if err != nil {
+		return nil, AsRiverError(err).Func("Info")
+	}
+	return &abci.InfoResponse{
+		Data:             m.chainID,
+		LastBlockHeight:  state.LastHeight,
+		LastBlockAppHash: state.LastAppHash,
+	}, nil
+}
+
+func (m *MetadataShard) CheckTx(ctx context.Context, req *abci.CheckTxRequest) (*abci.CheckTxResponse, error) {
+	metaTx, err := decodeMetadataTx(req.Tx)
+	if err != nil {
+		return &abci.CheckTxResponse{Code: codeEncodingError, Log: err.Error()}, nil
+	}
+	if err := m.validateTx(metaTx); err != nil {
+		return &abci.CheckTxResponse{Code: codeValidationError, Log: err.Error()}, nil
+	}
 	return &abci.CheckTxResponse{Code: abci.CodeTypeOK}, nil
 }
 
 func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
-	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID)
+	appHash := m.lastAppHash
+	if appHash == nil {
+		var err error
+		appHash, err = m.store.ComputeAppHash(ctx, m.opts.ShardID)
+		if err != nil {
+			return nil, AsRiverError(err).Func("Commit")
+		}
+	}
+	height := m.lastBlockHeight
+	if height == 0 && m.node != nil {
+		height = m.node.BlockStore().Height()
+	}
+	if err := m.store.SetShardState(ctx, m.opts.ShardID, height, appHash); err != nil {
+		return nil, AsRiverError(err).Func("Commit")
+	}
+	return &abci.CommitResponse{}, nil
+}
+
+func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abci.QueryResponse, error) {
+	resp := &abci.QueryResponse{Code: abci.CodeTypeOK}
+
+	state, err := m.store.GetShardState(ctx, m.opts.ShardID)
+	if err == nil {
+		resp.Height = state.LastHeight
+	}
+
+	parsedPath, err := url.Parse(req.Path)
 	if err != nil {
-		return nil, AsRiverError(err).Func("Commit")
+		resp.Code = codeValidationError
+		resp.Log = fmt.Sprintf("invalid path: %v", err)
+		return resp, nil
 	}
-	if err := m.store.SetShardState(ctx, m.opts.ShardID, m.node.BlockStore().Height(), appHash); err != nil {
-		return nil, AsRiverError(err).Func("Commit")
+
+	switch {
+	case strings.HasPrefix(parsedPath.Path, "/stream/"):
+		streamHex := strings.TrimPrefix(parsedPath.Path, "/stream/")
+		if streamHex == "" && len(req.Data) > 0 {
+			streamHex = hex.EncodeToString(req.Data)
+		}
+		streamID, err := shared.StreamIdFromString(streamHex)
+		if err != nil {
+			resp.Code = codeValidationError
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		record, err := m.store.GetStream(ctx, m.opts.ShardID, streamID)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		payload, err := protojson.Marshal(record)
+		if err != nil {
+			return nil, AsRiverError(err).Func("Query.stream.encode")
+		}
+		resp.Value = payload
+	case parsedPath.Path == "/streams":
+		offset, limit, err := parsePagination(parsedPath)
+		if err != nil {
+			resp.Code = codeValidationError
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		streams, err := m.store.ListStreams(ctx, m.opts.ShardID, offset, limit)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		count, err := m.store.CountStreams(ctx, m.opts.ShardID)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		payload, err := json.Marshal(struct {
+			Streams []*StreamMetadata `json:"streams"`
+			Offset  int64             `json:"offset"`
+			Limit   int32             `json:"limit"`
+			Count   int64             `json:"count"`
+		}{
+			Streams: streams,
+			Offset:  offset,
+			Limit:   limit,
+			Count:   count,
+		})
+		if err != nil {
+			return nil, AsRiverError(err).Func("Query.streams.encode")
+		}
+		resp.Value = payload
+	case strings.HasPrefix(parsedPath.Path, "/streams/node/"):
+		addrHex := strings.TrimPrefix(parsedPath.Path, "/streams/node/")
+		if strings.HasPrefix(addrHex, "0x") {
+			addrHex = addrHex[2:]
+		}
+		if len(addrHex) != 40 {
+			resp.Code = codeValidationError
+			resp.Log = "node address must be 20 bytes hex"
+			return resp, nil
+		}
+		nodeAddr := common.HexToAddress(addrHex)
+		offset, limit, err := parsePagination(parsedPath)
+		if err != nil {
+			resp.Code = codeValidationError
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		streams, err := m.store.ListStreamsByNode(ctx, m.opts.ShardID, nodeAddr, offset, limit)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		count, err := m.store.CountStreamsByNode(ctx, m.opts.ShardID, nodeAddr)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		payload, err := json.Marshal(struct {
+			Node    string            `json:"node"`
+			Streams []*StreamMetadata `json:"streams"`
+			Offset  int64             `json:"offset"`
+			Limit   int32             `json:"limit"`
+			Count   int64             `json:"count"`
+		}{
+			Node:    "0x" + addrHex,
+			Streams: streams,
+			Offset:  offset,
+			Limit:   limit,
+			Count:   count,
+		})
+		if err != nil {
+			return nil, AsRiverError(err).Func("Query.node.encode")
+		}
+		resp.Value = payload
+	case parsedPath.Path == "/streams/count":
+		count, err := m.store.CountStreams(ctx, m.opts.ShardID)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		payload, err := json.Marshal(struct {
+			Count int64 `json:"count"`
+		}{Count: count})
+		if err != nil {
+			return nil, AsRiverError(err).Func("Query.count.encode")
+		}
+		resp.Value = payload
+	case strings.HasPrefix(parsedPath.Path, "/streams/count/"):
+		addrHex := strings.TrimPrefix(parsedPath.Path, "/streams/count/")
+		if strings.HasPrefix(addrHex, "0x") {
+			addrHex = addrHex[2:]
+		}
+		if len(addrHex) != 40 {
+			resp.Code = codeValidationError
+			resp.Log = "node address must be 20 bytes hex"
+			return resp, nil
+		}
+		nodeAddr := common.HexToAddress(addrHex)
+		count, err := m.store.CountStreamsByNode(ctx, m.opts.ShardID, nodeAddr)
+		if err != nil {
+			resp.Code = abciCodeFromError(err)
+			resp.Log = err.Error()
+			return resp, nil
+		}
+		payload, err := json.Marshal(struct {
+			Node  string `json:"node"`
+			Count int64  `json:"count"`
+		}{
+			Node:  "0x" + addrHex,
+			Count: count,
+		})
+		if err != nil {
+			return nil, AsRiverError(err).Func("Query.count.node.encode")
+		}
+		resp.Value = payload
+	default:
+		resp.Code = codeValidationError
+		resp.Log = fmt.Sprintf("unsupported query path %q", req.Path)
 	}
-	return &abci.CommitResponse{Data: appHash}, nil
+	return resp, nil
 }
 
-func (MetadataShard) Query(context.Context, *abci.QueryRequest) (*abci.QueryResponse, error) {
-	return &abci.QueryResponse{Code: abci.CodeTypeOK}, nil
-}
-
-func (MetadataShard) InitChain(context.Context, *abci.InitChainRequest) (*abci.InitChainResponse, error) {
-	return &abci.InitChainResponse{}, nil
+func (m *MetadataShard) InitChain(ctx context.Context, req *abci.InitChainRequest) (*abci.InitChainResponse, error) {
+	if err := m.store.EnsureShardStorage(ctx, m.opts.ShardID); err != nil {
+		return nil, AsRiverError(err).Func("InitChain")
+	}
+	state, err := m.store.GetShardState(ctx, m.opts.ShardID)
+	if err == nil {
+		m.lastBlockHeight = state.LastHeight
+	} else {
+		m.log.Default.Warnw("failed to load shard state during InitChain", "err", err)
+	}
+	return &abci.InitChainResponse{
+		ConsensusParams: req.ConsensusParams,
+		Validators:      req.Validators,
+	}, nil
 }
 
 func (MetadataShard) ListSnapshots(context.Context, *abci.ListSnapshotsRequest) (*abci.ListSnapshotsResponse, error) {
@@ -225,34 +499,52 @@ func (MetadataShard) ApplySnapshotChunk(
 	return &abci.ApplySnapshotChunkResponse{}, nil
 }
 
-func (MetadataShard) PrepareProposal(
+func (m *MetadataShard) PrepareProposal(
 	_ context.Context,
 	req *abci.PrepareProposalRequest,
 ) (*abci.PrepareProposalResponse, error) {
 	txs := make([][]byte, 0, len(req.Txs))
 	var totalBytes int64
 	for _, tx := range req.Txs {
-		totalBytes += int64(len(tx))
-		if totalBytes > req.MaxTxBytes {
+		metaTx, err := decodeMetadataTx(tx)
+		if err != nil {
+			continue
+		}
+		if err := m.validateTx(metaTx); err != nil {
+			continue
+		}
+
+		txSize := int64(len(tx))
+		if totalBytes+txSize > req.MaxTxBytes {
 			break
 		}
 		txs = append(txs, tx)
+		totalBytes += txSize
 	}
 	return &abci.PrepareProposalResponse{Txs: txs}, nil
 }
 
-func (MetadataShard) ProcessProposal(
-	context.Context,
-	*abci.ProcessProposalRequest,
+func (m *MetadataShard) ProcessProposal(
+	_ context.Context,
+	req *abci.ProcessProposalRequest,
 ) (*abci.ProcessProposalResponse, error) {
+	for _, tx := range req.Txs {
+		metaTx, err := decodeMetadataTx(tx)
+		if err != nil {
+			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
+		}
+		if err := m.validateTx(metaTx); err != nil {
+			return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_REJECT}, nil
+		}
+	}
 	return &abci.ProcessProposalResponse{Status: abci.PROCESS_PROPOSAL_STATUS_ACCEPT}, nil
 }
 
-func (MetadataShard) ExtendVote(context.Context, *abci.ExtendVoteRequest) (*abci.ExtendVoteResponse, error) {
+func (m *MetadataShard) ExtendVote(context.Context, *abci.ExtendVoteRequest) (*abci.ExtendVoteResponse, error) {
 	return &abci.ExtendVoteResponse{}, nil
 }
 
-func (MetadataShard) VerifyVoteExtension(
+func (m *MetadataShard) VerifyVoteExtension(
 	context.Context,
 	*abci.VerifyVoteExtensionRequest,
 ) (*abci.VerifyVoteExtensionResponse, error) {
@@ -261,37 +553,39 @@ func (MetadataShard) VerifyVoteExtension(
 	}, nil
 }
 
-func (MetadataShard) FinalizeBlock(
+func (m *MetadataShard) FinalizeBlock(
 	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
 	txs := make([]*abci.ExecTxResult, len(req.Txs))
 	for i, txBytes := range req.Txs {
-		result := &abci.ExecTxResult{Code: abci.CodeTypeOK}
-		metaTx := &MetadataTx{}
-		if err := json.Unmarshal(txBytes, metaTx); err != nil {
-			result.Code = abci.CodeTypeEncodingError
-			result.Log = fmt.Sprintf("decode error: %v", err)
-			txs[i] = result
+		metaTx, err := decodeMetadataTx(txBytes)
+		if err != nil {
+			txs[i] = &abci.ExecTxResult{Code: codeEncodingError, Log: err.Error()}
 			continue
 		}
 		if err := m.validateTx(metaTx); err != nil {
-			result.Code = abci.CodeTypeUnauthorized
-			result.Log = fmt.Sprintf("validation failed: %v", err)
-			txs[i] = result
+			txs[i] = &abci.ExecTxResult{Code: codeValidationError, Log: err.Error()}
 			continue
 		}
 		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
 			txs[i] = &abci.ExecTxResult{
-				Code: abci.CodeTypeAbciError,
-				Log:  fmt.Sprintf("apply failed: %v", err),
+				Code: abciCodeFromError(err),
+				Log:  err.Error(),
 			}
 			continue
 		}
-		txs[i] = result
+		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
 	}
+	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID)
+	if err != nil {
+		return nil, AsRiverError(err).Func("FinalizeBlock.ComputeAppHash")
+	}
+	m.lastBlockHeight = req.Height
+	m.lastAppHash = appHash
 	return &abci.FinalizeBlockResponse{
 		TxResults: txs,
+		AppHash:   appHash,
 	}, nil
 }
 
