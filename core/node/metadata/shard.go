@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -22,6 +23,7 @@ import (
 	rivercrypto "github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 const (
@@ -38,6 +40,7 @@ type MetadataShardOpts struct {
 	GenesisDoc      *types.GenesisDoc
 	Wallet          *rivercrypto.Wallet
 	PersistentPeers []string
+	Store           storage.MetadataStore
 }
 
 type MetadataShard struct {
@@ -47,6 +50,9 @@ type MetadataShard struct {
 	chainID string
 
 	node *node.Node
+
+	store storage.MetadataStore
+	log   *logging.Log
 }
 
 func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataShard, error) {
@@ -55,6 +61,9 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 	}
 	if opts.Wallet == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "wallet is required")
+	}
+	if opts.Store == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "store is required")
 	}
 
 	chainID := chainIDForShard(opts.ShardID)
@@ -103,6 +112,8 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 		opts:      opts,
 		serverCtx: ctx,
 		chainID:   chainID,
+		store:     opts.Store,
+		log:       logging.FromCtx(ctx),
 	}
 
 	// Save genenis doc
@@ -173,8 +184,15 @@ func (MetadataShard) CheckTx(context.Context, *abci.CheckTxRequest) (*abci.Check
 	return &abci.CheckTxResponse{Code: abci.CodeTypeOK}, nil
 }
 
-func (MetadataShard) Commit(context.Context, *abci.CommitRequest) (*abci.CommitResponse, error) {
-	return &abci.CommitResponse{}, nil
+func (m *MetadataShard) Commit(ctx context.Context, _ *abci.CommitRequest) (*abci.CommitResponse, error) {
+	appHash, err := m.store.ComputeAppHash(ctx, m.opts.ShardID)
+	if err != nil {
+		return nil, AsRiverError(err).Func("Commit")
+	}
+	if err := m.store.SetShardState(ctx, m.opts.ShardID, m.node.BlockStore().Height(), appHash); err != nil {
+		return nil, AsRiverError(err).Func("Commit")
+	}
+	return &abci.CommitResponse{Data: appHash}, nil
 }
 
 func (MetadataShard) Query(context.Context, *abci.QueryRequest) (*abci.QueryResponse, error) {
@@ -244,16 +262,119 @@ func (MetadataShard) VerifyVoteExtension(
 }
 
 func (MetadataShard) FinalizeBlock(
-	_ context.Context,
+	ctx context.Context,
 	req *abci.FinalizeBlockRequest,
 ) (*abci.FinalizeBlockResponse, error) {
 	txs := make([]*abci.ExecTxResult, len(req.Txs))
-	for i := range req.Txs {
-		txs[i] = &abci.ExecTxResult{Code: abci.CodeTypeOK}
+	for i, txBytes := range req.Txs {
+		result := &abci.ExecTxResult{Code: abci.CodeTypeOK}
+		metaTx := &MetadataTx{}
+		if err := json.Unmarshal(txBytes, metaTx); err != nil {
+			result.Code = abci.CodeTypeEncodingError
+			result.Log = fmt.Sprintf("decode error: %v", err)
+			txs[i] = result
+			continue
+		}
+		if err := m.validateTx(metaTx); err != nil {
+			result.Code = abci.CodeTypeUnauthorized
+			result.Log = fmt.Sprintf("validation failed: %v", err)
+			txs[i] = result
+			continue
+		}
+		if err := m.store.ApplyMetadataTx(ctx, m.opts.ShardID, req.Height, metaTx); err != nil {
+			txs[i] = &abci.ExecTxResult{
+				Code: abci.CodeTypeAbciError,
+				Log:  fmt.Sprintf("apply failed: %v", err),
+			}
+			continue
+		}
+		txs[i] = result
 	}
 	return &abci.FinalizeBlockResponse{
 		TxResults: txs,
 	}, nil
+}
+
+func (m *MetadataShard) validateTx(tx *MetadataTx) error {
+	if tx == nil || tx.Op == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "missing op")
+	}
+	switch op := tx.Op.(type) {
+	case *MetadataTx_CreateStream:
+		return m.validateCreateStream(op.CreateStream)
+	case *MetadataTx_SetStreamLastMiniblockBatch:
+		return m.validateSetBatch(op.SetStreamLastMiniblockBatch)
+	case *MetadataTx_UpdateStreamNodesAndReplication:
+		return m.validateUpdateNodes(op.UpdateStreamNodesAndReplication)
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown op")
+	}
+}
+
+func (m *MetadataShard) validateCreateStream(cs *CreateStreamTx) error {
+	if cs == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "create payload missing")
+	}
+	if len(cs.StreamId) != 32 {
+		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
+	}
+	if len(cs.GenesisMiniblockHash) != 32 {
+		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock_hash must be 32 bytes")
+	}
+	if len(cs.GenesisMiniblock) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required")
+	}
+	if len(cs.Nodes) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
+	}
+	for _, n := range cs.Nodes {
+		if len(n) != 20 {
+			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+		}
+	}
+	if cs.ReplicationFactor == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
+	}
+	return nil
+}
+
+func (m *MetadataShard) validateSetBatch(batch *SetStreamLastMiniblockBatchTx) error {
+	if batch == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "batch missing")
+	}
+	if len(batch.Miniblocks) == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "miniblocks missing")
+	}
+	for _, mb := range batch.Miniblocks {
+		if len(mb.StreamId) != 32 {
+			return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
+		}
+		if len(mb.PrevMiniblockHash) != 32 || len(mb.LastMiniblockHash) != 32 {
+			return RiverError(Err_INVALID_ARGUMENT, "hashes must be 32 bytes")
+		}
+		if mb.LastMiniblockNum <= 0 {
+			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be > 0")
+		}
+	}
+	return nil
+}
+
+func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicationTx) error {
+	if update == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "update missing")
+	}
+	if len(update.StreamId) != 32 {
+		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
+	}
+	for _, n := range update.Nodes {
+		if len(n) != 20 {
+			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+		}
+	}
+	if update.ReplicationFactor != nil && *update.ReplicationFactor == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
+	}
+	return nil
 }
 
 type cometZapLogger struct {

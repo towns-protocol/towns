@@ -3,6 +3,8 @@ package storage
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"strings"
 
@@ -50,6 +52,8 @@ type MetadataStore interface {
 	SetShardState(ctx context.Context, shardId uint64, height int64, appHash []byte) error
 	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
 	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
+	ApplyMetadataTx(ctx context.Context, shardId uint64, height int64, tx *MetadataTx) error
+	ComputeAppHash(ctx context.Context, shardId uint64) ([]byte, error)
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -360,6 +364,10 @@ func (s *PostgresMetadataShardStore) applyMiniblockUpdateTx(
 			return RiverError(Err_NOT_FOUND, "stream not found", "streamId", update.StreamId)
 		}
 		return err
+	}
+
+	if currentSeal {
+		return RiverError(Err_FAILED_PRECONDITION, "stream is sealed", "streamId", update.StreamId)
 	}
 
 	if !bytes.Equal(currentHash, update.PrevMiniblockHash) {
@@ -1039,4 +1047,72 @@ func byteaArrayToSlice(arr pgtype.FlatArray[[]byte]) [][]byte {
 		nodes = append(nodes, cp)
 	}
 	return nodes
+}
+
+func (s *PostgresMetadataShardStore) ApplyMetadataTx(
+	ctx context.Context,
+	shardId uint64,
+	height int64,
+	tx *MetadataTx,
+) error {
+	if tx == nil {
+		return RiverError(Err_INVALID_ARGUMENT, "tx is required")
+	}
+	switch op := tx.Op.(type) {
+	case *MetadataTx_CreateStream:
+		_, err := s.CreateStream(ctx, shardId, height, op.CreateStream)
+		return err
+	case *MetadataTx_SetStreamLastMiniblockBatch:
+		return s.ApplyMiniblockBatch(ctx, shardId, height, op.SetStreamLastMiniblockBatch.Miniblocks)
+	case *MetadataTx_UpdateStreamNodesAndReplication:
+		_, err := s.UpdateStreamNodesAndReplication(ctx, shardId, height, op.UpdateStreamNodesAndReplication)
+		return err
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown tx op")
+	}
+}
+
+func (s *PostgresMetadataShardStore) ComputeAppHash(ctx context.Context, shardId uint64) ([]byte, error) {
+	hasher := sha256.New()
+	rows, err := s.store.pool.Query(ctx, s.sqlForShard(
+		`SELECT stream_id, last_miniblock_hash, last_miniblock_num, flags, replication_factor, sealed FROM {{streams}} ORDER BY stream_id`,
+		shardId,
+	))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			streamId          []byte
+			lastHash          []byte
+			lastNum           int64
+			flags             uint64
+			replicationFactor uint32
+			sealed            bool
+		)
+		if err := rows.Scan(&streamId, &lastHash, &lastNum, &flags, &replicationFactor, &sealed); err != nil {
+			return nil, err
+		}
+		hasher.Write(streamId)
+		hasher.Write(lastHash)
+		var buf [8]byte
+		// lastNum
+		binary.BigEndian.PutUint64(buf[:], uint64(lastNum))
+		hasher.Write(buf[:])
+		binary.BigEndian.PutUint64(buf[:], flags)
+		hasher.Write(buf[:])
+		binary.BigEndian.PutUint64(buf[:], uint64(replicationFactor))
+		hasher.Write(buf[:])
+		if sealed {
+			hasher.Write([]byte{1})
+		} else {
+			hasher.Write([]byte{0})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return hasher.Sum(nil), nil
 }
