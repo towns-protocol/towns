@@ -188,27 +188,17 @@ func validateHash(hash []byte, field string) error {
 	return nil
 }
 
-func normalizeNodeAddrs(nodes [][]byte) ([][]byte, error) {
+func validateNodeAddrs(nodes [][]byte) ([][]byte, error) {
 	if len(nodes) == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "nodes must not be empty")
 	}
 
-	seen := make(map[string]struct{}, len(nodes))
-	norm := make([][]byte, 0, len(nodes))
 	for _, n := range nodes {
 		if len(n) != 20 {
 			return nil, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
 		}
-		key := string(n)
-		if _, exists := seen[key]; exists {
-			continue
-		}
-		cp := make([]byte, len(n))
-		copy(cp, n)
-		norm = append(norm, cp)
-		seen[key] = struct{}{}
 	}
-	return norm, nil
+	return nodes, nil
 }
 
 func (s *PostgresMetadataShardStore) CreateStream(
@@ -226,7 +216,7 @@ func (s *PostgresMetadataShardStore) CreateStream(
 	if err := validateHash(txData.GenesisMiniblockHash, "genesis_miniblock_hash"); err != nil {
 		return nil, err
 	}
-	nodes, err := normalizeNodeAddrs(txData.Nodes)
+	nodes, err := validateNodeAddrs(txData.Nodes)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +413,7 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 	if err := validateStreamID(update.StreamId); err != nil {
 		return nil, err
 	}
-	nodes, err := normalizeNodeAddrs(update.Nodes)
+	nodes, err := validateNodeAddrs(update.Nodes)
 	if err != nil {
 		return nil, err
 	}

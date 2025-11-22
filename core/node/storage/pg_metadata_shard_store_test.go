@@ -35,7 +35,11 @@ func TestMetadataShardCreateAndGetStream(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xaa}, 32)
-	nodes := [][]byte{bytes.Repeat([]byte{0x10}, 20), bytes.Repeat([]byte{0x11}, 20), bytes.Repeat([]byte{0x10}, 20)}
+	nodes := [][]byte{
+		bytes.Repeat([]byte{0x10}, 20),
+		bytes.Repeat([]byte{0x11}, 20),
+		bytes.Repeat([]byte{0x12}, 20),
+	}
 
 	record, err := store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
@@ -50,7 +54,7 @@ func TestMetadataShardCreateAndGetStream(t *testing.T) {
 	require.Equal(t, streamID, record.StreamId)
 	require.EqualValues(t, genesisHash, record.LastMiniblockHash)
 	require.EqualValues(t, 0, record.LastMiniblockNum)
-	require.Len(t, record.Nodes, 2, "duplicate nodes should be deduped")
+	require.Len(t, record.Nodes, len(nodes))
 
 	fetched, err := store.GetStream(ctx, shardID, streamId)
 	require.NoError(t, err)
@@ -250,6 +254,61 @@ func TestMetadataShardSealedNodeChangeRejected(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Equal(t, prot.Err_FAILED_PRECONDITION, base.AsRiverError(err).Code)
+}
+
+func TestMetadataShardCountsAndState(t *testing.T) {
+	store, ctx := setupMetadataShardStoreTest(t)
+	const shardID = 1
+
+	streamA := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	streamB := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
+	nodeA := common.BytesToAddress(bytes.Repeat([]byte{0xaa}, 20))
+	nodeB := common.BytesToAddress(bytes.Repeat([]byte{0xbb}, 20))
+
+	_, err := store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
+		StreamId:             streamA[:],
+		GenesisMiniblockHash: bytes.Repeat([]byte{0x01}, 32),
+		GenesisMiniblock:     []byte("genesis"),
+		Nodes:                [][]byte{nodeA.Bytes(), nodeB.Bytes()},
+		ReplicationFactor:    2,
+	})
+	require.NoError(t, err)
+
+	_, err = store.CreateStream(ctx, shardID, 2, &prot.CreateStreamTx{
+		StreamId:             streamB[:],
+		GenesisMiniblockHash: bytes.Repeat([]byte{0x02}, 32),
+		GenesisMiniblock:     []byte("genesis"),
+		Nodes:                [][]byte{nodeB.Bytes()},
+		ReplicationFactor:    1,
+	})
+	require.NoError(t, err)
+
+	total, err := store.CountStreams(ctx, shardID)
+	require.NoError(t, err)
+	require.EqualValues(t, 2, total)
+
+	countByNodeA, err := store.CountStreamsByNode(ctx, shardID, nodeA)
+	require.NoError(t, err)
+	require.EqualValues(t, 1, countByNodeA)
+
+	countByNodeB, err := store.CountStreamsByNode(ctx, shardID, nodeB)
+	require.NoError(t, err)
+	require.EqualValues(t, 2, countByNodeB)
+
+	snapshot, err := store.GetStreamsStateSnapshot(ctx, shardID)
+	require.NoError(t, err)
+	require.Len(t, snapshot, 2)
+
+	state, err := store.GetShardState(ctx, shardID)
+	require.NoError(t, err)
+	require.EqualValues(t, 0, state.LastHeight)
+
+	err = store.SetShardState(ctx, shardID, 10, []byte{0x01, 0x02})
+	require.NoError(t, err)
+	state, err = store.GetShardState(ctx, shardID)
+	require.NoError(t, err)
+	require.EqualValues(t, 10, state.LastHeight)
+	require.Equal(t, []byte{0x01, 0x02}, state.LastAppHash)
 }
 
 // Ptr is a helper for optional fields in tests.
