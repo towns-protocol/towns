@@ -1,2 +1,0 @@
--- Metadata shard storage uses per-shard tables created at runtime.
--- This baseline migration is intentionally empty to keep migrate state consistent.
