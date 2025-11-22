@@ -163,29 +163,31 @@ func NewMetadataShard(ctx context.Context, opts MetadataShardOpts) (*MetadataSha
 
 	go func() {
 		<-ctx.Done()
-		shard.node.Stop()
+		if err := shard.node.Stop(); err != nil {
+			shard.log.Default.Warnw("failed to stop cometbft node", "err", err)
+		}
 	}()
 
 	return shard, nil
 }
 
-func (s *MetadataShard) Stopped() <-chan struct{} {
-	return s.node.Quit()
+func (m *MetadataShard) Stopped() <-chan struct{} {
+	return m.node.Quit()
 }
 
-func (s *MetadataShard) SubmitTx(tx []byte) error {
-	if s.node == nil {
+func (m *MetadataShard) SubmitTx(tx []byte) error {
+	if m.node == nil {
 		return RiverError(Err_FAILED_PRECONDITION, "metadata shard not started")
 	}
-	_, err := s.node.Mempool().CheckTx(tx, "")
+	_, err := m.node.Mempool().CheckTx(tx, "")
 	return err
 }
 
-func (s *MetadataShard) Height() int64 {
-	if s.node == nil {
+func (m *MetadataShard) Height() int64 {
+	if m.node == nil {
 		return 0
 	}
-	return s.node.BlockStore().Height()
+	return m.node.BlockStore().Height()
 }
 
 func chainIDForShard(shardID uint64) string {
@@ -373,9 +375,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 		resp.Value = payload
 	case strings.HasPrefix(parsedPath.Path, "/streams/node/"):
 		addrHex := strings.TrimPrefix(parsedPath.Path, "/streams/node/")
-		if strings.HasPrefix(addrHex, "0x") {
-			addrHex = addrHex[2:]
-		}
+		addrHex = strings.TrimPrefix(addrHex, "0x")
 		if len(addrHex) != 40 {
 			setError(resp, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes hex"))
 			return resp, nil
@@ -428,9 +428,7 @@ func (m *MetadataShard) Query(ctx context.Context, req *abci.QueryRequest) (*abc
 		resp.Value = payload
 	case strings.HasPrefix(parsedPath.Path, "/streams/count/"):
 		addrHex := strings.TrimPrefix(parsedPath.Path, "/streams/count/")
-		if strings.HasPrefix(addrHex, "0x") {
-			addrHex = addrHex[2:]
-		}
+		addrHex = strings.TrimPrefix(addrHex, "0x")
 		if len(addrHex) != 40 {
 			setError(resp, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes hex"))
 			return resp, nil
@@ -474,22 +472,22 @@ func (m *MetadataShard) InitChain(ctx context.Context, req *abci.InitChainReques
 	}, nil
 }
 
-func (MetadataShard) ListSnapshots(context.Context, *abci.ListSnapshotsRequest) (*abci.ListSnapshotsResponse, error) {
+func (m *MetadataShard) ListSnapshots(context.Context, *abci.ListSnapshotsRequest) (*abci.ListSnapshotsResponse, error) {
 	return &abci.ListSnapshotsResponse{}, nil
 }
 
-func (MetadataShard) OfferSnapshot(context.Context, *abci.OfferSnapshotRequest) (*abci.OfferSnapshotResponse, error) {
+func (m *MetadataShard) OfferSnapshot(context.Context, *abci.OfferSnapshotRequest) (*abci.OfferSnapshotResponse, error) {
 	return &abci.OfferSnapshotResponse{}, nil
 }
 
-func (MetadataShard) LoadSnapshotChunk(
+func (m *MetadataShard) LoadSnapshotChunk(
 	context.Context,
 	*abci.LoadSnapshotChunkRequest,
 ) (*abci.LoadSnapshotChunkResponse, error) {
 	return &abci.LoadSnapshotChunkResponse{}, nil
 }
 
-func (MetadataShard) ApplySnapshotChunk(
+func (m *MetadataShard) ApplySnapshotChunk(
 	context.Context,
 	*abci.ApplySnapshotChunkRequest,
 ) (*abci.ApplySnapshotChunkResponse, error) {
