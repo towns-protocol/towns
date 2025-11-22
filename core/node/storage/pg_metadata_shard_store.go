@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 // MetadataShardState captures persisted shard info used by ABCI commit.
@@ -26,23 +27,29 @@ type PostgresMetadataShardStore struct {
 }
 
 type MetadataStore interface {
-	EnsureShardStorage(ctx context.Context, shardID uint64) error
-	CreateStream(ctx context.Context, shardID uint64, height int64, tx *CreateStreamTx) (*StreamMetadata, error)
-	ApplyMiniblockBatch(ctx context.Context, shardID uint64, height int64, updates []*MiniblockUpdate) error
+	EnsureShardStorage(ctx context.Context, shardId uint64) error
+	CreateStream(ctx context.Context, shardId uint64, height int64, tx *CreateStreamTx) (*StreamMetadata, error)
+	ApplyMiniblockBatch(ctx context.Context, shardId uint64, height int64, updates []*MiniblockUpdate) error
 	UpdateStreamNodesAndReplication(
 		ctx context.Context,
-		shardID uint64,
+		shardId uint64,
 		height int64,
 		update *UpdateStreamNodesAndReplicationTx,
 	) (*StreamMetadata, error)
-	GetStream(ctx context.Context, shardID uint64, streamID []byte) (*StreamMetadata, error)
-	ListStreams(ctx context.Context, shardID uint64, offset int64, limit int32) ([]*StreamMetadata, error)
-	ListStreamsByNode(ctx context.Context, shardID uint64, node []byte, offset int64, limit int32) ([]*StreamMetadata, error)
-	CountStreams(ctx context.Context, shardID uint64) (int64, error)
-	CountStreamsByNode(ctx context.Context, shardID uint64, node []byte) (int64, error)
-	SetShardState(ctx context.Context, shardID uint64, height int64, appHash []byte) error
-	GetShardState(ctx context.Context, shardID uint64) (*MetadataShardState, error)
-	GetStreamsStateSnapshot(ctx context.Context, shardID uint64) ([]*StreamMetadata, error)
+	GetStream(ctx context.Context, shardId uint64, streamId shared.StreamId) (*StreamMetadata, error)
+	ListStreams(ctx context.Context, shardId uint64, offset int64, limit int32) ([]*StreamMetadata, error)
+	ListStreamsByNode(
+		ctx context.Context,
+		shardId uint64,
+		node common.Address,
+		offset int64,
+		limit int32,
+	) ([]*StreamMetadata, error)
+	CountStreams(ctx context.Context, shardId uint64) (int64, error)
+	CountStreamsByNode(ctx context.Context, shardId uint64, node common.Address) (int64, error)
+	SetShardState(ctx context.Context, shardId uint64, height int64, appHash []byte) error
+	GetShardState(ctx context.Context, shardId uint64) (*MetadataShardState, error)
+	GetStreamsStateSnapshot(ctx context.Context, shardId uint64) ([]*StreamMetadata, error)
 }
 
 var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
@@ -52,7 +59,7 @@ var _ MetadataStore = (*PostgresMetadataShardStore)(nil)
 func NewPostgresMetadataShardStore(
 	ctx context.Context,
 	eventStore *PostgresEventStore,
-	shardID uint64,
+	shardId uint64,
 ) (*PostgresMetadataShardStore, error) {
 	if eventStore == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "eventStore is required")
@@ -62,7 +69,7 @@ func NewPostgresMetadataShardStore(
 		store: eventStore,
 	}
 
-	if err := store.EnsureShardStorage(ctx, shardID); err != nil {
+	if err := store.EnsureShardStorage(ctx, shardId); err != nil {
 		return nil, AsRiverError(err).Func("NewPostgresMetadataShardStore")
 	}
 
@@ -73,35 +80,32 @@ func NewPostgresMetadataShardStore(
 func (*PostgresMetadataShardStore) Close(context.Context) {}
 
 // sqlForShard replaces placeholders with shard-specific table names.
-// Supported placeholders: {{streams}}, {{nodes}}, {{state}}.
-func (s *PostgresMetadataShardStore) sqlForShard(template string, shardID uint64) string {
-	prefix := fmt.Sprintf("msh_%016x", shardID)
-	streams := fmt.Sprintf("%s_streams", prefix)
-	nodes := fmt.Sprintf("%s_stream_nodes", prefix)
-	state := fmt.Sprintf("%s_state", prefix)
+// Supported placeholders: {{streams}}, {{nodes}}.
+func (s *PostgresMetadataShardStore) sqlForShard(template string, shardId uint64) string {
+	streams := fmt.Sprintf("md_%04x_s", shardId)
+	nodes := fmt.Sprintf("md_%04x_n", shardId)
 
 	replacer := strings.NewReplacer(
 		"{{streams}}", streams,
 		"{{nodes}}", nodes,
-		"{{state}}", state,
 	)
 	return replacer.Replace(template)
 }
 
-func (s *PostgresMetadataShardStore) EnsureShardStorage(ctx context.Context, shardID uint64) error {
+func (s *PostgresMetadataShardStore) EnsureShardStorage(ctx context.Context, shardId uint64) error {
 	return s.store.txRunner(
 		ctx,
 		"EnsureMetadataShardStorage",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			return s.ensureShardStorageTx(ctx, tx, shardID)
+			return s.ensureShardStorageTx(ctx, tx, shardId)
 		},
 		nil,
-		"shardId", shardID,
+		"shardId", shardId,
 	)
 }
 
-func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, tx pgx.Tx, shardID uint64) error {
+func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, tx pgx.Tx, shardId uint64) error {
 	log := logging.FromCtx(ctx)
 	streamsSQL := s.sqlForShard(`
 CREATE TABLE IF NOT EXISTS {{streams}} (
@@ -118,46 +122,51 @@ CREATE TABLE IF NOT EXISTS {{streams}} (
     CHECK (octet_length(stream_id) = 32),
     CHECK (octet_length(genesis_miniblock_hash) = 32),
     CHECK (octet_length(last_miniblock_hash) = 32)
-);`, shardID)
+);`, shardId)
 
 	nodesSQL := s.sqlForShard(`
 CREATE TABLE IF NOT EXISTS {{nodes}} (
     stream_id BYTEA NOT NULL,
+    position INT NOT NULL,
     node_addr BYTEA NOT NULL,
-    PRIMARY KEY (stream_id, node_addr),
+    PRIMARY KEY (stream_id, position),
+    UNIQUE (stream_id, node_addr),
     CHECK (octet_length(node_addr) = 20),
     FOREIGN KEY (stream_id) REFERENCES {{streams}}(stream_id) ON DELETE CASCADE
-);`, shardID)
+);`, shardId)
 
-	nodesIdxSQL := s.sqlForShard(`CREATE INDEX IF NOT EXISTS {{nodes}}_node_idx ON {{nodes}} (node_addr);`, shardID)
+	nodesIdxSQL := s.sqlForShard(`CREATE INDEX IF NOT EXISTS {{nodes}}_node_idx ON {{nodes}} (node_addr);`, shardId)
 
 	stateSQL := s.sqlForShard(`
-CREATE TABLE IF NOT EXISTS {{state}} (
-    single_row_key BOOL PRIMARY KEY DEFAULT TRUE,
+CREATE TABLE IF NOT EXISTS metadata (
+    shard_id BIGINT PRIMARY KEY,
     last_height BIGINT NOT NULL DEFAULT 0,
     last_app_hash BYTEA NOT NULL DEFAULT ''::BYTEA
-);`, shardID)
+);`, shardId)
 
-	stateSeedSQL := fmt.Sprintf(
-		`INSERT INTO %s (single_row_key, last_height, last_app_hash) VALUES (TRUE, 0, ''::BYTEA) ON CONFLICT DO NOTHING;`,
-		s.sqlForShard(`{{state}}`, shardID),
-	)
+	stateSeedSQL := `INSERT INTO metadata (shard_id, last_height, last_app_hash) VALUES ($1, 0, ''::BYTEA) ON CONFLICT DO NOTHING;`
 
-	statements := []string{streamsSQL, nodesSQL, nodesIdxSQL, stateSQL, stateSeedSQL}
+	statements := []string{streamsSQL, nodesSQL, nodesIdxSQL, stateSQL}
 	for _, sql := range statements {
 		if _, err := tx.Exec(ctx, sql); err != nil {
 			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
 				Message("failed to ensure metadata shard tables").
-				Tag("shardId", shardID)
+				Tag("shardId", shardId)
 		}
 	}
 
-	log.Debugw("metadata shard storage ensured", "shardId", shardID)
+	if _, err := tx.Exec(ctx, stateSeedSQL, int64(shardId)); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("failed to seed metadata shard state").
+			Tag("shardId", shardId)
+	}
+
+	log.Debugw("metadata shard storage ensured", "shardId", shardId)
 	return nil
 }
 
-func validateStreamID(streamID []byte) error {
-	if len(streamID) != 32 {
+func validateStreamID(streamId []byte) error {
+	if len(streamId) != 32 {
 		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
 	}
 	return nil
@@ -165,7 +174,16 @@ func validateStreamID(streamID []byte) error {
 
 func validateHash(hash []byte, field string) error {
 	if len(hash) != 32 {
-		return RiverError(Err_INVALID_ARGUMENT, fmt.Sprintf("%s must be 32 bytes", field))
+		return RiverError(
+			Err_INVALID_ARGUMENT,
+			"hash length invalid",
+			"field",
+			field,
+			"expectedLen",
+			32,
+			"actualLen",
+			len(hash),
+		)
 	}
 	return nil
 }
@@ -190,10 +208,6 @@ func normalizeNodeAddrs(nodes [][]byte) ([][]byte, error) {
 		norm = append(norm, cp)
 		seen[key] = struct{}{}
 	}
-
-	slices.SortFunc(norm, func(a, b []byte) int {
-		return bytes.Compare(a, b)
-	})
 	return norm, nil
 }
 
@@ -532,17 +546,17 @@ func (s *PostgresMetadataShardStore) replaceStreamNodesTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	shardID uint64,
-	streamID []byte,
+	streamId []byte,
 	nodes [][]byte,
 ) error {
 	deleteSQL := s.sqlForShard(`DELETE FROM {{nodes}} WHERE stream_id = $1`, shardID)
-	if _, err := tx.Exec(ctx, deleteSQL, streamID); err != nil {
+	if _, err := tx.Exec(ctx, deleteSQL, streamId); err != nil {
 		return err
 	}
 
-	insertSQL := s.sqlForShard(`INSERT INTO {{nodes}} (stream_id, node_addr) VALUES ($1, $2)`, shardID)
-	for _, node := range nodes {
-		if _, err := tx.Exec(ctx, insertSQL, streamID, node); err != nil {
+	insertSQL := s.sqlForShard(`INSERT INTO {{nodes}} (stream_id, position, node_addr) VALUES ($1, $2, $3)`, shardID)
+	for idx, node := range nodes {
+		if _, err := tx.Exec(ctx, insertSQL, streamId, idx, node); err != nil {
 			return err
 		}
 	}
@@ -553,12 +567,12 @@ func (s *PostgresMetadataShardStore) getStreamNodesTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	shardID uint64,
-	streamID []byte,
+	streamId []byte,
 ) ([][]byte, error) {
 	rows, err := tx.Query(
 		ctx,
-		s.sqlForShard(`SELECT node_addr FROM {{nodes}} WHERE stream_id = $1 ORDER BY node_addr`, shardID),
-		streamID,
+		s.sqlForShard(`SELECT node_addr FROM {{nodes}} WHERE stream_id = $1 ORDER BY position`, shardID),
+		streamId,
 	)
 	if err != nil {
 		return nil, err
@@ -579,19 +593,15 @@ func (s *PostgresMetadataShardStore) getStreamNodesTx(
 func (s *PostgresMetadataShardStore) GetStream(
 	ctx context.Context,
 	shardID uint64,
-	streamID []byte,
+	streamId shared.StreamId,
 ) (*StreamMetadata, error) {
-	if err := validateStreamID(streamID); err != nil {
-		return nil, err
-	}
-
 	var record *StreamMetadata
 	err := s.store.txRunner(
 		ctx,
 		"MetadataShard.GetStream",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			r, innerErr := s.getStreamTx(ctx, tx, shardID, streamID)
+			r, innerErr := s.getStreamTx(ctx, tx, shardID, streamId)
 			if innerErr != nil {
 				return innerErr
 			}
@@ -600,7 +610,7 @@ func (s *PostgresMetadataShardStore) GetStream(
 		},
 		&txRunnerOpts{skipLoggingNotFound: true},
 		"shardId", shardID,
-		"streamId", streamID,
+		"streamId", streamId,
 	)
 	return record, err
 }
@@ -609,7 +619,7 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	shardID uint64,
-	streamID []byte,
+	streamId shared.StreamId,
 ) (*StreamMetadata, error) {
 	var (
 		genesisHash []byte
@@ -635,14 +645,14 @@ func (s *PostgresMetadataShardStore) getStreamTx(
                 COALESCE(n.nodes, '{}') AS nodes
          FROM {{streams}} s
          LEFT JOIN LATERAL (
-             SELECT array_agg(node_addr ORDER BY node_addr) AS nodes
+             SELECT array_agg(node_addr ORDER BY position) AS nodes
              FROM {{nodes}} n WHERE n.stream_id = s.stream_id
          ) n ON TRUE
          WHERE s.stream_id = $1`,
 		shardID,
 	)
 
-	if err := tx.QueryRow(ctx, query, streamID).Scan(
+	if err := tx.QueryRow(ctx, query, streamId[:]).Scan(
 		&genesisHash,
 		&lastHash,
 		&lastNum,
@@ -654,13 +664,13 @@ func (s *PostgresMetadataShardStore) getStreamTx(
 		&nodesArray,
 	); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamID)
+			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId)
 		}
 		return nil, err
 	}
 
 	return &StreamMetadata{
-		StreamId:             streamID,
+		StreamId:             streamId[:],
 		ShardId:              shardID,
 		GenesisMiniblockHash: genesisHash,
 		LastMiniblockHash:    lastHash,
@@ -701,7 +711,7 @@ func (s *PostgresMetadataShardStore) ListStreams(
                             COALESCE(n.nodes, '{}') AS nodes
                      FROM {{streams}} s
                      LEFT JOIN LATERAL (
-                         SELECT array_agg(node_addr ORDER BY node_addr) AS nodes
+                         SELECT array_agg(node_addr ORDER BY position) AS nodes
                          FROM {{nodes}} n WHERE n.stream_id = s.stream_id
                      ) n ON TRUE
                      ORDER BY s.stream_id
@@ -718,7 +728,7 @@ func (s *PostgresMetadataShardStore) ListStreams(
 
 			for rows.Next() {
 				var (
-					streamID    []byte
+					streamId    []byte
 					genesisHash []byte
 					lastHash    []byte
 					lastNum     int64
@@ -730,7 +740,7 @@ func (s *PostgresMetadataShardStore) ListStreams(
 					nodesArray  pgtype.FlatArray[[]byte]
 				)
 				if err := rows.Scan(
-					&streamID,
+					&streamId,
 					&genesisHash,
 					&lastHash,
 					&lastNum,
@@ -745,7 +755,7 @@ func (s *PostgresMetadataShardStore) ListStreams(
 				}
 
 				records = append(records, &StreamMetadata{
-					StreamId:             streamID,
+					StreamId:             streamId,
 					ShardId:              shardID,
 					GenesisMiniblockHash: genesisHash,
 					LastMiniblockHash:    lastHash,
@@ -769,14 +779,10 @@ func (s *PostgresMetadataShardStore) ListStreams(
 func (s *PostgresMetadataShardStore) ListStreamsByNode(
 	ctx context.Context,
 	shardID uint64,
-	node []byte,
+	node common.Address,
 	offset int64,
 	limit int32,
 ) ([]*StreamMetadata, error) {
-	if len(node) != 20 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "node must be 20 bytes")
-	}
-
 	var records []*StreamMetadata
 	err := s.store.txRunner(
 		ctx,
@@ -799,14 +805,14 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
                      FROM {{streams}} s
                      JOIN {{nodes}} sn ON sn.stream_id = s.stream_id AND sn.node_addr = $1
                      LEFT JOIN LATERAL (
-                         SELECT array_agg(node_addr ORDER BY node_addr) AS nodes
+                         SELECT array_agg(node_addr ORDER BY position) AS nodes
                          FROM {{nodes}} n WHERE n.stream_id = s.stream_id
                      ) n ON TRUE
                      ORDER BY s.stream_id
                      OFFSET $2 LIMIT $3`,
 					shardID,
 				),
-				node,
+				node.Bytes(),
 				offset,
 				limit,
 			)
@@ -817,7 +823,7 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 
 			for rows.Next() {
 				var (
-					streamID    []byte
+					streamId    []byte
 					genesisHash []byte
 					lastHash    []byte
 					lastNum     int64
@@ -829,7 +835,7 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 					nodesArray  pgtype.FlatArray[[]byte]
 				)
 				if err := rows.Scan(
-					&streamID,
+					&streamId,
 					&genesisHash,
 					&lastHash,
 					&lastNum,
@@ -844,7 +850,7 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 				}
 
 				records = append(records, &StreamMetadata{
-					StreamId:             streamID,
+					StreamId:             streamId,
 					ShardId:              shardID,
 					GenesisMiniblockHash: genesisHash,
 					LastMiniblockHash:    lastHash,
@@ -881,11 +887,11 @@ func (s *PostgresMetadataShardStore) CountStreams(ctx context.Context, shardID u
 	return count, err
 }
 
-func (s *PostgresMetadataShardStore) CountStreamsByNode(ctx context.Context, shardID uint64, node []byte) (int64, error) {
-	if len(node) != 20 {
-		return 0, RiverError(Err_INVALID_ARGUMENT, "node must be 20 bytes")
-	}
-
+func (s *PostgresMetadataShardStore) CountStreamsByNode(
+	ctx context.Context,
+	shardID uint64,
+	node common.Address,
+) (int64, error) {
 	var count int64
 	err := s.store.txRunner(
 		ctx,
@@ -895,7 +901,7 @@ func (s *PostgresMetadataShardStore) CountStreamsByNode(ctx context.Context, sha
 			return tx.QueryRow(
 				ctx,
 				s.sqlForShard(`SELECT COUNT(*) FROM {{nodes}} WHERE node_addr = $1`, shardID),
-				node,
+				node.Bytes(),
 			).Scan(&count)
 		},
 		nil,
@@ -905,7 +911,12 @@ func (s *PostgresMetadataShardStore) CountStreamsByNode(ctx context.Context, sha
 	return count, err
 }
 
-func (s *PostgresMetadataShardStore) SetShardState(ctx context.Context, shardID uint64, height int64, appHash []byte) error {
+func (s *PostgresMetadataShardStore) SetShardState(
+	ctx context.Context,
+	shardID uint64,
+	height int64,
+	appHash []byte,
+) error {
 	if appHash == nil {
 		appHash = []byte{}
 	}
@@ -914,11 +925,8 @@ func (s *PostgresMetadataShardStore) SetShardState(ctx context.Context, shardID 
 		"MetadataShard.SetShardState",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			updateSQL := s.sqlForShard(
-				`UPDATE {{state}} SET last_height = $1, last_app_hash = $2 WHERE single_row_key = TRUE`,
-				shardID,
-			)
-			if _, err := tx.Exec(ctx, updateSQL, height, appHash); err != nil {
+			updateSQL := `UPDATE metadata SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`
+			if _, err := tx.Exec(ctx, updateSQL, height, appHash, shardID); err != nil {
 				return err
 			}
 			return nil
@@ -936,8 +944,8 @@ func (s *PostgresMetadataShardStore) GetShardState(ctx context.Context, shardID 
 		"MetadataShard.GetShardState",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			query := s.sqlForShard(`SELECT last_height, last_app_hash FROM {{state}} WHERE single_row_key = TRUE`, shardID)
-			return tx.QueryRow(ctx, query).Scan(&state.LastHeight, &state.LastAppHash)
+			query := `SELECT last_height, last_app_hash FROM metadata WHERE shard_id = $1`
+			return tx.QueryRow(ctx, query, shardID).Scan(&state.LastHeight, &state.LastAppHash)
 		},
 		nil,
 		"shardId", shardID,
@@ -970,7 +978,7 @@ func (s *PostgresMetadataShardStore) GetStreamsStateSnapshot(
                             COALESCE(n.nodes, '{}') AS nodes
                      FROM {{streams}} s
                      LEFT JOIN LATERAL (
-                         SELECT array_agg(node_addr ORDER BY node_addr) AS nodes
+                         SELECT array_agg(node_addr ORDER BY position) AS nodes
                          FROM {{nodes}} n WHERE n.stream_id = s.stream_id
                      ) n ON TRUE
                      ORDER BY s.stream_id`,
