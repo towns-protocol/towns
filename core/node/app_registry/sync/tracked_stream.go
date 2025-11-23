@@ -25,6 +25,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption for this session, and
 	// can now immediately forward incoming messages with the same session id.
+	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.processUserInboxMessage")
 	if payload := event.Event.GetUserInboxPayload(); payload != nil {
 		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
 			sessionIds := groupEncryptionSessions.GetSessionIds()
@@ -38,7 +39,23 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 				return err
 			}
 			for deviceKey := range deviceCipherTexts {
+				log.Infow(
+					"Publishing session keys for bot",
+					"streamId", streamId,
+					"deviceKey", deviceKey,
+					"sessionIdCount", len(sessionIds),
+					"sessionIds", sessionIds,
+				)
 				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, envelopeBytes); err != nil {
+					log.Errorw(
+						"Failed to publish session keys",
+						"error",
+						err,
+						"streamId",
+						streamId,
+						"deviceKey",
+						deviceKey,
+					)
 					return err
 				}
 			}
@@ -88,13 +105,28 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 				streamId,
 			)
 		} else if isForwardable {
+			log.Infow(
+				"Found forwardable app in channel",
+				"appAddress", memberAddress.Hex(),
+				"streamId", streamId,
+			)
 			apps.Add(member)
 		}
 		return false
 	})
 
 	if apps.Cardinality() > 0 {
+		log.Infow(
+			"Channel event detected for forwarding to bots",
+			"streamId", streamId,
+			"eventHash", hex.EncodeToString(event.Hash[:]),
+			"appCount", apps.Cardinality(),
+			"apps", apps.ToSlice(),
+			"eventCreator", hex.EncodeToString(event.Event.CreatorAddress),
+		)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
+	} else {
+		log.Infow("No forwardable apps found in channel members", "streamId", streamId)
 	}
 
 	return nil
