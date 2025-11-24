@@ -119,6 +119,7 @@ func NewRemoteStreamUpdateEmitter(
 			responseStream.Err(),
 		).
 			Tags("remote", remoteAddr).
+			Tags("streamID", streamID).
 			Func("NewRemoteStreamUpdateEmitter")
 	}
 

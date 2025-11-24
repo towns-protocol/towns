@@ -160,6 +160,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 
 	// Do not forward bot-authored events
 	if isApp {
+		log.Infow("Skipping bot-authored event", "creatorAddress", creator.Hex(), "channelId", channelId)
 		return
 	}
 
@@ -177,8 +178,20 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 				"event",
 				event,
 			)
-		} else if isForwardable && shouldForwardSpaceChannelMessage(ctx, appId, settings, event) {
-			appIds = append(appIds, appId)
+		} else if isForwardable {
+			shouldForward := shouldForwardSpaceChannelMessage(ctx, appId, settings, event)
+			log.Infow(
+				"Bot message forwarding decision",
+				"appId", appId.Hex(),
+				"channelId", channelId,
+				"shouldForward", shouldForward,
+				"forwardSetting", settings.ForwardSetting,
+				"messageInteractionType", event.Event.Tags.GetMessageInteractionType(),
+				"eventHash", hex.EncodeToString(event.Hash[:]),
+			)
+			if shouldForward {
+				appIds = append(appIds, appId)
+			}
 		}
 
 		return false
@@ -189,12 +202,27 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		return
 	}
 
+	sessionId := getEncryptionSession(event)
+
+	if len(appIds) > 0 {
+		log.Infow(
+			"Dispatching message to bots",
+			"channelId", channelId,
+			"spaceId", spaceId,
+			"appCount", len(appIds),
+			"appIds", appIds,
+			"sessionId", sessionId,
+			"hasEncryptedContent", sessionId != "",
+			"eventHash", hex.EncodeToString(event.Hash[:]),
+		)
+	}
+
 	// The cache is also a broker that will dispatch sendable messages to the appropriate
 	// consumers in order to make webhook calls to app services.
 	if err := p.cache.DispatchOrEnqueueMessages(
 		ctx,
 		appIds,
-		getEncryptionSession(event),
+		sessionId,
 		channelId,
 		streamEnvelope,
 	); err != nil {

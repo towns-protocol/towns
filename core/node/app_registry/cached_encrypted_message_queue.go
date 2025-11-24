@@ -199,6 +199,16 @@ func (q *CachedEncryptedMessageQueue) PublishSessionKeys(
 		return err
 	}
 	if sendableMessages != nil {
+		log := logging.FromCtx(ctx)
+		log.Infow(
+			"Dequeuing messages after receiving session keys",
+			"appId", sendableMessages.AppId,
+			"streamId", streamId,
+			"deviceKey", deviceKey,
+			"sessionIdCount", len(sessionIds),
+			"dequeuedMessageCount", len(sendableMessages.MessageEnvelopes),
+			"webhookUrl", sendableMessages.WebhookUrl,
+		)
 		messages := &SessionMessages{
 			StreamId:              streamId,
 			AppId:                 sendableMessages.AppId,
@@ -243,17 +253,27 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 		return err
 	}
 	log := logging.FromCtx(ctx)
-	// log.Debugw(
-	// 	"enqueue unsendable messages",
-	// 	"sendableApps",
-	// 	sendableApps,
-	// 	"unsendableApps",
-	// 	unsendableApps,
-	// 	"sessionId",
-	// 	sessionId,
-	// 	"channelId",
-	// 	channelId,
-	// )
+
+	sendableAppIds := make([]common.Address, len(sendableApps))
+	for i, app := range sendableApps {
+		sendableAppIds[i] = app.AppId
+	}
+	unsendableAppIds := make([]common.Address, len(unsendableApps))
+	for i, app := range unsendableApps {
+		unsendableAppIds[i] = app.AppId
+	}
+
+	log.Infow(
+		"Message dispatch categorization",
+		"channelId", channelId,
+		"sessionId", sessionId,
+		"totalApps", len(appIds),
+		"sendableApps", len(sendableApps),
+		"unsendableApps", len(unsendableApps),
+		"sendableAppIds", sendableAppIds,
+		"unsendableAppIds", unsendableAppIds,
+	)
+
 	if len(sendableApps)+len(unsendableApps) != len(appIds) {
 		return base.AsRiverError(
 			fmt.Errorf(
@@ -265,6 +285,13 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 
 	// Submit a single message for each sendable device
 	for _, sendableApp := range sendableApps {
+		log.Infow(
+			"Immediately dispatching message to bot",
+			"appId", sendableApp.AppId,
+			"deviceKey", sendableApp.DeviceKey,
+			"streamId", channelId,
+			"webhookUrl", sendableApp.WebhookUrl,
+		)
 		if err := q.appDispatcher.SubmitMessages(ctx, &SessionMessages{
 			StreamId:              channelId,
 			AppId:                 sendableApp.AppId,
@@ -277,17 +304,17 @@ func (q *CachedEncryptedMessageQueue) DispatchOrEnqueueMessages(
 			return err
 		}
 	}
-	// log.Debugw(
-	// 	"RequestKeySolicitations",
-	// 	"channelId",
-	// 	channelId,
-	// 	"unsendable",
-	// 	unsendableApps,
-	// 	"sessionId",
-	// 	sessionId,
-	// 	"channelId",
-	// 	channelId,
-	// )
+
+	if len(unsendableApps) > 0 {
+		log.Infow(
+			"Queueing messages for bots without encryption keys",
+			"channelId", channelId,
+			"unsendableAppCount", len(unsendableApps),
+			"unsendableAppIds", unsendableAppIds,
+			"sessionId", sessionId,
+		)
+	}
+
 	return q.appDispatcher.RequestKeySolicitations(
 		ctx,
 		sessionId,
