@@ -32,6 +32,11 @@ type EncryptedMessageQueue interface {
 		appId common.Address,
 	) (isForwardable bool, settings types.AppSettings, err error)
 
+	IsApp(
+		ctx context.Context,
+		userId common.Address,
+	) (bool, error)
+
 	DispatchOrEnqueueMessages(
 		ctx context.Context,
 		appIds []common.Address,
@@ -39,13 +44,23 @@ type EncryptedMessageQueue interface {
 		streamId shared.StreamId,
 		streamEventBytes []byte,
 	) (err error)
+
+	PersistSyncCookie(
+		ctx context.Context,
+		streamID shared.StreamId,
+		minipoolGen int64,
+		prevMiniblockHash []byte,
+	) error
+
+	GetStreamSyncCookies(
+		ctx context.Context,
+	) (map[shared.StreamId]*protocol.SyncCookie, error)
 }
 
 type AppRegistryStreamsTracker struct {
-	// TODO: eventually this struct will contain references to whatever types of cache / storage access
-	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
-	queue EncryptedMessageQueue
+	queue         EncryptedMessageQueue
+	streamCookies map[shared.StreamId]*protocol.SyncCookie // Loaded on startup
 }
 
 func NewAppRegistryStreamsTracker(
@@ -60,7 +75,8 @@ func NewAppRegistryStreamsTracker(
 	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
-		queue: store,
+		queue:         store,
+		streamCookies: make(map[shared.StreamId]*protocol.SyncCookie),
 	}
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
@@ -116,4 +132,25 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		tracker.StreamsTrackerImpl.Listener(),
 		tracker.queue,
 	)
+}
+
+// GetStreamCookie returns the stored sync cookie for a stream, if one exists.
+// This is used during startup to resume from the last processed position.
+func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
+	streamID shared.StreamId,
+) (*protocol.SyncCookie, bool) {
+	cookie, ok := tracker.streamCookies[streamID]
+	return cookie, ok
+}
+
+// LoadStreamCookies loads all persisted sync cookies from storage.
+// This should be called before the tracker starts processing streams.
+func (tracker *AppRegistryStreamsTracker) LoadStreamCookies(ctx context.Context) error {
+	cookies, err := tracker.queue.GetStreamSyncCookies(ctx)
+	if err != nil {
+		return err
+	}
+
+	tracker.streamCookies = cookies
+	return nil
 }

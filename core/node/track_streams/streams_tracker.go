@@ -39,6 +39,13 @@ type StreamFilter interface {
 	) (events.TrackedStreamView, error)
 }
 
+// StreamCookieProvider is an optional interface that can be implemented by StreamFilter
+// implementations that support cookie-based stream resumption. If implemented, the tracker
+// will use stored cookies to resume from the last processed position.
+type StreamCookieProvider interface {
+	GetStreamCookie(streamID shared.StreamId) (*protocol.SyncCookie, bool)
+}
+
 type StreamsTracker interface {
 	// Once the tracker is running, it will analyze all existing streams to see if they meet the criteria for
 	// tracking. In addition, it will continuously consider new streams upon stream allocation.
@@ -174,8 +181,29 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
+				// Check if the filter provides cookies (optional interface)
+				var applyHistorical ApplyHistoricalContent
+				if cookieProvider, ok := tracker.filter.(StreamCookieProvider); ok {
+					if cookie, hasCookie := cookieProvider.GetStreamCookie(stream.StreamId()); hasCookie {
+						// Resume from stored cookie position
+						applyHistorical = ApplyHistoricalContent{
+							Enabled:           true,
+							FromMiniblockHash: cookie.PrevMiniblockHash,
+						}
+						log.Debugw("Resuming stream from stored cookie",
+							"streamId", stream.StreamId(),
+							"minipoolGen", cookie.MinipoolGen)
+					} else {
+						// No cookie, start fresh
+						applyHistorical = ApplyHistoricalContent{Enabled: false}
+					}
+				} else {
+					// Filter doesn't provide cookies, use default behavior
+					applyHistorical = ApplyHistoricalContent{Enabled: false}
+				}
+
 				// start tracking the stream, until the root ctx expires.
-				tracker.multiSyncRunner.AddStream(stream, ApplyHistoricalContent{Enabled: false})
+				tracker.multiSyncRunner.AddStream(stream, applyHistorical)
 			}
 
 			return true

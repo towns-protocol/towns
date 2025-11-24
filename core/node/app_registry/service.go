@@ -339,6 +339,16 @@ func (s *Service) Start(ctx context.Context) {
 		for {
 			log.Infow("Start app registry streams tracker")
 
+			// Load persisted sync cookies before starting tracker
+			if tracker, ok := s.streamsTracker.(*sync.AppRegistryStreamsTracker); ok {
+				if err := tracker.LoadStreamCookies(ctx); err != nil {
+					log.Errorw("Failed to load stream sync cookies", "error", err)
+					// Continue anyway - we'll start from scratch if we can't load cookies
+				} else {
+					log.Infow("Loaded stream sync cookies for App Registry")
+				}
+			}
+
 			if err := s.streamsTracker.Run(ctx); err != nil {
 				log.Errorw("tracking streams failed", "error", err)
 			}

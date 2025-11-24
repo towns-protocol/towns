@@ -407,3 +407,21 @@ func (q *CachedEncryptedMessageQueue) getCachedAppInfo(
 
 	return appInfo, nil
 }
+
+// PersistSyncCookie stores or updates the sync cookie for a stream.
+// This enables resuming from the last processed position after restarts.
+func (q *CachedEncryptedMessageQueue) PersistSyncCookie(
+	ctx context.Context,
+	streamID shared.StreamId,
+	minipoolGen int64,
+	prevMiniblockHash []byte,
+) error {
+	return q.store.PersistSyncCookie(ctx, streamID, minipoolGen, prevMiniblockHash)
+}
+
+// GetStreamSyncCookies loads all stored cookies on startup.
+func (q *CachedEncryptedMessageQueue) GetStreamSyncCookies(
+	ctx context.Context,
+) (map[shared.StreamId]*protocol.SyncCookie, error) {
+	return q.store.GetStreamSyncCookies(ctx)
+}
