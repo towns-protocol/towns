@@ -165,7 +165,7 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 				// We know that we have a set of these on the network because some nodes were accidentally deployed
 				// with the wrong addresses early in the network's history. We've deemed these streams not worthy
 				// of repairing and generally ignore them.
-				log.Debugw("Ignore stream, no valid node found", "stream", stream.StreamId())
+				log.Infow("Ignore stream, no valid node found", "stream", stream.StreamId())
 				return true
 			}
 
