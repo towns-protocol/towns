@@ -164,7 +164,7 @@ func TestLoad(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.MissingEvents, view.minipool.events.Len())
-	mbCandidate, err := view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
+	mbCandidate, err := view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal, view))
 	require.NoError(t, err)
 	assert.Nil(t, mbCandidate.headerEvent.Event.GetMiniblockHeader().Snapshot)
 
@@ -195,7 +195,7 @@ func TestLoad(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.MissingEvents, 0)
-	mbCandidate, err = view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal))
+	mbCandidate, err = view.makeMiniblockCandidate(ctx, params, mbProposalFromProto(resp.Proposal, view))
 	require.NoError(t, err)
 	miniblockHeader = mbCandidate.headerEvent.Event.GetMiniblockHeader()
 	assert.Nil(t, miniblockHeader.Snapshot)

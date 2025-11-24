@@ -27,10 +27,7 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 
 	monitor.RecordCall(user.Bytes(), base, CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(base)
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
-	require.Equal(t, uint32(1), snapshot[0].Usage[0].Count)
+	require.Len(t, snapshot, 0)
 
 	monitor.RecordCall(user.Bytes(), base.Add(200*time.Millisecond), CallTypeEvent)
 	snapshot = monitor.GetHighUsageInfo(base.Add(500 * time.Millisecond))
@@ -111,6 +108,37 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 	require.Len(t, usage, 2)
 }
 
+func TestMonitorMultipleThresholdsSameCallType(t *testing.T) {
+	t.Parallel()
+	cfg := config.HighUsageDetectionConfig{
+		Enabled: true,
+		Thresholds: config.HighUsageThresholdFields{
+			ThresholdAddEventWindow1: time.Minute,
+			ThresholdAddEventCount1:  10,
+			ThresholdAddEventWindow2: time.Hour,
+			ThresholdAddEventCount2:  30,
+		},
+	}
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	user := common.HexToAddress("0xbeef")
+	base := time.Unix(0, 0)
+
+	for i := 0; i < 35; i++ {
+		monitor.RecordCall(user.Bytes(), base.Add(time.Duration(i)*time.Second), CallTypeEvent)
+	}
+
+	usage := monitor.GetHighUsageInfo(base.Add(40 * time.Second))
+	require.Len(t, usage, 1)
+	require.Equal(t, CallTypeEvent, usage[0].CallType)
+	require.Len(t, usage[0].Violations, 2)
+	require.Equal(t, time.Minute, usage[0].Violations[0].Window)
+	require.Equal(t, uint32(35), usage[0].Violations[0].Count)
+	require.Equal(t, uint32(10), usage[0].Violations[0].Limit)
+	require.Equal(t, time.Hour, usage[0].Violations[1].Window)
+	require.Equal(t, uint32(35), usage[0].Violations[1].Count)
+	require.Equal(t, uint32(30), usage[0].Violations[1].Limit)
+}
+
 func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	t.Parallel()
 	cfg := newDetectionConfig(true, map[CallType][]Threshold{
@@ -127,9 +155,7 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 	require.Len(t, monitor.GetHighUsageInfo(start.Add(2500*time.Millisecond)), 1)
 	monitor.RecordCall(user.Bytes(), start.Add(3500*time.Millisecond), CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(start.Add(4 * time.Second))
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
+	require.Len(t, snapshot, 0)
 }
 
 func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
@@ -147,9 +173,7 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 	require.Len(t, monitor.GetHighUsageInfo(now.Add(20*time.Second)), 1)
 	monitor.RecordCall(user.Bytes(), now.Add(70*time.Second), CallTypeEvent)
 	snapshot := monitor.GetHighUsageInfo(now.Add(80 * time.Second))
-	require.Len(t, snapshot, 1)
-	require.Empty(t, snapshot[0].Violations)
-	require.NotEmpty(t, snapshot[0].Usage)
+	require.Len(t, snapshot, 0)
 }
 
 func TestMonitorConfigValidation(t *testing.T) {
@@ -280,14 +304,14 @@ func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) confi
 		thr := values[0]
 		switch ct {
 		case CallTypeEvent:
-			cfg.Thresholds.ThresholdAddEventWindow = thr.Window
-			cfg.Thresholds.ThresholdAddEventCount = thr.Count
+			cfg.Thresholds.ThresholdAddEventWindow1 = thr.Window
+			cfg.Thresholds.ThresholdAddEventCount1 = thr.Count
 		case CallTypeMediaEvent:
-			cfg.Thresholds.ThresholdAddMediaEventWindow = thr.Window
-			cfg.Thresholds.ThresholdAddMediaEventCount = thr.Count
+			cfg.Thresholds.ThresholdAddMediaEventWindow1 = thr.Window
+			cfg.Thresholds.ThresholdAddMediaEventCount1 = thr.Count
 		case CallTypeCreateMediaStream:
-			cfg.Thresholds.ThresholdCreateMediaStreamWindow = thr.Window
-			cfg.Thresholds.ThresholdCreateMediaStreamCount = thr.Count
+			cfg.Thresholds.ThresholdCreateMediaStreamWindow1 = thr.Window
+			cfg.Thresholds.ThresholdCreateMediaStreamCount1 = thr.Count
 		case callTypeCount:
 			panic("invalid callTypeCount entry")
 		default:

@@ -81,6 +81,7 @@ import {
     ChannelMessage_Post_AttachmentSchema,
     type AppMetadata,
     StreamEvent,
+    ChannelMessage_Post_MentionSchema,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -114,10 +115,11 @@ import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
-import { getSmartAccountFromUserIdImpl } from './getSmartAccountFromUserId'
+import { getSmartAccountFromUserIdImpl } from './smart-account'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
 import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
+import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
@@ -192,7 +194,9 @@ export type MessageOpts = {
 }
 
 export type PostMessageOpts = MessageOpts & {
-    mentions?: PlainMessage<ChannelMessage_Post_Mention>[]
+    mentions?: Array<
+        { userId: string; displayName: string } | { roleId: number } | { atChannel: true }
+    >
     attachments?: Array<
         | ImageAttachment
         | ChunkedMediaAttachment
@@ -1831,7 +1835,7 @@ const buildBotActions = (
                         value: {
                             body: message,
                             attachments: processedAttachments.filter((x) => x !== null),
-                            mentions: opts?.mentions || [],
+                            mentions: processMentions(opts?.mentions),
                         },
                     },
                 },
@@ -1895,7 +1899,7 @@ const buildBotActions = (
                             case: 'text',
                             value: {
                                 body: message,
-                                mentions: opts?.mentions || [],
+                                mentions: processMentions(opts?.mentions),
                                 attachments: processedAttachments.filter((x) => x !== null),
                             },
                         },
@@ -2440,3 +2444,37 @@ const parseMentions = (
             ? [{ userId: m.userId, displayName: m.displayName }]
             : [],
     )
+
+const processMentions = (
+    mentions: PostMessageOpts['mentions'],
+): PlainMessage<ChannelMessage_Post_Mention>[] => {
+    if (!mentions) {
+        return []
+    }
+    return mentions.map((mention) => {
+        if ('userId' in mention) {
+            return create(ChannelMessage_Post_MentionSchema, {
+                userId: mention.userId,
+                displayName: mention.displayName,
+            })
+        } else if ('roleId' in mention) {
+            return create(ChannelMessage_Post_MentionSchema, {
+                mentionBehavior: {
+                    case: 'atRole',
+                    value: {
+                        roleId: mention.roleId,
+                    },
+                },
+            })
+        } else if ('atChannel' in mention) {
+            return create(ChannelMessage_Post_MentionSchema, {
+                mentionBehavior: {
+                    case: 'atChannel',
+                    value: create(EmptySchema, {}),
+                },
+            })
+        } else {
+            throw new Error(`Invalid mention type: ${JSON.stringify(mention)}`)
+        }
+    })
+}
