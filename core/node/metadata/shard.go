@@ -472,11 +472,17 @@ func (m *MetadataShard) InitChain(ctx context.Context, req *abci.InitChainReques
 	}, nil
 }
 
-func (m *MetadataShard) ListSnapshots(context.Context, *abci.ListSnapshotsRequest) (*abci.ListSnapshotsResponse, error) {
+func (m *MetadataShard) ListSnapshots(
+	context.Context,
+	*abci.ListSnapshotsRequest,
+) (*abci.ListSnapshotsResponse, error) {
 	return &abci.ListSnapshotsResponse{}, nil
 }
 
-func (m *MetadataShard) OfferSnapshot(context.Context, *abci.OfferSnapshotRequest) (*abci.OfferSnapshotResponse, error) {
+func (m *MetadataShard) OfferSnapshot(
+	context.Context,
+	*abci.OfferSnapshotRequest,
+) (*abci.OfferSnapshotResponse, error) {
 	return &abci.OfferSnapshotResponse{}, nil
 }
 
