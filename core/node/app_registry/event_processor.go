@@ -143,15 +143,6 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 ) {
 	log := logging.FromCtx(ctx).With("func", "MessageToAppProcessor.OnMessageEvent")
 
-	log.Infow(
-		"Processing message event for app forwarding",
-		"channelId", channelId,
-		"spaceId", spaceId,
-		"memberCount", members.Cardinality(),
-		"eventHash", hex.EncodeToString(event.Hash[:]),
-		"creatorAddress", hex.EncodeToString(event.Event.CreatorAddress),
-	)
-
 	creator := common.BytesToAddress(event.Event.CreatorAddress)
 	isApp, err := p.cache.IsApp(ctx, creator)
 	if err != nil {
@@ -169,7 +160,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 
 	// Do not forward bot-authored events
 	if isApp {
-		log.Infow("Skipping bot-authored event", "creatorAddress", creator.Hex())
+		log.Infow("Skipping bot-authored event", "creatorAddress", creator.Hex(), "channelId", channelId)
 		return
 	}
 
