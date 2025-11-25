@@ -117,18 +117,14 @@ func TestShouldPersistCookie_ChannelWithBot(t *testing.T) {
 	require.True(isForwardable, "Bot should be forwardable")
 }
 
-func TestShouldPersistCookie_UserInboxStreamForBot(t *testing.T) {
+func TestShouldPersistCookie_UserInboxStreamNeverPersisted(t *testing.T) {
 	require := require.New(t)
-	ctx := context.Background()
 
 	mockQueue := newMockQueue()
 
 	// Create a bot address and register it
 	botAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	mockQueue.addRegisteredApp(botAddress)
-
-	// Create a non-bot user address
-	userAddress := common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd")
 
 	trackedView := &AppRegistryTrackedStreamView{
 		queue: mockQueue,
@@ -138,31 +134,14 @@ func TestShouldPersistCookie_UserInboxStreamForBot(t *testing.T) {
 	botInboxStreamId := shared.UserInboxStreamIdFromAddr(botAddress)
 	require.Equal(shared.STREAM_USER_INBOX_BIN, botInboxStreamId.Type())
 
-	// Create a user inbox stream ID for a non-bot user
-	userInboxStreamId := shared.UserInboxStreamIdFromAddr(userAddress)
-	require.Equal(shared.STREAM_USER_INBOX_BIN, userInboxStreamId.Type())
-
 	// Verify the trackedView was created
 	require.NotNil(trackedView)
 
-	// Verify IsApp returns true for bot
-	isApp, err := mockQueue.IsApp(ctx, botAddress)
-	require.NoError(err)
-	require.True(isApp, "Bot should be a registered app")
-
-	// Verify IsApp returns false for non-bot user
-	isApp, err = mockQueue.IsApp(ctx, userAddress)
-	require.NoError(err)
-	require.False(isApp, "Non-bot user should not be a registered app")
-
-	// Verify we can extract the user address from the stream ID
-	extractedBotAddr, err := shared.GetUserAddressFromStreamId(botInboxStreamId)
-	require.NoError(err)
-	require.Equal(botAddress, extractedBotAddr)
-
-	extractedUserAddr, err := shared.GetUserAddressFromStreamId(userInboxStreamId)
-	require.NoError(err)
-	require.Equal(userAddress, extractedUserAddr)
+	// User inbox streams should never have cookies persisted, even for bots.
+	// Session keys are already persisted to the database and re-processing is idempotent.
+	// Only channel streams (STREAM_CHANNEL_BIN) should have cookies persisted.
+	require.NotEqual(shared.STREAM_CHANNEL_BIN, botInboxStreamId.Type(),
+		"User inbox streams are not channel streams and should not have cookies persisted")
 }
 
 func TestShouldPersistCookie_OtherStreamTypes(t *testing.T) {
@@ -181,11 +160,9 @@ func TestShouldPersistCookie_OtherStreamTypes(t *testing.T) {
 	require.NoError(err)
 	require.Equal(shared.STREAM_SPACE_BIN, spaceId.Type())
 
-	// Test that DM streams should not have cookies persisted
-	// The shouldPersistCookie method returns false for stream types other than
-	// STREAM_CHANNEL_BIN and STREAM_USER_INBOX_BIN
+	// The shouldPersistCookie method returns false for all stream types
+	// except STREAM_CHANNEL_BIN (and only when the channel has bot members).
 	require.NotEqual(shared.STREAM_CHANNEL_BIN, spaceId.Type())
-	require.NotEqual(shared.STREAM_USER_INBOX_BIN, spaceId.Type())
 }
 
 func TestMockQueueBehavior(t *testing.T) {

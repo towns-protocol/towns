@@ -171,50 +171,40 @@ func NewTrackedStreamForAppRegistryService(
 }
 
 // shouldPersistCookie determines if this stream's cookie should be persisted.
-// Only channel streams with bot members and bot inbox streams need cookie persistence.
-// TODO yoni: optimize this by caching the result of this (also can be used when forwarding events)
+// Only channel streams with bot members need cookie persistence to ensure message
+// delivery guarantees. User inbox streams don't need persistence since session keys
+// are already stored in the database and re-processing is idempotent.
 func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
 	streamId := view.StreamId()
-	streamType := streamId.Type()
 
-	// For channel streams, check if any member is a bot
-	if streamType == shared.STREAM_CHANNEL_BIN {
-		members, err := view.GetChannelMembers()
+	// Only persist cookies for channel streams with bot members
+	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+		return false
+	}
+
+	members, err := view.GetChannelMembers()
+	if err != nil {
+		return false
+	}
+
+	hasBots := false
+	members.Each(func(member string) bool {
+		// Trim 0x prefix
+		if len(member) > 2 && member[:2] == "0x" {
+			member = member[2:]
+		}
+
+		bytes, err := hex.DecodeString(member)
 		if err != nil {
 			return false
 		}
-
-		hasBots := false
-		members.Each(func(member string) bool {
-			// Trim 0x prefix
-			if len(member) > 2 && member[:2] == "0x" {
-				member = member[2:]
-			}
-
-			bytes, err := hex.DecodeString(member)
-			if err != nil {
-				return false
-			}
-			memberAddress := common.BytesToAddress(bytes)
-			isForwardable, _, err := b.queue.IsForwardableApp(ctx, memberAddress)
-			if err == nil && isForwardable {
-				hasBots = true
-				return true // Stop iteration
-			}
-			return false
-		})
-		return hasBots
-	}
-
-	// For user inbox streams, check if it belongs to a bot
-	if streamType == shared.STREAM_USER_INBOX_BIN {
-		userAddress, err := shared.GetUserAddressFromStreamId(*streamId)
-		if err != nil {
-			return false
+		memberAddress := common.BytesToAddress(bytes)
+		isForwardable, _, err := b.queue.IsForwardableApp(ctx, memberAddress)
+		if err == nil && isForwardable {
+			hasBots = true
+			return true // Stop iteration
 		}
-		isApp, err := b.queue.IsApp(ctx, userAddress)
-		return err == nil && isApp
-	}
-
-	return false
+		return false
+	})
+	return hasBots
 }
