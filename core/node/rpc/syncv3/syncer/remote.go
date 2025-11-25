@@ -246,6 +246,11 @@ func (r *remoteStreamUpdateEmitter) reAddUnprocessedBackfills(msgs []*backfillRe
 func (r *remoteStreamUpdateEmitter) cleanup() {
 	remainingMsgs := r.backfillsQueue.CloseAndGetBatch()
 
+	r.log.Infow(
+		"Remote emitter cleanup, sending SYNC_DOWN to subscribers",
+		"pendingBackfills", len(remainingMsgs),
+	)
+
 	// Send a stream down message to all active syncs of the current syncer version via event bus.
 	r.subscriber.OnStreamEvent(
 		r.streamID,
