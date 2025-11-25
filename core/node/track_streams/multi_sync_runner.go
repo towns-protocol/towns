@@ -317,6 +317,13 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
 		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
 		ssr.metrics.SyncDown.With(prometheus.Labels{"target_node": ssr.node.Hex()}).Inc()
+		streamID, _ := shared.StreamIdFromBytes(update.GetStreamId())
+		log.Infow(
+			"Received SYNC_DOWN from remote, stream will be relocated",
+			"streamId", streamID,
+			"syncId", ssr.syncer.GetSyncId(),
+			"targetNode", ssr.node,
+		)
 		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
@@ -434,21 +441,33 @@ func (ssr *syncSessionRunner) Run() {
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	record, ok := ssr.streamRecords.LoadAndDelete(streamID)
 
+	remainingStreams := ssr.streamRecords.Size()
+	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
+
 	// Cancel the remote sync session if all streams have been relocated.
-	if ssr.streamRecords.Size() <= 0 {
+	if remainingStreams <= 0 {
+		log.Infow(
+			"Sync session runner has no streams remaining after relocation, cancelling session",
+			"targetNode", ssr.node,
+		)
 		ssr.cancelSync(
 			base.RiverError(protocol.Err_SYNC_SESSION_RUNNER_EMPTY, "Sync session runner has no streams remaining"),
 		)
 	}
 
-	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
 	if !ok {
 		log.Errorw("Expected stream to exist in the stream records for this sync session runner")
 		return
 	}
 
 	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
-	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
+	log.Infow(
+		"Relocating stream to new target",
+		"oldNode", ssr.node,
+		"newTarget", newTarget,
+		"remainingStreamsInSession", remainingStreams,
+		"syncCause", context.Cause(ssr.syncCtx),
+	)
 	ssr.relocateStreams <- record
 }
 
