@@ -921,7 +921,7 @@ func (msr *MultiSyncRunner) AddStream(
 	// (e.g., channel members) which isn't available yet. Instead, just try to load -
 	// if a cookie exists, it means we previously determined this stream needed persistence.
 	if msr.cookieStore != nil {
-		cookie, err := msr.cookieStore.GetStreamCookie(ctx, streamId)
+		cookie, updatedAt, err := msr.cookieStore.GetStreamCookie(ctx, streamId)
 		if err != nil {
 			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
 		} else if cookie != nil {
@@ -932,10 +932,11 @@ func (msr *MultiSyncRunner) AddStream(
 				Enabled:           true,
 				FromMiniblockHash: cookie.PrevMiniblockHash,
 			}
-			logging.FromCtx(ctx).Debugw("Loaded sync cookie for stream resumption",
+			logging.FromCtx(ctx).Infow("Loaded sync cookie for stream resumption",
 				"streamId", streamId,
 				"minipoolGen", minipoolGen,
 				"prevMiniblockHash", prevMiniblockHash,
+				"updatedAt", updatedAt,
 			)
 		}
 	}

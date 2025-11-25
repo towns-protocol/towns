@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -46,30 +47,31 @@ func NewPostgresStreamCookieStore(pool *pgxpool.Pool, tableName string) *Postgre
 }
 
 // GetStreamCookie retrieves a stored cookie for a stream.
-// Returns nil, nil if no cookie exists for the stream.
+// Returns (nil, zero time, nil) if no cookie exists for the stream.
 func (s *PostgresStreamCookieStore) GetStreamCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
-) (*protocol.SyncCookie, error) {
+) (*protocol.SyncCookie, time.Time, error) {
 	streamIDHex := hex.EncodeToString(streamID[:])
 
 	var (
 		minipoolGen       int64
 		prevMiniblockHash []byte
+		updatedAt         time.Time
 	)
 
 	err := s.pool.QueryRow(
 		ctx,
-		`SELECT minipool_gen, prev_miniblock_hash
+		`SELECT minipool_gen, prev_miniblock_hash, updated_at
 		 FROM `+s.tableName+`
 		 WHERE stream_id = $1`,
 		streamIDHex,
-	).Scan(&minipoolGen, &prevMiniblockHash)
+	).Scan(&minipoolGen, &prevMiniblockHash, &updatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil // No cookie exists, return nil without error
+			return nil, time.Time{}, nil // No cookie exists, return nil without error
 		}
-		return nil, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+		return nil, time.Time{}, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 			Message("failed to get sync cookie").
 			Tag("streamId", streamID)
 	}
@@ -78,7 +80,7 @@ func (s *PostgresStreamCookieStore) GetStreamCookie(
 		StreamId:          streamID[:],
 		MinipoolGen:       minipoolGen,
 		PrevMiniblockHash: prevMiniblockHash,
-	}, nil
+	}, updatedAt, nil
 }
 
 // PersistSyncCookie stores or updates the sync cookie for a stream.
