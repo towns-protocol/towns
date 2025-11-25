@@ -82,12 +82,15 @@ the App Registry, and we can simply store the cookie (candidate 1).
 ## Implementation notes
 
 ### Persist cookies + bot-side dedup
+
+#### High-level approach
 1. **App Registry persistence**
-   - Add a table (e.g., `stream_cookies`) keyed by `stream_id` storing the
+   - Add a table (`stream_sync_cookies`) keyed by `stream_id` storing the
      last `SyncCookie` we successfully applied.
-   - After every `applyUpdateToStream`, write the returned `NextSyncCookie` to
-     that table in the same transaction as any queue mutations.
-   - On restart, load cookies for every stream before calling
+   - After every event processing, write the returned `NextSyncCookie` to
+     that table (NOT in transaction with queue mutations - see design notes below).
+   - Only persist cookies for streams that have bot members (dramatically reduces storage).
+   - On restart, load cookies for streams with bots before calling
      `StreamsTracker.AddStream`. Pass the cookie as `ApplyHistoricalContent`
      (i.e., set `FromMiniblockHash` from the stored hash) so we replay exactly
      from where we left off.
@@ -100,6 +103,204 @@ the App Registry, and we can simply store the cookie (candidate 1).
      deduplication cache keyed by `eventId`/hash, bounded by either time or
      memory. Only new events reach handlers; duplicates from replays are dropped.
    - Document the behavior so bot developers understand retries are possible.
+
+#### Design decisions
+- **No transactional coupling**: Cookie persistence is independent of message queue operations.
+  If a crash occurs after processing events but before persisting the cookie, the service will
+  replay some events on restart. This is acceptable with bot-side deduplication and simplifies
+  the implementation significantly.
+
+- **Selective persistence**: Only persist cookies for streams with bot members. This is determined by:
+  - For channel streams: whether `forwardableApps` was non-empty during event processing
+  - For user inbox streams: whether the stream belongs to a registered bot
+
+  This reduces the number of persisted cookies from potentially millions (all channels) to
+  hundreds/thousands (only channels with bots), dramatically reducing storage and I/O overhead.
+
+#### Detailed implementation plan
+
+##### 1. Database schema (Migration 000007)
+Create `stream_sync_cookies` table:
+```sql
+CREATE TABLE IF NOT EXISTS stream_sync_cookies (
+    stream_id            CHAR(64) PRIMARY KEY NOT NULL,
+    minipool_gen         BIGINT NOT NULL,
+    prev_miniblock_hash  BYTEA NOT NULL,
+    updated_at           TIMESTAMP DEFAULT NOW()
+);
+```
+
+The `updated_at` timestamp enables future cleanup of stale cookies if needed.
+
+##### 2. Storage interface extension
+**File:** `core/node/storage/pg_app_registry_store.go`
+
+Add to `AppRegistryStore` interface:
+```go
+// PersistSyncCookie stores or updates the sync cookie for a stream
+PersistSyncCookie(ctx context.Context, streamID shared.StreamId,
+    minipoolGen int64, prevMiniblockHash []byte) error
+
+// GetStreamSyncCookies loads all stored cookies on startup
+GetStreamSyncCookies(ctx context.Context) (map[shared.StreamId]*protocol.SyncCookie, error)
+
+// DeleteStreamSyncCookie removes a cookie (for cleanup)
+DeleteStreamSyncCookie(ctx context.Context, streamID shared.StreamId) error
+```
+
+Implementation details:
+- Use **READ COMMITTED** isolation (simple upsert, no need for SERIALIZABLE)
+- Use UPSERT pattern: `INSERT ... ON CONFLICT (stream_id) DO UPDATE SET ...`
+- No transaction parameter - each operation is independent
+
+##### 3. Selective persistence logic
+**File:** `core/node/app_registry/sync/tracked_stream.go`
+
+Modify `AppRegistryTrackedStreamView.onNewEvent()`:
+
+1. Track whether stream has bot members during event processing:
+   - For channel streams: set flag when `forwardableApps` is non-empty
+   - For user inbox streams: check if stream belongs to registered bot
+
+2. After processing events, conditionally persist cookie:
+```go
+if shouldPersistCookie(streamID, hadBotMembers) {
+    cookie := track_streams.SyncCookieFromContext(ctx)
+    if cookie != nil {
+        // Fire-and-forget style persistence
+        go func() {
+            if err := s.store.PersistSyncCookie(context.Background(),
+                streamID, cookie.MinipoolGen, cookie.PrevMiniblockHash); err != nil {
+                log.Warnw("failed to persist sync cookie",
+                    "stream_id", streamID, "error", err)
+            }
+        }()
+    }
+}
+```
+
+3. Add helper method:
+```go
+func (view *AppRegistryTrackedStreamView) shouldPersistCookie(
+    streamID shared.StreamId,
+    hadBotMembers bool,
+) bool {
+    streamType := streamID.Type()
+
+    // Always persist for bot inbox streams
+    if streamType == shared.STREAM_USER_INBOX_BIN {
+        return view.isBotInboxStream(streamID)
+    }
+
+    // For channels, only persist if bots are members
+    if streamType == shared.STREAM_CHANNEL_BIN {
+        return hadBotMembers
+    }
+
+    return false
+}
+```
+
+##### 4. Service layer integration
+**File:** `core/node/app_registry/service.go`
+
+Pass store reference to streams tracker during initialization:
+```go
+tracker, err := sync.NewAppRegistryStreamsTracker(
+    ctx, cfg, onChainConfig, riverRegistry,
+    streamTrackerNodeRegistries, metrics,
+    listener, cache, store, // Add store parameter
+    otelTracer,
+)
+```
+
+**File:** `core/node/app_registry/sync/streams_tracker.go`
+
+Update `AppRegistryStreamsTracker`:
+```go
+type AppRegistryStreamsTracker struct {
+    track_streams.StreamsTrackerImpl
+    queue         EncryptedMessageQueue
+    store         storage.AppRegistryStore  // Add store
+    streamCookies map[shared.StreamId]*protocol.SyncCookie  // Loaded on startup
+}
+```
+
+Modify `NewAppRegistryStreamsTracker()` to:
+1. Accept store parameter
+2. Load cookies on initialization: `store.GetStreamSyncCookies(ctx)`
+3. Store in `streamCookies` map
+
+Update `NewTrackedStream()` to pass store to tracked stream views.
+
+##### 5. Startup cookie loading and application
+**File:** `core/node/track_streams/streams_tracker.go`
+
+Modify `StreamsTrackerImpl.Run()` in the `ForAllStreams` callback (around line 178):
+
+```go
+// Before: Always used Enabled: false
+tracker.multiSyncRunner.AddStream(stream, ApplyHistoricalContent{Enabled: false})
+
+// After: Check for stored cookie
+var applyHistorical ApplyHistoricalContent
+if cookie, hasCookie := tracker.filter.GetStreamCookie(stream.StreamId()); hasCookie {
+    applyHistorical = ApplyHistoricalContent{
+        Enabled:           true,
+        FromMiniblockHash: cookie.PrevMiniblockHash,
+    }
+} else {
+    applyHistorical = ApplyHistoricalContent{Enabled: false}
+}
+tracker.multiSyncRunner.AddStream(stream, applyHistorical)
+```
+
+Add method to streams tracker filter interface:
+```go
+type StreamsTrackerFilter interface {
+    TrackStream(ctx context.Context, streamID shared.StreamId, isInit bool) bool
+    GetStreamCookie(streamID shared.StreamId) (*protocol.SyncCookie, bool)
+}
+```
+
+Implement in `AppRegistryStreamsTracker`:
+```go
+func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
+    streamID shared.StreamId,
+) (*protocol.SyncCookie, bool) {
+    cookie, ok := tracker.streamCookies[streamID]
+    return cookie, ok
+}
+```
+
+##### 6. Testing strategy
+
+**Unit tests** (`core/node/storage/pg_app_registry_store_test.go`):
+- Test `PersistSyncCookie()` - insert and update cases
+- Test `GetStreamSyncCookies()` - load multiple cookies
+- Test `DeleteStreamSyncCookie()` - removal
+- Test upsert behavior (same stream_id multiple times)
+
+**Integration tests** (`core/node/app_registry/sync/tracked_stream_test.go`):
+- Test selective persistence (streams with/without bots)
+- Test cookie persistence after event processing
+- Mock store to verify persistence is called correctly
+
+**Service restart tests**:
+1. Start App Registry with bot in channel
+2. Process events, verify cookie persisted
+3. Shutdown service
+4. Restart service
+5. Verify events replayed from cookie position
+6. Verify streams without bots start fresh
+
+**Manual testing scenario**:
+1. Register bot and add to channel
+2. Send messages, check `stream_sync_cookies` table
+3. Send messages to channel without bots
+4. Verify no cookie for bot-less channel
+5. Kill service mid-processing
+6. Restart and verify replay behavior
 
 ### Webhook failure drops
 - Enhance `SubmitMessages` to persist in-flight deliveries so transient webhook
