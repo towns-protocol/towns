@@ -1299,7 +1299,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
@@ -1344,6 +1344,7 @@ func (s *Stream) GetStickyPeer() common.Address {
 func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
@@ -1365,7 +1366,7 @@ func (s *Stream) GetReconcileNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.nodesLocked.GetReconcileNodes()
+	return slices.Clone(s.nodesLocked.GetReconcileNodes())
 }
 
 func (s *Stream) IsLocalInQuorum() bool {
