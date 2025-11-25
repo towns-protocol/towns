@@ -1,5 +1,5 @@
 -- Add blockdata_ext column to es table. This column will be used to determine if blockdata is
--- stored in external storage or in the DB (NULL (backwards compatibility, indicates D), D - DB, G - GCS, S - S3)
+-- stored in external storage or in the DB (D - DB (default for backward compat), G - GCS, S - S3)
 ALTER TABLE es ADD blockdata_ext CHAR NOT NULL DEFAULT 'D';
 ALTER TABLE es ADD CONSTRAINT blockdata_ext_values CHECK (blockdata_ext IN ('D', 'G','S'));
 
@@ -14,6 +14,9 @@ suffix CHAR(2);
 
 BEGIN
 SELECT num_partitions from settings where single_row_key=true into numPartitions;
+IF numPartitions IS NULL THEN
+    RAISE EXCEPTION 'num_partitions not found in settings table';
+END IF;
     FOR i IN 0.. numPartitions LOOP
             suffix = LPAD(TO_HEX(i), 2, '0');
 

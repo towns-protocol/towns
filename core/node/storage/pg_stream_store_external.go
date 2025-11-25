@@ -8,11 +8,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/towns-protocol/towns/core/node/storage/external"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage/external"
 )
 
 // ExternalStorageEnabled returns true if external storage is enabled for the stream store.
@@ -22,8 +21,8 @@ func (s *PostgresStreamStore) ExternalStorageEnabled() bool {
 
 // MigrateMiniblocksToExternalStorage migrates miniblock data from the given stream to external
 // storage. In case it fails, it returns an indication if the migration can be retried. The stream
-// must be a media stream that has been normalized (e.g. not ephemeral) and thus no more miniblocks
-// can be added to it.
+// must be a media stream that has been normalized (e.g. not ephemeral), and thus no more miniblocks
+// can be added to the stream.
 //
 // When all miniblocks are migrated to external storage, the stream is locked in the DB and the
 // miniblock data location is updated to external storage. The miniblocks are purged from the
@@ -219,6 +218,29 @@ func (s *PostgresStreamStore) writeExternalStorageObjectPartsAndPurgeMiniblockDa
 			Func("writeExternalStorageObjectPartsAndPurgeMiniblockDataTx")
 	}
 
+	// Verify that the number of parts matches the number of miniblocks in the DB. This is invariant.
+	// This ensures that no more miniblocks are written after the parts are created that could lead
+	// to miniblock data loss.
+	maxSeqNum := int64(0)
+	if err := tx.QueryRow(
+		ctx,
+		s.sqlForStream(`SELECT MAX(seq_num) FROM {{miniblocks}} WHERE stream_id = $1;`, streamID),
+		streamID,
+	).Scan(&maxSeqNum); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return RiverError(Err_INTERNAL, "Stream exists in es table, but no miniblocks in DB")
+		}
+		return err
+	}
+
+	if maxSeqNum+1 != int64(len(parts)) {
+		return RiverError(Err_INTERNAL, "Stream miniblock count in DB does not match parts count").
+			Tag("streamId", streamID).
+			Tag("partsCount", len(parts)).
+			Tag("maxSeqNum", maxSeqNum).
+			Func("writeExternalStorageObjectPartsAndPurgeMiniblockDataTx")
+	}
+
 	// drop miniblock records from normal miniblock table now the miniblock data is written to external storage
 	q := s.sqlForStream(`DELETE FROM {{miniblocks}} WHERE stream_id = $1;`, streamID)
 	// update the stream record with the new external storage location
@@ -320,7 +342,9 @@ func (s *PostgresStreamStore) StreamMiniblocksStoredLocation(
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			lockStreamResult, err := s.lockStream(ctx, tx, streamID, false)
-			location = lockStreamResult.MiniblockDataLocation
+			if err == nil {
+				location = lockStreamResult.MiniblockDataLocation
+			}
 			return err
 		},
 		nil,

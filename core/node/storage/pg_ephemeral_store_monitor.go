@@ -175,6 +175,8 @@ func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context
 				if shouldRetry := m.migrateNormalizedEphemeralStream(ctx, streamID); shouldRetry {
 					if retryCounter < MigrateToExternalStorageRetryCounter {
 						retryableFailedStreams[streamID] = retryCounter + 1
+					} else {
+						m.streamsToMigrateToExternalStorage.Delete(streamID)
 					}
 				} else {
 					m.streamsToMigrateToExternalStorage.Delete(streamID)

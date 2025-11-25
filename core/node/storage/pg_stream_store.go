@@ -1326,7 +1326,7 @@ func (s *PostgresStreamStore) readMiniblocksFromExternalStorageTx(
 
 	miniblocksRow, err := tx.Query(
 		ctx,
-		s.sqlForStream(sql, streamId),
+		sql,
 		streamId,
 		fromInclusive,
 		toExclusive,
