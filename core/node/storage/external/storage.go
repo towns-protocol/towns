@@ -916,15 +916,25 @@ func (loc MiniblockDataStorageLocation) Value() (driver.Value, error) {
 
 // Scan implements sql.Scanner for MiniblockDataStorageLocation.
 func (loc *MiniblockDataStorageLocation) Scan(src interface{}) error {
-	if str, ok := src.(string); ok {
-		if len(str) == 0 { // default is DB
-			*loc = MiniblockDataStorageLocationDB
-			return nil
-		}
-		if len(str) == 1 {
-			*loc = MiniblockDataStorageLocation(str[0])
-			return nil
-		}
+	var str string
+	switch v := src.(type) {
+	case string:
+		str = v
+	case []byte:
+		str = string(v)
+	default:
+		return RiverError(Err_INTERNAL, "Unable to scan miniblock storage location from DB").
+			Func("MiniblockDataStorageLocation.Scan").
+			Tags("raw", src, "rawType", fmt.Sprintf("%T", src))
+	}
+
+	if len(str) == 0 { // default is DB
+		*loc = MiniblockDataStorageLocationDB
+		return nil
+	}
+	if len(str) == 1 {
+		*loc = MiniblockDataStorageLocation(str[0])
+		return nil
 	}
 
 	return RiverError(Err_INTERNAL, "Unable to scan miniblock storage location from DB").

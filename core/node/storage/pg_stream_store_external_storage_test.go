@@ -62,8 +62,6 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		userWallet, err := crypto.NewWallet(ctx)
 		require.NoError(err)
 		nodeWallet, err := crypto.NewWallet(ctx)
-		require.NoError(err)
-
 		require.NoError(err, "Failed to load AWS S3 config")
 
 		t.Run("Small stream", func(t *testing.T) {

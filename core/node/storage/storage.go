@@ -120,6 +120,7 @@ type (
 			genesisMiniblock *MiniblockDescriptor,
 		) error
 
+		// StreamMiniblocksStoredLocation returns the location where miniblock data is stored for the given stream.
 		StreamMiniblocksStoredLocation(
 			ctx context.Context,
 			streamId StreamId,

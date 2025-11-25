@@ -309,7 +309,7 @@ func (s *PostgresStreamStore) loadMediaStreamsWithMiniblocksReadyToMigrateTx(
 	tx pgx.Tx,
 	limit uint,
 ) ([]StreamId, error) {
-	query := `SELECT stream_id, blockdata_ext FROM es WHERE ephemeral = false AND stream_id LIKE 'ff%' AND COALESCE(blockdata_ext, 'D') = 'D' LIMIT $1`
+	query := `SELECT stream_id FROM es WHERE ephemeral = false AND stream_id LIKE 'ff%' AND COALESCE(blockdata_ext, 'D') = 'D' LIMIT $1`
 	rows, err := tx.Query(ctx, query, limit)
 	if err != nil {
 		return nil, err
@@ -319,9 +319,8 @@ func (s *PostgresStreamStore) loadMediaStreamsWithMiniblocksReadyToMigrateTx(
 	var (
 		streamID StreamId
 		streams  = make([]StreamId, 0, limit)
-		location external.MiniblockDataStorageLocation
 	)
-	if _, err = pgx.ForEachRow(rows, []any{&streamID, &location}, func() error {
+	if _, err = pgx.ForEachRow(rows, []any{&streamID}, func() error {
 		streams = append(streams, streamID)
 		return nil
 	}); err != nil {

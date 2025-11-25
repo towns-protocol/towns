@@ -124,19 +124,17 @@ func (m *ephemeralStreamMonitor) runMigrateExistingMediaStreamsToExternalStorage
 	migratedAllExistingStreams := false
 	for !migratedAllExistingStreams {
 		const limit = 2500
-		if m.migrateExistingMediaStreamsToExternalStorage {
-			if streamsToMigrate, err := m.storage.LoadMediaStreamsWithMiniblocksReadyToMigrate(ctx, limit); err == nil {
-				// schedule streams for migration
-				for _, stream := range streamsToMigrate {
-					_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(stream, 0)
-				}
-				// if there are no streams left stop.
-				// new streams are scheduled for migration through the monitor.onSealed func.
-				migratedAllExistingStreams = len(streamsToMigrate) < limit
-			} else {
-				log.Error("failed to load media streams with miniblocks in database", "error", err)
-				migratedAllExistingStreams = true // try migrating existing streams on next monitor run
+		if streamsToMigrate, err := m.storage.LoadMediaStreamsWithMiniblocksReadyToMigrate(ctx, limit); err == nil {
+			// schedule streams for migration
+			for _, stream := range streamsToMigrate {
+				_, _ = m.streamsToMigrateToExternalStorage.LoadOrStore(stream, 0)
 			}
+			// if there are no streams left stop.
+			// new streams are scheduled for migration through the monitor.onSealed func.
+			migratedAllExistingStreams = len(streamsToMigrate) < limit
+		} else {
+			log.Error("failed to load media streams with miniblocks in database", "error", err)
+			migratedAllExistingStreams = true // try migrating existing streams on next monitor run
 		}
 
 		// wait till there are only a few streams scheduled for migration before scheduling more.
