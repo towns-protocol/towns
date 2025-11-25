@@ -174,6 +174,7 @@ func NewTrackedStreamForAppRegistryService(
 // Only channel streams with bot members need cookie persistence to ensure message
 // delivery guarantees. User inbox streams don't need persistence since session keys
 // are already stored in the database and re-processing is idempotent.
+// TODO yoni: optimize this by caching the result and track join/leave events
 func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
 	streamId := view.StreamId()
 
