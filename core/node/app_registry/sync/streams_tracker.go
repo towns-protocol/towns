@@ -44,23 +44,11 @@ type EncryptedMessageQueue interface {
 		streamId shared.StreamId,
 		streamEventBytes []byte,
 	) (err error)
-
-	PersistSyncCookie(
-		ctx context.Context,
-		streamID shared.StreamId,
-		minipoolGen int64,
-		prevMiniblockHash []byte,
-	) error
-
-	GetStreamSyncCookies(
-		ctx context.Context,
-	) (map[shared.StreamId]*protocol.SyncCookie, error)
 }
 
 type AppRegistryStreamsTracker struct {
 	track_streams.StreamsTrackerImpl
-	queue         EncryptedMessageQueue
-	streamCookies map[shared.StreamId]*protocol.SyncCookie // Loaded on startup
+	queue EncryptedMessageQueue
 }
 
 func NewAppRegistryStreamsTracker(
@@ -72,12 +60,13 @@ func NewAppRegistryStreamsTracker(
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
+	cookieStore track_streams.StreamCookieStore,
 	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
-		queue:         store,
-		streamCookies: make(map[shared.StreamId]*protocol.SyncCookie),
+		queue: store,
 	}
+
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
 		onChainConfig,
@@ -88,6 +77,8 @@ func NewAppRegistryStreamsTracker(
 		metricsFactory,
 		config.StreamTracking,
 		otelTracer,
+		cookieStore,
+		tracker.shouldPersistCookieForStream,
 	); err != nil {
 		return nil, err
 	}
@@ -134,23 +125,32 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 	)
 }
 
-// GetStreamCookie returns the stored sync cookie for a stream, if one exists.
-// This is used during startup to resume from the last processed position.
-func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
+// shouldPersistCookieForStream determines if a stream should have its cookie persisted.
+// Only channel streams and bot inbox streams need cookie persistence.
+func (tracker *AppRegistryStreamsTracker) shouldPersistCookieForStream(
+	ctx context.Context,
 	streamID shared.StreamId,
-) (*protocol.SyncCookie, bool) {
-	cookie, ok := tracker.streamCookies[streamID]
-	return cookie, ok
-}
+) bool {
+	streamType := streamID.Type()
 
-// LoadStreamCookies loads all persisted sync cookies from storage.
-// This should be called before the tracker starts processing streams.
-func (tracker *AppRegistryStreamsTracker) LoadStreamCookies(ctx context.Context) error {
-	cookies, err := tracker.queue.GetStreamSyncCookies(ctx)
-	if err != nil {
-		return err
+	// Always persist cookies for channel streams (they may have bots)
+	if streamType == shared.STREAM_CHANNEL_BIN {
+		return true
 	}
 
-	tracker.streamCookies = cookies
-	return nil
+	// For user inbox streams, only persist if it belongs to a registered bot
+	if streamType == shared.STREAM_USER_INBOX_BIN {
+		userAddress, err := shared.GetUserAddressFromStreamId(streamID)
+		if err != nil {
+			return false
+		}
+
+		isApp, err := tracker.queue.IsApp(ctx, userAddress)
+		if err != nil {
+			return false
+		}
+		return isApp
+	}
+
+	return false
 }

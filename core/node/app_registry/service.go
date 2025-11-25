@@ -110,6 +110,9 @@ func NewService(
 		listener = NewAppMessageProcessor(ctx, cache)
 	}
 
+	// Create the cookie store for stream resumption using the store's connection pool
+	cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
+
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
 		cfg,
@@ -119,6 +122,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
+		cookieStore,
 		otelTracer,
 	)
 	if err != nil {
@@ -338,16 +342,6 @@ func (s *Service) Start(ctx context.Context) {
 	go func() {
 		for {
 			log.Infow("Start app registry streams tracker")
-
-			// Load persisted sync cookies before starting tracker
-			if tracker, ok := s.streamsTracker.(*sync.AppRegistryStreamsTracker); ok {
-				if err := tracker.LoadStreamCookies(ctx); err != nil {
-					log.Errorw("Failed to load stream sync cookies", "error", err)
-					// Continue anyway - we'll start from scratch if we can't load cookies
-				} else {
-					log.Infow("Loaded stream sync cookies for App Registry")
-				}
-			}
 
 			if err := s.streamsTracker.Run(ctx); err != nil {
 				log.Errorw("tracking streams failed", "error", err)

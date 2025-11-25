@@ -55,6 +55,8 @@ func NewNotificationsStreamsTracker(
 		metricsFactory,
 		trackingConfig,
 		otelTracer,
+		nil, // cookieStore - notifications doesn't persist cookies yet
+		nil, // shouldPersistCookie
 	); err != nil {
 		return nil, err
 	}

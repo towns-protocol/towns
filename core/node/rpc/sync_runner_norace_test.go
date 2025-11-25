@@ -267,7 +267,9 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 			NumWorkers:                testCfg.numWorkers,
 			MaxConcurrentNodeRequests: testCfg.maxConcurrentRequests,
 		},
-		nil,
+		nil, // otelTracer
+		nil, // cookieStore
+		nil, // shouldPersistCookie
 	)
 	msrCtx := ctx
 	go msr.Run(msrCtx)
@@ -439,6 +441,7 @@ func setupTestChannelAndAddToSyncer(
 	}
 
 	msr.AddStream(
+		ctx,
 		&river.StreamWithId{
 			Id: channelId,
 			Stream: river.Stream{
@@ -529,7 +532,9 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 			NumWorkers:                4,
 			MaxConcurrentNodeRequests: 2,
 		},
-		nil,
+		nil, // otelTracer
+		nil, // cookieStore
+		nil, // shouldPersistCookie
 	)
 	msrCtx := ctx
 	// Use this line to enable logs only for the multisync runner
@@ -679,6 +684,7 @@ func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled b
 	)
 	tc.require.NoError(err)
 	tc.msr.AddStream(
+		tc.ctx,
 		&river.StreamWithId{
 			Id: streamId,
 			Stream: river.Stream{
@@ -769,7 +775,9 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 			NumWorkers:                5,
 			MaxConcurrentNodeRequests: 5,
 		},
-		nil,
+		nil, // otelTracer
+		nil, // cookieStore
+		nil, // shouldPersistCookie
 	)
 	go msr.Run(ctx)
 

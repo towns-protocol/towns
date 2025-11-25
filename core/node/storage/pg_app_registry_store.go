@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	mapset "github.com/deckarep/golang-set/v2"
 
@@ -235,28 +236,9 @@ type (
 			active bool,
 		) error
 
-		// PersistSyncCookie stores or updates the sync cookie for a stream.
-		// This enables the App Registry to resume from the last processed position
-		// after restarts. Only persists cookies for streams with bot members.
-		PersistSyncCookie(
-			ctx context.Context,
-			streamID shared.StreamId,
-			minipoolGen int64,
-			prevMiniblockHash []byte,
-		) error
-
-		// GetStreamSyncCookies loads all stored cookies on startup.
-		// Returns a map of stream ID to sync cookie for efficient lookup.
-		GetStreamSyncCookies(
-			ctx context.Context,
-		) (map[shared.StreamId]*protocol.SyncCookie, error)
-
-		// DeleteStreamSyncCookie removes a cookie when it's no longer needed.
-		// Useful for cleanup when bots leave channels or are deactivated.
-		DeleteStreamSyncCookie(
-			ctx context.Context,
-			streamID shared.StreamId,
-		) error
+		// Pool returns the underlying database connection pool.
+		// This is useful for creating shared components like StreamCookieStore.
+		Pool() *pgxpool.Pool
 	}
 )
 
@@ -1130,6 +1112,11 @@ func (s *PostgresAppRegistryStore) Close(ctx context.Context) {
 	s.PostgresEventStore.Close(ctx)
 }
 
+// Pool returns the underlying database connection pool.
+func (s *PostgresAppRegistryStore) Pool() *pgxpool.Pool {
+	return s.pool
+}
+
 func (s *PostgresAppRegistryStore) SetAppMetadata(
 	ctx context.Context,
 	app common.Address,
@@ -1446,160 +1433,5 @@ func (s *PostgresAppRegistryStore) setAppActiveStatus(
 			Tag("appId", app)
 	}
 
-	return nil
-}
-
-// PersistSyncCookie stores or updates the sync cookie for a stream.
-// Uses READ COMMITTED isolation since this is a simple upsert operation
-// that doesn't need to coordinate with other queue operations.
-func (s *PostgresAppRegistryStore) PersistSyncCookie(
-	ctx context.Context,
-	streamID shared.StreamId,
-	minipoolGen int64,
-	prevMiniblockHash []byte,
-) error {
-	return s.txRunner(
-		ctx,
-		"PersistSyncCookie",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.persistSyncCookie(ctx, streamID, minipoolGen, prevMiniblockHash, tx)
-		},
-		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
-		"streamId", streamID,
-		"minipoolGen", minipoolGen,
-	)
-}
-
-func (s *PostgresAppRegistryStore) persistSyncCookie(
-	ctx context.Context,
-	streamID shared.StreamId,
-	minipoolGen int64,
-	prevMiniblockHash []byte,
-	tx pgx.Tx,
-) error {
-	streamIDHex := hex.EncodeToString(streamID[:])
-
-	_, err := tx.Exec(
-		ctx,
-		`INSERT INTO stream_sync_cookies (stream_id, minipool_gen, prev_miniblock_hash, updated_at)
-		 VALUES ($1, $2, $3, NOW())
-		 ON CONFLICT (stream_id)
-		 DO UPDATE SET
-		     minipool_gen = EXCLUDED.minipool_gen,
-		     prev_miniblock_hash = EXCLUDED.prev_miniblock_hash,
-		     updated_at = NOW()`,
-		streamIDHex,
-		minipoolGen,
-		prevMiniblockHash,
-	)
-	if err != nil {
-		return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to persist sync cookie").
-			Tag("streamId", streamID)
-	}
-
-	return nil
-}
-
-// GetStreamSyncCookies loads all stored cookies on startup.
-// Returns a map of stream ID to sync cookie for efficient lookup.
-func (s *PostgresAppRegistryStore) GetStreamSyncCookies(
-	ctx context.Context,
-) (map[shared.StreamId]*protocol.SyncCookie, error) {
-	rows, err := s.pool.Query(
-		ctx,
-		`SELECT stream_id, minipool_gen, prev_miniblock_hash
-		 FROM stream_sync_cookies
-		 ORDER BY stream_id`,
-	)
-	if err != nil {
-		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to load sync cookies")
-	}
-	defer rows.Close()
-
-	cookies := make(map[shared.StreamId]*protocol.SyncCookie)
-
-	for rows.Next() {
-		var (
-			streamIDHex       string
-			minipoolGen       int64
-			prevMiniblockHash []byte
-		)
-
-		if err := rows.Scan(&streamIDHex, &minipoolGen, &prevMiniblockHash); err != nil {
-			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to scan sync cookie row")
-		}
-
-		// Decode stream ID from hex
-		streamIDBytes, err := hex.DecodeString(streamIDHex)
-		if err != nil {
-			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to decode stream ID from hex").
-				Tag("streamId", streamIDHex)
-		}
-
-		if len(streamIDBytes) != 32 {
-			return nil, RiverError(protocol.Err_INVALID_ARGUMENT, "invalid stream ID length").
-				Tag("streamId", streamIDHex).
-				Tag("length", len(streamIDBytes))
-		}
-
-		var streamID shared.StreamId
-		copy(streamID[:], streamIDBytes)
-
-		cookies[streamID] = &protocol.SyncCookie{
-			StreamId:          streamIDBytes,
-			MinipoolGen:       minipoolGen,
-			PrevMiniblockHash: prevMiniblockHash,
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("error iterating sync cookie rows")
-	}
-
-	return cookies, nil
-}
-
-// DeleteStreamSyncCookie removes a cookie when it's no longer needed.
-func (s *PostgresAppRegistryStore) DeleteStreamSyncCookie(
-	ctx context.Context,
-	streamID shared.StreamId,
-) error {
-	return s.txRunner(
-		ctx,
-		"DeleteStreamSyncCookie",
-		pgx.ReadWrite,
-		func(ctx context.Context, tx pgx.Tx) error {
-			return s.deleteStreamSyncCookie(ctx, streamID, tx)
-		},
-		&txRunnerOpts{overrideIsolationLevel: &isoLevelReadCommitted},
-		"streamId", streamID,
-	)
-}
-
-func (s *PostgresAppRegistryStore) deleteStreamSyncCookie(
-	ctx context.Context,
-	streamID shared.StreamId,
-	tx pgx.Tx,
-) error {
-	streamIDHex := hex.EncodeToString(streamID[:])
-
-	_, err := tx.Exec(
-		ctx,
-		`DELETE FROM stream_sync_cookies WHERE stream_id = $1`,
-		streamIDHex,
-	)
-	if err != nil {
-		return WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to delete sync cookie").
-			Tag("streamId", streamID)
-	}
-
-	// Note: We don't check RowsAffected because deleting a non-existent cookie is not an error
 	return nil
 }

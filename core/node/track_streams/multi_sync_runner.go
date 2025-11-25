@@ -115,6 +115,12 @@ type syncSessionRunner struct {
 	// closeErr is assigned when the sync has encountered an error state, is re-assigning all
 	// of it's streams, and is no longer assignable.
 	closeErr error
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	cookieStore StreamCookieStore
+
+	// shouldPersistCookie is an optional callback to decide which streams need cookie persistence.
+	shouldPersistCookie ShouldPersistCookieFunc
 }
 
 func (ssr *syncSessionRunner) AddStream(
@@ -289,6 +295,16 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
+
+	// Persist cookie if configured and the callback says we should persist for this stream
+	if ssr.cookieStore != nil && ssr.shouldPersistCookie != nil && ssr.shouldPersistCookie(ssr.syncCtx, streamId) {
+		cookie := streamAndCookie.NextSyncCookie
+		go func() {
+			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
+			}
+		}()
+	}
 }
 
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
@@ -559,6 +575,8 @@ func newSyncSessionRunner(
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
+	cookieStore StreamCookieStore,
+	shouldPersistCookie ShouldPersistCookieFunc,
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
@@ -574,6 +592,8 @@ func newSyncSessionRunner(
 		streamRecords:            xsync.NewMap[shared.StreamId, *streamSyncInitRecord](),
 		metrics:                  metrics,
 		otelTracer:               otelTracer,
+		cookieStore:              cookieStore,
+		shouldPersistCookie:      shouldPersistCookie,
 	}
 	runner.syncStarted.Add(1)
 	return &runner
@@ -621,6 +641,14 @@ type MultiSyncRunner struct {
 
 	// TODO: use a single node registry and modify http client settings for better performance.
 	nodeRegistries []nodes.NodeRegistry
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	// If nil, cookie persistence is disabled.
+	cookieStore StreamCookieStore
+
+	// shouldPersistCookie is an optional callback to decide which streams need cookie persistence.
+	// If nil, no cookies are persisted. Only used if cookieStore is set.
+	shouldPersistCookie ShouldPersistCookieFunc
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -638,6 +666,7 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 }
 
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
+// cookieStore and shouldPersistCookie are optional - if nil, cookie persistence is disabled.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
 	onChainConfig crypto.OnChainConfiguration,
@@ -645,6 +674,8 @@ func NewMultiSyncRunner(
 	trackedStreamViewConstructor TrackedViewConstructorFn,
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	cookieStore StreamCookieStore,
+	shouldPersistCookie ShouldPersistCookieFunc,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -668,6 +699,8 @@ func NewMultiSyncRunner(
 		concurrentNodeRequests: xsync.NewMap[common.Address, *semaphore.Weighted](),
 		unfilledSyncs:          xsync.NewMap[common.Address, *syncSessionRunner](),
 		otelTracer:             otelTracer,
+		cookieStore:            cookieStore,
+		shouldPersistCookie:    shouldPersistCookie,
 	}
 }
 
@@ -731,6 +764,8 @@ func (msr *MultiSyncRunner) addToSync(
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
+			msr.cookieStore,
+			msr.shouldPersistCookie,
 		)
 		var loaded bool
 
@@ -812,6 +847,8 @@ func (msr *MultiSyncRunner) addToSync(
 				targetNode,
 				msr.metrics,
 				msr.otelTracer,
+				msr.cookieStore,
+				msr.shouldPersistCookie,
 			)
 
 			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
@@ -876,19 +913,50 @@ func (msr *MultiSyncRunner) addToSync(
 }
 
 // AddStream adds a stream to the queue to be added to a sync session for event tracking.
+// If a cookie store is configured, it will attempt to load a stored cookie for the stream
+// to resume from the last persisted position.
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
+	ctx context.Context,
 	stream *river.StreamWithId,
 	applyHistoricalContent ApplyHistoricalContent,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
+	streamId := stream.StreamId()
+	minipoolGen := int64(math.MaxInt64)
+	prevMiniblockHash := common.Hash{}.Bytes()
+
+	// Try to load a stored cookie to resume from the last persisted position.
+	// We don't use shouldPersistCookie here because that requires stream view context
+	// (e.g., channel members) which isn't available yet. Instead, just try to load -
+	// if a cookie exists, it means we previously determined this stream needed persistence.
+	if msr.cookieStore != nil {
+		cookie, err := msr.cookieStore.GetStreamCookie(ctx, streamId)
+		if err != nil {
+			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
+		} else if cookie != nil {
+			minipoolGen = cookie.MinipoolGen
+			prevMiniblockHash = cookie.PrevMiniblockHash
+			// If we have a cookie, enable historical content from that position
+			applyHistoricalContent = ApplyHistoricalContent{
+				Enabled:           true,
+				FromMiniblockHash: cookie.PrevMiniblockHash,
+			}
+			logging.FromCtx(ctx).Debugw("Loaded sync cookie for stream resumption",
+				"streamId", streamId,
+				"minipoolGen", minipoolGen,
+				"prevMiniblockHash", prevMiniblockHash,
+			)
+		}
+	}
+
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId:               stream.StreamId(),
+		streamId:               streamId,
 		applyHistoricalContent: applyHistoricalContent,
-		minipoolGen:            math.MaxInt64,
-		prevMiniblockHash:      common.Hash{}.Bytes(),
+		minipoolGen:            minipoolGen,
+		prevMiniblockHash:      prevMiniblockHash,
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

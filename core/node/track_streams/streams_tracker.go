@@ -39,13 +39,6 @@ type StreamFilter interface {
 	) (events.TrackedStreamView, error)
 }
 
-// StreamCookieProvider is an optional interface that can be implemented by StreamFilter
-// implementations that support cookie-based stream resumption. If implemented, the tracker
-// will use stored cookies to resume from the last processed position.
-type StreamCookieProvider interface {
-	GetStreamCookie(streamID shared.StreamId) (*protocol.SyncCookie, bool)
-}
-
 type StreamsTracker interface {
 	// Once the tracker is running, it will analyze all existing streams to see if they meet the criteria for
 	// tracking. In addition, it will continuously consider new streams upon stream allocation.
@@ -80,6 +73,7 @@ type StreamsTrackerImpl struct {
 }
 
 // Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
+// cookieStore and shouldPersistCookie are optional - if nil, cookie persistence is disabled.
 func (tracker *StreamsTrackerImpl) Init(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,
@@ -90,6 +84,8 @@ func (tracker *StreamsTrackerImpl) Init(
 	metricsFactory infra.MetricsFactory,
 	streamTracking config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	cookieStore StreamCookieStore,
+	shouldPersistCookie ShouldPersistCookieFunc,
 ) error {
 	tracker.ctx = ctx
 	tracker.riverRegistry = riverRegistry
@@ -104,6 +100,8 @@ func (tracker *StreamsTrackerImpl) Init(
 		filter.NewTrackedStream,
 		streamTracking,
 		otelTracer,
+		cookieStore,
+		shouldPersistCookie,
 	)
 	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 
@@ -181,29 +179,9 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 			// start stream sync session for stream if it hasn't seen before
 			_, loaded := tracker.tracked.LoadOrStore(stream.StreamId(), struct{}{})
 			if !loaded {
-				// Check if the filter provides cookies (optional interface)
-				var applyHistorical ApplyHistoricalContent
-				if cookieProvider, ok := tracker.filter.(StreamCookieProvider); ok {
-					if cookie, hasCookie := cookieProvider.GetStreamCookie(stream.StreamId()); hasCookie {
-						// Resume from stored cookie position
-						applyHistorical = ApplyHistoricalContent{
-							Enabled:           true,
-							FromMiniblockHash: cookie.PrevMiniblockHash,
-						}
-						log.Debugw("Resuming stream from stored cookie",
-							"streamId", stream.StreamId(),
-							"minipoolGen", cookie.MinipoolGen)
-					} else {
-						// No cookie, start fresh
-						applyHistorical = ApplyHistoricalContent{Enabled: false}
-					}
-				} else {
-					// Filter doesn't provide cookies, use default behavior
-					applyHistorical = ApplyHistoricalContent{Enabled: false}
-				}
-
-				// start tracking the stream, until the root ctx expires.
-				tracker.multiSyncRunner.AddStream(stream, applyHistorical)
+				// Start tracking the stream. AddStream will check for stored cookies
+				// and resume from the last persisted position if a cookie store is configured.
+				tracker.multiSyncRunner.AddStream(ctx, stream, ApplyHistoricalContent{Enabled: false})
 			}
 
 			return true
@@ -227,13 +205,14 @@ func (tracker *StreamsTrackerImpl) Run(ctx context.Context) error {
 }
 
 func (tracker *StreamsTrackerImpl) forwardStreamEvents(
+	ctx context.Context,
 	streamWithId *river.StreamWithId,
 	applyHistoricalContent ApplyHistoricalContent,
 ) bool {
 	if _, loaded := tracker.tracked.LoadOrStore(streamWithId.StreamId(), struct{}{}); loaded {
 		return false
 	}
-	tracker.multiSyncRunner.AddStream(streamWithId, applyHistoricalContent)
+	tracker.multiSyncRunner.AddStream(ctx, streamWithId, applyHistoricalContent)
 	return true
 }
 
@@ -253,7 +232,7 @@ func (tracker *StreamsTrackerImpl) AddStream(
 	}
 	stream := river.NewStreamWithId(streamId, streamNoId)
 
-	added := tracker.forwardStreamEvents(stream, applyHistoricalContent)
+	added := tracker.forwardStreamEvents(tracker.ctx, stream, applyHistoricalContent)
 	return added, nil
 }
 
@@ -267,7 +246,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAllocated(
 	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
-	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
+	tracker.forwardStreamEvents(ctx, event.Stream, ApplyHistoricalContent{Enabled: true})
 }
 
 // OnStreamAdded is called each time a stream is added in the river registry.
@@ -280,7 +259,7 @@ func (tracker *StreamsTrackerImpl) OnStreamAdded(
 	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
-	tracker.forwardStreamEvents(event.Stream, ApplyHistoricalContent{Enabled: true})
+	tracker.forwardStreamEvents(ctx, event.Stream, ApplyHistoricalContent{Enabled: true})
 }
 
 func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
