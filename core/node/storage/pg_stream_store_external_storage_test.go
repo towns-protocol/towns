@@ -238,7 +238,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-			}, 2*time.Minute, 10*time.Millisecond)
+			}, 2*time.Minute, 100*time.Millisecond)
 		})
 
 		t.Run("Stream with many chunks", func(t *testing.T) {
@@ -269,7 +269,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-			}, 2*time.Minute, 10*time.Millisecond)
+			}, 2*time.Minute, 100*time.Millisecond)
 		})
 
 		t.Run("Stream range read", func(t *testing.T) {
@@ -298,7 +298,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 			require.EventuallyWithT(
 				rangeReadTest(ctx, store, streamID, chunks, expMiniblocks),
-				2*time.Minute, 10*time.Millisecond)
+				2*time.Minute, 100*time.Millisecond)
 		})
 
 		t.Run("Stream with big chunks", func(t *testing.T) {
@@ -331,7 +331,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 			// DB to external GC storage under the object key streamID in the background.
 			require.EventuallyWithT(func(collect *assert.CollectT) {
 				compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-			}, 2*time.Minute, 10*time.Millisecond)
+			}, 2*time.Minute, 100*time.Millisecond)
 		})
 	})
 
@@ -382,7 +382,7 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		// existing stream that became eligible for miniblock migration.
 		require.EventuallyWithT(func(collect *assert.CollectT) {
 			compareExternallyFetchedMiniblocks(collect, store, ctx, streamID, chunks, miniblocks)
-		}, 2*time.Minute, 10*time.Millisecond)
+		}, 2*time.Minute, 100*time.Millisecond)
 	})
 
 	t.Run("Miniblock range", func(t *testing.T) {
