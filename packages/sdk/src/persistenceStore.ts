@@ -14,7 +14,7 @@ import {
     ParsedPersistedSyncedStream,
 } from './streamUtils'
 
-import { bin_toHexString, dlog, dlogError } from '@towns-protocol/utils'
+import { bin_toHexString, dlog, dlogError, isTestEnv } from '@towns-protocol/utils'
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
@@ -464,6 +464,9 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                     log.error("Couldn't get persistent storage: ", e)
                 })
         } else {
+            if (isTestEnv()) {
+                return
+            }
             log.error('navigator.storage unavailable')
         }
     }
@@ -495,6 +498,9 @@ export class PersistenceStore extends Dexie implements IPersistenceStore {
                     log.error("Couldn't get storage estimate: ", e)
                 })
         } else {
+            if (isTestEnv()) {
+                return
+            }
             log.error('navigator.storage unavailable')
         }
     }
