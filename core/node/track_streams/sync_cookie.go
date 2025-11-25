@@ -17,9 +17,3 @@ type StreamCookieStore interface {
 	// PersistSyncCookie stores a cookie after processing events.
 	PersistSyncCookie(ctx context.Context, streamID shared.StreamId, cookie *protocol.SyncCookie) error
 }
-
-// ShouldPersistCookieFunc is a callback that services implement to decide
-// which streams need cookie persistence.
-// - App Registry: returns true only for streams with bot members
-// - Notifications: could return true for all streams
-type ShouldPersistCookieFunc func(ctx context.Context, streamID shared.StreamId) bool

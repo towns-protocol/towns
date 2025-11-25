@@ -200,7 +200,7 @@ func makeTrackedStreamConstructor(
 			streamId: streamId,
 			events:   eventChannel,
 		}
-		_, err := tracker.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, tracker.onNewEvent)
+		_, err := tracker.TrackedStreamViewImpl.Init(streamId, cfg, stream, tracker.onNewEvent, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +269,6 @@ func runMultiSyncerTest(t *testing.T, testCfg multiSyncerTestConfig) {
 		},
 		nil, // otelTracer
 		nil, // cookieStore
-		nil, // shouldPersistCookie
 	)
 	msrCtx := ctx
 	go msr.Run(msrCtx)
@@ -534,7 +533,6 @@ func TestMultiSyncerWithNodeFailures(t *testing.T) {
 		},
 		nil, // otelTracer
 		nil, // cookieStore
-		nil, // shouldPersistCookie
 	)
 	msrCtx := ctx
 	// Use this line to enable logs only for the multisync runner
@@ -777,7 +775,6 @@ func setupColdStreamsTest(t *testing.T) *coldStreamsTestContext {
 		},
 		nil, // otelTracer
 		nil, // cookieStore
-		nil, // shouldPersistCookie
 	)
 	go msr.Run(ctx)
 

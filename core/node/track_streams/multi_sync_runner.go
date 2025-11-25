@@ -118,9 +118,6 @@ type syncSessionRunner struct {
 
 	// cookieStore is an optional store for persisting sync cookies for stream resumption.
 	cookieStore StreamCookieStore
-
-	// shouldPersistCookie is an optional callback to decide which streams need cookie persistence.
-	shouldPersistCookie ShouldPersistCookieFunc
 }
 
 func (ssr *syncSessionRunner) AddStream(
@@ -296,8 +293,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 
-	// Persist cookie if configured and the callback says we should persist for this stream
-	if ssr.cookieStore != nil && ssr.shouldPersistCookie != nil && ssr.shouldPersistCookie(ssr.syncCtx, streamId) {
+	// Persist cookie if configured and the tracked view says we should persist for this stream
+	if ssr.cookieStore != nil && trackedView.ShouldPersistCookie(ssr.syncCtx) {
 		cookie := streamAndCookie.NextSyncCookie
 		go func() {
 			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
@@ -576,7 +573,6 @@ func newSyncSessionRunner(
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
 	cookieStore StreamCookieStore,
-	shouldPersistCookie ShouldPersistCookieFunc,
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
@@ -593,7 +589,6 @@ func newSyncSessionRunner(
 		metrics:                  metrics,
 		otelTracer:               otelTracer,
 		cookieStore:              cookieStore,
-		shouldPersistCookie:      shouldPersistCookie,
 	}
 	runner.syncStarted.Add(1)
 	return &runner
@@ -645,10 +640,6 @@ type MultiSyncRunner struct {
 	// cookieStore is an optional store for persisting sync cookies for stream resumption.
 	// If nil, cookie persistence is disabled.
 	cookieStore StreamCookieStore
-
-	// shouldPersistCookie is an optional callback to decide which streams need cookie persistence.
-	// If nil, no cookies are persisted. Only used if cookieStore is set.
-	shouldPersistCookie ShouldPersistCookieFunc
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -666,7 +657,8 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 }
 
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
-// cookieStore and shouldPersistCookie are optional - if nil, cookie persistence is disabled.
+// cookieStore is optional - if nil, cookie persistence is disabled. Cookie persistence
+// is controlled by each TrackedStreamView's ShouldPersistCookie method.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
 	onChainConfig crypto.OnChainConfiguration,
@@ -675,7 +667,6 @@ func NewMultiSyncRunner(
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
 	cookieStore StreamCookieStore,
-	shouldPersistCookie ShouldPersistCookieFunc,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -700,7 +691,6 @@ func NewMultiSyncRunner(
 		unfilledSyncs:          xsync.NewMap[common.Address, *syncSessionRunner](),
 		otelTracer:             otelTracer,
 		cookieStore:            cookieStore,
-		shouldPersistCookie:    shouldPersistCookie,
 	}
 }
 
@@ -765,7 +755,6 @@ func (msr *MultiSyncRunner) addToSync(
 			msr.metrics,
 			msr.otelTracer,
 			msr.cookieStore,
-			msr.shouldPersistCookie,
 		)
 		var loaded bool
 
@@ -848,7 +837,6 @@ func (msr *MultiSyncRunner) addToSync(
 				msr.metrics,
 				msr.otelTracer,
 				msr.cookieStore,
-				msr.shouldPersistCookie,
 			)
 
 			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {

@@ -73,7 +73,8 @@ type StreamsTrackerImpl struct {
 }
 
 // Init can be used by a struct embedding the StreamsTrackerImpl to initialize it.
-// cookieStore and shouldPersistCookie are optional - if nil, cookie persistence is disabled.
+// cookieStore is optional - if nil, cookie persistence is disabled. Cookie persistence
+// is controlled by each TrackedStreamView's ShouldPersistCookie method.
 func (tracker *StreamsTrackerImpl) Init(
 	ctx context.Context,
 	onChainConfig crypto.OnChainConfiguration,
@@ -85,7 +86,6 @@ func (tracker *StreamsTrackerImpl) Init(
 	streamTracking config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
 	cookieStore StreamCookieStore,
-	shouldPersistCookie ShouldPersistCookieFunc,
 ) error {
 	tracker.ctx = ctx
 	tracker.riverRegistry = riverRegistry
@@ -101,7 +101,6 @@ func (tracker *StreamsTrackerImpl) Init(
 		streamTracking,
 		otelTracer,
 		cookieStore,
-		shouldPersistCookie,
 	)
 	tracker.tracked = xsync.NewMap[shared.StreamId, struct{}]()
 

@@ -78,7 +78,6 @@ func NewAppRegistryStreamsTracker(
 		config.StreamTracking,
 		otelTracer,
 		cookieStore,
-		tracker.shouldPersistCookieForStream,
 	); err != nil {
 		return nil, err
 	}
@@ -123,34 +122,4 @@ func (tracker *AppRegistryStreamsTracker) NewTrackedStream(
 		tracker.StreamsTrackerImpl.Listener(),
 		tracker.queue,
 	)
-}
-
-// shouldPersistCookieForStream determines if a stream should have its cookie persisted.
-// Only channel streams and bot inbox streams need cookie persistence.
-func (tracker *AppRegistryStreamsTracker) shouldPersistCookieForStream(
-	ctx context.Context,
-	streamID shared.StreamId,
-) bool {
-	streamType := streamID.Type()
-
-	// Always persist cookies for channel streams (they may have bots)
-	if streamType == shared.STREAM_CHANNEL_BIN {
-		return true
-	}
-
-	// For user inbox streams, only persist if it belongs to a registered bot
-	if streamType == shared.STREAM_USER_INBOX_BIN {
-		userAddress, err := shared.GetUserAddressFromStreamId(streamID)
-		if err != nil {
-			return false
-		}
-
-		isApp, err := tracker.queue.IsApp(ctx, userAddress)
-		if err != nil {
-			return false
-		}
-		return isApp
-	}
-
-	return false
 }
