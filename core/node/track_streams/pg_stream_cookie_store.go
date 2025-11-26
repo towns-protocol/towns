@@ -77,6 +77,11 @@ func (s *PostgresStreamCookieStore) PersistSyncCookie(
 	streamID shared.StreamId,
 	cookie *protocol.SyncCookie,
 ) error {
+	if cookie == nil {
+		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "nil cookie").
+			Tag("streamId", streamID)
+	}
+
 	_, err := s.pool.Exec(
 		ctx,
 		`INSERT INTO `+s.tableName+` (stream_id, minipool_gen, prev_miniblock_hash, updated_at)
