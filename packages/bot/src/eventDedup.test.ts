@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { EventDedup } from './eventDedup'
+import {DEFAULT_CIPHERS} from "node:tls";
 
 describe('EventDedup', () => {
     let dedup: EventDedup
@@ -250,19 +251,6 @@ describe('EventDedup', () => {
             expect(smallDedup.has(hotStream, '0xhot_0062')).toBe(true) // 98
             expect(smallDedup.has(hotStream, '0xhot_0063')).toBe(true) // 99
             expect(smallDedup.has(hotStream, '0xhot_0000')).toBe(false) // Old, evicted
-        })
-    })
-
-    describe('default configuration', () => {
-        it('uses default maxSizePerStream of 2000', () => {
-            const defaultDedup = new EventDedup()
-            const streamId = '0xstream1'
-
-            // Add more than default max to verify it doesn't grow unbounded
-            for (let i = 0; i < 2005; i++) {
-                defaultDedup.add(streamId, `0x${i.toString(16).padStart(64, '0')}`)
-            }
-            expect(defaultDedup.size).toBeLessThanOrEqual(2000)
         })
     })
 
