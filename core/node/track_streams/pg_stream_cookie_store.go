@@ -17,15 +17,6 @@ import (
 // PostgresStreamCookieStore implements StreamCookieStore using PostgreSQL.
 // This is a shared implementation that can be used by any service (App Registry, Notifications, etc.)
 // that needs to persist sync cookies for stream resumption.
-//
-// The table schema is:
-//
-//	CREATE TABLE IF NOT EXISTS stream_sync_cookies (
-//	    stream_id            CHAR(64) PRIMARY KEY NOT NULL,
-//	    minipool_gen         BIGINT NOT NULL,
-//	    prev_miniblock_hash  BYTEA NOT NULL,
-//	    updated_at           TIMESTAMP DEFAULT NOW()
-//	);
 type PostgresStreamCookieStore struct {
 	pool      *pgxpool.Pool
 	tableName string
