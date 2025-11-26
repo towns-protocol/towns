@@ -3,29 +3,29 @@
  */
 export interface EventDedupConfig {
     /**
-     * Maximum number of event IDs to store in the cache.
-     * When exceeded, oldest entries are removed.
+     * Maximum number of event IDs to store per stream.
+     * When exceeded, oldest entries are removed (FIFO).
      */
-    maxSize?: number
+    maxSizePerStream?: number
 }
 
-const DEFAULT_MAX_SIZE = 10000
+const DEFAULT_MAX_SIZE_PER_STREAM = 15000
 
 /**
- * In-memory deduplication cache for bot events.
+ * In-memory deduplication cache for bot events, organized per stream.
  *
  * The App Registry may send duplicate events during restarts or replays.
  * This cache tracks recently seen event IDs to prevent duplicate processing.
  *
- * The cache is bounded by maximum entry count to prevent unbounded memory growth.
- * When the limit is reached, oldest entries are evicted (FIFO).
+ * Each stream has its own cache to prevent hot streams from evicting
+ * events from quieter streams.
  *
  * @example
  * ```typescript
- * const dedup = new EventDedup({ maxSize: 5000 })
+ * const dedup = new EventDedup({ maxSizePerStream: 1000 })
  *
  * // Check and add in one call
- * if (dedup.checkAndAdd(eventId)) {
+ * if (dedup.checkAndAdd(streamId, eventId)) {
  *   // Duplicate - skip processing
  *   return
  * }
@@ -33,38 +33,46 @@ const DEFAULT_MAX_SIZE = 10000
  * ```
  */
 export class EventDedup {
-    private readonly cache: Set<string> = new Set()
-    private readonly maxSize: number
+    // Map from streamId to Set of eventIds
+    private readonly caches: Map<string, Set<string>> = new Map()
+    private readonly maxSizePerStream: number
 
     constructor(config: EventDedupConfig = {}) {
-        this.maxSize = config.maxSize ?? DEFAULT_MAX_SIZE
+        this.maxSizePerStream = config.maxSizePerStream ?? DEFAULT_MAX_SIZE_PER_STREAM
     }
 
     /**
-     * Check if an event ID has been seen recently.
+     * Check if an event ID has been seen recently for a specific stream.
      * Does not modify the cache.
      *
-     * Note: Set.has() is O(1) average - it uses a hash table internally,
-     * not a linear scan.
+     * Note: Map.get() and Set.has() are both O(1) average - they use
+     * hash tables internally, not linear scans.
      */
-    has(eventId: string): boolean {
-        return this.cache.has(eventId)
+    has(streamId: string, eventId: string): boolean {
+        const streamCache = this.caches.get(streamId)
+        return streamCache?.has(eventId) ?? false
     }
 
     /**
-     * Add an event ID to the cache.
-     * If the cache is full, removes oldest entries.
+     * Add an event ID to the cache for a specific stream.
+     * If the stream's cache is full, removes oldest entries (FIFO).
      */
-    add(eventId: string): void {
-        // Evict oldest entry if at capacity
-        if (this.cache.size >= this.maxSize) {
-            const oldest = this.cache.values().next().value
+    add(streamId: string, eventId: string): void {
+        let streamCache = this.caches.get(streamId)
+        if (!streamCache) {
+            streamCache = new Set()
+            this.caches.set(streamId, streamCache)
+        }
+
+        // Evict oldest entry if at capacity for this stream
+        if (streamCache.size >= this.maxSizePerStream) {
+            const oldest = streamCache.values().next().value
             if (oldest !== undefined) {
-                this.cache.delete(oldest)
+                streamCache.delete(oldest)
             }
         }
 
-        this.cache.add(eventId)
+        streamCache.add(eventId)
     }
 
     /**
@@ -74,29 +82,44 @@ export class EventDedup {
      * This is the recommended method for deduplication as it combines
      * the check and add in a single atomic operation.
      */
-    checkAndAdd(eventId: string): boolean {
-        if (this.has(eventId)) {
+    checkAndAdd(streamId: string, eventId: string): boolean {
+        if (this.has(streamId, eventId)) {
             // eslint-disable-next-line no-console
-            console.warn('[@towns-protocol/bot] duplicate event detected', { eventId })
+            console.warn('[@towns-protocol/bot] duplicate event detected', {
+                streamId,
+                eventId,
+            })
             return true
         }
-        this.add(eventId)
+        this.add(streamId, eventId)
         return false
     }
 
     /**
-     * Clear all entries from the cache.
+     * Clear all entries from all stream caches.
      * Useful for testing.
      */
     clear(): void {
-        this.cache.clear()
+        this.caches.clear()
     }
 
     /**
-     * Get the current number of entries in the cache.
+     * Get the total number of events across all streams.
      * Useful for testing and monitoring.
      */
     get size(): number {
-        return this.cache.size
+        let total = 0
+        for (const cache of this.caches.values()) {
+            total += cache.size
+        }
+        return total
+    }
+
+    /**
+     * Get the number of streams being tracked.
+     * Useful for testing and monitoring.
+     */
+    get streamCount(): number {
+        return this.caches.size
     }
 }

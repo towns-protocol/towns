@@ -514,7 +514,7 @@ export class Bot<
                     continue
                 }
                 // Skip duplicate events (App Registry may replay events during restarts)
-                if (this.eventDedup.checkAndAdd(parsed.hashStr)) {
+                if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
                     continue
                 }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
