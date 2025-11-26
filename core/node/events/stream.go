@@ -98,8 +98,13 @@ func NewStream(
 
 // IsLocal is thread-safe.
 func (s *Stream) IsLocal() bool {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocal", "line", 103)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocal", "line", 105)
+		s.mu.RUnlock()
+	}()
 	return s.local != nil
 }
 
@@ -139,7 +144,9 @@ func (s *Stream) setViewLocked(view *StreamView) {
 // mu is always locked on return, even if error is returned.
 // Return nil view and nil error if stream is not local.
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
+	log := logging.FromCtx(ctx)
 	s.mu.Lock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 148)
 	if s.local == nil {
 		return nil, nil
 	}
@@ -158,6 +165,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 		return nil, err
 	}
 
+	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 168)
 	s.mu.Unlock()
 	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
@@ -171,6 +179,7 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 
 	for {
 		s.mu.Lock()
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 181)
 		if s.local == nil {
 			return nil, nil
 		}
@@ -179,11 +188,13 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 			s.lastAccessedTime = time.Now()
 			return s.getViewLocked(), nil
 		}
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 191)
 		s.mu.Unlock()
 
 		err := backoff.Wait(ctx, nil)
 		if err != nil {
 			s.mu.Lock()
+			log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 196)
 			return nil, err
 		}
 	}
@@ -224,8 +235,12 @@ func (s *Stream) loadViewNoReconcileLocked(ctx context.Context) (*StreamView, er
 // ApplyMiniblock applies given miniblock, updating the cached stream view and storage.
 // ApplyMiniblock is thread-safe.
 func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) error {
+	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ApplyMiniblock", "line", 241)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -243,8 +258,13 @@ func (s *Stream) importMiniblocks(
 		return nil
 	}
 
+	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "importMiniblocks", "line", 263)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "importMiniblocks", "line", 265)
+		s.mu.Unlock()
+	}()
 	return s.importMiniblocksLocked(ctx, miniblocks)
 }
 
@@ -392,8 +412,12 @@ func (s *Stream) applyMiniblockImplLocked(
 
 // promoteCandidate is thread-safe.
 func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
+	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "promoteCandidate", "line", 416)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -516,6 +540,7 @@ func (s *Stream) initFromGenesisLocked(
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // GetViewIfLocalEx is thread-safe.
 func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*StreamView, error) {
+	log := logging.FromCtx(ctx)
 	view, isLocal := s.tryGetView(allowNoQuorum)
 	if !isLocal {
 		return nil, nil
@@ -525,7 +550,10 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "GetViewIfLocalEx", "line", 554)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -563,8 +591,13 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 // If allowNoQuorum is true, it will return the view even if the local node is not in quorum.
 // tryGetView is thread-safe.
 func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "tryGetView", "line", 594)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "tryGetView", "line", 596)
+		s.mu.RUnlock()
+	}()
 	if s.local == nil {
 		return nil, false
 	}
@@ -599,8 +632,13 @@ func (s *Stream) maybeScrubLocked() {
 }
 
 func (s *Stream) shouldScrub() bool {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "shouldScrub", "line", 636)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "shouldScrub", "line", 638)
+		s.mu.Unlock()
+	}()
 	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
 		time.Since(s.local.lastScrubbedTime) > s.params.Config.Scrubbing.ScrubEligibleDuration {
 		s.local.lastScrubbedTime = time.Now()
@@ -619,8 +657,13 @@ func (s *Stream) maybeScheduleScrub() {
 // It returns true when the view is unloaded
 // tryCleanup is thread-safe.
 func (s *Stream) tryCleanup(expiration time.Duration) bool {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "tryCleanup", "line", 658)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryCleanup", "line", 660)
+		s.mu.Unlock()
+	}()
 
 	if s.local == nil {
 		// TODO: add purge from cache for non-local streams.
@@ -718,8 +761,12 @@ func (s *Stream) notifySubscribersLocked(
 }
 
 func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicateCheck bool) (*StreamView, error) {
+	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "addEvent", "line", 765)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return nil, err
 	}
@@ -856,8 +903,12 @@ func (s *Stream) UpdatesSinceCookie(
 		)
 	}
 
+	log := logging.FromCtx(ctx)
 	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "UpdatesSinceCookie", "line", 908)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -905,8 +956,12 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 		)
 	}
 
+	log := logging.FromCtx(ctx)
 	view, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Sub", "line", 961)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -930,6 +985,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 // This method is thread-safe.
 // Only local streams are allowed to subscribe.
 func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) error {
+	log := logging.FromCtx(ctx)
 	if !s.IsLocal() {
 		return RiverError(
 			Err_NOT_FOUND,
@@ -940,7 +996,10 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 	}
 
 	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "SubNoCookie", "line", 1001)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return err
 	}
@@ -957,8 +1016,13 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 // Such situation arises during ForceFlush.
 // Unsub is thread-safe.
 func (s *Stream) Unsub(receiver SyncResultReceiver) {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "Unsub", "line", 1019)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Unsub", "line", 1021)
+		s.mu.Unlock()
+	}()
 	if s.local.receivers != nil {
 		s.local.receivers.Remove(receiver)
 	}
@@ -969,8 +1033,13 @@ func (s *Stream) Unsub(receiver SyncResultReceiver) {
 // terminate corresponding sync loop.
 // ForceFlush is thread-safe.
 func (s *Stream) ForceFlush(ctx context.Context) {
+	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "ForceFlush", "line", 1038)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ForceFlush", "line", 1040)
+		s.mu.Unlock()
+	}()
 
 	if s.local == nil {
 		return
@@ -993,8 +1062,13 @@ func (s *Stream) unsubAllLocked() {
 // canCreateMiniblock determines if a stream is eligible to create a miniblock.
 // canCreateMiniblock is thread-safe.
 func (s *Stream) canCreateMiniblock() bool {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1066)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1068)
+		s.mu.RUnlock()
+	}()
 
 	// Loaded, has events in minipool, and periodic miniblock creation is not disabled in test settings.
 	return s.local != nil &&
@@ -1013,8 +1087,13 @@ type streamImplStatus struct {
 // getStatus returns a snapshot of useful statistics describing the stream's in-memory state.
 // getStatus is thread-safe.
 func (s *Stream) getStatus() *streamImplStatus {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "getStatus", "line", 1091)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getStatus", "line", 1093)
+		s.mu.RUnlock()
+	}()
 
 	ret := &streamImplStatus{
 		numSubscribers: s.local.receivers.Cardinality(),
@@ -1057,9 +1136,13 @@ func (s *Stream) SaveMiniblockCandidate(ctx context.Context, candidate *Minibloc
 // last block applied to the stream.
 // tryApplyCandidate is thread-safe.
 func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool, error) {
+	log := logging.FromCtx(ctx)
 	// try to apply the candidate
 	_, err := s.lockMuAndLoadView(ctx)
-	defer s.mu.Unlock()
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryApplyCandidate", "line", 1144)
+		s.mu.Unlock()
+	}()
 	if err != nil {
 		return false, err
 	}
@@ -1130,8 +1213,13 @@ func (s *Stream) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *Mini
 // or from storage otherwise.
 // getLastMiniblockNumSkipLoad is thread-safe.
 func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error) {
+	log := logging.FromCtx(ctx)
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1218)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1220)
+		s.mu.RUnlock()
+	}()
 
 	view := s.getViewLocked()
 	if view != nil {
@@ -1148,18 +1236,21 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	events []river.StreamUpdatedEvent,
 	blockNum blockchain.BlockNumber,
 ) {
+	log := logging.FromCtx(ctx)
 	if len(events) == 0 {
 		return
 	}
 
 	view, err := s.lockMuAndLoadView(ctx)
 	if err != nil {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1249)
 		s.mu.Unlock()
-		logging.FromCtx(ctx).Errorw("applyStreamEvents: failed to load view", "error", err)
+		log.Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
 	if view == nil {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1256)
 		s.mu.Unlock()
 		return // stream is not local, no need to apply miniblock updates
 	}
@@ -1197,6 +1288,7 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	s.lastAppliedBlockNum = blockNum
+	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1290)
 	s.mu.Unlock()
 
 	if needsSyncTask {
@@ -1261,8 +1353,13 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 	// Reinitialize data is prepared.
 	// Take lock, drop view, apply data to the database.
 	// Since it's a reset "in the future", current subscribers can't be updated continuosly and are dropped.
+	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "reinitialize", "line", 1357)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "reinitialize", "line", 1359)
+		s.mu.Unlock()
+	}()
 
 	s.setViewLocked(nil)
 	s.unsubAllLocked()
@@ -1297,8 +1394,13 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 // GetQuorumNodes returns the list of nodes this stream resides on according to the stream
 // registry. GetQuorumNodes is thread-safe.
 func (s *Stream) GetQuorumNodes() []common.Address {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1398)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1400)
+		s.mu.RUnlock()
+	}()
 
 	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
@@ -1308,8 +1410,13 @@ func (s *Stream) GetQuorumNodes() []common.Address {
 // isLocal - boolean, whether the stream is hosted on this node
 // GetRemotesAndIsLocal is thread-safe.
 func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1414)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1416)
+		s.mu.RUnlock()
+	}()
 
 	r, l := s.nodesLocked.GetRemotesAndIsLocal()
 	return slices.Clone(r), l
@@ -1321,8 +1428,13 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 // isLocal - boolean, whether the stream is hosted on this node
 // GetQuorumAndReconcileNodesAndIsLocal is thread-safe.
 func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumAndReconcileNodesAndIsLocal", "line", 1432)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetQuorumAndReconcileNodesAndIsLocal", "line", 1434)
+		s.mu.RUnlock()
+	}()
 
 	qn, sn, l := s.nodesLocked.GetQuorumAndReconcileNodesAndIsLocal()
 	return slices.Clone(qn), slices.Clone(sn), l
@@ -1332,8 +1444,13 @@ func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []com
 // stream. If the node becomes unavailable, the sticky peer can be updated with AdvanceStickyPeer.
 // This method is thread-safe.
 func (s *Stream) GetStickyPeer() common.Address {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1449)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1451)
+		s.mu.RUnlock()
+	}()
 
 	return s.nodesLocked.GetStickyPeer()
 }
@@ -1342,36 +1459,61 @@ func (s *Stream) GetStickyPeer() common.Address {
 // can be used whenever a node becomes unavailable.
 // AdvanceStickyPeer is thread-safe.
 func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1455)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1457)
+		s.mu.Unlock()
+	}()
 
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
 func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1467)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1469)
+		s.mu.Unlock()
+	}()
 
 	s.nodesLocked.ResetFromStreamWithId(stream, localNode)
 }
 
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "Reset", "line", 1479)
+	defer func() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Reset", "line", 1481)
+		s.mu.Unlock()
+	}()
 
 	s.nodesLocked.Reset(replicationFactor, nodes, localNode)
 }
 
 func (s *Stream) GetReconcileNodes() []common.Address {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1491)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1493)
+		s.mu.RUnlock()
+	}()
 
 	return slices.Clone(s.nodesLocked.GetReconcileNodes())
 }
 
 func (s *Stream) IsLocalInQuorum() bool {
+	log := logging.FromCtx(context.Background())
 	s.mu.RLock()
-	defer s.mu.RUnlock()
+	log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1503)
+	defer func() {
+		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1505)
+		s.mu.RUnlock()
+	}()
 
 	return s.nodesLocked.IsLocalInQuorum()
 }
@@ -1379,7 +1521,10 @@ func (s *Stream) IsLocalInQuorum() bool {
 // TestOnlyHelper_SetView injects the provided view directly into the stream. This helper is intended
 // for unit tests so they can bypass storage initialization.
 func (s *Stream) TestOnlyHelper_SetView(view *StreamView) {
+	log := logging.FromCtx(context.Background())
 	s.mu.Lock()
+	log.Infow("mutex Lock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1517)
 	s.setViewLocked(view)
+	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1519)
 	s.mu.Unlock()
 }
