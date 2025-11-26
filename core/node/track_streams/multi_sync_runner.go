@@ -297,6 +297,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	if ssr.cookieStore != nil && trackedView.ShouldPersistCookie(ssr.syncCtx) {
 		cookie := streamAndCookie.NextSyncCookie
 		go func() {
+			log.Infow("persisting sync cookie", "streamId", streamId, "cookie", cookie, "syncId", ssr.syncer.GetSyncId(), "targetNode", ssr.node)
 			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
 				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
 			}
