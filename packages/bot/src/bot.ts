@@ -7,6 +7,9 @@ import {
     type SendTipMemberParams,
     TipRecipientType,
     ETH_ADDRESS,
+    type Operation,
+    NoopOperation,
+    createRuleStruct,
 } from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
@@ -47,6 +50,7 @@ import {
     make_ChannelPayload_Inception,
     make_MemberPayload_Membership2,
     type CreateTownsClientParams,
+    waitForRoleCreated,
 } from '@towns-protocol/sdk'
 import { Hono, type Context, type Next } from 'hono'
 import { logger } from 'hono/logger'
@@ -141,6 +145,17 @@ export type BotPayload<
     T extends keyof BotEvents<Commands>,
     Commands extends PlainMessage<SlashCommand>[] = [],
 > = Parameters<BotEvents<Commands>[T]>[1]
+
+export type CreateRoleParams = {
+    /** The role name */
+    name: string
+    /** The permissions that will be granted to users of this role */
+    permissions: Permission[]
+    /** The custom rule data. Can be used to perform onchain checks */
+    rule?: Operation
+    /** Users that can have this role */
+    users?: string[]
+}
 
 type ImageAttachment = {
     type: 'image'
@@ -1161,6 +1176,54 @@ export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
      */
     async getRoles(spaceId: string) {
         return this.client.getRoles(spaceId)
+    }
+
+    /**
+     * Create a role in a space
+     * @param spaceId - The space ID
+     * @param params - Role parameters (name, permissions, optional rule, optional users)
+     * @returns The created role ID
+     */
+    async createRole(spaceId: string, params: CreateRoleParams) {
+        return this.client.createRole(spaceId, params)
+    }
+
+    /**
+     * Update an existing role
+     * @param spaceId - The space ID
+     * @param roleId - The role ID to update
+     * @param params - Updated role parameters
+     */
+    async updateRole(spaceId: string, roleId: number, params: CreateRoleParams) {
+        return this.client.updateRole(spaceId, roleId, params)
+    }
+
+    /**
+     * Add a role to a channel
+     * @param channelId - The channel ID
+     * @param roleId - The role ID to add
+     */
+    async addRoleToChannel(channelId: string, roleId: number) {
+        return this.client.addRoleToChannel(channelId, roleId)
+    }
+
+    /**
+     * Delete a role from a space
+     * @param spaceId - The space ID
+     * @param roleId - The role ID to delete
+     */
+    async deleteRole(spaceId: string, roleId: number) {
+        return this.client.deleteRole(spaceId, roleId)
+    }
+
+    /**
+     * Get full details of a specific role
+     * @param spaceId - The space ID
+     * @param roleId - The role ID
+     * @returns Role details including name, permissions, rule data, and users
+     */
+    async getRole(spaceId: string, roleId: number) {
+        return this.client.getRole(spaceId, roleId)
     }
 
     /**
@@ -2414,6 +2477,61 @@ const buildBotActions = (
         return channelId
     }
 
+    /** Creates a role in the space. Requires gas */
+    const createRole = async (
+        spaceId: string,
+        params: CreateRoleParams,
+    ): Promise<{ roleId: number }> => {
+        const txn = await spaceDapp.createRole(
+            spaceId,
+            params.name,
+            params.permissions,
+            params.users ?? [],
+            createRuleStruct(params.rule ?? NoopOperation),
+            client.wallet,
+        )
+        const { roleId, error } = await waitForRoleCreated(spaceDapp, spaceId, txn)
+        if (error) {
+            throw error
+        }
+        if (!roleId) {
+            throw Error('Unexpected failure when waiting for role to be created')
+        }
+        return { roleId }
+    }
+
+    /** Updates the specified the role. Requires gas. */
+    const updateRole = async (spaceId: string, roleId: number, params: CreateRoleParams) => {
+        const currentValues = await spaceDapp.getRole(spaceId, roleId)
+        return spaceDapp.updateRole(
+            {
+                permissions: params.permissions ?? currentValues?.permissions,
+                roleId,
+                roleName: params.name ?? currentValues?.name,
+                ruleData: createRuleStruct(params.rule ?? NoopOperation) ?? currentValues?.ruleData,
+                spaceNetworkId: spaceId,
+                users: params.users ?? currentValues?.users ?? [],
+            },
+            client.wallet,
+        )
+    }
+
+    /** Adds the specified role to a channel. Requires gas. */
+    const addRoleToChannel = (channelId: string, roleId: number) => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        return spaceDapp.addRoleToChannel(spaceId, channelId, roleId, client.wallet)
+    }
+
+    /** Deletes the specified role. Requires gas. */
+    const deleteRole = (spaceId: string, roleId: number) => {
+        return spaceDapp.deleteRole(spaceId, roleId, client.wallet)
+    }
+
+    /** Gets full details of a specific role */
+    const getRole = (spaceId: string, roleId: number) => {
+        return spaceDapp.getRole(spaceId, roleId)
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -2436,6 +2554,11 @@ const buildBotActions = (
         sendBlockchainTransaction,
         createChannel,
         getRoles,
+        createRole,
+        updateRole,
+        addRoleToChannel,
+        deleteRole,
+        getRole,
     }
 }
 
