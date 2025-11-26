@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { EventDedup } from './eventDedup'
-import {DEFAULT_CIPHERS} from "node:tls";
 
 describe('EventDedup', () => {
     let dedup: EventDedup
@@ -262,7 +261,7 @@ describe('EventDedup', () => {
             for (let i = 0; i < 10; i++) {
                 customDedup.add(streamId, `0x${i.toString(16)}`)
             }
-            expect(customDedup.size).toBeLessThanOrEqual(5)
+            expect(customDedup.size).toBe(5)
         })
     })
 })
