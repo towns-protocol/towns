@@ -54,7 +54,7 @@ func GetDefaultConfig() *Config {
 			Enabled: true,
 		},
 		HighUsageDetection: HighUsageDetectionConfig{
-			Enabled:    false,
+			Enabled:    true,
 			MaxResults: 50,
 			Thresholds: HighUsageThresholdFields{
 				ThresholdAddEventWindow1:          time.Minute,
