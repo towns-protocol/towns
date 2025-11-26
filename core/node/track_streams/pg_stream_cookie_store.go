@@ -13,7 +13,7 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-// PostgresStreamCookieStore implements StreamCookieStore using PostgreSQL.
+// PostgresStreamCookieStore implements SyncCookieStore using PostgreSQL.
 // This is a shared implementation that can be used by any service (App Registry, Notifications, etc.)
 // that needs to persist sync cookies for stream resumption.
 type PostgresStreamCookieStore struct {
@@ -21,7 +21,7 @@ type PostgresStreamCookieStore struct {
 	tableName string
 }
 
-var _ StreamCookieStore = (*PostgresStreamCookieStore)(nil)
+var _ SyncCookieStore = (*PostgresStreamCookieStore)(nil)
 
 // NewPostgresStreamCookieStore creates a new PostgresStreamCookieStore.
 // The tableName parameter allows different services to use different tables if needed,
@@ -38,7 +38,7 @@ func NewPostgresStreamCookieStore(pool *pgxpool.Pool, tableName string) *Postgre
 
 // GetStreamCookie retrieves a stored cookie for a stream.
 // Returns (nil, zero time, nil) if no cookie exists for the stream.
-func (s *PostgresStreamCookieStore) GetStreamCookie(
+func (s *PostgresStreamCookieStore) GetSyncCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 ) (*protocol.SyncCookie, time.Time, error) {

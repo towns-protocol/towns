@@ -60,7 +60,7 @@ func NewAppRegistryStreamsTracker(
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
-	cookieStore track_streams.StreamCookieStore,
+	cookieStore track_streams.SyncCookieStore,
 	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{

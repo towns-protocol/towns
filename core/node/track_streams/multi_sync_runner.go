@@ -117,7 +117,7 @@ type syncSessionRunner struct {
 	closeErr error
 
 	// cookieStore is an optional store for persisting sync cookies for stream resumption.
-	cookieStore StreamCookieStore
+	cookieStore SyncCookieStore
 }
 
 func (ssr *syncSessionRunner) AddStream(
@@ -573,7 +573,7 @@ func newSyncSessionRunner(
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
-	cookieStore StreamCookieStore,
+	cookieStore SyncCookieStore,
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
@@ -640,7 +640,7 @@ type MultiSyncRunner struct {
 
 	// cookieStore is an optional store for persisting sync cookies for stream resumption.
 	// If nil, cookie persistence is disabled.
-	cookieStore StreamCookieStore
+	cookieStore SyncCookieStore
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -667,7 +667,7 @@ func NewMultiSyncRunner(
 	trackedStreamViewConstructor TrackedViewConstructorFn,
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
-	cookieStore StreamCookieStore,
+	cookieStore SyncCookieStore,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -922,7 +922,7 @@ func (msr *MultiSyncRunner) AddStream(
 	// (e.g., channel members) which isn't available yet. Instead, just try to load -
 	// if a cookie exists, it means we previously determined this stream needed persistence.
 	if msr.cookieStore != nil {
-		cookie, updatedAt, err := msr.cookieStore.GetStreamCookie(ctx, streamId)
+		cookie, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
 		if err != nil {
 			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
 		} else if cookie != nil {

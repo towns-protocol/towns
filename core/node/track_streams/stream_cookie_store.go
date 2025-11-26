@@ -8,12 +8,12 @@ import (
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
-// StreamCookieStore handles cookie persistence for stream resumption.
+// SyncCookieStore handles cookie persistence for stream resumption.
 // This is the generic storage interface - same implementation can be used by all services.
-type StreamCookieStore interface {
+type SyncCookieStore interface {
 	// GetStreamCookie retrieves a stored cookie for a stream (called when starting sync).
 	// Returns (nil, zero time, nil) if no cookie exists.
-	GetStreamCookie(ctx context.Context, streamID shared.StreamId) (*protocol.SyncCookie, time.Time, error)
+	GetSyncCookie(ctx context.Context, streamID shared.StreamId) (*protocol.SyncCookie, time.Time, error)
 
 	// PersistSyncCookie stores a cookie after processing events.
 	PersistSyncCookie(ctx context.Context, streamID shared.StreamId, cookie *protocol.SyncCookie) error

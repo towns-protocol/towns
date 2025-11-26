@@ -85,7 +85,7 @@ func (tracker *StreamsTrackerImpl) Init(
 	metricsFactory infra.MetricsFactory,
 	streamTracking config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
-	cookieStore StreamCookieStore,
+	cookieStore SyncCookieStore,
 ) error {
 	tracker.ctx = ctx
 	tracker.riverRegistry = riverRegistry
