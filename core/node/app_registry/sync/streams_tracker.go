@@ -32,6 +32,11 @@ type EncryptedMessageQueue interface {
 		appId common.Address,
 	) (isForwardable bool, settings types.AppSettings, err error)
 
+	IsApp(
+		ctx context.Context,
+		userId common.Address,
+	) (bool, error)
+
 	DispatchOrEnqueueMessages(
 		ctx context.Context,
 		appIds []common.Address,
@@ -42,8 +47,6 @@ type EncryptedMessageQueue interface {
 }
 
 type AppRegistryStreamsTracker struct {
-	// TODO: eventually this struct will contain references to whatever types of cache / storage access
-	// the TrackedStreamView for the app registry service needs.
 	track_streams.StreamsTrackerImpl
 	queue EncryptedMessageQueue
 }
@@ -57,11 +60,13 @@ func NewAppRegistryStreamsTracker(
 	metricsFactory infra.MetricsFactory,
 	listener track_streams.StreamEventListener,
 	store EncryptedMessageQueue,
+	cookieStore track_streams.SyncCookieStore,
 	otelTracer trace.Tracer,
 ) (track_streams.StreamsTracker, error) {
 	tracker := &AppRegistryStreamsTracker{
 		queue: store,
 	}
+
 	if err := tracker.StreamsTrackerImpl.Init(
 		ctx,
 		onChainConfig,
@@ -72,6 +77,7 @@ func NewAppRegistryStreamsTracker(
 		metricsFactory,
 		config.StreamTracking,
 		otelTracer,
+		cookieStore,
 	); err != nil {
 		return nil, err
 	}
