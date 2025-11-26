@@ -2,7 +2,6 @@ package track_streams
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"time"
 
@@ -43,8 +42,6 @@ func (s *PostgresStreamCookieStore) GetStreamCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 ) (*protocol.SyncCookie, time.Time, error) {
-	streamIDHex := hex.EncodeToString(streamID[:])
-
 	var (
 		minipoolGen       int64
 		prevMiniblockHash []byte
@@ -56,7 +53,7 @@ func (s *PostgresStreamCookieStore) GetStreamCookie(
 		`SELECT minipool_gen, prev_miniblock_hash, updated_at
 		 FROM `+s.tableName+`
 		 WHERE stream_id = $1`,
-		streamIDHex,
+		streamID,
 	).Scan(&minipoolGen, &prevMiniblockHash, &updatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -80,8 +77,6 @@ func (s *PostgresStreamCookieStore) PersistSyncCookie(
 	streamID shared.StreamId,
 	cookie *protocol.SyncCookie,
 ) error {
-	streamIDHex := hex.EncodeToString(streamID[:])
-
 	_, err := s.pool.Exec(
 		ctx,
 		`INSERT INTO `+s.tableName+` (stream_id, minipool_gen, prev_miniblock_hash, updated_at)
@@ -91,7 +86,7 @@ func (s *PostgresStreamCookieStore) PersistSyncCookie(
 		     minipool_gen = EXCLUDED.minipool_gen,
 		     prev_miniblock_hash = EXCLUDED.prev_miniblock_hash,
 		     updated_at = NOW()`,
-		streamIDHex,
+		streamID,
 		cookie.MinipoolGen,
 		cookie.PrevMiniblockHash,
 	)
@@ -110,12 +105,10 @@ func (s *PostgresStreamCookieStore) DeleteStreamCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 ) error {
-	streamIDHex := hex.EncodeToString(streamID[:])
-
 	_, err := s.pool.Exec(
 		ctx,
 		`DELETE FROM `+s.tableName+` WHERE stream_id = $1`,
-		streamIDHex,
+		streamID,
 	)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
@@ -147,35 +140,18 @@ func (s *PostgresStreamCookieStore) GetAllStreamCookies(
 
 	for rows.Next() {
 		var (
-			streamIDHex       string
+			streamID          shared.StreamId
 			minipoolGen       int64
 			prevMiniblockHash []byte
 		)
 
-		if err := rows.Scan(&streamIDHex, &minipoolGen, &prevMiniblockHash); err != nil {
+		if err := rows.Scan(&streamID, &minipoolGen, &prevMiniblockHash); err != nil {
 			return nil, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to scan sync cookie row")
 		}
 
-		// Decode stream ID from hex
-		streamIDBytes, err := hex.DecodeString(streamIDHex)
-		if err != nil {
-			return nil, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-				Message("failed to decode stream ID from hex").
-				Tag("streamId", streamIDHex)
-		}
-
-		if len(streamIDBytes) != 32 {
-			return nil, base.RiverError(protocol.Err_INVALID_ARGUMENT, "invalid stream ID length").
-				Tag("streamId", streamIDHex).
-				Tag("length", len(streamIDBytes))
-		}
-
-		var streamID shared.StreamId
-		copy(streamID[:], streamIDBytes)
-
 		cookies[streamID] = &protocol.SyncCookie{
-			StreamId:          streamIDBytes,
+			StreamId:          streamID[:],
 			MinipoolGen:       minipoolGen,
 			PrevMiniblockHash: prevMiniblockHash,
 		}
