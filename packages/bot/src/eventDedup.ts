@@ -77,7 +77,7 @@ export class EventDedup {
     checkAndAdd(eventId: string): boolean {
         if (this.has(eventId)) {
             // eslint-disable-next-line no-console
-        console.warn('[@towns-protocol/bot] duplicate event detected', { eventId })
+            console.warn('[@towns-protocol/bot] duplicate event detected', { eventId })
             return true
         }
         this.add(eventId)
