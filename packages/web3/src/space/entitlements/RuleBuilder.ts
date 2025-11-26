@@ -6,6 +6,7 @@ import {
     type Operation,
     encodeERC1155Params,
     LogicalOperationType,
+    NoopRuleData,
     OperationType,
     treeToRuleData,
     encodeRuleDataV2,
@@ -125,7 +126,12 @@ export const createRule = (operation: Operation): Hex => {
 }
 
 /** Convert a rule tree to ethers typing IRuleEntitlementBase.RuleDataV2Struct */
-export const createRuleStruct = (operation: Operation) => treeToRuleData(operation)
+export const createRuleStruct = (operation: Operation) => {
+    if (operation.opType === OperationType.NONE) {
+        return NoopRuleData
+    }
+    return treeToRuleData(operation)
+}
 
 export const Rules = {
     and,
