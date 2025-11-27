@@ -93,6 +93,7 @@ import {
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
+import { EventDedup, type EventDedupConfig } from './eventDedup'
 
 import {
     http,
@@ -379,6 +380,7 @@ export class Bot<
     > = new Map()
     private readonly commands: Commands | undefined
     private readonly identityConfig?: BotIdentityConfig
+    private readonly eventDedup: EventDedup
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -387,6 +389,7 @@ export class Bot<
         appAddress: Address,
         commands?: Commands,
         identityConfig?: BotIdentityConfig,
+        dedupConfig?: EventDedupConfig,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
@@ -396,6 +399,7 @@ export class Bot<
         this.commands = commands
         this.appAddress = appAddress
         this.identityConfig = identityConfig
+        this.eventDedup = new EventDedup(dedupConfig)
     }
 
     start() {
@@ -507,6 +511,10 @@ export class Bot<
                     continue
                 }
                 if (!parsed.event.payload.case) {
+                    continue
+                }
+                // Skip duplicate events (App Registry may replay events during restarts)
+                if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
                     continue
                 }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
@@ -1357,6 +1365,7 @@ export const makeTownsBot = async <
         baseRpcUrl?: string
         commands?: Commands
         identity?: BotIdentityConfig
+        dedup?: EventDedupConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1445,6 +1454,7 @@ export const makeTownsBot = async <
         appAddress,
         opts.commands,
         opts.identity,
+        opts.dedup,
     )
 }
 
