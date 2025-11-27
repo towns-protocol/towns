@@ -530,31 +530,28 @@ export function drizzleSqliteAdapter(db: DrizzleDB, schema: DrizzleSchema): Stor
             },
 
             async transaction<T>(fn: (adapter: StorageAdapter) => Promise<T>): Promise<T> {
-                // For sync SQLite drivers, transactions must be synchronous.
-                // We use manual BEGIN/COMMIT/ROLLBACK with raw SQL.
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const dbWithTransaction = database as any
+                if (typeof dbWithTransaction.transaction === 'function') {
+                    return dbWithTransaction.transaction(async (tx: DrizzleDB) => {
+                        const txAdapter = createAdapter(tx)
+                        return fn(txAdapter)
+                    })
+                }
+                // Fallback: use raw SQL for drivers without .transaction()
                 if (database.run) {
+                    await database.run(sql`BEGIN`)
                     try {
-                        database.run(sql`BEGIN`)
                         const result = await fn(adapter)
-                        database.run(sql`COMMIT`)
+                        await database.run(sql`COMMIT`)
                         return result
                     } catch (error) {
-                        database.run(sql`ROLLBACK`)
+                        await database.run(sql`ROLLBACK`)
                         throw error
                     }
-                } else {
-                    // For async drivers, use the standard transaction API
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const dbWithTransaction = database as any
-                    if (typeof dbWithTransaction.transaction === 'function') {
-                        return dbWithTransaction.transaction(async (tx: DrizzleDB) => {
-                            const txAdapter = createAdapter(tx)
-                            return fn(txAdapter)
-                        })
-                    }
-                    // Fallback: just run without transaction
-                    return fn(adapter)
                 }
+                // Last resort: run without transaction
+                return fn(adapter)
             },
         }
 
