@@ -1,5 +1,6 @@
 import {
     CryptoStore,
+    createCryptoStore,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
     GroupEncryptionSession,
@@ -8,6 +9,7 @@ import {
     type EncryptionDeviceInitOpts,
     type IGroupEncryptionClient,
 } from '@towns-protocol/encryption'
+import type { StorageAdapter } from '@towns-protocol/storage'
 import { makeStreamRpcClient, type StreamRpcClient } from './makeStreamRpcClient'
 import {
     makeSignerContext,
@@ -131,11 +133,23 @@ export type CreateTownsClientParams = {
     hashValidation?: boolean
     /** Toggle signature validation of Envelopes. Defaults to `false`. */
     signatureValidation?: boolean
-    /** Maximum number of entries to store in the crypto store (for in-memory stores).
-     *  Helps prevent memory leaks in long-running bots.
-     *  Defaults to 5000.
+    /** Optional storage adapter for the crypto store.
+     *  When not provided, defaults to in-memory storage with maxEntries=5000.
+     *  Use this to provide a custom storage backend (e.g., Dexie for IndexedDB, Drizzle for SQL).
+     *
+     *  @example
+     *  ```typescript
+     *  import { inmemory } from '@towns-protocol/storage/adapters/memory'
+     *  import { dexieAdapter } from '@towns-protocol/storage/adapters/dexie'
+     *
+     *  // Custom in-memory adapter with different maxEntries
+     *  db: inmemory({ maxEntries: 10000 })
+     *
+     *  // Or use Dexie for IndexedDB persistence
+     *  db: dexieAdapter(myDexieInstance)
+     *  ```
      */
-    maxCryptoStoreEntries?: number
+    db?: StorageAdapter
 }
 export const createTownsClient = async (
     params: (
@@ -176,7 +190,15 @@ export const createTownsClient = async (
 
     const userId = userIdFromAddress(signerContext.creatorAddress)
 
-    const cryptoStore = RiverDbManager.getCryptoDb(userId, undefined, params.maxCryptoStoreEntries)
+    // Create crypto store - use provided storage adapter or default to in-memory with maxEntries=5000
+    const DEFAULT_MAX_ENTRIES = 5000
+    const cryptoStore = params.db
+        ? createCryptoStore({
+              databaseName: `database-${userId}`,
+              userId,
+              storageAdapter: params.db,
+          })
+        : RiverDbManager.getCryptoDb(userId, undefined, DEFAULT_MAX_ENTRIES)
     await cryptoStore.initialize()
 
     // eslint-disable-next-line prefer-const
