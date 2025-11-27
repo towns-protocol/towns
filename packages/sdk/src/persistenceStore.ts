@@ -18,6 +18,8 @@ import { bin_toHexString, dlog, dlogError, isTestEnv } from '@towns-protocol/uti
 import { isDefined } from './check'
 import { isChannelStreamId, isDMChannelStreamId, isGDMChannelStreamId } from './id'
 import { fromBinary, toBinary } from '@bufbuild/protobuf'
+import type { StorageAdapter } from '@towns-protocol/storage'
+import { PersistenceStoreAdapter } from './storage/PersistenceStoreAdapter'
 
 const MAX_CACHED_SCROLLBACK_COUNT = 3
 const DEFAULT_RETRY_COUNT = 3
@@ -114,6 +116,45 @@ export interface IPersistenceStore {
         randeEnd: bigint,
     ): Promise<ParsedMiniblock[]>
     saveSnapshot(streamId: string, miniblockNum: bigint, snapshot: Snapshot): Promise<void>
+}
+
+export interface PersistenceStoreOptions {
+    /** Database name (for IndexedDB) */
+    databaseName: string
+    /** Optional custom storage adapter (Drizzle, etc.) */
+    storageAdapter?: StorageAdapter
+}
+
+/**
+ * Create a persistence store instance.
+ *
+ * @param databaseName - Database name (for IndexedDB)
+ * @returns PersistenceStore instance
+ */
+export function createPersistenceStore(databaseName: string): IPersistenceStore
+
+/**
+ * Create a persistence store instance with options.
+ *
+ * @param options - Persistence store options including optional storage adapter
+ * @returns IPersistenceStore instance
+ */
+export function createPersistenceStore(options: PersistenceStoreOptions): IPersistenceStore
+
+export function createPersistenceStore(
+    databaseNameOrOptions: string | PersistenceStoreOptions,
+): IPersistenceStore {
+    // Handle options object
+    if (typeof databaseNameOrOptions === 'object') {
+        const options = databaseNameOrOptions
+        if (options.storageAdapter) {
+            return new PersistenceStoreAdapter(options.storageAdapter)
+        }
+        return new PersistenceStore(options.databaseName)
+    }
+
+    // Handle legacy positional argument
+    return new PersistenceStore(databaseNameOrOptions)
 }
 
 const SCRATCH_ID = '0'
