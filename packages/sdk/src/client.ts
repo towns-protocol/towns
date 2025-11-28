@@ -2163,6 +2163,7 @@ export class Client
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.tags?.threadId,
         }
 
         return this.makeEventAndAddToStream(
