@@ -622,6 +622,9 @@ function toTownsContent_ChannelPayload(
                     kind: RiverTimelineEvent.InteractionRequestEncrypted,
                     error: timelineEvent.decryptedContentError,
                     recipient,
+                    threadParentId: value.content.value.threadId
+                        ? bin_toHexString(value.content.value.threadId)
+                        : undefined,
                 } satisfies InteractionRequestEncryptedEvent,
             }
         }
