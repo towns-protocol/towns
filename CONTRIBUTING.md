@@ -88,28 +88,28 @@ yarn changeset
 This guides you through:
 
 1. Selecting which packages changed
-2. Choosing version bump type (use `patch`)
+2. Choosing version bump type
 3. Writing a summary for the changelog
 
 ### When is a changeset required?
 
--   Any change to packages published to npm (see list below)
--   Bug fixes, features, documentation updates affecting published code
+- Any change to packages published to npm (see list below)
+- Bug fixes, features, documentation updates affecting published code
 
 ### When can you skip a changeset?
 
--   Changes to private packages (anvil-docker, docs, playground, stress, etc.)
--   Changes to CI/build tooling only
--   Changes to the `core/` directory (Go code)
+- Changes to private packages (anvil-docker, docs, playground, stress, etc.)
+- Changes to CI/build tooling only
+- Changes to the `core/` directory
 
 ### Published packages
 
--   `@towns-protocol/sdk`, `@towns-protocol/react-sdk`, `@towns-protocol/web3`
--   `@towns-protocol/encryption`, `@towns-protocol/proto`, `@towns-protocol/generated`
--   `@towns-protocol/utils`, `@towns-protocol/rpc-connector`, `@towns-protocol/sdk-crypto`
--   `@towns-protocol/contracts`, `@towns-protocol/bot`, `towns-bot`
--   `create-towns-protocol-app`, `@towns-protocol/eslint-config`
--   `@towns-protocol/prettier-config`, `@towns-protocol/xchain-monitor`
+- `@towns-protocol/sdk`, `@towns-protocol/react-sdk`, `@towns-protocol/web3`
+- `@towns-protocol/encryption`, `@towns-protocol/proto`, `@towns-protocol/generated`
+- `@towns-protocol/utils`, `@towns-protocol/rpc-connector`, `@towns-protocol/sdk-crypto`
+- `@towns-protocol/contracts`, `@towns-protocol/bot`, `towns-bot`
+- `create-towns-protocol-app`, `@towns-protocol/eslint-config`
+- `@towns-protocol/prettier-config`, `@towns-protocol/xchain-monitor`
 
 ### Release process
 
