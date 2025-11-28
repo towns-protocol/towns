@@ -1592,7 +1592,7 @@ describe('Bot', { sequential: true }, () => {
     it('bot can create channel, channel has the role, bob joins and sends message, bot receives message', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
-        type WhyDoINeedThis = BasePayload & { event: ParsedEvent }
+        type WhyDoINeedThis = BasePayload & { parsed: ParsedEvent }
         const streamEvents: WhyDoINeedThis[] = []
         const receivedMessages: OnMessageType[] = []
         subscriptions.push(
