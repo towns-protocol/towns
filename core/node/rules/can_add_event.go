@@ -389,8 +389,10 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 		return aeBuilder().
 			check(params.creatorIsMember)
 	case *UserMetadataPayload_ProfileImage:
+		// Allow either the stream owner OR the bot owner to update profile image
 		return aeBuilder().
-			check(params.creatorIsMember)
+			check(params.creatorIsMemberOrPotentialBotOwner).
+			requireChainAuth(params.profileImageChainAuth)
 	case *UserMetadataPayload_Bio:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -641,6 +643,56 @@ func (params *aeParams) creatorIsApp() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// botOwnerChainAuth returns chain auth args to check if the event creator is the owner
+// of the bot whose user metadata stream this is. This is used to allow bot owners to
+// update their bot's profile image.
+func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
+	// Get the user address from the stream ID (the bot's client address)
+	botClientAddress, err := shared.GetUserAddressFromStreamId(*params.streamView.StreamId())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the creator's address
+	creatorAddress := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
+
+	// Create chain auth args to check if creator is the bot owner
+	return auth.NewChainAuthArgsForIsBotOwner(creatorAddress, botClientAddress), nil
+}
+
+// creatorIsMemberOrPotentialBotOwner is a sync check that always passes.
+// It's used in conjunction with chain auth to allow either:
+// 1. The stream owner (creatorIsMember would pass)
+// 2. A bot owner writing to their bot's stream (requires chain auth verification)
+// The actual verification happens in chain auth if needed.
+func (params *aeParams) creatorIsMemberOrPotentialBotOwner() (bool, error) {
+	// First check if creator is a member (the normal case)
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	err := checkIsMember(params, creatorAddress)
+	if err == nil {
+		// Creator is a member, allow without chain auth
+		return true, nil
+	}
+	// Creator is not a member - this might be a bot owner case
+	// Return true to allow chain auth to verify bot ownership
+	return true, nil
+}
+
+// profileImageChainAuth returns chain auth args to check bot ownership.
+// Returns nil if the creator is already a member (no chain auth needed).
+func (params *aeParams) profileImageChainAuth() (*auth.ChainAuthArgs, error) {
+	// First check if creator is a member
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	err := checkIsMember(params, creatorAddress)
+	if err == nil {
+		// Creator is a member, no need for chain auth
+		return nil, nil
+	}
+
+	// Creator is not a member, check if they're the bot owner
+	return params.botOwnerChainAuth()
 }
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
