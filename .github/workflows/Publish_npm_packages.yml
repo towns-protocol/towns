@@ -9,6 +9,10 @@ on:
 jobs:
     publish-npm:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
+            id-token: write
 
         steps:
             - name: Cancel previous runs
@@ -74,9 +78,39 @@ jobs:
               run: |
                   npm whoami || (echo "Not logged in to npm registry" && exit 1)
 
-            - name: Run Nightly Script
+            - name: Install dependencies
+              run: yarn install --immutable
+
+            - name: Build packages
+              run: yarn build
+
+            - name: Generate contract types
+              run: yarn workspace @towns-protocol/generated build-types
+
+            - name: Generate react-sdk docs
+              run: yarn workspace @towns-protocol/react-sdk gen
+
+            - name: Copy deployment addresses
+              run: ./packages/generated/scripts/copy-addresses.sh
+
+            - name: Create Release PR or Publish
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                  version: yarn changeset:version
+                  publish: yarn changeset:publish
+                  title: 'chore: Version Packages'
+                  commit: 'chore: Version Packages'
               env:
-                  GH_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
+                  GITHUB_TOKEN: ${{ secrets.RIVER_GITHUB_PAT }}
                   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-              run: ./scripts/publish-to-npm.sh
-              timeout-minutes: 60
+
+            - name: Push tags
+              if: steps.changesets.outputs.published == 'true'
+              run: git push --follow-tags
+
+            - name: Published packages info
+              if: steps.changesets.outputs.published == 'true'
+              run: |
+                  echo "Published packages:"
+                  echo '${{ steps.changesets.outputs.publishedPackages }}'
