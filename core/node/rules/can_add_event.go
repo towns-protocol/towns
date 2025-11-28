@@ -389,10 +389,8 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 		return aeBuilder().
 			check(params.creatorIsMember)
 	case *UserMetadataPayload_ProfileImage:
-		// Allow either the stream owner OR the bot owner to update profile image
 		return aeBuilder().
-			check(params.creatorIsMemberOrPotentialBotOwner).
-			requireChainAuth(params.profileImageChainAuth)
+			requireChainAuth(params.creatorIsMemberOrBotOwner)
 	case *UserMetadataPayload_Bio:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -662,27 +660,10 @@ func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
 	return auth.NewChainAuthArgsForIsBotOwner(creatorAddress, botClientAddress), nil
 }
 
-// creatorIsMemberOrPotentialBotOwner is a sync check that always passes.
-// It's used in conjunction with chain auth to allow either:
-// 1. The stream owner (creatorIsMember would pass)
-// 2. A bot owner writing to their bot's stream (requires chain auth verification)
-// The actual verification happens in chain auth if needed.
-func (params *aeParams) creatorIsMemberOrPotentialBotOwner() (bool, error) {
-	// First check if creator is a member (the normal case)
-	creatorAddress := params.parsedEvent.Event.CreatorAddress
-	err := checkIsMember(params, creatorAddress)
-	if err == nil {
-		// Creator is a member, allow without chain auth
-		return true, nil
-	}
-	// Creator is not a member - this might be a bot owner case
-	// Return true to allow chain auth to verify bot ownership
-	return true, nil
-}
-
-// profileImageChainAuth returns chain auth args to check bot ownership.
+// creatorIsMemberOrBotOwner returns chain auth args to check bot ownership.
 // Returns nil if the creator is already a member (no chain auth needed).
-func (params *aeParams) profileImageChainAuth() (*auth.ChainAuthArgs, error) {
+// This allows either the stream owner OR the bot owner to update profile images.
+func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error) {
 	// First check if creator is a member
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	err := checkIsMember(params, creatorAddress)
