@@ -1592,7 +1592,7 @@ describe('Bot', { sequential: true }, () => {
     it('bot can create channel, channel has the role, bob joins and sends message, bot receives message', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
-        type WhyDoINeedThis = BasePayload & { event: ParsedEvent }
+        type WhyDoINeedThis = BasePayload & { parsed: ParsedEvent }
         const streamEvents: WhyDoINeedThis[] = []
         const receivedMessages: OnMessageType[] = []
         subscriptions.push(
@@ -1849,11 +1849,32 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedInteractionResponses.length > 0)
     })
 
-    it('bot should be able to pin and unpin messages', async () => {
+    it('bot should be able to pin and unpin their own messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId, envelope } = await bot.sendMessage(channelId, 'Hello')
         const parsedEvnet = await bot.client.unpackEnvelope(envelope)
         const { eventId: pinEventId } = await bot.pinMessage(channelId, eventId, parsedEvnet.event)
+        log('pinned event', pinEventId)
+        const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
+        log('unpinned event', unpinEventId)
+    })
+
+    it('bot should be able to pin and unpin other users messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId } = await bobDefaultChannel.sendMessage('Hello')
+        const receivedMessages: OnMessageType[] = []
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
+        await waitFor(() => receivedMessages.length > 0)
+        const message = receivedMessages.find((x) => x.eventId === eventId)
+        check(isDefined(message), 'message is defined')
+        expect(message).toBeDefined()
+        expect(message?.event).toBeDefined()
+
+        const { eventId: pinEventId } = await bot.pinMessage(channelId, eventId, message.event)
         log('pinned event', pinEventId)
         const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
         log('unpinned event', unpinEventId)
