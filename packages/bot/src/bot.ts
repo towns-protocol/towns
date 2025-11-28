@@ -298,7 +298,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
     streamEvent: (
         handler: BotActions,
-        event: BasePayload & { event: ParsedEvent },
+        event: BasePayload & { parsed: ParsedEvent },
     ) => Promise<void> | void
     slashCommand: (
         handler: BotActions,
@@ -354,6 +354,8 @@ export type BasePayload = {
     eventId: string
     /** The creation time of the event */
     createdAt: Date
+    /** The raw event payload */
+    event: StreamEvent
 }
 
 export class Bot<
@@ -530,7 +532,8 @@ export class Bot<
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     eventId: parsed.hashStr,
-                    event: parsed,
+                    parsed: parsed,
+                    event: parsed.event,
                     createdAt,
                 })
                 switch (parsed.event.payload.case) {
@@ -573,6 +576,7 @@ export class Bot<
                                 refEventId,
                                 eventId: parsed.hashStr,
                                 createdAt,
+                                event: parsed.event,
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -608,6 +612,7 @@ export class Bot<
                             const decrypted = bin_fromBase64(decryptedBase64)
                             const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
+                                event: parsed.event,
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
@@ -641,6 +646,7 @@ export class Bot<
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelJoin', this.client, {
+                                            event: parsed.event,
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
@@ -655,6 +661,7 @@ export class Bot<
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelLeave', this.client, {
+                                            event: parsed.event,
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
@@ -708,6 +715,7 @@ export class Bot<
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                                 this.emitter.emit('tip', this.client, {
+                                                    event: parsed.event,
                                                     userId: senderUserId,
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
@@ -776,6 +784,7 @@ export class Bot<
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
+                        event: parsed.event,
                         userId,
                         eventId: parsed.hashStr,
                         spaceId: spaceIdFromChannelId(streamId),
@@ -816,6 +825,7 @@ export class Bot<
                     const { typeUrl, value } = gmContent
 
                     this.emitter.emit('rawGmMessage', this.client, {
+                        event: parsed.event,
                         userId,
                         spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
@@ -841,6 +851,7 @@ export class Bot<
                             } else {
                                 debug('emit:gmMessage', { userId, channelId: streamId })
                                 void typedHandler.handler(this.client, {
+                                    event: parsed.event,
                                     userId,
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -865,6 +876,7 @@ export class Bot<
                     messageId: payload.value.refEventId,
                 })
                 this.emitter.emit('reaction', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -888,6 +900,7 @@ export class Bot<
                     isMentioned,
                 })
                 this.emitter.emit('messageEdit', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -909,6 +922,7 @@ export class Bot<
                     refEventId: payload.value.refEventId,
                 })
                 this.emitter.emit('redaction', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
