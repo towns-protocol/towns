@@ -186,12 +186,14 @@ export interface InteractionRequestEvent {
     kind: RiverTimelineEvent.InteractionRequest
     payload?: PlainMessage<InteractionRequestPayload>
     recipient?: string
+    threadParentId?: string
 }
 
 export interface InteractionRequestEncryptedEvent {
     kind: RiverTimelineEvent.InteractionRequestEncrypted
     error?: DecryptionSessionError
     recipient?: string
+    threadParentId?: string
 }
 
 export interface InteractionResponseEvent {
@@ -679,11 +681,16 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage
-        ? content.threadId
-        : content?.kind === RiverTimelineEvent.TokenTransfer
-          ? content.threadParentId
-          : undefined
+    if (content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return content.threadId
+    } else if (
+        content?.kind === RiverTimelineEvent.InteractionRequest ||
+        content?.kind === RiverTimelineEvent.InteractionRequestEncrypted ||
+        content?.kind === RiverTimelineEvent.TokenTransfer
+    ) {
+        return content.threadParentId
+    }
+    return undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

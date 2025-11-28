@@ -392,3 +392,8 @@ func (v *NotificationStreamView) SendEventNotification(ctx context.Context, even
 	v.listener.OnMessageEvent(ctx, v.streamID, v.spaceID, members, event)
 	return nil
 }
+
+// ShouldPersistCookie returns false for notifications - they don't need cookie persistence.
+func (v *NotificationStreamView) ShouldPersistCookie(ctx context.Context) bool {
+	return false
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	mapset "github.com/deckarep/golang-set/v2"
 
@@ -234,6 +235,10 @@ type (
 			app common.Address,
 			active bool,
 		) error
+
+		// Pool returns the underlying database connection pool.
+		// This is useful for creating shared components like StreamCookieStore.
+		Pool() *pgxpool.Pool
 	}
 )
 
@@ -1105,6 +1110,11 @@ func (s *PostgresAppRegistryStore) enqueueUnsendableMessages(
 // Close closes the postgres connection pool
 func (s *PostgresAppRegistryStore) Close(ctx context.Context) {
 	s.PostgresEventStore.Close(ctx)
+}
+
+// Pool returns the underlying database connection pool.
+func (s *PostgresAppRegistryStore) Pool() *pgxpool.Pool {
+	return s.pool
 }
 
 func (s *PostgresAppRegistryStore) SetAppMetadata(

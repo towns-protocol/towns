@@ -1345,6 +1345,7 @@ message InteractionRequest {
     optional bytes recipient = 1;
     // encrypted binary InteractionRequestPayload
     EncryptedData encrypted_data = 3;
+    optional bytes thread_id = 4;
 }
 
 message InteractionResponse {
@@ -1352,6 +1353,7 @@ message InteractionResponse {
     bytes recipient = 1;
     // encrypted binary InteractionResponsePayload
     EncryptedData encrypted_data = 2;
+    optional bytes thread_id = 3;
 }
 
 message InteractionResponsePayload {

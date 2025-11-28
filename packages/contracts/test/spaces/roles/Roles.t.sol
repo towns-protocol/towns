@@ -8,6 +8,7 @@ import {IEntitlementsManager} from "src/spaces/facets/entitlements/IEntitlements
 import {IRoles} from "src/spaces/facets/roles/IRoles.sol";
 
 // libraries
+import {LibString} from "solady/utils/LibString.sol";
 import {Permissions} from "src/spaces/facets/Permissions.sol";
 
 // contracts
@@ -622,6 +623,7 @@ contract RolesTest is RolesBaseSetup {
     function test_removePermissionsFromRole_revert_when_invalid_permission(
         string memory permission
     ) external {
+        vm.assume(!LibString.eq(permission, "invalid"));
         vm.assume(bytes(permission).length > 2);
 
         string[] memory permissions = new string[](1);
