@@ -33,6 +33,10 @@ const (
 	// maxWorkerPoolPendingTasks is the maximum number of pending tasks in the worker pool.
 	// Background workers must respect this limit to avoid overloading.
 	maxWorkerPoolPendingTasks = 10000
+
+	// debugStreamId is the stream ID for which lockStream logging is enabled.
+	// Set to empty string to disable logging for all streams.
+	debugLockStreamId = "a105f2a7371ca78f9de8b80c9a92132b6e8832cb620000000000000000000000"
 )
 
 type PostgresStreamStore struct {
@@ -472,12 +476,26 @@ func (s *PostgresStreamStore) sqlForStream(sql string, streamId StreamId) string
 	return replacer.Replace(sql)
 }
 
+// shouldLogLockStream returns true if lockStream logging should be enabled for this stream.
+func shouldLogLockStream(streamId StreamId) bool {
+	return streamId.String() == debugLockStreamId
+}
+
 func (s *PostgresStreamStore) lockStream(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	write bool,
 ) (*LockStreamResult, error) {
+	log := logging.FromCtx(ctx)
+	if shouldLogLockStream(streamId) {
+		lockType := "FOR SHARE"
+		if write {
+			lockType = "FOR UPDATE"
+		}
+		log.Infow("lockStream called", "streamId", streamId, "lockType", lockType)
+	}
+
 	var result LockStreamResult
 	var err error
 	if write {
@@ -496,6 +514,9 @@ func (s *PostgresStreamStore) lockStream(
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			if shouldLogLockStream(streamId) {
+				log.Infow("lockStream failed: stream not found", "streamId", streamId)
+			}
 			return nil, RiverError(
 				Err_NOT_FOUND,
 				"Stream not found",
@@ -503,13 +524,20 @@ func (s *PostgresStreamStore) lockStream(
 				streamId,
 			).Func("PostgresStreamStore.lockStream")
 		}
+		if shouldLogLockStream(streamId) {
+			log.Infow("lockStream failed", "streamId", streamId, "error", err)
+		}
 		return nil, err
+	}
+
+	if shouldLogLockStream(streamId) {
+		log.Infow("lockStream acquired", "streamId", streamId, "lastSnapshotMiniblock", result.LastSnapshotMiniblock)
 	}
 
 	// There is data corruption in prod when lastSnapshotMiniblock is -1.
 	if result.LastSnapshotMiniblock < 0 {
 		result.LastSnapshotMiniblock = 0
-		logging.FromCtx(ctx).Warnw(
+		log.Warnw(
 			"lastSnapshotMiniblock is -1, setting to 0",
 			"streamId",
 			streamId,
@@ -517,6 +545,16 @@ func (s *PostgresStreamStore) lockStream(
 	}
 
 	return &result, nil
+}
+
+// logLockStreamRelease logs when a function that called lockStream is returning.
+// Use as: defer logLockStreamRelease(ctx, streamId, "FunctionName")()
+func logLockStreamRelease(ctx context.Context, streamId StreamId, funcName string) func() {
+	return func() {
+		if shouldLogLockStream(streamId) {
+			logging.FromCtx(ctx).Infow("lockStream released (function returning)", "streamId", streamId, "func", funcName)
+		}
+	}
 }
 
 func (s *PostgresStreamStore) CreateStreamStorage(
@@ -589,6 +627,7 @@ func (s *PostgresStreamStore) maybeOverwriteCorruptGenesisMiniblockTx(
 	streamId StreamId,
 	genesisMiniblock *MiniblockDescriptor,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "maybeOverwriteCorruptGenesisMiniblockTx")()
 	okErr := RiverError(Err_ALREADY_EXISTS, "OK: Stream not corrupt")
 	lockStream, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
@@ -682,6 +721,7 @@ func (s *PostgresStreamStore) getMaxArchivedMiniblockNumberTx(
 	streamId StreamId,
 	maxArchivedMiniblockNumber *int64,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "getMaxArchivedMiniblockNumberTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return err
 	}
@@ -740,6 +780,7 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 	startMiniblockNum int64,
 	miniblocks []*MiniblockDescriptor,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "writeArchiveMiniblocksTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
@@ -806,6 +847,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
+	defer logLockStreamRelease(ctx, streamId, "readStreamFromLastSnapshotTx")()
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
@@ -972,6 +1014,7 @@ func (s *PostgresStreamStore) writeEventTx(
 	minipoolSlot int,
 	envelope []byte,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "writeEventTx")()
 	_, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
@@ -1090,6 +1133,7 @@ func (s *PostgresStreamStore) writePrecedingMiniblocksTx(
 	streamId StreamId,
 	miniblocks []*MiniblockDescriptor,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "writePrecedingMiniblocksTx")()
 	// Lock the stream for update
 	_, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
@@ -1226,6 +1270,7 @@ func (s *PostgresStreamStore) readMiniblocksTx(
 	toExclusive int64,
 	omitSnapshot bool,
 ) ([]*MiniblockDescriptor, error) {
+	defer logLockStreamRelease(ctx, streamId, "readMiniblocksTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
@@ -1339,6 +1384,7 @@ func (s *PostgresStreamStore) writeMiniblockCandidateTx(
 	streamId StreamId,
 	miniblock *MiniblockDescriptor,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "writeMiniblockCandidateTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
@@ -1420,6 +1466,7 @@ func (s *PostgresStreamStore) readMiniblockCandidateTx(
 	blockHash common.Hash,
 	blockNumber int64,
 ) (*MiniblockDescriptor, error) {
+	defer logLockStreamRelease(ctx, streamId, "readMiniblockCandidateTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
@@ -1477,6 +1524,7 @@ func (s *PostgresStreamStore) getMiniblockCandidateCountTx(
 	streamId StreamId,
 	miniblockNumber int64,
 ) (int, error) {
+	defer logLockStreamRelease(ctx, streamId, "getMiniblockCandidateCountTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return 0, err
 	}
@@ -1569,6 +1617,7 @@ func (s *PostgresStreamStore) writeMiniblocksTx(
 	prevMinipoolGeneration int64,
 	prevMinipoolSize int,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "writeMiniblocksTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
@@ -1871,6 +1920,7 @@ func (s *PostgresStreamStore) DeleteStream(ctx context.Context, streamId StreamI
 }
 
 func (s *PostgresStreamStore) deleteStreamTx(ctx context.Context, tx pgx.Tx, streamId StreamId) error {
+	defer logLockStreamRelease(ctx, streamId, "deleteStreamTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
 		return err
 	}
@@ -2109,6 +2159,7 @@ func (s *PostgresStreamStore) debugReadStreamDataTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamDataResult, error) {
+	defer logLockStreamRelease(ctx, streamId, "debugReadStreamDataTx")()
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
@@ -2220,6 +2271,7 @@ func (s *PostgresStreamStore) debugDeleteMiniblocksTx(
 	fromInclusive int64,
 	toExclusive int64,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "debugDeleteMiniblocksTx")()
 	// Lock the stream to ensure consistency
 	_, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
@@ -2279,6 +2331,7 @@ func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) (*DebugReadStreamStatisticsResult, error) {
+	defer logLockStreamRelease(ctx, streamId, "debugReadStreamStatisticsTx")()
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
@@ -2362,6 +2415,7 @@ func (s *PostgresStreamStore) getLastMiniblockNumberTx(
 	tx pgx.Tx,
 	streamID StreamId,
 ) (int64, error) {
+	defer logLockStreamRelease(ctx, streamID, "getLastMiniblockNumberTx")()
 	if _, err := s.lockStream(ctx, tx, streamID, false); err != nil {
 		return 0, err
 	}
@@ -2442,6 +2496,7 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) ([]MiniblockRange, error) {
+	defer logLockStreamRelease(ctx, streamId, "getMiniblockNumberRangesTx")()
 	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
 		return nil, err
 	}
@@ -2510,6 +2565,7 @@ func (s *PostgresStreamStore) trimStreamTx(
 	trimToMbExclusive int64,
 	nullifySnapshotMbs []int64,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "trimStreamTx")()
 	_, err := s.lockStream(ctx, tx, streamId, true)
 	if err != nil {
 		return err
@@ -2657,6 +2713,7 @@ func (s *PostgresStreamStore) reinitializeStreamStorageTx(
 	lastSnapshotMiniblockNum int64,
 	updateExisting bool,
 ) error {
+	defer logLockStreamRelease(ctx, streamId, "reinitializeStreamStorageTx")()
 	// Try to insert the stream with ON CONFLICT DO NOTHING
 	// This handles race conditions atomically
 	tag, err := tx.Exec(
