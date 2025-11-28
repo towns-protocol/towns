@@ -338,6 +338,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The interaction response that was received */
             response: DecryptedInteractionResponse
+            threadId: string | undefined
         },
     ) => void | Promise<void>
 }
@@ -616,6 +617,9 @@ export class Bot<
                                     recipient: payload.recipient,
                                     payload: response,
                                 },
+                                threadId: payload.threadId
+                                    ? bin_toHexString(payload.threadId)
+                                    : undefined,
                             })
                         } else {
                             logNever(parsed.event.payload.value.content)
