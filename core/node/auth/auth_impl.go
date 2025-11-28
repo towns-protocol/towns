@@ -95,6 +95,16 @@ func NewChainAuthArgsForIsNotApp(userId common.Address) *ChainAuthArgs {
 	}
 }
 
+// NewChainAuthArgsForIsBotOwner creates chain auth args to check if the principal (userId)
+// is the owner of the bot whose client address is botClientAddress.
+func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress common.Address) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:             chainAuthKindIsBotOwner,
+		principal:        userId,
+		botClientAddress: botClientAddress,
+	}
+}
+
 func NewChainAuthArgsForSpace(
 	spaceId shared.StreamId,
 	userId common.Address,
@@ -162,6 +172,7 @@ const (
 	chainAuthKindIsWalletLinked
 	chainAuthKindIsApp
 	chainAuthKindIsNotApp
+	chainAuthKindIsBotOwner
 )
 
 type ChainAuthArgs struct {
@@ -181,6 +192,10 @@ type ChainAuthArgs struct {
 	linkedWallets string // a serialized list of linked wallets to comply with the cache key constraints
 	walletAddress common.Address
 	tokenIdsStr   string // a serialized list of token ids to comply with the cache key constraints
+
+	// botClientAddress is the client address of a bot for IS_BOT_OWNER checks.
+	// This is the address of the user stream that the bot owner is trying to write to.
+	botClientAddress common.Address
 }
 
 func (args *ChainAuthArgs) Principal() common.Address {
@@ -1161,7 +1176,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
@@ -1210,6 +1225,27 @@ func (ca *chainAuth) checkIsApp(
 			} else {
 				return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 			}
+		}
+	}
+
+	if args.kind == chainAuthKindIsBotOwner {
+		isOwner, err := ca.appRegistryContract.IsUserBotOwner(ctx, args.principal, args.botClientAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		logging.FromCtx(ctx).
+			Debugw(
+				"checkIsBotOwner",
+				"principal", args.principal,
+				"botClientAddress", args.botClientAddress,
+				"isOwner", isOwner,
+			)
+
+		if isOwner {
+			return boolCacheResult{true, EntitlementResultReason_NONE}, nil
+		} else {
+			return boolCacheResult{false, EntitlementResultReason_IS_NOT_BOT_OWNER}, nil
 		}
 	}
 
