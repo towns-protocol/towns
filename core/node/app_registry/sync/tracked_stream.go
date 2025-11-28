@@ -148,7 +148,13 @@ func NewTrackedStreamForAppRegistryService(
 		listener: listener,
 		queue:    store,
 	}
-	view, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, trackedView.onNewEvent)
+	view, err := trackedView.TrackedStreamViewImpl.Init(
+		streamId,
+		cfg,
+		stream,
+		trackedView.onNewEvent,
+		trackedView.shouldPersistCookie,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -162,4 +168,44 @@ func NewTrackedStreamForAppRegistryService(
 	}
 
 	return trackedView, nil
+}
+
+// shouldPersistCookie determines if this stream's cookie should be persisted.
+// Only channel streams with bot members need cookie persistence to ensure message
+// delivery guarantees. User inbox streams don't need persistence since session keys
+// are already stored in the database and re-processing is idempotent.
+// TODO yoni: optimize this by caching the result and track join/leave events
+func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
+	streamId := view.StreamId()
+
+	// Only persist cookies for channel streams with bot members
+	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+		return false
+	}
+
+	members, err := view.GetChannelMembers()
+	if err != nil {
+		return false
+	}
+
+	hasBots := false
+	members.Each(func(member string) bool {
+		// Trim 0x prefix
+		if len(member) > 2 && member[:2] == "0x" {
+			member = member[2:]
+		}
+
+		bytes, err := hex.DecodeString(member)
+		if err != nil {
+			return false
+		}
+		memberAddress := common.BytesToAddress(bytes)
+		isForwardable, _, err := b.queue.IsForwardableApp(ctx, memberAddress)
+		if err == nil && isForwardable {
+			hasBots = true
+			return true // Stop iteration
+		}
+		return false
+	})
+	return hasBots
 }
