@@ -24,6 +24,15 @@ import (
 
 var _ nodes.StreamNodes = (*Stream)(nil)
 
+// debugStreamId is the stream ID for which mutex logging is enabled.
+// Set to empty string to disable logging for all streams.
+const debugStreamId = "a105f2a7371ca78f9de8b80c9a92132b6e8832cb620000000000000000000000"
+
+// shouldLogMutex returns true if mutex logging should be enabled for this stream.
+func (s *Stream) shouldLogMutex() bool {
+	return debugStreamId != "" && s.streamId.String() == debugStreamId
+}
+
 type ViewStream interface {
 	GetView(ctx context.Context) (*StreamView, error)
 }
@@ -100,9 +109,13 @@ func NewStream(
 func (s *Stream) IsLocal() bool {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocal", "line", 103)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocal", "line", 103)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocal", "line", 105)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocal", "line", 105)
+		}
 		s.mu.RUnlock()
 	}()
 	return s.local != nil
@@ -146,7 +159,9 @@ func (s *Stream) setViewLocked(view *StreamView) {
 func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 148)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 148)
+	}
 	if s.local == nil {
 		return nil, nil
 	}
@@ -165,7 +180,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 		return nil, err
 	}
 
-	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 168)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 168)
+	}
 	s.mu.Unlock()
 	s.params.streamCache.SubmitReconcileStreamTask(s, nil)
 
@@ -179,7 +196,9 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 
 	for {
 		s.mu.Lock()
-		log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 181)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 181)
+		}
 		if s.local == nil {
 			return nil, nil
 		}
@@ -188,13 +207,17 @@ func (s *Stream) lockMuAndLoadView(ctx context.Context) (*StreamView, error) {
 			s.lastAccessedTime = time.Now()
 			return s.getViewLocked(), nil
 		}
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 191)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 191)
+		}
 		s.mu.Unlock()
 
 		err := backoff.Wait(ctx, nil)
 		if err != nil {
 			s.mu.Lock()
-			log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 196)
+			if s.shouldLogMutex() {
+				log.Infow("mutex Lock", "streamId", s.streamId, "func", "lockMuAndLoadView", "line", 196)
+			}
 			return nil, err
 		}
 	}
@@ -238,7 +261,9 @@ func (s *Stream) ApplyMiniblock(ctx context.Context, miniblock *MiniblockInfo) e
 	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ApplyMiniblock", "line", 241)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ApplyMiniblock", "line", 241)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -260,9 +285,13 @@ func (s *Stream) importMiniblocks(
 
 	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "importMiniblocks", "line", 263)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "importMiniblocks", "line", 263)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "importMiniblocks", "line", 265)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "importMiniblocks", "line", 265)
+		}
 		s.mu.Unlock()
 	}()
 	return s.importMiniblocksLocked(ctx, miniblocks)
@@ -415,7 +444,9 @@ func (s *Stream) promoteCandidate(ctx context.Context, mb *MiniblockRef) error {
 	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "promoteCandidate", "line", 416)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "promoteCandidate", "line", 416)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -551,7 +582,9 @@ func (s *Stream) GetViewIfLocalEx(ctx context.Context, allowNoQuorum bool) (*Str
 
 	view, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "GetViewIfLocalEx", "line", 554)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "GetViewIfLocalEx", "line", 554)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -593,9 +626,13 @@ func (s *Stream) GetView(ctx context.Context) (*StreamView, error) {
 func (s *Stream) tryGetView(allowNoQuorum bool) (*StreamView, bool) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "tryGetView", "line", 594)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "tryGetView", "line", 594)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "tryGetView", "line", 596)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "tryGetView", "line", 596)
+		}
 		s.mu.RUnlock()
 	}()
 	if s.local == nil {
@@ -634,9 +671,13 @@ func (s *Stream) maybeScrubLocked() {
 func (s *Stream) shouldScrub() bool {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "shouldScrub", "line", 636)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "shouldScrub", "line", 636)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "shouldScrub", "line", 638)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "shouldScrub", "line", 638)
+		}
 		s.mu.Unlock()
 	}()
 	if s.params.Config.Scrubbing.ScrubEligibleDuration > 0 &&
@@ -659,9 +700,13 @@ func (s *Stream) maybeScheduleScrub() {
 func (s *Stream) tryCleanup(expiration time.Duration) bool {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "tryCleanup", "line", 658)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "tryCleanup", "line", 658)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryCleanup", "line", 660)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryCleanup", "line", 660)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -764,7 +809,9 @@ func (s *Stream) addEvent(ctx context.Context, event *ParsedEvent, relaxDuplicat
 	log := logging.FromCtx(ctx)
 	_, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "addEvent", "line", 765)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "addEvent", "line", 765)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -906,7 +953,9 @@ func (s *Stream) UpdatesSinceCookie(
 	log := logging.FromCtx(ctx)
 	view, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "UpdatesSinceCookie", "line", 908)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "UpdatesSinceCookie", "line", 908)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -959,7 +1008,9 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver SyncResul
 	log := logging.FromCtx(ctx)
 	view, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Sub", "line", 961)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Sub", "line", 961)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -997,7 +1048,9 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 
 	_, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "SubNoCookie", "line", 1001)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "SubNoCookie", "line", 1001)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -1018,9 +1071,13 @@ func (s *Stream) SubNoCookie(ctx context.Context, receiver SyncResultReceiver) e
 func (s *Stream) Unsub(receiver SyncResultReceiver) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "Unsub", "line", 1019)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "Unsub", "line", 1019)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Unsub", "line", 1021)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Unsub", "line", 1021)
+		}
 		s.mu.Unlock()
 	}()
 	if s.local.receivers != nil {
@@ -1035,9 +1092,13 @@ func (s *Stream) Unsub(receiver SyncResultReceiver) {
 func (s *Stream) ForceFlush(ctx context.Context) {
 	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "ForceFlush", "line", 1038)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "ForceFlush", "line", 1038)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ForceFlush", "line", 1040)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ForceFlush", "line", 1040)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -1064,9 +1125,13 @@ func (s *Stream) unsubAllLocked() {
 func (s *Stream) canCreateMiniblock() bool {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1066)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1066)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1068)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "canCreateMiniblock", "line", 1068)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1089,9 +1154,13 @@ type streamImplStatus struct {
 func (s *Stream) getStatus() *streamImplStatus {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "getStatus", "line", 1091)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "getStatus", "line", 1091)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getStatus", "line", 1093)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getStatus", "line", 1093)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1140,7 +1209,9 @@ func (s *Stream) tryApplyCandidate(ctx context.Context, mb *MiniblockInfo) (bool
 	// try to apply the candidate
 	_, err := s.lockMuAndLoadView(ctx)
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryApplyCandidate", "line", 1144)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "tryApplyCandidate", "line", 1144)
+		}
 		s.mu.Unlock()
 	}()
 	if err != nil {
@@ -1215,9 +1286,13 @@ func (s *Stream) tryReadAndApplyCandidateLocked(ctx context.Context, mbRef *Mini
 func (s *Stream) getLastMiniblockNumSkipLoad(ctx context.Context) (int64, error) {
 	log := logging.FromCtx(ctx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1218)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1218)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1220)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "getLastMiniblockNumSkipLoad", "line", 1220)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1243,14 +1318,18 @@ func (s *Stream) applyStreamMiniblockUpdates(
 
 	view, err := s.lockMuAndLoadView(ctx)
 	if err != nil {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1249)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1249)
+		}
 		s.mu.Unlock()
 		log.Errorw("applyStreamEvents: failed to load view", "error", err)
 		return
 	}
 
 	if view == nil {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1256)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1256)
+		}
 		s.mu.Unlock()
 		return // stream is not local, no need to apply miniblock updates
 	}
@@ -1288,7 +1367,9 @@ func (s *Stream) applyStreamMiniblockUpdates(
 	}
 
 	s.lastAppliedBlockNum = blockNum
-	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1290)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "applyStreamMiniblockUpdates", "line", 1290)
+	}
 	s.mu.Unlock()
 
 	if needsSyncTask {
@@ -1355,9 +1436,13 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 	// Since it's a reset "in the future", current subscribers can't be updated continuosly and are dropped.
 	log := logging.FromCtx(ctx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "reinitialize", "line", 1357)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "reinitialize", "line", 1357)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "reinitialize", "line", 1359)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "reinitialize", "line", 1359)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -1396,9 +1481,13 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 func (s *Stream) GetQuorumNodes() []common.Address {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1398)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1398)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1400)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetQuorumNodes", "line", 1400)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1412,9 +1501,13 @@ func (s *Stream) GetQuorumNodes() []common.Address {
 func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1414)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1414)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1416)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetRemotesAndIsLocal", "line", 1416)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1430,9 +1523,21 @@ func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []common.Address, bool) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumAndReconcileNodesAndIsLocal", "line", 1432)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetQuorumAndReconcileNodesAndIsLocal", "line", 1432)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetQuorumAndReconcileNodesAndIsLocal", "line", 1434)
+		if s.shouldLogMutex() {
+			log.Infow(
+				"mutex RUnlock",
+				"streamId",
+				s.streamId,
+				"func",
+				"GetQuorumAndReconcileNodesAndIsLocal",
+				"line",
+				1434,
+			)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1446,9 +1551,13 @@ func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []com
 func (s *Stream) GetStickyPeer() common.Address {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1449)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1449)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1451)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetStickyPeer", "line", 1451)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1461,9 +1570,13 @@ func (s *Stream) GetStickyPeer() common.Address {
 func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1455)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1455)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1457)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "AdvanceStickyPeer", "line", 1457)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -1473,9 +1586,13 @@ func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode common.Address) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1467)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1467)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1469)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "ResetFromStreamWithId", "line", 1469)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -1485,9 +1602,13 @@ func (s *Stream) ResetFromStreamWithId(stream *river.StreamWithId, localNode com
 func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode common.Address) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "Reset", "line", 1479)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "Reset", "line", 1479)
+	}
 	defer func() {
-		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Reset", "line", 1481)
+		if s.shouldLogMutex() {
+			log.Infow("mutex Unlock", "streamId", s.streamId, "func", "Reset", "line", 1481)
+		}
 		s.mu.Unlock()
 	}()
 
@@ -1497,9 +1618,13 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 func (s *Stream) GetReconcileNodes() []common.Address {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1491)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1491)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1493)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "GetReconcileNodes", "line", 1493)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1509,9 +1634,13 @@ func (s *Stream) GetReconcileNodes() []common.Address {
 func (s *Stream) IsLocalInQuorum() bool {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.RLock()
-	log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1503)
+	if s.shouldLogMutex() {
+		log.Infow("mutex RLock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1503)
+	}
 	defer func() {
-		log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1505)
+		if s.shouldLogMutex() {
+			log.Infow("mutex RUnlock", "streamId", s.streamId, "func", "IsLocalInQuorum", "line", 1505)
+		}
 		s.mu.RUnlock()
 	}()
 
@@ -1523,8 +1652,12 @@ func (s *Stream) IsLocalInQuorum() bool {
 func (s *Stream) TestOnlyHelper_SetView(view *StreamView) {
 	log := logging.FromCtx(s.params.ServerCtx)
 	s.mu.Lock()
-	log.Infow("mutex Lock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1517)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Lock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1517)
+	}
 	s.setViewLocked(view)
-	log.Infow("mutex Unlock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1519)
+	if s.shouldLogMutex() {
+		log.Infow("mutex Unlock", "streamId", s.streamId, "func", "TestOnlyHelper_SetView", "line", 1519)
+	}
 	s.mu.Unlock()
 }
