@@ -93,6 +93,7 @@ import {
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
+import { EventDedup, type EventDedupConfig } from './eventDedup'
 
 import {
     http,
@@ -337,6 +338,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The interaction response that was received */
             response: DecryptedInteractionResponse
+            threadId: string | undefined
         },
     ) => void | Promise<void>
 }
@@ -379,6 +381,7 @@ export class Bot<
     > = new Map()
     private readonly commands: Commands | undefined
     private readonly identityConfig?: BotIdentityConfig
+    private readonly eventDedup: EventDedup
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -387,6 +390,7 @@ export class Bot<
         appAddress: Address,
         commands?: Commands,
         identityConfig?: BotIdentityConfig,
+        dedupConfig?: EventDedupConfig,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
@@ -396,6 +400,7 @@ export class Bot<
         this.commands = commands
         this.appAddress = appAddress
         this.identityConfig = identityConfig
+        this.eventDedup = new EventDedup(dedupConfig)
     }
 
     start() {
@@ -509,6 +514,10 @@ export class Bot<
                 if (!parsed.event.payload.case) {
                     continue
                 }
+                // Skip duplicate events (App Registry may replay events during restarts)
+                if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
+                    continue
+                }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
                 debug('emit:streamEvent', {
@@ -608,6 +617,9 @@ export class Bot<
                                     recipient: payload.recipient,
                                     payload: response,
                                 },
+                                threadId: payload.threadId
+                                    ? bin_toHexString(payload.threadId)
+                                    : undefined,
                             })
                         } else {
                             logNever(parsed.event.payload.value.content)
@@ -1357,6 +1369,7 @@ export const makeTownsBot = async <
         baseRpcUrl?: string
         commands?: Commands
         identity?: BotIdentityConfig
+        dedup?: EventDedupConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1445,6 +1458,7 @@ export const makeTownsBot = async <
         appAddress,
         opts.commands,
         opts.identity,
+        opts.dedup,
     )
 }
 
@@ -2128,13 +2142,13 @@ const buildBotActions = (
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.threadId ? bin_fromHexString(opts.threadId) : undefined,
         }
 
         // Send as InteractionRequest
         const eventPayload = make_ChannelPayload_InteractionRequest(request)
         return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
     }
-
     /**
      * Send a blockchain transaction to the stream
      * @param streamId - The stream ID to send the transaction to
