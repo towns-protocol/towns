@@ -19,10 +19,9 @@ services:
             - subgraph-db:/var/lib/postgresql/data
 
     subgraph-indexer:
-        image: public.ecr.aws/h5v6m2x1/subgraph:subgraph-fallback-app-registry-3
-        # build:
-        #     context: ../../
-        #     dockerfile: packages/subgraph/Dockerfile
+        build:
+            context: ../../
+            dockerfile: packages/subgraph/Dockerfile
         depends_on:
             subgraph-db:
                 condition: service_healthy
@@ -39,10 +38,9 @@ services:
             - PONDER_ENVIRONMENT=${PONDER_ENVIRONMENT}
 
     subgraph-server:
-        image: public.ecr.aws/h5v6m2x1/subgraph:subgraph-fallback-app-registry-3
-        # build:
-        #     context: ../../
-        #     dockerfile: packages/subgraph/Dockerfile
+        build:
+            context: ../../
+            dockerfile: packages/subgraph/Dockerfile
         depends_on:
             subgraph-db:
                 condition: service_healthy
