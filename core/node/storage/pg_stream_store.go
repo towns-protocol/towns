@@ -552,7 +552,8 @@ func (s *PostgresStreamStore) lockStream(
 func logLockStreamRelease(ctx context.Context, streamId StreamId, funcName string) func() {
 	return func() {
 		if shouldLogLockStream(streamId) {
-			logging.FromCtx(ctx).Infow("lockStream released (function returning)", "streamId", streamId, "func", funcName)
+			logging.FromCtx(ctx).
+				Infow("lockStream released (function returning)", "streamId", streamId, "func", funcName)
 		}
 	}
 }
