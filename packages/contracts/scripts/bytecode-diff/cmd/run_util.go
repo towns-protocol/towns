@@ -38,11 +38,11 @@ var AddHashesCmd = &cobra.Command{
 		environment := args[0]
 		yamlFilePath := args[1]
 
-		supportedEnvironments := []string{"alpha", "gamma", "omega", "delta", "beta"}
+		supportedEnvironments := []string{"alpha", "beta", "omega", "delta"}
 		if !utils.Contains(supportedEnvironments, environment) {
 			log.Fatal().
 				Str("environment", environment).
-				Msg("Environment not supported. Environment can be one of alpha, gamma, delta, omega, or beta.")
+				Msg("Environment not supported. Environment can be one of alpha, beta, omega, or delta.")
 		}
 
 		// todo: just require 1 rpc url based on env
