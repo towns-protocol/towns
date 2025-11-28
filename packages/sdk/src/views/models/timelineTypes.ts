@@ -683,14 +683,14 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     if (content?.kind === RiverTimelineEvent.ChannelMessage) {
         return content.threadId
-    }
-    if (
+    } else if (
         content?.kind === RiverTimelineEvent.InteractionRequest ||
         content?.kind === RiverTimelineEvent.InteractionRequestEncrypted ||
         content?.kind === RiverTimelineEvent.TokenTransfer
     ) {
         return content.threadParentId
     }
+    return undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
