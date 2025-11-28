@@ -7,7 +7,7 @@
         "docker:build": "cd ../../core && just build-anvil-docker local",
         "docker:start": "cd ../../core && USE_DOCKER_CHAINS=1 just anvils",
         "docker:stop": "cd ../../core && USE_DOCKER_CHAINS=1 just anvils-stop",
-        "docker:restart": "yarn docker:stop && yarn docker:start",
+        "docker:restart": "bun run docker:stop && bun run docker:start",
         "docker:logs": "docker logs -f towns-base-chain & docker logs -f towns-river-chain",
         "docker:logs:base": "docker logs -f towns-base-chain",
         "docker:logs:river": "docker logs -f towns-river-chain",

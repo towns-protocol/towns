@@ -13,7 +13,7 @@
       "dependsOn": [
         "CheckVersions",
         "FoundryUp",
-        "YarnInstall",
+        "BunInstall",
         "BuildProtobufs",
       ],
       "group": {
@@ -25,7 +25,7 @@
     {
       // start local dev:
       //
-      // 1. yarn install
+      // 1. bun install
       // 2. start blockchains (Docker by default)
       // 3. configure nodes
       // 4. starts all servers and clients
@@ -148,9 +148,9 @@
       }
     },
     {
-      "label": "YarnInstall",
+      "label": "BunInstall",
       "type": "shell",
-      "command": "yarn",
+      "command": "bun install --frozen-lockfile",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -317,7 +317,7 @@
     {
       "label": "Build Contracts",
       "type": "shell",
-      "command": "yarn workspace @towns-protocol/contracts compile",
+      "command": "bun run --filter @towns-protocol/contracts compile",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -329,7 +329,7 @@
     {
       "label": "BuildContractTypes",
       "type": "shell",
-      "command": "yarn workspace @towns-protocol/generated build-types",
+      "command": "bun run --filter @towns-protocol/generated build-types",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -353,7 +353,7 @@
     {
       "label": "Playground",
       "type": "shell",
-      "command": "cd packages/playground && yarn dev:local",
+      "command": "cd packages/playground && bun run dev:local",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -363,7 +363,7 @@
     {
       "label": "WatchSdk",
       "type": "shell",
-      "command": "cd packages/sdk && yarn watch",
+      "command": "cd packages/sdk && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -373,7 +373,7 @@
     {
       "label": "WatchReactSdk",
       "type": "shell",
-      "command": "cd packages/react-sdk && yarn watch",
+      "command": "cd packages/react-sdk && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -383,7 +383,7 @@
     {
       "label": "WatchBot",
       "type": "shell",
-      "command": "cd packages/bot && yarn watch",
+      "command": "cd packages/bot && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -393,7 +393,7 @@
     {
       "label": "WatchEncryption",
       "type": "shell",
-      "command": "cd packages/encryption && yarn watch",
+      "command": "cd packages/encryption && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -403,7 +403,7 @@
     {
       "label": "WatchUtils",
       "type": "shell",
-      "command": "cd packages/utils && yarn watch",
+      "command": "cd packages/utils && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -413,7 +413,7 @@
     {
       "label": "WatchProto",
       "type": "shell",
-      "command": "cd packages/proto && yarn watch",
+      "command": "cd packages/proto && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -423,7 +423,7 @@
     {
       "label": "WatchStress",
       "type": "shell",
-      "command": "cd packages/stress && yarn watch",
+      "command": "cd packages/stress && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -433,7 +433,7 @@
     {
       "label": "WatchWeb3",
       "type": "shell",
-      "command": "cd packages/web3 && yarn watch",
+      "command": "cd packages/web3 && bun run watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -443,7 +443,7 @@
     {
       "label": "WatchProto_Go",
       "type": "shell",
-      "command": "cd packages/proto && yarn watch:go",
+      "command": "cd packages/proto && bun run watch:go",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
