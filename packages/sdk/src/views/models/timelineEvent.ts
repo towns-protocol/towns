@@ -609,6 +609,9 @@ function toTownsContent_ChannelPayload(
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: timelineEvent.decryptedContent.content,
                         recipient,
+                        threadParentId: value.content.value.threadId
+                            ? bin_toHexString(value.content.value.threadId)
+                            : undefined,
                     } satisfies InteractionRequestEvent,
                 }
             }
@@ -1122,6 +1125,7 @@ export function toDecryptedEvent(
                         kind: RiverTimelineEvent.InteractionRequest,
                         payload: decryptedContent.content,
                         recipient: event.content.recipient,
+                        threadParentId: getThreadParentId(event.content),
                     } satisfies InteractionRequestEvent,
                 }
             } else {

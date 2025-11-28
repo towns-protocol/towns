@@ -2138,13 +2138,13 @@ const buildBotActions = (
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.threadId ? bin_fromHexString(opts.threadId) : undefined,
         }
 
         // Send as InteractionRequest
         const eventPayload = make_ChannelPayload_InteractionRequest(request)
         return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
     }
-
     /**
      * Send a blockchain transaction to the stream
      * @param streamId - The stream ID to send the transaction to
