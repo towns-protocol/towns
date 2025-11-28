@@ -16,3 +16,4 @@
 - [ ] Tests added where required
 - [ ] Documentation updated where applicable
 - [ ] Changes adhere to the repository's contribution guidelines
+- [ ] Changeset added (run `yarn changeset` if affecting published packages)
