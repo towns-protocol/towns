@@ -39,8 +39,8 @@ The subgraph consists of:
 # For Alpha environment
 docker compose --env-file .env.alpha up -d
 
-# For Gamma environment
-docker compose --env-file .env.gamma up -d
+# For Beta environment
+docker compose --env-file .env.beta up -d
 
 # For Omega environment
 docker compose --env-file .env.omega up -d
@@ -124,7 +124,7 @@ If you prefer more control, you can set up each component manually:
 2. **Set the environment**:
 
    ```bash
-   export RIVER_ENV=gamma
+   export RIVER_ENV=beta
    export PONDER_RPC_URL_1=http://localhost:8545
    ```
 
@@ -142,7 +142,7 @@ To create events for the subgraph to index, you can interact with the contracts 
 ```bash
 # Create a new space on the Anvil fork
 cd contracts
-make interact-any-local context=gamma rpc=base_anvil contract=InteractCreateSpace
+make interact-any-local context=beta rpc=base_anvil contract=InteractCreateSpace
 ```
 
 This will:
@@ -164,9 +164,9 @@ const spaceFactoryAddress = getContractAddress("spaceFactory", "base", "alpha");
 
 This system automatically:
 
-- Reads from the correct environment (alpha, gamma, omega, etc.)
+- Reads from the correct environment (alpha, beta, omega, etc.)
 - Finds the correct network (base, mainnet, etc.)
-- Falls back to default environments if needed: gamma
+- Falls back to default environments if needed: beta
 - Provides detailed error messages for troubleshooting
 
 ## Debugging Tools
@@ -220,7 +220,7 @@ The subgraph uses several environment variables for configuration:
 
 - `PONDER_RPC_URL_1`: RPC URL for the blockchain network (default: http://localhost:8545)
 - `PONDER_START_BLOCK`: Block number to start indexing from
-- `PONDER_ENVIRONMENT`: Environment to use for contract addresses (default: gamma)
+- `PONDER_ENVIRONMENT`: Environment to use for contract addresses (default: beta)
 
 These can be set in a `.env.local` file or via the command line.
 
@@ -229,17 +229,17 @@ These can be set in a `.env.local` file or via the command line.
 The subgraph supports multiple environments:
 
 - **alpha**: Development environment
-- **gamma**: Staging environment
+- **beta**: Staging environment
 - **omega**: Production environment
 
 To switch environments:
 
 ```bash
 # Using the fork script
-yarn dev:fork --environment gamma
+yarn dev:fork --environment beta
 
 # Or manually
-export PONDER_ENVIRONMENT=gamma
+export PONDER_ENVIRONMENT=beta
 yarn dev
 ```
 
@@ -282,7 +282,7 @@ You can create custom contract interactions to generate specific events:
 
 ```bash
 # Create a custom interaction script
-make interact-any-local context=gamma rpc=base_anvil contract=YourCustomInteraction
+make interact-any-local context=beta rpc=base_anvil contract=YourCustomInteraction
 ```
 
 ### Transfer Ownership

@@ -241,7 +241,7 @@ make deploy-facet-local rpc=base_anvil contract=MembershipFacet
 make deploy-base-sepolia contract=DeploySpace type=diamonds context=alpha
 
 # Deploy with hardware wallet
-make deploy-ledger-base-sepolia contract=DeploySpace type=diamonds context=gamma
+make deploy-ledger-base-sepolia contract=DeploySpace type=diamonds context=beta
 ```
 
 ## Environment Variables

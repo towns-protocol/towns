@@ -250,12 +250,12 @@ This approach separates facet contract deployment (using `DeployFacet` with CREA
 
 ```bash
 # Method 1: Using custom deployment scripts
-# To deploy a contract to Base Sepolia in the "gamma" deployment context:
--> make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+# To deploy a contract to Base Sepolia in the "beta" deployment context:
+-> make deploy-base-sepolia contract=DeployWalletLink type=facets context=beta
 
 # Method 2: Using the DeployFacet script
 # To deploy a facet to Base Sepolia:
--> make deploy-facet rpc=base_sepolia contract=WalletLink context=gamma
+-> make deploy-facet rpc=base_sepolia contract=WalletLink context=beta
 
 # To deploy with a ledger hardware wallet to Base mainnet:
 # Method 1: Using custom deployment scripts
@@ -264,8 +264,8 @@ This approach separates facet contract deployment (using `DeployFacet` with CREA
 # Method 2: Using the DeployFacet script
 -> make deploy-facet-ledger rpc=base contract=WalletLink context=omega
 
-# To redeploy a contract to Base Sepolia in the "gamma" deployment context:
--> OVERRIDE_DEPLOYMENTS=1 make deploy-base-sepolia contract=DeployWalletLink type=facets context=gamma
+# To redeploy a contract to Base Sepolia in the "beta" deployment context:
+-> OVERRIDE_DEPLOYMENTS=1 make deploy-base-sepolia contract=DeployWalletLink type=facets context=beta
 ```
 
 </details>

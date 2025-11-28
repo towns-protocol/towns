@@ -121,7 +121,6 @@ async function getReadSpaceInfoBlockNumber(blockNumber: bigint): Promise<bigint>
     // Environment-specific minimum block numbers where the upgraded contract is available
     const minBlockByEnvironment: Record<string, bigint> = {
         alpha: 30861709n, // Sep 10, 2025
-        gamma: 30861709n, // Sep 10, 2025
         beta: 30861709n, // Oct 02, 2025
         omega: 35350928n, // Sep 10, 2025
     }

@@ -107,14 +107,14 @@ Printing from logs should be done through `testfmt` package, set `RIVER_TEST_PRI
 Go test's -v flag serves dual purpose: print names of running tests and enable test output.
 These env vars give more control over what should be printed.
 
-# Checking on Gamma Status from Local Host
+# Checking on Beta Status from Local Host
 
 Run
 
-    ./env/gamma/run.sh info
+    ./env/beta/run.sh info
 
 Browse to http://localhost:4040/debug/multi to see status and ping times as seen from the local machine.
 
 Or, to get JSON on the console:
 
-    ./env/gamma/run.sh ping
+    ./env/beta/run.sh ping

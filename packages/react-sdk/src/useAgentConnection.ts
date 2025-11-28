@@ -17,7 +17,7 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  * import { townsEnv } from '@towns-protocol/sdk'
  * import { useState } from 'react'
  *
- * const townsConfig = townsEnv().makeTownsConfig('gamma')
+ * const townsConfig = townsEnv().makeTownsConfig('beta')
  *
  * const Login = () => {
  *   const { connectUsingBearerToken, isAgentConnecting, isAgentConnected } = useAgentConnection()
@@ -45,7 +45,7 @@ type AgentConnectConfig = Omit<SyncAgentConfig, 'context' | 'onTokenExpired'>
  * import { townsEnv } from '@towns-protocol/sdk'
  * import { useEthersSigner } from './utils/viem-to-ethers'
  *
- * const townsConfig = townsEnv().makeTownsConfig('gamma')
+ * const townsConfig = townsEnv().makeTownsConfig('beta')
  *
  * const Login = () => {
  *   const { connect, isAgentConnecting, isAgentConnected } = useAgentConnection()
@@ -137,7 +137,7 @@ export const useAgentConnection = () => {
         isAgentConnecting,
         /** Whether the agent is connected */
         isAgentConnected,
-        /** The environment of the current connection (gamma, omega, alpha, local_dev, etc.) */
+        /** The environment of the current connection (beta, omega, alpha, local_dev, etc.) */
         env: towns?.syncAgent?.config.townsConfig.environmentId,
     }
 }

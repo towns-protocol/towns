@@ -150,7 +150,7 @@ export class SyncAgent {
 
     dbName(db: string): string {
         const envSuffix =
-            this.config.townsConfig.environmentId === 'gamma'
+            this.config.townsConfig.environmentId === 'beta'
                 ? ''
                 : `-${this.config.townsConfig.environmentId}`
         const postfix = this.config.deviceId !== undefined ? `-${this.config.deviceId}` : ''

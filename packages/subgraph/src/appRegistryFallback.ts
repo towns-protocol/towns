@@ -22,10 +22,8 @@ function getAppRegistryUrl(environment: string): string {
         case 'alpha':
             return 'https://app-registry.alpha.towns.com'
         case 'beta':
-            return 'https://app-registry.beta.towns.com'
-        case 'gamma':
         case 'test-beta':
-            return 'https://app-registry.gamma.towns.com'
+            return 'https://app-registry.beta.towns.com'
         case 'omega':
             return 'https://app-registry.omega.towns.com'
         case 'delta':

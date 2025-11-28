@@ -78,12 +78,12 @@ is written in `core/env/local/archiver/config.yaml`.
 ./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
-## Example: Running against gamma nodes
+## Example: Running against beta nodes
 
 ```
 ./scripts/launch_storage.sh
 
-./env/gamma/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
+./env/beta/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
 ```
 
 **Note:** some networks, such as omega, may have hundreds of gigabytes of stream data available. Be sure to increase the maximum storage, CPU and/or memory of your docker service / postgres container appropriately so it can handle the load.
@@ -103,12 +103,12 @@ To run a local app registry service that checks against the streams and contract
 ./env/omega/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
 ```
 
-## Example: Running against gamma nodes
+## Example: Running against beta nodes
 
 ```
 ./scripts/launch_storage.sh
 
-./env/gamma/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+./env/beta/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
 ```
 
 # Installing Dependencies
