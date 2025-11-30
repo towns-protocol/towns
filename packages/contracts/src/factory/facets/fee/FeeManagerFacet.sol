@@ -8,6 +8,9 @@ import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBas
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
+// libraries
+import {FeeTypesLib} from "./FeeTypesLib.sol";
+
 /// @title FeeManagerFacet
 /// @notice Facet for unified fee management across the protocol
 contract FeeManagerFacet is
@@ -28,6 +31,7 @@ contract FeeManagerFacet is
 
     function __FeeManagerFacet__init_unchained(address protocolRecipient) internal {
         _setProtocolFeeRecipient(protocolRecipient);
+        _setInitialFeeConfigs(protocolRecipient);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -99,5 +103,37 @@ contract FeeManagerFacet is
     /// @inheritdoc IFeeManager
     function getProtocolFeeRecipient() external view returns (address recipient) {
         return _getProtocolFeeRecipient();
+    }
+
+    function _setInitialFeeConfigs(address protocolRecipient) internal {
+        // tipping fee
+        _setFeeConfig(
+            FeeTypesLib.TIP_MEMBER,
+            protocolRecipient,
+            FeeCalculationMethod.PERCENT,
+            50,
+            0,
+            true
+        );
+
+        // membership fee
+        _setFeeConfig(
+            FeeTypesLib.MEMBERSHIP,
+            protocolRecipient,
+            FeeCalculationMethod.HYBRID,
+            1000, // 10%
+            0.0005 ether,
+            true
+        );
+
+        // app installation fee
+        _setFeeConfig(
+            FeeTypesLib.APP_INSTALL,
+            protocolRecipient,
+            FeeCalculationMethod.HYBRID,
+            1000, // 10%
+            0.0005 ether,
+            true
+        );
     }
 }
