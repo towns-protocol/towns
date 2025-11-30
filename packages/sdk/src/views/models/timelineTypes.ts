@@ -70,6 +70,7 @@ export interface TimelineEvent {
         id: string
     }
     sessionId?: string
+    appClientAddress?: string
 }
 
 /// a timeline event should have one or none of the following fields set
