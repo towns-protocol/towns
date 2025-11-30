@@ -104,13 +104,88 @@ func NewStreamMembershipScrubTasksProcessor(
 	return proc
 }
 
+// processSpaceMemberImpl checks the individual member for entitlement and attempts to boot them if
+// they no longer meet entitlement requirements. This method returns an error for the sake
+// of annotating the telemetry span, but in practice it is not used by the caller.
+func (tp *streamMembershipScrubTaskProcessorImpl) processSpaceMemberImpl(
+	ctx context.Context,
+	spaceId StreamId,
+	memberAddress common.Address,
+	appAddress common.Address,
+	span trace.Span,
+) error {
+	log := logging.FromCtx(ctx)
+	tp.membershipChecks.Inc()
+
+	isEntitledResult, err := tp.chainAuth.IsEntitled(
+		ctx,
+		tp.config,
+		auth.NewChainAuthArgsForIsSpaceMember(
+			spaceId,
+			memberAddress,
+			appAddress,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	if span != nil {
+		span.SetAttributes(attribute.Bool("isEntitled", isEntitledResult.IsEntitled()))
+	}
+
+	// In the case that the user is not entitled, they must have lost their entitlement
+	// after joining the space, so let's go ahead and boot them.
+	if !isEntitledResult.IsEntitled() {
+		tp.entitlementLosses.Inc()
+
+		userStreamId := UserStreamIdFromAddr(memberAddress)
+
+		reason := entitlementResultReasonToMembershipReason(isEntitledResult.Reason())
+
+		log.Debugw("Entitlement loss detected for space; adding LEAVE event for user",
+			"memberAddress",
+			memberAddress,
+			"appAddress",
+			appAddress,
+			"userStreamId",
+			userStreamId,
+			"spaceId",
+			spaceId,
+			"reason",
+			reason,
+		)
+
+		if _, err = tp.eventAdder.AddEventPayload(
+			ctx,
+			userStreamId,
+			Make_UserPayload_Membership(
+				MembershipOp_SO_LEAVE,
+				spaceId,
+				tp.eventAdder.GetWalletAddress(),
+				nil,
+				&reason,
+			),
+			nil,
+		); err != nil {
+			return err
+		}
+
+		// If userBoots diverges from entitlementLosses, we know that some users did lose their
+		// entitlements but the server was unable to boot them.
+		tp.userBoots.Inc()
+	}
+
+	return nil
+}
+
 // processMemberImpl checks the individual member for entitlement and attempts to boot them if
 // they no longer meet entitlement requirements. This method returns an error for the sake
 // of annotating the telemetry span, but in practice it is not used by the caller.
 func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	ctx context.Context,
 	channelId StreamId,
-	member common.Address,
+	memberAddress common.Address,
 	appAddress common.Address,
 	span trace.Span,
 ) error {
@@ -124,7 +199,7 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 		auth.NewChainAuthArgsForChannel(
 			spaceId,
 			channelId,
-			member,
+			memberAddress,
 			auth.PermissionRead,
 			appAddress,
 		),
@@ -142,11 +217,13 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	if !isEntitledResult.IsEntitled() {
 		tp.entitlementLosses.Inc()
 
-		userStreamId := UserStreamIdFromAddr(member)
+		userStreamId := UserStreamIdFromAddr(memberAddress)
+
+		reason := entitlementResultReasonToMembershipReason(isEntitledResult.Reason())
 
 		log.Debugw("Entitlement loss detected; adding LEAVE event for user",
-			"user",
-			member,
+			"memberAddress",
+			memberAddress,
 			"appAddress",
 			appAddress,
 			"userStreamId",
@@ -155,9 +232,9 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 			channelId,
 			"spaceId",
 			spaceId,
+			"reason",
+			reason,
 		)
-
-		reason := entitlementResultReasonToMembershipReason(isEntitledResult.Reason())
 
 		if _, err = tp.eventAdder.AddEventPayload(
 			ctx,
@@ -181,10 +258,43 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMemberImpl(
 	return nil
 }
 
+func (tp *streamMembershipScrubTaskProcessorImpl) processSpaceMembership(
+	ctx context.Context,
+	spaceId StreamId,
+	memberAddress common.Address,
+	appAddress common.Address,
+) {
+	var span trace.Span
+	if tp.tracer != nil {
+		ctx, span = tp.tracer.Start(ctx, "space_member_scrub")
+		span.SetAttributes(
+			attribute.String("spaceId", spaceId.String()),
+			attribute.String("userId", memberAddress.Hex()),
+			attribute.String("appAddress", appAddress.Hex()),
+		)
+		defer span.End()
+	}
+
+	err := tp.processSpaceMemberImpl(ctx, spaceId, memberAddress, appAddress, span)
+	if err != nil {
+		logging.FromCtx(ctx).
+			Warnw("Failed to scrub space member", "spaceId", spaceId, "memberAddress", memberAddress, "error", err)
+	}
+
+	if span != nil {
+		if err == nil {
+			span.SetStatus(codes.Ok, "")
+		} else {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+		}
+	}
+}
+
 func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 	ctx context.Context,
 	channelId StreamId,
-	member common.Address,
+	memberAddress common.Address,
 	appAddress common.Address,
 ) {
 	spaceId := channelId.SpaceID()
@@ -195,16 +305,16 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processMembership(
 		span.SetAttributes(
 			attribute.String("spaceId", spaceId.String()),
 			attribute.String("channelId", channelId.String()),
-			attribute.String("userId", member.Hex()),
+			attribute.String("userId", memberAddress.Hex()),
 			attribute.String("appAddress", appAddress.Hex()),
 		)
 		defer span.End()
 	}
 
-	err := tp.processMemberImpl(ctx, channelId, member, appAddress, span)
+	err := tp.processMemberImpl(ctx, channelId, memberAddress, appAddress, span)
 	if err != nil {
 		logging.FromCtx(ctx).
-			Errorw("Failed to scrub member", "channelId", channelId, "member", member, "appAddress", appAddress, "error", err)
+			Errorw("Failed to scrub member", "channelId", channelId, "memberAddress", memberAddress, "appAddress", appAddress, "error", err)
 	}
 
 	if span != nil {
@@ -250,8 +360,10 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 	ctx context.Context,
 	streamId StreamId,
 ) error {
-	if !ValidChannelStreamId(&streamId) {
-		return RiverError(Err_INTERNAL, "Scrub scheduled for non-channel stream", "streamId", streamId)
+	isChannelStream := ValidChannelStreamId(&streamId)
+	isSpaceStream := ValidSpaceStreamId(&streamId)
+	if !isChannelStream && !isSpaceStream {
+		return RiverError(Err_INTERNAL, "Scrub scheduled for non-channel-or-space stream", "streamId", streamId)
 	}
 
 	stream, err := tp.cache.GetStreamNoWait(ctx, streamId)
@@ -287,7 +399,14 @@ func (tp *streamMembershipScrubTaskProcessorImpl) processStreamImpl(
 					streamId,
 				)
 		} else {
-			tp.processMembership(ctx, streamId, memberAddress, appAddress)
+			if isChannelStream {
+				tp.processMembership(ctx, streamId, memberAddress, appAddress)
+			} else if isSpaceStream {
+				tp.processSpaceMembership(ctx, streamId, memberAddress, appAddress)
+			} else {
+				// should never happen
+				return RiverError(Err_INTERNAL, "Logic error in stream membership scrub", "streamId", streamId)
+			}
 		}
 	}
 
