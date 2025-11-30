@@ -20,7 +20,8 @@ import { UserSettingsModel } from './user/models/userSettings'
 import { Spaces, SpacesModel } from './spaces/spaces'
 import { AuthStatus } from './river-connection/models/authStatus'
 import { ethers } from 'ethers'
-import type { EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
+import { createCryptoStore, type EncryptionDeviceInitOpts } from '@towns-protocol/encryption'
+import type { StorageAdapter } from '@towns-protocol/storage'
 import { Gdms, type GdmsModel } from './gdms/gdms'
 import { Dms, DmsModel } from './dms/dms'
 import { UnpackEnvelopeOpts } from '../sign'
@@ -39,6 +40,8 @@ export interface SyncAgentConfig {
     onTokenExpired?: () => void
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
     logId?: string
+    /** Custom storage adapter for both crypto and persistence databases */
+    db?: StorageAdapter
 }
 
 export class SyncAgent {
@@ -81,13 +84,24 @@ export class SyncAgent {
         this.store.newTransactionGroup('SyncAgent::initialization')
         const spaceDapp = new SpaceDapp(base.chainConfig, baseProvider)
         const riverRegistryDapp = new RiverRegistry(river.chainConfig, riverProvider)
+        const cryptoStore = config.db
+            ? createCryptoStore({
+                  databaseName: this.cryptoDbName(),
+                  userId: this.userId,
+                  storageAdapter: config.db,
+              })
+            : RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName())
+
         this.riverConnection = new RiverConnection(this.store, spaceDapp, riverRegistryDapp, {
             signerContext: config.context,
-            cryptoStore: RiverDbManager.getCryptoDb(this.userId, this.cryptoDbName()),
+            cryptoStore,
             entitlementsDelegate: new Entitlements(this.config.townsConfig, spaceDapp),
             opts: {
                 persistenceStoreName:
-                    config.disablePersistenceStore !== true ? this.persistenceDbName() : undefined,
+                    config.disablePersistenceStore !== true && !config.db
+                        ? this.persistenceDbName()
+                        : undefined,
+                db: config.db,
                 logNamespaceFilter: undefined,
                 highPriorityStreamIds: this.config.highPriorityStreamIds,
                 unpackEnvelopeOpts: config.unpackEnvelopeOpts,

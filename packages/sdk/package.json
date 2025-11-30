@@ -4,6 +4,16 @@
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./storage": {
+            "types": "./dist/storage/index.d.ts",
+            "import": "./dist/storage/index.js"
+        }
+    },
     "scripts": {
         "build": "tsc",
         "cb": "yarn clean && yarn build",
@@ -30,6 +40,7 @@
         "@towns-protocol/proto": "workspace:^",
         "@towns-protocol/rpc-connector": "workspace:^",
         "@towns-protocol/sdk-crypto": "workspace:^",
+        "@towns-protocol/storage": "workspace:^",
         "@towns-protocol/utils": "workspace:^",
         "@towns-protocol/web3": "workspace:^",
         "debug": "^4.3.4",

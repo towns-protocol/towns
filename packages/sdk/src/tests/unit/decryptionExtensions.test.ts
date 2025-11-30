@@ -39,6 +39,9 @@ import { create, toJsonString } from '@bufbuild/protobuf'
 
 const log = dlog('test:decryptionExtensions:')
 
+// Counter to ensure unique database names across concurrent tests
+let dbCounter = 0
+
 describe.concurrent('TestDecryptionExtensions', () => {
     // test should iterate over all the algorithms
     it.each(Object.values(GroupEncryptionAlgorithmId))(
@@ -213,7 +216,9 @@ async function createCryptoMocks(
     decryptionExtension: MockDecryptionExtensions
     userDevice: UserDevice
 }> {
-    const cryptoStore = createCryptoStore(`db_${userId}`, userId)
+    // Use unique database name to avoid conflicts in concurrent tests
+    const uniqueDbName = `db_${userId}_${dbCounter++}_${Date.now()}_${Math.random().toString(36).slice(2)}`
+    const cryptoStore = createCryptoStore(uniqueDbName, userId)
     const entitlementDelegate = new MockEntitlementsDelegate()
     const client = new MockGroupEncryptionClient(clientDiscoveryService)
     const crypto = new GroupEncryptionCrypto(client, cryptoStore)

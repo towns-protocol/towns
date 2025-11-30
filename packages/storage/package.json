@@ -1,0 +1,73 @@
+{
+    "name": "@towns-protocol/storage",
+    "version": "0.0.420",
+    "type": "module",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./adapters/memory": {
+            "types": "./dist/adapters/memory/index.d.ts",
+            "import": "./dist/adapters/memory/index.js"
+        },
+        "./adapters/drizzle": {
+            "types": "./dist/adapters/drizzle/index.d.ts",
+            "import": "./dist/adapters/drizzle/index.js"
+        },
+        "./adapters/dexie": {
+            "types": "./dist/adapters/dexie/index.d.ts",
+            "import": "./dist/adapters/dexie/index.js"
+        },
+        "./testing": {
+            "types": "./dist/testing/runAdapterTests.d.ts",
+            "import": "./dist/testing/runAdapterTests.js"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "cb": "yarn clean && yarn build",
+        "clean": "rm -rf dist",
+        "lint": "yarn eslint --format unix ./src",
+        "lint:fix": "yarn lint --fix",
+        "test": "vitest run",
+        "test:ci": "yarn test",
+        "test:watch": "vitest --watch",
+        "watch": "tsc --watch"
+    },
+    "peerDependencies": {
+        "dexie": ">=4.0.0",
+        "drizzle-orm": ">=0.35.0"
+    },
+    "peerDependenciesMeta": {
+        "dexie": {
+            "optional": true
+        },
+        "drizzle-orm": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/better-sqlite3": "^7.6.11",
+        "@types/node": "^20.14.8",
+        "@typescript-eslint/eslint-plugin": "^8.29.0",
+        "@typescript-eslint/parser": "^8.29.0",
+        "better-sqlite3": "^11.0.0",
+        "dexie": "^4.0.10",
+        "drizzle-orm": "^0.39.0",
+        "eslint": "^8.57.1",
+        "eslint-import-resolver-typescript": "^4.3.2",
+        "eslint-plugin-import-x": "^4.10.2",
+        "fake-indexeddb": "^6.0.0",
+        "typescript": "~5.8.3",
+        "vitest": "^3.2.3"
+    },
+    "files": [
+        "dist"
+    ],
+    "publishConfig": {
+        "access": "public"
+    }
+}

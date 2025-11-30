@@ -90,6 +90,7 @@
         "WatchReactSdk",
         "WatchBot",
         "WatchStress",
+        "WatchStorage",
       ],
       "group": {
         "kind": "build",
@@ -434,6 +435,16 @@
       "label": "WatchWeb3",
       "type": "shell",
       "command": "cd packages/web3 && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch-proto"
+      }
+    },
+    {
+      "label": "WatchStorage",
+      "type": "shell",
+      "command": "cd packages/storage && yarn watch",
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
