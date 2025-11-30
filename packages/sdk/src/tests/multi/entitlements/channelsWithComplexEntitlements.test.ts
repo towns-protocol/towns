@@ -22,11 +22,8 @@ import {
     Permission,
     TestERC721,
     LogicalOperationType,
-    OperationType,
-    Operation,
-    CheckOperationType,
-    treeToRuleData,
-    encodeThresholdParams,
+    Rules,
+    createRuleStruct,
 } from '@towns-protocol/web3'
 
 const log = dlog('csb:test:channelsWithComplexEntitlements')
@@ -216,43 +213,28 @@ describe('channelsWithComplexEntitlements', () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
         const testNft2Address = await TestERC721.getContractAddress('TestNFT2')
         const testNft3Address = await TestERC721.getContractAddress('TestNFT3')
-        const params = encodeThresholdParams({ threshold: 1n })
-        const leftOperation: Operation = {
-            opType: OperationType.CHECK,
-            checkType: CheckOperationType.ERC721,
-            chainId: 31337n,
-            contractAddress: testNft1Address,
-            params,
-        }
 
-        const rightOperation: Operation = {
-            opType: OperationType.CHECK,
-            checkType: CheckOperationType.ERC721,
-            chainId: 31337n,
-            contractAddress: testNft2Address,
-            params,
-        }
-        const two: Operation = {
-            opType: OperationType.LOGICAL,
-            logicalType: LogicalOperationType.AND,
-            leftOperation,
-            rightOperation,
-        }
-
-        const root: Operation = {
-            opType: OperationType.LOGICAL,
-            logicalType: LogicalOperationType.OR,
-            leftOperation: two,
-            rightOperation: {
-                opType: OperationType.CHECK,
-                checkType: CheckOperationType.ERC721,
+        const root = Rules.or(
+            Rules.and(
+                Rules.checkErc721({
+                    chainId: 31337n,
+                    contractAddress: testNft1Address,
+                    threshold: 1n,
+                }),
+                Rules.checkErc721({
+                    chainId: 31337n,
+                    contractAddress: testNft2Address,
+                    threshold: 1n,
+                }),
+            ),
+            Rules.checkErc721({
                 chainId: 31337n,
                 contractAddress: testNft3Address,
-                params,
-            },
-        }
+                threshold: 1n,
+            }),
+        )
 
-        const ruleData = treeToRuleData(root)
+        const ruleData = createRuleStruct(root)
         const { alice, bob, alicesWallet, aliceSpaceDapp, spaceId, channelId } =
             await setupChannelWithCustomRole([], ruleData)
 
