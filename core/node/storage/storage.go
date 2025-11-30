@@ -5,6 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/storage/external"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -117,6 +119,12 @@ type (
 			streamId StreamId,
 			genesisMiniblock *MiniblockDescriptor,
 		) error
+
+		// StreamMiniblocksStoredLocation returns the location where miniblock data is stored for the given stream.
+		StreamMiniblocksStoredLocation(
+			ctx context.Context,
+			streamId StreamId,
+		) (external.MiniblockDataStorageLocation, error)
 
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.

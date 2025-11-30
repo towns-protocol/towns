@@ -45,7 +45,6 @@ func newS3UploadSession(
 	totalMiniblockDataSize uint64,
 	signer *v4.Signer,
 	creds aws.Credentials,
-	httpClient *http.Client,
 ) (*s3UploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
@@ -93,7 +92,7 @@ func newS3UploadSession(
 		defer close(respChan)
 		defer reqCancel()
 
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			_ = bodyWriter.CloseWithError(err)
 			respChan <- struct {
@@ -164,7 +163,7 @@ func (s *s3UploadSession) Finish(ctx context.Context) (
 }
 
 // Abort cancels the pending upload session.
-func (s *s3UploadSession) Abort(ctx context.Context) {
+func (s *s3UploadSession) Abort() {
 	s.miniblocks = nil
 	s.reqCancel()
 	_ = s.s3Writer.Close()

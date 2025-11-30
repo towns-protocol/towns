@@ -41,6 +41,7 @@ func NewTestStreamStore(ctx context.Context) *TestStreamStore {
 				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{},
 			},
 		},
+		nil,
 		100,
 	)
 	if err != nil {

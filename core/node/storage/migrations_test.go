@@ -43,6 +43,7 @@ func TestMigrateExistingDb(t *testing.T) {
 				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{},
 			},
 		},
+		nil,
 		100,
 	)
 	require.NoError(err)
