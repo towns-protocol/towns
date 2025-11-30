@@ -1,0 +1,77 @@
+syntax = "proto3";
+package river.metadata;
+option go_package = "github.com/towns-protocol/towns/core/node/protocol";
+
+// MetadataTx is the envelope for all metadata shard transactions.
+message MetadataTx {
+    oneof op {
+        CreateStreamTx create_stream = 1;
+        SetStreamLastMiniblockBatchTx set_stream_last_miniblock_batch = 2;
+        UpdateStreamNodesAndReplicationTx update_stream_nodes_and_replication = 3;
+    }
+}
+
+// CreateStreamTx initializes a stream on a metadata shard.
+message CreateStreamTx {
+    // Stream id (expected 32 bytes).
+    bytes stream_id = 1;
+
+    // Hash of the genesis miniblock.
+    bytes genesis_miniblock_hash = 2;
+
+    // Serialized genesis miniblock payload.
+    bytes genesis_miniblock = 3;
+
+    // Nodes hosting the stream (20 byte addresses).
+    repeated bytes nodes = 4;
+
+    // Stream flags (mirrors StreamRegistry flags semantics).
+    uint64 flags = 5;
+
+    // Desired replication factor for the stream.
+    uint32 replication_factor = 6;
+
+    // Whether the stream is sealed on creation.
+    bool sealed = 7;
+}
+
+// SetStreamLastMiniblockBatchTx updates miniblock pointers for multiple streams atomically.
+message SetStreamLastMiniblockBatchTx {
+    repeated MiniblockUpdate miniblocks = 1;
+}
+
+// MiniblockUpdate mirrors StreamRegistry#setStreamLastMiniblockBatch semantics.
+message MiniblockUpdate {
+    bytes stream_id = 1;
+    // Last known miniblock hash before applying this update.
+    bytes prev_miniblock_hash = 2;
+    // New miniblock hash and height after applying this update.
+    bytes last_miniblock_hash = 3;
+    int64 last_miniblock_num = 4;
+    // Mark stream sealed at this height if true.
+    bool sealed = 5;
+}
+
+// UpdateStreamNodesAndReplicationTx updates placements and replication factor.
+message UpdateStreamNodesAndReplicationTx {
+    bytes stream_id = 1;
+    // Full node set to apply for the stream.
+    repeated bytes nodes = 2;
+    // Optional replication factor change. If unset, keep current.
+    optional uint32 replication_factor = 3;
+}
+
+// StreamMetadata is the projected state stored by a metadata shard.
+message StreamMetadata {
+    bytes stream_id = 1;
+    uint64 shard_id = 2;
+    bytes genesis_miniblock_hash = 3;
+    bytes last_miniblock_hash = 4;
+    int64 last_miniblock_num = 5;
+    repeated bytes nodes = 6;
+    uint64 flags = 7;
+    uint32 replication_factor = 8;
+    bool sealed = 9;
+    int64 created_at_height = 10;
+    int64 updated_at_height = 11;
+}

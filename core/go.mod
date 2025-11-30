@@ -8,6 +8,7 @@ require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.53.1
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cometbft/cometbft v1.0.1
 	github.com/deckarep/golang-set/v2 v2.8.0
 	github.com/ethereum/go-ethereum v1.16.3
 	github.com/exaring/otelpgx v0.9.3
