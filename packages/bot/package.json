@@ -30,7 +30,8 @@
         "image-size": "^2.0.2",
         "jsonwebtoken": "^9.0.2",
         "nanoevents": "^9.1.0",
-        "superjson": "^2.2.2"
+        "superjson": "^2.2.2",
+        "x402": "^0.7.3"
     },
     "devDependencies": {
         "@hono/node-server": "^1.14.0",
