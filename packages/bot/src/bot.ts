@@ -48,7 +48,8 @@ import {
     make_MemberPayload_Membership2,
     type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
-import { type Context, type Env, type Next } from 'hono'
+import { Hono, type Context, type Env, type Next } from 'hono'
+import { logger } from 'hono/logger'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
 import { createNanoEvents, type Emitter } from 'nanoevents'
@@ -405,6 +406,9 @@ export class Bot<
         this.eventDedup = new EventDedup(dedupConfig)
     }
 
+    /**
+     * @deprecated Use const app = bot.init() instead
+     */
     start() {
         const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
 
@@ -414,6 +418,19 @@ export class Bot<
             jwtMiddleware,
             handler: this.webhookHandler.bind(this),
         }
+    }
+
+    init() {
+        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+        const handler = this.webhookHandler.bind(this)
+        const app = new Hono()
+        app.use(logger())
+        app.post('/webhook', jwtMiddleware, handler)
+        app.get('/.well-known/agent-metadata.json', async (c) => {
+            return c.json(await this.getIdentityMetadata())
+        })
+        debug('init')
+        return app
     }
 
     private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
