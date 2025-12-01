@@ -206,7 +206,7 @@ jobs:
     Common_CI:
         permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
-        runs-on: blacksmith-32vcpu-ubuntu-2404
+        runs-on: blacksmith-16vcpu-ubuntu-2404
         timeout-minutes: 30
         needs: [Build_Anvil_Docker]
 
