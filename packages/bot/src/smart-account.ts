@@ -10,7 +10,6 @@ import {
 import { getStorageAt, readContract } from 'viem/actions'
 import walletLinkAbi from '@towns-protocol/generated/dev/abis/WalletLink.abi'
 import { Bot } from './bot'
-import type { Env } from 'hono'
 import type { PlainMessage, SlashCommand } from '@towns-protocol/proto'
 
 /**
@@ -136,7 +135,7 @@ async function getLinkedWalletsWithRootKey(
  * ```
  */
 export async function getSmartAccountFromUserId(
-    bot: Bot<PlainMessage<SlashCommand>[], Env>,
+    bot: Bot<PlainMessage<SlashCommand>[]>,
     params: {
         userId: Address
     },
