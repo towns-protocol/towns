@@ -284,6 +284,8 @@ const hash = await execute(bot.viem, {
 
 ## External Interactions (Unprompted Messages)
 
+`bot.start()` returns a **Hono app**. To extend with additional routes, create a new Hono app and use `.route('/', app)` per https://hono.dev/docs/guides/best-practices#building-a-larger-application
+
 **All handler methods available on bot** (webhooks, timers, tasks):
 You need data prior (channelId, spaceId, etc):
 ```typescript
@@ -293,16 +295,6 @@ bot.hasAdminPermission(...) | bot.checkPermission(...) | bot.ban(...) | bot.unba
 // Properties: bot.botId, bot.viem, bot.appAddress
 ```
 
-**GitHub Integration Pattern:**
-```typescript
-let channelId = null
-bot.onSlashCommand("setup", async (h, e) => { channelId = e.channelId })
-app.post('/webhook', bot.start().jwtMiddleware, bot.start().handler)
-app.post('/github', async (c) => {
-  if (channelId) await bot.sendMessage(channelId, `PR: ${c.req.json().title}`)
-  return c.json({ ok: true })
-})
-```
 **Patterns:** Store channel IDs | Webhooks/timers | Call bot.* directly | Handle errors
 
 ## Critical Notes
