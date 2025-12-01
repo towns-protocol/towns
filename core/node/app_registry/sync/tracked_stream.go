@@ -125,8 +125,6 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 			"eventCreator", hex.EncodeToString(event.Event.CreatorAddress),
 		)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
-	} else {
-		log.Infow("No forwardable apps found in channel members", "streamId", streamId)
 	}
 
 	return nil
