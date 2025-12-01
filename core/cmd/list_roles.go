@@ -35,7 +35,7 @@ func listRolesForSpace(ctx context.Context, cfg config.Config, spaceId shared.St
 		baseChain.Client,
 	)
 	if err != nil {
-		return fmt.Errorf("could not initalize space contract (does space exist?); %w", err)
+		return fmt.Errorf("could not initialize space contract (does space exist?); %w", err)
 	}
 
 	roles, err := spaceContract.GetRoles(ctx, spaceId)
