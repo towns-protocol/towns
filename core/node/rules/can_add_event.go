@@ -672,7 +672,16 @@ func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error)
 		return nil, nil
 	}
 
-	// Creator is not a member, check if they're the bot owner
+	// Creator is not a member - check if this is an bot user's stream
+	isAppUser, err := params.streamView.IsUserMetadataAppUser()
+	if err != nil {
+		return nil, err
+	}
+	if !isAppUser {
+		return nil, err
+	}
+
+	// This is a bot user stream, check if creator is the bot owner
 	return params.botOwnerChainAuth()
 }
 
