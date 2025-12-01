@@ -14,7 +14,7 @@ contract InteractRiverRegistrySetFreq is Interaction {
     function __interact(address deployer) internal override {
         address riverRegistry = getDeployment("riverRegistry");
 
-        uint64 value = 10;
+        uint64 value = 1;
 
         vm.startBroadcast(deployer);
         IRiverConfig(riverRegistry).setConfiguration(
