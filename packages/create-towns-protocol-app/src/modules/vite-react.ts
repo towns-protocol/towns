@@ -20,14 +20,14 @@ export const buildRiverReactApp = async (cfg: CreateRiverBuildAppConfig) => {
     console.log(picocolors.blue('\nAdding River SDK dependencies...'))
 
     await addDependencies(cfg.projectDir, () => ({
-        dependencies: ['@towns-protocol/react-sdk', '@towns-protocol/sdk'],
-        devDependencies: ['vite-plugin-node-polyfills'],
+        dependencies: ['@towns-protocol/react-sdk', '@towns-protocol/sdk', 'ethers', '@connectrpc/connect-web'],
+        devDependencies: ['vite-plugin-node-polyfills', 'vite-plugin-wasm'],
     }))
 
     console.log(picocolors.green('\nRiver SDK dependencies added successfully.'))
     console.log(picocolors.blue('\nUpdating vite.config.ts...'))
 
-    await updateViteConfigWithPolyfills(cfg)
+    await updateViteConfigWithPolyfillsAndWasm(cfg)
 
     console.log(picocolors.green('\nvite.config.ts updated successfully.'))
 }
@@ -61,21 +61,37 @@ const scaffoldViteReactApp = async (cfg: CreateRiverBuildAppConfig) => {
     return spawn.sync(pkgManager, createViteCommand, { stdio: 'inherit' })
 }
 
-const updateViteConfigWithPolyfills = async (cfg: CreateRiverBuildAppConfig) => {
+const updateViteConfigWithPolyfillsAndWasm = async (cfg: CreateRiverBuildAppConfig) => {
     const { projectDir, viteTemplate } = cfg
     const isJsTemplate = viteTemplate === 'react'
     const viteConfigPath = path.join(projectDir, isJsTemplate ? 'vite.config.js' : 'vite.config.ts')
     let viteConfig = readFileSync(viteConfigPath, 'utf8')
 
-    // Add import for vite-plugin-node-polyfills
-    viteConfig = `import { nodePolyfills } from 'vite-plugin-node-polyfills'\n${viteConfig}`
+    viteConfig = `import { nodePolyfills } from 'vite-plugin-node-polyfills'\nimport wasm from 'vite-plugin-wasm'\n${viteConfig}`
 
-    // Add nodePolyfills to plugins array
     viteConfig = viteConfig.replace(/plugins:\s*\[([\s\S]*?)\]/, (_, pluginsContent) => {
         const trimmedContent = pluginsContent.trim()
         const separator = trimmedContent ? ',\n    ' : ''
-        return `plugins: [${pluginsContent}${separator}nodePolyfills()\n  ]`
+        return `plugins: [${pluginsContent}${separator}wasm(),\n    nodePolyfills()\n  ]`
     })
+
+    if (viteConfig.includes('defineConfig(')) {
+        viteConfig = viteConfig.replace(
+            /defineConfig\((\s*{[\s\S]*?})\s*\)/,
+            (match, configObject) => {
+                if (configObject.includes('optimizeDeps')) {
+                    return match
+                }
+                
+                const updatedConfig = configObject.replace(
+                    /(\s*)}(\s*)$/,
+                    '$1,\n  optimizeDeps: {\n    exclude: [\'@towns-protocol/olm\']\n  }$2}'
+                )
+                
+                return `defineConfig(${updatedConfig})`
+            }
+        )
+    }
 
     writeFileSync(viteConfigPath, viteConfig)
 }
