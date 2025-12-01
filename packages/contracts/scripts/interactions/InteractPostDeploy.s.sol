@@ -51,14 +51,6 @@ contract InteractPostDeploy is Interaction {
         IImplementationRegistry(spaceFactory).addImplementation(baseRegistry);
         IImplementationRegistry(spaceFactory).addImplementation(riverAirdrop);
         IImplementationRegistry(spaceFactory).addImplementation(appRegistry);
-        IFeeManager(spaceFactory).setFeeConfig(
-            FeeTypesLib.TIP_MEMBER,
-            deployer,
-            FeeCalculationMethod.PERCENT,
-            50,
-            0,
-            true
-        );
         ISubscriptionModule(subscriptionModule).setSpaceFactory(spaceFactory);
         IMainnetDelegation(baseRegistry).setProxyDelegation(proxyDelegation);
         IRewardsDistribution(baseRegistry).setRewardNotifier(deployer, true);
