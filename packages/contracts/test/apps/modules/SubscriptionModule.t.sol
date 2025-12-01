@@ -1007,7 +1007,10 @@ contract SubscriptionModuleTest is ModulesBase {
             uint32 entityId,
             SubscriptionParams memory params
         ) = _createSubscription(makeAddr("user"), duration, renewalPrice);
-        vm.deal(address(account), renewalPrice);
+
+        uint256 totalPrice = _getMembership(params.space).getMembershipPrice();
+
+        vm.deal(address(account), totalPrice);
 
         _warpToRenewalTime(params.space, params.tokenId);
         _setMembershipDuration(params.space, duration * 2);
@@ -1085,9 +1088,11 @@ contract SubscriptionModuleTest is ModulesBase {
             SubscriptionParams memory params
         ) = _createSubscription(makeAddr("user"), duration, renewalPrice);
 
+        uint256 totalPrice = _getMembership(params.space).getMembershipPrice();
+
         // Process first automated renewal successfully
         _warpToRenewalTime(params.space, tokenId);
-        vm.deal(address(account), renewalPrice);
+        vm.deal(address(account), totalPrice);
         _processRenewalAs(processor, address(account), entityId);
 
         uint256 firstRenewalTime = subscriptionModule
@@ -1138,11 +1143,11 @@ contract SubscriptionModuleTest is ModulesBase {
 
         // Verify the subscription can process renewals correctly after reactivation
         _warpToRenewalTime(params.space, tokenId);
-        vm.deal(address(account), renewalPrice);
+        vm.deal(address(account), totalPrice);
         _processRenewalAs(processor, address(account), entityId);
 
         sub = subscriptionModule.getSubscription(address(account), entityId);
-        assertEq(sub.spent, renewalPrice * 2, "Should have spent for 2 automated renewals");
+        assertEq(sub.spent, totalPrice * 2, "Should have spent for 2 automated renewals");
         assertTrue(
             sub.lastRenewalTime > firstRenewalTime,
             "Last renewal time should be updated to recent timestamp"

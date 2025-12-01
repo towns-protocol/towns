@@ -308,9 +308,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     function test_renewMembershipNewTown() external {
         _setupMembershipPricing(2, MEMBERSHIP_PRICE);
 
+        uint256 totalPrice = membership.getMembershipPrice();
+
         vm.prank(alice);
-        vm.deal(alice, MEMBERSHIP_PRICE);
-        membership.joinSpace{value: MEMBERSHIP_PRICE}(alice);
+        vm.deal(alice, totalPrice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         uint256 tokenId = _getAliceTokenId();
         uint256 renewalPrice = _getRenewalPrice(tokenId);
@@ -393,21 +395,23 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         uint256 platformMinFee = platformReqs.getMembershipFee();
         _setupMembershipPricing(1, initialPrice);
 
+        uint256 totalPrice = membership.getMembershipPrice();
+
         // Alice joins at the higher price
-        vm.deal(alice, initialPrice);
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpace{value: initialPrice}(alice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         uint256 tokenId = _getAliceTokenId();
         uint256 originalExpiration = membership.expiresAt(tokenId);
 
         // Verify Alice paid the initial price
         uint256 lockedRenewalPrice = _getRenewalPrice(tokenId);
-        assertEq(lockedRenewalPrice, initialPrice, "Initial renewal price should be locked");
+        assertEq(lockedRenewalPrice, totalPrice, "Initial renewal price should be locked");
 
-        // Town transitions to minimum price (effectively free except for protocol fee)
+        // Town transitions to free
         vm.prank(founder);
-        membership.setMembershipPrice(platformMinFee);
+        membership.setMembershipPrice(0);
 
         // Verify current price is now just the platform minimum fee
         uint256 newMembershipPrice = membership.getMembershipPrice();
@@ -423,7 +427,7 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
             platformMinFee,
             "Renewal price should use lower current price, not locked price"
         );
-        assertLt(renewalPrice, initialPrice, "Renewal price should be less than original");
+        assertLt(renewalPrice, totalPrice, "Renewal price should be less than original");
 
         // Track balances
         (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
@@ -461,35 +465,34 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         uint256 lowerPrice = MEMBERSHIP_PRICE / 2;
         _setupMembershipPricing(1, initialPrice);
 
+        uint256 totalPrice = membership.getMembershipPrice();
+
         // Alice joins at the higher price
-        vm.deal(alice, initialPrice);
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpace{value: initialPrice}(alice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         uint256 tokenId = _getAliceTokenId();
         uint256 originalExpiration = membership.expiresAt(tokenId);
 
         // Verify Alice's renewal price is locked at initial price
-        assertEq(_getRenewalPrice(tokenId), initialPrice, "Initial renewal price should be locked");
+        assertEq(_getRenewalPrice(tokenId), totalPrice, "Initial renewal price should be locked");
 
         // Town reduces price to lower amount
         vm.prank(founder);
         membership.setMembershipPrice(lowerPrice);
 
         // Verify new membership price
-        assertEq(
-            membership.getMembershipPrice(),
-            lowerPrice,
-            "New membership price should be lower"
-        );
+        uint256 newTotalPrice = membership.getMembershipPrice();
+        assertLt(newTotalPrice, totalPrice, "New membership price should be lower");
 
         // Warp to expiration
         vm.warp(originalExpiration);
 
         // Get renewal price - should be the lower current price
         uint256 renewalPrice = _getRenewalPrice(tokenId);
-        assertEq(renewalPrice, lowerPrice, "Renewal should use lower current price");
-        assertLt(renewalPrice, initialPrice, "Renewal price should be less than original");
+        assertEq(renewalPrice, newTotalPrice, "Renewal should use lower current price");
+        assertLt(renewalPrice, totalPrice, "Renewal price should be less than original");
 
         // Track balances
         (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
@@ -499,8 +502,8 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         // Alice renews at the lower price
         _renewMembershipWithValue(alice, tokenId, renewalPrice);
 
-        // Calculate expected fees
-        uint256 protocolFee = _calculateProtocolFee(renewalPrice);
+        // Calculate expected fees (protocol fee on base price)
+        uint256 protocolFee = _calculateProtocolFee(lowerPrice);
         uint256 points = _getPoints(renewalPrice);
 
         // Verify balances
@@ -511,8 +514,8 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         );
         assertEq(
             address(membership).balance,
-            spaceBalanceBefore + renewalPrice - protocolFee,
-            "Space should receive net amount"
+            spaceBalanceBefore + lowerPrice,
+            "Space should receive base price"
         );
 
         // Verify membership was renewed
@@ -532,27 +535,26 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         uint256 higherPrice = MEMBERSHIP_PRICE;
         _setupMembershipPricing(1, initialPrice);
 
+        uint256 totalPrice = membership.getMembershipPrice();
+
         // Alice joins at the lower price
-        vm.deal(alice, initialPrice);
+        vm.deal(alice, totalPrice);
         vm.prank(alice);
-        membership.joinSpace{value: initialPrice}(alice);
+        membership.joinSpace{value: totalPrice}(alice);
 
         uint256 tokenId = _getAliceTokenId();
         uint256 originalExpiration = membership.expiresAt(tokenId);
 
         // Verify Alice's renewal price is locked at initial lower price
-        assertEq(_getRenewalPrice(tokenId), initialPrice, "Initial renewal price should be locked");
+        assertEq(_getRenewalPrice(tokenId), totalPrice, "Initial renewal price should be locked");
 
         // Town increases price
         vm.prank(founder);
         membership.setMembershipPrice(higherPrice);
 
         // Verify new membership price is higher
-        assertEq(
-            membership.getMembershipPrice(),
-            higherPrice,
-            "New membership price should be higher"
-        );
+        uint256 newTotalPrice = membership.getMembershipPrice();
+        assertGt(newTotalPrice, totalPrice, "New membership price should be higher");
 
         // Warp to expiration
         vm.warp(originalExpiration);
@@ -561,10 +563,10 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         uint256 renewalPrice = _getRenewalPrice(tokenId);
         assertEq(
             renewalPrice,
-            initialPrice,
+            totalPrice,
             "Renewal should maintain locked lower price despite increase"
         );
-        assertLt(renewalPrice, higherPrice, "Renewal price should be less than new higher price");
+        assertLt(renewalPrice, newTotalPrice, "Renewal price should be less than new higher price");
 
         // Track balances
         uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);

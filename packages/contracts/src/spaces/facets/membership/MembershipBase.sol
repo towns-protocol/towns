@@ -35,6 +35,8 @@ abstract contract MembershipBase is IMembershipBase {
         $.freeAllocationEnabled = true;
 
         if (info.price > 0) {
+            if (info.freeAllocation > 0)
+                Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
             IMembershipPricing(info.pricingModule).setPrice(info.price);
         }
 
@@ -176,9 +178,14 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
-        if (renewalPrice != 0) return renewalPrice;
-        return _getMembershipPrice(totalSupply);
+        uint256 lockedRenewalPrice = $.renewalPriceByTokenId[tokenId];
+        uint256 currentPrice = _getMembershipPrice(totalSupply);
+
+        // If no locked price, use current price
+        if (lockedRenewalPrice == 0) return currentPrice;
+
+        // Return the lower of the two prices (benefits user)
+        return FixedPointMathLib.min(lockedRenewalPrice, currentPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
