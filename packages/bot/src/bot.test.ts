@@ -52,7 +52,6 @@ import {
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
@@ -270,10 +269,7 @@ describe('Bot', { sequential: true }, () => {
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         expect(bot.appAddress).toBe(appAddress)
-        const { jwtMiddleware, handler } = bot.start()
-        const app = new Hono()
-        app.use(jwtMiddleware)
-        app.post('/webhook', handler)
+        const app = bot.start()
         serve({
             port: Number(process.env.BOT_PORT!),
             fetch: app.fetch,

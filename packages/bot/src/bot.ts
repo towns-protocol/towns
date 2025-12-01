@@ -48,7 +48,7 @@ import {
     make_MemberPayload_Membership2,
     type CreateTownsClientParams,
 } from '@towns-protocol/sdk'
-import { Hono, type Context, type Env, type Next } from 'hono'
+import { Hono, type Context, type Next } from 'hono'
 import { logger } from 'hono/logger'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
@@ -112,7 +112,6 @@ import {
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
-import type { BlankEnv } from 'hono/types'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
@@ -359,10 +358,7 @@ export type BasePayload = {
     event: StreamEvent
 }
 
-export class Bot<
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
-> {
+export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
     readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
@@ -406,22 +402,8 @@ export class Bot<
         this.eventDedup = new EventDedup(dedupConfig)
     }
 
-    /**
-     * @deprecated Use const app = bot.init() instead
-     */
     start() {
-        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
-
-        debug('start')
-
-        return {
-            jwtMiddleware,
-            handler: this.webhookHandler.bind(this),
-        }
-    }
-
-    init() {
-        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
+        const jwtMiddleware = createMiddleware(this.jwtMiddleware.bind(this))
         const handler = this.webhookHandler.bind(this)
         const app = new Hono()
         app.use(logger())
@@ -433,7 +415,7 @@ export class Bot<
         return app
     }
 
-    private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
+    private async jwtMiddleware(c: Context, next: Next): Promise<Response | void> {
         const authHeader = c.req.header('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -461,7 +443,7 @@ export class Bot<
         await next()
     }
 
-    private async webhookHandler(c: Context<HonoEnv>) {
+    private async webhookHandler(c: Context) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -1390,10 +1372,7 @@ export class Bot<
     }
 }
 
-export const makeTownsBot = async <
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
->(
+export const makeTownsBot = async <Commands extends PlainMessage<SlashCommand>[] = []>(
     appPrivateData: string,
     jwtSecretBase64: string,
     opts: {
@@ -1482,7 +1461,7 @@ export const makeTownsBot = async <
     }
 
     await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(
+    return new Bot<Commands>(
         client,
         viem,
         jwtSecretBase64,

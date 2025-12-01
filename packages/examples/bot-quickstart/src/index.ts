@@ -47,5 +47,5 @@ bot.onReaction(async (handler, { reaction, channelId }) => {
     }
 })
 
-const app = bot.init()
+const app = bot.start()
 export default app
