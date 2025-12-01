@@ -678,7 +678,7 @@ func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error)
 		return nil, err
 	}
 	if !isAppUser {
-		return nil, err
+		return nil, RiverError(Err_PERMISSION_DENIED, "creator is not a member and stream is not a bot user stream")
 	}
 
 	// This is a bot user stream, check if creator is the bot owner
