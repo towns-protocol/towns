@@ -1,6 +1,6 @@
 {
     "name": "@towns-protocol/encryption",
-    "version": "0.0.425",
+    "version": "0.0.426",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
