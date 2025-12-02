@@ -810,15 +810,26 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	mustLogStream := targetStream == streamId
-
 	log := logging.FromCtx(ctx)
 	start := time.Now()
 	rowCount := 0
+	mustLogStream := false
+
+	rowCountRecord := tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT count(1) FROM {{minipools}} WHERE stream_id = $1",
+			streamId,
+		), streamId)
+
+	var minipoolSize int
+	if err := rowCountRecord.Scan(&minipoolSize); err == nil {
+		mustLogStream = minipoolSize > 15_000
+	}
 
 	if mustLogStream {
 		log.Infow("START readStreamFromLastSnapshotTx",
-			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks)
+			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks, "minipoolSize", minipoolSize)
 		defer log.Infow("FINISH readStreamFromLastSnapshotTx",
 			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks,
 			"took", time.Since(start), "rowCount", rowCount)
@@ -905,22 +916,6 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			"snapshotMiniblockIndex", snapshotMiniblockIndex,
 			"readFirstSeqNum", miniblocks[0].Number,
 			"readLastSeqNum", seqNum)
-	}
-
-	rowCountRecord := tx.QueryRow(
-		ctx,
-		s.sqlForStream(
-			"SELECT count(1) FROM {{minipools}} WHERE stream_id = $1",
-			streamId,
-		), streamId)
-
-	var minipoolSize int
-	if err := rowCountRecord.Scan(&minipoolSize); err == nil {
-		log.Infow("MINIPOOL_SIZE readStreamFromLastSnapshotTx", "stream", streamId, "minipoolSize", minipoolSize)
-	} else {
-		log.Infow("MINIPOOL_SIZE readStreamFromLastSnapshotTx", "stream", streamId,
-			"numPrecedingMiniblocks", numPrecedingMiniblocks, "minipoolSizeErr", err)
-		return nil, err
 	}
 
 	const pageSize = 25_000
