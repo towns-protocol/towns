@@ -1668,15 +1668,17 @@ func TestGetAppMetadata(t *testing.T) {
 	require.NoError(err)
 
 	// Test getting metadata for existing app
-	metadata, err := store.GetAppMetadata(params.ctx, app)
+	metadata, active, err := store.GetAppMetadata(params.ctx, app)
 	require.NoError(err)
 	require.NotNil(metadata)
 	require.Equal(originalMetadata, *metadata)
+	require.True(active) // New apps are active by default
 
 	// Test getting metadata for non-existent app
-	metadata, err = store.GetAppMetadata(params.ctx, unregisteredApp)
+	metadata, active, err = store.GetAppMetadata(params.ctx, unregisteredApp)
 	require.Error(err)
 	require.Nil(metadata)
+	require.False(active)
 	require.True(base.IsRiverErrorCode(err, Err_NOT_FOUND))
 	require.ErrorContains(err, "app was not found in registry")
 }

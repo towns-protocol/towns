@@ -216,11 +216,11 @@ type (
 			updates map[string]interface{}, // field updates
 		) error
 
-		// GetAppMetadata gets the metadata for an app
+		// GetAppMetadata gets the metadata and active status for an app
 		GetAppMetadata(
 			ctx context.Context,
 			app common.Address,
-		) (*types.AppMetadata, error)
+		) (*types.AppMetadata, bool, error)
 
 		// IsUsernameAvailable checks if a username is available (case-sensitive)
 		IsUsernameAvailable(
@@ -1312,56 +1312,58 @@ func (s *PostgresAppRegistryStore) applyUpdates(
 func (s *PostgresAppRegistryStore) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-) (*types.AppMetadata, error) {
+) (*types.AppMetadata, bool, error) {
 	var metadata *types.AppMetadata
+	var active bool
 	err := s.txRunner(
 		ctx,
 		"GetAppMetadata",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			metadata, err = s.getAppMetadata(ctx, app, tx)
+			metadata, active, err = s.getAppMetadata(ctx, app, tx)
 			return err
 		},
 		nil,
 		"appAddress", app,
 	)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
-	return metadata, nil
+	return metadata, active, nil
 }
 
 func (s *PostgresAppRegistryStore) getAppMetadata(
 	ctx context.Context,
 	app common.Address,
 	tx pgx.Tx,
-) (*types.AppMetadata, error) {
+) (*types.AppMetadata, bool, error) {
 	var metadataJSON string
 	var username string
+	var active bool
 	if err := tx.QueryRow(
 		ctx,
-		`SELECT app_metadata, username FROM app_registry WHERE app_id = $1`,
+		`SELECT app_metadata, username, active FROM app_registry WHERE app_id = $1`,
 		PGAddress(app),
-	).Scan(&metadataJSON, &username); err != nil {
+	).Scan(&metadataJSON, &username, &active); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
+			return nil, false, RiverError(protocol.Err_NOT_FOUND, "app was not found in registry")
 		} else {
-			return nil, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			return nil, false, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 				Message("failed to find app metadata in registry")
 		}
 	}
 
 	var metadata types.AppMetadata
 	if err := json.Unmarshal([]byte(metadataJSON), &metadata); err != nil {
-		return nil, AsRiverError(err, protocol.Err_INTERNAL).
+		return nil, false, AsRiverError(err, protocol.Err_INTERNAL).
 			Message("Unable to unmarshal app metadata from JSON")
 	}
 	// Set the Username field from its separate column.
 	// DisplayName is already in the metadata JSON.
 	metadata.Username = username
 
-	return &metadata, nil
+	return &metadata, active, nil
 }
 
 func (s *PostgresAppRegistryStore) IsUsernameAvailable(
