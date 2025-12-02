@@ -954,9 +954,10 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		var envelope []byte
 		var generation int64
 		var slotNum int64
+		rowsRetrieved := 0
 
 		if _, err := pgx.ForEachRow(rows, []any{&envelope, &generation, &slotNum}, func() error {
-			rowCount++
+			rowsRetrieved++
 			if generation != expectedGeneration {
 				return RiverError(
 					Err_MINIBLOCKS_STORAGE_FAILURE,
@@ -983,7 +984,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			return nil, err
 		}
 
-		done = rowCount < pageSize
+		done = rowsRetrieved < pageSize
 
 		rows.Close()
 	}
