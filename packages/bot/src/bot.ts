@@ -1170,12 +1170,12 @@ export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
     }
 
     /**
-     * Get the roles for a space
+     * Get all roles for a space
      * @param spaceId - The space ID to get the roles for
-     * @returns The roles
+     * @returns Array of roles with id, name, permissions, and disabled status
      */
-    async getRoles(spaceId: string) {
-        return this.client.getRoles(spaceId)
+    async getAllRoles(spaceId: string) {
+        return this.client.getAllRoles(spaceId)
     }
 
     /**
@@ -2405,7 +2405,7 @@ const buildBotActions = (
         )
     }
 
-    const getRoles = async (spaceId: string) => {
+    const getAllRoles = async (spaceId: string) => {
         const roles = await readContract(viem, {
             address: SpaceAddressFromSpaceId(spaceId),
             abi: rolesFacetAbi,
@@ -2419,7 +2419,7 @@ const buildBotActions = (
         channelId: string,
         params: CreateChannelParams,
     ) => {
-        const roles = await getRoles(spaceId)
+        const roles = await getAllRoles(spaceId)
         const allRolesThatCanRead = roles.filter((role) =>
             role.permissions.includes(Permission.Read),
         )
@@ -2553,7 +2553,7 @@ const buildBotActions = (
         sendTip,
         sendBlockchainTransaction,
         createChannel,
-        getRoles,
+        getAllRoles,
         createRole,
         updateRole,
         addRoleToChannel,
