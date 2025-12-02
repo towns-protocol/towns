@@ -35,6 +35,11 @@ type aeParams struct {
 	currentTime           time.Time
 	streamView            *events.StreamView
 	parsedEvent           *events.ParsedEvent
+
+	// Memoized creator membership check to avoid duplicate IsMember() calls
+	creatorMembershipCached bool
+	creatorIsMemberResult   bool
+	creatorMembershipErr    error
 }
 
 type aeMembershipRules struct {
@@ -390,7 +395,8 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 			check(params.creatorIsMember)
 	case *UserMetadataPayload_ProfileImage:
 		return aeBuilder().
-			requireChainAuth(params.creatorIsMemberOrBotOwner)
+			check(params.creatorIsMemberOrIsAppUserStream).
+			requireChainAuth(params.botOwnerChainAuthIfNotMember)
 	case *UserMetadataPayload_Bio:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -634,6 +640,62 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
+// getCreatorIsMember returns cached result of creator membership check.
+// This avoids duplicate IsMember() calls between check and chain auth functions.
+func (params *aeParams) getCreatorIsMember() (bool, error) {
+	if params.creatorMembershipCached {
+		return params.creatorIsMemberResult, params.creatorMembershipErr
+	}
+	params.creatorMembershipCached = true
+	params.creatorIsMemberResult, params.creatorMembershipErr = params.streamView.IsMember(
+		params.parsedEvent.Event.CreatorAddress,
+	)
+	return params.creatorIsMemberResult, params.creatorMembershipErr
+}
+
+// creatorIsMemberOrIsAppUserStream returns true if creator is a member of the stream,
+// or if the stream belongs to an app user (bot). Returns error if neither condition is met.
+func (params *aeParams) creatorIsMemberOrIsAppUserStream() (bool, error) {
+	isMember, err := params.getCreatorIsMember()
+	if err != nil {
+		return false, err
+	}
+	if isMember {
+		return true, nil
+	}
+
+	// Not member - check if this is an app user stream (for bot owner case)
+	isAppUser, err := params.streamView.IsUserMetadataAppUser()
+	if err != nil {
+		return false, err
+	}
+	if isAppUser {
+		return true, nil // Allow - will be verified via chain auth
+	}
+
+	return false, RiverError(
+		Err_PERMISSION_DENIED,
+		"creator is not a member and stream is not associated with an app",
+		"creatorAddress", params.parsedEvent.Event.CreatorAddress,
+		"streamId", params.streamView.StreamId(),
+	)
+}
+
+// botOwnerChainAuthIfNotMember returns chain auth args for bot owner verification,
+// but only if the creator is not already a member of the stream.
+func (params *aeParams) botOwnerChainAuthIfNotMember() (*auth.ChainAuthArgs, error) {
+	isMember, err := params.getCreatorIsMember()
+	if err != nil {
+		return nil, err
+	}
+	if isMember {
+		return nil, nil // Skip chain auth - already authorized by check
+	}
+
+	// Not member - return bot owner chain auth args
+	return params.botOwnerChainAuth()
+}
+
 func (params *aeParams) creatorIsApp() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	err := checkIsApp(params, creatorAddress)
@@ -658,31 +720,6 @@ func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
 
 	// Create chain auth args to check if creator is the bot owner
 	return auth.NewChainAuthArgsForIsBotOwner(creatorAddress, botClientAddress), nil
-}
-
-// creatorIsMemberOrBotOwner returns chain auth args to check bot ownership.
-// Returns nil if the creator is already a member (no chain auth needed).
-// This allows either the stream owner OR the bot owner to update profile images.
-func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error) {
-	// First check if creator is a member
-	creatorAddress := params.parsedEvent.Event.CreatorAddress
-	err := checkIsMember(params, creatorAddress)
-	if err == nil {
-		// Creator is a member, no need for chain auth
-		return nil, nil
-	}
-
-	// Creator is not a member - check if this is an bot user's stream
-	isAppUser, err := params.streamView.IsUserMetadataAppUser()
-	if err != nil {
-		return nil, err
-	}
-	if !isAppUser {
-		return nil, RiverError(Err_PERMISSION_DENIED, "creator is not a member and stream is not a bot user stream")
-	}
-
-	// This is a bot user stream, check if creator is the bot owner
-	return params.botOwnerChainAuth()
 }
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
