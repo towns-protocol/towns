@@ -176,15 +176,15 @@ func (q *CachedEncryptedMessageQueue) SetAppMetadataPartial(
 func (q *CachedEncryptedMessageQueue) GetAppMetadata(
 	ctx context.Context,
 	app common.Address,
-) (*types.AppMetadata, error) {
+) (*types.AppMetadata, bool, error) {
 	appInfo, err := q.getCachedAppInfo(ctx, app)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if appInfo != nil {
-		return &appInfo.Metadata, nil
+		return &appInfo.Metadata, appInfo.Active, nil
 	}
-	return nil, base.RiverError(protocol.Err_NOT_FOUND, "App not found")
+	return nil, false, base.RiverError(protocol.Err_NOT_FOUND, "App not found")
 }
 
 func (q *CachedEncryptedMessageQueue) PublishSessionKeys(

@@ -294,6 +294,8 @@ message GetAppMetadataRequest {
 
 message GetAppMetadataResponse {
     AppMetadata metadata = 1;
+    // active indicates whether the app is currently active and receiving messages
+    bool active = 2;
 }
 
 // Validate bot username

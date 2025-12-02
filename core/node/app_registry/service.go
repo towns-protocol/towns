@@ -929,7 +929,7 @@ func (s *Service) GetAppMetadata(
 		return nil, err
 	}
 
-	metadata, err := s.store.GetAppMetadata(ctx, app)
+	metadata, active, err := s.store.GetAppMetadata(ctx, app)
 	if err != nil {
 		return nil, base.WrapRiverError(Err_INTERNAL, err).Message("could not get app metadata").
 			Tag("appId", app).Func("GetAppMetadata")
@@ -938,6 +938,7 @@ func (s *Service) GetAppMetadata(
 	return &connect.Response[GetAppMetadataResponse]{
 		Msg: &GetAppMetadataResponse{
 			Metadata: types.StorageToProtocolAppMetadata(*metadata),
+			Active:   active,
 		},
 	}, nil
 }

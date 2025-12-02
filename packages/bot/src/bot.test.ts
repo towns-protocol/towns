@@ -286,6 +286,11 @@ describe('Bot', { sequential: true }, () => {
         })
         expect(isRegistered).toBe(true)
         expect(validResponse).toBe(true)
+        const { metadata, active } = await appRegistryRpcClient.getAppMetadata({
+            appId: bin_fromHexString(botClientAddress),
+        })
+        expect(metadata?.username).toBe(BOT_USERNAME)
+        expect(active).toBe(true)
     }
 
     it('should have app_address defined in user stream for bot', async () => {
