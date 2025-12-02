@@ -1900,16 +1900,14 @@ describe('Bot', { sequential: true }, () => {
     it('bot can create role with NFT rule using Rules API', async () => {
         const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
 
-        const rule = Rules.checkErc721({
-            chainId: 31337n,
-            contractAddress: testNft1Address,
-            threshold: 1n,
-        })
-
         const { roleId } = await bot.createRole(spaceId, {
             name: 'NFT Gated Role',
             permissions: [Permission.Read],
-            rule,
+            rule: Rules.checkErc721({
+                chainId: 31337n,
+                contractAddress: testNft1Address,
+                threshold: 1n,
+            }),
         })
 
         const role = await spaceDapp.getRole(spaceId, roleId)

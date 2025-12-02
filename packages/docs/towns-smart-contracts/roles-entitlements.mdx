@@ -6,10 +6,14 @@ description: "Understanding Roles, Entitlements, and Permissions in Towns Protoc
 
 In the Towns ecosystem, `Permissions` are defined actions that users can undertake within a `Space`. These permissions are fundamental to governing user interactions and activities within the ecosystem. The Towns system includes a range of permissions, each tailored to specific functionalities:
 
-- **ModifyChannels**: This permission allows those who hold to create, delete, edit, and assign roles to a given channel within a Space.
-- **ModifyRoles**: This permission enables users to create and modify roles and entitlements within a Space.
-- **Read**: The `Read` permission allows users to access and view message content within a Space.
-- **Write**: With the `Write` permission, users can create and modify message content within a Space.
+- **Read**: Allows users to access and view message content within a Space.
+- **Write**: Allows users to create and modify message content within a Space.
+- **React**: Allows users to add reactions to messages.
+- **AddRemoveChannels**: Allows users to create and delete channels within a Space.
+- **ModifyChannel**: Allows users to edit channel settings.
+- **ModifySpaceSettings**: Allows users to change Space settings.
+- **ModifyRoles**: Allows users to create, update, and delete roles and entitlements within a Space.
+- **ModifyBanning**: Allows users to ban and unban members from a Space.
 
 ## Concept of Roles
 
@@ -40,5 +44,4 @@ Each newly minted Space in the Towns system is initialized with two predefined R
 **Member** - Granted to any address holding a Member NFT.
   By default, this Role includes "Read" and "Write" Permissions, allowing for basic interaction within the Space.
 
-**Minter** - Granted implicitly to any address that meets the requirements for minting a Membership NFT.
 

@@ -7,6 +7,7 @@ import {MembershipBaseSetup} from "../MembershipBaseSetup.sol";
 //interfaces
 
 //libraries
+import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 //contracts
 
@@ -44,13 +45,20 @@ contract MembershipPricingModulesTest is MembershipBaseSetup {
     }
 
     function test_setMembershipPrice() public givenMembershipHasPrice {
-        assertEq(membership.getMembershipPrice(), MEMBERSHIP_PRICE);
+        uint256 expectedPrice = MEMBERSHIP_PRICE + membership.getProtocolFee();
+        assertEq(membership.getMembershipPrice(), expectedPrice);
 
         uint256 newPrice = 2 ether;
 
         vm.prank(founder);
         membership.setMembershipPrice(newPrice);
 
-        assertEq(membership.getMembershipPrice(), newPrice);
+        uint256 protocolFee = (platformReqs.getMembershipBps() * newPrice) / 10000;
+        uint256 minFee = platformReqs.getMembershipFee();
+
+        protocolFee = FixedPointMathLib.max(protocolFee, minFee);
+
+        expectedPrice = newPrice + protocolFee;
+        assertEq(membership.getMembershipPrice(), expectedPrice);
     }
 }
