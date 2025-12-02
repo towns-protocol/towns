@@ -301,12 +301,12 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				"persisting sync cookie",
 				"streamId",
 				streamId,
-				"cookie",
-				cookie,
+				"nodeAddress",
+				common.BytesToAddress(cookie.NodeAddress),
+				"minipoolGen",
+				cookie.MinipoolGen,
 				"syncId",
 				ssr.syncer.GetSyncId(),
-				"targetNode",
-				ssr.node,
 			)
 			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
 				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)

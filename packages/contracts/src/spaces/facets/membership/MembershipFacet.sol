@@ -98,25 +98,26 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function setMembershipPrice(uint256 newPrice) external onlyOwner {
-        _verifyPrice(newPrice);
-        if (newPrice > 0 && _getMembershipFreeAllocation() > 0)
-            Membership__CannotSetPriceOnFreeSpace.selector.revertWith();
         IMembershipPricing(_getPricingModule()).setPrice(newPrice);
     }
 
     /// @inheritdoc IMembership
-    function getMembershipPrice() external view returns (uint256) {
-        return _getMembershipPrice(_totalSupply());
+    function getMembershipPrice() external view returns (uint256 totalRequired) {
+        (totalRequired, ) = _getTotalMembershipPayment(_getMembershipPrice(_totalSupply()));
     }
 
     /// @inheritdoc IMembership
-    function getMembershipRenewalPrice(uint256 tokenId) external view returns (uint256) {
-        return _getMembershipRenewalPrice(tokenId, _totalSupply());
+    function getMembershipRenewalPrice(
+        uint256 tokenId
+    ) external view returns (uint256 totalRequired) {
+        (totalRequired, ) = _getTotalMembershipPayment(
+            _getMembershipRenewalPrice(tokenId, _totalSupply())
+        );
     }
 
     /// @inheritdoc IMembership
-    function getProtocolFee() external view returns (uint256) {
-        return _getProtocolFee(_getMembershipPrice(_totalSupply()));
+    function getProtocolFee() external view returns (uint256 protocolFee) {
+        (, protocolFee) = _getTotalMembershipPayment(_getMembershipPrice(_totalSupply()));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -133,11 +134,6 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
             Membership__InvalidFreeAllocation.selector.revertWith();
         }
 
-        if (_getMembershipPrice(_totalSupply()) > 0) {
-            Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
-        }
-
-        // verify newLimit is not more than the allowed platform limit
         _verifyFreeAllocation(newAllocation);
         _setMembershipFreeAllocation(newAllocation);
     }
