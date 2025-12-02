@@ -926,6 +926,8 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 
 	page := 0
 	done := false
+	totalPagesFetched := 0
+	maxPagesFetched := 1 + (minipoolSize / pageSize)
 
 	for !done {
 		offset := page * pageSize
@@ -984,9 +986,11 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			return nil, err
 		}
 
-		done = rowsRetrieved < pageSize
+		done = rowsRetrieved < pageSize || totalPagesFetched > maxPagesFetched || rowsRetrieved == 0
 
 		rows.Close()
+
+		totalPagesFetched++
 	}
 
 	return &ReadStreamFromLastSnapshotResult{
