@@ -932,7 +932,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 
 		if mustLogStream {
 			log.Infow("PAGE_READ ReadStreamFromLastSnapshotTx",
-				"stream", streamId, "page", page, "offset", offset, "limit", pageSize, "duration", time.Since(start))
+				"stream", streamId, "page", page, "offset", offset, "limit", pageSize, "duration", time.Since(start).String())
 		}
 		rows, err := tx.Query(
 			ctx,
@@ -954,7 +954,6 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		var envelope []byte
 		var generation int64
 		var slotNum int64
-		rowCount := 0
 
 		if _, err := pgx.ForEachRow(rows, []any{&envelope, &generation, &slotNum}, func() error {
 			rowCount++

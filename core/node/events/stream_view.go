@@ -34,7 +34,6 @@ func MakeStreamView(
 	streamId StreamId,
 	streamData *storage.ReadStreamFromLastSnapshotResult,
 ) (*StreamView, error) {
-
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
@@ -94,6 +93,14 @@ func MakeStreamView(
 		}
 	}
 
+	if large {
+		logging.FromCtx(ctx).Infow(
+			"MakeStreamView: parsing large stream :: all miniblocks parsed",
+			"streamId", streamId,
+			"miniblocks", len(streamData.Miniblocks),
+		)
+	}
+
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -112,7 +119,7 @@ func MakeStreamView(
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
-	for _, e := range streamData.MinipoolEnvelopes {
+	for n, e := range streamData.MinipoolEnvelopes {
 		var env Envelope
 		err := proto.Unmarshal(e, &env)
 		if err != nil {
@@ -128,6 +135,17 @@ func MakeStreamView(
 				"duplicate event found in saved stream minipool",
 			).Func("MakeStreamView").
 				Tags("streamId", streamId, "event", parsed.ShortDebugStr())
+		}
+
+		if large && (n%25_000) == 0 {
+			logging.FromCtx(ctx).Infow(
+				"MakeStreamView: parsing large stream :: minipool event parse in progress",
+				"streamId", streamId,
+				"miniblocks", len(streamData.Miniblocks),
+				"minipoolEventsParsed", n+1,
+				"remainingEventsToParse", len(streamData.MinipoolEnvelopes)-n-1,
+				"duration", time.Since(startTime).String(),
+			)
 		}
 	}
 
