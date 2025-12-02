@@ -34,6 +34,7 @@ func MakeStreamView(
 	streamId StreamId,
 	streamData *storage.ReadStreamFromLastSnapshotResult,
 ) (*StreamView, error) {
+
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
