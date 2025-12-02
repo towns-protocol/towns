@@ -1,0 +1,122 @@
+---
+title: Roles 
+---
+
+Bots can create and manage roles in Towns spaces. Roles control what users can do - from reading messages to banning members. You can also create token-gated roles that require users to hold specific NFTs or tokens.
+
+<Note>
+Role management requires your bot to have admin permissions in the space. All role operations are onchain transactions that require gas.
+</Note>
+
+## Creating Roles
+
+```ts
+import { Permission } from '@towns-protocol/web3'
+
+const { roleId } = await bot.createRole(spaceId, {
+  name: 'Moderator',
+  permissions: [Permission.Read, Permission.Write, Permission.ModifyBanning],
+  users: ['0x...', '0x...'] // optional: only assign to specific users
+})
+```
+
+### CreateRoleParams
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Display name for the role |
+| `permissions` | `Permission[]` | Array of permissions to grant |
+| `users` | `string[]` | (Optional) User addresses to assign the role |
+| `rule` | `Operation` | (Optional) Token-gating rule (see below) |
+
+## Token-Gated Roles
+
+Create roles that require users to hold specific tokens using the `Rules` API:
+
+```ts
+import { Permission, Rules } from '@towns-protocol/web3'
+
+const townsHolderRule = Rules.checkErc20({
+  chainId: 8453n,
+  contractAddress: '0x00000000A22C618fd6b4D7E9A335C4B96B189a38',
+  threshold: 1n
+})
+
+const role = await bot.createRole(spaceId, {
+  name: 'Towns Holder',
+  permissions: [Permission.Read, Permission.Write],
+  rule: townsHolderRule
+})
+```
+
+You can apply the role to a channel by calling `bot.addRoleToChannel(channelId, roleId)`. This will gate the channel to only users who hold the required tokens.
+
+```ts
+await bot.addRoleToChannel(channelId, role.roleId)
+```
+
+### Available Rule Types
+
+| Rule | Description |
+|------|-------------|
+| `Rules.checkErc721({ chainId, contractAddress, threshold })` | Check ERC721 NFT balance |
+| `Rules.checkErc20({ chainId, contractAddress, threshold })` | Check ERC20 token balance |
+| `Rules.checkErc1155({ chainId, contractAddress, tokenId, threshold })` | Check ERC1155 balance for a specific token ID |
+| `Rules.checkEthBalance({ threshold })` | Check native ETH balance |
+| `Rules.checkIsEntitled({ chainId, contractAddress, params? })` | Check cross-chain entitlement |
+
+### Combining Rules
+
+```ts
+import { Rules } from '@towns-protocol/web3'
+import { parseEther } from 'viem'
+
+// AND: both conditions must pass
+const andRule = Rules.and(
+  Rules.checkErc721({ chainId: 8453n, contractAddress: nftContract, threshold: 1n }),
+  Rules.checkErc20({ chainId: 8453n, contractAddress: tokenContract, threshold: parseEther('100') })
+)
+
+// OR: either condition must pass
+const orRule = Rules.or(
+  Rules.checkErc721({ chainId: 8453n, contractAddress: nftContract, threshold: 1n }),
+  Rules.checkEthBalance({ threshold: parseEther('0.1') })
+)
+
+// All rules must pass. Does not allow failure. Can be nested.
+const allRule = Rules.every(ruleA, ruleB, ruleC)
+// Any rule can pass, allowing failure. Can be nested.
+const anyRule = Rules.some(ruleA, ruleB, ruleC)
+```
+
+## Managing Roles
+
+```ts
+// Get all roles in a space
+// Returns: Array<{ id, name, permissions, disabled }>
+const roles = await bot.getAllRoles(spaceId)
+
+// Get full details of a specific role
+// Returns: { id, name, permissions, users, ruleData, disabled } | null
+const role = await bot.getRole(spaceId, roleId)
+
+// Update a role. Fields are optional and will only update the fields that are provided.
+// Returns: Transaction hash
+await bot.updateRole(spaceId, roleId, {
+  name: 'New Name',
+  users: ['0x...', '0x...'],
+  permissions: [Permission.Read, Permission.Write]
+})
+
+// Delete a role
+// Returns: Transaction hash
+await bot.deleteRole(spaceId, roleId)
+
+// Add role to a channel, applying the role's rules to the channel
+// Returns: Transaction hash
+await bot.addRoleToChannel(channelId, roleId)
+```
+
+## Available Permissions
+
+See [Roles & Entitlements](/towns-smart-contracts/roles-entitlements) for the full list of available permissions.
