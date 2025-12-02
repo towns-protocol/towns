@@ -832,7 +832,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks, "minipoolSize", minipoolSize)
 		defer log.Infow("FINISH readStreamFromLastSnapshotTx",
 			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks,
-			"took", time.Since(start), "rowCount", rowCount)
+			"took", time.Since(start).String(), "rowCount", rowCount)
 	}
 
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)

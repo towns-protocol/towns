@@ -103,7 +103,7 @@ func initConfigAndLog() {
 
 func init() {
 	deadlock.Opts.WriteLocked(func() {
-		deadlock.Opts.DeadlockTimeout = 10 * time.Minute
+		deadlock.Opts.DeadlockTimeout = 30 * time.Minute
 		deadlock.Opts.MaxMapSize = 25 * 1024 * 256
 		deadlock.Opts.PrintAllCurrentGoroutines = true
 		deadlock.Opts.OnPotentialDeadlock = func() {} // Do not panic and continue execution
