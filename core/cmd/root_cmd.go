@@ -106,7 +106,7 @@ func init() {
 		deadlock.Opts.DeadlockTimeout = 10 * time.Minute
 		deadlock.Opts.MaxMapSize = 25 * 1024 * 256
 		deadlock.Opts.PrintAllCurrentGoroutines = true
-		//deadlock.Opts.OnPotentialDeadlock = func() {} // Do not panic and continue execution
+		deadlock.Opts.OnPotentialDeadlock = func() {} // Do not panic and continue execution
 		// TODO: make params configurable (move this section after config initialization) and wire zap logger to get better integration with log processors
 	})
 
