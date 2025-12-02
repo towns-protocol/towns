@@ -45,6 +45,7 @@ import {
     AppRegistryDapp,
     ETH_ADDRESS,
     Permission,
+    Rules,
     SpaceAddressFromSpaceId,
     SpaceDapp,
     TestERC721,
@@ -1874,5 +1875,113 @@ describe('Bot', { sequential: true }, () => {
         log('pinned event', pinEventId)
         const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
         log('unpinned event', unpinEventId)
+    })
+
+    it('bot can create role with permissions', async () => {
+        // Create role directly on bot
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Test Role',
+            permissions: [Permission.Read, Permission.Write],
+            users: [bot.botId, bob.userId],
+        })
+        // Verify role exists via spaceDapp
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('Test Role')
+        expect(role?.permissions).toContain(Permission.Read)
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can create role with NFT rule using Rules API', async () => {
+        const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
+
+        const rule = Rules.checkErc721({
+            chainId: 31337n,
+            contractAddress: testNft1Address,
+            threshold: 1n,
+        })
+
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'NFT Gated Role',
+            permissions: [Permission.Read],
+            rule,
+        })
+
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('NFT Gated Role')
+        // Role should have rule data set
+        expect(role?.ruleData).toBeDefined()
+    })
+
+    it('bot can update role', async () => {
+        // Create role first
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Original Name',
+            permissions: [Permission.Read],
+        })
+        // Update the role
+        await bot.updateRole(spaceId, roleId, {
+            name: 'Updated Name',
+            permissions: [Permission.Read, Permission.Write],
+        })
+        // Verify role was updated
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role?.name).toBe('Updated Name')
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can add role to channel', async () => {
+        // Create channel first (before the role exists)
+        const newChannelId = await bot.createChannel(spaceId, {
+            name: `test-channel-${randomUUID().slice(0, 8)}`,
+            description: 'Test channel for role',
+        })
+        // Create role after channel exists
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Channel Role',
+            permissions: [Permission.Read],
+        })
+        // Add role to channel
+        await bot.addRoleToChannel(newChannelId, roleId)
+        // Verify role is in channel
+        const channelRoles = await readContract(bot.viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: channelsFacetAbi,
+            functionName: 'getRolesByChannel',
+            args: [
+                newChannelId.startsWith('0x')
+                    ? (newChannelId as `0x${string}`)
+                    : `0x${newChannelId}`,
+            ],
+        })
+        expect(channelRoles).toContain(BigInt(roleId))
+    })
+
+    it('bot can get role details', async () => {
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Detailed Role',
+            permissions: [Permission.Read, Permission.Write],
+        })
+        const role = await bot.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('Detailed Role')
+        expect(role?.permissions).toContain(Permission.Read)
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can delete role', async () => {
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Role To Delete',
+            permissions: [Permission.Read],
+        })
+        // Verify role exists
+        const roleBefore = await bot.getRole(spaceId, roleId)
+        expect(roleBefore).toBeDefined()
+        // Delete the role
+        await bot.deleteRole(spaceId, roleId)
+        // Verify role no longer exists
+        const roleAfter = await bot.getRole(spaceId, roleId)
+        expect(roleAfter).toBeNull()
     })
 })
