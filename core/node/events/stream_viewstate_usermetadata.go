@@ -72,8 +72,12 @@ func (r *StreamView) IsUserMetadataAppUser() (bool, error) {
 		return false, err
 	}
 
+	if len(inception.AppAddress) != common.AddressLength {
+		return false, nil
+	}
+
 	zeroAddress := common.Address{}
-	if len(inception.AppAddress) == 20 && common.Address(inception.AppAddress) != zeroAddress {
+	if common.BytesToAddress(inception.AppAddress) != zeroAddress {
 		return true, nil
 	}
 

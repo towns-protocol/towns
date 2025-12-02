@@ -204,7 +204,7 @@ func (args *ChainAuthArgs) Principal() common.Address {
 
 func (args *ChainAuthArgs) String() string {
 	return fmt.Sprintf(
-		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s}",
+		"ChainAuthArgs{kind: %d, spaceId: %s, channelId: %s, principal: %s, permission: %s, linkedWallets: %s, walletAddress: %s, appAddress: %s, botClientAddress: %s}",
 		args.kind,
 		args.spaceId,
 		args.channelId,
@@ -213,6 +213,7 @@ func (args *ChainAuthArgs) String() string {
 		args.linkedWallets,
 		args.walletAddress.Hex(),
 		args.appAddress.Hex(),
+		args.botClientAddress.Hex(),
 	)
 }
 
