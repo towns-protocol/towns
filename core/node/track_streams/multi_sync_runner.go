@@ -227,6 +227,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 
 	applyBlocks := false
 	for _, block := range streamAndCookie.GetMiniblocks() {
+		// Currently the node will only send miniblocks in a reset (this code it dead atm)
 		if !reset {
 			if err := trackedView.ApplyBlock(
 				block,
