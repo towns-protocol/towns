@@ -198,7 +198,9 @@ import {
     IPersistenceStore,
     StubPersistenceStore,
     LoadedStream,
+    createPersistenceStore,
 } from './persistenceStore'
+import type { StorageAdapter } from '@towns-protocol/storage'
 import { SyncedStreams } from './syncedStreams'
 import { SyncState } from './syncedStreamsLoop'
 import { SyncedStream } from './syncedStream'
@@ -229,6 +231,8 @@ export enum SyncMode {
 
 export type ClientOptions = {
     persistenceStoreName?: string
+    /** Custom storage adapter for persistence store */
+    db?: StorageAdapter
     logNamespaceFilter?: string
     highPriorityStreamIds?: string[]
     unpackEnvelopeOpts?: UnpackEnvelopeOpts
@@ -368,7 +372,12 @@ export class Client
         this.logDebug = dlog('csb:cl:debug').extend(this.logId)
         this.cryptoStore = cryptoStore
 
-        if (opts?.persistenceStoreName) {
+        if (opts?.db) {
+            this.persistenceStore = createPersistenceStore({
+                databaseName: opts.persistenceStoreName ?? 'persistence',
+                storageAdapter: opts.db,
+            })
+        } else if (opts?.persistenceStoreName) {
             this.persistenceStore = new PersistenceStore(opts.persistenceStoreName)
         } else {
             this.persistenceStore = new StubPersistenceStore()
