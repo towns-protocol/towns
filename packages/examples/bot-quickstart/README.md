@@ -89,7 +89,7 @@ Main bot logic with:
 2. **Slash command handlers** (`onSlashCommand`) - Handle `/help` and `/time` commands
 3. **Message handler** (`onMessage`) - Respond to message keywords (hello, ping, react)
 4. **Reaction handler** (`onReaction`) - Respond to emoji reactions (👋)
-5. **Server setup** (Hono) - HTTP server with `/webhook` endpoint for receiving events
+5. **Bot server setup** (`bot.start()`) - Starts the bot server with a Hono HTTP server
 
 ## Extending this Bot
 
