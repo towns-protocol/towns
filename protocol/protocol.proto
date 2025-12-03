@@ -1298,7 +1298,7 @@ message InteractionRequestPayload {
         optional string subtitle = 7;
 
         // Which signature verification methods are allowed for this request.
-        SignatureValidation signature_validation = 8;
+        optional SignatureValidation signature_validation = 8;
     }
 
     message Form {
