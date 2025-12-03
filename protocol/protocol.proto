@@ -1265,6 +1265,15 @@ message InteractionRequestPayload {
             TYPED_DATA = 1;    // -> eth_signTypedData_v4 (EIP-712)
         }
 
+        // Specifies which signature verification methods are acceptable.
+        // EIP-712: EOA wallets only (verified via ecrecover)
+        // EIP-1271: Smart contract wallets (verified via isValidSignature)
+        enum SignatureValidation {
+            UNSPECIFIED = 0;
+            EIP712_ONLY = 1;
+            EIP712_OR_EIP1271 = 2;
+        }
+
         // A unique identifier for this interaction.
         // Used to correlate an InteractionRequest with its InteractionResponse.
         string id = 1;
@@ -1287,6 +1296,9 @@ message InteractionRequestPayload {
         optional string title = 6;
         // Optional: a subtitle or human-readable explanation (UX only).
         optional string subtitle = 7;
+
+        // Which signature verification methods are allowed for this request.
+        optional SignatureValidation signature_validation = 8;
     }
 
     message Form {
