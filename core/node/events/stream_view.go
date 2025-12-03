@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -28,10 +29,47 @@ type StreamViewStats struct {
 	TotalEventsEver       int // This is total number of events in the stream ever, not in the cache.
 }
 
-func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*StreamView, error) {
+func MakeStreamView(
+	ctx context.Context,
+	streamId StreamId,
+	streamData *storage.ReadStreamFromLastSnapshotResult,
+) (*StreamView, error) {
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
+
+	startTime := time.Now()
+	large := len(streamData.Miniblocks) > 100 || len(streamData.MinipoolEnvelopes) > 10
+	if large {
+		logging.FromCtx(ctx).Infow(
+			"MakeStreamView: parsing large stream",
+			"streamId", streamId,
+			"miniblocks", len(streamData.Miniblocks),
+			"minipoolSize", len(streamData.MinipoolEnvelopes),
+			"snapshotOffset", streamData.SnapshotMiniblockOffset,
+		)
+	}
+	defer func() {
+		duration := time.Since(startTime)
+		durationExceeded := duration > 10*time.Second
+		if durationExceeded || large {
+			level := zapcore.InfoLevel
+			msg := "MakeStreamView: large stream parsed"
+			if durationExceeded {
+				level = zapcore.ErrorLevel
+				msg = "MakeStreamView: stream parsing took too long"
+			}
+			logging.FromCtx(ctx).Logw(
+				level,
+				msg,
+				"duration", duration,
+				"streamId", streamId,
+				"miniblocks", len(streamData.Miniblocks),
+				"minipoolSize", len(streamData.MinipoolEnvelopes),
+				"snapshotOffset", streamData.SnapshotMiniblockOffset,
+			)
+		}
+	}()
 
 	miniblocks := make([]*MiniblockInfo, len(streamData.Miniblocks))
 	snapshotIndex := -1
@@ -59,9 +97,17 @@ func MakeStreamView(streamData *storage.ReadStreamFromLastSnapshotResult) (*Stre
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 
-	streamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
+	snapshotStreamId, err := StreamIdFromBytes(snapshot.GetInceptionPayload().GetStreamId())
 	if err != nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "bad streamId").Func("MakeStreamView")
+	}
+	if streamId != snapshotStreamId {
+		return nil, RiverError(
+			Err_STREAM_BAD_EVENT,
+			"expected streamId does not match snapshot",
+		).Func("MakeStreamView").
+			Tag("expectedStreamId", streamId).
+			Tag("snapshotStreamId", snapshotStreamId)
 	}
 
 	minipoolEvents := NewOrderedMap[common.Hash, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -302,36 +348,75 @@ func (r *StreamView) ProposeNextMiniblock(
 	}, nil
 }
 
+// proposeNextMiniblock creates a miniblock proposal from the local stream view that
+// respects the limits set in the given cfg.
 func (r *StreamView) proposeNextMiniblock(
 	ctx context.Context,
 	cfg *crypto.OnChainSettings,
 	forceSnapshot bool,
+	replicatedStream bool,
 ) *mbProposal {
+	var events []mbProposalEvent
+	// for replicated streams all events are included to prevent the situation that due to
+	// miniblock event limits, each replica has a different set of events and no quorum over
+	// which events to include could be reached. For replicated streams all gathered proposals
+	// are combined into a proposal used to create the next miniblock candidate. Miniblock
+	// event limits are respected during this step.
+	if replicatedStream {
+		events = r.minipool.proposalEvents()
+	} else {
+		events = r.minipool.proposalEventsWithMiniblockLimits(cfg)
+	}
+
 	return &mbProposal{
 		newMiniblockNum:   r.minipool.generation,
 		prevMiniblockHash: r.LastBlock().headerEvent.Hash,
 		shouldSnapshot:    forceSnapshot || r.shouldSnapshot(cfg),
-		eventHashes:       r.minipool.eventHashes(),
+		events:            events,
 	}
 }
 
+// mbProposalEvent contains details of an event that is included in a miniblock proposal.
+type mbProposalEvent struct {
+	// Hash is the event hash
+	Hash common.Hash
+	// Size is the length of the raw event envelope.
+	Size int
+}
+
+// mbProposal is a proposal created by a stream node that contains the details of the
+// next miniblock to be created. Proposals are used to create a candidate that is registered
+// in the StreamRegistry smart contract. If registered successful the candidate is promoted
+// to be the next miniblock in the stream.
 type mbProposal struct {
-	newMiniblockNum   int64
+	// newMiniblockNum is the miniblock number for this proposal.
+	newMiniblockNum int64
+	// prevMiniblockHash is the hash of the previous miniblock.
 	prevMiniblockHash common.Hash
-	shouldSnapshot    bool
-	eventHashes       []common.Hash
+	// shouldSnapshot is true if the node that created the proposal wants to create a snapshot
+	shouldSnapshot bool
+	// events contain the events included in the proposal. This is a slice to respect the ordering of events.
+	events []mbProposalEvent
 }
 
-func mbProposalFromProto(p *MiniblockProposal) *mbProposal {
-	hashes := make([]common.Hash, len(p.Hashes))
-	for i, h := range p.Hashes {
-		hashes[i].SetBytes(h)
+// mbProposalFromProto decodes the given p received from a remote replica node into
+// a mbProposal that can be combined to create the next miniblock candidate. The given
+// view is used to resolve the hashes to events to grab event details. Only events are
+// included in the returned proposal that are also present in the given view.
+func mbProposalFromProto(p *MiniblockProposal, view *StreamView) *mbProposal {
+	events := make([]mbProposalEvent, 0, len(p.Hashes))
+	for _, h := range p.Hashes {
+		eventHash := common.BytesToHash(h)
+		if event, ok := view.minipool.events.Get(eventHash); ok {
+			events = append(events, mbProposalEvent{Hash: eventHash, Size: len(event.Envelope.Event)})
+		}
 	}
+
 	return &mbProposal{
 		newMiniblockNum:   p.NewMiniblockNum,
-		prevMiniblockHash: common.Hash(p.PrevMiniblockHash),
+		prevMiniblockHash: common.BytesToHash(p.PrevMiniblockHash),
 		shouldSnapshot:    p.ShouldSnapshot,
-		eventHashes:       hashes,
+		events:            events,
 	}
 }
 
@@ -356,13 +441,13 @@ func (r *StreamView) makeMiniblockCandidate(
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	events := make([]*ParsedEvent, 0, r.minipool.events.Len())
 
-	for _, h := range proposal.eventHashes {
-		e, ok := r.minipool.events.Get(h)
+	for _, ev := range proposal.events {
+		e, ok := r.minipool.events.Get(ev.Hash)
 		if !ok {
 			return nil, RiverError(
 				Err_MINIPOOL_MISSING_EVENTS,
 				"proposal event not found in minipool",
-				"hash", h,
+				"hash", ev.Hash,
 				"streamId", r.streamId,
 				"generation", r.minipool.generation,
 				"minipoolLen", r.minipool.events.Len(),
@@ -881,7 +966,9 @@ func (r *StreamView) StreamParentId() *StreamId {
 func GetStreamParentId(inception IsInceptionPayload) []byte {
 	switch inceptionContent := inception.(type) {
 	case *ChannelPayload_Inception:
-		return inceptionContent.SpaceId
+		spaceID := StreamId{STREAM_SPACE_BIN}
+		copy(spaceID[1:], inceptionContent.StreamId[1:21])
+		return spaceID[:]
 	default:
 		return nil
 	}
@@ -1049,4 +1136,33 @@ func (r *StreamView) GetResetStreamAndCookieWithPrecedingMiniblocks(
 		SyncReset:              true,
 		SnapshotMiniblockIndex: snapshotIndexInResult,
 	}
+}
+
+// MiniblockEventLimits returns the maximum numbers of events per miniblock and the max total combined
+// size (in bytes) of all events in a miniblock as defined in the given cfg. It reads those from on-chain
+// settings and if not found, uses default values.
+//
+// It also ensures that settings read from on-chain are not too high, limiting them to the max allowed
+// by the protocol. This prevents misconfiguration or malicious on-chain values from causing excessive
+// miniblock sizes that could impact network performance or storage requirements.
+func MiniblockEventLimits(cfg *crypto.OnChainSettings) (maxEventsPerMiniblock, maxEventCombinedSize int) {
+	// limit the number of events that can be proposed in a single miniblock.
+	// use the default also as a max when settings are configured on-chain to prevent
+	// values that could cause performance issues or enable denial-of-service attacks.
+	maxEventsPerMiniblock = crypto.MaxEventsPerMiniblockDefault
+	if cfg.StreamMaxEventsPerMiniblock > 0 {
+		maxEventsPerMiniblock = int(min(crypto.MaxEventsPerMiniblockDefault, cfg.StreamMaxEventsPerMiniblock))
+	}
+
+	// limit the combined size of events that can be proposed in a single miniblock.
+	// use the default also as a max when settings are configured on-chain to prevent
+	// values that could cause performance issues or enable denial-of-service attacks.
+	maxEventCombinedSize = crypto.StreamMaxTotalEventsSizePerMiniblockDefault
+	if cfg.StreamMaxTotalEventsSizePerMiniblock > 0 {
+		maxEventCombinedSize = int(
+			min(crypto.StreamMaxTotalEventsSizePerMiniblockDefault, cfg.StreamMaxTotalEventsSizePerMiniblock),
+		)
+	}
+
+	return maxEventsPerMiniblock, maxEventCombinedSize
 }

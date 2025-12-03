@@ -1,6 +1,4 @@
 import { makeTownsBot } from '@towns-protocol/bot'
-import { Hono } from 'hono'
-import { logger } from 'hono/logger'
 import commands from './commands'
 
 const bot = await makeTownsBot(process.env.APP_PRIVATE_DATA!, process.env.JWT_SECRET!, {
@@ -48,10 +46,6 @@ bot.onReaction(async (handler, { reaction, channelId }) => {
         await handler.sendMessage(channelId, 'I saw your wave! 👋')
     }
 })
-const { jwtMiddleware, handler } = bot.start()
 
-const app = new Hono()
-app.use(logger())
-app.post('/webhook', jwtMiddleware, handler)
-
+const app = bot.start()
 export default app

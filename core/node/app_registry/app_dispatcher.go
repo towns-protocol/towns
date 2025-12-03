@@ -83,9 +83,18 @@ func (d *AppDispatcher) RequestKeySolicitations(
 
 			d.workerPool.Submit(
 				func() {
+					log := logging.FromCtx(ctx).With("func", "AppDispatcher.RequestKeySolicitations")
+					log.Infow(
+						"Requesting bot to solicit encryption key",
+						"appId", device.AppId,
+						"sessionId", sessionId,
+						"channelId", channelId,
+						"deviceKey", device.DeviceKey,
+						"webhookUrl", device.WebhookUrl,
+					)
 					// TODO: retries?
 					if err := d.appClient.RequestSolicitation(ctx, device.AppId, sharedSecret, device.WebhookUrl, channelId, sessionId); err != nil {
-						logging.FromCtx(ctx).With("func", "AppDispatcher.RequestKeySolicitations").Errorw(
+						log.Errorw(
 							"Could not complete request for app to send a key solicitation",
 							"appId",
 							device.AppId,
@@ -127,6 +136,23 @@ func (d *AppDispatcher) SubmitMessages(
 
 	d.workerPool.Submit(
 		func() {
+			log := logging.FromCtx(ctx)
+			log.Infow(
+				"Submitting messages to bot webhook",
+				"appId",
+				messages.AppId,
+				"streamId",
+				messages.StreamId,
+				"messageCount",
+				len(messages.MessageEnvelopes),
+				"webhookUrl",
+				messages.WebhookUrl,
+				"hasEncryptionEnvelope",
+				messages.EncryptionEnvelope != nil,
+				"workerPoolQueueSize",
+				d.workerPool.WaitingQueueSize(),
+			)
+			startTime := time.Now()
 			if err := d.appClient.SendSessionMessages(
 				ctx,
 				messages.StreamId,
@@ -136,9 +162,10 @@ func (d *AppDispatcher) SubmitMessages(
 				encryptionEnvelopes,
 				messages.WebhookUrl,
 			); err != nil {
+				duration := time.Since(startTime)
 				// TODO: retry logic?
-				logging.FromCtx(ctx).Errorw(
-					"Could not send session messages",
+				log.Errorw(
+					"Failed to deliver messages to bot webhook",
 					"appId",
 					messages.AppId,
 					"deviceKey",
@@ -147,8 +174,25 @@ func (d *AppDispatcher) SubmitMessages(
 					messages.WebhookUrl,
 					"streamId",
 					messages.StreamId,
+					"duration",
+					duration,
 					"error",
 					err,
+				)
+			} else {
+				duration := time.Since(startTime)
+				log.Infow(
+					"Successfully delivered messages to bot webhook",
+					"appId",
+					messages.AppId,
+					"streamId",
+					messages.StreamId,
+					"messageCount",
+					len(messages.MessageEnvelopes),
+					"webhookUrl",
+					messages.WebhookUrl,
+					"duration",
+					duration,
 				)
 			}
 		},

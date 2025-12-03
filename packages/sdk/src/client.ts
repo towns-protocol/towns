@@ -56,7 +56,13 @@ import {
     InfoResponse,
     MessageInteractionType,
     InteractionResponse,
+    InteractionRequest,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
     SessionKeys,
+    InteractionResponsePayload,
+    InteractionResponsePayloadSchema,
+    EncryptedDataVersion,
 } from '@towns-protocol/proto'
 import {
     bin_fromHexString,
@@ -67,10 +73,12 @@ import {
     dlog,
     dlogError,
     bin_fromString,
+    bin_toBase64,
 } from '@towns-protocol/utils'
 import {
     AES_GCM_DERIVED_ALGORITHM,
     CryptoStore,
+    EncryptionAlgorithmId,
     EnsureOutboundSessionOpts,
     GroupEncryptionAlgorithmId,
     GroupEncryptionCrypto,
@@ -170,6 +178,7 @@ import {
     isSolanaTransactionReceipt,
     ParsedEvent,
     ExclusionFilter,
+    make_ChannelPayload_InteractionRequest,
     make_ChannelPayload_InteractionResponse,
 } from './types'
 import { applyExclusionFilterToMiniblocks } from './streamUtils'
@@ -2124,17 +2133,99 @@ export class Client
         })
     }
 
-    async sendInteractionResponse(
+    async sendInteractionRequest(
         streamId: string,
-        response: PlainMessage<InteractionResponse>,
+        content: PlainMessage<InteractionRequestPayload['content']>,
+        recipient?: Uint8Array,
         opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
     ): Promise<{ eventId: string }> {
+        const stream = this.stream(streamId)
+        check(isDefined(stream), 'stream not found')
+        check(isDefined(this.cryptoBackend), 'crypto backend not initialized')
+
+        // Create payload with content and encryption device for responses
+        const payload = create(InteractionRequestPayloadSchema, {
+            encryptionDevice: this.userDeviceKey(),
+            content: content,
+        })
+
+        // Encrypt using group encryption (same as messages)
+        const encryptionAlgorithm =
+            stream.view.membershipContent.encryptionAlgorithm ??
+            this.defaultGroupEncryptionAlgorithm
+        const encryptedData = await this.cryptoBackend.encryptGroupEvent(
+            streamId,
+            toBinary(InteractionRequestPayloadSchema, payload),
+            encryptionAlgorithm as GroupEncryptionAlgorithmId,
+        )
+
+        // Create the request matching InteractionResquest structure
+        const request: PlainMessage<InteractionRequest> = {
+            recipient: recipient,
+            encryptedData: encryptedData,
+            threadId: opts?.tags?.threadId,
+        }
+
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_ChannelPayload_InteractionRequest(request),
+            {
+                method: 'sendInteractionRequest',
+                tags: opts?.tags,
+                ephemeral: opts?.ephemeral,
+            },
+        )
+    }
+
+    async sendInteractionResponse(
+        streamId: string,
+        recipient: Uint8Array,
+        payload: PlainMessage<InteractionResponsePayload>,
+        toUserDevice: UserDevice,
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean; threadId: string | undefined },
+    ): Promise<{ eventId: string }> {
+        const binaryData = toBinary(
+            InteractionResponsePayloadSchema,
+            create(InteractionResponsePayloadSchema, payload),
+        )
+        const string = bin_toBase64(binaryData)
+        const ciphertextmap = await this.encryptWithDeviceKeys(string, [toUserDevice])
+        const ciphertext = ciphertextmap[toUserDevice.deviceKey]
+        check(isDefined(ciphertext), 'ciphertext not found')
+        const response: PlainMessage<InteractionResponse> = {
+            recipient: recipient,
+            threadId: opts?.threadId ? bin_fromHexString(opts?.threadId) : undefined,
+            encryptedData: {
+                ciphertext: ciphertext,
+                algorithm: EncryptionAlgorithmId.Olm,
+                senderKey: this.userDeviceKey().deviceKey,
+                sessionId: '',
+                checksum: '',
+                ciphertextBytes: new Uint8Array(),
+                ivBytes: new Uint8Array(),
+                sessionIdBytes: new Uint8Array(),
+                version: EncryptedDataVersion.ENCRYPTED_DATA_VERSION_0,
+                deviceKey: toUserDevice.deviceKey,
+            } satisfies PlainMessage<EncryptedData>,
+        }
+        const tags = {
+            groupMentionTypes: [],
+            mentionedUserAddresses: [],
+            ...(opts?.tags ?? {}),
+            messageInteractionType:
+                opts?.tags?.messageInteractionType ?? MessageInteractionType.REPLY,
+            participatingUserAddresses: [
+                ...(opts?.tags?.participatingUserAddresses ?? []),
+                recipient,
+            ],
+        } satisfies PlainMessage<Tags>
+
         return this.makeEventAndAddToStream(
             streamId,
             make_ChannelPayload_InteractionResponse(response),
             {
                 method: 'sendInteractionResponse',
-                tags: opts?.tags,
+                tags,
                 ephemeral: opts?.ephemeral,
             },
         )
@@ -2194,7 +2285,7 @@ export class Client
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
         const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
-        return this.makeEventAndAddToStream(
+        const { eventId } = await this.makeEventAndAddToStream(
             this.userStreamId,
             make_UserPayload_UserMembershipAction({
                 op: MembershipOp.SO_JOIN,
@@ -2202,8 +2293,19 @@ export class Client
                 streamId: streamIdAsBytes(streamId),
                 streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
-            { method: 'inviteUser' },
+            { method: 'joinUser' },
         )
+        // share the latest group session to the user
+        try {
+            await this.encryptAndShareLatestGroupSessionToUser(streamId, userId)
+        } catch (error) {
+            this.logError('Failed to share group session to user', {
+                streamId,
+                userId,
+                error,
+            })
+        }
+        return { eventId }
     }
 
     async joinStream(

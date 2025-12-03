@@ -26,6 +26,7 @@ export type UserInfo = {
     displayNameEncrypted: boolean
     ensAddress?: string
     nft?: Nft
+    appAddress?: string
 }
 
 export class StreamStateView_MemberMetadata {
@@ -33,6 +34,7 @@ export class StreamStateView_MemberMetadata {
     readonly displayNames: MemberMetadata_DisplayNames
     readonly ensAddresses: MemberMetadata_EnsAddresses
     readonly nfts: MemberMetadata_Nft
+    readonly appAddresses = new Map<string, string>()
     readonly currentUserId: string
     constructor(streamId: string, currentUserId: string) {
         this.usernames = new MemberMetadata_Usernames(streamId, currentUserId)
@@ -47,6 +49,7 @@ export class StreamStateView_MemberMetadata {
         displayNames: { userId: string; wrappedEncryptedData: WrappedEncryptedData }[],
         ensAddresses: { userId: string; ensAddress: Uint8Array }[],
         nfts: { userId: string; nft: MemberPayload_Nft }[],
+        appAddresses: { userId: string; appAddress: string }[],
         cleartexts: Record<string, Uint8Array | string> | undefined,
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ) {
@@ -93,6 +96,12 @@ export class StreamStateView_MemberMetadata {
 
         this.ensAddresses.applySnapshot(ensAddresses)
         this.nfts.applySnapshot(nfts)
+
+        for (const item of appAddresses) {
+            if (item.appAddress) {
+                this.appAddresses.set(item.userId, item.appAddress)
+            }
+        }
     }
 
     onConfirmedEvent(
@@ -185,12 +194,22 @@ export class StreamStateView_MemberMetadata {
         const displayNameInfo = this.displayNames.info(userId)
         const ensAddress = this.ensAddresses.info(userId)
         const nft = this.nfts.info(userId)
+        const appAddress = this.appAddresses.get(userId)
         return {
             ...usernameInfo,
             ...displayNameInfo,
             ensAddress,
             nft,
+            appAddress,
         }
+    }
+
+    setAppAddress(userId: string, appAddress: string): void {
+        this.appAddresses.set(userId, appAddress)
+    }
+
+    removeAppAddress(userId: string): void {
+        this.appAddresses.delete(userId)
     }
 }
 

@@ -165,3 +165,18 @@ func (r *StreamView) IsAppUser() (bool, error) {
 
 	return false, err
 }
+
+func (r *StreamView) GetAppAddress() (common.Address, error) {
+	inception, err := r.GetUserInception()
+	if err != nil {
+		return common.Address{}, err
+	}
+
+	zeroAddress := common.Address{}
+	// If the inception event contains a valid AppAddress, then we consider it a bot.
+	if len(inception.AppAddress) == 20 && common.Address(inception.AppAddress) != zeroAddress {
+		return common.Address(inception.AppAddress), nil
+	}
+
+	return zeroAddress, nil
+}

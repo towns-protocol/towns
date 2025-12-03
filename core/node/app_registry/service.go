@@ -110,6 +110,10 @@ func NewService(
 		listener = NewAppMessageProcessor(ctx, cache)
 	}
 
+	// TODO: Cookie persistence is disabled until we fix the sync session runner to handle
+	// non-reset responses when resuming from a persisted cookie position.
+	// cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
+
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
 		cfg,
@@ -119,6 +123,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
+		nil, // cookieStore disabled
 		otelTracer,
 	)
 	if err != nil {

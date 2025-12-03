@@ -5,6 +5,8 @@ import {
     EncryptedData,
     EncryptedDataVersion,
     ChannelPropertiesSchema,
+    InteractionRequestPayload,
+    InteractionRequestPayloadSchema,
 } from '@towns-protocol/proto'
 import { fromBinary, fromJsonString } from '@bufbuild/protobuf'
 import { checkNever, logNever } from './check'
@@ -13,12 +15,17 @@ import { checkNever, logNever } from './check'
  * EncryptedContent
  *************/
 export interface EncryptedContent {
-    kind: 'text' | 'channelMessage' | 'channelProperties'
+    kind: 'text' | 'channelMessage' | 'channelProperties' | 'interactionRequestPayload'
     content: EncryptedData
 }
 
 export function isEncryptedContentKind(kind: string): kind is EncryptedContent['kind'] {
-    return kind === 'text' || kind === 'channelMessage' || kind === 'channelProperties'
+    return (
+        kind === 'text' ||
+        kind === 'channelMessage' ||
+        kind === 'channelProperties' ||
+        kind === 'interactionRequestPayload'
+    )
 }
 
 /*************
@@ -39,6 +46,11 @@ export interface DecryptedContent_ChannelProperties {
     content: ChannelProperties
 }
 
+export interface DecryptedContent_InteractionRequestPayload {
+    kind: 'interactionRequestPayload'
+    content: InteractionRequestPayload
+}
+
 export interface DecryptedContent_UnsupportedContent {
     kind: 'unsupported'
     content: string | Uint8Array
@@ -48,6 +60,7 @@ export type DecryptedContent =
     | DecryptedContent_Text
     | DecryptedContent_ChannelMessage
     | DecryptedContent_ChannelProperties
+    | DecryptedContent_InteractionRequestPayload
     | DecryptedContent_UnsupportedContent
 
 export function toDecryptedContent(
@@ -76,6 +89,11 @@ export function toDecryptedContent(
                         kind,
                         content: fromJsonString(ChannelPropertiesSchema, cleartext),
                     } satisfies DecryptedContent_ChannelProperties
+                case 'interactionRequestPayload':
+                    return {
+                        kind,
+                        content: fromJsonString(InteractionRequestPayloadSchema, cleartext),
+                    } satisfies DecryptedContent_InteractionRequestPayload
                 default:
                     // the client is responsible for this
                     // we should never have a type we don't know about locally here
@@ -105,6 +123,11 @@ export function toDecryptedContent(
                         kind: 'channelMessage',
                         content: fromBinary(ChannelMessageSchema, cleartext),
                     } satisfies DecryptedContent_ChannelMessage
+                case 'interactionRequestPayload':
+                    return {
+                        kind: 'interactionRequestPayload',
+                        content: fromBinary(InteractionRequestPayloadSchema, cleartext),
+                    } satisfies DecryptedContent_InteractionRequestPayload
                 default:
                     checkNever(kind) // local to our codebase, should never happen
                     return {

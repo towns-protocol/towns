@@ -39,16 +39,18 @@ import {
     unpackEnvelopes as sdk_unpackEnvelopes,
     UnpackEnvelopeOpts,
 } from './sign'
-import { bin_toHexString, check } from '@towns-protocol/utils'
+import { bin_toHexString, bin_fromHexString, check } from '@towns-protocol/utils'
 import { fromJsonString, toJsonString } from '@bufbuild/protobuf'
 import {
     SessionKeysSchema,
     UserInboxPayload_GroupEncryptionSessions,
+    Err,
     type Envelope,
     type PlainMessage,
     type StreamEvent,
     type Tags,
 } from '@towns-protocol/proto'
+import { errorContains, errorContainsMessage, getRpcErrorProperty } from './rpcInterceptors'
 import { AppRegistryService } from './appRegistryService'
 import { AppRegistryRpcClient } from './makeAppRegistryRpcClient'
 import { StreamStateView } from './streamStateView'
@@ -76,6 +78,7 @@ type Client_Base = {
     disableSignatureValidation: boolean
     /** Options for unpacking envelopes */
     unpackEnvelopeOpts: UnpackEnvelopeOpts
+
     /** Get the app service, will authenticate on first call and cache the service for subsequent calls */
     appServiceClient: () => Promise<AppRegistryRpcClient>
     /** Get a stream by streamId and unpack it */
@@ -97,7 +100,7 @@ type Client_Base = {
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array }>
+    ) => Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }>
 }
 
 // Main idea behind this is to allow for extension of the client.
@@ -128,6 +131,11 @@ export type CreateTownsClientParams = {
     hashValidation?: boolean
     /** Toggle signature validation of Envelopes. Defaults to `false`. */
     signatureValidation?: boolean
+    /** Maximum number of entries to store in the crypto store (for in-memory stores).
+     *  Helps prevent memory leaks in long-running bots.
+     *  Defaults to 5000.
+     */
+    maxCryptoStoreEntries?: number
 }
 export const createTownsClient = async (
     params: (
@@ -168,7 +176,7 @@ export const createTownsClient = async (
 
     const userId = userIdFromAddress(signerContext.creatorAddress)
 
-    const cryptoStore = RiverDbManager.getCryptoDb(userId)
+    const cryptoStore = RiverDbManager.getCryptoDb(userId, undefined, params.maxCryptoStoreEntries)
     await cryptoStore.initialize()
 
     // eslint-disable-next-line prefer-const
@@ -219,30 +227,107 @@ export const createTownsClient = async (
         return sdk_unpackEnvelopes(envelopes, { disableHashValidation, disableSignatureValidation })
     }
 
+    const withRetry = async <T>(
+        operation: (
+            prev: { prevMiniblockHash: Uint8Array; prevMiniblockNum: bigint } | undefined,
+            retryCount: number,
+        ) => Promise<T>,
+    ): Promise<T> => {
+        const RETRY_POLICY: Partial<Record<Err, { delay: number | number[]; maxRetries: number }>> =
+            {
+                [Err.MINIBLOCK_TOO_NEW]: { delay: 1000, maxRetries: 5 },
+                [Err.BAD_PREV_MINIBLOCK_HASH]: { delay: 0, maxRetries: 3 },
+                [Err.PERMISSION_DENIED]: { delay: [200, 400, 800, 1100], maxRetries: 4 },
+            }
+        const attempt = async (
+            retryCount: number,
+            prev?: { prevMiniblockHash: Uint8Array; prevMiniblockNum: bigint },
+        ): Promise<T> => {
+            try {
+                return await operation(prev, retryCount)
+            } catch (err) {
+                let policy: { delay: number | number[]; maxRetries: number } | undefined
+                let errorType: Err | undefined
+
+                if (errorContains(err, Err.MINIBLOCK_TOO_NEW)) {
+                    policy = RETRY_POLICY[Err.MINIBLOCK_TOO_NEW]
+                    errorType = Err.MINIBLOCK_TOO_NEW
+                } else if (errorContains(err, Err.BAD_PREV_MINIBLOCK_HASH)) {
+                    policy = RETRY_POLICY[Err.BAD_PREV_MINIBLOCK_HASH]
+                    errorType = Err.BAD_PREV_MINIBLOCK_HASH
+                } else if (
+                    errorContains(err, Err.PERMISSION_DENIED) &&
+                    (errorContainsMessage(err, 'Transaction has 0 confirmations.') ||
+                        errorContainsMessage(err, 'Transaction receipt not found'))
+                ) {
+                    policy = RETRY_POLICY[Err.PERMISSION_DENIED]
+                    errorType = Err.PERMISSION_DENIED
+                }
+                // Not a retryable error or max retries exceeded
+                if (!policy || !errorType || retryCount >= policy.maxRetries) {
+                    throw err
+                }
+                // Calculate delay for this retry
+                const delay =
+                    typeof policy.delay === 'number'
+                        ? policy.delay
+                        : policy.delay[retryCount] || policy.delay[policy.delay.length - 1]
+                // Handle BAD_PREV_MINIBLOCK_HASH - extract expected hash from error
+                if (errorType === Err.BAD_PREV_MINIBLOCK_HASH) {
+                    const expectedHash = getRpcErrorProperty(err, 'expected')
+                    const expectedMiniblockNum = getRpcErrorProperty(err, 'expNum')
+                    check(
+                        expectedHash !== undefined,
+                        'expected hash not found in BAD_PREV_MINIBLOCK_HASH error',
+                    )
+                    check(
+                        expectedMiniblockNum !== undefined,
+                        'expected miniblock num not found in BAD_PREV_MINIBLOCK_HASH error',
+                    )
+                    if (delay > 0) {
+                        await new Promise((resolve) => setTimeout(resolve, delay))
+                    }
+                    return attempt(retryCount + 1, {
+                        prevMiniblockHash: bin_fromHexString(expectedHash),
+                        prevMiniblockNum: BigInt(expectedMiniblockNum),
+                    })
+                }
+                if (delay > 0) {
+                    await new Promise((resolve) => setTimeout(resolve, delay))
+                }
+                return attempt(retryCount + 1, prev)
+            }
+        }
+        return attempt(0)
+    }
+
     const sendEvent = async (
         streamId: string,
         eventPayload: PlainMessage<StreamEvent>['payload'],
         tags?: PlainMessage<Tags>,
         ephemeral?: boolean,
-    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array }> => {
-        const { hash: prevMiniblockHash, miniblockNum: prevMiniblockNum } =
-            await client.rpc.getLastMiniblockHash({
+    ): Promise<{ eventId: string; prevMiniblockHash: Uint8Array; envelope: Envelope }> => {
+        return withRetry(async (prev, _retryCount) => {
+            const { hash: miniblockHash, miniblockNum } = prev
+                ? { hash: prev.prevMiniblockHash, miniblockNum: prev.prevMiniblockNum }
+                : await client.rpc.getLastMiniblockHash({
+                      streamId: streamIdAsBytes(streamId),
+                  })
+            const envelope = await makeEvent(
+                signerContext,
+                eventPayload,
+                miniblockHash,
+                miniblockNum,
+                tags,
+                ephemeral,
+            )
+            const eventId = bin_toHexString(envelope.hash)
+            await client.rpc.addEvent({
                 streamId: streamIdAsBytes(streamId),
+                event: envelope,
             })
-        const event = await makeEvent(
-            signerContext,
-            eventPayload,
-            prevMiniblockHash,
-            prevMiniblockNum,
-            tags,
-            ephemeral,
-        )
-        const eventId = bin_toHexString(event.hash)
-        await client.rpc.addEvent({
-            streamId: streamIdAsBytes(streamId),
-            event,
+            return { eventId, prevMiniblockHash: miniblockHash, envelope }
         })
-        return { eventId, prevMiniblockHash }
     }
 
     const buildGroupEncryptionClient = (): IGroupEncryptionClient => {

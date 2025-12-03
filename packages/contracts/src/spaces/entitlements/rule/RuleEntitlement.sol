@@ -16,20 +16,18 @@
  */
 pragma solidity ^0.8.0;
 
-// contracts
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-
-import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+// interfaces
+import {IEntitlement} from "../IEntitlement.sol";
+import {IRuleEntitlement} from "./IRuleEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-// interfaces
-
-import {IRuleEntitlement} from "./IRuleEntitlement.sol";
-import {IEntitlement} from "src/spaces/entitlements/IEntitlement.sol";
+// contracts
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 
 contract RuleEntitlement is
     Initializable,
@@ -47,13 +45,6 @@ contract RuleEntitlement is
     string public constant name = "Rule Entitlement";
     string public constant description = "Entitlement for crosschain rules";
     string public constant moduleType = "RuleEntitlement";
-
-    // Separate storage arrays for CheckOperation and LogicalOperation
-    //CheckOperation[] private checkOperations;
-    //LogicalOperation[] private logicalOperations;
-
-    // Dynamic array to store Operation instances
-    //Operation[] private operations;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -107,9 +98,8 @@ contract RuleEntitlement is
         // equivalent: abi.decode(entitlementData, (RuleData))
         RuleData calldata data;
         assembly {
-            // this is a variable length struct, so calldataload(entitlementData.offset) contains
-            // the
-            // offset from entitlementData.offset at which the struct begins
+            // this is a variable length struct, so entitlementData.offset contains
+            // the offset from entitlementData.offset at which the struct begins
             data := add(entitlementData.offset, calldataload(entitlementData.offset))
         }
 

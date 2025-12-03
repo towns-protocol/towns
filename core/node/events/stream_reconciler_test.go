@@ -298,7 +298,8 @@ func TestReconciler_SealedEphemeral(t *testing.T) {
 
 	// Create a media stream ID and channel ID
 	streamId := testutils.FakeStreamId(STREAM_MEDIA_BIN)
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 
 	const chunks = 6
 
@@ -944,4 +945,50 @@ func TestReconciler_ReconcileAndTrimEndToEnd(t *testing.T) {
 		expectedSeqs = append(expectedSeqs, seq)
 	}
 	assert.Equal(t, expectedSeqs, seqs)
+}
+
+// TestReconciler_NoRemotesNoCandidateFails verifies that when a non-replicated stream
+// has no remotes and no local candidate, reconciliation fails gracefully.
+// This test ensures the error handling path in tryPromoteLocalCandidate works correctly.
+func TestReconciler_NoRemotesNoCandidateFails(t *testing.T) {
+	cfg := config.GetDefaultConfig()
+	cfg.StreamReconciliation.InitialWorkerPoolSize = 0
+	cfg.StreamReconciliation.OnlineWorkerPoolSize = 0
+
+	ctx, tc := makeCacheTestContext(
+		t,
+		testParams{
+			config:                           cfg,
+			replFactor:                       1, // Non-replicated stream
+			numInstances:                     1,
+			disableStreamCacheCallbacks:      true,
+			recencyConstraintsGenerations:    5,
+			backwardsReconciliationThreshold: ptrUint64(20),
+		},
+	)
+	require := tc.require
+
+	tc.initCache(0, &MiniblockProducerOpts{TestDisableMbProdcutionOnBlock: true})
+	streamId, _, _ := tc.allocateStream()
+
+	inst := tc.instances[0]
+
+	// Get stream record
+	blockNum, err := inst.cache.params.Registry.Blockchain.GetBlockNumber(ctx)
+	require.NoError(err)
+	recordNoId, err := inst.cache.params.Registry.StreamRegistry.GetStreamOnBlock(ctx, streamId, blockNum)
+	require.NoError(err)
+	record := river.NewStreamWithId(streamId, recordNoId)
+
+	stream, err := inst.cache.getStreamImpl(ctx, streamId, true)
+	require.NoError(err)
+
+	// Reconciliation should fail - this is the same scenario as TestReconciler_NoRemotes
+	// but explicitly tests the new tryPromoteLocalCandidate code path
+	reconciler := newStreamReconciler(inst.cache, stream, record)
+	err = reconciler.reconcile()
+	require.Error(err)
+	require.True(IsRiverErrorCode(err, Err_UNAVAILABLE))
+
+	testfmt.Logf(t, "Correctly failed reconciliation with no remotes and no candidate")
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IDiamondInitHelper} from "./IDiamondInitHelper.sol";
-import {IAppFactory, IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
+import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 
 // libraries
 import {DeployDiamondCut} from "@towns-protocol/diamond/scripts/deployments/facets/DeployDiamondCut.sol";
@@ -17,6 +17,9 @@ import {DeployAppInstallerFacet} from "../facets/DeployAppInstallerFacet.s.sol";
 import {DeployAppFactoryFacet} from "../facets/DeployAppFactoryFacet.s.sol";
 import {DeploySpaceFactory} from "../diamonds/DeploySpaceFactory.s.sol";
 import {DeploySimpleAppBeacon} from "../diamonds/DeploySimpleAppBeacon.s.sol";
+import {DeployIdentityRegistry} from "../facets/DeployIdentityRegistry.s.sol";
+import {DeployReputationRegistry} from "../facets/DeployReputationRegistry.s.sol";
+import {DeployValidationRegistry} from "../facets/DeployValidationRegistry.s.sol";
 
 // contracts
 import {Diamond} from "@towns-protocol/diamond/src/Diamond.sol";
@@ -36,6 +39,11 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
     DeploySimpleAppBeacon private deploySimpleAppBeacon = new DeploySimpleAppBeacon();
 
     string internal constant APP_REGISTRY_SCHEMA = "address app, address client";
+    string internal constant FEEDBACK_SCHEMA =
+        "uint256 agentId, uint8 score, bytes32 tag1, bytes32 tag2, string feedbackUri, bytes32 feedbackHash";
+    string internal constant RESPONSE_SCHEMA =
+        "uint256 agentId, address reviewerAddress, uint64 feedbackIndex, string responseUri, bytes32 responseHash";
+
     address internal spaceFactory;
     address internal simpleAppBeacon;
 
@@ -101,6 +109,9 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("AppRegistryFacet");
         facetHelper.add("AppInstallerFacet");
         facetHelper.add("AppFactoryFacet");
+        facetHelper.add("IdentityRegistryFacet");
+        facetHelper.add("ReputationRegistryFacet");
+        facetHelper.add("ValidationRegistryFacet");
 
         facetHelper.deployBatch(deployer);
 
@@ -129,6 +140,27 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()),
             facet,
             DeployAppFactoryFacet.makeInitData(beacons, _getEntryPoint())
+        );
+
+        facet = facetHelper.getDeployedAddress("IdentityRegistryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployIdentityRegistry.selectors()),
+            facet,
+            DeployIdentityRegistry.makeInitData()
+        );
+
+        facet = facetHelper.getDeployedAddress("ReputationRegistryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployReputationRegistry.selectors()),
+            facet,
+            DeployReputationRegistry.makeInitData(FEEDBACK_SCHEMA, RESPONSE_SCHEMA)
+        );
+
+        facet = facetHelper.getDeployedAddress("ValidationRegistryFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployValidationRegistry.selectors()),
+            facet,
+            DeployValidationRegistry.makeInitData()
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");
@@ -165,6 +197,12 @@ contract DeployAppRegistry is IDiamondInitHelper, DiamondHelper, Deployer {
             }
             if (facetName.eq("AppFactoryFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAppFactoryFacet.selectors()));
+            }
+            if (facetName.eq("IdentityRegistryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployIdentityRegistry.selectors()));
+            }
+            if (facetName.eq("ValidationRegistryFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployValidationRegistry.selectors()));
             }
         }
 

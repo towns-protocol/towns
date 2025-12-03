@@ -309,7 +309,6 @@ func TestArchiveOneStream(t *testing.T) {
 	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, schema, nil)
 	require.NoError(err)
 	tester.t.Cleanup(pool.Pool.Close)
-	tester.t.Cleanup(pool.StreamingPool.Close)
 
 	streamStorage, err := storage.NewPostgresStreamStore(
 		ctx,
@@ -323,6 +322,7 @@ func TestArchiveOneStream(t *testing.T) {
 				StreamHistoryMiniblocks:  crypto.StreamHistoryMiniblocks{Default: 0, Space: 5},
 			},
 		},
+		nil,
 		100,
 	)
 	require.NoError(err)

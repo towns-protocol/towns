@@ -1320,31 +1320,6 @@ func (ru *aeMembershipRules) validMembershipPayload() (bool, error) {
 	if ru.membership == nil {
 		return false, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
 	}
-	// for join events require a parent stream id if the stream has a parent
-	if ru.membership.Op == MembershipOp_SO_JOIN {
-		streamParentId := ru.params.streamView.StreamParentId()
-
-		if streamParentId != nil {
-			if ru.membership.StreamParentId == nil {
-				return false, RiverError(
-					Err_INVALID_ARGUMENT,
-					"membership parent stream id is nil",
-					"streamParentId",
-					streamParentId,
-				)
-			}
-			if !streamParentId.EqualsBytes(ru.membership.StreamParentId) {
-				return false, RiverError(
-					Err_INVALID_ARGUMENT,
-					"membership parent stream id does not match parent stream id",
-					"membershipParentStreamId",
-					FormatFullHashFromBytes(ru.membership.StreamParentId),
-					"streamParentId",
-					streamParentId,
-				)
-			}
-		}
-	}
 	return true, nil
 }
 
@@ -1590,10 +1565,38 @@ func (ru *aeMembershipRules) requireStreamParentMembership() (*DerivedEvent, err
 			*streamParentId,
 			common.BytesToAddress(ru.membership.InitiatorAddress),
 			nil,
-			nil,
 		),
 		StreamId: userStreamId,
 	}, nil
+}
+
+func (ru *aeUserMembershipRules) addRemoveChannelChainAuthForApp(
+	userId common.Address,
+	appAddress common.Address,
+) (*auth.ChainAuthArgs, error) {
+	if ru.userMembership == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "membership is nil")
+	}
+	streamId, err := shared.StreamIdFromBytes(ru.userMembership.StreamId)
+	if err != nil {
+		return nil, err
+	}
+	if streamId.Type() == shared.STREAM_CHANNEL_BIN {
+		return auth.NewChainAuthArgsForChannel(
+			streamId.SpaceID(),
+			streamId,
+			userId,
+			auth.PermissionAddRemoveChannels,
+			appAddress,
+		), nil
+	}
+
+	return nil, RiverError(
+		Err_PERMISSION_DENIED,
+		"Invalid stream for app join, wanted channel",
+		"streamId",
+		streamId,
+	)
 }
 
 // ownerChainAuthForInviter validates that the inviter on the UserMembership event has space ownership.
@@ -1755,7 +1758,6 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 			userMembership.Op,
 			userAddress.Bytes(),
 			initiatorAddress,
-			userMembership.StreamParentId,
 			userMembership.Reason,
 			appAddress,
 		),
@@ -1769,16 +1771,41 @@ func (ru *aeUserMembershipRules) parentEventForUserMembership() (*DerivedEvent, 
 // be changed by either:
 // - the owner of a space where the bot is experiencing a membership change, OR
 // - by a node, specifically in the case of membership loss due to scrubbing.
+// - by the app itself, specifically in the case of creating a new channel and adding itself
 // Thus, for the very specific case when users are bot users, and the membership change is not a node-initiated
 // bounce, we want to verify that the initiator of the membership change has space ownership permissions.
 // NOTE that at this time, bots cannot be members of DMs or GDMs, so there will always be a space involved
 // in bot membership events.
 func (ru *aeUserMembershipRules) chainAuthForUserMembership() (*auth.ChainAuthArgs, error) {
-	isApp, _ := ru.params.streamView.IsAppUser()
-	isNodeInitiator := ru.params.isValidNode(ru.userMembership.Inviter)
+	appAddress, err := ru.params.streamView.GetAppAddress()
+	if err != nil {
+		return nil, err
+	}
+	isApp := appAddress != (common.Address{})
+	userId, err := shared.GetUserAddressFromStreamId(*ru.params.streamView.StreamId())
+	if err != nil {
+		return nil, err
+	}
+	isNodeCreator := ru.params.isValidNode(ru.params.parsedEvent.Event.CreatorAddress)
+	isNodeInitiator := isNodeCreator &&
+		bytes.Equal(ru.userMembership.Inviter, ru.params.parsedEvent.Event.CreatorAddress)
 	isNodeBoot := ru.userMembership.Op == MembershipOp_SO_LEAVE && isNodeInitiator
 	if isApp && !isNodeBoot {
-		return ru.ownerChainAuthForInviter()
+		if !isNodeCreator {
+			return nil, RiverError(
+				Err_PERMISSION_DENIED,
+				"app memberships should come from derived events, apps can't add themselves",
+				"inviter",
+				ru.userMembership.Inviter,
+			)
+		}
+		if bytes.Equal(ru.userMembership.Inviter, userId.Bytes()) {
+			// if the app invited itself, check to see that they have add remove channel permissions (supposibly the only way we could have gotten here is via a new channel creation)
+			return ru.addRemoveChannelChainAuthForApp(userId, appAddress)
+		} else {
+			// otherwise, check to see that the inviter has space ownership permissions
+			return ru.ownerChainAuthForInviter()
+		}
 	}
 	return nil, nil
 }
@@ -1797,7 +1824,6 @@ func (ru *aeUserMembershipActionRules) parentEventForUserMembershipAction() (*De
 		action.Op,
 		actionStreamId,
 		common.BytesToAddress(ru.params.parsedEvent.Event.CreatorAddress),
-		action.StreamParentId,
 		nil,
 	)
 	toUserStreamId, err := shared.UserStreamIdFromBytes(action.UserId)
@@ -1843,7 +1869,8 @@ func (ru *aeMembershipRules) spaceMembershipEntitlements() (*auth.ChainAuthArgs,
 }
 
 func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArgs, error) {
-	inception, err := ru.params.streamView.GetChannelInception()
+	channelId := *ru.params.streamView.StreamId()
+	spaceId, err := shared.SpaceIdFromChannelId(channelId)
 	if err != nil {
 		return nil, err
 	}
@@ -1855,11 +1882,6 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 
 	if permission == auth.PermissionUndefined {
 		return nil, nil
-	}
-
-	spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
-	if err != nil {
-		return nil, err
 	}
 
 	// ModifyBanning is a space level permission
@@ -1875,7 +1897,7 @@ func (ru *aeMembershipRules) channelMembershipEntitlements() (*auth.ChainAuthArg
 
 	chainAuthArgs := auth.NewChainAuthArgsForChannel(
 		spaceId,
-		*ru.params.streamView.StreamId(),
+		channelId,
 		permissionUser,
 		permission,
 		appAddress,
@@ -1914,13 +1936,7 @@ func (params *aeParams) channelEntitlements(permission auth.Permission) func() (
 	return func() (*auth.ChainAuthArgs, error) {
 		userId := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
 		channelId := *params.streamView.StreamId()
-
-		inception, err := params.streamView.GetChannelInception()
-		if err != nil {
-			return nil, err
-		}
-
-		spaceId, err := shared.StreamIdFromBytes(inception.SpaceId)
+		spaceId, err := shared.SpaceIdFromChannelId(channelId)
 		if err != nil {
 			return nil, err
 		}
@@ -1953,10 +1969,6 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 	if !shared.ValidChannelStreamId(channelId) {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "invalid channel stream id", "streamId", channelId)
 	}
-	spaceId := params.streamView.StreamParentId()
-	if spaceId == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "channel has no parent", "channelId", channelId)
-	}
 
 	return &DerivedEvent{
 		StreamId: userStreamId,
@@ -1964,7 +1976,6 @@ func (params *aeParams) onEntitlementFailureForUserEvent() (*DerivedEvent, error
 			MembershipOp_SO_LEAVE,
 			*channelId,
 			userId,
-			spaceId[:],
 			nil,
 		),
 	}, nil

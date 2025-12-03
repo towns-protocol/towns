@@ -166,19 +166,22 @@ func (s *Service) getStatusResponse(ctx context.Context, url *url.URL) (*statusi
 	if status != http.StatusOK {
 		statusStr = "UNAVAILABLE"
 	}
-	return &statusinfo.StatusResponse{
+	resp := &statusinfo.StatusResponse{
 		Status:            statusStr,
 		InstanceId:        s.instanceId,
 		Address:           addr,
 		Version:           version.GetFullVersion(),
 		StartTime:         s.startTime.UTC().Format(time.RFC3339),
-		Uptime:            time.Since(s.startTime).String(),
+		Uptime:            formatDurationToSeconds(time.Since(s.startTime)),
 		Graffiti:          s.config.GetGraffiti(),
 		River:             riverPing,
 		Base:              basePing,
 		OtherChains:       otherChainsPing,
 		XChainBlockchains: s.chainConfig.Get().XChain.Blockchains,
-	}, status
+		HighUsage:         convertHighUsageInfo(s.callRateMonitor.GetHighUsageInfo(time.Now())),
+	}
+
+	return resp, status
 }
 
 func (s *Service) handleStatus(w http.ResponseWriter, r *http.Request) {

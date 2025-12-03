@@ -23,6 +23,11 @@ type TrackedStreamView interface {
 	// to the internal view state. This method can be used to invoke the callback on events
 	// that were added to this streamView via ApplyBlock
 	SendEventNotification(ctx context.Context, event *ParsedEvent) error
+
+	// ShouldPersistCookie returns true if this stream's cookie should be persisted for resumption.
+	// The default implementation returns false. Services that need cookie persistence (like app registry)
+	// should override this method to implement their specific logic.
+	ShouldPersistCookie(ctx context.Context) bool
 }
 
 // TrackedStreamViewImpl can function on it's own as an object, or can be used as a mixin
@@ -30,24 +35,24 @@ type TrackedStreamView interface {
 // TrackedStreamView implements to functionality of applying blocks and events to a wrapped
 // stream view, and of notifying via the callback on unseen events.
 type TrackedStreamViewImpl struct {
-	streamID   shared.StreamId
-	view       *StreamView
-	cfg        crypto.OnChainConfiguration
-	onNewEvent func(ctx context.Context, view *StreamView, event *ParsedEvent) error
+	streamID            shared.StreamId
+	view                *StreamView
+	cfg                 crypto.OnChainConfiguration
+	onNewEvent          func(ctx context.Context, view *StreamView, event *ParsedEvent) error
+	shouldPersistCookie func(ctx context.Context, view *StreamView) bool
 }
 
-// The TrackedStreamView tracks the current state of a remote stream by applying blocks and events to
-// that stream in order to internally render an up-to-date view of the stream, upon which callbacks are
-// executed. It is used by the notification service and the bot registry service to track the state of
-// relevant streams. It is essentially a wrapper around StreamView, to apply events, and to execute callbacks.
-// onNewEvent is called whenever a new event is added to the view, ensuring that the onNewEvent callback is
+// Init initializes the TrackedStreamView with the given stream and callbacks.
+// onNewEvent is called whenever a new event is added to the view, ensuring that the callback is
 // never called twice for the same event.
+// shouldPersistCookie is an optional callback that determines if the stream's cookie should be persisted.
+// If nil, ShouldPersistCookie will return false.
 func (ts *TrackedStreamViewImpl) Init(
-	ctx context.Context,
 	streamID shared.StreamId,
 	cfg crypto.OnChainConfiguration,
 	stream *StreamAndCookie,
 	onNewEvent func(ctx context.Context, view *StreamView, event *ParsedEvent) error,
+	shouldPersistCookie func(ctx context.Context, view *StreamView) bool,
 ) (*StreamView, error) {
 	view, err := MakeRemoteStreamView(stream)
 	if err != nil {
@@ -56,12 +61,18 @@ func (ts *TrackedStreamViewImpl) Init(
 
 	ts.streamID = streamID
 	ts.onNewEvent = onNewEvent
+	ts.shouldPersistCookie = shouldPersistCookie
 	ts.view = view
 	ts.cfg = cfg
 
 	return view, nil
 }
 
+// ApplyBlock applies a miniblock to the view, updating internal state.
+// IMPORTANT: This does NOT send notifications - blocks contain historical events
+// that were already notified when they arrived via ApplyEvent.
+// The view's minipool is automatically pruned - events included in the block
+// are removed from the minipool (see copyAndApplyBlock).
 func (ts *TrackedStreamViewImpl) ApplyBlock(
 	miniblock *Miniblock,
 	snapshot *Envelope,
@@ -92,16 +103,21 @@ func (ts *TrackedStreamViewImpl) ApplyEvent(
 	return ts.addEvent(ctx, parsedEvent)
 }
 
+// applyBlock updates the view with a new miniblock.
+// Deduplication: skips blocks we've already processed by comparing block numbers.
+// The returned view has a pruned minipool - events now in the block are removed.
 func (ts *TrackedStreamViewImpl) applyBlock(
 	miniblock *MiniblockInfo,
 	cfg *crypto.OnChainSettings,
 ) error {
+	// Skip duplicate blocks - already processed this block number
 	if lastBlock := ts.view.LastBlock(); lastBlock != nil {
 		if miniblock.Ref.Num <= lastBlock.Ref.Num {
 			return nil
 		}
 	}
 
+	// copyAndApplyBlock removes events from minipool that are now in the block
 	view, _, err := ts.view.copyAndApplyBlock(miniblock, cfg)
 	if err != nil {
 		return err
@@ -111,17 +127,30 @@ func (ts *TrackedStreamViewImpl) applyBlock(
 	return nil
 }
 
+// addEvent adds a real-time event to the view and sends notifications.
+// This is the ONLY place where notifications are sent.
+//
+// Deduplication strategy:
+// 1. minipool.events.Has(event.Hash) - skip if already in minipool (duplicate event)
+// 2. GetMiniblockHeader() != nil - skip miniblock headers (metadata, not user events)
+//
+// Events are added to the minipool here, then removed when a miniblock is created
+// (see ApplyBlock/copyAndApplyBlock). This keeps the minipool bounded to events
+// waiting for the next miniblock.
 func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEvent) error {
+	// Skip duplicates: already in minipool or is a miniblock header
 	if ts.view.minipool.events.Has(event.Hash) || event.Event.GetMiniblockHeader() != nil {
 		return nil
 	}
 
+	// Add to minipool
 	view, err := ts.view.copyAndAddEvent(event)
 	if err != nil {
 		return err
 	}
 	ts.view = view
 
+	// Send notification for real-time event
 	return ts.SendEventNotification(ctx, event)
 }
 
@@ -131,4 +160,13 @@ func (ts *TrackedStreamViewImpl) SendEventNotification(ctx context.Context, even
 	}
 
 	return ts.onNewEvent(ctx, ts.view, event)
+}
+
+// ShouldPersistCookie returns true if the stream's cookie should be persisted.
+// It delegates to the shouldPersistCookie callback if provided, otherwise returns false.
+func (ts *TrackedStreamViewImpl) ShouldPersistCookie(ctx context.Context) bool {
+	if ts.shouldPersistCookie == nil {
+		return false
+	}
+	return ts.shouldPersistCookie(ctx, ts.view)
 }

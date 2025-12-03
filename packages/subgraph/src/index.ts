@@ -7,8 +7,10 @@ import {
     handleRedelegation,
     decodePermissions,
 } from './utils'
+import { fetchAgentData } from './agentData'
 
 const ETH_ADDRESS = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee' as const
+const ENVIRONMENT = process.env.PONDER_ENVIRONMENT || 'alpha'
 
 // Setup hook: Create critical indexes before indexing starts
 // These indexes are needed during historic sync for performance
@@ -684,22 +686,60 @@ ponder.on('AppRegistry:AppBanned', async ({ event, context }) => {
 })
 
 ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block, transaction, log } = event
     const blockNumber = event.block.number
+
     try {
+        const existingApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, app),
+        })
+        if (!existingApp) {
+            console.warn(
+                `Skipping AppInstalled: app ${app} not found at block ${blockNumber}. ` +
+                    `AppInstalled may have fired before AppCreated.`,
+            )
+            return
+        }
+
+        // Create installation record (only if app exists)
+        await context.db
+            .insert(schema.appInstallation)
+            .values({
+                app,
+                account,
+                appId,
+                installedAt: block.timestamp,
+                installTxHash: transaction.hash,
+                installLogIndex: log.logIndex,
+                isActive: true,
+            })
+            .onConflictDoUpdate({
+                // Handle re-installation after uninstall
+                appId,
+                installedAt: block.timestamp,
+                installTxHash: transaction.hash,
+                installLogIndex: log.logIndex,
+                uninstalledAt: null,
+                isActive: true,
+            })
+
+        // Also update the app.installedIn array for backward compatibility
         const result = await context.db.sql
             .update(schema.app)
             .set({
                 installedIn: sql`
                     CASE
-                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${event.args.account}]::text[]
-                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${event.args.account}::text
+                        WHEN NOT COALESCE(${schema.app.installedIn}, '{}') @> ARRAY[${account}]::text[]
+                        THEN COALESCE(${schema.app.installedIn}, '{}') || ${account}::text
                         ELSE ${schema.app.installedIn}
                     END
                 `,
             })
-            .where(eq(schema.app.appId, event.args.appId))
+            .where(eq(schema.app.address, app))
+
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppInstalled`, event.args.appId)
+            console.warn(`App not found for AppRegistry:AppInstalled`, app)
         }
     } catch (error) {
         console.error(
@@ -710,20 +750,538 @@ ponder.on('AppRegistry:AppInstalled', async ({ event, context }) => {
 })
 
 ponder.on('AppRegistry:AppUninstalled', async ({ event, context }) => {
+    const { app, account } = event.args
+    const { block } = event
     const blockNumber = event.block.number
+
     try {
+        // Soft delete installation record
+        const installResult = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                uninstalledAt: block.timestamp,
+                isActive: false,
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
+
+        if (installResult.changes === 0) {
+            console.warn(`No installation found for app ${app} in account ${account}`)
+        }
+
+        // Update app.installedIn array for backward compatibility
         const result = await context.db.sql
             .update(schema.app)
             .set({
-                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${event.args.account}::text)`,
+                installedIn: sql`array_remove(COALESCE(${schema.app.installedIn}, '{}'), ${account}::text)`,
             })
-            .where(eq(schema.app.appId, event.args.appId))
+            .where(eq(schema.app.address, app))
+
         if (result.changes === 0) {
-            console.warn(`App not found for AppRegistry:AppUninstalled`, event.args.appId)
+            console.warn(`App not found for AppRegistry:AppUninstalled`, app)
         }
     } catch (error) {
         console.error(
             `Error processing AppRegistry:AppUninstalled at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppRenewed', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block } = event
+    const blockNumber = event.block.number
+
+    try {
+        const result = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                lastRenewedAt: block.timestamp,
+                appId, // Update to current version if changed
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(`No installation found for renewal: app ${app} in account ${account}`)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppRenewed at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUpdated', async ({ event, context }) => {
+    const { app, account, appId } = event.args
+    const { block } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Update the installation record
+        const result = await context.db.sql
+            .update(schema.appInstallation)
+            .set({
+                lastUpdatedAt: block.timestamp,
+                appId, // Update to new version/config
+            })
+            .where(
+                and(
+                    eq(schema.appInstallation.app, app),
+                    eq(schema.appInstallation.account, account),
+                ),
+            )
+
+        if (result.changes === 0) {
+            console.warn(`No installation found for update: app ${app} in account ${account}`)
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:AppUpgraded', async ({ event, context }) => {
+    const { app, oldVersionId, newVersionId } = event.args
+    const { block, transaction, log } = event
+    const blockNumber = event.block.number
+
+    try {
+        // Mark old version as no longer latest or current
+        await context.db.sql
+            .update(schema.appVersion)
+            .set({ isLatest: false, isCurrent: false })
+            .where(and(eq(schema.appVersion.app, app), eq(schema.appVersion.appId, oldVersionId)))
+
+        await context.db
+            .insert(schema.appVersion)
+            .values({
+                appId: newVersionId,
+                app,
+                createdAt: block.timestamp,
+                upgradedFromId: oldVersionId,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                blockNumber: block.number,
+                isLatest: true,
+                isCurrent: true,
+            })
+            .onConflictDoUpdate({
+                createdAt: block.timestamp,
+                upgradedFromId: oldVersionId,
+                txHash: transaction.hash,
+                logIndex: log.logIndex,
+                blockNumber: block.number,
+                isLatest: true,
+                isCurrent: true,
+            })
+
+        // Update app's current version (keep appId immutable as stable identifier)
+        await context.db.sql
+            .update(schema.app)
+            .set({
+                currentVersionId: newVersionId,
+                lastUpdatedAt: block.timestamp,
+            })
+            .where(eq(schema.app.address, app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:AppUpgraded at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+// ===== Agent Identity & Reputation Handlers =====
+
+ponder.on('AppRegistry:Registered', async ({ event, context }) => {
+    const { agentId, agentUri, owner } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+    const transactionHash = event.transaction.hash
+
+    try {
+        // Insert agent identity (owner is the app contract address)
+        await context.db
+            .insert(schema.agentIdentity)
+            .values({
+                app: owner, // FK to apps.address
+                agentId: agentId,
+                agentUri: agentUri || null,
+                registeredAt: blockTimestamp,
+                registeredAtBlock: blockNumber,
+                updatedAt: null,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Fetch and store agent data if URI is provided
+        if (agentUri) {
+            console.info(
+                `[AgentRegistered] Fetching agent data: agentId=${agentId}, app=${owner}, uri=${agentUri}`,
+            )
+            const agentData = await fetchAgentData(agentUri, 3, 1000, owner, ENVIRONMENT)
+            if (agentData) {
+                await context.db.sql
+                    .update(schema.agentIdentity)
+                    .set({ agentData: agentData })
+                    .where(
+                        and(
+                            eq(schema.agentIdentity.app, owner),
+                            eq(schema.agentIdentity.agentId, agentId),
+                        ),
+                    )
+                console.info(
+                    `[AgentRegistered] Successfully stored agent data: agentId=${agentId}, app=${owner}`,
+                )
+            } else {
+                console.warn(
+                    `[AgentRegistered] Failed to fetch agent data: agentId=${agentId}, app=${owner}, uri=${agentUri}`,
+                )
+            }
+        }
+
+        // Initialize reputation summary
+        await context.db
+            .insert(schema.agentReputationSummary)
+            .values({
+                app: owner,
+                agentId: agentId,
+                totalFeedback: 0,
+                activeFeedback: 0,
+                revokedFeedback: 0,
+                averageRating: null,
+                totalResponses: 0,
+                uniqueReviewers: 0,
+                lastFeedbackAt: null,
+            })
+            .onConflictDoNothing()
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:Registered at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:UriUpdated', async ({ event, context }) => {
+    const { agentId, agentUri } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+
+    try {
+        // Find the agent identity by agentId
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.warn(`Agent identity not found for UriUpdated, agentId: ${agentId}`)
+            return
+        }
+
+        // Fetch agent data from new URI with retries
+        console.info(
+            `[AgentUriUpdated] Updating URI: agentId=${agentId}, app=${agent.app}, ` +
+                `oldUri=${agent.agentUri}, newUri=${agentUri}`,
+        )
+        const agentData = await fetchAgentData(agentUri, 3, 1000, agent.app, ENVIRONMENT)
+
+        if (agentData !== null) {
+            // Only update if fetch succeeds - keeps URI and data in sync
+            await context.db.sql
+                .update(schema.agentIdentity)
+                .set({
+                    agentUri: agentUri,
+                    agentData: agentData,
+                    updatedAt: blockTimestamp,
+                })
+                .where(
+                    and(
+                        eq(schema.agentIdentity.app, agent.app),
+                        eq(schema.agentIdentity.agentId, agentId),
+                    ),
+                )
+            console.info(
+                `[AgentUriUpdated] Successfully updated agent data: agentId=${agentId}, app=${agent.app}`,
+            )
+        } else {
+            console.warn(
+                `[AgentUriUpdated] Skipping URI update due to fetch failure: ` +
+                    `agentId=${agentId}, app=${agent.app}, attemptedUri=${agentUri}, keepingUri=${agent.agentUri}`,
+            )
+        }
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:UriUpdated at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:MetadataSet', async ({ event, context }) => {
+    const { agentId, metadataKey, metadataValue } = event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Find the agent identity by agentId to get the app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.warn(`Agent identity not found for MetadataSet, agentId: ${agentId}`)
+            return
+        }
+
+        // Upsert metadata
+        await context.db
+            .insert(schema.agentMetadata)
+            .values({
+                app: agent.app,
+                metadataKey: metadataKey,
+                metadataValue: metadataValue,
+                setAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoUpdate({
+                metadataValue: metadataValue,
+                setAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:MetadataSet at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:NewFeedback', async ({ event, context }) => {
+    const { agentId, reviewerAddress, score, tag1, tag2, feedbackUri, feedbackHash } = event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for NewFeedback, agentId: ${agentId}`)
+            return
+        }
+
+        // Determine feedback index (1-based, incremental per reviewer)
+        const lastFeedback = await context.db.sql.query.agentFeedback.findFirst({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.reviewerAddress, reviewerAddress),
+            ),
+            orderBy: (table, { desc }) => desc(table.feedbackIndex),
+        })
+
+        const feedbackIndex = lastFeedback ? lastFeedback.feedbackIndex + 1n : 1n
+
+        // Insert feedback
+        await context.db
+            .insert(schema.agentFeedback)
+            .values({
+                app: agent.app,
+                agentId: agentId,
+                reviewerAddress: reviewerAddress,
+                feedbackIndex: feedbackIndex,
+                rating: score,
+                tag1: tag1,
+                tag2: tag2,
+                comment: feedbackUri,
+                commentHash: feedbackHash,
+                isRevoked: false,
+                createdAt: blockTimestamp,
+                revokedAt: null,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Recalculate reputation summary
+        const activeFeedbackList = await context.db.sql.query.agentFeedback.findMany({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.isRevoked, false),
+            ),
+        })
+
+        const totalRating = activeFeedbackList.reduce((sum, f) => sum + f.rating, 0)
+        const count = activeFeedbackList.length
+        const avgRating = count > 0 ? totalRating / count : null
+
+        const uniqueReviewers = new Set(activeFeedbackList.map((f) => f.reviewerAddress)).size
+
+        const totalCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(eq(schema.agentFeedback.agentId, agentId))
+
+        const totalCount = Number(totalCountResult[0]?.count || 0)
+
+        // Update summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalFeedback: totalCount,
+                activeFeedback: count,
+                averageRating: avgRating,
+                uniqueReviewers: uniqueReviewers,
+                lastFeedbackAt: blockTimestamp,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:NewFeedback at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:FeedbackRevoked', async ({ event, context }) => {
+    const { agentId, reviewerAddress, feedbackIndex } = event.args
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for FeedbackRevoked, agentId: ${agentId}`)
+            return
+        }
+
+        // Update feedback revoked status
+        await context.db.sql
+            .update(schema.agentFeedback)
+            .set({
+                isRevoked: true,
+                revokedAt: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.agentFeedback.agentId, agentId),
+                    eq(schema.agentFeedback.reviewerAddress, reviewerAddress),
+                    eq(schema.agentFeedback.feedbackIndex, feedbackIndex),
+                ),
+            )
+
+        // Recalculate reputation summary (excluding revoked)
+        const activeFeedbackList = await context.db.sql.query.agentFeedback.findMany({
+            where: and(
+                eq(schema.agentFeedback.agentId, agentId),
+                eq(schema.agentFeedback.isRevoked, false),
+            ),
+        })
+
+        const totalRating = activeFeedbackList.reduce((sum, f) => sum + f.rating, 0)
+        const count = activeFeedbackList.length
+        const avgRating = count > 0 ? totalRating / count : null
+
+        const totalCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(eq(schema.agentFeedback.agentId, agentId))
+
+        const revokedCountResult = await context.db.sql
+            .select({ count: sql<string>`COUNT(*)` })
+            .from(schema.agentFeedback)
+            .where(
+                and(
+                    eq(schema.agentFeedback.agentId, agentId),
+                    eq(schema.agentFeedback.isRevoked, true),
+                ),
+            )
+
+        const totalCount = Number(totalCountResult[0]?.count || 0)
+        const revokedCount = Number(revokedCountResult[0]?.count || 0)
+
+        // Update summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalFeedback: totalCount,
+                activeFeedback: count,
+                revokedFeedback: revokedCount,
+                averageRating: avgRating,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:FeedbackRevoked at blockNumber ${blockNumber}:`,
+            error,
+        )
+    }
+})
+
+ponder.on('AppRegistry:ResponseAppended', async ({ event, context }) => {
+    const { agentId, reviewerAddress, feedbackIndex, responder, responseUri, responseHash } =
+        event.args
+    const blockTimestamp = event.block.timestamp
+    const transactionHash = event.transaction.hash
+    const blockNumber = event.block.number
+
+    try {
+        // Get agent identity to find app address
+        const agent = await context.db.sql.query.agentIdentity.findFirst({
+            where: eq(schema.agentIdentity.agentId, agentId),
+        })
+
+        if (!agent) {
+            console.error(`Agent identity not found for ResponseAppended, agentId: ${agentId}`)
+            return
+        }
+
+        // Insert response (use createdAt in PK to allow multiple responses from same responder)
+        await context.db
+            .insert(schema.feedbackResponse)
+            .values({
+                app: agent.app,
+                agentId: agentId,
+                reviewerAddress: reviewerAddress,
+                feedbackIndex: feedbackIndex,
+                responderAddress: responder,
+                comment: responseUri,
+                commentHash: responseHash,
+                createdAt: blockTimestamp,
+                transactionHash: transactionHash,
+            })
+            .onConflictDoNothing()
+
+        // Increment response count in summary
+        await context.db.sql
+            .update(schema.agentReputationSummary)
+            .set({
+                totalResponses: sql`${schema.agentReputationSummary.totalResponses} + 1`,
+            })
+            .where(eq(schema.agentReputationSummary.app, agent.app))
+    } catch (error) {
+        console.error(
+            `Error processing AppRegistry:ResponseAppended at blockNumber ${blockNumber}:`,
             error,
         )
     }
@@ -786,6 +1344,12 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             ethAmount = event.args.amount
         }
 
+        // Check if sender is a bot (exists in apps table)
+        const senderApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, sender),
+        })
+        const senderType = senderApp ? 'Bot' : 'Member'
+
         // Use INSERT ... ON CONFLICT DO NOTHING for the analytics event
         // This leverages the existing primary key constraint (txHash, logIndex)
         await context.db
@@ -800,7 +1364,9 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 eventData: {
                     type: 'tip',
                     sender: sender,
+                    senderType: senderType,
                     receiver: event.args.receiver,
+                    recipientType: 'Member',
                     currency: event.args.currency,
                     amount: event.args.amount.toString(),
                     tokenId: event.args.tokenId.toString(),
@@ -825,6 +1391,12 @@ ponder.on('Space:Tip', async ({ event, context }) => {
             .set({
                 totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
                 tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
+                ...(senderType === 'Member'
+                    ? {
+                          memberTipsSent: sql`${schema.tipLeaderboard.memberTipsSent} + 1`,
+                          memberTotalSent: sql`${schema.tipLeaderboard.memberTotalSent} + ${ethAmount}`,
+                      }
+                    : {}),
                 lastActivity: blockTimestamp,
             })
             .where(
@@ -841,11 +1413,130 @@ ponder.on('Space:Tip', async ({ event, context }) => {
                 spaceId: spaceId,
                 totalSent: ethAmount,
                 tipsSentCount: 1,
+                memberTipsSent: senderType === 'Member' ? 1 : 0,
+                memberTotalSent: senderType === 'Member' ? ethAmount : 0n,
+                botTipsSent: 0,
+                botTotalSent: 0n,
                 lastActivity: blockTimestamp,
             })
         }
     } catch (error) {
         console.error(`Error processing Space:Tip at timestamp ${blockTimestamp}:`, error)
+    }
+})
+
+ponder.on('Space:TipSent', async ({ event, context }) => {
+    const { sender, receiver, recipientType, currency, amount } = event.args
+
+    // Only handle bot tips (recipientType === 1)
+    if (recipientType !== 1) return
+
+    const blockTimestamp = event.block.timestamp
+    const blockNumber = event.block.number
+    const spaceId = event.log.address
+
+    try {
+        // Validate bot exists in app registry
+        const app = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, receiver),
+        })
+
+        if (!app) {
+            console.warn(
+                `⚠️  Bot tip sent to unregistered app at block ${blockNumber}. ` +
+                    `Receiver: ${receiver}, Amount: ${amount}, Currency: ${currency}`,
+            )
+        } else if (
+            !app.appId ||
+            app.appId === '0x0000000000000000000000000000000000000000000000000000000000000000'
+        ) {
+            console.warn(
+                `⚠️  Bot tip sent to app without appId at block ${blockNumber}. ` +
+                    `Receiver: ${receiver}, AppId: ${app.appId}`,
+            )
+        }
+
+        const isETH = currency.toLowerCase() === ETH_ADDRESS.toLowerCase()
+        const ethAmount = isETH ? amount : 0n
+
+        // Check if sender is a bot (exists in apps table)
+        const senderApp = await context.db.sql.query.app.findFirst({
+            where: eq(schema.app.address, sender),
+        })
+        const senderType = senderApp ? 'Bot' : 'Member'
+
+        // Insert analytics event
+        await context.db
+            .insert(schema.analyticsEvent)
+            .values({
+                txHash: event.transaction.hash,
+                logIndex: event.log.logIndex,
+                spaceId: spaceId,
+                eventType: 'tip',
+                blockTimestamp: blockTimestamp,
+                ethAmount: ethAmount,
+                eventData: {
+                    type: 'tip',
+                    sender,
+                    senderType: senderType,
+                    receiver,
+                    recipientType: 'Bot',
+                    currency,
+                    amount: amount.toString(),
+                },
+            })
+            .onConflictDoNothing()
+
+        // Update space bot tip volume
+        await context.db.sql
+            .update(schema.space)
+            .set({
+                botTipVolume: sql`COALESCE(${schema.space.botTipVolume}, 0) + ${ethAmount}`,
+            })
+            .where(eq(schema.space.id, spaceId))
+
+        // Update app tip metrics
+        await context.db.sql
+            .update(schema.app)
+            .set({
+                tipsCount: sql`COALESCE(${schema.app.tipsCount}, 0) + 1`,
+                tipsVolume: sql`COALESCE(${schema.app.tipsVolume}, 0) + ${ethAmount}`,
+            })
+            .where(eq(schema.app.address, receiver))
+
+        // Update tip leaderboard for sender (bot tips)
+        const result = await context.db.sql
+            .update(schema.tipLeaderboard)
+            .set({
+                totalSent: sql`${schema.tipLeaderboard.totalSent} + ${ethAmount}`,
+                tipsSentCount: sql`${schema.tipLeaderboard.tipsSentCount} + 1`,
+                botTipsSent: sql`${schema.tipLeaderboard.botTipsSent} + 1`,
+                botTotalSent: sql`${schema.tipLeaderboard.botTotalSent} + ${ethAmount}`,
+                lastActivity: blockTimestamp,
+            })
+            .where(
+                and(
+                    eq(schema.tipLeaderboard.user, sender),
+                    eq(schema.tipLeaderboard.spaceId, spaceId),
+                ),
+            )
+            .returning()
+
+        if (result.length === 0) {
+            await context.db.insert(schema.tipLeaderboard).values({
+                user: sender,
+                spaceId: spaceId,
+                totalSent: ethAmount,
+                tipsSentCount: 1,
+                memberTipsSent: 0,
+                memberTotalSent: 0n,
+                botTipsSent: 1,
+                botTotalSent: ethAmount,
+                lastActivity: blockTimestamp,
+            })
+        }
+    } catch (error) {
+        console.error(`Error processing Space:TipSent (bot tip) at block ${blockNumber}:`, error)
     }
 })
 

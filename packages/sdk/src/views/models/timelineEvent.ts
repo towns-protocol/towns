@@ -58,7 +58,9 @@ import {
     getReplyParentId,
     getThreadParentId,
     InteractionRequestEvent,
+    InteractionRequestEncryptedEvent,
     InteractionResponseEvent,
+    MiniappAttachment,
 } from './timelineTypes'
 import { checkNever, isDefined, logNever } from '../../check'
 import {
@@ -597,13 +599,35 @@ function toTownsContent_ChannelPayload(
             }
         case 'custom':
             return { error: `Custom payload not supported: ${description}` }
-        case 'interactionRequest':
+        case 'interactionRequest': {
+            const recipient = value.content.value.recipient
+                ? bin_toHexString(value.content.value.recipient)
+                : undefined
+            if (timelineEvent.decryptedContent?.kind === 'interactionRequestPayload') {
+                return {
+                    content: {
+                        kind: RiverTimelineEvent.InteractionRequest,
+                        payload: timelineEvent.decryptedContent.content,
+                        recipient,
+                        threadParentId: value.content.value.threadId
+                            ? bin_toHexString(value.content.value.threadId)
+                            : undefined,
+                    } satisfies InteractionRequestEvent,
+                }
+            }
+
+            // If not decrypted yet, show as encrypted
             return {
                 content: {
-                    kind: RiverTimelineEvent.InteractionRequest,
-                    request: value.content.value,
-                } satisfies InteractionRequestEvent,
+                    kind: RiverTimelineEvent.InteractionRequestEncrypted,
+                    error: timelineEvent.decryptedContentError,
+                    recipient,
+                    threadParentId: value.content.value.threadId
+                        ? bin_toHexString(value.content.value.threadId)
+                        : undefined,
+                } satisfies InteractionRequestEncryptedEvent,
             }
+        }
         case 'interactionResponse':
             return {
                 content: {
@@ -979,6 +1003,14 @@ function toAttachment(
                 chainId: content.chainId,
             } satisfies TickerAttachment
         }
+        case 'miniapp': {
+            const content = attachment.content.value
+            return {
+                type: 'miniapp',
+                url: content.url,
+                id,
+            } satisfies MiniappAttachment
+        }
         default:
             return undefined
     }
@@ -1088,6 +1120,24 @@ export function toDecryptedEvent(
                 return event
             }
         }
+        case RiverTimelineEvent.InteractionRequestEncrypted:
+            if (decryptedContent.kind === 'interactionRequestPayload') {
+                return {
+                    ...event,
+                    content: {
+                        kind: RiverTimelineEvent.InteractionRequest,
+                        payload: decryptedContent.content,
+                        recipient: event.content.recipient,
+                        threadParentId: getThreadParentId(event.content),
+                    } satisfies InteractionRequestEvent,
+                }
+            } else {
+                logger.error('$$$ timelineStoreEvents invalid interactionRequestEncrypted', {
+                    event,
+                    decryptedContent,
+                })
+                return event
+            }
         case RiverTimelineEvent.ChannelCreate:
         case RiverTimelineEvent.ChannelMessage:
         case RiverTimelineEvent.ChannelMessageMissing:
@@ -1180,9 +1230,11 @@ export function getFallbackContent(
         case RiverTimelineEvent.Inception:
             return content.type ? `type: ${content.type}` : ''
         case RiverTimelineEvent.InteractionRequest:
-            return `interactionRequest: ${content.request.content.value?.id ?? ''}`
+            return content.payload ? `interactionRequest` : `interactionRequest: (encrypted)`
+        case RiverTimelineEvent.InteractionRequestEncrypted:
+            return `interactionRequest: (encrypted)`
         case RiverTimelineEvent.InteractionResponse:
-            return `interactionResponse: ${content.response.content.value?.requestId ?? ''}`
+            return `interactionResponse: ${bin_toHexString(content.response.recipient)}`
         case RiverTimelineEvent.ChannelMessageEncrypted:
             return `Decrypting...`
         case RiverTimelineEvent.StreamMembership: {

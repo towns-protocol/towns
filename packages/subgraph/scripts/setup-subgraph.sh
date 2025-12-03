@@ -9,7 +9,7 @@ FORK_BLOCK_NUMBER="${FORK_BLOCK_NUMBER:-}"
 CHAIN_ID="${CHAIN_ID:-84532}"  # Default to Base Sepolia testnet
 PORT="${PORT:-8545}"
 PONDER_ENV_FILE=".env.local"
-ENVIRONMENT="${ENVIRONMENT:-gamma}"  # Default environment
+ENVIRONMENT="${ENVIRONMENT:-beta}"  # Default environment
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do

@@ -12,8 +12,11 @@ This guide will walk you through creating, developing, and deploying your first 
 ## Prerequisites
 
 Before you begin, make sure you have:
-- [Bun](https://bun.sh/docs/installation) installed
-- A [GitHub account](https://github.com/signup)
+- [Node.js v20+](https://nodejs.org/en/download) installed (download for your OS)
+- [Bun](https://bun.sh/docs/installation) installed (download for your OS)
+- A [GitHub account](https://github.com/signup) with SSH key configured (for pushing your bot code)
+  - [Create SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+  - [Upload SSH key to GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account)
 
 ## Create a Bot
 
@@ -61,6 +64,19 @@ cd my-bot
 bun install
 ```
 
+### Add Bot Discovery Endpoint
+
+Open `src/index.ts` and add this route after the `/webhook` route:
+
+```ts
+// After your /webhook route
+app.get('/.well-known/agent-metadata.json', async (c) => {
+  return c.json(await bot.getIdentityMetadata())
+})
+```
+
+This endpoint is **required** for bot directories to discover and index your bot. After deploying your bot, go to the [developer dashboard](https://app.towns.com/developer/dashboard) and click the **Boost** button to submit your bot for indexing.
+
 ### Configure Environment
 
 Copy the `.env.sample` file in your project root:
@@ -95,7 +111,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    | Setting | Value |
    |---------|-------|
    | **Name** | `my-bot` (or any name you prefer) |
-   | **Environment** | `Node` |
+   | **Language** | `Node` |
    | **Build Command** | `bun install` |
    | **Start Command** | `bun run start` |
 
@@ -107,6 +123,7 @@ We'll deploy to Render.com, which offers a generous free tier perfect for bot ho
    |-----|-------|
    | `APP_PRIVATE_DATA` | Your app private data from bot creation |
    | `JWT_SECRET` | Your JWT secret from bot creation |
+   | `PORT` | `5123` |
 
 5. **Deploy**
 
@@ -173,6 +190,47 @@ Finally, install your bot to a space to start using it:
 5. Grant permissions as needed
 
 Your bot is now live! 🎉
+
+## Understanding Your Bot's Wallet Architecture
+
+Your bot has two wallets that work together:
+
+### Bot Treasury Wallet
+
+The **Bot Treasury Wallet** (`bot.appAddress`) is a SimpleAccount (ERC-4337) smart contract that holds your bot's funds:
+- **Receives funds**: All tips and payments sent to your bot are stored here
+- **Stores assets**: This is where ETH and tokens are held
+- **Source for payments**: When your bot sends tips to users, funds come from this wallet
+
+To fund your bot treasury, send Base ETH directly to `bot.appAddress` from any wallet.
+
+### Gas Wallet
+
+The **Gas Wallet** (`bot.viem.account`) pays for gas fees on bot transactions:
+- **Signs transactions**: Authorizes all operations on behalf of the bot treasury
+- **Pays gas fees**: Needs Base ETH to cover transaction costs
+- **Fund this wallet**: Required for any blockchain transactions
+
+<Warning>
+Your gas wallet MUST be funded with Base ETH to execute any blockchain transactions (sending tips, banning users, etc.). Without gas, your bot cannot perform onchain operations.
+</Warning>
+
+### When to Fund Each
+
+**Fund your Gas Wallet when:**
+- Your bot needs to send tips to users
+- Your bot performs moderation actions (ban/unban)
+- Your bot interacts with smart contracts
+- You see "insufficient funds for gas" errors
+
+**Fund your Bot Treasury when:**
+- Your bot needs to send tips from its treasury
+- You want to receive payments and tips
+- Your bot needs to hold ETH/tokens for operations
+
+<Note>
+The gas wallet credentials are provided in `APP_PRIVATE_DATA` during bot creation. You can extract the wallet address from this value to fund it.
+</Note>
 
 ## Testing Your Bot
 

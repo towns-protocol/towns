@@ -1,7 +1,6 @@
 {
     "name": "@towns-protocol/bot",
-    "version": "0.0.390",
-    "packageManager": "yarn@3.8.0",
+    "version": "0.0.429",
     "type": "module",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

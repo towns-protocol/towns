@@ -9,6 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/crypto"
+
 	"github.com/towns-protocol/towns/core/blockchain"
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -125,8 +127,7 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 		return nil
 	}
 
-	err = j.saveCandidate(ctx)
-	if err != nil {
+	if err := j.saveCandidate(ctx); err != nil {
 		return err
 	}
 
@@ -158,16 +159,18 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 }
 
 func (j *mbJob) makeReplicatedProposal(ctx context.Context) (*mbProposal, *StreamView, error) {
+	// retrieve remote proposals
 	proposals, view, err := j.processRemoteProposals(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	localProposal := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot)
+	// create local proposal
+	localProposal := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot, j.replicated)
 
+	// Combine proposals into a single proposal that is used to create a miniblock candidate.
 	proposals = append(proposals, localProposal)
-
-	combined, err := j.combineProposals(proposals)
+	combined, err := j.combineProposals(proposals, j.cache.Params().ChainConfig.Get())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -181,10 +184,10 @@ func (j *mbJob) makeLocalProposal(ctx context.Context) (*mbProposal, *StreamView
 		return nil, nil, err
 	}
 
-	prop := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot)
+	prop := view.proposeNextMiniblock(ctx, j.cache.Params().ChainConfig.Get(), j.forceSnapshot, j.replicated)
 
 	// Is there anything to do?
-	if len(prop.eventHashes) == 0 && !prop.shouldSnapshot {
+	if len(prop.events) == 0 && !prop.shouldSnapshot {
 		return nil, view, nil
 	}
 
@@ -212,6 +215,7 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if view.minipool.generation != request.NewMiniblockNum {
 		// TODO: REPLICATION: FIX: if any MissingEvents are received, should they still be attempted to be added? I.e. loop below should be still executed?
 		return nil, nil, RiverError(
@@ -220,25 +224,26 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 		)
 	}
 
-	// Apply received MissingEvents, even if there are not enough quorum of proposals.
+	// Apply received MissingEvents, even if there is not enough to reach quorum at the moment.
+	// This will ensure that events propagate over all replicas.
 	added := make(map[common.Hash]bool)
 	converted := make([]*mbProposal, len(proposals))
 	for i, p := range proposals {
-		converted[i] = mbProposalFromProto(p.response.Proposal)
-
-		if converted[i].newMiniblockNum != view.minipool.generation {
+		// if the proposal was created on a different minipool generation, ignore it.
+		if p.response.GetProposal().GetNewMiniblockNum() != view.minipool.generation {
 			continue
 		}
 
+		// add missing events that replicas provided to the local minipool and keep track of the new stream view
 		for _, e := range p.response.MissingEvents {
 			parsed, err := ParseEvent(e)
 			if err != nil {
 				logging.FromCtx(ctx).Errorw("mbJob.processRemoteProposals: error parsing event", "error", err)
 				continue
 			}
+
 			if _, ok := added[parsed.Hash]; !ok {
 				added[parsed.Hash] = true
-
 				if !view.minipool.events.Has(parsed.Hash) {
 					newView, err := j.stream.addEvent(ctx, parsed, true)
 					if err == nil {
@@ -255,6 +260,8 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 				}
 			}
 		}
+
+		converted[i] = mbProposalFromProto(p.response.Proposal, view)
 	}
 
 	// View might have been updated by adding events, check if stream advanced in the meantime.
@@ -281,7 +288,13 @@ func (j *mbJob) processRemoteProposals(ctx context.Context) ([]*mbProposal, *Str
 	return nil, nil, RiverError(Err_INTERNAL, "mbJob.processRemoteProposals: no proposals and no errors")
 }
 
-func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
+// combineProposals combines the given proposals into a single proposal that can be
+// used to create a miniblock candidate.
+//
+// The combined proposal will contain all events from the given proposals that appear at least
+// quorumNum times. It will also contain the ShouldSnapshot flag if at least quorumNum proposals
+// contain ShouldSnapshot events.
+func (j *mbJob) combineProposals(proposals []*mbProposal, cfg *crypto.OnChainSettings) (*mbProposal, error) {
 	// Sanity check: all proposals must have the same miniblock number and prev hash.
 	for _, p := range proposals {
 		if p.newMiniblockNum != proposals[0].newMiniblockNum || p.prevMiniblockHash != proposals[0].prevMiniblockHash {
@@ -295,41 +308,63 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 		return nil, RiverError(Err_INTERNAL, "mbJob.combineProposals: not enough proposals")
 	}
 
-	// Count ShouldSnapshot.
-	shouldSnapshotNum := 0
+	// count on how many replicates votes to create a snapshot in the miniblock candidate.
+	proposalSnapshotVotesCount := 0
 	for _, p := range proposals {
 		if p.shouldSnapshot {
-			shouldSnapshotNum++
+			proposalSnapshotVotesCount++
 		}
 	}
-	shouldSnapshot := shouldSnapshotNum >= quorumNum
 
-	// Count event hashes.
+	// Count how often each event appears in the proposals.
+	// Only events that appear at least quorumNum times are included in the combined proposal.
 	eventCounts := make(map[common.Hash]int)
 	for _, p := range proposals {
-		for _, h := range p.eventHashes {
-			eventCounts[h]++
+		for _, ev := range p.events {
+			eventCounts[ev.Hash]++
 		}
 	}
 
-	events := make([]common.Hash, 0, len(eventCounts))
-
-	// walk over all event hashes again, adding them to the events list if they have quorum.
+	// walk over all event hashes and add the events to the combined proposal if reached quorum.
 	// do it this way to preserve order of events as they were received in a single proposal.
-	// we do not attempt to order events across proposals.
+	// we do not attempt to order events across proposals. allow up to set limits in the
+	// combined proposal.
+	var (
+		maxEventsPerMiniblock, maxEventCombinedSize = MiniblockEventLimits(cfg)
+		combinedEvents                              = make([]mbProposalEvent, 0, len(eventCounts))
+		combinedTotalEventSize                      = 0
+	)
+
+	var reachedLimit bool
 	for _, p := range proposals {
-		for _, h := range p.eventHashes {
-			if c, ok := eventCounts[h]; ok {
+		for _, event := range p.events {
+			if c, ok := eventCounts[event.Hash]; ok {
+				// only include events that appear at least quorumNum times
 				if c >= quorumNum {
-					events = append(events, h)
+					// if adding the next event to the combined proposal exceeds limits, stop processing all proposals
+					if len(combinedEvents) >= maxEventsPerMiniblock ||
+						combinedTotalEventSize+event.Size > maxEventCombinedSize {
+						reachedLimit = true
+						break
+					}
+					combinedEvents = append(combinedEvents, event)
+					// keep track of the total size of all events in the combined proposal
+					combinedTotalEventSize += event.Size
 				}
-				delete(eventCounts, h)
+				// if the next proposal contains the same event, it won't be processed again.
+				delete(eventCounts, event.Hash)
 			}
 		}
+		if reachedLimit {
+			break
+		}
 	}
 
+	// ShouldSnapshot flag is set if at least quorumNum proposals contain ShouldSnapshot vote.
+	shouldSnapshot := proposalSnapshotVotesCount >= quorumNum
+
 	// Is there anything to do?
-	if len(events) == 0 && !shouldSnapshot {
+	if len(combinedEvents) == 0 && !shouldSnapshot {
 		return nil, nil
 	}
 
@@ -337,7 +372,7 @@ func (j *mbJob) combineProposals(proposals []*mbProposal) (*mbProposal, error) {
 		newMiniblockNum:   proposals[0].newMiniblockNum,
 		prevMiniblockHash: proposals[0].prevMiniblockHash,
 		shouldSnapshot:    shouldSnapshot,
-		eventHashes:       events,
+		events:            combinedEvents,
 	}, nil
 }
 

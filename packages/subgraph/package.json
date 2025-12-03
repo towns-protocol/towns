@@ -1,7 +1,6 @@
 {
     "name": "@towns-protocol/subgraph",
     "private": true,
-    "packageManager": "yarn@3.8.0",
     "type": "module",
     "scripts": {
         "codegen": "yarn typings && ponder codegen",
@@ -12,6 +11,7 @@
         "find-paths": "tsx utils/findContractsPath.ts",
         "format": "prettier --write \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "lint": "eslint \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
+        "lint:fix": "eslint --fix \"src/**/*.{ts,tsx}\" \"ponder.config.ts\" \"ponder.schema.ts\"",
         "serve": "yarn typings && ponder serve",
         "start": "yarn typings && ponder start",
         "test:unit": "yarn typings && sh -c 'tsc --noEmit'",
@@ -20,6 +20,7 @@
     },
     "dependencies": {
         "@towns-protocol/web3": "workspace:^",
+        "axios": "^1.9.0",
         "hono": "^4.7.11",
         "ponder": "^0.13.14",
         "viem": "^2.29.3"

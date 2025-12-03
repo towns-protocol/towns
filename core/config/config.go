@@ -53,6 +53,24 @@ func GetDefaultConfig() *Config {
 		Metrics: MetricsConfig{
 			Enabled: true,
 		},
+		HighUsageDetection: HighUsageDetectionConfig{
+			Enabled:    true,
+			MaxResults: 50,
+			Thresholds: HighUsageThresholdFields{
+				ThresholdAddEventWindow1:          time.Minute,
+				ThresholdAddEventCount1:           50,
+				ThresholdAddEventWindow2:          30 * time.Minute,
+				ThresholdAddEventCount2:           1000,
+				ThresholdAddMediaEventWindow1:     time.Minute,
+				ThresholdAddMediaEventCount1:      50,
+				ThresholdAddMediaEventWindow2:     30 * time.Minute,
+				ThresholdAddMediaEventCount2:      500,
+				ThresholdCreateMediaStreamWindow1: time.Minute,
+				ThresholdCreateMediaStreamCount1:  5,
+				ThresholdCreateMediaStreamWindow2: 30 * time.Minute,
+				ThresholdCreateMediaStreamCount2:  100,
+			},
+		},
 		// TODO: Network: NetworkConfig{},
 		StandByOnStart:    true,
 		StandByPollPeriod: 500 * time.Millisecond,
@@ -101,6 +119,8 @@ type Config struct {
 	Database          DatabaseConfig
 	StorageType       string
 	TrimmingBatchSize int64
+	// ExternalMediaStreamStorage if configured, defines where media stream miniblocks are stored.
+	ExternalMediaStreamStorage ExternalMediaStreamStorageConfig `mapstructure:"external_media_stream_storage"`
 
 	// Blockchain configuration
 	BaseChain  ChainConfig
@@ -120,6 +140,7 @@ type Config struct {
 	// Metrics
 	Metrics             MetricsConfig
 	PerformanceTracking PerformanceTrackingConfig
+	HighUsageDetection  HighUsageDetectionConfig
 
 	// Scrubbing
 	Scrubbing ScrubbingConfig
@@ -380,6 +401,71 @@ type ArchiveConfig struct {
 	MaxFailedConsecutiveUpdates uint32 `json:",omitempty"` // If 0, default to 50.
 }
 
+// ExternalMediaStreamStorageAWSS3Config defines configuration to store media stream miniblocks
+// in AWS S3.
+type ExternalMediaStreamStorageAWSS3Config struct {
+	// Region is the region where the bucket is located.
+	Region string
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// AccessKeyID and SecretAccessKey are used to authenticate with AWS S3 and has read/write
+	// access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	AccessKeyID string `mapstructure:"access_key_id"`
+	// SecretAccessKey is the AWS secret access key that has read/write access to the bucket.
+	// https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html
+	SecretAccessKey string `mapstructure:"secret_access_key" json:"-" yaml:"-"`
+}
+
+func (cfg ExternalMediaStreamStorageAWSS3Config) fieldsSet() int {
+	fieldsSet := 0
+	if cfg.Region != "" {
+		fieldsSet++
+	}
+	if cfg.Bucket != "" {
+		fieldsSet++
+	}
+	if cfg.AccessKeyID != "" {
+		fieldsSet++
+	}
+	if cfg.SecretAccessKey != "" {
+		fieldsSet++
+	}
+	return fieldsSet
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageAWSS3Config) Enabled() bool {
+	return cfg.fieldsSet() == 4
+}
+
+// ExternalMediaStreamStorageGCStorageConfig defines configuration to store media stream miniblocks
+// in GCP Storage.
+type ExternalMediaStreamStorageGCStorageConfig struct {
+	// Bucket name where to store media miniblock data in.
+	Bucket string
+	// JsonCredentials is the JSON credentials file that has read/write access to the bucket.
+	JsonCredentials string `mapstructure:"json_credentials" json:"-" yaml:"-"` // Sensitive data, omit when possible
+}
+
+// Enabled returns true if all required fields are set.
+func (cfg ExternalMediaStreamStorageGCStorageConfig) Enabled() bool {
+	return cfg.Bucket != "" && cfg.JsonCredentials != ""
+}
+
+// ExternalMediaStreamStorageConfig specifies the configuration for storing media miniblock data
+// in external storage. For production only one of the storage backends should be configured. For
+// unittests all backends are supported.
+type ExternalMediaStreamStorageConfig struct {
+	// AwsS3 if configured, will be used to store media stream miniblocks in AWS S3.
+	AwsS3 ExternalMediaStreamStorageAWSS3Config `mapstructure:"aws_s3"`
+	// Gcs, if configured, will be used to store media stream miniblocks in GCP Storage.
+	Gcs ExternalMediaStreamStorageGCStorageConfig `mapstructure:"gcs_storage"`
+	// EnableMigrationExistingStreams if true, actively migrate media stream miniblock data
+	// from database to external storage.
+	EnableMigrationExistingStreams bool `mapstructure:"enable_migration_existing_streams"`
+}
+
 type APNPushNotificationsConfig struct {
 	// IosAppBundleID is used as the topic ID for notifications.
 	AppBundleID string
@@ -533,6 +619,77 @@ type MetricsConfig struct {
 
 	// Interface to use with the port above. Usually left empty to bind to all interfaces.
 	Interface string
+}
+
+type HighUsageDetectionConfig struct {
+	// Enabled toggles the high-usage detection tracker logic.
+	Enabled bool
+
+	// MaxResults limits the number of high-usage accounts exposed via /status.
+	MaxResults int
+
+	// Thresholds captures explicit per-call-type threshold definitions.
+	Thresholds HighUsageThresholdFields
+}
+
+// HighUsageThresholds flattens the configured threshold_* fields into a standard
+// map keyed by call type.
+func (cfg HighUsageDetectionConfig) HighUsageThresholds() map[string][]HighUsageThreshold {
+	return cfg.Thresholds.effectiveThresholds()
+}
+
+type HighUsageThresholdFields struct {
+	ThresholdAddEventWindow1          time.Duration `mapstructure:"threshold_add_event_window1"`
+	ThresholdAddEventCount1           uint32        `mapstructure:"threshold_add_event_count1"`
+	ThresholdAddEventWindow2          time.Duration `mapstructure:"threshold_add_event_window2"`
+	ThresholdAddEventCount2           uint32        `mapstructure:"threshold_add_event_count2"`
+	ThresholdAddMediaEventWindow1     time.Duration `mapstructure:"threshold_add_media_event_window1"`
+	ThresholdAddMediaEventCount1      uint32        `mapstructure:"threshold_add_media_event_count1"`
+	ThresholdAddMediaEventWindow2     time.Duration `mapstructure:"threshold_add_media_event_window2"`
+	ThresholdAddMediaEventCount2      uint32        `mapstructure:"threshold_add_media_event_count2"`
+	ThresholdCreateMediaStreamWindow1 time.Duration `mapstructure:"threshold_create_media_stream_window1"`
+	ThresholdCreateMediaStreamCount1  uint32        `mapstructure:"threshold_create_media_stream_count1"`
+	ThresholdCreateMediaStreamWindow2 time.Duration `mapstructure:"threshold_create_media_stream_window2"`
+	ThresholdCreateMediaStreamCount2  uint32        `mapstructure:"threshold_create_media_stream_count2"`
+}
+
+func (fields HighUsageThresholdFields) effectiveThresholds() map[string][]HighUsageThreshold {
+	result := make(map[string][]HighUsageThreshold)
+
+	addThreshold := func(name string, window time.Duration, count uint32) {
+		if window <= 0 || count == 0 || name == "" {
+			return
+		}
+		result[name] = append(result[name], HighUsageThreshold{
+			Window: window,
+			Count:  count,
+		})
+	}
+
+	addThreshold("event", fields.ThresholdAddEventWindow1, fields.ThresholdAddEventCount1)
+	addThreshold("event", fields.ThresholdAddEventWindow2, fields.ThresholdAddEventCount2)
+	addThreshold("media_event", fields.ThresholdAddMediaEventWindow1, fields.ThresholdAddMediaEventCount1)
+	addThreshold("media_event", fields.ThresholdAddMediaEventWindow2, fields.ThresholdAddMediaEventCount2)
+	addThreshold(
+		"create_media_stream",
+		fields.ThresholdCreateMediaStreamWindow1,
+		fields.ThresholdCreateMediaStreamCount1,
+	)
+	addThreshold(
+		"create_media_stream",
+		fields.ThresholdCreateMediaStreamWindow2,
+		fields.ThresholdCreateMediaStreamCount2,
+	)
+
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+type HighUsageThreshold struct {
+	Window time.Duration
+	Count  uint32
 }
 
 type DebugEndpointsConfig struct {

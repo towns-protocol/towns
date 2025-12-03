@@ -116,8 +116,6 @@ export function townsEnv(opts?: SafeEnvOpts): ITownsEnv {
                 return 'https://river-notification-service-beta.towns.com'
             case 'delta':
                 return 'https://river-notification-service-delta.towns.com'
-            case 'gamma':
-                return 'https://river-notification-service-gamma.towns.com'
             case 'omega':
                 return 'https://river-notification-service-omega.towns.com'
             default:
@@ -143,8 +141,6 @@ export function townsEnv(opts?: SafeEnvOpts): ITownsEnv {
                 return 'https://beta.river.delivery'
             case 'delta':
                 return 'https://delta.river.delivery'
-            case 'gamma':
-                return 'https://gamma.river.delivery'
             case 'omega':
                 return 'https://river.delivery'
             default:
@@ -168,8 +164,6 @@ export function townsEnv(opts?: SafeEnvOpts): ITownsEnv {
                 return 'https://app-registry.alpha.towns.com'
             case 'beta':
                 return 'https://app-registry.beta.towns.com'
-            case 'gamma':
-                return 'https://app-registry.gamma.towns.com'
             case 'omega':
                 return 'https://app-registry.omega.towns.com'
             case 'delta':

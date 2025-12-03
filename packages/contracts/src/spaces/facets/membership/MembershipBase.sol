@@ -35,7 +35,6 @@ abstract contract MembershipBase is IMembershipBase {
         $.freeAllocationEnabled = true;
 
         if (info.price > 0) {
-            _verifyPrice(info.price);
             if (info.freeAllocation > 0)
                 Membership__CannotSetFreeAllocationOnPaidSpace.selector.revertWith();
             IMembershipPricing(info.pricingModule).setPrice(info.price);
@@ -66,14 +65,29 @@ abstract contract MembershipBase is IMembershipBase {
         );
     }
 
+    function _getMembershipPrice(
+        uint256 totalSupply
+    ) internal view virtual returns (uint256 membershipPrice) {
+        address pricingModule = _getPricingModule();
+        if (pricingModule == address(0)) return 0;
+        uint256 freeAllocation = _getMembershipFreeAllocation();
+        membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
+    }
+
     function _getProtocolFee(uint256 membershipPrice) internal view returns (uint256) {
         IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 baseFee = platform.getMembershipFee();
+        if (membershipPrice == 0) return baseFee;
+        uint256 bpsFee = BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
+        return FixedPointMathLib.max(bpsFee, baseFee);
+    }
 
-        uint256 minPrice = platform.getMembershipMinPrice();
-
-        if (membershipPrice < minPrice) return platform.getMembershipFee();
-
-        return BasisPoints.calculate(membershipPrice, platform.getMembershipBps());
+    function _getTotalMembershipPayment(
+        uint256 membershipPrice
+    ) internal view returns (uint256 totalRequired, uint256 protocolFee) {
+        protocolFee = _getProtocolFee(membershipPrice);
+        if (membershipPrice == 0) return (protocolFee, protocolFee);
+        return (membershipPrice + protocolFee, protocolFee);
     }
 
     function _transferIn(address from, uint256 amount) internal returns (uint256) {
@@ -152,30 +166,8 @@ abstract contract MembershipBase is IMembershipBase {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           PRICING                          */
+    /*                           RENEWAL                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    function _verifyPrice(uint256 newPrice) internal view {
-        uint256 minFee = _getPlatformRequirements().getMembershipFee();
-        if (newPrice < minFee) Membership__PriceTooLow.selector.revertWith();
-    }
-
-    /// @dev Makes it virtual to allow other pricing strategies
-    function _getMembershipPrice(
-        uint256 totalSupply
-    ) internal view virtual returns (uint256 membershipPrice) {
-        address pricingModule = _getPricingModule();
-        IPlatformRequirements platform = _getPlatformRequirements();
-        if (pricingModule == address(0)) return platform.getMembershipFee();
-
-        // get free allocation
-        uint256 freeAllocation = _getMembershipFreeAllocation();
-        membershipPrice = IMembershipPricing(pricingModule).getPrice(freeAllocation, totalSupply);
-        if (membershipPrice == 0) return 0;
-
-        uint256 minPrice = platform.getMembershipMinPrice();
-        if (membershipPrice < minPrice) return platform.getMembershipFee();
-    }
 
     function _setMembershipRenewalPrice(uint256 tokenId, uint256 pricePaid) internal {
         MembershipStorage.layout().renewalPriceByTokenId[tokenId] = pricePaid;
@@ -186,15 +178,14 @@ abstract contract MembershipBase is IMembershipBase {
         uint256 totalSupply
     ) internal view returns (uint256) {
         MembershipStorage.Layout storage $ = MembershipStorage.layout();
-        IPlatformRequirements platform = _getPlatformRequirements();
+        uint256 lockedRenewalPrice = $.renewalPriceByTokenId[tokenId];
+        uint256 currentPrice = _getMembershipPrice(totalSupply);
 
-        uint256 minFee = platform.getMembershipFee();
-        uint256 renewalPrice = $.renewalPriceByTokenId[tokenId];
+        // If no locked price, use current price
+        if (lockedRenewalPrice == 0) return currentPrice;
 
-        if (renewalPrice != 0) return FixedPointMathLib.max(renewalPrice, minFee);
-
-        uint256 price = _getMembershipPrice(totalSupply);
-        return FixedPointMathLib.max(price, minFee);
+        // Return the lower of the two prices (benefits user)
+        return FixedPointMathLib.min(lockedRenewalPrice, currentPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

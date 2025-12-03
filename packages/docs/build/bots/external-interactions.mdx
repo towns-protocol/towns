@@ -2,56 +2,188 @@
 title: External Interactions
 ---
 
+Towns bots are built on [Hono](https://hono.dev). While `/webhook` is reserved for Towns events, you can add custom routes for external webhooks, APIs, and scheduled tasks.
 
-Towns bots are built on [Hono](https://hono.dev), a lightweight web framework. While by default `/webhook` endpoint is reserved for receiving Towns events, you can add any number of additional routes for:
+## Using Bot Methods Anywhere
 
-- **External webhooks** - GitHub, Linear, monitoring services
-- **Custom APIs** - REST endpoints for third-party integrations
-- **Scheduled tasks** - Timers that run periodically
-- **Health checks** - Status endpoints for monitoring
-
-The bot instance get from `makeTownsBot` contains all the methods you can use to interact with your bot.
-
-This allows you to perform actions that are not triggered by Towns events, such as letting other services trigger actions on your bot.
+**Important:** Bot methods like `sendMessage()` can be called directly on the bot instance, outside of event handlers. This enables integration with external services, webhooks, and scheduled tasks.
 
 ```ts
 import { Hono } from 'hono'
 import { makeTownsBot } from '@towns-protocol/bot'
 
 const bot = await makeTownsBot(privateData, jwtSecret)
-await bot.start()
+const { jwtMiddleware, handler } = bot.start()
 
 const app = new Hono()
 
-app.post('/api/post-message', async (c) => {
+// Towns webhook (required)
+app.post('/webhook', jwtMiddleware, handler)
+
+// Custom API endpoint
+app.post('/api/send', async (c) => {
   const { channelId, message } = await c.req.json()
   await bot.sendMessage(channelId, message)
   return c.json({ ok: true })
 })
+
+export default app
 ```
 
-Or fetch data from external APIs and send messages to channels.
+## GitHub Webhooks
 
 ```ts
 import { Hono } from 'hono'
 import { makeTownsBot } from '@towns-protocol/bot'
 
-const bot = await makeTownsBot(privateData, jwtSecret)
-await bot.start()
+const bot = await makeTownsBot(privateData, jwtSecret, { commands })
 
-const app = new Hono()
+let githubChannelId: string | null = null
 
-const channels: string[] = []
-bot.onSlashCommand('/set-channel', async (handler, event) => {
-  const { channelId } = event
-  channels.push(channelId)
-  await handler.sendMessage(channelId, 'Channel set successfully')
+// Register channel for GitHub notifications
+bot.onSlashCommand('setup-github', async (handler, event) => {
+  githubChannelId = event.channelId
+  await handler.sendMessage(
+    event.channelId,
+    'GitHub notifications configured for this channel'
+  )
 })
 
-setInterval(async () => {
-  const tokenPrice = await fetchTokenPriceApi('ETH')
-  for (const channelId of channels) {
-    await bot.sendMessage(channelId, "💰 ETH update: $" + tokenPrice)
+// Towns webhook (required)
+const { jwtMiddleware, handler } = bot.start()
+const app = new Hono()
+
+app.post('/webhook', jwtMiddleware, handler)
+
+// GitHub webhook endpoint
+app.post('/github-webhook', async (c) => {
+  const payload = await c.req.json()
+  
+  if (!githubChannelId) {
+    return c.json({ error: 'No channel configured' }, 400)
   }
-}, 60_000)
+  
+  // Send GitHub events to Towns channel
+  if (payload.action === 'opened' && payload.pull_request) {
+    await bot.sendMessage(
+      githubChannelId,
+      `PR opened: **${payload.pull_request.title}** by ${payload.sender.login}\n${payload.pull_request.html_url}`
+    )
+  } else if (payload.pusher) {
+    const commits = payload.commits?.length || 0
+    await bot.sendMessage(
+      githubChannelId,
+      `Push to ${payload.repository.name}: ${commits} commits by ${payload.pusher.name}`
+    )
+  }
+  
+  return c.json({ success: true })
+})
+
+export default app
 ```
+
+## Scheduled Tasks
+
+```ts
+const bot = await makeTownsBot(privateData, jwtSecret)
+const priceChannels = new Set()
+
+bot.onSlashCommand('price-alerts', async (handler, event) => {
+  priceChannels.add(event.channelId)
+  await handler.sendMessage(event.channelId, 'Price alerts enabled')
+})
+
+// Check price every 5 minutes
+setInterval(async () => {
+  const price = await fetch('https://api.example.com/eth-price').then(r => r.json())
+  
+  for (const channelId of priceChannels) {
+    await bot.sendMessage(channelId, `ETH: $${price}`)
+  }
+}, 5 * 60 * 1000)
+```
+
+## Storing State
+
+<Warning>
+In-memory storage (Map, Set) only works on always-on servers. Free hosting tiers can restart your server, losing all in-memory data. Consider storing data in a external database.
+</Warning>
+
+### SQLite (Drizzle)
+
+```bash
+bun add drizzle-orm better-sqlite3
+```
+
+```ts
+import { drizzle } from 'drizzle-orm/better-sqlite3'
+import Database from 'better-sqlite3'
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core'
+
+const channels = sqliteTable('channels', {
+  channelId: text('channel_id').primaryKey(),
+  service: text('service')
+})
+
+const db = drizzle(new Database('bot.db'))
+
+bot.onSlashCommand('setup', async (handler, event) => {
+  await db.insert(channels).values({
+    channelId: event.channelId,
+    service: 'github'
+  })
+})
+```
+
+### Turso (Managed SQLite)
+
+Free tier, perfect for bots on free hosting:
+
+```bash
+bun add @libsql/client drizzle-orm
+```
+
+```ts
+import { drizzle } from 'drizzle-orm/libsql'
+import { createClient } from '@libsql/client'
+
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!
+})
+
+const db = drizzle(client)
+```
+
+### Redis
+
+For caching and rate limiting:
+
+```bash
+bun add ioredis
+```
+
+```ts
+import Redis from 'ioredis'
+
+const redis = new Redis(process.env.REDIS_URL)
+
+// Rate limiting
+bot.onSlashCommand('premium', async (handler, event) => {
+  const count = await redis.incr(`ratelimit:${event.userId}`)
+  
+  if (count > 5) {
+    await handler.sendMessage(event.channelId, 'Rate limit exceeded')
+    return
+  }
+  
+  // Process request...
+})
+```
+
+## Next Steps
+
+- Learn about [interactive messages](/build/bots/interactive-messages)
+- Explore [onchain interactions](/build/bots/interaction-with-contracts)
+- Read about [event handlers](/build/bots/events)

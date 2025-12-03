@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	supportedEnvironments = []string{"alpha", "gamma", "omega", "delta", "beta"}
+	supportedEnvironments = []string{"alpha", "beta", "omega", "delta"}
 	baseRpcUrl            string
 	riverRpcUrl           string
 	riverDevnetRpcUrl     string
@@ -197,7 +197,7 @@ var rootCmd = &cobra.Command{
 			sourceEnvironment, targetEnvironment = args[0], args[1]
 			for _, environment := range []string{sourceEnvironment, targetEnvironment} {
 				if !utils.Contains(supportedEnvironments, environment) {
-					log.Fatal().Str("environment", environment).Msg("Environment not supported. Environment can be one of alpha, gamma, omega, delta, or beta.")
+					log.Fatal().Str("environment", environment).Msg("Environment not supported. Environment can be one of alpha, beta, omega, or delta.")
 				}
 			}
 

@@ -9,16 +9,27 @@ reviews:
     high_level_summary: false
     review_status: false
     poem: false
-    collapse_walkthrough: false
+    collapse_walkthrough: true
     sequence_diagrams: false
-    path_filters: ['!packages/generated/**', '!package.json', '!yarn.lock']
+    path_filters:
+        - '!packages/generated/**'
+        - '!packages/proto/src/gen/**'
+        - '!packages/proto/src/protocol_*.ts'
+        - '!packages/subgraph/generated/**'
+        - '!packages/contracts/out/**'
+        - '!packages/contracts/deployments/**'
+        - '!packages/contracts/broadcast/**'
+        - '!packages/contracts/typings/**'
+        - '!core/**/gen/**'
+        - '!**/dist/**'
+        - '!**/coverage/**'
+        - '!**/.turbo/**'
+        - '!package.json'
+        - '!yarn.lock'
+        - '!go.work.sum'
+        - '!go.sum'
     auto_review:
         enabled: true
         drafts: false
-        labels:
-            - 'ai'
-            - 'rabbit'
-            - 'coderabbit'
-            - 'area/contracts'
 chat:
     auto_reply: true

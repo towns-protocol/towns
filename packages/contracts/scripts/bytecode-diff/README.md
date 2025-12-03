@@ -40,17 +40,17 @@ ChannelBase: 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
 
 ### Run pairwise remote bytecode diff on facets deployed to two networks
 
-Runs bytecode diff from deployed facets for diamonds in alpha, beta, gamma, and omega environments as per source coordinates of diamonds for each environment.
+Runs bytecode diff from deployed facets for diamonds in alpha, beta, and omega environments as per source coordinates of diamonds for each environment.
 
 ```bash
-# compare omega against gamma facets and facet selectors
-GOWORK=off go run ./main.go gamma omega -v
+# compare omega against beta facets and facet selectors
+GOWORK=off go run ./main.go beta omega -v
 
 # output facet implementation changes by facet or selectors that are missing from omega
 ➜  bytecode-diff git:(jt/net-62-contract-differ) ✗ yq eval deployed-diffs/facet_diff_090324_18.yaml
 diamonds:
   - name: spaceOwner
-    source: gamma
+    source: beta
     target: omega
     facets:
       - sourceContractName: ""
@@ -87,7 +87,7 @@ diamonds:
 ### Run keccak256 hash generation on deployed contracts
 
 ```bash
-GOWORK=off go run main.go add-hashes gamma deployed-diffs/facet_diff_090624_1.yaml
+GOWORK=off go run main.go add-hashes beta deployed-diffs/facet_diff_090624_1.yaml
 
 # output to new yaml file suffixed with _hashed.yaml including bytecodeHash for each contract in deployments section
 ➜  bytecode-diff git:(jt/net-62-upgrade-script-2) ✗ yq e '.deployments' deployed-diffs/facet_diff_090624_1_hashed.yaml

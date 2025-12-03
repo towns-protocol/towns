@@ -24,7 +24,8 @@ func Test_StreamCache_normalizeEphemeralStream(t *testing.T) {
 	leaderInstance := tc.instances[0]
 
 	const chunks = 10
-	channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	channelId := testutils.MakeChannelId(spaceId)
 
 	t.Run("normalize ephemeral stream - all miniblocks exist", func(t *testing.T) {
 		streamId, err := StreamIdFromString(STREAM_MEDIA_PREFIX + strings.Repeat("1", 62))

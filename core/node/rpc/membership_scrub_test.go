@@ -41,7 +41,6 @@ func addUserToChannel(
 			MembershipOp_SO_JOIN,
 			channelId,
 			common.Address{},
-			spaceId[:],
 			nil,
 		),
 		&MiniblockRef{
@@ -343,7 +342,7 @@ func TestScrubStreamTaskProcessor(t *testing.T) {
 			require.NoError(err)
 			require.NotNil(space)
 
-			channelId := testutils.FakeStreamId(STREAM_CHANNEL_BIN)
+			channelId := testutils.MakeChannelId(spaceId)
 			channel, _, err := createChannel(ctx, wallet, client, spaceId, channelId, nil)
 			require.NoError(err)
 			require.NotNil(channel)

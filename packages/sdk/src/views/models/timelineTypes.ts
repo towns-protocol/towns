@@ -20,7 +20,7 @@ import {
     ChannelMessage_Post_Attachment,
     ChannelMessage_PostSchema,
     MembershipReason,
-    InteractionRequest,
+    InteractionRequestPayload,
     InteractionResponse,
 } from '@towns-protocol/proto'
 import type { DecryptionSessionError } from '../../decryptionExtensions'
@@ -84,6 +84,7 @@ export type TimelineEvent_OneOf =
     | FulfillmentEvent
     | InceptionEvent
     | InteractionRequestEvent
+    | InteractionRequestEncryptedEvent
     | InteractionResponseEvent
     | KeySolicitationEvent
     | MiniblockHeaderEvent
@@ -126,6 +127,7 @@ export enum RiverTimelineEvent {
     Fulfillment = 'm.fulfillment',
     Inception = 'm.inception', // TODO: would be great to name this after space / channel name
     InteractionRequest = 'm.interaction_request',
+    InteractionRequestEncrypted = 'm.interaction_request.encrypted',
     InteractionResponse = 'm.interaction_response',
     KeySolicitation = 'm.key_solicitation',
     MemberBlockchainTransaction = 'm.member_blockchain_transaction',
@@ -182,7 +184,16 @@ export interface InceptionEvent {
 
 export interface InteractionRequestEvent {
     kind: RiverTimelineEvent.InteractionRequest
-    request: PlainMessage<InteractionRequest>
+    payload?: PlainMessage<InteractionRequestPayload>
+    recipient?: string
+    threadParentId?: string
+}
+
+export interface InteractionRequestEncryptedEvent {
+    kind: RiverTimelineEvent.InteractionRequestEncrypted
+    error?: DecryptionSessionError
+    recipient?: string
+    threadParentId?: string
 }
 
 export interface InteractionResponseEvent {
@@ -511,12 +522,19 @@ export type TickerAttachment = {
     chainId: string
 }
 
+export type MiniappAttachment = {
+    type: 'miniapp'
+    url: string
+    id: string
+}
+
 export type Attachment =
     | ImageAttachment
     | ChunkedMediaAttachment
     | EmbeddedMessageAttachment
     | UnfurledLinkAttachment
     | TickerAttachment
+    | MiniappAttachment
 
 export type MessageTipEvent = Omit<TimelineEvent, 'content'> & {
     content: TipEvent
@@ -635,6 +653,15 @@ export function transformAttachments(attachments?: Attachment[]): ChannelMessage
                             },
                         },
                     })
+                case 'miniapp':
+                    return create(ChannelMessage_Post_AttachmentSchema, {
+                        content: {
+                            case: 'miniapp',
+                            value: {
+                                url: attachment.url,
+                            },
+                        },
+                    })
                 default:
                     logNever(attachment)
                     return undefined
@@ -654,11 +681,16 @@ export function getRedactsId(content: TimelineEvent_OneOf | undefined): string |
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === RiverTimelineEvent.ChannelMessage
-        ? content.threadId
-        : content?.kind === RiverTimelineEvent.TokenTransfer
-          ? content.threadParentId
-          : undefined
+    if (content?.kind === RiverTimelineEvent.ChannelMessage) {
+        return content.threadId
+    } else if (
+        content?.kind === RiverTimelineEvent.InteractionRequest ||
+        content?.kind === RiverTimelineEvent.InteractionRequestEncrypted ||
+        content?.kind === RiverTimelineEvent.TokenTransfer
+    ) {
+        return content.threadParentId
+    }
+    return undefined
 }
 
 export function getReplyParentId(content: TimelineEvent_OneOf | undefined): string | undefined {

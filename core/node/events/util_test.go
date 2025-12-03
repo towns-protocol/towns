@@ -241,7 +241,7 @@ func (ctc *cacheTestContext) addReplEvent(
 	streamId StreamId,
 	prevMiniblock *MiniblockRef,
 	nodes []common.Address,
-) {
+) *ParsedEvent {
 	addr := crypto.GetTestAddress()
 	ev, err := MakeParsedEventWithPayload(
 		ctc.clientWallet,
@@ -265,6 +265,8 @@ func (ctc *cacheTestContext) addReplEvent(
 			assert.NoError(collect, err)
 		}, 3*time.Second, 5*time.Millisecond, "failed to add event to stream, node %d %s", i, n)
 	}
+
+	return ev
 }
 
 // TODO: rename to allocateStream
@@ -476,36 +478,42 @@ func (ctc *cacheTestContext) GetMiniblocksByIds(
 		return nil, err
 	}
 
-	data := []*GetMiniblockResponse{}
-	err = inst.params.Storage.ReadMiniblocksByIds(
-		ctx,
-		streamId,
-		req.MiniblockIds,
-		req.OmitSnapshots,
-		func(mbBytes []byte, seqNum int64, snBytes []byte) error {
+	// Convert miniblock IDs to ranges with a max range size of 10
+	miniblockRanges := storage.MiniblockIdsToRanges(req.MiniblockIds, 10)
+	var data []*GetMiniblockResponse
+
+	for _, mbRange := range miniblockRanges {
+		miniblocks, err := inst.params.Storage.ReadMiniblocks(
+			ctx,
+			streamId,
+			mbRange.StartInclusive,
+			mbRange.EndInclusive+1, // +1 because ReadMiniblocks expects toExclusive
+			req.OmitSnapshots,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, mbDesc := range miniblocks {
 			var mb Miniblock
-			if err = proto.Unmarshal(mbBytes, &mb); err != nil {
-				return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
+			if err = proto.Unmarshal(mbDesc.Data, &mb); err != nil {
+				return nil, WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal miniblock")
 			}
 
 			var snapshot *Envelope
-			if len(snBytes) > 0 && !req.OmitSnapshots {
+			if len(mbDesc.Snapshot) > 0 && !req.OmitSnapshots {
 				snapshot = &Envelope{}
-				if err = proto.Unmarshal(snBytes, snapshot); err != nil {
-					return WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
+				if err = proto.Unmarshal(mbDesc.Snapshot, snapshot); err != nil {
+					return nil, WrapRiverError(Err_BAD_BLOCK, err).Message("Unable to unmarshal snapshot")
 				}
 			}
 
 			data = append(data, &GetMiniblockResponse{
-				Num:       seqNum,
+				Num:       mbDesc.Number,
 				Miniblock: &mb,
 				Snapshot:  snapshot,
 			})
-			return nil
-		},
-	)
-	if err != nil {
-		return nil, err
+		}
 	}
 
 	return testrpcstream.NewTestRpcStream(data), nil
@@ -770,7 +778,7 @@ func (i *cacheTestInstance) makeMbCandidateForView(
 	ctx context.Context,
 	view *StreamView,
 ) (*MiniblockInfo, error) {
-	proposal := view.proposeNextMiniblock(ctx, i.params.ChainConfig.Get(), false)
+	proposal := view.proposeNextMiniblock(ctx, i.params.ChainConfig.Get(), false, true)
 	mbCandidate, err := view.makeMiniblockCandidate(ctx, i.params, proposal)
 	if err != nil {
 		return nil, err

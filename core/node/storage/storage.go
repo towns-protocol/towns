@@ -5,6 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/towns-protocol/towns/core/node/storage/external"
+
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
@@ -16,8 +18,6 @@ const (
 )
 
 type (
-	MiniblockHandlerFunc func(blockdata []byte, seqNum int64, snapshot []byte) error
-
 	ReadStreamFromLastSnapshotResult struct {
 		SnapshotMiniblockOffset int
 		Miniblocks              []*MiniblockDescriptor
@@ -120,6 +120,12 @@ type (
 			genesisMiniblock *MiniblockDescriptor,
 		) error
 
+		// StreamMiniblocksStoredLocation returns the location where miniblock data is stored for the given stream.
+		StreamMiniblocksStoredLocation(
+			ctx context.Context,
+			streamId StreamId,
+		) (external.MiniblockDataStorageLocation, error)
+
 		// CreateStreamArchiveStorage creates a new archive storage for the given stream.
 		// Unlike regular CreateStreamStorage, only entry in es table and partition table for miniblocks are created.
 		CreateStreamArchiveStorage(ctx context.Context, streamId StreamId) error
@@ -149,23 +155,6 @@ type (
 			toExclusive int64,
 			omitSnapshot bool,
 		) ([]*MiniblockDescriptor, error)
-
-		// ReadMiniblocksByStream calls onEachMb for each selected miniblock
-		ReadMiniblocksByStream(
-			ctx context.Context,
-			streamId StreamId,
-			omitSnapshot bool,
-			onEachMb MiniblockHandlerFunc,
-		) error
-
-		// ReadMiniblocksByIds calls onEachMb for each specified miniblock
-		ReadMiniblocksByIds(
-			ctx context.Context,
-			streamId StreamId,
-			mbs []int64,
-			omitSnapshot bool,
-			onEachMb MiniblockHandlerFunc,
-		) error
 
 		// ReadEphemeralMiniblockNums returns the list of ephemeral miniblock numbers for the given ephemeral stream.
 		ReadEphemeralMiniblockNums(ctx context.Context, streamId StreamId) ([]int, error)
