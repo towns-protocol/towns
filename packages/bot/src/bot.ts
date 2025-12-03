@@ -2449,7 +2449,6 @@ const buildBotActions = (
                 client.signerContext,
                 make_ChannelPayload_Inception({
                     streamId: streamIdAsBytes(channelId),
-                    spaceId: streamIdAsBytes(spaceId),
                     settings: undefined,
                     channelSettings: {
                         autojoin: params.autojoin ?? false,

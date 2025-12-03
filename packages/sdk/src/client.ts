@@ -121,6 +121,7 @@ import {
     STREAM_ID_STRING_LENGTH,
     contractAddressFromSpaceId,
     isUserId,
+    spaceIdFromChannelId,
 } from './id'
 import {
     makeEvent,
@@ -843,15 +844,18 @@ export class Client
 
     async createChannel(
         spaceId: string | Uint8Array,
-        channelName: string,
-        channelTopic: string,
+        _channelName: string,
+        _channelTopic: string,
         inChannelId: string | Uint8Array,
         streamSettings?: PlainMessage<StreamSettings>,
         channelSettings?: PlainMessage<SpacePayload_ChannelSettings>,
     ): Promise<{ streamId: string }> {
-        const oChannelId = inChannelId
-        const channelId = streamIdAsBytes(oChannelId)
+        const channelId = streamIdAsBytes(inChannelId)
+        const channelIdStr = streamIdAsString(inChannelId)
+        const spaceIdstr = streamIdAsString(spaceId)
         this.logCall('createChannel', channelId, spaceId)
+        const derivedSpaceId = spaceIdFromChannelId(channelIdStr)
+        assert(derivedSpaceId === spaceIdstr, 'derivedSpaceId must be the same as spaceId')
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
@@ -860,7 +864,6 @@ export class Client
             this.signerContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
-                spaceId: streamIdAsBytes(spaceId),
                 settings: streamSettings,
                 channelSettings: channelSettings,
             }),
@@ -2283,7 +2286,6 @@ export class Client
     }
 
     async joinUser(streamId: string | Uint8Array, userId: string): Promise<{ eventId: string }> {
-        const stream = await this.initStream(streamId)
         check(isDefined(this.userStreamId))
         const { eventId } = await this.makeEventAndAddToStream(
             this.userStreamId,
@@ -2291,7 +2293,6 @@ export class Client
                 op: MembershipOp.SO_JOIN,
                 userId: bin_fromHexString(userId),
                 streamId: streamIdAsBytes(streamId),
-                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'joinUser' },
         )
@@ -2332,7 +2333,6 @@ export class Client
             make_UserPayload_UserMembership({
                 op: MembershipOp.SO_JOIN,
                 streamId: streamIdAsBytes(streamId),
-                streamParentId: stream.view.getContent().getStreamParentIdAsBytes(),
             }),
             { method: 'joinStream' },
         )

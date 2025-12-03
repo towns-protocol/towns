@@ -5,28 +5,25 @@ import { StreamStateView_AbstractContent } from './streamStateView_AbstractConte
 import { check } from '@towns-protocol/utils'
 import { logNever } from './check'
 import { StreamEncryptionEvents, StreamEvents, StreamStateEvents } from './streamEvents'
-import { streamIdFromBytes } from './id'
+import { spaceIdFromChannelId } from './id'
 import { DecryptedContent } from './encryptedContentTypes'
 export class StreamStateView_Channel extends StreamStateView_AbstractContent {
     readonly streamId: string
-    spaceId: string = ''
+    readonly spaceId: string
 
     constructor(streamId: string) {
         super()
         this.streamId = streamId
-    }
-
-    getStreamParentId(): string | undefined {
-        return this.spaceId
+        this.spaceId = spaceIdFromChannelId(this.streamId)
     }
 
     applySnapshot(
-        snapshot: Snapshot,
-        content: ChannelPayload_Snapshot,
+        _snapshot: Snapshot,
+        _content: ChannelPayload_Snapshot,
         _cleartexts: Record<string, Uint8Array | string> | undefined,
         _encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
     ): void {
-        this.spaceId = streamIdFromBytes(content.inception?.spaceId ?? Uint8Array.from([]))
+        // pass
     }
 
     prependEvent(
