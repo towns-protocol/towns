@@ -2,6 +2,7 @@ package external
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/towns-protocol/towns/core/config"
@@ -36,14 +38,14 @@ type (
 		Finish(ctx context.Context) ([]MiniblockDescriptor, MiniblockDataStorageLocation, error)
 		// Abort the upload session.
 		// If Finish was called before this is a no-op.
-		Abort(ctx context.Context)
+		Abort()
 	}
 
 	// Storage defines the interface to upload and download miniblock data to/from external storage.
 	Storage interface {
-		// MigrateExistingStreams returns true if streams that have their miniblock data
+		// MigrateStreams returns true if streams that have their miniblock data
 		// stored in the database must be actively migrated to external storage.
-		MigrateExistingStreams() bool
+		MigrateStreams() bool
 
 		// StartUploadSession starts an upload session for miniblock data to external storage.
 		StartUploadSession(
@@ -60,12 +62,21 @@ type (
 			parts []MiniblockDescriptor,
 			ranges []MiniblockRange,
 		) (map[int64][]byte, error)
+
+		// SetMetrics sets the histogram metrics for upload and download operations.
+		SetMetrics(uploadDuration, downloadDuration Histogram)
 	}
 
 	// TestStorage defines extra functionality specific for testing external storage.
 	TestStorage interface {
-		// DeleteObject removes the miniblock data object from external storage.
-		DeleteObject(ctx context.Context, streamID StreamId) error
+		// TestDeleteExternalObject removes the miniblock data object from external storage.
+		TestDeleteExternalObject(ctx context.Context, streamID StreamId) error
+		// TestNormalizeStreamWithoutCallingEphemeralMonitor normalizes the stream without calling EphemeralMonitor.
+		// This is useful for testing migration of existing streams to external storage.
+		TestNormalizeStreamWithoutCallingEphemeralMonitor(
+			ctx context.Context,
+			streamId StreamId,
+		) (common.Hash, error)
 	}
 
 	// MiniblockDescriptor holds information about a miniblock that is stored in
@@ -109,6 +120,15 @@ type (
 		googleOauthTokenMu sync.Mutex
 		// googleOauthToken is the token used to authenticate with Google Cloud Storage.
 		googleOauthToken *oauth2.Token
+
+		// metrics for observability
+		uploadDuration   Histogram
+		downloadDuration Histogram
+	}
+
+	// Histogram interface for recording duration observations
+	Histogram interface {
+		Observe(float64)
 	}
 
 	// byteRange represents a byte range in the object.
@@ -196,8 +216,13 @@ func NewStorage(
 		Func("NewStorage")
 }
 
-func (s *storage) MigrateExistingStreams() bool {
-	return s.migrateExistingStreams
+func (s *storage) SetMetrics(uploadDuration, downloadDuration Histogram) {
+	s.uploadDuration = uploadDuration
+	s.downloadDuration = downloadDuration
+}
+
+func (s *storage) MigrateStreams() bool {
+	return s != nil && s.migrateExistingStreams
 }
 
 func (s *storage) getGCSOauthToken() (*oauth2.Token, error) {
@@ -223,7 +248,6 @@ func (s *storage) StartUploadSession(
 	totalMiniblockDataSize uint64,
 ) (UploadSession, error) {
 	if s.gcs != nil {
-		httpClient := http.DefaultClient
 		apiToken, err := s.getGCSOauthToken()
 		if err != nil {
 			return nil, RiverError(Err_BAD_CONFIG, "Unable to get GCS oauth token").
@@ -232,12 +256,10 @@ func (s *storage) StartUploadSession(
 		}
 
 		return newGcsUploadSession(
-			ctx, streamID, s.schemaLockID, s.gcs.bucketName, totalMiniblockDataSize, apiToken, httpClient)
+			ctx, streamID, s.schemaLockID, s.gcs.bucketName, totalMiniblockDataSize, apiToken)
 	}
 
 	if s.s3 != nil {
-		httpClient := http.DefaultClient
-
 		return newS3UploadSession(
 			ctx,
 			streamID,
@@ -247,7 +269,6 @@ func (s *storage) StartUploadSession(
 			totalMiniblockDataSize,
 			s.s3.signer,
 			s.s3.creds,
-			httpClient,
 		)
 	}
 
@@ -298,6 +319,14 @@ func (s *storage) DownloadMiniblockData(
 		}
 	}
 
+	// Track download duration
+	startTime := time.Now()
+	defer func() {
+		if s.downloadDuration != nil {
+			s.downloadDuration.Observe(time.Since(startTime).Seconds())
+		}
+	}()
+
 	if s.s3 != nil {
 		return s.downloadMiniblockDataFromS3(ctx, streamID, byteRanges, allMiniblocks)
 	}
@@ -319,7 +348,6 @@ func (s *storage) downloadMiniblockDataFromS3(
 ) (map[int64][]byte, error) {
 	objectKey := StorageObjectKey(s.schemaLockID, streamID)
 	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.s3.bucketName, s.s3.region, objectKey)
-	httpClient := http.DefaultClient
 	rangeHeader := buildRangeHeader(ranges)
 
 	var data []byte
@@ -352,7 +380,7 @@ func (s *storage) downloadMiniblockDataFromS3(
 		}
 
 		// Execute request
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return 0, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR,
 				"failed to download miniblock data from S3", err).
@@ -401,7 +429,6 @@ func (s *storage) downloadMiniblockDataFromGCS(
 ) (map[int64][]byte, error) {
 	objectKey := StorageObjectKey(s.schemaLockID, streamID)
 	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.gcs.bucketName, objectKey)
-	httpClient := http.DefaultClient
 	rangeHeader := buildRangeHeader([]byteRange{rng})
 
 	var data []byte
@@ -433,7 +460,7 @@ func (s *storage) downloadMiniblockDataFromGCS(
 		}
 
 		// Execute request
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			return 0, RiverErrorWithBase(Err_DOWNSTREAM_NETWORK_ERROR,
 				"failed to download miniblock data from GCS", err).
@@ -880,4 +907,54 @@ func ObjectRangeMiniblocks(
 	}
 
 	return offset, size, rangeParts, nil
+}
+
+// Value implements river.Valuer for MiniblockDataStorageLocation.
+// This ensures that MiniblockDataStorageLocation can be written to database
+// and is compatible with MiniblockDataStorageLocation#Scan.
+func (loc MiniblockDataStorageLocation) Value() (driver.Value, error) {
+	return string(loc), nil
+}
+
+// Scan implements sql.Scanner for MiniblockDataStorageLocation.
+// This ensures that MiniblockDataStorageLocation can be read from database
+// and is compatible with MiniblockDataStorageLocation#Value.
+func (loc *MiniblockDataStorageLocation) Scan(src interface{}) error {
+	var str string
+	switch v := src.(type) {
+	case string:
+		str = v
+	case []byte:
+		str = string(v)
+	default:
+		return RiverError(Err_INTERNAL, "Unable to scan miniblock storage location from DB").
+			Func("MiniblockDataStorageLocation.Scan").
+			Tags("raw", src, "rawType", fmt.Sprintf("%T", src))
+	}
+
+	if len(str) == 0 { // default is DB
+		*loc = MiniblockDataStorageLocationDB
+		return nil
+	}
+	if len(str) == 1 {
+		*loc = MiniblockDataStorageLocation(str[0])
+		return nil
+	}
+
+	return RiverError(Err_INTERNAL, "Unable to scan miniblock storage location from DB").
+		Func("MiniblockDataStorageLocation.Scan").
+		Tags("raw", src, "rawType", fmt.Sprintf("%T", src))
+}
+
+func (loc MiniblockDataStorageLocation) String() string {
+	switch loc {
+	case MiniblockDataStorageLocationDB:
+		return "db"
+	case MiniblockDataStorageLocationGCS:
+		return "gcs"
+	case MiniblockDataStorageLocationS3:
+		return "s3"
+	default:
+		return "unknown"
+	}
 }
