@@ -110,8 +110,9 @@ func NewService(
 		listener = NewAppMessageProcessor(ctx, cache)
 	}
 
-	// Create the cookie store for stream resumption using the store's connection pool
-	cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
+	// TODO: Cookie persistence is disabled until we fix the sync session runner to handle
+	// non-reset responses when resuming from a persisted cookie position.
+	// cookieStore := track_streams.NewPostgresStreamCookieStore(store.Pool(), "stream_sync_cookies")
 
 	tracker, err := sync.NewAppRegistryStreamsTracker(
 		ctx,
@@ -122,7 +123,7 @@ func NewService(
 		metrics,
 		listener,
 		cache,
-		cookieStore,
+		nil, // cookieStore disabled
 		otelTracer,
 	)
 	if err != nil {
