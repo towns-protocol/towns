@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
+
 	"github.com/towns-protocol/towns/core/node/base"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
