@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -36,6 +37,9 @@ import (
 func TestExternalMediaStreamStorage(t *testing.T) {
 	t.Parallel()
 
+	s3Enabled := os.Getenv("RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_AWS_S3_REGION") != ""
+	gcsEnabled := os.Getenv("RIVER_EXTERNAL_MEDIA_STREAM_STORAGE_GCS_STORAGE_BUCKET") != ""
+
 	ctx := t.Context()
 	cfg := config.GetDefaultConfig()
 	bld, err := builder.NewConfigBuilder(cfg, "RIVER")
@@ -52,6 +56,10 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 		t.Parallel()
 
 		require := require.New(t)
+
+		if !s3Enabled {
+			t.Skip("AWS S3 Storage not enabled")
+		}
 
 		// ensure that GC Storage is disabled for AWS S3 tests
 		extStorageConfig := cfg.ExternalMediaStreamStorage
@@ -191,6 +199,10 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 
 	t.Run("Google Cloud Storage", func(t *testing.T) {
 		t.Parallel()
+
+		if !gcsEnabled {
+			t.Skip("Google Cloud storage not enabled")
+		}
 
 		// ensure that AWS S3 is disabled for GCS tests
 		gcsConfig := &config.ExternalMediaStreamStorageConfig{
@@ -336,6 +348,10 @@ func TestExternalMediaStreamStorage(t *testing.T) {
 	})
 
 	t.Run("Migrate existing streams", func(t *testing.T) {
+		if !gcsEnabled {
+			t.Skip("Google Cloud storage not enabled")
+		}
+
 		gcsConfig := &config.ExternalMediaStreamStorageConfig{
 			Gcs: config.ExternalMediaStreamStorageGCStorageConfig{
 				Bucket:          cfg.ExternalMediaStreamStorage.Gcs.Bucket,
