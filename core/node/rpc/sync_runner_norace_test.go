@@ -126,7 +126,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -1057,11 +1057,24 @@ func setupGapRecoveryTest(t *testing.T) *gapRecoveryTestContext {
 		serviceTesterOpts{
 			numNodes:          numNodes,
 			replicationFactor: replFactor,
-			start:             true,
+			start:             false, // Don't start yet - we need to set config first
 		},
 	)
 	ctx := tt.ctx
 	require := tt.require
+
+	// Set MinSnapshotEvents to a low value (3) so snapshots are created after few events
+	// This is needed to test gap recovery which requires a new snapshot to be created
+	tt.btc.SetConfigValue(
+		t,
+		ctx,
+		crypto.StreamDefaultMinEventsPerSnapshotConfigKey,
+		crypto.ABIEncodeUint64(3),
+	)
+
+	// Now start the nodes
+	tt.initNodeRecords(0, numNodes, river.NodeStatus_Operational)
+	tt.startNodes(0, numNodes)
 
 	cfg := tt.getConfig()
 	riverContract, err := registries.NewRiverRegistryContract(
@@ -1235,7 +1248,7 @@ func (tc *gapRecoveryTestContext) addStreamToRunner(
 }
 
 // TestGapRecovery_SameSnapshot tests that no gap recovery occurs when
-// persisted state matches the server's snapshot (CASE A).
+// persisted state matches the server's snapshot
 func TestGapRecovery_SameSnapshot(t *testing.T) {
 	tc := setupGapRecoveryTest(t)
 
@@ -1271,18 +1284,8 @@ func TestGapRecovery_SameSnapshot(t *testing.T) {
 	msr := tc.createMultiSyncRunner()
 	go msr.Run(tc.ctx)
 
-	// Add stream - should resume from persisted position
-	tc.addStreamToRunner(msr, channelId, true, lastMiniblock.Num)
-
-	// Wait a bit for sync to establish
-	time.Sleep(2 * time.Second)
-
-	// We shouldn't receive historical messages since we're at current position
-	tc.eventTrackerMu.Lock()
-	messageCount := len(tc.eventTracker[channelId])
-	tc.eventTrackerMu.Unlock()
-
-	tc.require.Equal(0, messageCount, "Should not receive historical messages when at current position")
+	// Add stream - cookie store will override applyHistoricalContent with persisted values
+	tc.addStreamToRunner(msr, channelId, false, 0)
 
 	// Add a new message to verify sync is working
 	newMsg := "new-msg-after-sync"
@@ -1296,7 +1299,19 @@ func TestGapRecovery_SameSnapshot(t *testing.T) {
 		defer tc.eventTrackerMu.Unlock()
 		_, found := tc.eventTracker[channelId][newMsg]
 		return found
-	}, 10*time.Second, 100*time.Millisecond, "New message should be received")
+	}, 10*time.Second, 100*time.Millisecond, "New message should be received after sync")
+
+	// Verify we did NOT receive historical messages (msg0, msg1, msg2)
+	// since we persisted cookie at the current position (same snapshot)
+	tc.eventTrackerMu.Lock()
+	channelMessages := tc.eventTracker[channelId]
+	tc.eventTrackerMu.Unlock()
+
+	for i := 0; i < numMessages; i++ {
+		historicalMsg := fmt.Sprintf("msg%d", i)
+		_, found := channelMessages[historicalMsg]
+		tc.require.False(found, "Should NOT receive historical message: %s (persisted cookie is at current position)", historicalMsg)
+	}
 
 	cancelCollector()
 	<-eventCollectorDone
@@ -1309,7 +1324,7 @@ func TestGapRecovery_GapDetected(t *testing.T) {
 
 	// Create channel with many messages
 	numMessages := 6
-	channelId, channelHash, miniblockRefs := tc.createChannelWithMiniblocks(numMessages)
+	channelId, _, miniblockRefs := tc.createChannelWithMiniblocks(numMessages)
 
 	tc.require.GreaterOrEqual(len(miniblockRefs), 4, "Need at least 4 miniblocks for gap test")
 
@@ -1340,9 +1355,9 @@ func TestGapRecovery_GapDetected(t *testing.T) {
 	msr := tc.createMultiSyncRunner()
 	go msr.Run(tc.ctx)
 
-	// Add stream with historical content from persisted position
+	// Add stream - cookie store will override applyHistoricalContent with persisted values
 	// Gap recovery should fetch miniblocks 3, 4, 5... up to server snapshot
-	tc.addStreamToRunner(msr, channelId, true, oldPosition.Num+1)
+	tc.addStreamToRunner(msr, channelId, false, 0)
 
 	// Wait for gap messages to be received
 	// We should receive messages from miniblocks after our persisted position
@@ -1365,8 +1380,10 @@ func TestGapRecovery_GapDetected(t *testing.T) {
 	}
 
 	// Add a new message to verify real-time sync works
+	// Use the last miniblock ref for adding new messages (channelHash from creation is stale)
+	lastMiniblockRef := &miniblockRefs[len(miniblockRefs)-1]
 	newMsg := "new-msg-after-gap"
-	addMessageToChannel(tc.ctx, tc.client, tc.wallet, newMsg, channelId, channelHash, tc.require)
+	addMessageToChannel(tc.ctx, tc.client, tc.wallet, newMsg, channelId, lastMiniblockRef, tc.require)
 
 	tc.require.Eventually(func() bool {
 		tc.eventTrackerMu.Lock()
@@ -1385,64 +1402,41 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	tc := setupGapRecoveryTest(t)
 
 	// Create channel with messages
-	numMessages := 3
-	channelId, channelHash, _ := tc.createChannelWithMiniblocks(numMessages)
+	channelId, channelHash, miniblockRefs := tc.createChannelWithMiniblocks(1)
 
 	// Verify no cookie exists initially
 	cookie, _, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 	tc.require.NoError(err)
 	tc.require.Nil(cookie, "No cookie should exist initially")
 
-	// Start event collector
-	updateTracker := func(record eventRecord, ciphertext string) {
-		if _, exists := tc.eventTracker[record.streamId]; !exists {
-			tc.eventTracker[record.streamId] = make(map[string]int)
-		}
-		tc.eventTracker[record.streamId][ciphertext]++
-	}
-	cancelCollector, eventCollectorDone := startEventCollector(
-		tc.ctx, tc.streamEvents, tc.eventTrackerMu, updateTracker,
-	)
-	defer cancelCollector()
-
 	// Create and start MultiSyncRunner with cookie store AND persistence enabled
 	msr := tc.createMultiSyncRunnerWithPersistence(true) // Enable persistence
 	go msr.Run(tc.ctx)
 
-	// Add stream with full historical content
-	tc.addStreamToRunner(msr, channelId, true, 0)
+	// Add stream (no cookie exists yet)
+	tc.addStreamToRunner(msr, channelId, false, 0)
 
-	// Wait for all messages to be received
-	tc.require.Eventually(func() bool {
-		tc.eventTrackerMu.Lock()
-		defer tc.eventTrackerMu.Unlock()
-		return len(tc.eventTracker[channelId]) >= numMessages
-	}, 15*time.Second, 100*time.Millisecond, "Should receive all messages")
-
-	// Add another message and create a miniblock to trigger cookie persistence
-	addMessageToChannel(tc.ctx, tc.client, tc.wallet, "trigger-persist", channelId, channelHash, tc.require)
-
-	tc.require.Eventually(func() bool {
-		tc.eventTrackerMu.Lock()
-		defer tc.eventTrackerMu.Unlock()
-		_, found := tc.eventTracker[channelId]["trigger-persist"]
-		return found
-	}, 10*time.Second, 100*time.Millisecond, "Trigger message should be received")
-
-	// Create a miniblock to advance minipool gen
-	_, err = makeMiniblock(tc.ctx, tc.client, channelId, false, -1)
-	tc.require.NoError(err)
-
-	// Wait for cookie to be persisted
+	// Give the sync time to establish
 	time.Sleep(2 * time.Second)
 
-	// Verify cookie was persisted
+	// Add a message and create a miniblock - this should trigger cookie persistence
+	addMessageToChannel(tc.ctx, tc.client, tc.wallet, "trigger-persist", channelId, channelHash, tc.require)
+	_, newRefs := createAndVerifyMiniblockWithRetry(tc.ctx, tc.client, channelId, miniblockRefs, tc.require)
+	newLastMiniblock := newRefs[len(newRefs)-1]
+
+	// Wait for cookie to be persisted (happens when miniblock is received via sync)
+	tc.require.Eventually(func() bool {
+		cookie, _, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+		if err != nil {
+			return false
+		}
+		return cookie != nil && cookie.MinipoolGen >= newLastMiniblock.Num
+	}, 10*time.Second, 500*time.Millisecond, "Cookie should be persisted after miniblock creation")
+
+	// Verify cookie has correct values
 	cookie, snapshotMb, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 	tc.require.NoError(err)
-	tc.require.NotNil(cookie, "Cookie should be persisted after sync")
-	tc.require.Greater(cookie.MinipoolGen, int64(0), "MinipoolGen should be > 0")
+	tc.require.NotNil(cookie, "Cookie should be persisted")
+	tc.require.GreaterOrEqual(cookie.MinipoolGen, newLastMiniblock.Num, "MinipoolGen should be >= lastMiniblock")
 	tc.require.GreaterOrEqual(snapshotMb, int64(0), "SnapshotMiniblock should be >= 0")
-
-	cancelCollector()
-	<-eventCollectorDone
 }

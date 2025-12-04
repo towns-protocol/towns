@@ -16,11 +16,14 @@ import (
 
 // getFirstMiniblockNumber extracts the miniblock number from the first miniblock in the slice.
 // Returns an error if miniblocks is empty or if parsing fails.
+// Note: We skip snapshot validation because the miniblocks in a sync reset response
+// don't include snapshot envelopes (except for the first one that matches the provided snapshot).
 func getFirstMiniblockNumber(miniblocks []*protocol.Miniblock) (int64, error) {
 	if len(miniblocks) == 0 {
 		return 0, base.RiverError(protocol.Err_INVALID_ARGUMENT, "no miniblocks in response")
 	}
-	mbInfo, err := events.NewMiniblockInfoFromProto(miniblocks[0], nil, events.NewParsedMiniblockInfoOpts())
+	opts := events.NewParsedMiniblockInfoOpts().WithSkipSnapshotValidation()
+	mbInfo, err := events.NewMiniblockInfoFromProto(miniblocks[0], nil, opts)
 	if err != nil {
 		return 0, err
 	}
