@@ -1,7 +1,6 @@
 package track_streams
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -46,12 +45,12 @@ type RemoteStreamSyncer interface {
 // ApplyHistoricalContent describes how historical content should be applied during sync
 type ApplyHistoricalContent struct {
 	// If false, only sync from current position. If true, apply historical content
-	// since inception/last snapshot, unless FromMiniblockHash is set, in which case
-	// only events from a specific miniblock hash will be applied
+	// since inception/last snapshot, unless FromMiniblockNum is set, in which case
+	// only events from that miniblock number onwards will be applied.
 	Enabled bool
-	// If non-nil, start applying from this specific miniblock hash onwards
-	// Enabled must be set to true
-	FromMiniblockHash []byte
+	// If > 0, start applying from this miniblock number onwards.
+	// Enabled must be set to true.
+	FromMiniblockNum int64
 }
 
 type streamSyncInitRecord struct {
@@ -68,10 +67,11 @@ type streamSyncInitRecord struct {
 	prevMiniblockHash []byte
 	remotes           nodes.StreamNodes
 
-	// Persisted state for gap detection on restart.
+	// Persisted state to avoid redundant DB writes.
 	// These values are loaded from the cookie store when adding a stream.
+	// We only persist when minipoolGen changes (new miniblock created).
 	persistedSnapshotMiniblock int64 // Last persisted snapshot miniblock number
-	persistedMinipoolGen       int64 // Last persisted minipoolGen (to avoid redundant writes)
+	persistedMinipoolGen       int64 // Last persisted minipoolGen
 }
 
 // Run a sync session, including parsing out the streaming sync response and multiplexing to the
@@ -231,7 +231,10 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	}
 
 	applyBlocks := false
-	for _, block := range streamAndCookie.GetMiniblocks() {
+	miniblocks := streamAndCookie.GetMiniblocks()
+	firstMiniblockNum, _ := getFirstMiniblockNumber(miniblocks)
+	for i, block := range miniblocks {
+		blockNum := firstMiniblockNum + int64(i)
 		// Currently the node will only send miniblocks in a reset (this code it dead atm)
 		if !reset {
 			if err := trackedView.ApplyBlock(
@@ -241,11 +244,10 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				log.Errorw("Unable to apply block", "error", err)
 			}
 		}
-		// apply blocks from the first block that matches the specified miniblock hash
-		// and all consecutive blocks
+		// apply blocks from the specified miniblock number onwards
 		if record.applyHistoricalContent.Enabled {
-			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockHash == nil ||
-				bytes.Equal(block.Header.GetHash(), record.applyHistoricalContent.FromMiniblockHash)
+			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockNum == 0 ||
+				blockNum >= record.applyHistoricalContent.FromMiniblockNum
 		}
 		// If the stream was just allocated, process the miniblocks and events for notifications.
 		// If not, ignore them because there were already notifications sent for the stream, and possibly
@@ -934,38 +936,41 @@ func (msr *MultiSyncRunner) AddStream(
 	streamId := stream.StreamId()
 	minipoolGen := int64(math.MaxInt64)
 	prevMiniblockHash := common.Hash{}.Bytes()
+	var persistedSnapshotMiniblock int64
+	var persistedMinipoolGen int64
 
-	// Try to load a stored cookie to resume from the last persisted position.
-	// We don't use shouldPersistCookie here because that requires stream view context
-	// (e.g., channel members) which isn't available yet. Instead, just try to load -
-	// if a cookie exists, it means we previously determined this stream needed persistence.
+	// Try to load persisted state for gap detection on restart.
+	// Note: We always start with minipoolGen=MaxInt64 to force a reset response from the server.
+	// The persisted state is only used for gap detection after we receive the reset response.
 	if msr.cookieStore != nil {
 		cookie, snapshotMiniblock, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
 		if err != nil {
 			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
 		} else if cookie != nil {
-			minipoolGen = cookie.MinipoolGen
-			prevMiniblockHash = cookie.PrevMiniblockHash
-			// If we have a cookie, enable historical content from that position
+			// Store persisted state for gap detection and avoiding redundant writes
+			persistedSnapshotMiniblock = snapshotMiniblock
+			persistedMinipoolGen = cookie.MinipoolGen
+			// Apply historical content from the persisted position onwards
 			applyHistoricalContent = ApplyHistoricalContent{
-				Enabled:           true,
-				FromMiniblockHash: cookie.PrevMiniblockHash,
+				Enabled:          true,
+				FromMiniblockNum: cookie.MinipoolGen,
 			}
-			logging.FromCtx(ctx).Infow("Loaded sync cookie for stream resumption",
+			logging.FromCtx(ctx).Infow("Loaded sync cookie for gap detection",
 				"streamId", streamId,
-				"minipoolGen", minipoolGen,
-				"prevMiniblockHash", prevMiniblockHash,
-				"snapshotMiniblock", snapshotMiniblock,
+				"persistedMinipoolGen", persistedMinipoolGen,
+				"persistedSnapshotMiniblock", persistedSnapshotMiniblock,
 				"updatedAt", updatedAt,
 			)
 		}
 	}
 
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId:               streamId,
-		applyHistoricalContent: applyHistoricalContent,
-		minipoolGen:            minipoolGen,
-		prevMiniblockHash:      prevMiniblockHash,
+		streamId:                   streamId,
+		applyHistoricalContent:     applyHistoricalContent,
+		minipoolGen:                minipoolGen,
+		prevMiniblockHash:          prevMiniblockHash,
+		persistedSnapshotMiniblock: persistedSnapshotMiniblock,
+		persistedMinipoolGen:       persistedMinipoolGen,
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

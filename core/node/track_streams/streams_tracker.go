@@ -47,8 +47,8 @@ type StreamsTracker interface {
 	// A stream that does not meet criteria for tracking at the time it is created can later be added via
 	// AddStream. An error will be returned if the stream could not be successfully added to the sync runner.
 	// set ApplyHistoricalContent.Enabled to true if you want to apply the stream from inception/last snapshot.
-	// You can set ApplyHistoricalContent.FromMiniblockHash to the exact miniblock hash
-	// that should be applied, and all of the consecutive miniblocks (Enabled needs to be true as well)
+	// You can set ApplyHistoricalContent.FromMiniblockNum to the miniblock number from which
+	// content should be applied (Enabled needs to be true as well)
 	AddStream(
 		streamId shared.StreamId,
 		applyHistoricalContent ApplyHistoricalContent,
@@ -268,7 +268,7 @@ func (tracker *StreamsTrackerImpl) OnStreamLastMiniblockUpdated(
 	if !tracker.filter.TrackStream(ctx, event.GetStreamId(), false) {
 		return
 	}
-	added, err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, event.LastMiniblockHash[:]})
+	added, err := tracker.AddStream(event.GetStreamId(), ApplyHistoricalContent{true, int64(event.LastMiniblockNum)})
 	if err != nil {
 		logging.FromCtx(ctx).Errorw("Failed to add stream on miniblock update",
 			"streamId", event.GetStreamId(),
