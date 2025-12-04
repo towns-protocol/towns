@@ -103,7 +103,7 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 
 	miniblockInterval, err := strconv.ParseUint(args[0], 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid miniblock interval value: %s", args[1])
+		return fmt.Errorf("invalid miniblock interval value: %s", args[0])
 	}
 
 	start, err := strconv.ParseUint(args[1], 10, 64)
