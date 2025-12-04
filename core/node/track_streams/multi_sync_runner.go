@@ -291,6 +291,68 @@ func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
 	}
 }
 
+// handleReset processes a sync reset response for a stream.
+// Returns the first miniblock number and any error from parsing it.
+func (ssr *syncSessionRunner) handleReset(
+	streamAndCookie *protocol.StreamAndCookie,
+	record *streamSyncInitRecord,
+) (firstMiniblockNum int64, firstMiniblockErr error) {
+	streamId := record.streamId
+	log := logging.FromCtx(ssr.syncCtx)
+	labels := prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
+
+	trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
+	if err != nil {
+		log.Errorw(
+			"Error constructing tracked view for stream; relocating stream",
+			"streamId", streamId,
+			"error", err,
+		)
+		ssr.cancelSync(
+			base.AsRiverError(fmt.Errorf("error constructing tracked view for stream: %w", err)).
+				Tag("streamId", streamId).
+				Tag("syncId", ssr.syncer.GetSyncId()).
+				Func("syncSessionRunner.handleReset"),
+		)
+		return 0, err
+	}
+
+	// Assuming each stream experiences a reset when it is first added to tracking, we would
+	// expect the reset to be the first event we see for each stream when tracking it.
+	ssr.metrics.TrackedStreams.With(labels).Inc()
+	record.trackedView = trackedView
+
+	miniblocks := streamAndCookie.GetMiniblocks()
+	if len(miniblocks) == 0 {
+		return 0, nil
+	}
+
+	firstMiniblockNum, firstMiniblockErr = getFirstMiniblockNumber(miniblocks)
+	if firstMiniblockErr != nil {
+		log.Errorw("Failed to parse first miniblock", "error", firstMiniblockErr, "streamId", streamId)
+		return 0, firstMiniblockErr
+	}
+
+	// Gap recovery: Check if we have persisted state and handle gaps on restart
+	if record.persistedSnapshotMiniblock > 0 {
+		ssr.handleGapOnReset(record, trackedView, miniblocks)
+	}
+
+	// Send notifications for historical miniblocks if enabled
+	// No need to call ApplyBlock since the view is already up to date from the init call
+	if record.applyHistoricalContent.Enabled {
+		startIdx := record.applyHistoricalContent.FromMiniblockNum - firstMiniblockNum
+		if startIdx < 0 {
+			startIdx = 0
+		}
+		if startIdx < int64(len(miniblocks)) {
+			ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[startIdx:])
+		}
+	}
+
+	return firstMiniblockNum, nil
+}
+
 func (ssr *syncSessionRunner) applyUpdateToStream(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
@@ -302,35 +364,19 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		reset    = streamAndCookie.GetSyncReset()
 		streamId = record.streamId
 		log      = logging.FromCtx(ssr.syncCtx)
-		labels   = prometheus.Labels{"type": shared.StreamTypeToString(streamId.Type())}
 	)
 
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
-	if reset {
-		trackedView, err := ssr.trackedViewForStream(streamId, streamAndCookie)
-		if err != nil {
-			log.Errorw(
-				"Error constructing tracked view for stream; relocating stream",
-				"streamId", streamId,
-				"error", err,
-			)
-			ssr.cancelSync(
-				base.AsRiverError(fmt.Errorf("error constructing tracked view for stream: %w", err)).
-					Tag("streamId", streamId).
-					Tag("syncId", ssr.syncer.GetSyncId()).
-					Func("syncSessionRunner.applyUpdateToStream"),
-			)
-			return
-		}
-		// Assuming each stream experiences a reset when it is first added to tracking, we would
-		// expect the reset to be the first event we see for each stream when tracking it.
-		ssr.metrics.TrackedStreams.With(labels).Inc()
-		record.trackedView = trackedView
+	// Track the first miniblock number for reset responses (used for cookie persistence)
+	var firstMiniblockNum int64
+	var firstMiniblockErr error
 
-		// Gap recovery: Check if we have persisted state and handle gaps on restart
-		if record.persistedSnapshotMiniblock > 0 {
-			ssr.handleGapOnReset(record, trackedView, streamAndCookie.GetMiniblocks())
+	if reset {
+		firstMiniblockNum, firstMiniblockErr = ssr.handleReset(streamAndCookie, record)
+		if firstMiniblockErr != nil && record.trackedView == nil {
+			// handleReset already cancelled the sync
+			return
 		}
 	}
 
@@ -343,52 +389,6 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				Func("syncSessionRunner.applyUpdateToStream"),
 		)
 		return
-	}
-
-	applyBlocks := false
-	miniblocks := streamAndCookie.GetMiniblocks()
-	firstMiniblockNum, firstMiniblockErr := getFirstMiniblockNumber(miniblocks)
-	if firstMiniblockErr != nil && len(miniblocks) > 0 {
-		log.Errorw("Failed to parse first miniblock", "error", firstMiniblockErr, "streamId", streamId)
-	}
-	for i, block := range miniblocks {
-		blockNum := firstMiniblockNum + int64(i)
-		// Currently the node will only send miniblocks in a reset (this code it dead atm)
-		if !reset {
-			if err := trackedView.ApplyBlock(
-				block,
-				streamAndCookie.Snapshot,
-			); err != nil {
-				log.Errorw("Unable to apply block", "error", err)
-			}
-		}
-		// apply blocks from the specified miniblock number onwards
-		// Skip if we failed to parse the first miniblock number
-		if record.applyHistoricalContent.Enabled && firstMiniblockErr == nil {
-			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockNum == 0 ||
-				blockNum >= record.applyHistoricalContent.FromMiniblockNum
-		}
-		// If the stream was just allocated, process the miniblocks and events for notifications.
-		// If not, ignore them because there were already notifications sent for the stream, and possibly
-		// for these miniblocks and events.
-		if applyBlocks {
-			// Send notifications for all events in all blocks.
-			for _, event := range block.GetEvents() {
-				if parsedEvent, err := events.ParseEvent(event); err == nil {
-					if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
-						log.Errorw(
-							"Error sending event notification",
-							"error",
-							err,
-							"streamId",
-							streamId,
-							"eventHash",
-							event.Hash,
-						)
-					}
-				}
-			}
-		}
 	}
 
 	for _, event := range streamAndCookie.GetEvents() {
