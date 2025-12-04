@@ -41,6 +41,7 @@ class Consts {
 
 // a view of all the streams
 export class StreamsView {
+    readonly lastAccessedAt: Observable<Record<string, number>>
     readonly notificationSettings: NotificationSettings
     readonly mutedStreamIds: Observable<Set<string>>
     readonly streamStatus: StreamStatus
@@ -78,6 +79,7 @@ export class StreamsView {
         const userMetadataStreamId = userId !== '' ? makeUserMetadataStreamId(userId) : ''
         const userSettingsStreamId = userId !== '' ? makeUserSettingsStreamId(userId) : ''
 
+        this.lastAccessedAt = new Observable<Record<string, number>>({})
         this.notificationSettings = new NotificationSettings()
         this.mutedStreamIds = this.notificationSettings.map(mutedStreamIdsTransform)
         this.streamStatus = new StreamStatus()
@@ -195,5 +197,19 @@ export class StreamsView {
         })
             .throttle(1000)
             .map(membersNotInDmsTransform)
+    }
+
+    setLastAccessedAt(lastAccessedAt: Record<string, number>) {
+        this.lastAccessedAt.setValue(lastAccessedAt)
+    }
+
+    setHighPriorityStreams(streamIds: string[]) {
+        this.lastAccessedAt.set((prev) => {
+            const newLastAccessedAt = { ...prev }
+            streamIds.forEach((streamId) => {
+                newLastAccessedAt[streamId] = Date.now()
+            })
+            return newLastAccessedAt
+        })
     }
 }
