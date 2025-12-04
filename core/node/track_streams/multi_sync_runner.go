@@ -300,14 +300,15 @@ func (ssr *syncSessionRunner) handleReset(
 	record.trackedView = trackedView
 
 	miniblocks := streamAndCookie.GetMiniblocks()
-	if len(miniblocks) == 0 {
+	if len(miniblocks) == 0 || (record.persistedMinipoolGen == 0 && !record.applyHistoricalContent.Enabled) {
 		return nil
 	}
 
 	firstMiniblockNum, err := getFirstMiniblockNumber(miniblocks)
 	if err != nil {
+		// Log but continue - don't block sync for parse errors
 		log.Errorw("Failed to parse first miniblock", "error", err, "streamId", streamId)
-		return err
+		return nil
 	}
 
 	// Gap recovery: Check if we have persisted state and handle gaps on restart
