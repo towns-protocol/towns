@@ -126,7 +126,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -1310,7 +1310,11 @@ func TestGapRecovery_SameSnapshot(t *testing.T) {
 	for i := 0; i < numMessages; i++ {
 		historicalMsg := fmt.Sprintf("msg%d", i)
 		_, found := channelMessages[historicalMsg]
-		tc.require.False(found, "Should NOT receive historical message: %s (persisted cookie is at current position)", historicalMsg)
+		tc.require.False(
+			found,
+			"Should NOT receive historical message: %s (persisted cookie is at current position)",
+			historicalMsg,
+		)
 	}
 
 	cancelCollector()
