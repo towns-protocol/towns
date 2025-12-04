@@ -1299,6 +1299,7 @@ func (s *Stream) reinitialize(ctx context.Context, stream *StreamAndCookie, upda
 func (s *Stream) GetQuorumNodes() []common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return slices.Clone(s.nodesLocked.GetQuorumNodes())
 }
 
@@ -1309,6 +1310,7 @@ func (s *Stream) GetQuorumNodes() []common.Address {
 func (s *Stream) GetRemotesAndIsLocal() ([]common.Address, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	r, l := s.nodesLocked.GetRemotesAndIsLocal()
 	return slices.Clone(r), l
 }
@@ -1332,6 +1334,7 @@ func (s *Stream) GetQuorumAndReconcileNodesAndIsLocal() ([]common.Address, []com
 func (s *Stream) GetStickyPeer() common.Address {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.nodesLocked.GetStickyPeer()
 }
 
@@ -1341,6 +1344,7 @@ func (s *Stream) GetStickyPeer() common.Address {
 func (s *Stream) AdvanceStickyPeer(currentPeer common.Address) common.Address {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	return s.nodesLocked.AdvanceStickyPeer(currentPeer)
 }
 
@@ -1359,15 +1363,15 @@ func (s *Stream) Reset(replicationFactor int, nodes []common.Address, localNode 
 }
 
 func (s *Stream) GetReconcileNodes() []common.Address {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	return s.nodesLocked.GetReconcileNodes()
+	return slices.Clone(s.nodesLocked.GetReconcileNodes())
 }
 
 func (s *Stream) IsLocalInQuorum() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
 	return s.nodesLocked.IsLocalInQuorum()
 }

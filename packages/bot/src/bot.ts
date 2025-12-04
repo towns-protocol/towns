@@ -7,6 +7,9 @@ import {
     type SendTipMemberParams,
     TipRecipientType,
     ETH_ADDRESS,
+    type Operation,
+    NoopOperation,
+    createRuleStruct,
 } from '@towns-protocol/web3'
 import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { stringify as superjsonStringify, parse as superjsonParse } from 'superjson'
@@ -47,8 +50,10 @@ import {
     make_ChannelPayload_Inception,
     make_MemberPayload_Membership2,
     type CreateTownsClientParams,
+    waitForRoleCreated,
 } from '@towns-protocol/sdk'
-import { type Context, type Env, type Next } from 'hono'
+import { Hono, type Context, type Next } from 'hono'
+import { logger } from 'hono/logger'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
 import { createNanoEvents, type Emitter } from 'nanoevents'
@@ -93,6 +98,8 @@ import {
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
+import { EventDedup, type EventDedupConfig } from './eventDedup'
+import type { RouteConfig } from 'x402/types'
 
 import {
     http,
@@ -110,7 +117,6 @@ import {
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
-import type { BlankEnv } from 'hono/types'
 import packageJson from '../package.json' with { type: 'json' }
 import { privateKeyToAccount } from 'viem/accounts'
 import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
@@ -122,6 +128,10 @@ import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
 import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
 type BotActions = ReturnType<typeof buildBotActions>
+
+export type BotCommand = PlainMessage<SlashCommand> & {
+    paid?: RouteConfig
+}
 
 export type BotHandler = ReturnType<typeof buildBotActions>
 
@@ -138,8 +148,19 @@ const debug = dlog('csb:bot')
 
 export type BotPayload<
     T extends keyof BotEvents<Commands>,
-    Commands extends PlainMessage<SlashCommand>[] = [],
+    Commands extends BotCommand[] = [],
 > = Parameters<BotEvents<Commands>[T]>[1]
+
+export type CreateRoleParams = {
+    /** The role name */
+    name: string
+    /** The permissions that will be granted to users of this role */
+    permissions: Permission[]
+    /** The custom rule data. Can be used to perform onchain checks */
+    rule?: Operation
+    /** Users that can have this role */
+    users?: string[]
+}
 
 type ImageAttachment = {
     type: 'image'
@@ -218,7 +239,7 @@ export type CreateChannelParams = {
     hideUserJoinLeaveEvents?: boolean
 }
 
-export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
+export type BotEvents<Commands extends BotCommand[] = []> = {
     message: (
         handler: BotActions,
         event: BasePayload & {
@@ -297,7 +318,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
     channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
     streamEvent: (
         handler: BotActions,
-        event: BasePayload & { event: ParsedEvent },
+        event: BasePayload & { parsed: ParsedEvent },
     ) => Promise<void> | void
     slashCommand: (
         handler: BotActions,
@@ -337,6 +358,7 @@ export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
         event: BasePayload & {
             /** The interaction response that was received */
             response: DecryptedInteractionResponse
+            threadId: string | undefined
         },
     ) => void | Promise<void>
 }
@@ -352,12 +374,11 @@ export type BasePayload = {
     eventId: string
     /** The creation time of the event */
     createdAt: Date
+    /** The raw event payload */
+    event: StreamEvent
 }
 
-export class Bot<
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
-> {
+export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
@@ -379,6 +400,7 @@ export class Bot<
     > = new Map()
     private readonly commands: Commands | undefined
     private readonly identityConfig?: BotIdentityConfig
+    private readonly eventDedup: EventDedup
 
     constructor(
         clientV2: ClientV2<BotActions>,
@@ -387,6 +409,7 @@ export class Bot<
         appAddress: Address,
         commands?: Commands,
         identityConfig?: BotIdentityConfig,
+        dedupConfig?: EventDedupConfig,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
@@ -396,20 +419,23 @@ export class Bot<
         this.commands = commands
         this.appAddress = appAddress
         this.identityConfig = identityConfig
+        this.eventDedup = new EventDedup(dedupConfig)
     }
 
     start() {
-        const jwtMiddleware = createMiddleware<HonoEnv>(this.jwtMiddleware.bind(this))
-
-        debug('start')
-
-        return {
-            jwtMiddleware,
-            handler: this.webhookHandler.bind(this),
-        }
+        const jwtMiddleware = createMiddleware(this.jwtMiddleware.bind(this))
+        const handler = this.webhookHandler.bind(this)
+        const app = new Hono()
+        app.use(logger())
+        app.post('/webhook', jwtMiddleware, handler)
+        app.get('/.well-known/agent-metadata.json', async (c) => {
+            return c.json(await this.getIdentityMetadata())
+        })
+        debug('init')
+        return app
     }
 
-    private async jwtMiddleware(c: Context<HonoEnv>, next: Next): Promise<Response | void> {
+    private async jwtMiddleware(c: Context, next: Next): Promise<Response | void> {
         const authHeader = c.req.header('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -437,7 +463,7 @@ export class Bot<
         await next()
     }
 
-    private async webhookHandler(c: Context<HonoEnv>) {
+    private async webhookHandler(c: Context) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -509,6 +535,10 @@ export class Bot<
                 if (!parsed.event.payload.case) {
                     continue
                 }
+                // Skip duplicate events (App Registry may replay events during restarts)
+                if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
+                    continue
+                }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
                 this.currentMessageTags = parsed.event.tags
                 debug('emit:streamEvent', {
@@ -521,7 +551,8 @@ export class Bot<
                     spaceId: spaceIdFromChannelId(streamId),
                     channelId: streamId,
                     eventId: parsed.hashStr,
-                    event: parsed,
+                    parsed: parsed,
+                    event: parsed.event,
                     createdAt,
                 })
                 switch (parsed.event.payload.case) {
@@ -564,6 +595,7 @@ export class Bot<
                                 refEventId,
                                 eventId: parsed.hashStr,
                                 createdAt,
+                                event: parsed.event,
                             })
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
@@ -599,6 +631,7 @@ export class Bot<
                             const decrypted = bin_fromBase64(decryptedBase64)
                             const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
                             this.emitter.emit('interactionResponse', this.client, {
+                                event: parsed.event,
                                 userId: userIdFromAddress(parsed.event.creatorAddress),
                                 spaceId: spaceIdFromChannelId(streamId),
                                 channelId: streamId,
@@ -608,6 +641,9 @@ export class Bot<
                                     recipient: payload.recipient,
                                     payload: response,
                                 },
+                                threadId: payload.threadId
+                                    ? bin_toHexString(payload.threadId)
+                                    : undefined,
                             })
                         } else {
                             logNever(parsed.event.payload.value.content)
@@ -629,6 +665,7 @@ export class Bot<
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelJoin', this.client, {
+                                            event: parsed.event,
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
@@ -643,6 +680,7 @@ export class Bot<
                                             eventId: parsed.hashStr,
                                         })
                                         this.emitter.emit('channelLeave', this.client, {
+                                            event: parsed.event,
                                             userId: userIdFromAddress(membership.userAddress),
                                             spaceId: spaceIdFromChannelId(streamId),
                                             channelId: streamId,
@@ -696,6 +734,7 @@ export class Bot<
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
                                                 this.emitter.emit('tip', this.client, {
+                                                    event: parsed.event,
                                                     userId: senderUserId,
                                                     spaceId: spaceIdFromChannelId(streamId),
                                                     channelId: streamId,
@@ -764,6 +803,7 @@ export class Bot<
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
                     const forwardPayload: BotPayload<'message', Commands> = {
+                        event: parsed.event,
                         userId,
                         eventId: parsed.hashStr,
                         spaceId: spaceIdFromChannelId(streamId),
@@ -804,6 +844,7 @@ export class Bot<
                     const { typeUrl, value } = gmContent
 
                     this.emitter.emit('rawGmMessage', this.client, {
+                        event: parsed.event,
                         userId,
                         spaceId: spaceIdFromChannelId(streamId),
                         channelId: streamId,
@@ -829,6 +870,7 @@ export class Bot<
                             } else {
                                 debug('emit:gmMessage', { userId, channelId: streamId })
                                 void typedHandler.handler(this.client, {
+                                    event: parsed.event,
                                     userId,
                                     spaceId: spaceIdFromChannelId(streamId),
                                     channelId: streamId,
@@ -853,6 +895,7 @@ export class Bot<
                     messageId: payload.value.refEventId,
                 })
                 this.emitter.emit('reaction', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -876,6 +919,7 @@ export class Bot<
                     isMentioned,
                 })
                 this.emitter.emit('messageEdit', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -897,6 +941,7 @@ export class Bot<
                     refEventId: payload.value.refEventId,
                 })
                 this.emitter.emit('redaction', this.client, {
+                    event: parsed.event,
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     eventId: parsed.hashStr,
                     spaceId: spaceIdFromChannelId(streamId),
@@ -1130,12 +1175,60 @@ export class Bot<
     }
 
     /**
-     * Get the roles for a space
+     * Get all roles for a space
      * @param spaceId - The space ID to get the roles for
-     * @returns The roles
+     * @returns Array of roles with id, name, permissions, and disabled status
      */
-    async getRoles(spaceId: string) {
-        return this.client.getRoles(spaceId)
+    async getAllRoles(spaceId: string) {
+        return this.client.getAllRoles(spaceId)
+    }
+
+    /**
+     * Create a role in a space
+     * @param spaceId - The space ID
+     * @param params - Role parameters (name, permissions, optional rule, optional users)
+     * @returns The created role ID
+     */
+    async createRole(spaceId: string, params: CreateRoleParams) {
+        return this.client.createRole(spaceId, params)
+    }
+
+    /**
+     * Update an existing role
+     * @param spaceId - The space ID
+     * @param roleId - The role ID to update
+     * @param params - Updated role parameters
+     */
+    async updateRole(spaceId: string, roleId: number, params: CreateRoleParams) {
+        return this.client.updateRole(spaceId, roleId, params)
+    }
+
+    /**
+     * Add a role to a channel
+     * @param channelId - The channel ID
+     * @param roleId - The role ID to add
+     */
+    async addRoleToChannel(channelId: string, roleId: number) {
+        return this.client.addRoleToChannel(channelId, roleId)
+    }
+
+    /**
+     * Delete a role from a space
+     * @param spaceId - The space ID
+     * @param roleId - The role ID to delete
+     */
+    async deleteRole(spaceId: string, roleId: number) {
+        return this.client.deleteRole(spaceId, roleId)
+    }
+
+    /**
+     * Get full details of a specific role
+     * @param spaceId - The space ID
+     * @param roleId - The role ID
+     * @returns Role details including name, permissions, rule data, and users
+     */
+    async getRole(spaceId: string, roleId: number) {
+        return this.client.getRole(spaceId, roleId)
     }
 
     /**
@@ -1347,16 +1440,14 @@ export class Bot<
     }
 }
 
-export const makeTownsBot = async <
-    Commands extends PlainMessage<SlashCommand>[] = [],
-    HonoEnv extends Env = BlankEnv,
->(
+export const makeTownsBot = async <Commands extends BotCommand[] = []>(
     appPrivateData: string,
     jwtSecretBase64: string,
     opts: {
         baseRpcUrl?: string
         commands?: Commands
         identity?: BotIdentityConfig
+        dedup?: EventDedupConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1438,13 +1529,14 @@ export const makeTownsBot = async <
     }
 
     await client.uploadDeviceKeys()
-    return new Bot<Commands, HonoEnv>(
+    return new Bot<Commands>(
         client,
         viem,
         jwtSecretBase64,
         appAddress,
         opts.commands,
         opts.identity,
+        opts.dedup,
     )
 }
 
@@ -2128,13 +2220,13 @@ const buildBotActions = (
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.threadId ? bin_fromHexString(opts.threadId) : undefined,
         }
 
         // Send as InteractionRequest
         const eventPayload = make_ChannelPayload_InteractionRequest(request)
         return client.sendEvent(streamId, eventPayload, tags, opts?.ephemeral)
     }
-
     /**
      * Send a blockchain transaction to the stream
      * @param streamId - The stream ID to send the transaction to
@@ -2318,7 +2410,7 @@ const buildBotActions = (
         )
     }
 
-    const getRoles = async (spaceId: string) => {
+    const getAllRoles = async (spaceId: string) => {
         const roles = await readContract(viem, {
             address: SpaceAddressFromSpaceId(spaceId),
             abi: rolesFacetAbi,
@@ -2332,7 +2424,7 @@ const buildBotActions = (
         channelId: string,
         params: CreateChannelParams,
     ) => {
-        const roles = await getRoles(spaceId)
+        const roles = await getAllRoles(spaceId)
         const allRolesThatCanRead = roles.filter((role) =>
             role.permissions.includes(Permission.Read),
         )
@@ -2390,6 +2482,61 @@ const buildBotActions = (
         return channelId
     }
 
+    /** Creates a role in the space. Requires gas */
+    const createRole = async (
+        spaceId: string,
+        params: CreateRoleParams,
+    ): Promise<{ roleId: number }> => {
+        const txn = await spaceDapp.createRole(
+            spaceId,
+            params.name,
+            params.permissions,
+            params.users ?? [],
+            createRuleStruct(params.rule ?? NoopOperation),
+            client.wallet,
+        )
+        const { roleId, error } = await waitForRoleCreated(spaceDapp, spaceId, txn)
+        if (error) {
+            throw error
+        }
+        if (!roleId) {
+            throw Error('Unexpected failure when waiting for role to be created')
+        }
+        return { roleId }
+    }
+
+    /** Updates the specified the role. Requires gas. */
+    const updateRole = async (spaceId: string, roleId: number, params: CreateRoleParams) => {
+        const currentValues = await spaceDapp.getRole(spaceId, roleId)
+        return spaceDapp.updateRole(
+            {
+                permissions: params.permissions ?? currentValues?.permissions,
+                roleId,
+                roleName: params.name ?? currentValues?.name,
+                ruleData: createRuleStruct(params.rule ?? NoopOperation) ?? currentValues?.ruleData,
+                spaceNetworkId: spaceId,
+                users: params.users ?? currentValues?.users ?? [],
+            },
+            client.wallet,
+        )
+    }
+
+    /** Adds the specified role to a channel. Requires gas. */
+    const addRoleToChannel = (channelId: string, roleId: number) => {
+        const spaceId = spaceIdFromChannelId(channelId)
+        return spaceDapp.addRoleToChannel(spaceId, channelId, roleId, client.wallet)
+    }
+
+    /** Deletes the specified role. Requires gas. */
+    const deleteRole = (spaceId: string, roleId: number) => {
+        return spaceDapp.deleteRole(spaceId, roleId, client.wallet)
+    }
+
+    /** Gets full details of a specific role */
+    const getRole = (spaceId: string, roleId: number) => {
+        return spaceDapp.getRole(spaceId, roleId)
+    }
+
     return {
         sendMessage,
         editMessage,
@@ -2411,7 +2558,12 @@ const buildBotActions = (
         sendTip,
         sendBlockchainTransaction,
         createChannel,
-        getRoles,
+        getAllRoles,
+        createRole,
+        updateRole,
+        addRoleToChannel,
+        deleteRole,
+        getRole,
     }
 }
 

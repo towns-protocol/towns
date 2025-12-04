@@ -36,7 +36,6 @@ func newGcsUploadSession(
 	bucket string,
 	totalMiniblockDataSize uint64,
 	token *oauth2.Token,
-	httpClient *http.Client,
 ) (*gcsUploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
@@ -74,7 +73,7 @@ func newGcsUploadSession(
 		defer close(respChan)
 		defer reqCancel()
 
-		resp, err := httpClient.Do(req)
+		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
 			_ = bodyWriter.CloseWithError(err)
 			respChan <- struct {
@@ -158,7 +157,7 @@ func (g *gcsUploadSession) Finish(ctx context.Context) (
 }
 
 // Abort the pending upload session
-func (g *gcsUploadSession) Abort(ctx context.Context) {
+func (g *gcsUploadSession) Abort() {
 	g.miniblocks = nil
 	g.reqCancel()
 	_ = g.gcStorage.Close()

@@ -115,6 +115,9 @@ type syncSessionRunner struct {
 	// closeErr is assigned when the sync has encountered an error state, is re-assigning all
 	// of it's streams, and is no longer assignable.
 	closeErr error
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	cookieStore SyncCookieStore
 }
 
 func (ssr *syncSessionRunner) AddStream(
@@ -289,6 +292,27 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	// Update record cookie for restarting sync from the correct position after relocation
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
+
+	// Persist cookie if configured and the tracked view says we should persist for this stream
+	if ssr.cookieStore != nil && trackedView.ShouldPersistCookie(ssr.syncCtx) {
+		cookie := streamAndCookie.NextSyncCookie
+		go func() {
+			log.Infow(
+				"persisting sync cookie",
+				"streamId",
+				streamId,
+				"nodeAddress",
+				common.BytesToAddress(cookie.NodeAddress),
+				"minipoolGen",
+				cookie.MinipoolGen,
+				"syncId",
+				ssr.syncer.GetSyncId(),
+			)
+			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
+			}
+		}()
+	}
 }
 
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
@@ -317,6 +341,13 @@ func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResp
 		// Stream relocation is invoked by the remote syncer whenever a SYNC_DOWN is received, via a callback.
 		// We can count sync downs to get a sense of how often streams are relocated due to node unavailability.
 		ssr.metrics.SyncDown.With(prometheus.Labels{"target_node": ssr.node.Hex()}).Inc()
+		streamID, _ := shared.StreamIdFromBytes(update.GetStreamId())
+		log.Infow(
+			"Received SYNC_DOWN from remote, stream will be relocated",
+			"streamId", streamID,
+			"syncId", ssr.syncer.GetSyncId(),
+			"targetNode", ssr.node,
+		)
 		return
 	case protocol.SyncOp_SYNC_CLOSE:
 		fallthrough
@@ -434,21 +465,33 @@ func (ssr *syncSessionRunner) Run() {
 func (ssr *syncSessionRunner) relocateStream(streamID shared.StreamId) {
 	record, ok := ssr.streamRecords.LoadAndDelete(streamID)
 
+	remainingStreams := ssr.streamRecords.Size()
+	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
+
 	// Cancel the remote sync session if all streams have been relocated.
-	if ssr.streamRecords.Size() <= 0 {
+	if remainingStreams <= 0 {
+		log.Infow(
+			"Sync session runner has no streams remaining after relocation, cancelling session",
+			"targetNode", ssr.node,
+		)
 		ssr.cancelSync(
 			base.RiverError(protocol.Err_SYNC_SESSION_RUNNER_EMPTY, "Sync session runner has no streams remaining"),
 		)
 	}
 
-	log := logging.FromCtx(ssr.syncCtx).With("syncId", ssr.GetSyncId()).With("streamId", streamID)
 	if !ok {
 		log.Errorw("Expected stream to exist in the stream records for this sync session runner")
 		return
 	}
 
 	newTarget := record.remotes.AdvanceStickyPeer(ssr.node)
-	log.Debugw("Relocating stream", "oldNode", ssr.node, "newTarget", newTarget)
+	log.Infow(
+		"Relocating stream to new target",
+		"oldNode", ssr.node,
+		"newTarget", newTarget,
+		"remainingStreamsInSession", remainingStreams,
+		"syncCause", context.Cause(ssr.syncCtx),
+	)
 	ssr.relocateStreams <- record
 }
 
@@ -540,6 +583,7 @@ func newSyncSessionRunner(
 	targetNode common.Address,
 	metrics *TrackStreamsSyncMetrics,
 	otelTracer trace.Tracer,
+	cookieStore SyncCookieStore,
 ) *syncSessionRunner {
 	ctx, cancel := context.WithCancelCause(rootCtx)
 	runner := syncSessionRunner{
@@ -555,6 +599,7 @@ func newSyncSessionRunner(
 		streamRecords:            xsync.NewMap[shared.StreamId, *streamSyncInitRecord](),
 		metrics:                  metrics,
 		otelTracer:               otelTracer,
+		cookieStore:              cookieStore,
 	}
 	runner.syncStarted.Add(1)
 	return &runner
@@ -602,6 +647,10 @@ type MultiSyncRunner struct {
 
 	// TODO: use a single node registry and modify http client settings for better performance.
 	nodeRegistries []nodes.NodeRegistry
+
+	// cookieStore is an optional store for persisting sync cookies for stream resumption.
+	// If nil, cookie persistence is disabled.
+	cookieStore SyncCookieStore
 }
 
 // getNodeRequestPool returns the node-specific semaphore used to rate limit requests to each node
@@ -619,6 +668,8 @@ func (msr *MultiSyncRunner) getNodeRequestPool(addr common.Address) *semaphore.W
 }
 
 // NewMultiSyncRunner creates a MultiSyncRunner instance.
+// cookieStore is optional - if nil, cookie persistence is disabled. Cookie persistence
+// is controlled by each TrackedStreamView's ShouldPersistCookie method.
 func NewMultiSyncRunner(
 	metricsFactory infra.MetricsFactory,
 	onChainConfig crypto.OnChainConfiguration,
@@ -626,6 +677,7 @@ func NewMultiSyncRunner(
 	trackedStreamViewConstructor TrackedViewConstructorFn,
 	streamTrackingConfig config.StreamTrackingConfig,
 	otelTracer trace.Tracer,
+	cookieStore SyncCookieStore,
 ) *MultiSyncRunner {
 	// Set configuration defaults if needed
 	if streamTrackingConfig.NumWorkers < 1 {
@@ -649,6 +701,7 @@ func NewMultiSyncRunner(
 		concurrentNodeRequests: xsync.NewMap[common.Address, *semaphore.Weighted](),
 		unfilledSyncs:          xsync.NewMap[common.Address, *syncSessionRunner](),
 		otelTracer:             otelTracer,
+		cookieStore:            cookieStore,
 	}
 }
 
@@ -712,6 +765,7 @@ func (msr *MultiSyncRunner) addToSync(
 			targetNode,
 			msr.metrics,
 			msr.otelTracer,
+			msr.cookieStore,
 		)
 		var loaded bool
 
@@ -793,6 +847,7 @@ func (msr *MultiSyncRunner) addToSync(
 				targetNode,
 				msr.metrics,
 				msr.otelTracer,
+				msr.cookieStore,
 			)
 
 			if acquireErr := pool.Acquire(rootCtx, 1); acquireErr != nil {
@@ -857,19 +912,51 @@ func (msr *MultiSyncRunner) addToSync(
 }
 
 // AddStream adds a stream to the queue to be added to a sync session for event tracking.
+// If a cookie store is configured, it will attempt to load a stored cookie for the stream
+// to resume from the last persisted position.
 // This method may block if the queue fills.
 func (msr *MultiSyncRunner) AddStream(
+	ctx context.Context,
 	stream *river.StreamWithId,
 	applyHistoricalContent ApplyHistoricalContent,
 ) {
 	promLabels := prometheus.Labels{"type": shared.StreamTypeToString(stream.StreamId().Type())}
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
+	streamId := stream.StreamId()
+	minipoolGen := int64(math.MaxInt64)
+	prevMiniblockHash := common.Hash{}.Bytes()
+
+	// Try to load a stored cookie to resume from the last persisted position.
+	// We don't use shouldPersistCookie here because that requires stream view context
+	// (e.g., channel members) which isn't available yet. Instead, just try to load -
+	// if a cookie exists, it means we previously determined this stream needed persistence.
+	if msr.cookieStore != nil {
+		cookie, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
+		if err != nil {
+			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
+		} else if cookie != nil {
+			minipoolGen = cookie.MinipoolGen
+			prevMiniblockHash = cookie.PrevMiniblockHash
+			// If we have a cookie, enable historical content from that position
+			applyHistoricalContent = ApplyHistoricalContent{
+				Enabled:           true,
+				FromMiniblockHash: cookie.PrevMiniblockHash,
+			}
+			logging.FromCtx(ctx).Infow("Loaded sync cookie for stream resumption",
+				"streamId", streamId,
+				"minipoolGen", minipoolGen,
+				"prevMiniblockHash", prevMiniblockHash,
+				"updatedAt", updatedAt,
+			)
+		}
+	}
+
 	msr.streamsToSync <- &streamSyncInitRecord{
-		streamId:               stream.StreamId(),
+		streamId:               streamId,
 		applyHistoricalContent: applyHistoricalContent,
-		minipoolGen:            math.MaxInt64,
-		prevMiniblockHash:      common.Hash{}.Bytes(),
+		minipoolGen:            minipoolGen,
+		prevMiniblockHash:      prevMiniblockHash,
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
 			stream.Nodes(),

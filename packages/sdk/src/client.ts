@@ -385,6 +385,7 @@ export class Client
 
         const syncedStreamsControllerDelegate = {
             startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                this.streamsView.setLastAccessedAt(lastAccessedAt)
                 this.streams.startSyncStreams(lastAccessedAt)
                 this.decryptionExtensions?.start()
             },
@@ -2163,6 +2164,7 @@ export class Client
         const request: PlainMessage<InteractionRequest> = {
             recipient: recipient,
             encryptedData: encryptedData,
+            threadId: opts?.tags?.threadId,
         }
 
         return this.makeEventAndAddToStream(
@@ -2181,7 +2183,7 @@ export class Client
         recipient: Uint8Array,
         payload: PlainMessage<InteractionResponsePayload>,
         toUserDevice: UserDevice,
-        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean },
+        opts?: { tags?: PlainMessage<Tags>; ephemeral?: boolean; threadId: string | undefined },
     ): Promise<{ eventId: string }> {
         const binaryData = toBinary(
             InteractionResponsePayloadSchema,
@@ -2193,6 +2195,7 @@ export class Client
         check(isDefined(ciphertext), 'ciphertext not found')
         const response: PlainMessage<InteractionResponse> = {
             recipient: recipient,
+            threadId: opts?.threadId ? bin_fromHexString(opts?.threadId) : undefined,
             encryptedData: {
                 ciphertext: ciphertext,
                 algorithm: EncryptionAlgorithmId.Olm,
@@ -3078,6 +3081,7 @@ export class Client
         this.syncedStreamsExtensions.setHighPriorityStreams(streamIds)
         this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
+        this.streamsView.setHighPriorityStreams(streamIds)
     }
 
     public async ensureOutboundSession(streamId: string, opts?: EnsureOutboundSessionOpts) {

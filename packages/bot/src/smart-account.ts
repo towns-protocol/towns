@@ -9,9 +9,7 @@ import {
 } from 'viem'
 import { getStorageAt, readContract } from 'viem/actions'
 import walletLinkAbi from '@towns-protocol/generated/dev/abis/WalletLink.abi'
-import { Bot } from './bot'
-import type { Env } from 'hono'
-import type { PlainMessage, SlashCommand } from '@towns-protocol/proto'
+import { Bot, type BotCommand } from './bot'
 
 /**
  * The default slot for the implementation address for ERC-1967 Proxies
@@ -136,7 +134,7 @@ async function getLinkedWalletsWithRootKey(
  * ```
  */
 export async function getSmartAccountFromUserId(
-    bot: Bot<PlainMessage<SlashCommand>[], Env>,
+    bot: Bot<BotCommand[]>,
     params: {
         userId: Address
     },

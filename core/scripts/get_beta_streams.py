@@ -50,7 +50,7 @@ def get_stream_and_validate(stream_tuple):
     """
 
     stream_id, min_seq_num = stream_tuple
-    command = f"./env/gamma/run.sh stream get {stream_id}"
+    command = f"./env/beta/run.sh stream get {stream_id}"
     try:
         result = subprocess.run(
             ["bash", "-c", command],

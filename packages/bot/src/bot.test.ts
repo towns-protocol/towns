@@ -27,7 +27,7 @@ import {
     type ChannelMessageEvent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { BasePayload, Bot, BotPayload, DecryptedInteractionResponse } from './bot'
+import type { BasePayload, Bot, BotCommand, BotPayload, DecryptedInteractionResponse } from './bot'
 import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
@@ -39,12 +39,12 @@ import {
     InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
     type PlainMessage,
-    type SlashCommand,
 } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
     ETH_ADDRESS,
     Permission,
+    Rules,
     SpaceAddressFromSpaceId,
     SpaceDapp,
     TestERC721,
@@ -52,7 +52,6 @@ import {
 } from '@towns-protocol/web3'
 import { createServer } from 'node:http2'
 import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
 import { randomUUID } from 'crypto'
 import { getBalance, readContract, waitForTransactionReceipt } from 'viem/actions'
 import townsAppAbi from '@towns-protocol/generated/dev/abis/ITownsApp.abi'
@@ -68,7 +67,7 @@ const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 const SLASH_COMMANDS = [
     { name: 'help', description: 'Get help with bot commands' },
     { name: 'status', description: 'Check bot status' },
-] as const satisfies PlainMessage<SlashCommand>[]
+] as const satisfies BotCommand[]
 
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
@@ -270,10 +269,7 @@ describe('Bot', { sequential: true }, () => {
         expect(bot).toBeDefined()
         expect(bot.botId).toBe(botClientAddress)
         expect(bot.appAddress).toBe(appAddress)
-        const { jwtMiddleware, handler } = bot.start()
-        const app = new Hono()
-        app.use(jwtMiddleware)
-        app.post('/webhook', handler)
+        const app = bot.start()
         serve({
             port: Number(process.env.BOT_PORT!),
             fetch: app.fetch,
@@ -1592,7 +1588,7 @@ describe('Bot', { sequential: true }, () => {
     it('bot can create channel, channel has the role, bob joins and sends message, bot receives message', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
-        type WhyDoINeedThis = BasePayload & { event: ParsedEvent }
+        type WhyDoINeedThis = BasePayload & { parsed: ParsedEvent }
         const streamEvents: WhyDoINeedThis[] = []
         const receivedMessages: OnMessageType[] = []
         subscriptions.push(
@@ -1849,7 +1845,7 @@ describe('Bot', { sequential: true }, () => {
         await waitFor(() => receivedInteractionResponses.length > 0)
     })
 
-    it('bot should be able to pin and unpin messages', async () => {
+    it('bot should be able to pin and unpin their own messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId, envelope } = await bot.sendMessage(channelId, 'Hello')
         const parsedEvnet = await bot.client.unpackEnvelope(envelope)
@@ -1857,5 +1853,132 @@ describe('Bot', { sequential: true }, () => {
         log('pinned event', pinEventId)
         const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
         log('unpinned event', unpinEventId)
+    })
+
+    it('bot should be able to pin and unpin other users messages', async () => {
+        await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
+        const { eventId } = await bobDefaultChannel.sendMessage('Hello')
+        const receivedMessages: OnMessageType[] = []
+        subscriptions.push(
+            bot.onMessage((_h, e) => {
+                receivedMessages.push(e)
+            }),
+        )
+        await waitFor(() => receivedMessages.length > 0)
+        const message = receivedMessages.find((x) => x.eventId === eventId)
+        check(isDefined(message), 'message is defined')
+        expect(message).toBeDefined()
+        expect(message?.event).toBeDefined()
+
+        const { eventId: pinEventId } = await bot.pinMessage(channelId, eventId, message.event)
+        log('pinned event', pinEventId)
+        const { eventId: unpinEventId } = await bot.unpinMessage(channelId, eventId)
+        log('unpinned event', unpinEventId)
+    })
+
+    it('bot can create role with permissions', async () => {
+        // Create role directly on bot
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Test Role',
+            permissions: [Permission.Read, Permission.Write],
+            users: [bot.botId, bob.userId],
+        })
+        // Verify role exists via spaceDapp
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('Test Role')
+        expect(role?.permissions).toContain(Permission.Read)
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can create role with NFT rule using Rules API', async () => {
+        const testNft1Address = await TestERC721.getContractAddress('TestNFT1')
+
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'NFT Gated Role',
+            permissions: [Permission.Read],
+            rule: Rules.checkErc721({
+                chainId: 31337n,
+                contractAddress: testNft1Address,
+                threshold: 1n,
+            }),
+        })
+
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('NFT Gated Role')
+        // Role should have rule data set
+        expect(role?.ruleData).toBeDefined()
+    })
+
+    it('bot can update role', async () => {
+        // Create role first
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Original Name',
+            permissions: [Permission.Read],
+        })
+        // Update the role
+        await bot.updateRole(spaceId, roleId, {
+            name: 'Updated Name',
+            permissions: [Permission.Read, Permission.Write],
+        })
+        // Verify role was updated
+        const role = await spaceDapp.getRole(spaceId, roleId)
+        expect(role?.name).toBe('Updated Name')
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can add role to channel', async () => {
+        // Create channel first (before the role exists)
+        const newChannelId = await bot.createChannel(spaceId, {
+            name: `test-channel-${randomUUID().slice(0, 8)}`,
+            description: 'Test channel for role',
+        })
+        // Create role after channel exists
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Channel Role',
+            permissions: [Permission.Read],
+        })
+        // Add role to channel
+        await bot.addRoleToChannel(newChannelId, roleId)
+        // Verify role is in channel
+        const channelRoles = await readContract(bot.viem, {
+            address: SpaceAddressFromSpaceId(spaceId),
+            abi: channelsFacetAbi,
+            functionName: 'getRolesByChannel',
+            args: [
+                newChannelId.startsWith('0x')
+                    ? (newChannelId as `0x${string}`)
+                    : `0x${newChannelId}`,
+            ],
+        })
+        expect(channelRoles).toContain(BigInt(roleId))
+    })
+
+    it('bot can get role details', async () => {
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Detailed Role',
+            permissions: [Permission.Read, Permission.Write],
+        })
+        const role = await bot.getRole(spaceId, roleId)
+        expect(role).toBeDefined()
+        expect(role?.name).toBe('Detailed Role')
+        expect(role?.permissions).toContain(Permission.Read)
+        expect(role?.permissions).toContain(Permission.Write)
+    })
+
+    it('bot can delete role', async () => {
+        const { roleId } = await bot.createRole(spaceId, {
+            name: 'Role To Delete',
+            permissions: [Permission.Read],
+        })
+        // Verify role exists
+        const roleBefore = await bot.getRole(spaceId, roleId)
+        expect(roleBefore).toBeDefined()
+        // Delete the role
+        await bot.deleteRole(spaceId, roleId)
+        // Verify role no longer exists
+        const roleAfter = await bot.getRole(spaceId, roleId)
+        expect(roleAfter).toBeNull()
     })
 })

@@ -5,10 +5,8 @@ This directory contains example implementations to help you get started with bui
 ## Getting Started
 
 1. Browse the available example directories to find one that matches your needs
-2. Navigate to the specific example directory
-3. Copy `.env.sample` to `.env` and fill in your credentials
-4. Install dependencies: `yarn install`
-5. Run the example: `yarn dev`
+2. Install them using the Towns bot CLI: `bunx towns-bot init proj-name --template <example-name>`
+3. Follow the instructions in the README file for the specific example.
 
 ## Environment Variables
 

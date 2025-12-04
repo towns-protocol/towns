@@ -25,6 +25,7 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 	// Capture keys sent to the app's inbox and store them in the message cache so that
 	// we can dequeue any existing messages that require decryption for this session, and
 	// can now immediately forward incoming messages with the same session id.
+	log := logging.FromCtx(ctx).With("func", "AppRegistryTrackedStreamView.processUserInboxMessage")
 	if payload := event.Event.GetUserInboxPayload(); payload != nil {
 		if groupEncryptionSessions := payload.GetGroupEncryptionSessions(); groupEncryptionSessions != nil {
 			sessionIds := groupEncryptionSessions.GetSessionIds()
@@ -38,7 +39,23 @@ func (b *AppRegistryTrackedStreamView) processUserInboxMessage(ctx context.Conte
 				return err
 			}
 			for deviceKey := range deviceCipherTexts {
+				log.Infow(
+					"Publishing session keys for bot",
+					"streamId", streamId,
+					"deviceKey", deviceKey,
+					"sessionIdCount", len(sessionIds),
+					"sessionIds", sessionIds,
+				)
 				if err := b.queue.PublishSessionKeys(ctx, streamId, deviceKey, sessionIds, envelopeBytes); err != nil {
+					log.Errorw(
+						"Failed to publish session keys",
+						"error",
+						err,
+						"streamId",
+						streamId,
+						"deviceKey",
+						deviceKey,
+					)
 					return err
 				}
 			}
@@ -88,12 +105,25 @@ func (b *AppRegistryTrackedStreamView) onNewEvent(ctx context.Context, view *Str
 				streamId,
 			)
 		} else if isForwardable {
+			log.Infow(
+				"Found forwardable app in channel",
+				"appAddress", memberAddress.Hex(),
+				"streamId", streamId,
+			)
 			apps.Add(member)
 		}
 		return false
 	})
 
 	if apps.Cardinality() > 0 {
+		log.Infow(
+			"Channel event detected for forwarding to bots",
+			"streamId", streamId,
+			"eventHash", hex.EncodeToString(event.Hash[:]),
+			"appCount", apps.Cardinality(),
+			"apps", apps.ToSlice(),
+			"eventCreator", hex.EncodeToString(event.Event.CreatorAddress),
+		)
 		b.listener.OnMessageEvent(ctx, *streamId, view.StreamParentId(), apps, event)
 	}
 
@@ -116,7 +146,13 @@ func NewTrackedStreamForAppRegistryService(
 		listener: listener,
 		queue:    store,
 	}
-	view, err := trackedView.TrackedStreamViewImpl.Init(ctx, streamId, cfg, stream, trackedView.onNewEvent)
+	view, err := trackedView.TrackedStreamViewImpl.Init(
+		streamId,
+		cfg,
+		stream,
+		trackedView.onNewEvent,
+		trackedView.shouldPersistCookie,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -130,4 +166,44 @@ func NewTrackedStreamForAppRegistryService(
 	}
 
 	return trackedView, nil
+}
+
+// shouldPersistCookie determines if this stream's cookie should be persisted.
+// Only channel streams with bot members need cookie persistence to ensure message
+// delivery guarantees. User inbox streams don't need persistence since session keys
+// are already stored in the database and re-processing is idempotent.
+// TODO yoni: optimize this by caching the result and track join/leave events
+func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
+	streamId := view.StreamId()
+
+	// Only persist cookies for channel streams with bot members
+	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+		return false
+	}
+
+	members, err := view.GetChannelMembers()
+	if err != nil {
+		return false
+	}
+
+	hasBots := false
+	members.Each(func(member string) bool {
+		// Trim 0x prefix
+		if len(member) > 2 && member[:2] == "0x" {
+			member = member[2:]
+		}
+
+		bytes, err := hex.DecodeString(member)
+		if err != nil {
+			return false
+		}
+		memberAddress := common.BytesToAddress(bytes)
+		isForwardable, _, err := b.queue.IsForwardableApp(ctx, memberAddress)
+		if err == nil && isForwardable {
+			hasBots = true
+			return true // Stop iteration
+		}
+		return false
+	})
+	return hasBots
 }
