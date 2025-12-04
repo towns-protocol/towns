@@ -674,8 +674,8 @@ type coldStreamsTestContext struct {
 	eventTrackerMu *sync.Mutex
 }
 
-// addStreamToSyncerNoHistory adds a stream to the syncer without historical content
-func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
+// addStreamToSyncer adds a stream to the syncer with optional historical content
+func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockNum int64) {
 	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
 		tc.ctx,
 		streamId,
@@ -691,8 +691,8 @@ func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled b
 			},
 		},
 		track_streams.ApplyHistoricalContent{
-			Enabled:           enabled,
-			FromMiniblockHash: fromMiniblockHash,
+			Enabled:          enabled,
+			FromMiniblockNum: fromMiniblockNum,
 		},
 	)
 }
@@ -910,7 +910,7 @@ func TestColdStreamsNoHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with no historical content
-	tc.addStreamToSyncer(channelId, false, nil)
+	tc.addStreamToSyncer(channelId, false, 0)
 
 	// Wait a bit to ensure no events are received
 	time.Sleep(2 * time.Second)
@@ -936,7 +936,7 @@ func TestColdStreamsFullHistory(t *testing.T) {
 	defer cancelCollector()
 
 	// Add stream to syncer with full historical content
-	tc.addStreamToSyncer(channelId, true, nil)
+	tc.addStreamToSyncer(channelId, true, 0)
 
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, messagesPerChannel, 10*time.Second)
@@ -973,7 +973,7 @@ func TestColdStreamsFromSpecificHash(t *testing.T) {
 
 	// Add stream to syncer with historical content from specific miniblock
 	// Start from miniblock 2 (which contains events after msg0)
-	tc.addStreamToSyncer(channelId, true, miniblockRefs[2].Hash[:])
+	tc.addStreamToSyncer(channelId, true, miniblockRefs[2].Num)
 
 	// Wait for and verify messages
 	channelMessages := tc.waitForAndVerifyMessages(channelId, 2, 10*time.Second)
