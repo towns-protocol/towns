@@ -149,8 +149,8 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 		backoff := base.BackoffTracker{
 			NextDelay:   250 * time.Millisecond,
 			MaxAttempts: 20,
-			Multiplier:  2,
-			Divisor:     3,
+			Multiplier:  3,
+			Divisor:     2,
 		}
 
 		for {
