@@ -232,7 +232,10 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 
 	applyBlocks := false
 	miniblocks := streamAndCookie.GetMiniblocks()
-	firstMiniblockNum, _ := getFirstMiniblockNumber(miniblocks)
+	firstMiniblockNum, firstMiniblockErr := getFirstMiniblockNumber(miniblocks)
+	if firstMiniblockErr != nil && len(miniblocks) > 0 {
+		log.Errorw("Failed to parse first miniblock", "error", firstMiniblockErr, "streamId", streamId)
+	}
 	for i, block := range miniblocks {
 		blockNum := firstMiniblockNum + int64(i)
 		// Currently the node will only send miniblocks in a reset (this code it dead atm)
@@ -245,7 +248,8 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 			}
 		}
 		// apply blocks from the specified miniblock number onwards
-		if record.applyHistoricalContent.Enabled {
+		// Skip if we failed to parse the first miniblock number
+		if record.applyHistoricalContent.Enabled && firstMiniblockErr == nil {
 			applyBlocks = applyBlocks || record.applyHistoricalContent.FromMiniblockNum == 0 ||
 				blockNum >= record.applyHistoricalContent.FromMiniblockNum
 		}
