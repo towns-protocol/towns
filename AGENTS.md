@@ -81,7 +81,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ### Local Development Setup
 
 1. Install prerequisites: Go, Node v20.x, Docker, Anvil, Just, jq
-2. Run `yarn install && yarn prepare`
+2. Run `bun install`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
    - `just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
@@ -116,12 +116,12 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 
 #### For TypeScript, JavaScript, YAML, Solidity, and other non-Go files:
 - **All non-Go files must pass Prettier formatting**
-  - Run `yarn prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
+  - Run `bun run prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
   - This command will check and fix any formatting issues in one step
 
 #### For all changes:
 - **All PRs must pass global linting**
-  - Run `yarn lint` from the root directory before committing
+  - Run `bun run lint` from the root directory before committing
   - This ensures code quality and consistency across the entire repository
 
 ## Key Technology Stack
@@ -147,7 +147,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - **Docker**: Local PostgreSQL and Redis
 - **Anvil**: Local blockchain development
 - **Just**: Command runner for Go workflows
-- **Yarn 2**: Package management
+- **Bun 1.3**: Package management
 
 ## Configuration Notes
 
