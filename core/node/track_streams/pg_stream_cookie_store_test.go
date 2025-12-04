@@ -84,11 +84,10 @@ func TestGetStreamCookie_NotFound(t *testing.T) {
 
 	streamId := randomStreamId(t)
 
-	// Getting a cookie that doesn't exist should return nil, 0, zero time, nil
-	cookie, snapshotMiniblock, updatedAt, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	// Getting a cookie that doesn't exist should return nil, zero time, nil
+	cookie, updatedAt, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err, "GetSyncCookie should not return error for non-existent cookie")
 	require.Nil(cookie, "Cookie should be nil for non-existent stream")
-	require.Equal(int64(0), snapshotMiniblock, "SnapshotMiniblock should be 0 for non-existent stream")
 	require.True(updatedAt.IsZero(), "UpdatedAt should be zero for non-existent stream")
 }
 
@@ -104,20 +103,18 @@ func TestPersistAndGetStreamCookie(t *testing.T) {
 		MinipoolGen:       42,
 		PrevMiniblockHash: []byte{1, 2, 3, 4, 5, 6, 7, 8},
 	}
-	snapshotMiniblock := int64(100)
 
-	// Persist the cookie with snapshot miniblock
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie, snapshotMiniblock)
+	// Persist the cookie
+	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
 	require.NoError(err, "PersistSyncCookie should succeed")
 
 	// Retrieve the cookie
-	retrieved, retrievedSnapshot, updatedAt, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	retrieved, updatedAt, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err, "GetSyncCookie should succeed")
 	require.NotNil(retrieved, "Retrieved cookie should not be nil")
 	require.Equal(cookie.StreamId, retrieved.StreamId)
 	require.Equal(cookie.MinipoolGen, retrieved.MinipoolGen)
 	require.Equal(cookie.PrevMiniblockHash, retrieved.PrevMiniblockHash)
-	require.Equal(snapshotMiniblock, retrievedSnapshot, "SnapshotMiniblock should match")
 	require.False(updatedAt.IsZero(), "UpdatedAt should be set")
 	require.WithinDuration(time.Now(), updatedAt, 5*time.Second, "UpdatedAt should be recent")
 }
@@ -135,7 +132,7 @@ func TestPersistStreamCookie_Update(t *testing.T) {
 		PrevMiniblockHash: []byte{1, 1, 1, 1},
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie1, 50)
+	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie1)
 	require.NoError(err)
 
 	// Update with new values
@@ -145,16 +142,15 @@ func TestPersistStreamCookie_Update(t *testing.T) {
 		PrevMiniblockHash: []byte{2, 2, 2, 2},
 	}
 
-	err = params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie2, 100)
+	err = params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie2)
 	require.NoError(err)
 
 	// Verify updated values
-	retrieved, snapshotMiniblock, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	retrieved, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err)
 	require.NotNil(retrieved)
 	require.Equal(int64(20), retrieved.MinipoolGen, "MinipoolGen should be updated")
 	require.Equal([]byte{2, 2, 2, 2}, retrieved.PrevMiniblockHash, "PrevMiniblockHash should be updated")
-	require.Equal(int64(100), snapshotMiniblock, "SnapshotMiniblock should be updated")
 }
 
 func TestDeleteStreamCookie(t *testing.T) {
@@ -170,11 +166,11 @@ func TestDeleteStreamCookie(t *testing.T) {
 		PrevMiniblockHash: []byte{5, 5, 5, 5},
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie, 25)
+	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
 	require.NoError(err)
 
 	// Verify it exists
-	retrieved, _, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	retrieved, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err)
 	require.NotNil(retrieved)
 
@@ -183,7 +179,7 @@ func TestDeleteStreamCookie(t *testing.T) {
 	require.NoError(err)
 
 	// Verify it's deleted
-	retrieved, _, _, err = params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	retrieved, _, err = params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err)
 	require.Nil(retrieved, "Cookie should be nil after deletion")
 }
@@ -217,7 +213,7 @@ func TestGetAllStreamCookies(t *testing.T) {
 			MinipoolGen:       int64(i + 1),
 			PrevMiniblockHash: []byte{byte(i), byte(i), byte(i), byte(i)},
 		}
-		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie, int64((i+1)*10))
+		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie)
 		require.NoError(err)
 	}
 
@@ -251,13 +247,13 @@ func TestMultipleStreams(t *testing.T) {
 		}
 		copy(cookie.PrevMiniblockHash, streamIds[i][:])
 
-		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie, int64(i*50))
+		err := params.cookieStore.PersistSyncCookie(params.ctx, streamIds[i], cookie)
 		require.NoError(err)
 	}
 
 	// Verify each stream has its own cookie
 	for i, streamId := range streamIds {
-		retrieved, _, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+		retrieved, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 		require.NoError(err)
 		require.NotNil(retrieved)
 		require.Equal(int64(i*100), retrieved.MinipoolGen)
@@ -308,10 +304,10 @@ func TestLargePrevMiniblockHash(t *testing.T) {
 		PrevMiniblockHash: largeHash,
 	}
 
-	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie, 500)
+	err := params.cookieStore.PersistSyncCookie(params.ctx, streamId, cookie)
 	require.NoError(err)
 
-	retrieved, _, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
+	retrieved, _, err := params.cookieStore.GetSyncCookie(params.ctx, streamId)
 	require.NoError(err)
 	require.NotNil(retrieved)
 	require.Equal(largeHash, retrieved.PrevMiniblockHash)

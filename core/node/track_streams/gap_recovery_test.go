@@ -44,18 +44,14 @@ func (m *mockTrackedStreamView) ShouldPersistCookie(ctx context.Context) bool {
 
 var _ events.TrackedStreamView = (*mockTrackedStreamView)(nil)
 
-// TestHandleGapOnReset_CaseA_SameSnapshot tests that no gap recovery happens when snapshots match
-func TestHandleGapOnReset_CaseA_SameSnapshot(t *testing.T) {
+// TestHandleGapOnReset_NoGap tests that no gap recovery happens when persisted position is after server snapshot
+func TestHandleGapOnReset_NoGap(t *testing.T) {
 	require := require.New(t)
 
-	// Create miniblock with number 100 (server snapshot)
-	serverMiniblock := makeMiniblockWithNum(t, 100)
-
-	// Create record with persisted state matching server snapshot
+	// Create record with persisted position after server snapshot
 	record := &streamSyncInitRecord{
-		streamId:                   shared.StreamId{},
-		persistedSnapshotMiniblock: 100, // Same as server
-		persistedMinipoolGen:       150,
+		streamId:             shared.StreamId{},
+		persistedMinipoolGen: 150, // > serverSnapshotMb (100)
 	}
 
 	// Create mocks
@@ -73,8 +69,8 @@ func TestHandleGapOnReset_CaseA_SameSnapshot(t *testing.T) {
 		node:         common.Address{},
 	}
 
-	// Execute
-	ssr.handleGapOnReset(record, mockView, []*protocol.Miniblock{serverMiniblock})
+	// Execute - server snapshot at 100, our persisted position at 150
+	ssr.handleGapOnReset(record, mockView, 100)
 
 	// Verify no interactions with mocks (no gap recovery triggered)
 	mockView.AssertNotCalled(t, "SendEventNotification", mock.Anything, mock.Anything)
@@ -83,12 +79,9 @@ func TestHandleGapOnReset_CaseA_SameSnapshot(t *testing.T) {
 	require.True(true) // Test passed if we got here without panics
 }
 
-// TestHandleGapOnReset_CaseB_GapDetected tests gap recovery when gap is detected
-func TestHandleGapOnReset_CaseB_GapDetected(t *testing.T) {
+// TestHandleGapOnReset_GapDetected tests gap recovery when gap is detected
+func TestHandleGapOnReset_GapDetected(t *testing.T) {
 	require := require.New(t)
-
-	// Create miniblock with number 200 (server snapshot)
-	serverMiniblock := makeMiniblockWithNum(t, 200)
 
 	// Create gap miniblocks (150-199)
 	gapMiniblock1 := makeMiniblockWithNum(t, 150)
@@ -98,9 +91,8 @@ func TestHandleGapOnReset_CaseB_GapDetected(t *testing.T) {
 
 	// Create record with persisted state that creates a gap
 	record := &streamSyncInitRecord{
-		streamId:                   streamId,
-		persistedSnapshotMiniblock: 100, // Different from server (200)
-		persistedMinipoolGen:       150, // <= serverSnapshotMb (200) - triggers gap
+		streamId:             streamId,
+		persistedMinipoolGen: 150, // <= serverSnapshotMb (200) - triggers gap
 	}
 
 	// Create mocks
@@ -134,8 +126,8 @@ func TestHandleGapOnReset_CaseB_GapDetected(t *testing.T) {
 		node:         nodeAddr,
 	}
 
-	// Execute
-	ssr.handleGapOnReset(record, mockView, []*protocol.Miniblock{serverMiniblock})
+	// Execute - server snapshot at 200, our persisted position at 150
+	ssr.handleGapOnReset(record, mockView, 200)
 
 	// Verify GetMiniblocks was called with correct range
 	mockClient.AssertCalled(t, "GetMiniblocks", mock.Anything, mock.Anything)
@@ -143,18 +135,14 @@ func TestHandleGapOnReset_CaseB_GapDetected(t *testing.T) {
 	require.True(true)
 }
 
-// TestHandleGapOnReset_CaseC_ServerSnapshotOlder tests that no gap recovery happens when server is behind
-func TestHandleGapOnReset_CaseC_ServerSnapshotOlder(t *testing.T) {
+// TestHandleGapOnReset_ServerSnapshotOlder tests that no gap recovery happens when server is behind
+func TestHandleGapOnReset_ServerSnapshotOlder(t *testing.T) {
 	require := require.New(t)
-
-	// Create miniblock with number 200 (server snapshot)
-	serverMiniblock := makeMiniblockWithNum(t, 200)
 
 	// Create record where our persisted position is ahead of server
 	record := &streamSyncInitRecord{
-		streamId:                   shared.StreamId{},
-		persistedSnapshotMiniblock: 100, // Different from server (200)
-		persistedMinipoolGen:       250, // > serverSnapshotMb (200) - server is behind
+		streamId:             shared.StreamId{},
+		persistedMinipoolGen: 250, // > serverSnapshotMb (200) - server is behind
 	}
 
 	// Create mocks
@@ -169,42 +157,10 @@ func TestHandleGapOnReset_CaseC_ServerSnapshotOlder(t *testing.T) {
 		node:         common.Address{},
 	}
 
-	// Execute
-	ssr.handleGapOnReset(record, mockView, []*protocol.Miniblock{serverMiniblock})
+	// Execute - server snapshot at 200, our persisted position at 250
+	ssr.handleGapOnReset(record, mockView, 200)
 
 	// Verify no interactions
-	mockView.AssertNotCalled(t, "SendEventNotification", mock.Anything, mock.Anything)
-	mockRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
-
-	require.True(true)
-}
-
-// TestHandleGapOnReset_EmptyMiniblocks tests handling when server returns empty miniblocks
-func TestHandleGapOnReset_EmptyMiniblocks(t *testing.T) {
-	require := require.New(t)
-
-	// Create record with persisted state
-	record := &streamSyncInitRecord{
-		streamId:                   shared.StreamId{},
-		persistedSnapshotMiniblock: 100,
-		persistedMinipoolGen:       150,
-	}
-
-	// Create mocks
-	mockView := &mockTrackedStreamView{}
-	mockRegistry := mocks.NewMockNodeRegistry(t)
-
-	ctx := context.Background()
-	ssr := &syncSessionRunner{
-		syncCtx:      ctx,
-		nodeRegistry: mockRegistry,
-		node:         common.Address{},
-	}
-
-	// Execute with empty miniblocks - should return early without error
-	ssr.handleGapOnReset(record, mockView, []*protocol.Miniblock{})
-
-	// Verify no interactions (early return due to parse error)
 	mockView.AssertNotCalled(t, "SendEventNotification", mock.Anything, mock.Anything)
 	mockRegistry.AssertNotCalled(t, "GetStreamServiceClientForAddress", mock.Anything)
 
@@ -315,10 +271,12 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 
 	// Create record with persisted state that will trigger gap recovery
 	record := &streamSyncInitRecord{
-		streamId:                   streamId,
-		persistedSnapshotMiniblock: 100, // Different from server (200)
-		persistedMinipoolGen:       150, // Gap: need miniblocks 150-199
-		applyHistoricalContent:     ApplyHistoricalContent{Enabled: true, FromMiniblockNum: 150},
+		streamId:             streamId,
+		persistedMinipoolGen: 150, // Gap: need miniblocks 150-199
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
 	}
 
 	// Create StreamAndCookie response (reset with new snapshot at 200)
@@ -342,14 +300,14 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 	require.True(true)
 }
 
-// TestApplyUpdateToStream_NoGapRecovery_SameSnapshot tests that no gap recovery happens
-// when snapshots match
-func TestApplyUpdateToStream_NoGapRecovery_SameSnapshot(t *testing.T) {
+// TestApplyUpdateToStream_NoGapRecovery tests that no gap recovery happens
+// when persisted position is after server snapshot
+func TestApplyUpdateToStream_NoGapRecovery(t *testing.T) {
 	require := require.New(t)
 
 	streamId := shared.StreamId{0x20}
 
-	// Create server response miniblock at position 100 (same as persisted snapshot)
+	// Create server response miniblock at position 100
 	serverMiniblock := makeMiniblockWithNum(t, 100)
 
 	// Create mock tracked view
@@ -368,12 +326,14 @@ func TestApplyUpdateToStream_NoGapRecovery_SameSnapshot(t *testing.T) {
 	// Create sync session runner
 	ssr := newTestSyncSessionRunner(t, mockRegistry, trackedViewForStream)
 
-	// Create record with persisted state matching server snapshot
+	// Create record with persisted position after server snapshot
 	record := &streamSyncInitRecord{
-		streamId:                   streamId,
-		persistedSnapshotMiniblock: 100, // Same as server
-		persistedMinipoolGen:       150,
-		applyHistoricalContent:     ApplyHistoricalContent{Enabled: true, FromMiniblockNum: 150},
+		streamId:             streamId,
+		persistedMinipoolGen: 150, // > server snapshot (100) - no gap
+		applyHistoricalContent: ApplyHistoricalContent{
+			Enabled:          true,
+			FromMiniblockNum: 150,
+		},
 	}
 
 	// Create StreamAndCookie response
@@ -420,12 +380,11 @@ func TestApplyUpdateToStream_NoPersistedState(t *testing.T) {
 	// Create sync session runner
 	ssr := newTestSyncSessionRunner(t, mockRegistry, trackedViewForStream)
 
-	// Create record with NO persisted state (persistedSnapshotMiniblock = 0)
+	// Create record with NO persisted state (persistedMinipoolGen = 0)
 	record := &streamSyncInitRecord{
-		streamId:                   streamId,
-		persistedSnapshotMiniblock: 0, // No persisted state
-		persistedMinipoolGen:       0,
-		applyHistoricalContent:     ApplyHistoricalContent{Enabled: false},
+		streamId:               streamId,
+		persistedMinipoolGen:   0, // No persisted state
+		applyHistoricalContent: ApplyHistoricalContent{Enabled: false},
 	}
 
 	// Create StreamAndCookie response
