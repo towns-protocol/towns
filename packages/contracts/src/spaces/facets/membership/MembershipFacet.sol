@@ -120,7 +120,9 @@ contract MembershipFacet is IMembership, MembershipJoin, ReentrancyGuard, Facet 
 
     /// @inheritdoc IMembership
     function getProtocolFee() external view returns (uint256 protocolFee) {
-        (, protocolFee) = _getTotalMembershipPayment(_getMembershipPrice(_totalSupply()));
+        uint256 membershipPrice = _getMembershipPrice(_totalSupply());
+        if (membershipPrice == 0) return 0;
+        (, protocolFee) = _getTotalMembershipPayment(membershipPrice);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

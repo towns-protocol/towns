@@ -199,9 +199,10 @@ contract MembershipJoinSpaceTest is
     }
 
     function test_getProtocolFee() external view {
+        // For free membership, protocol fee should be 0 (truly free)
         uint256 protocolFee = membership.getProtocolFee();
-        uint256 fee = platformReqs.getMembershipFee();
-        assertEq(protocolFee, fee);
+
+        assertEq(protocolFee, 0);
     }
 
     function test_getProtocolFee_withPriceAboveMinPrice() external {
