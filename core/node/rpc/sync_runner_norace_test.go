@@ -8,12 +8,14 @@ package rpc
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +29,9 @@ import (
 	"github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/registries"
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/testutils"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 	"github.com/towns-protocol/towns/core/node/track_streams"
 )
 
@@ -190,6 +194,13 @@ func verifyMessagesReceivedExactlyOnce(
 func makeTrackedStreamConstructor(
 	eventChannel chan<- eventRecord,
 ) func(context.Context, StreamId, crypto.OnChainConfiguration, *StreamAndCookie) (TrackedStreamView, error) {
+	return makeTrackedStreamConstructorWithPersistence(eventChannel, false)
+}
+
+func makeTrackedStreamConstructorWithPersistence(
+	eventChannel chan<- eventRecord,
+	enablePersistence bool,
+) func(context.Context, StreamId, crypto.OnChainConfiguration, *StreamAndCookie) (TrackedStreamView, error) {
 	return func(
 		ctx context.Context,
 		streamId StreamId,
@@ -200,7 +211,13 @@ func makeTrackedStreamConstructor(
 			streamId: streamId,
 			events:   eventChannel,
 		}
-		_, err := tracker.TrackedStreamViewImpl.Init(streamId, cfg, stream, tracker.onNewEvent, nil)
+		var shouldPersist func(context.Context, *StreamView) bool
+		if enablePersistence {
+			shouldPersist = func(ctx context.Context, view *StreamView) bool {
+				return true
+			}
+		}
+		_, err := tracker.TrackedStreamViewImpl.Init(streamId, cfg, stream, tracker.onNewEvent, shouldPersist)
 		if err != nil {
 			return nil, err
 		}
@@ -1012,4 +1029,418 @@ func TestColdStreams(t *testing.T) {
 	t.Run("FromSpecificHash", func(t *testing.T) {
 		TestColdStreamsFromSpecificHash(t)
 	})
+}
+
+// gapRecoveryTestContext contains infrastructure for testing gap recovery with cookie persistence
+type gapRecoveryTestContext struct {
+	tt             *serviceTester
+	ctx            context.Context
+	require        *require.Assertions
+	client         protocolconnect.StreamServiceClient
+	wallet         *crypto.Wallet
+	spaceId        StreamId
+	nodeRegistry   nodes.NodeRegistry
+	cookieStore    *track_streams.PostgresStreamCookieStore
+	dbPool         *pgxpool.Pool
+	dbCloser       func()
+	streamEvents   chan eventRecord
+	eventTracker   map[StreamId]map[string]int
+	eventTrackerMu *sync.Mutex
+}
+
+// setupGapRecoveryTest creates test infrastructure for gap recovery tests
+func setupGapRecoveryTest(t *testing.T) *gapRecoveryTestContext {
+	numNodes := 3
+	replFactor := 2
+	tt := newServiceTester(
+		t,
+		serviceTesterOpts{
+			numNodes:          numNodes,
+			replicationFactor: replFactor,
+			start:             true,
+		},
+	)
+	ctx := tt.ctx
+	require := tt.require
+
+	cfg := tt.getConfig()
+	riverContract, err := registries.NewRiverRegistryContract(
+		ctx,
+		tt.btc.DeployerBlockchain,
+		&cfg.RegistryContract,
+		&cfg.RiverRegistry,
+	)
+	require.NoError(err, "Error creating river registry contract")
+
+	nodeRegistry, err := nodes.LoadNodeRegistry(
+		ctx,
+		riverContract,
+		common.Address{},
+		0,
+		tt.btc.DeployerBlockchain.ChainMonitor,
+		tt.btc.OnChainConfig,
+		tt.httpClient(),
+		tt.httpClientWithCert(0),
+		nil,
+	)
+	require.NoError(err, "Error creating node registry")
+
+	client0 := tt.newTestClient(0, testClientOpts{}).client
+
+	wallet, err := crypto.NewWallet(ctx)
+	require.NoError(err)
+	resuser, _, err := createUser(ctx, wallet, client0, nil)
+	require.NoError(err)
+	require.NotNil(resuser)
+
+	// Create space
+	spaceId := testutils.FakeStreamId(STREAM_SPACE_BIN)
+	_, _, err = createSpace(ctx, wallet, client0, spaceId, nil)
+	require.NoError(err)
+
+	// Setup cookie store with app registry migrations
+	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "gap_")
+	require.NoError(err, "Error configuring db for cookie store")
+
+	dbCfg.StartupDelay = 2 * time.Millisecond
+	dbCfg.Extra = strings.Replace(dbCfg.Extra, "pool_max_conns=1000", "pool_max_conns=10", 1)
+
+	poolInfo, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, dbSchemaName, nil)
+	require.NoError(err, "Error creating pgx pool")
+
+	// Run app registry migrations to create the stream_sync_cookies table
+	_, err = storage.NewPostgresAppRegistryStore(
+		ctx,
+		poolInfo,
+		make(chan error, 1),
+		infra.NewMetricsFactory(nil, "", ""),
+	)
+	require.NoError(err, "Error running migrations for cookie store")
+
+	cookieStore := track_streams.NewPostgresStreamCookieStore(poolInfo.Pool, "stream_sync_cookies")
+
+	streamEvents := make(chan eventRecord, 2048)
+	eventTracker := make(map[StreamId]map[string]int)
+	var eventTrackerMu sync.Mutex
+
+	tc := &gapRecoveryTestContext{
+		tt:             tt,
+		ctx:            ctx,
+		require:        require,
+		client:         client0,
+		wallet:         wallet,
+		spaceId:        spaceId,
+		nodeRegistry:   nodeRegistry,
+		cookieStore:    cookieStore,
+		dbPool:         poolInfo.Pool,
+		dbCloser:       dbCloser,
+		streamEvents:   streamEvents,
+		eventTracker:   eventTracker,
+		eventTrackerMu: &eventTrackerMu,
+	}
+
+	t.Cleanup(func() {
+		poolInfo.Pool.Close()
+		dbCloser()
+	})
+
+	return tc
+}
+
+// createMultiSyncRunner creates a MultiSyncRunner with the given cookie store
+func (tc *gapRecoveryTestContext) createMultiSyncRunner() *track_streams.MultiSyncRunner {
+	return tc.createMultiSyncRunnerWithPersistence(false)
+}
+
+// createMultiSyncRunnerWithPersistence creates a MultiSyncRunner with configurable cookie persistence
+func (tc *gapRecoveryTestContext) createMultiSyncRunnerWithPersistence(enablePersistence bool) *track_streams.MultiSyncRunner {
+	return track_streams.NewMultiSyncRunner(
+		infra.NewMetricsFactory(nil, "", ""),
+		tc.tt.btc.OnChainConfig,
+		[]nodes.NodeRegistry{tc.nodeRegistry},
+		makeTrackedStreamConstructorWithPersistence(tc.streamEvents, enablePersistence),
+		config.StreamTrackingConfig{
+			StreamsPerSyncSession:     10,
+			NumWorkers:                2,
+			MaxConcurrentNodeRequests: 2,
+		},
+		nil,            // otelTracer
+		tc.cookieStore, // cookieStore
+	)
+}
+
+// createChannelWithMiniblocks creates a channel, adds messages, and creates miniblocks
+func (tc *gapRecoveryTestContext) createChannelWithMiniblocks(
+	numMessages int,
+) (StreamId, *MiniblockRef, []MiniblockRef) {
+	channelId := testutils.MakeChannelId(tc.spaceId)
+	channel, channelHash, err := createChannel(
+		tc.ctx,
+		tc.wallet,
+		tc.client,
+		tc.spaceId,
+		channelId,
+		&StreamSettings{DisableMiniblockCreation: true},
+	)
+	tc.require.NoError(err, "createChannel failed")
+	tc.require.NotNil(channel)
+
+	tc.eventTrackerMu.Lock()
+	tc.eventTracker[channelId] = make(map[string]int)
+	tc.eventTrackerMu.Unlock()
+
+	// Create initial miniblock
+	var miniblockRefs []MiniblockRef
+	_, miniblockRefs = createAndVerifyMiniblockWithRetry(tc.ctx, tc.client, channelId, miniblockRefs, tc.require)
+
+	// Add messages and create miniblocks for each
+	for i := 0; i < numMessages; i++ {
+		msg := fmt.Sprintf("msg%d", i)
+		addMessageToChannel(tc.ctx, tc.client, tc.wallet, msg, channelId, channelHash, tc.require)
+		_, miniblockRefs = createAndVerifyMiniblockWithRetry(tc.ctx, tc.client, channelId, miniblockRefs, tc.require)
+	}
+
+	return channelId, channelHash, miniblockRefs
+}
+
+// addStreamToRunner adds a stream to the MultiSyncRunner
+func (tc *gapRecoveryTestContext) addStreamToRunner(
+	msr *track_streams.MultiSyncRunner,
+	channelId StreamId,
+	applyHistory bool,
+	fromMiniblockNum int64,
+) {
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
+		tc.ctx,
+		channelId,
+	)
+	tc.require.NoError(err)
+
+	msr.AddStream(
+		tc.ctx,
+		&river.StreamWithId{
+			Id: channelId,
+			Stream: river.Stream{
+				Nodes:     streamOnChain.Nodes,
+				Reserved0: uint64(tc.tt.opts.replicationFactor),
+			},
+		},
+		track_streams.ApplyHistoricalContent{
+			Enabled:          applyHistory,
+			FromMiniblockNum: fromMiniblockNum,
+		},
+	)
+}
+
+// TestGapRecovery_SameSnapshot tests that no gap recovery occurs when
+// persisted state matches the server's snapshot (CASE A).
+func TestGapRecovery_SameSnapshot(t *testing.T) {
+	tc := setupGapRecoveryTest(t)
+
+	// Create channel with messages
+	numMessages := 3
+	channelId, _, miniblockRefs := tc.createChannelWithMiniblocks(numMessages)
+
+	// The last miniblock is our current position
+	lastMiniblock := miniblockRefs[len(miniblockRefs)-1]
+
+	// Pre-populate cookie store with current position (same as server)
+	cookie := &SyncCookie{
+		StreamId:          channelId[:],
+		MinipoolGen:       lastMiniblock.Num + 1,
+		PrevMiniblockHash: lastMiniblock.Hash[:],
+	}
+	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie, lastMiniblock.Num)
+	tc.require.NoError(err)
+
+	// Start event collector
+	updateTracker := func(record eventRecord, ciphertext string) {
+		if _, exists := tc.eventTracker[record.streamId]; !exists {
+			tc.eventTracker[record.streamId] = make(map[string]int)
+		}
+		tc.eventTracker[record.streamId][ciphertext]++
+	}
+	cancelCollector, eventCollectorDone := startEventCollector(
+		tc.ctx, tc.streamEvents, tc.eventTrackerMu, updateTracker,
+	)
+	defer cancelCollector()
+
+	// Create and start MultiSyncRunner with cookie store
+	msr := tc.createMultiSyncRunner()
+	go msr.Run(tc.ctx)
+
+	// Add stream - should resume from persisted position
+	tc.addStreamToRunner(msr, channelId, true, lastMiniblock.Num)
+
+	// Wait a bit for sync to establish
+	time.Sleep(2 * time.Second)
+
+	// We shouldn't receive historical messages since we're at current position
+	tc.eventTrackerMu.Lock()
+	messageCount := len(tc.eventTracker[channelId])
+	tc.eventTrackerMu.Unlock()
+
+	tc.require.Equal(0, messageCount, "Should not receive historical messages when at current position")
+
+	// Add a new message to verify sync is working
+	newMsg := "new-msg-after-sync"
+	addMessageToChannel(tc.ctx, tc.client, tc.wallet, newMsg, channelId, &MiniblockRef{
+		Hash: lastMiniblock.Hash, Num: lastMiniblock.Num,
+	}, tc.require)
+
+	// Wait for new message
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		_, found := tc.eventTracker[channelId][newMsg]
+		return found
+	}, 10*time.Second, 100*time.Millisecond, "New message should be received")
+
+	cancelCollector()
+	<-eventCollectorDone
+}
+
+// TestGapRecovery_GapDetected tests that gap recovery fetches missing miniblocks
+// when there's a gap between persisted state and server snapshot (CASE B).
+func TestGapRecovery_GapDetected(t *testing.T) {
+	tc := setupGapRecoveryTest(t)
+
+	// Create channel with many messages
+	numMessages := 6
+	channelId, channelHash, miniblockRefs := tc.createChannelWithMiniblocks(numMessages)
+
+	tc.require.GreaterOrEqual(len(miniblockRefs), 4, "Need at least 4 miniblocks for gap test")
+
+	// Pre-populate cookie store with an OLD position (creates a gap)
+	// We processed up to miniblock 2, but server is at miniblock 6+
+	oldPosition := miniblockRefs[2]
+	cookie := &SyncCookie{
+		StreamId:          channelId[:],
+		MinipoolGen:       oldPosition.Num + 1,
+		PrevMiniblockHash: oldPosition.Hash[:],
+	}
+	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie, oldPosition.Num)
+	tc.require.NoError(err)
+
+	// Start event collector
+	updateTracker := func(record eventRecord, ciphertext string) {
+		if _, exists := tc.eventTracker[record.streamId]; !exists {
+			tc.eventTracker[record.streamId] = make(map[string]int)
+		}
+		tc.eventTracker[record.streamId][ciphertext]++
+	}
+	cancelCollector, eventCollectorDone := startEventCollector(
+		tc.ctx, tc.streamEvents, tc.eventTrackerMu, updateTracker,
+	)
+	defer cancelCollector()
+
+	// Create and start MultiSyncRunner
+	msr := tc.createMultiSyncRunner()
+	go msr.Run(tc.ctx)
+
+	// Add stream with historical content from persisted position
+	// Gap recovery should fetch miniblocks 3, 4, 5... up to server snapshot
+	tc.addStreamToRunner(msr, channelId, true, oldPosition.Num+1)
+
+	// Wait for gap messages to be received
+	// We should receive messages from miniblocks after our persisted position
+	expectedGapMessages := numMessages - 2 // msg2, msg3, msg4, msg5
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		return len(tc.eventTracker[channelId]) >= expectedGapMessages
+	}, 15*time.Second, 200*time.Millisecond, "Should receive gap messages")
+
+	// Verify we received the expected messages
+	tc.eventTrackerMu.Lock()
+	channelMessages := tc.eventTracker[channelId]
+	tc.eventTrackerMu.Unlock()
+
+	for i := 2; i < numMessages; i++ {
+		expectedMsg := fmt.Sprintf("msg%d", i)
+		_, found := channelMessages[expectedMsg]
+		tc.require.True(found, "Should have received gap message: %s", expectedMsg)
+	}
+
+	// Add a new message to verify real-time sync works
+	newMsg := "new-msg-after-gap"
+	addMessageToChannel(tc.ctx, tc.client, tc.wallet, newMsg, channelId, channelHash, tc.require)
+
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		_, found := tc.eventTracker[channelId][newMsg]
+		return found
+	}, 10*time.Second, 100*time.Millisecond, "New message should be received after gap recovery")
+
+	cancelCollector()
+	<-eventCollectorDone
+}
+
+// TestGapRecovery_CookiePersistence tests that cookies are persisted during sync
+// and can be used to resume from the correct position.
+func TestGapRecovery_CookiePersistence(t *testing.T) {
+	tc := setupGapRecoveryTest(t)
+
+	// Create channel with messages
+	numMessages := 3
+	channelId, channelHash, _ := tc.createChannelWithMiniblocks(numMessages)
+
+	// Verify no cookie exists initially
+	cookie, _, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+	tc.require.NoError(err)
+	tc.require.Nil(cookie, "No cookie should exist initially")
+
+	// Start event collector
+	updateTracker := func(record eventRecord, ciphertext string) {
+		if _, exists := tc.eventTracker[record.streamId]; !exists {
+			tc.eventTracker[record.streamId] = make(map[string]int)
+		}
+		tc.eventTracker[record.streamId][ciphertext]++
+	}
+	cancelCollector, eventCollectorDone := startEventCollector(
+		tc.ctx, tc.streamEvents, tc.eventTrackerMu, updateTracker,
+	)
+	defer cancelCollector()
+
+	// Create and start MultiSyncRunner with cookie store AND persistence enabled
+	msr := tc.createMultiSyncRunnerWithPersistence(true) // Enable persistence
+	go msr.Run(tc.ctx)
+
+	// Add stream with full historical content
+	tc.addStreamToRunner(msr, channelId, true, 0)
+
+	// Wait for all messages to be received
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		return len(tc.eventTracker[channelId]) >= numMessages
+	}, 15*time.Second, 100*time.Millisecond, "Should receive all messages")
+
+	// Add another message and create a miniblock to trigger cookie persistence
+	addMessageToChannel(tc.ctx, tc.client, tc.wallet, "trigger-persist", channelId, channelHash, tc.require)
+
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		_, found := tc.eventTracker[channelId]["trigger-persist"]
+		return found
+	}, 10*time.Second, 100*time.Millisecond, "Trigger message should be received")
+
+	// Create a miniblock to advance minipool gen
+	_, err = makeMiniblock(tc.ctx, tc.client, channelId, false, -1)
+	tc.require.NoError(err)
+
+	// Wait for cookie to be persisted
+	time.Sleep(2 * time.Second)
+
+	// Verify cookie was persisted
+	cookie, snapshotMb, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+	tc.require.NoError(err)
+	tc.require.NotNil(cookie, "Cookie should be persisted after sync")
+	tc.require.Greater(cookie.MinipoolGen, int64(0), "MinipoolGen should be > 0")
+	tc.require.GreaterOrEqual(snapshotMb, int64(0), "SnapshotMiniblock should be >= 0")
+
+	cancelCollector()
+	<-eventCollectorDone
 }
