@@ -1,4 +1,4 @@
-import type { PlainMessage, SlashCommand } from '@towns-protocol/proto'
+import type { BotCommand } from '@towns-protocol/bot'
 
 // Those commands will be registered to the bot as soon as the bot is initialized
 // and will be available in the slash command autocomplete.
@@ -11,6 +11,6 @@ const commands = [
         name: 'time',
         description: 'Get the current time',
     },
-] as const satisfies PlainMessage<SlashCommand>[]
+] as const satisfies BotCommand[]
 
 export default commands

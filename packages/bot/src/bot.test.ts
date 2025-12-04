@@ -27,7 +27,7 @@ import {
     type ChannelMessageEvent,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
-import type { BasePayload, Bot, BotPayload, DecryptedInteractionResponse } from './bot'
+import type { BasePayload, Bot, BotCommand, BotPayload, DecryptedInteractionResponse } from './bot'
 import { bin_fromHexString, bin_toBase64, check, dlog } from '@towns-protocol/utils'
 import { makeTownsBot } from './bot'
 import { ethers } from 'ethers'
@@ -39,7 +39,6 @@ import {
     InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
     type PlainMessage,
-    type SlashCommand,
 } from '@towns-protocol/proto'
 import {
     AppRegistryDapp,
@@ -68,7 +67,7 @@ const WEBHOOK_URL = `https://localhost:${process.env.BOT_PORT}/webhook`
 const SLASH_COMMANDS = [
     { name: 'help', description: 'Get help with bot commands' },
     { name: 'status', description: 'Check bot status' },
-] as const satisfies PlainMessage<SlashCommand>[]
+] as const satisfies BotCommand[]
 
 type OnMessageType = BotPayload<'message'>
 type OnChannelJoin = BotPayload<'channelJoin'>
