@@ -67,6 +67,11 @@ type streamSyncInitRecord struct {
 	minipoolGen       int64
 	prevMiniblockHash []byte
 	remotes           nodes.StreamNodes
+
+	// Persisted state for gap detection on restart.
+	// These values are loaded from the cookie store when adding a stream.
+	persistedSnapshotMiniblock int64 // Last persisted snapshot miniblock number
+	persistedMinipoolGen       int64 // Last persisted minipoolGen (to avoid redundant writes)
 }
 
 // Run a sync session, including parsing out the streaming sync response and multiplexing to the
