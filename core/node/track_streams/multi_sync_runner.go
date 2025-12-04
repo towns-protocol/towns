@@ -269,7 +269,29 @@ func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
 	}
 }
 
+// maybePersistCookie persists the sync cookie if configured and the minipoolGen has changed.
+func (ssr *syncSessionRunner) maybePersistCookie(
+	streamId shared.StreamId,
+	trackedView events.TrackedStreamView,
+	record *streamSyncInitRecord,
+	cookie *protocol.SyncCookie,
+) {
+	if ssr.cookieStore == nil ||
+		cookie.MinipoolGen == record.persistedMinipoolGen ||
+		!trackedView.ShouldPersistCookie(ssr.syncCtx) {
+		return
+	}
+
+	if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+		logging.FromCtx(ssr.syncCtx).Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
+	} else {
+		// Update persisted state in record to avoid redundant writes
+		record.persistedMinipoolGen = cookie.MinipoolGen
+	}
+}
+
 // handleReset processes a sync reset response for a stream.
+// it will init the trackedView, and will notify historical events if needed
 func (ssr *syncSessionRunner) handleReset(
 	streamAndCookie *protocol.StreamAndCookie,
 	record *streamSyncInitRecord,
@@ -317,7 +339,6 @@ func (ssr *syncSessionRunner) handleReset(
 	}
 
 	// Send notifications for historical miniblocks if enabled
-	// No need to call ApplyBlock since the view is already up to date from the init call
 	if record.applyHistoricalContent.Enabled {
 		startIdx := record.applyHistoricalContent.FromMiniblockNum - firstMiniblockNum
 		if startIdx < 0 {
@@ -393,20 +414,7 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 
-	// Persist cookie if configured and the tracked view says we should persist for this stream.
-	// Only persist when minipoolGen changes (i.e., a new miniblock was created).
-	cookie := streamAndCookie.NextSyncCookie
-	if ssr.cookieStore != nil &&
-		trackedView.ShouldPersistCookie(ssr.syncCtx) &&
-		cookie.MinipoolGen != record.persistedMinipoolGen {
-
-		if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
-			log.Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
-		} else {
-			// Update persisted state in record to avoid redundant writes
-			record.persistedMinipoolGen = cookie.MinipoolGen
-		}
-	}
+	ssr.maybePersistCookie(streamId, trackedView, record, streamAndCookie.NextSyncCookie)
 }
 
 func (ssr *syncSessionRunner) processSyncUpdate(update *protocol.SyncStreamsResponse) {
@@ -1030,12 +1038,10 @@ func (msr *MultiSyncRunner) AddStream(
 		if err != nil {
 			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
 		} else if cookie != nil {
-			// Store persisted state for gap detection and avoiding redundant writes
 			persistedMinipoolGen = cookie.MinipoolGen
-			// Apply historical content from the persisted position onwards
 			applyHistoricalContent = ApplyHistoricalContent{
 				Enabled:          true,
-				FromMiniblockNum: cookie.MinipoolGen,
+				FromMiniblockNum: persistedMinipoolGen,
 			}
 			logging.FromCtx(ctx).Infow("Loaded sync cookie for gap detection",
 				"streamId", streamId,
