@@ -66,6 +66,7 @@ func setupMetadataShardTest(t *testing.T) metadataTestEnv {
 				StreamTrimActivationFactor:         1,
 			},
 		},
+		nil,
 		5,
 	)
 	require.NoError(t, err)
