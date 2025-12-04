@@ -385,6 +385,7 @@ export class Client
 
         const syncedStreamsControllerDelegate = {
             startSyncStreams: async (lastAccessedAt: Record<string, number>) => {
+                this.streamsView.setLastAccessedAt(lastAccessedAt)
                 this.streams.startSyncStreams(lastAccessedAt)
                 this.decryptionExtensions?.start()
             },
@@ -3080,6 +3081,7 @@ export class Client
         this.syncedStreamsExtensions.setHighPriorityStreams(streamIds)
         this.persistenceStore.setHighPriorityStreams(streamIds)
         this.streams.setHighPriorityStreams(streamIds)
+        this.streamsView.setHighPriorityStreams(streamIds)
     }
 
     public async ensureOutboundSession(streamId: string, opts?: EnsureOutboundSessionOpts) {
