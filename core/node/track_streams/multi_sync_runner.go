@@ -305,27 +305,45 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	record.minipoolGen = streamAndCookie.NextSyncCookie.MinipoolGen
 	record.prevMiniblockHash = streamAndCookie.NextSyncCookie.PrevMiniblockHash
 
-	// Persist cookie if configured and the tracked view says we should persist for this stream
-	if ssr.cookieStore != nil && trackedView.ShouldPersistCookie(ssr.syncCtx) {
-		cookie := streamAndCookie.NextSyncCookie
+	// Persist cookie if configured and the tracked view says we should persist for this stream.
+	// Only persist when minipoolGen changes (i.e., a new miniblock was created).
+	cookie := streamAndCookie.NextSyncCookie
+	if ssr.cookieStore != nil &&
+		trackedView.ShouldPersistCookie(ssr.syncCtx) &&
+		cookie.MinipoolGen != record.persistedMinipoolGen {
+
+		// Determine the snapshot miniblock number to persist.
+		// If this is a reset response, update from the first miniblock.
+		// Otherwise, keep the existing persisted value.
+		snapshotMiniblock := record.persistedSnapshotMiniblock
+		if reset && firstMiniblockErr == nil {
+			snapshotMiniblock = firstMiniblockNum
+		}
+
+		persistCookie := cookie
+		persistSnapshotMiniblock := snapshotMiniblock
 		go func() {
 			log.Infow(
 				"persisting sync cookie",
-				"streamId",
-				streamId,
-				"nodeAddress",
-				common.BytesToAddress(cookie.NodeAddress),
-				"minipoolGen",
-				cookie.MinipoolGen,
-				"syncId",
-				ssr.syncer.GetSyncId(),
+				"streamId", streamId,
+				"nodeAddress", common.BytesToAddress(persistCookie.NodeAddress),
+				"minipoolGen", persistCookie.MinipoolGen,
+				"snapshotMiniblock", persistSnapshotMiniblock,
+				"syncId", ssr.syncer.GetSyncId(),
 			)
-			// For now, pass 0 for snapshotMiniblock - this will be updated in a future step
-			// when we implement gap detection logic
-			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie, 0); err != nil {
+			if err := ssr.cookieStore.PersistSyncCookie(
+				ssr.rootCtx,
+				streamId,
+				persistCookie,
+				persistSnapshotMiniblock,
+			); err != nil {
 				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
 			}
 		}()
+
+		// Update persisted state in record to avoid redundant writes
+		record.persistedMinipoolGen = cookie.MinipoolGen
+		record.persistedSnapshotMiniblock = snapshotMiniblock
 	}
 }
 
