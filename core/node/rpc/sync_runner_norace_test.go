@@ -1153,7 +1153,9 @@ func (tc *gapRecoveryTestContext) createMultiSyncRunner() *track_streams.MultiSy
 }
 
 // createMultiSyncRunnerWithPersistence creates a MultiSyncRunner with configurable cookie persistence
-func (tc *gapRecoveryTestContext) createMultiSyncRunnerWithPersistence(enablePersistence bool) *track_streams.MultiSyncRunner {
+func (tc *gapRecoveryTestContext) createMultiSyncRunnerWithPersistence(
+	enablePersistence bool,
+) *track_streams.MultiSyncRunner {
 	return track_streams.NewMultiSyncRunner(
 		infra.NewMetricsFactory(nil, "", ""),
 		tc.tt.btc.OnChainConfig,

@@ -116,11 +116,12 @@ func TestHandleGapOnReset_CaseB_GapDetected(t *testing.T) {
 	// Mock GetMiniblocks to return gap miniblocks
 	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
 		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 200
-	})).Return(&connect.Response[protocol.GetMiniblocksResponse]{
-		Msg: &protocol.GetMiniblocksResponse{
-			Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
-		},
-	}, nil)
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{
+				Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
+			},
+		}, nil)
 
 	// Mock SendEventNotification - expect it to be called for events in gap miniblocks
 	// (Our test miniblocks have no events, so this won't be called, but that's okay)
@@ -296,11 +297,12 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
 	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
 		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 200
-	})).Return(&connect.Response[protocol.GetMiniblocksResponse]{
-		Msg: &protocol.GetMiniblocksResponse{
-			Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
-		},
-	}, nil)
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{
+				Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
+			},
+		}, nil)
 
 	// Create trackedViewForStream function that returns our mock
 	trackedViewForStream := func(streamId shared.StreamId, streamAndCookie *protocol.StreamAndCookie) (events.TrackedStreamView, error) {
