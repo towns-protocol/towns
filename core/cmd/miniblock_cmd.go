@@ -200,6 +200,10 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	if err := tracker.flushInterval(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
