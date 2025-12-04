@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/cobra"
+
+	"github.com/towns-protocol/towns/core/node/base"
 
 	"github.com/towns-protocol/towns/core/contracts/river"
 	"github.com/towns-protocol/towns/core/node/crypto"
@@ -141,12 +145,32 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 			batchEnd = last
 		}
 
-		logs, err := blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
-			FromBlock: new(big.Int).SetUint64(batchStart),
-			ToBlock:   new(big.Int).SetUint64(batchEnd),
-			Addresses: registryContract.Addresses,
-			Topics:    [][]common.Hash{{registryContract.StreamUpdatedEventTopic}},
-		})
+		var logs []types.Log
+
+		backoff := base.BackoffTracker{
+			NextDelay:   250 * time.Millisecond,
+			MaxAttempts: 20,
+			Multiplier:  3,
+			Divisor:     2,
+		}
+
+		for {
+			logs, err = blockchain.Client.FilterLogs(ctx, ethereum.FilterQuery{
+				FromBlock: new(big.Int).SetUint64(batchStart),
+				ToBlock:   new(big.Int).SetUint64(batchEnd),
+				Addresses: registryContract.Addresses,
+				Topics:    [][]common.Hash{{registryContract.StreamUpdatedEventTopic}},
+			})
+
+			if err == nil {
+				break
+			}
+
+			if err := backoff.Wait(ctx, err); err != nil {
+				return err
+			}
+		}
+
 		if err != nil {
 			return fmt.Errorf("failed to filter logs for blocks %d-%d: %w", batchStart, batchEnd, err)
 		}
