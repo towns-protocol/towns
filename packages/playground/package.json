@@ -6,7 +6,7 @@
     "scripts": {
         "build": "tsc && vite build",
         "dev": "vite",
-        "dev:local": "yarn load-env vite",
+        "dev:local": "bun run load-env vite",
         "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
         "load-env": "dotenv -e ../generated/deployments/local_dev/.env.vite --",
         "preview": "vite preview"
@@ -53,6 +53,7 @@
     "devDependencies": {
         "@towns-protocol/eslint-config": "workspace:^",
         "@towns-protocol/prettier-config": "workspace:^",
+        "@types/bun": "^1.3.1",
         "@types/node": "^20.14.8",
         "@types/react": "^19.1.16",
         "@types/react-dom": "^19.1.7",
