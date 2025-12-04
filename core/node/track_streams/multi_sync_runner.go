@@ -309,7 +309,9 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 				"syncId",
 				ssr.syncer.GetSyncId(),
 			)
-			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+			// For now, pass 0 for snapshotMiniblock - this will be updated in a future step
+			// when we implement gap detection logic
+			if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie, 0); err != nil {
 				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
 			}
 		}()
@@ -933,7 +935,7 @@ func (msr *MultiSyncRunner) AddStream(
 	// (e.g., channel members) which isn't available yet. Instead, just try to load -
 	// if a cookie exists, it means we previously determined this stream needed persistence.
 	if msr.cookieStore != nil {
-		cookie, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
+		cookie, snapshotMiniblock, updatedAt, err := msr.cookieStore.GetSyncCookie(ctx, streamId)
 		if err != nil {
 			logging.FromCtx(ctx).Warnw("Failed to load sync cookie", "streamId", streamId, "error", err)
 		} else if cookie != nil {
@@ -948,6 +950,7 @@ func (msr *MultiSyncRunner) AddStream(
 				"streamId", streamId,
 				"minipoolGen", minipoolGen,
 				"prevMiniblockHash", prevMiniblockHash,
+				"snapshotMiniblock", snapshotMiniblock,
 				"updatedAt", updatedAt,
 			)
 		}
