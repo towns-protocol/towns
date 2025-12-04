@@ -181,13 +181,14 @@ func (ssr *syncSessionRunner) AddStream(
 	return nil
 }
 
-// detectGapOnReset checks for gaps between persisted state and the server's current snapshot.
+// handleGapOnReset checks for gaps between persisted state and the server's current snapshot,
+// and if a gap is detected, fetches the missing miniblocks and sends notifications for their events.
 // This is called on the first reset response when we have persisted state from a previous run.
-// Returns true if a gap was detected that requires fetching missing miniblocks.
-func (ssr *syncSessionRunner) detectGapOnReset(
+func (ssr *syncSessionRunner) handleGapOnReset(
 	record *streamSyncInitRecord,
+	trackedView events.TrackedStreamView,
 	miniblocks []*protocol.Miniblock,
-) bool {
+) {
 	log := logging.FromCtx(ssr.syncCtx)
 	streamId := record.streamId
 
@@ -197,7 +198,7 @@ func (ssr *syncSessionRunner) detectGapOnReset(
 			"streamId", streamId,
 			"error", err,
 		)
-		return false
+		return
 	}
 
 	if record.persistedSnapshotMiniblock == serverSnapshotMb {
@@ -208,20 +209,44 @@ func (ssr *syncSessionRunner) detectGapOnReset(
 			"serverSnapshotMb", serverSnapshotMb,
 			"persistedMinipoolGen", record.persistedMinipoolGen,
 		)
-		return false
+		return
 	}
 
 	if record.persistedMinipoolGen <= serverSnapshotMb {
 		// CASE B: Gap detected - we missed miniblocks before the new snapshot.
-		// Need to fetch missing miniblocks from persistedMinipoolGen to serverSnapshotMb.
-		log.Warnw("Gap detection: gap detected, missing miniblocks before new snapshot",
+		// Fetch missing miniblocks and notify events.
+		log.Warnw("Gap detection: gap detected, fetching missing miniblocks",
 			"streamId", streamId,
 			"persistedSnapshotMiniblock", record.persistedSnapshotMiniblock,
 			"persistedMinipoolGen", record.persistedMinipoolGen,
 			"serverSnapshotMb", serverSnapshotMb,
 			"gapSize", serverSnapshotMb-record.persistedMinipoolGen,
 		)
-		return true
+
+		gapMiniblocks, err := fetchMiniblocks(
+			ssr.syncCtx,
+			ssr.nodeRegistry,
+			ssr.node,
+			streamId,
+			record.persistedMinipoolGen,
+			serverSnapshotMb,
+		)
+		if err != nil {
+			log.Errorw("Gap recovery: failed to fetch missing miniblocks",
+				"streamId", streamId,
+				"fromInclusive", record.persistedMinipoolGen,
+				"toExclusive", serverSnapshotMb,
+				"error", err,
+			)
+			return
+		}
+
+		log.Infow("Gap recovery: fetched missing miniblocks, sending notifications",
+			"streamId", streamId,
+			"numMiniblocks", len(gapMiniblocks),
+		)
+		ssr.notifyEventsFromMiniblocks(streamId, trackedView, gapMiniblocks)
+		return
 	}
 
 	// CASE C: Server snapshot is older than our persisted position.
@@ -233,7 +258,37 @@ func (ssr *syncSessionRunner) detectGapOnReset(
 		"persistedMinipoolGen", record.persistedMinipoolGen,
 		"serverSnapshotMb", serverSnapshotMb,
 	)
-	return false
+}
+
+// notifyEventsFromMiniblocks sends notifications for all events in the given miniblocks.
+// This is used for gap recovery to process events from miniblocks that were missed during downtime.
+func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
+	streamId shared.StreamId,
+	trackedView events.TrackedStreamView,
+	miniblocks []*protocol.Miniblock,
+) {
+	log := logging.FromCtx(ssr.syncCtx)
+
+	for _, block := range miniblocks {
+		for _, event := range block.GetEvents() {
+			parsedEvent, err := events.ParseEvent(event)
+			if err != nil {
+				log.Errorw("Failed to parse event from gap miniblock",
+					"streamId", streamId,
+					"eventHash", event.Hash,
+					"error", err,
+				)
+				continue
+			}
+			if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
+				log.Errorw("Error sending notification for gap event",
+					"streamId", streamId,
+					"eventHash", parsedEvent.Hash,
+					"error", err,
+				)
+			}
+		}
+	}
 }
 
 func (ssr *syncSessionRunner) applyUpdateToStream(
@@ -273,10 +328,9 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		ssr.metrics.TrackedStreams.With(labels).Inc()
 		record.trackedView = trackedView
 
-		// Gap detection: Check if we have persisted state and detect gaps on restart
+		// Gap recovery: Check if we have persisted state and handle gaps on restart
 		if record.persistedSnapshotMiniblock > 0 {
-			// TODO: Use the return value in Step 9 to trigger gap recovery
-			_ = ssr.detectGapOnReset(record, streamAndCookie.GetMiniblocks())
+			ssr.handleGapOnReset(record, trackedView, streamAndCookie.GetMiniblocks())
 		}
 	}
 
