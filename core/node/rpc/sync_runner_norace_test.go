@@ -1265,7 +1265,7 @@ func TestGapRecovery_SameSnapshot(t *testing.T) {
 		MinipoolGen:       lastMiniblock.Num + 1,
 		PrevMiniblockHash: lastMiniblock.Hash[:],
 	}
-	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie, lastMiniblock.Num)
+	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie)
 	tc.require.NoError(err)
 
 	// Start event collector
@@ -1336,7 +1336,7 @@ func TestGapRecovery_GapDetected(t *testing.T) {
 		MinipoolGen:       oldPosition.Num + 1,
 		PrevMiniblockHash: oldPosition.Hash[:],
 	}
-	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie, oldPosition.Num)
+	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie)
 	tc.require.NoError(err)
 
 	// Start event collector
@@ -1405,7 +1405,7 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	channelId, channelHash, miniblockRefs := tc.createChannelWithMiniblocks(1)
 
 	// Verify no cookie exists initially
-	cookie, _, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+	cookie, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 	tc.require.NoError(err)
 	tc.require.Nil(cookie, "No cookie should exist initially")
 
@@ -1426,7 +1426,7 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 
 	// Wait for cookie to be persisted (happens when miniblock is received via sync)
 	tc.require.Eventually(func() bool {
-		cookie, _, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+		cookie, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 		if err != nil {
 			return false
 		}
@@ -1434,9 +1434,8 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	}, 10*time.Second, 500*time.Millisecond, "Cookie should be persisted after miniblock creation")
 
 	// Verify cookie has correct values
-	cookie, snapshotMb, _, err := tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
+	cookie, _, err = tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 	tc.require.NoError(err)
 	tc.require.NotNil(cookie, "Cookie should be persisted")
 	tc.require.GreaterOrEqual(cookie.MinipoolGen, newLastMiniblock.Num, "MinipoolGen should be >= lastMiniblock")
-	tc.require.GreaterOrEqual(snapshotMb, int64(0), "SnapshotMiniblock should be >= 0")
 }

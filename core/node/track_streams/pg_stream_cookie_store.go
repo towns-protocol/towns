@@ -36,31 +36,30 @@ func NewPostgresStreamCookieStore(pool *pgxpool.Pool, tableName string) *Postgre
 	}
 }
 
-// GetSyncCookie retrieves a stored cookie and snapshot miniblock for a stream.
-// Returns (nil, 0, zero time, nil) if no cookie exists for the stream.
+// GetSyncCookie retrieves a stored cookie for a stream.
+// Returns (nil, zero time, nil) if no cookie exists for the stream.
 func (s *PostgresStreamCookieStore) GetSyncCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
-) (*protocol.SyncCookie, int64, time.Time, error) {
+) (*protocol.SyncCookie, time.Time, error) {
 	var (
 		minipoolGen       int64
 		prevMiniblockHash []byte
-		snapshotMiniblock int64
 		updatedAt         time.Time
 	)
 
 	err := s.pool.QueryRow(
 		ctx,
-		`SELECT minipool_gen, prev_miniblock_hash, snapshot_miniblock, updated_at
+		`SELECT minipool_gen, prev_miniblock_hash, updated_at
 		 FROM `+s.tableName+`
 		 WHERE stream_id = $1`,
 		streamID,
-	).Scan(&minipoolGen, &prevMiniblockHash, &snapshotMiniblock, &updatedAt)
+	).Scan(&minipoolGen, &prevMiniblockHash, &updatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, 0, time.Time{}, nil // No cookie exists, return nil without error
+			return nil, time.Time{}, nil // No cookie exists, return nil without error
 		}
-		return nil, 0, time.Time{}, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+		return nil, time.Time{}, base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
 			Message("failed to get sync cookie").
 			Tag("streamId", streamID)
 	}
@@ -69,16 +68,14 @@ func (s *PostgresStreamCookieStore) GetSyncCookie(
 		StreamId:          streamID[:],
 		MinipoolGen:       minipoolGen,
 		PrevMiniblockHash: prevMiniblockHash,
-	}, snapshotMiniblock, updatedAt, nil
+	}, updatedAt, nil
 }
 
 // PersistSyncCookie stores or updates the sync cookie for a stream.
-// snapshotMiniblock is the miniblock number where the last snapshot was created.
 func (s *PostgresStreamCookieStore) PersistSyncCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 	cookie *protocol.SyncCookie,
-	snapshotMiniblock int64,
 ) error {
 	if cookie == nil {
 		return base.RiverError(protocol.Err_INVALID_ARGUMENT, "nil cookie").
@@ -87,18 +84,16 @@ func (s *PostgresStreamCookieStore) PersistSyncCookie(
 
 	_, err := s.pool.Exec(
 		ctx,
-		`INSERT INTO `+s.tableName+` (stream_id, minipool_gen, prev_miniblock_hash, snapshot_miniblock, updated_at)
-		 VALUES ($1, $2, $3, $4, NOW())
+		`INSERT INTO `+s.tableName+` (stream_id, minipool_gen, prev_miniblock_hash, updated_at)
+		 VALUES ($1, $2, $3, NOW())
 		 ON CONFLICT (stream_id)
 		 DO UPDATE SET
 		     minipool_gen = EXCLUDED.minipool_gen,
 		     prev_miniblock_hash = EXCLUDED.prev_miniblock_hash,
-		     snapshot_miniblock = EXCLUDED.snapshot_miniblock,
 		     updated_at = NOW()`,
 		streamID,
 		cookie.MinipoolGen,
 		cookie.PrevMiniblockHash,
-		snapshotMiniblock,
 	)
 	if err != nil {
 		return base.WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
