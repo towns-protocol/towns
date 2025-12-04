@@ -400,25 +400,12 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 		trackedView.ShouldPersistCookie(ssr.syncCtx) &&
 		cookie.MinipoolGen != record.persistedMinipoolGen {
 
-		go func() {
-			log.Infow(
-				"persisting sync cookie",
-				"streamId", streamId,
-				"nodeAddress", common.BytesToAddress(cookie.NodeAddress),
-				"minipoolGen", cookie.MinipoolGen,
-				"syncId", ssr.syncer.GetSyncId(),
-			)
-			if err := ssr.cookieStore.PersistSyncCookie(
-				ssr.rootCtx,
-				streamId,
-				cookie,
-			); err != nil {
-				log.Warnw("Failed to persist sync cookie", "streamId", streamId, "error", err)
-			}
-		}()
-
-		// Update persisted state in record to avoid redundant writes
-		record.persistedMinipoolGen = cookie.MinipoolGen
+		if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+			log.Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
+		} else {
+			// Update persisted state in record to avoid redundant writes
+			record.persistedMinipoolGen = cookie.MinipoolGen
+		}
 	}
 }
 
