@@ -103,7 +103,7 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 
 	miniblockInterval, err := strconv.ParseUint(args[0], 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid miniblock interval value: %s", args[1])
+		return fmt.Errorf("invalid miniblock interval value: %s", args[0])
 	}
 
 	start, err := strconv.ParseUint(args[1], 10, 64)
@@ -184,11 +184,7 @@ func runMiniblockProductionRateCmd(cmd *cobra.Command, args []string) error {
 					}
 				case *river.StreamMiniblockUpdate:
 					streamID = e.GetStreamId()
-					if streamID.Type() == shared.STREAM_MEDIA_BIN {
-						miniblockCount = int(e.LastMiniblockNum) + 1
-					} else {
-						miniblockCount = 1
-					}
+					miniblockCount = 1
 				default:
 					continue
 				}
