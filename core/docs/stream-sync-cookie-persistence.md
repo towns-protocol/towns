@@ -110,121 +110,173 @@ ON new miniblock WITH snapshot:
 
 ---
 
-## Implementation Steps
+## Implementation Steps (One at a Time)
 
-### Phase 1: Storage Layer Changes
+### Step 1: Add `snapshot_miniblock` Column to Existing Store
 
 **File: `core/node/track_streams/pg_stream_cookie_store.go`**
 
-Replace the existing `SyncCookieStore` interface with a new `SyncStateStore`:
+Add `snapshot_miniblock` column to the existing implementation without changing the interface yet.
+
+Changes:
+- Update `GetSyncCookie` to also return `snapshotMiniblock`
+- Update `PersistSyncCookie` to accept and store `snapshotMiniblock`
+- Update SQL queries to include the new column
+
+```sql
+-- Migration: Add column to existing table
+ALTER TABLE stream_sync_cookies
+ADD COLUMN IF NOT EXISTS snapshot_miniblock BIGINT NOT NULL DEFAULT 0;
+```
+
+---
+
+### Step 2: Add Helper to Extract Snapshot Miniblock Number
+
+**File: `core/node/track_streams/sync_helpers.go`** (new file)
 
 ```go
-type SyncStateStore interface {
-    GetSyncState(ctx context.Context, streamID StreamId) (*PersistedSyncState, error)
-    PersistSyncState(ctx context.Context, state *PersistedSyncState) error
-    DeleteSyncState(ctx context.Context, streamID StreamId) error
-    GetAllSyncStates(ctx context.Context) (map[StreamId]*PersistedSyncState, error)
+func GetSnapshotMiniblockNum(miniblocks []*Miniblock) (int64, error) {
+    if len(miniblocks) == 0 {
+        return 0, errors.New("no miniblocks in response")
+    }
+    mbInfo, err := NewMiniblockInfoFromProto(miniblocks[0], nil, nil)
+    if err != nil {
+        return 0, err
+    }
+    return mbInfo.Ref.Num, nil
 }
 ```
 
-1. Create new database migration to add `snapshot_miniblock` column to existing table (or create new table)
-2. Implement the new interface in `PostgresSyncStateStore`
-3. Remove old `SyncCookieStore` interface and implementation
+---
 
-### Phase 2: Multi-Sync Runner Changes
+### Step 3: Update `streamSyncInitRecord` to Hold Persisted State
 
 **File: `core/node/track_streams/multi_sync_runner.go`**
 
-1. Modify `AddStream` to:
-   - Load persisted sync state (not just cookie)
-   - Always start with `cookie=nil` (fresh sync)
-   - Pass persisted state to the stream record for gap detection
-
-2. Modify `applyUpdateToStream` to:
-   - On first reset response, detect gaps using persisted state
-   - Fetch missing miniblocks if needed via `GetMiniblocks` RPC
-   - Process missing miniblocks before processing sync response
-
-3. Modify cookie persistence logic to:
-   - Track snapshot position from `StreamAndCookie.Snapshot`
-   - Update `snapshotMiniblock` when new snapshot is received
-   - Update `minipoolGen` on every miniblock
-
-### Phase 3: Gap Detection and Recovery
-
-**New file: `core/node/track_streams/sync_gap_recovery.go`**
+Add field to store the persisted snapshot miniblock for gap detection:
 
 ```go
-type SyncGapRecovery struct {
-    nodeRegistry nodes.NodeRegistry
-    // ...
+type streamSyncInitRecord struct {
+    // ... existing fields ...
+    persistedSnapshotMiniblock int64  // For gap detection on restart
 }
+```
 
-// DetectGap compares persisted state with sync response
-func (r *SyncGapRecovery) DetectGap(
-    persisted *PersistedSyncState,
-    syncResponse *StreamAndCookie,
-) (hasGap bool, gapStart int64, gapEnd int64)
+---
 
-// FetchMissingMiniblocks retrieves miniblocks to fill the gap
-func (r *SyncGapRecovery) FetchMissingMiniblocks(
+### Step 4: Update `AddStream` to Load and Store Persisted State
+
+**File: `core/node/track_streams/multi_sync_runner.go`**
+
+When adding a stream:
+1. Load persisted state (including `snapshotMiniblock`)
+2. Store `persistedSnapshotMiniblock` in the record
+3. Always start sync with `cookie=nil` (fresh sync, not resume)
+
+---
+
+### Step 5: Track Persisted State in Memory to Avoid Redundant DB Writes
+
+**File: `core/node/track_streams/multi_sync_runner.go`**
+
+Add fields to track what we've already persisted:
+
+```go
+type streamSyncInitRecord struct {
+    // ... existing fields ...
+    persistedSnapshotMiniblock int64  // Last persisted snapshot (for gap detection on restart)
+    persistedMinipoolGen       int64  // Last persisted minipoolGen (to avoid redundant writes)
+}
+```
+
+Persistence logic:
+- On each update, check if `NextSyncCookie.MinipoolGen != persistedMinipoolGen`
+- If same, skip persistence (no new miniblock was created)
+- If different (new miniblock):
+  - If update has snapshot: persist both `snapshotMiniblock` (from miniblock header) and `minipoolGen`
+  - If no snapshot: persist `minipoolGen` only, keep `snapshotMiniblock` unchanged
+  - Update `persistedMinipoolGen` (and `persistedSnapshotMiniblock` if changed) after successful persist
+
+---
+
+### Step 6: Add Gap Detection in `applyUpdateToStream`
+
+**File: `core/node/track_streams/multi_sync_runner.go`**
+
+On first reset response (when `record.trackedView == nil`):
+
+```go
+if record.persistedSnapshotMiniblock > 0 {
+    serverSnapshotMb := GetSnapshotMiniblockNum(streamAndCookie.Miniblocks)
+
+    if record.persistedSnapshotMiniblock == serverSnapshotMb {
+        // CASE A: Same snapshot - skip already-processed miniblocks
+    } else if record.minipoolGen <= serverSnapshotMb {
+        // CASE B: Gap detected - need to fetch missing miniblocks
+    } else {
+        // CASE C: Server snapshot older - log warning, continue normally
+    }
+}
+```
+
+---
+
+### Step 7: Add Miniblock Fetcher
+
+**File: `core/node/track_streams/miniblock_fetcher.go`** (new file)
+
+```go
+func FetchMiniblocks(
     ctx context.Context,
+    client StreamServiceClient,
     streamID StreamId,
     fromInclusive int64,
     toExclusive int64,
 ) ([]*Miniblock, error)
 ```
 
-### Phase 4: TrackedStreamView Changes
+Use existing `GetMiniblocks` RPC to fetch the gap.
 
-**File: `core/node/events/tracked_stream_view.go`**
+---
 
-1. Add method to process historical miniblocks with notifications:
+### Step 8: Add Method to Notify Events from Gap Miniblocks
+
+**File: `core/node/track_streams/multi_sync_runner.go`**
+
+Add helper method in `syncSessionRunner` or as a standalone function:
 
 ```go
-// ProcessHistoricalMiniblocks processes miniblocks fetched to fill a gap
-// Unlike ApplyBlock, this DOES send notifications for events
-func (ts *TrackedStreamViewImpl) ProcessHistoricalMiniblocks(
+func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
     ctx context.Context,
+    trackedView TrackedStreamView,
     miniblocks []*Miniblock,
 ) error
 ```
 
-2. Ensure proper deduplication to avoid double-notifying events
+Called from `applyUpdateToStream` when gap is detected. Parse each miniblock, extract events, call `SendEventNotification` for each.
 
-### Phase 5: Snapshot Position Tracking
+---
 
-**Changes needed to extract snapshot miniblock number:**
+### Step 9: Wire Up Gap Recovery in `applyUpdateToStream`
 
-The snapshot miniblock number is in the first miniblock's header. The `Miniblock.Header` field is an `Envelope` that needs to be parsed to extract the `MiniblockHeader`:
+**File: `core/node/track_streams/multi_sync_runner.go`**
 
-```go
-func GetSnapshotMiniblockNum(syncResponse *StreamAndCookie) (int64, error) {
-    if len(syncResponse.Miniblocks) == 0 {
-        return 0, errors.New("no miniblocks in response")
-    }
+When gap is detected:
+1. Initialize stream view from sync response (for current member state)
+2. Fetch gap miniblocks
+3. Notify events from gap miniblocks
+4. Notify events from sync response miniblocks
+5. Continue normal processing
 
-    // Parse the header envelope to get MiniblockHeader
-    headerEnvelope := syncResponse.Miniblocks[0].Header
-    parsedEvent, err := ParseEvent(headerEnvelope)
-    if err != nil {
-        return 0, err
-    }
+---
 
-    miniblockHeader := parsedEvent.Event.GetMiniblockHeader()
-    if miniblockHeader == nil {
-        return 0, errors.New("header is not a MiniblockHeader")
-    }
+### Step 10: Add Tests
 
-    return miniblockHeader.MiniblockNum, nil
-}
-```
-
-Alternatively, if using `MiniblockInfo` (which already parses this):
-```go
-mbInfo, err := NewMiniblockInfoFromProto(syncResponse.Miniblocks[0], syncResponse.Snapshot, nil)
-snapshotMiniblockNum := mbInfo.Ref.Num
-```
+1. Unit test for `GetSnapshotMiniblockNum`
+2. Unit test for gap detection logic
+3. Integration test for restart with same snapshot (CASE A)
+4. Integration test for restart with gap (CASE B)
 
 ---
 
