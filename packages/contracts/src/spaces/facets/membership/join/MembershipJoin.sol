@@ -503,15 +503,12 @@ abstract contract MembershipJoin is
         // Handle free renewal
         if (basePrice == 0) {
             // Refund any ETH sent
-            if (msg.value > 0) {
-                CurrencyTransfer.transferCurrency(
-                    _getMembershipCurrency(),
-                    address(this),
-                    payer,
-                    msg.value
-                );
-            }
-            _mintMembershipPoints(receiver, 0);
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                payer,
+                msg.value
+            );
             _renewSubscription(tokenId, uint64(duration));
             return;
         }
