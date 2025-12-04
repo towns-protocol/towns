@@ -5,6 +5,7 @@ import {
     SpaceReviewAction,
     SpaceReviewEventObject,
     TipSentEventObject,
+    type Address,
 } from '@towns-protocol/web3'
 import {
     PlainMessage,
@@ -493,7 +494,9 @@ export class Client
     }
 
     async initializeUser(opts?: {
+        forceInitialization?: boolean
         spaceId?: Uint8Array | string
+        dmPartnerUserId?: Address // other party's user ID for DM-based initialization
         encryptionDeviceInit?: EncryptionDeviceInitOpts
         appAddress?: Uint8Array | string
         skipSync?: boolean
@@ -510,8 +513,10 @@ export class Client
         const appAddress = opts?.appAddress ? ethereumAddressAsBytes(opts.appAddress) : undefined
 
         const spaceId = opts?.spaceId ? streamIdAsBytes(opts?.spaceId) : undefined
+        const dmPartnerAddress = opts?.dmPartnerUserId
         const initUserMetadata = {
             spaceId,
+            dmPartnerAddress,
         }
 
         const initializeUserStartTime = performance.now()
@@ -559,7 +564,10 @@ export class Client
         this.streams.onNetworkStatusChanged(isOnline)
     }
 
-    private async initUserStream(metadata?: { spaceId?: Uint8Array }, appAddress?: Uint8Array) {
+    private async initUserStream(
+        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Address },
+        appAddress?: Uint8Array,
+    ) {
         this.userStreamId = makeUserStreamId(this.userId)
         const userStream = this.createSyncedStream(this.userStreamId)
         if (!(await userStream.initializeFromPersistence())) {
@@ -573,6 +581,7 @@ export class Client
     private async initUserInboxStream(
         metadata?: {
             spaceId?: Uint8Array
+            dmPartnerAddress?: Address
         },
         appAddress?: Uint8Array,
     ) {
@@ -589,6 +598,7 @@ export class Client
     private async initUserMetadataStream(
         metadata?: {
             spaceId?: Uint8Array
+            dmPartnerAddress?: Address
         },
         appAddress?: Uint8Array,
     ) {
@@ -655,6 +665,7 @@ export class Client
     private async initUserSettingsStream(
         metadata?: {
             spaceId?: Uint8Array
+            dmPartnerAddress?: Address
         },
         appAddress?: Uint8Array,
     ) {
@@ -688,7 +699,7 @@ export class Client
 
     private async createUserStream(
         userStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Address },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userEvents = [
@@ -700,7 +711,13 @@ export class Client
                 }),
             ),
         ]
-        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
+        const dmPartnerAddressBytes = metadata?.dmPartnerAddress
+            ? addressFromUserId(metadata.dmPartnerAddress)
+            : undefined
+        const rpcMetadata = metadata
+            ? { spaceId: metadata.spaceId, dmPartnerAddress: dmPartnerAddressBytes }
+            : undefined
+        const encoded = rpcMetadata ? stripUndefinedMetadata(rpcMetadata) : rpcMetadata
         const response = await this.rpcClient.createStream({
             events: userEvents,
             streamId: streamIdAsBytes(userStreamId),
@@ -711,7 +728,7 @@ export class Client
 
     private async createUserMetadataStream(
         userMetadataStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Address },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userDeviceKeyEvents = [
@@ -723,7 +740,13 @@ export class Client
                 }),
             ),
         ]
-        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
+        const dmPartnerAddressBytes = metadata?.dmPartnerAddress
+            ? addressFromUserId(metadata.dmPartnerAddress)
+            : undefined
+        const rpcMetadata = metadata
+            ? { spaceId: metadata.spaceId, dmPartnerAddress: dmPartnerAddressBytes }
+            : undefined
+        const encoded = rpcMetadata ? stripUndefinedMetadata(rpcMetadata) : rpcMetadata
         const response = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
             streamId: streamIdAsBytes(userMetadataStreamId),
@@ -734,7 +757,7 @@ export class Client
 
     private async createUserInboxStream(
         userInboxStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Address },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userInboxEvents = [
@@ -746,7 +769,13 @@ export class Client
                 }),
             ),
         ]
-        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
+        const dmPartnerAddressBytes = metadata?.dmPartnerAddress
+            ? addressFromUserId(metadata.dmPartnerAddress)
+            : undefined
+        const rpcMetadata = metadata
+            ? { spaceId: metadata.spaceId, dmPartnerAddress: dmPartnerAddressBytes }
+            : undefined
+        const encoded = rpcMetadata ? stripUndefinedMetadata(rpcMetadata) : rpcMetadata
         const response = await this.rpcClient.createStream({
             events: userInboxEvents,
             streamId: streamIdAsBytes(userInboxStreamId),
@@ -757,7 +786,7 @@ export class Client
 
     private async createUserSettingsStream(
         inUserSettingsStreamId: string | Uint8Array,
-        metadata?: { spaceId?: Uint8Array },
+        metadata?: { spaceId?: Uint8Array; dmPartnerAddress?: Address },
         appAddress?: Uint8Array,
     ): Promise<ParsedStreamResponse> {
         const userSettingsStreamId = streamIdAsBytes(inUserSettingsStreamId)
@@ -771,7 +800,13 @@ export class Client
             ),
         ]
 
-        const encoded = metadata ? stripUndefinedMetadata(metadata) : metadata
+        const dmPartnerAddressBytes = metadata?.dmPartnerAddress
+            ? addressFromUserId(metadata.dmPartnerAddress)
+            : undefined
+        const rpcMetadata = metadata
+            ? { spaceId: metadata.spaceId, dmPartnerAddress: dmPartnerAddressBytes }
+            : undefined
+        const encoded = rpcMetadata ? stripUndefinedMetadata(rpcMetadata) : rpcMetadata
         const response = await this.rpcClient.createStream({
             events: userSettingsEvents,
             streamId: userSettingsStreamId,
