@@ -219,8 +219,7 @@ func (m *ephemeralStreamMonitor) migrateNormalizedEphemeralStream(
 		return retry
 	}
 
-	logging.FromCtx(ctx).Info("migrated ephemeral stream miniblocks to external storage",
-		"streamId", streamID)
+	logging.FromCtx(ctx).Debug("migrated ephemeral stream miniblocks to external storage", "streamId", streamID)
 
 	return false
 }
