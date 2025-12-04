@@ -173,7 +173,11 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
 
-    function test_revertWhen_renewMembershipNoEth() external givenAliceHasMintedMembership {
+    function test_revertWhen_renewMembershipNoEth()
+        external
+        givenMembershipHasPrice
+        givenAliceHasPaidMembership
+    {
         uint256 tokenId = _getAliceTokenId();
 
         vm.prank(alice);
@@ -341,27 +345,25 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         // Get protocol fee recipient and check initial balance
         (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
 
-        // Calculate protocol fee (should be 0 since base price is 0)
+        // Renewal price should be 0 for truly free memberships
         uint256 renewalPrice = freeMembership.getMembershipRenewalPrice(tokenId);
-        uint256 protocolFee = platformReqs.getMembershipFee();
         uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
 
-        assertEq(renewalPrice, protocolFee);
+        assertEq(renewalPrice, 0, "Renewal price should be 0 for free membership");
 
-        // Fund Alice's wallet with protocol fee and renew membership
-        vm.deal(alice, renewalPrice);
+        // Alice renews for free (no ETH needed)
         vm.prank(alice);
-        freeMembership.renewMembership{value: renewalPrice}(tokenId);
+        freeMembership.renewMembership(tokenId);
 
         uint256 points = _getPoints(renewalPrice);
 
-        // Verify protocol fee was paid
-        assertEq(protocol.balance - protocolBalanceBefore, protocolFee);
+        // Verify protocol receives nothing (truly free)
+        assertEq(protocol.balance - protocolBalanceBefore, 0, "Protocol should receive nothing");
 
         // Verify membership was renewed
         assertGt(freeMembership.expiresAt(tokenId), originalExpiration);
 
-        // Verify points were awarded
+        // Verify points (0 for free renewal)
         assertEq(IERC20(riverAirdrop).balanceOf(alice), currentPoints + points);
     }
 
@@ -392,7 +394,6 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
     function test_renewMembershipAfterPriceDropToFree() external {
         // Setup: Create a paid town with initial price
         uint256 initialPrice = MEMBERSHIP_PRICE;
-        uint256 platformMinFee = platformReqs.getMembershipFee();
         _setupMembershipPricing(1, initialPrice);
 
         uint256 totalPrice = membership.getMembershipPrice();
@@ -413,44 +414,39 @@ contract MembershipRenewTest is MembershipBaseSetup, IERC5643Base {
         vm.prank(founder);
         membership.setMembershipPrice(0);
 
-        // Verify current price is now just the platform minimum fee
+        // Verify current price is now free
         uint256 newMembershipPrice = membership.getMembershipPrice();
-        assertEq(newMembershipPrice, platformMinFee, "New price should be platform minimum");
+        assertEq(newMembershipPrice, 0, "New price should be free");
 
         // Warp to expiration
         vm.warp(originalExpiration);
 
-        // Get updated renewal price - should be the lower free price, not the locked higher price
+        // Get updated renewal price - should be free
         uint256 renewalPrice = _getRenewalPrice(tokenId);
-        assertEq(
-            renewalPrice,
-            platformMinFee,
-            "Renewal price should use lower current price, not locked price"
-        );
-        assertLt(renewalPrice, totalPrice, "Renewal price should be less than original");
+        assertEq(renewalPrice, 0, "Renewal price should use lower current price, not locked price");
 
         // Track balances
         (address protocol, uint256 protocolBalanceBefore) = _getProtocolFeeData();
         uint256 spaceBalanceBefore = address(membership).balance;
         uint256 currentPoints = IERC20(riverAirdrop).balanceOf(alice);
 
-        // Alice renews at the new lower price
+        // Alice renews for free
         _renewMembershipWithValue(alice, tokenId, renewalPrice);
 
-        // Verify protocol fee (all goes to protocol since price equals min fee)
-        assertEq(
-            protocol.balance - protocolBalanceBefore,
-            platformMinFee,
-            "Protocol should receive the minimum fee"
-        );
+        // Verify protocol receives nothing (truly free renewal)
+        assertEq(protocol.balance - protocolBalanceBefore, 0, "Protocol should receive nothing");
 
-        // Verify space receives nothing (entire amount is protocol fee)
-        assertEq(address(membership).balance, spaceBalanceBefore, "Space should receive nothing");
+        // Verify space balance unchanged
+        assertEq(
+            address(membership).balance,
+            spaceBalanceBefore,
+            "Space balance should be unchanged"
+        );
 
         // Verify membership was renewed
         assertGt(membership.expiresAt(tokenId), originalExpiration, "Membership should be renewed");
 
-        // Verify points were awarded based on renewal price
+        // Verify points (0 for free renewal)
         uint256 points = _getPoints(renewalPrice);
         assertEq(
             IERC20(riverAirdrop).balanceOf(alice),
