@@ -294,10 +294,9 @@ func (ssr *syncSessionRunner) maybePersistCookie(
 
 	if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
 		logging.FromCtx(ssr.syncCtx).Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
-	} else {
-		// Update persisted state in record to avoid redundant writes
-		record.persistedMinipoolGen = cookie.MinipoolGen
+		return
 	}
+	record.persistedMinipoolGen = cookie.MinipoolGen
 }
 
 // handleReset processes a sync reset response for a stream.
