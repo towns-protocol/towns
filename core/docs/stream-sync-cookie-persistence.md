@@ -107,12 +107,11 @@ Cookie persistence only happens when:
 **`handleReset`** - Processes sync reset responses:
 - Creates the tracked view
 - Detects gaps and triggers gap recovery
-- Notifies historical events if enabled
 
-**`handleGapOnReset`** - Gap recovery:
-- Compares `persistedMinipoolGen` with server's snapshot position
-- Fetches missing miniblocks via `GetMiniblocks` RPC
-- Sends event notifications for gap events
+**`handleHistoricalContent`** - Gap recovery:
+- Compares `applyHistoricalContent.FromMiniblockNum` with server's snapshot position
+- Fetches missing miniblocks via `GetMiniblocks` RPC if needed
+- Sends event notifications for historical events
 
 **`maybePersistCookie`** - Cookie persistence:
 - Checks if persistence is needed (minipoolGen changed)
@@ -122,44 +121,6 @@ Cookie persistence only happens when:
 **`notifyEventsFromMiniblocks`** - Event notification:
 - Parses events from miniblocks
 - Calls `SendEventNotification` for each event
-
----
-
-## Flow Diagram
-
-### Service Restart Flow
-
-```
-Load persisted cookie
-         │
-         ▼
-Add stream (minipoolGen=MaxInt64)
-         │
-         ▼
-Receive reset response
-         │
-         ▼
-┌─────────────────────────────────────────────────┐
-│ persistedMinipoolGen <= serverSnapshotMb?       │
-└─────────────────────────────────────────────────┘
-         │                          │
-        Yes (gap)                   No (no gap)
-         │                          │
-         ▼                          ▼
-┌─────────────────────┐    ┌─────────────────────┐
-│ GetMiniblocks(      │    │ Skip miniblocks     │
-│   persisted,        │    │ < persisted         │
-│   serverSnapshot)   │    │ Notify rest         │
-│                     │    └─────────────────────┘
-│ Notify gap events   │
-│ Notify sync events  │
-└─────────────────────┘
-         │
-         ▼
-┌─────────────────────────┐
-│ Continue normal sync    │
-└─────────────────────────┘
-```
 
 ---
 
