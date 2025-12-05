@@ -249,7 +249,7 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 }
 
 // notifyEventsFromMiniblocks sends notifications for all events in the given miniblocks.
-// This is used for gap recovery to process events from miniblocks that were missed during downtime.
+// This is used for historical recovery to process events from miniblocks that were missed during downtime.
 func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
 	streamId shared.StreamId,
 	trackedView events.TrackedStreamView,
@@ -261,7 +261,7 @@ func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
 		for _, event := range block.GetEvents() {
 			parsedEvent, err := events.ParseEvent(event)
 			if err != nil {
-				log.Errorw("Failed to parse event from gap miniblock",
+				log.Errorw("Failed to parse event from historic miniblock",
 					"streamId", streamId,
 					"eventHash", event.Hash,
 					"error", err,
@@ -269,7 +269,7 @@ func (ssr *syncSessionRunner) notifyEventsFromMiniblocks(
 				continue
 			}
 			if err := trackedView.SendEventNotification(ssr.syncCtx, parsedEvent); err != nil {
-				log.Errorw("Error sending notification for gap event",
+				log.Errorw("Error sending notification for historic event",
 					"streamId", streamId,
 					"eventHash", parsedEvent.Hash,
 					"error", err,
@@ -1025,7 +1025,7 @@ func (msr *MultiSyncRunner) AddStream(
 				Enabled:          true,
 				FromMiniblockNum: persistedMinipoolGen,
 			}
-			logging.FromCtx(ctx).Infow("Loaded sync cookie for gap detection",
+			logging.FromCtx(ctx).Infow("Loaded sync cookie for historical content",
 				"streamId", streamId,
 				"persistedMinipoolGen", persistedMinipoolGen,
 				"updatedAt", updatedAt,
