@@ -645,7 +645,7 @@ func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error)
 	}
 	if isMember {
 		// skip chain auth - already authorized as member
-		return nil, nil 
+		return nil, nil
 	}
 
 	// not member - check if this is a bot user's stream
