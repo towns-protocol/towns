@@ -87,8 +87,6 @@ import {
     type AppMetadata,
     StreamEvent,
     ChannelMessage_Post_MentionSchema,
-    InteractionRequestPayload_SignatureSchema,
-    InteractionRequestPayload_Signature_SignatureType,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -110,7 +108,6 @@ import type {
 import type { PendingPayment } from './payments'
 import { chainIdToNetwork, createPaymentRequest } from './payments'
 import { useFacilitator } from 'x402/verify'
-import { createPaymentHeader } from 'x402/client'
 
 import {
     http,
@@ -125,7 +122,6 @@ import {
     encodeAbiParameters,
     zeroAddress,
     parseEventLogs,
-    parseUnits,
     formatUnits,
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'

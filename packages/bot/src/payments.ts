@@ -1,7 +1,6 @@
 import type { Address, Hex } from 'viem'
 import { keccak256 } from 'viem'
 import { baseSepolia, base } from 'viem/chains'
-import { useFacilitator } from 'x402/verify'
 import type { BasePayload, BotHandler } from './bot'
 import type { Price, RouteConfig } from 'x402/types'
 import { InteractionRequestPayload_Signature_SignatureType } from '@towns-protocol/proto'
@@ -39,7 +38,7 @@ export function chainIdToNetwork(chainId: number): 'base' | 'base-sepolia' {
 }
 
 export function getUsdcAddress(chainId: number): Address {
-    const address = USDC_ADDRESSES[chainId as keyof typeof USDC_ADDRESSES]
+    const address = USDC_ADDRESSES[chainId]
     if (!address) {
         throw new Error(`USDC address not found for chain ID: ${chainId}`)
     }
@@ -167,6 +166,12 @@ export async function createPaymentRequest(
     const typedData = buildTransferAuthorizationTypedDataForSigning(params)
     const signatureId = `payment-${Date.now()}-${nonce.slice(0, 10)}`
 
+    // Format price for display
+    const priceDisplay =
+        typeof paymentConfig.price === 'string' || typeof paymentConfig.price === 'number'
+            ? String(paymentConfig.price)
+            : JSON.stringify(paymentConfig.price)
+
     const result = await handler.sendInteractionRequest(event.channelId, {
         case: 'signature',
         value: {
@@ -175,7 +180,7 @@ export async function createPaymentRequest(
             data: JSON.stringify(typedData),
             chainId: params.chainId.toString(),
             signerWallet: fromAddress,
-            title: `Payment Required for /${command} • ${paymentConfig.price} USDC`,
+            title: `Payment Required for /${command} • ${priceDisplay} USDC`,
             subtitle: `Sign to authorize payment`,
         },
     })
@@ -190,20 +195,21 @@ export async function createPaymentRequest(
 /**
  * Parses a USDC price to atomic units (6 decimals).
  * Handles dollar signs, commas, and decimal amounts.
+ * Only string and number inputs are supported.
  *
  * @example
  * parseUSDCPrice("$1.00")     // 1000000n
  * parseUSDCPrice(1.50)        // 1500000n
  * parseUSDCPrice("$1,000.00") // 1000000000n
- * parseUSDCPrice({ amount: 100 }) // attempts JSON parsing
  */
 export function parseUSDCPrice(price: Price): bigint {
-    // Handle string/number directly, otherwise try JSON serialization
-    const rawStr =
-        typeof price === 'string' || typeof price === 'number'
-            ? String(price)
-            : JSON.stringify(price)
+    if (typeof price !== 'string' && typeof price !== 'number') {
+        throw new Error(
+            `parseUSDCPrice only supports string or number inputs, got: ${typeof price}`,
+        )
+    }
 
+    const rawStr = String(price)
     const sanitized = rawStr.replace(/[$,\s]/g, '').trim()
 
     if (!/^\d+(\.\d{0,6})?$/.test(sanitized)) {
