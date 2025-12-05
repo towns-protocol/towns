@@ -1051,7 +1051,7 @@ type gapRecoveryTestContext struct {
 // setupGapRecoveryTest creates test infrastructure for gap recovery tests
 func setupGapRecoveryTest(t *testing.T) *gapRecoveryTestContext {
 	numNodes := 3
-	replFactor := 2
+	replFactor := 1
 	tt := newServiceTester(
 		t,
 		serviceTesterOpts{
