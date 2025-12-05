@@ -7,3 +7,12 @@ export * from './identity-types'
 export * from './re-exports'
 export * from './smart-account'
 export * from './snapshot-getter'
+
+// Extension system exports
+export { createBot, BotBuilder, dedup, identity, commands } from './extensions'
+export type {
+    BotExtension,
+    BotBuildContext,
+    BotRuntime,
+    OnBuildContext,
+} from './extensions'

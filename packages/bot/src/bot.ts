@@ -1,5 +1,5 @@
 import { create, fromBinary, fromJsonString, toBinary } from '@bufbuild/protobuf'
-import { utils, ethers } from 'ethers'
+import { utils } from 'ethers'
 import {
     SpaceDapp,
     Permission,
@@ -19,7 +19,6 @@ import {
     getRefEventIdFromChannelMessage,
     isChannelStreamId,
     make_ChannelPayload_Message,
-    createTownsClient,
     type ClientV2,
     streamIdAsString,
     make_MemberPayload_KeySolicitation,
@@ -29,10 +28,8 @@ import {
     makeUserMetadataStreamId,
     type ParsedEvent,
     unsafe_makeTags,
-    townsEnv,
     spaceIdFromChannelId,
     make_ChannelPayload_Redaction,
-    parseAppPrivateData,
     makeEvent,
     make_MediaPayload_Inception,
     make_MediaPayload_Chunk,
@@ -98,31 +95,26 @@ import {
 } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
-import { EventDedup, type EventDedupConfig } from './eventDedup'
+import type { EventDedupConfig } from './eventDedup'
 import type { RouteConfig } from 'x402/types'
 
 import {
-    http,
     type Chain,
     type Transport,
-    type Hex,
     type Address,
     type Account,
     type WalletClient,
-    createWalletClient,
     type TransactionReceipt,
     encodeAbiParameters,
     zeroAddress,
     parseEventLogs,
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
-import { base, baseSepolia, foundry } from 'viem/chains'
 import packageJson from '../package.json' with { type: 'json' }
-import { privateKeyToAccount } from 'viem/accounts'
-import appRegistryAbi from '@towns-protocol/generated/dev/abis/IAppRegistry.abi'
 import { execute } from 'viem/experimental/erc7821'
 import { getSmartAccountFromUserIdImpl } from './smart-account'
 import type { BotIdentityConfig, BotIdentityMetadata, ERC8004Endpoint } from './identity-types'
+import type { BotRuntime } from './extensions/types'
 import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
 import { EmptySchema } from '@bufbuild/protobuf/wkt'
@@ -381,6 +373,7 @@ export type BasePayload = {
 export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
     readonly appAddress: Address
+    readonly runtime: BotRuntime
     botId: string
     viem: WalletClient<Transport, Chain, Account>
     private readonly jwtSecret: Uint8Array
@@ -398,28 +391,21 @@ export class Bot<Commands extends BotCommand[] = []> {
             ) => void | Promise<void>
         }
     > = new Map()
-    private readonly commands: Commands | undefined
-    private readonly identityConfig?: BotIdentityConfig
-    private readonly eventDedup: EventDedup
 
     constructor(
         clientV2: ClientV2<BotActions>,
         viem: WalletClient<Transport, Chain, Account>,
         jwtSecretBase64: string,
         appAddress: Address,
-        commands?: Commands,
-        identityConfig?: BotIdentityConfig,
-        dedupConfig?: EventDedupConfig,
+        runtime: BotRuntime,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
         this.viem = viem
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
         this.currentMessageTags = undefined
-        this.commands = commands
         this.appAddress = appAddress
-        this.identityConfig = identityConfig
-        this.eventDedup = new EventDedup(dedupConfig)
+        this.runtime = runtime
     }
 
     start() {
@@ -536,7 +522,7 @@ export class Bot<Commands extends BotCommand[] = []> {
                     continue
                 }
                 // Skip duplicate events (App Registry may replay events during restarts)
-                if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
+                if (this.runtime.dedup.checkAndAdd(streamId, parsed.hashStr)) {
                     continue
                 }
                 const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
@@ -1373,12 +1359,12 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
 
         // If no config and no fetched metadata, return null
-        if (!this.identityConfig && !appMetadata) return null
+        if (!this.runtime.identity && !appMetadata) return null
 
         const endpoints: ERC8004Endpoint[] = []
 
-        if (this.identityConfig?.endpoints) {
-            endpoints.push(...this.identityConfig.endpoints)
+        if (this.runtime.identity?.endpoints) {
+            endpoints.push(...this.runtime.identity.endpoints)
         }
 
         const hasAgentWallet = endpoints.some((e) => e.name === 'agentWallet')
@@ -1390,7 +1376,7 @@ export class Bot<Commands extends BotCommand[] = []> {
             })
         }
 
-        const domain = this.identityConfig?.domain
+        const domain = this.runtime.identity?.domain
         if (domain && !endpoints.some((e) => e.name === 'A2A')) {
             const origin = domain.startsWith('http') ? domain : `https://${domain}`
 
@@ -1402,11 +1388,11 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
 
         // Merge app metadata with identity config, preferring identity config
-        const name = this.identityConfig?.name || appMetadata?.displayName || 'Unknown Bot'
-        const description = this.identityConfig?.description || appMetadata?.description || ''
+        const name = this.runtime.identity?.name || appMetadata?.displayName || 'Unknown Bot'
+        const description = this.runtime.identity?.description || appMetadata?.description || ''
         const image =
-            this.identityConfig?.image || appMetadata?.avatarUrl || appMetadata?.imageUrl || ''
-        const motto = this.identityConfig?.motto || appMetadata?.motto
+            this.runtime.identity?.image || appMetadata?.avatarUrl || appMetadata?.imageUrl || ''
+        const motto = this.runtime.identity?.motto || appMetadata?.motto
 
         return {
             type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
@@ -1414,13 +1400,13 @@ export class Bot<Commands extends BotCommand[] = []> {
             description,
             image,
             endpoints,
-            registrations: this.identityConfig?.registrations || [],
-            supportedTrust: this.identityConfig?.supportedTrust,
+            registrations: this.runtime.identity?.registrations || [],
+            supportedTrust: this.runtime.identity?.supportedTrust,
             motto,
-            capabilities: this.commands?.map((c) => c.name) || [],
+            capabilities: this.runtime.commands?.map((c) => c.name) || [],
             version: packageJson.version,
             framework: `javascript:${packageJson.name}:${packageJson.version}`,
-            attributes: this.identityConfig?.attributes,
+            attributes: this.runtime.identity?.attributes,
         }
     }
 
@@ -1430,11 +1416,11 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @returns The .well-known URL or null
      */
     getTokenURI(): string | null {
-        if (!this.identityConfig?.domain) return null
+        if (!this.runtime.identity?.domain) return null
 
-        const origin = this.identityConfig.domain.startsWith('http')
-            ? this.identityConfig.domain
-            : `https://${this.identityConfig.domain}`
+        const origin = this.runtime.identity.domain.startsWith('http')
+            ? this.runtime.identity.domain
+            : `https://${this.runtime.identity.domain}`
 
         return `${origin}/.well-known/agent-metadata.json`
     }
@@ -1450,97 +1436,29 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         dedup?: EventDedupConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
-    const { baseRpcUrl, ...clientOpts } = opts
-    let appAddress: Address | undefined
-    const {
-        privateKey,
-        encryptionDevice,
-        env,
-        appAddress: appAddressFromPrivateData,
-    } = parseAppPrivateData(appPrivateData)
-    if (!env) {
-        throw new Error('Failed to parse APP_PRIVATE_DATA')
-    }
-    if (appAddressFromPrivateData) {
-        appAddress = appAddressFromPrivateData
-    }
-    const account = privateKeyToAccount(privateKey as Hex)
+    // Use BotBuilder internally for consistent behavior
+    const { BotBuilder } = await import('./extensions/builder')
+    const { dedup: dedupExt } = await import('./extensions/dedup')
+    const { identity: identityExt } = await import('./extensions/identity')
+    const { commands: commandsExt } = await import('./extensions/commands')
 
-    const baseConfig = townsEnv().makeBaseChainConfig(env)
-    const getChain = (chainId: number) => {
-        if (chainId === base.id) return base
-        if (chainId === foundry.id) return foundry
-        return baseSepolia
-    }
-    const chain = getChain(baseConfig.chainConfig.chainId)
-    const viem = createWalletClient({
-        account,
-        transport: baseRpcUrl
-            ? http(baseRpcUrl, { batch: true })
-            : http(baseConfig.rpcUrl, { batch: true }),
-        chain,
-    })
+    const builder = new BotBuilder()
 
-    const spaceDapp = new SpaceDapp(
-        baseConfig.chainConfig,
-        new ethers.providers.JsonRpcProvider(baseRpcUrl || baseConfig.rpcUrl),
-    )
-    if (!appAddress) {
-        appAddress = await readContract(viem, {
-            address: baseConfig.chainConfig.addresses.appRegistry,
-            abi: appRegistryAbi,
-            functionName: 'getAppByClient',
-            args: [account.address],
-        })
-    }
+    // Always add dedup (with or without config) - matches current behavior
+    builder.extend(dedupExt(opts.dedup))
 
-    const client = await createTownsClient({
-        privateKey,
-        env,
-        encryptionDevice: {
-            fromExportedDevice: encryptionDevice,
-        },
-        ...clientOpts,
-    }).then((x) =>
-        x.extend((townsClient) => buildBotActions(townsClient, viem, spaceDapp, appAddress)),
-    )
+    if (opts.identity) {
+        builder.extend(identityExt(opts.identity))
+    }
 
     if (opts.commands) {
-        client
-            .appServiceClient()
-            .then((appRegistryClient) =>
-                appRegistryClient
-                    .updateAppMetadata({
-                        appId: bin_fromHexString(account.address),
-                        updateMask: ['slash_commands'],
-                        metadata: {
-                            slashCommands: opts.commands,
-                        },
-                    })
-                    .catch((err) => {
-                        // eslint-disable-next-line no-console
-                        console.warn('[@towns-protocol/bot] failed to update slash commands', err)
-                    }),
-            )
-            .catch((err) => {
-                // eslint-disable-next-line no-console
-                console.warn('[@towns-protocol/bot] failed to get app registry rpc client', err)
-            })
+        builder.extend(commandsExt(opts.commands))
     }
 
-    await client.uploadDeviceKeys()
-    return new Bot<Commands>(
-        client,
-        viem,
-        jwtSecretBase64,
-        appAddress,
-        opts.commands,
-        opts.identity,
-        opts.dedup,
-    )
+    return builder.build(appPrivateData, jwtSecretBase64, opts) as unknown as Promise<Bot<Commands>>
 }
 
-const buildBotActions = (
+export const buildBotActions = (
     client: ClientV2,
     viem: WalletClient<Transport, Chain, Account>,
     spaceDapp: SpaceDapp,
