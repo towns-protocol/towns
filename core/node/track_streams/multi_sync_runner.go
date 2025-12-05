@@ -187,10 +187,6 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 	trackedView events.TrackedStreamView,
 	streamAndCookie *protocol.StreamAndCookie,
 ) {
-	if !record.applyHistoricalContent.Enabled {
-		return
-	}
-
 	log := logging.FromCtx(ssr.syncCtx)
 	streamId := record.streamId
 	fromMiniblockNum := record.applyHistoricalContent.FromMiniblockNum
