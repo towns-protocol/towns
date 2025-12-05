@@ -8,7 +8,7 @@ When the app registry or notification service restarts:
 1. It starts syncing streams from scratch (requesting a reset)
 2. The server returns a reset response starting from the **last snapshot**
 3. The service starts handling events from the minipool, skipping all miniblocks (assuming they are already processed)
-3. Events between the last processed miniblock and the current last miniblock are **not handled**
+4. Events between the last processed miniblock and the current last miniblock are **not handled**
 
 This is problematic for bots that need to receive all messages in channels they're members of.
 
@@ -61,7 +61,7 @@ ON each sync update with new miniblock (minipoolGen changed):
 
 Cookie persistence only happens when:
 1. A cookie store is configured
-2. The tracked view says we should persist for this stream (in case of the registry service, only streams with bots intalled in them are persisted)
+2. The tracked view says we should persist for this stream (in case of the registry service, only streams with bots installed in them are persisted)
 3. The minipoolGen has changed (new miniblock was created)
 
 ### On Service Restart
@@ -139,20 +139,6 @@ Cookie persistence only happens when:
 - Gap recovery is idempotent
 - Restart will detect same gap and retry
 - Events might be re-notified (handlers should dedup or be idempotent)
-
----
-
-## Testing
-
-Unit tests in `track_streams/gap_recovery_test.go`:
-- `TestHandleGapOnReset_NoGap` - No gap when persisted > server snapshot
-- `TestHandleGapOnReset_GapDetected` - Gap triggers miniblock fetch
-- `TestApplyUpdateToStream_*` - Full flow tests
-
-Cookie store tests in `track_streams/pg_stream_cookie_store_test.go`:
-- CRUD operations
-- Multiple streams
-- Default table name
 
 ---
 
