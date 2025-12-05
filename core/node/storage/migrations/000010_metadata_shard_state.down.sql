@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS metadata_shard_state;
+DROP TABLE IF EXISTS metadata;

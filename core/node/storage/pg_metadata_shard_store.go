@@ -112,54 +112,55 @@ func (s *PostgresMetadataShardStore) EnsureShardStorage(ctx context.Context, sha
 
 func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, tx pgx.Tx, shardId uint64) error {
 	log := logging.FromCtx(ctx)
-	streamsSQL := s.sqlForShard(`
-CREATE TABLE IF NOT EXISTS {{streams}} (
-    stream_id BYTEA PRIMARY KEY,
-    genesis_miniblock_hash BYTEA NOT NULL,
-    genesis_miniblock BYTEA NOT NULL,
-    last_miniblock_hash BYTEA NOT NULL,
-    last_miniblock_num BIGINT NOT NULL,
-    replication_factor INT NOT NULL,
-    sealed BOOLEAN NOT NULL DEFAULT FALSE,
-    CHECK (octet_length(stream_id) = 32),
-    CHECK (octet_length(genesis_miniblock_hash) = 32),
-    CHECK (octet_length(last_miniblock_hash) = 32),
-    CHECK (last_miniblock_num >= 0),
-    CHECK (replication_factor > 0)
-);`, shardId)
 
-	nodesSQL := s.sqlForShard(`
-CREATE TABLE IF NOT EXISTS {{nodes}} (
-    stream_id BYTEA NOT NULL,
-    position INT NOT NULL,
-    node_addr BYTEA NOT NULL,
-    PRIMARY KEY (stream_id, position),
-    UNIQUE (stream_id, node_addr),
-    CHECK (octet_length(node_addr) = 20),
-    FOREIGN KEY (stream_id) REFERENCES {{streams}}(stream_id) ON DELETE CASCADE
-);`, shardId)
-
-	nodesIdxSQL := s.sqlForShard(`CREATE INDEX IF NOT EXISTS {{nodes}}_node_idx ON {{nodes}} (node_addr);`, shardId)
-
-	stateSQL := s.sqlForShard(`
-CREATE TABLE IF NOT EXISTS metadata (
-    shard_id BIGINT PRIMARY KEY,
-    last_height BIGINT NOT NULL DEFAULT 0,
-    last_app_hash BYTEA NOT NULL DEFAULT ''::BYTEA
-);`, shardId)
-
-	stateSeedSQL := `INSERT INTO metadata (shard_id, last_height, last_app_hash) VALUES ($1, 0, ''::BYTEA) ON CONFLICT DO NOTHING;`
-
-	statements := []string{streamsSQL, nodesSQL, nodesIdxSQL, stateSQL}
-	for _, sql := range statements {
-		if _, err := tx.Exec(ctx, sql); err != nil {
-			return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
-				Message("failed to ensure metadata shard tables").
-				Tag("shardId", shardId)
-		}
+	if _, err := tx.Exec(ctx, s.sqlForShard(`
+		CREATE TABLE IF NOT EXISTS {{streams}} (
+			stream_id BYTEA PRIMARY KEY,
+			genesis_miniblock_hash BYTEA NOT NULL,
+			genesis_miniblock BYTEA NOT NULL,
+			last_miniblock_hash BYTEA NOT NULL,
+			last_miniblock_num BIGINT NOT NULL,
+			replication_factor INT NOT NULL,
+			sealed BOOLEAN NOT NULL DEFAULT FALSE,
+			CHECK (octet_length(stream_id) = 32),
+			CHECK (octet_length(genesis_miniblock_hash) = 32),
+			CHECK (octet_length(last_miniblock_hash) = 32),
+			CHECK (last_miniblock_num >= 0),
+			CHECK (replication_factor > 0)
+		)`, shardId)); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("failed to create streams table").
+			Tag("shardId", shardId)
 	}
 
-	if _, err := tx.Exec(ctx, stateSeedSQL, int64(shardId)); err != nil {
+	if _, err := tx.Exec(ctx, s.sqlForShard(`
+		CREATE TABLE IF NOT EXISTS {{nodes}} (
+			stream_id BYTEA NOT NULL,
+			position INT NOT NULL,
+			node_addr BYTEA NOT NULL,
+			PRIMARY KEY (stream_id, position),
+			UNIQUE (stream_id, node_addr),
+			CHECK (octet_length(node_addr) = 20),
+			FOREIGN KEY (stream_id) REFERENCES {{streams}}(stream_id) ON DELETE CASCADE
+		)`, shardId)); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("failed to create nodes table").
+			Tag("shardId", shardId)
+	}
+
+	if _, err := tx.Exec(ctx, s.sqlForShard(
+		`CREATE INDEX IF NOT EXISTS {{nodes}}_node_idx ON {{nodes}} (node_addr)`,
+		shardId,
+	)); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("failed to create nodes index").
+			Tag("shardId", shardId)
+	}
+
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO metadata_shard_state (shard_id, last_height, last_app_hash) VALUES ($1, 0, ''::BYTEA) ON CONFLICT DO NOTHING`,
+		int64(shardId),
+	); err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
 			Message("failed to seed metadata shard state").
 			Tag("shardId", shardId)
@@ -958,7 +959,7 @@ func (s *PostgresMetadataShardStore) SetShardState(
 		"MetadataShard.SetShardState",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			updateSQL := `UPDATE metadata SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`
+			updateSQL := `UPDATE metadata_shard_state SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`
 			if _, err := tx.Exec(ctx, updateSQL, height, appHash, shardID); err != nil {
 				return err
 			}
@@ -977,7 +978,7 @@ func (s *PostgresMetadataShardStore) GetShardState(ctx context.Context, shardID 
 		"MetadataShard.GetShardState",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			query := `SELECT last_height, last_app_hash FROM metadata WHERE shard_id = $1`
+			query := `SELECT last_height, last_app_hash FROM metadata_shard_state WHERE shard_id = $1`
 			return tx.QueryRow(ctx, query, shardID).Scan(&state.LastHeight, &state.LastAppHash)
 		},
 		nil,
