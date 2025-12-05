@@ -180,61 +180,75 @@ func (ssr *syncSessionRunner) AddStream(
 	return nil
 }
 
-// handleGapOnReset checks for gaps between persisted state and the server's current snapshot,
-// and if a gap is detected, fetches the missing miniblocks and sends notifications for their events.
-// This is called on the first reset response when we have persisted state from a previous run.
-func (ssr *syncSessionRunner) handleGapOnReset(
+// handleHistoricalContent processes historical miniblocks on sync reset.
+// if applyHistoricalContent.Enabled is true, apply the events from the
+func (ssr *syncSessionRunner) handleHistoricalContent(
 	record *streamSyncInitRecord,
 	trackedView events.TrackedStreamView,
-	serverSnapshotMb int64,
+	streamAndCookie *protocol.StreamAndCookie,
 ) {
+	if !record.applyHistoricalContent.Enabled {
+		return
+	}
+
 	log := logging.FromCtx(ssr.syncCtx)
 	streamId := record.streamId
+	fromMiniblockNum := record.applyHistoricalContent.FromMiniblockNum
 
-	if record.persistedMinipoolGen > serverSnapshotMb {
-		// No gap: our persisted position is after the server's snapshot.
-		// The reset response includes everything we need from the snapshot onwards.
-		log.Debugw("Gap detection: no gap, persisted position is after server snapshot",
-			"streamId", streamId,
-			"serverSnapshotMb", serverSnapshotMb,
-			"persistedMinipoolGen", record.persistedMinipoolGen,
-		)
+	miniblocks := streamAndCookie.GetMiniblocks()
+	if len(miniblocks) == 0 || !record.applyHistoricalContent.Enabled {
 		return
 	}
 
-	// Gap detected: we missed miniblocks before the new snapshot.
-	// Fetch missing miniblocks and notify events.
-	log.Warnw("Gap detection: gap detected, fetching missing miniblocks",
-		"streamId", streamId,
-		"persistedMinipoolGen", record.persistedMinipoolGen,
-		"serverSnapshotMb", serverSnapshotMb,
-		"gapSize", serverSnapshotMb-record.persistedMinipoolGen,
-	)
-
-	gapMiniblocks, err := fetchMiniblocks(
-		ssr.syncCtx,
-		ssr.nodeRegistry,
-		ssr.node,
-		streamId,
-		record.persistedMinipoolGen,
-		serverSnapshotMb,
-	)
+	serverSnapshotMb, err := getFirstMiniblockNumber(miniblocks)
 	if err != nil {
-		log.Errorw("Gap recovery: failed to fetch missing miniblocks",
-			"streamId", streamId,
-			"fromInclusive", record.persistedMinipoolGen,
-			"toExclusive", serverSnapshotMb,
-			"error", err,
-		)
+		// Log but continue - don't block sync for parse errors
+		log.Errorw("handleHistoricalContent: Failed to parse first miniblock", "error", err, "streamId", streamId)
 		return
 	}
 
-	if len(gapMiniblocks) > 0 {
-		log.Infow("Gap recovery: fetched missing miniblocks, sending notifications",
+	// FromMiniblockNum is before our fist miniblock num, we need to fetch miniblocks from the remote
+	if fromMiniblockNum < serverSnapshotMb {
+		log.Warnw("handleHistoricalContent: fetching missing miniblocks",
 			"streamId", streamId,
-			"numMiniblocks", len(gapMiniblocks),
+			"FromMiniblockNum", fromMiniblockNum,
+			"serverSnapshotMb", serverSnapshotMb,
+			"gapSize", serverSnapshotMb-fromMiniblockNum,
 		)
-		ssr.notifyEventsFromMiniblocks(streamId, trackedView, gapMiniblocks)
+
+		missingMiniblocks, err := fetchMiniblocks(
+			ssr.syncCtx,
+			ssr.nodeRegistry,
+			ssr.node,
+			streamId,
+			fromMiniblockNum,
+			serverSnapshotMb,
+		)
+		if err != nil {
+			log.Errorw("handleHistoricalContent: failed to fetch missing miniblocks",
+				"streamId", streamId,
+				"fromInclusive", fromMiniblockNum,
+				"toExclusive", serverSnapshotMb,
+				"error", err,
+			)
+			// continue to handle miniblocks we have from the reset
+		}
+
+		if len(missingMiniblocks) > 0 {
+			log.Infow("Gap recovery: fetched missing miniblocks, sending notifications",
+				"streamId", streamId,
+				"numMiniblocks", len(missingMiniblocks),
+			)
+			ssr.notifyEventsFromMiniblocks(streamId, trackedView, missingMiniblocks)
+		}
+	}
+
+	startIdx := record.applyHistoricalContent.FromMiniblockNum - serverSnapshotMb
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	if startIdx < int64(len(miniblocks)) {
+		ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[startIdx:])
 	}
 }
 
@@ -321,33 +335,7 @@ func (ssr *syncSessionRunner) handleReset(
 	ssr.metrics.TrackedStreams.With(labels).Inc()
 	record.trackedView = trackedView
 
-	miniblocks := streamAndCookie.GetMiniblocks()
-	if len(miniblocks) == 0 || (record.persistedMinipoolGen == 0 && !record.applyHistoricalContent.Enabled) {
-		return nil
-	}
-
-	firstMiniblockNum, err := getFirstMiniblockNumber(miniblocks)
-	if err != nil {
-		// Log but continue - don't block sync for parse errors
-		log.Errorw("Failed to parse first miniblock", "error", err, "streamId", streamId)
-		return nil
-	}
-
-	// Gap recovery: Check if we have persisted state and handle gaps on restart
-	if record.persistedMinipoolGen > 0 {
-		ssr.handleGapOnReset(record, trackedView, firstMiniblockNum)
-	}
-
-	// Send notifications for historical miniblocks if enabled
-	if record.applyHistoricalContent.Enabled {
-		startIdx := record.applyHistoricalContent.FromMiniblockNum - firstMiniblockNum
-		if startIdx < 0 {
-			startIdx = 0
-		}
-		if startIdx < int64(len(miniblocks)) {
-			ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[startIdx:])
-		}
-	}
+	ssr.handleHistoricalContent(record, trackedView, streamAndCookie)
 
 	return nil
 }
