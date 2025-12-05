@@ -99,7 +99,16 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
-import type { RouteConfig } from 'x402/types'
+import type {
+    FacilitatorConfig,
+    PaymentPayload,
+    PaymentRequirements,
+    RouteConfig,
+} from 'x402/types'
+import type { PendingPayment } from './payments'
+import { chainIdToNetwork, createPaymentRequest } from './payments'
+import { useFacilitator } from 'x402/verify'
+import { createPaymentHeader } from 'x402/client'
 
 import {
     http,
@@ -114,6 +123,8 @@ import {
     encodeAbiParameters,
     zeroAddress,
     parseEventLogs,
+    parseUnits,
+    formatUnits,
 } from 'viem'
 import { readContract, waitForTransactionReceipt, writeContract } from 'viem/actions'
 import { base, baseSepolia, foundry } from 'viem/chains'
@@ -402,6 +413,11 @@ export class Bot<Commands extends BotCommand[] = []> {
     private readonly identityConfig?: BotIdentityConfig
     private readonly eventDedup: EventDedup
 
+    // Payment related members
+    private readonly paymentConfig?: FacilitatorConfig
+    private readonly pendingPayments: Map<string, PendingPayment> = new Map()
+    private readonly paymentCommands = new Map<string, RouteConfig>()
+
     constructor(
         clientV2: ClientV2<BotActions>,
         viem: WalletClient<Transport, Chain, Account>,
@@ -410,6 +426,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         commands?: Commands,
         identityConfig?: BotIdentityConfig,
         dedupConfig?: EventDedupConfig,
+        paymentConfig?: FacilitatorConfig,
     ) {
         this.client = clientV2
         this.botId = clientV2.userId
@@ -420,6 +437,17 @@ export class Bot<Commands extends BotCommand[] = []> {
         this.appAddress = appAddress
         this.identityConfig = identityConfig
         this.eventDedup = new EventDedup(dedupConfig)
+        this.paymentConfig = paymentConfig
+
+        if (commands && paymentConfig) {
+            for (const cmd of commands) {
+                if (cmd.paid?.price) {
+                    this.paymentCommands.set(cmd.name, cmd.paid)
+                }
+            }
+        }
+
+        this.onInteractionResponse(this.handlePaymentResponse.bind(this))
     }
 
     start() {
@@ -956,6 +984,133 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
     }
 
+    private async handlePaymentResponse(
+        handler: BotActions,
+        event: BasePayload & {
+            response: DecryptedInteractionResponse
+            threadId: string | undefined
+        },
+    ) {
+        if (!this.paymentConfig) return
+        const { response, channelId } = event
+
+        // Check if this is a signature response
+        if (response.payload?.content?.case !== 'signature') {
+            return
+        }
+
+        const signatureId = response.payload.content.value?.requestId ?? ''
+        const signature = (response.payload.content.value?.signature ?? '') as Hex
+
+        if (!signatureId || !signature) {
+            return
+        }
+
+        // Check if this is a pending payment
+        const pending = this.pendingPayments.get(signatureId)
+        if (!pending) {
+            return // Not a payment signature
+        }
+
+        // Remove from pending
+        this.pendingPayments.delete(signatureId)
+
+        const facilitator = useFacilitator(this.paymentConfig)
+
+        // Build PaymentPayload for x402
+        const paymentPayload: PaymentPayload = {
+            x402Version: 1,
+            scheme: 'exact',
+            network: chainIdToNetwork(this.viem.chain.id),
+            payload: {
+                signature: signature,
+                authorization: {
+                    from: pending.params.from,
+                    to: pending.params.to,
+                    value: pending.params.value.toString(),
+                    validAfter: pending.params.validAfter.toString(),
+                    validBefore: pending.params.validBefore.toString(),
+                    nonce: pending.params.nonce,
+                },
+            },
+        }
+
+        // Build PaymentRequirements for x402
+        const paymentRequirements: PaymentRequirements = {
+            scheme: 'exact',
+            network: paymentPayload.network,
+            maxAmountRequired: pending.params.value.toString(),
+            resource: `https://towns.com/command/${pending.command}`,
+            description: `Payment for /${pending.command}`,
+            mimeType: 'application/json',
+            payTo: pending.params.to,
+            maxTimeoutSeconds: 300,
+            asset: pending.params.verifyingContract,
+        }
+
+        // Single status message that gets updated through the flow
+        const statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
+
+        try {
+            const verifyResult = await facilitator.verify(paymentPayload, paymentRequirements)
+
+            if (!verifyResult.isValid) {
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `❌ Payment verification failed: ${verifyResult.invalidReason || 'Unknown error'}`,
+                )
+                await handler.removeEvent(channelId, pending.interactionEventId)
+                return
+            }
+
+            // Update status: settling
+            await handler.editMessage(
+                channelId,
+                statusMsg.eventId,
+                `✅ Verified • Settling $${formatUnits(pending.params.value, 6)} USDC...`,
+            )
+
+            const settleResult = await facilitator.settle(paymentPayload, paymentRequirements)
+
+            if (!settleResult.success) {
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `❌ Settlement failed: ${settleResult.errorReason || 'Unknown error'}`,
+                )
+                await handler.removeEvent(channelId, pending.interactionEventId)
+                return
+            }
+
+            // Final success - show receipt
+            await handler.editMessage(
+                channelId,
+                statusMsg.eventId,
+                `✅ **Payment Complete**\n` +
+                    `/${pending.command} • $${formatUnits(pending.params.value, 6)} USDC\n` +
+                    `Tx: \`${settleResult.transaction}\``,
+            )
+
+            // Delete the signature request now that payment is complete
+            await handler.removeEvent(channelId, pending.interactionEventId)
+
+            // Execute the original command handler (stored with __paid_ prefix)
+            const actualHandlerKey = `__paid_${pending.command}`
+            const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
+            if (originalHandler) {
+                await originalHandler(this.client, pending.event)
+            }
+        } catch (error) {
+            await handler.editMessage(
+                channelId,
+                statusMsg.eventId,
+                `❌ Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            )
+            await handler.removeEvent(channelId, pending.interactionEventId)
+        }
+    }
+
     /**
      * get the public device key of the bot
      * @returns the public device key of the bot
@@ -1290,14 +1445,64 @@ export class Bot<Commands extends BotCommand[] = []> {
     }
 
     onSlashCommand(command: Commands[number]['name'], fn: BotEvents<Commands>['slashCommand']) {
-        this.slashCommandHandlers.set(command, fn)
+        const paymentConfig = this.paymentCommands.get(command)
+        if (!paymentConfig || !this.paymentConfig) {
+            this.slashCommandHandlers.set(command, fn)
+            const unset = () => {
+                if (
+                    this.slashCommandHandlers.has(command) &&
+                    this.slashCommandHandlers.get(command) === fn
+                ) {
+                    this.slashCommandHandlers.delete(command)
+                }
+            }
+            return unset
+        }
+
+        this.slashCommandHandlers.set(command, async (handler, event) => {
+            try {
+                const chainId = this.viem.chain.id
+                const smartAccountAddress = await getSmartAccountFromUserIdImpl(
+                    this.client.config.base.chainConfig.addresses.spaceFactory,
+                    this.viem,
+                    event.userId,
+                )
+
+                const { signatureId, params, eventId } = await createPaymentRequest(
+                    handler,
+                    event,
+                    chainId,
+                    smartAccountAddress as Address,
+                    this.appAddress,
+                    paymentConfig,
+                    command,
+                )
+
+                // Store pending payment
+                this.pendingPayments.set(signatureId, {
+                    command: command,
+                    channelId: event.channelId,
+                    userId: event.userId,
+                    interactionEventId: eventId,
+                    event: event,
+                    params: params,
+                })
+            } catch (error) {
+                await handler.sendMessage(
+                    event.channelId,
+                    `❌ Failed to request payment: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                )
+            }
+        })
+
+        const actualHandlerKey = `__paid_${command}`
+        this.slashCommandHandlers.set(actualHandlerKey, fn)
+
         const unset = () => {
-            if (
-                this.slashCommandHandlers.has(command) &&
-                this.slashCommandHandlers.get(command) === fn
-            ) {
+            if (this.slashCommandHandlers.has(command)) {
                 this.slashCommandHandlers.delete(command)
             }
+            this.slashCommandHandlers.delete(actualHandlerKey)
         }
         return unset
     }
@@ -1366,6 +1571,7 @@ export class Bot<Commands extends BotCommand[] = []> {
             const response = await appRegistry.getAppMetadata({
                 appId: bin_fromHexString(this.botId),
             })
+
             appMetadata = response.metadata
         } catch (err) {
             // eslint-disable-next-line no-console
@@ -1448,6 +1654,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         commands?: Commands
         identity?: BotIdentityConfig
         dedup?: EventDedupConfig
+        paymentConfig?: FacilitatorConfig
     } & Partial<Omit<CreateTownsClientParams, 'env' | 'encryptionDevice'>> = {},
 ) => {
     const { baseRpcUrl, ...clientOpts } = opts
@@ -1537,6 +1744,7 @@ export const makeTownsBot = async <Commands extends BotCommand[] = []>(
         opts.commands,
         opts.identity,
         opts.dedup,
+        opts.paymentConfig,
     )
 }
 
