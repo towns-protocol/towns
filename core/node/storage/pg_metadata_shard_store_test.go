@@ -36,6 +36,7 @@ func TestMetadataShardCreateAndGetStream(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xaa}, 32)
+	genesisMiniblock := []byte("genesis")
 	nodes := [][]byte{
 		bytes.Repeat([]byte{0x10}, 20),
 		bytes.Repeat([]byte{0x11}, 20),
@@ -45,9 +46,8 @@ func TestMetadataShardCreateAndGetStream(t *testing.T) {
 	record, err := store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                nodes,
-		Flags:                3,
 		ReplicationFactor:    2,
 		Sealed:               false,
 	})
@@ -71,11 +71,12 @@ func TestMetadataShardCreateDuplicate(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xbb}, 32)
+	genesisMiniblock := []byte("genesis")
 
 	_, err := store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
 		ReplicationFactor:    1,
 	})
@@ -84,7 +85,7 @@ func TestMetadataShardCreateDuplicate(t *testing.T) {
 	_, err = store.CreateStream(ctx, shardID, 2, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
 		ReplicationFactor:    1,
 	})
@@ -100,11 +101,12 @@ func TestMetadataShardApplyMiniblockBatch(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xcc}, 32)
+	genesisMiniblock := []byte("genesis")
 
 	_, err = store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
 		ReplicationFactor:    1,
 	})
@@ -126,8 +128,18 @@ func TestMetadataShardApplyMiniblockBatch(t *testing.T) {
 	require.EqualValues(t, 1, fetched.LastMiniblockNum)
 	require.True(t, fetched.Sealed)
 
-	// Prev hash mismatch should fail.
+	// Skipping miniblock height should fail.
 	err = store.ApplyMiniblockBatch(ctx, shardID, 3, []*prot.MiniblockUpdate{{
+		StreamId:          streamID,
+		PrevMiniblockHash: newHash,
+		LastMiniblockHash: bytes.Repeat([]byte{0xef}, 32),
+		LastMiniblockNum:  3,
+	}})
+	require.Error(t, err)
+	require.Equal(t, prot.Err_FAILED_PRECONDITION, base.AsRiverError(err).Code)
+
+	// Prev hash mismatch should fail.
+	err = store.ApplyMiniblockBatch(ctx, shardID, 4, []*prot.MiniblockUpdate{{
 		StreamId:          streamID,
 		PrevMiniblockHash: genesisHash, // stale
 		LastMiniblockHash: bytes.Repeat([]byte{0xee}, 32),
@@ -145,11 +157,12 @@ func TestMetadataShardUpdateNodesAndReplication(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xaa}, 32)
+	genesisMiniblock := []byte("genesis")
 
 	_, err = store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
 		ReplicationFactor:    1,
 	})
@@ -161,14 +174,13 @@ func TestMetadataShardUpdateNodesAndReplication(t *testing.T) {
 			bytes.Repeat([]byte{0x02}, 20),
 			bytes.Repeat([]byte{0x03}, 20),
 		},
-		ReplicationFactor: Ptr[uint32](3),
+		ReplicationFactor: 2,
 	})
 	require.NoError(t, err)
-	require.EqualValues(t, 3, updated.ReplicationFactor)
+	require.EqualValues(t, 2, updated.ReplicationFactor)
 	require.Equal(t, 2, len(updated.Nodes))
 	require.Equal(t, bytes.Repeat([]byte{0x02}, 20), updated.Nodes[0])
 	require.Equal(t, bytes.Repeat([]byte{0x03}, 20), updated.Nodes[1])
-	require.EqualValues(t, 5, updated.UpdatedAtHeight)
 }
 
 func TestMetadataShardCreateStreamPreservesNodeOrder(t *testing.T) {
@@ -178,6 +190,7 @@ func TestMetadataShardCreateStreamPreservesNodeOrder(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xba}, 32)
+	genesisMiniblock := []byte("genesis")
 
 	nodes := [][]byte{
 		bytes.Repeat([]byte{0x10}, 20),
@@ -188,7 +201,7 @@ func TestMetadataShardCreateStreamPreservesNodeOrder(t *testing.T) {
 	_, err := store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                nodes,
 		ReplicationFactor:    3,
 	})
@@ -238,11 +251,12 @@ func TestMetadataShardSealedNodeChangeRejected(t *testing.T) {
 	streamId := testutils.FakeStreamId(shared.STREAM_SPACE_BIN)
 	streamID := streamId[:]
 	genesisHash := bytes.Repeat([]byte{0xab}, 32)
+	genesisMiniblock := []byte("genesis")
 
 	_, err = store.CreateStream(ctx, shardID, 1, &prot.CreateStreamTx{
 		StreamId:             streamID,
 		GenesisMiniblockHash: genesisHash,
-		GenesisMiniblock:     []byte("genesis"),
+		GenesisMiniblock:     genesisMiniblock,
 		Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
 		ReplicationFactor:    1,
 		Sealed:               true,
@@ -310,9 +324,4 @@ func TestMetadataShardCountsAndState(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, 10, state.LastHeight)
 	require.Equal(t, []byte{0x01, 0x02}, state.LastAppHash)
-}
-
-// Ptr is a helper for optional fields in tests.
-func Ptr[T any](v T) *T {
-	return &v
 }

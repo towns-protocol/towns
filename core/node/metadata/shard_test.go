@@ -102,9 +102,9 @@ func buildCreateStreamTx(streamID shared.StreamId, genesisHash []byte) *prot.Met
 			CreateStream: &prot.CreateStreamTx{
 				StreamId:             streamID[:],
 				GenesisMiniblockHash: genesisHash,
-				GenesisMiniblock:     []byte("genesis"),
+				GenesisMiniblock:     bytes.Repeat([]byte{0x01}, 32),
+				LastMiniblockNum:     0,
 				Nodes:                [][]byte{bytes.Repeat([]byte{0x01}, 20)},
-				Flags:                0,
 				ReplicationFactor:    1,
 			},
 		},

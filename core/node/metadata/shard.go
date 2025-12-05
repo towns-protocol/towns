@@ -619,9 +619,6 @@ func (m *MetadataShard) validateCreateStream(cs *CreateStreamTx) error {
 	if len(cs.GenesisMiniblockHash) != 32 {
 		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock_hash must be 32 bytes")
 	}
-	if len(cs.GenesisMiniblock) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required")
-	}
 	if len(cs.Nodes) == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
 	}
@@ -632,6 +629,18 @@ func (m *MetadataShard) validateCreateStream(cs *CreateStreamTx) error {
 	}
 	if cs.ReplicationFactor == 0 {
 		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
+	}
+	if int(cs.ReplicationFactor) > len(cs.Nodes) {
+		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+	}
+	if cs.LastMiniblockNum == 0 {
+		if len(cs.GenesisMiniblock) == 0 {
+			return RiverError(Err_INVALID_ARGUMENT, "genesis_miniblock required when last_miniblock_num is 0")
+		}
+	} else {
+		if len(cs.LastMiniblockHash) != 32 {
+			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_hash must be 32 bytes when last_miniblock_num is set")
+		}
 	}
 	return nil
 }
@@ -650,7 +659,7 @@ func (m *MetadataShard) validateSetBatch(batch *SetStreamLastMiniblockBatchTx) e
 		if len(mb.PrevMiniblockHash) != 32 || len(mb.LastMiniblockHash) != 32 {
 			return RiverError(Err_INVALID_ARGUMENT, "hashes must be 32 bytes")
 		}
-		if mb.LastMiniblockNum <= 0 {
+		if mb.LastMiniblockNum == 0 {
 			return RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num must be > 0")
 		}
 	}
@@ -669,8 +678,8 @@ func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicat
 			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
 		}
 	}
-	if update.ReplicationFactor != nil && *update.ReplicationFactor == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "replication_factor must be > 0")
+	if update.ReplicationFactor > 0 && len(update.Nodes) > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
+		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
 	}
 	return nil
 }
