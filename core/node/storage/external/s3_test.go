@@ -37,7 +37,7 @@ func TestAWSS3Storage(t *testing.T) {
 
 	// Create storage instance
 	streamID := testutils.FakeStreamId(STREAM_MEDIA_BIN)
-	storage, err := external.NewStorage(ctx, extStorageCfg, 0)
+	storage, err := external.NewStorage(ctx, extStorageCfg, "unittest")
 	require.NoError(err)
 	require.NotNil(storage)
 
