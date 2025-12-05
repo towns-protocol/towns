@@ -156,7 +156,7 @@ func (m *ephemeralStreamMonitor) runMigrateExistingMediaStreamsToExternalStorage
 func (m *ephemeralStreamMonitor) runStreamMigrationToExternalStorage(ctx context.Context) {
 	log := logging.FromCtx(ctx)
 
-	log.Info("Enable media stream miniblock data in external storage",
+	log.Infow("Enable media stream miniblock data in external storage",
 		"migrateExistingStreams", m.migrateExistingMediaStreamsToExternalStorage)
 
 	// schedule existing streams for migration if enabled through configuration
