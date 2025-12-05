@@ -121,7 +121,8 @@ func TestHandleHistoricalContent_GapDetected(t *testing.T) {
 			Msg: &protocol.GetMiniblocksResponse{
 				Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
 			},
-		}, nil).Once()
+		}, nil).
+		Once()
 
 	// Create syncSessionRunner
 	ctx := context.Background()
