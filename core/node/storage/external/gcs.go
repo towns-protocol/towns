@@ -32,14 +32,14 @@ var _ UploadSession = (*gcsUploadSession)(nil)
 func newGcsUploadSession(
 	ctx context.Context,
 	streamID StreamId,
-	schemaLockID int64,
+	schemaName string,
 	bucket string,
 	totalMiniblockDataSize uint64,
 	token *oauth2.Token,
 ) (*gcsUploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
-		objectKey              = StorageObjectKey(schemaLockID, streamID)
+		objectKey              = StorageObjectKey(schemaName, streamID)
 		url                    = fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucket, objectKey)
 		contentLength          = totalMiniblockDataSize
 		bodyReader, bodyWriter = io.Pipe()

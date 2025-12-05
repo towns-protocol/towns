@@ -99,6 +99,7 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
+import type { RouteConfig } from 'x402/types'
 
 import {
     http,
@@ -128,6 +129,10 @@ import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
 type BotActions = ReturnType<typeof buildBotActions>
 
+export type BotCommand = PlainMessage<SlashCommand> & {
+    paid?: RouteConfig
+}
+
 export type BotHandler = ReturnType<typeof buildBotActions>
 
 // StandardSchema type aliases for convenience
@@ -143,7 +148,7 @@ const debug = dlog('csb:bot')
 
 export type BotPayload<
     T extends keyof BotEvents<Commands>,
-    Commands extends PlainMessage<SlashCommand>[] = [],
+    Commands extends BotCommand[] = [],
 > = Parameters<BotEvents<Commands>[T]>[1]
 
 export type CreateRoleParams = {
@@ -234,7 +239,7 @@ export type CreateChannelParams = {
     hideUserJoinLeaveEvents?: boolean
 }
 
-export type BotEvents<Commands extends PlainMessage<SlashCommand>[] = []> = {
+export type BotEvents<Commands extends BotCommand[] = []> = {
     message: (
         handler: BotActions,
         event: BasePayload & {
@@ -373,7 +378,7 @@ export type BasePayload = {
     event: StreamEvent
 }
 
-export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
+export class Bot<Commands extends BotCommand[] = []> {
     readonly client: ClientV2<BotActions>
     readonly appAddress: Address
     botId: string
@@ -1435,7 +1440,7 @@ export class Bot<Commands extends PlainMessage<SlashCommand>[] = []> {
     }
 }
 
-export const makeTownsBot = async <Commands extends PlainMessage<SlashCommand>[] = []>(
+export const makeTownsBot = async <Commands extends BotCommand[] = []>(
     appPrivateData: string,
     jwtSecretBase64: string,
     opts: {

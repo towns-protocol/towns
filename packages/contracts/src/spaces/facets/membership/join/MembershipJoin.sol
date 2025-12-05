@@ -499,6 +499,20 @@ abstract contract MembershipJoin is
 
         uint256 duration = _getMembershipDuration();
         uint256 basePrice = _getMembershipRenewalPrice(tokenId, _totalSupply());
+
+        // Handle free renewal
+        if (basePrice == 0) {
+            // Refund any ETH sent
+            CurrencyTransfer.transferCurrency(
+                _getMembershipCurrency(),
+                address(this),
+                payer,
+                msg.value
+            );
+            _renewSubscription(tokenId, uint64(duration));
+            return;
+        }
+
         (uint256 totalRequired, ) = _getTotalMembershipPayment(basePrice);
 
         if (totalRequired > msg.value) Membership__InvalidPayment.selector.revertWith();

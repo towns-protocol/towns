@@ -39,7 +39,7 @@ var _ UploadSession = (*s3UploadSession)(nil)
 func newS3UploadSession(
 	ctx context.Context,
 	streamID StreamId,
-	schemaLockID int64,
+	schemaName string,
 	bucketName string,
 	region string,
 	totalMiniblockDataSize uint64,
@@ -48,7 +48,7 @@ func newS3UploadSession(
 ) (*s3UploadSession, error) {
 	var (
 		reqCtx, reqCancel      = context.WithCancel(ctx)
-		objectKey              = StorageObjectKey(schemaLockID, streamID)
+		objectKey              = StorageObjectKey(schemaName, streamID)
 		url                    = fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, objectKey)
 		contentLength          = int64(totalMiniblockDataSize)
 		timestamp              = time.Now().UTC()

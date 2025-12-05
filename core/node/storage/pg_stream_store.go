@@ -235,7 +235,7 @@ func NewPostgresStreamStore(
 
 	if externalStorageCfg != nil && (externalStorageCfg.Gcs.Enabled() || externalStorageCfg.AwsS3.Enabled()) {
 		if store.externalStorage == nil { // can be set through an option
-			externalStorage, err := external.NewStorage(ctx, externalStorageCfg, store.computeLockIdFromSchema())
+			externalStorage, err := external.NewStorage(ctx, externalStorageCfg, store.schemaName)
 			if err != nil {
 				return nil, AsRiverError(err).Func("NewPostgresStreamStore")
 			}

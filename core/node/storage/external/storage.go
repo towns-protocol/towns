@@ -99,7 +99,8 @@ type (
 	}
 
 	storage struct {
-		schemaLockID int64
+		// schemaName must correspond with the database schema name and is used to prefix uploaded blobs.
+		schemaName string
 
 		s3 *struct {
 			bucketName string
@@ -166,7 +167,7 @@ const (
 func NewStorage(
 	ctx context.Context,
 	cfg *config.ExternalMediaStreamStorageConfig,
-	schemaLockID int64,
+	schemaName string,
 ) (Storage, error) {
 	if cfg.Gcs.Enabled() {
 		creds, err := google.CredentialsFromJSON(ctx, []byte(cfg.Gcs.JsonCredentials), gcsCredentialScope)
@@ -176,7 +177,7 @@ func NewStorage(
 		}
 
 		return &storage{
-			schemaLockID:           schemaLockID,
+			schemaName:             schemaName,
 			migrateExistingStreams: cfg.EnableMigrationExistingStreams,
 			gcs: &struct {
 				bucketName string
@@ -195,7 +196,7 @@ func NewStorage(
 		}
 
 		return &storage{
-			schemaLockID:           schemaLockID,
+			schemaName:             schemaName,
 			migrateExistingStreams: cfg.EnableMigrationExistingStreams,
 			s3: &struct {
 				bucketName string
@@ -256,14 +257,14 @@ func (s *storage) StartUploadSession(
 		}
 
 		return newGcsUploadSession(
-			ctx, streamID, s.schemaLockID, s.gcs.bucketName, totalMiniblockDataSize, apiToken)
+			ctx, streamID, s.schemaName, s.gcs.bucketName, totalMiniblockDataSize, apiToken)
 	}
 
 	if s.s3 != nil {
 		return newS3UploadSession(
 			ctx,
 			streamID,
-			s.schemaLockID,
+			s.schemaName,
 			s.s3.bucketName,
 			s.s3.region,
 			totalMiniblockDataSize,
@@ -346,7 +347,7 @@ func (s *storage) downloadMiniblockDataFromS3(
 	ranges []byteRange,
 	miniblocks map[int64]MiniblockDescriptor,
 ) (map[int64][]byte, error) {
-	objectKey := StorageObjectKey(s.schemaLockID, streamID)
+	objectKey := StorageObjectKey(s.schemaName, streamID)
 	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.s3.bucketName, s.s3.region, objectKey)
 	rangeHeader := buildRangeHeader(ranges)
 
@@ -427,7 +428,7 @@ func (s *storage) downloadMiniblockDataFromGCS(
 	rng byteRange,
 	miniblocks map[int64]MiniblockDescriptor,
 ) (map[int64][]byte, error) {
-	objectKey := StorageObjectKey(s.schemaLockID, streamID)
+	objectKey := StorageObjectKey(s.schemaName, streamID)
 	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.gcs.bucketName, objectKey)
 	rangeHeader := buildRangeHeader([]byteRange{rng})
 
@@ -595,7 +596,7 @@ func (s *storage) DeleteObject(ctx context.Context, streamID StreamId) error {
 }
 
 func (s *storage) deleteObjectFromS3(ctx context.Context, streamID StreamId) error {
-	objectKey := StorageObjectKey(s.schemaLockID, streamID)
+	objectKey := StorageObjectKey(s.schemaName, streamID)
 	url := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", s.s3.bucketName, s.s3.region, objectKey)
 	httpClient := http.DefaultClient
 
@@ -642,7 +643,7 @@ func (s *storage) deleteObjectFromS3(ctx context.Context, streamID StreamId) err
 }
 
 func (s *storage) deleteObjectFromGCS(ctx context.Context, streamID StreamId) error {
-	objectKey := StorageObjectKey(s.schemaLockID, streamID)
+	objectKey := StorageObjectKey(s.schemaName, streamID)
 	url := fmt.Sprintf("https://storage.googleapis.com/%s/%s", s.gcs.bucketName, objectKey)
 	httpClient := http.DefaultClient
 
@@ -835,11 +836,8 @@ func retryWithBackoff(ctx context.Context, operation string, fn func() (int, err
 
 // StorageObjectKey returns the object key where the miniblocks for the given
 // streamID are stored in external storage.
-func StorageObjectKey(id int64, streamID StreamId) string {
-	if id < 0 {
-		id *= -1 // ensure that object key doesn't start with a minus
-	}
-	return fmt.Sprintf("%d/%s", id, streamID)
+func StorageObjectKey(schemaName string, streamID StreamId) string {
+	return fmt.Sprintf("%s/%s", schemaName, streamID)
 }
 
 // ObjectRangeMiniblocks returns a range that can be used to download a byte range of an
