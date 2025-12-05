@@ -4,6 +4,7 @@ import { baseSepolia, base } from 'viem/chains'
 import { useFacilitator } from 'x402/verify'
 import type { BasePayload, BotHandler } from './bot'
 import type { Price, RouteConfig } from 'x402/types'
+import { InteractionRequestPayload_Signature_SignatureType } from '@towns-protocol/proto'
 
 export const USDC_ADDRESSES: Record<number, Address> = {
     [baseSepolia.id]: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
@@ -170,7 +171,7 @@ export async function createPaymentRequest(
         case: 'signature',
         value: {
             id: signatureId,
-            type: 1, // TYPED_DATA
+            type: InteractionRequestPayload_Signature_SignatureType.TYPED_DATA,
             data: JSON.stringify(typedData),
             chainId: params.chainId.toString(),
             signerWallet: fromAddress,

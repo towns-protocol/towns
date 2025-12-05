@@ -87,6 +87,8 @@ import {
     type AppMetadata,
     StreamEvent,
     ChannelMessage_Post_MentionSchema,
+    InteractionRequestPayload_SignatureSchema,
+    InteractionRequestPayload_Signature_SignatureType,
 } from '@towns-protocol/proto'
 import {
     bin_equal,
@@ -1051,6 +1053,10 @@ export class Bot<Commands extends BotCommand[] = []> {
         // Single status message that gets updated through the flow
         const statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
 
+        // Track settlement state to distinguish payment failures from post-payment failures
+        let settlementCompleted = false
+        let transactionHash: string | undefined
+
         try {
             const verifyResult = await facilitator.verify(paymentPayload, paymentRequirements)
 
@@ -1083,13 +1089,17 @@ export class Bot<Commands extends BotCommand[] = []> {
                 return
             }
 
+            // Mark settlement as complete - funds have been transferred
+            settlementCompleted = true
+            transactionHash = settleResult.transaction
+
             // Final success - show receipt
             await handler.editMessage(
                 channelId,
                 statusMsg.eventId,
                 `✅ **Payment Complete**\n` +
                     `/${pending.command} • $${formatUnits(pending.params.value, 6)} USDC\n` +
-                    `Tx: \`${settleResult.transaction}\``,
+                    `Tx: \`${transactionHash}\``,
             )
 
             // Delete the signature request now that payment is complete
@@ -1102,12 +1112,29 @@ export class Bot<Commands extends BotCommand[] = []> {
                 await originalHandler(this.client, pending.event)
             }
         } catch (error) {
-            await handler.editMessage(
-                channelId,
-                statusMsg.eventId,
-                `❌ Payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            )
-            await handler.removeEvent(channelId, pending.interactionEventId)
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
+            if (settlementCompleted) {
+                // Payment succeeded but command handler failed - DO NOT suggest retry
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `⚠️ **Payment succeeded but command failed**\n` +
+                        `Your payment of $${formatUnits(pending.params.value, 6)} USDC was processed.\n` +
+                        `Tx: \`${transactionHash}\`\n\n` +
+                        `Error: ${errorMessage}\n` +
+                        `Please contact support - do NOT retry to avoid double charges.`,
+                )
+                // Don't remove interaction event - payment already processed
+            } else {
+                // Actual payment failure (verify or settle threw)
+                await handler.editMessage(
+                    channelId,
+                    statusMsg.eventId,
+                    `❌ Payment failed: ${errorMessage}`,
+                )
+                await handler.removeEvent(channelId, pending.interactionEventId)
+            }
         }
     }
 
@@ -1499,10 +1526,12 @@ export class Bot<Commands extends BotCommand[] = []> {
         this.slashCommandHandlers.set(actualHandlerKey, fn)
 
         const unset = () => {
-            if (this.slashCommandHandlers.has(command)) {
+            if (
+                this.slashCommandHandlers.has(command) &&
+                this.slashCommandHandlers.get(command) === fn
+            ) {
                 this.slashCommandHandlers.delete(command)
             }
-            this.slashCommandHandlers.delete(actualHandlerKey)
         }
         return unset
     }
