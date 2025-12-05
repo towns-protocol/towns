@@ -1026,8 +1026,6 @@ func (msr *MultiSyncRunner) AddStream(
 	msr.metrics.TotalStreams.With(promLabels).Inc()
 
 	streamId := stream.StreamId()
-	minipoolGen := int64(math.MaxInt64)
-	prevMiniblockHash := common.Hash{}.Bytes()
 	var persistedMinipoolGen int64
 
 	// Try to load persisted state for gap detection on restart.
@@ -1054,8 +1052,8 @@ func (msr *MultiSyncRunner) AddStream(
 	msr.streamsToSync <- &streamSyncInitRecord{
 		streamId:               streamId,
 		applyHistoricalContent: applyHistoricalContent,
-		minipoolGen:            minipoolGen,
-		prevMiniblockHash:      prevMiniblockHash,
+		minipoolGen:            int64(math.MaxInt64),
+		prevMiniblockHash:      common.Hash{}.Bytes(),
 		persistedMinipoolGen:   persistedMinipoolGen,
 		remotes: nodes.NewStreamNodesWithLock(
 			stream.ReplicationFactor(),
