@@ -68,7 +68,7 @@ contract AccountModuleFacet is
     /// @inheritdoc IModule
     function onUninstall(bytes calldata) external override nonReentrant {
         AccountModule.Layout storage $ = AccountModule.getLayout();
-        $.installed[msg.sender] = false;
+        delete $.installed[msg.sender];
     }
 
     function setSpaceFactory(address spaceFactory) external onlyOwner {
