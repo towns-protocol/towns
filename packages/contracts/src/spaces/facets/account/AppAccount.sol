@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IAppAccount} from "./IAppAccount.sol";
+import {IAppExecution} from "./IAppExecution.sol";
 
 // libraries
 import {AppAccountBase} from "./AppAccountBase.sol";
@@ -17,12 +18,12 @@ import {ReentrancyGuard} from "solady/utils/ReentrancyGuard.sol";
  * @notice A lightweight modular erc6900 semi-compatible account
  * @dev This account is used to execute transactions on behalf of a Space
  */
-contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
+contract AppAccount is IAppAccount, IAppExecution, AppAccountBase, ReentrancyGuard, Facet {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      Execution                             */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @inheritdoc IAppAccount
+    /// @inheritdoc IAppExecution
     function execute(
         address target,
         uint256 value,
@@ -98,8 +99,8 @@ contract AppAccount is IAppAccount, AppAccountBase, ReentrancyGuard, Facet {
         return _isAppEntitled(app, publicKey, permission);
     }
 
-    /// @inheritdoc IAppAccount
-    function isAppExecuting(address app) external view returns (bool) {
+    /// @inheritdoc IAppExecution
+    function isAppExecuting(address app) external view override returns (bool) {
         return _isAppExecuting(app);
     }
 }

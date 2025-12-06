@@ -209,15 +209,13 @@ contract AppRegistryTest is AppRegistryBaseTest {
 
         uint256 totalRequired = registry.getAppPrice(address(mockModule));
 
-        vm.deal(founder, totalRequired);
-
-        vm.prank(founder);
+        hoax(founder, totalRequired);
         vm.expectEmit(address(appAccount));
         emit ExecutionInstalled(address(mockModule), appInfo.manifest);
         installer.installApp{value: totalRequired}(mockModule, appAccount, "");
     }
 
-    function test_revertWhen_installApp_notAllowed() external givenAppIsRegistered {
+    function test_revertWhen_installApp_randomAddress_notAllowed() external givenAppIsRegistered {
         vm.prank(_randomAddress());
         vm.expectRevert(NotAllowed.selector);
         installer.installApp(mockModule, appAccount, "");

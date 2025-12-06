@@ -33,7 +33,9 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
     using CustomRevert for bytes4;
 
     modifier onlyAllowed(IAppAccount account) {
-        if (IERC173(address(account)).owner() != msg.sender) NotAllowed.selector.revertWith();
+        if (address(account) != msg.sender && IERC173(address(account)).owner() != msg.sender) {
+            NotAllowed.selector.revertWith();
+        }
         _;
     }
 
@@ -247,7 +249,6 @@ abstract contract AppRegistryBase is IAppRegistryBase, SchemaBase, AttestationBa
 
         ITownsApp appContract = ITownsApp(app);
         uint256 installPrice = appContract.installPrice();
-
         _chargeForInstall(msg.sender, app, installPrice);
 
         IAppAccount(account).onInstallApp(appId, data);
