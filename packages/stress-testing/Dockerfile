@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     make \
+    unzip \
     uuid-runtime \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -27,18 +28,17 @@ RUN pip3 install --break-system-packages --no-cache --upgrade pip setuptools
 RUN GO111MODULE=on GOBIN=/usr/local/bin go install \
     github.com/bufbuild/buf/cmd/buf@v1.28.1
 
-# Install yarn
-RUN npm install -g corepack@0.24.1
-RUN corepack enable
-RUN yarn set version 3.5.1
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun
 
 # Copy files
 COPY . /monorepo
 
 WORKDIR /monorepo
 
-RUN yarn
-RUN yarn csb:build
+RUN bun install --frozen-lockfile && bun pm cache rm
+RUN bun run csb:build
 
 ENV MONOREPO_ROOT=/monorepo
 ENV SINGLE_LINE_LOGS="true"

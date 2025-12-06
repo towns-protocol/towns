@@ -10,13 +10,13 @@ Towns Protocol is a permissionless, decentralized end-to-end encrypted chat netw
 
 ### Root-level commands (from project root):
 
-- `yarn install && yarn prepare` - Install dependencies and setup hooks
-- `yarn build` - Build all packages using turbo
-- `yarn test` - Run all tests
-- `yarn test:unit` - Run unit tests only
-- `yarn lint` - Run linting across all packages
-- `yarn prettier:check` - Check code formatting
-- `yarn prettier:fix` - Fix code formatting
+- `bun install` - Install dependencies and setup hooks
+- `bun run build` - Build all packages using turbo
+- `bun run test` - Run all tests
+- `bun run test:unit` - Run unit tests only
+- `bun run lint` - Run linting across all packages
+- `bun run prettier:check` - Check code formatting
+- `bun run prettier:fix` - Fix code formatting
 
 ### Go backend commands (from /core directory):
 
@@ -24,8 +24,8 @@ Read instructions in `core/AGENTS.md` for more details.
 
 ### Contract commands (from root):
 
-- `yarn workspace @towns-protocol/contracts exec anvil` - Start Anvil
-- `yarn workspace @towns-protocol/contracts exec cast` - Use Cast CLI
+- `anvil` - Start Anvil
+- `cast` - Use Cast CLI
 
 ### CI testing commands (from root):
 
@@ -81,7 +81,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 ### Local Development Setup
 
 1. Install prerequisites: Go, Node v20.x, Docker, Anvil, Just, jq
-2. Run `yarn install && yarn prepare`
+2. Run `bun install`
 3. Create Certificate Authority: `./core/scripts/register-ca.sh`
 4. Choose development environment (from `/core/`):
    - `just config-and-start` - Full environment with entitlement checks (required for some SDK tests)
@@ -116,12 +116,12 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 
 #### For TypeScript, JavaScript, YAML, Solidity, and other non-Go files:
 - **All non-Go files must pass Prettier formatting**
-  - Run `yarn prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
+  - Run `bun run prettier:fix` to automatically format TypeScript, JavaScript, YAML, Solidity, and other supported files
   - This command will check and fix any formatting issues in one step
 
 #### For all changes:
 - **All PRs must pass global linting**
-  - Run `yarn lint` from the root directory before committing
+  - Run `bun run lint` from the root directory before committing
   - This ensures code quality and consistency across the entire repository
 
 ## Key Technology Stack
@@ -147,7 +147,7 @@ Events are batched into **miniblocks** and replicated across multiple nodes for 
 - **Docker**: Local PostgreSQL and Redis
 - **Anvil**: Local blockchain development
 - **Just**: Command runner for Go workflows
-- **Yarn 2**: Package management
+- **Bun 1.3**: Package management
 
 ## Configuration Notes
 

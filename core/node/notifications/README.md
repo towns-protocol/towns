@@ -65,11 +65,9 @@ Additional configuration can be supplied through the `-c <config-file>` argument
 The Notification Service exports the following **Prometheus** metrics:
 
 - **`river_notification_total_streams`**: Total number of streams that need to be tracked.
-
   - Labels: `type=[dm, gdm, space_channel, user_settings]`
 
 - **`river_notification_tracked_streams`**: Number of streams currently being tracked.
-
   - Labels: `type=[dm, gdm, space_channel, user_settings]`
 
 - **`river_notification_sync_down`**: Number of streams reported as down by remote.
