@@ -8,6 +8,11 @@ RUN apt-get update && \
     git curl ca-certificates build-essential libvips-dev unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js (needed for npm pack in @towns-protocol/generated build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
@@ -60,15 +65,15 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
-RUN yarn init --yes
+RUN npm init --yes
 
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && yarn cache clean
+RUN npm install dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && npm cache clean --force
 
 # Force rebuild sharp to ensure correct Linux binaries and clean cache
-RUN yarn remove sharp && yarn add sharp@0.34.3 && yarn cache clean
+RUN npm uninstall sharp && npm install sharp@0.34.3 && npm cache clean --force
 
 # run the service
 ARG GIT_SHA

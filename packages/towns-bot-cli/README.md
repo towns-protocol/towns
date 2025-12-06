@@ -7,9 +7,11 @@ CLI for creating and managing Towns Protocol bot projects.
 ### Create a new bot project
 
 ```bash
+npx towns-bot init my-bot
+# or
 bunx towns-bot init my-bot
 # or
-npx towns-bot init my-bot
+yarn dlx towns-bot init my-bot
 # or
 pnpm dlx towns-bot init my-bot
 ```

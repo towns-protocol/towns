@@ -8,6 +8,11 @@ RUN apt-get update && \
     git curl ca-certificates build-essential unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js (needed for npm pack in @towns-protocol/generated build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
@@ -43,14 +48,14 @@ COPY ./packages/xchain-monitor ./packages/xchain-monitor
 RUN bun run turbo build --filter @towns-protocol/xchain-monitor...
 
 # create runner image with only the necessary files
-FROM oven/bun:1.3-alpine AS runner
+FROM node:lts-alpine3.20 AS runner
 
 COPY --from=builder /river/packages/xchain-monitor/dist /river/packages/xchain-monitor/dist
 
 # install dd-trace again (because the bundler excludes some of the sub-dependencies)
 WORKDIR /river/packages/xchain-monitor
-RUN bun init --yes
-RUN bun add dd-trace@^5.19.0 && bun pm cache rm
+RUN npm init --yes
+RUN npm install dd-trace@^5.19.0 && npm cache clean --force
 
 # run the service
 ARG GIT_SHA
@@ -59,4 +64,4 @@ ENV DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns" \
     DD_GIT_COMMIT_SHA=${GIT_SHA} \
     NODE_ENV=production
 
-CMD ["bun", "./dist/node_esbuild.cjs"]
+CMD ["node", "--enable-source-maps", "--max-old-space-size=4096", "./dist/node_esbuild.cjs"]

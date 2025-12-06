@@ -8,6 +8,11 @@ RUN apt-get update && \
     git curl ca-certificates build-essential unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js (needed for npm pack in @towns-protocol/generated build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install Bun
 RUN curl -fsSL https://bun.sh/install | bash && \
     ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
