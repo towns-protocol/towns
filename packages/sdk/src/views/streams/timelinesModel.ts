@@ -27,13 +27,25 @@ export type ThreadsMap = Record<string, TimelinesMap>
 export type ReactionsMap = Record<string, Record<string, MessageReactions>>
 /// TipsMap: { streamId: { eventId: MessageTips } }
 export type TipsMap = Record<string, Record<string, MessageTips>>
+/// EventIndexMap: { streamId: Map<eventId, arrayIndex> } - O(1) event lookups
+export type EventIndexMap = Record<string, Map<string, number>>
+/// ThreadEventIndexMap: { streamId: { parentId: Map<eventId, arrayIndex> } } - O(1) thread event lookups
+export type ThreadEventIndexMap = Record<string, Record<string, Map<string, number>>>
+/// OriginalEventsMap: { streamId: { eventId: originalEvent } } - stores ORIGINAL version before any edits
+export type OriginalEventsMap = Record<string, Record<string, TimelineEvent>>
+/// ReplacementLogMap: { streamId: eventId[] } - append-only log of replaced eventIds for transform iteration
+export type ReplacementLogMap = Record<string, string[]>
 // store states
 export type TimelinesViewModel = {
     timelines: TimelinesMap
-    replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
+    eventIndex: EventIndexMap
+    // Phase 3: Store original event + log instead of unbounded array
+    originalEvents: OriginalEventsMap
+    replacementLog: ReplacementLogMap
     pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
+    threadEventIndex: ThreadEventIndexMap
     reactions: ReactionsMap
     tips: TipsMap
     lastestEventByUser: { [userId: string]: TimelineEvent }
@@ -75,7 +87,9 @@ export function makeTimelinesViewInterface(
         }
         return {
             timelines: { ...state.timelines, [streamId]: [] },
-            replacedEvents: state.replacedEvents,
+            eventIndex: { ...state.eventIndex, [streamId]: new Map<string, number>() },
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: {
                 ...state.threadsStats,
@@ -84,6 +98,10 @@ export function makeTimelinesViewInterface(
             threads: {
                 ...state.threads,
                 [streamId]: aggregated.threads,
+            },
+            threadEventIndex: {
+                ...state.threadEventIndex,
+                [streamId]: {} as Record<string, Map<string, number>>,
             },
             reactions: {
                 ...state.reactions,
@@ -101,10 +119,13 @@ export function makeTimelinesViewInterface(
         setState((prev) => {
             for (const streamId of streamIds) {
                 delete prev.timelines[streamId]
-                delete prev.replacedEvents[streamId]
+                delete prev.eventIndex[streamId]
+                delete prev.originalEvents[streamId]
+                delete prev.replacementLog[streamId]
                 delete prev.pendingReplacedEvents[streamId]
                 delete prev.threadsStats[streamId]
                 delete prev.threads[streamId]
+                delete prev.threadEventIndex[streamId]
                 delete prev.reactions[streamId]
                 delete prev.tips[streamId]
             }
@@ -112,17 +133,33 @@ export function makeTimelinesViewInterface(
         })
     }
     const removeEvent = (state: TimelinesViewModel, streamId: string, eventId: string) => {
-        const eventIndex = state.timelines[streamId]?.findIndex((e) => e.eventId == eventId)
-        if ((eventIndex ?? -1) < 0) {
+        // O(1) lookup using eventIndex
+        const index = state.eventIndex[streamId]?.get(eventId)
+        if (index === undefined) {
             return state
         }
-        const event = state.timelines[streamId][eventIndex]
+        const event = state.timelines[streamId][index]
+        const { timelines: newTimelines, eventIndex: newEventIndex } = removeTimelineEvent(
+            streamId,
+            index,
+            state.timelines,
+            state.eventIndex,
+        )
+        const { threads: newThreads, threadEventIndex: newThreadEventIndex } = removeThreadEvent(
+            streamId,
+            event,
+            state.threads,
+            state.threadEventIndex,
+        )
         return {
-            timelines: removeTimelineEvent(streamId, eventIndex, state.timelines),
-            replacedEvents: state.replacedEvents,
+            timelines: newTimelines,
+            eventIndex: newEventIndex,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: removeThreadStat(streamId, event, state.threadsStats),
-            threads: removeThreadEvent(streamId, event, state.threads),
+            threads: newThreads,
+            threadEventIndex: newThreadEventIndex,
             reactions: removeReaction(streamId, event, state.reactions),
             tips: removeTip(streamId, event, state.tips),
             lastestEventByUser: state.lastestEventByUser,
@@ -134,18 +171,34 @@ export function makeTimelinesViewInterface(
         streamId: string,
         timelineEvent: TimelineEvent,
     ) => {
+        const { timelines: newTimelines, eventIndex: newEventIndex } = appendTimelineEvent(
+            streamId,
+            timelineEvent,
+            state.timelines,
+            state.eventIndex,
+        )
+        const { threads: newThreads, threadEventIndex: newThreadEventIndex } = insertThreadEvent(
+            streamId,
+            timelineEvent,
+            state.threads,
+            state.threadEventIndex,
+        )
         return {
-            timelines: appendTimelineEvent(streamId, timelineEvent, state.timelines),
-            replacedEvents: state.replacedEvents,
+            timelines: newTimelines,
+            eventIndex: newEventIndex,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
                 timelineEvent,
                 state.threadsStats,
                 state.timelines[streamId],
+                state.eventIndex[streamId],
                 userId,
             ),
-            threads: insertThreadEvent(streamId, timelineEvent, state.threads),
+            threads: newThreads,
+            threadEventIndex: newThreadEventIndex,
             reactions: addReactions(streamId, timelineEvent, state.reactions),
             tips: addTips(streamId, timelineEvent, state.tips, 'append'),
             lastestEventByUser: state.lastestEventByUser,
@@ -163,18 +216,34 @@ export function makeTimelinesViewInterface(
                   state.pendingReplacedEvents[streamId][inTimelineEvent.eventId],
               )
             : inTimelineEvent
+        const { timelines: newTimelines, eventIndex: newEventIndex } = prependTimelineEvent(
+            streamId,
+            timelineEvent,
+            state.timelines,
+            state.eventIndex,
+        )
+        const { threads: newThreads, threadEventIndex: newThreadEventIndex } = insertThreadEvent(
+            streamId,
+            timelineEvent,
+            state.threads,
+            state.threadEventIndex,
+        )
         return {
-            timelines: prependTimelineEvent(streamId, timelineEvent, state.timelines),
-            replacedEvents: state.replacedEvents,
+            timelines: newTimelines,
+            eventIndex: newEventIndex,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
                 timelineEvent,
                 state.threadsStats,
                 state.timelines[streamId],
+                state.eventIndex[streamId],
                 userId,
             ),
-            threads: insertThreadEvent(streamId, timelineEvent, state.threads),
+            threads: newThreads,
+            threadEventIndex: newThreadEventIndex,
             reactions: addReactions(streamId, timelineEvent, state.reactions),
             tips: addTips(streamId, timelineEvent, state.tips, 'prepend'),
             lastestEventByUser: state.lastestEventByUser,
@@ -189,13 +258,20 @@ export function makeTimelinesViewInterface(
         timelineEvent: TimelineEvent,
     ) => {
         const timeline = state.timelines[streamId] ?? []
-        const eventIndex = timeline.findIndex(
-            (e: TimelineEvent) =>
-                e.eventId === replacedMsgId ||
-                (e.localEventId && e.localEventId === timelineEvent.localEventId),
-        )
+        const indexMap = state.eventIndex[streamId]
 
-        if (eventIndex === -1) {
+        // O(1) lookup by eventId first, then fall back to localEventId scan if needed
+        let index = indexMap?.get(replacedMsgId)
+        if (index === undefined && timelineEvent.localEventId) {
+            // Fall back to localEventId lookup - this is less common, kept as O(n) for now
+            index = timeline.findIndex(
+                (e: TimelineEvent) =>
+                    e.localEventId && e.localEventId === timelineEvent.localEventId,
+            )
+            if (index === -1) index = undefined
+        }
+
+        if (index === undefined) {
             // if we didn't find an event to replace...
             if (
                 state.pendingReplacedEvents[streamId]?.[replacedMsgId] &&
@@ -218,58 +294,105 @@ export function makeTimelinesViewInterface(
                 }
             }
         }
-        const oldEvent = timeline[eventIndex]
+        const oldEvent = timeline[index]
         if (timelineEvent.latestEventNum < oldEvent.latestEventNum) {
             return state
         }
         const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
 
         const threadParentId = newEvent.threadParentId
+        const threadIndexMap = threadParentId
+            ? state.threadEventIndex[streamId]?.[threadParentId]
+            : undefined
+
+        // O(1) lookup for thread event
+        let threadIdx = threadIndexMap?.get(replacedMsgId)
+        if (threadIdx === undefined && timelineEvent.localEventId && threadParentId) {
+            // Fall back to localEventId lookup for thread
+            const threadTimeline = state.threads[streamId]?.[threadParentId]
+            const foundIdx = threadTimeline?.findIndex(
+                (e) => e.localEventId && e.localEventId === timelineEvent.localEventId,
+            )
+            if (foundIdx !== undefined && foundIdx >= 0) {
+                threadIdx = foundIdx
+            }
+        }
+
         const threadTimeline = threadParentId
             ? state.threads[streamId]?.[threadParentId]
             : undefined
-        const threadEventIndex =
-            threadTimeline?.findIndex(
-                (e) =>
-                    e.eventId === replacedMsgId ||
-                    (e.localEventId && e.localEventId === timelineEvent.localEventId),
-            ) ?? -1
 
-        return {
-            timelines: replaceTimelineEvent(
+        // Phase 3: Store original event (if first edit) and append to log
+        // This stores ONE entry per eventId instead of one per edit
+        const eventIdForLog = oldEvent.eventId
+        const newOriginalEvents = state.originalEvents[streamId]?.[eventIdForLog]
+            ? state.originalEvents // Already have original, don't overwrite
+            : {
+                  ...state.originalEvents,
+                  [streamId]: {
+                      ...state.originalEvents[streamId],
+                      [eventIdForLog]: oldEvent,
+                  },
+              }
+        const newReplacementLog = {
+            ...state.replacementLog,
+            [streamId]: [...(state.replacementLog[streamId] ?? []), eventIdForLog],
+        }
+
+        // Update timelines and their index
+        const { timelines: newTimelines, eventIndex: newEventIndex } = replaceTimelineEvent(
+            streamId,
+            newEvent,
+            index,
+            timeline,
+            state.timelines,
+            state.eventIndex,
+            oldEvent.eventId,
+        )
+
+        // Handle thread updates
+        let newThreads = state.threads
+        let newThreadEventIndex = state.threadEventIndex
+        if (threadParentId && threadTimeline && threadIdx !== undefined) {
+            const result = replaceThreadEvent(
+                streamId,
+                threadParentId,
+                newEvent,
+                threadIdx,
+                threadTimeline,
+                state.threads,
+                state.threadEventIndex,
+                oldEvent.eventId,
+            )
+            newThreads = result.threads
+            newThreadEventIndex = result.threadEventIndex
+        } else if (threadParentId) {
+            const result = insertThreadEvent(
                 streamId,
                 newEvent,
-                eventIndex,
-                timeline,
-                state.timelines,
-            ),
-            replacedEvents: {
-                ...state.replacedEvents,
-                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
-            },
+                state.threads,
+                state.threadEventIndex,
+            )
+            newThreads = result.threads
+            newThreadEventIndex = result.threadEventIndex
+        }
+
+        return {
+            timelines: newTimelines,
+            eventIndex: newEventIndex,
+            originalEvents: newOriginalEvents,
+            replacementLog: newReplacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
                 newEvent,
                 removeThreadStat(streamId, oldEvent, state.threadsStats),
                 state.timelines[streamId],
+                state.eventIndex[streamId],
                 userId,
             ),
-            threads:
-                threadParentId && threadTimeline && threadEventIndex >= 0
-                    ? {
-                          ...state.threads,
-                          [streamId]: replaceTimelineEvent(
-                              threadParentId,
-                              newEvent,
-                              threadEventIndex,
-                              threadTimeline,
-                              state.threads[streamId],
-                          ),
-                      }
-                    : threadParentId
-                      ? insertThreadEvent(streamId, newEvent, state.threads)
-                      : state.threads,
+            threads: newThreads,
+            threadEventIndex: newThreadEventIndex,
             reactions: addReactions(
                 streamId,
                 newEvent,
@@ -287,13 +410,12 @@ export function makeTimelinesViewInterface(
     ) {
         // very very similar to replaceEvent, but we only swap out the confirmedInBlockNum and confirmedEventNum
         const timeline = state.timelines[streamId] ?? []
-        const eventIndex = timeline.findIndex(
-            (e: TimelineEvent) => e.eventId === confirmation.eventId,
-        )
-        if (eventIndex === -1) {
+        // O(1) lookup using eventIndex
+        const index = state.eventIndex[streamId]?.get(confirmation.eventId)
+        if (index === undefined) {
             return state
         }
-        const oldEvent = timeline[eventIndex]
+        const oldEvent = timeline[index]
         const newEvent = {
             ...oldEvent,
             confirmedEventNum: confirmation.confirmedEventNum,
@@ -302,39 +424,53 @@ export function makeTimelinesViewInterface(
         }
 
         const threadParentId = newEvent.threadParentId
+        // O(1) lookup for thread event
+        const threadIdx = threadParentId
+            ? state.threadEventIndex[streamId]?.[threadParentId]?.get(confirmation.eventId)
+            : undefined
         const threadTimeline = threadParentId
             ? state.threads[streamId]?.[threadParentId]
             : undefined
-        const threadEventIndex =
-            threadTimeline?.findIndex((e) => e.eventId === confirmation.eventId) ?? -1
+
+        // Update timelines and their index (eventId doesn't change for confirmations)
+        const { timelines: newTimelines, eventIndex: newEventIndex } = replaceTimelineEvent(
+            streamId,
+            newEvent,
+            index,
+            timeline,
+            state.timelines,
+            state.eventIndex,
+            oldEvent.eventId,
+        )
+
+        // Handle thread updates
+        let newThreads = state.threads
+        let newThreadEventIndex = state.threadEventIndex
+        if (threadParentId && threadTimeline && threadIdx !== undefined) {
+            const result = replaceThreadEvent(
+                streamId,
+                threadParentId,
+                newEvent,
+                threadIdx,
+                threadTimeline,
+                state.threads,
+                state.threadEventIndex,
+                oldEvent.eventId,
+            )
+            newThreads = result.threads
+            newThreadEventIndex = result.threadEventIndex
+        }
 
         return {
-            timelines: replaceTimelineEvent(
-                streamId,
-                newEvent,
-                eventIndex,
-                timeline,
-                state.timelines,
-            ),
-            replacedEvents: {
-                ...state.replacedEvents,
-                [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
-            },
+            timelines: newTimelines,
+            eventIndex: newEventIndex,
+            // Confirmations don't add to originalEvents/replacementLog - only actual edits do
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: state.threadsStats,
-            threads:
-                threadParentId && threadTimeline && threadEventIndex >= 0
-                    ? {
-                          ...state.threads,
-                          [streamId]: replaceTimelineEvent(
-                              threadParentId,
-                              newEvent,
-                              threadEventIndex,
-                              threadTimeline,
-                              state.threads[streamId],
-                          ),
-                      }
-                    : state.threads,
+            threads: newThreads,
+            threadEventIndex: newThreadEventIndex,
             reactions: state.reactions,
             tips: state.tips,
             lastestEventByUser: state.lastestEventByUser,
@@ -575,6 +711,7 @@ function addThreadStats(
     timelineEvent: TimelineEvent,
     threadsStats: ThreadStatsMap,
     timeline: TimelineEvent[] | undefined,
+    eventIndex: Map<string, number> | undefined,
     userId: string,
 ): ThreadStatsMap {
     const parentId = timelineEvent.threadParentId
@@ -589,6 +726,7 @@ function addThreadStats(
                     parentId,
                     threadsStats[streamId]?.[parentId],
                     timeline,
+                    eventIndex,
                     userId,
                 ),
             },
@@ -622,8 +760,19 @@ function makeNewThreadStats(
     event: TimelineEvent,
     parentId: string,
     timeline?: TimelineEvent[],
+    eventIndex?: Map<string, number>,
 ): ThreadStatsData {
-    const parent = timeline?.find((t) => t.eventId === parentId) // one time lookup of the parent message for the first reply
+    // O(1) lookup using eventIndex instead of O(n) find
+    let parent: TimelineEvent | undefined
+    if (timeline && eventIndex) {
+        const idx = eventIndex.get(parentId)
+        if (idx !== undefined) {
+            parent = timeline[idx]
+        }
+    } else if (timeline) {
+        // Fallback to O(n) if no index available
+        parent = timeline.find((t) => t.eventId === parentId)
+    }
     return {
         replyEventIds: new Set<string>(),
         userIds: new Set<string>(),
@@ -640,9 +789,10 @@ function addThreadStat(
     parentId: string,
     entry: ThreadStatsData | undefined,
     timeline: TimelineEvent[] | undefined,
+    eventIndex: Map<string, number> | undefined,
     userId: string,
 ): ThreadStatsData {
-    const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
+    const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline, eventIndex)
     if (event.content?.kind === RiverTimelineEvent.RedactedEvent) {
         return updated
     }
@@ -817,65 +967,187 @@ function removeThreadEvent(
     streamId: string,
     event: TimelineEvent,
     threads: ThreadsMap,
-): ThreadsMap {
+    threadEventIndex: ThreadEventIndexMap,
+): { threads: ThreadsMap; threadEventIndex: ThreadEventIndexMap } {
     const parentId = event.threadParentId
     if (!parentId) {
-        return threads
+        return { threads, threadEventIndex }
     }
-    const threadEventIndex =
-        threads[streamId]?.[parentId]?.findIndex((e) => e.eventId === event.eventId) ?? -1
-    if (threadEventIndex === -1) {
-        return threads
+    // O(1) lookup using threadEventIndex
+    const index = threadEventIndex[streamId]?.[parentId]?.get(event.eventId)
+    if (index === undefined) {
+        return { threads, threadEventIndex }
     }
+
+    const threadTimeline = threads[streamId]?.[parentId] ?? []
+    const newThreadTimeline = [
+        ...threadTimeline.slice(0, index),
+        ...threadTimeline.slice(index + 1),
+    ]
+
+    // Update the index - need to decrement all indices after the removed element
+    const newParentIndex = new Map(threadEventIndex[streamId]?.[parentId])
+    newParentIndex.delete(event.eventId)
+    for (const [eventId, idx] of newParentIndex) {
+        if (idx > index) {
+            newParentIndex.set(eventId, idx - 1)
+        }
+    }
+
     return {
-        ...threads,
-        [streamId]: removeTimelineEvent(parentId, threadEventIndex, threads[streamId]),
+        threads: {
+            ...threads,
+            [streamId]: {
+                ...threads[streamId],
+                [parentId]: newThreadTimeline,
+            },
+        },
+        threadEventIndex: {
+            ...threadEventIndex,
+            [streamId]: {
+                ...threadEventIndex[streamId],
+                [parentId]: newParentIndex,
+            },
+        },
     }
+}
+
+// Phase 2: Binary insertion for thread events - O(n) instead of O(n log n)
+function binaryInsertByEventNum(events: TimelineEvent[], event: TimelineEvent): number {
+    let low = 0
+    let high = events.length
+    while (low < high) {
+        const mid = (low + high) >>> 1
+        if (events[mid].eventNum < event.eventNum) {
+            low = mid + 1
+        } else {
+            high = mid
+        }
+    }
+    return low
 }
 
 function insertThreadEvent(
     streamId: string,
     timelineEvent: TimelineEvent,
     threads: ThreadsMap,
-): ThreadsMap {
+    threadEventIndex: ThreadEventIndexMap,
+): { threads: ThreadsMap; threadEventIndex: ThreadEventIndexMap } {
     if (!timelineEvent.threadParentId) {
-        return threads
+        return { threads, threadEventIndex }
     }
+
+    const parentId = timelineEvent.threadParentId
+    const existingTimeline = threads[streamId]?.[parentId] ?? []
+
+    // Phase 2: Binary insertion instead of sort - O(n) instead of O(n log n)
+    const insertIndex = binaryInsertByEventNum(existingTimeline, timelineEvent)
+    const newTimeline = [
+        ...existingTimeline.slice(0, insertIndex),
+        timelineEvent,
+        ...existingTimeline.slice(insertIndex),
+    ]
+
+    // Update the thread event index
+    const existingIndex = threadEventIndex[streamId]?.[parentId] ?? new Map()
+    const newParentIndex = new Map(existingIndex)
+
+    // Shift indices for events after the insertion point
+    for (const [eventId, idx] of newParentIndex) {
+        if (idx >= insertIndex) {
+            newParentIndex.set(eventId, idx + 1)
+        }
+    }
+    newParentIndex.set(timelineEvent.eventId, insertIndex)
+
     return {
-        ...threads,
-        [streamId]: insertTimelineEvent(
-            timelineEvent.threadParentId,
-            timelineEvent,
-            threads[streamId] ?? {},
-        ),
+        threads: {
+            ...threads,
+            [streamId]: {
+                ...threads[streamId],
+                [parentId]: newTimeline,
+            },
+        },
+        threadEventIndex: {
+            ...threadEventIndex,
+            [streamId]: {
+                ...threadEventIndex[streamId],
+                [parentId]: newParentIndex,
+            },
+        },
+    }
+}
+
+function replaceThreadEvent(
+    streamId: string,
+    parentId: string,
+    newEvent: TimelineEvent,
+    index: number,
+    threadTimeline: TimelineEvent[],
+    threads: ThreadsMap,
+    threadEventIndex: ThreadEventIndexMap,
+    oldEventId: string,
+): { threads: ThreadsMap; threadEventIndex: ThreadEventIndexMap } {
+    const newTimeline = [
+        ...threadTimeline.slice(0, index),
+        newEvent,
+        ...threadTimeline.slice(index + 1),
+    ]
+
+    // Update index if eventId changed
+    let newParentIndex = threadEventIndex[streamId]?.[parentId]
+    if (oldEventId !== newEvent.eventId) {
+        newParentIndex = new Map(newParentIndex)
+        newParentIndex.delete(oldEventId)
+        newParentIndex.set(newEvent.eventId, index)
+    }
+
+    return {
+        threads: {
+            ...threads,
+            [streamId]: {
+                ...threads[streamId],
+                [parentId]: newTimeline,
+            },
+        },
+        threadEventIndex: {
+            ...threadEventIndex,
+            [streamId]: {
+                ...threadEventIndex[streamId],
+                [parentId]: newParentIndex ?? new Map(),
+            },
+        },
     }
 }
 
 function removeTimelineEvent(
     streamId: string,
-    eventIndex: number,
+    index: number,
     timelines: TimelinesMap,
-): TimelinesMap {
-    return {
-        ...timelines,
-        [streamId]: [
-            ...timelines[streamId].slice(0, eventIndex),
-            ...timelines[streamId].slice(eventIndex + 1),
-        ],
-    }
-}
+    eventIndex: EventIndexMap,
+): { timelines: TimelinesMap; eventIndex: EventIndexMap } {
+    const timeline = timelines[streamId]
+    const removedEvent = timeline[index]
+    const newTimeline = [...timeline.slice(0, index), ...timeline.slice(index + 1)]
 
-function insertTimelineEvent(
-    streamId: string,
-    timelineEvent: TimelineEvent,
-    timelines: TimelinesMap,
-) {
-    // thread items are decrypted in an unpredictable order, so we need to insert them in the correct order
+    // Update the index - need to decrement all indices after the removed element
+    const newIndex = new Map(eventIndex[streamId])
+    newIndex.delete(removedEvent.eventId)
+    for (const [eventId, idx] of newIndex) {
+        if (idx > index) {
+            newIndex.set(eventId, idx - 1)
+        }
+    }
+
     return {
-        ...timelines,
-        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])].sort((a, b) =>
-            a.eventNum > b.eventNum ? 1 : -1,
-        ),
+        timelines: {
+            ...timelines,
+            [streamId]: newTimeline,
+        },
+        eventIndex: {
+            ...eventIndex,
+            [streamId]: newIndex,
+        },
     }
 }
 
@@ -883,10 +1155,25 @@ function appendTimelineEvent(
     streamId: string,
     timelineEvent: TimelineEvent,
     timelines: TimelinesMap,
-) {
+    eventIndex: EventIndexMap,
+): { timelines: TimelinesMap; eventIndex: EventIndexMap } {
+    const existingTimeline = timelines[streamId] ?? []
+    const newIndex = existingTimeline.length
+
+    // Update the index
+    const existingIndex = eventIndex[streamId] ?? new Map()
+    const newEventIndex = new Map(existingIndex)
+    newEventIndex.set(timelineEvent.eventId, newIndex)
+
     return {
-        ...timelines,
-        [streamId]: [...(timelines[streamId] ?? []), timelineEvent],
+        timelines: {
+            ...timelines,
+            [streamId]: [...existingTimeline, timelineEvent],
+        },
+        eventIndex: {
+            ...eventIndex,
+            [streamId]: newEventIndex,
+        },
     }
 }
 
@@ -894,23 +1181,58 @@ function prependTimelineEvent(
     streamId: string,
     timelineEvent: TimelineEvent,
     timelines: TimelinesMap,
-) {
+    eventIndex: EventIndexMap,
+): { timelines: TimelinesMap; eventIndex: EventIndexMap } {
+    const existingTimeline = timelines[streamId] ?? []
+
+    // Update the index - shift all existing indices by 1 and add new event at 0
+    const existingIndex = eventIndex[streamId] ?? new Map()
+    const newEventIndex = new Map<string, number>()
+    newEventIndex.set(timelineEvent.eventId, 0)
+    for (const [eventId, idx] of existingIndex) {
+        newEventIndex.set(eventId, idx + 1)
+    }
+
     return {
-        ...timelines,
-        [streamId]: [timelineEvent, ...(timelines[streamId] ?? [])],
+        timelines: {
+            ...timelines,
+            [streamId]: [timelineEvent, ...existingTimeline],
+        },
+        eventIndex: {
+            ...eventIndex,
+            [streamId]: newEventIndex,
+        },
     }
 }
 
 function replaceTimelineEvent(
     streamId: string,
     newEvent: TimelineEvent,
-    eventIndex: number,
+    index: number,
     timeline: TimelineEvent[],
     timelines: TimelinesMap,
-) {
+    eventIndex: EventIndexMap,
+    oldEventId: string,
+): { timelines: TimelinesMap; eventIndex: EventIndexMap } {
+    const newTimeline = [...timeline.slice(0, index), newEvent, ...timeline.slice(index + 1)]
+
+    // Update index if eventId changed
+    let newEventIndex = eventIndex[streamId]
+    if (oldEventId !== newEvent.eventId) {
+        newEventIndex = new Map(newEventIndex)
+        newEventIndex.delete(oldEventId)
+        newEventIndex.set(newEvent.eventId, index)
+    }
+
     return {
-        ...timelines,
-        [streamId]: [...timeline.slice(0, eventIndex), newEvent, ...timeline.slice(eventIndex + 1)],
+        timelines: {
+            ...timelines,
+            [streamId]: newTimeline,
+        },
+        eventIndex: {
+            ...eventIndex,
+            [streamId]: newEventIndex ?? new Map(),
+        },
     }
 }
 

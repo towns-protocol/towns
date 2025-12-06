@@ -31,10 +31,13 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
     ) {
         super({
             timelines: {},
-            replacedEvents: {},
+            eventIndex: {},
+            originalEvents: {},
+            replacementLog: {},
             pendingReplacedEvents: {},
             threadsStats: {},
             threads: {},
+            threadEventIndex: {},
             reactions: {},
             tips: {},
             lastestEventByUser: {},
@@ -91,7 +94,9 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         decryptedContent: DecryptedContent,
     ): TimelineEvent | undefined {
-        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
+        // O(1) lookup using eventIndex
+        const index = this.value.eventIndex[streamId]?.get(eventId)
+        const prevEvent = index !== undefined ? this.value.timelines[streamId][index] : undefined
         if (prevEvent) {
             const newEvent = toDecryptedEvent(prevEvent, decryptedContent, this.userId)
             if (!isEqual(newEvent, prevEvent)) {
@@ -107,7 +112,9 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         eventId: string,
         error: DecryptionSessionError,
     ) {
-        const prevEvent = this.value.timelines[streamId].find((event) => event.eventId === eventId)
+        // O(1) lookup using eventIndex
+        const index = this.value.eventIndex[streamId]?.get(eventId)
+        const prevEvent = index !== undefined ? this.value.timelines[streamId][index] : undefined
         if (prevEvent) {
             const newEvent = toDecryptedContentErrorEvent(prevEvent, error)
             if (newEvent !== prevEvent) {

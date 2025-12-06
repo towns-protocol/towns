@@ -126,7 +126,7 @@ export class Observable<T> {
         this._dispose?.()
     }
 
-    private notify(prevValue: T) {
+    protected notify(prevValue: T) {
         const subscriptions = this.subscribers
         subscriptions.forEach((sub) => this._notify(sub, this.value, prevValue))
     }
