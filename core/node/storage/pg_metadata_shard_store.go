@@ -955,7 +955,7 @@ func (s *PostgresMetadataShardStore) SetShardState(
 		"MetadataShard.SetShardState",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			updateSQL := `UPDATE metadata_shard_state SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`
+			updateSQL := `UPDATE metadata SET last_height = $1, last_app_hash = $2 WHERE shard_id = $3`
 			if _, err := tx.Exec(ctx, updateSQL, height, appHash, shardID); err != nil {
 				return err
 			}
@@ -974,7 +974,7 @@ func (s *PostgresMetadataShardStore) GetShardState(ctx context.Context, shardID 
 		"MetadataShard.GetShardState",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			query := `SELECT last_height, last_app_hash FROM metadata_shard_state WHERE shard_id = $1`
+			query := `SELECT last_height, last_app_hash FROM metadata WHERE shard_id = $1`
 			return tx.QueryRow(ctx, query, shardID).Scan(&state.LastHeight, &state.LastAppHash)
 		},
 		nil,
