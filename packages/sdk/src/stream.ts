@@ -54,8 +54,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): void {
-        // Grab any local events from the previous view that haven't been processed
-        // Use timelinesView.getLocalEvents() to access EventStore
+        // grab any local events from the previous view that haven't been processed
         const localEvents = this.streamsView.timelinesView
             .getLocalEvents(this.streamId)
             .filter((e) => e.hashStr.startsWith('~'))

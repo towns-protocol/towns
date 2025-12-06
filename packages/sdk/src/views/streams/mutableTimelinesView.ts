@@ -1059,7 +1059,7 @@ export class MutableTimelinesView extends Observable<TimelinesViewModel> {
         this.cachedValue = newValue
         this.cachedVersion = this.stateVersion
         this._value = newValue
-        ;(this as any).notify(prevValue)
+        this.notify(prevValue)
     }
 
     /**
