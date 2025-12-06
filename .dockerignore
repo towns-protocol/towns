@@ -6,3 +6,12 @@ packages/stream-metadata/docker-compose.yml
 packages/metrics-discovery/Dockerfile
 packages/metrics-discovery/docker-compose.yml
 packages/anvil-docker/Dockerfile
+
+# Exclude build artifacts and dependencies (at any depth)
+**/node_modules
+**/dist
+**/coverage
+**/out
+**/.turbo
+**/tsconfig.tsbuildinfo
+**/.eslintcache

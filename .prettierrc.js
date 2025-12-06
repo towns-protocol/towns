@@ -1,3 +1,3 @@
 module.exports = {
-    ...require('@towns-protocol/prettier-config'),
+    ...require('./packages/prettier-config/config.js'),
 }

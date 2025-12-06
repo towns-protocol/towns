@@ -77,4 +77,4 @@ mkdir -p "$GENERATED_DIR/deployments/${RIVER_ENV}"
 cp -r "$PROJECT_ROOT/packages/contracts/deployments/${RIVER_ENV}/." "$GENERATED_DIR/deployments/${RIVER_ENV}/"
 
 # Update the config
-cd "$GENERATED_DIR" && yarn make-config
+cd "$GENERATED_DIR" && bun run make-config

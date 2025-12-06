@@ -15,7 +15,7 @@ CONTRACT_INTERFACES="(IDiamond|IDiamondCut|IArchitect|Architect|ILegacyArchitect
 
 # Clean typings to avoid stale factories/interfaces lingering between runs
 rm -rf "$TYPINGS_DIR"
-yarn typechain --target=ethers-v5 "$CONTRACTS_DIR/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "$TYPINGS_DIR"
+bun run typechain --target=ethers-v5 "$CONTRACTS_DIR/out/**/?${CONTRACT_INTERFACES}.json" --out-dir "$TYPINGS_DIR"
 
 # Clean abis to avoid stale abi files lingering between runs
 rm -rf "$ABI_DIR"
