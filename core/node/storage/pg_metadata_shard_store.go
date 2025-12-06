@@ -14,7 +14,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
@@ -111,8 +110,6 @@ func (s *PostgresMetadataShardStore) EnsureShardStorage(ctx context.Context, sha
 }
 
 func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, tx pgx.Tx, shardId uint64) error {
-	log := logging.FromCtx(ctx)
-
 	if _, err := tx.Exec(ctx, s.sqlForShard(`
 		CREATE TABLE IF NOT EXISTS {{streams}} (
 			stream_id BYTEA PRIMARY KEY,
@@ -158,7 +155,7 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 	}
 
 	if _, err := tx.Exec(ctx,
-		`INSERT INTO metadata_shard_state (shard_id, last_height, last_app_hash) VALUES ($1, 0, ''::BYTEA) ON CONFLICT DO NOTHING`,
+		`INSERT INTO metadata (shard_id, last_height, last_app_hash) VALUES ($1, 0, ''::BYTEA) ON CONFLICT DO NOTHING`,
 		int64(shardId),
 	); err != nil {
 		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
@@ -166,7 +163,6 @@ func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, t
 			Tag("shardId", shardId)
 	}
 
-	log.Debugw("metadata shard storage ensured", "shardId", shardId)
 	return nil
 }
 
