@@ -1,7 +1,7 @@
 import { Observable } from '../observable/observable'
 import { combine } from '../observable/combine'
 import { StreamStatus } from './streams/streamStatus'
-import { TimelinesView, TimelinesViewDelegate } from './streams/timelines'
+import { MutableTimelinesView, TimelinesViewDelegate } from './streams/mutableTimelinesView'
 import {
     makeUserInboxStreamId,
     makeUserMetadataStreamId,
@@ -54,7 +54,7 @@ export class StreamsView {
     readonly userInboxStreams: UserInboxStreamsView
     readonly userMetadataStreams: UserMetadataStreamsView
     readonly userSettingsStreams: UserSettingsStreamsView
-    readonly timelinesView: TimelinesView
+    readonly timelinesView: MutableTimelinesView
     readonly latestEventByUser: Observable<Record<string, TimelineEvent>>
     readonly my: {
         userId: Constant<string>
@@ -92,7 +92,7 @@ export class StreamsView {
         this.userStreams = new UserStreamsView()
         this.userMetadataStreams = new UserMetadataStreamsView()
         this.userInboxStreams = new UserInboxStreamsView()
-        this.timelinesView = new TimelinesView(userId, delegate)
+        this.timelinesView = new MutableTimelinesView(userId, delegate)
         this.latestEventByUser = this.timelinesView.throttle(1000).map((x) => x.lastestEventByUser)
 
         // throttle the timelines for subsequent observers
