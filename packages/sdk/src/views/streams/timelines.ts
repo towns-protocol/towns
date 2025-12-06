@@ -32,7 +32,8 @@ export class TimelinesView extends Observable<TimelinesViewModel> {
         super({
             timelines: {},
             eventIndex: {},
-            replacedEvents: {},
+            originalEvents: {},
+            replacementLog: {},
             pendingReplacedEvents: {},
             threadsStats: {},
             threads: {},

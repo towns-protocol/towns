@@ -31,11 +31,17 @@ export type TipsMap = Record<string, Record<string, MessageTips>>
 export type EventIndexMap = Record<string, Map<string, number>>
 /// ThreadEventIndexMap: { streamId: { parentId: Map<eventId, arrayIndex> } } - O(1) thread event lookups
 export type ThreadEventIndexMap = Record<string, Record<string, Map<string, number>>>
+/// OriginalEventsMap: { streamId: { eventId: originalEvent } } - stores ORIGINAL version before any edits
+export type OriginalEventsMap = Record<string, Record<string, TimelineEvent>>
+/// ReplacementLogMap: { streamId: eventId[] } - append-only log of replaced eventIds for transform iteration
+export type ReplacementLogMap = Record<string, string[]>
 // store states
 export type TimelinesViewModel = {
     timelines: TimelinesMap
     eventIndex: EventIndexMap
-    replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
+    // Phase 3: Store original event + log instead of unbounded array
+    originalEvents: OriginalEventsMap
+    replacementLog: ReplacementLogMap
     pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
@@ -82,7 +88,8 @@ export function makeTimelinesViewInterface(
         return {
             timelines: { ...state.timelines, [streamId]: [] },
             eventIndex: { ...state.eventIndex, [streamId]: new Map<string, number>() },
-            replacedEvents: state.replacedEvents,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: {
                 ...state.threadsStats,
@@ -113,7 +120,8 @@ export function makeTimelinesViewInterface(
             for (const streamId of streamIds) {
                 delete prev.timelines[streamId]
                 delete prev.eventIndex[streamId]
-                delete prev.replacedEvents[streamId]
+                delete prev.originalEvents[streamId]
+                delete prev.replacementLog[streamId]
                 delete prev.pendingReplacedEvents[streamId]
                 delete prev.threadsStats[streamId]
                 delete prev.threads[streamId]
@@ -146,7 +154,8 @@ export function makeTimelinesViewInterface(
         return {
             timelines: newTimelines,
             eventIndex: newEventIndex,
-            replacedEvents: state.replacedEvents,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: removeThreadStat(streamId, event, state.threadsStats),
             threads: newThreads,
@@ -177,7 +186,8 @@ export function makeTimelinesViewInterface(
         return {
             timelines: newTimelines,
             eventIndex: newEventIndex,
-            replacedEvents: state.replacedEvents,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
@@ -221,7 +231,8 @@ export function makeTimelinesViewInterface(
         return {
             timelines: newTimelines,
             eventIndex: newEventIndex,
-            replacedEvents: state.replacedEvents,
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
@@ -254,7 +265,8 @@ export function makeTimelinesViewInterface(
         if (index === undefined && timelineEvent.localEventId) {
             // Fall back to localEventId lookup - this is less common, kept as O(n) for now
             index = timeline.findIndex(
-                (e: TimelineEvent) => e.localEventId && e.localEventId === timelineEvent.localEventId,
+                (e: TimelineEvent) =>
+                    e.localEventId && e.localEventId === timelineEvent.localEventId,
             )
             if (index === -1) index = undefined
         }
@@ -306,12 +318,25 @@ export function makeTimelinesViewInterface(
             }
         }
 
-        const threadTimeline = threadParentId ? state.threads[streamId]?.[threadParentId] : undefined
+        const threadTimeline = threadParentId
+            ? state.threads[streamId]?.[threadParentId]
+            : undefined
 
-        // Store the replacement in the history (used by unread markers)
-        const newReplacedEvents = {
-            ...state.replacedEvents,
-            [streamId]: [...(state.replacedEvents[streamId] ?? []), { oldEvent, newEvent }],
+        // Phase 3: Store original event (if first edit) and append to log
+        // This stores ONE entry per eventId instead of one per edit
+        const eventIdForLog = oldEvent.eventId
+        const newOriginalEvents = state.originalEvents[streamId]?.[eventIdForLog]
+            ? state.originalEvents // Already have original, don't overwrite
+            : {
+                  ...state.originalEvents,
+                  [streamId]: {
+                      ...state.originalEvents[streamId],
+                      [eventIdForLog]: oldEvent,
+                  },
+              }
+        const newReplacementLog = {
+            ...state.replacementLog,
+            [streamId]: [...(state.replacementLog[streamId] ?? []), eventIdForLog],
         }
 
         // Update timelines and their index
@@ -355,7 +380,8 @@ export function makeTimelinesViewInterface(
         return {
             timelines: newTimelines,
             eventIndex: newEventIndex,
-            replacedEvents: newReplacedEvents,
+            originalEvents: newOriginalEvents,
+            replacementLog: newReplacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 streamId,
@@ -438,8 +464,9 @@ export function makeTimelinesViewInterface(
         return {
             timelines: newTimelines,
             eventIndex: newEventIndex,
-            // Confirmations don't add to replacedEvents - only actual edits do
-            replacedEvents: state.replacedEvents,
+            // Confirmations don't add to originalEvents/replacementLog - only actual edits do
+            originalEvents: state.originalEvents,
+            replacementLog: state.replacementLog,
             pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: state.threadsStats,
             threads: newThreads,
@@ -1101,10 +1128,7 @@ function removeTimelineEvent(
 ): { timelines: TimelinesMap; eventIndex: EventIndexMap } {
     const timeline = timelines[streamId]
     const removedEvent = timeline[index]
-    const newTimeline = [
-        ...timeline.slice(0, index),
-        ...timeline.slice(index + 1),
-    ]
+    const newTimeline = [...timeline.slice(0, index), ...timeline.slice(index + 1)]
 
     // Update the index - need to decrement all indices after the removed element
     const newIndex = new Map(eventIndex[streamId])
