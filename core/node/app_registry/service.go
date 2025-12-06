@@ -545,7 +545,7 @@ waitLoop:
 			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for user stream availability")
 			break waitLoop
 		case <-time.After(delay):
-			stream, err := s.riverRegistry.StreamRegistry.GetStreamOnLatestBlock(ctx, userStreamId)
+			stream, err := s.riverRegistry.StreamRegistry.GetStream(ctx, 0, userStreamId)
 			if err != nil {
 				continue
 			}
@@ -665,7 +665,7 @@ waitLoop:
 			loopExitErr = base.AsRiverError(ctx.Err(), Err_NOT_FOUND).Message("Timed out while waiting for stream availability")
 			break waitLoop
 		case <-time.After(delay):
-			stream, err := s.riverRegistry.StreamRegistry.GetStreamOnLatestBlock(ctx, userMetadataStreamId)
+			stream, err := s.riverRegistry.StreamRegistry.GetStream(ctx, 0, userMetadataStreamId)
 			if err != nil {
 				continue
 			}

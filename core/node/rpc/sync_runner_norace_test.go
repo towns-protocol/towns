@@ -431,12 +431,9 @@ func setupTestChannelAndAddToSyncer(
 	}
 	tt.require.Equal(int64(0), b0ref.Num, "miniblock number should be 0 for %s", channelId.String())
 
-	streamOnChain, err := tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
-		ctx,
-		channelId,
-	)
+	streamOnChain, err := tt.nodes[0].service.registryContract.StreamRegistry.GetStream(ctx, 0, channelId)
 	if err != nil {
-		return StreamId{}, nil, fmt.Errorf("GetStreamOnLatestBlock failed for %s: %w", channelId.String(), err)
+		return StreamId{}, nil, fmt.Errorf("GetStream failed for %s: %w", channelId.String(), err)
 	}
 
 	msr.AddStream(
@@ -676,10 +673,7 @@ type coldStreamsTestContext struct {
 
 // addStreamToSyncerNoHistory adds a stream to the syncer without historical content
 func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockHash []byte) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
-		tc.ctx,
-		streamId,
-	)
+	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStream(tc.ctx, 0, streamId)
 	tc.require.NoError(err)
 	tc.msr.AddStream(
 		tc.ctx,

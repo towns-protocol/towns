@@ -78,7 +78,7 @@ func (s *StreamCache) getRecordTask(
 	ctx, cancel := context.WithTimeout(s.params.ServerCtx, 5*time.Second)
 	defer cancel()
 
-	streamRecord, err := s.params.Registry.StreamRegistry.GetStreamOnLatestBlock(ctx, stream.streamId)
+	streamRecord, err := s.params.Registry.StreamRegistry.GetStream(ctx, 0, stream.streamId)
 	if err != nil {
 		logging.FromCtx(ctx).
 			Errorw("getRecordTask: Unable to get stream record", "stream", stream.streamId, "error", err)
@@ -327,7 +327,7 @@ func (s *StreamCache) reconcileStreamFromStreamRegistryGenesisBlock(stream *Stre
 	defer cancel()
 
 	streamID := stream.StreamId()
-	_, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, streamID, 0)
+	_, _, mb, err := s.params.Registry.GetStreamWithGenesis(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}
