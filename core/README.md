@@ -74,8 +74,8 @@ is written in `core/env/local/archiver/config.yaml`.
 # populate RIVER_REPO_PATH with the absolute path to the root of your river repository
 ./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml
 
-# For formatted logs, try the following. pino-pretty should be installed with `yarn build`
-./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
+# For formatted logs, try the following. pino-pretty should be installed with `bun install`
+./env/omega/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | bun run pino-pretty
 ```
 
 ## Example: Running against beta nodes
@@ -83,7 +83,7 @@ is written in `core/env/local/archiver/config.yaml`.
 ```
 ./scripts/launch_storage.sh
 
-./env/beta/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | yarn exec pino-pretty
+./env/beta/run.sh archive -c $RIVER_REPO_PATH/core/env/local/archiver/config.yaml | bun run pino-pretty
 ```
 
 **Note:** some networks, such as omega, may have hundreds of gigabytes of stream data available. Be sure to increase the maximum storage, CPU and/or memory of your docker service / postgres container appropriately so it can handle the load.
@@ -100,7 +100,7 @@ To run a local app registry service that checks against the streams and contract
 
 # Make sure to use an absolute path to refer to the app-registry/config.yaml file
 # populate RIVER_REPO_PATH with the absolute path to the root of your river repository
-./env/omega/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+./env/omega/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | bun run pino-pretty
 ```
 
 ## Example: Running against beta nodes
@@ -108,7 +108,7 @@ To run a local app registry service that checks against the streams and contract
 ```
 ./scripts/launch_storage.sh
 
-./env/beta/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | yarn exec pino-pretty
+./env/beta/run.sh app-registry -c $RIVER_REPO_PATH/core/env/local/app-registry/config.yaml | bun run pino-pretty
 ```
 
 # Installing Dependencies
@@ -130,7 +130,7 @@ There are addition install steps for go tools in [./node/README.md](./node/READM
 Protobufs are generated for go and typescript
 
     cd proto
-    yarn buf:generate
+    bun run buf:generate
 
     cd node
     go generate -v -x protocol/gen.go
@@ -150,11 +150,11 @@ Then generate the TLS certificates for the node:
     cd node
     go test -v ./...
 
-# Clean Build after Yarn Install or Branch Switching
+# Clean Build after Bun Install or Branch Switching
 
 Build is incremental, as such it may get confused when packages are updated or branches are switched.
 
 Clean build artifacts and rebuild:
 
-    yarn csb:clean
-    yarn csb:build
+    bun run csb:clean
+    bun run csb:build

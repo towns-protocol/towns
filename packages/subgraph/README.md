@@ -29,7 +29,7 @@ The subgraph consists of:
 ## Prerequisites
 
 - Node.js >= 18.14
-- Yarn package manager
+- Bun package manager
 - Access to an Ethereum RPC endpoint (local or remote)
 - Foundry tools (forge, anvil) for local blockchain development
 
@@ -88,7 +88,7 @@ If you encounter issues:
 
 ```
 # regenerate schema.graphql file with a headless instance
-yarn dev:no-ui
+bun run dev:no-ui
 ```
 
 ## Getting Started
@@ -101,7 +101,7 @@ The easiest way to get started is to use our automated setup script:
 
 ```bash
 # Start the subgraph with an Anvil fork
-yarn dev:fork
+bun run dev:fork
 ```
 
 This script will:
@@ -132,7 +132,7 @@ If you prefer more control, you can set up each component manually:
 
    ```bash
    cd packages/subgraph
-   yarn dev
+   bun run dev
    ```
 
 ## Interacting with Contracts
@@ -175,7 +175,7 @@ If you encounter issues with contract address resolution, you can use our debugg
 
 ```bash
 # Find the correct path to contract deployments
-yarn find-paths
+bun run find-paths
 ```
 
 You can also enable debug mode in the code:
@@ -188,15 +188,15 @@ const address = getContractAddress("contractName", network, env, {
 
 ## Available Commands
 
-- `yarn dev`: Start the development server with hot reloading
-- `yarn dev:fork`: Start with an Anvil fork of Base Sepolia
-- `yarn start`: Start the production server
-- `yarn db`: Access the database CLI
-- `yarn codegen`: Generate TypeScript types from the schema
-- `yarn serve`: Serve the API without indexing
-- `yarn lint`: Run ESLint
-- `yarn typecheck`: Run TypeScript type checking
-- `yarn find-paths`: Debug tool to find correct contract paths
+- `bun run dev`: Start the development server with hot reloading
+- `bun run dev:fork`: Start with an Anvil fork of Base Sepolia
+- `bun run start`: Start the production server
+- `bun run db`: Access the database CLI
+- `bun run codegen`: Generate TypeScript types from the schema
+- `bun run serve`: Serve the API without indexing
+- `bun run lint`: Run ESLint
+- `bun run typecheck`: Run TypeScript type checking
+- `bun run find-paths`: Debug tool to find correct contract paths
 
 ## API Endpoints
 
@@ -236,11 +236,11 @@ To switch environments:
 
 ```bash
 # Using the fork script
-yarn dev:fork --environment beta
+bun run dev:fork --environment beta
 
 # Or manually
 export PONDER_ENVIRONMENT=beta
-yarn dev
+bun run dev
 ```
 
 ## Troubleshooting
@@ -248,7 +248,7 @@ yarn dev
 If you encounter issues:
 
 1. **Contract Address Resolution**:
-   - Run `yarn find-paths` to debug path resolution
+   - Run `bun run find-paths` to debug path resolution
    - Enable debug mode: `getContractAddress('contractName', network, env, { debug: true })`
    - Check that the environment is correctly set
 
@@ -285,7 +285,7 @@ make interact-any-local context=beta rpc=base_anvil contract=YourCustomInteracti
 ### Transfer Ownership
 
 ```bash
-yarn transfer-ownership
+bun run transfer-ownership
 ```
 
 ### Working with Multiple Networks

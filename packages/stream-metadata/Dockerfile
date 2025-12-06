@@ -51,7 +51,7 @@ COPY ./packages/stream-metadata ./packages/stream-metadata
 RUN bun run turbo build --filter @towns-protocol/stream-metadata...
 
 # create runner image with only the necessary files
-FROM oven/bun:1.3-alpine AS runner
+FROM node:lts-alpine3.20 AS runner
 
 # Install runtime dependencies for Sharp
 RUN apk add --no-cache libc6-compat vips
@@ -60,17 +60,15 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
-
-# Bun is already installed in the base image
-RUN bun init --yes
+RUN yarn init --yes
 
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN bun add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && bun pm cache rm
+RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && yarn cache clean
 
 # Force rebuild sharp to ensure correct Linux binaries and clean cache
-RUN bun remove sharp && bun add sharp@0.34.3 && bun pm cache rm
+RUN yarn remove sharp && yarn add sharp@0.34.3 && yarn cache clean
 
 # run the service
 ARG GIT_SHA
@@ -79,4 +77,4 @@ ENV DD_GIT_REPOSITORY_URL="https://github.com/towns-protocol/towns" \
     DD_GIT_COMMIT_SHA=${GIT_SHA} \
     NODE_ENV=production
 
-CMD ["bun", "./dist/node_esbuild.cjs"]
+CMD ["node", "--enable-source-maps", "./dist/node_esbuild.cjs"]

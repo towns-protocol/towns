@@ -7,9 +7,9 @@ This package contains Docker configuration for running local blockchain networks
 From this package directory:
 
 ```bash
-yarn docker:start    # Start both chain containers (Base + River)
-yarn docker:logs     # View logs from both containers
-yarn docker:stop     # Stop and remove both containers
+bun run docker:start    # Start both chain containers (Base + River)
+bun run docker:logs     # View logs from both containers
+bun run docker:stop     # Stop and remove both containers
 ```
 
 Or use the traditional justfile commands:
@@ -91,17 +91,17 @@ which runs `just-deploy-contracts`. Contract addresses are extracted to `package
 This package provides convenient npm scripts for Docker operations:
 
 ```bash
-yarn docker:build      # Build Docker image locally (via just)
-yarn docker:start      # Start both chain containers (via just)
-yarn docker:stop       # Stop and remove both containers (via just)
-yarn docker:restart    # Restart both containers
-yarn docker:logs       # View logs from both containers
-yarn docker:logs:base  # View Base chain container logs
-yarn docker:logs:river # View River chain container logs
-yarn docker:shell      # Start fresh container for inspection
-yarn anvil:status      # Check if anvil processes are running in containers
-yarn chain:base        # Get Base chain block number
-yarn chain:river       # Get River chain block number
+bun run docker:build      # Build Docker image locally (via just)
+bun run docker:start      # Start both chain containers (via just)
+bun run docker:stop       # Stop and remove both containers (via just)
+bun run docker:restart    # Restart both containers
+bun run docker:logs       # View logs from both containers
+bun run docker:logs:base  # View Base chain container logs
+bun run docker:logs:river # View River chain container logs
+bun run docker:shell      # Start fresh container for inspection
+bun run anvil:status      # Check if anvil processes are running in containers
+bun run chain:base        # Get Base chain block number
+bun run chain:river       # Get River chain block number
 ```
 
 ## Available Just Targets

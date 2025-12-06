@@ -39,7 +39,7 @@ function permitAndStake(
 #### Dependencies
 
 ```bash
-yarn add @uniswap/permit2-sdk viem
+bun add @uniswap/permit2-sdk viem
 ```
 
 #### Complete Integration Example
