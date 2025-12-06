@@ -17,6 +17,8 @@ type Input = {
 
 export type UnreadMarkersModel = {
     markers: Record<string, FullyReadMarker>
+    // Phase 3: Track last seen mention status for delta calculation across edits
+    lastSeenMentionStatus: Record<string, Record<string, boolean>> // streamId -> eventId -> wasMentioned
 }
 
 export function unreadMarkersTransform(
@@ -26,7 +28,7 @@ export function unreadMarkersTransform(
 ): UnreadMarkersModel {
     //console.log('unreadMarkersTransform', value, prev, state)
 
-    state = state ?? { markers: {} }
+    state = state ?? { markers: {}, lastSeenMentionStatus: {} }
 
     const { userId, myRemoteFullyReadMarkers, timelinesView } = value
 
@@ -47,8 +49,8 @@ export function unreadMarkersTransform(
 /// when we get an update from the server, update our local state
 function updateFullyReadMarkersFromRemote(
     fullyReadMarkersMap: Record<string, Record<string, FullyReadMarker | undefined> | undefined>,
-    state: { markers: Record<string, FullyReadMarker> },
-) {
+    state: UnreadMarkersModel,
+): UnreadMarkersModel {
     let markersUpdated = 0
     const updated = { ...state.markers }
     for (const fullyReadMarkers of Object.values(fullyReadMarkersMap)) {
@@ -62,7 +64,7 @@ function updateFullyReadMarkersFromRemote(
     }
     if (markersUpdated > 0) {
         console.log('$ onRoomAccountDataEvent: set markers for ', { markersUpdated })
-        return { markers: updated }
+        return { ...state, markers: updated }
     } else {
         return state
     }
@@ -72,8 +74,8 @@ function diffTimeline(
     timelineState: TimelinesViewModel,
     prev: TimelinesViewModel,
     userId: string,
-    state: { markers: Record<string, FullyReadMarker> },
-): { markers: Record<string, FullyReadMarker> } {
+    state: UnreadMarkersModel,
+): UnreadMarkersModel {
     if (Object.keys(prev.timelines).length === 0 || timelineState.timelines === prev.timelines) {
         // noop
         return state
@@ -88,13 +90,19 @@ function diffTimeline(
                 channelId,
                 userId,
                 events,
-                timelineState.replacedEvents[channelId] ?? [],
-                prev.replacedEvents[channelId] ?? [],
+                timelineState.eventIndex[channelId],
+                timelineState.originalEvents[channelId] ?? {},
+                timelineState.replacementLog[channelId] ?? [],
+                prev.replacementLog[channelId] ?? [],
                 updated,
+                state.lastSeenMentionStatus,
             )
             const resultAdded = diffAdded(channelId, userId, events, prevEvents, updated)
             if (resultReplaced.didUpdate || resultAdded.didUpdate) {
-                state = { markers: updated }
+                state = {
+                    markers: updated,
+                    lastSeenMentionStatus: resultReplaced.lastSeenMentionStatus,
+                }
             }
         }
     }
@@ -105,33 +113,60 @@ function diffReplaced(
     channelId: string,
     userId: string,
     events: TimelineEvent[],
-    replacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
-    prevReplacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
+    eventIndex: Map<string, number> | undefined,
+    originalEvents: Record<string, TimelineEvent>,
+    replacementLog: string[],
+    prevReplacementLog: string[],
     updated: { [key: string]: FullyReadMarker },
-) {
-    // if a replaced event is in the event index window, we need to update mentions and unread
-    // replaced is the primary way things get decrypted, so we need to adjust the first unread event
-    // and the unread windows for threads
-    if (replacedEvents.length === prevReplacedEvents.length) {
-        return { didUpdate: false }
+    lastSeenMentionStatus: Record<string, Record<string, boolean>>,
+): { didUpdate: boolean; lastSeenMentionStatus: Record<string, Record<string, boolean>> } {
+    // Phase 3: Iterate over new entries in replacementLog
+    // Use lastSeenMentionStatus to track mention deltas across multiple edits
+    if (replacementLog.length === prevReplacementLog.length) {
+        return { didUpdate: false, lastSeenMentionStatus }
     }
+
     // get the marker for this channel
     const channelMarker = updated[channelId]
     // if we don't have a channel marker, then all changes should get picked up in the added diff
     if (!channelMarker) {
-        return { didUpdate: false }
+        return { didUpdate: false, lastSeenMentionStatus }
     }
+
     let didUpdate = false
-    for (let i = prevReplacedEvents.length; i < replacedEvents.length; i++) {
-        const event = replacedEvents[i]
+    const newLastSeenMentionStatus = { ...lastSeenMentionStatus }
+    if (!newLastSeenMentionStatus[channelId]) {
+        newLastSeenMentionStatus[channelId] = {}
+    }
+
+    // Process new entries in the log
+    for (let i = prevReplacementLog.length; i < replacementLog.length; i++) {
+        const eventId = replacementLog[i]
+
+        // Get current event from timeline using O(1) lookup
+        const eventIdx = eventIndex?.get(eventId)
+        const currentEvent = eventIdx !== undefined ? events[eventIdx] : undefined
+        if (!currentEvent) {
+            continue
+        }
+
+        // Get the last seen mention status (or from original if first time)
+        const originalEvent = originalEvents[eventId]
+        const wasMentionedBefore =
+            newLastSeenMentionStatus[channelId][eventId] ?? originalEvent?.isMentioned ?? false
+        const wasMentionedAfter = currentEvent.isMentioned
+
+        // Update last seen status
+        newLastSeenMentionStatus[channelId][eventId] = wasMentionedAfter
+
         // compare the event num against the channel window, not the thread id intentionally
         // because we didn't know the thread id until after the event was decrypted and replaced
-        if (event.newEvent.eventNum > channelMarker.endUnreadWindow) {
+        if (currentEvent.eventNum > channelMarker.endUnreadWindow) {
             // we'll pick this up in the added diff
             continue
         }
 
-        const markerId = event.newEvent.threadParentId ?? channelId
+        const markerId = currentEvent.threadParentId ?? channelId
         const marker = updated[markerId]
         if (!marker) {
             didUpdate = true
@@ -139,25 +174,24 @@ function diffReplaced(
             // is the first event in that thread that's been decrypted
             updated[markerId] = {
                 channelId: channelId,
-                threadParentId: event.newEvent.threadParentId,
-                eventId: event.newEvent.eventId,
-                eventNum: event.newEvent.eventNum,
+                threadParentId: currentEvent.threadParentId,
+                eventId: currentEvent.eventId,
+                eventNum: currentEvent.eventNum,
                 beginUnreadWindow: channelMarker.beginUnreadWindow,
                 endUnreadWindow: channelMarker.endUnreadWindow,
-                isUnread: isCountedAsUnread(event.newEvent, userId),
+                isUnread: isCountedAsUnread(currentEvent, userId),
                 markedReadAtTs: 0n,
-                mentions: event.newEvent.isMentioned ? 1 : 0,
+                mentions: currentEvent.isMentioned ? 1 : 0,
             }
             continue
         } else {
             // if we're before the unread window, we don't need to update anything
-            if (event.newEvent.eventNum < marker.beginUnreadWindow) {
+            if (currentEvent.eventNum < marker.beginUnreadWindow) {
                 continue
             }
             didUpdate = true
-            // if the event is in the unread window,
-            const wasMentionedBefore = event.oldEvent.isMentioned
-            const wasMentionedAfter = event.newEvent.isMentioned
+
+            // Calculate mention delta from last seen status
             const mentions =
                 wasMentionedBefore === wasMentionedAfter
                     ? marker.mentions
@@ -165,12 +199,14 @@ function diffReplaced(
                       ? marker.mentions - 1
                       : marker.mentions + 1
 
-            const endUnreadWindow = maxBigint(event.newEvent.eventNum, marker.endUnreadWindow)
+            const endUnreadWindow = maxBigint(currentEvent.eventNum, marker.endUnreadWindow)
 
+            // Check if this is a redaction (current is redacted but original wasn't)
+            const wasRedactedBefore = originalEvent?.isRedacted ?? false
             if (
-                event.newEvent.isRedacted &&
-                !event.oldEvent.isRedacted &&
-                event.newEvent.eventNum === marker.eventNum
+                currentEvent.isRedacted &&
+                !wasRedactedBefore &&
+                currentEvent.eventNum === marker.eventNum
             ) {
                 // if the event was redacted, we need to find the first unread event
                 const firstUnread = firstUnreadEvent(
@@ -194,10 +230,10 @@ function diffReplaced(
                 // if this is not a redaction it should never move from countsAsUnread to !countsAsUnread
                 // meaning we just need to check to see if this is the new first unread event
                 const isNewFirstUnread =
-                    isCountedAsUnread(event.newEvent, userId) &&
-                    (!marker.isUnread || event.newEvent.eventNum <= marker.eventNum)
-                const newEventId = isNewFirstUnread ? event.newEvent.eventId : marker.eventId
-                const newEventNum = isNewFirstUnread ? event.newEvent.eventNum : marker.eventNum
+                    isCountedAsUnread(currentEvent, userId) &&
+                    (!marker.isUnread || currentEvent.eventNum <= marker.eventNum)
+                const newEventId = isNewFirstUnread ? currentEvent.eventId : marker.eventId
+                const newEventNum = isNewFirstUnread ? currentEvent.eventNum : marker.eventNum
 
                 updated[markerId] = {
                     ...marker,
@@ -211,7 +247,7 @@ function diffReplaced(
         }
     }
 
-    return { didUpdate }
+    return { didUpdate, lastSeenMentionStatus: newLastSeenMentionStatus }
 }
 
 function diffAdded(

@@ -73,17 +73,130 @@ export interface MemberSpaceReview {
     eventHashStr: string
 }
 
+// Phase 4: Unified member state to reduce redundant data structures
+export type MembershipStatus = 'joined' | 'invited' | 'left' | 'none'
+
+export interface MemberState {
+    status: MembershipStatus
+    isPending: boolean
+    data?: StreamMember
+    isApp: boolean
+}
+
 export class StreamStateView_Members extends StreamStateView_AbstractContent {
     readonly streamId: string
     readonly joined = new Map<string, StreamMember>()
-    readonly joinedUsers = new Set<string>()
-    readonly invitedUsers = new Set<string>()
-    readonly leftUsers = new Set<string>()
-    readonly pendingJoinedUsers = new Set<string>()
-    readonly pendingInvitedUsers = new Set<string>()
-    readonly pendingLeftUsers = new Set<string>()
+    // Phase 4: Unified member state - single source of truth
+    private readonly _members = new Map<string, MemberState>()
+    // Phase 4: Cache invalidation tracking
+    private _cacheVersion = 0
+    private _cachedJoinedUsers: { version: number; set: Set<string> } | null = null
+    private _cachedInvitedUsers: { version: number; set: Set<string> } | null = null
+    private _cachedLeftUsers: { version: number; set: Set<string> } | null = null
+    private _cachedPendingJoinedUsers: { version: number; set: Set<string> } | null = null
+    private _cachedPendingInvitedUsers: { version: number; set: Set<string> } | null = null
+    private _cachedPendingLeftUsers: { version: number; set: Set<string> } | null = null
+
+    // Phase 4: Computed getters that derive from _members
+    get joinedUsers(): Set<string> {
+        if (!this._cachedJoinedUsers || this._cachedJoinedUsers.version !== this._cacheVersion) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'joined' && !state.isPending) set.add(userId)
+            }
+            this._cachedJoinedUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedJoinedUsers.set
+    }
+
+    get invitedUsers(): Set<string> {
+        if (!this._cachedInvitedUsers || this._cachedInvitedUsers.version !== this._cacheVersion) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'invited' && !state.isPending) set.add(userId)
+            }
+            this._cachedInvitedUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedInvitedUsers.set
+    }
+
+    get leftUsers(): Set<string> {
+        if (!this._cachedLeftUsers || this._cachedLeftUsers.version !== this._cacheVersion) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'left' && !state.isPending) set.add(userId)
+            }
+            this._cachedLeftUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedLeftUsers.set
+    }
+
+    get pendingJoinedUsers(): Set<string> {
+        if (
+            !this._cachedPendingJoinedUsers ||
+            this._cachedPendingJoinedUsers.version !== this._cacheVersion
+        ) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'joined' && state.isPending) set.add(userId)
+            }
+            this._cachedPendingJoinedUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedPendingJoinedUsers.set
+    }
+
+    get pendingInvitedUsers(): Set<string> {
+        if (
+            !this._cachedPendingInvitedUsers ||
+            this._cachedPendingInvitedUsers.version !== this._cacheVersion
+        ) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'invited' && state.isPending) set.add(userId)
+            }
+            this._cachedPendingInvitedUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedPendingInvitedUsers.set
+    }
+
+    get pendingLeftUsers(): Set<string> {
+        if (
+            !this._cachedPendingLeftUsers ||
+            this._cachedPendingLeftUsers.version !== this._cacheVersion
+        ) {
+            const set = new Set<string>()
+            for (const [userId, state] of this._members) {
+                if (state.status === 'left' && state.isPending) set.add(userId)
+            }
+            this._cachedPendingLeftUsers = { version: this._cacheVersion, set }
+        }
+        return this._cachedPendingLeftUsers.set
+    }
+
     readonly apps = new Set<string>()
     readonly pendingMembershipEvents = new Map<string, MemberPayload_Membership>()
+
+    // Phase 4: O(1) member state lookup
+    getMemberState(userId: string): MemberState | undefined {
+        return this._members.get(userId)
+    }
+
+    // Phase 4: Get all members with a specific status
+    getMembersByStatus(status: MembershipStatus, includePending: boolean = false): string[] {
+        const result: string[] = []
+        for (const [userId, state] of this._members) {
+            if (state.status === status && (includePending || !state.isPending)) {
+                result.push(userId)
+            }
+        }
+        return result
+    }
+
+    // Phase 4: Invalidate all cached Sets
+    private _invalidateCaches(): void {
+        this._cacheVersion++
+    }
+
     readonly solicitHelper: StreamStateView_Members_Solicitations
     readonly memberMetadata: StreamStateView_MemberMetadata
     readonly pins: Pin[] = []
@@ -760,45 +873,100 @@ export class StreamStateView_Members extends StreamStateView_AbstractContent {
         type: 'pending' | 'confirmed',
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ) {
+        const isPending = type === 'pending'
+        const currentState = this._members.get(userId)
+        const isApp = currentState?.isApp ?? this.apps.has(userId)
+        const memberData = currentState?.data ?? this.joined.get(userId)
+
         switch (op) {
             case MembershipOp.SO_INVITE:
                 if (type === 'confirmed') {
-                    this.pendingInvitedUsers.delete(userId)
-                    if (this.invitedUsers.add(userId)) {
+                    const wasNew =
+                        !currentState || currentState.status !== 'invited' || currentState.isPending
+                    this._members.set(userId, {
+                        status: 'invited',
+                        isPending: false,
+                        data: memberData,
+                        isApp,
+                    })
+                    this._invalidateCaches()
+                    if (wasNew) {
                         stateEmitter?.emit('streamNewUserInvited', this.streamId, userId)
                         this.emitMembershipChange(userId, stateEmitter, this.streamId)
                     }
                 } else {
-                    if (this.pendingInvitedUsers.add(userId)) {
+                    const wasNew =
+                        !currentState ||
+                        currentState.status !== 'invited' ||
+                        !currentState.isPending
+                    this._members.set(userId, {
+                        status: 'invited',
+                        isPending: true,
+                        data: memberData,
+                        isApp,
+                    })
+                    this._invalidateCaches()
+                    if (wasNew) {
                         stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
                     }
                 }
                 break
             case MembershipOp.SO_JOIN:
                 if (type === 'confirmed') {
-                    this.pendingJoinedUsers.delete(userId)
-                    if (this.joinedUsers.add(userId)) {
+                    const wasNew =
+                        !currentState || currentState.status !== 'joined' || currentState.isPending
+                    this._members.set(userId, {
+                        status: 'joined',
+                        isPending: false,
+                        data: this.joined.get(userId),
+                        isApp,
+                    })
+                    this._invalidateCaches()
+                    if (wasNew) {
                         stateEmitter?.emit('streamNewUserJoined', this.streamId, userId)
                         this.emitMembershipChange(userId, stateEmitter, this.streamId)
                     }
                 } else {
-                    if (this.pendingJoinedUsers.add(userId)) {
+                    const wasNew =
+                        !currentState || currentState.status !== 'joined' || !currentState.isPending
+                    this._members.set(userId, {
+                        status: 'joined',
+                        isPending: true,
+                        data: this.joined.get(userId),
+                        isApp,
+                    })
+                    this._invalidateCaches()
+                    if (wasNew) {
                         stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
                     }
                 }
                 break
             case MembershipOp.SO_LEAVE:
                 if (type === 'confirmed') {
-                    const wasJoined = this.joinedUsers.delete(userId)
-                    const wasInvited = this.invitedUsers.delete(userId)
-                    this.pendingLeftUsers.delete(userId)
-                    this.leftUsers.add(userId)
+                    const wasJoined = currentState?.status === 'joined' && !currentState.isPending
+                    const wasInvited = currentState?.status === 'invited' && !currentState.isPending
+                    this._members.set(userId, {
+                        status: 'left',
+                        isPending: false,
+                        data: memberData,
+                        isApp,
+                    })
+                    this._invalidateCaches()
                     if (wasJoined || wasInvited) {
                         stateEmitter?.emit('streamUserLeft', this.streamId, userId)
                         this.emitMembershipChange(userId, stateEmitter, this.streamId)
                     }
                 } else {
-                    if (this.pendingLeftUsers.add(userId)) {
+                    const wasNew =
+                        !currentState || currentState.status !== 'left' || !currentState.isPending
+                    this._members.set(userId, {
+                        status: 'left',
+                        isPending: true,
+                        data: memberData,
+                        isApp,
+                    })
+                    this._invalidateCaches()
+                    if (wasNew) {
                         stateEmitter?.emit('streamPendingMembershipUpdated', this.streamId, userId)
                     }
                 }

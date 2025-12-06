@@ -168,4 +168,90 @@ describe('TimelinesOptimization', () => {
             expect(eventViaIndex).toEqual(eventViaFind)
         })
     })
+
+    describe('Phase 3: originalEvents and replacementLog', () => {
+        test('originalEvents stores only the first version of edited event', () => {
+            // Send original message
+            const events1 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'original message' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events1, 'alice', 'channel1')
+
+            // Edit the message first time
+            const events2 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'original message' })
+                .editMessage({ edits: 'msg1', newBody: 'first edit' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events2, 'alice', 'channel1')
+
+            const { originalEvents: afterFirstEdit } = timelinesView.value
+            const originalAfterFirstEdit = afterFirstEdit['channel1']?.['msg1']
+            expect(originalAfterFirstEdit).toBeDefined()
+            expect(originalAfterFirstEdit?.fallbackContent).toContain('original message')
+
+            // Edit the message second time
+            const events3 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'first edit' })
+                .editMessage({ edits: 'msg1', newBody: 'second edit' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events3, 'alice', 'channel1')
+
+            const { originalEvents: afterSecondEdit } = timelinesView.value
+            const originalAfterSecondEdit = afterSecondEdit['channel1']?.['msg1']
+
+            // Original should still be the FIRST version, not updated to first edit
+            expect(originalAfterSecondEdit).toBeDefined()
+            expect(originalAfterSecondEdit?.fallbackContent).toContain('original message')
+        })
+
+        test('replacementLog tracks all edits including duplicates', () => {
+            // Send original message
+            const events1 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'original' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events1, 'alice', 'channel1')
+
+            // Edit once
+            const events2 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'original' })
+                .editMessage({ edits: 'msg1', newBody: 'edit 1' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events2, 'alice', 'channel1')
+
+            const { replacementLog: log1 } = timelinesView.value
+            expect(log1['channel1']?.length).toBe(1)
+
+            // Edit again
+            const events3 = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'edit 1' })
+                .editMessage({ edits: 'msg1', newBody: 'edit 2' })
+                .getEvents()
+            timelinesView.setState.appendEvents(events3, 'alice', 'channel1')
+
+            const { replacementLog: log2 } = timelinesView.value
+            // Log should have two entries (may be duplicates) for transform iteration
+            expect(log2['channel1']?.length).toBe(2)
+        })
+
+        test('originalEvents stores one entry per unique eventId', () => {
+            // Send and edit multiple messages
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'msg1', from: 'alice', body: 'message 1' })
+                .sendMessage({ id: 'msg2', from: 'bob', body: 'message 2' })
+                .editMessage({ edits: 'msg1', newBody: 'msg1 edited' })
+                .editMessage({ edits: 'msg2', newBody: 'msg2 edited' })
+                .editMessage({ edits: 'msg1', newBody: 'msg1 edited again' })
+                .getEvents()
+
+            timelinesView.setState.appendEvents(events, 'alice', 'channel1')
+
+            const { originalEvents } = timelinesView.value
+            const originals = originalEvents['channel1']
+
+            // Should have exactly 2 entries (one per unique eventId), not 3 (one per edit)
+            expect(Object.keys(originals ?? {}).length).toBe(2)
+            expect(originals?.['msg1']?.fallbackContent).toContain('message 1')
+            expect(originals?.['msg2']?.fallbackContent).toContain('message 2')
+        })
+    })
 })
