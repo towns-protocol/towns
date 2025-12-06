@@ -1446,7 +1446,6 @@ export class Client
             check(isDefined(miniblock), 'miniblock not found')
             event = miniblock.events.find((e) => e.hashStr === eventId)
         } else {
-            // Get event from EventStore via timelinesView
             const rawEvent = this.streamsView.timelinesView.getRawEvent(eventId)
             event = rawEvent?.remoteEvent
         }
@@ -2254,7 +2253,6 @@ export class Client
     async retrySendMessage(streamId: string, localId: string): Promise<void> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found' + streamId)
-        // Get event from EventStore via timelinesView
         let event = this.streamsView.timelinesView.getRawEvent(localId)
         if (!event) {
             event = this.streamsView.timelinesView.findEventByLocalId(streamId, localId)

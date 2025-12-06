@@ -119,7 +119,6 @@ export class SyncedStream extends Stream implements ISyncedStream {
         snapshot: ParsedSnapshot | undefined,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): Promise<void> {
-        // Get unconfirmed events from EventStore and extract their remoteEvent
         const minipoolEvents = new Map<string, ParsedEvent>(
             this.streamsView.timelinesView
                 .getUnconfirmedEvents(this.streamId)
@@ -197,8 +196,6 @@ export class SyncedStream extends Stream implements ISyncedStream {
             return
         }
 
-        // Get unconfirmed events from EventStore for persistence
-        // Extract remoteEvent (ParsedEvent) for persistence format
         const minipoolEvents = this.streamsView.timelinesView
             .getUnconfirmedEvents(this.streamId)
             .filter((event) => isDefined(event.remoteEvent))
