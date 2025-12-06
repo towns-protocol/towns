@@ -68,7 +68,6 @@ export class StreamStateView {
     readonly userId: string
     readonly streamsView: StreamsView
     readonly contentKind: SnapshotCaseType
-    readonly minipoolEvents = new Map<string, StreamTimelineEvent>()
 
     prevMiniblockHash?: Uint8Array
     prevMiniblockNum?: bigint
@@ -323,10 +322,15 @@ export class StreamStateView {
                 this.processEphemeralEvent(parsedEvent, encryptionEmitter)
                 continue
             }
-            const existingEvent = this.minipoolEvents.get(parsedEvent.hashStr)
-            if (existingEvent) {
-                existingEvent.remoteEvent = parsedEvent
-                updated.push(existingEvent)
+            // Check if event already exists in EventStore (from previous batches)
+            const existingRawEvent = this.streamsView.timelinesView.getRawEvent(parsedEvent.hashStr)
+            if (existingRawEvent) {
+                // Update existing event with new parsed data
+                const updatedEvent: StreamTimelineEvent = {
+                    ...existingRawEvent,
+                    remoteEvent: parsedEvent,
+                }
+                updated.push(updatedEvent)
             } else {
                 const event = makeRemoteTimelineEvent({
                     parsedEvent,
@@ -398,10 +402,7 @@ export class StreamStateView {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] | undefined {
-        check(!this.minipoolEvents.has(timelineEvent.hashStr))
-        if (timelineEvent.remoteEvent.event.payload.case !== 'miniblockHeader') {
-            this.minipoolEvents.set(timelineEvent.hashStr, timelineEvent)
-        }
+        // Note: EventStore handles deduplication internally, no need to track in minipoolEvents
 
         const event = timelineEvent.remoteEvent
         const payload = event.event.payload
@@ -465,31 +466,46 @@ export class StreamStateView {
         encryptionEmitter: TypedEmitter<StreamEncryptionEvents> | undefined,
         stateEmitter: TypedEmitter<StreamStateEvents> | undefined,
     ): ConfirmedTimelineEvent[] {
-        const confirmed = []
+        const confirmed: ConfirmedTimelineEvent[] = []
         for (let i = 0; i < eventHashes.length; i++) {
             const eventId = bin_toHexString(eventHashes[i])
-            const event = this.minipoolEvents.get(eventId)
-            if (!event) {
-                logError(`Mininblock event not found ${eventId}`) // aellis this is pretty serious
+            // Get event from EventStore (via timelinesView)
+            const rawEvent = this.streamsView.timelinesView.getRawEvent(eventId)
+            if (!rawEvent) {
+                logError(`Miniblock event not found ${eventId}`) // aellis this is pretty serious
                 continue
             }
-            this.minipoolEvents.delete(eventId)
-            event.miniblockNum = header.miniblockNum
-            event.confirmedEventNum = header.eventNumOffset + BigInt(i)
-            event.confirmedAtEpochMs = header.timestamp
-                ? timestampToEpochMs(header.timestamp)
-                : undefined
-            check(isConfirmedEvent(event), `Event is not confirmed ${eventId}`)
-            switch (event.remoteEvent.event.payload.case) {
-                case 'memberPayload':
-                    this.membershipContent.onConfirmedEvent(event, stateEmitter, encryptionEmitter)
-                    break
-                case undefined:
-                    break
-                default:
-                    this.getContent().onConfirmedEvent(event, stateEmitter, encryptionEmitter)
+            // Create confirmed event with updated fields
+            // Note: EventStore keeps the event (doesn't delete), just marks as confirmed
+            const confirmedEvent: ConfirmedTimelineEvent = {
+                ...rawEvent,
+                miniblockNum: header.miniblockNum,
+                confirmedEventNum: header.eventNumOffset + BigInt(i),
+                confirmedAtEpochMs: header.timestamp
+                    ? timestampToEpochMs(header.timestamp)
+                    : undefined,
+            } as ConfirmedTimelineEvent
+            check(isConfirmedEvent(confirmedEvent), `Event is not confirmed ${eventId}`)
+            if (confirmedEvent.remoteEvent) {
+                switch (confirmedEvent.remoteEvent.event.payload.case) {
+                    case 'memberPayload':
+                        this.membershipContent.onConfirmedEvent(
+                            confirmedEvent,
+                            stateEmitter,
+                            encryptionEmitter,
+                        )
+                        break
+                    case undefined:
+                        break
+                    default:
+                        this.getContent().onConfirmedEvent(
+                            confirmedEvent,
+                            stateEmitter,
+                            encryptionEmitter,
+                        )
+                }
             }
-            confirmed.push(event)
+            confirmed.push(confirmedEvent)
         }
         return confirmed
     }
@@ -563,7 +579,7 @@ export class StreamStateView {
         }
     }
 
-    // update streeam state with successfully decrypted events by hashStr event id
+    // update stream state with successfully decrypted events by hashStr event id
     updateDecryptedContent(
         eventId: string,
         content: DecryptedContent,
@@ -572,17 +588,13 @@ export class StreamStateView {
         this.membershipContent.onDecryptedContent(eventId, content, emitter)
         this.getContent().onDecryptedContent(eventId, content, emitter)
 
-        const minipoolEvent = this.minipoolEvents.get(eventId)
-        if (minipoolEvent) {
-            minipoolEvent.decryptedContent = content
-        }
-
+        // EventStore handles decrypted content via streamEventDecrypted
         const timelineEvent = this.streamsView.timelinesView.streamEventDecrypted(
             this.streamId,
             eventId,
             content,
         )
-        // dispatching eventDecrypted makes it easier to test, fyi pins and usernames from snapshots don't have cooresponding timeline events
+        // dispatching eventDecrypted makes it easier to test, fyi pins and usernames from snapshots don't have corresponding timeline events
         if (timelineEvent) {
             emitter.emit('eventDecrypted', this.streamId, this.contentKind, timelineEvent)
         }
@@ -790,7 +802,7 @@ export class StreamStateView {
             localEvent: { localId, channelMessage, status },
             createdAtEpochMs: BigInt(Date.now()),
         } satisfies StreamTimelineEvent
-        this.minipoolEvents.set(localId, timelineEvent)
+        // EventStore handles storage via streamUpdated
         this.getContent().onAppendLocalEvent(timelineEvent, emitter)
 
         this.streamsView.timelinesView.streamUpdated(this.streamId, {
@@ -806,28 +818,38 @@ export class StreamStateView {
         emitter: TypedEmitter<StreamEvents>,
     ) {
         log('updateLocalEvent', { localId, parsedEventHash, status })
-        // we update local events multiple times, so we need to check both the localId and the parsedEventHash
-        const timelineEvent =
-            this.minipoolEvents.get(localId) ?? this.minipoolEvents.get(parsedEventHash)
-        check(isDefined(timelineEvent), `Local event not found ${localId}`)
-        check(isLocalEvent(timelineEvent), `Event is not local ${localId}`)
-        const previousId = timelineEvent.hashStr
-        timelineEvent.hashStr = parsedEventHash
-        timelineEvent.localEvent.status = status
-        this.minipoolEvents.delete(previousId)
-        this.minipoolEvents.set(parsedEventHash, timelineEvent)
+        // We update local events multiple times, so we need to check both the localId and the parsedEventHash
+        // Use EventStore via timelinesView to find the event
+        let rawEvent = this.streamsView.timelinesView.getRawEvent(localId)
+        if (!rawEvent) {
+            rawEvent = this.streamsView.timelinesView.getRawEvent(parsedEventHash)
+        }
+        check(isDefined(rawEvent), `Local event not found ${localId}`)
+        check(isLocalEvent(rawEvent), `Event is not local ${localId}`)
 
+        const previousId = rawEvent.hashStr
+        // Create updated event with new hash and status
+        const updatedEvent: LocalTimelineEvent = {
+            ...rawEvent,
+            hashStr: parsedEventHash,
+            localEvent: {
+                ...rawEvent.localEvent,
+                status,
+            },
+        }
+
+        // EventStore handles re-keying via streamLocalEventUpdated
         this.streamsView.timelinesView.streamLocalEventUpdated(
             this.streamId,
             previousId,
-            timelineEvent,
+            updatedEvent,
         )
         emitter?.emit(
             'streamLocalEventUpdated',
             this.streamId,
             this.contentKind,
             previousId,
-            timelineEvent,
+            updatedEvent,
         )
     }
 

@@ -3,13 +3,7 @@ import { DLogger } from '@towns-protocol/utils'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
-import {
-    LocalEventStatus,
-    ParsedEvent,
-    ParsedMiniblock,
-    ParsedSnapshot,
-    isLocalEvent,
-} from './types'
+import { LocalEventStatus, ParsedEvent, ParsedMiniblock, ParsedSnapshot } from './types'
 import { StreamEvents } from './streamEvents'
 import { DecryptedContent } from './encryptedContentTypes'
 import { DecryptionSessionError } from './decryptionExtensions'
@@ -60,11 +54,11 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         prevSnapshotMiniblockNum: bigint,
         cleartexts: Record<string, Uint8Array | string> | undefined,
     ): void {
-        // grab any local events from the previous view that haven't been processed
-        const localEvents = Array.from(this._view.minipoolEvents.values())
-            .filter(isLocalEvent)
+        // Grab any local events from the previous view that haven't been processed
+        // Use timelinesView.getLocalEvents() to access EventStore
+        const localEvents = this.streamsView.timelinesView
+            .getLocalEvents(this.streamId)
             .filter((e) => e.hashStr.startsWith('~'))
-            .sort((a, b) => Number(a.eventNum - b.eventNum))
         this._view = new StreamStateView(this.userId, this.streamId, this.streamsView)
         this._view.initialize(
             nextSyncCookie,

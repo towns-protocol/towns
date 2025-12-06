@@ -9,7 +9,7 @@
  * @see packages/sdk/arch/proposals/streamstate-optimization.md
  */
 
-import { StreamTimelineEvent } from '../../types'
+import { StreamTimelineEvent, LocalTimelineEvent } from '../../types'
 import { TimelineEvent, TimelineEvent_OneOf, EventStatus } from '../models/timelineTypes'
 import { toEvent, getFallbackContent } from '../models/timelineEvent'
 import { dlogger } from '@towns-protocol/utils'
@@ -172,6 +172,56 @@ export class EventStore {
         return this.streamIndex.get(streamId)?.length ?? 0
     }
 
+    /**
+     * Get raw StreamTimelineEvent by ID (for external access without transformation)
+     */
+    getRawEvent(eventId: string): StreamTimelineEvent | undefined {
+        return this.events.get(eventId)?.rawEvent
+    }
+
+    /**
+     * Get all unconfirmed events for a stream (events not yet in a miniblock)
+     */
+    getUnconfirmedEvents(streamId: string): StreamTimelineEvent[] {
+        const eventIds = this.streamIndex.get(streamId) ?? []
+        return eventIds
+            .map((id) => this.events.get(id))
+            .filter(
+                (n): n is NormalizedEvent =>
+                    n !== undefined && n.rawEvent.miniblockNum === undefined,
+            )
+            .map((n) => n.rawEvent)
+    }
+
+    /**
+     * Get all local events for a stream (events with localEvent, sorted by eventNum)
+     */
+    getLocalEvents(streamId: string): LocalTimelineEvent[] {
+        const eventIds = this.streamIndex.get(streamId) ?? []
+        return eventIds
+            .map((id) => this.events.get(id))
+            .filter(
+                (n): n is NormalizedEvent =>
+                    n !== undefined && n.rawEvent.localEvent !== undefined,
+            )
+            .map((n) => n.rawEvent as LocalTimelineEvent)
+            .sort((a, b) => Number(a.eventNum - b.eventNum))
+    }
+
+    /**
+     * Find an event by its local event ID
+     */
+    findByLocalEventId(streamId: string, localEventId: string): StreamTimelineEvent | undefined {
+        const eventIds = this.streamIndex.get(streamId) ?? []
+        for (const eventId of eventIds) {
+            const n = this.events.get(eventId)
+            if (n?.rawEvent.localEvent?.localId === localEventId) {
+                return n.rawEvent
+            }
+        }
+        return undefined
+    }
+
     // ============================================================================
     // Public API - Event Mutations (Mutable Updates)
     // ============================================================================
@@ -273,6 +323,74 @@ export class EventStore {
         this.changeBuffer.push({
             type: 'update',
             eventId,
+            streamId: normalized.streamId,
+            threadParentId: normalized.threadParentId,
+        })
+
+        return true
+    }
+
+    /**
+     * Update an event and change its key (for local -> server ID transition)
+     */
+    updateEventWithNewId(
+        oldEventId: string,
+        newEventId: string,
+        rawEvent: StreamTimelineEvent,
+    ): boolean {
+        const normalized = this.events.get(oldEventId)
+        if (!normalized) {
+            return false
+        }
+
+        // Update the normalized event
+        normalized.eventId = newEventId
+        normalized.rawEvent = rawEvent
+        normalized._cacheVersion = -1 // Invalidate cache
+
+        // Re-key in primary storage
+        this.events.delete(oldEventId)
+        this.events.set(newEventId, normalized)
+
+        // Update stream index
+        const streamEvents = this.streamIndex.get(normalized.streamId)
+        if (streamEvents) {
+            const idx = streamEvents.indexOf(oldEventId)
+            if (idx !== -1) {
+                streamEvents[idx] = newEventId
+            }
+        }
+
+        // Update thread index
+        if (normalized.threadParentId) {
+            const threadEvents = this.threadIndex
+                .get(normalized.streamId)
+                ?.get(normalized.threadParentId)
+            if (threadEvents) {
+                const idx = threadEvents.indexOf(oldEventId)
+                if (idx !== -1) {
+                    threadEvents[idx] = newEventId
+                }
+            }
+        }
+
+        // Update reaction index
+        if (normalized.reactionParentId) {
+            const reactionEvents = this.reactionIndex
+                .get(normalized.streamId)
+                ?.get(normalized.reactionParentId)
+            if (reactionEvents) {
+                const idx = reactionEvents.indexOf(oldEventId)
+                if (idx !== -1) {
+                    reactionEvents[idx] = newEventId
+                }
+            }
+        }
+
+        // Buffer change notification
+        this.changeBuffer.push({
+            type: 'update',
+            eventId: newEventId,
             streamId: normalized.streamId,
             threadParentId: normalized.threadParentId,
         })

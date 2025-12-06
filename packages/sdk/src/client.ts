@@ -1446,9 +1446,9 @@ export class Client
             check(isDefined(miniblock), 'miniblock not found')
             event = miniblock.events.find((e) => e.hashStr === eventId)
         } else {
-            const stream = this.stream(streamId)
-            check(isDefined(stream), 'stream not found')
-            event = stream.view.minipoolEvents.get(eventId)?.remoteEvent
+            // Get event from EventStore via timelinesView
+            const rawEvent = this.streamsView.timelinesView.getRawEvent(eventId)
+            event = rawEvent?.remoteEvent
         }
         check(isDefined(event), 'pin event not found')
         const streamEvent = event.event
@@ -2254,11 +2254,11 @@ export class Client
     async retrySendMessage(streamId: string, localId: string): Promise<void> {
         const stream = this.stream(streamId)
         check(isDefined(stream), 'stream not found' + streamId)
-        const event =
-            stream.view.minipoolEvents.get(localId) ??
-            Array.from(stream.view.minipoolEvents.values()).find(
-                (e) => e.localEvent?.localId === localId,
-            )
+        // Get event from EventStore via timelinesView
+        let event = this.streamsView.timelinesView.getRawEvent(localId)
+        if (!event) {
+            event = this.streamsView.timelinesView.findEventByLocalId(streamId, localId)
+        }
         check(isDefined(event), 'retry event not found')
         check(isDefined(event.localEvent), 'retry local event not found')
         check(event.localEvent.status === 'failed', 'event not in failed state')
