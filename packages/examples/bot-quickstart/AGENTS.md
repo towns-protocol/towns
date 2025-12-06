@@ -79,6 +79,12 @@ bot.onSlashCommand("help", async (handler, event) => {
 })
 ```
 
+#### Paid Commands
+Add a `paid` property to your command definition with a price in USDC:
+```typescript
+{ name: "generate", description: "Generate AI content", paid: { price: '$0.20' } }
+```
+
 ### onReaction
 **When:** User adds emoji reaction
 
