@@ -53,6 +53,7 @@ import {
 import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 import { nanoid } from 'nanoid'
 import { RiverTimelineEvent, TimelineEvent } from '../../views/models/timelineTypes'
+import type { Address } from '@towns-protocol/web3'
 
 const log = dlog('csb:test')
 
@@ -1080,5 +1081,58 @@ describe('clientTest', () => {
 
         const decrypted = await bobsClient.getUserBio(bobsClient.userId)
         expect(decrypted?.bio).toStrictEqual(bio.bio)
+    })
+
+    test('aliceInitializesWithDMPartner', async () => {
+        // Bob must exist first - initialize with a space
+        await expect(bobsClient.initializeUser()).resolves.not.toThrow()
+        bobsClient.startSync()
+
+        // Bob creates a space to be a valid user
+        const bobsSpaceId = makeUniqueSpaceStreamId()
+        await expect(bobsClient.createSpace(bobsSpaceId)).resolves.not.toThrow()
+
+        // Alice initializes using Bob as her DM partner (no space required)
+        await expect(
+            alicesClient.initializeUser({ dmPartnerUserId: bobsClient.userId as Address }),
+        ).resolves.not.toThrow()
+
+        // Verify Alice's user streams were created
+        expect(alicesClient.streams.size()).toEqual(4)
+        expect(alicesClient.streams.get(makeUserStreamId(alicesClient.userId))).toBeDefined()
+        expect(
+            alicesClient.streams.get(makeUserSettingsStreamId(alicesClient.userId)),
+        ).toBeDefined()
+        expect(alicesClient.streams.get(makeUserInboxStreamId(alicesClient.userId))).toBeDefined()
+        expect(
+            alicesClient.streams.get(makeUserMetadataStreamId(alicesClient.userId)),
+        ).toBeDefined()
+
+        alicesClient.startSync()
+
+        // Alice can now create a DM with Bob
+        const { streamId: dmStreamId } = await alicesClient.createDMChannel(bobsClient.userId)
+        expect(dmStreamId).toBeDefined()
+
+        // Wait for the DM stream to be ready
+        const alicesDmStream = await alicesClient.waitForStream(dmStreamId)
+        expect(alicesDmStream).toBeDefined()
+
+        // Alice can send a message in the DM
+        await expect(
+            alicesClient.sendMessage(dmStreamId, 'Hello Bob, this is Alice!'),
+        ).resolves.not.toThrow()
+
+        // Wait for Bob to receive the DM stream
+        const bobsDmStream = await bobsClient.waitForStream(dmStreamId)
+        expect(bobsDmStream).toBeDefined()
+
+        // Verify the message appears
+        await waitFor(() => {
+            const event = alicesDmStream.view.timeline.find(
+                (e) => getTimelineMessagePayload(e) === 'Hello Bob, this is Alice!',
+            )
+            expect(event).toBeDefined()
+        })
     })
 })

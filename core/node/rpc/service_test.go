@@ -1371,3 +1371,66 @@ func TestStartSyncWithWrongCookie(t *testing.T) {
 	}
 	tt.require.ErrorIs(updates.Err(), context.Canceled)
 }
+
+func TestCreateUserStreamWithDMPartner(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	require := require.New(t)
+
+	client := tt.testClient(0)
+
+	partnerWallet, err := crypto.NewWallet(tt.ctx)
+	require.NoError(err)
+	_, _, err = createUser(tt.ctx, partnerWallet, client, nil)
+	require.NoError(err)
+
+	userWallet, err := crypto.NewWallet(tt.ctx)
+	require.NoError(err)
+	userStreamId := UserStreamIdFromAddr(userWallet.Address)
+
+	inception, err := events.MakeEnvelopeWithPayload(
+		userWallet,
+		events.Make_UserPayload_Inception(userStreamId, nil),
+		nil,
+	)
+	require.NoError(err)
+
+	res, err := client.CreateStream(tt.ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userStreamId[:],
+		Metadata: map[string][]byte{
+			"dmPartnerAddress": partnerWallet.Address[:],
+		},
+	}))
+	require.NoError(err)
+	require.NotNil(res.Msg.Stream)
+}
+
+func TestCreateUserStreamWithNonExistentDMPartner(t *testing.T) {
+	tt := newServiceTester(t, serviceTesterOpts{numNodes: 1, start: true})
+	require := require.New(t)
+
+	client := tt.testClient(0)
+
+	userWallet, err := crypto.NewWallet(tt.ctx)
+	require.NoError(err)
+
+	fakePartnerAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	userStreamId := UserStreamIdFromAddr(userWallet.Address)
+
+	inception, err := events.MakeEnvelopeWithPayload(
+		userWallet,
+		events.Make_UserPayload_Inception(userStreamId, nil),
+		nil,
+	)
+	require.NoError(err)
+
+	_, err = client.CreateStream(tt.ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userStreamId[:],
+		Metadata: map[string][]byte{
+			"dmPartnerAddress": fakePartnerAddr[:],
+		},
+	}))
+	require.Error(err)
+	require.Contains(err.Error(), "user does not exist")
+}

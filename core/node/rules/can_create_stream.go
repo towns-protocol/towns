@@ -321,7 +321,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_BIN),
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
-		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		).requireUserAddr(ru.params.getRequiredUserAddrsForUserStream()...).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserMetadataPayload_Inception:
 		ru := &csUserMetadataRules{
@@ -332,7 +332,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_METADATA_KEY_BIN),
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
-		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		).requireUserAddr(ru.params.getRequiredUserAddrsForUserStream()...).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserSettingsPayload_Inception:
 		ru := &csUserSettingsRules{
@@ -343,7 +343,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_SETTINGS_BIN),
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
-		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		).requireUserAddr(ru.params.getRequiredUserAddrsForUserStream()...).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *UserInboxPayload_Inception:
 		ru := &csUserInboxRules{
@@ -354,7 +354,7 @@ func (ru *csParams) canCreateStream() ruleBuilderCS {
 			ru.params.streamIdTypeIsCorrect(shared.STREAM_USER_INBOX_BIN),
 			ru.params.eventCountMatches(1),
 			ru.params.isUserStreamId,
-		).requireChainAuth(ru.params.getNewUserStreamChainAuth)
+		).requireUserAddr(ru.params.getRequiredUserAddrsForUserStream()...).requireChainAuth(ru.params.getNewUserStreamChainAuth)
 
 	case *MetadataPayload_Inception:
 		ru := &csMetadataRules{
@@ -689,6 +689,26 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Check for DM-based initialization: if dmPartnerAddress is provided,
+	// allow user stream creation without space membership.
+	// The partner's existence is validated via RequiredUserAddrs.
+	if dmPartnerAddressBytes, ok := ru.requestMetadata["dmPartnerAddress"]; ok {
+		if len(dmPartnerAddressBytes) != 20 {
+			return nil, RiverError(
+				Err_BAD_STREAM_CREATION_PARAMS,
+				"invalid dmPartnerAddress length",
+				"length",
+				len(dmPartnerAddressBytes),
+				"expectedLength",
+				20,
+			)
+		}
+		// DM-based init - no chain auth needed
+		// Partner existence is validated via RequiredUserAddrs
+		return nil, nil
+	}
+
 	// we don't have a good way to check to see if they have on chain assets yet,
 	// so require a space id to be passed in the metadata and check that the user has read permissions there
 	if spaceIdBytes, ok := ru.requestMetadata["spaceId"]; ok {
@@ -701,9 +721,23 @@ func (ru *csParams) getNewUserStreamChainAuth() (*auth.ChainAuthArgs, error) {
 			userAddress,
 			ru.creatorAppAddress,
 		), nil
-	} else {
-		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "A spaceId where spaceContract.isMember(userId)==true must be provided in metadata for user stream")
 	}
+
+	return nil, RiverError(
+		Err_BAD_STREAM_CREATION_PARAMS,
+		"Either spaceId where spaceContract.isMember(userId)==true or dmPartnerAddress must be provided in metadata for user stream",
+	)
+}
+
+// getRequiredUserAddrsForUserStream returns user addresses that must exist for user stream creation.
+// If dmPartnerAddress is in metadata, it's returned so the partner's existence is validated.
+func (ru *csParams) getRequiredUserAddrsForUserStream() [][]byte {
+	if dmPartnerAddressBytes, ok := ru.requestMetadata["dmPartnerAddress"]; ok {
+		if len(dmPartnerAddressBytes) == 20 {
+			return [][]byte{dmPartnerAddressBytes}
+		}
+	}
+	return nil
 }
 
 func (ru *csMediaRules) getChainAuthForMediaStream() (*auth.ChainAuthArgs, error) {
