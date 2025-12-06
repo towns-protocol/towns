@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 // interfaces
-import {IEntryPoint} from "@eth-infinitism/account-abstraction/interfaces/IEntryPoint.sol";
 
 // libraries
 
