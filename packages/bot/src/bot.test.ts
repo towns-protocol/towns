@@ -25,6 +25,7 @@ import {
     genIdBlob,
     ParsedEvent,
     type ChannelMessageEvent,
+    makeUniqueMediaStreamId,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { BasePayload, Bot, BotCommand, BotPayload, DecryptedInteractionResponse } from './bot'
@@ -38,6 +39,7 @@ import {
     InteractionRequestPayload,
     InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
+    MediaInfoSchema,
     type PlainMessage,
 } from '@towns-protocol/proto'
 import {
@@ -59,6 +61,9 @@ import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 import { UserDevice } from '@towns-protocol/encryption'
+import { nanoid } from 'nanoid'
+import { create } from '@bufbuild/protobuf'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 
 const log = dlog('test:bot')
 
@@ -1980,5 +1985,38 @@ describe('Bot', { sequential: true }, () => {
         // Verify role no longer exists
         const roleAfter = await bot.getRole(spaceId, roleId)
         expect(roleAfter).toBeNull()
+    })
+
+    it('bob (bot owner) should be able to update bot profile image', async () => {
+        // Create mock chunked media info (following pattern from client.test.ts:1010-1047)
+        const mediaStreamId = makeUniqueMediaStreamId()
+        const image = create(MediaInfoSchema, {
+            mimetype: 'image/png',
+            filename: 'bot-avatar.png',
+        })
+        const { key, iv } = await deriveKeyAndIV(nanoid(128))
+        const chunkedMediaInfo = {
+            info: image,
+            streamId: mediaStreamId,
+            encryption: {
+                case: 'aesgcm' as const,
+                value: { secretKey: key, iv },
+            },
+            thumbnail: undefined,
+        }
+
+        // Bob (bot owner) updates the bot's profile image using setUserProfileImageFor
+        await bobClient.riverConnection.call(async (client) => {
+            await client.setUserProfileImage(chunkedMediaInfo, botClientAddress)
+        })
+
+        // Verify the bot's profile image was updated
+        const decrypted = await bobClient.riverConnection.call(async (client) => {
+            return await client.getUserProfileImage(botClientAddress)
+        })
+
+        expect(decrypted).toBeDefined()
+        expect(decrypted?.info?.mimetype).toBe('image/png')
+        expect(decrypted?.info?.filename).toBe('bot-avatar.png')
     })
 })

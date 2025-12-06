@@ -1,6 +1,8 @@
 package events
 
 import (
+	"github.com/ethereum/go-ethereum/common"
+
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 )
@@ -60,4 +62,24 @@ func (r *StreamView) GetUserMetadataSnapshotContent() (*UserMetadataPayload_Snap
 	} else {
 		return nil, RiverError(Err_WRONG_STREAM_TYPE, "Expected user metadata stream", "streamId", r.streamId)
 	}
+}
+
+// IsUserMetadataAppUser checks if a user metadata stream belongs to an app user.
+// Returns true if the inception event contains a valid AppAddress (20 bytes, non-zero).
+func (r *StreamView) IsUserMetadataAppUser() (bool, error) {
+	inception, err := r.GetUserMetadataInception()
+	if err != nil {
+		return false, err
+	}
+
+	if len(inception.AppAddress) != common.AddressLength {
+		return false, nil
+	}
+
+	zeroAddress := common.Address{}
+	if common.BytesToAddress(inception.AppAddress) != zeroAddress {
+		return true, nil
+	}
+
+	return false, nil
 }
