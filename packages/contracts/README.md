@@ -58,11 +58,10 @@ The system also supports cross-chain delegation between Ethereum L1 and Base L2,
 
 ## Requirements
 
-Install [yarn](https://yarnpkg.com/getting-started/install) via corepack:
+Install [Bun](https://bun.sh/):
 
 ```shell
-npm install -g corepack
-corepack enable
+curl -fsSL https://bun.sh/install | bash
 ```
 
 Install [Foundry](https://github.com/foundry-rs/foundry):
@@ -77,7 +76,7 @@ foundryup
 Clone the repo, then:
 
 ```shell
-yarn
+bun install
 ```
 
 **To compile the smart contracts:**

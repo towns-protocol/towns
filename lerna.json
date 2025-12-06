@@ -2,7 +2,7 @@
     "$schema": "node_modules/lerna/schemas/lerna-schema.json",
     "version": "0.0.431",
     "packages": ["packages/*", "protocol"],
-    "npmClient": "yarn",
+    "npmClient": "bun",
     "command": {
         "publish": {
             "access": "public"

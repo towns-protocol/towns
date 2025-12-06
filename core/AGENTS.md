@@ -185,7 +185,7 @@ Before committing any Go code changes:
 
 - Definitions in `../protocol`
 - Generate Go bindings: `cd node && go generate -v -x protocol/gen.go`
-- Generate TypeScript bindings: `cd ../protocol && yarn buf:generate`
+- Generate TypeScript bindings: `cd ../protocol && bun run buf:generate`
 
 ### Database Schema Management
 
@@ -199,7 +199,7 @@ Before committing any Go code changes:
 
 - Structured JSON logging via zap with custom extensions in `node/logging/`
 - Log levels: debug, info, warn, error
-- Pretty formatting in development via `yarn exec pino-pretty`
+- Pretty formatting in development via `bun run pino-pretty`
 
 ### Debugging Commands
 

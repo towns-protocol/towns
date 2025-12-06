@@ -7,7 +7,7 @@ React Hooks for River SDK.
 in the future:
 
 ```sh
-yarn add @towns-protocol/react-sdk
+bun add @towns-protocol/react-sdk
 ```
 
 # Usage
