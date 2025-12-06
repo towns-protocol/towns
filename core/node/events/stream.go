@@ -993,14 +993,24 @@ func (s *Stream) unsubAllLocked() {
 // canCreateMiniblock determines if a stream is eligible to create a miniblock.
 // canCreateMiniblock is thread-safe.
 func (s *Stream) canCreateMiniblock() bool {
+	targetStreamID, _ := StreamIdFromString("a105f2a7371ca78f9de8b80c9a92132b6e8832cb620000000000000000000000")
+
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	// Loaded, has events in minipool, and periodic miniblock creation is not disabled in test settings.
-	return s.local != nil &&
+	canCreateMiniblock := s.local != nil &&
 		s.getViewLocked() != nil &&
 		s.getViewLocked().minipool.events.Len() > 0 &&
 		!s.getViewLocked().snapshot.GetInceptionPayload().GetSettings().GetDisableMiniblockCreation()
+
+	if s.streamId == targetStreamID {
+		logging.FromCtx(s.params.ServerCtx).Infow("can create miniblock",
+			"stream", s.streamId, "canCreateMiniblock", canCreateMiniblock,
+			"minipoolLen", s.getViewLocked().minipool.events.Len())
+	}
+
+	return canCreateMiniblock
 }
 
 type streamImplStatus struct {

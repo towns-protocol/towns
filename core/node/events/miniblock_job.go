@@ -3,11 +3,13 @@ package events
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"slices"
 	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/towns-protocol/towns/core/node/shared"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 
@@ -135,6 +137,8 @@ func (j *mbJob) produceCandidate(ctx context.Context, blockNum blockchain.BlockN
 }
 
 func (j *mbJob) makeCandidate(ctx context.Context) error {
+	targetStreamID, _ := shared.StreamIdFromString("a105f2a7371ca78f9de8b80c9a92132b6e8832cb620000000000000000000000")
+
 	var prop *mbProposal
 	var view *StreamView
 	var err error
@@ -143,6 +147,11 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 	} else {
 		prop, view, err = j.makeLocalProposal(ctx)
 	}
+
+	if targetStreamID != j.stream.StreamId() {
+		logging.FromCtx(ctx).Warn("Stream proposal result",
+			"stream", j.stream.StreamId(), "err", err, "prop", fmt.Sprintf("%p", prop))
+	}
 	if err != nil {
 		return err
 	}
@@ -150,9 +159,19 @@ func (j *mbJob) makeCandidate(ctx context.Context) error {
 		return nil
 	}
 
+	if targetStreamID != j.stream.StreamId() {
+		logging.FromCtx(ctx).Warn("Stream proposal created",
+			"stream", j.stream.StreamId(), "eventsLen", len(prop.events))
+	}
+
 	j.candidate, err = view.makeMiniblockCandidate(ctx, j.cache.Params(), prop)
 	if err != nil {
 		return err
+	}
+
+	if targetStreamID != j.stream.StreamId() && j.candidate != nil {
+		logging.FromCtx(ctx).Warn("Stream candidate created",
+			"stream", j.stream.StreamId(), "eventsLen", len(j.candidate.Events()))
 	}
 
 	return nil

@@ -103,9 +103,9 @@ func initConfigAndLog() {
 
 func init() {
 	deadlock.Opts.WriteLocked(func() {
-		deadlock.Opts.DeadlockTimeout = time.Minute
-		deadlock.Opts.MaxMapSize = 1024 * 256
-		deadlock.Opts.PrintAllCurrentGoroutines = false
+		deadlock.Opts.DeadlockTimeout = 30 * time.Minute
+		deadlock.Opts.MaxMapSize = 25 * 1024 * 256
+		deadlock.Opts.PrintAllCurrentGoroutines = true
 		deadlock.Opts.OnPotentialDeadlock = func() {} // Do not panic and continue execution
 		// TODO: make params configurable (move this section after config initialization) and wire zap logger to get better integration with log processors
 	})
