@@ -2,7 +2,7 @@
  * @group main
  */
 
-import { makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
+import { makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
 import { Client } from '../../client'
 import { makeUniqueChannelStreamId, makeDMStreamId, streamIdAsString } from '../../id'
 import { CreationCookie, CreationCookieSchema, InfoRequestSchema } from '@towns-protocol/proto'
@@ -150,12 +150,14 @@ describe('mediaTests', () => {
             1,
             encryptedData.ciphertext.subarray(encryptedData.ciphertext.length / 2),
         )
-        const decryptedChunks = await bobsClient.getMediaPayload(
-            streamIdAsString(creationCookie.streamId),
-            key,
-            iv,
-        )
-        expect(decryptedChunks).toEqual(data)
+        await waitFor(async () => {
+            const decryptedChunks = await bobsClient.getMediaPayload(
+                streamIdAsString(creationCookie.streamId),
+                key,
+                iv,
+            )
+            expect(decryptedChunks).toEqual(data)
+        })
     })
 
     test('chunkIndexNeedsToBeWithinBounds', async () => {
