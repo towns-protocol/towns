@@ -53,7 +53,14 @@ func fetchMiniblocks(
 
 	// Try preferred node first (the node we're syncing from)
 	if preferredNode != (common.Address{}) {
-		miniblocks, err := fetchMiniblocksFromNode(ctx, nodeRegistry, preferredNode, streamId, fromInclusive, toExclusive)
+		miniblocks, err := fetchMiniblocksFromNode(
+			ctx,
+			nodeRegistry,
+			preferredNode,
+			streamId,
+			fromInclusive,
+			toExclusive,
+		)
 		if err == nil {
 			return miniblocks, nil
 		}
