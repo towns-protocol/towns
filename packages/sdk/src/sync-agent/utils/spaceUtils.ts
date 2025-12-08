@@ -13,20 +13,22 @@ export async function makeDefaultMembershipInfo(
     feeRecipient: string,
     pricing: 'dynamic' | 'fixed' = 'dynamic',
 ): Promise<MembershipStruct> {
-    const pricingModule =
+    const [pricingModule, maxSupply] = await Promise.all([
         pricing == 'dynamic'
-            ? await getDynamicPricingModule(spaceDapp)
-            : await getFixedPricingModule(spaceDapp)
+            ? getDynamicPricingModule(spaceDapp)
+            : getFixedPricingModule(spaceDapp),
+        spaceDapp.platformRequirements.getMembershipMintLimit(),
+    ])
     return {
         settings: {
             name: 'Everyone',
             symbol: 'MEMBER',
             price: 0,
-            maxSupply: 1000,
+            maxSupply,
             duration: 0,
             currency: ETH_ADDRESS,
             feeRecipient: feeRecipient,
-            freeAllocation: 1000,
+            freeAllocation: maxSupply,
             pricingModule: pricingModule.module,
         },
         permissions: [Permission.Read, Permission.Write],
