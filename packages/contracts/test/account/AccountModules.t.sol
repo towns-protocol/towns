@@ -4,12 +4,14 @@ pragma solidity ^0.8.29;
 // interfaces
 import {IAccountModule} from "../../src/account/facets/IAccountModule.sol";
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
-import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
 import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
+import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IAppAccount} from "../../src/spaces/facets/account/IAppAccount.sol";
+import {ExecutionInstallDelegate} from "modular-account/src/helpers/ExecutionInstallDelegate.sol";
 
 // libraries
 import {Validator} from "../../src/utils/libraries/Validator.sol";
-import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
 import {ModuleInstallCommonsLib} from "modular-account/src/libraries/ModuleInstallCommonsLib.sol";
 import "../../src/account/facets/AccountModule.sol" as AccountModule;
 
@@ -20,10 +22,12 @@ import {DeployAccountModules} from "../../scripts/deployments/diamonds/DeployAcc
 import {AppRegistryBaseTest} from "../attest/AppRegistryBase.t.sol";
 import {ERC6900Setup} from "./ERC6900Setup.sol";
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
+import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 
 contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
     DeployAccountModules internal deployAccountModules;
     IAccountModule internal accountModules;
+    IExecutionModule internal executionModule;
 
     function setUp() public override(AppRegistryBaseTest, ERC6900Setup) {
         super.setUp();
@@ -33,6 +37,11 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
         address mod = deployAccountModules.deploy(deployer);
 
         accountModules = IAccountModule(mod);
+        executionModule = IExecutionModule(mod);
+    }
+
+    function _manifest() internal view returns (ExecutionManifest memory) {
+        return executionModule.executionManifest();
     }
 
     function test_init_setsSpaceFactory() external view {
@@ -100,13 +109,10 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
     function test_onInstall(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
 
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
+            address(executionModule),
+            _manifest(),
             abi.encode(address(userAccount))
         );
 
@@ -115,81 +121,62 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
 
     function test_onInstall_revertWhen_ZeroAddress(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
-
-        bytes4[] memory selectors = new bytes4[](0);
+        ExecutionManifest memory m = _manifest();
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 ModuleInstallCommonsLib.ModuleInstallCallbackFailed.selector,
-                address(accountModules),
+                address(executionModule),
                 abi.encodeWithSelector(Validator.InvalidAddress.selector)
             )
         );
-        _installValidation(
-            userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
-            abi.encode(address(0))
-        );
+        _installExecution(userAccount, address(executionModule), m, abi.encode(address(0)));
     }
 
     function test_onInstall_revertWhen_InvalidAccount(address user, address wrongAccount) external {
         vm.assume(wrongAccount != address(0));
         ModularAccount userAccount = _createAccount(user, 0);
         vm.assume(wrongAccount != address(userAccount));
-
-        bytes4[] memory selectors = new bytes4[](0);
+        ExecutionManifest memory m = _manifest();
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 ModuleInstallCommonsLib.ModuleInstallCallbackFailed.selector,
-                address(accountModules),
+                address(executionModule),
                 abi.encodeWithSelector(
                     AccountModule.AccountModule__InvalidAccount.selector,
                     wrongAccount
                 )
             )
         );
-        _installValidation(
-            userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
-            abi.encode(wrongAccount)
-        );
+        _installExecution(userAccount, address(executionModule), m, abi.encode(wrongAccount));
     }
 
     function test_onInstall_revertWhen_AlreadyInitialized(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
+        ExecutionManifest memory m = _manifest();
 
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
 
         assertTrue(accountModules.isInstalled(address(userAccount)));
 
+        // Installing the same execution module again fails with ExecutionFunctionAlreadySet
+        // because the execution function selector is already registered
         vm.expectRevert(
             abi.encodeWithSelector(
-                ModuleInstallCommonsLib.ModuleInstallCallbackFailed.selector,
-                address(accountModules),
-                abi.encodeWithSelector(
-                    AccountModule.AccountModule__AlreadyInitialized.selector,
-                    address(userAccount)
-                )
+                ExecutionInstallDelegate.ExecutionFunctionAlreadySet.selector,
+                IAppAccount.onInstallApp.selector
             )
         );
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId + 1,
-            selectors,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
     }
@@ -201,13 +188,10 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
     function test_onUninstall(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
 
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
+            address(executionModule),
+            _manifest(),
             abi.encode(address(userAccount))
         );
 
@@ -216,10 +200,10 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
         // Note: onUninstall is only called if uninstallData.length > 0
         // so we need to pass a non-empty uninstallData
         // Pass the account address as expected by onUninstall
-        _uninstallValidation(
+        _uninstallExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
+            address(executionModule),
+            _manifest(),
             abi.encode(address(userAccount))
         );
 
@@ -228,15 +212,18 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
 
     function test_onUninstall_failsIfNotInstalled(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
+        ExecutionManifest memory m = _manifest();
 
-        // Do NOT install validation
+        // Do NOT install execution
 
-        // onUninstall callback fails but doesn't revert - uninstall completes with failure
-        vm.expectEmit(address(userAccount));
-        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
-
-        // Pass non-empty uninstallData to trigger onUninstall
-        _uninstallValidation(userAccount, address(accountModules), nextEntityId, abi.encode(1));
+        // Uninstalling non-installed execution fails with ExecutionFunctionNotSet
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ExecutionInstallDelegate.ExecutionFunctionNotSet.selector,
+                IAppAccount.onInstallApp.selector
+            )
+        );
+        _uninstallExecution(userAccount, address(executionModule), m, abi.encode(1));
 
         // Module was never installed, so isInstalled should still be false
         assertFalse(accountModules.isInstalled(address(userAccount)));
@@ -247,14 +234,12 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
         vm.assume(notAccount != address(0));
         ModularAccount userAccount = _createAccount(user, 0);
         vm.assume(notAccount != address(userAccount));
+        ExecutionManifest memory m = _manifest();
 
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
 
@@ -262,16 +247,11 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
 
         // onUninstall callback fails but doesn't revert - uninstall completes with failure
         vm.expectEmit(address(userAccount));
-        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
+        emit IModularAccount.ExecutionUninstalled(address(executionModule), false, m);
 
         // uninstallData encoded as an address that is not account
-        // _uninstallValidation will call as userAccount (account), but facet will decode 'notAccount'
-        _uninstallValidation(
-            userAccount,
-            address(accountModules),
-            nextEntityId,
-            abi.encode(notAccount)
-        );
+        // _uninstallExecution will call as userAccount (account), but facet will decode 'notAccount'
+        _uninstallExecution(userAccount, address(executionModule), m, abi.encode(notAccount));
 
         // Since callback failed, installed flag should remain true
         assertTrue(accountModules.isInstalled(address(userAccount)));
@@ -279,39 +259,42 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
 
     function test_onUninstall_actuallyDeletesInstalledFlag(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
+        ExecutionManifest memory m = _manifest();
 
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
+        _installExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
 
         assertTrue(accountModules.isInstalled(address(userAccount)));
 
-        _uninstallValidation(
+        _uninstallExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
 
         assertFalse(accountModules.isInstalled(address(userAccount)));
 
-        // Should be idempotent - trying again fails with NotInstalled but doesn't revert
-        vm.expectEmit(address(userAccount));
-        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
-        _uninstallValidation(
+        // Trying to uninstall again fails with ExecutionFunctionNotSet since
+        // execution function was already removed
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ExecutionInstallDelegate.ExecutionFunctionNotSet.selector,
+                IAppAccount.onInstallApp.selector
+            )
+        );
+        _uninstallExecution(
             userAccount,
-            address(accountModules),
-            nextEntityId,
+            address(executionModule),
+            m,
             abi.encode(address(userAccount))
         );
 
-        // Still uninstalled after failed callback
+        // Still uninstalled
         assertFalse(accountModules.isInstalled(address(userAccount)));
     }
 
@@ -332,54 +315,27 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  VALIDATION MODULE TESTS                     */
+    /*                    APP MANAGER TESTS                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    function test_validateUserOp_returnsOne() external {
-        PackedUserOperation memory userOp;
-        uint256 result = IValidationModule(address(accountModules)).validateUserOp(
-            0,
-            userOp,
-            bytes32(0)
-        );
-        assertEq(result, 1);
-    }
+    function test_onInstallApp(address user) external givenSimpleAppIsRegistered {
+        ModularAccount userAccount = _createAccount(user, 0);
 
-    function test_validateSignature_returnsInvalidSelector() external view {
-        bytes4 result = IValidationModule(address(accountModules)).validateSignature(
-            address(0),
-            0,
-            address(0),
-            bytes32(0),
-            new bytes(0)
+        _installExecution(
+            userAccount,
+            address(executionModule),
+            _manifest(),
+            abi.encode(address(userAccount))
         );
-        assertEq(result, bytes4(0xffffffff));
-    }
 
-    function test_validateRuntime_succeedsWhen_SenderIsThis() external {
-        IValidationModule(address(accountModules)).validateRuntime(
-            address(0),
-            0,
-            address(accountModules),
-            0,
-            new bytes(0),
-            new bytes(0)
-        );
-    }
+        ITownsApp appContract = ITownsApp(address(SIMPLE_APP));
+        IAppAccount appAccount = IAppAccount(address(userAccount));
 
-    function test_validateRuntime_revertWhen_InvalidSender(address sender) external {
-        vm.assume(sender != address(accountModules));
+        uint256 totalPrice = registry.getAppPrice(address(appContract));
 
-        vm.expectRevert(
-            abi.encodeWithSelector(AccountModule.AccountModule__InvalidSender.selector, sender)
-        );
-        IValidationModule(address(accountModules)).validateRuntime(
-            address(0),
-            0,
-            sender,
-            0,
-            new bytes(0),
-            new bytes(0)
-        );
+        hoax(address(userAccount), totalPrice);
+        installer.installApp{value: totalPrice}(appContract, appAccount, "");
+
+        assertTrue(appAccount.isAppInstalled(address(appContract)));
     }
 }

@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {BaseSetup} from "../spaces/BaseSetup.sol";
 
 // interfaces
-
+import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 // libraries
 import {ValidationConfigLib, ValidationConfig} from "@erc6900/reference-implementation/libraries/ValidationConfigLib.sol";
 import {ModuleEntityLib, ModuleEntity} from "@erc6900/reference-implementation/libraries/ModuleEntityLib.sol";
@@ -68,6 +68,17 @@ abstract contract ERC6900Setup is BaseSetup {
         account.installValidation(config, selectors, installData, new bytes[](0));
     }
 
+    /// @notice Installs an execution module on an account
+    function _installExecution(
+        ModularAccount account,
+        address module,
+        ExecutionManifest memory manifest,
+        bytes memory installData
+    ) internal {
+        vm.prank(address(entryPoint));
+        account.installExecution(module, manifest, installData);
+    }
+
     /// @notice Uninstalls a validation module from an account
     function _uninstallValidation(
         ModularAccount account,
@@ -78,6 +89,17 @@ abstract contract ERC6900Setup is BaseSetup {
         ModuleEntity moduleEntity = ModuleEntityLib.pack(module, entityId);
         vm.prank(address(entryPoint));
         account.uninstallValidation(moduleEntity, uninstallData, new bytes[](0));
+    }
+
+    /// @notice Uninstalls an execution module from an account
+    function _uninstallExecution(
+        ModularAccount account,
+        address module,
+        ExecutionManifest memory manifest,
+        bytes memory uninstallData
+    ) internal {
+        vm.prank(address(entryPoint));
+        account.uninstallExecution(module, manifest, uninstallData);
     }
 
     /// @notice Gets the next entity ID

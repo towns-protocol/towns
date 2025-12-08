@@ -18,9 +18,9 @@ library DeployAccountModuleFacet {
         arr.p(AccountModuleFacet.moduleId.selector);
         arr.p(AccountModuleFacet.onInstall.selector);
         arr.p(AccountModuleFacet.onUninstall.selector);
-        arr.p(AccountModuleFacet.validateUserOp.selector);
-        arr.p(AccountModuleFacet.validateSignature.selector);
-        arr.p(AccountModuleFacet.validateRuntime.selector);
+        arr.p(AccountModuleFacet.preExecutionHook.selector);
+        arr.p(AccountModuleFacet.postExecutionHook.selector);
+        arr.p(AccountModuleFacet.executionManifest.selector);
 
         // External functions
         arr.p(AccountModuleFacet.setSpaceFactory.selector);

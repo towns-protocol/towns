@@ -5,7 +5,9 @@ pragma solidity ^0.8.29;
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
 import {IAccountModule} from "./IAccountModule.sol";
-import {IValidationHookModule} from "@erc6900/reference-implementation/interfaces/IValidationHookModule.sol";
+import {IExecutionModule, ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
+import {IExecutionHookModule} from "@erc6900/reference-implementation/interfaces/IExecutionHookModule.sol";
+import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 
 // libraries
 import "./AccountModule.sol" as AccountModule;
@@ -22,7 +24,8 @@ import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.so
 contract AccountModuleFacet is
     IAccountModule,
     IModule,
-    IValidationModule,
+    IExecutionModule,
+    IExecutionHookModule,
     ModuleBase,
     OwnableBase,
     ReentrancyGuardTransient,
@@ -38,9 +41,10 @@ contract AccountModuleFacet is
         address spaceFactory,
         address appRegistry
     ) external onlyInitializing {
+        _addInterface(type(IModule).interfaceId);
         _addInterface(type(IAccountModule).interfaceId);
         _addInterface(type(IValidationModule).interfaceId);
-        _addInterface(type(IValidationHookModule).interfaceId);
+        _addInterface(type(IExecutionModule).interfaceId);
         __AccountModuleFacet_init_unchained(spaceFactory, appRegistry);
     }
 
@@ -65,6 +69,7 @@ contract AccountModuleFacet is
         AccountModule.Layout storage $ = AccountModule.getStorage();
         if ($.installed[account])
             AccountModule.AccountModule__AlreadyInitialized.selector.revertWith(account);
+
         $.installed[account] = true;
     }
 
@@ -109,6 +114,118 @@ contract AccountModuleFacet is
         return "towns.account-module.1.0.0";
     }
 
+    function executionManifest() external pure returns (ExecutionManifest memory) {
+        bool allowGlobalValidation = false;
+        bool skipRuntimeValidation = true;
+
+        ManifestExecutionFunction[] memory executionFunctions = new ManifestExecutionFunction[](11);
+        executionFunctions[0] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.onInstallApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[1] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.onUninstallApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[2] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.onRenewApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[3] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.onUpdateApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[4] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.enableApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[5] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.disableApp.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[6] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.isAppInstalled.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[7] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.getAppId.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[8] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.getAppExpiration.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[9] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.isAppEntitled.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        executionFunctions[10] = ManifestExecutionFunction({
+            executionSelector: IAppAccount.getInstalledApps.selector,
+            skipRuntimeValidation: skipRuntimeValidation,
+            allowGlobalValidation: allowGlobalValidation
+        });
+
+        ManifestExecutionHook[] memory executionHooks = new ManifestExecutionHook[](4);
+
+        executionHooks[0] = ManifestExecutionHook({
+            executionSelector: IAppAccount.onInstallApp.selector,
+            entityId: 1,
+            isPreHook: true,
+            isPostHook: false
+        });
+
+        executionHooks[1] = ManifestExecutionHook({
+            executionSelector: IAppAccount.onUninstallApp.selector,
+            entityId: 2,
+            isPreHook: true,
+            isPostHook: false
+        });
+
+        executionHooks[2] = ManifestExecutionHook({
+            executionSelector: IAppAccount.onRenewApp.selector,
+            entityId: 3,
+            isPreHook: true,
+            isPostHook: false
+        });
+
+        executionHooks[3] = ManifestExecutionHook({
+            executionSelector: IAppAccount.onUpdateApp.selector,
+            entityId: 4,
+            isPreHook: true,
+            isPostHook: false
+        });
+
+        bytes4[] memory interfaceIds = new bytes4[](1);
+        interfaceIds[0] = type(IAppAccount).interfaceId;
+
+        return
+            ExecutionManifest({
+                executionFunctions: executionFunctions,
+                executionHooks: executionHooks,
+                interfaceIds: interfaceIds
+            });
+    }
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        ACCOUNT MODULE                         */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -121,36 +238,16 @@ contract AccountModuleFacet is
     /*                  VALIDATION MODULE                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    /// @inheritdoc IValidationModule
-    function validateUserOp(
-        uint32,
-        PackedUserOperation calldata,
-        bytes32
-    ) external pure override returns (uint256) {
-        return _INVALID_USER_OP;
-    }
-
-    /// @inheritdoc IValidationModule
-    function validateSignature(
-        address,
-        uint32,
-        address,
-        bytes32,
-        bytes calldata
-    ) external pure override returns (bytes4) {
-        return _INVALID_SIGNATURE;
-    }
-
-    /// @inheritdoc IValidationModule
-    function validateRuntime(
-        address,
+    function preExecutionHook(
         uint32,
         address sender,
         uint256,
-        bytes calldata,
         bytes calldata
-    ) external view override {
-        if (sender != address(this))
-            AccountModule.AccountModule__InvalidSender.selector.revertWith(sender);
+    ) external view returns (bytes memory) {
+        if (sender != AccountModule.getStorage().appRegistry)
+            AccountModule.AccountModule__InvalidCaller.selector.revertWith(sender);
+        return "";
     }
+
+    function postExecutionHook(uint32 entityId, bytes calldata preExecHookData) external {}
 }
