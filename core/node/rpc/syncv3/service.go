@@ -40,7 +40,6 @@ type Service interface {
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
 	handlerRegistry handler.Registry
-	streamCache     *events.StreamCache
 	otelTracer      trace.Tracer
 }
 

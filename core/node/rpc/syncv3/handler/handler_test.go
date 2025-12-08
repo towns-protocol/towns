@@ -82,7 +82,7 @@ func TestSyncStreamHandlerImpl_SyncID(t *testing.T) {
 func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 	t.Run("validation failure", func(t *testing.T) {
 		env := newHandlerTestEnv(t)
-		_, err := env.handler.Modify(&protocol.ModifySyncRequest{})
+		_, err := env.handler.Modify(context.Background(), &protocol.ModifySyncRequest{})
 		require.Error(t, err)
 		var riverErr *base.RiverErrorImpl
 		require.True(t, errors.As(err, &riverErr))
@@ -105,7 +105,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			},
 		}
 
-		res, err := env.handler.Modify(req)
+		res, err := env.handler.Modify(context.Background(), req)
 		require.NoError(t, err)
 		require.Empty(t, res.Adds)
 		require.Empty(t, res.Removals)
@@ -151,7 +151,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			},
 		}
 
-		res, err := env.handler.Modify(req)
+		res, err := env.handler.Modify(context.Background(), req)
 		require.NoError(t, err)
 
 		require.Len(t, res.Adds, 1)
