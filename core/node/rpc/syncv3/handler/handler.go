@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
@@ -47,7 +48,7 @@ type SyncStreamHandler interface {
 	// update from the given sync position is sent to the client (backfill).
 	//
 	// For each stream that is removed, the operation will unsubscribe from further stream updates.
-	Modify(req *ModifySyncRequest) (*ModifySyncResponse, error)
+	Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 
 	// Cancel the stream sync operation.
 	// The given operation must be removed from the SyncStreamHandlerRegistry.
@@ -73,6 +74,7 @@ type syncStreamHandlerImpl struct {
 	receiver      Receiver
 	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streamCache   *events.StreamCache
 }
 
 func (s *syncStreamHandlerImpl) Run() error {
@@ -124,9 +126,9 @@ func (s *syncStreamHandlerImpl) SyncID() string {
 	return s.syncID
 }
 
-func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncResponse, error) {
+func (s *syncStreamHandlerImpl) Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
 	// Perform an initial validation of the request before processing further.
-	if err := validateModifySync(req); err != nil {
+	if err := validateModifySync(ctx, s.streamCache, req); err != nil {
 		return nil, err
 	}
 

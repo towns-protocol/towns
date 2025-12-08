@@ -25,7 +25,7 @@ type Service interface {
 
 	// ModifySync modifies an existing sync operation. It can add or remove streams from the sync.
 	// It can also backfill a specific stream by the given cookie which is already syncing.
-	ModifySync(req *ModifySyncRequest) (*ModifySyncResponse, error)
+	ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 
 	// CancelSync cancels an existing sync operation by its ID.
 	CancelSync(ctx context.Context, syncID string) error
@@ -40,6 +40,7 @@ type Service interface {
 // serviceImpl implements the Service interface with the default business logic.
 type serviceImpl struct {
 	handlerRegistry handler.Registry
+	streamCache     *events.StreamCache
 	otelTracer      trace.Tracer
 }
 
@@ -47,13 +48,13 @@ type serviceImpl struct {
 func NewService(
 	ctx context.Context,
 	localAddr common.Address,
-	cache *events.StreamCache,
+	streamCache *events.StreamCache,
 	nodeRegistry nodes.NodeRegistry,
 	metrics infra.MetricsFactory,
 	otelTracer trace.Tracer,
 ) Service {
-	eventBus := eventbus.New(ctx, localAddr, cache, nodeRegistry, metrics, otelTracer)
-	registry := handler.NewRegistry(eventBus, metrics)
+	eventBus := eventbus.New(ctx, localAddr, streamCache, nodeRegistry, metrics, otelTracer)
+	registry := handler.NewRegistry(streamCache, eventBus, metrics)
 	return &serviceImpl{
 		handlerRegistry: registry,
 		otelTracer:      otelTracer,
@@ -73,7 +74,7 @@ func (s *serviceImpl) SyncStreams(
 	defer s.handlerRegistry.Remove(syncID)
 
 	if len(streams) > 0 {
-		res, err := h.Modify(&ModifySyncRequest{SyncId: syncID, AddStreams: streams})
+		res, err := h.Modify(ctx, &ModifySyncRequest{SyncId: syncID, AddStreams: streams})
 		if err != nil {
 			return err
 		}
@@ -90,13 +91,13 @@ func (s *serviceImpl) SyncStreams(
 	return h.Run()
 }
 
-func (s *serviceImpl) ModifySync(req *ModifySyncRequest) (*ModifySyncResponse, error) {
+func (s *serviceImpl) ModifySync(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
 	h, ok := s.handlerRegistry.Get(req.GetSyncId())
 	if !ok {
 		return nil, RiverError(Err_NOT_FOUND, "sync operation not found")
 	}
 
-	return h.Modify(req)
+	return h.Modify(ctx, req)
 }
 
 func (s *serviceImpl) CancelSync(ctx context.Context, syncID string) error {
