@@ -201,9 +201,13 @@ describe('syncStreams', () => {
                 miniblockNum: 1n,
             }),
         )
+        // this takes 10 seconds now because the sync down code now handles sync down responses from modify sync
+        await new Promise((resolve) => setTimeout(resolve, 5))
 
         // make sure it shows up
-        await waitFor(() => expect(userInboxDeviceSummaryUpdatedCount).toBe(2))
+        await waitFor(() => expect(userInboxDeviceSummaryUpdatedCount).toBe(2), {
+            timeoutMS: 10000,
+        })
 
         await alicesSyncedStreams.stopSync()
     })

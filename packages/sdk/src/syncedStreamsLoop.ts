@@ -860,7 +860,8 @@ export class SyncedStreamsLoop {
         for (const streamIdStr of streamIds) {
             if (
                 !this.pendingSyncCookies.includes(streamIdStr) &&
-                !this.inFlightSyncCookies.has(streamIdStr)
+                !this.inFlightSyncCookies.has(streamIdStr) &&
+                this.streams.has(streamIdStr)
             ) {
                 this.pendingSyncCookies.push(streamIdStr)
             }
