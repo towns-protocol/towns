@@ -11,6 +11,7 @@ import {DeployIntrospection} from "@towns-protocol/diamond/scripts/deployments/f
 import {DeployOwnable} from "@towns-protocol/diamond/scripts/deployments/facets/DeployOwnable.sol";
 import {DeployMetadata} from "../facets/DeployMetadata.s.sol";
 import {DeployAccountModuleFacet} from "../facets/DeployAccountModuleFacet.s.sol";
+import {DeployAppManagerFacet} from "../facets/DeployAppManagerFacet.s.sol";
 import {DeploySpaceFactory} from "./DeploySpaceFactory.s.sol";
 import {DeployAppRegistry} from "./DeployAppRegistry.s.sol";
 import {LibString} from "solady/utils/LibString.sol";
@@ -62,6 +63,9 @@ contract DeployAccountModules is IDiamondInitHelper, DiamondHelper, Deployer {
             if (facetName.eq("AccountModuleFacet")) {
                 addCut(makeCut(facet, FacetCutAction.Add, DeployAccountModuleFacet.selectors()));
             }
+            if (facetName.eq("AppManagerFacet")) {
+                addCut(makeCut(facet, FacetCutAction.Add, DeployAppManagerFacet.selectors()));
+            }
         }
 
         return baseFacets();
@@ -72,6 +76,7 @@ contract DeployAccountModules is IDiamondInitHelper, DiamondHelper, Deployer {
         facetHelper.add("MultiInit");
         facetHelper.add("MetadataFacet");
         facetHelper.add("AccountModuleFacet");
+        facetHelper.add("AppManagerFacet");
 
         facetHelper.deployBatch(deployer);
 
@@ -88,6 +93,13 @@ contract DeployAccountModules is IDiamondInitHelper, DiamondHelper, Deployer {
             makeCut(facet, FacetCutAction.Add, DeployAccountModuleFacet.selectors()),
             facet,
             DeployAccountModuleFacet.makeInitData(spaceFactory, appRegistry)
+        );
+
+        facet = facetHelper.getDeployedAddress("AppManagerFacet");
+        addFacet(
+            makeCut(facet, FacetCutAction.Add, DeployAppManagerFacet.selectors()),
+            facet,
+            DeployAppManagerFacet.makeInitData()
         );
 
         address multiInit = facetHelper.getDeployedAddress("MultiInit");

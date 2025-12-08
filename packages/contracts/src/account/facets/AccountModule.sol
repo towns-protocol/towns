@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
+// libraries
+import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+
+// types
+using CustomRevert for bytes4;
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         EVENTS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -33,6 +39,10 @@ error AccountModule__InvalidAccount(address account);
 /// @notice Emitted when the account is not installed
 /// @param account The address of the account
 error AccountModule__NotInstalled(address account);
+
+/// @notice Emitted when the sender is not the registry
+/// @param sender The address of the sender
+error AccountModule__InvalidCaller(address sender);
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         STORAGE                            */
@@ -75,4 +85,10 @@ function setSpaceFactory(address spaceFactory) {
 function setAppRegistry(address appRegistry) {
     getStorage().appRegistry = appRegistry;
     emit AppRegistrySet(appRegistry);
+}
+
+/// @notice Checks if the caller is the registry
+/// @dev Reverts if the caller is not the registry
+function onlyRegistry(address caller) view {
+    if (caller != getStorage().appRegistry) AccountModule__InvalidCaller.selector.revertWith(caller);
 }
