@@ -3122,6 +3122,9 @@ func (s *PostgresStreamStore) reinitializeExistingStreamLockedTx(
 	return nil
 }
 
+// getCurrentNodeProcessInfo returns a short string describing the current process,
+// including the hostname (or "unknown" if it cannot be determined), the process ID,
+// and the provided schema name in the format `hostname=<host>, pid=<pid>, schema=<schema>`.
 func getCurrentNodeProcessInfo(currentSchemaName string) string {
 	currentHostname, err := os.Hostname()
 	if err != nil {
