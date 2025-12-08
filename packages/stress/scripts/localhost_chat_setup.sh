@@ -30,8 +30,8 @@ export NODE_ENV=development
 # fund the root wallet
 cast rpc -r $BASE_CHAIN_RPC_URL anvil_setBalance $WALLET_ADDRESS 10000000000000000000 > /dev/null
 
-yarn build
-PROCESS_INDEX=0 yarn start &
+bun run build
+PROCESS_INDEX=0 bun run start &
 pid=($!)
 wait $pid || true
 

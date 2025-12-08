@@ -1,11 +1,11 @@
 {
     "name": "@towns-protocol/generated",
-    "version": "0.0.430",
+    "version": "0.0.431",
     "type": "module",
     "scripts": {
-        "build": "node ./scripts/prepare.js",
+        "build": "bun ./scripts/prepare.js",
         "build-types": "bash scripts/build-contract-types.sh",
-        "make-config": "node ./scripts/make-config.js"
+        "make-config": "bun ./scripts/make-config.js"
     },
     "dependencies": {
         "@ethersproject/abi": "^5.8.0",

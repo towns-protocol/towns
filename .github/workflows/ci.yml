@@ -239,15 +239,13 @@ jobs:
             - name: Install Binaries
               run: sudo apt-get update && sudo apt-get -y install make zstd libsecp256k1-dev gcc netcat-openbsd
 
-            - uses: actions/setup-node@v4
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: '20'
+                  bun-version-file: .bun-version
 
-            - name: Setup yarn
-              run: npm install -g yarn
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -293,20 +291,20 @@ jobs:
 
             - name: Syncpack
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn syncpack:check
+              run: bun run syncpack:check
 
             - name: Prettier
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn prettier:check
+              run: bun run prettier:check
 
             - name: Build
               id: ts_build
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn build
+              run: bun run build
 
             - name: Lint
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
-              run: yarn lint
+              run: bun run lint
 
             - name: Linting River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -368,15 +366,15 @@ jobs:
             - name: Generate react-sdk docs
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
               working-directory: packages/react-sdk
-              run: yarn gen
+              run: bun run gen
 
             - name: Docs checking broken links
               working-directory: packages/docs
-              run: yarn broken-links
+              run: bun run broken-links
 
             - name: Docs spellcheck
               working-directory: packages/docs
-              run: yarn spellcheck
+              run: bun run spellcheck
 
             - name: Staticcheck River Node
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' }}
@@ -388,7 +386,7 @@ jobs:
 
             - name: Unit Tests
               if: ${{ !cancelled() && steps.setup_success.outcome == 'success' && steps.ts_build.outcome == 'success' }}
-              run: yarn test:unit
+              run: bun run test:unit
 
     Multinode:
         permissions: write-all
@@ -429,15 +427,13 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - uses: actions/setup-node@v4
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: '20'
+                  bun-version-file: .bun-version
 
-            - name: Setup yarn
-              run: npm install -g yarn
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -450,7 +446,7 @@ jobs:
                       ${{ runner.os }}-turbo-common-
 
             - name: Build all packages
-              run: yarn build
+              run: bun run build
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -481,8 +477,8 @@ jobs:
               env:
                   USE_DOCKER_CHAINS: '1'
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print Bun package versions
+              run: bun pm ls
 
             - name: Setup River CA for testing certificates
               run: ./scripts/register-ca.sh
@@ -510,14 +506,14 @@ jobs:
 
             - name: Run River Tests (without entitlements)
               working-directory: packages/sdk
-              run: yarn run test:ci:multi:ne
+              run: bun run test:ci:multi:ne
               timeout-minutes: 10
 
             - name: Run Stream Metadata Nodes
               run: |
                   mkdir -p core/run_files/local_dev/stream-metadata # make a directory for logs so they get saved
-                  yarn workspace @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
-                  yarn wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
+                  bun run --filter @towns-protocol/stream-metadata dev:local_dev > core/run_files/local_dev/stream-metadata/dev.log 2>&1 &
+                  bun run wait-on http://localhost:3002/health --timeout=120000 --i=5000 --verbose
 
             # Wait for data replication to complete. Similar to River nodes, the health endpoint
             # responds before data propagation across nodes is finished.
@@ -525,7 +521,7 @@ jobs:
               run: sleep 10
 
             - name: Run Stream Metadata Tests (without entitlements)
-              run: yarn turbo run test:integration --filter=@towns-protocol/stream-metadata
+              run: bun run turbo run test:integration --filter=@towns-protocol/stream-metadata
 
             - *archive_river_node_logs_and_settings
 
@@ -568,15 +564,13 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - uses: actions/setup-node@v4
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: '20'
+                  bun-version-file: .bun-version
 
-            - name: Setup yarn
-              run: npm install -g yarn
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -607,8 +601,8 @@ jobs:
               env:
                   USE_DOCKER_CHAINS: '1'
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print Bun package versions
+              run: bun pm ls
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -645,19 +639,19 @@ jobs:
               run: sleep 10
 
             - name: Build & Test (with entitlements)
-              run: yarn csb:turbo-no-sdk
+              run: bun run csb:turbo-no-sdk
 
             - name: Run River Tests (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
+              run: bun run turbo run test:ci:multi:ent --filter=@towns-protocol/sdk
 
-            - name: Run Stress Test Tests (yarn) (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/stress
+            - name: Run Stress Test Tests (bun) (with entitlements)
+              run: bun run turbo run test:ci:multi:ent --filter=@towns-protocol/stress
 
             - name: Run Stress Test Demo (node) (with entitlements)
               run: ./packages/stress/scripts/localhost_demo.sh
 
             - name: Run Bot Uber Test (with entitlements)
-              run: yarn turbo run test:ci:multi:ent --filter=@towns-protocol/bot
+              run: bun run turbo run test:ci:multi:ent --filter=@towns-protocol/bot
 
             - *archive_river_node_logs_and_settings
 
@@ -700,15 +694,13 @@ jobs:
               with:
                   version: ${{ env.FOUNDRY_VERSION }}
 
-            - uses: actions/setup-node@v4
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
               with:
-                  node-version: '20'
+                  bun-version-file: .bun-version
 
-            - name: Setup yarn
-              run: npm install -g yarn
-
-            - name: Install node dependencies
-              run: yarn install --immutable
+            - name: Install dependencies
+              run: bun install --frozen-lockfile
 
             - name: Print versions
               run: ./scripts/print-versions.sh
@@ -739,8 +731,8 @@ jobs:
               env:
                   USE_DOCKER_CHAINS: '1'
 
-            - name: Print Yarn package versions
-              run: yarn info --name-only --all
+            - name: Print Bun package versions
+              run: bun pm ls
 
             - name: Maintain Turbo cache
               uses: actions/cache@v4
@@ -771,10 +763,10 @@ jobs:
               run: just start-and-wait-app-registry
 
             - name: Build & Test (with entitlements)
-              run: yarn csb:turbo-no-sdk
+              run: bun run csb:turbo-no-sdk
 
             - name: Run River Tests Against Legacy Spaces (with entitlements)
-              run: yarn turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
+              run: bun run turbo run test:ci:multi:ent:legacy --filter=@towns-protocol/sdk
 
             - *archive_river_node_logs_and_settings
 

@@ -5,22 +5,21 @@ WORKDIR /river
 # Install build dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    git curl ca-certificates build-essential && \
+    git curl ca-certificates build-essential unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20
+# Install Node.js (needed for npm pack in @towns-protocol/generated build)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
 # Copy monorepo configuration for dependency resolution
-COPY buf.yaml package.json yarn.lock .yarnrc.yml turbo.json ./
-COPY .yarn/releases .yarn/releases
-COPY .yarn/plugins .yarn/plugins
+COPY buf.yaml package.json bunfig.toml bun.lock turbo.json ./
 COPY packages/tsconfig.base.json ./packages/
 
 # Copy workspace package.json files for dependency resolution
@@ -34,7 +33,7 @@ COPY packages/web3/package.json ./packages/web3/
 COPY protocol/package.json ./protocol/
 
 # Install dependencies (prepare.js will install Foundry if needed)
-RUN yarn install && yarn cache clean
+RUN bun install && bun pm cache rm
 
 # Copy remaining source code
 COPY packages/contracts ./packages/contracts/
@@ -47,10 +46,10 @@ COPY packages/web3 ./packages/web3/
 COPY protocol ./protocol/
 
 # Build the package
-RUN yarn run turbo build --filter @towns-protocol/metrics-discovery
+RUN bun run turbo build --filter @towns-protocol/metrics-discovery
 
 # Create runtime image
-FROM node:lts-alpine3.20 AS runtime
+FROM oven/bun:1.3-alpine AS runtime
 
 WORKDIR /river/packages/metrics-discovery
 
@@ -64,4 +63,4 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080 || exit 1
 
-CMD [ "node", "./dist/index.cjs"]
+CMD ["bun", "./dist/index.cjs"]
