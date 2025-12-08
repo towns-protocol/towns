@@ -49,9 +49,13 @@ export async function update(_argv: UpdateArgs) {
         const packageJsonBefore: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
         const versionsBefore = getTownsVersions(packageJsonBefore)
 
-        await runCommand(dlxBin, [...dlxArgs, 'npm-check-updates', '-u', '-f', '@towns-protocol/*'], {
-            silent: true,
-        })
+        await runCommand(
+            dlxBin,
+            [...dlxArgs, 'npm-check-updates', '-u', '-f', '@towns-protocol/*'],
+            {
+                silent: true,
+            },
+        )
 
         const packageJsonAfter: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
         const versionsAfter = getTownsVersions(packageJsonAfter)
