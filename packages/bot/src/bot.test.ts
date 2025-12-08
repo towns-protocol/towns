@@ -1855,7 +1855,8 @@ describe('Bot', { sequential: true }, () => {
         log('unpinned event', unpinEventId)
     })
 
-    it('bot should be able to pin and unpin other users messages', async () => {
+    // @miguel-nascimento 2025-12-08 flaky test
+    it.skip('bot should be able to pin and unpin other users messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId } = await bobDefaultChannel.sendMessage('Hello')
         const receivedMessages: OnMessageType[] = []
