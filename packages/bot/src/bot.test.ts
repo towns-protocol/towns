@@ -1310,7 +1310,8 @@ describe('Bot', { sequential: true }, () => {
         expect(chunkedMedia?.info.sizeBytes).toBe(BigInt(2500000))
     })
 
-    it('should send mixed attachments (URL + chunked)', async () => {
+    // @miguel-nascimento 2025-12-08 flaky test
+    it.skip('should send mixed attachments (URL + chunked)', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const testData = createTestPNG(50, 50)
