@@ -202,7 +202,7 @@ describe('syncStreams', () => {
             }),
         )
         // this takes 10 seconds now because the sync down code now handles sync down responses from modify sync
-        await new Promise((resolve) => setTimeout(resolve, 5))
+        await new Promise((resolve) => setTimeout(resolve, 5000))
 
         // make sure it shows up
         await waitFor(() => expect(userInboxDeviceSummaryUpdatedCount).toBe(2), {
