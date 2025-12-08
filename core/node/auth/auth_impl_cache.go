@@ -38,6 +38,7 @@ const (
 	EntitlementResultReason_IS_NOT_APP
 	EntitlementResultReason_MISMATCHED_APP_ADDRESS
 	EntitlementResultReason_APP_ENTITLEMENTS
+	EntitlementResultReason_IS_NOT_BOT_OWNER
 	EntitlementResultReason_MAX // MAX - leave at the end
 )
 
@@ -54,6 +55,7 @@ var entitlementResultReasonDescriptions = []string{
 	"USER_IS_NOT_APP",
 	"MISMATCHED_APP_ADDRESS",
 	"APP_ENTITLEMENTS",
+	"IS_NOT_BOT_OWNER",
 }
 
 func (r EntitlementResultReason) String() string {

@@ -81,3 +81,53 @@ func (arc *AppRegistryContract) UserIsRegisteredAsApp(
 	}
 	return registeredAppAddress != zeroAddress, registeredAppAddress, nil
 }
+
+// IsUserBotOwner checks if the given user (potentialOwner) is the owner of the bot
+// whose client address is botClientAddress.
+func (arc *AppRegistryContract) IsUserBotOwner(
+	ctx context.Context,
+	potentialOwner common.Address,
+	botClientAddress common.Address,
+) (bool, error) {
+	zeroAddress := common.Address{}
+
+	// Get the app contract address from the bot's client address
+	appAddress, err := arc.appRegistry.GetAppByClient(&bind.CallOpts{Context: ctx}, botClientAddress)
+	if err != nil {
+		return false, AsRiverError(
+			err,
+		).Message("Unable to get app by client address").
+			Tag("botClientAddress", botClientAddress)
+	}
+
+	// If no app is registered with this client address, the user can't be the owner
+	if appAddress == zeroAddress {
+		return false, nil
+	}
+
+	// Get the latest app ID for this app address
+	appId, err := arc.appRegistry.GetLatestAppId(&bind.CallOpts{Context: ctx}, appAddress)
+	if err != nil {
+		return false, AsRiverError(
+			err,
+		).Message("Unable to get latest app ID").
+			Tag("appAddress", appAddress)
+	}
+
+	// If no valid app ID, the user can't be the owner
+	if appId == EMPTY_UID {
+		return false, nil
+	}
+
+	// Get the app data to check the owner
+	appData, err := arc.appRegistry.GetAppById(&bind.CallOpts{Context: ctx}, appId)
+	if err != nil {
+		return false, AsRiverError(
+			err,
+		).Message("Unable to get app by ID").
+			Tag("appId", appId)
+	}
+
+	// Check if the potential owner matches the app's owner
+	return appData.Owner == potentialOwner, nil
+}
