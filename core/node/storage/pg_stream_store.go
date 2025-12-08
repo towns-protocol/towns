@@ -776,8 +776,25 @@ func (s *PostgresStreamStore) getMaxArchivedMiniblockNumberTx(
 		return err
 	}
 
+	return s.getMaxArchivedMiniblockNumberTxNoLock(
+		ctx,
+		tx,
+		streamId,
+		lockStream,
+		maxArchivedMiniblockNumber,
+	)
+}
+
+// getMaxArchivedMiniblockNumberTxNoLock expects the caller to have a lock on the stream.
+func (s *PostgresStreamStore) getMaxArchivedMiniblockNumberTxNoLock(
+	ctx context.Context,
+	tx pgx.Tx,
+	streamId StreamId,
+	lockStreamResult *LockStreamResult,
+	maxArchivedMiniblockNumber *int64,
+) error {
 	table := "miniblocks"
-	if lockStream.MiniblockDataLocation != external.MiniblockDataStorageLocationDB {
+	if !lockStreamResult.MiniblocksStoredInDB() {
 		table = "miniblocks_ext"
 	}
 
@@ -835,12 +852,19 @@ func (s *PostgresStreamStore) writeArchiveMiniblocksTx(
 	startMiniblockNum int64,
 	miniblocks []*MiniblockDescriptor,
 ) error {
-	if _, err := s.lockStream(ctx, tx, streamId, true); err != nil {
+	lockStream, err := s.lockStream(ctx, tx, streamId, true)
+	if err != nil {
 		return err
 	}
 
 	var lastKnownMiniblockNum int64
-	if err := s.getMaxArchivedMiniblockNumberTx(ctx, tx, streamId, &lastKnownMiniblockNum); err != nil {
+	if err := s.getMaxArchivedMiniblockNumberTxNoLock(
+		ctx,
+		tx,
+		streamId,
+		lockStream,
+		&lastKnownMiniblockNum,
+	); err != nil {
 		return err
 	}
 
