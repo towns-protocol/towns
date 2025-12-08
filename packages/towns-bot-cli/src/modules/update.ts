@@ -1,14 +1,13 @@
 import fs from 'fs'
 import path from 'path'
 import { green, red, yellow, cyan } from 'picocolors'
-import {
-    getPackageManager,
-    getInstallCommand,
-    getDlxCommand,
-    runCommand,
-    runCommandWithOutput,
-} from './utils.js'
+import { getPackageManager, getInstallCommand, getDlxCommand, runCommand } from './utils.js'
 import type { UpdateArgs } from '../parser.js'
+
+interface PackageJson {
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+}
 
 interface VersionUpdate {
     package: string
@@ -16,23 +15,18 @@ interface VersionUpdate {
     to: string
 }
 
-function parseNcuOutput(output: string): VersionUpdate[] {
-    const updates: VersionUpdate[] = []
-    const lines = output.split('\n')
-
-    for (const line of lines) {
-        // Match lines like: @towns-protocol/bot  ^1.0.0  →  ^1.1.0
-        const match = line.match(/^\s*(@towns-protocol\/\S+)\s+(\S+)\s+→\s+(\S+)/)
-        if (match) {
-            updates.push({
-                package: match[1],
-                from: match[2],
-                to: match[3],
-            })
+function getTownsVersions(packageJson: PackageJson): Record<string, string> {
+    const versions: Record<string, string> = {}
+    for (const deps of [packageJson.dependencies, packageJson.devDependencies]) {
+        if (deps) {
+            for (const [pkg, version] of Object.entries(deps)) {
+                if (pkg.startsWith('@towns-protocol/')) {
+                    versions[pkg] = version
+                }
+            }
         }
     }
-
-    return updates
+    return versions
 }
 
 export async function update(_argv: UpdateArgs) {
@@ -50,17 +44,25 @@ export async function update(_argv: UpdateArgs) {
     console.log(cyan('Checking for @towns-protocol updates...'))
 
     try {
-        // Run npm-check-updates and capture output
         const [dlxBin, ...dlxArgs] = dlxCommand.split(' ')
-        const output = await runCommandWithOutput(dlxBin, [
-            ...dlxArgs,
-            'npm-check-updates',
-            '-u',
-            '-f',
-            '@towns-protocol/*',
-        ])
 
-        const updates = parseNcuOutput(output)
+        const packageJsonBefore: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        const versionsBefore = getTownsVersions(packageJsonBefore)
+
+        await runCommand(dlxBin, [...dlxArgs, 'npm-check-updates', '-u', '-f', '@towns-protocol/*'], {
+            silent: true,
+        })
+
+        const packageJsonAfter: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        const versionsAfter = getTownsVersions(packageJsonAfter)
+
+        const updates: VersionUpdate[] = []
+        for (const [pkg, newVersion] of Object.entries(versionsAfter)) {
+            const oldVersion = versionsBefore[pkg]
+            if (oldVersion && oldVersion !== newVersion) {
+                updates.push({ package: pkg, from: oldVersion, to: newVersion })
+            }
+        }
 
         if (updates.length === 0) {
             console.log(green('✓'), 'All @towns-protocol packages are up to date!')
