@@ -13,9 +13,6 @@ event SpaceFactorySet(address spaceFactory);
 /// @param appRegistry The address of the app registry
 event AppRegistrySet(address appRegistry);
 
-/// @notice Emitted when the account is installed
-/// @param account The address of the account
-event Installed(address account);
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                           ERRORS                           */
@@ -33,6 +30,10 @@ error AccountModule__AlreadyInitialized(address account);
 /// @param account The address of the account
 error AccountModule__InvalidAccount(address account);
 
+/// @notice Emitted when the account is not installed
+/// @param account The address of the account
+error AccountModule__NotInstalled(address account);
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         STORAGE                            */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -41,6 +42,7 @@ error AccountModule__InvalidAccount(address account);
 bytes32 constant STORAGE_SLOT = 0x6f1ea9b463f1b71d7152d8267a9cec8292deeeb23f844482db8129707aea3800;
 
 /// @notice Storage layout for the AccountModulesFacet
+/// @custom:storage-location erc7201:towns.account.module.storage
 struct Layout {
     /// @notice Space factory
     address spaceFactory;
@@ -51,7 +53,7 @@ struct Layout {
 }
 
 /// @notice Returns the storage layout for the AccountModulesFacet
-function getLayout() pure returns (Layout storage $) {
+function getStorage() pure returns (Layout storage $) {
     assembly {
         $.slot := STORAGE_SLOT
     }
@@ -64,13 +66,13 @@ function getLayout() pure returns (Layout storage $) {
 /// @notice Sets the space factory
 /// @param spaceFactory The address of the space factory
 function setSpaceFactory(address spaceFactory) {
-    getLayout().spaceFactory = spaceFactory;
+    getStorage().spaceFactory = spaceFactory;
     emit SpaceFactorySet(spaceFactory);
 }
 
 /// @notice Sets the app registry
 /// @param appRegistry The address of the app registry
 function setAppRegistry(address appRegistry) {
-    getLayout().appRegistry = appRegistry;
+    getStorage().appRegistry = appRegistry;
     emit AppRegistrySet(appRegistry);
 }
