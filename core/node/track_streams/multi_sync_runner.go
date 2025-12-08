@@ -215,7 +215,8 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 		missingMiniblocks, err := fetchMiniblocks(
 			ssr.syncCtx,
 			ssr.nodeRegistry,
-			ssr.node,
+			ssr.node, // Try the node we're syncing from first
+			record.remotes,
 			streamId,
 			fromMiniblockNum,
 			serverSnapshotMb,

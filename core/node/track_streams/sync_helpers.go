@@ -30,10 +30,59 @@ func getFirstMiniblockNumber(miniblocks []*protocol.Miniblock) (int64, error) {
 	return mbInfo.Ref.Num, nil
 }
 
-// fetchMiniblocks fetches miniblocks from a remote node for a given stream.
+// fetchMiniblocks fetches miniblocks from remote nodes for a given stream.
 // This is used for gap recovery when we detect missing miniblocks on restart.
-// Returns the raw miniblock protos - caller is responsible for parsing.
+// It tries preferredNode first (if provided), then each node in the quorum.
+// Returns on first success. Returns the raw miniblock protos - caller is responsible for parsing.
 func fetchMiniblocks(
+	ctx context.Context,
+	nodeRegistry nodes.NodeRegistry,
+	preferredNode common.Address,
+	remotes nodes.StreamNodes,
+	streamId shared.StreamId,
+	fromInclusive int64,
+	toExclusive int64,
+) ([]*protocol.Miniblock, error) {
+	nodeAddrs := remotes.GetQuorumNodes()
+	if len(nodeAddrs) == 0 {
+		return nil, base.RiverError(protocol.Err_INVALID_ARGUMENT, "no remote nodes available for gap recovery").
+			Tag("streamId", streamId)
+	}
+
+	var lastErr error
+
+	// Try preferred node first (the node we're syncing from)
+	if preferredNode != (common.Address{}) {
+		miniblocks, err := fetchMiniblocksFromNode(ctx, nodeRegistry, preferredNode, streamId, fromInclusive, toExclusive)
+		if err == nil {
+			return miniblocks, nil
+		}
+		lastErr = err
+	}
+
+	// Try remaining nodes
+	for _, nodeAddr := range nodeAddrs {
+		// Skip preferred node since we already tried it
+		if nodeAddr == preferredNode {
+			continue
+		}
+		miniblocks, err := fetchMiniblocksFromNode(ctx, nodeRegistry, nodeAddr, streamId, fromInclusive, toExclusive)
+		if err == nil {
+			return miniblocks, nil
+		}
+		lastErr = err
+	}
+
+	return nil, base.AsRiverError(lastErr).
+		Message("Failed to fetch miniblocks from all remote nodes").
+		Tag("streamId", streamId).
+		Tag("fromInclusive", fromInclusive).
+		Tag("toExclusive", toExclusive).
+		Tag("numNodesTried", len(nodeAddrs))
+}
+
+// fetchMiniblocksFromNode fetches miniblocks from a specific node.
+func fetchMiniblocksFromNode(
 	ctx context.Context,
 	nodeRegistry nodes.NodeRegistry,
 	nodeAddr common.Address,
@@ -58,6 +107,7 @@ func fetchMiniblocks(
 		return nil, base.AsRiverError(err).
 			Message("Failed to fetch miniblocks for gap recovery").
 			Tag("streamId", streamId).
+			Tag("nodeAddr", nodeAddr).
 			Tag("fromInclusive", fromInclusive).
 			Tag("toExclusive", toExclusive)
 	}

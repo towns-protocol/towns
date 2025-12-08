@@ -12,6 +12,7 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/nodes"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils/mocks"
@@ -93,6 +94,7 @@ func TestHandleHistoricalContent_GapDetected(t *testing.T) {
 	gapMiniblock2 := makeMiniblockWithNum(t, 151)
 
 	streamId := shared.StreamId{0x20} // channel stream
+	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
 	// Create record with persisted state that creates a gap
 	record := &streamSyncInitRecord{
@@ -101,14 +103,13 @@ func TestHandleHistoricalContent_GapDetected(t *testing.T) {
 			Enabled:          true,
 			FromMiniblockNum: 150,
 		},
+		remotes: nodes.NewStreamNodesWithLock(1, []common.Address{nodeAddr}, common.Address{}),
 	}
 
 	// Create mocks
 	mockView := &mockTrackedStreamView{}
 	mockRegistry := mocks.NewMockNodeRegistry(t)
 	mockClient := mocks.NewMockStreamServiceClient(t)
-
-	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
 	// Setup mock expectations
 	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
@@ -290,6 +291,7 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 			Enabled:          true,
 			FromMiniblockNum: 150,
 		},
+		remotes: nodes.NewStreamNodesWithLock(1, []common.Address{nodeAddr}, common.Address{}),
 	}
 
 	// Create StreamAndCookie response (reset with new snapshot at 200)
