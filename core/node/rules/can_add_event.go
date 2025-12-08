@@ -390,7 +390,7 @@ func (params *aeParams) canAddUserMetadataPayload(payload *StreamEvent_UserMetad
 			check(params.creatorIsMember)
 	case *UserMetadataPayload_ProfileImage:
 		return aeBuilder().
-			check(params.creatorIsMember)
+			requireChainAuth(params.creatorIsMemberOrBotOwner)
 	case *UserMetadataPayload_Bio:
 		return aeBuilder().
 			check(params.creatorIsMember)
@@ -634,6 +634,37 @@ func (params *aeParams) creatorIsMember() (bool, error) {
 	return true, nil
 }
 
+// creatorIsMemberOrBotOwner returns nil if the creator is a member (no chain auth needed),
+// or returns chain auth args for bot owner verification if the creator is not a member
+// but the stream belongs to a bot user.
+func (params *aeParams) creatorIsMemberOrBotOwner() (*auth.ChainAuthArgs, error) {
+	creatorAddress := params.parsedEvent.Event.CreatorAddress
+	isMember, err := params.streamView.IsMember(creatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	if isMember {
+		// skip chain auth - already authorized as member
+		return nil, nil
+	}
+
+	// not member - check if this is a bot user's stream
+	isAppUser, err := params.streamView.IsUserMetadataAppUser()
+	if err != nil {
+		return nil, err
+	}
+	if !isAppUser {
+		return nil, RiverError(
+			Err_PERMISSION_DENIED,
+			"creator is not a member and stream is not associated with an app",
+			"creatorAddress", creatorAddress,
+			"streamId", params.streamView.StreamId(),
+		)
+	}
+	// this is a bot user stream, return chain auth to verify bot ownership
+	return params.botOwnerChainAuth()
+}
+
 func (params *aeParams) creatorIsApp() (bool, error) {
 	creatorAddress := params.parsedEvent.Event.CreatorAddress
 	err := checkIsApp(params, creatorAddress)
@@ -641,6 +672,23 @@ func (params *aeParams) creatorIsApp() (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// botOwnerChainAuth returns chain auth args to check if the event creator is the owner
+// of the bot whose user metadata stream this is. This is used to allow bot owners to
+// update their bot's profile image.
+func (params *aeParams) botOwnerChainAuth() (*auth.ChainAuthArgs, error) {
+	// Get the user address from the stream ID (the bot's client address)
+	botClientAddress, err := shared.GetUserAddressFromStreamId(*params.streamView.StreamId())
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the creator's address
+	creatorAddress := common.BytesToAddress(params.parsedEvent.Event.CreatorAddress)
+
+	// Create chain auth args to check if creator is the bot owner
+	return auth.NewChainAuthArgsForIsBotOwner(creatorAddress, botClientAddress), nil
 }
 
 func (ru *aeMemberBlockchainTransactionRules) validMemberBlockchainTransaction_ReceiptMetadata() (bool, error) {
