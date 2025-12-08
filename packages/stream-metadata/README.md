@@ -90,7 +90,7 @@ Run `./scripts/start_dev.sh`, and then kill the stream-metadata service. Running
 
 ```bash
 cd packages/stream-metadata
-yarn dev
+bun run dev
 ```
 
 ### Testing Image Processing
@@ -99,7 +99,7 @@ You can test the image processing functionality:
 
 ```bash
 # Run image processing tests
-yarn build && node dist/test-image-processing.cjs
+bun run build && node dist/test-image-processing.cjs
 ```
 
 ## Caching Strategy

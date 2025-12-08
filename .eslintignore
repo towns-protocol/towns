@@ -11,5 +11,4 @@ infra/
 
 vite.config.ts
 
-.yarn/*
-yarn.lock
+bun.lock
