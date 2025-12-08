@@ -316,12 +316,6 @@ func (ssr *syncSessionRunner) handleReset(
 			"streamId", streamId,
 			"error", err,
 		)
-		ssr.cancelSync(
-			base.AsRiverError(fmt.Errorf("error constructing tracked view for stream: %w", err)).
-				Tag("streamId", streamId).
-				Tag("syncId", ssr.syncer.GetSyncId()).
-				Func("syncSessionRunner.handleReset"),
-		)
 		return err
 	}
 
@@ -351,8 +345,13 @@ func (ssr *syncSessionRunner) applyUpdateToStream(
 	ssr.metrics.SyncUpdate.With(prometheus.Labels{"reset": fmt.Sprintf("%t", reset)}).Inc()
 
 	if reset {
-		if err := ssr.handleReset(streamAndCookie, record); err != nil && record.trackedView == nil {
-			// handleReset already cancelled the sync
+		if err := ssr.handleReset(streamAndCookie, record); err != nil {
+			ssr.cancelSync(
+				base.AsRiverError(fmt.Errorf("error constructing tracked view for stream: %w", err)).
+					Tag("streamId", streamId).
+					Tag("syncId", ssr.syncer.GetSyncId()).
+					Func("syncSessionRunner.handleReset"),
+			)
 			return
 		}
 	}

@@ -126,7 +126,7 @@ func startEventCollector(
 func verifyMessagesReceivedExactlyOnce(
 	require *require.Assertions,
 	channelIds []StreamId,
-	expectedMessages map[StreamId][]string, // Value is a slice of expected message strings
+	expectedMessages map[StreamId][]string,   // Value is a slice of expected message strings
 	eventTracker map[StreamId]map[string]int, // Value is a map of received message string to its count
 ) {
 	for i, channelId := range channelIds {
@@ -1441,5 +1441,5 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	cookie, _, err = tc.cookieStore.GetSyncCookie(tc.ctx, channelId)
 	tc.require.NoError(err)
 	tc.require.NotNil(cookie, "Cookie should be persisted")
-	tc.require.Equal(cookie.MinipoolGen, newLastMiniblock.Num+1, "MinipoolGen should be == lastMiniblock + 1")
+	tc.require.Equal(newLastMiniblock.Num+1, cookie.MinipoolGen, "MinipoolGen should be == lastMiniblock + 1")
 }
