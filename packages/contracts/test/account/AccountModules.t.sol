@@ -5,6 +5,7 @@ pragma solidity ^0.8.29;
 import {IAccountModule} from "../../src/account/facets/IAccountModule.sol";
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
+import {IModularAccount} from "@erc6900/reference-implementation/interfaces/IModularAccount.sol";
 
 // libraries
 import {Validator} from "../../src/utils/libraries/Validator.sol";
@@ -112,27 +113,6 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
         assertTrue(accountModules.isInstalled(address(userAccount)));
     }
 
-    function test_onUninstall(address user) external {
-        ModularAccount userAccount = _createAccount(user, 0);
-
-        bytes4[] memory selectors = new bytes4[](0);
-
-        _installValidation(
-            userAccount,
-            address(accountModules),
-            nextEntityId,
-            selectors,
-            abi.encode(address(userAccount))
-        );
-
-        assertTrue(accountModules.isInstalled(address(userAccount)));
-
-        // Note: onUninstall is only called if uninstallData.length > 0
-        _uninstallValidation(userAccount, address(accountModules), nextEntityId, abi.encode(1));
-
-        assertFalse(accountModules.isInstalled(address(userAccount)));
-    }
-
     function test_onInstall_revertWhen_ZeroAddress(address user) external {
         ModularAccount userAccount = _createAccount(user, 0);
 
@@ -212,6 +192,127 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
             selectors,
             abi.encode(address(userAccount))
         );
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        UNINSTALL TESTS                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_onUninstall(address user) external {
+        ModularAccount userAccount = _createAccount(user, 0);
+
+        bytes4[] memory selectors = new bytes4[](0);
+
+        _installValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            selectors,
+            abi.encode(address(userAccount))
+        );
+
+        assertTrue(accountModules.isInstalled(address(userAccount)));
+
+        // Note: onUninstall is only called if uninstallData.length > 0
+        // so we need to pass a non-empty uninstallData
+        // Pass the account address as expected by onUninstall
+        _uninstallValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            abi.encode(address(userAccount))
+        );
+
+        assertFalse(accountModules.isInstalled(address(userAccount)));
+    }
+
+    function test_onUninstall_failsIfNotInstalled(address user) external {
+        ModularAccount userAccount = _createAccount(user, 0);
+
+        // Do NOT install validation
+
+        // onUninstall callback fails but doesn't revert - uninstall completes with failure
+        vm.expectEmit(address(userAccount));
+        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
+
+        // Pass non-empty uninstallData to trigger onUninstall
+        _uninstallValidation(userAccount, address(accountModules), nextEntityId, abi.encode(1));
+
+        // Module was never installed, so isInstalled should still be false
+        assertFalse(accountModules.isInstalled(address(userAccount)));
+    }
+
+    function test_onUninstall_failsIfInvalidAccount(address user, address notAccount) external {
+        // Use an account that is not the caller (userAccount)
+        vm.assume(notAccount != address(0));
+        ModularAccount userAccount = _createAccount(user, 0);
+        vm.assume(notAccount != address(userAccount));
+
+        bytes4[] memory selectors = new bytes4[](0);
+
+        _installValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            selectors,
+            abi.encode(address(userAccount))
+        );
+
+        assertTrue(accountModules.isInstalled(address(userAccount)));
+
+        // onUninstall callback fails but doesn't revert - uninstall completes with failure
+        vm.expectEmit(address(userAccount));
+        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
+
+        // uninstallData encoded as an address that is not account
+        // _uninstallValidation will call as userAccount (account), but facet will decode 'notAccount'
+        _uninstallValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            abi.encode(notAccount)
+        );
+
+        // Since callback failed, installed flag should remain true
+        assertTrue(accountModules.isInstalled(address(userAccount)));
+    }
+
+    function test_onUninstall_actuallyDeletesInstalledFlag(address user) external {
+        ModularAccount userAccount = _createAccount(user, 0);
+
+        bytes4[] memory selectors = new bytes4[](0);
+
+        _installValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            selectors,
+            abi.encode(address(userAccount))
+        );
+
+        assertTrue(accountModules.isInstalled(address(userAccount)));
+
+        _uninstallValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            abi.encode(address(userAccount))
+        );
+
+        assertFalse(accountModules.isInstalled(address(userAccount)));
+
+        // Should be idempotent - trying again fails with NotInstalled but doesn't revert
+        vm.expectEmit(address(userAccount));
+        emit IModularAccount.ValidationUninstalled(address(accountModules), nextEntityId, false);
+        _uninstallValidation(
+            userAccount,
+            address(accountModules),
+            nextEntityId,
+            abi.encode(address(userAccount))
+        );
+
+        // Still uninstalled after failed callback
+        assertFalse(accountModules.isInstalled(address(userAccount)));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

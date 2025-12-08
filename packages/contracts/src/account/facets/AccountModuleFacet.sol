@@ -30,6 +30,9 @@ contract AccountModuleFacet is
 {
     using CustomRevert for bytes4;
 
+    uint256 internal constant _INVALID_USER_OP = 1;
+    bytes4 internal constant _INVALID_SIGNATURE = 0xffffffff;
+
     /// @notice Initializes the facet when added to a Diamond
     function __AccountModuleFacet_init(
         address spaceFactory,
@@ -47,7 +50,7 @@ contract AccountModuleFacet is
     ) internal {
         Validator.checkAddress(spaceFactory);
         Validator.checkAddress(appRegistry);
-        AccountModule.Layout storage $ = AccountModule.getLayout();
+        AccountModule.Layout storage $ = AccountModule.getStorage();
         ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
     }
 
@@ -59,16 +62,24 @@ contract AccountModuleFacet is
         if (account != msg.sender)
             AccountModule.AccountModule__InvalidAccount.selector.revertWith(account);
 
-        AccountModule.Layout storage $ = AccountModule.getLayout();
+        AccountModule.Layout storage $ = AccountModule.getStorage();
         if ($.installed[account])
             AccountModule.AccountModule__AlreadyInitialized.selector.revertWith(account);
         $.installed[account] = true;
     }
 
     /// @inheritdoc IModule
-    function onUninstall(bytes calldata) external override nonReentrant {
-        AccountModule.Layout storage $ = AccountModule.getLayout();
-        delete $.installed[msg.sender];
+    function onUninstall(bytes calldata data) external override nonReentrant {
+        address account = abi.decode(data, (address));
+        Validator.checkAddress(account);
+
+        if (account != msg.sender)
+            AccountModule.AccountModule__InvalidAccount.selector.revertWith(account);
+
+        AccountModule.Layout storage $ = AccountModule.getStorage();
+        if (!$.installed[account])
+            AccountModule.AccountModule__NotInstalled.selector.revertWith(account);
+        delete $.installed[account];
     }
 
     function setSpaceFactory(address spaceFactory) external onlyOwner {
@@ -82,11 +93,11 @@ contract AccountModuleFacet is
     }
 
     function getSpaceFactory() external view returns (address) {
-        return AccountModule.getLayout().spaceFactory;
+        return AccountModule.getStorage().spaceFactory;
     }
 
     function getAppRegistry() external view returns (address) {
-        return AccountModule.getLayout().appRegistry;
+        return AccountModule.getStorage().appRegistry;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -103,7 +114,7 @@ contract AccountModuleFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function isInstalled(address account) external view returns (bool) {
-        return AccountModule.getLayout().installed[account];
+        return AccountModule.getStorage().installed[account];
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -116,7 +127,7 @@ contract AccountModuleFacet is
         PackedUserOperation calldata,
         bytes32
     ) external pure override returns (uint256) {
-        return 1;
+        return _INVALID_USER_OP;
     }
 
     /// @inheritdoc IValidationModule
@@ -127,7 +138,7 @@ contract AccountModuleFacet is
         bytes32,
         bytes calldata
     ) external pure override returns (bytes4) {
-        return 0xffffffff;
+        return _INVALID_SIGNATURE;
     }
 
     /// @inheritdoc IValidationModule
