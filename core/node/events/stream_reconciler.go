@@ -306,7 +306,7 @@ func (sr *streamReconciler) reconcileFromRegistryGenesisBlock() error {
 	defer cancel()
 
 	streamID := sr.stream.StreamId()
-	_, _, mb, err := sr.cache.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, streamID, 0)
+	_, _, mb, err := sr.cache.params.Registry.StreamRegistry.GetStreamWithGenesis(ctx, 0, streamID)
 	if err != nil {
 		return err
 	}

@@ -188,7 +188,7 @@ func (cc *cmdContext) getStubForStream(
 	ctx, cancel := context.WithTimeout(cc.ctx, 30*time.Second)
 	defer cancel()
 
-	record, err := cc.registryContract.StreamRegistry.GetStreamOnBlock(ctx, streamID, cc.blockchain.InitialBlockNum)
+	record, err := cc.registryContract.StreamRegistry.GetStream(ctx, cc.blockchain.InitialBlockNum, streamID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
