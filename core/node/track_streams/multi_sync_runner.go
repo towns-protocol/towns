@@ -245,7 +245,7 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 		startIdx = 0
 	}
 	if startIdx < int64(len(miniblocks)) {
-		ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[startIdx:])
+		ssr.notifyEventsFromMiniblocks(streamId, trackedView, miniblocks[int(startIdx):])
 	}
 }
 
