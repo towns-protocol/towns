@@ -37,17 +37,17 @@ When updating the seed phrase used for stress testing (e.g., in AWS Secrets Mana
 1. **Generate a new seed phrase** (if needed):
    ```bash
    # Use any tool to generate a BIP39 mnemonic, or use the wallet generation tool
-   yarn generate-wallets --seed "test test test test test test test test test test test junk" --start 0 --end 1
+   bun run generate-wallets --seed "test test test test test test test test test test test junk" --start 0 --end 1
    ```
 
 2. **Check current balances** of wallets from the old seed:
    ```bash
-   yarn transfer-funds check --old-seed "your old seed phrase" --start 0 --end 40
+   bun run transfer-funds check --old-seed "your old seed phrase" --start 0 --end 40
    ```
 
 3. **Transfer funds** from old to new wallets:
    ```bash
-   yarn transfer-funds transfer \
+   bun run transfer-funds transfer \
      --old-seed "old seed phrase" \
      --new-seed "new seed phrase" \
      --start 0 \
@@ -61,7 +61,7 @@ When updating the seed phrase used for stress testing (e.g., in AWS Secrets Mana
 
 5. **Verify the transfer** by checking balances of the new wallets:
    ```bash
-   yarn transfer-funds check --old-seed "new seed phrase" --start 0 --end 40
+   bun run transfer-funds check --old-seed "new seed phrase" --start 0 --end 40
    ```
 
 #### Important Notes
@@ -85,13 +85,13 @@ When updating the seed phrase used for stress testing (e.g., in AWS Secrets Mana
 
 ```bash
 # 1. Check old wallet balances
-yarn transfer-funds check --old-seed "your old twelve word mnemonic seed phrase goes here"
+bun run transfer-funds check --old-seed "your old twelve word mnemonic seed phrase goes here"
 
 # 2. Transfer to new wallets
-yarn transfer-funds transfer \
+bun run transfer-funds transfer \
   --old-seed "your old twelve word mnemonic seed phrase goes here" \
   --new-seed "your new twelve word mnemonic seed phrase goes here"
 
 # 3. Verify new wallet balances
-yarn transfer-funds check --old-seed "your new twelve word mnemonic seed phrase goes here"
+bun run transfer-funds check --old-seed "your new twelve word mnemonic seed phrase goes here"
 ```

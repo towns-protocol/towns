@@ -10,5 +10,5 @@ to use viem's default provider as it frequently 503s.)
 To start the service, run
 
 ```
-yarn dev
+bun run dev
 ```
