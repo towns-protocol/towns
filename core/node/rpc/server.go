@@ -148,6 +148,8 @@ func (s *Service) start(opts *ServerStartOpts) error {
 		return AsRiverError(err).Message("Failed to init wallet").LogError(s.defaultLogger)
 	}
 
+	s.initCallRateMonitor()
+
 	s.initTracing("river-stream", s.wallet.String())
 
 	// There is an order here to how components must be initialized.
@@ -271,12 +273,6 @@ func (s *Service) initInstance(mode string, opts *ServerStartOpts) {
 	s.metrics = infra.NewMetricsFactory(metricsRegistry, "river", subsystem)
 	s.metricsPublisher = infra.NewMetricsPublisher(metricsRegistry)
 	s.metricsPublisher.StartMetricsServer(s.serverCtx, s.config.Metrics)
-
-	var monitorLogger *zap.Logger
-	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
-		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
-	}
-	s.callRateMonitor = highusage.NewCallRateMonitor(s.serverCtx, s.config.HighUsageDetection, monitorLogger)
 }
 
 func (s *Service) initWallet() error {
@@ -301,6 +297,19 @@ func (s *Service) initWallet() error {
 	}
 
 	return nil
+}
+
+func (s *Service) initCallRateMonitor() {
+	var monitorLogger *zap.Logger
+	if s.defaultLogger != nil && s.defaultLogger.RootLogger != nil {
+		monitorLogger = s.defaultLogger.RootLogger.Named("highusage")
+	}
+	s.callRateMonitor = highusage.NewCallRateMonitor(
+		s.serverCtx,
+		s.config.HighUsageDetection,
+		monitorLogger,
+		s.wallet.Address,
+	)
 }
 
 func (s *Service) initBaseChain() error {
