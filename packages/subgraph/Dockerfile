@@ -57,7 +57,7 @@ COPY packages/web3/package.json ./packages/web3/
 COPY protocol/package.json ./protocol/
 
 # Install all dependencies (cached unless package.json files change)
-RUN bun install && bun pm cache rm
+RUN bun install --ignore-scripts && bun pm cache rm
 
 # ==========================================
 # Source Code and Build
