@@ -10,7 +10,7 @@
         "lint": "eslint --format unix ./src --max-warnings=0",
         "lint:fix": "bun run lint --fix",
         "test": "vitest",
-        "test:ci:multi:ent": "vitest run --silent=passed-only",
+        "test:ci:multi:ent": "bun run --bun vitest run --silent=passed-only",
         "test:watch": "vitest --watch",
         "typecheck": "tsc --noEmit",
         "watch": "tsc --watch"

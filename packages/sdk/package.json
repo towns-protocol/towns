@@ -11,11 +11,11 @@
         "lint": "eslint --format unix ./src  --max-warnings=0",
         "lint:fix": "bun run lint --fix",
         "test:ci": "bun run test:ci:multi:ne",
-        "test:ci:multi:ent": "vitest run --silent=passed-only --config vitest.config.ts",
-        "test:ci:multi:ent:legacy": "vitest run --silent=passed-only --config vitest.config.multi_legacy.ts",
-        "test:ci:multi:ne": "vitest run --silent=passed-only --config vitest.config.multi_ne.ts",
+        "test:ci:multi:ent": "bun run --bun vitest run --silent=passed-only --config vitest.config.ts",
+        "test:ci:multi:ent:legacy": "bun run --bun vitest run --silent=passed-only --config vitest.config.multi_legacy.ts",
+        "test:ci:multi:ne": "bun run --bun vitest run --silent=passed-only --config vitest.config.multi_ne.ts",
         "test:ci:with-entitlements": "bun run test:ci:multi:ent",
-        "test:unit": "vitest run --silent=passed-only --config vitest.config.unit.ts",
+        "test:unit": "bun run --bun vitest run --silent=passed-only --config vitest.config.unit.ts",
         "watch": "tsc --watch"
     },
     "dependencies": {
