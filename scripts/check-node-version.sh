@@ -9,13 +9,22 @@ if [ -f .nvmrc ]; then
     # Get the current Node version
     CURRENT_VERSION=$(node -v)
 
-    # Extract major versions (strip 'v' prefix if present)
-    CURRENT_VERSION_MAJOR=$(echo "$CURRENT_VERSION" | sed 's/^v//' | cut -d'.' -f1)
-    NVM_VERSION_MAJOR=$(echo "$NVM_VERSION" | sed 's/^v//' | cut -d'.' -f1)
+    # Strip 'v' prefix if present
+    NVM_VERSION_STRIPPED=$(echo "$NVM_VERSION" | sed 's/^v//')
+    CURRENT_VERSION_STRIPPED=$(echo "$CURRENT_VERSION" | sed 's/^v//')
 
-    # Extract minor versions (will be empty if not specified)
-    CURRENT_VERSION_MINOR=$(echo "$CURRENT_VERSION" | sed 's/^v//' | cut -d'.' -f2)
-    NVM_VERSION_MINOR=$(echo "$NVM_VERSION" | sed 's/^v//' | cut -d'.' -f2)
+    # Extract major versions
+    CURRENT_VERSION_MAJOR=$(echo "$CURRENT_VERSION_STRIPPED" | cut -d'.' -f1)
+    NVM_VERSION_MAJOR=$(echo "$NVM_VERSION_STRIPPED" | cut -d'.' -f1)
+
+    # Extract minor versions only if a dot exists in the version string
+    CURRENT_VERSION_MINOR=$(echo "$CURRENT_VERSION_STRIPPED" | cut -d'.' -f2)
+    # Only set NVM_VERSION_MINOR if the .nvmrc version contains a dot
+    if echo "$NVM_VERSION_STRIPPED" | grep -q '\.'; then
+        NVM_VERSION_MINOR=$(echo "$NVM_VERSION_STRIPPED" | cut -d'.' -f2)
+    else
+        NVM_VERSION_MINOR=""
+    fi
 
     VERSION_OK=true
 
@@ -32,6 +41,10 @@ if [ -f .nvmrc ]; then
     fi
 
     if [ "$VERSION_OK" = false ]; then
+        echo "CURRENT_VERSION_MAJOR: $CURRENT_VERSION_MAJOR"
+        echo "NVM_VERSION_MAJOR: $NVM_VERSION_MAJOR"
+        echo "CURRENT_VERSION_MINOR: $CURRENT_VERSION_MINOR"
+        echo "NVM_VERSION_MINOR: $NVM_VERSION_MINOR"
         echo "Version mismatch: required $NVM_VERSION, current $CURRENT_VERSION"
         echo "Required Node.js version is $(tput setaf 10)$NVM_VERSION$(tput sgr0), but currently $(tput setaf 9)$CURRENT_VERSION$(tput sgr0) is in use."
         echo
