@@ -82,7 +82,7 @@ func TestSyncStreamHandlerImpl_SyncID(t *testing.T) {
 func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 	t.Run("validation failure", func(t *testing.T) {
 		env := newHandlerTestEnv(t)
-		_, err := env.handler.Modify(context.Background(), &protocol.ModifySyncRequest{})
+		_, err := env.handler.Modify(t.Context(), &protocol.ModifySyncRequest{})
 		require.Error(t, err)
 		var riverErr *base.RiverErrorImpl
 		require.True(t, errors.As(err, &riverErr))
@@ -99,7 +99,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			AddStreams: []*protocol.SyncCookie{{StreamId: addID.Bytes()}},
 		}
 
-		res, err := env.handler.Modify(context.Background(), req)
+		res, err := env.handler.Modify(t.Context(), req)
 		require.NoError(t, err)
 
 		// Error should be in the response, not returned as an error
@@ -127,7 +127,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			},
 		}
 
-		res, err := env.handler.Modify(context.Background(), req)
+		res, err := env.handler.Modify(t.Context(), req)
 		require.NoError(t, err)
 
 		// Only the missing stream should have an error
@@ -160,7 +160,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			},
 		}
 
-		res, err := env.handler.Modify(context.Background(), req)
+		res, err := env.handler.Modify(t.Context(), req)
 		require.NoError(t, err)
 		require.Empty(t, res.Adds)
 		require.Empty(t, res.Removals)
@@ -209,7 +209,7 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 			},
 		}
 
-		res, err := env.handler.Modify(context.Background(), req)
+		res, err := env.handler.Modify(t.Context(), req)
 		require.NoError(t, err)
 
 		require.Len(t, res.Adds, 1)
