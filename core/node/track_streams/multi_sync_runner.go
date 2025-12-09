@@ -182,6 +182,7 @@ func (ssr *syncSessionRunner) AddStream(
 
 // handleHistoricalContent processes historical miniblocks on sync reset.
 // if applyHistoricalContent.Enabled is true, apply the events from the
+// specified miniblock till the latest event in the minipool.
 func (ssr *syncSessionRunner) handleHistoricalContent(
 	record *streamSyncInitRecord,
 	trackedView events.TrackedStreamView,
@@ -205,7 +206,7 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 
 	// FromMiniblockNum is before our fist miniblock num, we need to fetch miniblocks from the remote
 	if fromMiniblockNum < serverSnapshotMb {
-		log.Warnw("handleHistoricalContent: fetching missing miniblocks",
+		log.Infow("handleHistoricalContent: fetching missing miniblocks",
 			"streamId", streamId,
 			"FromMiniblockNum", fromMiniblockNum,
 			"serverSnapshotMb", serverSnapshotMb,
