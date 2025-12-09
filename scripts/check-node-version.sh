@@ -9,11 +9,30 @@ if [ -f .nvmrc ]; then
     # Get the current Node version
     CURRENT_VERSION=$(node -v)
 
-    CURRENT_VERSION_MAJOR=$(echo $CURRENT_VERSION | cut -d'.' -f1)
+    # Extract major versions (strip 'v' prefix if present)
+    CURRENT_VERSION_MAJOR=$(echo "$CURRENT_VERSION" | sed 's/^v//' | cut -d'.' -f1)
+    NVM_VERSION_MAJOR=$(echo "$NVM_VERSION" | sed 's/^v//' | cut -d'.' -f1)
 
-    # Compare the versions
-    if [ $NVM_VERSION != $CURRENT_VERSION_MAJOR ]; then
-        echo
+    # Extract minor versions (will be empty if not specified)
+    CURRENT_VERSION_MINOR=$(echo "$CURRENT_VERSION" | sed 's/^v//' | cut -d'.' -f2)
+    NVM_VERSION_MINOR=$(echo "$NVM_VERSION" | sed 's/^v//' | cut -d'.' -f2)
+
+    VERSION_OK=true
+
+    # Compare major versions first
+    if [ "$NVM_VERSION_MAJOR" != "$CURRENT_VERSION_MAJOR" ]; then
+        VERSION_OK=false
+    # If major matches and minor version is specified in .nvmrc, check minor version
+    elif [ -n "$NVM_VERSION_MINOR" ]; then
+        # Ensure CURRENT_VERSION_MINOR is treated as 0 if empty
+        CURRENT_VERSION_MINOR=${CURRENT_VERSION_MINOR:-0}
+        if [ "$CURRENT_VERSION_MINOR" -lt "$NVM_VERSION_MINOR" ]; then
+            VERSION_OK=false
+        fi
+    fi
+
+    if [ "$VERSION_OK" = false ]; then
+        echo "Version mismatch: required $NVM_VERSION, current $CURRENT_VERSION"
         echo "Required Node.js version is $(tput setaf 10)$NVM_VERSION$(tput sgr0), but currently $(tput setaf 9)$CURRENT_VERSION$(tput sgr0) is in use."
         echo
         echo "To switch to $(tput setaf 10)$NVM_VERSION$(tput sgr0) run the command $(tput setaf 11)nvm install $NVM_VERSION --lts & nvm alias default $NVM_VERSION & nvm use default$(tput sgr0) and $(tput setaf 10)restart VSCode $(tput sgr0)"
