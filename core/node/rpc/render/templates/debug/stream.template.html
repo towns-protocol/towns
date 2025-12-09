@@ -45,7 +45,16 @@
       <tr><td>Stream Id:</td><td>{{.Result.StreamId}}</td></tr>
       <tr><td>Num Minipool Events:</td><td>{{.Result.NumMinipoolEvents}}</td></tr>
       <tr><td>Latest Snapshot Miniblock Num:</td><td>{{.Result.LatestSnapshotMiniblockNum}}</td></tr>
-      <tr><td>Lastest Miniblock Number:</td><td>{{.Result.LatestMiniblockNum}}</td></tr>
+      <tr><td>Miniblocks Ranges ({{ len .Result.MiniblocksRanges }}):</td>
+        <td>
+          <table>
+            <tr><th>From (incl)</th><th>To (incl)</th><th>Snapshots</th></tr>
+            {{ range $i, $range := .Result.MiniblocksRanges }}
+            <tr><td>{{$range.StartInclusive}}</td><td>{{$range.EndInclusive}}</td><td>{{len $range.SnapshotSeqNums}}</td></tr>
+            {{end}}
+          </table>
+      </td>
+      </tr>
       <tr><td>Current Miniblock Candidates ({{ len .Result.CurrentMiniblockCandidates }}):</td>
         <td>
           <table>
