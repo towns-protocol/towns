@@ -3,6 +3,8 @@ package external
 import (
 	"context"
 	"database/sql/driver"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -170,7 +172,14 @@ func NewStorage(
 	schemaName string,
 ) (Storage, error) {
 	if cfg.Gcs.Enabled() {
-		creds, err := google.CredentialsFromJSON(ctx, []byte(cfg.Gcs.JsonCredentials), gcsCredentialScope)
+		jsonCredentials := []byte(cfg.Gcs.JsonCredentials)
+		if !json.Valid(jsonCredentials) {
+			if decoded := decodeBase64JSONCredentials(cfg.Gcs.JsonCredentials); len(decoded) > 0 {
+				jsonCredentials = decoded
+			}
+		}
+
+		creds, err := google.CredentialsFromJSON(ctx, jsonCredentials, gcsCredentialScope)
 		if err != nil {
 			return nil, RiverErrorWithBase(Err_BAD_CONFIG, "Unable to create GCP credentials", err).
 				Func("NewStorage")
@@ -955,4 +964,23 @@ func (loc MiniblockDataStorageLocation) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+// decodeBase64JSONCredentials attempts to treat the provided string as base64 and returns the decoded bytes if they form valid JSON.
+func decodeBase64JSONCredentials(value string) []byte {
+	if value == "" {
+		return nil
+	}
+
+	for _, encoding := range []*base64.Encoding{base64.StdEncoding, base64.RawStdEncoding} {
+		decoded, err := encoding.DecodeString(value)
+		if err != nil {
+			continue
+		}
+		if json.Valid(decoded) {
+			return decoded
+		}
+	}
+
+	return nil
 }
