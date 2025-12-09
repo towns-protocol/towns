@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"context"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 // validateModifySync validates the ModifySyncRequest to ensure it is well-formed.
-func validateModifySync(ctx context.Context, streamCache StreamCache, req *ModifySyncRequest) error {
+// This performs structural validation only (empty request, invalid stream IDs, duplicates).
+// Stream existence in cache is checked during processing to allow partial success.
+func validateModifySync(req *ModifySyncRequest) error {
 	// Make sure the request is not empty
 	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 &&
 		len(req.GetBackfillStreams().GetStreams()) == 0 {
@@ -30,8 +30,7 @@ func validateModifySync(ctx context.Context, streamCache StreamCache, req *Modif
 		seen[streamId] = struct{}{}
 	}
 
-	// - Prevent duplicates in the add list.
-	// - Ensure that streams in the add list exist in the stream cache.
+	// Prevent duplicates in the add list.
 	seen = make(map[StreamId]struct{}, len(req.GetAddStreams()))
 	for _, c := range req.GetAddStreams() {
 		streamId, err := StreamIdFromBytes(c.GetStreamId())
@@ -41,13 +40,6 @@ func validateModifySync(ctx context.Context, streamCache StreamCache, req *Modif
 
 		if _, exists := seen[streamId]; exists {
 			return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in add list")
-		}
-
-		if _, err = streamCache.GetStreamNoWait(ctx, streamId); err != nil {
-			if IsRiverErrorCode(err, Err_NOT_FOUND) {
-				return RiverError(Err_NOT_FOUND, "Stream not found", "streamId", streamId)
-			}
-			return err
 		}
 
 		seen[streamId] = struct{}{}

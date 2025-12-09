@@ -132,14 +132,28 @@ func (s *syncStreamHandlerImpl) SyncID() string {
 }
 
 func (s *syncStreamHandlerImpl) Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	// Perform an initial validation of the request before processing further.
-	if err := validateModifySync(ctx, s.streamCache, req); err != nil {
+	// Perform an initial structural validation of the request before processing further.
+	if err := validateModifySync(req); err != nil {
 		return nil, err
 	}
 
 	var res ModifySyncResponse
 
 	for _, cookie := range req.GetAddStreams() {
+		streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
+
+		// Check if the stream exists in the cache before subscribing.
+		// If not found, add the error to the response and continue with the next stream.
+		if _, err := s.streamCache.GetStreamNoWait(ctx, streamId); err != nil {
+			rvrErr := AsRiverError(err)
+			res.Adds = append(res.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
 		if err := s.eventBus.EnqueueSubscribe(cookie, s); err != nil {
 			rvrErr := AsRiverError(err)
 			res.Adds = append(res.Adds, &SyncStreamOpStatus{

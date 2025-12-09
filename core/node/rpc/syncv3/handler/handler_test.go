@@ -89,22 +89,56 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 		require.Equal(t, protocol.Err_INVALID_ARGUMENT, riverErr.Code)
 	})
 
-	t.Run("stream not found in cache", func(t *testing.T) {
+	t.Run("stream not found in cache returns error in response", func(t *testing.T) {
 		env := newHandlerTestEnv(t)
 
 		addID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
-		// Do not add the stream to the cache - it should fail validation
+		// Do not add the stream to the cache - it should return an error in the response
 
 		req := &protocol.ModifySyncRequest{
 			AddStreams: []*protocol.SyncCookie{{StreamId: addID.Bytes()}},
 		}
 
-		_, err := env.handler.Modify(context.Background(), req)
-		require.Error(t, err)
-		var riverErr *base.RiverErrorImpl
-		require.True(t, errors.As(err, &riverErr))
-		require.Equal(t, protocol.Err_NOT_FOUND, riverErr.Code)
-		require.Equal(t, "Stream not found", riverErr.Msg)
+		res, err := env.handler.Modify(context.Background(), req)
+		require.NoError(t, err)
+
+		// Error should be in the response, not returned as an error
+		require.Len(t, res.Adds, 1)
+		require.Equal(t, addID.Bytes(), res.Adds[0].GetStreamId())
+		require.Equal(t, int32(protocol.Err_NOT_FOUND), res.Adds[0].GetCode())
+
+		// EnqueueSubscribe should not have been called since stream wasn't in cache
+		require.Empty(t, env.eventBus.SubscribeCalls())
+	})
+
+	t.Run("partial success with mixed streams", func(t *testing.T) {
+		env := newHandlerTestEnv(t)
+
+		existingID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+		missingID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+
+		// Only add one stream to the cache
+		env.streamCache.AddStream(existingID)
+
+		req := &protocol.ModifySyncRequest{
+			AddStreams: []*protocol.SyncCookie{
+				{StreamId: existingID.Bytes()},
+				{StreamId: missingID.Bytes()},
+			},
+		}
+
+		res, err := env.handler.Modify(context.Background(), req)
+		require.NoError(t, err)
+
+		// Only the missing stream should have an error
+		require.Len(t, res.Adds, 1)
+		require.Equal(t, missingID.Bytes(), res.Adds[0].GetStreamId())
+		require.Equal(t, int32(protocol.Err_NOT_FOUND), res.Adds[0].GetCode())
+
+		// EnqueueSubscribe should have been called only for the existing stream
+		subs := env.eventBus.SubscribeCalls()
+		require.Len(t, subs, 1)
+		require.Equal(t, existingID.Bytes(), subs[0].cookie.GetStreamId())
 	})
 
 	t.Run("successful operations", func(t *testing.T) {
