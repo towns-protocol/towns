@@ -55,7 +55,7 @@ COPY ./packages/generated/package.json packages/generated/
 COPY ./packages/prettier-config/package.json packages/prettier-config/
 
 # Install dependencies with Bun
-RUN bun install --filter @towns-protocol/contracts && bun pm cache rm
+RUN bun install --ignore-scripts --filter @towns-protocol/contracts && bun pm cache rm
 
 # Copy rest of the project files
 COPY ./packages/anvil-docker/scripts packages/anvil-docker/scripts
