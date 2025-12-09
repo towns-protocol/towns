@@ -137,8 +137,8 @@ The `updated_at` timestamp enables future cleanup of stale cookies if needed.
 
 Add to `AppRegistryStore` interface:
 ```go
-// PersistSyncCookie stores or updates the sync cookie for a stream
-PersistSyncCookie(ctx context.Context, streamID shared.StreamId,
+// WriteSyncCookie stores or updates the sync cookie for a stream
+WriteSyncCookie(ctx context.Context, streamID shared.StreamId,
     minipoolGen int64, prevMiniblockHash []byte) error
 
 // GetStreamSyncCookies loads all stored cookies on startup
@@ -169,7 +169,7 @@ if shouldPersistCookie(streamID, hadBotMembers) {
     if cookie != nil {
         // Fire-and-forget style persistence
         go func() {
-            if err := s.store.PersistSyncCookie(context.Background(),
+            if err := s.store.WriteSyncCookie(context.Background(),
                 streamID, cookie.MinipoolGen, cookie.PrevMiniblockHash); err != nil {
                 log.Warnw("failed to persist sync cookie",
                     "stream_id", streamID, "error", err)
@@ -276,7 +276,7 @@ func (tracker *AppRegistryStreamsTracker) GetStreamCookie(
 ##### 6. Testing strategy
 
 **Unit tests** (`core/node/storage/pg_app_registry_store_test.go`):
-- Test `PersistSyncCookie()` - insert and update cases
+- Test `WriteSyncCookie()` - insert and update cases
 - Test `GetStreamSyncCookies()` - load multiple cookies
 - Test `DeleteStreamSyncCookie()` - removal
 - Test upsert behavior (same stream_id multiple times)

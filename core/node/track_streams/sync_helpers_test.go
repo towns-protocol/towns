@@ -1,8 +1,12 @@
 package track_streams
 
 import (
+	"context"
 	"testing"
 
+	"connectrpc.com/connect"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -11,6 +15,8 @@ import (
 	"github.com/towns-protocol/towns/core/node/crypto"
 	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
+	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/testutils/mocks"
 )
 
 // makeMiniblockWithNum creates a minimal valid miniblock with the specified miniblock number.
@@ -93,4 +99,46 @@ func TestGetFirstMiniblockNumber_ZeroMiniblock(t *testing.T) {
 	num, err := getFirstMiniblockNumber([]*protocol.Miniblock{mb})
 	require.NoError(err)
 	require.Equal(int64(0), num)
+}
+
+func TestFetchMiniblocksFromNode_Pagination(t *testing.T) {
+	require := require.New(t)
+	ctx := context.Background()
+
+	streamId := shared.StreamId{0x20}
+	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+
+	// Create miniblocks for two pages
+	mb0 := makeMiniblockWithNum(t, 0)
+	mb1 := makeMiniblockWithNum(t, 1)
+	mb2 := makeMiniblockWithNum(t, 2)
+	mb3 := makeMiniblockWithNum(t, 3)
+
+	mockRegistry := mocks.NewMockNodeRegistry(t)
+	mockClient := mocks.NewMockStreamServiceClient(t)
+	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
+
+	// First call returns first 2 miniblocks (simulating server page limit)
+	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
+		return req.Msg.FromInclusive == 0 && req.Msg.ToExclusive == 4
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{Miniblocks: []*protocol.Miniblock{mb0, mb1}},
+		}, nil).
+		Once()
+
+	// Second call returns remaining miniblocks
+	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
+		return req.Msg.FromInclusive == 2 && req.Msg.ToExclusive == 4
+	})).
+		Return(&connect.Response[protocol.GetMiniblocksResponse]{
+			Msg: &protocol.GetMiniblocksResponse{Miniblocks: []*protocol.Miniblock{mb2, mb3}},
+		}, nil).
+		Once()
+
+	mbs, err := fetchMiniblocksFromNode(ctx, mockRegistry, nodeAddr, streamId, 0, 4)
+	require.NoError(err)
+	require.Len(mbs, 4)
+
+	mockClient.AssertExpectations(t)
 }

@@ -71,8 +71,8 @@ func (s *PostgresStreamCookieStore) GetSyncCookie(
 	}, updatedAt, nil
 }
 
-// PersistSyncCookie stores or updates the sync cookie for a stream.
-func (s *PostgresStreamCookieStore) PersistSyncCookie(
+// WriteSyncCookie stores or updates the sync cookie for a stream.
+func (s *PostgresStreamCookieStore) WriteSyncCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 	cookie *protocol.SyncCookie,

@@ -56,7 +56,7 @@ On restart, we always request a fresh sync (minipoolGen=MaxInt64) which forces a
 ```
 ON each sync update with new miniblock (minipoolGen changed):
     IF trackedView.ShouldPersistCookie():
-        PersistSyncCookie(streamId, NextSyncCookie)
+        WriteSyncCookie(streamId, NextSyncCookie)
 ```
 
 Cookie persistence only happens when:

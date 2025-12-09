@@ -204,7 +204,7 @@ func (ssr *syncSessionRunner) handleHistoricalContent(
 		return
 	}
 
-	// FromMiniblockNum is before our fist miniblock num, we need to fetch miniblocks from the remote
+	// FromMiniblockNum is before our first miniblock num, we need to fetch miniblocks from the remote
 	if fromMiniblockNum < serverSnapshotMb {
 		log.Infow("handleHistoricalContent: fetching missing miniblocks",
 			"streamId", streamId,
@@ -294,7 +294,7 @@ func (ssr *syncSessionRunner) maybePersistCookie(
 		return
 	}
 
-	if err := ssr.cookieStore.PersistSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
+	if err := ssr.cookieStore.WriteSyncCookie(ssr.rootCtx, streamId, cookie); err != nil {
 		logging.FromCtx(ssr.syncCtx).Errorw("Failed to persist sync cookie", "streamId", streamId, "error", err)
 		return
 	}

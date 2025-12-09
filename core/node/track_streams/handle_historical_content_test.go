@@ -86,12 +86,14 @@ func TestHandleHistoricalContent_NoGap(t *testing.T) {
 
 // TestHandleHistoricalContent_GapDetected tests gap recovery when gap is detected
 func TestHandleHistoricalContent_GapDetected(t *testing.T) {
-	// Create server miniblock at position 200
-	serverMiniblock := makeMiniblockWithNum(t, 200)
+	// Create server miniblock at position 155
+	serverMiniblock := makeMiniblockWithNum(t, 155)
 
-	// Create gap miniblocks (150-199) that will be fetched
-	gapMiniblock1 := makeMiniblockWithNum(t, 150)
-	gapMiniblock2 := makeMiniblockWithNum(t, 151)
+	// Create gap miniblocks (150-154) that will be fetched
+	gapMiniblocks := make([]*protocol.Miniblock, 5)
+	for i := range gapMiniblocks {
+		gapMiniblocks[i] = makeMiniblockWithNum(t, int64(150+i))
+	}
 
 	streamId := shared.StreamId{0x20} // channel stream
 	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
@@ -114,13 +116,13 @@ func TestHandleHistoricalContent_GapDetected(t *testing.T) {
 	// Setup mock expectations
 	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
 
-	// Mock GetMiniblocks to return gap miniblocks - use Once() to require the call
+	// Mock GetMiniblocks to return all gap miniblocks in one response
 	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
-		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 200
+		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 155
 	})).
 		Return(&connect.Response[protocol.GetMiniblocksResponse]{
 			Msg: &protocol.GetMiniblocksResponse{
-				Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
+				Miniblocks: gapMiniblocks,
 			},
 		}, nil).
 		Once()
@@ -133,12 +135,12 @@ func TestHandleHistoricalContent_GapDetected(t *testing.T) {
 		node:         nodeAddr,
 	}
 
-	// Create StreamAndCookie with server snapshot at 200
+	// Create StreamAndCookie with server snapshot at 155
 	streamAndCookie := &protocol.StreamAndCookie{
 		Miniblocks: []*protocol.Miniblock{serverMiniblock},
 	}
 
-	// Execute - server snapshot at 200, our persisted position at 150
+	// Execute - server snapshot at 155, our persisted position at 150
 	ssr.handleHistoricalContent(record, mockView, streamAndCookie)
 
 	// Verify GetMiniblocks was called with correct range (Once() ensures it was called exactly once)
@@ -245,12 +247,14 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 
 	streamId := shared.StreamId{0x20} // channel stream
 
-	// Create server response miniblock at position 200 (new snapshot)
-	serverMiniblock := makeMiniblockWithNum(t, 200)
+	// Create server response miniblock at position 155 (new snapshot)
+	serverMiniblock := makeMiniblockWithNum(t, 155)
 
-	// Create gap miniblocks that will be fetched (150-199)
-	gapMiniblock1 := makeMiniblockWithNum(t, 150)
-	gapMiniblock2 := makeMiniblockWithNum(t, 151)
+	// Create gap miniblocks that will be fetched (150-154)
+	gapMiniblocks := make([]*protocol.Miniblock, 5)
+	for i := range gapMiniblocks {
+		gapMiniblocks[i] = makeMiniblockWithNum(t, int64(150+i))
+	}
 
 	// Create mock tracked view
 	mockView := &mockTrackedStreamView{}
@@ -263,14 +267,14 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 
 	nodeAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
-	// Setup mock for gap recovery fetch
+	// Setup mock for gap recovery fetch - return all miniblocks in one response
 	mockRegistry.On("GetStreamServiceClientForAddress", nodeAddr).Return(mockClient, nil)
 	mockClient.On("GetMiniblocks", mock.Anything, mock.MatchedBy(func(req *connect.Request[protocol.GetMiniblocksRequest]) bool {
-		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 200
+		return req.Msg.FromInclusive == 150 && req.Msg.ToExclusive == 155
 	})).
 		Return(&connect.Response[protocol.GetMiniblocksResponse]{
 			Msg: &protocol.GetMiniblocksResponse{
-				Miniblocks: []*protocol.Miniblock{gapMiniblock1, gapMiniblock2},
+				Miniblocks: gapMiniblocks,
 			},
 		}, nil)
 
@@ -286,7 +290,7 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 	// Create record with persisted state that will trigger gap recovery
 	record := &streamSyncInitRecord{
 		streamId:             streamId,
-		persistedMinipoolGen: 150, // Gap: need miniblocks 150-199
+		persistedMinipoolGen: 150, // Gap: need miniblocks 150-154
 		applyHistoricalContent: ApplyHistoricalContent{
 			Enabled:          true,
 			FromMiniblockNum: 150,
@@ -294,12 +298,12 @@ func TestApplyUpdateToStream_WithGapRecovery(t *testing.T) {
 		remotes: nodes.NewStreamNodesWithLock(1, []common.Address{nodeAddr}, common.Address{}),
 	}
 
-	// Create StreamAndCookie response (reset with new snapshot at 200)
+	// Create StreamAndCookie response (reset with new snapshot at 155)
 	streamAndCookie := &protocol.StreamAndCookie{
 		SyncReset:  true,
 		Miniblocks: []*protocol.Miniblock{serverMiniblock},
 		NextSyncCookie: &protocol.SyncCookie{
-			MinipoolGen: 201,
+			MinipoolGen: 156,
 		},
 	}
 

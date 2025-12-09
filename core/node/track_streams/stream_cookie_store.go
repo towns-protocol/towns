@@ -18,8 +18,8 @@ type SyncCookieStore interface {
 		streamID shared.StreamId,
 	) (cookie *protocol.SyncCookie, updatedAt time.Time, err error)
 
-	// PersistSyncCookie stores a cookie after processing events.
-	PersistSyncCookie(
+	// WriteSyncCookie stores a cookie after processing events.
+	WriteSyncCookie(
 		ctx context.Context,
 		streamID shared.StreamId,
 		cookie *protocol.SyncCookie,

@@ -1259,7 +1259,7 @@ func TestGapRecovery_SameSnapshot(t *testing.T) {
 		MinipoolGen:       lastMiniblock.Num + 1,
 		PrevMiniblockHash: lastMiniblock.Hash[:],
 	}
-	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie)
+	err := tc.cookieStore.WriteSyncCookie(tc.ctx, channelId, cookie)
 	tc.require.NoError(err)
 
 	// Start event collector
@@ -1334,7 +1334,7 @@ func TestGapRecovery_GapDetected(t *testing.T) {
 		MinipoolGen:       oldPosition.Num + 1,
 		PrevMiniblockHash: oldPosition.Hash[:],
 	}
-	err := tc.cookieStore.PersistSyncCookie(tc.ctx, channelId, cookie)
+	err := tc.cookieStore.WriteSyncCookie(tc.ctx, channelId, cookie)
 	tc.require.NoError(err)
 
 	// Start event collector

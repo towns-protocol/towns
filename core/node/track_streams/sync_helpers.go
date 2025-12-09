@@ -89,6 +89,8 @@ func fetchMiniblocks(
 }
 
 // fetchMiniblocksFromNode fetches miniblocks from a specific node.
+// It handles pagination by making multiple requests if the server returns fewer
+// miniblocks than requested due to page size limits.
 func fetchMiniblocksFromNode(
 	ctx context.Context,
 	nodeRegistry nodes.NodeRegistry,
@@ -102,22 +104,40 @@ func fetchMiniblocksFromNode(
 		return nil, err
 	}
 
-	req := connect.NewRequest(&protocol.GetMiniblocksRequest{
-		StreamId:      streamId[:],
-		FromInclusive: fromInclusive,
-		ToExclusive:   toExclusive,
-	})
-	req.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+	var allMiniblocks []*protocol.Miniblock
+	currentFrom := fromInclusive
 
-	resp, err := client.GetMiniblocks(ctx, req)
-	if err != nil {
-		return nil, base.AsRiverError(err).
-			Message("Failed to fetch miniblocks for gap recovery").
-			Tag("streamId", streamId).
-			Tag("nodeAddr", nodeAddr).
-			Tag("fromInclusive", fromInclusive).
-			Tag("toExclusive", toExclusive)
+	for currentFrom < toExclusive {
+		req := connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      streamId[:],
+			FromInclusive: currentFrom,
+			ToExclusive:   toExclusive,
+		})
+		req.Header().Set(headers.RiverNoForwardHeader, headers.RiverHeaderTrueValue)
+
+		resp, err := client.GetMiniblocks(ctx, req)
+		if err != nil {
+			return nil, base.AsRiverError(err).
+				Message("Failed to fetch miniblocks for gap recovery").
+				Tag("streamId", streamId).
+				Tag("nodeAddr", nodeAddr).
+				Tag("fromInclusive", currentFrom).
+				Tag("toExclusive", toExclusive)
+		}
+
+		miniblocks := resp.Msg.GetMiniblocks()
+		if len(miniblocks) == 0 {
+			// No miniblocks returned, cannot make progress
+			return nil, base.RiverError(protocol.Err_UNAVAILABLE, "Node returned no miniblocks").
+				Tag("streamId", streamId).
+				Tag("nodeAddr", nodeAddr).
+				Tag("fromInclusive", currentFrom).
+				Tag("toExclusive", toExclusive)
+		}
+
+		allMiniblocks = append(allMiniblocks, miniblocks...)
+		currentFrom += int64(len(miniblocks))
 	}
 
-	return resp.Msg.GetMiniblocks(), nil
+	return allMiniblocks, nil
 }
