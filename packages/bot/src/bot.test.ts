@@ -2012,13 +2012,16 @@ describe('Bot', { sequential: true }, () => {
             await client.setUserProfileImage(chunkedMediaInfo, botClientAddress)
         })
 
-        // Verify the bot's profile image was updated
-        const decrypted = await bobClient.riverConnection.call(async (client) => {
-            return await client.getUserProfileImage(botClientAddress)
-        })
+        await waitFor(async () => {
+            // Verify the bot's profile image was updated
+            // in waitFor because sometimes it takes a second before you can getStream on a media stream
+            const decrypted = await bobClient.riverConnection.call(async (client) => {
+                return await client.getUserProfileImage(botClientAddress)
+            })
 
-        expect(decrypted).toBeDefined()
-        expect(decrypted?.info?.mimetype).toBe('image/png')
-        expect(decrypted?.info?.filename).toBe('bot-avatar.png')
+            expect(decrypted).toBeDefined()
+            expect(decrypted?.info?.mimetype).toBe('image/png')
+            expect(decrypted?.info?.filename).toBe('bot-avatar.png')
+        })
     })
 })

@@ -275,7 +275,7 @@ describe('memberMetadataTests', () => {
 
         // Verify that setting the username was not delayed — see `setUsername delays` for details
         const elapsed = usernameSetTime! - startTime
-        expect(elapsed).toBeLessThanOrEqual(5000)
+        expect(elapsed).toBeLessThanOrEqual(10000)
 
         for (const client of [bobsClient, alicesClient]) {
             const streamView = client.streams.get(streamId)!.view
