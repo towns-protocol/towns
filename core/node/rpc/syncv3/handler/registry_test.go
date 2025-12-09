@@ -14,7 +14,8 @@ import (
 func TestSyncStreamHandlerRegistry_NewGetRemove(t *testing.T) {
 	metrics := newCapturingMetrics()
 	bus := newFakeEventBus()
-	registry := NewRegistry(bus, metrics)
+	streamCache := newStubStreamCache()
+	registry := NewRegistry(streamCache, bus, metrics)
 	impl := registry.(*syncStreamHandlerRegistryImpl)
 
 	handler, ok := impl.Get("missing")
@@ -62,7 +63,7 @@ func TestSyncStreamHandlerRegistry_NewGetRemove(t *testing.T) {
 
 func TestSyncStreamHandlerRegistry_NewDuplicate(t *testing.T) {
 	metrics := newCapturingMetrics()
-	registry := NewRegistry(newFakeEventBus(), metrics)
+	registry := NewRegistry(newStubStreamCache(), newFakeEventBus(), metrics)
 	impl := registry.(*syncStreamHandlerRegistryImpl)
 
 	recv := nopReceiver{}

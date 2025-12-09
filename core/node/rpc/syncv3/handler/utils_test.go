@@ -4,10 +4,13 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
 	"github.com/towns-protocol/towns/core/node/protocol"
@@ -20,6 +23,7 @@ type handlerTestEnv struct {
 	handler       *syncStreamHandlerImpl
 	receiver      *fakeReceiver
 	eventBus      *fakeEventBus
+	streamCache   *stubStreamCache
 	streamUpdates *dynmsgbuf.DynamicBuffer[*protocol.SyncStreamsResponse]
 	ctx           context.Context
 
@@ -33,6 +37,7 @@ func newHandlerTestEnv(t *testing.T) *handlerTestEnv {
 
 	receiver := newFakeReceiver()
 	eventBus := newFakeEventBus()
+	streamCache := newStubStreamCache()
 	streamUpdates := dynmsgbuf.NewUnboundedDynamicBuffer[*protocol.SyncStreamsResponse]()
 
 	ctx, baseCancel := context.WithCancelCause(context.Background())
@@ -40,6 +45,7 @@ func newHandlerTestEnv(t *testing.T) *handlerTestEnv {
 	env := &handlerTestEnv{
 		receiver:      receiver,
 		eventBus:      eventBus,
+		streamCache:   streamCache,
 		streamUpdates: streamUpdates,
 		ctx:           ctx,
 		cancelBase:    baseCancel,
@@ -60,6 +66,7 @@ func newHandlerTestEnv(t *testing.T) *handlerTestEnv {
 		receiver:      receiver,
 		eventBus:      eventBus,
 		streamUpdates: streamUpdates,
+		streamCache:   streamCache,
 	}
 
 	return env
@@ -323,4 +330,67 @@ func (c *capturingMetrics) gaugeSnapshot() gaugeSnapshot {
 	copy(fnsCopy, c.fns)
 
 	return gaugeSnapshot{opts: optsCopy, fns: fnsCopy}
+}
+
+type stubStreamCache struct {
+	mu      sync.Mutex
+	timeout time.Duration
+	stream  *events.Stream
+	err     error
+	// perStream allows configuring per-stream responses. Key is stream ID string.
+	perStream map[string]stubStreamCacheEntry
+}
+
+type stubStreamCacheEntry struct {
+	stream *events.Stream
+	err    error
+}
+
+func newStubStreamCache() *stubStreamCache {
+	return &stubStreamCache{
+		perStream: make(map[string]stubStreamCacheEntry),
+	}
+}
+
+func (s *stubStreamCache) GetStreamNoWait(_ context.Context, streamID shared.StreamId) (*events.Stream, error) {
+	if s.timeout > 0 {
+		time.Sleep(s.timeout)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check per-stream configuration first
+	if entry, ok := s.perStream[streamID.String()]; ok {
+		return entry.stream, entry.err
+	}
+
+	// Fall back to default behavior
+	if s.err != nil {
+		return nil, s.err
+	}
+	if s.stream != nil {
+		return s.stream, nil
+	}
+
+	// If no stream is configured, return NOT_FOUND error
+	return nil, base.RiverError(protocol.Err_NOT_FOUND, "stream not found")
+}
+
+// AddStream adds a stream to the cache that will be returned for lookups.
+func (s *stubStreamCache) AddStream(streamID shared.StreamId) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.perStream[streamID.String()] = stubStreamCacheEntry{
+		stream: &events.Stream{},
+	}
+}
+
+// SetStreamError sets an error to be returned for a specific stream lookup.
+func (s *stubStreamCache) SetStreamError(streamID shared.StreamId, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.perStream[streamID.String()] = stubStreamCacheEntry{
+		err: err,
+	}
 }

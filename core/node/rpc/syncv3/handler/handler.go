@@ -23,6 +23,11 @@ var (
 	_ eventbus.StreamSubscriber = (*syncStreamHandlerImpl)(nil)
 )
 
+// StreamCache represents a behavior of the stream cache.
+type StreamCache interface {
+	GetStreamNoWait(ctx context.Context, streamID StreamId) (*events.Stream, error)
+}
+
 // Receiver is a final receiver of the stream update message, i.e. client.
 type Receiver interface {
 	// Send sends the given SyncStreamsResponse to the client.
@@ -74,7 +79,7 @@ type syncStreamHandlerImpl struct {
 	receiver      Receiver
 	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
-	streamCache   *events.StreamCache
+	streamCache   StreamCache
 }
 
 func (s *syncStreamHandlerImpl) Run() error {

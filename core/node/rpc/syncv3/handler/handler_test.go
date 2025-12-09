@@ -89,12 +89,33 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 		require.Equal(t, protocol.Err_INVALID_ARGUMENT, riverErr.Code)
 	})
 
+	t.Run("stream not found in cache", func(t *testing.T) {
+		env := newHandlerTestEnv(t)
+
+		addID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+		// Do not add the stream to the cache - it should fail validation
+
+		req := &protocol.ModifySyncRequest{
+			AddStreams: []*protocol.SyncCookie{{StreamId: addID.Bytes()}},
+		}
+
+		_, err := env.handler.Modify(context.Background(), req)
+		require.Error(t, err)
+		var riverErr *base.RiverErrorImpl
+		require.True(t, errors.As(err, &riverErr))
+		require.Equal(t, protocol.Err_NOT_FOUND, riverErr.Code)
+		require.Equal(t, "Stream not found", riverErr.Msg)
+	})
+
 	t.Run("successful operations", func(t *testing.T) {
 		env := newHandlerTestEnv(t)
 
 		addID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 		removeID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 		backfillID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+
+		// Add the stream to the cache so validation passes
+		env.streamCache.AddStream(addID)
 
 		req := &protocol.ModifySyncRequest{
 			AddStreams:    []*protocol.SyncCookie{{StreamId: addID.Bytes()}},
@@ -133,6 +154,9 @@ func TestSyncStreamHandlerImpl_Modify(t *testing.T) {
 		addID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 		removeID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
 		backfillID := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+
+		// Add the stream to the cache so validation passes
+		env.streamCache.AddStream(addID)
 
 		subErr := base.RiverError(protocol.Err_ALREADY_EXISTS, "subscribe failed")
 		unsubErr := base.RiverError(protocol.Err_NOT_FOUND, "unsubscribe failed")

@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 	"github.com/towns-protocol/towns/core/node/testutils"
@@ -18,16 +20,20 @@ func TestValidateModifySync(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		req     *protocol.ModifySyncRequest
-		wantErr bool
-		msg     string
+		name        string
+		req         *protocol.ModifySyncRequest
+		streamCache func() *stubStreamCache
+		wantErr     bool
+		errCode     protocol.Err
+		msg         string
 	}{
 		{
-			name:    "empty request",
-			req:     &protocol.ModifySyncRequest{},
-			wantErr: true,
-			msg:     "Empty modify sync request",
+			name:        "empty request",
+			req:         &protocol.ModifySyncRequest{},
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Empty modify sync request",
 		},
 		{
 			name: "invalid backfill stream",
@@ -38,8 +44,10 @@ func TestValidateModifySync(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
-			msg:     "Invalid stream in backfill list",
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Invalid stream in backfill list",
 		},
 		{
 			name: "duplicate backfill stream",
@@ -51,8 +59,10 @@ func TestValidateModifySync(t *testing.T) {
 					}(),
 				},
 			},
-			wantErr: true,
-			msg:     "Duplicate stream in backfill list",
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Duplicate stream in backfill list",
 		},
 		{
 			name: "invalid add stream",
@@ -61,19 +71,45 @@ func TestValidateModifySync(t *testing.T) {
 					{StreamId: []byte{0x01}},
 				},
 			},
-			wantErr: true,
-			msg:     "Invalid stream in add list",
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Invalid stream in add list",
 		},
 		{
 			name: "duplicate add stream",
-			req: &protocol.ModifySyncRequest{
-				AddStreams: func() []*protocol.SyncCookie {
-					sid := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
-					return []*protocol.SyncCookie{toCookie(sid), toCookie(sid)}
-				}(),
+			req: func() *protocol.ModifySyncRequest {
+				sid := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+				return &protocol.ModifySyncRequest{
+					AddStreams: []*protocol.SyncCookie{toCookie(sid), toCookie(sid)},
+				}
+			}(),
+			streamCache: func() *stubStreamCache {
+				// Need the stream to exist so we hit the duplicate check on second iteration
+				cache := newStubStreamCache()
+				cache.stream = &events.Stream{} // Return a valid stream for any lookup
+				return cache
 			},
 			wantErr: true,
+			errCode: protocol.Err_INVALID_ARGUMENT,
 			msg:     "Duplicate stream in add list",
+		},
+		{
+			name: "add stream not found in cache",
+			req: func() *protocol.ModifySyncRequest {
+				sid := testutils.FakeStreamId(shared.STREAM_CHANNEL_BIN)
+				return &protocol.ModifySyncRequest{
+					AddStreams: []*protocol.SyncCookie{toCookie(sid)},
+				}
+			}(),
+			streamCache: func() *stubStreamCache {
+				cache := newStubStreamCache()
+				cache.err = base.RiverError(protocol.Err_NOT_FOUND, "stream not found")
+				return cache
+			},
+			wantErr: true,
+			errCode: protocol.Err_NOT_FOUND,
+			msg:     "Stream not found",
 		},
 		{
 			name: "invalid remove stream",
@@ -82,8 +118,10 @@ func TestValidateModifySync(t *testing.T) {
 					{0x01},
 				},
 			},
-			wantErr: true,
-			msg:     "Invalid stream in remove list",
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Invalid stream in remove list",
 		},
 		{
 			name: "duplicate remove stream",
@@ -93,8 +131,10 @@ func TestValidateModifySync(t *testing.T) {
 					return [][]byte{sid.Bytes(), sid.Bytes()}
 				}(),
 			},
-			wantErr: true,
-			msg:     "Duplicate stream in remove list",
+			streamCache: newStubStreamCache,
+			wantErr:     true,
+			errCode:     protocol.Err_INVALID_ARGUMENT,
+			msg:         "Duplicate stream in remove list",
 		},
 		{
 			name: "remove overlaps add",
@@ -105,7 +145,14 @@ func TestValidateModifySync(t *testing.T) {
 					RemoveStreams: [][]byte{sid.Bytes()},
 				}
 			}(),
+			streamCache: func() *stubStreamCache {
+				// Return a non-nil stream for any lookup so add validation passes
+				cache := newStubStreamCache()
+				cache.stream = nil
+				return cache
+			},
 			wantErr: true,
+			errCode: protocol.Err_INVALID_ARGUMENT,
 			msg:     "Stream in remove list is also in add list",
 		},
 		{
@@ -123,12 +170,29 @@ func TestValidateModifySync(t *testing.T) {
 					RemoveStreams: [][]byte{removeID.Bytes()},
 				}
 			}(),
+			streamCache: func() *stubStreamCache {
+				cache := newStubStreamCache()
+				cache.stream = nil
+				return cache
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateModifySync(tc.req)
+			cache := tc.streamCache()
+
+			// For tests that need streams to exist, add them to the cache
+			if !tc.wantErr || tc.name == "remove overlaps add" {
+				for _, cookie := range tc.req.GetAddStreams() {
+					sid, err := shared.StreamIdFromBytes(cookie.GetStreamId())
+					if err == nil {
+						cache.AddStream(sid)
+					}
+				}
+			}
+
+			err := validateModifySync(context.Background(), cache, tc.req)
 			if !tc.wantErr {
 				require.NoError(t, err)
 				return
@@ -138,7 +202,7 @@ func TestValidateModifySync(t *testing.T) {
 			var riverErr *base.RiverErrorImpl
 			require.True(t, errors.As(err, &riverErr))
 			require.Equal(t, tc.msg, riverErr.Msg)
-			require.Equal(t, protocol.Err_INVALID_ARGUMENT, riverErr.Code)
+			require.Equal(t, tc.errCode, riverErr.Code)
 		})
 	}
 }

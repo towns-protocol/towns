@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/towns-protocol/towns/core/node/events"
-
 	. "github.com/towns-protocol/towns/core/node/base"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -34,11 +32,11 @@ type syncStreamHandlerRegistryImpl struct {
 	handlersLock sync.Mutex
 	handlers     map[string]*syncStreamHandlerImpl
 	eventBus     eventbus.StreamSubscriptionManager
-	streamCache  *events.StreamCache
+	streamCache  StreamCache
 }
 
 func NewRegistry(
-	streamCache *events.StreamCache,
+	streamCache StreamCache,
 	eventBus eventbus.StreamSubscriptionManager,
 	metrics infra.MetricsFactory,
 ) Registry {

@@ -4,13 +4,12 @@ import (
 	"context"
 
 	. "github.com/towns-protocol/towns/core/node/base"
-	"github.com/towns-protocol/towns/core/node/events"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/shared"
 )
 
 // validateModifySync validates the ModifySyncRequest to ensure it is well-formed.
-func validateModifySync(ctx context.Context, streamCache *events.StreamCache, req *ModifySyncRequest) error {
+func validateModifySync(ctx context.Context, streamCache StreamCache, req *ModifySyncRequest) error {
 	// Make sure the request is not empty
 	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 &&
 		len(req.GetBackfillStreams().GetStreams()) == 0 {
