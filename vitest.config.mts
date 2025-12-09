@@ -6,8 +6,10 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import dotenv from 'dotenv'
 
-// Load environment variables from generated deployments (quiet to suppress output)
-dotenv.config({ path: resolve(__dirname, 'packages/generated/deployments/local_dev/.env'), quiet: true })
+dotenv.config({
+    path: resolve(__dirname, 'packages/generated/deployments/local_dev/.env'),
+    quiet: true,
+})
 
 export function readBypassSecret(): string | undefined {
     try {
