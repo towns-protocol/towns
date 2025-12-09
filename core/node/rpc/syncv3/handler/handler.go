@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/towns-protocol/towns/core/node/base"
+	"github.com/towns-protocol/towns/core/node/events"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/rpc/syncv3/eventbus"
@@ -21,6 +22,11 @@ var (
 	_ SyncStreamHandler         = (*syncStreamHandlerImpl)(nil)
 	_ eventbus.StreamSubscriber = (*syncStreamHandlerImpl)(nil)
 )
+
+// StreamCache represents a behavior of the stream cache.
+type StreamCache interface {
+	GetStreamNoWait(ctx context.Context, streamID StreamId) (*events.Stream, error)
+}
 
 // Receiver is a final receiver of the stream update message, i.e. client.
 type Receiver interface {
@@ -47,7 +53,7 @@ type SyncStreamHandler interface {
 	// update from the given sync position is sent to the client (backfill).
 	//
 	// For each stream that is removed, the operation will unsubscribe from further stream updates.
-	Modify(req *ModifySyncRequest) (*ModifySyncResponse, error)
+	Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error)
 
 	// Cancel the stream sync operation.
 	// The given operation must be removed from the SyncStreamHandlerRegistry.
@@ -73,6 +79,7 @@ type syncStreamHandlerImpl struct {
 	receiver      Receiver
 	eventBus      eventbus.StreamSubscriptionManager
 	streamUpdates *dynmsgbuf.DynamicBuffer[*SyncStreamsResponse]
+	streamCache   StreamCache
 }
 
 func (s *syncStreamHandlerImpl) Run() error {
@@ -124,8 +131,8 @@ func (s *syncStreamHandlerImpl) SyncID() string {
 	return s.syncID
 }
 
-func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncResponse, error) {
-	// Perform an initial validation of the request before processing further.
+func (s *syncStreamHandlerImpl) Modify(ctx context.Context, req *ModifySyncRequest) (*ModifySyncResponse, error) {
+	// Perform an initial structural validation of the request before processing further.
 	if err := validateModifySync(req); err != nil {
 		return nil, err
 	}
@@ -133,6 +140,20 @@ func (s *syncStreamHandlerImpl) Modify(req *ModifySyncRequest) (*ModifySyncRespo
 	var res ModifySyncResponse
 
 	for _, cookie := range req.GetAddStreams() {
+		streamId, _ := StreamIdFromBytes(cookie.GetStreamId())
+
+		// Check if the stream exists in the cache before subscribing.
+		// If not found, add the error to the response and continue with the next stream.
+		if _, err := s.streamCache.GetStreamNoWait(ctx, streamId); err != nil {
+			rvrErr := AsRiverError(err)
+			res.Adds = append(res.Adds, &SyncStreamOpStatus{
+				StreamId: cookie.GetStreamId(),
+				Code:     int32(rvrErr.Code),
+				Message:  rvrErr.GetMessage(),
+			})
+			continue
+		}
+
 		if err := s.eventBus.EnqueueSubscribe(cookie, s); err != nil {
 			rvrErr := AsRiverError(err)
 			res.Adds = append(res.Adds, &SyncStreamOpStatus{

@@ -82,7 +82,7 @@ func (s *Service) ModifySync(
 	res := connect.NewResponse(&ModifySyncResponse{})
 	var err error
 	runWithLabels(ctx, req.Msg.GetSyncId(), func(ctx context.Context) {
-		res.Msg, err = s.syncv3Svc.ModifySync(req.Msg)
+		res.Msg, err = s.syncv3Svc.ModifySync(ctx, req.Msg)
 	})
 	if err != nil {
 		err = AsRiverError(err).Func("ModifySync").

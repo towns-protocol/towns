@@ -145,11 +145,11 @@ func TestSyncSubscriptionWithTooSlowClient_NoRace(t *testing.T) {
 	// subscribe to channel updates on node 1 direct through a sync op to have better control over it
 	testfmt.Logf(t, "subscribe on node %s", node1.address)
 	eventBus := eventbus.New(ctx, node1.address, node1.service.cache, node1.service.nodeRegistry, nil, nil)
-	handlerRegistry := handler.NewRegistry(eventBus, nil)
+	handlerRegistry := handler.NewRegistry(node1.service.cache, eventBus, nil)
 	slowSubscriber := slowStreamsResponseSender{sendDuration: time.Second}
 	syncHandler, err := handlerRegistry.New(ctx, syncID, slowSubscriber)
 	req.NoError(err, "handlerRegistry.New")
-	resp, err := syncHandler.Modify(&protocol.ModifySyncRequest{AddStreams: syncPos})
+	resp, err := syncHandler.Modify(ctx, &protocol.ModifySyncRequest{AddStreams: syncPos})
 	req.NoError(err, "syncHandler.Modify")
 	req.Empty(resp.GetAdds())
 
