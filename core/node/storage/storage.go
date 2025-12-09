@@ -5,9 +5,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/towns-protocol/towns/core/node/storage/external"
-
 	. "github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage/external"
 )
 
 const (
@@ -72,10 +71,11 @@ type (
 
 	DebugReadStreamStatisticsResult struct {
 		StreamId                   string
-		LatestMiniblockNum         int64
+		MiniblocksRanges           []MiniblockRange
 		CurrentMiniblockCandidates []MiniblockCandidateStatisticsResult
 		NumMinipoolEvents          int64
 		LatestSnapshotMiniblockNum int64
+		DBTableSuffix              string
 	}
 
 	MiniblockRange struct {
