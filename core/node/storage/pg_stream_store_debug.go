@@ -217,6 +217,7 @@ func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
 	result := &DebugReadStreamStatisticsResult{
 		StreamId:                   streamId.String(),
 		LatestSnapshotMiniblockNum: lockStream.LastSnapshotMiniblock,
+		DBTableSuffix:              CreatePartitionSuffix(streamId, s.numPartitions),
 	}
 
 	result.MiniblocksRanges, err = s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId)

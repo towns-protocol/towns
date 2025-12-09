@@ -75,6 +75,7 @@ type (
 		CurrentMiniblockCandidates []MiniblockCandidateStatisticsResult
 		NumMinipoolEvents          int64
 		LatestSnapshotMiniblockNum int64
+		DBTableSuffix              string
 	}
 
 	MiniblockRange struct {
