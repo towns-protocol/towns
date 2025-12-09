@@ -691,27 +691,40 @@ type coldStreamsTestContext struct {
 	eventTrackerMu *sync.Mutex
 }
 
-// addStreamToSyncer adds a stream to the syncer with optional historical content
-func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, enabled bool, fromMiniblockNum int64) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
-		tc.ctx,
+// addStreamToMultiSyncRunner is a helper function to add a stream to a MultiSyncRunner
+func addStreamToMultiSyncRunner(
+	ctx context.Context,
+	require *require.Assertions,
+	tt *serviceTester,
+	msr *track_streams.MultiSyncRunner,
+	streamId StreamId,
+	applyHistory bool,
+	fromMiniblockNum int64,
+) {
+	streamOnChain, err := tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
+		ctx,
 		streamId,
 	)
-	tc.require.NoError(err)
-	tc.msr.AddStream(
-		tc.ctx,
+	require.NoError(err)
+	msr.AddStream(
+		ctx,
 		&river.StreamWithId{
 			Id: streamId,
 			Stream: river.Stream{
 				Nodes:     streamOnChain.Nodes,
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
+				Reserved0: uint64(tt.opts.replicationFactor),
 			},
 		},
 		track_streams.ApplyHistoricalContent{
-			Enabled:          enabled,
+			Enabled:          applyHistory,
 			FromMiniblockNum: fromMiniblockNum,
 		},
 	)
+}
+
+// addStreamToSyncer adds a stream to the syncer with optional historical content
+func (tc *coldStreamsTestContext) addStreamToSyncer(streamId StreamId, applyHistory bool, fromMiniblockNum int64) {
+	addStreamToMultiSyncRunner(tc.ctx, tc.require, tc.tt, tc.msr, streamId, applyHistory, fromMiniblockNum)
 }
 
 // waitForAndVerifyMessages waits for messages to be received and verifies the count
@@ -1225,26 +1238,7 @@ func (tc *gapRecoveryTestContext) addStreamToRunner(
 	applyHistory bool,
 	fromMiniblockNum int64,
 ) {
-	streamOnChain, err := tc.tt.nodes[0].service.registryContract.StreamRegistry.GetStreamOnLatestBlock(
-		tc.ctx,
-		channelId,
-	)
-	tc.require.NoError(err)
-
-	msr.AddStream(
-		tc.ctx,
-		&river.StreamWithId{
-			Id: channelId,
-			Stream: river.Stream{
-				Nodes:     streamOnChain.Nodes,
-				Reserved0: uint64(tc.tt.opts.replicationFactor),
-			},
-		},
-		track_streams.ApplyHistoricalContent{
-			Enabled:          applyHistory,
-			FromMiniblockNum: fromMiniblockNum,
-		},
-	)
+	addStreamToMultiSyncRunner(tc.ctx, tc.require, tc.tt, msr, channelId, applyHistory, fromMiniblockNum)
 }
 
 // TestGapRecovery_SameSnapshot tests that no gap recovery occurs when
@@ -1413,15 +1407,32 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	tc.require.NoError(err)
 	tc.require.Nil(cookie, "No cookie should exist initially")
 
+	// Start event collector to track when sync is established
+	updateTracker := func(record eventRecord, ciphertext string) {
+		if _, exists := tc.eventTracker[record.streamId]; !exists {
+			tc.eventTracker[record.streamId] = make(map[string]int)
+		}
+		tc.eventTracker[record.streamId][ciphertext]++
+	}
+	cancelCollector, eventCollectorDone := startEventCollector(
+		tc.ctx, tc.streamEvents, tc.eventTrackerMu, updateTracker,
+	)
+	defer cancelCollector()
+
 	// Create and start MultiSyncRunner with cookie store AND persistence enabled
 	msr := tc.createMultiSyncRunnerWithPersistence(true) // Enable persistence
 	go msr.Run(tc.ctx)
 
-	// Add stream (no cookie exists yet)
-	tc.addStreamToRunner(msr, channelId, false, 0)
+	// Add stream with historical content enabled - we'll wait for "msg0" to confirm sync is established
+	tc.addStreamToRunner(msr, channelId, true, 0)
 
-	// Give the sync time to establish
-	time.Sleep(2 * time.Second)
+	// Wait for historical message "msg0" to be received, confirming sync is established
+	tc.require.Eventually(func() bool {
+		tc.eventTrackerMu.Lock()
+		defer tc.eventTrackerMu.Unlock()
+		_, found := tc.eventTracker[channelId]["msg0"]
+		return found
+	}, 10*time.Second, 100*time.Millisecond, "Historical message 'msg0' should be received, confirming sync is established")
 
 	// Add a message and create a miniblock - this should trigger cookie persistence
 	addMessageToChannel(tc.ctx, tc.client, tc.wallet, "trigger-persist", channelId, channelHash, tc.require)
@@ -1442,4 +1453,7 @@ func TestGapRecovery_CookiePersistence(t *testing.T) {
 	tc.require.NoError(err)
 	tc.require.NotNil(cookie, "Cookie should be persisted")
 	tc.require.Equal(newLastMiniblock.Num+1, cookie.MinipoolGen, "MinipoolGen should be == lastMiniblock + 1")
+
+	cancelCollector()
+	<-eventCollectorDone
 }
