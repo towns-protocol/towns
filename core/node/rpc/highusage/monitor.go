@@ -96,6 +96,7 @@ type inMemoryCallRateMonitor struct {
 	callSpecs    []*callTypeSpec
 	lastCleanup  time.Time
 	logger       *zap.Logger
+	localNode    common.Address
 }
 
 const (
@@ -110,7 +111,13 @@ const (
 )
 
 // NewCallRateMonitor builds a CallRateMonitor using the provided configuration.
-func NewCallRateMonitor(ctx context.Context, cfg config.HighUsageDetectionConfig, logger *zap.Logger) CallRateMonitor {
+// The localNode address is excluded from tracking (system-generated events).
+func NewCallRateMonitor(
+	ctx context.Context,
+	cfg config.HighUsageDetectionConfig,
+	logger *zap.Logger,
+	localNode common.Address,
+) CallRateMonitor {
 	if !cfg.Enabled {
 		return noopCallRateMonitor{}
 	}
@@ -137,6 +144,7 @@ func NewCallRateMonitor(ctx context.Context, cfg config.HighUsageDetectionConfig
 		callSpecs:    specs,
 		lastCleanup:  time.Now(),
 		logger:       logger.Named("highusage_monitor"),
+		localNode:    localNode,
 	}
 	if cleanupMinInterval > 0 {
 		ticker := time.NewTicker(cleanupMinInterval)
@@ -186,6 +194,7 @@ func convertThresholds(cfg config.HighUsageDetectionConfig) [][]Threshold {
 }
 
 // RecordCall increments the counters for the given user and call type.
+// Calls from the local node (system-generated events) are ignored.
 func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, callType CallType) {
 	if len(userBytes) == 0 {
 		return
@@ -193,6 +202,11 @@ func (m *inMemoryCallRateMonitor) RecordCall(userBytes []byte, now time.Time, ca
 
 	user := common.BytesToAddress(userBytes)
 	if user == (common.Address{}) {
+		return
+	}
+
+	// Skip events signed by the local node (system-generated events)
+	if user == m.localNode {
 		return
 	}
 
