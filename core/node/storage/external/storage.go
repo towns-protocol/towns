@@ -178,7 +178,7 @@ func NewStorage(
 				jsonCredentials = decoded
 			}
 		}
-		
+
 		creds, err := google.CredentialsFromJSON(ctx, jsonCredentials, gcsCredentialScope)
 		if err != nil {
 			return nil, RiverErrorWithBase(Err_BAD_CONFIG, "Unable to create GCP credentials", err).
