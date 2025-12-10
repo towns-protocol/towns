@@ -7,12 +7,12 @@ import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IV
 import {IAccountHub} from "./IAccountHub.sol";
 import {IExecutionModule, ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IExecutionHookModule} from "@erc6900/reference-implementation/interfaces/IExecutionHookModule.sol";
-import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
+import {IAppAccount} from "../../../spaces/facets/account/IAppAccount.sol";
 
 // libraries
 import "./AccountHubMod.sol" as AccountHub;
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
-import {Validator} from "src/utils/libraries/Validator.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // contracts
 import {ModuleBase} from "modular-account/src/modules/ModuleBase.sol";
@@ -54,24 +54,20 @@ contract AccountHubFacet is
     /// @inheritdoc IModule
     function onInstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
-        Validator.checkAddress(account);
         AccountHub.installAccount(account);
     }
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
-        Validator.checkAddress(account);
         AccountHub.uninstallAccount(account);
     }
 
     function setSpaceFactory(address spaceFactory) external onlyOwner {
-        Validator.checkAddress(spaceFactory);
         AccountHub.setSpaceFactory(spaceFactory);
     }
 
     function setAppRegistry(address appRegistry) external onlyOwner {
-        Validator.checkAddress(appRegistry);
         AccountHub.setAppRegistry(appRegistry);
     }
 

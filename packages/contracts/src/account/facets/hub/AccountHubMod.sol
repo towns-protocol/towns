@@ -2,7 +2,8 @@
 pragma solidity ^0.8.29;
 
 // libraries
-import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
+import {CustomRevert} from "../../../utils/libraries/CustomRevert.sol";
+import {Validator} from "../../../utils/libraries/Validator.sol";
 
 // types
 using CustomRevert for bytes4;
@@ -49,7 +50,7 @@ error AccountHub__InvalidCaller(address sender);
 // keccak256(abi.encode(uint256(keccak256("towns.account.hub.storage")) - 1)) & ~bytes32(uint256(0xff))
 bytes32 constant STORAGE_SLOT = 0x71d4dc86d61a3ac91d71fb32ada3a4c5ccb69a82d3979318701e6840c1db0a00;
 
-/// @notice Storage layout for the AccountHubsFacet
+/// @notice Storage layout for the AccountHubMod
 /// @custom:storage-location erc7201:towns.account.hub.storage
 struct Layout {
     /// @notice Space factory
@@ -60,7 +61,7 @@ struct Layout {
     mapping(address account => bool installed) installed;
 }
 
-/// @notice Returns the storage layout for the AccountHubsFacet
+/// @notice Returns the storage layout for the AccountHubMod
 function getStorage() pure returns (Layout storage $) {
     assembly {
         $.slot := STORAGE_SLOT
@@ -74,6 +75,7 @@ function getStorage() pure returns (Layout storage $) {
 /// @notice Installs an account
 /// @param account The address of the account
 function installAccount(address account) {
+    Validator.checkAddress(account);
     if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
 
     Layout storage $ = getStorage();
@@ -84,8 +86,8 @@ function installAccount(address account) {
 /// @notice Uninstalls an account
 /// @param account The address of the account
 function uninstallAccount(address account) {
+    Validator.checkAddress(account);
     if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
-
     Layout storage $ = getStorage();
     if (!$.installed[account]) AccountHub__NotInstalled.selector.revertWith(account);
     delete $.installed[account];
@@ -94,6 +96,7 @@ function uninstallAccount(address account) {
 /// @notice Sets the space factory
 /// @param spaceFactory The address of the space factory
 function setSpaceFactory(address spaceFactory) {
+    Validator.checkAddress(spaceFactory);
     getStorage().spaceFactory = spaceFactory;
     emit SpaceFactorySet(spaceFactory);
 }
@@ -101,6 +104,7 @@ function setSpaceFactory(address spaceFactory) {
 /// @notice Sets the app registry
 /// @param appRegistry The address of the app registry
 function setAppRegistry(address appRegistry) {
+    Validator.checkAddress(appRegistry);
     getStorage().appRegistry = appRegistry;
     emit AppRegistrySet(appRegistry);
 }
