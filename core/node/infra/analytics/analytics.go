@@ -35,9 +35,12 @@ type mixpanelAnalytics struct {
 
 func (m *mixpanelAnalytics) Track(ctx context.Context, distinctId string, event string, properties map[string]any) {
 	e := m.client.NewEvent(event, distinctId, properties)
+	// Use context.WithoutCancel to decouple from parent context so the tracking
+	// request completes even if the parent request is cancelled.
+	trackCtx := context.WithoutCancel(ctx)
 	go func() {
-		if err := m.client.Track(ctx, []*mixpanel.Event{e}); err != nil {
-			log := logging.FromCtx(ctx)
+		if err := m.client.Track(trackCtx, []*mixpanel.Event{e}); err != nil {
+			log := logging.FromCtx(trackCtx)
 			log.Errorw("Failed to track analytics event", "event", event, "error", err)
 		}
 	}()
