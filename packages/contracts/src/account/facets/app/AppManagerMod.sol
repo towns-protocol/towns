@@ -187,6 +187,10 @@ function updateApp(address account, bytes32 newAppId, bytes calldata data) {
     });
 }
 
+/// @notice Checks if an app is installed
+/// @param account The account to check
+/// @param app The app address
+/// @return True if the app is installed
 function isAppInstalled(address account, address app) view returns (bool) {
     Layout storage $ = getStorage();
     bytes32 appId = $.appIdByApp[account][app];
@@ -298,6 +302,12 @@ function isAppEntitled(
     return false;
 }
 
+/// @notice Calculates the expiration for an app
+/// @param $ The storage layout
+/// @param account The account that owns the app
+/// @param appId The ID of the app
+/// @param newDuration The new duration of the app
+/// @return The expiration timestamp
 function calcExpiration(
     Layout storage $,
     address account,
