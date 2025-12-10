@@ -901,14 +901,18 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
-	var ret *ReadStreamFromLastSnapshotResult
+	var (
+		ret            *ReadStreamFromLastSnapshotResult
+		miniblockParts []external.MiniblockDescriptor
+	)
+
 	if err := s.txRunner(
 		ctx,
 		"ReadStreamFromLastSnapshot",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
 			var err error
-			ret, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
+			ret, miniblockParts, err = s.readStreamFromLastSnapshotTx(ctx, tx, streamId, numPrecedingMiniblocks)
 			return err
 		},
 		nil,
@@ -916,18 +920,46 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	); err != nil {
 		return nil, err
 	}
+
+	if len(miniblockParts) > 0 {
+		// fetch and decode miniblocks from external storage outside stream lock
+		fromInclusive, toExclusive := miniblockParts[0].Number, miniblockParts[len(miniblockParts)-1].Number+1
+		miniblocksData, err := s.externalStorage.DownloadMiniblockData(
+			ctx, streamId, miniblockParts, []external.MiniblockRange{
+				{FromInclusive: fromInclusive, ToExclusive: toExclusive},
+			})
+		if err != nil {
+			return nil, err
+		}
+
+		ret.Miniblocks = make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
+		for i := fromInclusive; i < toExclusive; i++ {
+			data, ok := miniblocksData[i]
+			if !ok {
+				return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks data not found in external storage").
+					Tag("miniblock", i).
+					Tag("streamId", streamId)
+			}
+			ret.Miniblocks = append(ret.Miniblocks, &MiniblockDescriptor{Number: i, Data: data})
+		}
+	}
+
 	return ret, nil
 }
 
+// readStreamFromLastSnapshotTx returns miniblocks and minipool events from the database. If the stream
+// miniblocks are stored in external storage it returns the parts that can be used to download and decode
+// miniblocks from external storage. The caller is expected to download and decode outside the transaction
+// so it won't hold the stream lock.
 func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	numPrecedingMiniblocks int,
-) (*ReadStreamFromLastSnapshotResult, error) {
+) (result *ReadStreamFromLastSnapshotResult, parts []external.MiniblockDescriptor, err error) {
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	snapshotMiniblockIndex := lockStream.LastSnapshotMiniblock
@@ -938,69 +970,94 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		startSeqNum = 0
 	}
 
-	miniblocksRow, err := tx.Query(
-		ctx,
-		s.sqlForStream(
-			"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num",
-			streamId,
-		),
-		startSeqNum,
-		streamId,
+	var (
+		miniblocks []*MiniblockDescriptor
+		envelopes  [][]byte
+		seqNum     int64
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	var miniblocks []*MiniblockDescriptor
-	var blockdata []byte
-	var seqNum int64
-	var snapshot []byte
-	corrupt := false
-	if _, err := pgx.ForEachRow(
-		miniblocksRow,
-		[]any{&blockdata, &seqNum, &snapshot},
-		func() error {
-			if len(miniblocks) > 0 && seqNum != miniblocks[0].Number+int64(len(miniblocks)) {
-				return RiverError(
-					Err_INTERNAL,
-					"Miniblocks consistency violation - miniblocks are not sequential in db",
-					"ActualSeqNum", seqNum,
-					"ExpectedSeqNum", miniblocks[0].Number+int64(len(miniblocks)))
-			}
-			if len(blockdata) == 0 {
-				corrupt = true
-			}
-			if len(snapshot) == 0 {
-				snapshot = nil
-			}
-			miniblocks = append(miniblocks, &MiniblockDescriptor{
-				Number:   seqNum,
-				Data:     blockdata,
-				Snapshot: snapshot,
-			})
-			return nil
-		},
-	); err != nil {
-		return nil, err
-	}
-
-	if corrupt {
-		return nil, RiverError(
-			Err_NOT_FOUND,
-			"Stream is corrupt - miniblock data is empty",
-			"streamId", streamId,
+	if lockStream.MiniblocksStoredInDB() {
+		miniblocksRow, err := tx.Query(
+			ctx,
+			s.sqlForStream(
+				"SELECT blockdata, seq_num, snapshot FROM {{miniblocks}} WHERE seq_num >= $1 AND stream_id = $2 ORDER BY seq_num",
+				streamId,
+			),
+			startSeqNum,
+			streamId,
 		)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		var blockdata []byte
+		var snapshot []byte
+		corrupt := false
+		if _, err := pgx.ForEachRow(
+			miniblocksRow,
+			[]any{&blockdata, &seqNum, &snapshot},
+			func() error {
+				if len(miniblocks) > 0 && seqNum != miniblocks[0].Number+int64(len(miniblocks)) {
+					return RiverError(
+						Err_INTERNAL,
+						"Miniblocks consistency violation - miniblocks are not sequential in db",
+						"ActualSeqNum", seqNum,
+						"ExpectedSeqNum", miniblocks[0].Number+int64(len(miniblocks)))
+				}
+				if len(blockdata) == 0 {
+					corrupt = true
+				}
+				if len(snapshot) == 0 {
+					snapshot = nil
+				}
+				miniblocks = append(miniblocks, &MiniblockDescriptor{
+					Number:   seqNum,
+					Data:     blockdata,
+					Snapshot: snapshot,
+				})
+				return nil
+			},
+		); err != nil {
+			return nil, nil, err
+		}
+
+		if corrupt {
+			return nil, nil, RiverError(
+				Err_NOT_FOUND,
+				"Stream is corrupt - miniblock data is empty",
+				"streamId", streamId,
+			)
+		}
+
+		if !(miniblocks[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
+			return nil, nil, RiverError(
+				Err_INTERNAL,
+				"Miniblocks consistency violation - snapshotMiniblockIndex is out of range",
+				"snapshotMiniblockIndex", snapshotMiniblockIndex,
+				"readFirstSeqNum", miniblocks[0].Number,
+				"readLastSeqNum", seqNum)
+		}
+	} else {
+		// streams that are stored in external storage are sealed. Only fetch miniblock parts so that the
+		// actual miniblocks can be fetched and decoded from external storage outside of stream lock.
+		lastMiniblockNum, err := s.getLastMiniblockNumberTx(ctx, tx, streamId)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// fetch parts for external stored miniblocks
+		parts, err = s.readMiniblocksFromExternalStorageTxNoLock(ctx, tx, streamId, startSeqNum, lastMiniblockNum+1)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// required for fetch any minipool events
+		if len(parts) > 0 {
+			seqNum = parts[len(parts)-1].Number
+		}
 	}
 
-	if !(miniblocks[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
-		return nil, RiverError(
-			Err_INTERNAL,
-			"Miniblocks consistency violation - snapshotMiniblockIndex is out of range",
-			"snapshotMiniblockIndex", snapshotMiniblockIndex,
-			"readFirstSeqNum", miniblocks[0].Number,
-			"readLastSeqNum", seqNum)
-	}
-
+	// fetch events from minipool
 	rows, err := tx.Query(
 		ctx,
 		s.sqlForStream(
@@ -1010,10 +1067,9 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		streamId,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	var envelopes [][]byte
 	expectedGeneration := seqNum + 1
 	var expectedSlot int64 = -1
 
@@ -1045,14 +1101,17 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		expectedSlot++
 		return nil
 	}); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &ReadStreamFromLastSnapshotResult{
-		SnapshotMiniblockOffset: int(snapshotMiniblockIndex - miniblocks[0].Number),
-		Miniblocks:              miniblocks,
-		MinipoolEnvelopes:       envelopes,
-	}, nil
+	result = &ReadStreamFromLastSnapshotResult{Miniblocks: miniblocks, MinipoolEnvelopes: envelopes}
+	if len(miniblocks) > 0 {
+		result.SnapshotMiniblockOffset = int(snapshotMiniblockIndex - miniblocks[0].Number)
+	} else if len(parts) > 0 {
+		result.SnapshotMiniblockOffset = int(snapshotMiniblockIndex - parts[0].Number)
+	}
+
+	return result, parts, nil
 }
 
 // WriteEvent adds event to the given minipool.
