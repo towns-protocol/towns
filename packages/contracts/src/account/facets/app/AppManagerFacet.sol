@@ -5,7 +5,7 @@ pragma solidity ^0.8.29;
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 
 // libraries
-import "./AppManager.sol" as AppManager;
+import "./AppManagerMod.sol" as AppManager;
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";

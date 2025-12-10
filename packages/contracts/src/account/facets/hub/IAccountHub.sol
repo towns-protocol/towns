@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-interface IAccountModule {
+interface IAccountHub {
     /// @notice Sets the space factory
     /// @param spaceFactory The address of the space factory
     function setSpaceFactory(address spaceFactory) external;

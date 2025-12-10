@@ -55,6 +55,10 @@ abstract contract ERC6900Setup is BaseSetup {
         return account;
     }
 
+    function _createAccount(address owner) internal returns (ModularAccount) {
+        return _createAccount(owner, 0);
+    }
+
     /// @notice Installs a validation module on an account
     function _installValidation(
         ModularAccount account,

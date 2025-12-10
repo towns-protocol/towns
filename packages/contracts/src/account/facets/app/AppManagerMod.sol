@@ -8,8 +8,8 @@ import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol"
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {Attestation, EMPTY_UID} from "@ethereum-attestation-service/eas-contracts/Common.sol";
-import "../AccountModule.sol" as AccountModule;
 import {LibCall} from "solady/utils/LibCall.sol";
+import "../hub/AccountHubMod.sol" as AccountHub;
 
 // types
 using CustomRevert for bytes4;
@@ -39,8 +39,8 @@ error AppManager__AppNotRegistered();
 /*                         STORAGE                            */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-// keccak256(abi.encode(uint256(keccak256("towns.account.agent.storage")) - 1)) & ~bytes32(uint256(0xff))
-bytes32 constant STORAGE_SLOT = 0x2a33f2b9f2365d04fe7f088972d6b77078013dc33e95b71548cb37dbec7b0600;
+// keccak256(abi.encode(uint256(keccak256("towns.account.app.manager.storage")) - 1)) & ~bytes32(uint256(0xff))
+bytes32 constant STORAGE_SLOT = 0x2e45e2674c3081261f26138b3a1b39b0261feef8186e18fcf5badd4929fe7b00;
 
 struct App {
     bytes32 appId;
@@ -51,7 +51,7 @@ struct App {
 }
 
 /// @notice Storage layout for the AppManager
-/// @custom:storage-location erc8042:towns.account.agent.storage
+/// @custom:storage-location erc8042:towns.account.app.manager.storage
 struct Layout {
     mapping(address account => EnumerableSetLib.Bytes32Set) agents;
     mapping(address account => mapping(bytes32 appId => App)) appById;
@@ -78,7 +78,7 @@ function getStorage() pure returns (Layout storage $) {
 function installApp(address account, bytes32 appId, bytes calldata data) {
     if (appId == EMPTY_UID) AppManager__InvalidAppId.selector.revertWith();
 
-    IAppRegistry registry = IAppRegistry(AccountModule.getStorage().appRegistry);
+    IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
     IAppRegistryBase.App memory app = registry.getAppById(appId);
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
@@ -110,7 +110,7 @@ function installApp(address account, bytes32 appId, bytes calldata data) {
 function uninstallApp(address account, bytes32 appId, bytes calldata data) {
     if (appId == EMPTY_UID) AppManager__InvalidAppId.selector.revertWith();
 
-    IAppRegistry registry = IAppRegistry(AccountModule.getStorage().appRegistry);
+    IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
     IAppRegistryBase.App memory app = registry.getAppById(appId);
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
@@ -137,7 +137,7 @@ function uninstallApp(address account, bytes32 appId, bytes calldata data) {
 function renewApp(address account, bytes32 appId) {
     if (appId == EMPTY_UID) AppManager__InvalidAppId.selector.revertWith();
 
-    IAppRegistry registry = IAppRegistry(AccountModule.getStorage().appRegistry);
+    IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
     IAppRegistryBase.App memory app = registry.getAppById(appId);
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
@@ -165,7 +165,7 @@ function updateApp(address account, bytes32 newAppId, bytes calldata data) {
     if (currentAppId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
     if (currentAppId == newAppId) AppManager__AppAlreadyInstalled.selector.revertWith();
 
-    IAppRegistry registry = IAppRegistry(AccountModule.getStorage().appRegistry);
+    IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
     IAppRegistryBase.App memory newApp = registry.getAppById(newAppId);
     if (newApp.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
@@ -203,8 +203,9 @@ function getAppId(address account, address app) view returns (bytes32) {
 /// @param app The app address
 /// @return The expiration timestamp
 function getAppExpiration(address account, address app) view returns (uint48) {
-    bytes32 appId = getStorage().appIdByApp[account][app];
-    return getStorage().appById[account][appId].expiration;
+    Layout storage $ = getStorage();
+    bytes32 appId = $.appIdByApp[account][app];
+    return $.appById[account][appId].expiration;
 }
 
 /// @notice Gets all installed app addresses for an account
@@ -224,18 +225,20 @@ function getInstalledApps(address account) view returns (address[] memory apps) 
 /// @param account The account that owns the app
 /// @param app The app address to enable
 function enableApp(address account, address app) {
-    bytes32 appId = getStorage().appIdByApp[account][app];
+    Layout storage $ = getStorage();
+    bytes32 appId = $.appIdByApp[account][app];
     if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
-    getStorage().appById[account][appId].active = true;
+    $.appById[account][appId].active = true;
 }
 
 /// @notice Disables an app
 /// @param account The account that owns the app
 /// @param app The app address to disable
 function disableApp(address account, address app) {
-    bytes32 appId = getStorage().appIdByApp[account][app];
+    Layout storage $ = getStorage();
+    bytes32 appId = $.appIdByApp[account][app];
     if (appId == EMPTY_UID) AppManager__AppNotInstalled.selector.revertWith();
-    getStorage().appById[account][appId].active = false;
+    $.appById[account][appId].active = false;
 }
 
 /// @notice Checks if an app is entitled to a permission
@@ -257,7 +260,7 @@ function isAppEntitled(
     // Check app is active
     if (!$.appById[account][appId].active) return false;
 
-    IAppRegistry registry = IAppRegistry(AccountModule.getStorage().appRegistry);
+    IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
 
     // Check app not banned
     if (registry.isAppBanned(module)) return false;
