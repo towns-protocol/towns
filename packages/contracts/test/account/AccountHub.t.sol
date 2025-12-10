@@ -8,7 +8,6 @@ import {IExecutionModule} from "@erc6900/reference-implementation/interfaces/IEx
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IAppAccount} from "../../src/spaces/facets/account/IAppAccount.sol";
 import {ExecutionInstallDelegate} from "modular-account/src/helpers/ExecutionInstallDelegate.sol";
-import {ITownsApp} from "../../src/apps/ITownsApp.sol";
 
 // libraries
 import {Validator} from "../../src/utils/libraries/Validator.sol";

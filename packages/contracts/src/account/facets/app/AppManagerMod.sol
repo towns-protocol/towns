@@ -210,14 +210,26 @@ function getAppExpiration(address account, address app) view returns (uint48) {
 
 /// @notice Gets all installed app addresses for an account
 /// @param account The account to check
-/// @return apps The array of installed app addresses
+/// @return apps The array of installed app addresses (only active apps)
 function getInstalledApps(address account) view returns (address[] memory apps) {
     Layout storage $ = getStorage();
     bytes32[] memory appIds = $.agents[account].values();
     uint256 length = appIds.length;
-    apps = new address[](length);
+
+    // Count active apps first
+    uint256 activeCount;
     for (uint256 i; i < length; ++i) {
-        apps[i] = $.appById[account][appIds[i]].app;
+        if ($.appById[account][appIds[i]].active) ++activeCount;
+    }
+
+    // Build array of active apps only
+    apps = new address[](activeCount);
+    uint256 j;
+    for (uint256 i; i < length; ++i) {
+        App storage app = $.appById[account][appIds[i]];
+        if (app.active) {
+            apps[j++] = app.app;
+        }
     }
 }
 
@@ -264,6 +276,9 @@ function isAppEntitled(
 
     // Check app not banned
     if (registry.isAppBanned(module)) return false;
+
+    // Check app has not expired
+    if ($.appById[account][appId].expiration < block.timestamp) return false;
 
     IAppRegistryBase.App memory app = registry.getAppById(appId);
     if (app.appId == EMPTY_UID) return false;

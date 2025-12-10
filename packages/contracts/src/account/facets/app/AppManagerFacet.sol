@@ -19,43 +19,43 @@ contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet, Ownabl
 
     function __AppManagerFacet_init_unchained() internal {}
 
-    function onInstallApp(bytes32 appId, bytes calldata data) external override nonReentrant {
+    function onInstallApp(bytes32 appId, bytes calldata data) external nonReentrant {
         AppManager.installApp(msg.sender, appId, data);
     }
 
-    function onUninstallApp(bytes32 appId, bytes calldata data) external override nonReentrant {
+    function onUninstallApp(bytes32 appId, bytes calldata data) external nonReentrant {
         AppManager.uninstallApp(msg.sender, appId, data);
     }
 
-    function onRenewApp(bytes32 appId, bytes calldata) external override nonReentrant {
+    function onRenewApp(bytes32 appId, bytes calldata) external nonReentrant {
         AppManager.renewApp(msg.sender, appId);
     }
 
-    function onUpdateApp(bytes32 appId, bytes calldata data) external override nonReentrant {
+    function onUpdateApp(bytes32 appId, bytes calldata data) external nonReentrant {
         AppManager.updateApp(msg.sender, appId, data);
     }
 
-    function enableApp(address app) external override nonReentrant {
+    function enableApp(address app) external nonReentrant {
         AppManager.enableApp(msg.sender, app);
     }
 
-    function disableApp(address app) external override nonReentrant {
+    function disableApp(address app) external nonReentrant {
         AppManager.disableApp(msg.sender, app);
     }
 
-    function isAppInstalled(address app) external view override returns (bool) {
+    function isAppInstalled(address app) external view returns (bool) {
         return AppManager.isAppInstalled(msg.sender, app);
     }
 
-    function getAppId(address app) external view override returns (bytes32) {
+    function getAppId(address app) external view returns (bytes32) {
         return AppManager.getAppId(msg.sender, app);
     }
 
-    function getAppExpiration(address app) external view override returns (uint48) {
+    function getAppExpiration(address app) external view returns (uint48) {
         return AppManager.getAppExpiration(msg.sender, app);
     }
 
-    function getInstalledApps() external view override returns (address[] memory) {
+    function getInstalledApps() external view returns (address[] memory) {
         return AppManager.getInstalledApps(msg.sender);
     }
 
@@ -63,7 +63,7 @@ contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet, Ownabl
         address app,
         address publicKey,
         bytes32 permission
-    ) external view override returns (bool) {
+    ) external view returns (bool) {
         return AppManager.isAppEntitled(msg.sender, app, publicKey, permission);
     }
 }
