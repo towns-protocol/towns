@@ -70,6 +70,9 @@ function getStorage() pure returns (Layout storage $) {
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         FUNCTIONS                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// @notice Installs an account
+/// @param account The address of the account
 function installAccount(address account) {
     if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
 
@@ -78,6 +81,8 @@ function installAccount(address account) {
     $.installed[account] = true;
 }
 
+/// @notice Uninstalls an account
+/// @param account The address of the account
 function uninstallAccount(address account) {
     if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
 
