@@ -49,7 +49,7 @@ struct App {
 /// @notice Storage layout for the AppManager
 /// @custom:storage-location erc7201:towns.account.app.manager.storage
 struct Layout {
-    mapping(address account => EnumerableSetLib.Bytes32Set) agents;
+    mapping(address account => EnumerableSetLib.Bytes32Set) apps;
     mapping(address account => mapping(bytes32 appId => App)) appById;
     mapping(address account => mapping(address app => bytes32 appId)) appIdByApp;
 }
@@ -77,11 +77,11 @@ function installApp(address account, bytes32 appId, bytes calldata data) {
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
     Layout storage $ = getStorage();
-    EnumerableSetLib.Bytes32Set storage agents = $.agents[account];
+    EnumerableSetLib.Bytes32Set storage apps = $.apps[account];
 
-    if (agents.contains(app.appId)) AppManager__AppAlreadyInstalled.selector.revertWith();
+    if (apps.contains(app.appId)) AppManager__AppAlreadyInstalled.selector.revertWith();
 
-    agents.add(app.appId);
+    apps.add(app.appId);
     $.appIdByApp[account][app.module] = app.appId;
     $.appById[account][app.appId] = App({
         appId: app.appId,
@@ -109,12 +109,12 @@ function uninstallApp(address account, bytes32 appId, bytes calldata data) {
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
     Layout storage $ = getStorage();
-    EnumerableSetLib.Bytes32Set storage agents = $.agents[account];
+    EnumerableSetLib.Bytes32Set storage apps = $.apps[account];
 
-    if (!agents.contains(app.appId)) AppManager__AppNotInstalled.selector.revertWith();
+    if (!apps.contains(app.appId)) AppManager__AppNotInstalled.selector.revertWith();
 
     // Remove from storage
-    agents.remove(app.appId);
+    apps.remove(app.appId);
     delete $.appIdByApp[account][app.module];
     delete $.appById[account][app.appId];
 
@@ -136,7 +136,7 @@ function renewApp(address account, bytes32 appId, bytes calldata) {
     if (app.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
     Layout storage $ = getStorage();
-    if (!$.agents[account].contains(appId)) AppManager__AppNotInstalled.selector.revertWith();
+    if (!$.apps[account].contains(appId)) AppManager__AppNotInstalled.selector.revertWith();
 
     // Calculate and update the new expiration
     $.appById[account][appId].expiration = calcExpiration($, account, appId, app.duration);
@@ -167,12 +167,12 @@ function updateApp(address account, bytes32 newAppId, bytes calldata data) {
     address oldModule = $.appById[account][currentAppId].app;
 
     // Remove old app from storage
-    $.agents[account].remove(currentAppId);
+    $.apps[account].remove(currentAppId);
     delete $.appById[account][currentAppId];
     delete $.appIdByApp[account][oldModule];
 
     // Add new app
-    $.agents[account].add(newAppId);
+    $.apps[account].add(newAppId);
     $.appIdByApp[account][newApp.module] = newAppId;
     $.appById[account][newAppId] = App({
         appId: newAppId,
@@ -216,7 +216,7 @@ function getAppExpiration(address account, address app) view returns (uint48) {
 /// @return apps The array of installed app addresses (only active apps)
 function getInstalledApps(address account) view returns (address[] memory apps) {
     Layout storage $ = getStorage();
-    bytes32[] memory appIds = $.agents[account].values();
+    bytes32[] memory appIds = $.apps[account].values();
     uint256 length = appIds.length;
 
     // Count active apps first
