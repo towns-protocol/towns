@@ -4,8 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"slices"
 	"strconv"
 	"time"
+
+	"github.com/towns-protocol/towns/core/node/storage"
 
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
@@ -57,6 +61,8 @@ func (s *Service) info(
 			return s.debugInfoMakeMiniblock(ctx, request)
 		} else if debug == "drop_stream" {
 			return s.debugDropStream(ctx, request)
+		} else if debug == "trim" {
+			return s.debugTrimStream(ctx, request)
 		}
 
 		if s.config.EnableTestAPIs {
@@ -128,6 +134,81 @@ func (s *Service) debugDropStream(
 	}
 
 	return connect.NewResponse(&InfoResponse{}), nil
+}
+
+func (s *Service) debugTrimStream(
+	ctx context.Context,
+	req *connect.Request[InfoRequest],
+) (*connect.Response[InfoResponse], error) {
+	if len(req.Msg.GetDebug()) != 2 {
+		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a sync id and stream id")
+	}
+
+	streamID, err := shared.StreamIdFromString(req.Msg.Debug[1])
+	if err != nil {
+		return nil, err
+	}
+
+	ranges, err := s.storage.GetMiniblockNumberRanges(ctx, streamID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ranges) == 0 {
+		return nil, RiverError(Err_DEBUG_ERROR, "no miniblocks found for stream")
+	}
+
+	// Get the latest range
+	latestRange := ranges[len(ranges)-1]
+
+	historyWindow := s.chainConfig.Get().StreamHistoryMiniblocks.ForType(streamID.Type())
+	if historyWindow == 0 {
+		return nil, RiverError(Err_DEBUG_ERROR, "no stream history miniblocks setting set for stream")
+	}
+
+	start := latestRange.EndInclusive
+	if historyWindow >= math.MaxInt64 {
+		start -= math.MaxInt64
+	} else {
+		start -= int64(historyWindow)
+	}
+	if start < 0 {
+		return nil, RiverError(Err_DEBUG_ERROR, "history window is larger than stream size")
+	}
+
+	// Find the closest snapshot miniblock to trim to
+	trimToMiniblock := storage.FindClosestSnapshotMiniblock(ranges, start)
+
+	var retentionIntervalMbs int64
+	if interval := int64(s.chainConfig.Get().StreamSnapshotIntervalInMiniblocks); interval > 0 {
+		retentionIntervalMbs = max(interval, storage.MinRetentionIntervalMiniblocks)
+	}
+
+	var nullifySnapshotMbs []int64
+	if len(latestRange.SnapshotSeqNums) > 0 {
+		lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
+		nullifySnapshotMbs = storage.DetermineStreamSnapshotsToNullify(
+			latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
+			retentionIntervalMbs, storage.MinKeepMiniblocks,
+		)
+	}
+
+	logging.FromCtx(ctx).Infow(
+		"Debug trim stream",
+		"streamId", streamID,
+		"trimToMiniblock", trimToMiniblock,
+		"nullifySnapshotMbs", nullifySnapshotMbs,
+		"latestRange.start", latestRange.StartInclusive,
+		"latestRange.end", latestRange.EndInclusive,
+	)
+
+	if err = s.storage.TrimStream(ctx, streamID, trimToMiniblock, nullifySnapshotMbs); err != nil {
+		return nil, AsRiverError(err, Err_DEBUG_ERROR).
+			Tags("streamId", streamID).
+			Message("failed to trim stream")
+	}
+
+	return nil, nil
 }
 
 func (s *Service) debugInfoMakeMiniblock(
