@@ -243,7 +243,7 @@ contract AccountHubTest is AppRegistryBaseTest, ERC6900Setup {
         vm.expectRevert();
         _uninstallExecution(userAccount, address(accountHub), m, abi.encode(address(userAccount)));
 
-        // // Still uninstalled
+        // Still uninstalled
         assertFalse(accountHub.isInstalled(address(userAccount)));
     }
 
