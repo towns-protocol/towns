@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/towns-protocol/towns/core/node/storage"
-
 	"connectrpc.com/connect"
 	"github.com/ethereum/go-ethereum/common"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -20,6 +18,7 @@ import (
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	. "github.com/towns-protocol/towns/core/node/protocol/protocolconnect"
 	"github.com/towns-protocol/towns/core/node/shared"
+	"github.com/towns-protocol/towns/core/node/storage"
 	"github.com/towns-protocol/towns/core/node/utils"
 	"github.com/towns-protocol/towns/core/river_node/version"
 )
