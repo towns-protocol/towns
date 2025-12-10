@@ -199,9 +199,6 @@ func decodeMetadataTx(txBytes []byte) (*MetadataTx, error) {
 	if err := proto.Unmarshal(txBytes, metaTx); err == nil {
 		return metaTx, nil
 	}
-	if err := protojson.Unmarshal(txBytes, metaTx); err == nil {
-		return metaTx, nil
-	}
 	return nil, RiverError(Err_INVALID_ARGUMENT, "unable to decode metadata tx")
 }
 
