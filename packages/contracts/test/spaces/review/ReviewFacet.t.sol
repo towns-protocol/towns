@@ -23,7 +23,7 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
         reviewFacet = ReviewFacet(userSpace);
 
         // Example initialization of a sample review
-        sampleReview = Review({comment: "Great experience!", rating: 5});
+        sampleReview = Review({tokenId: 1, comment: "Great experience!", rating: 5});
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -41,7 +41,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     }
 
     function test_addReview_revertIf_commentTooShort() public givenAliceHasMintedMembership {
-        Review memory invalidReview = Review({comment: "Bad", rating: 5});
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        Review memory invalidReview = Review({tokenId: tokenId, comment: "Bad", rating: 5});
 
         vm.expectRevert(ReviewFacet__InvalidCommentLength.selector);
         vm.prank(alice);
@@ -51,12 +52,27 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
     function test_addReview_revertIf_invalidRating() public givenAliceHasMintedMembership {
         Review memory invalidReview = Review({
             comment: "This exceeds the maximum allowed rating.",
-            rating: 6 // Invalid rating
+            rating: 6, // Invalid rating
+            tokenId: membershipTokenQueryable.tokensOfOwner(alice)[0]
         });
 
         vm.expectRevert(ReviewFacet__InvalidRating.selector);
         vm.prank(alice);
         reviewFacet.setReview(Action.Add, abi.encode(invalidReview));
+    }
+
+    function test_addReview_revertIf_notTokenOwner(
+        uint256 tokenId
+    ) public givenAliceHasMintedMembership {
+        vm.prank(charlie);
+        membership.joinSpace(charlie);
+        tokenId = membershipTokenQueryable.tokensOfOwner(charlie)[0];
+
+        Review memory newReview = Review({tokenId: tokenId, comment: "Great service!", rating: 5});
+
+        vm.expectRevert(ReviewFacet__NotTokenOwner.selector);
+        vm.prank(alice);
+        reviewFacet.setReview(Action.Add, abi.encode(newReview));
     }
 
     function test_fuzz_addReview(
@@ -73,7 +89,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
             comment = comment.slice(0, DEFAULT_MAX_COMMENT_LENGTH);
         }
 
-        Review memory newReview = Review({comment: comment, rating: rating});
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        Review memory newReview = Review({tokenId: tokenId, comment: comment, rating: rating});
 
         vm.expectEmit(address(reviewFacet));
         emit ReviewAdded(alice, newReview.comment, newReview.rating);
@@ -91,7 +108,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
         givenAliceHasMintedMembership
         givenWalletIsLinked(aliceWallet, bobWallet)
     {
-        Review memory newReview = Review({comment: "Great service!", rating: 5});
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        Review memory newReview = Review({tokenId: tokenId, comment: "Great service!", rating: 5});
 
         vm.prank(bob);
         reviewFacet.setReview(Action.Add, abi.encode(newReview));
@@ -109,7 +127,12 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
         vm.prank(alice);
         reviewFacet.setReview(Action.Add, abi.encode(sampleReview));
 
-        Review memory updatedReview = Review({comment: "Updated comment", rating: 4});
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(alice)[0];
+        Review memory updatedReview = Review({
+            tokenId: tokenId,
+            comment: "Updated comment",
+            rating: 4
+        });
 
         vm.expectEmit(address(reviewFacet));
         emit ReviewUpdated(alice, updatedReview.comment, updatedReview.rating);
@@ -161,7 +184,8 @@ contract ReviewFacetTest is MembershipBaseSetup, IReviewBase {
         vm.prank(charlie);
         membership.joinSpace(charlie);
 
-        Review memory review = Review({comment: "Good Service.", rating: 4});
+        uint256 tokenId = membershipTokenQueryable.tokensOfOwner(charlie)[0];
+        Review memory review = Review({tokenId: tokenId, comment: "Good Service.", rating: 4});
 
         vm.prank(charlie);
         reviewFacet.setReview(Action.Add, abi.encode(review));

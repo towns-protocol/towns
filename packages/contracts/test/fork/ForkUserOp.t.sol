@@ -37,7 +37,8 @@ contract ForkUserOp is TestUtils {
         vm.createSelectFork("base", 27_294_553);
         IReviewBase.Review memory review = IReviewBase.Review({
             comment: "I'm a good friend of YAZ who created this group chat. He asked me to rate this town. I would give it 5 stars, but only God is perfect, so I give it 4.",
-            rating: 4
+            rating: 4,
+            tokenId: 1
         });
         vm.etch(0x8Dfe21D0e911c54bA9104539a2c346168Dd94662, type(ReviewFacet).runtimeCode);
         vm.prank(0x405Ad07b01E3366e686f0056Bab0F89B091944f3);

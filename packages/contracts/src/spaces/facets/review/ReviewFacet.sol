@@ -5,17 +5,17 @@ pragma solidity ^0.8.23;
 import {IReview} from "./IReview.sol";
 
 // libraries
-
 import {ReviewStorage} from "./ReviewStorage.sol";
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {EnumerableSetLib} from "solady/utils/EnumerableSetLib.sol";
-import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {Entitled} from "src/spaces/facets/Entitled.sol";
+import {BanningBase} from "src/spaces/facets/banning/BanningBase.sol";
+import {ERC721ABase} from "src/diamond/facets/token/ERC721A/ERC721ABase.sol";
 
-contract ReviewFacet is IReview, Entitled, Facet {
+contract ReviewFacet is IReview, Entitled, BanningBase, Facet, ERC721ABase {
     using EnumerableSetLib for EnumerableSetLib.AddressSet;
 
     uint256 internal constant DEFAULT_MIN_COMMENT_LENGTH = 10;
@@ -32,6 +32,7 @@ contract ReviewFacet is IReview, Entitled, Facet {
 
         if (action == Action.Add) {
             Review memory newReview = abi.decode(data, (Review));
+
             _validateReview(newReview);
 
             ReviewStorage.Content storage review = rs.reviewByUser[msg.sender];
@@ -93,7 +94,7 @@ contract ReviewFacet is IReview, Entitled, Facet {
         }
     }
 
-    function _validateReview(Review memory review) internal pure {
+    function _validateReview(Review memory review) internal view {
         uint256 length = bytes(review.comment).length;
         if (length < DEFAULT_MIN_COMMENT_LENGTH || length > DEFAULT_MAX_COMMENT_LENGTH) {
             CustomRevert.revertWith(ReviewFacet__InvalidCommentLength.selector);
@@ -101,5 +102,14 @@ contract ReviewFacet is IReview, Entitled, Facet {
         if (review.rating > 5) {
             CustomRevert.revertWith(ReviewFacet__InvalidRating.selector);
         }
+
+        address[] memory wallets = _getLinkedWalletsWithUser(msg.sender);
+        uint256 walletLen = wallets.length;
+        for (uint256 i; i < walletLen; ++i) {
+            if (_ownerOf(review.tokenId) == wallets[i]) {
+                return;
+            }
+        }
+        CustomRevert.revertWith(ReviewFacet__NotTokenOwner.selector);
     }
 }

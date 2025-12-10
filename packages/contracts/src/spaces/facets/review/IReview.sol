@@ -11,6 +11,7 @@ interface IReviewBase {
     }
 
     struct Review {
+        uint256 tokenId;
         string comment;
         uint8 rating;
     }
@@ -23,6 +24,8 @@ interface IReviewBase {
     error ReviewFacet__InvalidRating();
     error ReviewFacet__ReviewAlreadyExists();
     error ReviewFacet__ReviewDoesNotExist();
+    error ReviewFacet__UserIsBanned();
+    error ReviewFacet__NotTokenOwner();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                           EVENTS                           */
