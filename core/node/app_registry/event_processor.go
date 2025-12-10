@@ -11,21 +11,25 @@ import (
 
 	"github.com/towns-protocol/towns/core/node/app_registry/types"
 	"github.com/towns-protocol/towns/core/node/events"
+	"github.com/towns-protocol/towns/core/node/infra/analytics"
 	"github.com/towns-protocol/towns/core/node/logging"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
 )
 
 type MessageToAppProcessor struct {
-	cache *CachedEncryptedMessageQueue
+	cache     *CachedEncryptedMessageQueue
+	analytics analytics.Analytics
 }
 
 func NewAppMessageProcessor(
 	ctx context.Context,
 	cache *CachedEncryptedMessageQueue,
+	analytics analytics.Analytics,
 ) *MessageToAppProcessor {
 	return &MessageToAppProcessor{
-		cache: cache,
+		cache:     cache,
+		analytics: analytics,
 	}
 }
 
@@ -157,6 +161,11 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		)
 		return
 	}
+
+	// Track message posted event
+	p.analytics.Track(ctx, creator, "posted message", map[string]any{
+		"isBot": isApp,
+	})
 
 	// Do not forward bot-authored events
 	if isApp {
