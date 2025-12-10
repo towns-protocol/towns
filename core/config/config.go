@@ -593,6 +593,9 @@ type AppRegistryConfig struct {
 	NumMessageSendWorkers int
 
 	StreamTracking StreamTrackingConfig
+
+	// MixpanelToken is the project token for Mixpanel analytics. If empty, analytics is disabled.
+	MixpanelToken string
 }
 
 type LogConfig struct {

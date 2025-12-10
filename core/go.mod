@@ -96,6 +96,7 @@ require (
 	github.com/linxGnu/grocksdb v1.9.3 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
+	github.com/mixpanel/mixpanel-go v1.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20220708102147-0a8a51822cae // indirect
 	github.com/openzipkin/zipkin-go v0.4.3 // indirect
