@@ -34,7 +34,12 @@ type mixpanelAnalytics struct {
 	client *mixpanel.ApiClient
 }
 
-func (m *mixpanelAnalytics) Track(ctx context.Context, accountId common.Address, event string, properties map[string]any) {
+func (m *mixpanelAnalytics) Track(
+	ctx context.Context,
+	accountId common.Address,
+	event string,
+	properties map[string]any,
+) {
 	e := m.client.NewEvent(event, accountId.Hex(), properties)
 	// Use context.WithoutCancel to decouple from parent context so the tracking
 	// request completes even if the parent request is cancelled.
