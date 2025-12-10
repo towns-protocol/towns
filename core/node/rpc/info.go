@@ -160,6 +160,11 @@ func (s *Service) debugTrimStream(
 	// Get the latest range
 	latestRange := ranges[len(ranges)-1]
 
+	// At least one snapshot miniblock must exist
+	if len(latestRange.SnapshotSeqNums) == 0 {
+		return nil, RiverError(Err_DEBUG_ERROR, "no snapshot miniblocks found for stream")
+	}
+
 	historyWindow := s.chainConfig.Get().StreamHistoryMiniblocks.ForType(streamID.Type())
 	if historyWindow == 0 {
 		return nil, RiverError(Err_DEBUG_ERROR, "no stream history miniblocks setting set for stream")
