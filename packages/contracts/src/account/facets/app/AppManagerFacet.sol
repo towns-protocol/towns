@@ -27,8 +27,8 @@ contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet, Ownabl
         AppManager.uninstallApp(msg.sender, appId, data);
     }
 
-    function onRenewApp(bytes32 appId, bytes calldata) external nonReentrant {
-        AppManager.renewApp(msg.sender, appId);
+    function onRenewApp(bytes32 appId, bytes calldata data) external nonReentrant {
+        AppManager.renewApp(msg.sender, appId, data);
     }
 
     function onUpdateApp(bytes32 appId, bytes calldata data) external nonReentrant {

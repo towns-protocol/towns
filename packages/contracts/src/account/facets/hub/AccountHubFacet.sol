@@ -32,9 +32,6 @@ contract AccountHubFacet is
 {
     using CustomRevert for bytes4;
 
-    uint256 internal constant _INVALID_USER_OP = 1;
-    bytes4 internal constant _INVALID_SIGNATURE = 0xffffffff;
-
     /// @notice Initializes the facet when added to a Diamond
     function __AccountHubFacet_init(
         address spaceFactory,
@@ -229,5 +226,5 @@ contract AccountHubFacet is
         return "";
     }
 
-    function postExecutionHook(uint32 entityId, bytes calldata preExecHookData) external {}
+    function postExecutionHook(uint32, bytes calldata) external {}
 }

@@ -23,16 +23,16 @@ using EnumerableSetLib for EnumerableSetLib.Bytes32Set;
 /*                           ERRORS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-/// @notice Emitted when the app ID is invalid
+/// @notice Thrown when the app ID is invalid
 error AppManager__InvalidAppId();
 
-/// @notice Emitted when the app is already installed
+/// @notice Thrown when the app is already installed
 error AppManager__AppAlreadyInstalled();
 
-/// @notice Emitted when the app is not installed
+/// @notice Thrown when the app is not installed
 error AppManager__AppNotInstalled();
 
-/// @notice Emitted when the app is not registered
+/// @notice Thrown when the app is not registered
 error AppManager__AppNotRegistered();
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -51,7 +51,7 @@ struct App {
 }
 
 /// @notice Storage layout for the AppManager
-/// @custom:storage-location erc8042:towns.account.app.manager.storage
+/// @custom:storage-location erc7201:towns.account.app.manager.storage
 struct Layout {
     mapping(address account => EnumerableSetLib.Bytes32Set) agents;
     mapping(address account => mapping(bytes32 appId => App)) appById;
@@ -60,13 +60,11 @@ struct Layout {
 
 /// @notice Returns the storage layout for the AppManager
 /// @return $ The storage layout
-/// @custom:storage-location erc8042:towns.account.agent.storage
 function getStorage() pure returns (Layout storage $) {
     assembly {
         $.slot := STORAGE_SLOT
     }
 }
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         FUNCTIONS                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -134,7 +132,7 @@ function uninstallApp(address account, bytes32 appId, bytes calldata data) {
 /// @notice Renews an app subscription
 /// @param account The account that owns the app
 /// @param appId The ID of the app to renew
-function renewApp(address account, bytes32 appId) {
+function renewApp(address account, bytes32 appId, bytes calldata) {
     if (appId == EMPTY_UID) AppManager__InvalidAppId.selector.revertWith();
 
     IAppRegistry registry = IAppRegistry(AccountHub.getAppRegistry());
@@ -169,9 +167,13 @@ function updateApp(address account, bytes32 newAppId, bytes calldata data) {
     IAppRegistryBase.App memory newApp = registry.getAppById(newAppId);
     if (newApp.appId == EMPTY_UID) AppManager__AppNotRegistered.selector.revertWith();
 
-    // Remove old app from agents set
+    // Read the old module from the stored app before deletion
+    address oldModule = $.appById[account][currentAppId].app;
+
+    // Remove old app from storage
     $.agents[account].remove(currentAppId);
     delete $.appById[account][currentAppId];
+    delete $.appIdByApp[account][oldModule];
 
     // Add new app
     $.agents[account].add(newAppId);
@@ -186,8 +188,9 @@ function updateApp(address account, bytes32 newAppId, bytes calldata data) {
 }
 
 function isAppInstalled(address account, address app) view returns (bool) {
-    bytes32 appId = getStorage().appIdByApp[account][app];
-    return appId != EMPTY_UID && getStorage().appById[account][appId].active;
+    Layout storage $ = getStorage();
+    bytes32 appId = $.appIdByApp[account][app];
+    return appId != EMPTY_UID && $.appById[account][appId].active;
 }
 
 /// @notice Gets the app ID for a given app address

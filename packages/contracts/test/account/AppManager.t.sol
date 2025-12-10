@@ -6,6 +6,7 @@ import {ITownsApp} from "src/apps/ITownsApp.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 import {IAppFactoryBase} from "src/apps/facets/factory/IAppFactory.sol";
 import {IAppRegistryBase} from "src/apps/facets/registry/IAppRegistry.sol";
+import {ISimpleApp} from "src/apps/simple/app/ISimpleApp.sol";
 
 // types
 import {ExecutionManifest} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
@@ -85,8 +86,8 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
 
         // Try to install again via installer - should revert
         uint256 totalPrice = registry.getAppPrice(address(appContract));
-        vm.expectRevert(AppManager.AppManager__AppAlreadyInstalled.selector);
         hoax(account, totalPrice);
+        vm.expectRevert(AppManager.AppManager__AppAlreadyInstalled.selector);
         installer.installApp{value: totalPrice}(appContract, IAppAccount(account), "");
     }
 
@@ -133,7 +134,7 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
         assertEq(installedApps.length, 0);
     }
 
-    function test_uninstallApp_revertWhen_AppNotInstalled(
+    function test_uninstallApp_revertWhen_AppNotRegistered(
         address user
     ) external givenSimpleAppIsRegistered {
         address account = _createAccountWithHubInstalled(user);
@@ -205,6 +206,30 @@ contract AppManagerTest is AppRegistryBaseTest, ERC6900Setup {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      UPDATE APP TESTS                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function test_updateApp(address user) external givenSimpleAppIsRegistered {
+        address account = _createAccountWithHubInstalled(user);
+        ITownsApp appContract = ITownsApp(address(SIMPLE_APP));
+        _installAppToAccount(account, appContract);
+
+        bytes32[] memory permissions = new bytes32[](1);
+        permissions[0] = bytes32("Write");
+
+        vm.prank(DEFAULT_DEV);
+        ISimpleApp(address(SIMPLE_APP)).updatePermissions(permissions);
+
+        vm.prank(DEFAULT_DEV);
+        bytes32 newAppId = registry.upgradeApp(appContract, DEFAULT_CLIENT, SIMPLE_APP_ID);
+
+        IAppAccount appAccount = IAppAccount(account);
+        uint256 totalPrice = registry.getAppPrice(address(appContract));
+
+        hoax(account, totalPrice);
+        installer.updateApp(appContract, appAccount);
+
+        assertTrue(appAccount.isAppEntitled(address(appContract), DEFAULT_CLIENT, permissions[0]));
+        assertTrue(appAccount.getAppId(address(appContract)) == newAppId);
+    }
 
     function test_updateApp_revertWhen_AppNotInstalled(
         address user
