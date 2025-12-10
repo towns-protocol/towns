@@ -1050,7 +1050,8 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		}
 
 		// fetch parts for external stored miniblocks
-		parts, err = s.readMiniblocksFromExternalStorageTxNoLock(ctx, tx, streamId, startSeqNum, lastMiniblockNum+1)
+		parts, err = s.readMiniblockDescriptorsForExternalStorageNoLockTx(
+			ctx, tx, streamId, startSeqNum, lastMiniblockNum+1)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1418,7 +1419,7 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 			// if miniblock data is not stored in the database fetch the miniblock parts that
 			// are used to retrieve and decode miniblocks from external storage. Fetch and
 			// decode the miniblocks outside the DB transaction.
-			miniblockParts, err = s.readMiniblocksFromExternalStorageTxNoLock(
+			miniblockParts, err = s.readMiniblockDescriptorsForExternalStorageNoLockTx(
 				ctx, tx, streamId, fromInclusive, toExclusive)
 			return err
 		},
@@ -1457,8 +1458,8 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 	return miniblocks, nil
 }
 
-// readMiniblocksFromExternalStorageTxNoLock expects the caller to have a lock on the stream.
-func (s *PostgresStreamStore) readMiniblocksFromExternalStorageTxNoLock(
+// readMiniblockDescriptorsForExternalStorageNoLockTx expects the caller to have a lock on the stream.
+func (s *PostgresStreamStore) readMiniblockDescriptorsForExternalStorageNoLockTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
