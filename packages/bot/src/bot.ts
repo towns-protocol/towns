@@ -52,7 +52,7 @@ import {
     type CreateTownsClientParams,
     waitForRoleCreated,
 } from '@towns-protocol/sdk'
-import { Hono, type Context, type Next } from 'hono'
+import { Hono, type Context as HonoContext, type Next } from 'hono'
 import { logger } from 'hono/logger'
 import { createMiddleware } from 'hono/factory'
 import { default as jwt } from 'jsonwebtoken'
@@ -99,6 +99,28 @@ import {
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { encryptChunkedAESGCM } from '@towns-protocol/sdk-crypto'
 import { EventDedup, type EventDedupConfig } from './eventDedup'
+import {
+    Context,
+    type MessageContext,
+    type SlashCommandContext,
+    type ReactionContext,
+    type RedactionContext,
+    type MessageEditContext,
+    type TipContext,
+    type StreamEventContext,
+    type InteractionResponseContext,
+    type RawGmContext,
+    type GmContext,
+    type MessageEventData,
+    type SlashCommandEventData,
+    type ReactionEventData,
+    type RedactionEventData,
+    type MessageEditEventData,
+    type TipEventData,
+    type StreamEventData,
+    type InteractionResponseEventData,
+    type RawGmEventData,
+} from './context'
 import type {
     FacilitatorConfig,
     PaymentPayload,
@@ -136,13 +158,13 @@ import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import rolesFacetAbi from '@towns-protocol/generated/dev/abis/Roles.abi'
 import { EmptySchema } from '@bufbuild/protobuf/wkt'
 
-type BotActions = ReturnType<typeof buildBotActions>
+export type BotActions = ReturnType<typeof buildBotActions>
 
 export type BotCommand = PlainMessage<SlashCommand> & {
     paid?: RouteConfig
 }
 
-export type BotHandler = ReturnType<typeof buildBotActions>
+export type BotHandler = Context
 
 // StandardSchema type aliases for convenience
 export type InferInput<Schema extends StandardSchemaV1> = NonNullable<
@@ -249,126 +271,39 @@ export type CreateChannelParams = {
 }
 
 export type BotEvents<Commands extends BotCommand[] = []> = {
-    message: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The decrypted message content */
-            message: string
-            /** In case of a reply, that's  the eventId of the message that got replied */
-            replyId: string | undefined
-            /** In case of a thread, that's the thread id where the message belongs to */
-            threadId: string | undefined
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** Convenience flag to check if the bot was mentioned */
-            isMentioned: boolean
-        },
-    ) => void | Promise<void>
+    message: (ctx: MessageContext, event: BasePayload & MessageEventData) => void | Promise<void>
     redaction: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID that got redacted */
-            refEventId: string
-        },
+        ctx: RedactionContext,
+        event: BasePayload & RedactionEventData,
     ) => void | Promise<void>
     messageEdit: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID of the message that got edited */
-            refEventId: string
-            /** New message */
-            message: string
-            /** In case of a reply, that's  the eventId of the message that got replied */
-            replyId: string | undefined
-            /** In case of a thread, that's the thread id where the message belongs to */
-            threadId: string | undefined
-            /** Users mentioned in the message */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** Convenience flag to check if the bot was mentioned */
-            isMentioned: boolean
-        },
+        ctx: MessageEditContext,
+        event: BasePayload & MessageEditEventData,
     ) => void | Promise<void>
-    reaction: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The reaction that was added */
-            reaction: string
-            /** The event ID of the message that got reacted to */
-            messageId: string
-            /** The user ID of the user that added the reaction */
-            userId: string
-        },
-    ) => Promise<void> | void
+    reaction: (ctx: ReactionContext, event: BasePayload & ReactionEventData) => Promise<void> | void
     eventRevoke: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The event ID of the message that got revoked */
-            refEventId: string
-        },
+        ctx: RedactionContext,
+        event: BasePayload & RedactionEventData,
     ) => Promise<void> | void
-    tip: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The message ID of the parent of the tip */
-            messageId: string
-            /** The address that sent the tip */
-            senderAddress: Address
-            /** The address that received the tip */
-            receiverAddress: Address
-            /** The user ID that received the tip */
-            receiverUserId: string
-            /** The amount of the tip */
-            amount: bigint
-            /** The currency of the tip */
-            currency: Address
-        },
-    ) => Promise<void> | void
-    channelJoin: (handler: BotActions, event: BasePayload) => Promise<void> | void
-    channelLeave: (handler: BotActions, event: BasePayload) => Promise<void> | void
+    tip: (ctx: TipContext, event: BasePayload & TipEventData) => Promise<void> | void
+    channelJoin: (ctx: Context, event: BasePayload) => Promise<void> | void
+    channelLeave: (ctx: Context, event: BasePayload) => Promise<void> | void
     streamEvent: (
-        handler: BotActions,
-        event: BasePayload & { parsed: ParsedEvent },
+        ctx: StreamEventContext,
+        event: BasePayload & StreamEventData,
     ) => Promise<void> | void
     slashCommand: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The slash command that was invoked (without the /) */
-            command: Commands[number]['name']
-            /** Arguments passed after the command
-             * @example
-             * ```
-             * /help
-             * args: []
-             * ```
-             * ```
-             * /sum 1 2
-             * args: ['1', '2']
-             * ```
-             */
-            args: string[]
-            /** Users mentioned in the command */
-            mentions: Pick<ChannelMessage_Post_Mention, 'userId' | 'displayName'>[]
-            /** The eventId of the message that got replied */
-            replyId: string | undefined
-            /** The thread id where the message belongs to */
-            threadId: string | undefined
-        },
+        ctx: SlashCommandContext<Commands[number]['name']>,
+        event: BasePayload & SlashCommandEventData & { command: Commands[number]['name'] },
     ) => Promise<void> | void
-    rawGmMessage: (
-        handler: BotActions,
-        event: BasePayload & { typeUrl: string; message: Uint8Array },
-    ) => void | Promise<void>
+    rawGmMessage: (ctx: RawGmContext, event: BasePayload & RawGmEventData) => void | Promise<void>
     gm: <Schema extends StandardSchemaV1>(
-        handler: BotActions,
+        ctx: GmContext<Schema>,
         event: BasePayload & { typeUrl: string; schema: Schema; data: InferOutput<Schema> },
     ) => void | Promise<void>
     interactionResponse: (
-        handler: BotActions,
-        event: BasePayload & {
-            /** The interaction response that was received */
-            response: DecryptedInteractionResponse
-            threadId: string | undefined
-        },
+        ctx: InteractionResponseContext,
+        event: BasePayload & InteractionResponseEventData,
     ) => void | Promise<void>
 }
 
@@ -393,7 +328,6 @@ export class Bot<Commands extends BotCommand[] = []> {
     botId: string
     viem: WalletClient<Transport, Chain, Account>
     private readonly jwtSecret: Uint8Array
-    private currentMessageTags: PlainMessage<Tags> | undefined
     private readonly emitter: Emitter<BotEvents<Commands>> = createNanoEvents()
     private readonly slashCommandHandlers: Map<string, BotEvents<Commands>['slashCommand']> =
         new Map()
@@ -402,7 +336,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         {
             schema: StandardSchemaV1
             handler: (
-                handler: BotActions,
+                ctx: Context<BasePayload & { typeUrl: string; data: any }>,
                 event: BasePayload & { typeUrl: string; data: any },
             ) => void | Promise<void>
         }
@@ -430,7 +364,6 @@ export class Bot<Commands extends BotCommand[] = []> {
         this.botId = clientV2.userId
         this.viem = viem
         this.jwtSecret = bin_fromBase64(jwtSecretBase64)
-        this.currentMessageTags = undefined
         this.commands = commands
         this.appAddress = appAddress
         this.identityConfig = identityConfig
@@ -461,7 +394,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         return app
     }
 
-    private async jwtMiddleware(c: Context, next: Next): Promise<Response | void> {
+    private async jwtMiddleware(c: HonoContext, next: Next): Promise<Response | void> {
         const authHeader = c.req.header('Authorization')
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -489,7 +422,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         await next()
     }
 
-    private async webhookHandler(c: Context) {
+    private async webhookHandler(c: HonoContext) {
         const body = await c.req.arrayBuffer()
         const encryptionDevice = this.client.crypto.getUserDevice()
         const request = fromBinary(AppServiceRequestSchema, new Uint8Array(body))
@@ -533,6 +466,63 @@ export class Bot<Commands extends BotCommand[] = []> {
         return c.body(toBinary(AppServiceResponseSchema, response), 200)
     }
 
+    /**
+     * Create a Context instance for a handler invocation
+     * @param basePayload - The base event payload
+     * @param eventData - Event-specific data to include in the context
+     * @param tags - Message tags for threading
+     */
+    private makeBasePayload(
+        parsed: ParsedEvent,
+        streamId: string,
+        userIdOverride?: Address,
+    ): BasePayload {
+        return {
+            userId: userIdOverride ?? userIdFromAddress(parsed.event.creatorAddress),
+            spaceId: spaceIdFromChannelId(streamId),
+            channelId: streamId,
+            eventId: parsed.hashStr,
+            event: parsed.event,
+            createdAt: new Date(Number(parsed.event.createdAtEpochMs)),
+        }
+    }
+
+    private createContext<TEventData extends Record<string, unknown> = Record<string, unknown>>(
+        parsed: ParsedEvent,
+        streamId: string,
+        payload: BasePayload & TEventData,
+    ): Context<BasePayload & TEventData> {
+        return new Context<BasePayload & TEventData>({
+            payload,
+            tags: parsed.event.tags,
+            client: this.client,
+            viem: this.viem,
+            appAddress: this.appAddress,
+            getStreamViewFn: (streamId: string) => this.getStreamView(streamId),
+        })
+    }
+
+    /**
+     * Create a context from a pre-constructed BasePayload (for payment handlers where parsed event isn't available)
+     */
+    private createContextFromPayload<
+        TEventData extends Record<string, unknown> = Record<string, unknown>,
+    >(
+        basePayload: BasePayload,
+        eventData?: TEventData,
+        tags?: PlainMessage<Tags>,
+    ): Context<BasePayload & TEventData> {
+        const payload = { ...basePayload, ...eventData } as BasePayload & TEventData
+        return new Context<BasePayload & TEventData>({
+            payload,
+            tags,
+            client: this.client,
+            viem: this.viem,
+            appAddress: this.appAddress,
+            getStreamViewFn: (streamId: string) => this.getStreamView(streamId),
+        })
+    }
+
     // TODO: onTip
     private async handleEvent(appEvent: EventPayload) {
         if (!appEvent.payload.case || !appEvent.payload.value) return
@@ -565,22 +555,14 @@ export class Bot<Commands extends BotCommand[] = []> {
                 if (this.eventDedup.checkAndAdd(streamId, parsed.hashStr)) {
                     continue
                 }
-                const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
-                this.currentMessageTags = parsed.event.tags
                 debug('emit:streamEvent', {
                     userId: userIdFromAddress(parsed.event.creatorAddress),
                     channelId: streamId,
                     eventId: parsed.hashStr,
                 })
-                this.emitter.emit('streamEvent', this.client, {
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
-                    eventId: parsed.hashStr,
-                    parsed: parsed,
-                    event: parsed.event,
-                    createdAt,
-                })
+                const streamEventPayload = { ...this.makeBasePayload(parsed, streamId), parsed }
+                const streamEventCtx = this.createContext(parsed, streamId, streamEventPayload)
+                this.emitter.emit('streamEvent', streamEventCtx, streamEventPayload)
                 switch (parsed.event.payload.case) {
                     case 'channelPayload':
                     case 'dmChannelPayload':
@@ -614,15 +596,16 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 channelId: streamId,
                                 refEventId,
                             })
-                            this.emitter.emit('eventRevoke', this.client, {
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
+                            const eventRevokePayload = {
+                                ...this.makeBasePayload(parsed, streamId),
                                 refEventId,
-                                eventId: parsed.hashStr,
-                                createdAt,
-                                event: parsed.event,
-                            })
+                            }
+                            const eventRevokeCtx = this.createContext(
+                                parsed,
+                                streamId,
+                                eventRevokePayload,
+                            )
+                            this.emitter.emit('eventRevoke', eventRevokeCtx, eventRevokePayload)
                         } else if (
                             parsed.event.payload.value.content.case === 'channelProperties'
                         ) {
@@ -655,22 +638,33 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 payload.encryptedData.senderKey,
                             )
                             const decrypted = bin_fromBase64(decryptedBase64)
-                            const response = fromBinary(InteractionResponsePayloadSchema, decrypted)
-                            this.emitter.emit('interactionResponse', this.client, {
-                                event: parsed.event,
-                                userId: userIdFromAddress(parsed.event.creatorAddress),
-                                spaceId: spaceIdFromChannelId(streamId),
-                                channelId: streamId,
-                                eventId: parsed.hashStr,
-                                createdAt,
+                            const interactionResponse = fromBinary(
+                                InteractionResponsePayloadSchema,
+                                decrypted,
+                            )
+                            const interactionResponseData = {
                                 response: {
                                     recipient: payload.recipient,
-                                    payload: response,
+                                    payload: interactionResponse,
                                 },
                                 threadId: payload.threadId
                                     ? bin_toHexString(payload.threadId)
                                     : undefined,
-                            })
+                            }
+                            const interactionResponsePayload = {
+                                ...this.makeBasePayload(parsed, streamId),
+                                ...interactionResponseData,
+                            }
+                            const interactionResponseCtx = this.createContext(
+                                parsed,
+                                streamId,
+                                interactionResponsePayload,
+                            )
+                            this.emitter.emit(
+                                'interactionResponse',
+                                interactionResponseCtx,
+                                interactionResponsePayload,
+                            )
                         } else {
                             logNever(parsed.event.payload.value.content)
                         }
@@ -682,37 +676,56 @@ export class Bot<Commands extends BotCommand[] = []> {
                                 {
                                     const membership = parsed.event.payload.value.content.value
                                     const isChannel = isChannelStreamId(streamId)
-                                    // TODO: do we want Bot to listen to onSpaceJoin/onSpaceLeave?
                                     if (!isChannel) continue
                                     if (membership.op === MembershipOp.SO_JOIN) {
+                                        const memberUserId = userIdFromAddress(
+                                            membership.userAddress,
+                                        )
                                         debug('emit:channelJoin', {
-                                            userId: userIdFromAddress(membership.userAddress),
+                                            userId: memberUserId,
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                         })
-                                        this.emitter.emit('channelJoin', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                        })
+                                        const channelJoinPayload = this.makeBasePayload(
+                                            parsed,
+                                            streamId,
+                                            memberUserId,
+                                        )
+                                        const channelJoinCtx = this.createContext(
+                                            parsed,
+                                            streamId,
+                                            channelJoinPayload,
+                                        )
+                                        this.emitter.emit(
+                                            'channelJoin',
+                                            channelJoinCtx,
+                                            channelJoinPayload,
+                                        )
                                     }
                                     if (membership.op === MembershipOp.SO_LEAVE) {
+                                        const memberUserId = userIdFromAddress(
+                                            membership.userAddress,
+                                        )
                                         debug('emit:channelLeave', {
-                                            userId: userIdFromAddress(membership.userAddress),
+                                            userId: memberUserId,
                                             channelId: streamId,
                                             eventId: parsed.hashStr,
                                         })
-                                        this.emitter.emit('channelLeave', this.client, {
-                                            event: parsed.event,
-                                            userId: userIdFromAddress(membership.userAddress),
-                                            spaceId: spaceIdFromChannelId(streamId),
-                                            channelId: streamId,
-                                            eventId: parsed.hashStr,
-                                            createdAt,
-                                        })
+                                        const channelLeavePayload = this.makeBasePayload(
+                                            parsed,
+                                            streamId,
+                                            memberUserId,
+                                        )
+                                        const channelLeaveCtx = this.createContext(
+                                            parsed,
+                                            streamId,
+                                            channelLeavePayload,
+                                        )
+                                        this.emitter.emit(
+                                            'channelLeave',
+                                            channelLeaveCtx,
+                                            channelLeavePayload,
+                                        )
                                     }
                                 }
                                 break
@@ -759,20 +772,25 @@ export class Bot<Commands extends BotCommand[] = []> {
                                                     currency,
                                                     messageId: bin_toHexString(tipEvent.messageId),
                                                 })
-                                                this.emitter.emit('tip', this.client, {
-                                                    event: parsed.event,
-                                                    userId: senderUserId,
-                                                    spaceId: spaceIdFromChannelId(streamId),
-                                                    channelId: streamId,
-                                                    eventId: parsed.hashStr,
-                                                    createdAt,
+                                                const tipPayload = {
+                                                    ...this.makeBasePayload(
+                                                        parsed,
+                                                        streamId,
+                                                        senderUserId,
+                                                    ),
                                                     amount: tipEvent.amount,
                                                     currency: currency as `0x${string}`,
                                                     senderAddress,
                                                     receiverAddress,
                                                     receiverUserId,
                                                     messageId: bin_toHexString(tipEvent.messageId),
-                                                })
+                                                }
+                                                const tipCtx = this.createContext(
+                                                    parsed,
+                                                    streamId,
+                                                    tipPayload,
+                                                )
+                                                this.emitter.emit('tip', tipCtx, tipPayload)
                                             }
                                             break
                                         case undefined:
@@ -819,66 +837,63 @@ export class Bot<Commands extends BotCommand[] = []> {
             return
         }
 
-        const createdAt = new Date(Number(parsed.event.createdAtEpochMs))
         switch (payload.case) {
             case 'post': {
                 if (payload.value.content.case === 'text') {
-                    const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const replyId = payload.value.replyId
                     const threadId = payload.value.threadId
                     const mentions = parseMentions(payload.value.content.value.mentions)
                     const isMentioned = mentions.some((m) => m.userId === this.botId)
-                    const forwardPayload: BotPayload<'message', Commands> = {
-                        event: parsed.event,
-                        userId,
-                        eventId: parsed.hashStr,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        message: payload.value.content.value.body,
-                        createdAt,
-                        mentions,
-                        isMentioned,
-                        replyId,
-                        threadId,
-                    }
+                    const message = payload.value.content.value.body
 
                     if (
                         parsed.event.tags?.messageInteractionType ===
                         MessageInteractionType.SLASH_COMMAND
                     ) {
-                        const { command, args } = parseSlashCommand(
-                            payload.value.content.value.body,
-                        )
+                        const { command, args } = parseSlashCommand(message)
                         const handler = this.slashCommandHandlers.get(command)
                         if (handler) {
-                            void handler(this.client, {
-                                ...forwardPayload,
+                            const slashCommandPayload = {
+                                ...this.makeBasePayload(parsed, streamId),
+                                message,
+                                mentions,
+                                isMentioned,
                                 command: command as Commands[number]['name'],
                                 args,
                                 replyId,
                                 threadId,
-                            })
+                            }
+                            const slashCommandCtx = this.createContext(
+                                parsed,
+                                streamId,
+                                slashCommandPayload,
+                            )
+                            void handler(slashCommandCtx, slashCommandPayload)
                         }
                     } else {
-                        debug('emit:message', forwardPayload)
-                        this.emitter.emit('message', this.client, forwardPayload)
+                        const messagePayload = {
+                            ...this.makeBasePayload(parsed, streamId),
+                            message,
+                            mentions,
+                            isMentioned,
+                            replyId,
+                            threadId,
+                        }
+                        const messageCtx = this.createContext(parsed, streamId, messagePayload)
+                        debug('emit:message', messagePayload)
+                        this.emitter.emit('message', messageCtx, messagePayload)
                     }
                 } else if (payload.value.content.case === 'gm') {
-                    const userId = userIdFromAddress(parsed.event.creatorAddress)
                     const gmContent = payload.value.content.value
-
                     const { typeUrl, value } = gmContent
 
-                    this.emitter.emit('rawGmMessage', this.client, {
-                        event: parsed.event,
-                        userId,
-                        spaceId: spaceIdFromChannelId(streamId),
-                        channelId: streamId,
-                        eventId: parsed.hashStr,
-                        createdAt,
+                    const rawGmPayload = {
+                        ...this.makeBasePayload(parsed, streamId),
                         typeUrl,
                         message: value ?? new Uint8Array(),
-                    })
+                    }
+                    const rawGmCtx = this.createContext(parsed, streamId, rawGmPayload)
+                    this.emitter.emit('rawGmMessage', rawGmCtx, rawGmPayload)
 
                     const typedHandler = this.gmTypedHandlers.get(typeUrl)
 
@@ -894,17 +909,17 @@ export class Bot<Commands extends BotCommand[] = []> {
                             if ('issues' in result && result.issues) {
                                 debug('GM validation failed', { typeUrl, issues: result.issues })
                             } else {
-                                debug('emit:gmMessage', { userId, channelId: streamId })
-                                void typedHandler.handler(this.client, {
-                                    event: parsed.event,
-                                    userId,
-                                    spaceId: spaceIdFromChannelId(streamId),
+                                debug('emit:gmMessage', {
+                                    userId: userIdFromAddress(parsed.event.creatorAddress),
                                     channelId: streamId,
-                                    eventId: parsed.hashStr,
-                                    createdAt,
+                                })
+                                const gmPayload = {
+                                    ...this.makeBasePayload(parsed, streamId),
                                     typeUrl,
                                     data: result.value,
-                                })
+                                }
+                                const gmCtx = this.createContext(parsed, streamId, gmPayload)
+                                void typedHandler.handler(gmCtx, gmPayload)
                             }
                         } catch (error) {
                             debug('GM handler error', { typeUrl, error })
@@ -920,16 +935,13 @@ export class Bot<Commands extends BotCommand[] = []> {
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
                 })
-                this.emitter.emit('reaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                const reactionPayload = {
+                    ...this.makeBasePayload(parsed, streamId),
                     reaction: payload.value.reaction,
                     messageId: payload.value.refEventId,
-                    createdAt,
-                })
+                }
+                const reactionCtx = this.createContext(parsed, streamId, reactionPayload)
+                this.emitter.emit('reaction', reactionCtx, reactionPayload)
                 break
             }
             case 'edit': {
@@ -944,20 +956,17 @@ export class Bot<Commands extends BotCommand[] = []> {
                     messagePreview: payload.value.post?.content.value.body.substring(0, 50),
                     isMentioned,
                 })
-                this.emitter.emit('messageEdit', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                const editPayload = {
+                    ...this.makeBasePayload(parsed, streamId),
                     refEventId: payload.value.refEventId,
                     message: payload.value.post?.content.value.body,
                     mentions,
                     isMentioned,
-                    createdAt,
                     replyId: payload.value.post?.replyId,
                     threadId: payload.value.post?.threadId,
-                })
+                }
+                const editCtx = this.createContext(parsed, streamId, editPayload)
+                this.emitter.emit('messageEdit', editCtx, editPayload)
                 break
             }
             case 'redaction': {
@@ -966,15 +975,12 @@ export class Bot<Commands extends BotCommand[] = []> {
                     channelId: streamId,
                     refEventId: payload.value.refEventId,
                 })
-                this.emitter.emit('redaction', this.client, {
-                    event: parsed.event,
-                    userId: userIdFromAddress(parsed.event.creatorAddress),
-                    eventId: parsed.hashStr,
-                    spaceId: spaceIdFromChannelId(streamId),
-                    channelId: streamId,
+                const redactionPayload = {
+                    ...this.makeBasePayload(parsed, streamId),
                     refEventId: payload.value.refEventId,
-                    createdAt,
-                })
+                }
+                const redactionCtx = this.createContext(parsed, streamId, redactionPayload)
+                this.emitter.emit('redaction', redactionCtx, redactionPayload)
                 break
             }
             default:
@@ -983,7 +989,7 @@ export class Bot<Commands extends BotCommand[] = []> {
     }
 
     private async handlePaymentResponse(
-        handler: BotActions,
+        ctx: InteractionResponseContext,
         event: BasePayload & {
             response: DecryptedInteractionResponse
             threadId: string | undefined
@@ -1047,7 +1053,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         }
 
         // Single status message that gets updated through the flow
-        const statusMsg = await handler.sendMessage(channelId, '🔍 Verifying payment...')
+        const statusMsg = await ctx.sendMessage(channelId, '🔍 Verifying payment...')
 
         // Track settlement state to distinguish payment failures from post-payment failures
         let settlementCompleted = false
@@ -1057,17 +1063,17 @@ export class Bot<Commands extends BotCommand[] = []> {
             const verifyResult = await facilitator.verify(paymentPayload, paymentRequirements)
 
             if (!verifyResult.isValid) {
-                await handler.editMessage(
+                await ctx.editMessage(
                     channelId,
                     statusMsg.eventId,
                     `❌ Payment verification failed: ${verifyResult.invalidReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
+                await ctx.removeEvent(channelId, pending.interactionEventId)
                 return
             }
 
             // Update status: settling
-            await handler.editMessage(
+            await ctx.editMessage(
                 channelId,
                 statusMsg.eventId,
                 `✅ Verified • Settling $${formatUnits(pending.params.value, 6)} USDC...`,
@@ -1076,12 +1082,12 @@ export class Bot<Commands extends BotCommand[] = []> {
             const settleResult = await facilitator.settle(paymentPayload, paymentRequirements)
 
             if (!settleResult.success) {
-                await handler.editMessage(
+                await ctx.editMessage(
                     channelId,
                     statusMsg.eventId,
                     `❌ Settlement failed: ${settleResult.errorReason || 'Unknown error'}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
+                await ctx.removeEvent(channelId, pending.interactionEventId)
                 return
             }
 
@@ -1090,7 +1096,7 @@ export class Bot<Commands extends BotCommand[] = []> {
             transactionHash = settleResult.transaction
 
             // Final success - show receipt
-            await handler.editMessage(
+            await ctx.editMessage(
                 channelId,
                 statusMsg.eventId,
                 `✅ **Payment Complete**\n` +
@@ -1099,20 +1105,39 @@ export class Bot<Commands extends BotCommand[] = []> {
             )
 
             // Delete the signature request now that payment is complete
-            await handler.removeEvent(channelId, pending.interactionEventId)
+            await ctx.removeEvent(channelId, pending.interactionEventId)
 
             // Execute the original command handler (stored with __paid_ prefix)
             const actualHandlerKey = `__paid_${pending.command}`
             const originalHandler = this.slashCommandHandlers.get(actualHandlerKey)
             if (originalHandler) {
-                await originalHandler(this.client, pending.event)
+                // Create a context for the original handler using the stored event data
+                const slashCommandEventData = {
+                    message: '',
+                    mentions: pending.event.mentions,
+                    isMentioned: false,
+                    command: pending.event.command as Commands[number]['name'],
+                    args: pending.event.args,
+                    replyId: pending.event.replyId,
+                    threadId: pending.event.threadId,
+                }
+                const basePayload: BasePayload = {
+                    event: pending.event.event,
+                    userId: pending.event.userId,
+                    spaceId: pending.event.spaceId,
+                    channelId: pending.event.channelId,
+                    eventId: pending.event.eventId,
+                    createdAt: pending.event.createdAt,
+                }
+                const handlerCtx = this.createContextFromPayload(basePayload, slashCommandEventData)
+                await originalHandler(handlerCtx, { ...basePayload, ...slashCommandEventData })
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
 
             if (settlementCompleted) {
                 // Payment succeeded but command handler failed - DO NOT suggest retry
-                await handler.editMessage(
+                await ctx.editMessage(
                     channelId,
                     statusMsg.eventId,
                     `⚠️ **Payment succeeded but command failed**\n` +
@@ -1124,12 +1149,12 @@ export class Bot<Commands extends BotCommand[] = []> {
                 // Don't remove interaction event - payment already processed
             } else {
                 // Actual payment failure (verify or settle threw)
-                await handler.editMessage(
+                await ctx.editMessage(
                     channelId,
                     statusMsg.eventId,
                     `❌ Payment failed: ${errorMessage}`,
                 )
-                await handler.removeEvent(channelId, pending.interactionEventId)
+                await ctx.removeEvent(channelId, pending.interactionEventId)
             }
         }
     }
@@ -1149,14 +1174,7 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @param opts - The options for the message
      */
     async sendMessage(streamId: string, message: string, opts?: PostMessageOpts) {
-        const result = await this.client.sendMessage(
-            streamId,
-            message,
-            opts,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendMessage(streamId, message, opts)
     }
 
     /**
@@ -1166,14 +1184,7 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @param reaction - The reaction to send
      */
     async sendReaction(streamId: string, refEventId: string, reaction: string) {
-        const result = await this.client.sendReaction(
-            streamId,
-            refEventId,
-            reaction,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendReaction(streamId, refEventId, reaction)
     }
 
     /**
@@ -1182,9 +1193,7 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @param refEventId - The eventId of the event to remove
      */
     async removeEvent(streamId: string, refEventId: string) {
-        const result = await this.client.removeEvent(streamId, refEventId, this.currentMessageTags)
-        this.currentMessageTags = undefined
-        return result
+        return this.client.removeEvent(streamId, refEventId)
     }
 
     /**
@@ -1193,8 +1202,7 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @param refEventId - The eventId of the event to remove
      */
     async adminRemoveEvent(streamId: string, refEventId: string) {
-        const result = await this.client.adminRemoveEvent(streamId, refEventId)
-        return result
+        return this.client.adminRemoveEvent(streamId, refEventId)
     }
 
     /**
@@ -1209,15 +1217,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         message: string,
         opts?: PostMessageOpts,
     ) {
-        const result = await this.client.editMessage(
-            streamId,
-            messageId,
-            message,
-            opts,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.editMessage(streamId, messageId, message, opts)
     }
 
     /**
@@ -1234,16 +1234,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         data: InferInput<Schema>,
         opts?: MessageOpts,
     ) {
-        const result = await this.client.sendGM(
-            streamId,
-            typeUrl,
-            schema,
-            data,
-            opts,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendGM(streamId, typeUrl, schema, data, opts)
     }
 
     /**
@@ -1254,15 +1245,7 @@ export class Bot<Commands extends BotCommand[] = []> {
      * @param opts - The options for the message
      */
     async sendRawGM(streamId: string, typeUrl: string, message: Uint8Array, opts?: MessageOpts) {
-        const result = await this.client.sendRawGM(
-            streamId,
-            typeUrl,
-            message,
-            opts,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendRawGM(streamId, typeUrl, message, opts)
     }
 
     /**
@@ -1278,15 +1261,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         recipient?: Uint8Array,
         opts?: MessageOpts,
     ) {
-        const result = await this.client.sendInteractionRequest(
-            streamId,
-            content,
-            recipient,
-            opts,
-            this.currentMessageTags,
-        )
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendInteractionRequest(streamId, content, recipient, opts)
     }
 
     async hasAdminPermission(userId: string, spaceId: string) {
@@ -1328,9 +1303,7 @@ export class Bot<Commands extends BotCommand[] = []> {
             userId: Address
         },
     ) {
-        const result = await this.client.sendTip(params, this.currentMessageTags)
-        this.currentMessageTags = undefined
-        return result
+        return this.client.sendTip(params)
     }
 
     async pinMessage(streamId: string, eventId: string, streamEvent: StreamEvent) {
@@ -1542,7 +1515,7 @@ export class Bot<Commands extends BotCommand[] = []> {
         typeUrl: string,
         schema: Schema,
         handler: (
-            handler: BotActions,
+            ctx: Context<BasePayload & { typeUrl: string; data: InferOutput<Schema> }>,
             event: BasePayload & { typeUrl: string; data: InferOutput<Schema> },
         ) => void | Promise<void>,
     ) {
