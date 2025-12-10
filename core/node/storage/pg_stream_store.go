@@ -923,6 +923,10 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 
 	if len(miniblockParts) > 0 {
 		// fetch and decode miniblocks from external storage outside stream lock
+		if s.externalStorage == nil {
+			return nil, RiverError(Err_INTERNAL, "external storage not configured but required for stream miniblocks").
+				Tag("streamId", streamId)
+		}
 		fromInclusive, toExclusive := miniblockParts[0].Number, miniblockParts[len(miniblockParts)-1].Number+1
 		miniblocksData, err := s.externalStorage.DownloadMiniblockData(
 			ctx, streamId, miniblockParts, []external.MiniblockRange{
