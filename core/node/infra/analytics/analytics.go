@@ -3,6 +3,7 @@ package analytics
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/mixpanel/mixpanel-go"
 
 	"github.com/towns-protocol/towns/core/node/logging"
@@ -12,9 +13,9 @@ import (
 // This abstraction allows for swapping implementations and simplifies testing.
 type Analytics interface {
 	// Track records an event with the given name and properties.
-	// distinctId identifies the user/entity associated with the event.
+	// accountId identifies the user/entity (wallet address) associated with the event.
 	// The call is non-blocking and errors are logged but not returned.
-	Track(ctx context.Context, distinctId string, event string, properties map[string]any)
+	Track(ctx context.Context, accountId common.Address, event string, properties map[string]any)
 }
 
 // New creates a new Analytics implementation.
@@ -33,8 +34,8 @@ type mixpanelAnalytics struct {
 	client *mixpanel.ApiClient
 }
 
-func (m *mixpanelAnalytics) Track(ctx context.Context, distinctId string, event string, properties map[string]any) {
-	e := m.client.NewEvent(event, distinctId, properties)
+func (m *mixpanelAnalytics) Track(ctx context.Context, accountId common.Address, event string, properties map[string]any) {
+	e := m.client.NewEvent(event, accountId.Hex(), properties)
 	// Use context.WithoutCancel to decouple from parent context so the tracking
 	// request completes even if the parent request is cancelled.
 	trackCtx := context.WithoutCancel(ctx)
@@ -49,6 +50,6 @@ func (m *mixpanelAnalytics) Track(ctx context.Context, distinctId string, event 
 // noopAnalytics is a no-op implementation used when analytics is disabled.
 type noopAnalytics struct{}
 
-func (n *noopAnalytics) Track(ctx context.Context, distinctId string, event string, properties map[string]any) {
+func (n *noopAnalytics) Track(ctx context.Context, accountId common.Address, event string, properties map[string]any) {
 	// No-op
 }
