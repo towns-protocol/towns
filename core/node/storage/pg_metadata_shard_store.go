@@ -110,6 +110,18 @@ func (s *PostgresMetadataShardStore) EnsureShardStorage(ctx context.Context, sha
 }
 
 func (s *PostgresMetadataShardStore) ensureShardStorageTx(ctx context.Context, tx pgx.Tx, shardId uint64) error {
+	if _, err := tx.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS metadata (
+			shard_id BIGINT PRIMARY KEY,
+			last_height BIGINT NOT NULL DEFAULT 0,
+			last_app_hash BYTEA NOT NULL DEFAULT ''::BYTEA,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`); err != nil {
+		return WrapRiverError(Err_DB_OPERATION_FAILURE, err).
+			Message("failed to create metadata state table").
+			Tag("shardId", shardId)
+	}
+
 	if _, err := tx.Exec(ctx, s.sqlForShard(`
 		CREATE TABLE IF NOT EXISTS {{streams}} (
 			stream_id BYTEA PRIMARY KEY,
