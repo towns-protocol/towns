@@ -922,33 +922,46 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	}
 
 	if len(miniblockParts) > 0 {
-		// fetch and decode miniblocks from external storage outside stream lock
-		if s.externalStorage == nil {
-			return nil, RiverError(Err_INTERNAL, "external storage not configured but required for stream miniblocks").
-				Tag("streamId", streamId)
-		}
-		fromInclusive, toExclusive := miniblockParts[0].Number, miniblockParts[len(miniblockParts)-1].Number+1
-		miniblocksData, err := s.externalStorage.DownloadMiniblockData(
-			ctx, streamId, miniblockParts, []external.MiniblockRange{
-				{FromInclusive: fromInclusive, ToExclusive: toExclusive},
-			})
+		miniblocks, err := s.downloadAndDecodeExternalMiniblocks(ctx, streamId, miniblockParts)
 		if err != nil {
 			return nil, err
 		}
-
-		ret.Miniblocks = make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
-		for i := fromInclusive; i < toExclusive; i++ {
-			data, ok := miniblocksData[i]
-			if !ok {
-				return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks data not found in external storage").
-					Tag("miniblock", i).
-					Tag("streamId", streamId)
-			}
-			ret.Miniblocks = append(ret.Miniblocks, &MiniblockDescriptor{Number: i, Data: data})
-		}
+		ret.Miniblocks = miniblocks
 	}
 
 	return ret, nil
+}
+
+func (s *PostgresStreamStore) downloadAndDecodeExternalMiniblocks(
+	ctx context.Context,
+	streamId StreamId,
+	miniblockParts []external.MiniblockDescriptor,
+) ([]*MiniblockDescriptor, error) {
+	if !s.ExternalStorageEnabled() {
+		return nil, RiverError(Err_INTERNAL, "external storage not configured but required for stream miniblocks").
+			Tag("streamId", streamId)
+	}
+
+	fromInclusive, toExclusive := miniblockParts[0].Number, miniblockParts[len(miniblockParts)-1].Number+1
+	miniblocksData, err := s.externalStorage.DownloadMiniblockData(
+		ctx, streamId, miniblockParts, []external.MiniblockRange{
+			{FromInclusive: fromInclusive, ToExclusive: toExclusive},
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	miniblocks := make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
+	for i := fromInclusive; i < toExclusive; i++ {
+		data, ok := miniblocksData[i]
+		if !ok {
+			return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks data not found in external storage").
+				Tag("miniblock", i).
+				Tag("streamId", streamId)
+		}
+		miniblocks = append(miniblocks, &MiniblockDescriptor{Number: i, Data: data})
+	}
+	return miniblocks, nil
 }
 
 // readStreamFromLastSnapshotTx returns miniblocks and minipool events from the database. If the stream
@@ -1435,24 +1448,9 @@ func (s *PostgresStreamStore) ReadMiniblocks(
 		return miniblocks, nil
 	}
 
-	// fetch and decode miniblocks from external storage
-	miniblocksData, err := s.externalStorage.DownloadMiniblockData(
-		ctx, streamId, miniblockParts, []external.MiniblockRange{
-			{FromInclusive: fromInclusive, ToExclusive: toExclusive},
-		})
+	miniblocks, err := s.downloadAndDecodeExternalMiniblocks(ctx, streamId, miniblockParts)
 	if err != nil {
 		return nil, err
-	}
-
-	miniblocks = make([]*MiniblockDescriptor, 0, toExclusive-fromInclusive)
-	for i := fromInclusive; i < toExclusive; i++ {
-		data, ok := miniblocksData[i]
-		if !ok {
-			return nil, RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks data not found in external storage").
-				Tag("miniblock", i).
-				Tag("streamId", streamId)
-		}
-		miniblocks = append(miniblocks, &MiniblockDescriptor{Number: i, Data: data})
 	}
 
 	return miniblocks, nil
