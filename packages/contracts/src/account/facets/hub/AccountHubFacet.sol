@@ -4,14 +4,13 @@ pragma solidity ^0.8.29;
 // interfaces
 import {IModule} from "@erc6900/reference-implementation/interfaces/IModule.sol";
 import {IValidationModule} from "@erc6900/reference-implementation/interfaces/IValidationModule.sol";
-import {IAccountModule} from "./IAccountModule.sol";
+import {IAccountHub} from "./IAccountHub.sol";
 import {IExecutionModule, ExecutionManifest, ManifestExecutionFunction, ManifestExecutionHook} from "@erc6900/reference-implementation/interfaces/IExecutionModule.sol";
 import {IExecutionHookModule} from "@erc6900/reference-implementation/interfaces/IExecutionHookModule.sol";
 import {IAppAccount} from "src/spaces/facets/account/IAppAccount.sol";
 
 // libraries
-import "./AccountModule.sol" as AccountModule;
-import {PackedUserOperation} from "@eth-infinitism/account-abstraction/interfaces/PackedUserOperation.sol";
+import "./AccountHubMod.sol" as AccountHub;
 import {CustomRevert} from "src/utils/libraries/CustomRevert.sol";
 import {Validator} from "src/utils/libraries/Validator.sol";
 
@@ -21,8 +20,8 @@ import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
 
-contract AccountModuleFacet is
-    IAccountModule,
+contract AccountHubFacet is
+    IAccountHub,
     IModule,
     IExecutionModule,
     IExecutionHookModule,
@@ -37,24 +36,21 @@ contract AccountModuleFacet is
     bytes4 internal constant _INVALID_SIGNATURE = 0xffffffff;
 
     /// @notice Initializes the facet when added to a Diamond
-    function __AccountModuleFacet_init(
+    function __AccountHubFacet_init(
         address spaceFactory,
         address appRegistry
     ) external onlyInitializing {
         _addInterface(type(IModule).interfaceId);
-        _addInterface(type(IAccountModule).interfaceId);
+        _addInterface(type(IAccountHub).interfaceId);
         _addInterface(type(IValidationModule).interfaceId);
         _addInterface(type(IExecutionModule).interfaceId);
-        __AccountModuleFacet_init_unchained(spaceFactory, appRegistry);
+        __AccountHubFacet_init_unchained(spaceFactory, appRegistry);
     }
 
-    function __AccountModuleFacet_init_unchained(
-        address spaceFactory,
-        address appRegistry
-    ) internal {
+    function __AccountHubFacet_init_unchained(address spaceFactory, address appRegistry) internal {
         Validator.checkAddress(spaceFactory);
         Validator.checkAddress(appRegistry);
-        AccountModule.Layout storage $ = AccountModule.getStorage();
+        AccountHub.Layout storage $ = AccountHub.getStorage();
         ($.spaceFactory, $.appRegistry) = (spaceFactory, appRegistry);
     }
 
@@ -62,47 +58,32 @@ contract AccountModuleFacet is
     function onInstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
         Validator.checkAddress(account);
-
-        if (account != msg.sender)
-            AccountModule.AccountModule__InvalidAccount.selector.revertWith(account);
-
-        AccountModule.Layout storage $ = AccountModule.getStorage();
-        if ($.installed[account])
-            AccountModule.AccountModule__AlreadyInitialized.selector.revertWith(account);
-
-        $.installed[account] = true;
+        AccountHub.installAccount(account);
     }
 
     /// @inheritdoc IModule
     function onUninstall(bytes calldata data) external override nonReentrant {
         address account = abi.decode(data, (address));
         Validator.checkAddress(account);
-
-        if (account != msg.sender)
-            AccountModule.AccountModule__InvalidAccount.selector.revertWith(account);
-
-        AccountModule.Layout storage $ = AccountModule.getStorage();
-        if (!$.installed[account])
-            AccountModule.AccountModule__NotInstalled.selector.revertWith(account);
-        delete $.installed[account];
+        AccountHub.uninstallAccount(account);
     }
 
     function setSpaceFactory(address spaceFactory) external onlyOwner {
         Validator.checkAddress(spaceFactory);
-        AccountModule.setSpaceFactory(spaceFactory);
+        AccountHub.setSpaceFactory(spaceFactory);
     }
 
     function setAppRegistry(address appRegistry) external onlyOwner {
         Validator.checkAddress(appRegistry);
-        AccountModule.setAppRegistry(appRegistry);
+        AccountHub.setAppRegistry(appRegistry);
     }
 
     function getSpaceFactory() external view returns (address) {
-        return AccountModule.getStorage().spaceFactory;
+        return AccountHub.getStorage().spaceFactory;
     }
 
     function getAppRegistry() external view returns (address) {
-        return AccountModule.getStorage().appRegistry;
+        return AccountHub.getStorage().appRegistry;
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -231,11 +212,11 @@ contract AccountModuleFacet is
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function isInstalled(address account) external view returns (bool) {
-        return AccountModule.getStorage().installed[account];
+        return AccountHub.isInstalled(account);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                  VALIDATION MODULE                          */
+    /*                      MODULE HOOKS                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     function preExecutionHook(
@@ -244,8 +225,7 @@ contract AccountModuleFacet is
         uint256,
         bytes calldata
     ) external view returns (bytes memory) {
-        if (sender != AccountModule.getStorage().appRegistry)
-            AccountModule.AccountModule__InvalidCaller.selector.revertWith(sender);
+        AccountHub.onlyRegistry(sender);
         return "";
     }
 
