@@ -1051,10 +1051,13 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			return nil, nil, err
 		}
 
-		// required for fetch any minipool events
-		if len(parts) > 0 {
-			seqNum = parts[len(parts)-1].Number
+		if len(parts) == 0 {
+			return nil, nil, RiverError(
+				Err_INTERNAL,
+				"Miniblocks consistency violation - no external miniblocks")
 		}
+
+		seqNum = parts[len(parts)-1].Number
 
 		// validate consistency: snapshotMiniblockIndex must be within range of fetched parts
 		if len(parts) > 0 && !(parts[0].Number <= snapshotMiniblockIndex && snapshotMiniblockIndex <= seqNum) {
