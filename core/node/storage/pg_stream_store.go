@@ -919,12 +919,41 @@ func (s *PostgresStreamStore) ReadStreamFromLastSnapshot(
 	return ret, nil
 }
 
+var (
+	targetStream, _ = StreamIdFromString("a105f2a7371ca78f9de8b80c9a92132b6e8832cb620000000000000000000000")
+)
+
 func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
 	numPrecedingMiniblocks int,
 ) (*ReadStreamFromLastSnapshotResult, error) {
+	log := logging.FromCtx(ctx)
+	start := time.Now()
+	rowCount := 0
+	mustLogStream := false
+
+	rowCountRecord := tx.QueryRow(
+		ctx,
+		s.sqlForStream(
+			"SELECT count(1) FROM {{minipools}} WHERE stream_id = $1",
+			streamId,
+		), streamId)
+
+	var minipoolSize int
+	if err := rowCountRecord.Scan(&minipoolSize); err == nil {
+		mustLogStream = minipoolSize > 15_000
+	}
+
+	if mustLogStream {
+		log.Infow("START readStreamFromLastSnapshotTx",
+			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks, "minipoolSize", minipoolSize)
+		defer log.Infow("FINISH readStreamFromLastSnapshotTx",
+			"stream", streamId, "numPrecedingMiniblocks", numPrecedingMiniblocks,
+			"took", time.Since(start).String(), "rowCount", rowCount)
+	}
+
 	lockStream, err := s.lockStream(ctx, tx, streamId, false)
 	if err != nil {
 		return nil, err
@@ -936,6 +965,11 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	startSeqNum := snapshotMiniblockIndex - int64(numPrecedingMiniblocks)
 	if startSeqNum < 0 {
 		startSeqNum = 0
+	}
+
+	if mustLogStream {
+		log.Infow("RANGE readStreamFromLastSnapshotTx", "stream", streamId,
+			"numPrecedingMiniblocks", numPrecedingMiniblocks, "startSeqNum", startSeqNum)
 	}
 
 	miniblocksRow, err := tx.Query(
@@ -960,6 +994,8 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 		miniblocksRow,
 		[]any{&blockdata, &seqNum, &snapshot},
 		func() error {
+			rowCount++
+
 			if len(miniblocks) > 0 && seqNum != miniblocks[0].Number+int64(len(miniblocks)) {
 				return RiverError(
 					Err_INTERNAL,
@@ -1001,51 +1037,79 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 			"readLastSeqNum", seqNum)
 	}
 
-	rows, err := tx.Query(
-		ctx,
-		s.sqlForStream(
-			"SELECT envelope, generation, slot_num FROM {{minipools}} WHERE stream_id = $1 ORDER BY generation, slot_num",
-			streamId,
-		),
-		streamId,
-	)
-	if err != nil {
-		return nil, err
-	}
+	const pageSize = 25_000
 
 	var envelopes [][]byte
 	expectedGeneration := seqNum + 1
 	var expectedSlot int64 = -1
 
-	// Scan variables
-	var envelope []byte
-	var generation int64
-	var slotNum int64
-	if _, err := pgx.ForEachRow(rows, []any{&envelope, &generation, &slotNum}, func() error {
-		if generation != expectedGeneration {
-			return RiverError(
-				Err_MINIBLOCKS_STORAGE_FAILURE,
-				"Minipool consistency violation - minipool generation doesn't match last miniblock generation",
-			).
-				Tag("generation", generation).
-				Tag("expectedGeneration", expectedGeneration)
+	page := 0
+	done := false
+	totalPagesFetched := 0
+	maxPagesFetched := 1 + (minipoolSize / pageSize)
+
+	for !done {
+		offset := page * pageSize
+
+		if mustLogStream {
+			log.Infow("PAGE_READ ReadStreamFromLastSnapshotTx",
+				"stream", streamId, "page", page, "offset", offset, "limit", pageSize, "duration", time.Since(start).String())
 		}
-		if slotNum != expectedSlot {
-			return RiverError(
-				Err_MINIBLOCKS_STORAGE_FAILURE,
-				"Minipool consistency violation - slotNums are not sequential",
-			).
-				Tag("slotNum", slotNum).
-				Tag("expectedSlot", expectedSlot)
+		rows, err := tx.Query(
+			ctx,
+			s.sqlForStream(
+				"SELECT envelope, generation, slot_num FROM {{minipools}} WHERE stream_id = $1 ORDER BY generation, slot_num OFFSET $2 LIMIT $3",
+				streamId,
+			),
+			streamId,
+			offset,
+			pageSize,
+		)
+		if err != nil {
+			return nil, err
 		}
 
-		if slotNum >= 0 {
-			envelopes = append(envelopes, envelope)
+		page++
+
+		// Scan variables
+		var envelope []byte
+		var generation int64
+		var slotNum int64
+		rowsRetrieved := 0
+
+		if _, err := pgx.ForEachRow(rows, []any{&envelope, &generation, &slotNum}, func() error {
+			rowsRetrieved++
+			if generation != expectedGeneration {
+				return RiverError(
+					Err_MINIBLOCKS_STORAGE_FAILURE,
+					"Minipool consistency violation - minipool generation doesn't match last miniblock generation",
+				).
+					Tag("generation", generation).
+					Tag("expectedGeneration", expectedGeneration)
+			}
+			if slotNum != expectedSlot {
+				return RiverError(
+					Err_MINIBLOCKS_STORAGE_FAILURE,
+					"Minipool consistency violation - slotNums are not sequential",
+				).
+					Tag("slotNum", slotNum).
+					Tag("expectedSlot", expectedSlot)
+			}
+
+			if slotNum >= 0 {
+				envelopes = append(envelopes, envelope)
+			}
+			expectedSlot++
+			return nil
+		}); err != nil {
+			return nil, err
 		}
-		expectedSlot++
-		return nil
-	}); err != nil {
-		return nil, err
+
+		done = rowsRetrieved < pageSize || totalPagesFetched > maxPagesFetched || rowsRetrieved == 0
+
+		rows.Close()
+
+		totalPagesFetched++
 	}
 
 	return &ReadStreamFromLastSnapshotResult{
