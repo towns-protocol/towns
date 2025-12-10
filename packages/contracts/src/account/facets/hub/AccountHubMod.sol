@@ -23,7 +23,6 @@ event AppRegistrySet(address appRegistry);
 /*                           ERRORS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-/// @notice Emitted when the sender is invalid
 /// @notice Reverted when the sender is invalid
 /// @param sender The address of the sender
 error AccountHub__InvalidSender(address sender);

@@ -10,9 +10,8 @@ import "./AppManagerMod.sol" as AppManager;
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
 import {ReentrancyGuardTransient} from "solady/utils/ReentrancyGuardTransient.sol";
-import {OwnableBase} from "@towns-protocol/diamond/src/facets/ownable/OwnableBase.sol";
 
-contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet, OwnableBase {
+contract AppManagerFacet is IAppAccount, ReentrancyGuardTransient, Facet {
     function __AppManagerFacet_init() external onlyInitializing {
         _addInterface(type(IAppAccount).interfaceId);
     }
