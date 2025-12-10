@@ -1040,7 +1040,7 @@ func (s *PostgresStreamStore) readStreamFromLastSnapshotTx(
 	} else {
 		// streams that are stored in external storage are sealed. Only fetch miniblock parts so that the
 		// actual miniblocks can be fetched and decoded from external storage outside of stream lock.
-		lastMiniblockNum, err := s.getLastMiniblockNumberTx(ctx, tx, streamId)
+		lastMiniblockNum, err := s.getLastMiniblockNumberNoLockTx(ctx, tx, streamId, lockStream)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -2415,8 +2415,12 @@ func (s *PostgresStreamStore) GetLastMiniblockNumber(
 		"GetLastMiniblockNumber",
 		pgx.ReadWrite,
 		func(ctx context.Context, tx pgx.Tx) error {
-			var err error
-			ret, err = s.getLastMiniblockNumberTx(ctx, tx, streamID)
+			lockStreamResult, err := s.lockStream(ctx, tx, streamID, false)
+			if err != nil {
+				return err
+			}
+
+			ret, err = s.getLastMiniblockNumberNoLockTx(ctx, tx, streamID, lockStreamResult)
 			return err
 		},
 		nil,
@@ -2428,16 +2432,13 @@ func (s *PostgresStreamStore) GetLastMiniblockNumber(
 	return ret, nil
 }
 
-func (s *PostgresStreamStore) getLastMiniblockNumberTx(
+// getLastMiniblockNumberNoLockTx expects that callers have a lock on the stream.
+func (s *PostgresStreamStore) getLastMiniblockNumberNoLockTx(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamID StreamId,
+	lockStreamResult *LockStreamResult,
 ) (int64, error) {
-	lockStreamResult, err := s.lockStream(ctx, tx, streamID, false)
-	if err != nil {
-		return 0, err
-	}
-
 	var (
 		maxSeqNum int64
 		table     = "{{miniblocks}}"
