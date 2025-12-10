@@ -2,12 +2,15 @@ package analytics
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/mixpanel/mixpanel-go"
 
 	"github.com/towns-protocol/towns/core/node/logging"
 )
+
+const trackTimeout = 10 * time.Second
 
 // Analytics provides an interface for tracking product analytics events.
 // This abstraction allows for swapping implementations and simplifies testing.
@@ -41,10 +44,11 @@ func (m *mixpanelAnalytics) Track(
 	properties map[string]any,
 ) {
 	e := m.client.NewEvent(event, accountId.Hex(), properties)
-	// Use context.WithoutCancel to decouple from parent context so the tracking
-	// request completes even if the parent request is cancelled.
-	trackCtx := context.WithoutCancel(ctx)
+	// Use context.WithoutCancel to decouple from parent context cancellation,
+	// then add a timeout to prevent goroutine accumulation if Mixpanel is unreachable.
+	trackCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), trackTimeout)
 	go func() {
+		defer cancel()
 		if err := m.client.Track(trackCtx, []*mixpanel.Event{e}); err != nil {
 			log := logging.FromCtx(trackCtx)
 			log.Errorw("Failed to track analytics event", "event", event, "error", err)
