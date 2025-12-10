@@ -140,7 +140,7 @@ func (s *Service) debugTrimStream(
 	req *connect.Request[InfoRequest],
 ) (*connect.Response[InfoResponse], error) {
 	if len(req.Msg.GetDebug()) != 2 {
-		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a sync id and stream id")
+		return nil, RiverError(Err_DEBUG_ERROR, "trim requires a stream id")
 	}
 
 	streamID, err := shared.StreamIdFromString(req.Msg.Debug[1])
