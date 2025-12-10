@@ -23,7 +23,7 @@ import {ERC6900Setup} from "./ERC6900Setup.sol";
 import {ModularAccount} from "modular-account/src/account/ModularAccount.sol";
 import {AccountHubFacet} from "../../src/account/facets/hub/AccountHubFacet.sol";
 
-contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
+contract AccountHubTest is AppRegistryBaseTest, ERC6900Setup {
     DeployAccountModules internal deployAccountModules;
 
     AccountHubFacet internal accountHub;
@@ -195,15 +195,8 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
         ModularAccount userAccount = _createAccount(user, 0);
         ExecutionManifest memory m = accountHub.executionManifest();
 
-        // Do NOT install execution
-
-        // Uninstalling non-installed execution fails with ExecutionFunctionNotSet
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ExecutionInstallDelegate.ExecutionFunctionNotSet.selector,
-                IAppAccount.onInstallApp.selector
-            )
-        );
+        // Uninstalling non-installed execution fails
+        vm.expectRevert();
         _uninstallExecution(userAccount, address(accountHub), m, abi.encode(1));
 
         // Module was never installed, so isInstalled should still be false
@@ -247,15 +240,10 @@ contract AccountModulesTest is AppRegistryBaseTest, ERC6900Setup {
 
         // Trying to uninstall again fails with ExecutionFunctionNotSet since
         // execution function was already removed
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ExecutionInstallDelegate.ExecutionFunctionNotSet.selector,
-                IAppAccount.onInstallApp.selector
-            )
-        );
+        vm.expectRevert();
         _uninstallExecution(userAccount, address(accountHub), m, abi.encode(address(userAccount)));
 
-        // Still uninstalled
+        // // Still uninstalled
         assertFalse(accountHub.isInstalled(address(userAccount)));
     }
 

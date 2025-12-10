@@ -19,31 +19,30 @@ event SpaceFactorySet(address spaceFactory);
 /// @param appRegistry The address of the app registry
 event AppRegistrySet(address appRegistry);
 
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                           ERRORS                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// @notice Emitted when the sender is invalid
+/// @notice Reverted when the sender is invalid
 /// @param sender The address of the sender
 error AccountHub__InvalidSender(address sender);
 
-/// @notice Emitted when the account is already initialized
+/// @notice Reverted when the account is already initialized
 /// @param account The address of the account
 error AccountHub__AlreadyInitialized(address account);
 
-/// @notice Emitted when the account is invalid
+/// @notice Reverted when the account is invalid
 /// @param account The address of the account
 error AccountHub__InvalidAccount(address account);
 
-/// @notice Emitted when the account is not installed
+/// @notice Reverted when the account is not installed
 /// @param account The address of the account
 error AccountHub__NotInstalled(address account);
 
-/// @notice Emitted when the sender is not the registry
+/// @notice Reverted when the sender is not the registry
 /// @param sender The address of the sender
 error AccountHub__InvalidCaller(address sender);
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         STORAGE                            */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -72,10 +71,8 @@ function getStorage() pure returns (Layout storage $) {
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                         FUNCTIONS                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
 function installAccount(address account) {
-    if (account != msg.sender)
-        AccountHub__InvalidAccount.selector.revertWith(account);
+    if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
 
     Layout storage $ = getStorage();
     if ($.installed[account]) AccountHub__AlreadyInitialized.selector.revertWith(account);
@@ -83,7 +80,7 @@ function installAccount(address account) {
 }
 
 function uninstallAccount(address account) {
-    if (account != msg.sender) AccountHub__InvalidCaller.selector.revertWith(account);
+    if (account != msg.sender) AccountHub__InvalidAccount.selector.revertWith(account);
 
     Layout storage $ = getStorage();
     if (!$.installed[account]) AccountHub__NotInstalled.selector.revertWith(account);
@@ -118,9 +115,7 @@ function getAppRegistry() view returns (address) {
 }
 
 /// @notice Checks if the caller is the registry
-/// @dev Reverts if the caller is not the registry
+/// @dev Guard function: reverts if the caller is not the registry
 function onlyRegistry(address caller) view {
     if (caller != getStorage().appRegistry) AccountHub__InvalidCaller.selector.revertWith(caller);
 }
-
-
