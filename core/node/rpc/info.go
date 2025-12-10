@@ -165,7 +165,8 @@ func (s *Service) debugTrimStream(
 		return nil, RiverError(Err_DEBUG_ERROR, "no stream history miniblocks setting set for stream")
 	}
 
-	start := latestRange.EndInclusive
+	lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
+	start := lastSnapshotMiniblock
 	if historyWindow >= math.MaxInt64 {
 		start -= math.MaxInt64
 	} else {
@@ -185,7 +186,6 @@ func (s *Service) debugTrimStream(
 
 	var nullifySnapshotMbs []int64
 	if len(latestRange.SnapshotSeqNums) > 0 {
-		lastSnapshotMiniblock := slices.Max(latestRange.SnapshotSeqNums)
 		nullifySnapshotMbs = storage.DetermineStreamSnapshotsToNullify(
 			latestRange.StartInclusive, lastSnapshotMiniblock-1, latestRange.SnapshotSeqNums,
 			retentionIntervalMbs, storage.MinKeepMiniblocks,
@@ -207,7 +207,7 @@ func (s *Service) debugTrimStream(
 			Message("failed to trim stream")
 	}
 
-	return nil, nil
+	return connect.NewResponse(&InfoResponse{}), nil
 }
 
 func (s *Service) debugInfoMakeMiniblock(
