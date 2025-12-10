@@ -36,7 +36,7 @@ func NewPostgresStreamCookieStore(pool *pgxpool.Pool, tableName string) *Postgre
 	}
 }
 
-// GetStreamCookie retrieves a stored cookie for a stream.
+// GetSyncCookie retrieves a stored cookie for a stream.
 // Returns (nil, zero time, nil) if no cookie exists for the stream.
 func (s *PostgresStreamCookieStore) GetSyncCookie(
 	ctx context.Context,
@@ -71,8 +71,8 @@ func (s *PostgresStreamCookieStore) GetSyncCookie(
 	}, updatedAt, nil
 }
 
-// PersistSyncCookie stores or updates the sync cookie for a stream.
-func (s *PostgresStreamCookieStore) PersistSyncCookie(
+// WriteSyncCookie stores or updates the sync cookie for a stream.
+func (s *PostgresStreamCookieStore) WriteSyncCookie(
 	ctx context.Context,
 	streamID shared.StreamId,
 	cookie *protocol.SyncCookie,

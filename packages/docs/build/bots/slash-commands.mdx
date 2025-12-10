@@ -22,7 +22,7 @@ Slash commands are special message types that:
 Commands are defined in a TypeScript file (typically `src/commands.ts`):
 
 ```ts src/commands.ts
-import type { PlainMessage, SlashCommand } from '@towns-protocol/proto'
+import type { BotCommand } from '@towns-protocol/bot'
 
 export const commands = [
   {
@@ -41,7 +41,7 @@ export const commands = [
     name: 'weather',
     description: 'Get current weather for a location'
   }
-] as const satisfies PlainMessage<SlashCommand>[]
+] as const satisfies BotCommand[]
 
 export default commands
 ```
@@ -162,6 +162,58 @@ bot.onSlashCommand('ban', async (handler, { userId, spaceId, channelId, mentions
   } catch {
     await handler.sendMessage( channelId, '❌ Failed to ban user')
   }
+})
+```
+
+## Paid Commands
+
+You can create commands that require USDC payments in any network. Payments are processed through the [x402 protocol](https://x402.org).
+
+### Defining Paid Commands
+
+Add a `paid` property to your command definition with a price in USDC:
+
+```ts src/commands.ts
+import type { BotCommand } from '@towns-protocol/bot'
+
+export const commands = [
+  {
+    name: 'generate',
+    description: 'Generate AI content',
+    paid: { price: '$0.20' }
+  }
+] as const satisfies BotCommand[]
+
+export default commands
+```
+
+### How it works
+
+When a user invokes a paid command:
+
+1. Bot sends a signature request for USDC transfer authorization
+2. User signs the request in their wallet
+3. Payment is verified and settled via the x402 facilitator
+4. Your command handler executes after successful payment
+
+```ts src/commands.ts
+export const commands = [
+  {
+    name: 'generate',
+    description: 'Generate AI content',
+    paid: { price: '$0.20' }
+  }
+]
+```
+
+```ts
+// Handler only runs after payment succeeds
+bot.onSlashCommand('generate', async (handler, event) => {
+  // Payment already processed at this point
+  await handler.sendMessage(
+    event.channelId,
+    'Thank you for your purchase! Here is your generated content...'
+  )
 })
 ```
 

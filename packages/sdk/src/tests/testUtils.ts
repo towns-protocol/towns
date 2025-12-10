@@ -34,7 +34,6 @@ import { bin_fromHexString, check, dlog, publicKeyToAddress } from '@towns-proto
 import { ethers, ContractTransaction } from 'ethers'
 import { RiverDbManager } from '../riverDbManager'
 import { StreamRpcClient, makeStreamRpcClient } from '../makeStreamRpcClient'
-import assert from 'assert'
 import { forEachRight } from 'lodash-es'
 import { MockEntitlementsDelegate } from '../utils'
 import { SignerContext, makeSignerContext } from '../signerContext'
@@ -421,7 +420,7 @@ export const makeDonePromise = (): DonePromise => {
 
 export const sendFlush = async (client: StreamRpcClient): Promise<void> => {
     const r = await client.info({ debug: ['flush_cache'] })
-    assert(r.graffiti === 'cache flushed')
+    check(r.graffiti === 'cache flushed')
 }
 
 export async function* iterableWrapper<T>(

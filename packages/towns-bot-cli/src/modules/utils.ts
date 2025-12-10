@@ -47,6 +47,19 @@ export function getRunCommand(packageManager: string, script: string): string {
     }
 }
 
+export function getDlxCommand(packageManager: string): string {
+    switch (packageManager) {
+        case 'bun':
+            return 'bunx'
+        case 'yarn':
+            return 'yarn dlx'
+        case 'pnpm':
+            return 'pnpm dlx'
+        default:
+            return 'npx'
+    }
+}
+
 export function runCommand(
     command: string,
     args: string[],
@@ -64,6 +77,41 @@ export function runCommand(
                 reject(new Error(`Command failed with exit code ${code}`))
             } else {
                 resolve()
+            }
+        })
+
+        child.on('error', reject)
+    })
+}
+
+export function runCommandWithOutput(
+    command: string,
+    args: string[],
+    opts: { cwd?: string } = {},
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const child = spawn(command, args, {
+            stdio: ['ignore', 'pipe', 'pipe'],
+            cwd: opts.cwd,
+            shell: process.platform === 'win32',
+        })
+
+        let stdout = ''
+        let stderr = ''
+
+        child.stdout?.on('data', (data: Buffer) => {
+            stdout += data.toString()
+        })
+
+        child.stderr?.on('data', (data: Buffer) => {
+            stderr += data.toString()
+        })
+
+        child.on('close', (code) => {
+            if (code !== 0) {
+                reject(new Error(stderr || `Command failed with exit code ${code}`))
+            } else {
+                resolve(stdout)
             }
         })
 

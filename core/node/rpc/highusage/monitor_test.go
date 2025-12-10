@@ -21,7 +21,7 @@ func TestMonitorPerMinuteThreshold(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0x1")
 	base := time.Unix(0, 0)
 
@@ -50,7 +50,7 @@ func TestMonitorPerDayThreshold(t *testing.T) {
 		},
 	})
 
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0x2")
 	base := time.Unix(0, 0)
 
@@ -74,7 +74,7 @@ func TestMonitorCleanupRemovesIdleUsers(t *testing.T) {
 		},
 	})
 
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0x3")
 	base := time.Unix(0, 0)
 
@@ -96,7 +96,7 @@ func TestMonitorMultipleCallTypesSameUser(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0x42")
 	base := time.Unix(0, 0)
 
@@ -119,7 +119,7 @@ func TestMonitorMultipleThresholdsSameCallType(t *testing.T) {
 			ThresholdAddEventCount2:  30,
 		},
 	}
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0xbeef")
 	base := time.Unix(0, 0)
 
@@ -146,7 +146,7 @@ func TestMonitorWraparoundInCircularBuffer(t *testing.T) {
 			{Window: 3 * time.Second, Count: 3},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0xab")
 	start := time.Unix(0, 0)
 	for i := 0; i < 3; i++ {
@@ -165,7 +165,7 @@ func TestMonitorEdgeCaseThresholdBoundaries(t *testing.T) {
 			{Window: time.Minute, Count: 2},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0xcd")
 	now := time.Unix(0, 0)
 	monitor.RecordCall(user.Bytes(), now, CallTypeEvent)
@@ -183,7 +183,7 @@ func TestMonitorConfigValidation(t *testing.T) {
 			{Window: time.Minute, Count: 0},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 	user := common.HexToAddress("0xef")
 	monitor.RecordCall(user.Bytes(), time.Unix(0, 0), CallTypeEvent)
 	require.Len(t, monitor.GetHighUsageInfo(time.Unix(30, 0)), 0)
@@ -196,7 +196,7 @@ func TestMonitorConcurrentRecordCall(t *testing.T) {
 			{Window: time.Minute, Count: 200},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 
 	user := common.HexToAddress("0x111")
 	start := time.Unix(0, 0)
@@ -229,7 +229,7 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 			{Window: time.Minute, Count: 50},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 
 	user := common.HexToAddress("0x123")
 	start := time.Unix(0, 0)
@@ -254,7 +254,7 @@ func TestMonitorGetWhileRecording(t *testing.T) {
 func TestMonitorDisabledConfig(t *testing.T) {
 	t.Parallel()
 	cfg := newDetectionConfig(false, nil)
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 
 	user := common.HexToAddress("0xaa")
 	monitor.RecordCall(user.Bytes(), time.Now(), CallTypeEvent)
@@ -268,7 +268,7 @@ func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 			{Window: time.Minute, Count: 10},
 		},
 	})
-	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop())
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), common.Address{})
 
 	var wg sync.WaitGroup
 	start := time.Unix(0, 0)
@@ -286,6 +286,32 @@ func TestMonitorMultipleConcurrentUsers(t *testing.T) {
 
 	usage := monitor.GetHighUsageInfo(start.Add(30 * time.Second))
 	require.Len(t, usage, 5)
+}
+
+func TestMonitorExcludesLocalNode(t *testing.T) {
+	t.Parallel()
+	localNode := common.HexToAddress("0x1111111111111111111111111111111111111111")
+	cfg := newDetectionConfig(true, map[CallType][]Threshold{
+		CallTypeEvent: {
+			{Window: time.Minute, Count: 2},
+		},
+	})
+	monitor := NewCallRateMonitor(context.Background(), cfg, zap.NewNop(), localNode)
+	base := time.Unix(0, 0)
+
+	// Local node events should be ignored
+	monitor.RecordCall(localNode.Bytes(), base, CallTypeEvent)
+	monitor.RecordCall(localNode.Bytes(), base.Add(time.Second), CallTypeEvent)
+	snapshot := monitor.GetHighUsageInfo(base.Add(2 * time.Second))
+	require.Len(t, snapshot, 0, "local node events should not be recorded")
+
+	// Other users should still be tracked - need 2 calls to hit threshold
+	otherUser := common.HexToAddress("0x2222222222222222222222222222222222222222")
+	monitor.RecordCall(otherUser.Bytes(), base.Add(3*time.Second), CallTypeEvent)
+	monitor.RecordCall(otherUser.Bytes(), base.Add(4*time.Second), CallTypeEvent)
+	snapshot = monitor.GetHighUsageInfo(base.Add(5 * time.Second))
+	require.Len(t, snapshot, 1)
+	require.Equal(t, otherUser, snapshot[0].User)
 }
 
 func newDetectionConfig(enabled bool, thresholds map[CallType][]Threshold) config.HighUsageDetectionConfig {

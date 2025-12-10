@@ -5,22 +5,21 @@ WORKDIR /river
 # Install dependencies needed for Sharp and other native modules
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    git curl ca-certificates build-essential libvips-dev && \
+    git curl ca-certificates build-essential libvips-dev unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js 20
+# Install Node.js (needed for npm pack in @towns-protocol/generated build)
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Enable Corepack and install Yarn
-RUN corepack enable && \
-    corepack prepare yarn@3.8.0 --activate
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash && \
+    ln -s /root/.bun/bin/bun /usr/local/bin/bun && \
+    ln -s /root/.bun/bin/bunx /usr/local/bin/bunx
 
 # Copy monorepo configuration for dependency resolution
-COPY package.json yarn.lock .yarnrc.yml turbo.json buf.yaml ./
-COPY .yarn/releases .yarn/releases
-COPY .yarn/plugins .yarn/plugins
+COPY buf.yaml package.json bunfig.toml bun.lock turbo.json ./
 COPY packages/tsconfig.base.json ./packages/
 
 # Copy workspace package.json files for dependency resolution
@@ -39,7 +38,7 @@ COPY ./packages/prettier-config/package.json ./packages/prettier-config/
 COPY ./protocol/package.json ./protocol/
 
 # Install dependencies (cached unless package.json files change)
-RUN yarn install && yarn cache clean
+RUN bun install && bun pm cache rm
 
 # Copy remaining source code (only packages needed for build)
 COPY ./protocol ./protocol
@@ -54,7 +53,7 @@ COPY ./packages/encryption ./packages/encryption
 COPY ./packages/rpc-connector ./packages/rpc-connector
 COPY ./packages/stream-metadata ./packages/stream-metadata
 
-RUN yarn run turbo build --filter @towns-protocol/stream-metadata...
+RUN bun run turbo build --filter @towns-protocol/stream-metadata...
 
 # create runner image with only the necessary files
 FROM node:lts-alpine3.20 AS runner
@@ -66,15 +65,15 @@ COPY --from=builder /river/packages/stream-metadata/dist /river/packages/stream-
 
 # install external dependencies that were excluded from the bundle
 WORKDIR /river/packages/stream-metadata
-RUN yarn init --yes
+RUN npm init --yes
 
 # We need to install @towns-protocol/olm here because esbuild
 # isnt smart enough to read the export field in package json
 # and get the node specific import in the bundle step
-RUN yarn add dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && yarn cache clean
+RUN npm install dd-trace@^5.19.0 @towns-protocol/olm@3.2.28 sharp@0.34.3 && npm cache clean --force
 
 # Force rebuild sharp to ensure correct Linux binaries and clean cache
-RUN yarn remove sharp && yarn add sharp@0.34.3 && yarn cache clean
+RUN npm uninstall sharp && npm install sharp@0.34.3 && npm cache clean --force
 
 # run the service
 ARG GIT_SHA

@@ -7,6 +7,8 @@ import (
 )
 
 // validateModifySync validates the ModifySyncRequest to ensure it is well-formed.
+// This performs structural validation only (empty request, invalid stream IDs, duplicates).
+// Stream existence in cache is checked during processing to allow partial success.
 func validateModifySync(req *ModifySyncRequest) error {
 	// Make sure the request is not empty
 	if len(req.GetAddStreams()) == 0 && len(req.GetRemoveStreams()) == 0 &&
@@ -28,7 +30,7 @@ func validateModifySync(req *ModifySyncRequest) error {
 		seen[streamId] = struct{}{}
 	}
 
-	// Prevent duplicates in the add list
+	// Prevent duplicates in the add list.
 	seen = make(map[StreamId]struct{}, len(req.GetAddStreams()))
 	for _, c := range req.GetAddStreams() {
 		streamId, err := StreamIdFromBytes(c.GetStreamId())
@@ -39,6 +41,7 @@ func validateModifySync(req *ModifySyncRequest) error {
 		if _, exists := seen[streamId]; exists {
 			return RiverError(Err_INVALID_ARGUMENT, "Duplicate stream in add list")
 		}
+
 		seen[streamId] = struct{}{}
 	}
 

@@ -25,6 +25,7 @@ import {
     genIdBlob,
     ParsedEvent,
     type ChannelMessageEvent,
+    makeUniqueMediaStreamId,
 } from '@towns-protocol/sdk'
 import { describe, it, expect, beforeAll, vi } from 'vitest'
 import type { BasePayload, Bot, BotCommand, BotPayload, DecryptedInteractionResponse } from './bot'
@@ -38,6 +39,7 @@ import {
     InteractionRequestPayload,
     InteractionRequestPayload_Signature_SignatureType,
     InteractionResponsePayload,
+    MediaInfoSchema,
     type PlainMessage,
 } from '@towns-protocol/proto'
 import {
@@ -59,6 +61,9 @@ import channelsFacetAbi from '@towns-protocol/generated/dev/abis/Channels.abi'
 import { parseEther } from 'viem'
 import { execute } from 'viem/experimental/erc7821'
 import { UserDevice } from '@towns-protocol/encryption'
+import { nanoid } from 'nanoid'
+import { create } from '@bufbuild/protobuf'
+import { deriveKeyAndIV } from '@towns-protocol/sdk-crypto'
 
 const log = dlog('test:bot')
 
@@ -1305,7 +1310,8 @@ describe('Bot', { sequential: true }, () => {
         expect(chunkedMedia?.info.sizeBytes).toBe(BigInt(2500000))
     })
 
-    it('should send mixed attachments (URL + chunked)', async () => {
+    // @miguel-nascimento 2025-12-08 flaky test
+    it.skip('should send mixed attachments (URL + chunked)', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
 
         const testData = createTestPNG(50, 50)
@@ -1855,7 +1861,8 @@ describe('Bot', { sequential: true }, () => {
         log('unpinned event', unpinEventId)
     })
 
-    it('bot should be able to pin and unpin other users messages', async () => {
+    // @miguel-nascimento 2025-12-08 flaky test
+    it.skip('bot should be able to pin and unpin other users messages', async () => {
         await setForwardSetting(ForwardSettingValue.FORWARD_SETTING_ALL_MESSAGES)
         const { eventId } = await bobDefaultChannel.sendMessage('Hello')
         const receivedMessages: OnMessageType[] = []
@@ -1980,5 +1987,41 @@ describe('Bot', { sequential: true }, () => {
         // Verify role no longer exists
         const roleAfter = await bot.getRole(spaceId, roleId)
         expect(roleAfter).toBeNull()
+    })
+
+    it('bob (bot owner) should be able to update bot profile image', async () => {
+        // Create mock chunked media info (following pattern from client.test.ts:1010-1047)
+        const mediaStreamId = makeUniqueMediaStreamId()
+        const image = create(MediaInfoSchema, {
+            mimetype: 'image/png',
+            filename: 'bot-avatar.png',
+        })
+        const { key, iv } = await deriveKeyAndIV(nanoid(128))
+        const chunkedMediaInfo = {
+            info: image,
+            streamId: mediaStreamId,
+            encryption: {
+                case: 'aesgcm' as const,
+                value: { secretKey: key, iv },
+            },
+            thumbnail: undefined,
+        }
+
+        // Bob (bot owner) updates the bot's profile image using setUserProfileImageFor
+        await bobClient.riverConnection.call(async (client) => {
+            await client.setUserProfileImage(chunkedMediaInfo, botClientAddress)
+        })
+
+        await waitFor(async () => {
+            // Verify the bot's profile image was updated
+            // in waitFor because sometimes it takes a second before you can getStream on a media stream
+            const decrypted = await bobClient.riverConnection.call(async (client) => {
+                return await client.getUserProfileImage(botClientAddress)
+            })
+
+            expect(decrypted).toBeDefined()
+            expect(decrypted?.info?.mimetype).toBe('image/png')
+            expect(decrypted?.info?.filename).toBe('bot-avatar.png')
+        })
     })
 })

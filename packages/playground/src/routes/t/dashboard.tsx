@@ -1,5 +1,5 @@
 import { Outlet, useNavigate } from 'react-router-dom'
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useMemo, useState } from 'react'
 import {
     useDm,
     useGdm,
@@ -44,9 +44,6 @@ export const DashboardRoute = () => {
     const { streamIds: dmStreamIds } = useUserDms()
     const { data: bots, isLoading: botsLoading } = useAllBots()
 
-    useEffect(() => {
-        console.log('bots', bots)
-    }, [bots])
     const [joinSpaceDialogOpen, setJoinSpaceDialogOpen] = useState(false)
     const [createSpaceDialogOpen, setCreateSpaceDialogOpen] = useState(false)
     const [createDmDialogOpen, setCreateDmDialogOpen] = useState(false)

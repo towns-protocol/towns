@@ -1,20 +1,20 @@
 {
   "name": "@towns-protocol/contracts",
-  "version": "0.0.430",
+  "version": "0.0.434",
   "scripts": {
     "clean": "forge clean",
     "compile": "forge build",
-    "format": "yarn prettier:write",
-    "lint": "yarn solhint \"{script,src,tests}/**/*.sol\"",
+    "format": "bun run prettier:write",
+    "lint": "bun run solhint \"{script,src,tests}/**/*.sol\"",
     "prettier:check": "prettier --check \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{sol,json,js,md,yml,ts}\" --ignore-path \".prettierignore\"",
     "snapshot": "forge snapshot --isolate",
     "test": "forge test --ffi --nmc Fork --fuzz-runs 4096",
-    "test:unit": "yarn test",
+    "test:unit": "bun run test",
     "typings": "wagmi generate"
   },
   "dependencies": {
-    "@erc6900/reference-implementation": "https://github.com/erc6900/reference-implementation/archive/refs/tags/v0.8.0.tar.gz",
+    "@erc6900/reference-implementation": "github:erc6900/reference-implementation#v0.8.0",
     "@ethereum-attestation-service/eas-contracts": "^1.8.0",
     "@layerzerolabs/oft-evm": "^3.1.4",
     "@openzeppelin/contracts": "^5.4.0",
@@ -47,9 +47,6 @@
     "scripts/**/*.sol",
     "README.md"
   ],
-  "installConfig": {
-    "hoistingLimits": "dependencies"
-  },
   "publishConfig": {
     "access": "public"
   }

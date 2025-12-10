@@ -8,9 +8,9 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "build": "yarn typecheck && yarn compile",
-        "compile": "node ./esbuild.config.mjs",
-        "dev": "yarn build && yarn start",
+        "build": "bun run typecheck && bun run compile",
+        "compile": "bun ./esbuild.config.mjs",
+        "dev": "bun run build && bun run start",
         "lint": "eslint . --ext .ts",
         "start": "node ./dist/index.cjs",
         "test": "echo \"Error: no test specified\" && exit 1",

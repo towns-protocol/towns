@@ -1239,12 +1239,24 @@ export class Client
         return this.makeEventAndAddToStream(spaceStreamId, event, { method: 'setSpaceImage' })
     }
 
-    async setUserProfileImage(chunkedMediaInfo: PlainMessage<ChunkedMedia>) {
-        this.logCall('setUserProfileImage', chunkedMediaInfo.streamId, chunkedMediaInfo.info)
+    async setUserProfileImage(chunkedMediaInfo: PlainMessage<ChunkedMedia>, userId?: string) {
+        this.logCall(
+            'setUserProfileImage',
+            userId,
+            chunkedMediaInfo.streamId,
+            chunkedMediaInfo.info,
+        )
+        const targetUserId = userId ?? this.userId
 
         // create the chunked media to be added
-        const context = this.userId.toLowerCase()
-        const userStreamId = makeUserMetadataStreamId(this.userId)
+        const context = targetUserId.toLowerCase()
+        const userStreamId = makeUserMetadataStreamId(targetUserId)
+
+        // initialize the target user's stream (creates SyncedStream and adds to this.streams)
+        // usually only needed in case of bot owner updating their bot profile image
+        if (targetUserId !== this.userId) {
+            await this.initStream(userStreamId)
+        }
 
         // encrypt the chunked media
         // use the lowercased userId as the key phrase

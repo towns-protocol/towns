@@ -18,18 +18,18 @@ This package contains:
 
 ```bash
 # After fresh clone
-yarn install && yarn build
+bun install && bun run build
 
 # Get artifacts (auto-downloads or generates as needed)
-yarn build
+bun run build
 ```
 
 ## Troubleshooting
 
 ```bash
 # Missing artifacts error
-yarn build
+bun run build
 
 # Clean slate regeneration
-rm -rf dev/ && yarn build
+rm -rf dev/ && bun run build
 ```
