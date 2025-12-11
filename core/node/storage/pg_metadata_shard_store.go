@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -211,6 +212,16 @@ func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEm
 		idx := record.PermanentIndex()
 		if idx <= 0 {
 			return nil, RiverError(Err_INTERNAL, "invalid permanent index", "node", addr, "index", idx)
+		}
+		if slices.Contains(indexes, int32(idx)) {
+			return nil, RiverError(
+				Err_INVALID_ARGUMENT,
+				"node list cannot contain duplicates",
+				"node",
+				addr,
+				"index",
+				idx,
+			)
 		}
 		indexes = append(indexes, int32(idx))
 	}
