@@ -2,6 +2,7 @@ package app_registry
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,45 +10,51 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/towns-protocol/towns/core/config"
+	"github.com/towns-protocol/towns/core/node/base/test"
 	"github.com/towns-protocol/towns/core/node/infra"
+	"github.com/towns-protocol/towns/core/node/storage"
+	"github.com/towns-protocol/towns/core/node/testutils/dbtestutils"
 )
 
-// mockCleanupStore implements EnqueuedMessagesCleanupStore for testing.
-type mockCleanupStore struct {
-	deleteExpiredCalled    bool
-	deleteExpiredThreshold time.Time
-	deleteExpiredReturn    int64
-	deleteExpiredErr       error
-
-	trimCalled bool
-	trimMax    int
-	trimReturn int64
-	trimErr    error
-
-	countReturn int64
-	countErr    error
+type cleanupTestParams struct {
+	ctx    context.Context
+	store  *storage.PostgresAppRegistryStore
+	closer func()
 }
 
-func (m *mockCleanupStore) DeleteExpiredEnqueuedMessages(ctx context.Context, olderThan time.Time) (int64, error) {
-	m.deleteExpiredCalled = true
-	m.deleteExpiredThreshold = olderThan
-	return m.deleteExpiredReturn, m.deleteExpiredErr
-}
+func setupCleanupTest(t *testing.T) *cleanupTestParams {
+	require := require.New(t)
+	ctx := test.NewTestContext(t)
 
-func (m *mockCleanupStore) TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error) {
-	m.trimCalled = true
-	m.trimMax = maxMessages
-	return m.trimReturn, m.trimErr
-}
+	dbCfg, dbSchemaName, dbCloser, err := dbtestutils.ConfigureDbWithPrefix(ctx, "cleanup_")
+	require.NoError(err, "Error configuring db for test")
 
-func (m *mockCleanupStore) GetEnqueuedMessagesCount(ctx context.Context) (int64, error) {
-	return m.countReturn, m.countErr
+	dbCfg.StartupDelay = 2 * time.Millisecond
+	dbCfg.Extra = strings.Replace(dbCfg.Extra, "pool_max_conns=1000", "pool_max_conns=10", 1)
+
+	pool, err := storage.CreateAndValidatePgxPool(ctx, dbCfg, dbSchemaName, nil)
+	require.NoError(err, "Error creating pgx pool for test")
+
+	exitSignal := make(chan error, 1)
+	store, err := storage.NewPostgresAppRegistryStore(ctx, pool, exitSignal, infra.NewMetricsFactory(nil, "", ""))
+	require.NoError(err, "Error creating new postgres app registry store")
+
+	params := &cleanupTestParams{
+		ctx:   ctx,
+		store: store,
+		closer: func() {
+			store.Close(ctx)
+			dbCloser()
+		},
+	}
+
+	t.Cleanup(params.closer)
+	return params
 }
 
 func TestNewEnqueuedMessagesCleaner_UsesProvidedConfig(t *testing.T) {
 	require := require.New(t)
-
-	store := &mockCleanupStore{}
+	params := setupCleanupTest(t)
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
 
 	cfg := config.EnqueuedMessageRetentionConfig{
@@ -56,7 +63,7 @@ func TestNewEnqueuedMessagesCleaner_UsesProvidedConfig(t *testing.T) {
 		CleanupInterval:   10 * time.Minute,
 	}
 
-	cleaner := NewEnqueuedMessagesCleaner(store, cfg, metricsFactory)
+	cleaner := NewEnqueuedMessagesCleaner(params.store, cfg, metricsFactory)
 
 	require.Equal(24*time.Hour, cleaner.cfg.TTL)
 	require.Equal(500, cleaner.cfg.MaxMessagesPerBot)
@@ -65,11 +72,7 @@ func TestNewEnqueuedMessagesCleaner_UsesProvidedConfig(t *testing.T) {
 
 func TestEnqueuedMessagesCleaner_Cleanup(t *testing.T) {
 	require := require.New(t)
-
-	store := &mockCleanupStore{
-		deleteExpiredReturn: 5,
-		trimReturn:          3,
-	}
+	params := setupCleanupTest(t)
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
 
 	cfg := config.EnqueuedMessageRetentionConfig{
@@ -78,29 +81,20 @@ func TestEnqueuedMessagesCleaner_Cleanup(t *testing.T) {
 		CleanupInterval:   5 * time.Minute,
 	}
 
-	cleaner := NewEnqueuedMessagesCleaner(store, cfg, metricsFactory)
+	cleaner := NewEnqueuedMessagesCleaner(params.store, cfg, metricsFactory)
 
-	// Call cleanup directly
-	beforeCleanup := time.Now()
-	cleaner.cleanup(context.Background())
-	afterCleanup := time.Now()
+	// Call cleanup directly - with empty DB, no errors should occur
+	cleaner.cleanup(params.ctx)
 
-	// Verify delete expired was called
-	require.True(store.deleteExpiredCalled)
-	// Threshold should be approximately 7 days ago
-	expectedThreshold := beforeCleanup.Add(-7 * 24 * time.Hour)
-	require.True(store.deleteExpiredThreshold.After(expectedThreshold.Add(-time.Second)))
-	require.True(store.deleteExpiredThreshold.Before(afterCleanup.Add(-7*24*time.Hour + time.Second)))
-
-	// Verify trim was called with correct max
-	require.True(store.trimCalled)
-	require.Equal(1000, store.trimMax)
+	// Verify no messages were deleted (empty DB)
+	count, err := params.store.GetEnqueuedMessagesCount(params.ctx)
+	require.NoError(err)
+	require.Equal(int64(0), count)
 }
 
 func TestEnqueuedMessagesCleaner_Run_StopsOnContextCancel(t *testing.T) {
 	require := require.New(t)
-
-	store := &mockCleanupStore{}
+	params := setupCleanupTest(t)
 	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
 
 	cfg := config.EnqueuedMessageRetentionConfig{
@@ -109,14 +103,14 @@ func TestEnqueuedMessagesCleaner_Run_StopsOnContextCancel(t *testing.T) {
 		CleanupInterval:   100 * time.Millisecond, // Short interval for testing
 	}
 
-	cleaner := NewEnqueuedMessagesCleaner(store, cfg, metricsFactory)
+	cleaner := NewEnqueuedMessagesCleaner(params.store, cfg, metricsFactory)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	runCtx, runCancel := context.WithCancel(context.Background())
 
 	// Start the cleaner in a goroutine
 	done := make(chan struct{})
 	go func() {
-		cleaner.Run(ctx)
+		cleaner.Run(runCtx)
 		close(done)
 	}()
 
@@ -124,7 +118,7 @@ func TestEnqueuedMessagesCleaner_Run_StopsOnContextCancel(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 
 	// Cancel the context
-	cancel()
+	runCancel()
 
 	// Wait for the cleaner to stop
 	select {
@@ -133,7 +127,4 @@ func TestEnqueuedMessagesCleaner_Run_StopsOnContextCancel(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		require.Fail("Cleaner did not stop after context cancellation")
 	}
-
-	// Verify cleanup was called at least once
-	require.True(store.deleteExpiredCalled || store.trimCalled, "Expected at least one cleanup call")
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/towns-protocol/towns/core/config"
 	"github.com/towns-protocol/towns/core/node/infra"
 	"github.com/towns-protocol/towns/core/node/logging"
+	"github.com/towns-protocol/towns/core/node/storage"
 )
 
 // cleanupMetrics holds Prometheus metrics for the cleanup job.
@@ -18,7 +19,7 @@ type cleanupMetrics struct {
 	deletedByLimit        prometheus.Counter
 }
 
-func newCleanupMetrics(factory infra.MetricsFactory, store EnqueuedMessagesCleanupStore) *cleanupMetrics {
+func newCleanupMetrics(factory infra.MetricsFactory, store storage.AppRegistryStore) *cleanupMetrics {
 	return &cleanupMetrics{
 		enqueuedMessagesTotal: factory.NewGaugeFunc(
 			prometheus.GaugeOpts{
@@ -41,23 +42,16 @@ func newCleanupMetrics(factory infra.MetricsFactory, store EnqueuedMessagesClean
 	}
 }
 
-// EnqueuedMessagesCleanupStore defines the storage methods needed for cleanup.
-type EnqueuedMessagesCleanupStore interface {
-	DeleteExpiredEnqueuedMessages(ctx context.Context, olderThan time.Time) (int64, error)
-	TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
-	GetEnqueuedMessagesCount(ctx context.Context) (int64, error)
-}
-
 // EnqueuedMessagesCleaner runs periodic cleanup of old and excess enqueued messages.
 type EnqueuedMessagesCleaner struct {
-	store   EnqueuedMessagesCleanupStore
+	store   storage.AppRegistryStore
 	cfg     config.EnqueuedMessageRetentionConfig
 	metrics *cleanupMetrics
 }
 
 // NewEnqueuedMessagesCleaner creates a new cleaner with the given configuration.
 func NewEnqueuedMessagesCleaner(
-	store EnqueuedMessagesCleanupStore,
+	store storage.AppRegistryStore,
 	cfg config.EnqueuedMessageRetentionConfig,
 	metricsFactory infra.MetricsFactory,
 ) *EnqueuedMessagesCleaner {
