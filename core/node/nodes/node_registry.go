@@ -43,9 +43,10 @@ type nodeRegistryImpl struct {
 	httpClientWithCert *http.Client
 	connectOpts        []connect.ClientOption
 
-	mu                    sync.RWMutex
-	nodesLocked           map[common.Address]*NodeRecord
-	appliedBlockNumLocked blockchain.BlockNumber
+	mu                       sync.RWMutex
+	nodesLocked              map[common.Address]*NodeRecord
+	appliedBlockNumLocked    blockchain.BlockNumber
+	nextPermanentIndexLocked int
 
 	// All fields below are recalculated from nodesLocked by resetLocked()
 	// All fields are immutable, i.e. copy under RWLock can be returned to the caller
@@ -81,14 +82,15 @@ func LoadNodeRegistry(
 	}
 
 	ret := &nodeRegistryImpl{
-		contract:              contract,
-		onChainConfig:         onChainConfig,
-		localNodeAddress:      localNodeAddress,
-		httpClient:            httpClient,
-		httpClientWithCert:    httpClientWithCert,
-		nodesLocked:           make(map[common.Address]*NodeRecord, len(nodes)),
-		appliedBlockNumLocked: appliedBlockNum,
-		connectOpts:           connectOpts,
+		contract:                 contract,
+		onChainConfig:            onChainConfig,
+		localNodeAddress:         localNodeAddress,
+		httpClient:               httpClient,
+		httpClientWithCert:       httpClientWithCert,
+		nodesLocked:              make(map[common.Address]*NodeRecord, len(nodes)),
+		appliedBlockNumLocked:    appliedBlockNum,
+		nextPermanentIndexLocked: 1,
+		connectOpts:              connectOpts,
 	}
 
 	localFound := false
@@ -149,6 +151,8 @@ func (n *nodeRegistryImpl) resetLocked() {
 }
 
 // addNodeLocked adds a node to the registry if it does not exist.
+// Returns new node record and a true if the node was added,
+// existing node record and false if it already existed.
 func (n *nodeRegistryImpl) addNodeLocked(
 	addr common.Address,
 	url string,
@@ -159,13 +163,14 @@ func (n *nodeRegistryImpl) addNodeLocked(
 		return existingNode, false
 	}
 
-	// Lock should be taken by the caller
 	nn := &NodeRecord{
-		address:  addr,
-		operator: operator,
-		url:      url,
-		status:   status,
+		address:        addr,
+		operator:       operator,
+		url:            url,
+		status:         status,
+		permanentIndex: n.nextPermanentIndexLocked,
 	}
+	n.nextPermanentIndexLocked++
 	if addr == n.localNodeAddress {
 		nn.local = true
 	} else {
@@ -340,6 +345,7 @@ func (n *nodeRegistryImpl) CloneWithClients(
 			local:               node.local,
 			streamServiceClient: node.streamServiceClient,
 			nodeToNodeClient:    node.nodeToNodeClient,
+			permanentIndex:      node.permanentIndex,
 		}
 		clone.nodesLocked[addr] = clonedNode
 	}
