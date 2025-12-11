@@ -142,7 +142,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	ctx context.Context,
 	channelId shared.StreamId,
 	spaceId *shared.StreamId,
-	members mapset.Set[string],
+	appIds mapset.Set[string],
 	event *events.ParsedEvent,
 ) {
 	log := logging.FromCtx(ctx).With("func", "MessageToAppProcessor.OnMessageEvent")
@@ -173,25 +173,25 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 		return
 	}
 
-	appIds := make([]common.Address, 0, members.Cardinality())
-	members.Each(func(memberId string) bool {
-		appId := common.HexToAddress(memberId)
-		isForwardable, settings, err := p.cache.IsForwardableApp(ctx, appId)
+	appIdsToForward := make([]common.Address, 0, appIds.Cardinality())
+	appIds.Each(func(appId string) bool {
+		appAddress := common.HexToAddress(appId)
+		isForwardable, settings, err := p.cache.IsForwardableApp(ctx, appAddress)
 		if err != nil {
 			log.Errorw(
 				"Error checking if member is a registered app that can receive forwarded messages",
 				"error",
 				err,
-				"appId",
-				appId,
+				"appAddress",
+				appAddress,
 				"event",
 				event,
 			)
 		} else if isForwardable {
-			shouldForward := shouldForwardSpaceChannelMessage(ctx, appId, settings, event)
+			shouldForward := shouldForwardSpaceChannelMessage(ctx, appAddress, settings, event)
 			log.Infow(
 				"Bot message forwarding decision",
-				"appId", appId.Hex(),
+				"appAddress", appAddress.Hex(),
 				"channelId", channelId,
 				"shouldForward", shouldForward,
 				"forwardSetting", settings.ForwardSetting,
@@ -199,7 +199,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 				"eventHash", hex.EncodeToString(event.Hash[:]),
 			)
 			if shouldForward {
-				appIds = append(appIds, appId)
+				appIdsToForward = append(appIdsToForward, appAddress)
 			}
 		}
 
@@ -213,13 +213,13 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 
 	sessionId := getEncryptionSession(event)
 
-	if len(appIds) > 0 {
+	if len(appIdsToForward) > 0 {
 		log.Infow(
 			"Dispatching message to bots",
 			"channelId", channelId,
 			"spaceId", spaceId,
-			"appCount", len(appIds),
-			"appIds", appIds,
+			"appCount", len(appIdsToForward),
+			"appIdsToForward", appIdsToForward,
 			"sessionId", sessionId,
 			"hasEncryptedContent", sessionId != "",
 			"eventHash", hex.EncodeToString(event.Hash[:]),
@@ -230,7 +230,7 @@ func (p *MessageToAppProcessor) OnMessageEvent(
 	// consumers in order to make webhook calls to app services.
 	if err := p.cache.DispatchOrEnqueueMessages(
 		ctx,
-		appIds,
+		appIdsToForward,
 		sessionId,
 		channelId,
 		streamEnvelope,
