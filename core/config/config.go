@@ -99,6 +99,13 @@ func GetDefaultConfig() *Config {
 			SingleCallTimeout:      30 * time.Second, // geth internal timeout is 30 seconds
 			ProgressReportInterval: 10 * time.Second,
 		},
+		AppRegistry: AppRegistryConfig{
+			EnqueuedMessageRetention: EnqueuedMessageRetentionConfig{
+				TTL:               24 * time.Hour,
+				MaxMessagesPerBot: 1000,
+				CleanupInterval:   30 * time.Minute,
+			},
+		},
 		MetadataShardMask: 0x3ff, // 1023
 	}
 }

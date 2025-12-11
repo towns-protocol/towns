@@ -44,20 +44,6 @@ func (m *mockCleanupStore) GetEnqueuedMessagesCount(ctx context.Context) (int64,
 	return m.countReturn, m.countErr
 }
 
-func TestNewEnqueuedMessagesCleaner_AppliesDefaults(t *testing.T) {
-	require := require.New(t)
-
-	store := &mockCleanupStore{}
-	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
-
-	// Empty config - should use defaults
-	cleaner := NewEnqueuedMessagesCleaner(store, config.EnqueuedMessageRetentionConfig{}, metricsFactory)
-
-	require.Equal(DefaultEnqueuedMessageTTL, cleaner.cfg.TTL)
-	require.Equal(DefaultMaxMessagesPerBot, cleaner.cfg.MaxMessagesPerBot)
-	require.Equal(DefaultEnqueuedMessageCleanupInterval, cleaner.cfg.CleanupInterval)
-}
-
 func TestNewEnqueuedMessagesCleaner_UsesProvidedConfig(t *testing.T) {
 	require := require.New(t)
 
@@ -150,13 +136,4 @@ func TestEnqueuedMessagesCleaner_Run_StopsOnContextCancel(t *testing.T) {
 
 	// Verify cleanup was called at least once
 	require.True(store.deleteExpiredCalled || store.trimCalled, "Expected at least one cleanup call")
-}
-
-func TestEnqueuedMessagesCleaner_Constants(t *testing.T) {
-	require := require.New(t)
-
-	// Verify default constants are reasonable
-	require.Equal(7*24*time.Hour, DefaultEnqueuedMessageTTL)
-	require.Equal(1000, DefaultMaxMessagesPerBot)
-	require.Equal(5*time.Minute, DefaultEnqueuedMessageCleanupInterval)
 }

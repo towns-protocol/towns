@@ -11,13 +11,6 @@ import (
 	"github.com/towns-protocol/towns/core/node/logging"
 )
 
-const (
-	// Default values for retention configuration
-	DefaultEnqueuedMessageTTL             = 7 * 24 * time.Hour // 7 days
-	DefaultMaxMessagesPerBot              = 1000
-	DefaultEnqueuedMessageCleanupInterval = 5 * time.Minute
-)
-
 // cleanupMetrics holds Prometheus metrics for the cleanup job.
 type cleanupMetrics struct {
 	enqueuedMessagesTotal prometheus.GaugeFunc
@@ -68,17 +61,6 @@ func NewEnqueuedMessagesCleaner(
 	cfg config.EnqueuedMessageRetentionConfig,
 	metricsFactory infra.MetricsFactory,
 ) *EnqueuedMessagesCleaner {
-	// Apply defaults if not configured
-	if cfg.TTL <= 0 {
-		cfg.TTL = DefaultEnqueuedMessageTTL
-	}
-	if cfg.MaxMessagesPerBot <= 0 {
-		cfg.MaxMessagesPerBot = DefaultMaxMessagesPerBot
-	}
-	if cfg.CleanupInterval <= 0 {
-		cfg.CleanupInterval = DefaultEnqueuedMessageCleanupInterval
-	}
-
 	return &EnqueuedMessagesCleaner{
 		store:   store,
 		cfg:     cfg,
