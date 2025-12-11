@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/towns-protocol/towns/core/node/logging"
 
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
@@ -175,6 +176,14 @@ func (ts *TrackedStreamViewImpl) applyMiniblockHeader(headerEvent *ParsedEvent) 
 		hash := common.BytesToHash(hashBytes)
 		if event, ok := ts.view.minipool.events.Get(hash); ok {
 			events = append(events, event)
+		} else {
+			logging.FromCtx(context.TODO()).Errorw(
+				"Event in miniblock header not found in minipool",
+				"streamId", ts.streamID,
+				"miniblockNum", header.MiniblockNum,
+				"eventHash", hash,
+				"minipoolLen", ts.view.minipool.events.Len(),
+			)
 		}
 	}
 
