@@ -2543,12 +2543,12 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
 	lockStreamResult *LockStreamResult,
 ) ([]MiniblockRange, error) {
 	var (
-		snapshotStatement = "(snapshot IS NOT NULL) AS has_snapshot,"
+		snapshotStatement = "(snapshot IS NOT NULL) AS has_snapshot"
 		table             = "{{miniblocks}}"
 	)
 
 	if !lockStreamResult.MiniblocksStoredInDB() {
-		snapshotStatement = "false AS has_snapshot,"
+		snapshotStatement = "false AS has_snapshot"
 		table = "{{miniblocks_ext}}"
 	}
 
