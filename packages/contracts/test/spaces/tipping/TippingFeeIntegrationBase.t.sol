@@ -3,12 +3,13 @@ pragma solidity ^0.8.23;
 
 // interfaces
 import {IFeeManager} from "src/factory/facets/fee/IFeeManager.sol";
-import {ITipping, ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
+import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 
 // libraries
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
+import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest, TipMetadata} from "src/spaces/facets/tipping/TippingMod.sol";
 
 // contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
@@ -91,12 +92,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         // User sends the full amount, fee is deducted internally
         vm.deal(from, amount);
 
-        ITippingBase.MembershipTipParams memory params = ITippingBase.MembershipTipParams({
+        MembershipTipParams memory params = MembershipTipParams({
             receiver: to,
             tokenId: 1,
             currency: CurrencyTransfer.NATIVE_TOKEN,
             amount: amount,
-            metadata: ITippingBase.TipMetadata({
+            metadata: TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -104,7 +105,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip{value: amount}(ITippingBase.TipRecipientType.Member, abi.encode(params));
+        tipping.sendTip{value: amount}(TipRecipientType.Member, abi.encode(params));
 
         // Calculate actual tip amount (amount - fee)
         uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
@@ -119,7 +120,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         // User sends the full amount, fee is deducted internally
         vm.deal(from, amount);
 
-        ITippingBase.TipRequest memory request = ITippingBase.TipRequest({
+        TipRequest memory request = TipRequest({
             receiver: to,
             tokenId: 1,
             currency: CurrencyTransfer.NATIVE_TOKEN,
@@ -139,12 +140,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
     function _sendBotTip(address from, address to, uint256 amount) internal {
         vm.deal(from, amount);
 
-        ITippingBase.BotTipParams memory params = ITippingBase.BotTipParams({
+        BotTipParams memory params = BotTipParams({
             receiver: to,
             currency: CurrencyTransfer.NATIVE_TOKEN,
             appId: bytes32(0),
             amount: amount,
-            metadata: ITippingBase.TipMetadata({
+            metadata: TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -152,7 +153,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip{value: amount}(ITippingBase.TipRecipientType.Bot, abi.encode(params));
+        tipping.sendTip{value: amount}(TipRecipientType.Bot, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -169,12 +170,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        ITippingBase.MembershipTipParams memory params = ITippingBase.MembershipTipParams({
+        MembershipTipParams memory params = MembershipTipParams({
             receiver: to,
             tokenId: 1,
             currency: address(mockUSDC),
             amount: amount,
-            metadata: ITippingBase.TipMetadata({
+            metadata: TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -182,7 +183,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip(ITippingBase.TipRecipientType.Member, abi.encode(params));
+        tipping.sendTip(TipRecipientType.Member, abi.encode(params));
 
         // Calculate actual tip amount (amount - fee)
         uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
@@ -199,7 +200,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        ITippingBase.TipRequest memory request = ITippingBase.TipRequest({
+        TipRequest memory request = TipRequest({
             receiver: to,
             tokenId: 1,
             currency: address(mockUSDC),
@@ -211,9 +212,9 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         tipping.tip(request);
 
-        // Calculate actual tip amount (amount - fee)
-        uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
-        return amount - fee;
+        // // Calculate actual tip amount (amount - fee)
+        // uint256 fee = feeManager.calculateFee(FeeTypesLib.TIP_MEMBER, from, amount, "");
+        // return amount - fee;
     }
 
     function _sendBotTipERC20(address from, address to, uint256 amount) internal {
@@ -222,12 +223,12 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         vm.prank(from);
         mockUSDC.approve(address(tipping), amount);
 
-        ITippingBase.BotTipParams memory params = ITippingBase.BotTipParams({
+        BotTipParams memory params = BotTipParams({
             receiver: to,
             currency: address(mockUSDC),
             appId: bytes32(0),
             amount: amount,
-            metadata: ITippingBase.TipMetadata({
+            metadata: TipMetadata({
                 messageId: bytes32(uint256(1)),
                 channelId: bytes32(uint256(2)),
                 data: ""
@@ -235,7 +236,7 @@ abstract contract TippingFeeIntegrationBaseTest is BaseSetup {
         });
 
         vm.prank(from);
-        tipping.sendTip(ITippingBase.TipRecipientType.Bot, abi.encode(params));
+        tipping.sendTip(TipRecipientType.Bot, abi.encode(params));
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

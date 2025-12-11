@@ -1,102 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-interface ITippingBase {
-    // =============================================================
-    //                           Enums
-    // =============================================================
+import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest} from "./TippingMod.sol";
 
-    enum TipRecipientType {
-        Member, // Tips to token holders
-        Bot, // Tips to bot wallets
-        Pool // Tips to pool wallets
-    }
-
-    // =============================================================
-    //                           Structs
-    // =============================================================
-
-    struct TipMetadata {
-        bytes32 messageId;
-        bytes32 channelId;
-        bytes data; // Extensible metadata
-    }
-
-    /// @notice Params for Member tips (includes tokenId)
-    struct MembershipTipParams {
-        address receiver;
-        uint256 tokenId;
-        address currency;
-        uint256 amount;
-        TipMetadata metadata;
-    }
-
-    /// @notice Params for Bot tips (similar to Wallet but distinct type)
-    struct BotTipParams {
-        address receiver;
-        address currency;
-        bytes32 appId;
-        uint256 amount;
-        TipMetadata metadata;
-    }
-
-    /// @notice Legacy tip request (maintain backwards compatibility)
-    struct TipRequest {
-        address receiver;
-        uint256 tokenId;
-        address currency;
-        uint256 amount;
-        bytes32 messageId;
-        bytes32 channelId;
-    }
-
-    // =============================================================
-    //                           Events
-    // =============================================================
-
-    event TipSent(
-        address indexed sender,
-        address indexed receiver,
-        TipRecipientType indexed recipientType,
-        address currency,
-        uint256 amount,
-        bytes data
-    );
-
-    // Maintain legacy event for backwards compatibility
-    event Tip(
-        uint256 indexed tokenId,
-        address indexed currency,
-        address sender,
-        address receiver,
-        uint256 amount,
-        bytes32 messageId,
-        bytes32 channelId
-    );
-
-    // =============================================================
-    //                           Errors
-    // =============================================================
-
-    error InvalidRecipientType();
-    error InvalidTipData();
-    error TokenDoesNotExist();
-    error ReceiverIsNotMember();
-    error CannotTipSelf();
-    error AmountIsZero();
-    error CurrencyIsZero();
-    error MsgValueMismatch();
-    error UnexpectedETH();
-}
-
-interface ITipping is ITippingBase {
+interface ITipping {
     /// @notice Send a tip using flexible encoding based on recipient type
     /// @param recipientType The type of recipient (Member, Wallet, Bot, Pool)
     /// @param data ABI-encoded tip params based on recipientType:
     ///   - Member: abi.encode(MembershipTipParams)
     ///   - Wallet: abi.encode(WalletTipParams)
     ///   - Bot: abi.encode(BotTipParams)
-    ///   - Pool: Reserved for future implementation
     function sendTip(TipRecipientType recipientType, bytes calldata data) external payable;
 
     /// @notice Sends a tip to a space member (legacy)
@@ -105,6 +18,7 @@ interface ITipping is ITippingBase {
     /// @dev Requires sender and receiver to be members of the space
     /// @dev Requires amount > 0 and valid currency address
     /// @dev Emits Tip event
+    ///@custom:deprecated Use sendTip instead
     function tip(TipRequest calldata tipRequest) external payable;
 
     /// @notice Get tips received by wallet address and currency

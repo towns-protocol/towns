@@ -7,7 +7,7 @@ import {ITownsPoints} from "src/airdrop/points/ITownsPoints.sol";
 import {IERC721ABase} from "src/diamond/facets/token/ERC721A/IERC721A.sol";
 import {IERC721AQueryable} from "src/diamond/facets/token/ERC721A/extensions/IERC721AQueryable.sol";
 import {IPlatformRequirements} from "src/factory/facets/platform/requirements/IPlatformRequirements.sol";
-import {ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
+import {TipRecipientType, MembershipTipParams, BotTipParams, TipRequest, TipMetadata, Tip, TipSent, CurrencyIsZero, CannotTipSelf, AmountIsZero, MsgValueMismatch, UnexpectedETH, InvalidRecipientType} from "src/spaces/facets/tipping/TippingMod.sol";
 import {IFeeManager} from "src/factory/facets/fee/IFeeManager.sol";
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 
@@ -24,7 +24,7 @@ import {TippingFacet} from "src/spaces/facets/tipping/TippingFacet.sol";
 import {DeployMockERC20, MockERC20} from "scripts/deployments/utils/DeployMockERC20.s.sol";
 import {BaseSetup} from "test/spaces/BaseSetup.sol";
 
-contract TippingTest is Test, BaseSetup, ITippingBase, IERC721ABase {
+contract TippingTest is Test, BaseSetup, IERC721ABase {
     // Default test parameters
     bytes32 internal constant DEFAULT_MESSAGE_ID = bytes32(uint256(0x1));
     bytes32 internal constant DEFAULT_CHANNEL_ID = bytes32(uint256(0x2));
