@@ -285,7 +285,12 @@ func (n *nodeRegistryImpl) GetNodeByPermanentIndex(index int32) (*NodeRecord, er
 	defer n.mu.RUnlock()
 	nn := n.nodesByIndexLocked[index]
 	if nn == nil {
-		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node index", "index", index).Func("GetNodeByPermanentIndex")
+		return nil, RiverError(
+			Err_UNKNOWN_NODE,
+			"No record for node index",
+			"index",
+			index,
+		).Func("GetNodeByPermanentIndex")
 	}
 	return nn, nil
 }
