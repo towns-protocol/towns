@@ -1090,7 +1090,10 @@ export abstract class BaseDecryptionExtensions {
             streamId,
             userId: item.fromUserId,
             deviceKey: item.solicitation.deviceKey,
-            sessionIds: fulfilledSessionIds,
+            sessionIds:
+                fulfilledSessionIds.length > 0
+                    ? fulfilledSessionIds
+                    : allSessions.map((x) => x.sessionId).sort(),
             ephemeral: item.ephemeral,
         })
 
