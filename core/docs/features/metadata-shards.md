@@ -1,74 +1,59 @@
-# Metadata Shards Plan
+# Metadata Shards
 
-## Goals and Scope
-- Store metadata for new streams on metadata shards (CometBFT app per shard, ~10 replicas per shard) instead of the StreamRegistry smart contract; legacy streams stay on-chain.
-- Preserve the StreamRegistry feature set for metadata (create/allocate stream, update last miniblock state in batches, node placement/replication metadata, sealing) with deterministic state transitions.
-- Keep per-shard state in Postgres tables that are namespaced by `shardId` and accessed through the storage package, then surfaced through the MetadataShard ABCI app.
-- Expose a typed Go API on `MetadataShard` for stream operations and reads, backed by protobuf-encoded CometBFT transactions.
+## Current Shape
 
-## Assumptions and Non-Goals
-- Metadata shards live alongside existing River node Postgres; no cross-shard queries are required inside a single ABCI block execution.
-- Stream assignment to shards is driven by node config (e.g., consistent hash over streamId); the plan covers plumbing, not the assignment algorithm.
-- No migration of existing on-chain metadata is required; dual-read/write paths will gate by a feature flag or stream provenance.
+- Metadata shards run a CometBFT ABCI app (`MetadataShard`) backed by Postgres via `PostgresMetadataShardStore`.
+- Shard data lives in per-shard tables plus a shared `metadata` table that records `shard_id`, `last_height`, and `last_app_hash`.
+- Transactions are protobuf-encoded (`protocol/metadata_shard.proto`) and passed straight into the ABCI mempool or FinalizeBlock.
+- The implementation optimizes for deterministic state transitions and predictable app hashes; snapshot endpoints are stubbed.
 
-## Development Plan
+## Protocol and Validation
 
-### 1) Protocol Definition
-- Add `protocol/metadata_shard.proto` with `package river.metadata` (Go package `github.com/towns-protocol/towns/core/node/protocol`) that defines:
-  - `MetadataTx` envelope with `oneof op`.
-  - `CreateStreamTx` (stream_id bytes32, genesis_miniblock_hash bytes32, genesis_miniblock bytes, nodes []bytes20, flags uint64, replication_factor uint32, sealed bool).
-  - `SetStreamLastMiniblockBatchTx` containing repeated `MiniblockUpdate` (stream_id, prev_miniblock_hash, last_miniblock_hash, last_miniblock_num, sealed flag).
-  - `UpdateStreamNodesAndReplicationTx`  to mirror contract features (node set changes, replication factor updates).
-  - `StreamMetadata` struct used in queries (stream_id, shard_id, genesis_miniblock_hash, last_miniblock_hash, last_miniblock_num, nodes, flags, replication_factor, sealed, created_at_height, updated_at_height).
-- Wire proto into buf generation (`buf.gen.yaml` if needed) and ensure `go generate ./core/node/protocol` re-emits Go types.
+- `MetadataTx` wraps three ops: `CreateStreamTx`, `SetStreamLastMiniblockBatchTx`, and `UpdateStreamNodesAndReplicationTx`.
+- `CreateStreamTx`: requires 32-byte `stream_id` and `genesis_miniblock_hash`; `nodes` must be non-empty 20-byte addresses; `replication_factor` > 0 and ≤ len(nodes); if `last_miniblock_num` is 0, a `genesis_miniblock` is required and `last_miniblock_hash` must match the genesis hash, otherwise `last_miniblock_hash` must be 32 bytes. `sealed` can be set at creation.
+- `SetStreamLastMiniblockBatchTx`: a non-empty list of `MiniblockUpdate` items; each enforces 32-byte hashes, `last_miniblock_num` > 0, and uses `prev_miniblock_hash` for optimistic concurrency.
+- `UpdateStreamNodesAndReplicationTx`: `stream_id` must be 32 bytes; optional `nodes` must be 20-byte addresses if provided and cannot be empty; sealed streams reject node changes unless the set is identical; `replication_factor` defaults to the current value when 0 and must remain > 0 and ≤ number of nodes.
+- The ABCI layer performs stateless checks in `CheckTx`/`PrepareProposal`/`ProcessProposal`; stateful checks happen inside the Postgres store during FinalizeBlock.
 
-### 2) Storage Layer (Postgres)
-- Create `core/node/storage/pg_metadata_shard_store.go` with a struct that owns a pgx pool reference and shardId; follow existing storage patterns (ctx-aware logging, `pgTxTracker`, traced transactions).
-- Table naming per shard: derive short prefixes using the uint64 shardId, e.g., `msh_<shardId>_streams`, `msh_<shardId>_stream_nodes`, `msh_<shardId>_tx_log`, `msh_<shardId>_state`. Use `fmt.Sprintf("msh_%016x_*", shardId)` to keep deterministic names.
-- Table schemas:
-  - Streams: `stream_id BYTEA PK`, `genesis_miniblock_hash BYTEA`, `genesis_miniblock BYTEA`, `last_miniblock_hash BYTEA`, `last_miniblock_num BIGINT`, `flags BIGINT`, `replication_factor SMALLINT`, `sealed BOOL`, `created_at_height BIGINT`, `updated_at_height BIGINT`.
-  - Stream nodes: `stream_id BYTEA`, `node_addr BYTEA`, `PRIMARY KEY(stream_id, node_addr)` for reverse lookups.
-  - Tx log/state: per-block app hash inputs, last_height, last_app_hash to support deterministic `Commit`.
-- Initialization: expose `EnsureShardStorage(ctx)` that creates tables for a shard if missing inside a transaction; reuse pattern from `PostgresStreamStore` migrations.
-- Mutators:
-  - `CreateStream(ctx, shardId, CreateStreamTx, height)` validating uniqueness, node list non-empty, and initial state defaults.
-  - `ApplyMiniblockBatch(ctx, updates, height)` verifying `prev_miniblock_hash`/`miniblock_num` monotonicity and sealed flag; reject mismatched state with `RiverError`.
-  - `UpdateStreamNodes/ReplicationFactor` helpers if included in proto, enforcing invariants (no removal on sealed streams, etc.).
-- Readers:
-  - `GetStream(ctx, streamID)`, `ListStreams(ctx, start, limit)`, `ListStreamsByNode(ctx, nodeAddr, start, limit)`, `Counts`.
-  - `GetAppState(ctx)` returning deterministic hash inputs (e.g., sorted stream ids + last_miniblock_hash/num + sealed flag + replication_factor) for `Commit`.
+## Storage Layout
 
-### 3) ABCI Implementation in `core/node/metadata/shard.go`
-- Extend `MetadataShard` to hold a storage handle (pg store) and shardId; inject DB connection in constructor.
-- `InitChain`: ensure shard tables exist, load last committed height/app hash from storage, and set consensus params (no empty blocks remains fine).
-- `CheckTx`: decode `MetadataTx`, run stateless validation (field lengths, required fields, node list sizes), and optionally soft-check current state via storage with a read-only connection.
-- `PrepareProposal/FinalizeBlock`: iterate txs in order, apply to storage in a single transaction scoped to the Comet block height; collect per-tx events/codes in `FinalizeBlockResponse`.
-- `Commit`: compute deterministic app hash from storage snapshot (e.g., xxhash over sorted `stream_id|last_hash|last_num|sealed|replication_factor`) and persist `last_height/app_hash` to the shard state table.
-- `Query`: support basic queries for node internals (get stream by id, paginate streams, count streams, shard health) using the storage readers.
-- Snapshot methods: keep stubbed but gated with TODO to implement pg-based snapshot export/import later.
+- Table names derive from the shard id: `md_%04x_s` (streams) and `md_%04x_n` (nodes) with 4-digit hex shard ids.
+- Streams table columns: `stream_id` (PK, 32 bytes), `genesis_miniblock_hash` (32 bytes), `genesis_miniblock` (payload), `last_miniblock_hash` (32 bytes), `last_miniblock_num` (BIGINT), `replication_factor` (INT), `sealed` (BOOL) plus CHECK constraints on lengths and positivity.
+- Nodes table columns: `stream_id` (FK → streams), `position` (ordering), `node_addr` (20 bytes); PK on `(stream_id, position)`, unique `(stream_id, node_addr)`, index on `node_addr`. Replacements delete and reinsert to preserve ordering.
+- Shared `metadata` table holds one row per shard with last height/hash; created on first `EnsureShardStorage` call. There is no per-block tx log; the app hash is recomputed from the streams table when needed.
 
-### 4) MetadataShard Go API
-- Add typed helpers on `MetadataShard` to wrap proto encoding and mempool submission:
-  - `CreateStream(ctx, params)` -> encode `CreateStreamTx`, submit via `SubmitTx`, optionally wait for height commit (poll block store).
-  - `SetStreamLastMiniblockBatch(ctx, updates)` -> encode `SetStreamLastMiniblockBatchTx`.
-  - `UpdateStreamNodes/ReplicationFactor` methods if implemented.
-  - Read helpers that hit `Query`/storage for internal callers (`GetStream`, `StreamsOnNode`, `StreamCount`).
-- Update `shard_test.go` into integration tests that create streams, push miniblock batches, and assert replicated state across nodes via queries and app hash consistency.
+## Execution Flow
 
-### 5) Node Integration and Routing
-- Introduce a metadata shard directory in config (list of shardIds + peer addresses + Postgres DSN) and a shard selection helper (hashing streamId or configured mapping).
-- When creating new streams, route metadata writes to the chosen shard via `MetadataShard.CreateStream` instead of the River StreamRegistry contract.
-- When producing miniblocks, switch the metadata write path: if stream is marked as shard-backed, call `SetStreamLastMiniblockBatch` on that shard; otherwise keep the contract call for legacy.
-- Update read paths (`StreamCache`/reconciler) to fetch metadata from the shard when the stream is shard-backed, with fallback to the contract for legacy streams; include a flag on stream metadata to indicate storage backend.
-- Ensure observability/metrics: per-shard tx latency, app hash, height, failed tx counts.
+- `NewMetadataShard` derives the chain id (`metadata-shard-<hex>`), writes the genesis doc, configures CometBFT for local-friendly defaults (no RPC listener, tighter consensus timeouts), and ensures shard tables exist.
+- `SubmitTx` feeds bytes into the mempool `CheckTx`. `Height` reflects the Comet block store height when the node is running.
+- `FinalizeBlock` decodes and validates each tx, applies it via `ApplyMetadataTx` (serially inside a tx runner), computes the app hash, and caches `{height, appHash}` for `Commit`.
+- `Commit` writes `last_height`/`last_app_hash` into the shared `metadata` table using the cached app hash (or recomputing if missing).
+- Query endpoints:
+  - `/stream/<hex>` (or `req.Data`): returns a single `StreamMetadata` as protojson.
+  - `/streams?offset=&limit=`: returns streams ordered by `stream_id` plus count/offset/limit.
+  - `/streams/node/<0xaddr>?offset=&limit=`: streams hosted by a node plus count.
+  - `/streams/count` and `/streams/count/<0xaddr>`: aggregate counts.
+- Snapshot ABCI methods are stubs; InitChain reuses stored shard state when present.
 
-### 6) Testing and Rollout
-- Unit tests for storage validation (duplicate stream creation, bad prev hash, sealing rules, node set updates) using pgx test harness.
-- ABCI integration tests: multi-node shard spinning in memory verifying height sync, deterministic app hash, and block rollback safety.
-- Routing tests: create a shard-backed stream, produce miniblocks, ensure `StreamCache` and RPC responses read from shard data.
-- Add feature flag/defaults: start with disabled shard writes, enable per-environment, and include migration scripts to provision shard tables.
+## Store Semantics
 
-### 7) Follow-Ups / Risks
-- Define the deterministic app hash function carefully to avoid hash drift across nodes; prefer ordered materialization from SQL.
-- Plan for snapshotting/export if shard catch-up is needed (could reuse Postgres logical backups in the interim).
-- Clarify replication factor semantics in shards vs. contract; if duplicated, keep a single source of truth and reconcile conflicts.
+- Create stream: enforces unique `stream_id`, validates replication factor against node count, stores the genesis miniblock (empty when starting above height 0), and seeds `last_miniblock_hash` from the genesis hash when `last_miniblock_num` is 0.
+- Miniblock batch: rejects sealed streams, requires `prev_miniblock_hash` to match the current hash, demands `last_miniblock_num` increment by exactly 1, and ORs the `sealed` flag with existing state.
+- Update nodes/replication: defaults to the existing node set when `nodes` is empty, forbids node changes on sealed streams unless identical, enforces replication factor bounds, and rewrites node rows to keep the provided order.
+- Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) all hydrate nodes via ordered array aggregation.
+
+## App Hash
+
+- `ComputeAppHash` materializes streams ordered by `stream_id` and hashes `stream_id || last_miniblock_hash || last_miniblock_num || replication_factor || sealed_byte` with SHA-256.
+- Node placement and genesis payloads are not currently part of the app hash, so changing only the node list does not alter the hash.
+
+# TODO
+
+- [ ] Update database to use single table for streams data using int array and GIN index for nodes (insted of putting nodes in a separate table).
+- [ ] Collect block state in memory and only commit when Commit is called in a single transaction.
+- [ ] Implement app_hash using fixed depth sparse merkle tree with pg backing.
+- [ ] Implement snapshotting/export functionality.
+- [ ] Add restart, replica change and replica recovery tests.
+- [ ] Include node set (and other non-miniblock metadata) in the app_hash inputs so placement-only changes affect consensus state.
+- [ ] Persist created/updated block heights for streams to make audits and retries deterministic.
+- [ ] Add typed helpers for encoding/submitting metadata shard transactions instead of hand-building proto bytes at call sites.
