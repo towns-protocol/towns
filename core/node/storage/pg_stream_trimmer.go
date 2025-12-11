@@ -235,7 +235,7 @@ func (t *streamTrimmer) processTrimTaskTx(
 
 	lastSnapshotMiniblock := lockStream.LastSnapshotMiniblock
 
-	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId)
+	ranges, err := t.store.getMiniblockNumberRangesTxNoLock(ctx, tx, task.streamId, lockStream)
 	if err != nil {
 		return err
 	}
