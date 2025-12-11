@@ -1979,7 +1979,7 @@ func TestDeleteExpiredEnqueuedMessages(t *testing.T) {
 	require.Equal(int64(0), deleted)
 
 	// Verify count unchanged
-	count, err = store.GetEnqueuedMessagesCount(params.ctx)
+	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(5), count)
 
@@ -1989,7 +1989,7 @@ func TestDeleteExpiredEnqueuedMessages(t *testing.T) {
 	require.Equal(int64(5), deleted)
 
 	// Verify all messages deleted
-	count, err = store.GetEnqueuedMessagesCount(params.ctx)
+	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(0), count)
 }
@@ -2060,7 +2060,7 @@ func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
 	}
 
 	// Verify total count
-	count, err := store.GetEnqueuedMessagesCount(params.ctx)
+	count, err := store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(15), count)
 
@@ -2072,7 +2072,7 @@ func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
 	require.Equal(int64(3), deleted)
 
 	// Verify final count: 7 + 5 = 12
-	count, err = store.GetEnqueuedMessagesCount(params.ctx)
+	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(12), count)
 
@@ -2084,7 +2084,7 @@ func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
 	require.Equal(int64(6), deleted)
 
 	// Verify final count: 3 + 3 = 6
-	count, err = store.GetEnqueuedMessagesCount(params.ctx)
+	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(6), count)
 }
@@ -2094,44 +2094,11 @@ func TestGetEnqueuedMessagesCount(t *testing.T) {
 	require := require.New(t)
 	store := params.pgAppRegistryStore
 
-	// Initially empty
-	count, err := store.GetEnqueuedMessagesCount(params.ctx)
+	// GetEnqueuedMessagesCountAprox uses pg_class statistics for performance.
+	// Stats are updated by ANALYZE/autovacuum, so we just verify:
+	// 1. The method doesn't error
+	// 2. Returns a non-negative value
+	count, err := store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
-	require.Equal(int64(0), count)
-
-	// Create an app with a webhook
-	owner := safeAddress(t)
-	app := safeAddress(t)
-	secretBytes, _ := hex.DecodeString(testSecretHexString)
-	secret := [32]byte(secretBytes)
-	deviceKey := "count-device-key"
-	fallbackKey := "test-fallback-key"
-
-	err = store.CreateApp(
-		params.ctx,
-		owner,
-		app,
-		types.AppSettings{ForwardSetting: ForwardSettingValue_FORWARD_SETTING_UNSPECIFIED},
-		testAppMetadataWithName("count_test_app"),
-		secret,
-	)
-	require.NoError(err)
-
-	err = store.RegisterWebhook(params.ctx, app, "https://webhook.com/count", deviceKey, fallbackKey)
-	require.NoError(err)
-
-	// Enqueue messages and verify count
-	for i := 1; i <= 5; i++ {
-		_, _, err = store.EnqueueUnsendableMessages(
-			params.ctx,
-			[]common.Address{app},
-			fmt.Sprintf("count-session-%d", i),
-			[]byte(fmt.Sprintf("count-message-%d", i)),
-		)
-		require.NoError(err)
-
-		count, err = store.GetEnqueuedMessagesCount(params.ctx)
-		require.NoError(err)
-		require.Equal(int64(i), count)
-	}
+	require.GreaterOrEqual(count, int64(0))
 }

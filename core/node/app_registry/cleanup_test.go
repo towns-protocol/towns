@@ -87,7 +87,7 @@ func TestEnqueuedMessagesCleaner_Cleanup(t *testing.T) {
 	cleaner.cleanup(params.ctx)
 
 	// Verify no messages were deleted (empty DB)
-	count, err := params.store.GetEnqueuedMessagesCount(params.ctx)
+	count, err := params.store.GetEnqueuedMessagesCountAprox(params.ctx)
 	require.NoError(err)
 	require.Equal(int64(0), count)
 }
