@@ -253,7 +253,7 @@ describe('inboxMessageTest', () => {
                 trimmedFromInclusive,
                 trimmedToExclusive,
                 undefined,
-                { skipPersistence: true, skipCache: true },
+                { skipPersistence: true },
             )
             // If we get here without throwing, the test should fail
             // since there is no range of such miniblocks anymore
@@ -286,7 +286,7 @@ describe('inboxMessageTest', () => {
             validFromInclusive,
             validToExclusive,
             undefined,
-            { skipPersistence: true, skipCache: true },
+            { skipPersistence: true },
         )
 
         log('getMiniblocks result for valid range:', {
