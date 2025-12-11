@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgerrcode"
@@ -235,6 +236,17 @@ type (
 			app common.Address,
 			active bool,
 		) error
+
+		// DeleteExpiredEnqueuedMessages removes messages older than the given threshold.
+		// Returns the number of deleted rows.
+		DeleteExpiredEnqueuedMessages(ctx context.Context, olderThan time.Time) (int64, error)
+
+		// TrimEnqueuedMessagesPerBot deletes oldest messages for bots exceeding maxMessages.
+		// Returns the number of deleted rows.
+		TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
+
+		// GetEnqueuedMessagesCount returns the total count of enqueued messages.
+		GetEnqueuedMessagesCount(ctx context.Context) (int64, error)
 
 		// Pool returns the underlying database connection pool.
 		// This is useful for creating shared components like StreamCookieStore.
@@ -1434,4 +1446,57 @@ func (s *PostgresAppRegistryStore) setAppActiveStatus(
 	}
 
 	return nil
+}
+
+// DeleteExpiredEnqueuedMessages removes messages older than the given threshold.
+func (s *PostgresAppRegistryStore) DeleteExpiredEnqueuedMessages(
+	ctx context.Context,
+	olderThan time.Time,
+) (int64, error) {
+	result, err := s.pool.Exec(ctx,
+		`DELETE FROM enqueued_messages WHERE created_at < $1`,
+		olderThan,
+	)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to delete expired enqueued messages")
+	}
+	return result.RowsAffected(), nil
+}
+
+// TrimEnqueuedMessagesPerBot deletes oldest messages for bots exceeding maxMessages.
+func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
+	ctx context.Context,
+	maxMessages int,
+) (int64, error) {
+	// Delete oldest messages for each device_key that exceeds the limit.
+	// Uses ROW_NUMBER() to rank messages by created_at (newest first) per device_key,
+	// then deletes all rows with rank > maxMessages.
+	result, err := s.pool.Exec(ctx, `
+		DELETE FROM enqueued_messages
+		WHERE ctid IN (
+			SELECT ctid FROM (
+				SELECT ctid,
+				       ROW_NUMBER() OVER (PARTITION BY device_key ORDER BY created_at DESC) as rn
+				FROM enqueued_messages
+			) ranked
+			WHERE rn > $1
+		)
+	`, maxMessages)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to trim enqueued messages per bot")
+	}
+	return result.RowsAffected(), nil
+}
+
+// GetEnqueuedMessagesCount returns the total count of enqueued messages.
+func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCount(ctx context.Context) (int64, error) {
+	var count int64
+	err := s.pool.QueryRow(ctx, `SELECT COUNT(*) FROM enqueued_messages`).Scan(&count)
+	if err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to count enqueued messages")
+	}
+	return count, nil
 }
