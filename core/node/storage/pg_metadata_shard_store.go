@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,49 +25,9 @@ type MetadataShardState struct {
 	LastAppHash []byte
 }
 
-// NodeIndexResolver maps between node addresses and their permanent indexes.
-// Permanent indexes must be stable across nodes for deterministic state.
-type NodeIndexResolver interface {
-	PermanentIndexForAddress(addr common.Address) (int32, error)
-	AddressForPermanentIndex(index int32) (common.Address, error)
-}
-
-type nodeRegistryIndexResolver struct {
-	registry nodespkg.NodeRegistry
-}
-
-// NewNodeIndexResolverFromRegistry adapts a nodes.NodeRegistry to a NodeIndexResolver.
-func NewNodeIndexResolverFromRegistry(registry nodespkg.NodeRegistry) NodeIndexResolver {
-	return &nodeRegistryIndexResolver{registry: registry}
-}
-
-func (r *nodeRegistryIndexResolver) PermanentIndexForAddress(addr common.Address) (int32, error) {
-	record, err := r.registry.GetNode(addr)
-	if err != nil {
-		return 0, err
-	}
-	idx := record.PermanentIndex()
-	if idx <= 0 {
-		return 0, RiverError(Err_INTERNAL, "invalid permanent index", "node", addr, "index", idx)
-	}
-	return int32(idx), nil
-}
-
-func (r *nodeRegistryIndexResolver) AddressForPermanentIndex(index int32) (common.Address, error) {
-	for _, node := range r.registry.GetAllNodes() {
-		if node == nil {
-			continue
-		}
-		if int32(node.PermanentIndex()) == index {
-			return node.Address(), nil
-		}
-	}
-	return common.Address{}, RiverError(Err_UNKNOWN_NODE, "unknown node index", "index", index)
-}
-
 type PostgresMetadataShardStore struct {
 	store    *PostgresEventStore
-	resolver NodeIndexResolver
+	registry nodespkg.NodeRegistry
 }
 
 type MetadataStore interface {
@@ -105,18 +66,18 @@ func NewPostgresMetadataShardStore(
 	ctx context.Context,
 	eventStore *PostgresEventStore,
 	shardId uint64,
-	resolver NodeIndexResolver,
+	registry nodespkg.NodeRegistry,
 ) (*PostgresMetadataShardStore, error) {
 	if eventStore == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "eventStore is required")
 	}
-	if resolver == nil {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "node index resolver is required")
+	if registry == nil {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "node registry is required")
 	}
 
 	store := &PostgresMetadataShardStore{
 		store:    eventStore,
-		resolver: resolver,
+		registry: registry,
 	}
 
 	if err := store.EnsureShardStorage(ctx, shardId); err != nil {
@@ -240,15 +201,19 @@ func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEm
 	}
 	indexes := make([]int32, 0, len(nodes))
 	for _, nodeBytes := range nodes {
+		if len(nodeBytes) != 20 {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+		}
 		addr := common.BytesToAddress(nodeBytes)
-		idx, err := s.resolver.PermanentIndexForAddress(addr)
+		record, err := s.registry.GetNode(addr)
 		if err != nil {
 			return nil, err
 		}
+		idx := record.PermanentIndex()
 		if idx <= 0 {
 			return nil, RiverError(Err_INTERNAL, "invalid permanent index", "node", addr, "index", idx)
 		}
-		indexes = append(indexes, idx)
+		indexes = append(indexes, int32(idx))
 	}
 	return indexes, nil
 }
@@ -256,11 +221,17 @@ func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEm
 func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]byte, error) {
 	addrs := make([][]byte, 0, len(indexes))
 	for _, idx := range indexes {
-		addr, err := s.resolver.AddressForPermanentIndex(idx)
+		if idx <= 0 {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "node index must be positive", "index", idx)
+		}
+		record, err := s.registry.GetNodeByPermanentIndex(idx)
 		if err != nil {
 			return nil, err
 		}
-		addrs = append(addrs, addr.Bytes())
+		addrBytes := record.Address().Bytes()
+		cp := make([]byte, len(addrBytes))
+		copy(cp, addrBytes)
+		addrs = append(addrs, cp)
 	}
 	return addrs, nil
 }
@@ -565,8 +536,8 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 	shardID uint64,
 	height int64,
 	streamId []byte,
-	newReplicationFactor uint32,
-	newNodeIndexes []int32,
+	proposedReplicationFactor uint32,
+	proposedNodeIndexes []int32,
 ) (*StreamMetadata, error) {
 	_ = height
 
@@ -602,44 +573,71 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 		return nil, err
 	}
 
-	if newReplicationFactor > 0 && len(newNodeIndexes) > 0 {
-		_, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-		 	 SET replication_factor = $2,
-			   nodes = $3
-			 WHERE stream_id = $1`,
-			shardID,
-		), streamId, newReplicationFactor, newNodeIndexes)
-		if err != nil {
-			return nil, err
+	targetIndexes := existingIndexes
+	if len(proposedNodeIndexes) > 0 {
+		if sealed && !slices.Equal(existingIndexes, proposedNodeIndexes) {
+			return nil, RiverError(
+				Err_FAILED_PRECONDITION,
+				"sealed stream nodes cannot be changed",
+				"streamId",
+				streamId,
+			)
 		}
-		replicationFactor = newReplicationFactor
-		existingIndexes = newNodeIndexes
-	} else if newReplicationFactor > 0 {
-		_, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-		 	 SET replication_factor = $2
-			 WHERE stream_id = $1`,
-			shardID,
-		), streamId, newReplicationFactor)
-		if err != nil {
-			return nil, err
-		}
-		replicationFactor = newReplicationFactor
-	} else {
-		_, err := tx.Exec(ctx, s.sqlForShard(
-			`UPDATE {{streams}}
-		 	 SET nodes = $2
-			 WHERE stream_id = $1`,
-			shardID,
-		), streamId, newNodeIndexes)
-		if err != nil {
-			return nil, err
-		}
-		existingIndexes = newNodeIndexes
+		targetIndexes = proposedNodeIndexes
 	}
 
-	nodesAddrs, err := s.nodeAddrsForIndexes(existingIndexes)
+	newReplicationFactor := replicationFactor
+	if proposedReplicationFactor != 0 {
+		newReplicationFactor = proposedReplicationFactor
+	}
+
+	if newReplicationFactor == 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
+	}
+	if len(targetIndexes) == 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "nodes must not be empty")
+	}
+	if int(newReplicationFactor) > len(targetIndexes) {
+		return nil, RiverError(
+			Err_INVALID_ARGUMENT,
+			"replication_factor cannot exceed number of nodes",
+			"replicationFactor", newReplicationFactor,
+			"numNodes", len(targetIndexes),
+		)
+	}
+
+	switch {
+	case proposedReplicationFactor > 0 && len(proposedNodeIndexes) > 0:
+		if _, err := tx.Exec(ctx, s.sqlForShard(
+			`UPDATE {{streams}}
+SET replication_factor = $2,
+    nodes = $3
+WHERE stream_id = $1`,
+			shardID,
+		), streamId, newReplicationFactor, targetIndexes); err != nil {
+			return nil, err
+		}
+	case proposedReplicationFactor > 0:
+		if _, err := tx.Exec(ctx, s.sqlForShard(
+			`UPDATE {{streams}}
+SET replication_factor = $2
+WHERE stream_id = $1`,
+			shardID,
+		), streamId, newReplicationFactor); err != nil {
+			return nil, err
+		}
+	case len(proposedNodeIndexes) > 0:
+		if _, err := tx.Exec(ctx, s.sqlForShard(
+			`UPDATE {{streams}}
+SET nodes = $2
+WHERE stream_id = $1`,
+			shardID,
+		), streamId, targetIndexes); err != nil {
+			return nil, err
+		}
+	}
+
+	nodesAddrs, err := s.nodeAddrsForIndexes(targetIndexes)
 	if err != nil {
 		return nil, err
 	}
@@ -649,7 +647,7 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 		LastMiniblockHash:    lastHash,
 		LastMiniblockNum:     lastNum,
 		Nodes:                nodesAddrs,
-		ReplicationFactor:    replicationFactor,
+		ReplicationFactor:    newReplicationFactor,
 		Sealed:               sealed,
 		GenesisMiniblock:     genesisMiniblock,
 	}, nil
@@ -838,9 +836,13 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 		"MetadataShard.ListStreamsByNode",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			nodeIndex, err := s.resolver.PermanentIndexForAddress(node)
+			record, err := s.registry.GetNode(node)
 			if err != nil {
 				return err
+			}
+			nodeIndex := record.PermanentIndex()
+			if nodeIndex <= 0 {
+				return RiverError(Err_INTERNAL, "invalid permanent index", "node", node, "index", nodeIndex)
 			}
 			rows, err := tx.Query(
 				ctx,
@@ -859,7 +861,7 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 	                     OFFSET $2 LIMIT $3`,
 					shardID,
 				),
-				nodeIndex,
+				int32(nodeIndex),
 				offset,
 				limit,
 			)
@@ -943,14 +945,18 @@ func (s *PostgresMetadataShardStore) CountStreamsByNode(
 		"MetadataShard.CountStreamsByNode",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			nodeIndex, err := s.resolver.PermanentIndexForAddress(node)
+			record, err := s.registry.GetNode(node)
 			if err != nil {
 				return err
+			}
+			nodeIndex := record.PermanentIndex()
+			if nodeIndex <= 0 {
+				return RiverError(Err_INTERNAL, "invalid permanent index", "node", node, "index", nodeIndex)
 			}
 			return tx.QueryRow(
 				ctx,
 				s.sqlForShard(`SELECT COUNT(*) FROM {{streams}} WHERE nodes @> ARRAY[$1]::int[]`, shardID),
-				nodeIndex,
+				int32(nodeIndex),
 			).Scan(&count)
 		},
 		nil,

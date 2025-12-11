@@ -23,6 +23,7 @@ import (
 
 type NodeRegistry interface {
 	GetNode(address common.Address) (*NodeRecord, error)
+	GetNodeByPermanentIndex(index int32) (*NodeRecord, error)
 	GetAllNodes() []*NodeRecord
 
 	// Returns error for local node.
@@ -45,6 +46,7 @@ type nodeRegistryImpl struct {
 
 	mu                       sync.RWMutex
 	nodesLocked              map[common.Address]*NodeRecord
+	nodesByIndexLocked       map[int32]*NodeRecord
 	appliedBlockNumLocked    blockchain.BlockNumber
 	nextPermanentIndexLocked int
 
@@ -138,12 +140,16 @@ func (n *nodeRegistryImpl) resetLocked() {
 	n.activeNodesLocked = make([]*NodeRecord, 0, len(n.nodesLocked))
 	n.validAddrsLocked = make([]common.Address, 0, len(n.nodesLocked))
 	n.operatorsLocked = make(map[common.Address]bool, len(n.nodesLocked))
+	n.nodesByIndexLocked = make(map[int32]*NodeRecord, len(n.nodesLocked))
 
 	nodeBlocklist := n.onChainConfig.Get().NodeBlocklist
 	for addr, nn := range n.nodesLocked {
 		n.allNodesLocked = append(n.allNodesLocked, nn)
 		n.validAddrsLocked = append(n.validAddrsLocked, addr)
 		n.operatorsLocked[nn.operator] = true
+		if idx := int32(nn.permanentIndex); idx > 0 {
+			n.nodesByIndexLocked[idx] = nn
+		}
 		if nn.Status() == river.NodeStatus_Operational && !slices.Contains(nodeBlocklist, nn.Address()) {
 			n.activeNodesLocked = append(n.activeNodesLocked, nn)
 		}
@@ -274,6 +280,16 @@ func (n *nodeRegistryImpl) GetNode(address common.Address) (*NodeRecord, error) 
 	return nn, nil
 }
 
+func (n *nodeRegistryImpl) GetNodeByPermanentIndex(index int32) (*NodeRecord, error) {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	nn := n.nodesByIndexLocked[index]
+	if nn == nil {
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node index", "index", index).Func("GetNodeByPermanentIndex")
+	}
+	return nn, nil
+}
+
 func (n *nodeRegistryImpl) GetAllNodes() []*NodeRecord {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -349,6 +365,16 @@ func (n *nodeRegistryImpl) CloneWithClients(
 			permanentIndex:      node.permanentIndex,
 		}
 		clone.nodesLocked[addr] = clonedNode
+	}
+
+	clone.nodesByIndexLocked = make(map[int32]*NodeRecord, len(n.nodesByIndexLocked))
+	for _, node := range clone.nodesLocked {
+		if node == nil {
+			continue
+		}
+		if idx := int32(node.permanentIndex); idx > 0 {
+			clone.nodesByIndexLocked[idx] = node
+		}
 	}
 
 	clone.allNodesLocked = make([]*NodeRecord, len(n.allNodesLocked))
