@@ -232,10 +232,8 @@ contract PrepayFacetTest is MembershipBaseSetup, IPrepayBase {
         // Charlie mints
         vm.prank(charlie);
         membership.joinSpace(charlie);
-        assertEq(prepayFacet.prepaidMembershipSupply(), 1);
 
-        // Bob mints (need to add bob as entitled user first or use free allocation)
-        // Since bob is not in the allowed users list, let's verify prepaid supply decreased
+        // Verify final prepaid supply after two mints
         assertEq(prepayFacet.prepaidMembershipSupply(), 1);
     }
 
