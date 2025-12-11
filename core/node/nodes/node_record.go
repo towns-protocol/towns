@@ -18,6 +18,7 @@ type NodeRecord struct {
 	local               bool
 	streamServiceClient StreamServiceClient
 	nodeToNodeClient    NodeToNodeClient
+	permanentIndex      int
 }
 
 func (n *NodeRecord) Address() common.Address {
@@ -48,14 +49,21 @@ func (n *NodeRecord) NodeToNodeClient() NodeToNodeClient {
 	return n.nodeToNodeClient
 }
 
+// TODO: this is temporary implementation to unblock metadata shard development.
+// Add permanent index to the contract to make it consistent across restarts and all nodes.
+func (n *NodeRecord) PermanentIndex() int {
+	return n.permanentIndex
+}
+
 func (n *NodeRecord) String() string {
 	var local string
 	if n.local {
 		local = " local"
 	}
 	return fmt.Sprintf(
-		"%s %d (%-11s) %s%s %s",
+		"%s (%d) %d (%-11s) %s%s %s",
 		n.address.Hex(),
+		n.permanentIndex,
 		n.status,
 		river.NodeStatusString(n.status),
 		n.url,
