@@ -523,7 +523,7 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
     function test_validationResponse_fuzzScore(
         uint8 score
     ) external givenSimpleAppIsRegistered givenAgentIsRegistered givenValidationRequestExists {
-        vm.assume(score <= 100);
+        score = uint8(bound(score, 0, 100));
 
         vm.prank(DEFAULT_VALIDATOR);
         validationRegistry.validationResponse(
@@ -1496,7 +1496,7 @@ contract ValidationRegistryTest is AppRegistryBaseTest, IValidationRegistryBase 
     function test_revertWhen_validationResponse_fuzzScoreAbove100(
         uint8 score
     ) external givenSimpleAppIsRegistered givenAgentIsRegistered givenValidationRequestExists {
-        vm.assume(score > 100);
+        score = uint8(bound(score, 101, type(uint8).max));
 
         vm.prank(DEFAULT_VALIDATOR);
         vm.expectRevert(ValidationRegistry__InvalidResponseScore.selector);
