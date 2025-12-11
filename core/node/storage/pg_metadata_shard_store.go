@@ -520,7 +520,7 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 	if update == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "update payload is required")
 	}
-	if len(update.Nodes) == 0 || update.ReplicationFactor == 0 {
+	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "nothing to update:nodes or replication_factor are required")
 	}
 	if err := validateStreamID(update.StreamId); err != nil {
