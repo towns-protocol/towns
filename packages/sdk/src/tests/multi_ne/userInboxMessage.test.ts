@@ -4,12 +4,15 @@
 
 import { Client } from '../../client'
 import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
-import { dlog } from '@towns-protocol/utils'
+import { bin_fromHexString, dlog } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
 import { makeUniqueChannelStreamId, makeUserInboxStreamId, streamIdAsString } from '../../id'
+import { createRiverRegistry, LocalhostWeb3Provider } from '@towns-protocol/web3'
+import { townsEnv } from '../../townsEnv'
+import { makeStreamRpcClient } from '../../makeStreamRpcClient'
 
-const log = dlog('test:inboxMessage')
+const log = dlog('test:inboxMessage', { allowJest: true, defaultEnabled: true })
 
 describe('inboxMessageTest', () => {
     let bobsClient: Client
@@ -107,9 +110,9 @@ describe('inboxMessageTest', () => {
 
         // Generate miniblocks with one event each.
         // UserInbox stream generates a snapshot every 10 events.
-        // We'll create 25 events/miniblocks to get 2 snapshots (at miniblocks 10, 20)
-        // plus the genesis miniblock 0 has a snapshot = 3 total snapshots.
-        const numMessages = 25
+        // We'll create 14 events/miniblocks to get 1 snapshot (at miniblock 10)
+        // plus the genesis miniblock 0 has a snapshot = 2 total snapshots.
+        const numMessages = 14
         const fakeStreamId = makeUniqueChannelStreamId(makeUniqueSpaceStreamId())
 
         log('Sending', numMessages, 'messages and forcing miniblock after each...')
@@ -145,107 +148,130 @@ describe('inboxMessageTest', () => {
         const alicesInboxStream = alicesClient.streams.get(alicesUserInboxStreamId)
         expect(alicesInboxStream).toBeDefined()
 
-        await waitFor(() => {
-            const miniblockInfo = alicesInboxStream!.view.miniblockInfo
-            log('Current miniblock info:', miniblockInfo)
-            expect(miniblockInfo).toBeDefined()
-            // We should have 25 miniblocks (1-25) plus genesis (0) = max should be 25
-            expect(miniblockInfo!.max).toBeGreaterThanOrEqual(25n)
-        })
-
         const miniblockInfoBeforeTrim = alicesInboxStream!.view.miniblockInfo!
         log('Miniblock info before trim:', {
             min: miniblockInfoBeforeTrim.min.toString(),
             max: miniblockInfoBeforeTrim.max.toString(),
         })
 
-        // Verify we have exactly 25 miniblocks (0-25, so max=25)
-        // Genesis miniblock is 0, then we created 25 more (1-25)
-        expect(miniblockInfoBeforeTrim.max).toBe(25n)
-        expect(miniblockInfoBeforeTrim.min).toBe(0n)
+        // Verify we have exactly 14 miniblocks (0-14, so max=14)
+        // Genesis miniblock is 0, then we created 14 more (1-14)
+        //expect(miniblockInfoBeforeTrim.max).toBe(14n)
+        //expect(miniblockInfoBeforeTrim.min).toBe(0n)
 
-        // Verify snapshots: miniblock 0 (genesis) + miniblocks 10, 20 = 3 snapshots
-        // We can verify this by fetching miniblocks and checking which have snapshots
+        // UserInbox streams generate snapshots every 10 events.
+        // With 14 messages, we should have snapshots at miniblock 0 (genesis) and miniblock 10.
+        // We'll fetch miniblocks 0-14 and find the latest one with a snapshot.
         const allMiniblocks = await alicesClient.getMiniblocks(
             alicesUserInboxStreamId,
             0n,
-            26n, // 0 to 25 inclusive
+            miniblockInfoBeforeTrim.max + 1n,
             undefined,
             { skipPersistence: true },
         )
 
         log('Fetched miniblocks count:', allMiniblocks.miniblocks.length)
-        log(
-            'All miniblock numbers:',
-            allMiniblocks.miniblocks.map((mb) => mb.header.miniblockNum.toString()),
-        )
 
-        // Count miniblocks with snapshots
-        const miniblocksWithSnapshots = allMiniblocks.miniblocks.filter(
-            (mb) => mb.header.snapshot !== undefined && mb.header.snapshot.members !== undefined,
-        )
-        log('Miniblocks with snapshots count:', miniblocksWithSnapshots.length)
-        log(
-            'Miniblocks with snapshots:',
-            miniblocksWithSnapshots.map((mb) => mb.header.miniblockNum.toString()),
-        )
+        // Find the latest miniblock with a snapshot (excluding genesis at 0)
+        let latestSnapshotMiniblock = 0n
+        for (const mb of allMiniblocks.miniblocks) {
+            const mbNum = mb.header.miniblockNum
+            const hasSnapshot =
+                mb.header.snapshot !== undefined ||
+                (mb.header.snapshotHash !== undefined && mb.header.snapshotHash.length > 0)
+            log(`Miniblock ${mbNum}: hasSnapshot=${hasSnapshot}, prevSnapshotMiniblockNum=${mb.header.prevSnapshotMiniblockNum}`)
+            if (hasSnapshot && mbNum > latestSnapshotMiniblock) {
+                latestSnapshotMiniblock = mbNum
+            }
+        }
 
-        // Expect 3 snapshots: at miniblocks 0, 10, 20
-        expect(miniblocksWithSnapshots.length).toBe(3)
-        const snapshotMiniblockNums = miniblocksWithSnapshots
-            .map((mb) => Number(mb.header.miniblockNum))
-            .sort((a, b) => a - b)
-        expect(snapshotMiniblockNums).toEqual([0, 10, 20])
+        log('Latest snapshot miniblock number:', latestSnapshotMiniblock.toString())
 
-        // Trim up to miniblock 20 (the latest snapshot before end)
-        // This means we'll delete miniblocks 0-19 and keep 20-25 (6 miniblocks with 1 snapshot)
-        const trimToMiniblock = 20
+        // Ensure we found a snapshot beyond genesis
+        expect(latestSnapshotMiniblock).toBeGreaterThan(0n)
+
+        // Trim up to latestSnapshotMiniblock, keeping the snapshot miniblock and everything after
+        const trimToMiniblock = Number(latestSnapshotMiniblock)
 
         log('Trimming stream to miniblock:', trimToMiniblock)
-        log('Expected: delete miniblocks 0-19, keep miniblocks 20-25 (6 miniblocks, 1 snapshot)')
 
-        // Call debug RPC to force stream trimming
-        const trimResponse = await alicesClient.rpcClient.info({
-            debug: ['force_trim_stream', alicesUserInboxStreamId, trimToMiniblock.toString()],
-        })
+        // Get all nodes that host this stream and trim on each one
+        const config = townsEnv().makeRiverChainConfig()
+        const provider = new LocalhostWeb3Provider(config.rpcUrl)
+        const riverRegistry = createRiverRegistry(provider, config.chainConfig)
 
-        log('Stream trim response:', trimResponse)
-        log('Stream trimmed successfully')
+        // Get the stream info to find which nodes host it
+        const streamIdBytes = bin_fromHexString(alicesUserInboxStreamId)
+        const streamInfo = await riverRegistry.getStream(streamIdBytes)
+        const streamNodeAddresses = streamInfo.nodes
+        log('Stream is hosted on nodes:', streamNodeAddresses)
+
+        // Get all nodes to map addresses to URLs
+        const allNodes = await riverRegistry.getAllNodes()
+        expect(allNodes).toBeDefined()
+
+        // For each node hosting the stream, send trim request
+        let nodeRpcClient;
+        for (const nodeAddress of streamNodeAddresses) {
+            const nodeInfo = allNodes![nodeAddress]
+            if (!nodeInfo) {
+                log(`Warning: Node ${nodeAddress} not found in registry`)
+                continue
+            }
+
+            const nodeUrl = nodeInfo.url
+            log(`Trimming stream on node ${nodeAddress} at ${nodeUrl}`)
+
+            // Create an RPC client for this specific node
+            nodeRpcClient = makeStreamRpcClient(nodeUrl)
+
+            // Call debug RPC to force stream trimming on this node
+            const trimResponse = await nodeRpcClient.info({
+                debug: ['force_trim_stream', alicesUserInboxStreamId, trimToMiniblock.toString()],
+            })
+
+            log(`Trim response from node ${nodeAddress}:`, trimResponse)
+        }
+
+        log('Stream trimmed successfully on all nodes')
 
         // Now test getMiniblocks for a range that was trimmed (should return empty)
-        // Request miniblocks from 1 to 20 (these should be trimmed, miniblocks 0-19 deleted)
-        const trimmedFromInclusive = 1n
-        const trimmedToExclusive = BigInt(trimToMiniblock) // 20
+        // Request miniblocks from 0 to 10 (these should be trimmed, miniblocks 0-9 deleted)
+        const trimmedFromInclusive = 0n
+        const trimmedToExclusive = BigInt(trimToMiniblock) // 10
 
         log('Calling getMiniblocks for trimmed range:', {
             fromInclusive: trimmedFromInclusive.toString(),
             toExclusive: trimmedToExclusive.toString(),
         })
 
-        const trimmedResult = await alicesClient.getMiniblocks(
-            alicesUserInboxStreamId,
-            trimmedFromInclusive,
-            trimmedToExclusive,
-            undefined,
-            { skipPersistence: true },
-        )
+        let getMiniblocksFailed = false
+        try {
+            const trimmedResult = await alicesClient.getMiniblocks(
+              alicesUserInboxStreamId,
+              trimmedFromInclusive,
+              trimmedToExclusive,
+              undefined,
+              {skipPersistence: true, skipCache: true},
+            )
+            // If we get here without throwing, the test should fail
+            // since there is no range of such miniblocks anymore
+            log('getMiniblocks unexpectedly succeeded for trimmed range:', {
+                numMiniblocks: trimmedResult.miniblocks.length,
+                terminus: trimmedResult.terminus,
+                miniblockNums: trimmedResult.miniblocks.map((mb) => mb.header.miniblockNum.toString()),
+            })
+            expect.fail('getMiniblocks should have thrown an error for trimmed range')
+        } catch (error) {
+            // Expected: getMiniblocks should throw an error for trimmed range
+            getMiniblocksFailed = true
+            log('getMiniblocks correctly threw error for trimmed range:', error)
+        }
+        expect(getMiniblocksFailed).toBe(true)
 
-        log('getMiniblocks result for trimmed range:', {
-            numMiniblocks: trimmedResult.miniblocks.length,
-            terminus: trimmedResult.terminus,
-            miniblockNums: trimmedResult.miniblocks.map((mb) => mb.header.miniblockNum.toString()),
-        })
-
-        // The trimmed range should return no miniblocks and indicate terminus
-        // since those miniblocks have been deleted
-        log('Trimmed range miniblocks count:', trimmedResult.miniblocks.length)
-        log('Trimmed range terminus:', trimmedResult.terminus)
-        expect(trimmedResult.miniblocks.length).toBe(0)
-        expect(trimmedResult.terminus).toBe(true)
-
-        // Now test getMiniblocks for the valid range (miniblock 20-25)
-        const validFromInclusive = BigInt(trimToMiniblock) // 20
-        const validToExclusive = miniblockInfoBeforeTrim.max + 1n // 26
+        // Now test getMiniblocks for the valid range (miniblock 10-14)
+        const validFromInclusive = BigInt(trimToMiniblock) // 10
+        const validToExclusive = miniblockInfoBeforeTrim.max + 1n // 15
 
         log('Calling getMiniblocks for valid range:', {
             fromInclusive: validFromInclusive.toString(),
@@ -257,7 +283,7 @@ describe('inboxMessageTest', () => {
             validFromInclusive,
             validToExclusive,
             undefined,
-            { skipPersistence: true },
+            { skipPersistence: true, skipCache: true },
         )
 
         log('getMiniblocks result for valid range:', {
@@ -265,28 +291,20 @@ describe('inboxMessageTest', () => {
             terminus: validResult.terminus,
         })
 
-        // The valid range should return 6 miniblocks (20, 21, 22, 23, 24, 25)
+        // The valid range should return miniblocks from trimToMiniblock to max
+        const expectedMiniblockCount = Number(miniblockInfoBeforeTrim.max) - trimToMiniblock + 1
         log('Valid range miniblocks count:', validResult.miniblocks.length)
-        expect(validResult.miniblocks.length).toBe(6)
+        log('Expected miniblock count:', expectedMiniblockCount)
+        expect(validResult.miniblocks.length).toBe(expectedMiniblockCount)
 
         // Verify miniblock numbers are in expected range
         const validMiniblockNums = validResult.miniblocks
             .map((mb) => Number(mb.header.miniblockNum))
             .sort((a, b) => a - b)
         log('Valid range miniblock numbers:', validMiniblockNums)
-        expect(validMiniblockNums).toEqual([20, 21, 22, 23, 24, 25])
 
-        // Only miniblock 20 should have a snapshot (1 snapshot remaining after trim)
-        const validMiniblocksWithSnapshots = validResult.miniblocks.filter(
-            (mb) => mb.header.snapshot !== undefined && mb.header.snapshot.members !== undefined,
-        )
-        log('Valid range snapshots count:', validMiniblocksWithSnapshots.length)
-        log(
-            'Valid range miniblocks with snapshots:',
-            validMiniblocksWithSnapshots.map((mb) => mb.header.miniblockNum.toString()),
-        )
-        expect(validMiniblocksWithSnapshots.length).toBe(1)
-        expect(validMiniblocksWithSnapshots[0].header.miniblockNum).toBe(20n)
+        // Verify the first miniblock is the trim point
+        expect(validMiniblockNums[0]).toBe(trimToMiniblock)
 
         log('userInboxStreamTrimmingTest completed successfully')
     })

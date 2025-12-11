@@ -232,40 +232,24 @@ func (s *Service) debugForceTrimStream(
 		return nil, err
 	}
 
-	stream, err := s.cache.GetStreamNoWait(ctx, streamID)
+	trimToMiniblock, err := strconv.Atoi(req.Msg.Debug[2])
 	if err != nil {
-		return nil, err
-	}
-	if stream.IsLocal() {
-		trimToMiniblock, err := strconv.Atoi(req.Msg.Debug[2])
-		if err != nil {
-			return nil, RiverError(Err_DEBUG_ERROR, "invalid trimToMiniblock value")
-		}
-
-		log.Infow(
-			"Debug trim stream",
-			"streamId", streamID,
-			"trimToMiniblock", trimToMiniblock,
-		)
-
-		if err = s.storage.TrimStream(ctx, streamID, int64(trimToMiniblock), nil); err != nil {
-			return nil, AsRiverError(err, Err_DEBUG_ERROR).
-				Tags("streamId", streamID).
-				Message("failed to trim stream")
-		}
-
-		return connect.NewResponse(&InfoResponse{}), nil
+		return nil, RiverError(Err_DEBUG_ERROR, "invalid trimToMiniblock value")
 	}
 
-	return utils.PeerNodeRequestWithRetries(
-		ctx,
-		stream,
-		func(ctx context.Context, stub StreamServiceClient, _ common.Address) (*connect.Response[InfoResponse], error) {
-			return stub.Info(ctx, req)
-		},
-		s.config.Network.NumRetries,
-		s.nodeRegistry,
+	log.Infow(
+		"Debug trim stream",
+		"streamId", streamID,
+		"trimToMiniblock", trimToMiniblock,
 	)
+
+	if err = s.storage.TrimStream(ctx, streamID, int64(trimToMiniblock), nil); err != nil {
+		return nil, AsRiverError(err, Err_DEBUG_ERROR).
+			Tags("streamId", streamID).
+			Message("failed to trim stream")
+	}
+
+	return connect.NewResponse(&InfoResponse{}), nil
 }
 
 func (s *Service) debugInfoMakeMiniblock(

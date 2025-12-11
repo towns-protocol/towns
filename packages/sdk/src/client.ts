@@ -2552,25 +2552,27 @@ export class Client
         fromInclusive: bigint,
         toExclusive: bigint,
         exclusionFilter?: ExclusionFilter,
-        opts?: { skipPersistence?: boolean },
+        opts?: { skipPersistence?: boolean, skipCache?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
-        try {
-            for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
-                const miniblock = await this.persistenceStore.getMiniblock(
-                    streamIdAsString(streamId),
-                    i,
-                )
-                if (miniblock) {
-                    cachedMiniblocks.push(miniblock)
-                    toExclusive = i
-                } else {
-                    break
+        if (!opts?.skipCache) {
+            try {
+                for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
+                    const miniblock = await this.persistenceStore.getMiniblock(
+                      streamIdAsString(streamId),
+                      i,
+                    )
+                    if (miniblock) {
+                        cachedMiniblocks.push(miniblock)
+                        toExclusive = i
+                    } else {
+                        break
+                    }
                 }
+                cachedMiniblocks.reverse()
+            } catch (error) {
+                this.logError('error getting miniblocks', error)
             }
-            cachedMiniblocks.reverse()
-        } catch (error) {
-            this.logError('error getting miniblocks', error)
         }
 
         // Apply exclusion filtering to cached miniblocks if filters are provided
