@@ -23,6 +23,7 @@ contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
     }
 
     function prepayMembership(uint256 supply) external payable nonReentrant {
+        _validatePrepayCaller();
         if (supply == 0) revert Prepay__InvalidSupplyAmount();
 
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
@@ -55,5 +56,10 @@ contract PrepayFacet is IPrepay, PrepayBase, ReentrancyGuard, Entitled, Facet {
         MembershipStorage.Layout storage ds = MembershipStorage.layout();
         IPlatformRequirements platform = IPlatformRequirements(ds.spaceFactory);
         return supply * platform.getMembershipFee();
+    }
+
+    function _validatePrepayCaller() internal view {
+        address spaceFactory = MembershipStorage.layout().spaceFactory;
+        if (msg.sender != spaceFactory && msg.sender != _owner()) revert Prepay__NotAllowed();
     }
 }
