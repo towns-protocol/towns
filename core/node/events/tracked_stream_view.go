@@ -3,6 +3,10 @@ package events
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/towns-protocol/towns/core/node/logging"
+
 	"github.com/towns-protocol/towns/core/node/crypto"
 	. "github.com/towns-protocol/towns/core/node/protocol"
 	"github.com/towns-protocol/towns/core/node/shared"
@@ -132,18 +136,23 @@ func (ts *TrackedStreamViewImpl) applyBlock(
 //
 // Deduplication strategy:
 // 1. minipool.events.Has(event.Hash) - skip if already in minipool (duplicate event)
-// 2. GetMiniblockHeader() != nil - skip miniblock headers (metadata, not user events)
+// 2. GetMiniblockHeader() != nil - handle miniblock headers specially (prune minipool)
 //
 // Events are added to the minipool here, then removed when a miniblock is created
 // (see ApplyBlock/copyAndApplyBlock). This keeps the minipool bounded to events
 // waiting for the next miniblock.
 func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEvent) error {
-	// Skip duplicates: already in minipool or is a miniblock header
-	if ts.view.minipool.events.Has(event.Hash) || event.Event.GetMiniblockHeader() != nil {
+	// Skip duplicates already in minipool
+	if ts.view.minipool.events.Has(event.Hash) {
 		return nil
 	}
 
-	// Add to minipool
+	// Handle miniblock headers - these signal a new block was created and we need to prune
+	if event.Event.GetMiniblockHeader() != nil {
+		return ts.applyMiniblockHeader(ctx, event)
+	}
+
+	// Add regular event to minipool
 	view, err := ts.view.copyAndAddEvent(event)
 	if err != nil {
 		return err
@@ -152,6 +161,40 @@ func (ts *TrackedStreamViewImpl) addEvent(ctx context.Context, event *ParsedEven
 
 	// Send notification for real-time event
 	return ts.SendEventNotification(ctx, event)
+}
+
+// applyMiniblockHeader handles a miniblock header event received during real-time sync.
+// When the server creates a miniblock, it sends the header as an event. We need to:
+// 1. Collect events from our minipool that match the header's event hashes
+// 2. Create a MiniblockInfo from the header and events
+// 3. Apply the block to prune our minipool
+func (ts *TrackedStreamViewImpl) applyMiniblockHeader(ctx context.Context, headerEvent *ParsedEvent) error {
+	header := headerEvent.Event.GetMiniblockHeader()
+
+	// Collect events from minipool that are in this block
+	events := make([]*ParsedEvent, 0, len(header.EventHashes))
+	for _, hashBytes := range header.EventHashes {
+		hash := common.BytesToHash(hashBytes)
+		if event, ok := ts.view.minipool.events.Get(hash); ok {
+			events = append(events, event)
+		} else {
+			logging.FromCtx(ctx).Errorw(
+				"Event in miniblock header not found in minipool",
+				"streamId", ts.streamID,
+				"miniblockNum", header.MiniblockNum,
+				"eventHash", hash,
+				"minipoolLen", ts.view.minipool.events.Len(),
+			)
+		}
+	}
+
+	// Create MiniblockInfo from header event and collected events
+	mb, err := NewMiniblockInfoFromParsed(headerEvent, events, nil)
+	if err != nil {
+		return err
+	}
+
+	return ts.applyBlock(mb, ts.cfg.Get())
 }
 
 func (ts *TrackedStreamViewImpl) SendEventNotification(ctx context.Context, event *ParsedEvent) error {

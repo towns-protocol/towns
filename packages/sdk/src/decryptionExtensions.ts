@@ -1085,30 +1085,28 @@ export abstract class BaseDecryptionExtensions {
             .filter((x) => requestedSessionIds.has(x))
             .sort()
 
-        // the only way fulfilledSessionIds is empty is if we're sending a to a new device key
-        // and we don't have overlapping session ids, but they probably need these keys so we're going to send them anyway
-        // but we don't need to send a fulfillment because it's not actionable information for the other stream members
-        if (fulfilledSessionIds.length > 0) {
-            // send a single key fulfillment for all algorithms
-            const { error } = await this.sendKeyFulfillment({
-                streamId,
-                userId: item.fromUserId,
-                deviceKey: item.solicitation.deviceKey,
-                sessionIds: fulfilledSessionIds,
-                ephemeral: item.ephemeral,
-            })
+        // send a single key fulfillment for all algorithms
+        const { error } = await this.sendKeyFulfillment({
+            streamId,
+            userId: item.fromUserId,
+            deviceKey: item.solicitation.deviceKey,
+            sessionIds:
+                fulfilledSessionIds.length > 0
+                    ? fulfilledSessionIds
+                    : allSessions.map((x) => x.sessionId).sort(),
+            ephemeral: item.ephemeral,
+        })
 
-            // if the key fulfillment failed, someone else already sent a key fulfillment
-            if (error) {
-                if (
-                    !errorContains(error, Err.DUPLICATE_EVENT) &&
-                    !errorContains(error, Err.NOT_FOUND)
-                ) {
-                    // duplicate events are expected, we can ignore them, others are not
-                    this.log.error('failed to send key fulfillment', error)
-                }
-                return
+        // if the key fulfillment failed, someone else already sent a key fulfillment
+        if (error) {
+            if (
+                !errorContains(error, Err.DUPLICATE_EVENT) &&
+                !errorContains(error, Err.NOT_FOUND)
+            ) {
+                // duplicate events are expected, we can ignore them, others are not
+                this.log.error('failed to send key fulfillment', error)
             }
+            return
         }
 
         // if the key fulfillment succeeded, send one group session payload for each algorithm

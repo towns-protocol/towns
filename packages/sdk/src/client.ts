@@ -2552,10 +2552,10 @@ export class Client
         fromInclusive: bigint,
         toExclusive: bigint,
         exclusionFilter?: ExclusionFilter,
-        opts?: { skipPersistence?: boolean; skipCache?: boolean },
+        opts?: { skipPersistence?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
-        if (!opts?.skipCache) {
+        if (!opts?.skipPersistence) {
             try {
                 for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
                     const miniblock = await this.persistenceStore.getMiniblock(
