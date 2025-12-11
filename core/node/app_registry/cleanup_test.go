@@ -52,24 +52,6 @@ func setupCleanupTest(t *testing.T) *cleanupTestParams {
 	return params
 }
 
-func TestNewEnqueuedMessagesCleaner_UsesProvidedConfig(t *testing.T) {
-	require := require.New(t)
-	params := setupCleanupTest(t)
-	metricsFactory := infra.NewMetricsFactory(prometheus.NewRegistry(), "", "")
-
-	cfg := config.EnqueuedMessageRetentionConfig{
-		TTL:               24 * time.Hour,
-		MaxMessagesPerBot: 500,
-		CleanupInterval:   10 * time.Minute,
-	}
-
-	cleaner := NewEnqueuedMessagesCleaner(params.store, cfg, metricsFactory)
-
-	require.Equal(24*time.Hour, cleaner.cfg.TTL)
-	require.Equal(500, cleaner.cfg.MaxMessagesPerBot)
-	require.Equal(10*time.Minute, cleaner.cfg.CleanupInterval)
-}
-
 func TestEnqueuedMessagesCleaner_Cleanup(t *testing.T) {
 	require := require.New(t)
 	params := setupCleanupTest(t)

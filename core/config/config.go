@@ -610,15 +610,15 @@ type AppRegistryConfig struct {
 
 // EnqueuedMessageRetentionConfig configures TTL and limits for the enqueued_messages table.
 type EnqueuedMessageRetentionConfig struct {
-	// TTL is how long messages are kept before cleanup. Default: 7 days.
+	// TTL is how long messages are kept before cleanup.
 	// Messages older than this are deleted by the background cleanup job.
 	TTL time.Duration
 
-	// MaxMessagesPerBot is the maximum number of messages kept per bot. Default: 1000.
+	// MaxMessagesPerBot is the maximum number of messages kept per bot.
 	// When a bot exceeds this limit, the oldest messages are deleted.
 	MaxMessagesPerBot int
 
-	// CleanupInterval is how often the cleanup job runs. Default: 5 minutes.
+	// CleanupInterval is how often the cleanup job runs.
 	CleanupInterval time.Duration
 }
 
