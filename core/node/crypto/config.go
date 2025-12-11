@@ -315,6 +315,12 @@ func DefaultOnChainSettings() *OnChainSettings {
 
 		StreamMiniblockRegistrationFrequency: 1,
 
+		StreamHistoryMiniblocks: StreamHistoryMiniblocks{
+			UserInbox:    5000,
+			UserSettings: 40,
+			Space:        400,
+		},
+
 		MembershipLimits: MembershipLimitsSettings{
 			GDM: 48,
 			DM:  2,
