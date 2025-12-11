@@ -324,12 +324,13 @@ func (n *nodeRegistryImpl) CloneWithClients(
 	defer n.mu.RUnlock()
 
 	clone := &nodeRegistryImpl{
-		contract:              n.contract,
-		onChainConfig:         n.onChainConfig,
-		localNodeAddress:      n.localNodeAddress,
-		httpClient:            httpClient,
-		httpClientWithCert:    httpClientWithCert,
-		appliedBlockNumLocked: n.appliedBlockNumLocked,
+		contract:                 n.contract,
+		onChainConfig:            n.onChainConfig,
+		localNodeAddress:         n.localNodeAddress,
+		httpClient:               httpClient,
+		httpClientWithCert:       httpClientWithCert,
+		appliedBlockNumLocked:    n.appliedBlockNumLocked,
+		nextPermanentIndexLocked: n.nextPermanentIndexLocked,
 	}
 
 	clone.connectOpts = make([]connect.ClientOption, len(n.connectOpts))
