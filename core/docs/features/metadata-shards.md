@@ -62,3 +62,4 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 - [ ] Include node set (and other non-miniblock metadata) in the app_hash inputs so placement-only changes affect consensus state.
 - [ ] Persist created/updated block heights for streams to make audits and retries deterministic.
 - [ ] Add typed helpers for encoding/submitting metadata shard transactions instead of hand-building proto bytes at call sites.
+- [ ] Do not store genesis miniblock and hash in the database. Always rely on ephemeral stream creation codepath.

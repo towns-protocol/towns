@@ -264,17 +264,6 @@ func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte) ([]int3
 	return indexes, nil
 }
 
-func (s *PostgresMetadataShardStore) permanentIndexForAddress(addr common.Address) (int32, error) {
-	idx, err := s.resolver.PermanentIndexForAddress(addr)
-	if err != nil {
-		return 0, err
-	}
-	if idx <= 0 {
-		return 0, RiverError(Err_INTERNAL, "invalid permanent index", "node", addr, "index", idx)
-	}
-	return idx, nil
-}
-
 func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]byte, error) {
 	addrs := make([][]byte, 0, len(indexes))
 	for _, idx := range indexes {
@@ -282,10 +271,7 @@ func (s *PostgresMetadataShardStore) nodeAddrsForIndexes(indexes []int32) ([][]b
 		if err != nil {
 			return nil, err
 		}
-		addrBytes := addr.Bytes()
-		cp := make([]byte, len(addrBytes))
-		copy(cp, addrBytes)
-		addrs = append(addrs, cp)
+		addrs = append(addrs, addr.Bytes())
 	}
 	return addrs, nil
 }
@@ -894,7 +880,7 @@ func (s *PostgresMetadataShardStore) ListStreamsByNode(
 		"MetadataShard.ListStreamsByNode",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			nodeIndex, err := s.permanentIndexForAddress(node)
+			nodeIndex, err := s.resolver.PermanentIndexForAddress(node)
 			if err != nil {
 				return err
 			}
@@ -999,7 +985,7 @@ func (s *PostgresMetadataShardStore) CountStreamsByNode(
 		"MetadataShard.CountStreamsByNode",
 		pgx.ReadOnly,
 		func(ctx context.Context, tx pgx.Tx) error {
-			nodeIndex, err := s.permanentIndexForAddress(node)
+			nodeIndex, err := s.resolver.PermanentIndexForAddress(node)
 			if err != nil {
 				return err
 			}
