@@ -1469,25 +1469,56 @@ func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
 	ctx context.Context,
 	maxMessages int,
 ) (int64, error) {
-	// Delete oldest messages for each device_key that exceeds the limit.
-	// Uses ROW_NUMBER() to rank messages by created_at (newest first) per device_key,
-	// then deletes all rows with rank > maxMessages.
-	result, err := s.pool.Exec(ctx, `
-		DELETE FROM enqueued_messages
-		WHERE ctid IN (
-			SELECT ctid FROM (
-				SELECT ctid,
-				       ROW_NUMBER() OVER (PARTITION BY device_key ORDER BY created_at DESC) as rn
-				FROM enqueued_messages
-			) ranked
-			WHERE rn > $1
-		)
-	`, maxMessages)
+	// Get all device keys from app_registry that have webhooks registered
+	rows, err := s.pool.Query(ctx, `
+		SELECT device_key FROM app_registry WHERE device_key IS NOT NULL
+	`)
 	if err != nil {
 		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to trim enqueued messages per bot")
+			Message("failed to get device keys for trimming")
 	}
-	return result.RowsAffected(), nil
+	defer rows.Close()
+
+	var deviceKeys []string
+	for rows.Next() {
+		var deviceKey string
+		if err := rows.Scan(&deviceKey); err != nil {
+			return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to scan device key")
+		}
+		deviceKeys = append(deviceKeys, deviceKey)
+	}
+	if err := rows.Err(); err != nil {
+		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+			Message("failed to iterate device keys")
+	}
+
+	// For each device, delete messages beyond the limit using the index efficiently.
+	// The subquery finds the created_at of the (maxMessages+1)th newest message,
+	// then deletes all messages at or before that timestamp.
+	var totalDeleted int64
+	for _, deviceKey := range deviceKeys {
+		result, err := s.pool.Exec(ctx, `
+			DELETE FROM enqueued_messages
+			WHERE device_key = $1
+			  AND created_at <= (
+				  SELECT created_at
+				  FROM enqueued_messages
+				  WHERE device_key = $1
+				  ORDER BY created_at DESC
+				  OFFSET $2
+				  LIMIT 1
+			  )
+		`, deviceKey, maxMessages)
+		if err != nil {
+			return totalDeleted, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
+				Message("failed to trim enqueued messages for device").
+				Tag("deviceKey", deviceKey)
+		}
+		totalDeleted += result.RowsAffected()
+	}
+
+	return totalDeleted, nil
 }
 
 // GetEnqueuedMessagesCountAprox returns an approximate count of enqueued messages.
