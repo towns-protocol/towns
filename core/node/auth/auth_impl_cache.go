@@ -39,7 +39,10 @@ const (
 	EntitlementResultReason_MISMATCHED_APP_ADDRESS
 	EntitlementResultReason_APP_ENTITLEMENTS
 	EntitlementResultReason_IS_NOT_BOT_OWNER
-	EntitlementResultReason_MAX // MAX - leave at the end
+	EntitlementResultReason_CREATOR_IS_APP            // Creator cannot be an app
+	EntitlementResultReason_SECOND_PARTY_NOT_APP      // Second party must be a registered app
+	EntitlementResultReason_APP_NOT_INSTALLED_ON_USER // App not installed on creator's account
+	EntitlementResultReason_MAX                       // MAX - leave at the end
 )
 
 var entitlementResultReasonDescriptions = []string{
@@ -56,6 +59,9 @@ var entitlementResultReasonDescriptions = []string{
 	"MISMATCHED_APP_ADDRESS",
 	"APP_ENTITLEMENTS",
 	"IS_NOT_BOT_OWNER",
+	"CREATOR_IS_APP",
+	"SECOND_PARTY_NOT_APP",
+	"APP_NOT_INSTALLED_ON_USER",
 }
 
 func (r EntitlementResultReason) String() string {

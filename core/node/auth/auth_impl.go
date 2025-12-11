@@ -105,6 +105,23 @@ func NewChainAuthArgsForIsBotOwner(userId common.Address, botClientAddress commo
 	}
 }
 
+// NewChainAuthArgsForSecondPartyIsAppInstalled creates chain auth args for validating
+// that the second party is a registered app and the app is installed on the creator's account.
+// It checks that:
+// 1. The creator (principal) is NOT a registered app
+// 2. The second party (botClientAddress) IS a registered app
+// 3. The app is installed on the creator's account
+func NewChainAuthArgsForSecondPartyIsAppInstalled(
+	creatorAddress common.Address,
+	secondPartyAddress common.Address,
+) *ChainAuthArgs {
+	return &ChainAuthArgs{
+		kind:             chainAuthKindSecondPartyIsAppInstalled,
+		principal:        creatorAddress,
+		botClientAddress: secondPartyAddress, // Reuse field for second party address
+	}
+}
+
 func NewChainAuthArgsForSpace(
 	spaceId shared.StreamId,
 	userId common.Address,
@@ -173,6 +190,7 @@ const (
 	chainAuthKindIsApp
 	chainAuthKindIsNotApp
 	chainAuthKindIsBotOwner
+	chainAuthKindSecondPartyIsAppInstalled // For validating second party is an app and installed on creator's account
 )
 
 type ChainAuthArgs struct {
@@ -295,6 +313,7 @@ type chainAuth struct {
 	spaceContract           SpaceContract
 	appRegistryContract     *AppRegistryContract
 	walletLinkContract      *base.WalletLink
+	userAccountContract     UserAccountContract
 	linkedWalletsLimit      int
 	contractCallsTimeoutMs  int
 	entitlementCache        *entitlementCache
@@ -347,6 +366,11 @@ func NewChainAuth(
 		return nil, err
 	}
 
+	userAccountContract, err := NewUserAccountContract(blockchain.Client)
+	if err != nil {
+		return nil, err
+	}
+
 	entitlementCache, err := newEntitlementCache(ctx, blockchain.Config)
 	if err != nil {
 		return nil, err
@@ -384,6 +408,7 @@ func NewChainAuth(
 		spaceContract:           spaceContract,
 		walletLinkContract:      walletLinkContract,
 		appRegistryContract:     appRegistryContract,
+		userAccountContract:     userAccountContract,
 		linkedWalletsLimit:      linkedWalletsLimit,
 		contractCallsTimeoutMs:  contractCallsTimeoutMs,
 		entitlementCache:        entitlementCache,
@@ -1177,7 +1202,7 @@ func (ca *chainAuth) checkStreamIsEnabled(
 			return false, reason, err
 		}
 		return isEnabled, reason, nil
-	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner {
+	} else if args.kind == chainAuthKindIsWalletLinked || args.kind == chainAuthKindIsApp || args.kind == chainAuthKindIsNotApp || args.kind == chainAuthKindIsBotOwner || args.kind == chainAuthKindSecondPartyIsAppInstalled {
 		return true, EntitlementResultReason_NONE, nil
 	} else {
 		return false, EntitlementResultReason_NONE, RiverError(Err_INTERNAL, "Unknown chain auth kind").Func("checkStreamIsEnabled")
@@ -1250,7 +1275,74 @@ func (ca *chainAuth) checkIsApp(
 		}
 	}
 
+	if args.kind == chainAuthKindSecondPartyIsAppInstalled {
+		return ca.checkSecondPartyIsAppInstalled(ctx, args)
+	}
+
 	return nil, nil
+}
+
+// checkSecondPartyIsAppInstalled validates that the second party is a registered app
+// and the app is installed on the creator's account:
+// 1. Creator (principal) must NOT be a registered app
+// 2. Second party (botClientAddress) must BE a registered app
+// 3. The app must be installed on the creator's account
+func (ca *chainAuth) checkSecondPartyIsAppInstalled(
+	ctx context.Context,
+	args *ChainAuthArgs,
+) (CacheResult, error) {
+	log := logging.FromCtx(ctx)
+
+	// 1. Check if creator is an app - deny if true (bots cannot initiate DMs)
+	creatorIsApp, _, err := ca.appRegistryContract.UserIsRegisteredAsApp(ctx, args.principal)
+	if err != nil {
+		return nil, err
+	}
+	if creatorIsApp {
+		log.Debugw(
+			"checkSecondPartyIsAppInstalled: creator is an app, denying",
+			"creator", args.principal,
+		)
+		return boolCacheResult{false, EntitlementResultReason_CREATOR_IS_APP}, nil
+	}
+
+	// 2. Check if second party is an app - deny if not (only bot DMs allowed)
+	secondPartyIsApp, appContractAddress, err := ca.appRegistryContract.UserIsRegisteredAsApp(
+		ctx,
+		args.botClientAddress,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !secondPartyIsApp {
+		log.Debugw(
+			"checkSecondPartyIsAppInstalled: second party is not an app, denying",
+			"secondParty", args.botClientAddress,
+		)
+		return boolCacheResult{false, EntitlementResultReason_SECOND_PARTY_NOT_APP}, nil
+	}
+
+	// 3. Check if the app is installed on the creator's account
+	isInstalled, err := ca.userAccountContract.IsAppInstalled(ctx, args.principal, appContractAddress)
+	if err != nil {
+		return nil, err
+	}
+	if !isInstalled {
+		log.Debugw(
+			"checkSecondPartyIsAppInstalled: app not installed on creator's account",
+			"creator", args.principal,
+			"appContract", appContractAddress,
+		)
+		return boolCacheResult{false, EntitlementResultReason_APP_NOT_INSTALLED_ON_USER}, nil
+	}
+
+	log.Debugw(
+		"checkSecondPartyIsAppInstalled: all checks passed",
+		"creator", args.principal,
+		"secondParty", args.botClientAddress,
+		"appContract", appContractAddress,
+	)
+	return boolCacheResult{true, EntitlementResultReason_NONE}, nil
 }
 
 // checkAppMembership validates that the app is a member of the space. If the app
