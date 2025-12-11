@@ -9,7 +9,7 @@ import {ITipping} from "src/spaces/facets/tipping/ITipping.sol";
 import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol";
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {TippingMod} from "src/spaces/facets/tipping/TippingMod.sol";
+import "src/spaces/facets/tipping/TippingMod.sol" as TippingMod;
 
 // contracts
 import {BaseSetup} from "test/spaces/BaseSetup.sol";

@@ -15,7 +15,7 @@ import {FeeCalculationMethod} from "src/factory/facets/fee/FeeManagerStorage.sol
 import {BasisPoints} from "src/utils/libraries/BasisPoints.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
-import {TippingMod} from "src/spaces/facets/tipping/TippingMod.sol";
+import "src/spaces/facets/tipping/TippingMod.sol" as TippingMod;
 
 // contracts
 import {IntrospectionFacet} from "@towns-protocol/diamond/src/facets/introspection/IntrospectionFacet.sol";

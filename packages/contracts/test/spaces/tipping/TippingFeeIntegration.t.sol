@@ -11,7 +11,7 @@ import {ITippingBase} from "src/spaces/facets/tipping/ITipping.sol";
 // libraries
 import {FeeTypesLib} from "src/factory/facets/fee/FeeTypesLib.sol";
 import {CurrencyTransfer} from "src/utils/libraries/CurrencyTransfer.sol";
-import {TippingMod} from "src/spaces/facets/tipping/TippingMod.sol";
+import "src/spaces/facets/tipping/TippingMod.sol" as TippingMod;
 
 /// @title TippingFeeIntegrationTest
 /// @notice Integration tests for tipping with FeeManager

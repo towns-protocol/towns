@@ -6,7 +6,7 @@ import {ITipping} from "./ITipping.sol";
 import {ITownsPointsBase} from "../../../airdrop/points/ITownsPoints.sol";
 
 // libraries
-import {TippingMod} from "./TippingMod.sol";
+import "./TippingMod.sol" as TippingMod;
 
 // contracts
 import {Facet} from "@towns-protocol/diamond/src/facets/Facet.sol";
