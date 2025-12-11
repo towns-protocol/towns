@@ -1,5 +1,10 @@
 # Metadata Shards
 
+## Code location
+
+Metadata shard CometBFT code: `core/node/metadata/shard.go`.
+Storage code: `core/node/storage/pg_metadata_shard_store.go`.
+
 ## Current Shape
 
 - Metadata shards run a CometBFT ABCI app (`MetadataShard`) backed by Postgres via `PostgresMetadataShardStore`.
