@@ -220,7 +220,7 @@ func (s *PostgresStreamStore) debugReadStreamStatisticsTx(
 		DBTableSuffix:              CreatePartitionSuffix(streamId, s.numPartitions),
 	}
 
-	result.MiniblocksRanges, err = s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId)
+	result.MiniblocksRanges, err = s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId, lockStream)
 	if err != nil {
 		return nil, AsRiverError(err, Err_DB_OPERATION_FAILURE).Tag("query", "miniblock_ranges")
 	}

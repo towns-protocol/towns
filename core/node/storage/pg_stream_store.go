@@ -2528,19 +2528,31 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTx(
 	tx pgx.Tx,
 	streamId StreamId,
 ) ([]MiniblockRange, error) {
-	if _, err := s.lockStream(ctx, tx, streamId, false); err != nil {
+	lockStreamResult, err := s.lockStream(ctx, tx, streamId, false)
+	if err != nil {
 		return nil, err
 	}
 
-	return s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId)
+	return s.getMiniblockNumberRangesTxNoLock(ctx, tx, streamId, lockStreamResult)
 }
 
 func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
 	ctx context.Context,
 	tx pgx.Tx,
 	streamId StreamId,
+	lockStreamResult *LockStreamResult,
 ) ([]MiniblockRange, error) {
-	query := s.sqlForStream(`
+	var (
+		snapshotStatement = "(snapshot IS NOT NULL) AS has_snapshot"
+		table             = "{{miniblocks}}"
+	)
+
+	if !lockStreamResult.MiniblocksStoredInDB() {
+		snapshotStatement = "false AS has_snapshot"
+		table = "{{miniblocks_ext}}"
+	}
+
+	query := s.sqlForStream(fmt.Sprintf(`
 		SELECT
 			MIN(seq_num) AS start_range,
 			MAX(seq_num) AS end_range,
@@ -2548,13 +2560,16 @@ func (s *PostgresStreamStore) getMiniblockNumberRangesTxNoLock(
 		FROM (
 			SELECT
 				seq_num,
-				(snapshot IS NOT NULL) AS has_snapshot,
+				%s,
 				seq_num - ROW_NUMBER() OVER (ORDER BY seq_num) AS grp
-			FROM {{miniblocks}}
+			FROM %s
 			WHERE stream_id = $1
 		) AS sub
 		GROUP BY grp
-		ORDER BY start_range`, streamId)
+		ORDER BY start_range`,
+		snapshotStatement,
+		table,
+	), streamId)
 
 	rows, err := tx.Query(ctx, query, streamId)
 	if err != nil {
