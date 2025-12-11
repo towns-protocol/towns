@@ -111,6 +111,7 @@ message StreamMetadata {
 
     // Hash of the genesis miniblock.
     // Must be 32 bytes.
+    // Set on creation and cannot be changed.
     bytes genesis_miniblock_hash = 2;
 
     // Hash of the last miniblock.
@@ -134,9 +135,12 @@ message StreamMetadata {
     uint32 replication_factor = 7;
 
     // Whether the stream is sealed.
+    // When stream is sealed, last miniblock hash and number are immutable.
+    // Both replication factor and nodes can be updated when stream is sealed.
     bool sealed = 8;
 
     // Serialized genesis miniblock payload.
+    // Set on creation and cannot be changed.
     // TODO: future optimization: remove this field and create all streams through ephemeral streams creation codepath.
     bytes genesis_miniblock = 9;
 }

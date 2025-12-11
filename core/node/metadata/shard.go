@@ -670,16 +670,18 @@ func (m *MetadataShard) validateUpdateNodes(update *UpdateStreamNodesAndReplicat
 	if len(update.StreamId) != 32 {
 		return RiverError(Err_INVALID_ARGUMENT, "stream_id must be 32 bytes")
 	}
-	if len(update.Nodes) == 0 {
-		return RiverError(Err_INVALID_ARGUMENT, "nodes required")
+	if len(update.Nodes) == 0 && update.ReplicationFactor == 0 {
+		return RiverError(Err_INVALID_ARGUMENT, "nothing to update")
 	}
-	for _, n := range update.Nodes {
-		if len(n) != 20 {
-			return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+	if len(update.Nodes) > 0 {
+		for _, n := range update.Nodes {
+			if len(n) != 20 {
+				return RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
+			}
 		}
-	}
-	if update.ReplicationFactor > 0 && len(update.Nodes) > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
-		return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		if update.ReplicationFactor > 0 && int(update.ReplicationFactor) > len(update.Nodes) {
+			return RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
 	}
 	return nil
 }

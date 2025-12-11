@@ -101,6 +101,36 @@ func (_m *MockNodeRegistry) GetNode(address common.Address) (*nodes.NodeRecord, 
 	return r0, r1
 }
 
+// GetNodeByPermanentIndex provides a mock function with given fields: index
+func (_m *MockNodeRegistry) GetNodeByPermanentIndex(index int32) (*nodes.NodeRecord, error) {
+	ret := _m.Called(index)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNodeByPermanentIndex")
+	}
+
+	var r0 *nodes.NodeRecord
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int32) (*nodes.NodeRecord, error)); ok {
+		return rf(index)
+	}
+	if rf, ok := ret.Get(0).(func(int32) *nodes.NodeRecord); ok {
+		r0 = rf(index)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*nodes.NodeRecord)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int32) error); ok {
+		r1 = rf(index)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodeToNodeClientForAddress provides a mock function with given fields: address
 func (_m *MockNodeRegistry) GetNodeToNodeClientForAddress(address common.Address) (protocolconnect.NodeToNodeClient, error) {
 	ret := _m.Called(address)
