@@ -113,15 +113,17 @@ function uninstallApp(address account, bytes32 appId, bytes calldata data) {
 
     if (!apps.contains(app.appId)) AppManager__AppNotInstalled.selector.revertWith();
 
+    address module = $.appById[account][app.appId].app;
+
     // Remove from storage
     apps.remove(app.appId);
-    delete $.appIdByApp[account][app.module];
+    delete $.appIdByApp[account][module];
     delete $.appById[account][app.appId];
 
     // Call module's onUninstall if data is provided (non-reverting)
     if (data.length > 0) {
         // solhint-disable-next-line no-empty-blocks
-        try IModule(app.module).onUninstall(data) {} catch {}
+        try IModule(module).onUninstall(data) {} catch {}
     }
 }
 
