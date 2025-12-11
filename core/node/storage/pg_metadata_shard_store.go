@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -232,23 +231,13 @@ func validateHash(hash []byte, field string) error {
 	return nil
 }
 
-func validateNodeAddrs(nodes [][]byte, allowEmpty bool) ([][]byte, error) {
+func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte, allowEmpty bool) ([]int32, error) {
 	if len(nodes) == 0 {
 		if allowEmpty {
 			return nil, nil
 		}
 		return nil, RiverError(Err_INVALID_ARGUMENT, "nodes must not be empty")
 	}
-
-	for _, n := range nodes {
-		if len(n) != 20 {
-			return nil, RiverError(Err_INVALID_ARGUMENT, "node address must be 20 bytes")
-		}
-	}
-	return nodes, nil
-}
-
-func (s *PostgresMetadataShardStore) nodeIndexesForAddrs(nodes [][]byte) ([]int32, error) {
 	indexes := make([]int32, 0, len(nodes))
 	for _, nodeBytes := range nodes {
 		addr := common.BytesToAddress(nodeBytes)
@@ -293,28 +282,23 @@ func (s *PostgresMetadataShardStore) CreateStream(
 	if err := validateHash(txData.GenesisMiniblockHash, "genesis_miniblock_hash"); err != nil {
 		return nil, err
 	}
-	nodes, err := validateNodeAddrs(txData.Nodes, false)
+	nodeIndexes, err := s.nodeIndexesForAddrs(txData.Nodes, false)
 	if err != nil {
 		return nil, err
 	}
 	if txData.ReplicationFactor == 0 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
 	}
-	if int(txData.ReplicationFactor) > len(nodes) {
+	if int(txData.ReplicationFactor) > len(nodeIndexes) {
 		return nil, RiverError(
 			Err_INVALID_ARGUMENT,
 			"replication_factor cannot exceed number of nodes",
 			"replicationFactor", txData.ReplicationFactor,
-			"numNodes", len(nodes),
+			"numNodes", len(nodeIndexes),
 		)
 	}
 	if txData.LastMiniblockNum > math.MaxInt64 {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "last_miniblock_num too large")
-	}
-
-	nodeIndexes, err := s.nodeIndexesForAddrs(nodes)
-	if err != nil {
-		return nil, err
 	}
 
 	var (
@@ -350,7 +334,7 @@ func (s *PostgresMetadataShardStore) CreateStream(
 		GenesisMiniblockHash: txData.GenesisMiniblockHash,
 		LastMiniblockHash:    lastMiniblockHash,
 		LastMiniblockNum:     lastMiniblockNum,
-		Nodes:                nodes,
+		Nodes:                txData.Nodes,
 		ReplicationFactor:    txData.ReplicationFactor,
 		Sealed:               txData.Sealed,
 		GenesisMiniblock:     genesisMiniblock,
@@ -536,19 +520,15 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 	if update == nil {
 		return nil, RiverError(Err_INVALID_ARGUMENT, "update payload is required")
 	}
+	if len(update.Nodes) == 0 || update.ReplicationFactor == 0 {
+		return nil, RiverError(Err_INVALID_ARGUMENT, "nothing to update:nodes or replication_factor are required")
+	}
 	if err := validateStreamID(update.StreamId); err != nil {
 		return nil, err
 	}
-	nodes, err := validateNodeAddrs(update.Nodes, true)
+	nodeIndexes, err := s.nodeIndexesForAddrs(update.Nodes, true)
 	if err != nil {
 		return nil, err
-	}
-	var nodeIndexes []int32
-	if len(nodes) > 0 {
-		nodeIndexes, err = s.nodeIndexesForAddrs(nodes)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	var result *StreamMetadata
@@ -562,8 +542,8 @@ func (s *PostgresMetadataShardStore) UpdateStreamNodesAndReplication(
 				tx,
 				shardID,
 				height,
-				update,
-				nodes,
+				update.StreamId,
+				update.ReplicationFactor,
 				nodeIndexes,
 			)
 			if innerErr != nil {
@@ -584,9 +564,9 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 	tx pgx.Tx,
 	shardID uint64,
 	height int64,
-	update *UpdateStreamNodesAndReplicationTx,
-	nodes [][]byte,
-	nodeIndexes []int32,
+	streamId []byte,
+	newReplicationFactor uint32,
+	newNodeIndexes []int32,
 ) (*StreamMetadata, error) {
 	_ = height
 
@@ -614,84 +594,62 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 	if err := tx.QueryRow(
 		ctx,
 		selectSQL,
-		update.StreamId,
+		streamId,
 	).Scan(&replicationFactor, &sealed, &lastHash, &lastNum, &genesisHash, &genesisMiniblock, &existingIndexes); err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", update.StreamId)
+			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId)
 		}
 		return nil, err
 	}
 
-	targetIndexes := existingIndexes
-	targetNodes := nodes
-	if len(nodes) > 0 {
-		targetIndexes = nodeIndexes
-		if sealed && !slices.Equal(existingIndexes, nodeIndexes) {
-			return nil, RiverError(
-				Err_FAILED_PRECONDITION,
-				"sealed stream nodes cannot be changed",
-				"streamId",
-				update.StreamId,
-			)
-		}
-	} else {
-		var err error
-		targetNodes, err = s.nodeAddrsForIndexes(existingIndexes)
+	if newReplicationFactor > 0 && len(newNodeIndexes) > 0 {
+		_, err := tx.Exec(ctx, s.sqlForShard(
+			`UPDATE {{streams}}
+		 	 SET replication_factor = $2,
+			   nodes = $3
+			 WHERE stream_id = $1`,
+			shardID,
+		), streamId, newReplicationFactor, newNodeIndexes)
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	newReplicationFactor := replicationFactor
-	if update.ReplicationFactor != 0 {
-		newReplicationFactor = update.ReplicationFactor
-	}
-
-	if newReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
-	}
-	if len(targetIndexes) == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "nodes must not be empty")
-	}
-	if int(newReplicationFactor) > len(targetIndexes) {
-		return nil, RiverError(
-			Err_INVALID_ARGUMENT,
-			"replication_factor cannot exceed number of nodes",
-			"replicationFactor", newReplicationFactor,
-			"numNodes", len(targetIndexes),
-		)
-	}
-
-	if len(nodes) > 0 {
-		updateSQL := s.sqlForShard(
+		replicationFactor = newReplicationFactor
+		existingIndexes = newNodeIndexes
+	} else if newReplicationFactor > 0 {
+		_, err := tx.Exec(ctx, s.sqlForShard(
 			`UPDATE {{streams}}
-SET replication_factor = $2,
-    nodes = $3
-WHERE stream_id = $1`,
+		 	 SET replication_factor = $2
+			 WHERE stream_id = $1`,
 			shardID,
-		)
-		if _, err := tx.Exec(ctx, updateSQL, update.StreamId, newReplicationFactor, targetIndexes); err != nil {
+		), streamId, newReplicationFactor)
+		if err != nil {
 			return nil, err
 		}
+		replicationFactor = newReplicationFactor
 	} else {
-		updateSQL := s.sqlForShard(
+		_, err := tx.Exec(ctx, s.sqlForShard(
 			`UPDATE {{streams}}
-SET replication_factor = $2
-WHERE stream_id = $1`,
+		 	 SET nodes = $2
+			 WHERE stream_id = $1`,
 			shardID,
-		)
-		if _, err := tx.Exec(ctx, updateSQL, update.StreamId, newReplicationFactor); err != nil {
+		), streamId, newNodeIndexes)
+		if err != nil {
 			return nil, err
 		}
+		existingIndexes = newNodeIndexes
 	}
 
+	nodesAddrs, err := s.nodeAddrsForIndexes(existingIndexes)
+	if err != nil {
+		return nil, err
+	}
 	return &StreamMetadata{
-		StreamId:             update.StreamId,
+		StreamId:             streamId,
 		GenesisMiniblockHash: genesisHash,
 		LastMiniblockHash:    lastHash,
 		LastMiniblockNum:     lastNum,
-		Nodes:                targetNodes,
-		ReplicationFactor:    newReplicationFactor,
+		Nodes:                nodesAddrs,
+		ReplicationFactor:    replicationFactor,
 		Sealed:               sealed,
 		GenesisMiniblock:     genesisMiniblock,
 	}, nil
