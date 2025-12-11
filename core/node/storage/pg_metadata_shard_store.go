@@ -7,7 +7,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"slices"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -536,19 +535,19 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 	shardID uint64,
 	height int64,
 	streamId []byte,
-	proposedReplicationFactor uint32,
-	proposedNodeIndexes []int32,
+	newReplicationFactor uint32,
+	newNodeIndexes []int32,
 ) (*StreamMetadata, error) {
 	_ = height
 
 	var (
-		replicationFactor uint32
-		sealed            bool
-		lastHash          []byte
-		lastNum           int64
-		genesisHash       []byte
-		genesisMiniblock  []byte
-		existingIndexes   []int32
+		currentReplicationFactor uint32
+		sealed                   bool
+		lastHash                 []byte
+		lastNum                  int64
+		genesisHash              []byte
+		genesisMiniblock         []byte
+		currentNodeIndexes       []int32
 	)
 
 	selectSQL := s.sqlForShard(
@@ -566,78 +565,57 @@ func (s *PostgresMetadataShardStore) updateStreamNodesAndReplicationTx(
 		ctx,
 		selectSQL,
 		streamId,
-	).Scan(&replicationFactor, &sealed, &lastHash, &lastNum, &genesisHash, &genesisMiniblock, &existingIndexes); err != nil {
+	).Scan(&currentReplicationFactor, &sealed, &lastHash, &lastNum, &genesisHash, &genesisMiniblock, &currentNodeIndexes); err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, RiverError(Err_NOT_FOUND, "stream not found", "streamId", streamId)
 		}
 		return nil, err
 	}
 
-	targetIndexes := existingIndexes
-	if len(proposedNodeIndexes) > 0 {
-		if sealed && !slices.Equal(existingIndexes, proposedNodeIndexes) {
-			return nil, RiverError(
-				Err_FAILED_PRECONDITION,
-				"sealed stream nodes cannot be changed",
-				"streamId",
-				streamId,
-			)
-		}
-		targetIndexes = proposedNodeIndexes
-	}
-
-	newReplicationFactor := replicationFactor
-	if proposedReplicationFactor != 0 {
-		newReplicationFactor = proposedReplicationFactor
-	}
-
-	if newReplicationFactor == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor must be greater than zero")
-	}
-	if len(targetIndexes) == 0 {
-		return nil, RiverError(Err_INVALID_ARGUMENT, "nodes must not be empty")
-	}
-	if int(newReplicationFactor) > len(targetIndexes) {
-		return nil, RiverError(
-			Err_INVALID_ARGUMENT,
-			"replication_factor cannot exceed number of nodes",
-			"replicationFactor", newReplicationFactor,
-			"numNodes", len(targetIndexes),
-		)
-	}
-
 	switch {
-	case proposedReplicationFactor > 0 && len(proposedNodeIndexes) > 0:
+	case newReplicationFactor > 0 && len(newNodeIndexes) > 0:
 		if _, err := tx.Exec(ctx, s.sqlForShard(
 			`UPDATE {{streams}}
-SET replication_factor = $2,
-    nodes = $3
-WHERE stream_id = $1`,
+			SET replication_factor = $2,
+				nodes = $3
+			WHERE stream_id = $1`,
 			shardID,
-		), streamId, newReplicationFactor, targetIndexes); err != nil {
+		), streamId, newReplicationFactor, newNodeIndexes); err != nil {
 			return nil, err
 		}
-	case proposedReplicationFactor > 0:
+		currentReplicationFactor = newReplicationFactor
+		currentNodeIndexes = newNodeIndexes
+
+	case newReplicationFactor > 0:
+		if int(newReplicationFactor) > len(currentNodeIndexes) {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "replication_factor cannot exceed number of nodes")
+		}
 		if _, err := tx.Exec(ctx, s.sqlForShard(
 			`UPDATE {{streams}}
-SET replication_factor = $2
-WHERE stream_id = $1`,
+			SET replication_factor = $2
+			WHERE stream_id = $1`,
 			shardID,
 		), streamId, newReplicationFactor); err != nil {
 			return nil, err
 		}
-	case len(proposedNodeIndexes) > 0:
+		currentReplicationFactor = newReplicationFactor
+
+	case len(newNodeIndexes) > 0:
+		if len(newNodeIndexes) < int(currentReplicationFactor) {
+			return nil, RiverError(Err_INVALID_ARGUMENT, "nodes cannot be less than replication_factor")
+		}
 		if _, err := tx.Exec(ctx, s.sqlForShard(
 			`UPDATE {{streams}}
-SET nodes = $2
-WHERE stream_id = $1`,
+			SET nodes = $2
+			WHERE stream_id = $1`,
 			shardID,
-		), streamId, targetIndexes); err != nil {
+		), streamId, newNodeIndexes); err != nil {
 			return nil, err
 		}
+		currentNodeIndexes = newNodeIndexes
 	}
 
-	nodesAddrs, err := s.nodeAddrsForIndexes(targetIndexes)
+	nodesAddrs, err := s.nodeAddrsForIndexes(currentNodeIndexes)
 	if err != nil {
 		return nil, err
 	}
@@ -647,7 +625,7 @@ WHERE stream_id = $1`,
 		LastMiniblockHash:    lastHash,
 		LastMiniblockNum:     lastNum,
 		Nodes:                nodesAddrs,
-		ReplicationFactor:    newReplicationFactor,
+		ReplicationFactor:    currentReplicationFactor,
 		Sealed:               sealed,
 		GenesisMiniblock:     genesisMiniblock,
 	}, nil
