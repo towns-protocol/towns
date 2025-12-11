@@ -245,7 +245,7 @@ type (
 		// Returns the number of deleted rows.
 		TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
 
-		// GetEnqueuedMessagesCount returns the total count of enqueued messages.
+		// GetEnqueuedMessagesCountAprox returns the total count of enqueued messages.
 		GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error)
 
 		// Pool returns the underlying database connection pool.
@@ -1490,7 +1490,7 @@ func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
 	return result.RowsAffected(), nil
 }
 
-// GetEnqueuedMessagesCount returns an approximate count of enqueued messages.
+// GetEnqueuedMessagesCountAprox returns an approximate count of enqueued messages.
 // This uses pg_class statistics which is fast but may be slightly inaccurate
 // (updated by ANALYZE/autovacuum, typically within a few percent of actual count).
 func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error) {
