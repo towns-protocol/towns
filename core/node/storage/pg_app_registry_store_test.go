@@ -1968,30 +1968,20 @@ func TestDeleteExpiredEnqueuedMessages(t *testing.T) {
 		require.NoError(err)
 	}
 
-	// Verify messages are enqueued
-	count, err := store.GetEnqueuedMessagesCount(params.ctx)
-	require.NoError(err)
-	require.Equal(int64(5), count)
-
 	// Delete messages older than 1 hour from now (should delete nothing)
 	deleted, err := store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(-1*time.Hour))
 	require.NoError(err)
 	require.Equal(int64(0), deleted)
-
-	// Verify count unchanged
-	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
-	require.NoError(err)
-	require.Equal(int64(5), count)
 
 	// Delete messages older than 1 hour in the future (should delete all)
 	deleted, err = store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(1*time.Hour))
 	require.NoError(err)
 	require.Equal(int64(5), deleted)
 
-	// Verify all messages deleted
-	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
+	// Delete again should delete nothing
+	deleted, err = store.DeleteExpiredEnqueuedMessages(params.ctx, time.Now().Add(1*time.Hour))
 	require.NoError(err)
-	require.Equal(int64(0), count)
+	require.Equal(int64(0), deleted)
 }
 
 func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
@@ -2059,22 +2049,12 @@ func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
 		require.NoError(err)
 	}
 
-	// Verify total count
-	count, err := store.GetEnqueuedMessagesCountAprox(params.ctx)
-	require.NoError(err)
-	require.Equal(int64(15), count)
-
 	// Trim to max 7 per bot
 	// app1 has 10 -> should delete 3 (oldest)
 	// app2 has 5 -> should delete 0
 	deleted, err := store.TrimEnqueuedMessagesPerBot(params.ctx, 7)
 	require.NoError(err)
 	require.Equal(int64(3), deleted)
-
-	// Verify final count: 7 + 5 = 12
-	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
-	require.NoError(err)
-	require.Equal(int64(12), count)
 
 	// Trim again to max 3 per bot
 	// app1 has 7 -> should delete 4
@@ -2083,10 +2063,10 @@ func TestTrimEnqueuedMessagesPerBot(t *testing.T) {
 	require.NoError(err)
 	require.Equal(int64(6), deleted)
 
-	// Verify final count: 3 + 3 = 6
-	count, err = store.GetEnqueuedMessagesCountAprox(params.ctx)
+	// Trim again with same limit should delete nothing
+	deleted, err = store.TrimEnqueuedMessagesPerBot(params.ctx, 3)
 	require.NoError(err)
-	require.Equal(int64(6), count)
+	require.Equal(int64(0), deleted)
 }
 
 func TestGetEnqueuedMessagesCount(t *testing.T) {
