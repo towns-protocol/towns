@@ -14,22 +14,16 @@ import (
 
 // cleanupMetrics holds Prometheus metrics for the cleanup job.
 type cleanupMetrics struct {
-	enqueuedMessagesTotal prometheus.GaugeFunc
+	enqueuedMessagesTotal prometheus.Gauge
 	deletedByTTL          prometheus.Counter
 	deletedByLimit        prometheus.Counter
 }
 
-func newCleanupMetrics(factory infra.MetricsFactory, store storage.AppRegistryStore) *cleanupMetrics {
+func newCleanupMetrics(factory infra.MetricsFactory) *cleanupMetrics {
 	return &cleanupMetrics{
-		enqueuedMessagesTotal: factory.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name: "app_registry_enqueued_messages_total",
-				Help: "Total number of messages in the enqueued_messages table",
-			},
-			func() float64 {
-				count, _ := store.GetEnqueuedMessagesCount(context.Background())
-				return float64(count)
-			},
+		enqueuedMessagesTotal: factory.NewGaugeEx(
+			"app_registry_enqueued_messages_total",
+			"Total number of messages in the enqueued_messages table",
 		),
 		deletedByTTL: factory.NewCounterEx(
 			"app_registry_enqueued_messages_deleted_by_ttl_total",
@@ -58,7 +52,7 @@ func NewEnqueuedMessagesCleaner(
 	return &EnqueuedMessagesCleaner{
 		store:   store,
 		cfg:     cfg,
-		metrics: newCleanupMetrics(metricsFactory, store),
+		metrics: newCleanupMetrics(metricsFactory),
 	}
 }
 
@@ -105,5 +99,13 @@ func (c *EnqueuedMessagesCleaner) cleanup(ctx context.Context) {
 	} else if trimmed > 0 {
 		log.Infow("Trimmed per-bot message queues", "count", trimmed)
 		c.metrics.deletedByLimit.Add(float64(trimmed))
+	}
+
+	// 3. Update total count metric
+	count, err := c.store.GetEnqueuedMessagesCountAprox(ctx)
+	if err != nil {
+		log.Errorw("Failed to get enqueued messages count", "error", err)
+	} else {
+		c.metrics.enqueuedMessagesTotal.Set(float64(count))
 	}
 }

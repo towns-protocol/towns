@@ -246,7 +246,7 @@ type (
 		TrimEnqueuedMessagesPerBot(ctx context.Context, maxMessages int) (int64, error)
 
 		// GetEnqueuedMessagesCount returns the total count of enqueued messages.
-		GetEnqueuedMessagesCount(ctx context.Context) (int64, error)
+		GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error)
 
 		// Pool returns the underlying database connection pool.
 		// This is useful for creating shared components like StreamCookieStore.
@@ -1490,13 +1490,19 @@ func (s *PostgresAppRegistryStore) TrimEnqueuedMessagesPerBot(
 	return result.RowsAffected(), nil
 }
 
-// GetEnqueuedMessagesCount returns the total count of enqueued messages.
-func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCount(ctx context.Context) (int64, error) {
+// GetEnqueuedMessagesCount returns an approximate count of enqueued messages.
+// This uses pg_class statistics which is fast but may be slightly inaccurate
+// (updated by ANALYZE/autovacuum, typically within a few percent of actual count).
+func (s *PostgresAppRegistryStore) GetEnqueuedMessagesCountAprox(ctx context.Context) (int64, error) {
 	var count int64
-	err := s.pool.QueryRow(ctx, `SELECT COUNT(*) FROM enqueued_messages`).Scan(&count)
+	err := s.pool.QueryRow(ctx, `
+		SELECT GREATEST(COALESCE(reltuples::bigint, 0), 0)
+		FROM pg_class
+		WHERE relname = 'enqueued_messages'
+	`).Scan(&count)
 	if err != nil {
 		return 0, WrapRiverError(protocol.Err_DB_OPERATION_FAILURE, err).
-			Message("failed to count enqueued messages")
+			Message("failed to get enqueued messages count estimate")
 	}
 	return count, nil
 }
