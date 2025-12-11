@@ -3,7 +3,7 @@
  */
 
 import { Client } from '../../client'
-import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId, waitFor } from '../testUtils'
+import { makeDonePromise, makeTestClient, makeUniqueSpaceStreamId } from '../testUtils'
 import { bin_fromHexString, dlog } from '@towns-protocol/utils'
 import { GroupEncryptionAlgorithmId } from '@towns-protocol/encryption'
 import { UserInboxPayload_GroupEncryptionSessions } from '@towns-protocol/proto'
@@ -179,7 +179,9 @@ describe('inboxMessageTest', () => {
             const hasSnapshot =
                 mb.header.snapshot !== undefined ||
                 (mb.header.snapshotHash !== undefined && mb.header.snapshotHash.length > 0)
-            log(`Miniblock ${mbNum}: hasSnapshot=${hasSnapshot}, prevSnapshotMiniblockNum=${mb.header.prevSnapshotMiniblockNum}`)
+            log(
+                `Miniblock ${mbNum}: hasSnapshot=${hasSnapshot}, prevSnapshotMiniblockNum=${mb.header.prevSnapshotMiniblockNum}`,
+            )
             if (hasSnapshot && mbNum > latestSnapshotMiniblock) {
                 latestSnapshotMiniblock = mbNum
             }
@@ -211,7 +213,6 @@ describe('inboxMessageTest', () => {
         expect(allNodes).toBeDefined()
 
         // For each node hosting the stream, send trim request
-        let nodeRpcClient;
         for (const nodeAddress of streamNodeAddresses) {
             const nodeInfo = allNodes![nodeAddress]
             if (!nodeInfo) {
@@ -223,7 +224,7 @@ describe('inboxMessageTest', () => {
             log(`Trimming stream on node ${nodeAddress} at ${nodeUrl}`)
 
             // Create an RPC client for this specific node
-            nodeRpcClient = makeStreamRpcClient(nodeUrl)
+            const nodeRpcClient = makeStreamRpcClient(nodeUrl)
 
             // Call debug RPC to force stream trimming on this node
             const trimResponse = await nodeRpcClient.info({
@@ -248,18 +249,20 @@ describe('inboxMessageTest', () => {
         let getMiniblocksFailed = false
         try {
             const trimmedResult = await alicesClient.getMiniblocks(
-              alicesUserInboxStreamId,
-              trimmedFromInclusive,
-              trimmedToExclusive,
-              undefined,
-              {skipPersistence: true, skipCache: true},
+                alicesUserInboxStreamId,
+                trimmedFromInclusive,
+                trimmedToExclusive,
+                undefined,
+                { skipPersistence: true, skipCache: true },
             )
             // If we get here without throwing, the test should fail
             // since there is no range of such miniblocks anymore
             log('getMiniblocks unexpectedly succeeded for trimmed range:', {
                 numMiniblocks: trimmedResult.miniblocks.length,
                 terminus: trimmedResult.terminus,
-                miniblockNums: trimmedResult.miniblocks.map((mb) => mb.header.miniblockNum.toString()),
+                miniblockNums: trimmedResult.miniblocks.map((mb) =>
+                    mb.header.miniblockNum.toString(),
+                ),
             })
             expect.fail('getMiniblocks should have thrown an error for trimmed range')
         } catch (error) {

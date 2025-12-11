@@ -1575,17 +1575,7 @@ func (s *PostgresStreamStore) readMiniblocksTxNoLock(
 	var blockdata []byte
 	var seqNum int
 	var snapshot []byte
-	firstRow := true
 	if _, err = pgx.ForEachRow(miniblocksRow, []any{&blockdata, &seqNum, &snapshot}, func() error {
-		// Check if the first miniblock matches the requested fromInclusive
-		if firstRow && int64(seqNum) != fromInclusive {
-			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Missing miniblocks at start of range").
-				Tag("RequestedStart", fromInclusive).
-				Tag("ActualStart", seqNum).
-				Tag("streamId", streamId)
-		}
-		firstRow = false
-
 		if prevSeqNum != -1 && seqNum != prevSeqNum+1 {
 			// There is a gap in sequence numbers
 			return RiverError(Err_MINIBLOCKS_NOT_FOUND, "Miniblocks consistency violation").

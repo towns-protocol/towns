@@ -2552,15 +2552,15 @@ export class Client
         fromInclusive: bigint,
         toExclusive: bigint,
         exclusionFilter?: ExclusionFilter,
-        opts?: { skipPersistence?: boolean, skipCache?: boolean },
+        opts?: { skipPersistence?: boolean; skipCache?: boolean },
     ): Promise<{ miniblocks: ParsedMiniblock[]; terminus: boolean }> {
         const cachedMiniblocks: ParsedMiniblock[] = []
         if (!opts?.skipCache) {
             try {
                 for (let i = toExclusive - 1n; i >= fromInclusive; i = i - 1n) {
                     const miniblock = await this.persistenceStore.getMiniblock(
-                      streamIdAsString(streamId),
-                      i,
+                        streamIdAsString(streamId),
+                        i,
                     )
                     if (miniblock) {
                         cachedMiniblocks.push(miniblock)
