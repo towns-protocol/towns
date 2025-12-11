@@ -17,7 +17,7 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 - `MetadataTx` wraps three ops: `CreateStreamTx`, `SetStreamLastMiniblockBatchTx`, and `UpdateStreamNodesAndReplicationTx`.
 - `CreateStreamTx`: requires 32-byte `stream_id` and `genesis_miniblock_hash`; `nodes` must be non-empty 20-byte addresses; `replication_factor` > 0 and ≤ len(nodes); if `last_miniblock_num` is 0, a `genesis_miniblock` is required and `last_miniblock_hash` must match the genesis hash, otherwise `last_miniblock_hash` must be 32 bytes. `sealed` can be set at creation.
 - `SetStreamLastMiniblockBatchTx`: a non-empty list of `MiniblockUpdate` items; each enforces 32-byte hashes, `last_miniblock_num` > 0, and uses `prev_miniblock_hash` for optimistic concurrency.
-- `UpdateStreamNodesAndReplicationTx`: `stream_id` must be 32 bytes; optional `nodes` must be 20-byte addresses if provided and cannot be empty; sealed streams reject node changes unless the set is identical; `replication_factor` defaults to the current value when 0 and must remain > 0 and ≤ number of nodes.
+- `UpdateStreamNodesAndReplicationTx`: `stream_id` must be 32 bytes; if `nodes` is supplied it must be a list of 20-byte addresses and replaces the current node set; `replication_factor` defaults to the current value when 0 and must remain > 0 and ≤ number of nodes. This op is allowed even on sealed streams (sealing only freezes miniblock pointers).
 - The ABCI layer performs stateless checks in `CheckTx`/`PrepareProposal`/`ProcessProposal`; stateful checks happen inside the Postgres store during FinalizeBlock.
 
 ## Storage Layout
@@ -42,9 +42,9 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 ## Store Semantics
 
-- Create stream: enforces unique `stream_id`, validates replication factor against node count, stores the genesis miniblock (empty when starting above height 0), and seeds `last_miniblock_hash` from the genesis hash when `last_miniblock_num` is 0.
+- Create stream: enforces unique `stream_id`, validates replication factor against node count, stores the genesis miniblock (empty when starting above height 0), seeds `last_miniblock_hash` from the genesis hash when `last_miniblock_num` is 0, and treats `genesis_miniblock_hash`/`genesis_miniblock` as immutable after creation.
 - Miniblock batch: rejects sealed streams, requires `prev_miniblock_hash` to match the current hash, demands `last_miniblock_num` increment by exactly 1, and ORs the `sealed` flag with existing state.
-- Update nodes/replication: defaults to the existing node set when `nodes` is empty, forbids node changes on sealed streams unless identical, enforces replication factor bounds, and rewrites the stored `nodes` array to keep the provided order.
+- Update nodes/replication: defaults to the existing node set when `nodes` is empty, allows node and/or replication-factor changes even when sealed, enforces replication factor bounds, and rewrites the stored `nodes` array to keep the provided order.
 - Reads: `GetStream`, paginated `ListStreams`, node-filtered listings, counts, and full snapshots (`GetStreamsStateSnapshot`) resolve stored permanent indexes back into ordered node address lists.
 
 ## App Hash
