@@ -54,7 +54,7 @@ Storage code: `core/node/storage/pg_metadata_shard_store.go`.
 
 # TODO
 
-- [x] Update database to use single table for streams data using int array and GIN index for nodes (insted of putting nodes in a separate table).
+- [x] Update database to use single table for streams data using int array and GIN index for nodes (instead of putting nodes in a separate table).
 - [ ] Collect block state in memory and only commit when Commit is called in a single transaction.
 - [ ] Implement app_hash using fixed depth sparse merkle tree with pg backing.
 - [ ] Implement snapshotting/export functionality.
