@@ -88,7 +88,8 @@ func NewAppRegistryStreamsTracker(
 func (tracker *AppRegistryStreamsTracker) TrackStream(ctx context.Context, streamId shared.StreamId, _ bool) bool {
 	streamType := streamId.Type()
 
-	if streamType == shared.STREAM_CHANNEL_BIN {
+	// Track channel and DM streams
+	if streamType == shared.STREAM_CHANNEL_BIN || streamType == shared.STREAM_DM_CHANNEL_BIN {
 		return true
 	}
 	if streamType != shared.STREAM_USER_INBOX_BIN {

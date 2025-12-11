@@ -176,8 +176,9 @@ func NewTrackedStreamForAppRegistryService(
 func (b *AppRegistryTrackedStreamView) shouldPersistCookie(ctx context.Context, view *StreamView) bool {
 	streamId := view.StreamId()
 
-	// Only persist cookies for channel streams with bot members
-	if streamId.Type() != shared.STREAM_CHANNEL_BIN {
+	// Only persist cookies for channel/DM streams with bot members
+	streamType := streamId.Type()
+	if streamType != shared.STREAM_CHANNEL_BIN && streamType != shared.STREAM_DM_CHANNEL_BIN {
 		return false
 	}
 
